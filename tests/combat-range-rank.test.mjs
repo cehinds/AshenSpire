@@ -1,0 +1,198 @@
+// Owner, 2026-11-05: "use the front and back rows to indicate melee and reach". Display only.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../src/ui/models/CombatRangeRankModel.js';
+import { alternativeFormation } from '../src/ui/models/AlternativeFormationModel.js';
+import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { createRangeState, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
+
+const fight = (bands, { dead = [], range = true } = {}) => {
+  const enemies = Object.keys(bands).map(id => ({ id, kind: 'enemy', alive: !dead.includes(id) }));
+  const player = { id: 'player', alive: true };
+  const combat = { player, enemies };
+  if (range) {
+    combat.rangeState = createRangeState({ ...RANGE_POLICY_DEFAULTS }, [{ key: 'player:player' }, ...enemies.map(e => ({ key: `enemy:${e.id}` }))]);
+    for (const [id, band] of Object.entries(bands)) combat.rangeState.engagements[rangePairKey('player:player', `enemy:${id}`)] = band;
+  }
+  return combat;
+};
+
+test('melee stands front, reach stands back', () => {
+  const melee = combatRangeRanks(fight({ e1: 0 }));
+  assert.equal(melee.get('player:player'), 'front');
+  assert.equal(melee.get('enemy:e1'), 'front');
+  const reach = combatRangeRanks(fight({ e1: 1 }));
+  assert.equal(reach.get('player:player'), 'back');
+  assert.equal(reach.get('enemy:e1'), 'back');
+});
+
+test('mixed fight: the player is front if any enemy is at melee; each enemy follows its own band', () => {
+  const ranks = combatRangeRanks(fight({ e1: 0, e2: 1 }));
+  assert.equal(ranks.get('player:player'), 'front');
+  assert.equal(ranks.get('enemy:e1'), 'front');
+  assert.equal(ranks.get('enemy:e2'), 'back');
+});
+
+test('dead enemies are ignored and a player facing only reach enemies stays back', () => {
+  const ranks = combatRangeRanks(fight({ e1: 0, e2: 1 }, { dead: ['e1'] }));
+  assert.equal(ranks.has('enemy:e1'), false);
+  assert.equal(ranks.get('player:player'), 'back');
+});
+
+test('no range state gives null', () => {
+  assert.equal(combatRangeRanks(fight({ e1: 0 }, { range: false })), null);
+  assert.equal(combatRangeRanks({ player: { id: 'player', alive: true }, enemies: [] }), null);
+});
+
+const plan = enemies => combatFormation({ width: 1000, height: 500, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+  friends: ['player'], enemies });
+const strip = (formation, id) => formation.slots.find(s => s.id === id).formationRole;
+
+test('the plan puts melee in the front strip and reach in the back strip, keeping lanes', () => {
+  const base = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false);
+  const f = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false, { rangeRanks: { player: 'front', e1: 'front', e2: 'back' } });
+  assert.equal(strip(f, 'player'), 'player-front');
+  assert.equal(strip(f, 'e1'), 'enemy-front');
+  assert.equal(strip(f, 'e2'), 'enemy-back');
+  for (const id of ['e1', 'e2']) assert.equal(f.slots.find(s => s.id === id).lane, base.slots.find(s => s.id === id).lane);
+  const back = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false, { rangeRanks: { player: 'back', e1: 'back', e2: 'back' } });
+  assert.equal(strip(back, 'player'), 'player-back');
+  const bands = Object.fromEntries(back.visualBands.map(b => [b.id, b.top]));
+  const slot = back.slots.find(s => s.id === 'player');
+  assert(slot.box.top >= bands['player-back'] - 1e-6 && slot.box.top > bands['player-front'], 'player drawn in the back strip, below the front strip');
+});
+
+test('three enemies at different ranks never share a strip lane', () => {
+  const f = alternativeFormation(plan(['e1', 'e2', 'e3']), 1000, 500, false, { rangeRanks: { player: 'front', e1: 'front', e2: 'back', e3: 'front' } });
+  const spots = f.slots.filter(s => s.side === 'enemy').map(s => `${s.formationRole}:${s.lane}`);
+  assert.equal(new Set(spots).size, 3);
+});
+
+test('null ranks leave the layout identical to today', () => {
+  const a = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false);
+  const b = alternativeFormation(plan(['e1', 'e2']), 1000, 500, false, { rangeRanks: null });
+  assert.deepEqual(b, a);
+});
+
+test('playback: a strip changes on the beat of its own move, not when the engine finished', () => {
+  // e1 is at melee, e2 at reach; in the enemy turn e1 acts, then e2 advances. `combat` is already post-dispatch.
+  const before = fight({ e1: 0, e2: 1 });
+  const snap = rangeRankSnapshot(before);
+  const after = fight({ e1: 0, e2: 0 });
+  assert.equal(combatRangeRanks(after).get('enemy:e2'), 'front', 'the finished state has e2 in front');
+  const rank = () => rangeRanksFromSnapshot(snap).get('enemy:e2');
+  assert.equal(rank(), 'back');
+  applyRangeRankEvent(snap, { type: 'damageDealt', sourceId: 'e1', targetId: 'player' });
+  assert.equal(rank(), 'back', 'e1 beats leave e2 behind');
+  applyRangeRankEvent(snap, { type: 'combatEngagementMoved', sourceId: 'e2', targetId: 'player', bands: -1 });
+  assert.equal(rank(), 'front', 'e2 steps up on its own move beat');
+  applyRangeRankEvent(snap, { type: 'enemyDied', targetId: 'e1', enemyId: 'hound' });
+  assert.equal(rangeRanksFromSnapshot(snap).has('enemy:e1'), false);
+  assert.equal(rangeRankSnapshot(fight({ e1: 0 }, { range: false })), null);
+});
+
+test('four enemies: movers take free lanes; only a full strip shares', () => {
+  const ids = ['e1', 'e2', 'e3', 'e4'];
+  const cells = ranks => alternativeFormation(plan(ids), 1000, 500, false, { rangeRanks: ranks }).slots.filter(s => s.side === 'enemy');
+  const mixed = cells({ e1: 'front', e2: 'front', e3: 'back', e4: 'back' });
+  const coords = mixed.map(s => `${s.x}:${s.ground}`);
+  assert.equal(new Set(coords).size, 4, 'room in both strips: four distinct cells');
+  const allFront = cells(Object.fromEntries(ids.map(id => [id, 'front']))).filter(s => s.formationRole === 'enemy-front');
+  assert.equal(new Set(allFront.map(s => s.lane)).size, 3, 'the front strip fills all three lanes before any sharing');
+});
+
+test('three enemies keep their own lane when only the strip changes', () => {
+  const ids = ['e1', 'e2', 'e3'];
+  const base = alternativeFormation(plan(ids), 1000, 500, false);
+  const f = alternativeFormation(plan(ids), 1000, 500, false, { rangeRanks: Object.fromEntries(ids.map(id => [id, 'front'])) });
+  for (const id of ids) assert.equal(f.slots.find(s => s.id === id).lane, base.slots.find(s => s.id === id).lane);
+});
+
+test('playback: an attack from Reach that pays an implicit Advance moves both fighters front on the Advance receipt', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000;
+  combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')] = 1;
+  const snap = rangeRankSnapshot(combat);
+  assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back');
+  const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
+  const step = events.find(e => e.type === 'combatEngagementMoved');
+  assert.deepEqual([step.sourceId, step.targetId, step.bands, step.reason], ['player', 'e1', -1, 'advance'], 'the engine announces the committed Advance');
+  const live = combatRangeRanks(combat);
+  assert.equal(live.get('player:player'), 'front');
+  let early = true;
+  for (const event of events) {
+    if (event === step) early = false;
+    if (early) assert.equal(rangeRanksFromSnapshot(snap).get('enemy:e1'), 'back', `before the attack lands (${event.type})`);
+    applyRangeRankEvent(snap, event);
+  }
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...live].sort(), 'the reduced receipts end where the live state is');
+});
+
+test('playback: a short-range-profile attack that commits no Advance leaves both fighters back', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  run.loadout.sets.rightHand[0] = 'shortbow'; run.loadout.sets.leftHand[0] = null;
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000;
+  combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')] = 1;
+  const snap = rangeRankSnapshot(combat);
+  const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
+  assert.equal(combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')], 1, 'the engine commits no Advance');
+  assert.equal(events.some(e => e.type === 'combatEngagementMoved'), false, 'no Advance committed, no movement receipt');
+  for (const event of events) {
+    applyRangeRankEvent(snap, event);
+    assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back', event.type);
+  }
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
+});
+
+test('playback: Hit and Run from Reach steps in on its Advance beat and back out on its retreat beat', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000; combat.player.energy = 9;
+  const pair = rangePairKey('player:player', 'enemy:e1');
+  combat.rangeState.engagements[pair] = 1;
+  combat.piles.hand.find(card => card.cardId === 'core.strike').cardId = 'core.hitAndRun';
+  const card = combat.piles.hand.find(c => c.cardId === 'core.hitAndRun');
+  const snap = rangeRankSnapshot(combat);
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  assert.equal(combat.rangeState.engagements[pair], 1, 'the retreat restores Reach');
+  const moves = events.filter(e => e.type === 'combatEngagementMoved');
+  assert.deepEqual(moves.map(e => e.bands), [-1, 1], 'a step in, then a step back out');
+  const seen = [];
+  for (const event of events) {
+    applyRangeRankEvent(snap, event);
+    if (event.type === 'combatEngagementMoved') seen.push(rangeRanksFromSnapshot(snap).get('player:player'));
+  }
+  assert.deepEqual(seen, ['front', 'back']);
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
+});

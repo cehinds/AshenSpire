@@ -732,7 +732,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const pageZoom = uiZoom();
     const presentation = { formationPolicy: JSON.parse(field.dataset.formationPolicy || 'null'),
       formationOccupancy: JSON.parse(field.dataset.formationOccupancy || '[]'), ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}'),
-      perspectiveGrid: true };
+      perspectiveGrid: true, rangeRanks: field.dataset.rangeRanks ? JSON.parse(field.dataset.rangeRanks) : null };
     const partySize = frames.filter(f => f.classList.contains('player')).length;
     const dimensions = formationDimensions(presentation, Math.max(partySize, frames.filter(f => f.classList.contains('enemy')).length), partySize);
     const playerCell = playerFormationCell(field.dataset.playerCell, dimensions);

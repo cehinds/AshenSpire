@@ -1202,6 +1202,13 @@ export function playTimeline(events, ctx, done) {
       return { impactMs: speed.lungeMs * COMBAT_TIMING.windupFraction, totalMs: speed.lungeMs,
         cancel: () => { if (ctx.figureAnimations !== false) stageFor(actorEl)?.settle?.(); } };
     },
+    // A step in or out of range that the engine committed before the hit lands (an Advance the attack paid for, Driving Thrust's push)
+    // changes the formation strips as contact begins; one after the damage (Hit and Run's retreat) waits for the group's HUD apply.
+    onEngagement: beat => {
+      const hit = beat.events.findIndex(e => e.type === 'damageDealt');
+      const early = beat.events.filter((e, i) => e.type === 'combatEngagementMoved' && (hit < 0 || i < hit));
+      if (early.length) visualSafe(() => ctx.onEngagementMoved?.(early));
+    },
     onContact: (beat, actor) => {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
@@ -1261,7 +1268,11 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'numbers');
       cue(beat);
     },
-    onApply: beat => ctx.onBeatApplied?.(beat),
+    onApply: beat => {
+      const moves = beat.events.filter(e => e.type === 'combatEngagementMoved');
+      if (moves.length) visualSafe(() => ctx.onEngagementMoved?.(moves));
+      ctx.onBeatApplied?.(beat);
+    },
     onResolution: beat => {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
       ctx.onResolution?.(beat);
