@@ -1,0 +1,13 @@
+{
+  "sizing": {
+    "floaterFontPx": 28,
+    "floaterFontMinPx": 18,
+    "floaterFontVw": 7,
+    "floaterLineGapPx": 6,
+    "floaterMaxVisible": 4
+  },
+  "motion": {
+    "floaterStaggerMs": 320,
+    "floaterShiftMs": 220
+  }
+}
