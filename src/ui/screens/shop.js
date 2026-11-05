@@ -220,7 +220,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     run.flasks.forEach((f, at) => {
       const def = registries.flasks.get(f.flaskId);
       const price = sellPriceFor(registries.balance, 'flask', def);
-      if (price > 0) out.push({ kind: 'flask', at, def, price, title: flaskIdentityHtml(def), titleHtml: true, desc: def.textTemplate || '' });
+      if (price > 0) out.push({ kind: 'flask', at, def, price, title: flaskIdentityHtml(def), titleHtml: true, desc: relicText(def, registries) });
     });
     return out;
   }
@@ -376,9 +376,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !flaskAcquisitionPlan(registries, run, item.id).ok });
-      const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
+      const tile = shopItem(flaskIdentityHtml(def), relicText(def, registries), item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
       addOffer('flasks', {
-        ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
+        ref: flaskRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('flask', def.name, item.cost, () => {
           if (run.cinders < item.cost || !stock.flasks.includes(item)) return;
