@@ -47,7 +47,6 @@ export function mountTitle(app, {
   onSettingsChange,
   onCollapse,
   onQuit,
-  onCustom,
   onCompendium,
   onBestiary,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
@@ -245,7 +244,6 @@ export function mountTitle(app, {
         else if (action === 'bestiary') onBestiary?.();
         else if (action === 'history') onHistory?.();
         else if (action === 'profile') onProfile?.();
-        else if (action === 'custom') onCustom?.();
         else if (action === 'settings') onSettings();
         else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();

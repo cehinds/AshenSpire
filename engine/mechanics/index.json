@@ -1367,9 +1367,7 @@
       "tag": "status.glassCannon",
       "family": "status",
       "portability": "legacy",
-      "modules": [
-        "statuses"
-      ]
+      "modules": []
     },
     {
       "id": "status.goreblood",

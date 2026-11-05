@@ -39,8 +39,6 @@ import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { quickStartRunConfig } from './model/characterCreation.js';
-import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
-import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 import { formFactorFor } from './ui/models/FormFactorModel.js';
@@ -77,7 +75,7 @@ import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
-import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
+import { isCustomRun } from './model/customRun.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
@@ -131,7 +129,6 @@ import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
-import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
 import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
@@ -1416,9 +1413,8 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
 
-  // Custom Climb: alternate starting decks + start-of-run rule effects.
+  // Sealed and Draft start from a dealt deck rather than the composed one.
   const deckMode = run.custom.deckMode || 'standard';
-  const mods = activeMods(run.custom);
   if (deckMode === 'sealed') {
     run.deck = createDeck(sealedDeckIds(classId), createIdGen('rc'));
   } else if (deckMode === 'draft') {
@@ -1431,8 +1427,6 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
     run.poolDeckRule = POOL_DECK_RULE;
   }
-  if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
-  if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
   if (deckMode === 'draft') return showDraft(); // picks, then proceeds to the map
   startClimb({ skipOpening });
@@ -1448,7 +1442,7 @@ function startClimb({ skipOpening = false } = {}) {
   // do, so the first fight plays the same cards a reload would. A pool deck is
   // dealt no lent card by it (model/cardRemoval.js isPoolDeckMode).
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
-  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
+  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), run.actNumber, null, { history: run.history });
   if (run.journey) syncWorldPosition();
   if (runSupportsPrologue(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
@@ -1496,27 +1490,10 @@ function draftBaseIds() {
 // Generate the current act's map and pre-roll every '?' node (stream
 // 'events') so outcomes are seed-determined and the Sealstone Key can
 // reveal them (SPEC §6).
-// Endless Spire: acts past 3 loop back through acts 1-3 content, harder each
-// cycle (combatMods). All content lookups go through contentAct(); the real
-// run.actNumber keeps counting up for labels, saves, and history.
-function endlessOn() {
-  return !!(run.custom && activeMods(run.custom).endless);
-}
-function contentAct() {
-  return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
-}
 // The SEAT climbed at the current tier (SPEC §13.1): content follows the seat,
 // geometry and difficulty follow the tier. Endless loops the order with the act.
 function currentSeat() {
-  return seatAtTier(run.seatOrder, contentAct());
-}
-
-// The Custom Climb debug shape (floors cap, columns cap, node weights) or null
-// for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
-// with everything else the run chose — a resumed short run stays short, and act
-// 2 is generated at the same shape act 1 was.
-function runMapShape() {
-  return (run.custom && run.custom.mapShape) || null;
+  return seatAtTier(run.seatOrder, run.actNumber);
 }
 
 // The map-build sequence itself lives in engine/actmap.js (the one boot path,
@@ -1529,15 +1506,11 @@ function advanceAct() {
   run.mapNodeId = null;
   run.path = [];
   run.lastEncounters = [];
-  // Full heal between acts — halved under the "Scarce Embers" custom rule.
-  if (run.custom && activeMods(run.custom).lessHealing) {
-    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * registries.balance.customMods.lessHealingMult));
-  } else {
-    run.hp = run.maxHp;
-  }
+  // Full heal between acts.
+  run.hp = run.maxHp;
   // Owner 2026-10-27: both flask pools refill at every act change (configured runs; legacy keeps its behaviour).
   refillFlasksAtActChange(run);
-  run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
+  run.mapGraph = buildActMap(registries, rng, currentSeat(), run.actNumber, null, { history: run.history });
   persistOrWarn(); // reached from a boss reward: a full store must not strand the climb
   showMap();
 }
@@ -1943,8 +1916,8 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
     },
     // The Title updates in place from the returned list (no remount). The
-    // snapshot below is this showTitle's own `slots`, which onQuickStart and
-    // onCustom read, so it is refreshed too.
+    // snapshot below is this showTitle's own `slots`, which onQuickStart
+    // reads, so it is refreshed too.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
       const fresh = saveSlotRecords();
@@ -1960,10 +1933,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onSettingsChange: persistSettingsChange,
     onCollapse: showCollapsedTitle,
     onQuit: quitGame,
-    onCustom: () => {
-      const empty = slots.find((s) => !s.summary);
-      showCustomRun(empty ? empty.slot : 1);
-    },
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
@@ -2547,17 +2516,6 @@ function showCustomize(slot = 1, catalog = false) {
   });
 }
 
-function showCustomRun(slot = 1) {
-  mountCustomRun(app, {
-    registries,
-    defaultSeedString: shotState === 'customrun' ? 'SHOWCASE' : randomSeedString(),
-    onBack: showTitle,
-    // Custom Climb falls back to slot 1 when every slot is full, so it asks
-    // the same Replace question Customize does before writing over a save.
-    onStart: (config) => startRunInSlot(config, slot),
-  });
-}
-
 // W2c REPLACE, AT THE WRITE BOUNDARY: the one gate every new climb passes
 // before it writes a slot. An empty slot starts at once; an occupied one asks,
 // naming the save that goes and the character that replaces it.
@@ -2665,16 +2623,15 @@ function showMap(opts) {
   if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
-  const suggested = run.quickStart && !run.mapNodeId && !run.journey && !run.legacyDungeon
+  const suggested = run.quickStart && !run.mapNodeId && !run.journey
     ? run.mapGraph.startIds.find(id => run.mapGraph.nodes[id].type === 'monster') : null;
   const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : suggested;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
-      healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
+      healMult: 1,
       refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
       restBonus: restRecoveryBonus(saves.loadMeta().settings || {}),
       // The run's live streams: the rest preview copies their position, so a
@@ -2788,7 +2745,7 @@ function worldLocationAction(action) {
     // is rolled on `shopOffers` on first entry and kept on the point, so a
     // revisit reopens it as saved; a custom run's price multiplier reaches it
     // as it reaches the market.
-    state.stock ||= blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    state.stock ||= blacksmithVisitStock(registries, rng, run, { });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2797,7 +2754,7 @@ function worldLocationAction(action) {
     // master picked on `shop` and its stock rolled on `shopOffers` on first
     // entry, kept on the point, so a revisit reopens it as saved. No shipped
     // point carries the service yet; content places it.
-    state.stock ||= masterVisitStock(registries, rng, run, { priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
+    state.stock ||= masterVisitStock(registries, rng, run);
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2806,7 +2763,7 @@ function worldLocationAction(action) {
     // `shop`, and which of them are out on `shopOffers`. A custom run's price
     // multiplier reaches it as it reaches a classic merchant (review, #1374;
     // before that no atlas shelf was scaled).
-    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, priceMult: shopPriceMult() });
+    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2886,10 +2843,9 @@ function enterNode(nodeId) {
   const firstVisit = !run.path.includes(nodeId);
   if (firstVisit) run.path.push(nodeId);
   run.floor = node.floor;
-  const refillHealMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   // The destination owns its checkpoint: combat saves the refill together with
   // its encounter receipt, and a failed autosave must not prevent entry.
-  if (firstVisit) applyNodeRefill(run, node, { healMult: refillHealMult });
+  if (firstVisit) applyNodeRefill(run, node, { healMult: 1 });
 
   let kind = node.type;
   if (kind === 'event') {
@@ -2925,7 +2881,7 @@ function enterNode(nodeId) {
       // nothing new, so a seed's shelves are what they always were.
       // Greedy Merchants and Hoarder scale every price it lays out, the
       // market additions included (SPEC §14.3).
-      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant' });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
@@ -2959,15 +2915,11 @@ function enterNode(nodeId) {
 }
 
 // ---- combat ------------------------------------------------------------------------
-// Custom Climb combat rules → generic createCombat options for a given pool.
+// Combat options (enemy HP/damage scaling) for a given pool.
 function combatMods(pool, encounter = null) {
-  const mods = run.custom ? activeMods(run.custom) : {};
   let hpMult = 1;
   const enemyStatuses = [];
   const playerStatuses = [];
-  const cm = registries.balance.customMods;
-  if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= cm.toughElitesHpMult;
-  if (pool === 'boss' && mods.bigBosses) hpMult *= cm.bigBossesHpMult;
   // SPEC §13.3: a seat climbed off its authored baseline scales by the tier
   // ratio — exactly 1 at the baseline, so every existing seed's fights roll
   // the HP they always did. World Journey binds difficulty to its own act and
@@ -2977,89 +2929,11 @@ function combatMods(pool, encounter = null) {
   // order is drawn per run, so a boss's difficulty cannot be authored.
   let damageMult = 1;
   if (!run.journey && Array.isArray(run.seatOrder)) {
-    const boss = bossTierScale(registries, { encounter, tier: contentAct() });
-    hpMult *= boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct());
+    const boss = bossTierScale(registries, { encounter, tier: run.actNumber });
+    hpMult *= boss ? boss.hp : seatTierHpMult(registries, currentSeat(), run.actNumber);
     if (boss) damageMult = boss.damage;
   }
-  if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
-  if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
-  if (mods.endless) {
-    const { loop } = endlessActInfo(run.actNumber);
-    if (loop > 0) {
-      hpMult *= 1 + ENDLESS_HP_PER_LOOP * loop;
-      enemyStatuses.push({ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop });
-    }
-  }
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
-}
-
-function showLegacyDungeon(opts) {
-  // A flask-only redraw hands back the selected node, as on the act map.
-  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
-  if (run.pendingReward) return mountPendingReward();
-  if (run.legacyDungeon.activeRest) return showRest();
-  if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
-    onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
-    onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
-}
-
-function enterDungeonLocation() {
-  switch (dungeonNodeAction(run)) {
-    case 'rest':
-      run.legacyDungeon.activeRest ||= { nodeId: run.legacyDungeon.current, refilled: false };
-      persist(); return showRest();
-    case 'treasure': {
-      const relicId = rollRelicReward(registries, rng, run.relics);
-      const armamentId = rollDrop('treasure');
-      const smithingStoneReceipt = treasureSmithingReward();
-      resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
-    }
-    case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
-    case 'dialogue': return showDungeonDialogue();
-    default: return showLegacyDungeon();
-  }
-}
-
-function showDungeonDialogue() {
-  const node = dungeonNode(run), pending = run.legacyDungeon.pending;
-  mountDialogue(app, { registries, run, meta: activeMeta, rng, eventId: node.id,
-    definition: { id: node.id, name: node.name, text: node.lore, choices: dungeonChoices(run) },
-    speaker: { id: node.id, name: node.speaker, portraitKey: node.kind === 'boss' ? registries.encounters.get(node.encounter).enemies[0] : null },
-    dialogueState: pending ? { beat: 0, generation: 0, resolved: true, choiceId: pending.choiceId, resultText: pending.text } : null,
-    hud: roomHud(showDungeonDialogue),
-    commitChoice: command => {
-      const receipt = chooseDungeon(run, command.choiceId, rng);
-      persist();
-      return { choice: { id: receipt.choiceId, resultText: receipt.text } };
-    },
-    onDone: () => {
-      const encounterId = dungeonNode(run).encounter;
-      const action = continueDungeon(run);
-      if (action === 'rest') { persist(); return showRest(); }
-      if (action === 'combat') return enterCombat(run.legacyDungeon.parentNodeId, encounterId);
-      persist(); showMap();
-    },
-  });
-}
-
-function leaveLegacyDungeon() {
-  if (!run.legacyDungeon?.cleared) return;
-  if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
-  delete run.legacyDungeon;
-  if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
-    audio.music('victory');
-    return showFinishedRun(true);
-  }
-  if (run.journey) { persist(); showMap(); } else advanceAct();
-}
-
-function openLegacyEntrance(encounterId, nodeId) {
-  if (isConfiguredRun(run) && !gameModule(run, 'dungeons')) return false;
-  const def = dungeonForEncounter(encounterId);
-  if (!def) return false;
-  beginDungeon(run, def, nodeId); persist(); showMap(); return true;
 }
 
 // The Enter tap paints before the fight is built: building and mounting the
@@ -3084,15 +2958,11 @@ function startFight(pool, nodeId) {
 function startFightNow(pool, nodeId) {
   if (run.journey) {
     const enc = journeyEncounter(run.journey, nodeId, registries);
-    if (openLegacyEntrance(enc.id, nodeId)) return;
     return enterCombat(nodeId, enc.id);
   }
-  // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
-  if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = pool === 'boss'
-    ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: contentAct() })
+    ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: run.actNumber })
     : rollEncounter(registries, rng, { pool, seat: currentSeat(), exclude: run.lastEncounters });
-  if (pool === 'boss' && openLegacyEntrance(encounterId, nodeId)) return;
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -3494,8 +3364,7 @@ async function onCombatEnd(result, combat, enc) {
   // the combat screen is still mounted here, so the beat stands over it and
   // the door opens when it lifts. Reduced motion resolves at once.
   run.stats.fightsWon += 1;
-  if (run.legacyDungeon) resolveDungeonNode(run);
-  else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
+  if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
@@ -3523,8 +3392,7 @@ async function onCombatEnd(result, combat, enc) {
     run.bossGroups = run.bossGroups || {};
     const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
     for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
-    // Endless Spire: no summit — the climb loops until death.
-    if (!run.legacyDungeon && ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn()))) {
+    if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || run.actNumber >= 3) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       return showFinishedRun(true);
@@ -3558,7 +3426,7 @@ async function onCombatEnd(result, combat, enc) {
       levelChoices,
       characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
     };
-    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
+    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
   }
 
   // Skill and class level rewards are independent of the combat card roll.
@@ -3592,7 +3460,7 @@ async function onCombatEnd(result, combat, enc) {
 
   function withSourceBonuses(offer) {
     return runSourceRewardOffer(registries, rng, run, offer, {
-      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, flatRarity: chaosRewardsOn(), meta:saves.loadMeta(),
+      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, meta:saves.loadMeta(),
     });
   }
 }
@@ -3608,7 +3476,7 @@ async function onCombatEnd(result, combat, enc) {
  */
 function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
+    classId: run.class, pool, relicIds: run.relics, draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
@@ -3656,7 +3524,7 @@ function rollSkillDrafts(pool, includeBanked = false) {
     }
     for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
       const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
-      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
+      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool });
       // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
       // the offer, its save and its reload all show the same card.
       if (cardIds.length) out.push({ skillId: track.id, level, cardIds, ranks: cardIds.map(() => rollDraftRank(registries, rng, level)), claimOrdinal: i < queued ? 0 : i - queued + 1 });
@@ -3897,18 +3765,6 @@ function showCharacterProgression(returnTo) {
   return mountPendingReward(run.pendingReward, returnTo);
 }
 
-// Custom Climb helpers used across nodes.
-function chaosRewardsOn() {
-  return !!(run.custom && activeMods(run.custom).chaosRewards);
-}
-function shopPriceMult() {
-  const mods = run.custom ? activeMods(run.custom) : {};
-  let m = 1;
-  if (mods.expensiveShops) m *= registries.balance.customMods.expensiveShopsMult;
-  if (mods.hoarder) m *= registries.balance.customMods.hoarderShopMult;
-  return m;
-}
-
 // ---- non-combat nodes -----------------------------------------------------------------
 // THE BAND EVERY ROOM CARRIES (components/runHud.js). The same callbacks the
 // map hands its HUD, with the Armoury closing back onto the room that opened
@@ -3941,7 +3797,7 @@ let openVisit = null;
 function showRest(openPanel = null, locationId = null) {
   if (isConfiguredRun(run) && gameModule(run, 'rest')) {
     audio.music('rest');
-    const record = !run.journey && !run.legacyDungeon ? openRestRecord(run, { multiUse: false }) : null;
+    const record = !run.journey ? openRestRecord(run, { multiUse: false }) : null;
     const visit = beginGameProfileRest(run, `${run.actNumber}:${run.mapNodeId}`);
     persist();
     const leave = () => { markRestLeft(run); persist(); showMap(); };
@@ -3970,7 +3826,7 @@ function showRest(openPanel = null, locationId = null) {
   }
   if (locationId) restLocationId = locationId;
   audio.music('rest');
-  const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  const healMult = 1;
   // THE PLACE IS A CARRIER (plan phase 7, engine/locations.js): its tags'
   // rules mount for the visit, `arrived` fires here and `rested` when the
   // player takes the Rest, and what the place restores is the sum of its
@@ -3988,13 +3844,13 @@ function showRest(openPanel = null, locationId = null) {
   const worldRest = run.journey?.activeService;
   // The classic map's rest site keeps its own record (restRevisit.js), which
   // stands in for the service state so a re-entry does not refill again.
-  const classicRest = !run.journey && !run.legacyDungeon;
+  const classicRest = !run.journey;
   const priorRevisit = run.restRevisit;
   // The Multi-use setting is read once; a record opened now keeps it for the visit.
   const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
   const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
   if (record !== priorRevisit) persist();
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
+  const restState = (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -4062,8 +3918,7 @@ function showRest(openPanel = null, locationId = null) {
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
-      if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
-      else finishWorldService();
+      finishWorldService();
       if (classicRest) markRestLeft(run);
       persist();
       showMap();
@@ -4153,9 +4008,9 @@ function showShop() {
     // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
     // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
     if (configuredShopKind(run, shopId) === 'blacksmith') {
-      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
       persist(); audio.music('shop');
-      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
         onChanged: () => persist(), onArmamentPurchased: id => recordCollectedArmament(id, 'shop'),
         onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
     }
@@ -4178,10 +4033,10 @@ function showShop() {
   // So is a wise master's (SPEC §14.5), by the same door.
   if (shopStockKind(run.shopStock) === 'master') {
     return mountMaster(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       // A lesson's cards are rolled on the run's own `shopOffers` stream, at
       // the reward door's odds (equal under Chaos Rewards).
-      rng, flatRarity: chaosRewardsOn(),
+      rng,
       onChanged: () => persist(),
       onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
       onLeave: () => {
@@ -4194,7 +4049,7 @@ function showShop() {
   }
   if (shopStockKind(run.shopStock) === 'blacksmith') {
     return mountBlacksmith(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
       onChanged: () => persist(),
       onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
       onLeave: () => {
@@ -4216,13 +4071,10 @@ function showShop() {
     // the run's streams, with the same heal scale and refill counts the Rest
     // screen's visit is given (showRest).
     restAtInn: (quote) => {
-      const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+      const healMult = 1;
       const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
       return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     },
-    // A custom run's price multiplier: what a consumable sells back for is
-    // capped at what one would cost here now (SPEC §14.3).
-    priceMult: shopPriceMult(),
     // The market's quest event (SPEC §14.3): paid and marked seen, then the
     // visit closes exactly as Leave closes it, and the event door opens once.
     enterQuestEvent: (quote) => {
@@ -4460,8 +4312,6 @@ if (shotState) {
     savedSmithingStones: saved?.smithingStones ?? null,
     pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
     savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
-    legacyDungeon: run?.legacyDungeon ? structuredClone(run.legacyDungeon) : null,
-    savedLegacyDungeon: saved?.legacyDungeon ? structuredClone(saved.legacyDungeon) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
@@ -4698,16 +4548,6 @@ if (shotState === 'combat-test') {
     run.floor = g.nodes[id].floor;
     run.path = walked;
     showMap();
-  }
-  // Memory-storage preview of a real dungeon: the same entry, dialogue,
-  // combat, rewards and saves as play, without touching the player's slots.
-  if (shotState === 'map' && shotParams.has('shotDungeon')) {
-    const def = LEGACY_DUNGEONS.find(d => d.id === shotParams.get('shotDungeon'));
-    if (!def) throw Error('shotDungeon must be BS, HM or FC');
-    const parent = Object.values(run.mapGraph.nodes).find(n => n.type === 'boss');
-    if (!parent) throw Error('Dungeon preview needs a boss entrance');
-    run.mapNodeId = parent.id; run.floor = parent.floor; run.path = [parent.id];
-    openLegacyEntrance(def.bossEncounter, parent.id);
   }
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
@@ -5127,11 +4967,6 @@ if (shotState === 'combat-test') {
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
-} else if (shotState === 'customrun') {
-  // The Custom Climb has no entry on the title menu today (title.js voids
-  // `onCustom`), so a capture reaches it here, the way every other screen
-  // without a door of its own does — same memory storage, same fixed seed.
-  showCustomRun(1);
 } else if (shotState === 'history') {
   // Run history with runs IN it, written through the real recorder
   // (saves.recordResult → the same bytes finishRun writes), so the screen is

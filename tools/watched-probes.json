@@ -871,7 +871,7 @@
   {
    "id": "G6",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (the mapMode A/B, ruled here and NOT on Custom Climb) · src/ui/screens/customRun.js (which grows nothing new)",
+   "read": "src/ui/screens/settings.js (the mapMode A/B, ruled here and NOT on Custom Climb)",
    "anchors": [
     "mapMode"
    ],
@@ -1107,43 +1107,6 @@
    "screen": "no build surface — how the house convenes",
    "why": "'multiple agents working on several different aspects' is a fact about our sessions. What he is naming is that it be VISIBLE to him, and visibility lives in the update format (C2), not in the game.",
    "evidence": "commons/SUMMON.md"
-  },
-  {
-   "id": "G6b",
-   "extra": true,
-   "by": "Bjorn",
-   "read": "src/ui/screens/customRun.js (#cr-shape — the run-shape knobs SHIPPED via #140; compare 08-08, when this file asserted their absence)",
-   "anchors": [
-    "cr-shape"
-   ],
-   "screen": "CUSTOM CLIMB — mapMode still ruled off this screen; the shape knobs now legitimately on it",
-   "_note": "NOT a ledger row. On 08-08 this probe proved two false reports false by asserting the knobs and the A/B were NOT here. R1 shipped since (#140), so the knob half of that absence is DELETED — a probe asserting yesterday's tree is the stale receipt this tool exists to catch. What remains asserted: the map-reveal A/B stays in Settings (G6's ruling), and the knobs that now exist are asserted PRESENT by R1's own probe, not here.",
-   "reach": [
-    {
-     "op": "goto",
-     "q": ""
-    },
-    {
-     "op": "click",
-     "sel": "#custom-climb",
-     "ms": 900
-    }
-   ],
-   "focus": "#cr-seed",
-   "expect": {
-    "present": {
-     "the ascension slider": "#cr-asc",
-     "the difficulty rules": "#cr-diff .mod-chip",
-     "the seed field": "#cr-seed",
-     "begin": "#cr-start"
-    },
-    "absent": {
-     "a map-reveal control (ruled into Settings instead — G6)": "[data-key=\"mapMode\"]"
-    },
-    "measure": {
-     "controlsOnThisScreen": "[...document.querySelectorAll('.customrun input,.customrun button')].map(e=>(e.id||e.className)).join(' | ')"
-    }
-   }
   },
   {
    "id": "G4b",
@@ -1553,42 +1516,11 @@
   },
   {
    "id": "R1",
+   "kind": "off-build",
    "by": "Bjorn",
-   "read": "src/ui/screens/customRun.js (#cr-shape, #cr-shape-toggle, #cr-shape-floors, #cr-shape-cols, #cr-shape-weights — ranges derived from the acts’ own config)",
-   "anchors": [
-    "cr-shape-weights",
-    "cr-shape-floors"
-   ],
-   "screen": "CUSTOM CLIMB › RUN SHAPE — the three knobs, off by default, opened",
-   "reach": [
-    {
-     "op": "goto",
-     "q": ""
-    },
-    {
-     "op": "click",
-     "sel": "#custom-climb",
-     "ms": 900
-    },
-    {
-     "op": "click",
-     "sel": "#cr-shape-toggle",
-     "ms": 500
-    }
-   ],
-   "focus": "#cr-shape-body",
-   "expect": {
-    "present": {
-     "floors per act": "#cr-shape-floors",
-     "map width (columns)": "#cr-shape-cols",
-     "node odds (per-type weights)": "#cr-shape-weights"
-    },
-    "measure": {
-     "floors": "(()=>{const f=document.getElementById('cr-shape-floors');return f.min+'-'+f.max+' at '+f.value;})()",
-     "cols": "(()=>{const c=document.getElementById('cr-shape-cols');return c.min+'-'+c.max+' at '+c.value;})()",
-     "weightRows": "document.querySelectorAll('#cr-shape-weights input, #cr-shape-weights .rs-slider').length"
-    }
-   }
+   "screen": "retired — Custom Climb › Run Shape no longer ships",
+   "why": "The Custom Climb screen and its run-shape knobs (#cr-shape) were deleted in cleanup step 3f (Core ships one climb); there is no build surface left to photograph.",
+   "evidence": "docs/CLEANUP-PLAN.md step 3f"
   },
   {
    "id": "F2",

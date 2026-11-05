@@ -10,16 +10,16 @@ const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const start = main.indexOf('function advanceAct(');
 const advanceSource = main.slice(start, main.indexOf('\n}', start) + 2);
 
-function advance({ configured, scarce = false }) {
+function advance({ configured }) {
   const run = {
-    actNumber: 1, hp: 5, maxHp: 20, custom: scarce ? {} : null,
+    actNumber: 1, hp: 5, maxHp: 20, custom: null,
     gameProfile: configured ? { foundation: { mode: 'configured' } } : { foundation: { mode: 'legacy' } },
     flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 0, manaCurrent: 0 }, history: [],
   };
   const context = vm.createContext({
-    run, registries: { balance: { customMods: { lessHealingMult: 0.5 } } }, rng: {},
-    activeMods: () => ({ lessHealing: scarce }), buildActMap: () => ({ nodes: {} }), currentSeat: () => 'weald',
-    contentAct: () => run.actNumber, runMapShape: () => null, persistOrWarn() {}, showMap() {}, refillFlasksAtActChange,
+    run, registries: { balance: {} }, rng: {},
+    buildActMap: () => ({ nodes: {} }), currentSeat: () => 'weald',
+    persistOrWarn() {}, showMap() {}, refillFlasksAtActChange,
   });
   vm.runInContext(advanceSource + '\nadvanceAct();', context);
   return run;
@@ -31,12 +31,6 @@ test('advanceAct refills both flask pools for a configured run', () => {
   assert.equal(run.flaskCharges.hpCurrent, 2);
   assert.equal(run.flaskCharges.manaCurrent, 1);
   assert.equal(run.hp, 20);
-});
-test('the act-change refill is independent of the heal mod (Scarce Embers still refills flasks)', () => {
-  const run = advance({ configured: true, scarce: true });
-  assert.equal(run.hp, 5 + Math.floor(15 * 0.5));
-  assert.equal(run.flaskCharges.hpCurrent, 2);
-  assert.equal(run.flaskCharges.manaCurrent, 1);
 });
 test('a legacy run keeps its behaviour: no flask refill at the act change', () => {
   const run = advance({ configured: false });

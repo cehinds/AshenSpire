@@ -48,7 +48,6 @@ import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
-import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
@@ -215,6 +214,21 @@ function pendingRewardReferenceProblems(pending, registries) {
     problems.push(`armament '${rewards.armamentId}' is unknown`);
   }
   return problems;
+}
+
+// Status ids retired from the game (glassCannon went with Custom Climb, 2026-11-05). A saved fight may still
+// carry one; it is dropped on load, BEFORE the snapshot reference check, so the save is not archived for it.
+// Only ids named here are dropped: any other unknown status id is still refused.
+const RETIRED_STATUS_IDS = ['glassCannon'];
+function dropRetiredStatuses(run) {
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    const snapshot = holder?.snapshot;
+    if (!snapshot) continue;
+    for (const entity of [snapshot.player, ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : [])]) {
+      if (!entity?.statuses || typeof entity.statuses !== 'object') continue;
+      for (const id of RETIRED_STATUS_IDS) delete entity.statuses[id];
+    }
+  }
 }
 
 /**
@@ -984,7 +998,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
         const seatProblems = seatOrderProblems(run.seatOrder, registries);
         if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
-        const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+        const mapAct = run.actNumber;
         if (run.journey) {
           // deserializeRun validated the pinned manifest. Its graph is a derived
           // projection, and its dungeon may belong to a different classic act.
@@ -1001,6 +1015,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // check, which requires exactly `slot.sets` positions and would archive
         // every fight an older build saved with its three cells. The ledger is
         // not open yet, so the note is written below, once it is.
+        dropRetiredStatuses(run);
         trimmedLoadout = [
           ...trimExtraSets(registries, run.loadout),
           ...[run.combatEntered, run.combatPendingOutcome]

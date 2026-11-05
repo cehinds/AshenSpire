@@ -51,7 +51,7 @@ import { bossDestinationLabel } from '../model/bossDestinationLabels.js';
  * ⇒ byte-for-byte today's act, so every existing seed replays unchanged.
  *
  * A shape that does not resolve THROWS and names the knob. The screen refuses
- * it before the run starts (ui/screens/customRun.js), so reaching this throw
+ * it before the run starts, so reaching this throw
  * means a shape arrived from somewhere the screen does not guard — a hand-edited
  * save, a future caller. That is precisely when a loud failure is worth its cost.
  */

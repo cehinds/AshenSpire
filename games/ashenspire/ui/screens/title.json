@@ -34,7 +34,6 @@
     "continue": "run.continue",
     "new": "run.new",
     "quickStart": "run.quickStart",
-    "custom": "run.custom",
     "history": "history.open",
     "profile": "profile.open",
     "settings": "settings.open",

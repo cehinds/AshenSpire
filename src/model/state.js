@@ -1098,7 +1098,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!id || !Number.isInteger(level) || level < 0) problems.push(`classRewardLevels.${id} must be a non-negative integer`);
     }
   }
-  problems.push(...legacyDungeonProblems(run));
+  if (run.legacyDungeon !== undefined) problems.push('legacyDungeon: legacy dungeons are no longer supported');
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
   for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
@@ -1999,4 +1999,3 @@ export function enemyMoveDamage(enemy, move) {
   if (mult === 1 || !(move.damage > 0)) return move.damage;
   return Math.max(1, Math.round(move.damage * mult));
 }
-import { legacyDungeonProblems } from './legacyDungeon.js';

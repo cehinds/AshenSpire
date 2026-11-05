@@ -236,11 +236,6 @@
       "handler": "src/ui/screens/title.js#mountTitle.onContinue",
       "description": "Continue a saved run."
     },
-    "run.custom": {
-      "kind": "app",
-      "handler": "src/ui/screens/title.js#mountTitle.onCustom",
-      "description": "Begin a run with a custom character."
-    },
     "run.new": {
       "kind": "app",
       "handler": "src/ui/screens/title.js#mountTitle.onNew",

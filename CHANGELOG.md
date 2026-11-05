@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Legacy dungeons and Custom Climb removed.** ([#2553](https://github.com/cehinds/AshenSpire/pull/2553), `0.7.3.134`). The unreachable legacy dungeons and Custom Climb screens, mods and endless mode are gone; the Core climb is unchanged.
 - **Shop (i) clear of the art.** ([#2554](https://github.com/cehinds/AshenSpire/pull/2554), `0.7.3.134`). Shop card (i) buttons no longer cover the card's thumbnail art; they sit in their own spot under it.
 - **Floaters stay on screen.** ([#2551](https://github.com/cehinds/AshenSpire/pull/2551), `0.7.3.132`). Floater words and numbers over the rightmost enemy no longer overhang the screen edge on phones.
 - **Floaters** ([#2549](https://github.com/cehinds/AshenSpire/pull/2549), `0.7.3.130`). Combat floaters now appear one at a time per character, stack in a rising column, and share one text size.

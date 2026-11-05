@@ -362,7 +362,6 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `deadlyTempo` | 2 | card | The owner's floor for a status. |
 | `opportunist` | 2 | card | The owner's floor for a status. |
 | `envenom` | 2 | card | The owner's floor for a status. |
-| `glassCannon` | 2 | card | The owner's floor for a status. |
 | `magicVulnerable` | 2 | card | The owner's floor for a status. |
 | `bleeding` | 2 | card | The owner's floor for a status. |
 | `frozen` | 2 | card | The owner's floor for a status. |

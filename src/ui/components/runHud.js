@@ -35,7 +35,6 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents } from '../models/PotionContentsModel.js';
 import { useRunChargeFlask } from '../../engine/actions.js';
 import { seatAtTier } from '../../model/seats.js';
-import { activeMods, endlessActInfo } from '../../content/customMods.js';
 import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
@@ -65,8 +64,7 @@ export function syncArmouryNew(button, run) {
  * for a run that has no seat (World Journey, a snapshot without an order). */
 export function seatNameOf(registries, run) {
   if (run.journey || !Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
-  const tier = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
-  const id = seatAtTier(run.seatOrder, tier);
+  const id = seatAtTier(run.seatOrder, run.actNumber);
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }
 

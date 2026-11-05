@@ -175,9 +175,7 @@ test('smithingRewardId keeps the combat claim id byte-for-byte and names treasur
   const run = { actNumber: 2, floor: 5, mapNodeId: 'n7' };
   assert.equal(smithingRewardId(run, 'elite'), 'combat:2:5:n7:elite');
   assert.equal(smithingRewardId({ actNumber: 1, floor: 0 }, 'boss'), 'combat:1:0:unknown:boss');
-  assert.equal(smithingRewardId({ ...run, legacyDungeon: { current: 'd3' } }, 'normal'), 'combat:2:5:n7:d3:normal');
   assert.equal(smithingRewardId(run, 'treasure'), 'treasure:2:5:n7');
-  assert.equal(smithingRewardId({ ...run, legacyDungeon: { current: 'd3' } }, 'treasure'), 'treasure:2:5:n7:d3');
 });
 
 test('Falsify: a refined stone reward pays and survives a reload', () => {
