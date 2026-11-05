@@ -1,4 +1,4 @@
-import { actorRangeKey, rangePairKey, bandCap } from '../../model/combatEngagement.js';
+import { actorRangeKey, rangePairKey, rangeBand, bandCap } from '../../model/combatEngagement.js';
 
 // Presentation only (owner, 2026-11-05: "use the front and back rows to indicate melee and reach").
 // An actor stands in the FRONT strip of its side while it is at melee (band 0) with an opposing living actor,
@@ -24,11 +24,15 @@ export function applyRangeRankEvent(snap, event) {
   if (event.type === 'enemyDied') {
     const row = snap.enemies.find(a => a.id === (event.targetId ?? event.id));
     if (row) row.alive = false;
-  } else if (event.type === 'combatEngagementMoved') {
+  } else if (event.type === 'combatEngagementMoved' || (/^attack/.test(event.type) && typeof event.range === 'string')) {
     const keyOf = id => [...snap.players, ...snap.enemies].find(a => a.id === id)?.key;
     const a = keyOf(event.sourceId), b = keyOf(event.targetId);
     const key = a && b ? rangePairKey(a, b) : null;
-    if (key && Object.hasOwn(snap.engagements, key)) snap.engagements[key] = Math.max(0, Math.min(snap.cap, snap.engagements[key] + event.bands));
+    if (!key || !Object.hasOwn(snap.engagements, key)) return snap;
+    // An attack's receipt names the band it struck from. A paid implicit Advance (acceptRangeActions) persists the closer
+    // distance without a movement receipt, so the pair is at most that band from this beat on.
+    if (event.type === 'combatEngagementMoved') snap.engagements[key] = Math.max(0, Math.min(snap.cap, snap.engagements[key] + event.bands));
+    else if (rangeBand(event.range) >= 0) snap.engagements[key] = Math.min(snap.engagements[key], rangeBand(event.range));
   }
   return snap;
 }

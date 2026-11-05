@@ -107,3 +107,33 @@ test('three enemies keep their own lane when only the strip changes', () => {
   const f = alternativeFormation(plan(ids), 1000, 500, false, { rangeRanks: Object.fromEntries(ids.map(id => [id, 'front'])) });
   for (const id of ids) assert.equal(f.slots.find(s => s.id === id).lane, base.slots.find(s => s.id === id).lane);
 });
+
+test('playback: an attack from Reach that pays an implicit Advance moves both fighters front on its own beat', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 10000;
+  combat.rangeState.engagements[rangePairKey('player:player', 'enemy:e1')] = 1;
+  const snap = rangeRankSnapshot(combat);
+  assert.equal(rangeRanksFromSnapshot(snap).get('player:player'), 'back');
+  const strike = combat.piles.hand.find(card => card.cardId === 'core.strike');
+  const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: 'e1' });
+  assert.equal(events.some(e => e.type === 'combatEngagementMoved'), false, 'the engine records no movement receipt for a paid Advance');
+  const live = combatRangeRanks(combat);
+  assert.equal(live.get('player:player'), 'front');
+  let early = true;
+  for (const event of events) {
+    if (event.type === 'attackHit') early = false;
+    if (early) assert.equal(rangeRanksFromSnapshot(snap).get('enemy:e1'), 'back', `before the attack lands (${event.type})`);
+    applyRangeRankEvent(snap, event);
+  }
+  assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...live].sort(), 'the reduced receipts end where the live state is');
+});

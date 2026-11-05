@@ -179,7 +179,8 @@ const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'c
 // A beat that can change who stands where or how big a figure is: only these
 // ask the battlefield for its expensive geometry refit. A hit, a heal, a
 // status or a resource change moves no one.
-const GEOMETRY_BEAT_EVENT = /Spawn|Summon|Died|Defeated|Moved|Formation|Transform|Phase|Fled|Revive|Resurrect|Swap|combatEnded/i;
+// attackHit/attackMissed carry the band an attack struck from, which can close a paid Advance (see applyRangeRankEvent).
+const GEOMETRY_BEAT_EVENT = /Spawn|Summon|Died|Defeated|Moved|Formation|Transform|Phase|Fled|Revive|Resurrect|Swap|combatEnded|^attack(Hit|Missed|Evaded)/i;
 
 // THE POSITIONAL CARD KEYS (SPEC §7.3, §9 M4), as a pure mapping so it can be
 // tested without a DOM. `1`–`9` name hand slots 1–9 and `q`/`Q` names slot 10
