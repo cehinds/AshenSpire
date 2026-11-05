@@ -8,7 +8,7 @@
 // commit pair: the plan is inert and names its refusal; the commit re-plans, refuses a quote whose revision, price or
 // tier no longer matches, mutates, and bumps `shopStock.tradeRevision`.
 import { gameContent, gameModule } from './gameProfile.js';
-import { gameProfileRewardPools } from './gameProfileRewards.js';
+import { gameProfileRewardPools, artsOnOtherSide } from './gameProfileRewards.js';
 import { itemUpgradeTiers } from './itemUpgrades.js';
 import { blacksmithRules } from './blacksmithConfig.js';
 import { carriedIds } from './loadout.js';
@@ -62,7 +62,9 @@ export function coreBlacksmithShelves(registries, rng, run) {
     const base = rng.int(STREAM, ...rangeFor(table, 'armament', defs.get(id).rarity));
     return { id, tier, cost: Math.max(1, Math.round(base * (Number.isFinite(mult[tier]) ? mult[tier] : 1))) };
   });
-  const weaponArts = pools.weaponArts.map((id) => ({ id, cost: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
+  // Owner 2026-11-05: never stock an art the open reward door is showing; owned arts are already out of the pool.
+  const onDoor = new Set(artsOnOtherSide(run, 'blacksmith', null));
+  const weaponArts = pools.weaponArts.filter((id) => !onDoor.has(id)).map((id) => ({ id, cost: rng.int(STREAM, ...rangeFor(table, 'weaponArt', null)) }));
   return { armaments, weaponArts };
 }
 

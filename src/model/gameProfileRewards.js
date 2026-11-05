@@ -35,7 +35,7 @@ function equipmentGroupMembers(registries, rules, category, family) {
 }
 /** The Core reward pools (weapons, weaponArts, armor, …) the shops and the Blacksmith draw from. */
 export const gameProfileRewardPools = (registries, run) => pools(registries, run);
-function pools(registries, run) {
+function pools(registries, run, { claim = false } = {}) {
   const definitions = gameContent(run,'cards') || [];
   const rules = gameContent(run,'rewards');
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
@@ -56,10 +56,38 @@ function pools(registries, run) {
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id)) ) : [],
+    weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
+}
+// Owner 2026-11-05: the weapon-art pool is the default and learnable arts of the weapons the run carries (storage and sets),
+// plus any extra authored ids (empty for Core), minus arts already owned: in the deck or sideboard, which also holds the
+// arts a worn weapon grants. A claim (`claim: true`) accepts every authored art, so an offer made earlier stays claimable.
+function weaponArtPool(registries,run,rules,extras,carried,claim) {
+  const armaments=registries.equipment.armaments||[];
+  const ids=[...extras];
+  for(const piece of armaments){
+    if(!claim&&!carried.has(piece.id))continue;
+    ids.push(...(piece.weaponCardPackage?.weaponArtDefaults||[]),...(piece.weaponCardPackage?.learnableArts||[]));
+  }
+  const owned=!claim&&rules?.eligibility?.weaponArts?.skipOwned?new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card)):new Set();
+  return [...new Set(ids)].filter(id=>registries.cards.has(id)&&!owned.has(id)&&rangeCardAvailable(run,registries.cards.get(id)));
+}
+// Owner 2026-11-05: an art stocked in the shop the player is in, or shown on the open reward door, is not offered by the other.
+export function artsOnOtherSide(run,source,offerId) {
+  const offers=run.gameProfileRewardOffers||{},ids=new Set();
+  const artsOf=offer=>(offer?.options||[]).filter(option=>option.kind==='weaponArts').map(option=>option.id);
+  if(source==='shop'||source==='blacksmith'){
+    const doors=Object.values(offers).filter(offer=>offer&&offer.source!=='shop'&&offer.id!==offerId);
+    const door=doors.at(-1);
+    if(door&&door.claimed==null)for(const id of artsOf(door))ids.add(id);
+  }
+  if(source!=='shop'){
+    for(const id of artsOf(offers[`shop:${run.gameProfileOpenShop}`]))ids.add(id);
+    for(const row of run.shopStock?.weaponArts||[])ids.add(row.id);
+  }
+  return [...ids];
 }
 function cardRank(card,rules) {
   const rule=rules?.eligibility?.combatCards;
@@ -133,16 +161,14 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
   for(const kind of Object.keys(available))available[kind]=available[kind].filter(id=>!excludedIds.includes(id));
+  const otherSide=artsOnOtherSide(run,source,offerId);
+  if(otherSide.length)available.weaponArts=available.weaponArts.filter(id=>!otherSide.includes(id));
   // Owner 2026-10-24: eligibility.potions.excludeKinds keeps the charge flasks (hp, mana) out of NEW Core offers; a relic grows
   // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
   const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
   if(excludedFlasks.length)available.potions=available.potions.filter(id=>!excludedFlasks.includes(flaskKindOf(registries.flasks.get(id))));
-  // Owner 2026-10-27: a reward screen (not the shop) never offers a weapon art the character already owns, when
-  // eligibility.weaponArts.skipOwned is set (Core 2).
-  if(source!=='shop'&&gameContent(run,'rewards')?.eligibility?.weaponArts?.skipOwned){
-    const owned=new Set([...(run.deck||[]),...(run.sideboard||[])].map(card=>card?.cardId??card?.id??card));
-    available.weaponArts=available.weaponArts.filter(id=>!owned.has(id));
-  }
+  // Owner 2026-10-27 / 2026-11-05: eligibility.weaponArts.skipOwned (Core 2) drops owned arts from every offer, shops
+  // and the Blacksmith included; weaponArtPool applies it.
   // Owner 2026-10-27: combat rewards retire relics except the ids in eligibility.relics.combatIds (the flask relic, which
   // stays inside the potions share). Chests (source 'treasure') and shops keep every relic.
   const combatRelics=gameContent(run,'rewards')?.eligibility?.relics?.combatIds;
@@ -173,7 +199,9 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=kind==='combatCards'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'||kind==='weaponArts'?weightedCardPick(registries,run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):kind==='potions'?weightedPotionPick(gameContent(run,'rewards')?.eligibility?.combatCards,run,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    // A card that is also a weapon art is one offer, never both a card and an art on the same screen.
+    if(kind==='combatCards'||kind==='weaponArts')for(const other of ['combatCards','combatCardsLow','weaponArts'])available[other]=available[other].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
@@ -207,7 +235,7 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if (!(pools(registries,run)[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
+  if (!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
   if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);

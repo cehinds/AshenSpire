@@ -175,9 +175,7 @@
     },
     "weaponArts": {
       "skipOwned": true,
-      "cardIds": [
-        "core.reaverSpecial"
-      ]
+      "cardIds": []
     },
     "potions": {
       "excludeKinds": [
