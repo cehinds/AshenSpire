@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Enemy HUDs** ([#2542](https://github.com/cehinds/AshenSpire/pull/2542), `0.7.3.116`). Enemy HUD panels now line up side by side in a row instead of a column when they fit.
 - **Combatant size** ([#2543](https://github.com/cehinds/AshenSpire/pull/2543), `0.7.3.116`). Player and enemy figures are now 65% scale (were 72%).
 - **Reward cards** ([#2539](https://github.com/cehinds/AshenSpire/pull/2539), `0.7.3.114`). The selected reward card shows an (i) button, and tapping an already-selected card also opens the card inspector.
 - **Saves** ([#2538](https://github.com/cehinds/AshenSpire/pull/2538), `0.7.3.112`). Core 2 runs no longer freeze legacy settings overrides into their saved configuration, only the opening settings and version fields; old saves still load.
