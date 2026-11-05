@@ -43,6 +43,7 @@ Settings live in `engine/modules/cards/settings.schema.json`; shipped defaults a
 - `/editorWhere` (type enum; default `"strategize"`; allowed "strategize", "noncombat"): "strategize" limits deck editing to the Strategize rest service; "noncombat" opens the deck editor from the run HUD/Armoury at any time outside combat and locks it during combat.
 - `/faceMaxEffects` (type integer; default `2`; range 0..1000000): Face-display budget, not an execution limit.
 - `/faceMaxLines` (type integer; default `3`; range 0..1000000): Approximate readable face-line budget.
+  The fuller "roomy" face reading (`content/config/ui/components/card.json`, `rulesFace.face`) applies within these caps: a profile that sets either one below its default (2 / 3) also caps the roomy reading at that many clauses; at the defaults the roomy budget governs.
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
