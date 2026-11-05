@@ -34,7 +34,8 @@
       "right",
       "right"
     ],
-    "pinnedMinWidthPx": 150
+    "pinnedMinWidthPx": 150,
+    "enemyRowMinWidthPx": 120
   },
   "motion": {
     "dwellMs": 500,
