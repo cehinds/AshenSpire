@@ -30,6 +30,7 @@ test('every callout kind has a localized word', () => {
 // A live anchor: a waiting floater for a detached anchor is dropped (fx.js), as it is for a combatant that left.
 function liveNode(dom, tag = 'div') {
   const node = dom.document.createElement(tag);
+  node.box = { left: 100, top: 300, width: 80, height: 120 }; // room above the head for the whole column
   dom.document.body.append(node);
   return node;
 }
@@ -39,7 +40,7 @@ const drain = (t2, ms) => { for (let left = ms; left > 0; left -= 1) t2.mock.tim
 test('a callout names its fighter, joins the fighter\'s column one stagger behind the floater before it, and skips a repeat', (t2) => {
   t2.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   withKitDom((dom) => {
-    const layer = liveNode(dom);
+    const layer = liveNode(dom); layer.box = { left: 0, top: 0, width: 600, height: 700 };
     const anchor = liveNode(dom);
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
@@ -69,7 +70,7 @@ test('instant speed: the words keep the 500ms lifetime callout() picked and a sh
   try {
     withKitDom((dom) => {
       setAnimSpeed('instant');
-      const layer = liveNode(dom);
+      const layer = liveNode(dom); layer.box = { left: 0, top: 0, width: 600, height: 700 };
       const anchor = liveNode(dom);
       const stagger = floaterStaggerMs();
       assert.ok(stagger > 0 && stagger < 320, 'Instant shortens the stagger with the life');
