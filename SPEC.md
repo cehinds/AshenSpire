@@ -2372,7 +2372,7 @@ Player combat animations use three presentation groups: attack-type cards attack
 Animate draw, selection, targeting, play, resolution, discard, exhaust, attack, hit, and defeat as appropriate. Resting fighters hold their authored pose without continuous idle bob in every rendering style and performance mode (owner, 2026-10-21); preserve actual action/reaction clips and visible status/aura feedback. Engine outcomes remain authoritative; skipping, interrupting, or disabling animations cannot alter state or strand input. Reduced-motion mode replaces travel/shake/repeated motion with brief static or opacity feedback while retaining outcome information. Provide readable non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard, and touch behavior. Validate timing, event-handler cleanup, and multi-enemy performance in actual browser playtests.
 
 ### Approved poker equipment cards (#784)
-Equipment selection and inspection use the approved `item-cards-preview.html` design:
+Equipment selection and inspection use the approved poker-card design:
 a single 350 by 490 canvas scales uniformly at 5:7. Painted armament art is keyed by
 item id; armor uses its painted menu pose. `equipmentCardModel` reads canonical base
 facts, tags, requirements and modifier vocabulary. Live comparison, upgrades and
@@ -2381,9 +2381,8 @@ hover and keyboard explanations plus a normal full-text disclosure for touch and
 long content. Overfull regions explicitly direct the reader to details instead of
 clipping text. Player Poise is live since plan phase 8 (§13.4k): the receipt the surfaces render is the meter's max.
 
-The all-armament gallery at `weapon-cards-preview.html` renders every registered
-weapon, shield and staff through the same equipment inspection component, with
-search, type filtering and enlarged inspection. Merchant offers and buy/sell
+The equipment inspection component renders every registered weapon, shield and
+staff, with search, type filtering and enlarged inspection. Merchant offers and buy/sell
 inspection also use that component; prices, smithing tiers, mounted cards and
 transaction rules remain live receipts outside the base-value card (#799).
 

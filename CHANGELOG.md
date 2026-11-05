@@ -32,8 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-05
+
+- **Tool leftovers cleared** ([#2534](https://github.com/cehinds/AshenSpire/pull/2534), `0.7.3.108`). Dead banner scripts, orphaned preview files and stale notes from the removed authoring tools are gone, and the Reaver greatsword frame checks are back.
+
 ## 2026-11-04
 
+- **Core 2 test helper** ([#2532](https://github.com/cehinds/AshenSpire/pull/2532), `0.7.3.106`). Tests get one helper for a Core 2 run, and the scattered Core 2 checks go through one `isCoreProfile` function (no gameplay change).
 - **Authoring tools moved off dev** ([#2530](https://github.com/cehinds/AshenSpire/pull/2530), `0.7.3.104`). Pose Studio, the Workbench, the editor, UI Studio and the root preview pages leave dev with the workflows that ran them; they live on the `tools-archive` branch.
 - **Retired game modes removed** ([#2529](https://github.com/cehinds/AshenSpire/pull/2529), `0.7.3.102`). The old Core 1 and `current` game data, presets and their tests are deleted; only Core 2 is built (its hashes are unchanged).
 - **Retired game modes refuse to resume** ([#2527](https://github.com/cehinds/AshenSpire/pull/2527), `0.7.3.100`). a run saved in the old Current or Core 1 mode now shows a clear message instead of loading, and is kept untouched; new games and bad links always use Core 2.

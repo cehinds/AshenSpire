@@ -1,6 +1,7 @@
 import { uiConfig } from '../config/generated/ui.js';
 import { SEATS } from '../content/seats.js';
 import { ATLAS } from './worldAtlas.js';
+import { isCoreProfile } from './gameProfile.js';
 
 export const PROLOGUE_DEFAULTS = uiConfig.screens.prologue.components.sequence;
 export const PROLOGUE_PREFIX = 'gameConfig.prologue.';
@@ -743,5 +744,5 @@ export function pendingPrologueScene(run) {
 // their own entry route, and a loaded save never gains a pending opening.
 export function runSupportsPrologue(run) {
   return run?.gameProfile?.foundation?.mode !== 'configured'
-    || run?.gameProfile?.author?.core === 'ashen.core@2.0.0';
+    || isCoreProfile(run);
 }

@@ -1,3 +1,5 @@
+> The tool described here lives on the `tools-archive` branch.
+
 # Edit game code and art in Visual Studio
 
 Use the full **Visual Studio 2022** application. In **File → Open → Folder**,

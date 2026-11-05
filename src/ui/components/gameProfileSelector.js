@@ -1,5 +1,5 @@
 import { t } from '../strings.js';
-import { resolveGameProfile } from '../../model/gameProfile.js';
+import { resolveGameProfile, isCoreProfile } from '../../model/gameProfile.js';
 import { retiredProfileReason } from '../../model/retiredProfile.js';
 
 // Store author JSON rather than a resolved snapshot: the next build resolves it
@@ -106,7 +106,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
     finally { upload.value = ''; }
   });
   panel.append(label, importButton, upload, status);
-  if (profile.author?.core === 'ashen.core@2.0.0') {
+  if (isCoreProfile(profile)) {
     const note = document.createElement('p');
     note.textContent = t('gameProfile.settings.xpPolicy');
     panel.append(note);

@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveCard } from '../src/model/registries.js';
+import { core2Registries } from './helpers/core2.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
@@ -10,8 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
   return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } },

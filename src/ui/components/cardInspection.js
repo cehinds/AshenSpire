@@ -25,16 +25,14 @@ import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel
 //
 // This lived in `src/main.js` and was WRONG THERE, measured rather than argued.
 // Walking the import graph from every module script in every page at the repo
-// root, FIVE pages reach this module and only ONE of them boots `main.js`:
+// root, several pages reached this module and only ONE of them boots `main.js`:
 //
 //   index.html                  -> src/main.js                  door + main
-//   armament-kits-preview.html  -> inline module script          door, no main
-//   item-cards-preview.html     -> src/ui/previews/itemCards.js  door, no main
 //   tooltip-review-scene.html   -> .../tooltipReviewEntry.js     door, no main
-//   weapon-cards-preview.html   -> .../weaponCards.js            door, no main
 //
-// On those four the attribute was never written, so the door kept two columns
-// at every width — measured on weapon-cards-preview.html at 390x844, the
+// On the pages that do not boot `main.js` the attribute was never written, so
+// the door kept two columns at every width — measured on a since-removed card
+// gallery page at 390x844, the
 // details column was 24.969px. That is not a column, it is a seam. The fix was
 // in the app and the defect was in the component.
 //
