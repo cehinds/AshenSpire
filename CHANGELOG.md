@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Player HUD** ([#2541](https://github.com/cehinds/AshenSpire/pull/2541), `0.7.3.110`). The player's selected HUD now sits right of the player on phones as well as desktop.
 - **Settings** ([#2536](https://github.com/cehinds/AshenSpire/pull/2536), `0.7.3.110`). Retired the Progression, Combat, Stats, Recovery and Shops tabs and the Stats and Levelling previews, which Core 2 never showed. Old exported settings files and sync profiles now import with a warning instead of being refused.
 - **Tool leftovers cleared** ([#2534](https://github.com/cehinds/AshenSpire/pull/2534), `0.7.3.108`). Dead banner scripts, orphaned preview files and stale notes from the removed authoring tools are gone, and the Reaver greatsword frame checks are back.
 
