@@ -16,9 +16,11 @@ test('the battlefield grid switch is no longer a setting, and nothing promotes i
   assert.ok(!(key in SETTINGS_DEFAULTS.values));
   assert.equal(presentationConfig().showFormationGrid,true);
 });
+// 2026-11-05: the bottom edge closes the last strip of each team (the gap between them has no tiles), flagged closeBottom.
 test('perspective grid paints each shared edge once and closes only outer boundaries',()=>{
   assert.equal(perspectiveCellOutlinePath({lane:0,visualBand:'A'},3),'M0,100V0H100');
   assert.equal(perspectiveCellOutlinePath({lane:2,visualBand:'A'},3),'M0,100V0H100V100');
-  assert.equal(perspectiveCellOutlinePath({lane:0,visualBand:'D'},3),'M0,100V0H100M100,100H0');
-  assert.equal(perspectiveCellOutlinePath({lane:2,visualBand:'D'},3),'M0,100V0H100V100M100,100H0');
+  assert.equal(perspectiveCellOutlinePath({lane:0,visualBand:'B',closeBottom:true},3),'M0,100V0H100M100,100H0');
+  assert.equal(perspectiveCellOutlinePath({lane:0,visualBand:'E',closeBottom:true},3),'M0,100V0H100M100,100H0');
+  assert.equal(perspectiveCellOutlinePath({lane:2,visualBand:'E',closeBottom:true},3),'M0,100V0H100V100M100,100H0');
 });

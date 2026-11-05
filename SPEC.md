@@ -2032,7 +2032,10 @@ What the tabs hold, by area:
   `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
   The default (alternative) perspective instead draws one uniform grid (owner, 2026-10-12):
   three lanes, an enemy back rank and front rank, and one player rank nearest the camera,
-  with a band of open ground between the party and the enemies. The grid is sheared: each
+  with a band of open ground between the party and the enemies. (Owner, 2026-11-05: the open
+  ground is a gap of `teamGapRows` strip heights (default 0.6) with no tiles, and the party now has
+  a front strip, nearer the enemies, and a back strip; the front and back rows are to indicate melee
+  and reach, a mapping that follows separately. The extra enemy strip is drawn only when Core enables the extra row.) The grid is sheared: each
   row slides right in proportion to its depth, so lanes run on a diagonal and every cell is
   the same parallelogram. The top of the field is sky; the grid stands on the ground below it. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
   fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
