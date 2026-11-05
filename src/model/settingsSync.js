@@ -237,7 +237,7 @@ export function importOwnership(text, changes, settings, promoted = {}) {
  */
 export function profileChanges(text, bundle, settings, rows, keys) {
   const warnings = [];
-  const changes = parseAdvancedConfigFile(text, bundle, {}, rows, warnings);
+  const changes = parseAdvancedConfigFile(text, bundle, {}, rows, warnings, { dropRetiredLegacy: true });
   const owned = new Set(keys);
   for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
   for (const key of LOCAL_ONLY_KEYS) delete changes[key];

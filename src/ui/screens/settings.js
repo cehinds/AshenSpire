@@ -3631,7 +3631,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const text = await file.text();
-        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings, { dropRetiredLegacy: true });
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
           throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
@@ -4154,7 +4154,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
       const warnings = [];
       const text = await file.text();
-      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings, { dropRetiredLegacy: true });
       // A sync profile loaded by hand keeps the ownership it records.
       const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
       const problem = promotionProblem(contentBundle, settings, saved);

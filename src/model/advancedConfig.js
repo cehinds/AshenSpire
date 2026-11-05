@@ -1462,7 +1462,22 @@ function tolerateRaisedFloors(entries, rows, warnings) {
   return kept.filter(([key]) => !skippedGroups.has(rows.get(key)?.floorGroup));
 }
 
-export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = []) {
+// THE RETIRED LEGACY SETTINGS GROUPS (cleanup row 3e). Core 2 reads none of the
+// Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World or
+// (bar `playInDeckOrder`) Deck rows, and the Settings screen no longer draws
+// them, so a file or sync profile exported while they existed still carries
+// their keys. They are dropped with one named warning, never refused as
+// unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
+// still settings.
+const RETIRED_LEGACY_GROUP_KEYS = new RegExp('^(settings\\.)?(gameConfig\\.(?!prologue\\.|presentation\\.)|recovery\\.(hp|stamina|mana)\\.|(shrineMultiUse|creationAutoAdvance|useRestorativeFlasksOutsideCombat|victorySummaryMode|victoryReceiptSeconds|victoryReceiptPauseMs|victoryReceiptReadySeconds|victoryReceiptFormulaTerms|victoryReceiptVisibleRows|victoryXpSeconds|levelUpRefillSeconds|levelUpRefillPauseMs|levelUpAllocateStats|reward(Level|Battle|Treasure)[A-Za-z]+|shopSell|swapCostRule|levelUpValue|statTierSize|deckEditing|deckEditingWhere|deckMinUnlimited|deckMinSize|deckMaxUnlimited|deckMaxSize|classSpellPowerCopies)$)');
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+export function withoutRetiredLegacyGroups(entries, warnings) {
+  const kept = entries.filter(([key]) => !RETIRED_LEGACY_GROUP_KEYS.test(key));
+  if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
+  return kept;
+}
+
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = [], { dropRetiredLegacy = false } = {}) {
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
@@ -1471,6 +1486,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
   }
+  // Dropped FIRST, before any migration reads the keys it would otherwise convert.
+  if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
   const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
