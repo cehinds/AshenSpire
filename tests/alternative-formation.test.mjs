@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeFormation, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeFormation, perspectiveBandRows, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { mobileFieldOverlap, desktopFieldBottom, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
@@ -133,21 +133,67 @@ test('enemies of one class stand one height in every rank; low creatures stay at
   }
 });
 
-test('the extra band keeps identical geometry when core occupancy is disabled', () => {
+test('the extra enemy strip is drawn only when core enables it; the player has a front and a back strip', () => {
   const plans = [false,true].map(enabled => {
     const presentation = {perspectiveGrid:true,formationPreset:'straight',formationPolicy:{extraRow:{enabled,sides:['enemy'],capacityPerLane:1}}};
     return alternativeFormation(combatFormation({width:1440,height:441,presentation,friends:['p'],enemies:['e']}),1440,441,false,presentation);
   });
-  assert.deepEqual(plans[0].visualBands,plans[1].visualBands);
-  assert.equal(plans[0].visualBands.length,4);
-  assert.equal(plans[0].cells.some(c=>c.visualBand==='C'),false);
+  assert.deepEqual(plans[0].visualBands.map(b=>b.id),['enemy-back','enemy-front','player-front','player-back']);
+  assert.deepEqual(plans[1].visualBands.map(b=>b.id),['enemy-back','enemy-front','extra-combatants','player-front','player-back']);
+  assert.equal(plans[0].visualCells.some(c=>c.visualBand==='C'),false, 'no extra tiles when disabled');
   assert.equal(plans[1].cells.filter(c=>c.visualBand==='C').length,3);
-  const coreVisual = plans[0].visualCells.filter(c=>c.visualBand==='C');
-  assert.equal(coreVisual.length,3);
-  assert.ok(coreVisual.every(c=>c.visualOnly));
-  assert.ok(coreVisual.every(c=>!plans[0].slots.some(slot=>slot.cell===c.cell)));
-  assert.deepEqual(coreVisual.map(c=>c.box),plans[1].visualCells.filter(c=>c.visualBand==='C').map(c=>c.box));
+  // 9 gameplay-or-visual enemy cells become 6 without the extra rank; the player rank doubles to 6.
   assert.equal(plans[0].visualCells.length,12);
+  assert.equal(plans[1].visualCells.length,15);
+  const back = plans[0].visualCells.filter(c=>c.visualBand==='E');
+  assert.ok(back.length===3 && back.every(c=>c.visualOnly && c.side==='player'));
+  assert.ok(back.every(c=>!plans[0].slots.some(slot=>slot.cell===c.cell)));
+  assert.ok(plans[0].slots.find(s=>s.side==='player').visualBand==='D', 'the player stands in the front strip');
+  // Enabling the extra rank shrinks the strips so nothing leaves the field.
+  assert.ok(plans[1].visualBands.at(-1).top + plans[1].visualBands.at(-1).height <= 441 + 1e-6);
+});
+
+test('the phone field never extends so far that the player back strip passes the resting cards', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const p = grid.profiles.mobile, rows = perspectiveBandRows(grid, false, p).rows;
+  for (const [width, natural, handHeight] of [[390, 480, 260], [375, 420, 240], [390, 560, 300], [360, 400, 230]]) {
+    const extension = mobileFieldOverlap({ natural, width, handHeight, rem: 16, zoom: 1, compact: true });
+    const input = { width, height: handHeight, count: 5, rem: 16, zoom: 1, compact: true, controlsHeight: 0, controlled: [], headroom: 0, formFactor: 'mobile' };
+    const { restTop } = responsiveHandLayout(input, handLayout(input));
+    // The last player strip ends at top + rows * rowHeight of the extended field; the cards rest at natural + restTop.
+    assert.ok((natural + extension) * (p.top + rows * p.rowHeight) <= natural + restTop + 1e-6, `${width}x${natural}: player back strip clears the cards`);
+  }
+});
+
+test('a team gap of open ground separates the enemy and player strips on every profile and size', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  assert.equal(grid.teamGapRows, 0.6);
+  assert.equal(perspectiveBandRows(grid, false).rows, 4 + grid.teamGapRows);
+  assert.equal(perspectiveBandRows(grid, true).rows, 5 + grid.teamGapRows);
+  // Per-profile gaps (owner 2026-11-05): the phone's gap is wide enough to read as open ground.
+  assert.ok(grid.profiles.mobile.teamGapRows >= 1 && grid.shortLandscape.teamGapRows >= 1);
+  for (const key of ['wide', 'narrow', 'short', 'shortLandscape', ...Object.keys(grid.profiles).map(k => `profiles.${k}`)]) {
+    const p = key.startsWith('profiles.') ? grid.profiles[key.slice(9)] : grid[key];
+    assert.ok(p.top + p.rowHeight * perspectiveBandRows(grid, false, p).rows <= 1 + 1e-9, `${key}: the strips and the gap fit the field`);
+  }
+  for (const [width, height, narrow, formFactor] of [[375, 667, true, 'mobile'], [390, 844, true, 'mobile'], [844, 390, false, 'tablet'], [1280, 800, false, 'desktop'], [1440, 900, false, 'desktop'], [844, 220, false, 'tablet'], [390, 240, true, 'mobile']]) {
+    for (const extra of [false, true]) {
+      const presentation = { perspectiveGrid: true, formationPreset: 'straight', formFactor, formationPolicy: { extraRow: { enabled: extra, sides: ['enemy'], capacityPerLane: 1 } } };
+      const f = alternativeFormation(combatFormation({ width, height, presentation, friends: ['p'], enemies: ['a', 'b', 'c'] }), width, height, narrow, presentation);
+      const label = `${width}x${height} extra=${extra}`;
+      const last = f.visualBands.filter(b => b.side === 'enemy').at(-1), first = f.visualBands.find(b => b.side === 'player');
+      const h = f.visualBands[0].height;
+      const profileGap = (height < grid.shortBelowPx ? (width >= 600 ? grid.shortLandscape : grid.short) : grid.profiles[formFactor]).teamGapRows ?? grid.teamGapRows;
+      assert.ok(first.top - (last.top + last.height) >= profileGap * h - 1e-6, `${label}: gap is at least the profile's teamGapRows strips`);
+      assert.ok(f.visualBands[0].top >= 0, `${label}: nothing above the field`);
+      const end = f.visualBands.at(-1);
+      assert.ok(end.top + end.height <= height + 1e-6, `${label}: no strip leaves the field`);
+      for (const c of f.visualCells) assert.ok(c.box.top >= 0 && c.box.top + c.box.height <= height + 1e-6, `${label}: cell inside the field`);
+      // No cell lies in the gap: open ground.
+      for (const c of f.visualCells) assert.ok(c.box.top + c.box.height <= last.top + last.height + 1e-6 || c.box.top >= first.top - 1e-6, `${label}: no tile in the gap`);
+      for (const s of f.slots) assert.ok(Math.abs(s.ground - (s.box.top + s.box.height)) < 1e-6, `${label}: feet at the cell bottom`);
+    }
+  }
 });
 
 test('engine occupancy is authoritative for extra combatants and saved player lanes', () => {
@@ -167,6 +213,10 @@ test('malformed visual band configuration fails before producing NaN geometry', 
   const {uiConfig}=await import('../src/config/generated/ui.js');
   const grid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
   grid.bands[2].id='enemy-front';assert.throws(()=>validatePerspectiveGrid(grid),/visual bands/);
+  const noGap=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  noGap.teamGapRows=0;assert.throws(()=>validatePerspectiveGrid(noGap),/visual bands/);
+  const tall=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  tall.profiles.mobile.rowHeight=0.2;assert.throws(()=>validatePerspectiveGrid(tall),/mobile profile/);
   const invalid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
   invalid.wide.rowHeight=NaN;assert.throws(()=>validatePerspectiveGrid(invalid),/wide profile/);
 });
@@ -248,7 +298,8 @@ test('a short landscape field stands its enemy ranks low and fits bodies about 1
     const back = formation.cells.filter(c => c.side === 'enemy' && c.rank === 0);
     const player = formation.cells.filter(c => c.side === 'player');
     const ground = Math.max(...back.map(c => c.ground));
-    if (label === 'landscape') assert.ok(ground >= height * 0.7, `back-rank feet at ${ground}`);
+    // 2026-11-05: 0.65, was 0.7. The gap and the player's second strip must also end above the cards (shortLandscape top .62, rowHeight .045).
+    if (label === 'landscape') assert.ok(ground >= height * 0.65, `back-rank feet at ${ground}`);
     // The party's baseline stays at the bottom of the field either way: feet on the cell bottom.
     assert.ok(Math.max(...player.map(c => c.ground)) <= height * 0.95 + 1e-6);
     const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
@@ -295,11 +346,12 @@ test('a taller short-landscape field keeps its sprite width: the shear is capped
 
 test('narrow phone strips keep sprite width and stay above the parent short profile (667, 740, 780 wide)', () => {
   // The cap also bites at the tuned 146px height on narrower strips; floors are the parent `short` profile's fitted
-  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced).
+  // heights for the same 60x150 envelope, 3 enemies (measured with the parent profile forced). 2026-11-05: the 116px floors drop to 5.2 (was 13.3):
+  // the retuned strips (gap + two player strips above the cards) stand the back rank higher up the field, which a field that short cannot spare.
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.shortLandscape;
   const makePlan = (width, height) => combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
     friends: ['p0'], enemies: ['e0', 'e1', 'e2'] });
-  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 13.3], [780, 116, 13.3], [667, 187, 39.3]]) {
+  for (const [width, height, floor] of [[667, 131, 15.1], [740, 116, 5.2], [780, 116, 5.2], [667, 187, 39.3]]) {
     const formation = alternativeFormation(makePlan(width, height), width, height, false);
     const actors = formation.slots.filter(slot => slot.side === 'enemy').map(slot => ({ slot, side: 'enemy', visibleWidth: 60, visibleHeight: 150, leading: 66, ratio: 1, multiplier: 1 }));
     for (const fit of fitAlternativeSprites({ width, height, actors, narrow: false })) assert.ok(fit.visibleHeight >= floor - 0.05, `${width}x${height}: ${fit.visibleHeight} < parent ${floor}`);
@@ -360,14 +412,14 @@ test('phone field extension keeps every ground at or above the resting cards', (
   assert.ok(reviewed < 66, '360x660 no longer takes the full cap');
 });
 
-test('desktop and phone profiles stand the back rank lower and keep rank D above the hand', () => {
+test('desktop and phone profiles stand the back rank lower and keep the player strips above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.4, 0.14]);
-  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.43, 0.115]);
+  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.41, 0.12]);  // retuned 2026-11-05: the team gap (0.8 rows) and the second player strip need the room
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.5, 0.095]);  // retuned 2026-11-05: the phone's 1.0-row gap; feet of the player front strip stay near 88%
   for (const key of ['desktop', 'mobile']) {
     const p = grid.profiles[key];
     assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);
-    assert.ok(p.top + 4 * p.rowHeight <= 1, `${key}: the profile validates`);
+    assert.ok(p.top + perspectiveBandRows(grid, false, p).rows * p.rowHeight <= 1, `${key}: the profile validates`);
   }
   const footer = uiConfig.scenes.w4a.sizing.desktopFooter;
   const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx;
@@ -383,11 +435,11 @@ test('desktop and phone profiles stand the back rank lower and keep rank D above
     // Short desktops shrink the overlap to keep rank D clear, they never drop it below the cards' top edge.
     assert.ok(overlap >= -1e-6, `${width}x${height}: the field reaches the cards`);
     const fieldHeight = fieldBottom - header;
-    assert.ok(header + fieldHeight * (desktop.top + 4 * desktop.rowHeight) <= cardTop, `${width}x${height}: rank D ends above the resting cards`);
+    assert.ok(header + fieldHeight * (desktop.top + perspectiveBandRows(grid, false, desktop).rows * desktop.rowHeight) <= cardTop, `${width}x${height}: the last player strip ends above the resting cards`);
   }
   // Phone: the cards' top sits in the DOM (not in a model), so tests/battlefield-layout.browser.mjs and the measured
-  // 390x844 / 360x740 shots own that check; rank D ends at 89% of the field here.
+  // 390x844 / 360x740 shots own that check; the player front strip ends at 89% of the field here, the back strip at 99%.
   const formation = alternativeFormation(plan(3), 1280, 516, false, { formFactor: 'desktop' });
   const [back] = formation.visualBands;
-  assert.ok(Math.abs(back.top - 516 * 0.4) < 1e-6 && Math.abs(back.height - 516 * 0.14) < 1e-6);
+  assert.ok(Math.abs(back.top - 516 * 0.41) < 1e-6 && Math.abs(back.height - 516 * 0.12) < 1e-6);
 });

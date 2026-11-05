@@ -1366,7 +1366,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
-      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()));
+      // Read defensively: display-only callers (and the tests that slice this function) run outside the playback closure.
+      const queued = typeof playbackEvents !== 'undefined' ? playbackEvents : null;
+      const at = queued ? queued.indexOf(e) : -1;
+      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()), at >= 0 ? queued.slice(at + 1) : null);
       if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
         case 'enemyMoveStarted': {
@@ -1515,6 +1518,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'cardDrawn': {
           disp.pileCounts.draw = Math.max(0, disp.pileCounts.draw - 1);
+          // End Turn freezes the old hand's face through the enemy beats (heldTurnHand). The draw is where the new
+          // hand starts arriving, so the freeze ends here: before this, renderHand returned early on every draw beat
+          // and the whole new hand swapped in at once when playback ended. Cards still held keep their place; each
+          // drawn card is appended in draw order (disp.hand) and the discards have already left it.
+          heldTurnHand = null;
           const inst = findInst(e.cardInstanceId);
           if (inst && !disp.hand.some((c) => c.instanceId === inst.instanceId)) disp.hand.push(inst);
           break;
@@ -2695,7 +2703,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
-          stacked: stackedIds.has(inst.instanceId),
+          stacked: stackedIds.has(inst.instanceId), maxRange: combat.rangeState?.policy?.maxRange,
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
           surface: 'combat',

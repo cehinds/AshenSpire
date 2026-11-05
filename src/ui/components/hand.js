@@ -1,5 +1,5 @@
 import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
-import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance, holdPlaySlots, HAND_PLAY_SETTLE } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer.
 //
@@ -113,6 +113,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const upcastMeasurements = new WeakMap();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
   let publishedGeometry = null;
+  let appliedHand = null; // { ids, key, plan, held }: the plan last written, for holdPlaySlots
+  let settleTimer = 0;
   const publishGeometry = key => {
     if (publishedGeometry === key) return;
     publishedGeometry = key;
@@ -176,7 +178,22 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
       const input = { width: clientWidth, height: clientHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
-      const plan = responsiveHandLayout(input, layoutHand(input));
+      const fresh = responsiveHandLayout(input, layoutHand(input));
+      // A play leaves the other cards where they are (holdPlaySlots); the gap closes once, after holdMs.
+      const ids = cards.map(el => el.dataset.instanceId);
+      const key = JSON.stringify([clientWidth, clientHeight, zoom, rem, compact, formFactor, controlsHeight]);
+      const keep = appliedHand?.held && appliedHand.key === key && appliedHand.ids.join('|') === ids.join('|');
+      const held = keep ? appliedHand.plan : holdPlaySlots(appliedHand, ids, fresh, key);
+      const plan = held || fresh;
+      // Only a play (the hand shrank) restarts the hold; a ResizeObserver re-apply keeps the running deadline.
+      const shrank = !!appliedHand && ids.length < appliedHand.ids.length;
+      appliedHand = { ids, key, plan, held: !!held };
+      if (!(keep && settleTimer && !shrank)) { clearTimeout(settleTimer); settleTimer = 0; }
+      if (held && !settleTimer) settleTimer = setTimeout(() => {
+        settleTimer = 0;
+        if (appliedHand) appliedHand.held = false;
+        applyHandLayout();
+      }, HAND_PLAY_SETTLE.holdMs);
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       setVar(handEl, '--hand-card-zoom', '1');
       setVar(handEl, '--hand-span', plan.span + 'px');
@@ -194,7 +211,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         setVar(el, '--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
         setVar(el, '--hand-card-angle', slot.angle + 'deg');
         setVar(el, '--hand-card-arc', slot.y + 'px');
-        setVar(el, '--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');
+        setVar(el, '--hand-hit-width', (plan.hitWidths?.[i] ?? (i === cards.length - 1 ? plan.cardWidth : plan.step)) + 'px');
         let lane = el.querySelector('.hand-hit-lane');
         if (!lane) {
           lane = document.createElement('span');
@@ -333,7 +350,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     return result;
   }
   // The options renderCard is given above, for refreshCard (tests/hand-keeps-cards-on-refresh.test.mjs holds the two equal).
-  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true,
+  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
     surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
   // A card that keeps its element while its look changes runs without transitions for the frame that paints the
   // change, so it lands as a rebuilt card did. The second frame callback restores the stylesheet's own.
@@ -438,7 +455,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       rebuilt++;
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true,
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
           reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
@@ -542,6 +559,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    clearTimeout(settleTimer);
+    settleTimer = 0;
     releaseInspectionOverlay?.();
     for (const record of renderedCards.values()) record.release?.();
     renderedCards.clear();

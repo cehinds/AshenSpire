@@ -58,7 +58,7 @@ test('Core range: exact and unobserved telegraphs never move the public pair dis
   assert.deepEqual(target.combatStance, stances.ranged, 'preview never rewrites the live telegraph');
   const near = odds(combat, target, 'core.strike', stances.ranged, 'hidden');
   const key = Object.keys(combat.rangeState.engagements)[0];
-  combat.rangeState.engagements[key] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[key] = 2;
   const far = odds(combat, target, 'core.strike', stances.ranged, 'hidden');
   assert.ok(near > far, 'actual public distance still affects the badge even when its telegraph is hidden');
   assert.equal(far, 0, 'the Strike cannot reach beyond its actual weapon coverage');

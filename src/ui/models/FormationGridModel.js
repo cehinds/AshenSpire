@@ -14,5 +14,5 @@ export function formationTileGeometry(cell, plan, presentation) {
 // Top and left edges own shared seams. Only the final lane/band closes the
 // outside boundary, keeping translucent strokes from being painted twice.
 export function perspectiveCellOutlinePath(cell, lanes) {
-  return `M0,100V0H100${cell.lane === lanes - 1 ? 'V100' : ''}${cell.visualBand === 'D' ? 'M100,100H0' : ''}`;
+  return `M0,100V0H100${cell.lane === lanes - 1 ? 'V100' : ''}${cell.closeBottom ? 'M100,100H0' : ''}`;
 }

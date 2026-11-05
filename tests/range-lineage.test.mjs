@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { live } from './helpers/fixcore-combat-rules.mjs';
+import { live as cappedLive } from './helpers/fixcore-combat-rules.mjs';
+import { uncappedCombat } from './helpers/uncapped-range.mjs';
+const live = () => uncappedCombat(cappedLive());
 import { dispatch,previewCard } from '../src/engine/combat.js';
 import { quoteRangeActions } from '../src/engine/combatEngagement.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';

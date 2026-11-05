@@ -2032,7 +2032,10 @@ What the tabs hold, by area:
   `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
   The default (alternative) perspective instead draws one uniform grid (owner, 2026-10-12):
   three lanes, an enemy back rank and front rank, and one player rank nearest the camera,
-  with a band of open ground between the party and the enemies. The grid is sheared: each
+  with a band of open ground between the party and the enemies. (Owner, 2026-11-05: the open
+  ground is a gap of `teamGapRows` strip heights (default 0.6) with no tiles, and the party now has
+  a front strip, nearer the enemies, and a back strip; the front and back rows are to indicate melee
+  and reach, a mapping that follows separately. The extra enemy strip is drawn only when Core enables the extra row.) The grid is sheared: each
   row slides right in proportion to its depth, so lanes run on a diagonal and every cell is
   the same parallelogram. The top of the field is sky; the grid stands on the ground below it. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
   fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
@@ -2177,7 +2180,12 @@ together.
   focus explains after 500 ms regardless of the hover delay, and Enter or
   Space on a selectable detail explains at once. Cards carry no hover or tap
   tooltip: selecting a card reveals its Information button, and that opens the
-  card inspection (with nested keyword tooltips). Card inspections show
+  card inspection (with nested keyword tooltips). Card tooltips open only inside
+  the card inspection (owner, 2026-11-05: "Restrict card tooltips to just the
+  inspect modal"); on every other surface (combat hand, selected or not, reward,
+  shop, deck and upgrade card faces) a tag symbol, keyword or underlined number
+  is plain decoration: no tooltip, no pointer or focus, and a tap anywhere on the
+  card is the card's own action. Card inspections show
   complete effect text and decision-relevant values or requirements. General classifications appear as explained tags beneath the
   card; keywords disclose definitions. Do not repeat artwork descriptions,
   generic instructions, flavor explanations, or identical effect text.
@@ -3400,6 +3408,17 @@ enemy increases the distance with a one-band retreat card (`moveEngagement`,
 defaults); Core enemies that start at Reach or beyond own one, plan it only
 while engaged closer than their starting range, and never twice in a row. See
 [RangeAdvance](docs/design/RangeAdvance.md).
+
+**Maximum range is Reach (owner, 2026-11-05: "Let's configure max range to be reach").** The
+Core range policy carries `maxRange` (`range.maxRange` in
+`content/source/fixCoreMechanics.json`, authored `"reach"`), snapshotted into the run
+and each fight like the rest of the policy. A fight never stores an engagement band
+past the cap: starting bands (a shortbow wearer or an enemy that starts Ranged) are
+capped, a Retreat at the cap is a no-op, and an enemy never plans a retreat past
+it. Cards authored `ranged` keep their data and read as Reach on the card face, the
+deck editor and the upgrade preview; an upgrade never offers Reach to Ranged. A
+policy with no `maxRange` (a run or save from before the cap) keeps all three bands
+and replays unchanged.
 
 This contract applies to new runs using **`ashen.core@2.0.0`**, the FixCore rules version 1 profile. It overrides earlier combat rules only for those runs where they conflict with this section. The [FixCore design document](docs/design/FixCore-complete.md)’s corrected requirements, defaults, architecture contracts, detailed behavior, and falsification criteria are normative for this profile; its source snippets and method names are proposals, not claims of shipped implementation. Where this section applies, it supersedes conflicting legacy rules for the named profile. This section specifies behavior; implementation is separate and is not claimed complete here.
 

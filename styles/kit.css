@@ -4106,6 +4106,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .inspection-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
 .inspection-tag { display:inline-block; max-width:100%; padding:4px 8px; border:1px solid var(--line); border-radius:5px; color:var(--gold); font:inherit; font-size:13px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; cursor:help; }
 .tooltip-keyword { color:var(--gold); border-bottom:1px dotted currentColor; cursor:help; }
+/* On a card face outside the inspector a keyword is decoration only (owner, 2026-11-05). */
+.card .tooltip-keyword { cursor:inherit; pointer-events:none; }
+:is(.card-inspection-modal, .card-inspection-layout) .card .tooltip-keyword { cursor:help; pointer-events:auto; }
 .tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:var(--focus-ring); outline-offset:3px; }
 .inspection-facts { display:flex; flex-wrap:wrap; gap:8px; }
 .inspection-facts .inspection-tag { font-size:15px; color:var(--parchment); }
@@ -6803,3 +6806,8 @@ body.reduced-motion .as-toast { transition: none; }
 .armoury[data-view='rack'][data-split='rows'] .armoury-inventory > .ep-list.armoury-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; }
 .armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
 .armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 3; position: static; max-height: none; overflow: visible; }
+
+/* A play leaves the hand's other cards in place; when the gap closes (hand.js, behavior.hand.playSettle) they ease over. */
+@media (prefers-reduced-motion: no-preference) {
+  :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { transition: left .22s ease-out; }
+}

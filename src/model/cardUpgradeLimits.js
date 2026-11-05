@@ -57,7 +57,7 @@ export function nextUpgradeOptions(run, instance, base, registries, count = 1, {
   const mana = (registries && registries.balance && registries.balance.mana) || {};
   // Core ranks scale the face after the steps, so the roll sees the rank the card will be shown at.
   const rank = run.gameProfile?.modules?.progression?.cardRanks === true ? cardRank(instance) : 1;
-  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell };
+  const limits = { ...mana, rank, scale, exposure: registries?.balance?.exposure?.buildupPerManaSpell, maxRange: run.rangePolicy?.maxRange };
   const roll = (n) => rollUpgradeOptions(base, applied, applied.length, upgradeStepRng(run.seed, salt ? `${instance.instanceId}#${salt}` : instance.instanceId, applied.length), limits, n);
   const authored = applied.length === 0 && base.upgrade && !noAuthored;
   if (count <= 1) return authored ? [{ k: 'authored' }] : roll(1);
