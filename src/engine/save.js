@@ -216,6 +216,21 @@ function pendingRewardReferenceProblems(pending, registries) {
   return problems;
 }
 
+// Status ids retired from the game (glassCannon went with Custom Climb, 2026-11-05). A saved fight may still
+// carry one; it is dropped on load, BEFORE the snapshot reference check, so the save is not archived for it.
+// Only ids named here are dropped: any other unknown status id is still refused.
+const RETIRED_STATUS_IDS = ['glassCannon'];
+function dropRetiredStatuses(run) {
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    const snapshot = holder?.snapshot;
+    if (!snapshot) continue;
+    for (const entity of [snapshot.player, ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : [])]) {
+      if (!entity?.statuses || typeof entity.statuses !== 'object') continue;
+      for (const id of RETIRED_STATUS_IDS) delete entity.statuses[id];
+    }
+  }
+}
+
 /**
  * Migrate one exact active-combat snapshot through the same weapon-package
  * composer as an ordinary run. The snapshot loadout is authoritative while a
@@ -1000,6 +1015,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // check, which requires exactly `slot.sets` positions and would archive
         // every fight an older build saved with its three cells. The ledger is
         // not open yet, so the note is written below, once it is.
+        dropRetiredStatuses(run);
         trimmedLoadout = [
           ...trimExtraSets(registries, run.loadout),
           ...[run.combatEntered, run.combatPendingOutcome]

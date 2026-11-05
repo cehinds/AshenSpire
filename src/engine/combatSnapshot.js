@@ -366,10 +366,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     backfillPersistentPoise(combat, entity);
     // A snapshot from before Barrier became a status holds the numeric pool: it was a one-turn layer, so it is dropped (SPEC 4.1a).
     if (entity && 'barrier' in entity) delete entity.barrier;
-    // A status the current registry no longer knows (glassCannon, retired with Custom Climb) is dropped on load, so the next turn does not throw.
-    if (entity?.statuses && typeof entity.statuses === 'object') {
-      for (const id of Object.keys(entity.statuses)) if (!registries.statuses.has(id)) delete entity.statuses[id];
-    }
   }
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
