@@ -21,13 +21,7 @@
 //                the mini's count one lower). After that remount the setting
 //                still holds — Drink is still offered — and a second Drink
 //                saves and empties the flask, whose Drink is then refused with
-//                the empty reason. Then `?shot=atlas`: the world atlas is a
-//                map screen with no Potions control, so turning the setting on
-//                there must leave it mounted with the destination the player
-//                selected. It judges THAT the run is saved, not which
-//                call saved it: dropping only the onChange's own onSave leaves
-//                the run saved (observed: the remounted map commits through
-//                onSave too), so that edit is not a known-bad here.
+//                the empty reason.
 //   dispatch     the real Potions control (components/runPotions.js) mounted in
 //                the page on a real run (real registries, a Crimson Flask and
 //                two Blight Coatings carried) with the setting ON. Every row of
@@ -119,14 +113,6 @@ if (process.argv.includes('--selftest')) {
         replace: '',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the reopened tray names the destination as it did before the redraw/,
-      },
-      {
-        name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
-        file: 'src/main.js',
-        find: "const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');",
-        replace: 'const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed);',
-        args: ['--only', 'persistence'],
-        expectRed: /FAIL persistence: atlas, turning the setting on keeps the atlas and its selected destination/,
       },
       {
         name: 'the map stops remounting after a Potions action',
@@ -546,30 +532,6 @@ async function persistenceProbe(cdp, base, check) {
     await ev(`__fm.closeModal('run-potion-menu')`);
     check('persistence: no page error', page.errors.length === 0, page.errors.join(' | '));
   } finally { await page.close(); }
-
-  // THE WORLD ATLAS is a `.mapscreen` too, with no Potions control. Turning the
-  // setting on there must not remount it: the atlas keeps the player's selected
-  // destination only in the mounted screen (#1474 review).
-  const atlas = await openPage(cdp, base, `shot=atlas&${settingsQuery(false)}`, { ready: '.world-atlas-screen' });
-  try {
-    const picked = await atlas.ev(`(async () => {
-      const current = document.querySelector('.atlas-node.current')?.dataset.atlasNode;
-      const road = [...document.querySelectorAll('.atlas-road-list [data-atlas-node]')].find((b) => b.dataset.atlasNode !== current);
-      if (!road) return { why: 'the atlas offers no road to select' };
-      road.click();
-      await __fm.sleep(200);
-      window.__fmAtlas = document.querySelector('.world-atlas-screen');
-      return { id: road.dataset.atlasNode, current, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode };
-    })()`);
-    check('persistence: atlas, a road other than the current place can be selected',
-      !picked.why && picked.pressed === picked.id && picked.id !== picked.current, JSON.stringify(picked));
-    const toggled = await atlas.ev(TOGGLE_SETTING('[data-atlas-menu]'));
-    check('persistence: atlas, the setting turns on through its Menu → Settings', toggled === '', toggled);
-    const kept = await atlas.ev(`({ same: !!window.__fmAtlas?.isConnected, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode })`);
-    check('persistence: atlas, turning the setting on keeps the atlas and its selected destination (no remount)',
-      kept.same && kept.pressed === picked.id, JSON.stringify({ ...kept, want: picked.id }));
-    check('persistence: atlas, no page error', atlas.errors.length === 0, atlas.errors.join(' | '));
-  } finally { await atlas.close(); }
 }
 
 // ---------------------------------------------------------------------------

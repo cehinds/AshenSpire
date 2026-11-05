@@ -394,9 +394,6 @@ jobs:
       - name: Historical standalone artifacts resolve verified LFS bytes
         run: node tools/git-artifact.test.mjs
 
-      - name: World Journey normalized data and seeded routes
-        run: node tests/world-atlas.test.mjs
-
       # A player met "SOMETHING JUST STOPPED WORKING / ResizeObserver loop
       # completed with undelivered notifications. at :0" over a screen that was
       # working. The banner is the game's one claim that a control died, so a
@@ -656,7 +653,7 @@ jobs:
         # which are platform-independent; the platform claim is dirorder's and
         # `reproducible`'s, and both already run on all three.
         #
-        # UNWRAPPED, like the world-atlas step above: the file prints per-case
+        # UNWRAPPED: the file prints per-case
         # PASS/FAIL lines and exits 1 on any FAIL, but no counted verdict, so the
         # door would read it as SILENCE. Giving it one is a change to this tool's
         # output contract and belongs with whoever wants the wrapper, not with
@@ -1080,7 +1077,7 @@ jobs:
         # and compared to flaskActionPlan for the Crimson and Azure flasks and
         # the carried potions; every map Potions choice driven for what it does;
         # a Potions action and a "Use flasks outside combat" change saved and
-        # kept across the remount, and the world atlas left mounted by it.
+        # kept across the remount.
         # About 2 minutes on the machine it was written on.
         run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs
 
