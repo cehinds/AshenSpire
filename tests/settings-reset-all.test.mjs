@@ -36,3 +36,11 @@ test('Reset all also clears stored keys of the retired legacy groups, which have
   assert.equal(settings['gameConfig.balance.xp.combatWin'], undefined);
   assert.equal(settings.reduceFlashes, undefined);
 });
+
+test('Reset all restores the combat-tools grid key, which has no Settings row', () => {
+  const key = 'gameConfig.presentation.showFormationGrid';
+  const settings = { [key]: false };
+  assert.ok(allResettableKeys().includes(key));
+  resetKeys(settings, () => ({ ok: true }), allResettableKeys(settings), 'All settings reset', { promoted: {} });
+  assert.equal(settings[key], undefined);
+});
