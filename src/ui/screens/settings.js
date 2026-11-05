@@ -56,7 +56,7 @@ import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefa
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
-import { advancedConfigProblemRows, liveAdvancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblemRows, liveAdvancedConfigRows, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
@@ -2021,10 +2021,6 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
-  if (settings?.[row.key] === undefined && row.key.startsWith('gameConfig.attributeRules.presets.')) {
-    const path = row.key.slice('gameConfig.'.length).split('.');
-    return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
-  }
   const fallback = row.defaultFor ? row.defaultFor(settings) : row.def;
   const raw = (settings || {})[row.key];
   // The rule itself lives in CardSizeModel so the card-size model and this row
@@ -2941,9 +2937,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   };
   const reportAdvancedProblems = () => {
     refreshGates(container, settings);
-    for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
-      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
-    }
     syncSubsectionHeadings();
     // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
     //
