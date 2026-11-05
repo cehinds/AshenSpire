@@ -2,17 +2,14 @@
 // limit like Strike, the Magic Adept mints the new Cantrips, and all ten count as Basic or Cantrip for the reward bias.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { core2Profile, core2Registries } from './helpers/core2.mjs';
 import { deckCopyLimit } from '../src/model/deckRules.js';
 import { basicOrCantripMatcher } from '../src/model/stanceCoverage.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const profile = core2Profile(), registries = core2Registries();
 // Copy limits read the collected-card ledger: each card is collected first, as a reward claim does.
 const live = (classId, ids) => {
   const run = createRunState({ registries, seed: 511, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });

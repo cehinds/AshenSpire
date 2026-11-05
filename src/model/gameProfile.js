@@ -2,6 +2,7 @@
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
+import { SUPPORTED_CORE } from './retiredProfile.js';
 import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
 import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
@@ -31,6 +32,8 @@ export function validateGameProfileSnapshot(profile) { return validateVerifiedPr
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
 export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
+// The one "is this the Core game" predicate: a profile, or a run/registries carrying one, authored on the supported Core.
+export function isCoreProfile(subject) { return subjectProfile(subject)?.author?.core === SUPPORTED_CORE; }
 // `rampless` leaves a ramp unapplied: the registry copy of a card stays plain so resolveCard can ramp it with the instance's plays (SPEC §4.3).
 export function projectGameCard(subject,idOrInstance,{rampless=false}={}) {
   if (!gameModule(subject,'cards') || gameModule(subject,'cards').mode === 'legacy') return null;
