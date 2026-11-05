@@ -32,8 +32,9 @@ function scene(document, { combat = false } = {}) {
   fx.appendChild = (node) => { spawns.push({ node, at: Date.now() }); return append(node); };
   return { fx, a: anchor(100), b: anchor(300), spawns, anchor };
 }
-// The mocked clock jumps to the end of a tick before its timers run, so a long wait is taken in small steps.
-const advance = (t, ms) => { for (let left = ms; left > 0; left -= 5) t.mock.timers.tick(Math.min(5, left)); };
+// The mocked clock jumps to the end of a tick before its timers run, so a long wait is taken in 1 ms steps: a 5 ms step
+// rounds each timer up to the grid, and a chain of stagger gaps (208 ms) drifts past the spawn times the tests assert.
+const advance = (t, ms) => { for (let left = ms; left > 0; left -= 1) t.mock.timers.tick(1); };
 const lift = (node) => parseFloat(node.props['--float-lift'] ?? '0');
 const setup = (t, fn) => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -45,7 +46,7 @@ const setup = (t, fn) => {
 
 test('floaters over one combatant spawn one stagger apart, in order, never two at once', (t) => setup(t, ({ fx, a, spawns }) => {
   const stagger = floaterStaggerMs();
-  assert.equal(stagger, 320, 'the default stagger at Combat speed x1');
+  assert.equal(stagger, 208, 'the default stagger at Combat speed x1');
   const nodes = [['-11', 'heal'], ['+5', 'blk'], ['+2', 'heal'], ['BURN', 'heal']].map(([text, cls]) => floatNum(fx, a, text, cls));
   assert.deepEqual(spawns.map((s) => s.node.textContent), ['-11'], 'only the first is in the layer yet');
   advance(t, stagger * 3);
@@ -118,22 +119,22 @@ test('Reduced motion: still sequenced and stacked (the CSS makes it fade only, w
 
 test('stagger scales with the Combat speed the way the lifetime does, and shortens on Instant', (t) => setup(t, ({ fx, a, spawns }) => {
   const ratio = (life) => life / 1650;
-  assert.equal(floaterStaggerMs(), Math.round(320 * ratio(floaterLifeMs())));
+  assert.equal(floaterStaggerMs(), Math.round(208 * ratio(floaterLifeMs())));
   setCombatPacing({ combatSpeed: 2 });
   assert.equal(floaterLifeMs(), 825);
-  assert.equal(floaterStaggerMs(), 160, 'half the life, half the stagger');
+  assert.equal(floaterStaggerMs(), 104, 'half the life, half the stagger');
   setCombatPacing({ combatSpeed: 8 });
   assert.equal(floaterLifeMs(), 400, 'the life floors at 400 ms');
-  assert.equal(floaterStaggerMs(), Math.round(320 * 400 / 1650), 'and the stagger floors with it');
+  assert.equal(floaterStaggerMs(), Math.round(208 * 400 / 1650), 'and the stagger floors with it');
   setCombatPacing({ combatSpeed: 1 });
   setAnimSpeed('instant');
   assert.equal(floaterLifeMs(), 480);
-  assert.equal(floaterStaggerMs(), Math.round(320 * 480 / 1650));
+  assert.equal(floaterStaggerMs(), Math.round(208 * 480 / 1650));
   setAnimSpeed('normal');
   setCombatPacing({ combatSpeed: 2 });
   floatNum(fx, a, '-1', 'heal'); floatNum(fx, a, '-2', 'heal');
-  advance(t, 160);
-  assert.deepEqual(spawns.map((s) => s.at), [0, 160]);
+  advance(t, 104);
+  assert.deepEqual(spawns.map((s) => s.at), [0, 104]);
 }));
 
 test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, a, spawns }) => {
@@ -144,7 +145,7 @@ test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, 
   advance(t, floaterStaggerMs());
   flushMeasureJobs();
   assert.deepEqual(spawns.map((s) => s.node), [word, num]);
-  assert.deepEqual(spawns.map((s) => s.at), [0, 320]);
+  assert.deepEqual(spawns.map((s) => s.at), [0, 208]);
   assert.equal(word.dataset.calloutFor, 'e1');
   assert.equal(lift(word), 20 + GAP, 'the word is a slot above the number that followed it');
   assert.equal(num.style.left, word.style.left, 'same x');
