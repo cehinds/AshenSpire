@@ -111,7 +111,7 @@ test('a range change that makes the shown attack unaffordable changes the intent
   const enemy = combat.enemies[0];
   assert.equal(enemy.intent.moveId, 'slash');
   const pair = rangePairKey('player:player', `enemy:${enemy.id}`);
-  combat.rangeState.engagements[pair] = 2;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[pair] = 2;
   const card = combat.piles.hand.find(row => row.cardId === 'core.defend') || combat.piles.hand[0];
   play(combat, card);
   const now = shown(enemy);
@@ -177,7 +177,7 @@ function farFight(band) {
   const combat = fight('gildedKnight', 2);
   combat.core2ActionRulesVersion = 1;
   const enemy = combat.enemies[0];
-  combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = band;
+  delete combat.rangeState.policy.maxRange; combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = band;
   return { combat, enemy };
 }
 

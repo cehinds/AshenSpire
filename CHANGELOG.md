@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
-- **Steadier hand and enemy intent** ([#2582](https://github.com/cehinds/AshenSpire/pull/2582), `0.7.3.170`). The new hand arrives on the draw beat instead of swapping at the end, enemy intent no longer flickers to ? between an enemy's moves, and other cards hold their place when you play one, then close up.
+- **Steadier hand and enemy intent** ([#2582](https://github.com/cehinds/AshenSpire/pull/2582), `0.7.3.172`). The new hand arrives on the draw beat instead of swapping at the end, enemy intent no longer flickers to ? between an enemy's moves, and other cards hold their place when you play one, then close up.
+- **Range capped at Reach** ([#2578](https://github.com/cehinds/AshenSpire/pull/2578), `0.7.3.172`). Core fights now cap range at Reach: Ranged cards and the shortbow read and play as Reach, Retreat stops at Reach, and upgrades no longer offer Reach to Ranged (older saves keep three bands).
 - **Reward selection without reload** ([#2580](https://github.com/cehinds/AshenSpire/pull/2580), `0.7.3.170`). Selecting a card on the card reward screen no longer reloads the window; only the action buttons update, so focus and scroll stay put.
 - **Player HUD panel always shown** ([#2577](https://github.com/cehinds/AshenSpire/pull/2577), `0.7.3.168`). The player's selected health panel is shown at all times beside the player, with no small overhead bar and no permanent glow on the character.
 - **Card tooltips only in inspect** ([#2576](https://github.com/cehinds/AshenSpire/pull/2576), `0.7.3.166`). Card tooltips now open only in the card inspect window; tag symbols and keywords on hand, reward and shop cards no longer take taps, so tapping a card always selects it.

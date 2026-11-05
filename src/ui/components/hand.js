@@ -350,7 +350,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     return result;
   }
   // The options renderCard is given above, for refreshCard (tests/hand-keeps-cards-on-refresh.test.mjs holds the two equal).
-  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true,
+  const cardOpts = entry => ({ preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
     surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
   // A card that keeps its element while its look changes runs without transitions for the frame that paints the
   // change, so it lands as a rebuilt card did. The second frame callback restores the stylesheet's own.
@@ -455,7 +455,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       rebuilt++;
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true,
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, infoBadge: true, range: true, maxRange: entry.maxRange,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3,
           reuseFace: donor });
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS

@@ -8,7 +8,7 @@
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
 import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
-import { normalizeRange } from './combatRanges.js';
+import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
 export { STACK_CAPS };
@@ -167,7 +167,9 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   if (attacking && !counterReturn) {
     const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
     const next = { melee: 'reach', reach: 'ranged' }[raw];
-    if (next) found.range = { tag: `range:${next}` };
+    // Owner, 2026-11-05: a fight capped at Reach never offers Reach to Ranged (limits.maxRange, from the run's range policy).
+    const cap = RANGES.indexOf(limits.maxRange);
+    if (next && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
   }
   if (hitsEnemy && maneuver !== 'sweep' && !counterReturn && !tagged((s) => s.retarget)) {
     const [SINGLE, AREA] = TARGETING;
