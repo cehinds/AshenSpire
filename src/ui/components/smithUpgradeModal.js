@@ -23,6 +23,8 @@ import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { deltaNode, changeSummary, economyNode } from './smithPaneParts.js';
 import { smithCandidateRows } from '../models/SmithWorkspaceModel.js';
+import { resolveUpgradedItem } from '../../model/itemUpgrades.js';
+import { requirementAtLevel } from '../../model/smithing.js';
 
 const visibleFocusable = (root) => [...root.querySelectorAll(
   'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
@@ -37,6 +39,18 @@ const itemArt = (item, { small = false } = {}) => {
   hideOnError(img);
   return well;
 };
+
+/**
+ * The item as it stands at a smithing tier, for its face: the resolved piece, with each attribute requirement the
+ * tier lowers stated at that tier (the resolved piece keeps the authored base; smithing.js owns the arithmetic).
+ */
+export function itemAtTier(registries, selected, level) {
+  const piece = resolveUpgradedItem(registries, selected.itemRef, level);
+  const authored = piece.requirements?.attributes;
+  if (selected.itemKind === 'relic' || !authored) return piece;
+  const attributes = Object.fromEntries(Object.entries(authored).map(([id, base]) => [id, requirementAtLevel(registries, selected.itemRef, id, base, level).required]));
+  return { ...piece, requirements: { ...piece.requirements, attributes } };
+}
 
 export function mountSmithUpgradeModal(host, initialModel, {
 
@@ -72,11 +86,29 @@ export function mountSmithUpgradeModal(host, initialModel, {
     : [el('span', { class: 'smith-requirement smith-requirement-none met' }, el('b', { class: 'sp-v', text: 'None' }))]);
 
   /**
+   * An armament, armour or relic upgrade shows the ITEM's own card before and after (owner, 2026-11-05): the item
+   * resolved at its current and next smithing tier (`upgradeLevel` on the piece is what the face reads for its AR),
+   * never a card it supplies. If the item face cannot be built there is no face, never the Strike card.
+   */
+  const itemFacesFor = (selected) => {
+    try {
+      const at = (level) => {
+        const piece = itemAtTier(registries, selected, level);
+        return selected.itemKind === 'relic'
+          ? renderCollectibleCard(registries, piece, 'Relic', { level: 'glance' }).card
+          : renderEquipmentCard(registries, piece, { level: 'glance' }).card;
+      };
+      return upgradeFacesNode({ before: at(selected.currentLevel), after: at(selected.nextLevel) });
+    } catch { return null; }
+  };
+
+  /**
    * The first affected card as its before and after faces. A live card instance steps its own smithing tier; a Core
    * row carries only the card's id and its live value before and after (`damage` or `block`), so its faces are the
    * copy's own resolved definition (its `cardReference`: upgrades, rank), else the card's base definition, with that effect's amount set to each value. No such card: no faces, the rows say it all.
    */
   const facesFor = (selected) => {
+    if (selected.itemKind !== 'card') return itemFacesFor(selected);
     const face = (reference, definition) => renderCard(registries, reference, { small: true, tooltip: false, inspectReadOnly: true, ...(definition ? { definition } : {}) });
     const live = selected.affectedRows.find((entry) => entry.reference);
     if (live) {
