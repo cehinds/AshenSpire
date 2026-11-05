@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Card tooltips only in inspect** ([#2576](https://github.com/cehinds/AshenSpire/pull/2576), `0.7.3.164`). Card tooltips now open only in the card inspect window; tag symbols and keywords on hand, reward and shop cards no longer take taps, so tapping a card always selects it.
 - **Master weapon art choice setting** ([#2574](https://github.com/cehinds/AshenSpire/pull/2574), `0.7.3.164`). A new Advanced setting, off by default, offers Add to deck or Add to library after buying a weapon art from the Master.
 - **Three arts per weapon** ([#2571](https://github.com/cehinds/AshenSpire/pull/2571), `0.7.3.162`). Every Core weapon now teaches two extra arts; reward doors, shops and the Blacksmith offer arts for the weapons you carry that you do not already own, and the same art is no longer in both the shop and the reward door.
 - **Equip or add to deck after buying** ([#2572](https://github.com/cehinds/AshenSpire/pull/2572), `0.7.3.160`). Shop purchases now offer to add a bought card to your deck or library, and to equip a bought weapon or armour or keep it in inventory.
