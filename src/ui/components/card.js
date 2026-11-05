@@ -256,7 +256,7 @@ export function renderCard(registries, ref, opts = {}) {
       tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
     model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
     // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
-    model.range = opts.range ? combatCardRange(def) : null;
+    model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
     accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,

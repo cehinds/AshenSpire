@@ -469,7 +469,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides
   // which cards show one; the hand's chip reads the same rule.
   const rangeNode = (row) => {
-    const range = combatCardRange(combatDef(row));
+    const range = combatCardRange(combatDef(row), run.rangePolicy?.maxRange);
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
   // Physical or magical, as an icon before the costs: the Physical shield in gold
