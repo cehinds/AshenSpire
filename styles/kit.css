@@ -4067,6 +4067,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   border-color: var(--selection-color, var(--green));
   box-shadow: 0 0 0 2px var(--selection-color, var(--green)), 0 0 18px color-mix(in srgb, var(--selection-color, var(--green)) 40%, transparent);
 }
+/* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
+   shows its (i) in the lane reserved above the row. */
+.reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
