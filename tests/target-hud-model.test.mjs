@@ -208,3 +208,16 @@ test('several enemy panels share a row, each near its own enemy, and wrap only w
   assert.ok(rows.filter(p => p.top === tops[0]).length >= 2, 'at least two share a row');
   assert.ok(rows.every(p => p.left >= 0 && p.left + p.width <= phone.width), 'on screen');
 });
+
+test('enemy panels in a row stay under their own enemy, never drifting beneath a neighbour', () => {
+  const bounds = { left: 0, top: 0, width: 1000, height: 600 };
+  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 120, top: 170, height: 115 } });
+  const a = panel('a', 300), b = panel('b', 560);
+  const obstacles = [{ id: 'a', ...a.anchor }, { id: 'b', ...b.anchor },
+    { left: 0, top: 0, width: 1000, height: 95 }, { left: 480, top: 480, width: 120, height: 120 }, { left: 150, top: 290, width: 280, height: 190 }];
+  const placed = placeTargetHudPanels({ bounds, panels: [a, b], obstacles, config: targetHudConfig() });
+  for (const [own, enemy] of [[a, a], [b, b]]) {
+    const rect = placed.find(row => row.id === own.id), centre = rect.left + rect.width / 2;
+    assert.ok(centre >= enemy.anchor.left - rect.width / 2 && centre <= enemy.anchor.left + enemy.anchor.width + rect.width / 2, `${own.id} centre ${centre} is within its enemy's span +/- half a panel`);
+  }
+});

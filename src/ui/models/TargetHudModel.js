@@ -140,7 +140,7 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
     if (rows.at(-1).length && used + gap + width > area.width + 1e-6) { rows.push([]); used = 0; }
     used += (rows.at(-1).length ? gap : 0) + width; rows.at(-1).push(panel);
   }
-  const clear = rect => !obstacles.some(other => targetHudOverlaps(rect, other)) && !avoid.some(other => targetHudOverlaps(rect, other, gap));
+  const clear = (rect, near) => !near.some(other => targetHudOverlaps(rect, other)) && !avoid.some(other => targetHudOverlaps(rect, other, gap));
   const placedRows = [];
   for (const row of rows) {
     const height = Math.max(...row.map(panel => Math.min(panel.height, area.height)));
@@ -156,22 +156,32 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
     };
     const anchorBottom = Math.max(...row.map(panel => panel.anchor.top + panel.anchor.height)), anchorTop = Math.min(...row.map(panel => panel.anchor.top));
     const distance = top => Math.min(Math.abs(top - (anchorBottom + gap)), Math.abs(top + height + gap - anchorTop));
+    // A panel's centre must stay within its own enemy's span, give or take half a panel, so it never lands under a neighbour.
+    const ownsCentre = placed => placed.every((rect, i) => {
+      const { anchor } = row[i], centre = rect.left + rect.width / 2, slack = rect.width / 2;
+      return centre >= anchor.left - slack && centre <= anchor.left + anchor.width + slack;
+    });
+    const sideways = placed => placed.reduce((sum, rect, i) => sum + Math.abs(rect.left + rect.width / 2 - (row[i].anchor.left + row[i].anchor.width / 2)), 0);
     const tops = [];
     for (let top = area.top; top + height <= area.top + area.height + 1e-6; top += 4) tops.push(top);
     tops.push(area.top + area.height - height);
-    let found = null;
-    for (const top of tops.sort((a, b) => distance(a) - distance(b))) {
+    // Each band's obstacles are found once per top, then reused by every start in it.
+    let found = null, best = Infinity;
+    for (const top of tops) {
       if (top < area.top - 1e-6) continue;
       // Start at the field edge, or just right of an obstacle in this band (a row can sit beside the player, not over it).
       const band = { left: area.left, width: area.width, top, height };
-      const starts = [area.left, ...obstacles.filter(other => targetHudOverlaps(band, other)).map(other => other.left + other.width + gap)].sort((a, b) => a - b);
+      const near = obstacles.filter(other => targetHudOverlaps(band, other));
+      const starts = [area.left, ...near.map(other => other.left + other.width + gap)].sort((a, b) => a - b);
       for (const minLeft of starts) {
         if (minLeft > area.left + area.width) continue;
         const placed = layoutAt(top, minLeft);
-        if (placed.every(rect => rect.left >= area.left - 1e-6 && rect.left + rect.width <= area.left + area.width + 1e-6) && placed.every(clear)
-          && !placedRows.flat().some(other => placed.some(rect => targetHudOverlaps(rect, other, gap)))) { found = placed; break; }
+        if (!placed.every(rect => rect.left >= area.left - 1e-6 && rect.left + rect.width <= area.left + area.width + 1e-6) || !ownsCentre(placed)
+          || !placed.every(rect => clear(rect, near)) || placedRows.flat().some(other => placed.some(rect => targetHudOverlaps(rect, other, gap)))) continue;
+        // Total sideways drift plus the vertical distance from the enemies: the nearest, least-shifted layout wins.
+        const score = sideways(placed) + distance(top);
+        if (score < best) { best = score; found = placed; }
       }
-      if (found) break;
     }
     if (!found) return null;
     placedRows.push(found);
