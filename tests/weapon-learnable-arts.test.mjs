@@ -39,7 +39,7 @@ test('a package with a learnable art equal to a default or a repeat is refused',
 // ---- Pools: rewards, shops and the Blacksmith (owner 2026-11-05) ----
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { gameProfileRewardPools, gameProfileRewardOffers, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardPools, gameProfileRewardOffers, gameProfileShopStock, claimGameProfileReward, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { coreBlacksmithShelves } from '../src/model/blacksmithStock.js';
 
 const arts = (id) => { const pkg = packages().find(row => row.weaponId === id); return [...pkg.weaponArtDefaults, ...pkg.learnableArts]; };
@@ -146,4 +146,22 @@ test('a skipped door (no pending reward) does not hide its arts from the next sh
   const stock = gameProfileShopStock(reg, run, createRng(3), { shopId: 'y' });
   assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id).sort(), ['executioner', 'poiseBreaker']);
   assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id).sort(), ['executioner', 'poiseBreaker']);
+});
+
+test('an old save holding core.reaverSpecial on a pending door or shop shelf still claims and buys it; fresh offers never include it', () => {
+  const run = reaver();
+  run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'core.reaverSpecial' }], takeCount: 1, taken: [], claimed: null } };
+  run.gameProfilePendingReward = { offerId: 'door', source: 'combat' };
+  claimGameProfileReward(reg, run, 'door', 0);
+  assert.ok(run.sideboard.some(card => card.cardId === 'core.reaverSpecial'), 'claimed into the sideboard');
+  const shop = reaver();
+  shop.cinders = 100000;
+  shop.gameProfileRewardOffers = { 'shop:old': { id: 'shop:old', source: 'shop', price: 10, options: [{ kind: 'weaponArts', id: 'core.reaverSpecial', price: 50 }], takeCount: 1, taken: [], claimed: null } };
+  purchaseGameProfileShopOffer(reg, shop, 'old', 0, null);
+  assert.ok(shop.sideboard.some(card => card.cardId === 'core.reaverSpecial'), 'bought into the sideboard');
+  for (let seed = 0; seed < 100; seed++) {
+    const door = gameProfileRewardOffers(reg, reaver(['katana']), createRng(seed), { offerId: 'fresh' });
+    assert.ok(!door.options.some(option => option.kind === 'weaponArts' && option.id === 'core.reaverSpecial'));
+  }
+  assert.ok(!gameProfileRewardPools(reg, reaver()).weaponArts.includes('core.reaverSpecial'));
 });
