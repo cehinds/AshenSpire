@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetHudPinnedWidth, targetHudEnemyRowWidth, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -156,7 +156,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   listen(window, 'blur', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
-  const desired = () => [...new Set([...eligible, focused, hover, focusWithin].filter(id => entries.has(id)))];
+  const desired = () => targetHudDesiredIds({ entries: entries.values(), eligible, focused, hover, focusWithin });
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
   function gate() {
     const next = targetHudEnabled({ formFactor: document.documentElement.dataset.formFactor,
@@ -231,11 +231,14 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       if (frame.dataset.matchupActive !== active) frame.dataset.matchupActive = active;
       if (frame.style.getPropertyValue('--combat-matchup-color') !== color) frame.style.setProperty('--combat-matchup-color', color);
       frame.classList.toggle('target-hud-selected', next.has(id));
+      const pinnedOnly = String(targetHudPinnedOnly({ entries: entries.values(), id, eligible, focused, hover, focusWithin }));
+      if (frame.dataset.hudPinned !== pinnedOnly) frame.dataset.hudPinned = pinnedOnly;
       frame.classList.toggle('target-hud-focused', id === focused || id === hover);
       frame.classList.toggle('target-hud-candidate', eligible.includes(id));
     }
     scheduleGeometry();
   }
+  const tintIds = () => targetHudTintIds({ entries: entries.values(), shown, eligible, focused, hover, focusWithin });
   function scheduleGeometry() { if (!disposed && raf === null) raf = requestAnimationFrame(geometry); }
   // The two computed-style reads a frame's geometry needs (the core marker's
   // custom properties and the active target's ::after box) change only when the
@@ -336,7 +339,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // Each frame's grid tile, read now: the writes below never move a tile, and
     // reading it after them was a forced layout per tile.
     const tiles = new Map();
-    for (const id of new Set([...shown, ...eligible, focused].filter(Boolean))) {
+    for (const id of tintIds()) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry || frame.dataset.targetHudCellPolygon) continue;
       const tile = field.querySelector(`.formation-grid-cell[data-cell="${frame.dataset.formationCell}"]`);
       const path = tile?.querySelector('[data-perspective-outline]');
@@ -395,7 +398,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const viewBox = `0 0 ${fieldBox.width} ${fieldBox.height}`;
     if (cells.getAttribute('viewBox') !== viewBox) cells.setAttribute('viewBox', viewBox);
     const drawn = [];
-    for (const id of new Set([...shown, ...eligible, focused].filter(Boolean))) {
+    for (const id of tintIds()) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
       const fill = entry.role === 'player' ? config.behavior.playerTint : config.behavior.enemyTint;
       const opacity = id === focused ? config.behavior.focusedTintOpacity : config.behavior.candidateTintOpacity;
