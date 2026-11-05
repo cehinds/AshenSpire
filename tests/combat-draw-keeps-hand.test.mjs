@@ -35,7 +35,7 @@ function fixture(document, { retain = false } = {}) {
   const context = {
     combat, registries, combatEl, document, CSS: { escape: value => value }, console,
     selected: null, selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
-    heldTurnHand: null, playQueue: [], disp: null, busy: true, enemyPlayback: false, upcastPreviewRefresh: false,
+    playbackEvents: [], heldTurnHand: null, playQueue: [], disp: null, busy: true, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
     resolveCombatCard, previewCard, getEntity, esc: String, $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
     stackedCardIds: () => new Set(), isUnplayable: () => false, playAvailability: () => true, inspectionPlayAction: () => ({}),
