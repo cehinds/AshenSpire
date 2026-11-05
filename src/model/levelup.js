@@ -248,8 +248,7 @@ export const PACE_CURVE_TO = 20;
 
 /**
  * levelPace(registries, { pointsPerLevel }) → what the numbers in force make
- * of a climb, for the Levelling preview (SPEC §15.2;
- * ui/models/LevelPacePreviewModel.js).
+ * of a climb (SPEC §15.2; the Settings preview that drew it retired in cleanup 3e).
  *
  * `registries` is the CONFIGURED content (configuredContentBundle), where the
  * XP multiplier is already applied and rounded into the awards — it is not

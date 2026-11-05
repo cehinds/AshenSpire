@@ -26,3 +26,13 @@ test('resetting every key clears a changed value and offers it back', () => {
   assert.equal(snapshot.reduceFlashes, true);
   assert.equal(saved.length, 1);
 });
+
+test('Reset all also clears stored keys of the retired legacy groups, which have no row left', () => {
+  const settings = { 'recovery.hp.afterCombat': 50, 'gameConfig.balance.xp.combatWin': 9, 'gameConfig.presentation.formationGap': 20, reduceFlashes: true };
+  const keys = allResettableKeys(settings);
+  assert.ok(keys.includes('recovery.hp.afterCombat') && keys.includes('gameConfig.balance.xp.combatWin'));
+  resetKeys(settings, () => ({ ok: true }), keys, 'All settings reset', { promoted: {} });
+  assert.equal(settings['recovery.hp.afterCombat'], undefined);
+  assert.equal(settings['gameConfig.balance.xp.combatWin'], undefined);
+  assert.equal(settings.reduceFlashes, undefined);
+});

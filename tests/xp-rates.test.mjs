@@ -9,7 +9,6 @@ import { createEnemyCombatEntity, createRunState } from '../src/model/state.js';
 import { combatLevelXp, combatXpReceipt, xpToNext as characterXpToNext } from '../src/model/levelup.js';
 import { enemyCombatPower } from '../src/model/combatPower.js';
 import { xpToNext as skillXpToNext } from '../src/model/skills.js';
-import { levelPacePreview } from '../src/ui/models/LevelPacePreviewModel.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -107,26 +106,6 @@ test('enemy equipment gives a small additive combat-power bonus in the real figh
     { 'gameConfig.balance.xp.combatPowerMultiplier': 0.4 }));
   assert.ok(combatLevelXp(stronger, { victory: true, enemies: encounter }) >
     combatLevelXp(registries, { victory: true, enemies: encounter }), 'the combat-power setting reaches XP');
-  assert.match(levelPacePreview({ 'gameConfig.balance.xp.combatPowerMultiplier': 0.4 }).killText,
-    /power × 0\.4 × 25.*power 3 each give 80 XP/, 'the preview follows the same setting');
-});
-
-test('the preview responds to the same settings as character and skill awards', () => {
-  const settings = {
-    'gameConfig.progression.xpMultiplier': 2,
-    'gameConfig.balance.level.xp.base': 200,
-    'gameConfig.balance.skill.xp.base': 150,
-    'gameConfig.balance.xp.kill.normal': 15,
-  };
-  const updated = createRegistries(configuredContentBundle(contentBundle, settings));
-  const preview = levelPacePreview(settings);
-  assert.equal(preview.curve[0].step, characterXpToNext(updated, 1));
-  assert.equal(preview.curve[0].step, 200);
-  assert.equal(preview.fights.find((fight) => fight.pool === 'normal').xp, 108);
-  assert.match(preview.killText, /power × 0\.2 × 50.*30 × 0\.2 × total enemy levels.*power 3 each give 120 XP/);
-  assert.equal(preview.skillText.includes('10 XP'), true);
-  assert.equal(preview.skillText.includes('150 XP'), true);
-  assert.equal(skillXpToNext(updated, 'weapon', 0), 150);
 });
 
 test('SPEC §13.4o caps: a skill stops at 10 and the class track at 20, banking the XP past the cap', async () => {

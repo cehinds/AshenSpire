@@ -29,7 +29,6 @@ import { MARKET_SHELVES, SHOP_KIND_SCREENS, shopStockProblems, shopSettingsProbl
 import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountShop } from '../src/ui/screens/shop.js';
-import { shopRowLabel } from '../src/ui/screens/settings.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase,
   armourPurchasePlan, commitArmourPurchase,
@@ -727,14 +726,9 @@ test('every addition stock and per-visit count is a whole number at the content 
   }
 });
 
-test('the market sigil offering has its own label; the blacksmith keeps "Sigil setting" (review, #1374)', () => {
+test('the market sigil offering has its own label; the blacksmith keeps "Sigil setting" (review, #1374; the Shops rows retired in 3e)', () => {
   assert.equal(t('settings.shops.offering.market.sigils'), 'Sigils');
   assert.equal(t('settings.shops.offering.sigils'), 'Sigil setting');
-  const rows = advancedConfigRows(contentBundle);
-  const market = rows.find((r) => r.key === `${PREFIX}market.sigils.enabled`);
-  const smith = rows.find((r) => r.key === `${PREFIX}blacksmith.sigils.enabled`);
-  assert.match(shopRowLabel(market.shopLabel), /Sigils:/);
-  assert.match(shopRowLabel(smith.shopLabel), /Sigil setting/);
 });
 
 test('inn rest is refused by a restDenied relic in its tag-list form, naming the relic (review, #1374)', () => {

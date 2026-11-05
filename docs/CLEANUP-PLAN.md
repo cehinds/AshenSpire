@@ -94,7 +94,7 @@ legacy path today; each area PR moves its tests onto the Core 2 helper (3c) or d
 | 3b | Delete `bundles/current`, `bundles/core-v1`, `packs/core-v1`, `presets/current.json`; regenerate `gameProfiles.js` and `game.lock.json` (runtime hash unchanged); delete or rewrite the Core 1 / current-only tests | done (#2529) |
 | 3c | Core 2 test helper (registries and runs bound to the default profile) | done (this PR) |
 | 3d | Collapse Core 1 vs Core 2 checks (`author.core === 'ashen.core@2.0.0'`, `fixCoreVersion`) | done (this PR) |
-| 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | todo |
+| 3e | Settings: legacy Advanced rows, `advancedConfig` run overrides | PR A done (this PR); PR B (snapshot overrides) pending; configuredContentBundle part deferred to 3i/3k |
 | 3f | Map: legacy `actmap` branch, `mapgen`, world atlas/journey, legacy dungeons, Custom Climb | todo |
 | 3g | Progression: class mastery, feats/class tree, keepsakes, manual level-up, legacy stat rows (prologue stays) | todo |
 | 3h | Rewards and shops: legacy offer and merchant flows | todo |

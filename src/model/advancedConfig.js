@@ -999,6 +999,16 @@ export function advancedConfigRows(bundle) {
 }
 
 /**
+ * The rows Core 2 still reads as settings: the opening and the presentation rows
+ * (cleanup row 3e). The Settings screen and the import door build THESE rather
+ * than the ~5,000 legacy mechanics rows `advancedConfigRows` also generates for
+ * the content-bundle path (`configuredContentBundle`), which is 3i/3k's to retire.
+ */
+export function liveAdvancedConfigRows(bundle) {
+  return withGates([...prologueRows(), ...presentationRows()], bundle);
+}
+
+/**
  * Every override switch's `own`, for the readers that must honour them.
  * Cached per bundle: `configuredContentBundle` asks on every call, and
  * rebuilding every row for it doubled that call's cost (review, #1260).
@@ -1462,7 +1472,29 @@ function tolerateRaisedFloors(entries, rows, warnings) {
   return kept.filter(([key]) => !skippedGroups.has(rows.get(key)?.floorGroup));
 }
 
-export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = []) {
+// THE RETIRED LEGACY SETTINGS GROUPS (cleanup row 3e). Core 2 reads none of the
+// Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World or
+// (bar `playInDeckOrder`) Deck rows, and the Settings screen no longer draws
+// them, so a file or sync profile exported while they existed still carries
+// their keys. They are dropped with one named warning, never refused as
+// unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
+// still settings. The plain-key settings game code still reads by key
+// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
+// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
+// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
+// the only one.
+const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+export function withoutRetiredLegacyGroups(entries, warnings) {
+  const kept = entries.filter(([key]) => !isRetiredLegacySettingKey(key));
+  if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
+  return kept;
+}
+
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = [], { dropRetiredLegacy = false } = {}) {
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
@@ -1471,7 +1503,9 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
   }
-  const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
+  // Dropped FIRST, before any migration reads the keys it would otherwise convert.
+  if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
+  const rows = new Map((dropRetiredLegacy ? liveAdvancedConfigRows(bundle) : advancedConfigRows(bundle)).map(row => [row.key, row]));
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
