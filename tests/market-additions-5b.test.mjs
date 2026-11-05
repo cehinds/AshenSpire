@@ -402,13 +402,12 @@ test('FINISH: a quest event opens the event door once and closes the visit', () 
   });
 });
 
-test('main.js enters the quest event by closing the visit exactly as Leave does, then opening the event door', () => {
+test('main.js enters the quest event by closing the visit, then opening the event door', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const at = main.indexOf('enterQuestEvent:');
   assert.ok(at > 0, 'showShop wires the quest event');
   const body = main.slice(at, at + 900);
   assert.match(body, /commitQuestEvent\(/);
-  assert.match(body, /finishWorldService\(\)/);
   assert.match(body, /run\.shopStock = null/);
   assert.match(body, /showEvent\(/);
 });

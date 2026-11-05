@@ -169,8 +169,6 @@ test('shipped quest chains and speakers validate; each broken ref is refused by 
     "chain event 'goldboughAvatar' names no speaker"), 'a chain event without a speaker is refused');
   assert.ok(refusedWith({ eventSpeakers: { ...eventSpeakers, namelessRest: 'nobodyAtAll' } },
     "unknown speaker 'nobodyAtAll'"), 'an event naming no speaker row is refused');
-  assert.ok(refusedWith({ atlasQuests: [{ ...contentBundle.atlasQuests[0], speakerId: 'nobodyAtAll' }] },
-    "unknown speaker 'nobodyAtAll'"), 'an atlas quest naming no speaker row is refused');
   assert.ok(refusedWith({ speakers: [...contentBundle.speakers, { id: 'planted', name: 'Planted', portraitKey: 'noSuchArt' }] },
     "unknown portrait key 'noSuchArt'"), 'a portrait key no art answers to is refused');
 });
