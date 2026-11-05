@@ -165,3 +165,22 @@ test('an old save holding core.reaverSpecial on a pending door or shop shelf sti
   }
   assert.ok(!gameProfileRewardPools(reg, reaver()).weaponArts.includes('core.reaverSpecial'));
 });
+
+import { gameProfileShopSalePlans } from '../src/model/gameProfileShopSales.js';
+
+test('a bought learnable art and a legacy reaverSpecial resell against their weaponArts purchase price, never above it', () => {
+  const run = reaver();
+  run.cinders = 100000;
+  run.gameProfileRewardOffers = { 'shop:d': { id: 'shop:d', source: 'shop', price: 10, options: [
+    { kind: 'weaponArts', id: 'executioner', price: 10 }, { kind: 'weaponArts', id: 'core.reaverSpecial', price: 10 }], takeCount: 2, taken: [], claimed: null } };
+  run.gameProfileOpenShop = 'd';
+  purchaseGameProfileShopOffer(reg, run, 'd', 0, null);
+  purchaseGameProfileShopOffer(reg, run, 'd', 1, null);
+  assert.equal(run.gameProfileShopPurchasePrices['weaponArts:executioner'], 10);
+  const plans = gameProfileShopSalePlans(reg, run, 'd').filter(plan => ['executioner', 'core.reaverSpecial'].includes(plan.def.id));
+  assert.equal(plans.length, 2);
+  for (const plan of plans) {
+    assert.equal(plan.kind, 'weaponArts', `${plan.def.id} is classified as a weapon art`);
+    assert.ok(plan.price > 0 && plan.price <= Math.floor(10 * reg.balance.shop.sellFraction), `${plan.def.id} resale ${plan.price} within the purchase ceiling`);
+  }
+});
