@@ -99,7 +99,7 @@ const RAIL_LABEL = {
 // of saved stock and its atomic transaction; this adapter only presents it.
 // A shop card has no selection step, so it wears the shared (i) badge always (merchantOffer.js shows it); the
 // reading it opens carries no purchase or play verbs (`only: []`), and buying stays on the row's own button.
-const shopCardOptions = Object.freeze({ level: 'glance', infoBadge: true, actionOwnsTouch: true, surface: 'shop', only: [] });
+const shopCardOptions = Object.freeze({ level: 'glance', infoBadge: true, surface: 'shop', only: [] });
 
 export function mountConfiguredShop(app, { registries, run, offer, onTake, onSell, onLeave, meta, hud = null }) {
   const previousCategory = app.querySelector('.merchant-workspace')?.dataset.shopContent;
