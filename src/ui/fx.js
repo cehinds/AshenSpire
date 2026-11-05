@@ -1087,12 +1087,15 @@ const traceBeat = (step, detail) => {
   if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
 };
 
-// The receipt that says a beat's actor changes stance: Core 2 card plays emit combatStanceChanged (prepareTacticalCard /
-// setCombatStance); the legacy enterStance effect emits stanceEntered. Both are drawn before the action (owner 2026-11-05).
+// The receipt that makes the actor's stance figure change in a beat. The player's stance sprite follows every card
+// play (createStanceLedger.accept on cardPlayed), so cardPlayed leads; Core 2 plays also emit combatStanceChanged
+// (prepareTacticalCard / setCombatStance) and the legacy enterStance effect emits stanceEntered. All three are drawn
+// before the action word and animation (owner 2026-11-05); the stance receipts are preferred for the trace detail.
 const STANCE_LEAD_TYPES = new Set(['stanceEntered', 'combatStanceChanged']);
 function stanceLeadEvent(beat) {
   return beat.events.find(e => STANCE_LEAD_TYPES.has(e.type)
-    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId));
+    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId))
+    || beat.events.find(e => e.type === 'cardPlayed');
 }
 
 // Is this figure in its stance? 'out' — mid-action or in a pose other than its

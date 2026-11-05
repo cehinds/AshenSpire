@@ -100,7 +100,7 @@ test('a stance-changing attack plays stance change, then the action animation, t
 
 // Core 2 card plays change stance through prepareTacticalCard / setCombatStance, which emit combatStanceChanged
 // (stanceEntered belongs to the legacy enterStance effect). The receipts here come from the engine, not by hand.
-test('a Core 2 card play emits combatStanceChanged and leads with the stance before the action and the hit', (t) => {
+function core2CardEvents() {
   const registries = createRegistries(contentBundle);
   const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20, stamina: 20, maxStamina: 20, energyMax: 20,
@@ -109,7 +109,10 @@ test('a Core 2 card play emits combatStanceChanged and leads with the stance bef
   const { events } = dispatch(combat, { type: 'playCard', cardInstanceId: 'x', targetId: enemyId });
   assert.ok(events.some(e => e.type === 'combatStanceChanged'), 'Core 2 emits combatStanceChanged');
   assert.ok(!events.some(e => e.type === 'stanceEntered'), 'and not the legacy stanceEntered');
+  return { events, enemyId };
+}
 
+function leadOrder(t, events) {
   setCombatPacing();
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   t.mock.method(globalThis.performance, 'now', () => Date.now());
@@ -132,7 +135,19 @@ test('a Core 2 card play emits combatStanceChanged and leads with the stance bef
   });
   assert.equal(completed, 1);
   assert.ok(applied > 0);
-  assert.deepEqual(order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit')).slice(0, 3),
-    ['stance:combatStanceChanged', 'action', 'hit']);
+  return order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit'));
+}
+
+test('a Core 2 card play emits combatStanceChanged and leads with the stance before the action and the hit', (t) => {
+  const { events } = core2CardEvents();
+  const order = leadOrder(t, events);
+  assert.deepEqual(order.slice(0, 3), ['stance:combatStanceChanged', 'action', 'hit']);
   assert.equal(order.filter(step => step.startsWith('stance')).length, 1, 'the stance leads exactly once');
+});
+
+test('an ordinary card play with no stance receipt still leads on cardPlayed, before the action and the hit', (t) => {
+  // The stance sprite follows every cardPlayed through the held-stance ledger, so that receipt must lead too.
+  const { events } = core2CardEvents();
+  const order = leadOrder(t, events.filter(e => e.type !== 'combatStanceChanged'));
+  assert.deepEqual(order.slice(0, 3), ['stance:cardPlayed', 'action', 'hit']);
 });
