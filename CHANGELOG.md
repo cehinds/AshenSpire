@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-05
 
+- **Combat layout fixed after start** ([#2564](https://github.com/cehinds/AshenSpire/pull/2564), `0.7.3.138`). HUDs, intents and shadows stay put through stances and swings; a stance card shows its stance before the action animation; the stance badge is gone; the player's overhead HUD is always shown.
 - **Upgrade modal shows the armament.** ([#2557](https://github.com/cehinds/AshenSpire/pull/2557), `0.7.3.138`). The Blacksmith and rest upgrade modal shows the armament's own card, current tier against next, instead of one of its cards' damage.
 - **Legacy dungeons and Custom Climb removed.** ([#2553](https://github.com/cehinds/AshenSpire/pull/2553), `0.7.3.136`). The unreachable legacy dungeons and Custom Climb screens, mods and endless mode are gone; the Core climb is unchanged.
 - **Shop (i) clear of the art.** ([#2554](https://github.com/cehinds/AshenSpire/pull/2554), `0.7.3.134`). Shop card (i) buttons no longer cover the card's thumbnail art; they sit in their own spot under it.
