@@ -483,6 +483,7 @@ function stackFor(layer, anchor) {
       maxVisible: (item) => maxVisibleFor(rec, item),
       alive: (item) => floaterHostAlive(item),
       maxQueued: FLOATER_STACK.floaterMaxQueued,
+      fadeMs: FLOATER_EARLY_MS + 20,
       staggerMinMs: () => floaterStaggerMinMs(),
       show: (item, entry) => showFloater(rec, item, entry),
       fadeEarly: (entry) => fadeFloaterEarly(entry),

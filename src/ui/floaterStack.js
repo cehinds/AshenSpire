@@ -24,13 +24,15 @@ export const FLOATER_STACK = Object.freeze({ ...uiConfig.presentation.floaterSta
  * @param {(entries: object[]) => void} [o.layout]        a floater spawned: re-lift the visible ones by `entry.slot`
  * @param {number} [o.maxQueued]      more than this many waiting shrinks the stagger to `staggerMinMs` so the backlog drains
  * @param {() => number} [o.staggerMinMs]  the shrunk stagger (read on every spawn)
+ * @param {number} [o.fadeMs]         how long an evicted floater keeps its (highest) slot while it fades; it is re-lifted on every spawn meanwhile
  *
  * A pushed item with `immediate: true` (a damage number) never waits: it spawns at once at the bottom of the
  * column, takes the next slot, and restarts the stagger clock for whatever is still waiting.
  */
-export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVisible, show, fadeEarly = () => {}, layout = () => {}, alive = () => true, maxQueued = Infinity, staggerMinMs = () => 1 }) {
+export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVisible, show, fadeEarly = () => {}, layout = () => {}, alive = () => true, maxQueued = Infinity, staggerMinMs = () => 1, fadeMs = 0 }) {
   let seq = 0;
   let visible = [];
+  let fading = [];
   let pending = [];
   let lastSpawn = -Infinity;
   let timer = null;
@@ -47,23 +49,23 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
   }
   function relayout() {
     visible.forEach((entry, i) => { entry.slot = visible.length - 1 - i; });
-    layout(visible);
+    // Evicted floaters still fading stay above the column, oldest highest, and are re-lifted with every change.
+    fading.forEach((entry, i) => { entry.slot = visible.length + fading.length - 1 - i; });
+    layout(fading.length ? visible.concat(fading) : visible);
   }
   function spawn(item = pending.shift()) {
     const t = now();
     lastSpawn = t;
     const limit = Math.max(1, Math.floor(maxVisible(item)) || 1);
     // Make room: the oldest leaves early (it is already the highest in the column). The new one is the extra.
-    const evicted = [];
-    while (visible.length >= limit) { const old = visible.shift(); old.leaving = true; evicted.push(old); fadeEarly(old); }
+    while (visible.length >= limit) {
+      const old = visible.shift(); old.leaving = true; fading.push(old); fadeEarly(old);
+      if (old.timer != null) clearTimer(old.timer);
+      old.fadeTimer = setTimer(() => { fading = fading.filter((e) => e !== old); }, Math.max(1, fadeMs));
+    }
     const entry = { item, spawnedAt: t, expiresAt: t + Math.max(0, Number(item.lifeMs) || 0), slot: 0, leaving: false, handle: null };
     visible.push(entry);
     relayout();
-    // An evicted floater is still on screen for its fade: it stays the highest in the column, lifted with the rest.
-    if (evicted.length) {
-      evicted.forEach((old, i) => { old.slot = visible.length + evicted.length - 1 - i; });
-      layout(evicted);
-    }
     entry.handle = show(item, entry);
     if (entry.expiresAt > t) {
       entry.timer = setTimer(() => {
@@ -127,7 +129,8 @@ export function createFloaterStack({ now, setTimer, clearTimer, staggerMs, maxVi
       pending = [];
       if (timer !== null) { clearTimer(timer); timer = null; }
       for (const entry of visible) if (entry.timer != null) clearTimer(entry.timer);
-      visible = [];
+      for (const entry of fading) if (entry.fadeTimer != null) clearTimer(entry.fadeTimer);
+      visible = []; fading = [];
     },
   };
 }

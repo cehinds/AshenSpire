@@ -224,12 +224,21 @@ test('more than maxQueued waiting shrinks the stagger so the backlog drains', ()
   assert.ok(gaps.slice(5).every((g) => g === 320), 'normal once the backlog is within the cap');
 });
 
-test('a floater the cap evicts is lifted above the rest during its fade', () => {
-  const { c, push, layouts, faded } = make({ max: 2 });
+test('floaters the cap evicts are lifted above the rest on every spawn, never sharing a slot', () => {
+  const c = clock();
+  const layouts = [];
+  const stack = createFloaterStack({
+    ...c, staggerMs: () => 320, maxVisible: () => 2, fadeMs: 500, show: () => null, fadeEarly: () => {},
+    layout: (entries) => layouts.push(entries.map((e) => [e.item.id, e.slot])),
+  });
+  const push = (id) => stack.push({ id, lifeMs: 100000 });
   push('a'); c.advance(320); push('b'); c.advance(320); push('c');
-  assert.deepEqual(faded.map((f) => f.id), ['a']);
-  const last = layouts.at(-1);
-  assert.deepEqual(last, [['a', 2]], 'the evicted one is lifted past the two that stay');
+  assert.deepEqual(layouts.at(-1), [['b', 1], ['c', 0], ['a', 2]], 'a is evicted and sits above the two that stay');
+  c.advance(320); push('d');
+  assert.deepEqual(layouts.at(-1), [['c', 1], ['d', 0], ['a', 3], ['b', 2]], 'a is lifted again; b joins it above, in its own slot');
+  c.advance(600);
+  push('e');
+  assert.ok(layouts.at(-1).every(([id]) => id !== 'a' && id !== 'b'), 'a floater that finished fading no longer takes a slot');
 });
 
 test('a waiting floater whose host reports it gone is dropped; the others still spawn', () => {
