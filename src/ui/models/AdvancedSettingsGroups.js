@@ -2,17 +2,15 @@ import { WIREFRAME_CHOICE_GROUPS } from './WireframeChoiceModel.js';
 
 // Presentation only: every setting keeps its existing key and value semantics.
 //
-// Core 2 shows the Opening, Interface, Text, Battlefield, Wireframes and Export
+// Core 2 shows the Opening, Interface, Text, Wireframes and Export
 // sections plus Play in deck order under Deck (cleanup row 3e retired the
 // Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World
 // tabs with the rows behind them). The model files each row (`advancedGroup`);
 // the exceptions below are the presentation rows whose one model group,
 // Interface, spans three tabs.
-const BATTLEFIELD = /^gameConfig\.presentation\.(?!settings(Width|Height)Percent$)/;
 export function advancedSection(row) {
   if (row.key === 'creationAutoAdvance') return 'Progression';
   if (/^gameConfig\.presentation\.settings(Width|Height)Percent$/.test(row.key) || row.key === 'uprightGate') return 'Wireframes';
-  if (BATTLEFIELD.test(row.key)) return 'Battlefield';
   return row.advancedGroup || 'Interface';
 }
 
@@ -27,12 +25,6 @@ function topic(row, section) {
   if (row.debugTopic) return 'Diagnostics';
   if (row.textTopic) return row.textTopic;
   if (row.prologueTopic) return row.prologueTopic;
-  if (section === 'Battlefield') {
-    if (/movement|Activation|selectionColor/.test(key)) return 'Movement';
-    if (/row[A-F]|front|back|formation|groundTilt|groundSkew|gridShape|showFormationGrid/.test(key)) return 'Formation layout';
-    if (/Spawn|SpriteScale/.test(key)) return 'Characters';
-    return 'Formation grid';
-  }
   if (section === 'Wireframes') return 'Window';
   if (section === 'Export') return 'Configuration file';
   if (section === 'Interface') {
@@ -62,7 +54,6 @@ export function advancedSubgroups(rows, section) {
     const rank = (id) => (order.indexOf(id) < 0 ? order.length : order.indexOf(id));
     result.sort((a, b) => rank(a.id) - rank(b.id));
   };
-  if (section === 'Battlefield') byOrder(['Formation layout', 'Formation grid', 'Characters', 'Movement']);
   // Modals, then Menus, then Scenes: outermost surface first, and the order the
   // catalogue itself is written in — discovered, not restated, so the two
   // cannot disagree about which family comes first. Cards and the settings

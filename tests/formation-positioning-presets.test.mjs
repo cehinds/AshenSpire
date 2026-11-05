@@ -18,19 +18,17 @@ for (const [layout, source] of Object.entries(FORMATION_POSITIONING_PRESETS)) {
       }
     }
   });
-  test(`${layout} supplies default groups while retaining explicit edits`, () => {
-    const supplied = suppliedFormationPositioning(layout);
-    const settings = {...SETTINGS_DEFAULTS.values,
-      'gameConfig.presentation.formationColumns':supplied.formationColumns,
-      'gameConfig.presentation.formationRows':supplied.formationRows};
-    assert.equal(presentationConfig(settings).formationGroups, supplied.formationGroups);
-    settings['gameConfig.presentation.formationGroups']='[]';
-    assert.equal(presentationConfig(settings).formationGroups,'[]');
-  });
 }
 test('unprovided layouts remain independent and returned drafts cannot mutate the presets', () => {
   assert.equal(suppliedFormationPositioning('2x3'),null);
   const draft=suppliedFormationPositioning('1x1');
   draft.formationGroups='[]';
   assert.notEqual(suppliedFormationPositioning('1x1').formationGroups,'[]');
+});
+
+// Owner, 2026-11-05: formationGroups is a retired key; presentationConfig() derives it from the
+// fixed formation and ignores a stored value.
+test('a stored formationGroups value is ignored', () => {
+  const base = presentationConfig({}).formationGroups;
+  assert.equal(presentationConfig({ 'gameConfig.presentation.formationGroups': '[]' }).formationGroups, base);
 });

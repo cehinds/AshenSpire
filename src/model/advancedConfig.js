@@ -719,6 +719,13 @@ function explicitRows(bundle) {
   return rows;
 }
 
+// THE PRESENTATION MODEL. The formation, grid, spawn, layer, offset and movement values the combat
+// battlefield stage and formation movement read. None of them is a setting any more (owner,
+// 2026-11-05): Core draws its formation from the viewport model, and presentationConfig() reads a
+// stored value for only the live keys (the panel size pair and showFormationGrid, LIVE_PRESENTATION_KEYS).
+// Every other stored key is deleted at boot (retiredStoredSettingKeys, main.js) and dropped by Reset,
+// sync and import, so in play they are always PRESENTATION_DEFAULTS. The reader stays because Core
+// combat still consumes the config (docs/CLEANUP-PLAN.md, 3e follow-up).
 const PRESENTATION_ROWS = Object.freeze([
   ...FORMATION_FIELDS.map(field => ({ ...field, note: 'Preview and apply in Formation layout. Grid dimensions are shared by both sides.' })),
   ...[...FORMATION_ROWS].flatMap(row => [
@@ -736,7 +743,7 @@ const PRESENTATION_ROWS = Object.freeze([
   { key: 'settingsHeightPercent', label: 'Settings panel height', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings panel may use.' },
 ]);
 
-function presentationRows() {
+function presentationModelRows() {
   return [
     { cat: 'Advanced', advancedGroup: 'Interface', type: 'text', presentationKey: 'formationGroups',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.formationGroups`, def: '[]', maxLength: 20000, label: 'Formation groups', note: 'Saved group offsets and member positions.' },
@@ -813,6 +820,15 @@ function presentationRows() {
       note: 'Numbered left to right across the battlefield. A column outside this team’s grid uses the nearest valid column. Front is nearer the center.',
     })),
   ];
+}
+
+
+// The one presentation row still a setting: how much of the viewport the Settings panel uses.
+const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
+const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
+function presentationRows() {
+  return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
 }
 
 /**
@@ -1384,7 +1400,8 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
 
 export function presentationConfig(settings = {}) {
   const values = { ...PRESENTATION_DEFAULTS };
-  for (const row of presentationRows()) {
+  // Only a live row's key is read: the battlefield keys are retired, so a stored one never drives combat.
+  for (const row of presentationModelRows().filter((r) => LIVE_PRESENTATION_KEYS.includes(r.presentationKey))) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
     if (row.presentationKey === 'formationGroups') {
@@ -1401,7 +1418,8 @@ export function presentationConfig(settings = {}) {
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, row.integer ? Math.round(number) : number));
     }
   }
-  if (!(`${ADVANCED_CONFIG_PREFIX}presentation.formationGroups` in settings)) {
+  {
+    // formationGroups is retired (no row reads a stored value): always derived from the formation.
     values.formationGroups = suppliedFormationPositioning(`${values.formationColumns}x${values.formationRows}`)?.formationGroups || '[]';
   }
   return values;
@@ -1465,14 +1483,16 @@ function tolerateRaisedFloors(entries, rows, warnings) {
 // unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
 // still settings. The plain-key settings game code still reads by key
 // (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
-const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.)|recovery\.(hp|stamina|mana)\.)/;
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
 // A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
 // mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
 // the only one.
 const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
-export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment and World settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
 /** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
 export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+/** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
+export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
 export function withoutRetiredLegacyGroups(entries, warnings) {
   const kept = entries.filter(([key]) => !isRetiredLegacySettingKey(key));
   if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
@@ -1491,6 +1511,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // Dropped FIRST, before any migration reads the keys it would otherwise convert.
   if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
   const rows = new Map((dropRetiredLegacy ? liveAdvancedConfigRows(bundle) : advancedConfigRows(bundle)).map(row => [row.key, row]));
+  // The combat-tools grid key has no Settings control but is still a live, importable key.
+  for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
