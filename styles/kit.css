@@ -1778,7 +1778,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
   /* An odd last choice (3 or 5 offered) centres under the pair above it instead of hugging the left column. */
-  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
+  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
   .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
   .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
