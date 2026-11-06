@@ -84,13 +84,18 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     // (size.x); the foot inset then only keeps the ground inside the cell.
     const moved = (size.slid === true || trustSizeX) && Number.isFinite(size.x);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
-    // Owner 2026-11-05: the party's feet stand inside their strip like the enemies', not on its bottom edge line.
-    // The party keeps its own x (its fit already cleared its neighbours); only the ground takes the shadow inset.
+    // Owner 2026-11-06: every figure's feet (its shadow's centre) stand inside the DRAWN cell, footInCellFraction of
+    // the cell's height above its bottom line, never on a line. The drawn cell is the slot's own box.
+    // The party keeps its own x (its fit already cleared its neighbours); only the ground moves.
     const shadowHeight = (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08;
-    const inner = actor.slot.box ? insetPerspectiveFootprint(actor.slot, { width: halfWidth * 2, height: shadowHeight }) : null;
-    const stripFits = inner && actor.slot.box.height >= shadowHeight + 2 * uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx;
+    const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const box = actor.slot.box;
+    const wanted = box ? { ...actor.slot, ground: box.top + box.height * (1 - grid.footInCellFraction) } : actor.slot;
+    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight }) : null;
+    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx;
     // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
-    const foot = inner ? (actor.side === 'enemy' ? inner : { x, ground: stripFits ? inner.ground : actor.slot.box.top + actor.slot.box.height / 2 }) : { x, ground: actor.slot.ground };
+    const ground = inner ? (stripFits ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
+    const foot = inner ? (actor.side === 'enemy' ? { x: inner.x, ground } : { x, ground }) : { x, ground };
     // A lone player's feet never stand inside the hand area: the ground line
     // moves up to the hand's top edge (the fit already sized the body for it).
     if (actor.side === 'player' && solo && Number.isFinite(handTop)) foot.ground = Math.min(foot.ground, handTop);

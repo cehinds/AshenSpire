@@ -86,6 +86,8 @@
       "bodyWidthFraction": 0.8,
       "bodyWidthMaxPx": 180,
       "footprintInsetPx": 6,
+      "footInCellFraction": 0.35,
+      "handLiftMaxFraction": 0.12,
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {

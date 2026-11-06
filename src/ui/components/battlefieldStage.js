@@ -745,7 +745,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
-    alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, formFactor: document.documentElement.dataset.formFactor });
+    // The resting hand's top, in field px, as the previous pass settled it (the hand lays out after this read, so its
+    // live rect is not yet final): the grid rises so the party's front strip stands above it (handLiftMaxFraction).
+    const planHandTop = layoutState.handAnchor?.top;
+    alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop : null, formFactor: document.documentElement.dataset.formFactor });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
