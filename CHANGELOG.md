@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-06
+
+- **Menus return where you were** ([#2589](https://github.com/cehinds/AshenSpire/pull/2589), `0.7.3.182`). After upgrading a card you land back on the refreshed list, Back buttons name the place you're in (Back to Blacksmith, Shrine, Merchant, Rewards), and the Armoury reopens on the last tab you used.
+
 ## 2026-11-05
 
 - **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.182`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
