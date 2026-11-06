@@ -90,6 +90,14 @@ const SW_KILL_RUN = SW_KILL || has('--sw-kill');
 // folder) keep their shape until they age out of --keep.
 const WEB_DIR = 'web';
 const DOWNLOAD_PATH = 'download/AshenSpire.html';
+// THE OFFLINE FILE IS KEPT FOR ONE BUILD PER CHANNEL (2026-11-06). Each pack build's
+// download/ is a ~157 MB single file and the site held six copies per channel (five
+// builds plus /latest/), which put the Pages artifact at 5.2 GB (run 42174299001;
+// Pages 1 GB limit). Now only a primary channel's newest build carries it (its
+// /latest/ copy is the README link and the in-game download reads the newest
+// ordinal's file); older builds and the alternative channels are Play-only.
+// The build's page and art in the store are untouched, so Play works for all of them.
+export const downloadKept = (branch, newest) => newest && !branch.startsWith('alternative/');
 // BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
 //
 // Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
@@ -198,7 +206,10 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 // and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
 // docs/preview was removed (owner decision 2026-11-04).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
-const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
+// docs/preview and docs/design are excluded too (owner decision 2026-11-04; they
+// were 163 MB and 79 MB on main, and cc505ac9ce only dropped docs/preview from the
+// KEPT list, so main's tree still shipped both: measured in run 42174299001).
+const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music', 'docs/preview', 'docs/design']);
 // Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
 const BASE_TREE_KEPT_DIRS = Object.freeze(['assets']);
 const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
@@ -670,7 +681,9 @@ function downloadLink(rel, b, label = 'Download', edition = 'full') {
   return `<a class="play dl" href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(label)}</a>`;
 }
 /** Both download buttons for one build, sized; the mobile one only when the build has it. */
+const ARCHIVED_NOTE = 'Play only: the offline file is kept for the newest build of each channel';
 function downloadButtons(rel, b, suffix) {
+  if (b.downloadArchived) return `<span class="meta">${ARCHIVED_NOTE}.</span>`;
   // A LIGHT BUILD (dev/test since 2026-09-26) is one file with phone-sized art
   // and no mobile twin; calling it "full" would promise art it does not carry.
   if (b.shape === 'pack') return downloadLink(rel, b, `Download${suffix} — light art single file (${mb(downloadBytes(b))})`, 'full');
@@ -680,6 +693,7 @@ function downloadButtons(rel, b, suffix) {
   return full + mobile;
 }
 function tableDownload(rel, b, edition) {
+  if (b.downloadArchived && edition === 'full') return `<span class="meta">— (${ARCHIVED_NOTE})</span>`;
   if (edition === 'mobile' && b.shape === 'pack') return '<span class="meta">— (web edition: its download is the light single file)</span>';
   if (edition === 'mobile' && b.edition === 'light' && !b.mobileBytes) return '<span class="meta">— (light build: the one file is already phone-sized)</span>';
   if (edition === 'mobile' && !b.mobileBytes) return '<span class="meta">— (predates the mobile edition)</span>';
@@ -1143,13 +1157,20 @@ function publishBuild(outDir, b, a) {
     b.shape = 'pack';
     const { pin } = publishPack(outDir, rel, html, a.web.from);
     b.tier = pin.tier || null;
-    // THE DOWNLOAD, KEPT WHOLE: the light single file, beside the page.
-    const target = join(dir, DOWNLOAD_PATH);
-    mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, a.download);
-    if (Buffer.compare(readFileSync(target), a.download) !== 0) throw new Error(`${rel}: written download differs from its source`);
-    b.download = { path: DOWNLOAD_PATH, bytes: a.download.length, sha256: sha256(a.download) };
-    checks++;
+    if (b.downloadArchived) {
+      // Archived: no download/ on the site, so build.json names none and the
+      // in-game downloader refuses it ("not ready") rather than saving a game
+      // with no art (see the top-level `bytes: null` below).
+      b.download = null;
+    } else {
+      // THE DOWNLOAD, KEPT WHOLE: the light single file, beside the page.
+      const target = join(dir, DOWNLOAD_PATH);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, a.download);
+      if (Buffer.compare(readFileSync(target), a.download) !== 0) throw new Error(`${rel}: written download differs from its source`);
+      b.download = { path: DOWNLOAD_PATH, bytes: a.download.length, sha256: sha256(a.download) };
+      checks++;
+    }
   } else {
     b.shape = 'single';
     writeFileSync(join(dir, 'index.html'), html);
@@ -1321,6 +1342,7 @@ function assemble(outDir, keep) {
     const builds = [];
     for (const b of listed) {
       if (!served.has(b)) continue;
+      if (served.get(b).web) b.downloadArchived = !downloadKept(branch, builds.length === 0);
       try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
       catch (error) {
         if (!error.refused) throw error;
@@ -1382,6 +1404,11 @@ function assemble(outDir, keep) {
   // it is the mobile failure this pass exists to remove, moved one layer out.
   for (const d of branchData) for (const b of d.builds) {
     for (const edition of b.mobileBytes ? ['full', 'mobile'] : ['full']) {
+      if (b.downloadArchived && edition === 'full') {
+        if (existsSync(join(outDir, downloadHref('', b, edition)))) throw new Error(`${d.branch}/${b.ordinal} is archived but still carries its download`);
+        checks++;
+        continue;
+      }
       const href = downloadHref('', b, edition);
       if (!root.includes(`href="${href}" download="`)) throw new Error(`root index does not offer a ${edition} download for ${d.branch}/${b.ordinal}`);
       if (!existsSync(join(outDir, href))) throw new Error(`${edition} download target missing on disk: ${href}`);
@@ -1440,7 +1467,10 @@ function check(outDir) {
       // THE DOWNLOAD, KEPT WHOLE: the light single file the build list and
       // offlineDownload.js name, present with the bytes recorded for it.
       const file = join(bdir, b.download?.path || DOWNLOAD_PATH);
-      if (!b.download || !existsSync(file)) red(`MISSING ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the build's Download names it and the site has no such file`);
+      if (b.downloadArchived) {
+        if (existsSync(file) || b.download || download.download) red(`ARCHIVED ${d.branch}/${b.ordinal} still carries a download that is said to be archived`);
+        else checks++;
+      } else if (!b.download || !existsSync(file)) red(`MISSING ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the build's Download names it and the site has no such file`);
       else {
         const bytes = readFileSync(file);
         const meta = download.download || {};
