@@ -586,6 +586,11 @@ export function lfsPointerSize(text) {
   const m = /^version https:\/\/git-lfs\.github\.com\/spec\/v1\n[\s\S]*?\nsize (\d+)\n?/.exec(String(text));
   return m ? Number(m[1]) : null;
 }
+/** The cap reason for the text of a committed file when it is an over-cap LFS pointer, else null. Pure. */
+export function pointerOversize(text) {
+  const n = lfsPointerSize(text);
+  return n === null ? null : oversizeReason(n);
+}
 /** A reason string when a committed inline file of `bytes` is too big to serve, else null. Pure. */
 export function oversizeReason(bytes) {
   return bytes > LEGACY_SINGLE_MAX_BYTES ? `its committed single file is ${(bytes / 1e6).toFixed(0)} MB, over the ${(LEGACY_SINGLE_MAX_BYTES / 1e6).toFixed(0)} MB cap for a legacy inline build (the site size guard)` : null;
@@ -595,9 +600,10 @@ export function oversizeReason(bytes) {
 function artifactsOf(b) {
   if (b.source === 'git') {
     // Judge the size from the LFS pointer first, so an oversized build is never fetched.
-    let pointer = null;
-    try { pointer = lfsPointerSize(git(['show', `${b.sha}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { /* not readable as text: judged after the fetch */ }
-    const tooBig = pointer !== null ? oversizeReason(pointer) : null;
+    let pointerText = '';
+    // The selftest's simulated purge must reach committedArtifact, so no pre-fetch cap check then.
+    if (!SIMULATE_PURGE) try { pointerText = git(['show', `${b.sha}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { /* not readable as text: judged after the fetch */ }
+    const tooBig = pointerOversize(pointerText);
     if (tooBig) return { error: tooBig };
     const html = committedArtifact(b.sha, 'AshenSpire.html');
     if (!html) return { error: 'its committed HTML can no longer be fetched (LFS object unavailable)' };

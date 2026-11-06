@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys, lfsPointerSize, oversizeReason, LEGACY_SINGLE_MAX_BYTES, latestDownloadStub } from '../tools/pages-site.mjs';
+import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys, lfsPointerSize, oversizeReason, LEGACY_SINGLE_MAX_BYTES, latestDownloadStub, pointerOversize } from '../tools/pages-site.mjs';
 
 // The Pages artifact must stay well under 1 GB (run 42174299001 was 5.2 GB and
 // timed out in deploy-pages). These rules are what keeps it there.
@@ -122,4 +122,20 @@ test('latest/download is a redirect stub to the newest build, not a second copy 
   assert.ok(html.length < 1000);
   assert.match(html, /url=\.\.\/\.\.\/210\/download\/AshenSpire\.html/);
   assert.match(html, /location\.replace\("\.\.\/\.\.\/210\/download\/AshenSpire\.html"\)/);
+});
+
+test('pointerOversize refuses an over-cap pointer and ignores non-pointers and an empty read', () => {
+  const ptr = (n) => `version https://git-lfs.github.com/spec/v1\noid sha256:${'b'.repeat(64)}\nsize ${n}\n`;
+  assert.match(pointerOversize(ptr(255185771)), /over the 150 MB cap/);
+  assert.equal(pointerOversize(ptr(56e6)), null);
+  assert.equal(pointerOversize(''), null, 'the simulated-purge path passes no pointer text, so it reaches committedArtifact');
+  assert.equal(pointerOversize('<!doctype html>'), null);
+});
+
+const site = readFileSync(new URL('../tools/pages-site.mjs', import.meta.url), 'utf8');
+test('artifactsOf applies the pointer cap before the fetch and not under the simulated purge', () => {
+  const body = site.slice(site.indexOf('function artifactsOf'));
+  assert.match(body, /if \(!SIMULATE_PURGE\) try \{ pointerText = git\(/);
+  assert.ok(body.indexOf('pointerOversize(pointerText)') < body.indexOf("committedArtifact(b.sha, 'AshenSpire.html')"));
+  assert.match(body, /if \(tooBig\) return \{ error: tooBig \}/);
 });
