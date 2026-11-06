@@ -139,10 +139,18 @@ try {
     }));
     const player = rows.find(row => row.id === 'player');
     assert.ok(player?.cellWidth > 20, `${tag}: the player's cell width is published (cell ${player?.cell})`);
+    // Armed with a Strike, every living enemy is a legal target, so every enemy's panel shows (a row that does not is a failure,
+    // not a row to skip). Width is the `.target-hud-detail` shell's, as in the blocks above.
+    for (const row of rows.filter(row => row.id !== 'player')) assert.ok(row.shown, `${tag} ${row.id} (${row.cell}): the enemy's panel shows once a Strike is armed`);
+    assert.ok(rows.some(row => row.id !== 'player' && row.shown), `${tag}: at least one enemy panel was checked`);
     for (const row of rows.filter(row => row.shown)) {
-      assert.ok(Math.abs(row.width - row.cellWidth) <= 2, `${tag} ${row.id} (${row.cell}): panel ${row.width.toFixed(1)} is as wide as its cell ${row.cellWidth.toFixed(1)}`);
+      const name = `${tag} ${row.id} (${row.cell})`;
+      assert.ok(row.panel && row.info, `${name}: its panel and Inspect control exist`);
+      assert.ok(Math.abs(row.width - row.cellWidth) <= 2, `${name}: panel ${row.width.toFixed(1)} is as wide as its cell ${row.cellWidth.toFixed(1)}`);
       assert.ok(row.info.left >= row.panel.left - 1 && row.info.right <= row.panel.right + 1 && row.info.top >= row.panel.top - 1 && row.info.bottom <= row.panel.bottom + 1,
-        `${tag} ${row.id} (${row.cell}): Inspect ${JSON.stringify(row.info)} is inside its panel ${JSON.stringify(row.panel)}`);
+        `${name}: Inspect ${JSON.stringify(row.info)} is inside its panel ${JSON.stringify(row.panel)}`);
+      assert.ok(row.panel.right - row.info.right <= 7 && row.info.top - row.panel.top <= 7,
+        `${name}: Inspect stands in the panel's top-right corner (${(row.panel.right - row.info.right).toFixed(1)} from the right, ${(row.info.top - row.panel.top).toFixed(1)} from the top)`);
     }
     assert.ok(rows.some(row => row.id === 'player' && row.shown), `${tag}: the player's panel is showing`);
     await page.close();
