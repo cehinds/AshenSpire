@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-06
+
+- **Combat redraws less** ([#2592](https://github.com/cehinds/AshenSpire/pull/2592), `0.7.3.182`). The battlefield now rewrites a figure's data and style only when something changed, so a screen resize no longer rewrites 158 unchanged attributes.
+
 ## 2026-11-05
 
 - **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.182`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
