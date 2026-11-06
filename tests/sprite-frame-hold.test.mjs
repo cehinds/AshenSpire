@@ -10,15 +10,15 @@ const clip = { frameMs: 100, impactIndex: 5, frames: Array.from({ length: 9 }, (
 const component = { normalLungeMs: 260, references: { attack: 'a' }, clips: { a: clip }, poseRoles: {}, frames: {} };
 
 test('frame hold follows the step duration and the Combat speed; Instant drops it', () => {
-  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1 });
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1, animationStepDuration: 390 });
   // Re-pinned 2026-11-02 (sprite pacing): the hold is 1000 / spriteActionFps (9 fps) = 111 ms at x1, not
   // 0.28 of the step (109 ms), and it no longer drops below frameHoldMinMs (75 ms) at a short step or high speed.
   assert.equal(frameHoldMs(), 111, '9 fps at x1 -> 111 ms');
   setCombatPacing({ combatSpeed: 1, animationStepDuration: 195 });
   assert.equal(frameHoldMs(), 75, 'Mobile fast preset: floored at 75 ms (was 55 ms, 18 fps)');
-  setCombatPacing({ combatSpeed: 2 });
+  setCombatPacing({ combatSpeed: 2, animationStepDuration: 390 });
   assert.equal(frameHoldMs(), 75, 'x2 reaches the floor, not 25 fps');
-  setCombatPacing({ combatSpeed: 1.25 });
+  setCombatPacing({ combatSpeed: 1.25, animationStepDuration: 390 });
   assert.equal(frameHoldMs(), 89, 'the default x1.25: 11 fps');
   assert.equal(idleFrameMs(), 114, 'idle: 7 fps at x1, 114 ms at x1.25');
   setAnimSpeed('instant'); assert.equal(frameHoldMs(), 0);
@@ -27,7 +27,7 @@ test('frame hold follows the step duration and the Combat speed; Instant drops i
 });
 
 test('an authored clip never plays a frame faster than the hold, and the total grows to match', () => {
-  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1 });
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1, animationStepDuration: 390 });
   const speed = actionPacing().spriteSpeed;
   assert.equal(speed.minFrameMs, 111); // re-pinned 2026-11-02: 9 fps (was 109 ms)
   const t = animationTiming(component, 'attack', speed);
@@ -41,7 +41,7 @@ test('an authored clip never plays a frame faster than the hold, and the total g
 });
 
 test('the Reaver painting holds each of its distinct images, and impact precedes the total', () => {
-  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1 });
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1, animationStepDuration: 390 });
   const t = reaverAttackTiming(actionPacing().spriteSpeed);
   assert.equal(t.runMs.length, REAVER_ATTACK_RUNS.length);
   assert.ok(t.runMs.every(ms => ms >= 65), 'every image held >= 0.6 of 109 ms');
@@ -52,7 +52,7 @@ test('the Reaver painting holds each of its distinct images, and impact precedes
 });
 
 test('the sprite lunge and reaction are never shorter than one held frame', () => {
-  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25 });
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25, animationStepDuration: 390 });
   const speed = actionPacing().spriteSpeed;
   assert.ok(speed.reactionMs >= speed.minFrameMs && speed.lungeMs >= speed.minFrameMs, JSON.stringify(speed));
   assert.equal(speed.minFrameMs, frameHoldMs());
@@ -65,7 +65,7 @@ test('the sprite lunge and reaction are never shorter than one held frame', () =
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
 
 test('the pilot attack (6 frames) holds each frame, so a phone swing is no longer 16 ms a frame', () => {
-  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25 });
+  setAnimSpeed('fast'); setCombatPacing({ combatSpeed: 1.25, animationStepDuration: 390 });
   const speed = actionPacing().spriteSpeed;
   const plain = selectedWeaponSequenceTiming(selectedWeaponSequence('attack'), { ...speed, minFrameMs: 0 });
   const held = selectedWeaponSequenceTiming(selectedWeaponSequence('attack'), speed);

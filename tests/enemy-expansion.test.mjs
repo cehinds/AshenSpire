@@ -41,13 +41,13 @@ test('enemy stage settles reactions, extends holds, and keeps defeat terminal', 
   stage.play('attack', 260);
   assert.equal(el.dataset.pose, 'attack-01');
   // Re-pinned 2026-11-02 (sprite pacing): the four frames are held evenly on a rAF clock, each for the frame hold
-  // (89 ms at the default speed) instead of the authored 70/60/60/70 weights over 260 ms.
-  tickFrames(t, 100);
+  // (125 ms at the default speed and the 550 ms default Animation step, 2026-11-06) instead of the authored 70/60/60/70 weights over 260 ms.
+  tickFrames(t, 130);
   assert.equal(el.dataset.pose, 'attack-02');
   stage.hold(100);
   tickFrames(t, 340);
   assert.equal(el.dataset.pose, 'attack-02', 'a hold freezes the frame and pushes the settle out');
-  tickFrames(t, 30);
+  tickFrames(t, 140);
   assert.equal(el.dataset.pose, 'idle');
   stage.setState({ hp: 10, maxHp: 10, block: 4 });
   assert.equal(el.dataset.pose, 'block-01', 'resting guard uses a painted frame, not a sequence asset name');
