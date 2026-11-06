@@ -1,0 +1,138 @@
+name: stale-branch-cleanup
+
+# WHY THIS EXISTS (owner, 2026-11-06). Sessions cannot delete origin branches
+# themselves (the session proxy refuses branch deletion), so a sweep of stale
+# branches runs here, on demand.
+#
+# THE RULE. On dispatch, delete every origin branch whose last commit is older
+# than `days` (default 7), except `main`, `release`, `test`, `dev` and anything
+# listed in `keep`. A branch with an open pull request is kept unless
+# `keep_open_prs` is false. Protected branches fail to delete and are listed as
+# refused. `dry_run` (default true) only lists what would go.
+#
+# BOUNDARY. This only deletes origin branch pointers. The step summary lists
+# every deleted branch with its tip SHA so it can be restored with
+# `git push origin <sha>:refs/heads/<branch>` while the commit is still held.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Delete branches whose last commit is older than this many days'
+        type: number
+        default: 7
+      dry_run:
+        description: 'List what would be deleted without deleting anything'
+        type: boolean
+        default: true
+      keep_open_prs:
+        description: 'Keep branches that have an open pull request'
+        type: boolean
+        default: true
+      keep:
+        description: 'Extra branches to keep, comma-separated (main, release, test, dev are always kept)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: stale-branch-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Delete origin branches older than the cutoff
+        env:
+          DAYS: ${{ inputs.days }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          KEEP_OPEN_PRS: ${{ inputs.keep_open_prs }}
+          KEEP: ${{ inputs.keep }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+
+          cutoff=$(( $(date +%s) - DAYS * 86400 ))
+          echo "cutoff: $(date -u -d @"$cutoff" +%Y-%m-%dT%H:%M:%SZ) (older than $DAYS days)"
+
+          declare -A keep_set=([main]=1 [release]=1 [test]=1 [dev]=1)
+          IFS=',' read -ra extra <<< "$KEEP"
+          for k in "${extra[@]+"${extra[@]}"}"; do
+            k=$(echo "$k" | xargs); [ -n "$k" ] && keep_set["$k"]=1
+          done
+
+          # Fail closed: if the open-PR list cannot be read, the step fails and
+          # nothing is deleted.
+          declare -A open_pr=()
+          if [ "$KEEP_OPEN_PRS" = "true" ]; then
+            page=1
+            while :; do
+              out=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f per_page=100 -f page=$page --jq '.[].head.ref')
+              [ -n "$out" ] || break
+              while IFS= read -r r; do open_pr["$r"]=1; done <<< "$out"
+              page=$((page + 1))
+            done
+          fi
+
+          deleted=(); would=(); kept=(); failed=()
+          while IFS=$'\t' read -r ts b; do
+            [ -n "$b" ] || continue
+            [ "$b" = "HEAD" ] && continue
+            tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ -n "${keep_set[$b]:-}" ]; then
+              echo "kept $b (always kept)"; kept+=("$b (always kept)"); continue
+            fi
+            if [ -n "${open_pr[$b]:-}" ]; then
+              echo "kept $b (open pull request)"; kept+=("$b (open pull request)"); continue
+            fi
+            if [ "$ts" -ge "$cutoff" ]; then
+              continue
+            fi
+            when=$(date -u -d @"$ts" +%Y-%m-%d)
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "[dry run] would delete $b ($when, $tip)"
+              would+=("$b ($when, \`$tip\`)")
+            elif git push --force-with-lease="refs/heads/$b:$tip" origin ":refs/heads/$b" 2>/tmp/push.err; then
+              echo "deleted $b ($when, $tip)"
+              deleted+=("$b ($when, \`$tip\`)")
+            else
+              reason=$(grep -m1 -oE 'remote: .*|! \[remote rejected\].*' /tmp/push.err || tr '\n' ' ' </tmp/push.err)
+              echo "refused $b ($reason)"
+              failed+=("$b ($reason)")
+            fi
+          done < <(git for-each-ref --sort=committerdate --format='%(committerdate:unix)%09%(refname:strip=3)' refs/remotes/origin/)
+
+          {
+            echo "## stale-branch-cleanup"
+            echo
+            echo "Cutoff: older than $DAYS days ($(date -u -d @"$cutoff" +%Y-%m-%d))."
+            echo
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Dry run: nothing was deleted."
+              echo
+              echo "### Would delete (${#would[@]})"
+              for b in "${would[@]+"${would[@]}"}"; do echo "- $b"; done
+              echo
+            fi
+            echo "### Deleted (${#deleted[@]})"
+            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- $b"; done
+            echo
+            echo "### Delete refused (${#failed[@]})"
+            for b in "${failed[@]+"${failed[@]}"}"; do echo "- $b"; done
+            echo
+            echo "### Kept (${#kept[@]})"
+            for b in "${kept[@]+"${kept[@]}"}"; do echo "- $b"; done
+          } >> "$GITHUB_STEP_SUMMARY"
