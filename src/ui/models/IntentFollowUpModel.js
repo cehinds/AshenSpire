@@ -76,6 +76,18 @@ export function advanceFollowUps(plan, trace) {
 }
 
 /**
+ * trimFollowUps(plan, dropped) → the symbols after an `enemyPlanTrimmed` receipt. The right-most `dropped` moves leave the
+ * plan itself (ids and total), so a later advanceFollowUps can never bring a cancelled action back; the row only shrinks.
+ */
+export function trimFollowUps(plan, dropped = 0, trace = null) {
+  if (!plan) return [];
+  const count = Math.max(0, Math.min(Math.floor(Number(dropped) || 0), plan.total - plan.cursor));
+  plan.ids = plan.ids.slice(0, plan.total - count);
+  plan.total = plan.ids.length;
+  return remainingFollowUps(plan, trace);
+}
+
+/**
  * createFollowMemo() → the per-screen memory that outlives the playback record. A reaction window opens mid-turn with
  * the playback state cleared and the resumed dispatch snapshots again, so the plan (built once, before the phase) and
  * the row on screen are kept here per enemy until the turn ends.

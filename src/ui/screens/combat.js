@@ -14,7 +14,7 @@ import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
+import { advanceFollowUps, createFollowMemo, followUpPlan, trimFollowUps } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
@@ -1342,8 +1342,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         case 'enemyPlanTrimmed': {
           // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
-          const now = followMemo.row(e.sourceId, true) ?? disp?.ents[e.sourceId]?.followUps ?? [];
-          row(e.sourceId, now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))));
+          // The underlying plan (ids and total) shrinks too, so a later enemyMoveStarted cannot rebuild a cancelled intent.
+          const plan = disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId);
+          if (plan) row(e.sourceId, trimFollowUps(plan, e.dropped?.length || 0, combat.followTrace?.[e.sourceId]));
+          else {
+            const now = followMemo.row(e.sourceId, true) ?? disp?.ents[e.sourceId]?.followUps ?? [];
+            row(e.sourceId, now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))));
+          }
           break;
         }
         case 'enemyStaggered':
