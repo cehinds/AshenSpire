@@ -32,6 +32,7 @@ import { reducedMotionRequested } from '../motion.js';
 import { effectsOff } from '../performance.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
+import { setData, setStyle, setVar } from '../domWrite.js';
 // The overhead group's height above a head: config only, never a DOM measurement. A measured height changes with
 // selection (a selected frame hides its meters) and would refit the settled artwork on every click.
 const miniHudGroupHeight = grid => overheadGroupHeightPx(grid, {
@@ -931,19 +932,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const overheadX = anchor?.x ?? x;
         const overheadLocal = anchorLocalBox(FORMATION_LOCAL_ORIGIN,
           { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-        leadingHost.style.left = `${overheadLocal.left}px`;
+        setStyle(leadingHost, 'left', `${overheadLocal.left}px`);
         const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
-        leadingHost.style.translate = `0 ${(ground + overheadGap - above + (anchor?.offsetY ?? 0)) / zoom}px`;
+        setStyle(leadingHost, 'translate', `0 ${(ground + overheadGap - above + (anchor?.offsetY ?? 0)) / zoom}px`);
         if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
         else delete frame.dataset.overheadObstructed;
-        frame.dataset.hudBelow = 'true';
+        setData(frame, 'hudBelow', 'true');
         return;
       }
       delete frame.dataset.hudBelow;
       const overheadX = anchor?.x ?? x;
       const overheadLocal = anchorLocalBox(FORMATION_LOCAL_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      leadingHost.style.left = `${overheadLocal.left}px`;
+      setStyle(leadingHost, 'left', `${overheadLocal.left}px`);
       // Full-height artwork may reach its final ground before the fitter
       // can reserve more ribbon headroom. Move only the readable controls,
       // including a packed cross-row control, clear of the ribbon.
@@ -1036,31 +1037,31 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const x = fitted.x;
       const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
-      sprite.style.zoom = String(scale / zoom);
-      sprite.firstElementChild.style.top = `${footOffset}px`;
+      setStyle(sprite, 'zoom', String(scale / zoom));
+      setStyle(sprite.firstElementChild, 'top', `${footOffset}px`);
       const paintedHeight = boxHeight * scale;
       // Transparent canvas above the figure is not part of the card's layout.
       // Keep the image and its feet in place while the card starts at the ink.
-      sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
+      setStyle(sprite, 'marginTop', `${(visibleHeight - paintedHeight) / scale}px`);
       const local = anchorLocalBox(FORMATION_LOCAL_ORIGIN, { left: x - nameWidth / 2, top: ground - visibleHeight, width: nameWidth, height: visibleHeight }, { zoom: pageZoom });
-      frame.style.left = `${local.left}px`;
-      frame.style.width = `${local.width}px`;
+      setStyle(frame, 'left', `${local.left}px`);
+      setStyle(frame, 'width', `${local.width}px`);
       // Keep depth on the artwork. A z-index on the whole frame traps its
       // overhead buttons below a neighbouring frame's sprite on short phones.
-      frame.style.zIndex = '';
+      setStyle(frame, 'zIndex', '');
       // Depth stays within a role's plane: players always paint over enemies.
-      sprite.style.setProperty('--combat-depth', String(depthOrder.indexOf(slot.layer)));
-      frame.dataset.formationRow = slot.formationRow;
-      frame.dataset.visualBand = slot.visualBand;
-      frame.dataset.formationRole = slot.formationRole;
-      frame.dataset.formationDepth = String(slot.row);
-      frame.dataset.formationCell = slot.cell;
-      frame.dataset.targetHudLane = slot.lane === 0 ? 'left' : slot.lane === plan.rows - 1 ? 'right' : 'middle';
+      setVar(sprite, '--combat-depth', String(depthOrder.indexOf(slot.layer)));
+      setData(frame, 'formationRow', slot.formationRow);
+      setData(frame, 'visualBand', slot.visualBand);
+      setData(frame, 'formationRole', slot.formationRole);
+      setData(frame, 'formationDepth', slot.row);
+      setData(frame, 'formationCell', slot.cell);
+      setData(frame, 'targetHudLane', slot.lane === 0 ? 'left' : slot.lane === plan.rows - 1 ? 'right' : 'middle');
       if (slot.box) {
         const { left, top, width, height, skew = 0 } = slot.box;
-        frame.dataset.targetHudCellPolygon = JSON.stringify([[left + skew * height / 2, top],
+        setData(frame, 'targetHudCellPolygon', JSON.stringify([[left + skew * height / 2, top],
           [left + width + skew * height / 2, top], [left + width - skew * height / 2, top + height],
-          [left - skew * height / 2, top + height]]);
+          [left - skew * height / 2, top + height]]));
       }
       if (Number.isFinite(slot.miniHudWidth)) {
         const miniHud = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -1069,19 +1070,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           const fit = sizes.find(size => size.id === other.slot.id);
           return (fit?.ground ?? other.slot.ground) - (fit?.visibleHeight ?? 0) - miniHudGroupHeight(miniHud);
         })) - miniHud.miniHudSpriteGapPx;
-        frame.style.setProperty('--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
-        frame.style.setProperty('--combat-mini-hud-top', `${groupTop / pageZoom}px`);
-        frame.style.setProperty('--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);
-        frame.dataset.miniHudLeft = String(slot.miniHudLeft);
-        frame.dataset.miniHudTop = String(groupTop);
-        frame.dataset.miniHudWidth = String(slot.miniHudWidth);
+        setVar(frame, '--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
+        setVar(frame, '--combat-mini-hud-top', `${groupTop / pageZoom}px`);
+        setVar(frame, '--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);
+        setData(frame, 'miniHudLeft', slot.miniHudLeft);
+        setData(frame, 'miniHudTop', groupTop);
+        setData(frame, 'miniHudWidth', slot.miniHudWidth);
       }
-      frame.dataset.baseSpriteScale = String(fitted.scale);
-      frame.dataset.presentationScale = String(multiplier);
-      frame.dataset.formationX = String(slot.x);
-      frame.dataset.groundY = String(fieldRect.top + ground);
-      frame.dataset.groundRatio = String(ground / fieldRect.height);
-      stack.style.top = `${local.top}px`;
+      setData(frame, 'baseSpriteScale', fitted.scale);
+      setData(frame, 'presentationScale', multiplier);
+      setData(frame, 'formationX', slot.x);
+      setData(frame, 'groundY', fieldRect.top + ground);
+      setData(frame, 'groundRatio', ground / fieldRect.height);
+      setStyle(stack, 'top', `${local.top}px`);
       // The half-field art floor may move two enemies to the same painted
       // centre. Their intent/Inspect controls retain their distinct reserved
       // slots instead of following that inward art clamp. Measured collisions
@@ -1089,11 +1090,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leadingHost) leadingWrites.push({ actor, frame, leadingHost, id: slot.id, x, ground, visibleHeight });
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
-      frame.style.setProperty('--combat-elev', `${-overheadGap / zoom}px`);
-      frame.dataset.overheadClamped = 'false';
-      frame.dataset.combatantScale = '1';
-      frame.dataset.spriteRatio = String(ratio);
-      frame.dataset.spriteVisibleHeight = String(visibleHeight);
+      setVar(frame, '--combat-elev', `${-overheadGap / zoom}px`);
+      setData(frame, 'overheadClamped', 'false');
+      setData(frame, 'combatantScale', '1');
+      setData(frame, 'spriteRatio', ratio);
+      setData(frame, 'spriteVisibleHeight', visibleHeight);
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));

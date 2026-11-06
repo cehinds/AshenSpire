@@ -148,8 +148,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
         file: 'src/ui/components/battlefieldStage.js',
-        find: "      frame.style.zIndex = '';",
-        replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
+        find: "      setStyle(frame, 'zIndex', '');",
+        replace: "      setStyle(frame, 'zIndex', String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0)));",
         // The red names the covering element by what the hit-test finds. The
         // plant's authored alternatives were neighbouring artwork (.enemy-pose-
         // stage, .enemy-expansion-bob, ...). On the current tree, at 390x650, the

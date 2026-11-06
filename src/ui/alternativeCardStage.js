@@ -123,7 +123,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
     let x=0, effect=null;
-    el.dataset.effect='';
+    if(el.dataset.effect!=='')el.dataset.effect='';
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
@@ -180,7 +180,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !effectsOff() && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
-      if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);el.dataset.effect=effect;}
+      if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);if(el.dataset.effect!==effect)el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
     const flash=flashAt===null||effectsOff()||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});

@@ -4,6 +4,7 @@ import { intentIcon } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
+import { setAttr } from '../domWrite.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -13,7 +14,7 @@ export function selectCombatantInfo(root, id) {
     const selected = frame.dataset.eid === id;
     if (frame.classList.contains('context-selected') !== selected) changed = true;
     frame.classList.toggle('context-selected', selected);
-    frame.setAttribute('aria-pressed', String(selected));
+    setAttr(frame, 'aria-pressed', selected);
   }
   // Every card tap clears the reading selection first. When nothing was
   // selected there is nothing for the battlefield to refit, and its refit (a

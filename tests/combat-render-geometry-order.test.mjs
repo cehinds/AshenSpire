@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { runInNewContext } from 'node:vm';
+import { setData } from '../src/ui/domWrite.js';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const begin = source.indexOf('  function renderCombatantStage(');
@@ -17,7 +18,7 @@ function fixture(code = rendering, wrote = {}) {
   const handWidth = 390, footerTop = 744;
   let handReceipt, toolsTop, controlsReady = false, toolsReady = false, badgesReady = false;
   const context = {
-    formationOccupancy, combat: { player: { id: 'player', formationCell: 'A1' }, enemies: [] }, selected: null, selfArm: false,
+    setData, formationOccupancy, combat: { player: { id: 'player', formationCell: 'A1' }, enemies: [] }, selected: null, selfArm: false,
     selectedFlask: null, selectedCombatantId: null,
     paintedAppearance: 'alternative', displayAppearance: () => 'alternative',
     $: selector => { assert.equal(selector, '.field'); return field; },
@@ -68,7 +69,7 @@ test('the former actual render order is rejected by the first-fit receipt condit
   const end=rendering.indexOf('    applyTargetLayer();',begin);
   assert.ok(begin>=0&&end>begin);
   const former = (rendering.slice(0,begin)+'    renderHand();\n    renderControls();\n    renderCombatTools();\n'
-    +rendering.slice(end)).replace(/renderCombatantStage\(\{[^;]*\);/,'renderCombatantStage();');
+    +rendering.slice(end)).replace(/(?<!function )renderCombatantStage\(\{[^;]*\);/,'renderCombatantStage();');
   assert.notEqual(former, rendering);
   const probe = fixture(former); probe.api.render();
   assert.equal(probe.fits.length, 1);
