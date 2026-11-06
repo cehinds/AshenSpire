@@ -61,7 +61,7 @@ import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statPr
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints, creationMode } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
-import { LEGACY_HAND_MAX } from '../src/model/statRows.js';
+import { FALLBACK_HAND_MAX } from '../src/model/statRows.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
@@ -293,7 +293,7 @@ function attributeTerms(row, attributes) {
 
 // `handMax` pins the hand cap for a fixture whose mechanic needs room past the
 // fallback cap; omitted, the fallback. These fixtures hand createCombat no hand
-// rules, so the cap is LEGACY_HAND_MAX (5, model/statRows.js) — `balance.handMax`
+// rules, so the cap is FALLBACK_HAND_MAX (5, model/statRows.js) — `balance.handMax`
 // was retired in ruleset 7 and a copy of it on the registries is read by
 // nothing. The pin is therefore set on the fight itself, after the opening
 // draw (five cards, inside either cap): with no hand rules nothing recomputes
@@ -452,14 +452,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // ---- 5. Hand limit overflow → discard ---------------------------------------
   test('5. draws past the hand cap go to discard (handFull)', () => {
     // The cap is the fallback a fight handed no hand rules reads
-    // (LEGACY_HAND_MAX, model/statRows.js: 5 — the value `balance.handMax`
+    // (FALLBACK_HAND_MAX, model/statRows.js: 5 — the value `balance.handMax`
     // shipped with until ruleset 7 retired it for the handSize row), read
     // rather than restated; the deck still holds more than any cap tBigDraw
     // can fill, so the overflow is real at either value.
     const c = makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] });
     playFromHand(c, 'tBigDraw');
-    eq(c.handMax, LEGACY_HAND_MAX, 'a fight with no hand rules reads the legacy fallback cap');
-    eq(c.piles.hand.length, LEGACY_HAND_MAX, `hand capped at the fallback ${LEGACY_HAND_MAX}`);
+    eq(c.handMax, FALLBACK_HAND_MAX, 'a fight with no hand rules reads the legacy fallback cap');
+    eq(c.piles.hand.length, FALLBACK_HAND_MAX, `hand capped at the fallback ${FALLBACK_HAND_MAX}`);
     assert(logOf(c, 'cardDiscarded').some((e) => e.reason === 'handFull'), 'handFull discard emitted');
   });
 
@@ -1543,7 +1543,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // 7-card deck (tCharge is Innate → both in the opening hand) so the
     // ownerTurnStart bonus draw has cards left to actually draw. The hand cap
     // is pinned past the five-card turn draw: at the fallback cap of 5
-    // (LEGACY_HAND_MAX) the sixth card is a handFull discard, and the hook
+    // (FALLBACK_HAND_MAX) the sixth card is a handFull discard, and the hook
     // would be measured by the cap rather than by the draw it asked for.
     const c = makeCombat({ deck: ['tCharge', 'tCharge', 'strike', 'strike', 'strike', 'strike', 'strike'], handMax: 10 });
     playFromHand(c, 'tCharge'); // 3
@@ -6420,7 +6420,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
     eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/7/10', 'Rogue buckler Defend is stamped from source DR (DEX 3 × 0.75 where 0.5 stood, 2026-09-24)');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/8/11', 'Rogue buckler Defend is stamped from the live DR row (the bare test registries read it since the frozen ruleset-6 formula was deleted; the configured registries the game uses gave 8/11 before too)');
     const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');

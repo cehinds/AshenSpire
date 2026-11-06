@@ -1,6 +1,6 @@
 import { handRulesDefaults } from '../content/handRules.js';
 import { HAND_STAT_IDS, statRowValue, storedStatRowProblems } from './derivedStats.js';
-import { HAND_GROUP_ROWS, handStatRows, isLegacyHandGroup, legacyHandRow, statRowCount } from './statRows.js';
+import { handStatRows, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
@@ -148,13 +148,10 @@ export function handRulesSettingsProblems() {
 
 /**
  * handRow(rules, id) → the row a fight counts `id` ('openingHand' | 'draw' |
- * 'handSize') by — its own row, or a saved fight's retired group restated.
+ * 'handSize') by — its own row,.
  */
 export function handRow(rules, id) {
   if (rules?.rows?.[id]) return rules.rows[id];
-  const group = Object.keys(HAND_GROUP_ROWS).find((key) => HAND_GROUP_ROWS[key] === id);
-  const legacy = group && rules?.[group];
-  if (legacy) return isLegacyHandGroup(legacy) ? legacyHandRow(legacy) : legacy;
   throw new Error(`Hand rules carry no ${id} row`);
 }
 
@@ -166,7 +163,7 @@ export function handRow(rules, id) {
  * single-stat group is read through its exact adapter.
  */
 export function scaledCards(rule, attributes = {}, level = undefined) {
-  return statRowCount(isLegacyHandGroup(rule) ? legacyHandRow(rule) : rule, attributes, level);
+  return statRowCount(rule, attributes, level);
 }
 
 /**
@@ -175,8 +172,7 @@ export function scaledCards(rule, attributes = {}, level = undefined) {
  * before the row's bounds, `min`, `max` and the `value`.
  */
 export function scaledCardsReceipt(rule, attributes = {}, level = undefined) {
-  const row = isLegacyHandGroup(rule) ? legacyHandRow(rule) : rule;
-  const receipt = statRowValue(row, { attributes, level, lenientAttributes: true });
+  const receipt = statRowValue(rule, { attributes, level, lenientAttributes: true });
   return { ...receipt, bonus: receipt.raw - receipt.base };
 }
 

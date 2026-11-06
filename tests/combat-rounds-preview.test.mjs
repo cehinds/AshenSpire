@@ -111,6 +111,8 @@ test('preview-off saves preserve historical bytes apart from approved event meta
   // Compared independently with actual Dev eb6: the only changes are ten
   // public intent/action receipt keys on six actor/move events. Normalize only
   // those approved event fields to retain both historical snapshot goldens.
+  // Re-recorded for chore/DropSettingsMigrations: bare test registries now price equipment ratings by the live rows, not the frozen
+  // ruleset-6 formula (configured registries, which the game uses, are unchanged; see combat-rounds-live.test.mjs).
   let receiptKeys = 0;
   const previousTotals = [], endedMoves = [], rawCompatible = [], metadataCompatible = [];
   // Ward and Barrier (SPEC 4.1a, 2026-11-01): the numeric `barrier` field is gone and Barrier is a status. Normalize ONLY that, per entity:
@@ -176,13 +178,13 @@ test('preview-off saves preserve historical bytes apart from approved event meta
   assert.deepEqual(previousTotals, [0, 0, 0, 0, 0, 0]);
   assert.deepEqual(endedMoves, [['e1', 'warcry'], ['e1', 'guard'], ['e1', 'warcry'], ['e1', 'guard']],
     'only the consumed-move lifecycle events are removed from the historical snapshots');
-  assert.equal(createHash('sha256').update(rawCompatible.join('\n')).digest('hex'), 'e7426f174a65ae5a26e2cc29f2e050325d27245eeb3c62a9d0a3211a9ef70945',
+  assert.equal(createHash('sha256').update(rawCompatible.join('\n')).digest('hex'), '7eba9997506d5a35e7f1266f50d0552883eb5794f919610d3b09c298fcb14271',
     'filtering only the four verified additive lifecycle events retains the raw historical snapshots');
-  assert.equal(createHash('sha256').update(metadataCompatible.join('\n')).digest('hex'), '93d6eabd4472b4de11b457a57e8c4c99add1302cd654db0a31b5d4334086b1ae',
+  assert.equal(createHash('sha256').update(metadataCompatible.join('\n')).digest('hex'), 'ad10d2b2a4ac51a25bf6710cbedb710a7175208c154ec54875e1176313f41861',
     'removing only the six approved status fields retains the previous complete snapshot golden');
   assert.equal(receiptKeys, 10, 'two actor and four move events carry the approved metadata');
   const compatibleText = compatible.map(snapshot => JSON.stringify(snapshot)).join('\n');
-  assert.equal(createHash('sha256').update(compatibleText).digest('hex'), '58ef3e9185a370136aef73c4b5e0729017a0a81826fa74761f04d066b82cab64');
+  assert.equal(createHash('sha256').update(compatibleText).digest('hex'), '027cbf9785bfc920530b8b6dba40f46a65391ac7e6fd599bc18c5bb3e82c202e');
   const legacyText = compatible.map(snapshot => {
     for (const key of ['typePlays', 'instanceUsesCombat', 'cardUsesCombat']) {
       assert.deepEqual(snapshot.player.abilityRiders[key], {});
@@ -190,10 +192,10 @@ test('preview-off saves preserve historical bytes apart from approved event meta
     }
     return JSON.stringify(snapshot);
   }).join('\n');
-  assert.equal(createHash('sha256').update(legacyText).digest('hex'), '7470d1798b70c40051fa756e26725ed42fe62f358863a30a9f332f6e7469d1ae');
+  assert.equal(createHash('sha256').update(legacyText).digest('hex'), 'a2951302c44dcbb421cbeb3665e853a749ed45113cca4d573bc6aabeb9da08f8');
   // The raw historical golden includes the six previousTotal receipts; the
   // additive end events above are checked by exact shape and move identity.
-  assert.equal(rawCompatible.join('\n').length, 137217);
+  assert.equal(rawCompatible.join('\n').length, 137225);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

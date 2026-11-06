@@ -84,12 +84,7 @@ test('pool settings round trip, reject impossible budgets, and tolerate the reti
 
 test('stat-driven hand sizes read the attribute the sheet shows', async () => {
   const { scaledCards } = await import('../src/model/handRules.js');
-  const rule = { statEnabled: true, stat: 'intelligence', baseline: 0, pointsPerCard: 5, base: 3, minimum: 1, maximum: 20 };
-  assert.equal(scaledCards(rule, { intelligence: 2 }), 3);
-  assert.equal(scaledCards(rule, { intelligence: 10 }), 5);
-  // Ruleset 7: a hand count is a stat row, read the same way — 3 base +
-  // floor(INT × 0.2) lands on the same 3 and 5. (The group above is the shape a
-  // fight saved before ruleset 7 carries, still counted exactly.)
+  // A hand count is a stat row: 3 base + floor(INT × 0.2).
   const row = { base: 3, intelligence: 0.2, min: 1, max: 20 };
   assert.equal(scaledCards(row, { intelligence: 2 }), 3);
   assert.equal(scaledCards(row, { intelligence: 10 }), 5);

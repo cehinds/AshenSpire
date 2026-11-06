@@ -647,7 +647,6 @@ export function grantSmithingReward(registries, run, pool, rewardId, rng = null)
 /** Initialize or migrate one run in place, returning an explicit receipt. */
 export function initializeRunSmithing(registries, run, explicitRules = undefined) {
   rulesFor(registries, explicitRules);
-  const hadLegacyLevels = run.armamentLevels != null;
   const wasMissing = run.smithingStones == null || run.itemUpgradeLevels == null || run.smithingRewardClaims == null;
   const priorLevels = levels(run);
   for (const [itemRef, level] of Object.entries(priorLevels)) {
@@ -677,18 +676,11 @@ export function initializeRunSmithing(registries, run, explicitRules = undefined
     fromSchemaVersion: run.schemaVersion ?? null,
     toSchemaVersion: SMITHING_SCHEMA_VERSION,
     initialized: wasMissing,
-    migratedArmamentLevels: hadLegacyLevels,
     promotedArmaments: Object.freeze([...promotedArmaments]),
     preservedOrdinaryUpgrades: Object.freeze((run.deck || [])
       .filter((card) => card.upgraded && !sourceArmamentId(registries, run, card))
       .map((card) => card.instanceId)),
   });
-}
-
-/** Pure migration helper for tools and tests that must preserve source bytes. */
-export function migrateLegacySmithing(registries, legacyRun, explicitRules = undefined) {
-  const run = structuredClone(legacyRun);
-  return Object.freeze({ run, receipt: initializeRunSmithing(registries, run, explicitRules) });
 }
 
 export function ownedSmithingArmaments(registries, run) {
