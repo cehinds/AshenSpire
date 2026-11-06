@@ -1146,8 +1146,11 @@ export function playTimeline(events, ctx, done) {
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
   const runParts = (beat, key) => {
     // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
-    for (const event of beat.events) if (!terminal(event) && !beat.lead?.includes(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
+    for (const event of beat.events) if (!terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
   };
+  // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
+  // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
+  const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
   const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
@@ -1200,13 +1203,13 @@ export function playTimeline(events, ctx, done) {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
       // Owner 2026-11-06: the cost the card pays comes first (visual, floater, resource HUD), then the intent word.
-      if (beat.lead?.length) {
-        for (const event of beat.lead) {
+      if (costOf(beat).length) {
+        for (const event of costOf(beat)) {
           visualSafe(() => parts.get(event)?.contact?.(ctx));
           const label = COST_LABEL[event.type];
           if (label && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
         }
-        visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: beat.lead }));
+        visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: costOf(beat) }));
         traceBeat('cost', beat.actorId);
       }
       ctx.onIntent?.(beat);
@@ -1292,7 +1295,7 @@ export function playTimeline(events, ctx, done) {
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
-        for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !beat.lead?.includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
+        for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
         for (const event of beat.events) {
           if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
             || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
@@ -1302,7 +1305,7 @@ export function playTimeline(events, ctx, done) {
           if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
           visualSafe(() => parts.get(event)?.callout?.(ctx));
         }
-        for (const event of beat.events) if (event.type !== 'damageDealt' && !terminal(event) && !beat.lead?.includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
+        for (const event of beat.events) if (event.type !== 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
       }
       cue(beat);
     },
@@ -1310,7 +1313,7 @@ export function playTimeline(events, ctx, done) {
       const moves = beat.events.filter(e => e.type === 'combatEngagementMoved');
       if (moves.length) visualSafe(() => ctx.onEngagementMoved?.(moves));
       // The cost events were applied to the HUD in onIntent (ctx.onLeadApplied); apply the rest here, once each.
-      ctx.onBeatApplied?.(beat.lead?.length && typeof ctx.onLeadApplied === 'function' ? { ...beat, events: beat.events.filter(e => !beat.lead.includes(e)) } : beat);
+      ctx.onBeatApplied?.(costOf(beat).length && typeof ctx.onLeadApplied === 'function' ? { ...beat, events: beat.events.filter(e => !costOf(beat).includes(e)) } : beat);
     },
     onResolution: beat => {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));

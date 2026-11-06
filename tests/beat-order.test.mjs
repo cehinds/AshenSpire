@@ -483,3 +483,22 @@ test('the enemy SP payment floater precedes the enemy move word', t => {
     assert.ok(cost && word && cost.at <= word.at);
   });
 });
+
+// A cardPreparing trigger (feat:pilgrim-of-scars) can heal before cardPlayed; that receipt rides the beat's lead with the
+// cost but is not a cost, so it keeps its visuals while only the cost is played and applied up front.
+test('a heal that precedes cardPlayed keeps its +HP floater; only the cost is applied up front', t => {
+  drive(t, ({ trace, run, finish }) => {
+    const led = [];
+    run([
+      { type: 'energySpent', amount: 1 },
+      { type: 'healed', targetId: 'player', amount: 5 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], { onLeadApplied: beat => led.push(...beat.events.map(e => e.type)),
+         onBeatApplied: beat => led.push(...beat.events.map(e => 'applied:' + e.type)) });
+    finish();
+    assert.ok(trace.some(e => e.what === 'float:+5'), 'the +HP floater plays');
+    assert.ok(trace.some(e => e.what === 'float:−1 EP'), 'and so does the cost floater');
+    assert.deepEqual(led.filter(x => /energySpent|healed/.test(x)), ['energySpent', 'applied:healed'], 'the cost applies up front, the heal with the beat, each once');
+  });
+});
