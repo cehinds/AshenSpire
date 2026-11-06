@@ -788,13 +788,16 @@ function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
 function trimEnemyPlanDuringTurn(combat, enemy) {
   if (!core2ActionPolicyEnabled(combat) || combat.combatRounds || !enemy.alive || enemy.pendingMove || !enemy.plannedMoves?.length) return;
   const def = combat.registries.enemies.get(enemy.enemyId);
-  const available = Rounds.enemyAvailableSp(enemy);
-  const price = row => Rounds.enemyMoveQuote(def.moves[row.moveId], { enemy, moveId: row.moveId, combat }).totalSp;
-  const before = enemy.plannedMoves, kept = [...before], dropped = [];
-  while (kept.length && kept.reduce((sum, row) => sum + price(row), 0) > available) dropped.unshift(kept.pop().moveId);
+  // trimEnemyPlan prices the plan in order against a detached projected range state (a move that closes the distance
+  // makes the next one cheaper) from a pool; the pool here is what the enemy has left now.
+  const left = { ...enemy, maxStamina: Rounds.enemyAvailableSp(enemy), pendingStaminaLoss: 0 };
+  const before = enemy.plannedMoves, ids = rows => rows.map(row => row.moveId).join(',');
+  const kept = [...before], dropped = [];
+  // Right-most first: shorten the plan until the whole remaining prefix is affordable as quoted in sequence.
+  while (kept.length && ids(Rounds.trimEnemyPlan(left, def, kept, { combat })) !== ids(kept)) dropped.unshift(kept.pop().moveId);
   if (!dropped.length) return;
   // The plan is the tail of movesHistory: drop the same moves there so maxConsecutive sees what will play.
-  const history = enemy.movesHistory, ids = rows => rows.map(row => row.moveId).join(',');
+  const history = enemy.movesHistory;
   const start = history?.length - before.length;
   if (history && start >= 0 && ids(before) === history.slice(start).join(',')) history.splice(start, before.length, ...kept.map(row => row.moveId));
   enemy.plannedMoves = kept;

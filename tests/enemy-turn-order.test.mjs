@@ -59,3 +59,25 @@ test('an SP loss during the enemy turn trims the plan from the right-most move, 
   assert.deepEqual(first.remaining, trimmed.plan.filter((id, i) => i < first.remaining.length), 'what remains is the plan prefix, in order');
   assert.ok(first.remaining.length + first.dropped.length <= trimmed.plan.length);
 });
+
+test('the trim prices the kept plan in sequence: a first move that closes the distance makes the next one cheaper', async () => {
+  const { rangePairKey } = await import('../src/model/combatEngagement.js');
+  const { uncappedRun } = await import('./helpers/uncapped-range.mjs');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  uncappedRun(run);
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 100000;
+  const enemy = combat.enemies[0];
+  const pair = rangePairKey(`enemy:${enemy.id}`, 'player:player');
+  const key = Object.keys(combat.rangeState.engagements)[0] ?? pair;
+  combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [key]: 1 } };
+  // Head: a move that does not close distance (guard). Then two 1 SP melee attacks from Reach distance:
+  // the first pays 1 + 1 Advance, the second is at band 0 and pays 1, so 3 SP afford both (4 would be the per-move quote).
+  enemy.intent = { ...enemy.intent, moveId: 'guard' };
+  enemy.plannedMoves = [{ moveId: 'slash', sp: 1 }, { moveId: 'slash', sp: 1 }];
+  const guardSp = registries.enemies.get('wanderingSoldier').moves.guard;
+  enemy.maxStamina = (guardSp.sp ?? 1) + 3; enemy.pendingStaminaLoss = 0; // the turn start refills the pool from these
+  const events = enemyTurn(combat);
+  assert.ok(events.some(row => row.type === 'enemyMoveStarted' && row.moveId === 'guard'), 'the head played');
+  assert.equal(events.filter(row => row.type === 'enemyPlanTrimmed').length, 0, 'both affordable attacks are kept');
+});
