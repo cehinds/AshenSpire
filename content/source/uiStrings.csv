@@ -134,6 +134,11 @@ combat.status.applied.frostExposed,,EXPOSED,,
 combat.status.applied.insanityExposed,,EXPOSED,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
+common.backTo,,Back to {place},Return to {place}.,
+common.place.blacksmith,,Blacksmith,The Blacksmith's forge.,
+common.place.shrine,,Shrine,The Shrine you are resting at.,
+common.place.merchant,,Merchant,The merchant's stall.,
+common.place.rest,,Rest,The rest site.,
 common.continue,,Continue,Move on from this screen.,Continue
 common.skip,,Skip,Leave this behind and move on.,Skip
 common.confirm,,Confirm,Commit the choice you have made.,Confirm
