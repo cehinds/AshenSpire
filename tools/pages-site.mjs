@@ -75,6 +75,40 @@ const KEEP_MAX = 25;
 export const RETENTION = { main: 3, release: 10, dev: 3, test: 3 };
 export const DEFAULT_KEEP = 3;
 export const keepFor = (branch, override = null) => Math.min(KEEP_MAX, Math.max(1, override ?? RETENTION[branch] ?? DEFAULT_KEEP));
+// A run's rebuild budget (run 42186410401 ran out of disk). Applies only to builds
+// that are not a branch's newest; the newest of every branch is always rebuilt.
+export const MAX_REBUILDS_DEFAULT = 12;
+export const clampMaxRebuilds = (v) => Math.min(200, Math.max(1, Math.floor(Number(v)) || MAX_REBUILDS_DEFAULT));
+const MAX_REBUILDS = clampMaxRebuilds(flag('--max-rebuilds', MAX_REBUILDS_DEFAULT));
+/**
+ * The rebuild plan for one run: `lists` is [{branch, builds}] (each newest first),
+ * `tierOf(branch, sha)` is 'full' | 'light', `seeded(b)` is true for a build served
+ * from --main-build. Builds with source 'rebuild' are deduped by sha:tier; every
+ * branch's newest is kept, and a non-newest build past `max` unique rebuilds is
+ * returned in `over` (to be skipped). Pure.
+ */
+export function planRebuilds(lists, { max = MAX_REBUILDS_DEFAULT, tierOf = () => 'light', seeded = () => false } = {}) {
+  const keys = new Set();
+  const plan = [];
+  const over = new Set();
+  const take = (b) => {
+    const tier = tierOf(b.branch, b.sha);
+    const key = `${b.sha}:${tier}`;
+    if (!keys.has(key)) { keys.add(key); plan.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, tier, key }); }
+  };
+  const want = (b) => b.source === 'rebuild' && !seeded(b);
+  for (const { builds } of lists) if (builds[0] && want(builds[0])) take(builds[0]);
+  for (const { builds } of lists) {
+    builds.forEach((b, i) => {
+      if (i === 0 || !want(b)) return;
+      const key = `${b.sha}:${tierOf(b.branch, b.sha)}`;
+      if (keys.has(key)) return;
+      if (keys.size >= max) { over.add(b); return; }
+      take(b);
+    });
+  }
+  return { plan, over };
+}
 const keepFlag = flag('--keep', null);
 const KEEP_OVERRIDE = keepFlag === null ? null : (Number(keepFlag) || null);
 const KEEP_NOTE = KEEP_OVERRIDE ? `${KEEP_OVERRIDE} builds per branch (override)` : `main ${RETENTION.main}, release ${RETENTION.release}, dev ${RETENTION.dev}, test ${RETENTION.test}, others ${DEFAULT_KEEP} builds`;
@@ -1362,8 +1396,18 @@ function assemble(outDir, keepOverride) {
 
   let checks = 0;
   const branchData = [];
+  // Every branch's list once, so the run can say what it will rebuild and cap it.
+  const listings = new Map(BRANCHES.map((branch) => [branch, buildsOf(branch, keepFor(branch, keepOverride))]));
+  const { plan: rebuildPlan, over: overCap } = planRebuilds([...listings].map(([branch, l]) => ({ branch, builds: l.builds })), {
+    max: MAX_REBUILDS,
+    tierOf: (branch, sha) => (fullArtFor(branch, sha) ? 'full' : 'light'),
+    seeded: (b) => Boolean(MAIN_BUILD) && b.branch === 'main' && b.sha === mainHeadSha,
+  });
+  console.log(`rebuild plan: ${rebuildPlan.length} builds (cap ${MAX_REBUILDS} on non-newest)${rebuildPlan.length ? ' — ' + rebuildPlan.map((x) => `${x.branch}/${x.ordinal} ${x.sha.slice(0, 7)} ${x.tier}`).join(', ') : ''}`);
   for (const branch of BRANCHES) {
-    const { head, builds: listed, headTracksBuild, headOrdinal } = buildsOf(branch, keepFor(branch, keepOverride));
+    const { head, builds: allListed, headTracksBuild, headOrdinal } = listings.get(branch);
+    const listed = [];
+    for (const b of allListed) { if (overCap.has(b)) skip(b, `rebuild cap ${MAX_REBUILDS} reached`); else listed.push(b); }
     // Fetch or rebuild every listed build FIRST, so one that cannot be served
     // leaves the list (named in skippedBuilds) before any page links it.
     const served = new Map();
