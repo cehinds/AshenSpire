@@ -261,7 +261,11 @@ export function mountCardUpgradeModal(host, initialModel, {
   desk.closeBtn.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
-  queueMicrotask(() => (cards.find((card) => card.dataset.instanceId === focusInstanceId) || modal).focus({ preventScroll: true }));
+  queueMicrotask(() => {
+    const row = cards.find((card) => card.dataset.instanceId === focusInstanceId);
+    if (row) row.dataset.quietFocus = 'true'; // refocused by the return, not by the player: no card tooltip over the list
+    (row || modal).focus({ preventScroll: true });
+  });
   // Mounted with a card already chosen: its modal opens at once.
   if (initialModel.selected) review?.();
   return { update(model) { draw(model); }, close };

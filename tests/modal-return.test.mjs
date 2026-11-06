@@ -83,3 +83,25 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
     closeConfirmationModal();
   });
 });
+
+test('the row refocused by the return is marked quiet (no tooltip); a plain focus is not', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const tooltip = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8'));
+  assert.match(tooltip, /if \(el\.dataset\.quietFocus\) return;/, 'the tooltip skips a quiet focus');
+  const microtasks = []; const realQ = globalThis.queueMicrotask;
+  await withKitDom((dom) => {
+    resetModalParents(); resetModalState();
+    const run = createRunState({ registries, classId: 'reaver', seed: 3 }); run.smithingStones = 3;
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const strike = run.deck.find((c) => c.cardId === 'core.strike');
+    globalThis.queueMicrotask = (fn) => microtasks.push(fn);
+    const door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), { registries, meta: {}, focusInstanceId: strike.instanceId, onSelect() {}, onBack() {}, onConfirm() {} });
+    microtasks.splice(0).forEach((fn) => fn());
+    globalThis.queueMicrotask = realQ;
+    const other = host.querySelector(`.card-upgrade-row:not([data-instance-id="${strike.instanceId}"])`);
+    assert.equal(host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).dataset.quietFocus, 'true');
+    assert.equal(other.dataset.quietFocus, undefined, 'a row the player focuses is never quiet');
+    door.close();
+  });
+});

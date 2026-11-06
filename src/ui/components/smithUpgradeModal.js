@@ -316,7 +316,11 @@ export function mountSmithUpgradeModal(host, initialModel, {
   desk.closeBtn.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
-  queueMicrotask(() => (cards.find((card) => card.dataset.itemRef === focusItemRef) || modal).focus({ preventScroll: true }));
+  queueMicrotask(() => {
+    const row = cards.find((card) => card.dataset.itemRef === focusItemRef);
+    if (row) row.dataset.quietFocus = 'true';
+    (row || modal).focus({ preventScroll: true });
+  });
   // Mounted with an item already chosen (the Blacksmith's per-item Upgrade): its modal opens at once.
   if (initialModel.properties.selected) review?.();
 
