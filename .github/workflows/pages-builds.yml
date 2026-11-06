@@ -143,7 +143,7 @@ on:
     inputs:
       keep:
         description: newest builds to publish per branch
-        default: '5'
+        default: '3'
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
         default: ''
@@ -476,7 +476,10 @@ jobs:
             echo "$(jq '.previews | length' "$out/previews.json") current branch build(s) carry a playable preview."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
-        # THE DEFAULT IS 5, NOT 10 (2026-10-19). GitHub Pages refuses an artifact it
+        # THE DEFAULT IS 3, NOT 5 OR 10 (2026-11-06; it was 10 until 2026-10-19, then 5).
+        # At 5 the artifact was 7.4 GB raw / 5.2 GB packed and deploy-pages timed out
+        # (run 42174299001); see the size guard below for the cap this protects.
+        # THE DEFAULT WAS 5, NOT 10 (2026-10-19). GitHub Pages refuses an artifact it
         # cannot unpack ("Artifact could not be deployed ... total size is less than
         # 10GB"): with --keep 10 the artifact grew 6.56 -> 6.99 -> 7.30 GB in a day and
         # every dev deploy from 7.30 GB up failed (runs 39232459193, 39236238774) while
@@ -486,9 +489,9 @@ jobs:
         # `keep` from a dispatch is clamped here (1..25) and again in the
         # generator: each listed uncommitted build is a rebuild.
         env:
-          KEEP_INPUT: ${{ inputs.keep || '5' }}
+          KEEP_INPUT: ${{ inputs.keep || '3' }}
         run: |
-          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-5}
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-3}
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
