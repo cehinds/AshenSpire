@@ -149,12 +149,18 @@ const DOWNLOAD_PATH = 'download/AshenSpire.html';
 // download/ is a ~157 MB single file and the site held six copies per channel (five
 // builds plus /latest/), which put the Pages artifact at 5.2 GB (run 42174299001;
 // Pages 1 GB limit). Now only a primary channel's newest build carries it (its
-// /latest/ copy is the README link and the in-game download reads the newest
-// ordinal's file); older builds and the alternative channels are Play-only.
+// /latest/download/ is a redirect stub to that file, for the README link; the in-game
+// download reads the newest ordinal's file); older builds and the alternative channels are Play-only.
 // The build's page and art in the store are untouched, so Play works for all of them.
 export const downloadKept = (branch, newest) => newest && !branch.startsWith('alternative/');
 /** Archived (no offline download) unless it is the first build of a primary channel actually published. */
 export const archivedFor = (branch, publishedCount) => !downloadKept(branch, publishedCount === 0);
+/** The page at <branch>/latest/download/AshenSpire.html: sends the visitor to the newest build's file. Pure. */
+export function latestDownloadStub(ordinal) {
+  const to = `../../${ordinal}/${DOWNLOAD_PATH}`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=${to}"><title>Download</title></head><body><p>The offline file for build ${ordinal} is at <a href="${to}">${to}</a>.</p><script>location.replace(${JSON.stringify(to)});</script></body></html>
+`;
+}
 // BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
 //
 // Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
@@ -1500,9 +1506,14 @@ function assemble(outDir, keepOverride) {
       const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
       writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44" role="img" aria-label="Published build ${stamp}"><rect width="220" height="44" rx="6" fill="#243344"/><text x="110" y="28" text-anchor="middle" fill="white" font-family="sans-serif" font-size="18" font-weight="600">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
-      for (const extra of [ASSET_BASE_FILE, 'download']) {
-        const from = join(outDir, branch, String(builds[0].ordinal), extra);
-        if (existsSync(from)) cpSync(from, join(latest, extra), { recursive: true });
+      const from0 = join(outDir, branch, String(builds[0].ordinal), ASSET_BASE_FILE);
+      if (existsSync(from0)) cpSync(from0, join(latest, ASSET_BASE_FILE), { recursive: true });
+      // /latest/download/ stays a working link (README, readme-sync) but is a redirect to
+      // the newest build's file, not a second 157 MB copy (run 42254638934: three copies
+      // of the same file were 470 MB of the 2810 MB site).
+      if (existsSync(join(outDir, branch, String(builds[0].ordinal), DOWNLOAD_PATH))) {
+        mkdirSync(join(latest, 'download'), { recursive: true });
+        writeFileSync(join(latest, DOWNLOAD_PATH), latestDownloadStub(builds[0].ordinal));
       }
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys, lfsPointerSize, oversizeReason, LEGACY_SINGLE_MAX_BYTES } from '../tools/pages-site.mjs';
+import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys, lfsPointerSize, oversizeReason, LEGACY_SINGLE_MAX_BYTES, latestDownloadStub } from '../tools/pages-site.mjs';
 
 // The Pages artifact must stay well under 1 GB (run 42174299001 was 5.2 GB and
 // timed out in deploy-pages). These rules are what keeps it there.
@@ -115,4 +115,11 @@ test('a committed inline build over the legacy cap is judged from its LFS pointe
   assert.match(oversizeReason(255185771), /255 MB, over the 150 MB cap/);
   assert.equal(oversizeReason(105e6), null, 'main/81 (105 MB) is still served');
   assert.equal(oversizeReason(LEGACY_SINGLE_MAX_BYTES), null);
+});
+
+test('latest/download is a redirect stub to the newest build, not a second copy of the file', () => {
+  const html = latestDownloadStub(210);
+  assert.ok(html.length < 1000);
+  assert.match(html, /url=\.\.\/\.\.\/210\/download\/AshenSpire\.html/);
+  assert.match(html, /location\.replace\("\.\.\/\.\.\/210\/download\/AshenSpire\.html"\)/);
 });
