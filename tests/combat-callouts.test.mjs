@@ -55,11 +55,13 @@ test('a callout names its fighter, joins the fighter\'s column one stagger behin
     assert.deepEqual(callouts(layer), [first, other], 'one word per fighter shows at once; another fighter has its own column');
     flushMeasureJobs();
     assert.equal(first.dataset.floatSlot, '0');
-    drain(t2, floaterStaggerMs() * 3);
-    flushMeasureJobs();
-    assert.deepEqual(callouts(layer).filter((n) => n.dataset.calloutFor === 'e1'), [first, second, third, fourth],
-      'nothing is dropped: each queued word joins the column in turn');
-    assert.deepEqual([first, second, third, fourth].map((n) => n.dataset.floatSlot), ['3', '2', '1', '0'], 'the earlier words are already above the newest');
+    // At the owner's 750 ms interval a word outlives one stagger but not three, so each queued word is checked as it joins.
+    for (const word of [second, third, fourth]) {
+      drain(t2, floaterStaggerMs());
+      flushMeasureJobs();
+      assert.ok(callouts(layer).includes(word), 'nothing is dropped: each queued word joins the column in turn');
+      assert.equal(word.dataset.floatSlot, '0', 'the newest word sits at the bottom of the column');
+    }
     clearCallouts(layer);
     assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
   });

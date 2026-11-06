@@ -23,7 +23,7 @@ export const COMBAT_TIMING = Object.freeze({
   // (1100 ms, long enough to read on a phone) then the last third fades. Scales with the Combat speed
   // multiplier only, NOT with the Fast/Slow animation pace, so a phone's Auto-Fast pace does not
   // shrink the number below readability (owner, 2026-10-31).
-  floaterLifeMs: 1650,
+  floaterLifeMs: 2400,
   floaterMinLifeMs: 400,   // the floor at the highest speed multiplier
   floaterInstantMs: 480,   // the Instant pace keeps the classic short number
   floaterFadeFraction: 1 / 3,
@@ -33,8 +33,8 @@ export const COMBAT_TIMING = Object.freeze({
   calloutMinLifeMs: 700,
   calloutInstantMs: 500,   // the Instant pace keeps the classic short word
   // Sprite frame rates (owner, 2026-11-02: "Sprite Animation is too fast and looks twitchy"). Base rates at
-  // Combat speed 1 and the default 390 ms Animation step; the hold per frame is 1000 / fps, divided by the
-  // Combat speed once and scaled by the step duration setting, then clamped below. Every action frame is held
+  // Combat speed 1 and the default 550 ms Animation step (authored reference 390 ms); the hold per frame is 1000 / fps, divided by the
+  // Combat speed once and scaled by the step duration setting (against the authored 390 ms reference), then clamped below. Every action frame is held
   // for the same time, so a swing steps evenly. Instant and Reduced motion hold nothing.
   spriteActionFps: 9,      // attack, defend, cast, enemy actions: 111 ms a frame at x1, 89 ms at the default x1.25
   spriteIdleFps: 7,        // a looping idle (6-8 fps). No sprite idle loop ships today; idleFrameMs() is its clock
@@ -74,7 +74,7 @@ export function getBeatOrder() {
 
 // One presentation-only multiplier for the entire ordered action. The classic
 // pace remains a compatibility choice, with ×1 preserving its relative scale.
-import { ACTION_PACING, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
+import { ACTION_PACING, AUTOMATION_DEFAULTS, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
 import { FLOATER_STACK } from './floaterStack.js';
 // The speed multiplier in force: the manual one, or the auto-combat one while
 // auto-combat is on (owner, D11, 2026-10-18). The gap between stages is the
@@ -91,16 +91,21 @@ export function floaterLifeMs() {
   if (getAnimSpeed() === 'instant') return COMBAT_TIMING.floaterInstantMs;
   return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / combatPacing.speed));
 }
+// The floater life at the shipped default Combat speed. floaterStack.json's stagger numbers are intervals at this
+// life (owner, 2026-11-06: 750 ms between floaters as the player sees them by default), so they scale from it.
+function defaultFloaterLifeMs() {
+  return Math.round(Math.max(COMBAT_TIMING.floaterMinLifeMs, COMBAT_TIMING.floaterLifeMs / AUTOMATION_DEFAULTS.combatSpeed));
+}
 // The wait between two floaters spawning over one combatant, in ms (owner, 2026-11-05; content/config floaterStack.json).
 // It follows the floater life, so it scales with the Combat speed multiplier and shortens on Instant exactly as
-// the life does, never below 1 ms.
+// the life does, never below 1 ms. At the default speed it is the JSON number itself.
 export function floaterStaggerMs() {
-  return Math.max(1, Math.round(FLOATER_STACK.floaterStaggerMs * floaterLifeMs() / COMBAT_TIMING.floaterLifeMs));
+  return Math.max(1, Math.round(FLOATER_STACK.floaterStaggerMs * floaterLifeMs() / defaultFloaterLifeMs()));
 }
 // The shrunk wait used while more than floaterMaxQueued floaters are waiting over one combatant, so the backlog
 // drains and never falls behind the next action. It scales with the floater life like the full stagger.
 export function floaterStaggerMinMs() {
-  return Math.max(1, Math.min(floaterStaggerMs(), Math.round(FLOATER_STACK.floaterStaggerMinMs * floaterLifeMs() / COMBAT_TIMING.floaterLifeMs)));
+  return Math.max(1, Math.min(floaterStaggerMs(), Math.round(FLOATER_STACK.floaterStaggerMinMs * floaterLifeMs() / defaultFloaterLifeMs())));
 }
 // How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
 export function calloutLifeMs() {

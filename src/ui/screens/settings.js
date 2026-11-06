@@ -327,7 +327,7 @@ const ROWS = [
   { cat: 'Combat', key: 'combatStepPause', type: 'number', def: ACTION_PACING.stageGapMs,
     min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
     note: tFull('settings.row.combatStepPause') },
-  { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDurationMs,
+  { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },
   { cat: 'Combat', key: 'combatPacingPreset', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
