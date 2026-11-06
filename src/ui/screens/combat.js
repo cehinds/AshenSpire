@@ -329,7 +329,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // Same write the Settings row makes. A refused write rolls the setting back, so repaint from readSettings().
       try { await onSettingsChange?.({ autoCombat: enabled }); }
       catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
-      finally { if (combatEl.isConnected) renderCombatTools(); }
+      finally { if (combatEl.isConnected) { renderCombatTools(); scheduleAutoCombat(); } }
     },
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
@@ -341,7 +341,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Debug mode: a Console button that lives outside the combat input pipeline.
   const debugButton = mountCombatDebugButton(combatEl, { readSettings });
   // Menu > Settings can change Auto combat behind this screen; repaint the footer switch when the overlay closes.
-  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) renderCombatTools(); else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
+  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) { renderCombatTools(); scheduleAutoCombat(); } else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
   window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
   window.addEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch);
 
@@ -595,7 +595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let enemyPlayback = false;
   const beatDirty = { on: false, geometry: false, hand: false, frame: 0 };
   let pileReceivedFrame = 0;
-  let busy = false; // animating / resolving
+  let busy = false; // animating / resolving (written only through setBusy)
   // Plays the player queued while an earlier card's animations resolve (owner, 2026-11-02): each left the hand at once
   // and waits here, in order. They live in this controller only; the engine sees a play when its turn comes.
   const playQueue = [];
@@ -613,12 +613,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // line names every lock and how long busy has held: an input that "does
   // nothing" on a slow phone is either a long wait (busyForMs climbs and ends)
   // or a lock that never clears (busyForMs keeps growing, the next report
-  // shows it). Sampled every 250 ms; nothing reads it but the log.
+  // shows it). The stamp is written where busy changes (setBusy), not sampled
+  // by a timer; nothing reads it but the log.
   let busyStamp = 0;
-  const busyWatch = setInterval(() => {
-    if (!combatEl.isConnected) { clearInterval(busyWatch); return; }
-    if (busy) busyStamp ||= performance.now(); else busyStamp = 0;
-  }, 250);
+  function setBusy(value) {
+    busy = value;
+    if (value) busyStamp ||= performance.now(); else busyStamp = 0;
+  }
   const lockReport = () => {
     const busyForMs = busy && busyStamp ? Math.round(performance.now() - busyStamp) : 0;
     return { busy, busyForMs, enemyPlayback, pendingReaction: combat.pendingReaction?.id || null, reactionModalOpen: !!reactionShell,
@@ -1697,6 +1698,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
     const policy = resolveCombatAutomation(readSettings());
+    // Auto combat off: nothing to poll for (this used to tick every 500 ms for the whole fight). Turning it on re-arms
+    // from the footer switch, the Settings write settling, or the overlay closing (all below).
+    if (!policy.enabled) return;
     const armedOffer = !!combat.pendingReaction && autoArmedReaction === reactionShell;
     const AUTO_POLL_MS = 50;
     autoCombatTimer = setTimeout(() => {
@@ -1720,7 +1724,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       scheduleAutoCombat();
     // One wait per answer: a fresh offer arms on a short tick, then the timeline's own gap (scaled by the
     // animation pace, the auto speed and Reduced motion, so 0 on Instant) passes once before the answer.
-    }, !policy.enabled ? 500 : armedOffer ? Math.max(AUTO_POLL_MS, actionPacing({ reduced: reducedMotionRequested() }).gapMs) : AUTO_POLL_MS);
+    }, armedOffer ? Math.max(AUTO_POLL_MS, actionPacing({ reduced: reducedMotionRequested() }).gapMs) : AUTO_POLL_MS);
   }
 
   // ---------- rendering ----------
@@ -2879,7 +2883,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           disp = takeSnapshot();
           try {
             const out = dispatch(combat, { type: 'basicAttack', targetId: target.value });
-            busy = true; afterDispatch(out.events);
+            setBusy(true); afterDispatch(out.events);
           } catch (error) { disp = null; console.warn('[combat] attack rejected:', error.message); render(); }
         };
         actions.append(target, attack); $('.hand-overlay').append(actions);
@@ -2938,7 +2942,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function expansionIntent(intent) {
     if (busy || enemyPlayback || combat.result || combat.phase !== 'player') return false;
     disp = takeSnapshot();
-    try { const out = dispatch(combat, intent); busy = true; afterDispatch(out.events); return true; }
+    try { const out = dispatch(combat, intent); setBusy(true); afterDispatch(out.events); return true; }
     catch (error) { disp = null; render(); return { ok: false, error: error.message }; }
   }
 
@@ -3560,7 +3564,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     dlog('dispatch', `useFlask slot=${slot}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length });
     sfx.play('flask');
-    busy = true;
+    setBusy(true);
     afterDispatch(out.events);
   }
 
@@ -3596,7 +3600,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const out = dispatch(combat, { type: 'chooseReaction', ...intent });
       if (kind) recordManualReaction(run, owner || ownSeat(), kind);
       enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
-      busy = true; afterDispatch(out.events);
+      setBusy(true); afterDispatch(out.events);
     } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
   function showPendingDiscard() {
@@ -3618,7 +3622,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onChoose: cardInstanceIds => {
         disp = takeSnapshot();
         const out = dispatch(combat, { type: combat.pendingCardChoice ? 'chooseCards' : 'chooseDiscard', cardInstanceIds });
-        busy = true; afterDispatch(out.events);
+        setBusy(true); afterDispatch(out.events);
       },
     });
   }
@@ -3683,7 +3687,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         disp = null;
         heldTurnHand = null;
         enemyPlayback = false;
-        busy = false;
+        setBusy(false);
         finishRender();
         showPendingDiscard();
         if (combat.result) {
@@ -4073,7 +4077,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // player sees the play was accepted instead of a card that hangs there while the timeline runs.
     disp.leftHand = new Set([instanceId]);
     try { renderHand({ refreshHitChances: false }); } catch (e) { console.warn('[combat] hand repaint on play failed:', e && e.message); }
-    busy = true;
+    setBusy(true);
     afterDispatch(out.events);
   }
 
@@ -4113,7 +4117,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
       dlog('dispatch', 'endTurn', { events: out.events.length });
-      busy = true;
+      setBusy(true);
       afterDispatch(out.events);
     };
     const plan = discardChoicePlan(combat);
@@ -4350,9 +4354,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         disp = takeSnapshot();
         const out = dispatch(combat, { type: 'moveCharacter', cell, settings: readSettings() });
         dlog('dispatch', `moveCharacter ${cell}`, { events: out.events.length });
-        busy = true;
+        setBusy(true);
         afterDispatch(out.events);
-      } catch (error) { disp = null; busy = false; dlog('rejected', 'moveCharacter', error.message); render(); }
+      } catch (error) { disp = null; setBusy(false); dlog('rejected', 'moveCharacter', error.message); render(); }
     },
   });
 
@@ -4362,7 +4366,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // pager nodes alive. The marker is a focused lifecycle probe, not a styling
   // hook; teardown removes it before a fresh combat creates its own owner.
   if (document.body && typeof MutationObserver !== 'undefined') {
-    const pagerVeilObserver = new MutationObserver(() => {
+    const isVeilNode = (node) => node.nodeType === 1 && (node.classList.contains('modal-veil') || !!node.querySelector?.('.modal-veil'));
+    const touchesVeil = (record) => [...record.addedNodes, ...record.removedNodes].some(isVeilNode);
+    const pagerVeilObserver = new MutationObserver((records) => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
         autoCombatTimer = null;
@@ -4372,6 +4378,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         reactionShell?.dismiss();
         releaseRangeAction();
         handStrip.teardown();
+        endTurnBeat?.(); endTurnBeat = null; // its window keydown door would otherwise outlive the detached button
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();
@@ -4396,7 +4403,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         delete combatEl.dataset.handPagerOwner;
         return;
       }
-      syncHandPager([...app.querySelectorAll('.hand .card')]);
+      // The pager only depends on whether a veil stands (veilIsOpen), so a mutation that neither adds nor removes
+      // one is ignored (every damage number, tooltip and effect node used to re-run the sync).
+      if (records.some(touchesVeil)) syncHandPager([...app.querySelectorAll('.hand .card')]);
     });
     combatEl.dataset.handPagerOwner = 'active';
     pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
