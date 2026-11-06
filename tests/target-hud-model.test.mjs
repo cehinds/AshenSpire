@@ -82,3 +82,11 @@ test('the player margin placement takes the margin, caps it, and refuses one too
   assert.equal(playerMarginPlacement({ right: 1000, edge: 1185, gap: 10, top: 50 }), null, '175 px of room is under the 180 px floor: no overlap, fall back');
   assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1190, gap: 10, top: 50 }), { width: 180, left: 1010, top: 50 });
 });
+
+import { readFileSync } from 'node:fs';
+test('an enemy panel keeps its name slot (now holding the intent) as the targeting and full-read click target', () => {
+  const src = readFileSync(new URL('../src/ui/components/combatTargetHud.js', import.meta.url), 'utf8');
+  assert.match(src, /node\('div', 'target-hud-name target-hud-intent'\)/);
+  assert.match(src, /event\.target\.closest\('\.target-hud-name, \.target-hud-meters'\)/, 'the name slot still confirms a target');
+  assert.match(src, /inspect\(id, shell\)/, 'a plain tap on the panel opens the full read');
+});
