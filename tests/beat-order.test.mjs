@@ -424,3 +424,31 @@ test('the card-play order: cost, intent word, stance, animation, hit word, react
     assert.equal(at('word:action:Strike'), 0, 'the intent word is up with the cost, before the stance');
   });
 });
+
+// Owner 2026-11-06, enemy loop: reveal -> the enemy pays (SP floater, meter) -> move (word, animation) -> hit word -> reaction -> damage.
+test('the enemy-turn order: reveal, SP payment, move word, animation, hit word, reaction, damage', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    const mark = what => trace.push({ what, at: Date.now() });
+    run([
+      { type: 'enemyActorTurnStarted', sourceId: 'e1', intent: {} },
+      { type: 'enemyStaminaSpent', sourceId: 'e1', moveId: 'slash', amount: 2, remaining: 1 },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack' },
+      { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
+      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 },
+    ], { onLeadApplied: () => mark('cost-applied') });
+    finish();
+    const all = [...trace, ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))].sort((a, b) => a.at - b.at).map(e => e.what);
+    const wanted = ['float:−2 SP', 'cost-applied', 'word:action:Attack', 'swing', 'word:hit', 'reaction:player', 'float:-6'];
+    const seen = all.filter(n => wanted.includes(n));
+    assert.deepEqual(seen, wanted);
+  });
+});
+
+test('an enemy that cannot pay says OUT OF SP over itself and plays nothing', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([{ type: 'enemyMoveUnavailable', sourceId: 'e1', moveId: 'slash', required: 3, available: 1, resource: 'sp' }]);
+    finish();
+    assert.deepEqual(words.map(w => w.kind), ['outOfSp']);
+    assert.ok(!trace.some(e => e.what === 'swing' || e.what === 'contact'), 'no animation for a skipped move');
+  });
+});

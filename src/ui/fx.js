@@ -644,6 +644,8 @@ export const CALLOUT_KINDS = {
   contestPassed: { string: 'combat.callout.contestPassed', tone: 'white' },
   contestFailed: { string: 'combat.callout.contestFailed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  // Owner 2026-11-06: an enemy that cannot pay its next move's SP says so, then skips it.
+  outOfSp: { string: 'combat.callout.outOfSp', tone: 'white' },
   dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
@@ -1037,6 +1039,15 @@ export function groupBeats(events) {
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
+      // The SP check failed: a beat of its own (the OUT OF SP word), the move is skipped.
+      case 'enemyMoveUnavailable':
+        startActor(e.sourceId, 'reveal', e);
+        break;
+      // The enemy pays its move's SP: a loose run, so it rides the move's beat as `lead` (cost first, as for a card).
+      case 'enemyStaminaSpent':
+        push();
+        cur = { actorId: null, banner: null, kind: null, events: [e] };
+        break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
         cur.prepared = e.contactPrepared === true;
@@ -1134,7 +1145,7 @@ export function playTimeline(events, ctx, done) {
     // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
     for (const event of beat.events) if (!terminal(event) && !beat.lead?.includes(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
   };
-  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP' };
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
@@ -1970,6 +1981,7 @@ export function statusPopupFor(e = {}) {
  */
 export function calloutForEvent(e = {}) {
   let kind = null;
+  if (e.type === 'enemyMoveUnavailable') return e.resource === 'sp' && e.sourceId != null ? { kind: 'outOfSp', targetId: e.sourceId } : null;
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {

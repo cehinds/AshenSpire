@@ -1340,6 +1340,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           row(id, advanceFollowUps(disp?.followPlans?.[id] ?? followMemo.planFor(id), combat.followTrace?.[id]));
           break;
         }
+        case 'enemyPlanTrimmed': {
+          // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
+          const now = followMemo.row(e.sourceId, true) ?? disp?.ents[e.sourceId]?.followUps ?? [];
+          row(e.sourceId, now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))));
+          break;
+        }
         case 'enemyStaggered':
           // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
           if (followMemo.row(e.targetId, true)?.length) row(e.targetId, []);
@@ -1452,6 +1458,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'energyGained':
           if (disp.ents.player) disp.ents.player.energy = Math.min(disp.ents.player.energyMax, disp.ents.player.energy + e.amount);
+          break;
+        case 'enemyStaminaSpent':
+          // The enemy's SP meter follows the payment (shown from fixCoreStaminaRemaining ?? stamina, see the SP row).
+          if (t === undefined && disp.ents[e.sourceId]) { disp.ents[e.sourceId].fixCoreStaminaRemaining = e.remaining; disp.ents[e.sourceId].stamina = e.remaining; }
           break;
         case 'staminaSpent':
           if (disp.ents.player && Number.isFinite(disp.ents.player.stamina)) disp.ents.player.stamina = Math.max(0, disp.ents.player.stamina - e.amount);
