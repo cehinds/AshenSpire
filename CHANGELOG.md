@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Combat order, enemy SP loop and Reach** ([#2620](https://github.com/cehinds/AshenSpire/pull/2620), `0.7.3.206`). Combat plays in the owner's order (cost, intent word, stance, animation, hit/miss, reaction, damage), Reach cards and most spells no longer charge a band-1 Advance (touches, grasps and spell blades stay Melee), floaters and attack animations default to 750 ms with separate enemy pacing settings, and enemies pay and lose SP visibly in their turn.
 - **Pages publish no longer fills the runner's disk** ([#2606](https://github.com/cehinds/AshenSpire/pull/2606), `0.7.3.206`). The Pages assemble frees each rebuild's build tree and output as soon as it is published, skips the offline single file for archived builds, prints a rebuild plan capped per run, and logs disk space around the assemble step.
 - **Merged branches are cleaned up** ([#2608](https://github.com/cehinds/AshenSpire/pull/2608), `0.7.3.206`). The branch cleanup workflow now also deletes origin branches already merged into dev, keeping protected branches, open PR branches and branches with no work yet; it has a dry-run switch.
 - **Pages keeps ten releases** ([#2605](https://github.com/cehinds/AshenSpire/pull/2605), `0.7.3.204`). The Pages site keeps the last 3 builds of main, dev and test and the last 10 releases; the workflow's keep input is now only an override.
