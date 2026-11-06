@@ -30,3 +30,9 @@ test('the reward Continue door is disarmed before a repaint re-arms it and when 
   assert.match(reward, /disarmContinue\?\.\(\);\s*disarmContinue = beatArmer\(meta, registries\)\(cont, 'rewardContinue'/);
   assert.match(reward, /onDone\(chosenCardId\);\s*disarmContinue\?\.\(\); disarmContinue = null;/);
 });
+
+test('the hand pager re-syncs only when a veil is added or removed, not on every body mutation', () => {
+  const observer = source.slice(source.indexOf('const isVeilNode'), source.indexOf("combatEl.dataset.handPagerOwner = 'active'"));
+  assert.match(observer, /records\.some\(touchesVeil\)/);
+  assert.match(observer, /classList\.contains\('modal-veil'\)/);
+});

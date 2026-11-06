@@ -4366,7 +4366,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // pager nodes alive. The marker is a focused lifecycle probe, not a styling
   // hook; teardown removes it before a fresh combat creates its own owner.
   if (document.body && typeof MutationObserver !== 'undefined') {
-    const pagerVeilObserver = new MutationObserver(() => {
+    const isVeilNode = (node) => node.nodeType === 1 && (node.classList.contains('modal-veil') || !!node.querySelector?.('.modal-veil'));
+    const touchesVeil = (record) => [...record.addedNodes, ...record.removedNodes].some(isVeilNode);
+    const pagerVeilObserver = new MutationObserver((records) => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
         autoCombatTimer = null;
@@ -4401,7 +4403,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         delete combatEl.dataset.handPagerOwner;
         return;
       }
-      syncHandPager([...app.querySelectorAll('.hand .card')]);
+      // The pager only depends on whether a veil stands (veilIsOpen), so a mutation that neither adds nor removes
+      // one is ignored (every damage number, tooltip and effect node used to re-run the sync).
+      if (records.some(touchesVeil)) syncHandPager([...app.querySelectorAll('.hand .card')]);
     });
     combatEl.dataset.handPagerOwner = 'active';
     pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
