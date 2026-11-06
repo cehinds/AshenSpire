@@ -82,7 +82,7 @@ import { t, tFull, tTip } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
 import { openBookLearning } from '../components/bookLearning.js';
 import { renderBookArt } from '../components/bookArt.js';
-import { equipClassCard } from '../../model/classLibrary.js';
+import { equipClassCard, learnedClassIds } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
@@ -1556,7 +1556,11 @@ export function mountEquipment(host, {
   }
 
   /** An owned item with an action of its own beyond equipping: a skill book (Read). Listed in and out of combat; the action is out of combat only. */
-  const usableRow = (row) => row.read === true;
+  // A learned class card is one too (SPEC §14.3: the Inventory may equip one learned card or leave the core slot empty); it is
+  // listed only when there is a choice to make (more than one learned card, or the core slot already empty), out of combat,
+  // and never on a configured profile (Core 2 keeps its class fixed).
+  const classChoice = () => !inCombat && run.gameProfile?.foundation?.mode !== 'configured' && (learnedClassIds(run).length > 1 || run.classUnequipped === true);
+  const usableRow = (row) => row.read === true || (row.classCard === true && classChoice());
 
   /** The Inventory section: the usable items normally (none, and no section, when there are none), compatible replacements while a position is selected. */
   function inventoryBlock() {
