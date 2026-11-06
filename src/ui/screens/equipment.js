@@ -1555,7 +1555,10 @@ export function mountEquipment(host, {
     return root;
   }
 
-  /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
+  /** An owned item with an action of its own beyond equipping: a skill book (Read). Listed in and out of combat; the action is out of combat only. */
+  const usableRow = (row) => row.read === true;
+
+  /** The Inventory section: the usable items normally (none, and no section, when there are none), compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list armoury-split';
@@ -1572,9 +1575,12 @@ export function mountEquipment(host, {
     const roleLabels = Object.fromEntries(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const selectedSlot = picking ? eq.slots.find((slot) => slot.id === picking.slotId) : null;
     const allRows = inventoryRows(registries, run, meta);
+    // Owner 2026-11-06: outside a slot's picker the Armory lists only the usable non-equippable items (a skill book is
+    // Read here): compact rows, no grid, and the detail opens under the rows only once an item is chosen.
     const rows = selectedSlot
       ? allRows.filter((row) => row.item && fitsSlot(selectedSlot, row.item))
-      : allRows;
+      : allRows.filter(usableRow);
+    if (!selectedSlot) { box.classList.add('is-books-only'); box.dataset.detailOpen = 'false'; prompt.hidden = true; }
     const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
@@ -2570,14 +2576,14 @@ export function mountEquipment(host, {
       // Owner 2026-11-06: the Armory tab is the equipped-slot rows and nothing else, so there is no scrolling. The item
       // collection and its detail pane are gone; items are chosen through the slot's picker (Choose item / Replace), which
       // is this same block opened for one slot, and through the reward / purchase Equip flow (beginInventoryEquip).
-      if (picking) {
+      if (picking || inventoryRows(registries, run, meta).some(usableRow)) {
         inventory.append(inventoryBlock());
         if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
       }
       // SPEC §15.4: the Sigils panel stays below the slot rows.
       const sigils = sigilsPanel();
       if (sigils) inventory.append(sigils);
-      if (!inventory.childElementCount) inventory.remove();
+      if (!inventory.children.length) inventory.remove();
     } else inventory.remove();
     wrap.querySelector('.armoury-strip').parentElement.remove();
 
