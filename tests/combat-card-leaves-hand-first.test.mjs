@@ -47,6 +47,7 @@ function fixture(document, { energy } = {}) {
     flyCard: () => timeline.push('fly'), sfx: { play() {} }, haptic: { play() {} }, t: x => x,
     render() { timeline.push('render'); }, renderPlayQueue() {}, queueToast: { show: text => timeline.push('toast:' + text) },
     commitEndTurn: () => timeline.push('end-turn'),
+    setBusy(value) { context.busy = value; },
     afterDispatch: () => { timeline.push('timeline-start:' + hand.children.map(c => c.dataset.instanceId).join(',')); },
     handStrip: { render({ cards }) {
       hand.replaceChildren();

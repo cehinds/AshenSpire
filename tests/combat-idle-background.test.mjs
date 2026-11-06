@@ -15,3 +15,7 @@ test('auto combat arms its tick only while Auto is on, and every Auto change re-
   const settled = source.slice(source.indexOf('const repaintAutoSwitch'), source.indexOf('window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch)'));
   assert.match(settled, /scheduleAutoCombat\(\)/, 'Settings settling and the overlay closing re-arm');
 });
+
+test('combat.js starts no interval at all', () => {
+  assert.doesNotMatch(source, /\bsetInterval\(/);
+});
