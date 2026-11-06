@@ -151,9 +151,14 @@ jobs:
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
           dev_tip=$(git rev-parse refs/remotes/origin/dev)
           open_heads=$(gh api --paginate "repos/$REPO/pulls?state=open" --jq '.[].head.ref')
-          if [ -n "$DELETE_BEFORE" ] && ! [[ "$DELETE_BEFORE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            echo "delete_unmerged_before must be YYYY-MM-DD, got: $DELETE_BEFORE" >&2
-            exit 1
+          if [ -n "$DELETE_BEFORE" ]; then
+            # Shape and a real calendar date: 2026-99-99 would sort after every
+            # valid date and make recent branches eligible for deletion.
+            if ! [[ "$DELETE_BEFORE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] \
+               || [ "$(date -u -d "$DELETE_BEFORE" +%F 2>/dev/null || true)" != "$DELETE_BEFORE" ]; then
+              echo "delete_unmerged_before must be a real YYYY-MM-DD date, got: $DELETE_BEFORE" >&2
+              exit 1
+            fi
           fi
           # Comma-separated keep list, one name per line, spaces trimmed.
           keep_list=$(printf '%s' "$KEEP" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
