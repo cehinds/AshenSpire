@@ -133,6 +133,9 @@ export function mountRewards(app, {
   let progress = rewards.xpGains || onClaimLevel ? scoped(rewardProgress(registries, run, rewards.xpGains, { maxSkills: Infinity })) : null;
   const standingProgress = !rewards.xpGains;
   const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+  // The Continue control's hold/key door. Each paint builds a new control, so the old one is disarmed first (its window
+  // keydown listener would otherwise outlive the detached button), and it is released when the screen is left.
+  let disarmContinue = null;
   let xpAnimationDone = !progress || !rewards.xpBefore || !orderedXpRows(progress).length || document.body.classList.contains('reduced-motion');
   let refill = null;
   const animatedTracks = new Set();
@@ -957,11 +960,13 @@ export function mountRewards(app, {
       for (const row of toTake) take(row, null, { present: false });
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
+      disarmContinue?.(); disarmContinue = null;
     };
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    beatArmer(meta, registries)(cont, 'rewardContinue', {
+    disarmContinue?.();
+    disarmContinue = beatArmer(meta, registries)(cont, 'rewardContinue', {
       question: t('reward.leave.question'),
       confirmLabel: t('reward.leave.confirm'),
       onConfirm: () => {

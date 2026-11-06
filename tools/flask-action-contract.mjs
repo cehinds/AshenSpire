@@ -225,7 +225,7 @@ check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));
 check('flask selection does not call useFlask directly',
-  /if \(action.enabled\) arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?onUse\(row\)/.test(potions)
+  /if \(action.enabled\) (?:disarmers\.push\()?arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?onUse\(row\)/.test(potions)
     && /onUse: [\s\S]*?else useFlask\(slot, null, chargeKind\)/.test(combat)
     && /fold.addEventListener\('toggle', moveUse\)/.test(potions));
 
