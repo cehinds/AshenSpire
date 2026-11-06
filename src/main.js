@@ -1393,7 +1393,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // game-over screen can offer Run again with the same choices after any
   // reload. The STARTING attributes, not the levelled ones; the game profile
   // is already run.gameProfile. A run saved before this field has no Run again.
-  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes });
+  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, ...(deckEdit ? { deckEdit } : {}) });
   run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
