@@ -329,7 +329,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // Same write the Settings row makes. A refused write rolls the setting back, so repaint from readSettings().
       try { await onSettingsChange?.({ autoCombat: enabled }); }
       catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
-      finally { if (combatEl.isConnected) renderCombatTools(); }
+      finally { if (combatEl.isConnected) { renderCombatTools(); scheduleAutoCombat(); } }
     },
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
@@ -341,7 +341,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Debug mode: a Console button that lives outside the combat input pipeline.
   const debugButton = mountCombatDebugButton(combatEl, { readSettings });
   // Menu > Settings can change Auto combat behind this screen; repaint the footer switch when the overlay closes.
-  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) renderCombatTools(); else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
+  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) { renderCombatTools(); scheduleAutoCombat(); } else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
   window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
   window.addEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch);
 
@@ -1697,6 +1697,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
     const policy = resolveCombatAutomation(readSettings());
+    // Auto combat off: nothing to poll for (this used to tick every 500 ms for the whole fight). Turning it on re-arms
+    // from the footer switch, the Settings write settling, or the overlay closing (all below).
+    if (!policy.enabled) return;
     const armedOffer = !!combat.pendingReaction && autoArmedReaction === reactionShell;
     const AUTO_POLL_MS = 50;
     autoCombatTimer = setTimeout(() => {
@@ -1720,7 +1723,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       scheduleAutoCombat();
     // One wait per answer: a fresh offer arms on a short tick, then the timeline's own gap (scaled by the
     // animation pace, the auto speed and Reduced motion, so 0 on Instant) passes once before the answer.
-    }, !policy.enabled ? 500 : armedOffer ? Math.max(AUTO_POLL_MS, actionPacing({ reduced: reducedMotionRequested() }).gapMs) : AUTO_POLL_MS);
+    }, armedOffer ? Math.max(AUTO_POLL_MS, actionPacing({ reduced: reducedMotionRequested() }).gapMs) : AUTO_POLL_MS);
   }
 
   // ---------- rendering ----------
