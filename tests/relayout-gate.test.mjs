@@ -70,3 +70,13 @@ test('an art-load callback forces one relayout through the gate (one per load, n
   // The forced pass is consumed once: refresh clears forcePending, so a settled sprite registers no further callback.
   assert.match(source, /forcePending = false;\n    layoutEpoch\+\+;/);
 });
+
+test('the per-frame cell the pass itself writes is not a key input: before and after the cell write the key is equal', () => {
+  const frame = { eid: 'e1', dead: false, cell: undefined };
+  const before = formationKey(state({ frames: [{ ...frame }] }));
+  const after = formationKey(state({ frames: [{ ...frame, cell: 'D1' }] }));
+  assert.equal(before, after);
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /cell: frame\.dataset\.formationCell/);
+  assert.match(source, /lastSeenViewport = `\$\{now\.width\}x\$\{now\.height\}`;/, 'the last seen viewport updates every pass');
+});

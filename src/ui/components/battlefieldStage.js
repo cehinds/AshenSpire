@@ -692,12 +692,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
     const now = viewportNow();
+    lastSeenViewport = `${now.width}x${now.height}`;
     const phone = isPhoneViewport({ width: now.width, height: now.height, coarse: coarsePointer() }, relayoutConfig);
     // What the formation shows: who stands in which cell, who is alive, the strips and the policy. A committed move,
     // an engagement step or a death changes it and must reposition the figures; the viewport and selection do not.
     const formationKey = formationKeyOf({ playerCell: field.dataset.playerCell, occupancy: field.dataset.formationOccupancy,
       rangeRanks: field.dataset.rangeRanks, policy: field.dataset.formationPolicy,
-      frames: frames.map(frame => ({ eid: frame.dataset.eid, cell: frame.dataset.formationCell, dead: frame.classList.contains('dead') })) });
+      frames: frames.map(frame => ({ eid: frame.dataset.eid, dead: frame.classList.contains('dead') })) });
     const unplaced = frames.some(frame => !placedFrames.has(frame)) || formationKey !== placedFormationKey;
     const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone });
     if (!(force === true || forcePending) && !unplaced && !moved) return;

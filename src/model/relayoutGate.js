@@ -18,7 +18,7 @@ export function shouldRelayout(laidOut, now, cfg, { phone = false } = {}) {
   return Math.abs(now.height - laidOut.height) > laidOut.height * cfg.heightDelta;
 }
 // What the formation shows: who stands in which cell, who is alive, the strips and the policy. A committed move,
-// an engagement step (rangeRanks) or a death changes it and must reposition the figures; selection never does.
+// (the per-frame cell is written by the pass itself, so it is not an input) an engagement step (rangeRanks) or a death changes it and must reposition the figures; selection never does.
 export function formationKey({ playerCell, occupancy, rangeRanks, policy, frames }) {
-  return [playerCell, occupancy, rangeRanks, policy, ...frames.map(frame => `${frame.eid}:${frame.cell ?? ''}:${frame.dead ? 1 : 0}`)].join('|');
+  return [playerCell, occupancy, rangeRanks, policy, ...frames.map(frame => `${frame.eid}:${frame.dead ? 1 : 0}`)].join('|');
 }
