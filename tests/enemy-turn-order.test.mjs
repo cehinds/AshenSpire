@@ -33,7 +33,7 @@ test('every move the enemy plays is paid for first: enemyStaminaSpent precedes i
     events.forEach((event, i) => {
       if (event.type !== 'enemyMoveStarted' || event.reaction) return;
       const spent = events.slice(0, i).reverse().find(row => row.type === 'enemyStaminaSpent' && row.moveId === event.moveId);
-      if (event.actionPreview?.spCost > 0) { assert.ok(spent, `${id}/${seed}: ${event.moveId} is paid before it starts`); assert.equal(spent.amount, event.actionPreview.spCost); paidMoves++; }
+      if ((event.actionPreview?.totalSp ?? event.actionPreview?.spCost) > 0) { assert.ok(spent, `${id}/${seed}: ${event.moveId} is paid before it starts`); assert.equal(spent.amount, event.actionPreview.totalSp ?? event.actionPreview.spCost); paidMoves++; }
     });
   }
   assert.ok(paidMoves > 0, 'the fixture exercises at least one paid move');
@@ -86,4 +86,25 @@ test('the trim prices the kept plan in sequence: one band out of reach, two 1 SP
   trimEnemyPlanDuringTurn(combat, enemy);
   const [trim] = combat.eventLog.slice(start).filter(row => row.type === 'enemyPlanTrimmed');
   assert.deepEqual([trim?.dropped, trim?.remaining], [['slash'], ['slash']]);
+});
+
+test('the SP receipt includes the Advance surcharge: its remaining matches the enemy SP after the move', async () => {
+  const { uncappedRun } = await import('./helpers/uncapped-range.mjs');
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  uncappedRun(run);
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.hp = combat.player.maxHp = 100000;
+  const enemy = combat.enemies[0];
+  const key = Object.keys(combat.rangeState.engagements)[0];
+  combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [key]: 1 } };
+  enemy.intent = { ...enemy.intent, moveId: 'slash' };
+  enemy.plannedMoves = [];
+  enemy.maxStamina = 6; enemy.pendingStaminaLoss = 0;
+  const events = enemyTurn(combat);
+  const paid = events.filter(row => row.type === 'enemyStaminaSpent' && row.moveId === 'slash');
+  assert.equal(paid.length, 1);
+  const slashSp = registries.enemies.get('wanderingSoldier').moves.slash.sp ?? 1;
+  assert.ok(paid[0].amount > slashSp, `the Advance is in the amount (${paid[0].amount} > base ${slashSp})`);
+  assert.equal(paid[0].remaining, 6 - paid[0].amount);
+  assert.equal(paid[0].remaining, enemy.fixCoreStaminaRemaining, 'the displayed SP matches the enemy after the move');
 });

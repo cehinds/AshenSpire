@@ -999,8 +999,10 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
     enemy.fixCoreStaminaRemaining=available-(prepaid ? required : spCost);
     enemy.stamina=enemy.fixCoreStaminaRemaining;
     // Owner 2026-11-06: the enemy visibly pays its move's SP before the move plays (the UI floats it and updates the SP meter).
-    const paid = prepaid ? required : spCost;
-    if (paid > 0) combat.emit('enemyStaminaSpent', { sourceId: enemy.id, moveId, amount: paid, remaining: enemy.fixCoreStaminaRemaining, expectedLeft: available - (prepaid ? required : totalSp) });
+    // The receipt covers the whole payment, the Advance surcharge included (acceptRangeActions deducts it with no receipt of
+    // its own), so the amount and the SP left shown match enemy.fixCoreStaminaRemaining once the move has resolved.
+    const paid = prepaid ? required : totalSp;
+    if (paid > 0) combat.emit('enemyStaminaSpent', { sourceId: enemy.id, moveId, amount: paid, remaining: available - paid, expectedLeft: available - paid });
     if (prepaid && combat.rangeState) {
       // The charge already paid its accepted price. Retain that payment when
       // it lands; only a newly required Advance surcharge is charged above.
