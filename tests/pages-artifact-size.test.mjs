@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys } from '../tools/pages-site.mjs';
+import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys, lfsPointerSize, oversizeReason, LEGACY_SINGLE_MAX_BYTES, latestDownloadStub, pointerOversize } from '../tools/pages-site.mjs';
 
 // The Pages artifact must stay well under 1 GB (run 42174299001 was 5.2 GB and
 // timed out in deploy-pages). These rules are what keeps it there.
@@ -104,4 +104,38 @@ test('rebuildAt drops a cached out dir that was stripped of its single file when
   assert.match(src, /strippedSingle: Boolean\(skipSingle && webTree\)/);
   assert.match(src, /!singleNeeded\.has\(/);
   assert.ok(src.indexOf('cached.strippedSingle') < src.indexOf('const env = { ...process.env, GIT_LFS_SKIP_SMUDGE'), 'checked on the cache hit, before any rebuild');
+});
+
+// release/548 was a 255 MB legacy inline file (305 MB with its mobile copy) and took the
+// assembled site to 2810 MB (run 42254638934).
+test('a committed inline build over the legacy cap is judged from its LFS pointer and refused', () => {
+  const pointer = (n) => `version https://git-lfs.github.com/spec/v1\noid sha256:${'a'.repeat(64)}\nsize ${n}\n`;
+  assert.equal(lfsPointerSize(pointer(255185771)), 255185771);
+  assert.equal(lfsPointerSize('<!doctype html>'), null);
+  assert.match(oversizeReason(255185771), /255 MB, over the 150 MB cap/);
+  assert.equal(oversizeReason(105e6), null, 'main/81 (105 MB) is still served');
+  assert.equal(oversizeReason(LEGACY_SINGLE_MAX_BYTES), null);
+});
+
+test('latest/download is a redirect stub to the newest build, not a second copy of the file', () => {
+  const html = latestDownloadStub(210);
+  assert.ok(html.length < 1000);
+  assert.match(html, /url=\.\.\/\.\.\/210\/download\/AshenSpire\.html/);
+  assert.match(html, /location\.replace\("\.\.\/\.\.\/210\/download\/AshenSpire\.html"\)/);
+});
+
+test('pointerOversize refuses an over-cap pointer and ignores non-pointers and an empty read', () => {
+  const ptr = (n) => `version https://git-lfs.github.com/spec/v1\noid sha256:${'b'.repeat(64)}\nsize ${n}\n`;
+  assert.match(pointerOversize(ptr(255185771)), /over the 150 MB cap/);
+  assert.equal(pointerOversize(ptr(56e6)), null);
+  assert.equal(pointerOversize(''), null, 'the simulated-purge path passes no pointer text, so it reaches committedArtifact');
+  assert.equal(pointerOversize('<!doctype html>'), null);
+});
+
+const site = readFileSync(new URL('../tools/pages-site.mjs', import.meta.url), 'utf8');
+test('artifactsOf applies the pointer cap before the fetch and not under the simulated purge', () => {
+  const body = site.slice(site.indexOf('function artifactsOf'));
+  assert.match(body, /if \(!SIMULATE_PURGE\) try \{ pointerText = git\(/);
+  assert.ok(body.indexOf('pointerOversize(pointerText)') < body.indexOf("committedArtifact(b.sha, 'AshenSpire.html')"));
+  assert.match(body, /if \(tooBig\) return \{ error: tooBig \}/);
 });

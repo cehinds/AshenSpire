@@ -550,7 +550,7 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$total" -gt "$SITE_MAX_MB" ]; then
-            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower the retention table (or dispatch with `keep`), prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
+            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower the retention table (or dispatch with the keep input), prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
             exit 1
           fi
           if [ "$total" -gt "$SITE_WARN_MB" ]; then
