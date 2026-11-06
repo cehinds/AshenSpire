@@ -62,7 +62,7 @@ export function hooks(el) { return el.__hooks || (el.__hooks = {}); }
 export function onLive(el, type, handler, options) {
   const bag = hooks(el), key = `on:${type}${options === true || options?.capture ? ':capture' : ''}`;
   const first = !bag[key];
-  bag[key] = handler;
+  bag[key] = handler; bag.safe = true;
   if (first) el.addEventListener(type, event => el.__hooks[key]?.(event), options);
 }
 
@@ -96,14 +96,21 @@ function syncAttributes(live, fresh) {
   built.set(live, next);
 }
 
-// Two elements pair only when morphing one into the other keeps its meaning: the same tag, and for a control (a
-// button, link, field, or anything focusable or carrying hooks) the same builder class set too.
+// Two elements pair only when morphing one into the other keeps its meaning: the same tag, and a control that answers
+// through plain listeners (a button, link, field or anything focusable that is not built on onLive hooks) only with the
+// same builder class set, so a handler never lands on the wrong control. Nodes built on onLive, and focusable non-buttons
+// whose only behaviour is a tooltip hook, follow a rebuild whatever their state classes.
 const interactive = el => /^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/i.test(el.tagName) || el.hasAttribute('tabindex') || !!el.__hooks;
+const handedOver = el => !!el.__hooks?.safe || (!!el.__hooks?.tip && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/i.test(el.tagName));
+// The role of an element: its tag and first builder class (`as-meter`, `combat-health-badge`). Children pair by role, in order,
+// so a badge appearing or going does not shift every sibling after it onto the wrong node.
+const roleOf = (el, memo) => el.nodeType !== 1 ? '#text' : `${el.namespaceURI}|${el.tagName}|${(memo ? [...(built.get(el)?.classes || tokens(el.getAttribute('class')))] : tokens(el.getAttribute('class')))[0] || ''}`;
 function pairs(live, fresh) {
   if (live.nodeType !== fresh.nodeType) return false;
   if (live.nodeType !== 1) return true;
   if (live.tagName !== fresh.tagName || live.namespaceURI !== fresh.namespaceURI) return false;
   if (!interactive(live) && !interactive(fresh)) return true;
+  if (handedOver(live) && handedOver(fresh)) return true;
   const was = built.get(live)?.classes || new Set(tokens(live.getAttribute('class')));
   const now = new Set(tokens(fresh.getAttribute('class')));
   return was.size === now.size && [...now].every(name => was.has(name));
@@ -115,30 +122,31 @@ export function morph(live, fresh) {
   let swaps = 0;
   syncAttributes(live, fresh);
   if (fresh.__hooks) live.__hooks = { ...live.__hooks, ...fresh.__hooks };
-  const have = [...live.childNodes], want = [...fresh.childNodes];
-  want.forEach((next, index) => {
-    const current = have[index];
-    if (!current) { markBuilt(next); live.appendChild(next); swaps++; return; }
-    if (!pairs(current, next)) { markBuilt(next); live.replaceChild(next, current); swaps++; return; }
-    if (next.nodeType === 1) swaps += morph(current, next);
-    else if (current.nodeValue !== next.nodeValue) current.nodeValue = next.nodeValue;
-  });
-  for (const extra of have.slice(want.length)) { live.removeChild(extra); swaps++; }
+  swaps += reconcileChildren(live, [...live.childNodes], [...fresh.childNodes], null, () => true, false);
   return swaps;
 }
 
-/** reconcileList(parent, live, fresh, anchor, { morphable }): make the `live` children of `parent` read as `fresh`,
- *  pairing by position. A pair that `morphable` allows (default: all) is morphed and kept; any other is replaced.
- *  Unmatched fresh nodes go before `anchor` (null: at the end); unmatched live nodes are removed.
+/** reconcileList(parent, live, fresh, anchor, { morphable }): make the `live` children of `parent` read as `fresh`. A fresh node pairs
+ *  with the next live node of the same role that `morphable` allows (default: any); that pair is morphed and kept. A fresh
+ *  node with no partner is inserted before `anchor` (null: at the end), a live node left without one is removed.
  *  Returns the number of nodes added, removed or replaced. */
 export function reconcileList(parent, live, fresh, anchor = null, { morphable = () => true } = {}) {
-  let swaps = 0;
-  fresh.forEach((next, index) => {
-    const current = live[index];
-    if (current && pairs(current, next) && morphable(current, next)) { swaps += morph(current, next); return; }
-    markBuilt(next);
-    if (current) { parent.replaceChild(next, current); swaps++; } else { parent.insertBefore(next, anchor); swaps++; }
-  });
-  for (const extra of live.slice(fresh.length)) { parent.removeChild(extra); swaps++; }
+  return reconcileChildren(parent, live, fresh, anchor, morphable, true);
+}
+
+function reconcileChildren(parent, live, fresh, anchor, morphable, scoped) {
+  let swaps = 0, at = 0;
+  const after = index => (index < live.length ? live[index] : scoped ? anchor : null);
+  for (const next of fresh) {
+    const role = roleOf(next, false);
+    let found = -1;
+    for (let i = at; i < live.length; i++) if (roleOf(live[i], true) === role && pairs(live[i], next) && morphable(live[i], next)) { found = i; break; }
+    if (found < 0) { markBuilt(next); parent.insertBefore(next, after(at)); swaps++; continue; }
+    for (let i = at; i < found; i++) { parent.removeChild(live[i]); swaps++; }
+    if (next.nodeType === 1) swaps += morph(live[found], next);
+    else if (live[found].nodeValue !== next.nodeValue) live[found].nodeValue = next.nodeValue;
+    at = found + 1;
+  }
+  for (let i = at; i < live.length; i++) { parent.removeChild(live[i]); swaps++; }
   return swaps;
 }

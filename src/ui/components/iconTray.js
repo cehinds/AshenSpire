@@ -91,17 +91,19 @@ export function trayIcon({
   if (disabled) node.setAttribute('aria-disabled', 'true');
   if (!tip) return node;
   attachTooltip(node, tip);
+  // The tooltip's content lives in a hook so a node kept across a rebuild (domWrite.morph) explains with its newest text.
+  const liveTip = () => (node.__hooks?.tip || tip)();
   const yields = () => typeof yieldTap === 'function' && yieldTap();
   node.addEventListener('keydown', (event) => {
     if (!['Enter', ' '].includes(event.key) || yields()) return;
     event.preventDefault(); event.stopPropagation();
-    if (activate) { hideTooltip(); activate(node); } else explain(node, tip);
+    if (activate) { hideTooltip(); activate(node); } else explain(node, liveTip);
   });
   node.addEventListener('click', (event) => {
     if (yields()) return;
     event.stopPropagation();
     if (activate && answered === node) { answered = null; hideTooltip(); activate(node); return; }
-    explain(node, tip);
+    explain(node, liveTip);
   });
   return node;
 }

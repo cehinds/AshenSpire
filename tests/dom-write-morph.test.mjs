@@ -15,6 +15,7 @@ class El {
   removeAttribute(name) { this.writes.push(`rm:${name}`); this.attrs.delete(name); }
   get style() { const map = this.styleMap, writes = this.writes; return { getPropertyValue: name => map.get(name) ?? '', setProperty: (name, value) => { writes.push(`style:${name}`); map.set(name, value); }, removeProperty: name => { writes.push(`rmstyle:${name}`); map.delete(name); } }; }
   appendChild(node) { this.childNodes.push(node); node.parent = this; return node; }
+  insertBefore(node, ref) { const at = ref ? this.childNodes.indexOf(ref) : -1; if (at < 0) this.childNodes.push(node); else this.childNodes.splice(at, 0, node); node.parent = this; return node; }
   replaceChild(next, old) { this.childNodes[this.childNodes.indexOf(old)] = next; next.parent = this; return old; }
   removeChild(node) { this.childNodes.splice(this.childNodes.indexOf(node), 1); return node; }
   addEventListener(type, fn) { this.listeners.push([type, fn]); }
@@ -51,17 +52,17 @@ test('attributes and classes the builder dropped go; ones another module added s
   assert.equal(live.styleMap.get('left'), '12px');
 });
 
-test('a child that cannot pair is replaced and counted; extra children are removed', () => {
+test('a child with no partner is added and counted; the live ones left over are removed', () => {
   const live = markBuilt(el('div', {}, el('span', {}, 'a'), el('b', {}, 'x'), el('i', {}, 'y')));
   const swaps = morph(live, el('div', {}, el('span', {}, 'a'), el('em', {}, 'x')));
-  assert.equal(swaps, 2); // b -> em, i removed
+  assert.equal(swaps, 3); // em added; b and i removed
   assert.deepEqual(live.childNodes.map(node => node.tagName), ['SPAN', 'EM']);
 });
 
 test('controls of another builder class do not pair, so a handler never lands on the wrong control', () => {
   const live = markBuilt(el('button', { class: 'intent' }, 'a'));
   const host = markBuilt(el('div', {}, live));
-  assert.equal(morph(host, el('div', {}, el('button', { class: 'player-action-intent' }, 'b'))), 1);
+  assert.equal(morph(host, el('div', {}, el('button', { class: 'player-action-intent' }, 'b'))), 2); // added, and the old one removed
   assert.notEqual(host.childNodes[0], live);
 });
 
@@ -87,7 +88,6 @@ test('a tooltip content hook follows the rebuild', () => {
 
 test('reconcileList keeps paired children, appends new ones before the anchor and removes the rest', async () => {
   const { reconcileList } = await import('../src/ui/domWrite.js');
-  El.prototype.insertBefore = function insertBefore(node, ref) { const at = ref ? this.childNodes.indexOf(ref) : -1; if (at < 0) this.childNodes.push(node); else this.childNodes.splice(at, 0, node); node.parent = this; return node; };
   const tail = el('footer');
   const a = markBuilt(el('span', {}, '1')), b = markBuilt(el('span', {}, '2'));
   const parent = el('div', {}, a, b, tail);
@@ -96,4 +96,16 @@ test('reconcileList keeps paired children, appends new ones before the anchor an
   assert.equal(parent.childNodes[0], a); assert.equal(a.textContent, '9');
   assert.equal(reconcileList(parent, [a], [el('span', {}, '1'), el('span', {}, '2')], tail), 1);
   assert.deepEqual(parent.childNodes.map(node => node.tagName), ['SPAN', 'SPAN', 'FOOTER']);
+});
+
+test('a child that appears or goes does not shift its siblings onto the wrong node', () => {
+  const row = (...kids) => el('div', { class: 'row' }, ...kids);
+  const badge = text => el('span', { class: 'badge' }, text), meter = text => el('i', { class: 'meter' }, text);
+  const live = markBuilt(row(meter('50')));
+  const kept = live.childNodes[0];
+  assert.equal(morph(live, row(badge('P'), meter('40'))), 1, 'one badge added');
+  assert.equal(live.childNodes[1], kept, 'the meter is the same node');
+  assert.equal(kept.textContent, '40');
+  assert.equal(morph(live, row(meter('30'))), 1, 'one badge removed');
+  assert.equal(live.childNodes[0], kept);
 });
