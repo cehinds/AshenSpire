@@ -64,7 +64,7 @@ try {
       const hp = panel.querySelector('.combat-health-meter .m-value');
       const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
       const hpRow = panel.querySelector('.combat-health-row');
-      const badges = [...hpRow.querySelectorAll('[data-defense-kind]')].map(node => {
+      const badges = [...hpRow.querySelectorAll('[data-defense-kind]:not([hidden])')].map(node => {
         const value = node.querySelector('.combat-health-badge-value');
         return { kind:node.dataset.defenseKind, value:value.textContent, label:node.getAttribute('aria-label'),
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
@@ -73,7 +73,7 @@ try {
         resourceKinds:[...panel.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
-        order:[...hpRow.children].map(e=>e.dataset.defenseKind || e.dataset.res).filter(Boolean), viewport:{width:innerWidth,height:innerHeight} };
+        order:[...hpRow.children].filter(e => !e.hidden).map(e=>e.dataset.defenseKind || e.dataset.res).filter(Boolean), viewport:{width:innerWidth,height:innerHeight} };
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});

@@ -25,11 +25,9 @@
 :root .combat[data-target-hud='true'] .combatant.dead > .target-hud-overhead-meters {
   opacity:0; visibility:hidden; pointer-events:none; transition:opacity .25s ease, visibility 0s linear .25s;
 }
-:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters {
-  display:flex!important; top:var(--combat-selected-intent-top,calc(var(--combat-mini-hud-top,-63px) + 22px / var(--ui-zoom,1)));
-  left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
-}
-:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
+/* Owner (2026-11-06): the mini HUD never moves. A selected enemy's panel stands above its rack, and the rack's own bar only
+   hides (it keeps its room), so the intent stays exactly where it was. */
+:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { visibility:hidden; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
   position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
   /* Only the centered action row owns intent input. The full-width host
@@ -50,6 +48,7 @@
 :root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat { --intent-value-size: calc(18px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-target-hud='true'] :is(.intent-action,.intent-followup) .intent-icon { width:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(20px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .player-action-intent .intent-action[hidden] { display:none; }
 :root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); height:calc(25px * var(--intent-content-scale) / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
@@ -67,11 +66,11 @@
   position:absolute; inset:calc(9px / var(--ui-zoom,1)) 0 auto auto; width:auto; height:auto;
   display:flex; justify-content:flex-end; background:transparent; pointer-events:none;
 }
-:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(10px / var(--ui-zoom,1));  }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(max(9px, 10px * var(--mini-hud-scale,1)) / var(--ui-zoom,1));  }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
   position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
-  font-size:calc(7.2px / var(--ui-zoom,1)); flex:0 0 calc(12.8px / var(--ui-zoom,1)); width:calc(12.8px / var(--ui-zoom,1)); height:calc(12.8px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
+  font-size:calc(7.2px * var(--mini-hud-scale,1) / var(--ui-zoom,1)); flex:0 0 calc(12.8px * var(--mini-hud-scale,1) / var(--ui-zoom,1)); width:calc(12.8px * var(--mini-hud-scale,1) / var(--ui-zoom,1)); height:calc(12.8px * var(--mini-hud-scale,1) / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
 }
 :root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;
@@ -84,8 +83,6 @@
 }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
-/* battlefieldStage.js slides an intent sideways (overheadIntentSeparation.js) when a neighbour's stands on it. */
-:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { left:var(--combat-intent-shift,auto)!important; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
 :root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
 :root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }
@@ -220,3 +217,6 @@
 :root .combat.combat.combat[data-layout='formation'] .combatant :is(.target-hud-overhead-meters, .combatant-mini-hud, .target-hud-meters) .combat-health-row:has(.combat-health-counter, .combat-health-reflect) {
   height: auto !important;
 }
+
+/* Owner (2026-11-06): the mini HUD is as wide as its cell and its contents scale with it (--mini-hud-scale, set once per layout pass). */
+:root .combat .combatant { --intent-content-scale: calc(.8 * var(--mini-hud-scale, 1)); }

@@ -48,7 +48,7 @@ for (const appearance of ['alternative', 'classic']) for (const role of ['player
       const all = slotsOf(next);
       const passed = { classNames: all.classNames };
       for (const slot of subset) passed[slot] = all[slot];
-      assert.equal(updateCombatantSlots(frame, passed), true);
+      assert.equal(updateCombatantSlots(frame, passed), 0, 'no rack: the slots are replaced as before and nothing is counted');
       // Expected: a fresh frame whose passed slots are the new ones and the rest the old.
       // Separate node instances: the expected frame must not steal the actual frame's nodes.
       const before = make(role, 'a'), again = make(role, 'b');
@@ -87,15 +87,18 @@ test('a player slot update keeps the action glyph last in the leading host and l
     full.querySelector('.combatant-leading').children.map(n => n.className).join('|').replace(/c-\w/g, ''));
 }));
 
-test('node slots are refused (nothing touched) while the target-HUD rack holds the meters', () => withKitDom(({ document }) => {
+// Owner (2026-11-06): with the target-HUD rack up, node slots are no longer refused (that forced a full rebuild that discarded
+// the rack, the intent and the meters on every HP change). They are morphed in place; tests/combat-hud-static.browser.mjs
+// proves that against a real DOM (no node replaced, no HUD box moved). Here: a class-only write never touches the rack.
+test('a class-only slot write leaves the target-HUD rack untouched', () => withKitDom(({ document }) => {
   document.documentElement ||= document.createElement('html');
   const make = kit(document);
   const frame = combatantFrame(make('enemy', 'a'));
   const rack = document.createElement('div'); rack.className = 'target-hud-overhead-meters';
   frame.append(rack);
   const html = frame.outerHTML;
-  assert.equal(updateCombatantSlots(frame, { meters: make('enemy', 'b').meters }), false);
-  assert.equal(frame.outerHTML, html);
-  assert.equal(updateCombatantSlots(frame, { classNames: ['dead'] }), true);
+  assert.equal(updateCombatantSlots(frame, { classNames: ['dead'] }), 0);
   assert.ok(frame.classList.contains('dead'));
+  assert.equal(frame.querySelector('.target-hud-overhead-meters').outerHTML, rack.outerHTML);
+  assert.notEqual(frame.outerHTML, html);
 }));

@@ -59,7 +59,7 @@
         "skew": 0.6,
         "top": 0.41,
         "rowHeight": 0.125,
-        "hudWidthFraction": 0.5,
+        "hudWidthFraction": 1,
         "hudCenterOnBody": true
       },
       "narrow": {
@@ -97,7 +97,7 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "hudWidthFraction": 0.55,
+        "hudWidthFraction": 1,
         "skew": 1.6,
         "top": 0.5,
         "rowHeight": 0.105
@@ -109,7 +109,7 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "hudWidthFraction": 0.55,
+        "hudWidthFraction": 1,
         "skew": 4.2,
         "top": 0.63,
         "rowHeight": 0.04,
@@ -238,17 +238,23 @@
           "skew": 0.6,
           "top": 0.41,
           "rowHeight": 0.12,
-          "hudWidthFraction": 0.5,
+          "hudWidthFraction": 1,
           "hudCenterOnBody": true,
           "teamGapRows": 0.8
         }
       },
-      "miniHudInsetPx": 2,
+      "miniHudInsetPx": 0,
       "miniHudGroupHeightPx": 61,
       "desktopMiniHudGroupHeightPx": 96,
       "desktopShortMiniHudGroupHeightPx": 80,
       "desktopMiniHudBandOverlapPx": 30,
-      "miniHudSpriteGapPx": 5
+      "miniHudSpriteGapPx": 5,
+      "miniHud": {
+        "designWidthPx": 140,
+        "baseFontPx": 13,
+        "minFontPx": 9,
+        "maxScale": 1.2
+      }
     }
   },
   "behavior": {
