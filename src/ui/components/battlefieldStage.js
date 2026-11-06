@@ -343,7 +343,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const read = intent ? { frameBox, intentBox, rackBox: rack.getBoundingClientRect() } : null;
         // Owner (2026-11-06): the rack stands wholly above the head. Its own height is read, since it can run past the
         // configured group height (the HP row's padding), and the rack's bottom, not its estimate, keeps the gap.
-        const rackHeight = rack.getBoundingClientRect().height || 0;
+        const rackHeight = (read ? read.rackBox : rack.getBoundingClientRect()).height || 0; // one read per rack: the intent's skip key shares it
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
           groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       // A detailed HUD rack is absent briefly while its frame is rendered.
