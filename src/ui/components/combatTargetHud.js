@@ -28,7 +28,7 @@ function panelFor(entry) {
   // screen readers (aria-label/title) and in the inspect panel; the player's panel keeps its name.
   const intent = entry.role === 'enemy' && entry.createIntent ? entry.createIntent() : null;
   if (entry.role === 'enemy') {
-    const slot = node('div', 'target-hud-name target-hud-intent');
+    const slot = node('div', 'target-hud-name target-hud-name-intent');
     slot.title = entry.name; slot.setAttribute('aria-label', entry.name);
     const sr = node('span', 'sr-only', entry.name);
     slot.append(sr);

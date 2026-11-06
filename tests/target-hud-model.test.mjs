@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { targetHudMatchup, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, createTargetHudDwell, miniHudScale, enemyHudPlacement, playerHudPlacement } from '../src/ui/models/TargetHudModel.js';
 
 // Owner 2026-11-06: "keep enemy mini HUDs above them in a fixed position; keep the player hud anchored to the right and
@@ -83,10 +82,9 @@ test('the player margin placement takes the margin, caps it, and refuses one too
   assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1190, gap: 10, top: 50 }), { width: 180, left: 1010, top: 50 });
 });
 
-import { readFileSync } from 'node:fs';
 test('an enemy panel keeps its name slot (now holding the intent) as the targeting and full-read click target', () => {
   const src = readFileSync(new URL('../src/ui/components/combatTargetHud.js', import.meta.url), 'utf8');
-  assert.match(src, /node\('div', 'target-hud-name target-hud-intent'\)/);
+  assert.match(src, /node\('div', 'target-hud-name target-hud-name-intent'\)/);
   assert.match(src, /event\.target\.closest\('\.target-hud-name, \.target-hud-meters'\)/, 'the name slot still confirms a target');
   assert.match(src, /inspect\(id, shell\)/, 'a plain tap on the panel opens the full read');
 });

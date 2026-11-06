@@ -47,5 +47,5 @@ test('the combatant mini HUD hides the scoped total line, and no target-HUD inte
   assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
   const sheets = [readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8'), css,
     readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8'), readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8')];
-  for (const sheet of sheets) assert.doesNotMatch(sheet, /target-hud-intent/, "the target panel's intent row was removed (2026-10-26)");
+  for (const sheet of sheets) assert.doesNotMatch(sheet, /target-hud-name-intent/, "the target panel's intent row was removed (2026-10-26)");
 });

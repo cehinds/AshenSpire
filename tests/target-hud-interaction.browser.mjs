@@ -59,7 +59,7 @@ try {
     await inspector.waitFor({ state: 'detached' });
     // Owner 2026-10-25: one tap anywhere on a selected panel (padding, statuses) inspects. The panel
     // holds name, HP and stats only now (2026-10-26), so its padding is the part that is always there.
-    assert.equal(await panel.locator('.target-hud-intent').count(), 0, 'the panel no longer carries an intent strip');
+    assert.equal(await panel.locator('.target-hud-name-intent').count(), 0, 'the panel no longer carries an intent strip');
     for (const [label, press] of [['padding', () => panel.locator('.target-hud-panel').click({ position: { x: 3, y: 3 } })],
       ['status icon', () => panel.locator('.target-hud-statuses .status-icon').first().click()]]) {
       if (label === 'status icon' && !(await panel.locator('.target-hud-statuses .status-icon').count())) continue; // the player carries no status in this fixture
