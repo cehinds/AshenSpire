@@ -198,7 +198,10 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 // and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
 // docs/preview was removed (owner decision 2026-11-04).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
-const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
+// docs/preview and docs/design are excluded too (owner decision 2026-11-04; they
+// were 163 MB and 79 MB on main, and cc505ac9ce only dropped docs/preview from the
+// KEPT list, so main's tree still shipped both: measured in run 42174299001).
+const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music', 'docs/preview', 'docs/design']);
 // Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
 const BASE_TREE_KEPT_DIRS = Object.freeze(['assets']);
 const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
