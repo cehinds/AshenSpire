@@ -1044,7 +1044,7 @@ export function mountEquipment(host, {
    * An empty position, a drag/drop and the Inventory tab's own buttons are not a
    * replacement and equip at once.
    */
-  function requestEquip(slotId, setIndex, pieceId, actionLabel, { confirm = false, opener = null } = {}) {
+  function requestEquip(slotId, setIndex, pieceId, actionLabel, { confirm = false, opener = null, onBack = undefined } = {}) {
     const slot = eq.slots.find(candidate => candidate.id === slotId);
     const currentId = run.loadout.sets[slotId]?.[setIndex];
     if (!(picking || confirm) || !slot || !pieceId || currentId === pieceId || (!currentId && !confirm)) {
@@ -1062,7 +1062,7 @@ export function mountEquipment(host, {
       // An EMPTY position: confirm with the item's card (Inventory equip flow, owner 2026-11-05).
       openEquipConfirmModal({
         registries, item: next, name: next.name, slotLabel: `${slot.label} · ${setIndex + 1}`, opener,
-        onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); },
+        onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); }, onBack,
       });
       return true;
     }
@@ -1074,7 +1074,7 @@ export function mountEquipment(host, {
       rows: equipmentCompareRows(registries, current, next, {
         attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels,
       }),
-      onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); },
+      onEquip: () => { applyEquipmentChange(slotId, setIndex, pieceId, actionLabel); }, onBack,
       returnFocusElement: opener || undefined,
     });
     return true;
@@ -1095,16 +1095,17 @@ export function mountEquipment(host, {
       }
     }
     const open = choices.filter(choice => choice.position.state !== 'locked');
-    const proceed = ({ slot, position }) => {
+    // Back from the compare or confirm child lands on the slot list it came from (when there was one).
+    const proceed = ({ slot, position }, onBack = undefined) => {
       const label = `${slot.label} · ${position.index + 1}`;
       const seal = canEquip(registries, slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: position.index, itemId: row.id, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
       const transition = equipTransitionReceipt(registries, run.loadout, slot.id, position.index, row.id);
       const refusal = !seal.ok ? seal.reason : !transition.ok ? transition.reason : '';
       if (refusal) { notice = refusal; draw(); return; }
-      requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener });
+      requestEquip(slot.id, position.index, row.id, `Equip ${row.name} to ${label}`, { confirm: true, opener, onBack });
     };
     if (open.length === 1) { proceed(open[0]); return; }
-    openSlotChoiceModal({
+    const chooseSlot = () => openSlotChoiceModal({
       opener,
       options: choices.map(({ slot, position, id }) => ({
         id, label: `${slot.label} · ${position.index + 1}`,
@@ -1112,8 +1113,9 @@ export function mountEquipment(host, {
         hint: position.rung?.hint || position.rung?.name || '',
         sub: `${t(position.active ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${position.state === 'empty' ? tTip('piles.empty') : position.summary.name}`,
       })),
-      onChoose: (id) => { const choice = choices.find(candidate => candidate.id === id); if (choice) proceed(choice); },
+      onChoose: (id) => { const choice = choices.find(candidate => candidate.id === id); if (choice) proceed(choice, chooseSlot); },
     });
+    chooseSlot();
   }
 
   function comparisonFor(slotId, setIndex, pieceId) {

@@ -38,10 +38,10 @@ export function openSlotChoiceModal({ options, onChoose, opener }) {
 }
 
 /**
- * openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, opener })
+ * openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, onBack, opener })
  *   The empty-position confirm: the item's card, Back / Equip.
  */
-export function openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, opener }) {
+export function openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, onBack, opener }) {
   const back = button({ label: t('common.back'), role: 'exit' });
   const equip = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'equip-confirm-equip' });
   const shell = openModal({
@@ -53,7 +53,7 @@ export function openEquipConfirmModal({ registries, item, name, slotLabel, onEqu
       host.append(el('div', { class: 'equip-confirm-card' }, [rendered.card]));
     },
   });
-  back.addEventListener('click', () => shell.close());
+  back.addEventListener('click', () => { shell.close(); onBack?.(); }); // Back returns to the list it came from (modalReturn.js)
   equip.addEventListener('click', () => { shell.close(); onEquip?.(); });
   return shell;
 }
