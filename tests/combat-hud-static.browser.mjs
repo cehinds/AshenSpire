@@ -14,9 +14,9 @@ const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: t
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 const HUD = '.target-hud-layer, .target-hud-detail, .target-hud-overhead-meters, .target-hud-inspect-info, .intent, .player-action-intent, .combatant-leading, .meters, .combat-health-row, .statuses, .nm, .enemy-key';
 
-async function board(width, height, enemies) {
+async function board(width, height, enemies, seed = 4) {
   const page = await browser.newPage({ viewport: { width, height }, reducedMotion: 'reduce' });
-  await page.goto(`${server.url}index.html?shot=combat&gameProfile=core&shotSeed=4&shotEnemyCount=${enemies}&shotHand=5`, { waitUntil: 'load' });
+  await page.goto(`${server.url}index.html?shot=combat&gameProfile=core&shotSeed=${seed}${enemies ? `&shotEnemyCount=${enemies}&shotHand=5` : ''}`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!window.__combat);
   await page.waitForSelector('.combatant.player .sprite');
   await page.waitForTimeout(2500);
@@ -123,6 +123,28 @@ try {
       assert.ok(grown.insideX && grown.insideY, `${tag}: the Inspect control stays inside its panel after a status appears (${JSON.stringify(grown)})`);
       assert.ok(Math.abs(grown.top - bare.top) < 2 && Math.abs(grown.right - bare.right) < 2, `${tag}: and in the same corner (${JSON.stringify([bare, grown])})`);
     }
+    await page.close();
+  }
+  // Other seeds stand the player in other cells (PERF1: the back-left one). Every HUD is still exactly as wide as its cell, and each
+  // Inspect control stands inside its own panel's top-right corner, whichever cell the figure is in.
+  for (const seed of ['PERF1', 'PERF2']) for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, null, seed), tag = `${width}x${height} seed ${seed}`;
+    await click(page, page.locator('.hand .card[data-card-id="core.strike"]').first()); await page.waitForTimeout(1200);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant')].map(frame => {
+      const id = frame.dataset.eid, polygon = JSON.parse(frame.dataset.targetHudCellPolygon || 'null');
+      const shell = document.querySelector(`.target-hud-detail[data-eid="${id}"]`), info = document.querySelector(`.target-hud-inspect-info[data-eid="${id}"]`);
+      const panel = shell?.querySelector('.target-hud-panel').getBoundingClientRect(), box = info?.getBoundingClientRect();
+      return { id, cell: frame.dataset.formationCell, cellWidth: polygon && polygon[2][0] - polygon[3][0], shown: shell?.classList.contains('visible'),
+        width: shell?.getBoundingClientRect().width, panel: panel && { left: panel.left, right: panel.right, top: panel.top, bottom: panel.bottom }, info: box && { left: box.left, right: box.right, top: box.top, bottom: box.bottom } };
+    }));
+    const player = rows.find(row => row.id === 'player');
+    assert.ok(player?.cellWidth > 20, `${tag}: the player's cell width is published (cell ${player?.cell})`);
+    for (const row of rows.filter(row => row.shown)) {
+      assert.ok(Math.abs(row.width - row.cellWidth) <= 2, `${tag} ${row.id} (${row.cell}): panel ${row.width.toFixed(1)} is as wide as its cell ${row.cellWidth.toFixed(1)}`);
+      assert.ok(row.info.left >= row.panel.left - 1 && row.info.right <= row.panel.right + 1 && row.info.top >= row.panel.top - 1 && row.info.bottom <= row.panel.bottom + 1,
+        `${tag} ${row.id} (${row.cell}): Inspect ${JSON.stringify(row.info)} is inside its panel ${JSON.stringify(row.panel)}`);
+    }
+    assert.ok(rows.some(row => row.id === 'player' && row.shown), `${tag}: the player's panel is showing`);
     await page.close();
   }
   // A panel already pushed against the top edge keeps its top on screen when a status grows it (short landscape phone).
