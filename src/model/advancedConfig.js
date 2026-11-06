@@ -13,10 +13,10 @@ import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
+import { STAT_ROW_NO_MAX, hasRetiredOpeningHand, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 import { shopConfigRows, cloneShops, shopSettingsProblems, shopOverridesSetAside } from './shopKinds.js';
@@ -184,6 +184,42 @@ const RETIRED_UPGRADE_AT_KEY = `${ADVANCED_CONFIG_PREFIX}balance.skill.upgradeAt
 const RETIRED_UPGRADE_AT_KEYS = Object.freeze([RETIRED_UPGRADE_AT_KEY, `settings.${RETIRED_UPGRADE_AT_KEY}`]);
 const RETIRED_UPGRADE_AT_WARNING = 'The skill-level card upgrade setting is retired and was left out: levels raise card ranks instead.';
 
+// STAT SETTINGS FROM BEFORE RULESET 7 ARE DROPPED, NEVER CONVERTED (owner,
+// 2026-11-04: Core 2 is the only game; profiles from before it are refused or
+// dropped, not converted). Two families of stored key have no row left to land
+// on, in either spelling (plain or `settings.`-prefixed):
+//
+//   stat    the rating formula (`combatRatings.multiplier` and
+//           `combatRatings.ratings.<id>.<field>`), the hand rules' single-stat
+//           dials (`handRules.<group>.*`, `handRules.startingByClass.*`),
+//           `balance.handMax` and the `statRowsVersion` marker that guarded
+//           their conversion;
+//   item    the per-item rating plus `combatRatings.bonuses.armament:<id>.<r>`
+//           and `.armor:`.
+//
+// Each family is said once, aloud, when it was present.
+const RETIRED_STAT_KEY = /^gameConfig\.(?:combatRatings\.(?:multiplier|ratings\.(?:ar|dr|pr|poise|ward)\.(?:base|strength|dexterity|constitution|wisdom|intelligence))|handRules\.(?:(?:starting|turn|capacity)\.(?:base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)|startingByClass\.[a-z]+\.(?:base|stat))|balance\.handMax)$/;
+const RETIRED_ITEM_BONUS_KEY = /^gameConfig\.combatRatings\.bonuses\.(?:armament|armor):/;
+const RETIRED_STAT_MARKER = 'statRowsVersion';
+const RETIRED_STAT_WARNING = 'The combat-rating formula and multiplier, the hand rules\' dials and the fallback hand capacity are retired and were left out: every stat is one row now (Stats → each stat). Everything else was kept.';
+const RETIRED_ITEM_BONUS_WARNING = 'The per-item rating bonuses are retired and were left out: an item\'s rating is set on the item (Equipment → item ratings). Everything else was kept.';
+const bareSetting = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+const retiredStatKey = (key) => RETIRED_STAT_KEY.test(bareSetting(key));
+const retiredItemBonusKey = (key) => RETIRED_ITEM_BONUS_KEY.test(bareSetting(key));
+const retiredStatMarker = (key) => bareSetting(key) === RETIRED_STAT_MARKER;
+
+/** withoutRetiredStatSettings(entries, warnings) → the entries without either retired stat family, one warning each. */
+function withoutRetiredStatSettings(entries, warnings = null) {
+  const kept = entries.filter(([key]) => !retiredStatKey(key) && !retiredItemBonusKey(key) && !retiredStatMarker(key));
+  if (kept.length !== entries.length && Array.isArray(warnings)) {
+    if (entries.some(([key]) => retiredStatKey(key))) warnings.push(RETIRED_STAT_WARNING);
+    if (entries.some(([key]) => retiredItemBonusKey(key))) warnings.push(RETIRED_ITEM_BONUS_WARNING);
+  }
+  return kept;
+}
+
+const hasRetiredStatSettings = (settings = {}) => Object.keys(settings || {}).some((key) => retiredStatKey(key) || retiredItemBonusKey(key) || retiredStatMarker(key));
+
 /**
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
@@ -215,32 +251,20 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
   return warnings;
 }
 
-/** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
+/** True when a stored profile holds a key `normalizeAdvancedSettings` drops. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  // An unmarked profile holding a `draw` or `poise` row is one of them
-  // (model/statRows.js hasLegacyStatSettings).
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
+  return hasRetiredStatSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings);
 }
 
 /**
  * normalizeAdvancedSettings(settings, bundle) → the same object, holding only
- * keys this build knows.
- *
- * ONE NUMBER, ONE ROW, WHEREVER IT IS READ (Copilot, on #1242). The per-item
- * rating migration is value-bearing — it reads the item's authored rating to
- * turn an old plus into the value it used to make — so it cannot live in the
- * static key map above, and a reader that skipped it saw a different number
- * from a reader that did: the item card took the migrated 8 while the settings
- * row still opened on the authored 5, and typing in that row overwrote the 8.
- * Rewriting the profile ITSELF, once, at boot, leaves every reader — the row,
- * the export, the configured bundle, the fight — looking at one key.
+ * keys this build knows: every retired key is deleted, with one warning per
+ * family, and none is converted.
  *
  * In place, because the profile object is shared (`main.js` holds
  * `activeMeta.settings` by reference and saves it); the return value is the
  * same object, for callers that would rather read than mutate.
  */
-export { hasLegacyItemRatingSettings };
-
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
@@ -252,23 +276,16 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
     if (Array.isArray(warnings)) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   }
   // #1294's retired 3–15 opening-hand limits and the retired shared opening
-  // base and attribute go first (#1318), so they are never converted into the
-  // opening-hand row below.
+  // base and attribute (#1318).
   if (hasRetiredOpeningHand(settings)) {
     const kept = new Set(withoutRetiredOpeningHand(Object.entries(settings), warnings).map(([key]) => key));
     for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
-  // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
-  // fallback hand size are stat rows now; their old keys become row keys.
-  // A profile whose stat rows were read here is marked as read by a ruleset-7
-  // build, so its `draw` and `poise` rows are never re-read as the old ones.
-  const readStatRows = hasLegacyStatSettings(settings);
-  const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
-  if (migrated !== settings) {
-    for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
-    Object.assign(settings, migrated);
+  // Ruleset 7's retired stat keys and per-item rating plusses.
+  if (hasRetiredStatSettings(settings)) {
+    const kept = new Set(withoutRetiredStatSettings(Object.entries(settings), warnings).map(([key]) => key));
+    for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
-  if (readStatRows) settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   return settings;
 }
 
@@ -1220,7 +1237,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // one, or an older snapshot the line above disables — would otherwise have
   // its equip load moved by a dial that changes nothing else (review, #1242).
   if (configured.balance.combatRatings.enabled) {
-    applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
+    applyItemRatingConfig(configured, bundle, settings);
   }
   // A per-class value switched off leaves the class following the global:
   // drop its entry and the engine's own fallback applies.
@@ -1430,9 +1447,6 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     game: 'Ashen Spire',
     build,
-    // Written by a ruleset-7 build: its `draw` and `poise` rows mean what they
-    // mean now (model/statRows.js).
-    statRows: STAT_ROWS_VERSION,
     overrides: advancedConfigSettings(settings, additionalKeys),
   }, null, 2) + '\n';
 }
@@ -1518,15 +1532,11 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
   }
   const changes = {};
-  // A file exported before the per-item rows became the item's own ratings
-  // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
-  // reads each as the value it used to make. Done HERE, at the door, because
-  // the next line refuses an unknown key by aborting the whole file.
-  // A file exported before ruleset 7 carries no `statRows` stamp. #1294's
-  // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
-  // converted into the opening-hand row.
-  const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
-  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningHand(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
+  // A file exported before ruleset 7 carries retired stat keys and per-item
+  // rating plusses. They are dropped with a warning, never converted, and the
+  // retired opening-hand limits go with them: all BEFORE the check below that
+  // refuses an unknown key by aborting the whole file.
+  const overrides = Object.fromEntries(withoutRetiredStatSettings(withoutRetiredOpeningHand(Object.entries(file.overrides), warnings), warnings));
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once. The retired
   // opening-hand limits and shared opening base/attribute (which have no row)

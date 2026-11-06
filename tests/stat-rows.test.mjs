@@ -12,7 +12,7 @@ import { DERIVED_STAT_IDS, statRowValue, deriveStat, resolvedRuleRow } from '../
 import { attributeRatingReceipt } from '../src/model/ratingFormula.js';
 import { scaledCards } from '../src/model/handRules.js';
 import { validateContent } from '../src/model/validate.js';
-import { LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, migrateLegacyStatSettings, statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes } from '../src/model/statRows.js';
+import { LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes } from '../src/model/statRows.js';
 import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile, hasLegacyAdvancedSettings } from '../src/model/advancedConfig.js';
 
 const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
@@ -184,84 +184,44 @@ test('a fight saved with the retired hand groups and rating multiplier restores 
   assert.equal(attributeRatingReceipt(back.ratingsRules, back.attributes, 'ar').value, legacy.base + Math.floor(weighted * 1.5 + 1e-9));
 });
 
-test('legacy settings keys convert on import and on load: ratings, multiplier, hand groups, handMax', () => {
-  const warnings = [];
-  const converted = migrateLegacyStatSettings({
+test('retired stat keys are dropped with one warning and nothing is converted: ratings, multiplier, hand groups, handMax', () => {
+  const retired = {
     'gameConfig.combatRatings.ratings.ar.strength': 1,
     'gameConfig.combatRatings.ratings.ward.base': 3,
+    'gameConfig.combatRatings.multiplier': 2,
     'gameConfig.handRules.capacity.base': 9,
-    'gameConfig.handRules.starting.base': 4, // the shipped value: nothing to fit
+    'gameConfig.handRules.turn.pointsPerCard': 3,
+    'gameConfig.handRules.startingByClass.reaver.base': 5,
     'gameConfig.balance.handMax': 7,
-    'gameConfig.handRules.retain': false,
-  }, warnings);
-  assert.equal(converted['gameConfig.derivedStatRules.rules.ar.strength'], 1);
-  assert.equal(converted['gameConfig.derivedStatRules.rules.ward.base'], 3);
-  assert.equal(converted['gameConfig.handRules.retain'], false, 'a behaviour option is not a stat row and stays');
-  for (const key of Object.keys(converted)) assert(!/combatRatings\.ratings|handRules\.(starting|turn|capacity)|balance\.handMax/.test(key), `${key} left in a retired home`);
-  assert.equal(converted['gameConfig.derivedStatRules.rules.handSize.base'] !== undefined, true, 'a tuned capacity becomes the hand-size row');
-  assert.equal(converted['gameConfig.derivedStatRules.rules.openingHand.base'], undefined, 'an untuned group keeps the new defaults');
-  // The converted capacity counts exactly what the tuned group counted, at every INT.
-  const fitted = Object.fromEntries(['base', ...ATTRIBUTES, 'attributeBaseline', 'min', 'max'].map((f) => [f, converted[`gameConfig.derivedStatRules.rules.handSize.${f}`]]));
-  const legacy = legacyHandRow({ ...LEGACY_HAND_GROUPS.capacity, base: 9 });
-  for (let n = 0; n <= 40; n += 1) assert.equal(statRowCount(fitted, { intelligence: n }), statRowCount(legacy, { intelligence: n }), `INT ${n}`);
-  // So does a tuned turn draw (review, #1296: the old fit was off by a card at INT 7).
-  const turn = migrateLegacyStatSettings({ 'gameConfig.handRules.turn.base': 3, 'gameConfig.handRules.turn.pointsPerCard': 3 });
-  const turnRow = Object.fromEntries(['base', ...ATTRIBUTES, 'attributeBaseline', 'min', 'max'].map((f) => [f, turn[`gameConfig.derivedStatRules.rules.draw.${f}`]]));
-  const turnLegacy = legacyHandRow({ ...LEGACY_HAND_GROUPS.turn, base: 3, pointsPerCard: 3 });
-  for (let n = 0; n <= 40; n += 1) assert.equal(statRowCount(turnRow, { intelligence: n }), statRowCount(turnLegacy, { intelligence: n }), `turn at INT ${n}`);
-  // Rating keys still at their old shipped numbers are no tuning (an export
-  // writes every value): they leave the ruleset-7 rows alone (review, #1296).
-  const stock = migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.wisdom': 0.2, 'gameConfig.combatRatings.ratings.poise.intelligence': 0.1, 'gameConfig.combatRatings.ratings.ar.strength': 0.75 });
-  assert.deepEqual(Object.keys(stock).filter((k) => k.startsWith('gameConfig.derivedStatRules.')), []);
-  assert(warnings.some((line) => /hand size|hand capacity/i.test(line)));
-  // A multiplier folds into the weights, and says so.
-  const scaledWarnings = [];
-  const scaled = migrateLegacyStatSettings({ 'gameConfig.combatRatings.multiplier': 2 }, scaledWarnings);
-  assert.equal(scaled['gameConfig.derivedStatRules.rules.ar.strength'], 1.5);
-  assert(scaledWarnings.some((line) => /multiplier/.test(line)));
-  // The profile door and the import door both run it.
-  const profile = { 'gameConfig.handRules.turn.baseline': 2, 'gameConfig.combatRatings.ratings.dr.base': 2 };
-  assert(hasLegacyAdvancedSettings(profile));
-  normalizeAdvancedSettings(profile, contentBundle, []);
-  assert.equal(profile['gameConfig.derivedStatRules.rules.dr.base'], 2);
-  assert.equal(profile['gameConfig.handRules.turn.baseline'], undefined);
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { 'gameConfig.combatRatings.ratings.pr.intelligence': 1, 'gameConfig.balance.handMax': 6 } });
-  const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], []);
-  assert.equal(imported['gameConfig.derivedStatRules.rules.pr.intelligence'], 1);
-});
-
-test('a pre-ruleset-7 draw or poise row is read as what it meant then; a marked one as what it means now', () => {
-  const old = {
-    'gameConfig.derivedStatRules.rules.draw.base': 3,
-    'gameConfig.derivedStatRules.rules.draw.intelligence': 0.5,
-    'gameConfig.derivedStatRules.rules.poise.constitution': 1,
-    'gameConfig.combatRatings.ratings.poise.constitution': 1.5,
-    'gameConfig.handRules.turn.base': 3,
+    statRowsVersion: 7,
   };
+  const keep = { 'gameConfig.handRules.retain': false, 'gameConfig.derivedStatRules.rules.draw.base': 3 };
+  // The profile door.
+  const profile = { ...retired, ...keep };
+  assert(hasLegacyAdvancedSettings(profile));
   const warnings = [];
-  const converted = migrateLegacyStatSettings(old, warnings);
-  // The co-op-only draw is set aside; the tuned turn draw becomes the row.
-  assert.notEqual(converted['gameConfig.derivedStatRules.rules.draw.intelligence'], 0.5);
-  assert.equal(converted['gameConfig.derivedStatRules.rules.draw.base'] !== undefined, true);
-  // The rating Poise wins over the ratings-off pool.
-  assert.equal(converted['gameConfig.derivedStatRules.rules.poise.constitution'], 1.5);
-  assert(warnings.some((line) => /old Draw row/.test(line)));
-  // A profile this build marked keeps its rows as they are.
-  const marked = { statRowsVersion: 7, 'gameConfig.derivedStatRules.rules.draw.base': 3 };
-  assert.equal(hasLegacyAdvancedSettings(marked), false);
-  assert.equal(migrateLegacyStatSettings(marked), marked);
-  // Normalising a profile whose stat rows it read marks it; one with none is left alone.
-  const profile = { 'gameConfig.handRules.turn.base': 3 };
-  normalizeAdvancedSettings(profile, contentBundle, []);
-  assert.equal(profile.statRowsVersion, 7);
-  const untouched = { sfxVolume: 0.4 };
-  normalizeAdvancedSettings(untouched, contentBundle, []);
-  assert.deepEqual(untouched, { sfxVolume: 0.4 });
-  // An exported file carries the stamp, and a stamped file's draw row imports as written.
-  const stamped = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { 'gameConfig.derivedStatRules.rules.draw.base': 3 } });
-  assert.equal(parseAdvancedConfigFile(stamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], 3);
+  assert.equal(normalizeAdvancedSettings(profile, contentBundle, warnings), profile, 'the same object');
+  assert.deepEqual(profile, keep, 'only the retired keys went; a behaviour option and a row key stay as written');
+  assert.equal(warnings.length, 1, 'one warning for the whole stat family');
+  assert.match(warnings[0], /formula and multiplier.*retired/);
+  assert.equal(hasLegacyAdvancedSettings(profile), false);
+  // The mirrored spelling goes too.
+  const mirrored = { 'settings.gameConfig.balance.handMax': 7, 'settings.gameConfig.combatRatings.ratings.pr.intelligence': 1 };
+  normalizeAdvancedSettings(mirrored, contentBundle, []);
+  assert.deepEqual(mirrored, {});
+  // The import door: the file lands without them, no row key is written for them.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { ...retired, ...keep } });
+  const importWarnings = [];
+  const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings);
+  assert.deepEqual(imported, keep);
+  assert.equal(importWarnings.length, 1);
+  // A row key is a row key: an unstamped file's draw row imports as written.
   const unstamped = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { 'gameConfig.derivedStatRules.rules.draw.base': 3 } });
-  assert.equal(parseAdvancedConfigFile(unstamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], undefined);
+  assert.equal(parseAdvancedConfigFile(unstamped, contentBundle, {}, [], [])['gameConfig.derivedStatRules.rules.draw.base'], 3);
+  // Unchanged input is returned as is.
+  const clean = { sfxVolume: 0.4 };
+  normalizeAdvancedSettings(clean, contentBundle, []);
+  assert.deepEqual(clean, { sfxVolume: 0.4 });
 });
 
 test('a hand holds at least one card: a hand size under 1 is refused before a fight can open empty', () => {
@@ -315,7 +275,7 @@ test('rating receipts show a row bound, and an old run\'s attribute cards name i
   assert(strength.reveal.lines.some((line) => line === 'AR: floor(2 × STR)'), strength.reveal.lines.join(' | '));
 });
 
-test('an old run with ratings on names its rating Poise on its cards; a ratings-off Poise edit is not migrated', async () => {
+test('an old run with ratings on names its rating Poise on its cards; a retired ratings-off Poise edit is dropped', async () => {
   const { statProjection } = await import('../src/model/statProjection.js');
   const { attributeCardModels } = await import('../src/model/creationBrief.js');
   const registries = createRegistries(configuredContentBundle(contentBundle, {}));
@@ -324,9 +284,6 @@ test('an old run with ratings on names its rating Poise on its cards; a ratings-
   const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
   const strength = cards.find((card) => card.id === 'strength');
   assert(strength.reveal.lines.some((line) => line === 'Poise: floor(0.5 × STR)'), strength.reveal.lines.join(' | '));
-  const off = migrateLegacyStatSettings({ 'gameConfig.combatRatings.enabled': false, 'gameConfig.combatRatings.ratings.poise.base': 50 });
-  assert.equal(off['gameConfig.derivedStatRules.rules.poise.base'], undefined);
-  assert.equal(off['gameConfig.combatRatings.ratings.poise.base'], undefined);
 });
 
 test("an old run's attribute cards name its own hand groups, not the live hand rows", async () => {
@@ -391,31 +348,6 @@ test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at 
   }
 });
 
-test("#1294's opening-hand settings convert exactly onto the opening-hand row", () => {
-  const legacy = {
-    'gameConfig.handRules.startingByClass.reaver.base': 5,
-    'gameConfig.handRules.startingByClass.herald.stat': 'intelligence',
-    'gameConfig.handRules.starting.maximum': 7,
-  };
-  const converted = normalizeAdvancedSettings({ ...legacy }, contentBundle);
-  assert(Object.keys(converted).every((key) => !key.startsWith('gameConfig.handRules.')), 'no hand-rule count key survives');
-  const registries = createRegistries(configuredContentBundle(contentBundle, converted));
-  const expected = { reaver: [5, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'intelligence'], starseer: [5, 'intelligence'] };
-  for (const [classId, [base, stat]] of Object.entries(expected)) {
-    for (let primary = 1; primary <= 20; primary += 1) {
-      const attributes = { ...at(1), [stat]: primary };
-      assert.equal(statRowCount(statRow(registries, { class: classId }, 'openingHand'), attributes), hand1294(base, primary, { maximum: 7 }), `${classId} ${stat} ${primary}`);
-    }
-  }
-  // An exported file from #1294 converts the same way, mirrors and all.
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { ...legacy, ...Object.fromEntries(Object.entries(legacy).map(([k, v]) => [`settings.${k}`, v])) } });
-  const imported = parseAdvancedConfigFile(file, contentBundle);
-  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'], 5);
-  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.intelligence'], 0.5);
-  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.wisdom'], 0);
-  assert.equal(imported['gameConfig.derivedStatRules.rules.openingHand.max'], 7);
-});
-
 test('a saved fight whose hand size can reach 0 is refused at the fight door', async () => {
   const { handRulesProblems, resolveHandRules } = await import('../src/model/handRules.js');
   const rows = { openingHand: { base: 4 }, draw: { base: 2 }, handSize: { base: 7, min: 1, max: 30 } };
@@ -446,16 +378,7 @@ test('a saved fight with an unpriceable hand or rating row, or rating rules with
 // Codex, #1296 (second round): a sparse legacy rating edit keeps its formula,
 // a saved level is a real level, Mana keeps a ceiling of at least 1, and a
 // bound that moves a number is said wherever the number is explained.
-test('legacy rating rows convert whole when tuned; bounds are said; saved levels and Mana ceilings are held', async () => {
-  // Only Poise CON stated: the row keeps its legacy WIS 0.2 / INT 0.1, not ruleset 7's 0.3 / 0.2.
-  const sparse = migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.constitution': 2 });
-  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.constitution'], 2);
-  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.wisdom'], LEGACY_RATING_FORMULA.ratings.poise.wisdom);
-  assert.equal(sparse['gameConfig.derivedStatRules.rules.poise.intelligence'], LEGACY_RATING_FORMULA.ratings.poise.intelligence);
-  // ...while a row left entirely at its shipped numbers still pins nothing.
-  assert.deepEqual(Object.keys(migrateLegacyStatSettings({ 'gameConfig.combatRatings.ratings.poise.constitution': 1 }))
-    .filter((key) => key.startsWith('gameConfig.derivedStatRules.')), []);
-
+test('bounds are said; saved levels and Mana ceilings are held', async () => {
   const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
   const registries = createRegistries(configuredContentBundle(contentBundle, {}));
   const run = createRunState({ seed: 6, classId: 'herald', registries });

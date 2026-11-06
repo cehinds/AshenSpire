@@ -623,82 +623,32 @@ test('a rating with no item column is carried by the rules, not lost', () => {
   assert.equal(rules.itemRatings['armament:straightSword'].ar, undefined, 'AR has a column and is not kept twice');
 });
 
-// A configuration exported before the rows became values still imports, and
-// what it meant — authored plus the plus — is what it lands as.
-test('a stored per-item bonus is read as the value it used to make', () => {
-  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: legacy });
-  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle),
-    { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5 });
-  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(sword.attackRating, 5, '2 authored + the 3 the old dial added');
-});
-
-// Copilot, on #1242: a saved fight carries its own rules, `bonuses.<item>` and
-// all, and is restored into registries rebuilt from the RUN's configuration
-// snapshot — where the same plus has already become the item's value. Adding
-// the old table on top of the new column would score the plus twice.
-test('a resumed fight scores an old per-item plus once, not twice', async () => {
-  const { createRunState } = await import('../src/model/state.js');
-  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
-  // What `main.js resumeRun` does: registries from the run's own snapshot.
-  const tuned = createRegistries(configuredContentBundle(contentBundle, legacy));
-  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
-  const attributes = ratingReceipt(tuned, run, resolveCombatRatings({}, contentBundle))
-    .sources.find(s => s.name === 'Attributes').ar;
-
-  // The rules the fight opened under, written by the old build: the plus is
-  // still in `bonuses`, keyed by the item.
-  const saved = resolveCombatRatings({}, contentBundle);
-  saved.bonuses['armament:straightSword'] = { ar: 3 };
-  const resumed = ratingReceipt(tuned, run, saved);
-  const sword = resumed.sources.find(s => s.name === 'Straight Sword');
-  assert.equal(sword.ar, 5, 'authored 2 + the 3, once');
-  assert.equal(sword.effectiveRatings.ar, 5, 'on the card path too');
-  assert.equal(resumed.totals.ar, attributes + 5, 'not 8, which is what adding both homes gives');
-  const { effectiveEquipmentRating } = await import('../src/model/ratingFormula.js');
-  const piece = tuned.equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(effectiveEquipmentRating(saved, run.attributes, piece, { ratingId: 'ar' }, 'ar').equipmentBase, 5,
-    'the card value a resumed fight deals reads the plus once as well');
-});
-
-// An item's rating is a whole number in the column it is written to, and the
-// row's ceiling is the old one, so the two sums the migration cannot keep
-// exactly are named at the import door rather than found later.
-test('a legacy bonus that cannot be kept exactly says so', () => {
+// A per-item plus (`bonuses.<item>.<rating>`) is a retired dial: it is dropped
+// with one warning, never converted into the item's rating.
+test('a stored per-item bonus is dropped with a warning and nothing is converted', () => {
+  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'gameConfig.combatRatings.bonuses.armor:oldMail.poise': 2 };
   const warnings = [];
-  const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
-  const fractional = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 0.5 }),
-    contentBundle, {}, [], warnings);
-  assert.deepEqual(fractional, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 3 }, '2.5 rounds');
-  assert.match(warnings.join(' '), /rounded/);
-  assert.match(warnings.join(' '), /Straight Sword AR 2\.5→3/);
-
-  const capped = [];
-  const big = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 999 }),
-    contentBundle, {}, [], capped);
-  assert.deepEqual(big, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 999 });
-  assert.match(capped.join(' '), /stopped there/);
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { ...legacy, ...Object.fromEntries(Object.entries(legacy).map(([k, v]) => [`settings.${k}`, v])) } });
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle, {}, [], warnings), {}, 'the file lands, with no item rating written');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /per-item rating bonuses are retired/);
+  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 2, 'the authored value stands: the plus is not added');
 });
 
 // One number, one row, wherever it is read: the profile itself is brought
 // forward at boot, so the settings row cannot open on a different value from
 // the one the card and the fight are using.
-test('a stored profile is rewritten to the rows this build has', async () => {
-  const { normalizeAdvancedSettings, advancedConfigRows, advancedConfigExport } = await import('../src/model/advancedConfig.js');
-  const profile = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'settings.musicEnabled': true };
-  assert.equal(normalizeAdvancedSettings(profile, contentBundle), profile, 'the same object main.js holds');
+test('a stored profile drops the retired per-item bonus and keeps the rest', async () => {
+  const { normalizeAdvancedSettings } = await import('../src/model/advancedConfig.js');
+  const profile = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4, 'settings.musicEnabled': true };
+  const warnings = [];
+  assert.equal(normalizeAdvancedSettings(profile, contentBundle, warnings), profile, 'the same object main.js holds');
   assert.deepEqual(profile, {
-    'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5,
+    'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4,
     'settings.musicEnabled': true,
-  }, 'the old key is gone and unrelated settings are untouched');
-
-  // Which is what closes the gap the reviewer named: the row now opens on the
-  // number the card shows.
-  const row = advancedConfigRows(contentBundle).find(r => r.key === 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar');
-  assert.equal(profile[row.key], 5);
-  assert.equal(row.def, 2, 'and the authored value is still what Reset returns it to');
-  assert.match(advancedConfigExport(profile), /itemRatings\.armament:straightSword\.ar/);
+  }, 'the old key is gone, a current item rating and unrelated settings are untouched');
+  assert.equal(warnings.length, 1);
 });
 
 // ARMOUR, which every test above left alone: a set authors one rating column
