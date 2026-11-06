@@ -246,3 +246,34 @@ test('the player panel is pinned right even when an enemy panel and sprite crowd
   assert.ok(mine.left >= player.anchor.left + player.anchor.width);
   assert.ok(!(mine.left < theirs.left + theirs.width && mine.left + mine.width > theirs.left && mine.top < theirs.top + theirs.height && mine.top + mine.height > theirs.top), 'the enemy panel does not overlap the player panel');
 });
+
+// Owner 2026-11-06: fixed mini HUDs. Each is placed from its own figure alone; no avoidance, no packing.
+test('miniHudScale fits the HUD to its cell and never drops the font below the readable minimum', async () => {
+  const { miniHudScale } = await import('../src/ui/models/TargetHudModel.js');
+  const config = { designWidthPx: 140, baseFontPx: 13, minFontPx: 9, maxScale: 1.4 };
+  assert.deepEqual(miniHudScale({ cellWidth: 140, config }), { scale: 1, fontPx: 13 });
+  assert.equal(miniHudScale({ cellWidth: 280, config }).scale, 1.4, 'a wide cell stops at the maximum scale');
+  const narrow = miniHudScale({ cellWidth: 40, config });
+  assert.ok(Math.abs(narrow.fontPx - 9) < 1e-9, 'a narrow cell stops at the 9px minimum font');
+  assert.ok(miniHudScale({ cellWidth: 100, config }).fontPx < 13);
+});
+
+test('an enemy HUD is centred on its figure with its bottom at the head, and only the screen edge moves it', async () => {
+  const { enemyHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+  const bounds = { left: 0, top: 0, width: 390, height: 600 };
+  assert.deepEqual(enemyHudPlacement({ centerX: 200, bottom: 300, width: 100, height: 60, bounds }), { left: 150, top: 240 });
+  // Neighbours are never consulted: the same input gives the same answer, overlap accepted.
+  assert.deepEqual(enemyHudPlacement({ centerX: 230, bottom: 300, width: 100, height: 60, bounds }), { left: 180, top: 240 });
+  assert.equal(enemyHudPlacement({ centerX: 10, bottom: 300, width: 100, height: 60, bounds }).left, 0, 'left screen edge');
+  assert.equal(enemyHudPlacement({ centerX: 385, bottom: 300, width: 100, height: 60, bounds }).left, 290, 'right screen edge');
+  assert.equal(enemyHudPlacement({ centerX: 200, bottom: 20, width: 100, height: 60, bounds }).top, 0, 'top screen edge');
+});
+
+test('the player HUD stands right of the body at its top and is not moved by anything but the screen edge', async () => {
+  const { playerHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+  const bounds = { left: 0, top: 0, width: 390, height: 600 };
+  const anchor = { left: 40, width: 60, top: 320 };
+  assert.deepEqual(playerHudPlacement({ anchor, width: 110, height: 70, gap: 6, bounds }), { left: 106, top: 320 });
+  assert.equal(playerHudPlacement({ anchor: { ...anchor, left: 300 }, width: 110, height: 70, gap: 6, bounds }).left, 280, 'right screen edge');
+  assert.equal(playerHudPlacement({ anchor: { ...anchor, top: 590 }, width: 110, height: 70, gap: 6, bounds }).top, 530, 'bottom screen edge');
+});

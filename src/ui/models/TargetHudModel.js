@@ -197,6 +197,33 @@ export function placeEnemyPanelRows({ area, panels, obstacles = [], avoid = [], 
   return placedRows.flat();
 }
 
+// ---- Fixed mini HUD placement (owner, 2026-11-06) ----------------------------------------------------------
+// "Keep enemy mini HUDs above them in a fixed position. Keep player hud anchored to the right and fixed." Each mini HUD
+// is placed from its own figure alone, once per layout pass: no avoidance, no packing, no movement on select, hover,
+// intent or damage. The only clamp is the screen edge. Physical pixels, like the rest of this model.
+const miniHudConfig = () => uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHud;
+
+/** miniHudScale({ cellWidth }): the font scale that fits the HUD's contents to a cell-wide box, never below the readable
+ *  minimum font. `scale` multiplies the HUD's design sizes (font, bars, badges); `fontPx` is the base text size at it. */
+export function miniHudScale({ cellWidth, config = miniHudConfig() }) {
+  const { designWidthPx, baseFontPx, minFontPx, maxScale } = config;
+  const floor = minFontPx / baseFontPx;
+  const scale = Math.min(maxScale, Math.max(floor, cellWidth / designWidthPx));
+  return { scale, fontPx: baseFontPx * scale };
+}
+
+/** enemyHudPlacement: centred on the figure, its bottom edge at `bottom` (the head), grown upward; clamped to `bounds`. */
+export function enemyHudPlacement({ centerX, bottom, width, height, bounds }) {
+  return { left: clamp(centerX - width / 2, bounds.left, bounds.left + bounds.width - width),
+    top: Math.max(bounds.top, bottom - height) };
+}
+
+/** playerHudPlacement: immediately right of the body at its top, clamped to `bounds`; it never moves above, down or around. */
+export function playerHudPlacement({ anchor, width, height, gap, bounds }) {
+  return { left: clamp(anchor.left + anchor.width + gap, bounds.left, bounds.left + bounds.width - width),
+    top: clamp(anchor.top, bounds.top, bounds.top + bounds.height - height) };
+}
+
 // One stable-target clock, including leave grace. Updating content for the
 // same IDs does not restart dwell; a switch is one delay, never exit+enter.
 // Owner 2026-11-05: the player's selected HUD is on at all times and the mini overhead bar never shows for the player.
