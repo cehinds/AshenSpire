@@ -6420,7 +6420,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
     eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/7/10', 'Rogue buckler Defend is stamped from source DR (DEX 3 × 0.75 where 0.5 stood, 2026-09-24)');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/8/11', 'Rogue buckler Defend is stamped from the live DR row (the bare test registries read it since the frozen ruleset-6 formula was deleted; the configured registries the game uses gave 8/11 before too)');
     const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
