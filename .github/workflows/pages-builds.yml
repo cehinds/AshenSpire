@@ -500,7 +500,11 @@ jobs:
             if [ "$keep" -gt 25 ]; then keep=25; fi
             keep_args=(--keep "$keep")
           fi
-          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site "${keep_args[@]}" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+          status=0
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site "${keep_args[@]}" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-} || status=$?
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+          exit "$status"
       - name: Capture the exact primary channel pages this assembly will deploy
         id: primary_targets
         run: |
