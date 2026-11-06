@@ -452,3 +452,34 @@ test('an enemy that cannot pay says OUT OF SP over itself and plays nothing', t 
     assert.ok(!trace.some(e => e.what === 'swing' || e.what === 'contact'), 'no animation for a skipped move');
   });
 });
+
+// Owner 2026-11-06: every cost floater of one play (EP, SP, MP; the enemy's SP) appears in the cost beat, before the intent word.
+test('a card with two costs shows both cost floaters before the intent word and the stance', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([
+      { type: 'energySpent', amount: 2 },
+      { type: 'staminaSpent', amount: 1 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], { onStanceLead: () => trace.push({ what: 'stance', at: Date.now() }) });
+    finish();
+    const word = words.find(w => w.kind === 'action:Strike');
+    const ep = trace.find(e => e.what === 'float:\u22122 EP'), sp = trace.find(e => e.what === 'float:\u22121 SP'), stance = trace.find(e => e.what === 'stance');
+    assert.ok(ep && sp && word && stance, 'both costs, the word and the stance all appear');
+    assert.ok(ep.at <= word.at && sp.at <= word.at, `both cost floaters (${ep.at}, ${sp.at}) precede the word (${word.at})`);
+    assert.ok(word.at < stance.at);
+  });
+});
+
+test('the enemy SP payment floater precedes the enemy move word', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([
+      { type: 'enemyStaminaSpent', sourceId: 'e1', moveId: 'slash', amount: 2, remaining: 1 },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack' },
+    ]);
+    finish();
+    const cost = trace.find(e => e.what === 'float:\u22122 SP'), word = words.find(w => w.kind.startsWith('action:'));
+    assert.ok(cost && word && cost.at <= word.at);
+  });
+});

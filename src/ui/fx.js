@@ -396,7 +396,7 @@ export function combatReadoutLayer(layer, create = true) {
  * comes (a damage number's turn is at once). `onSpawn` runs when it joins the layer, so its sound plays with it.
  * There are no side lanes and no jitter, so a caller passes no placement.
  */
-export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null } = {}) {
+export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null, immediate: forceImmediate = false } = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
   const el = document.createElement('div');
@@ -413,7 +413,7 @@ export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null } = {}
   // The number outlives its animation by a beat, as it always has.
   // A damage number never waits behind the column (its bars follow in the same beat, so it must paint first); it
   // spawns at once at the bottom and the other floaters stagger after it. `onSpawn` is the floater's own sound.
-  const immediate = /\b(dmg|burst)\b/.test(cls);
+  const immediate = forceImmediate || /\b(dmg|burst)\b/.test(cls);
   enqueueFloater({ layer, anchor, el, kind: 'number', lifeMs: life + 60, immediate, onSpawn });
   return el;
 }
@@ -1204,7 +1204,7 @@ export function playTimeline(events, ctx, done) {
         for (const event of beat.lead) {
           visualSafe(() => parts.get(event)?.contact?.(ctx));
           const label = COST_LABEL[event.type];
-          if (label && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small'));
+          if (label && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
         }
         visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: beat.lead }));
         traceBeat('cost', beat.actorId);
