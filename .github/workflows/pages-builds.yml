@@ -514,6 +514,38 @@ jobs:
             du -sm _site/* | sort -rn | head -15
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      # THE SIZE GUARD (2026-11-06). The Pages artifact was 5.2 GB packed (7.4 GB on disk)
+      # and deploy-pages timed out ("Timeout reached, aborting!", run 42174299001), so the
+      # dev preview stayed stale. A site this big must stop HERE, naming where the bytes
+      # are, instead of uploading for ten minutes and failing opaquely in `deploy`.
+      # SITE_WARN_MB is the target (the Pages limit is 1 GB packed); SITE_MAX_MB is the
+      # hard stop, set well below the 5.2 GB that timed out and the 6.99 GB that last
+      # landed in October. Both are apparent sizes (du --apparent-size), not disk blocks.
+      - name: Fail if the assembled site is too big for Pages
+        env:
+          SITE_WARN_MB: 1000
+          SITE_MAX_MB: 2500
+        run: |
+          set -uo pipefail
+          total=$(du -sm --apparent-size _site | cut -f1)
+          {
+            echo "### Site size guard"
+            echo
+            echo "${total} MB assembled (warn at ${SITE_WARN_MB} MB, fail at ${SITE_MAX_MB} MB). Largest folders:"
+            echo
+            echo '```'
+            du -sm --apparent-size _site/* | sort -rn | head -12
+            echo
+            du -sm --apparent-size _site/*/* 2>/dev/null | sort -rn | head -12
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$total" -gt "$SITE_MAX_MB" ]; then
+            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower --keep, prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
+            exit 1
+          fi
+          if [ "$total" -gt "$SITE_WARN_MB" ]; then
+            echo "::warning title=Pages site above target::${total} MB is over the ${SITE_WARN_MB} MB target (the Pages limit is 1 GB packed); see the folder table in this run's summary."
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
