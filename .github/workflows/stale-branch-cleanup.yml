@@ -6,7 +6,9 @@ name: stale-branch-cleanup
 #
 # THE RULE. On dispatch, delete every origin branch whose last commit is older
 # than `days` (default 7), except `main`, `release`, `test`, `dev` and anything
-# listed in `keep`. A branch with an open pull request is kept unless
+# matched by `keep` (default `tools-archive,alternative/*`: the authoring tools
+# branch, DEVELOPER.md, and the frozen alternative pair, CONTRIBUTING.md). A
+# branch that is the head or the base of an open pull request is kept unless
 # `keep_open_prs` is false. Protected branches fail to delete and are listed as
 # refused. `dry_run` (default true) only lists what would go.
 #
@@ -30,9 +32,9 @@ on:
         type: boolean
         default: true
       keep:
-        description: 'Extra branches to keep, comma-separated (main, release, test, dev are always kept)'
+        description: 'Extra branches to keep, comma-separated, shell globs allowed (main, release, test, dev are always kept)'
         type: string
-        default: ''
+        default: 'tools-archive,alternative/*'
 
 permissions:
   contents: write
@@ -65,22 +67,38 @@ jobs:
           set -euo pipefail
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
 
+          if ! [[ "$DAYS" =~ ^[0-9]+$ ]] || [ "$DAYS" -lt 1 ]; then
+            echo "days must be a whole number of at least 1, got: '$DAYS'" >&2
+            exit 1
+          fi
           cutoff=$(( $(date +%s) - DAYS * 86400 ))
           echo "cutoff: $(date -u -d @"$cutoff" +%Y-%m-%dT%H:%M:%SZ) (older than $DAYS days)"
 
           declare -A keep_set=([main]=1 [release]=1 [test]=1 [dev]=1)
+          keep_globs=()
           IFS=',' read -ra extra <<< "$KEEP"
           for k in "${extra[@]+"${extra[@]}"}"; do
-            k=$(echo "$k" | xargs); [ -n "$k" ] && keep_set["$k"]=1
+            k=$(echo "$k" | xargs)
+            [ -n "$k" ] || continue
+            case "$k" in *[*?]*) keep_globs+=("$k") ;; *) keep_set["$k"]=1 ;; esac
           done
+          kept_by_glob() {
+            local b=$1 g
+            for g in "${keep_globs[@]+"${keep_globs[@]}"}"; do
+              # shellcheck disable=SC2254
+              case "$b" in $g) return 0 ;; esac
+            done
+            return 1
+          }
 
-          # Fail closed: if the open-PR list cannot be read, the step fails and
-          # nothing is deleted.
+          # Keep the head and the base of every open pull request: deleting a
+          # base closes every pull request targeting it. Fail closed: if the
+          # list cannot be read, the step fails and nothing is deleted.
           declare -A open_pr=()
           if [ "$KEEP_OPEN_PRS" = "true" ]; then
             page=1
             while :; do
-              out=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f per_page=100 -f page=$page --jq '.[].head.ref')
+              out=$(gh api -X GET "repos/$REPO/pulls" -f state=open -f per_page=100 -f page=$page --jq '.[] | .head.ref, .base.ref')
               [ -n "$out" ] || break
               while IFS= read -r r; do open_pr["$r"]=1; done <<< "$out"
               page=$((page + 1))
@@ -95,8 +113,11 @@ jobs:
             if [ -n "${keep_set[$b]:-}" ]; then
               echo "kept $b (always kept)"; kept+=("$b (always kept)"); continue
             fi
+            if kept_by_glob "$b"; then
+              echo "kept $b (matches keep)"; kept+=("$b (matches keep)"); continue
+            fi
             if [ -n "${open_pr[$b]:-}" ]; then
-              echo "kept $b (open pull request)"; kept+=("$b (open pull request)"); continue
+              echo "kept $b (head or base of an open pull request)"; kept+=("$b (head or base of an open pull request)"); continue
             fi
             if [ "$ts" -ge "$cutoff" ]; then
               continue
