@@ -91,3 +91,25 @@ test('an enemy action holds every frame for the same time, never under the pace 
   setAnimSpeed('instant');
   assert.equal(stage.actionTiming('attack', actionPacing().spriteSpeed).totalMs, 0, 'Instant plays nothing');
 });
+
+test('an enemy clip plays with the enemy frame hold: a short enemy attack setting is never outrun by the player floor', async t => {
+  const { actionPacing, setAnimSpeed, setCombatPacing } = await import('../src/ui/animationPace.js');
+  const oldDocument = globalThis.document, oldImage = globalThis.Image;
+  class Element { constructor() { this.dataset = {}; this.style = {}; } append() {} addEventListener() {} setAttribute() {} }
+  globalThis.document = { createElement: () => new Element(), body: { classList: { contains: () => false } } };
+  globalThis.Image = Element;
+  t.after(() => { globalThis.document = oldDocument; globalThis.Image = oldImage; setAnimSpeed('normal'); setCombatPacing(); });
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  installMockRaf(t);
+  setAnimSpeed('normal');
+  // The player's step is 3000 ms (frame floor 160 ms) while the enemy's attack setting is 100 ms.
+  setCombatPacing({ animationStepDuration: 3000, enemyAttackMs: 100 });
+  const speed = actionPacing({ enemy: true }).spriteSpeed;
+  const el = enemyExpansionSprite({ id: 'stitchedHound', name: 'Hound' }, { hp: 10, maxHp: 10 });
+  const stage = stageFor(el);
+  const reserved = stage.actionTiming('attack', speed).totalMs;
+  assert.ok(reserved < 4 * 160, `the reservation (${reserved} ms) uses the enemy hold, below four player-floor frames`);
+  stage.play('attack', speed.lungeMs);
+  tickFrames(t, reserved + 40);
+  assert.equal(el.dataset.pose, 'idle', 'the clip has finished inside its reservation, not still on a frame');
+});
