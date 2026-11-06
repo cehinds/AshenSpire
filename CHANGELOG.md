@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Blacksmith matches the Merchant** ([#2588](https://github.com/cehinds/AshenSpire/pull/2588), `0.7.3.184`). The Blacksmith's figure no longer stands under the top bar, and its offers look and read like the Merchant's: item art, an action button, and the price underneath.
 - **Party feet inside their row** ([#2587](https://github.com/cehinds/AshenSpire/pull/2587), `0.7.3.184`). In combat your character now stands inside the front row's cell instead of on its line.
 
 ## 2026-11-05
