@@ -275,8 +275,8 @@ test('composed feet stand footInCellFraction above the drawn cell bottom for a s
   }
 });
 
-// A stale hand anchor (a rotation or resize since it was settled) must give no lift: the stage passes handTop only
-// when the anchor's layout key matches this pass, and the model lifts nothing for a missing or non-finite top.
+// The model lifts nothing for a missing or non-finite hand top; the stage reads the hand's top in the same pass
+// (owner, 2026-11-06: static layout, nothing carried from an earlier pass).
 test('no hand top, or a stale anchor the stage drops, gives no grid lift', async () => {
   const [width, height] = [390, 488.36];
   const run = handTop => alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
@@ -286,5 +286,6 @@ test('no hand top, or a stale anchor the stage drops, gives no grid lift', async
   for (const stale of [null, undefined, NaN, Infinity]) assert.equal(run(stale), run(null), `handTop ${stale} lifts nothing`);
   const { readFileSync } = await import('node:fs');
   const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  assert.match(source, /layoutState\.handAnchor\?\.key === planLayoutKey \? layoutState\.handAnchor\.top : null/, 'the stage passes the anchor only when its key matches');
+  assert.match(source, /const planHandTop = planHandRect && planHand\.clientWidth > 0 \? planHandRect\.top - fieldRect\.top : null/, 'the stage reads the hand top in the same pass');
+  assert.doesNotMatch(source, /layoutState\.handAnchor\?\.key === planLayoutKey/, 'no earlier pass feeds the grid lift');
 });

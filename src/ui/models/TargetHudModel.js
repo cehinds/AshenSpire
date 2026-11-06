@@ -48,7 +48,9 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const side = targetHudSide(panel.role, panel.lane, config, enemyCount);
     // A pinned (player) panel's top is the anchor's top, the player's overhead meters; it shifts vertically, never across.
     // Too little room right of the body even at the floor width: sit above the player, never over the body or enemy.
-    const above = pinned && side === 'right' && width > area.left + area.width - (a.left + a.width + gap) + 0.5;
+    // Owner (2026-11-06): "keep it fixed right of player". The player's panel is never moved above, down or around an
+    // obstacle: it stands right of the body at the body's top, and the enemy panels yield to it.
+    const above = false;
     const point = direction => direction === 'above' ? { left: a.left, top: a.top - height - gap }
       : direction === 'below' ? { left: a.left + (a.width - width) / 2, top: a.top + a.height + gap }
       : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: pinned ? a.top : a.top - height / 3 };
@@ -60,7 +62,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     }
     for (const [rank, direction] of (pinned ? [above ? 'above' : side] : [side, ...['left', 'below', 'right'].filter(value => value !== side)]).entries()) {
       const p = point(direction);
-      for (const offset of [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset), direction);
+      for (const offset of pinned ? [0] : [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset), direction);
     }
     if (!pinned) for (let top = area.top; top <= area.top + area.height - height; top += Math.max(1, step))
       for (let left = area.left; left <= area.left + area.width - width; left += Math.max(1, width + gap)) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top), 'free');
@@ -73,16 +75,11 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     // A player-side panel's own sprite box (mostly transparent canvas) is not an obstacle: the panel is anchored to the body beside it.
     // Player-only obstacles (enemy HP bars) never move an enemy's panel, so enemy placement is as before.
     const mine = obstacles.filter(other => pinned ? other.id !== panel.id : !other.playerOnly);
-    // Owner 2026-11-05: when an enemy's sprite stands right beside the player (a landscape phone), the pinned panel
-    // takes the nearest clear slot to the right of that obstacle, still right of the player and never on the figure.
-    if (pinned && !above && side === 'right') for (const obstacle of mine.filter(other => other.width > 0 && other.height > 0 && other.left + other.width > a.left + a.width))
-      for (const offset of [0, -step, step])
-        add(obstacle.left + obstacle.width + gap, a.top + offset, 300 + Math.abs(obstacle.left + obstacle.width - (a.left + a.width)) + Math.abs(offset), 'right');
     const obstacleCount = rect => mine.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
     const free = choices.filter(choice => obstacleCount(choice) === 0);
     // A pinned panel overlaps a decoration before it leaves the player's side.
-    const clear = pinned && !free.length ? choices.slice(0, 1) : free;
+    const clear = pinned ? choices.slice(0, 1) : free;
     requests.push({ id: panel.id, mine, choices, clear });
   }
   // Backtracking with the most constrained remaining target first avoids an

@@ -24,12 +24,12 @@ import { alternativeFormation } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
 import { perspectiveCellContains, overheadGroupHeightPx } from '../models/AlternativeFormationModel.js';
-import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
-import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
+import { hudGeometry, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
-import { effectsOff } from '../performance.js';
+import { effectsOff, coarsePointer } from '../performance.js';
+import { shouldRelayout, viewportKey, isPhoneViewport, formationKey as formationKeyOf } from '../../model/relayoutGate.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
 import { setData, setStyle, setVar } from '../domWrite.js';
@@ -298,7 +298,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const reads = frames.map(frame => {
       const sprite = frame.querySelector('.sprite');
       if (!sprite) return null;
-      const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
+      const body = currentSpriteBodyBounds(sprite, scheduleArt), box = frame.getBoundingClientRect();
       const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       const badge = frame.querySelector(':scope > .combat-hit-chance');
@@ -377,7 +377,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (!sprite || !leading) continue;
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
+        const body = currentSpriteBodyBounds(sprite, scheduleArt);
         const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
         const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
         const intentHeight = intentBox?.height || 37;
@@ -411,7 +411,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!plain.length) { separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox }); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
-      const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
+      const art = currentSpriteArtBounds(sprite, scheduleArt), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
@@ -420,6 +420,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
     if (field.closest('.combat')?.dataset.targetHud === 'true') { centerTargetOverheads(); return; }
+    // Placed once per layout pass: a later call (pose tracking, tool placement, selection) leaves it where it is.
+    const seats = [...field.querySelectorAll('.combatant.player')].filter(player => player.querySelector('.combatant-mini-hud'));
+    if (reserveFirst !== true && seats.length && seats.every(player => player.hudEpoch === layoutEpoch)) {
+      // Opening or closing the player's info panel moves only the intent glyph off (or back from) the Inspect door.
+      for (const player of seats) {
+        const expanded = player.classList.contains('context-selected'), glyph = player.hudGlyph;
+        if (!glyph || expanded === player.glyphExpanded) continue;
+        player.glyphExpanded = expanded;
+        placePlayerIntentGlyph(glyph.leading, { art: glyph.art, hudBottom: glyph.hudBottom, zoom: glyph.zoom, avoid: expanded ? glyph.infoRect : null, viewport: glyph.viewport });
+      }
+      return;
+    }
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -462,7 +474,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const players = [...field.querySelectorAll('.combatant.player')].flatMap(player => {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) return [];
-      const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       art.width = art.right - art.left;
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
       const viewport = combat.getBoundingClientRect();
@@ -488,31 +500,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     panels.push(...playerInfoRects);
     for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
       const expanded = player.classList.contains('context-selected');
-      const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
-      const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
-      const idleTop = Math.max((combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom ?? viewport.top) + 4, art.top - panel.height - 14);
+      // Owner (2026-11-06): "keep it fixed right of player". The mini HUD stands directly right of the figure,
+      // level with its upper body, placed once per layout pass; selecting, intents and enemy panels never move
+      // it (the enemy panels pack around it instead). Nothing here reads the previous position.
+      const hudTopLimit = (combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom ?? viewport.top) + 4;
+      // The details offset tokens (hudOffsets.playerDetailsDx / Dy) still apply, as a fixed amount, inside the field.
+      const staticLeft = Math.max(viewport.left + 4, Math.min(art.right + 4 * zoom + hudOffsets.playerDetailsDx * zoom, viewport.right - panel.width - 4));
+      const staticTop = Math.max(hudTopLimit, art.top + 0.3 * (art.bottom - art.top) - panel.height / 2 + hudOffsets.playerDetailsDy * zoom);
       const handFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
       const hudBottom = combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom;
-      // The panel's previous spot without the token offset applied last pass,
-      // so a kept position never accumulates the offset frame after frame.
-      const applied = player.hudDetailsShift || { x: 0, y: 0 };
-      const placed = playerDetailsPlacement({
-        art: expanded ? { ...art, top: art.bottom - panel.height } : { ...art, right: idleLeft - 4, top: idleTop - 16 },
-        width: panel.width, height: panel.height, viewport, gap: panelGap,
-        handTop: handFloor,
-        previous: reserveFirst === true ? undefined : { left: panel.left - applied.x, top: panel.top - applied.y },
-        hudBottom, obstacles: panels });
-      // The details offset tokens, added after placement and clamped to the
-      // same field, header and hand edges; an offset onto another control is
-      // refused (HudLayoutOffsetModel). Both 0: `placed` exactly.
-      const shift = offsetPlacement({ rect: { left: placed.left, top: placed.top, width: panel.width, height: panel.height },
-        dx: hudOffsets.playerDetailsDx * zoom, dy: hudOffsets.playerDetailsDy * zoom,
-        bounds: { left: viewport.left + 4, right: viewport.right - 4, top: Number.isFinite(hudBottom) ? hudBottom : viewport.top,
-          bottom: Number.isFinite(handFloor) ? handFloor - 4 : viewport.bottom },
-        obstacles: panels });
-      const placement = !expanded ? { ...placed, left: idleLeft, top: idleTop }
-        : shift.shifted ? { ...placed, left: shift.left, top: shift.top } : placed;
-      player.hudDetailsShift = { x: placement.left - placed.left, y: placement.top - placed.top };
+      const placed = { left: staticLeft, top: staticTop };
+      const placement = placed;
+      player.hudEpoch = layoutEpoch;
       panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
       const top = `${(placement.top - stack.top) / zoom}px`;
       const left = `${(placement.left - stack.left) / zoom}px`;
@@ -520,6 +519,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
       // Selected, the Inspect door is visible: the glyph keeps off it.
+      player.hudGlyph = { leading, art, hudBottom, zoom, infoRect, viewport }; player.glyphExpanded = expanded;
       placePlayerIntentGlyph(leading, { art, hudBottom, zoom, avoid: expanded ? infoRect : null, viewport });
       for (const [door, rect] of [[inspect, infoRect]]) {
         if (!rect) continue;
@@ -539,7 +539,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite');
       if (!sprite) continue;
-      const art = currentSpriteArtBounds(sprite, schedule);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       const spriteWidth = sprite.getBoundingClientRect().width;
       const artWidth = art.right - art.left;
       if (!(artWidth > 0 && spriteWidth > 0)) continue;
@@ -639,7 +639,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   function trackedBodies() {
     const rows = [];
     for (const sprite of field.querySelectorAll('.combatant .sprite')) {
-      const body = currentSpriteBodyBounds(sprite, schedule);
+      const body = currentSpriteBodyBounds(sprite, scheduleArt);
       rows.push(body.left, body.right, body.top, body.bottom, body.headY, body.feetY);
     }
     return rows;
@@ -675,18 +675,43 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // and made combat unplayable on phones; the bob's few pixels are tolerated.
     trackingRequest = open && (trackStable < 2 || performance.now() - trackChangedAt < TRACK_SETTLE_MS) ? requestAnimationFrame(trackPlayerHud) : 0;
   }
-  const refresh = () => {
+  // The battlefield is laid out once when combat mounts and stays fixed (owner, 2026-11-06: "just let everything
+  // be static/fixed. No more dynamic adjusting"). Another pass runs only for a frame it has not placed yet, a
+  // forced setting change, or a real viewport change (relayoutGate.js: width > 8%, height > 25%, an orientation
+  // flip off phones). Selecting, hovering, intents, the HUD and the hand never relayout it.
+  const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
+  const placedFrames = new WeakSet();
+  let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
+  const viewportNow = () => viewportKey({ width: window.innerWidth, height: window.innerHeight });
+  const refresh = (force = false) => {
     cancelAnimationFrame(frameRequest);
-    invalidateSpriteRects();
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
     if (!field.isConnected) return;
-    const combat = field.closest('.combat');
-    if (combat.dataset.layout !== 'formation') combat.dataset.layout = 'formation';
-    const targetHud = combat.dataset.targetHud === 'true';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
+    const now = viewportNow();
+    lastSeenViewport = `${now.width}x${now.height}`;
+    const phone = isPhoneViewport({ width: now.width, height: now.height, coarse: coarsePointer() }, relayoutConfig);
+    // What the formation shows: who stands in which cell, who is alive, the strips and the policy. A committed move,
+    // an engagement step or a death changes it and must reposition the figures; the viewport and selection do not.
+    const formationKey = formationKeyOf({ playerCell: field.dataset.playerCell, occupancy: field.dataset.formationOccupancy,
+      rangeRanks: field.dataset.rangeRanks, policy: field.dataset.formationPolicy,
+      frames: frames.map(frame => ({ eid: frame.dataset.eid, dead: frame.classList.contains('dead') })) });
+    const unplaced = frames.some(frame => !placedFrames.has(frame)) || formationKey !== placedFormationKey;
+    const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone });
+    if (!(force === true || forcePending) && !unplaced && !moved) return;
+    forcePending = false;
+    layoutEpoch++;
+    setData(field, 'layoutEpoch', layoutEpoch);
+    if (moved) laidOut = now;
+    placedFormationKey = formationKey;
+    for (const frame of frames) placedFrames.add(frame);
+    invalidateSpriteRects();
+    const combat = field.closest('.combat');
+    if (combat.dataset.layout !== 'formation') combat.dataset.layout = 'formation';
+    const targetHud = combat.dataset.targetHud === 'true';
     fitLabels();
     const measuredField = field.getBoundingClientRect();
     // CSS zoom can report float noise across equivalent DOM remounts. Snap the
@@ -746,16 +771,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
-    // The resting hand's top, in field px, as the previous pass settled it (the hand lays out after this read, so its
-    // live rect is not yet final): the grid rises so the party's lowest strip (player-back) stands above it
-    // (handLiftMaxFraction). Only an anchor settled for THIS layout key counts, so a rotation or resize lifts nothing.
+    // The hand's top, in field px, read in this same pass: the hand is the combat grid's fixed bottom band
+    // (flushGeometry has authored it before the fit), so the grid rises once so the party's lowest strip stands
+    // above it (handLiftMaxFraction). Nothing from an earlier pass is used (owner, 2026-11-06: static layout).
     const planHand = combat.querySelector('.hand'), planHandRect = planHand?.getBoundingClientRect();
-    const planHandKey = planHandRect && planHand.clientWidth > 0
-      ? handGeometryKey({ width: planHand.clientWidth, height: planHand.clientHeight, zoom: planHandRect.width / planHand.clientWidth,
-        fontSize: layoutMetrics().fontSize, left: planHandRect.left }) : null;
-    const planLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':'
-      + planHandKey?.split(':').map(value => Number.isFinite(Number(value)) ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
-    const planHandTop = layoutState.handAnchor?.key === planLayoutKey ? layoutState.handAnchor.top : null;
+    const planHandTop = planHandRect && planHand.clientWidth > 0 ? planHandRect.top - fieldRect.top : null;
     alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop : null, formFactor: document.documentElement.dataset.formFactor });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
@@ -1125,7 +1145,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Enemy overheads pack around the player's measured art and controls. An
     // obstacle never blocks its own owner, and the fitted artwork does not move.
     const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
-      const art = currentSpriteArtBounds(sprite, refresh);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       const controls = [...frame.querySelectorAll('.combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud')]
         .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
       return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
@@ -1197,7 +1217,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       lockX: true, size: footerSize, maxShiftX: 44,
       obstacles: [...readFooterObstacles(),
         ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls),
-        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, refresh), ownerId: frame.dataset.eid }))].map(rect => ({
+        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, scheduleArt), ownerId: frame.dataset.eid }))].map(rect => ({
         ownerId: rect.ownerId,
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -1342,7 +1362,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const selected = frame.classList.contains('context-selected') && !!sprite;
       let bottomLimit;
       if (selected) {
-        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
+        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, scheduleArt).top, width: 0, height: 0 }).top;
         bottomLimit = artTop - INTENT_ART_GAP;
       } else {
         const statusHeight = (leadingHost.querySelector(':scope > .statuses')?.getBoundingClientRect().height || 0) / zoom;
@@ -1394,7 +1414,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
     }
     if (targetHud) for (const { frame, sprite } of placed) {
-      syncCoreTinyTarget(frame, currentSpriteArtBounds(sprite, refresh), frame.getBoundingClientRect(), zoom);
+      syncCoreTinyTarget(frame, currentSpriteArtBounds(sprite, scheduleArt), frame.getBoundingClientRect(), zoom);
     }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
@@ -1409,14 +1429,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       : frame.matches('.enemy:not(.context-selected):not(.dead)'))
       .map(({frame, sprite}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
-        const artBox = targetHud ? currentSpriteArtBounds(sprite, refresh) : sprite.getBoundingClientRect();
+        const artBox = targetHud ? currentSpriteArtBounds(sprite, scheduleArt) : sprite.getBoundingClientRect();
         const art = { left:artBox.left, right:artBox.right, top:artBox.top, bottom:artBox.bottom, width:artBox.right - artBox.left };
         return { id: frame.dataset.eid, frame, box, art,
           x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
           y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
       });
     const actorArt = placed.map(({frame, sprite}) => {
-      const box = currentSpriteArtBounds(sprite, refresh);
+      const box = currentSpriteArtBounds(sprite, scheduleArt);
       return { ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
         right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top };
     });
@@ -1515,7 +1535,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     field.dataset.groundY = String(fieldRect.top + plan.ground);
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
-  const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
+  const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
+  const scheduleForced = () => { forcePending = true; schedule(); };
+  // An art image that finishes loading settles the bounds the fit fell back from (the whole sprite box): that one
+  // load forces one relayout through the gate. The callback fires once per load, so it cannot loop.
+  const scheduleArt = () => scheduleForced();
   const combatHost = field.closest('.combat');
   const releaseBackdrop = wireAlternativeBackdrop(combatHost);
   const releaseLayeredEnvironment = wireLayeredEnvironment(combatHost);
@@ -1538,7 +1562,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     schedule();
   };
   combatHost.addEventListener('combatantselectionchange', selectionChanged);
-  combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -1554,13 +1577,31 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!rootStyle) return '';
     return [...LAYOUT_ROOT_VARS.map(name => rootStyle.getPropertyValue(name)), rootStyle.fontSize].join('|');
   };
+  // The values (not the mere rewrite) of the settings that change the layout: applyDisplaySettings rewrites
+  // these attributes on every pass, and a rewrite to the same value must not relayout.
+  const FORCING_ATTRIBUTES = ['data-composition', 'data-form-factor', 'data-formation-settings', 'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'];
+  const settingKey = () => { const root = document.documentElement;
+    return FORCING_ATTRIBUTES.map(name => typeof root?.getAttribute === 'function' ? root.getAttribute(name) : null).join('|'); };
+  let lastSettingKey = settingKey();
+  let lastSeenViewport = `${window.innerWidth}x${window.innerHeight}`;
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();
     const styleOnly = records.every(record => record.attributeName === 'style');
     if (styleOnly && key === lastRootLayoutKey) return;
+    // A phone's address bar moves --visible-height and the view box: those pass the viewport gate like a
+    // resize (the page zoom follows the viewport height too). Only a formation setting forces a fresh layout.
+    const keyMoved = key !== lastRootLayoutKey;
     lastRootLayoutKey = key;
-    schedule();
+    const setting = settingKey();
+    // UI scale and text size (--ui-zoom, root font-size, --view-*) are live display settings: changed in Settings
+    // mid-combat they relay out once. The same variables also follow the viewport (a phone's address bar), so a
+    // change that arrives with a new viewport size goes through the viewport gate instead.
+    const viewport = `${window.innerWidth}x${window.innerHeight}`;
+    const settingChange = keyMoved && viewport === lastSeenViewport;
+    lastSeenViewport = viewport;
+    if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
+    else schedule();
   });
   layoutObserver.observe(document.documentElement, {
     // The two scene words are named here rather than left to ride on
@@ -1622,7 +1663,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     releaseBackdrop();
     releaseLayeredEnvironment();
     combatHost.removeEventListener('combatantselectionchange', selectionChanged);
-    combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);
     cancelAnimationFrame(overheadRequest);
@@ -1645,7 +1685,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // used whatever fonts were loaded; only a load still to finish needs a refit.
   // (The field's ResizeObserver still delivers its first observation and refits
   // once after mount, as before.)
-  const fontsLoaded = () => { if (field.isConnected) schedule(); };
+  const fontsLoaded = () => { if (field.isConnected) scheduleForced(); };
   document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
   releaseActiveStage = release;
   refresh();

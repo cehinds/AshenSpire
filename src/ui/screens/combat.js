@@ -960,7 +960,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The figure's glyph and stance: the armed card's, else the held ones.
   function syncPlayerPreview(player, inst, def) {
     syncPlayerActionIntent(player, inst, heldKinds.get());
-    stageFor(player?.querySelector('.sprite'))?.setStance?.(playerStance(def));
+    // Owner (2026-11-06): static figure. Arming, hovering or targeting a card never changes the pose; only a played
+    // card's action or a resolved stance change does, so the preview shows the held stance.
+    stageFor(player?.querySelector('.sprite'))?.setStance?.(playerStance(null));
   }
 
   // An armed card's kind shows while it is armed; otherwise the last confirmed
@@ -2458,7 +2460,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const activeCard = findInst(selected || selfArm);
     const activeDef = activeCard ? resolveCombatCard(combat, activeCard, { upcastRanks: upcastRanksByCard.get(activeCard.instanceId) }) : null;
     syncPlayerActionIntent(box, activeCard, heldKinds.get());
-    stageFor(box)?.setStance?.(playerStance(activeDef));
+    stageFor(box)?.setStance?.(playerStance(null));
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing || !figureAnimationsEnabled(run) });
     playerRenderKey = renderKey;
     if (wrote) stageWrote = true;

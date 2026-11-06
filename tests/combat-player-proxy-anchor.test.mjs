@@ -72,7 +72,7 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
   const placed=boxes.map((_box,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:index?'enemy':'player'},
     classList:{contains:role=>role===(index?'enemy':'player') || index > 0 && role === 'context-selected'}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,ribbon:null,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, scheduleArt: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,ribbon:null,
     combat:{getBoundingClientRect:()=>({bottom:900})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
@@ -94,7 +94,7 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
   const placed=ids.map((id,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, scheduleArt: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{getBoundingClientRect:()=>({bottom:400})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
@@ -110,7 +110,7 @@ test('waist-overlap players retain packed cores while idle enemies reserve no hi
   const placed=ids.map((id,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:id},classList:{contains:role=>role===(id.includes('player')?'player':'enemy')
     ||(id==='selected'||id==='player')&&role==='context-selected'||id==='dead-player'&&role==='dead'}}}));
   let packed,reserved;
-  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, scheduleArt: () => {}, fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packed=input.targets;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{reserved=input.targetCores;return input.pack();}});
@@ -142,7 +142,7 @@ test('captured1515 waist-overlap player packs above HP without moving artwork or
   assert.ok(!clear(fallback,{...obstacles[0],top:obstacles[0].top-fieldRect.top,bottom:obstacles[0].bottom-fieldRect.top}),
     'unpacked fallback reproduces the own-HP collision');
   let targets;
-  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {},fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, scheduleArt: () => {},fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:650})},
     readFooterObstacles:()=>obstacles,combatTargetAnchors,placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{assert.equal(input.targetCores.length,1);targets=input.pack();return targets;}});

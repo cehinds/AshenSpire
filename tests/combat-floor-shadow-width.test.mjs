@@ -23,7 +23,7 @@ test('a floor shadow follows painted artwork while selection cannot inflate it t
   const player = fakeFrame({ spriteWidth: 99, barWidth: 112 });
   const enemy = fakeFrame({ spriteWidth: 64.6, barWidth: 88 });
   const field = { querySelectorAll: () => [player, enemy] };
-  const context = { currentSpriteArtBounds: sprite => sprite.art, schedule() {} };
+  const context = { currentSpriteArtBounds: sprite => sprite.art, schedule() {}, scheduleArt() {} };
   const sync = runInNewContext(`${stage.slice(start, end)}\nsyncFloorShadows`, { field, ...context });
   sync();
   assert.equal(player.sprite.style.getPropertyValue('--floor-shadow-width'), '113.13%');

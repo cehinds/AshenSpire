@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Combat is static** ([#2595](https://github.com/cehinds/AshenSpire/pull/2595), `0.7.3.192`). Combat no longer redraws: your figure repaints only when its pose changes (not when you select a card), the battlefield lays out once per fight and ignores the phone's address bar, your panel stays fixed right of your character, and all figures are 5% smaller.
 - **Figures stand inside their cells** ([#2593](https://github.com/cehinds/AshenSpire/pull/2593), `0.7.3.192`). Combat figures now stand inside their grid cells, about a third of the way up, instead of on the lines; on phones the grid rises a little to keep the player above the hand.
 - **Combat redraws less** ([#2592](https://github.com/cehinds/AshenSpire/pull/2592), `0.7.3.190`). The battlefield now rewrites a figure's data and style only when something changed, so a screen resize no longer rewrites 158 unchanged attributes.
 - **Menus return where you were** ([#2589](https://github.com/cehinds/AshenSpire/pull/2589), `0.7.3.188`). After upgrading a card you land back on the refreshed list, Back buttons name the place you're in (Back to Blacksmith, Shrine, Merchant, Rewards), and the Armoury reopens on the last tab you used.

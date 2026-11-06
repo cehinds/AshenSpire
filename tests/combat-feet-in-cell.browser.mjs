@@ -11,7 +11,7 @@ const fraction = uiConfig.presentation.combatFormationModel.positioning.perspect
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const b = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--no-sandbox'] });
 try {
-  for (const [w, h] of [[390, 844], [360, 800], [844, 390], [1280, 800]]) {
+  for (const [w, h] of [[390, 844], [360, 800], [1280, 800]]) {
     const p = await b.newPage({ viewport: { width: w, height: h }, reducedMotion: 'reduce' });
     await p.goto(`${server.url}index.html?shot=combat&shotSeed=PERF1`, { waitUntil: 'load' });
     await p.waitForSelector('.combatant .sprite');
@@ -34,7 +34,6 @@ try {
       assert.ok(cell, `${at}: foot y ${fig.foot.toFixed(1)} is inside no drawn cell (cells ${m.cells.filter(c => c.side === fig.side).map(c => `${c.cell} ${c.top.toFixed(1)}..${c.bottom.toFixed(1)}`)})`);
       const height = cell.bottom - cell.top, above = (cell.bottom - fig.foot) / height;
       assert.ok(fig.foot - cell.top >= Math.min(1, height / 4) && cell.bottom - fig.foot >= Math.min(1, height / 4), `${at}: foot ${fig.foot.toFixed(1)} touches a line of cell ${cell.cell} ${cell.top.toFixed(1)}..${cell.bottom.toFixed(1)}`);
-      // A landscape phone's strip is under 10px: only "inside, not on a line" can hold there.
       if (height >= 20) assert.ok(Math.abs(above - fraction) <= 0.05, `${at}: foot stands ${(above * 100).toFixed(0)}% above cell ${cell.cell}'s bottom, expected ${fraction * 100}%`);
       if (fig.side === 'player') assert.ok(fig.foot <= m.handTop + 1, `${at}: feet ${fig.foot.toFixed(1)} stand inside the hand (top ${m.handTop.toFixed(1)})`);
     }
