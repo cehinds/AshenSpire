@@ -2596,6 +2596,7 @@ card,,cometFragment,camp:spell
 card,,cometFragment,school:force
 card,,cometFragment,maneuver:casting
 card,,starbladePhalanx,camp:spell
+card,,starbladePhalanx,range:melee
 card,,starbladePhalanx,school:force
 card,,starbladePhalanx,maneuver:casting
 card,,crystalBarrier,camp:spell
@@ -2610,6 +2611,7 @@ card,,frostVeil,camp:spell
 card,,frostVeil,maneuver:defend
 card,,frostVeil,school:frost
 card,,starSlicer,camp:spell
+card,,starSlicer,range:melee
 card,,starSlicer,school:force
 card,,starSlicer,maneuver:casting
 card,,starstoneWard,camp:spell
@@ -2634,6 +2636,7 @@ card,,stargazerCard,school:illusion
 card,,astralArmorCard,camp:spell
 card,,astralArmorCard,school:alteration
 card,,moonrendCut,camp:spell
+card,,moonrendCut,range:melee
 card,,moonrendCut,school:force
 card,,moonrendCut,maneuver:casting
 card,,meteorite,camp:spell
@@ -2647,6 +2650,7 @@ card,,gravityWell,school:alteration
 card,,azureCoilCard,camp:spell
 card,,azureCoilCard,school:lightning
 card,,astralCleave,camp:spell
+card,,astralCleave,range:melee
 card,,astralCleave,school:force
 card,,astralCleave,maneuver:casting
 card,,radiantSpray,camp:spell
@@ -2658,6 +2662,7 @@ card,,supernova,maneuver:casting
 card,,timeDilation,camp:spell
 card,,timeDilation,school:alteration
 card,,starstoneKris,camp:spell
+card,,starstoneKris,range:melee
 card,,starstoneKris,school:force
 card,,starstoneKris,maneuver:casting
 card,,constellationCard,camp:spell
@@ -2745,6 +2750,7 @@ card,,emberCommunion,school:divine
 card,,bloodPact,camp:spell
 card,,bloodPact,school:decay
 card,,blightTouch,camp:spell
+card,,blightTouch,range:melee
 card,,blightTouch,school:decay
 card,,blightTouch,damage:decay
 card,,blightTouch,maneuver:casting
@@ -2832,6 +2838,7 @@ card,,painOffering,school:decay
 card,,painOffering,damage:decay
 card,,painOffering,maneuver:casting
 card,,witheringTouch,camp:spell
+card,,witheringTouch,range:melee
 card,,witheringTouch,school:decay
 card,,witheringTouch,damage:decay
 card,,witheringTouch,maneuver:casting

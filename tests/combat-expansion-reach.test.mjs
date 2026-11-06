@@ -57,3 +57,26 @@ test('an untagged spell attack is Reach on the card face and in the Advance math
   const melee = { ...carrier, tags: [...spell.tags, 'range:melee'], combatProfile: { camp: 'spell', maneuver: 'casting', range: 'melee' } };
   assert.equal(rangeSourceContact(ctx, ctx.player, ctx.enemies[0], melee, { op: 'damage' }).coverage, 'melee');
 });
+
+// Owner 2026-11-06: touches, grasps and spell blades stay Melee; every other untagged spell attack is Reach.
+test('ten named spells carry an explicit range:melee and resolve to Melee; an untagged spell resolves to Reach', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { combatProfileFor, defaultRangeFor, combatCardRange } = await import('../src/model/combatCardProfile.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const melee = ['blightTouch', 'witheringTouch', 'core.brittleTouch', 'core.shockingGrasp', 'core.palmFlame',
+    'moonrendCut', 'astralCleave', 'starstoneKris', 'starSlicer', 'starbladePhalanx'];
+  for (const id of melee) {
+    const card = registries.cards.get(id);
+    assert.ok(card, `${id} exists`);
+    assert.ok(card.tags.includes('range:melee'), `${id} is tagged range:melee`);
+    assert.equal(combatCardRange(card), 'melee', id);
+    assert.equal(combatProfileFor(card, { registries }).range, 'melee', id);
+  }
+  const untagged = registries.cards.get('core.cinderDart');
+  assert.ok(!untagged.tags.some(tag => tag.startsWith('range:')));
+  assert.equal(defaultRangeFor(combatProfileFor(untagged, { registries })), 'reach');
+  assert.equal(combatCardRange(untagged), 'reach');
+});
