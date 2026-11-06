@@ -2232,3 +2232,9 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 :root .combat .target-hud-detail .target-hud-intent .intent > :not(.intent-compact):not(.cr-followups) { display: none !important; }
 :root .combat .target-hud-detail .target-hud-intent .intent .intent-compact { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; min-width: 0; }
 :root .combat .target-hud-detail .target-hud-intent .intent-damage-scope { display: none; }
+
+/* Owner 2026-11-06: the desktop player panel stands in the board's right margin (combatTargetHud.js playerMargin). Where
+   the margin narrows to its 180 px floor the panel's rows stack vertically instead of sharing a line. */
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-meters,
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-panel { display: flex; flex-direction: column; align-items: stretch; gap: .3em; }
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-statuses.statuses { flex-wrap: wrap; justify-content: flex-start; }

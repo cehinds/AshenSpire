@@ -322,18 +322,33 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     setStyle(record.info, 'left', `${info.left}px`); setStyle(record.info, 'top', `${info.top}px`);
     setStyle(record.info, 'width', `${info.width}px`); setStyle(record.info, 'height', `${info.height}px`);
   }
+  // Owner 2026-11-06 (option B): on desktop the player's panel stands in the empty margin to the right of the board. The board
+  // keeps its size; the panel takes the margin's width (never below 180 px, the width its rows stack at) and shrinks with the
+  // viewport. null (the panel keeps standing beside the figure) off desktop or when the board's cells are not drawn.
+  const MARGIN_MIN_PX = 180, MARGIN_MAX_PX = 420;
+  function playerMargin(bounds, gap) {
+    if (!['desktop', 'widescreen'].includes(document.documentElement.dataset.formFactor)) return null;
+    let right = -Infinity;
+    for (const cell of field.querySelectorAll('.formation-grid-cell')) right = Math.max(right, cell.getBoundingClientRect().right);
+    if (!Number.isFinite(right)) return null;
+    const edge = bounds.left + bounds.width - gap;
+    const width = Math.min(MARGIN_MAX_PX, Math.max(MARGIN_MIN_PX, edge - (right + gap)));
+    return { width, left: Math.min(right + gap, edge - width), top: bounds.top + gap };
+  }
   function place(fieldBox, rootBox, zoom, bounds, epoch) {
     const gap = config.positioning.gapPx, sizing = config.sizing;
+    const margin = playerMargin(bounds, gap);
     const rows = [];
     for (const [id, record] of panels) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
-      const cellWidth = Number(frame.dataset.cellWidth) || rect(frame).width;
+      const cellWidth = entry.role === 'player' && margin ? margin.width : Number(frame.dataset.cellWidth) || rect(frame).width;
       rows.push({ id, record, frame, entry, cellWidth, ...miniHudScale({ cellWidth }) });
     }
     // Writes: the panel is exactly as wide as its cell, its contents scaled to it (never below the minimum font).
     for (const { record, cellWidth, scale, fontPx } of rows) {
       const node = record.node;
       setVar(node, '--mini-hud-scale', String(scale));
+      setData(node, 'margin', node.dataset.role === 'player' && margin ? (cellWidth < 260 ? 'stacked' : 'row') : 'off');
       setVar(node, '--target-hud-font', `${fontPx / zoom}px`);
       setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale / zoom}px`);
       setStyle(node, 'width', `${anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width: cellWidth, height: 0 }, { zoom }).width}px`);
@@ -354,7 +369,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const boxes = [];
     for (const row of rows) {
       let at;
-      if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
+      if (row.entry.role === 'player' && margin) at = { left: margin.left, top: margin.top };
+      else if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
       else if (row.rack) {
         const placed = enemyHudPlacement({ centerX: row.rack.centerX, bottom: row.rack.top - gap / 4, width: row.cellWidth, height: row.height, bounds });
         at = { left: placed.left, top: placed.top + row.height };
