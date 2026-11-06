@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Merged branches are cleaned up** ([#2608](https://github.com/cehinds/AshenSpire/pull/2608), `0.7.3.204`). The branch cleanup workflow now also deletes origin branches already merged into dev, keeping protected branches, open PR branches and branches with no work yet; it has a dry-run switch.
 - **Pages keeps ten releases** ([#2605](https://github.com/cehinds/AshenSpire/pull/2605), `0.7.3.204`). The Pages site keeps the last 3 builds of main, dev and test and the last 10 releases; the workflow's keep input is now only an override.
 - **Previews publish again** ([#2603](https://github.com/cehinds/AshenSpire/pull/2603), `0.7.3.202`). The Pages site drops stale branch previews, old per-build offline files and docs/preview, keeps 3 builds per branch, and fails early with a size breakdown if it grows past its limit, so the dev preview deploy no longer times out.
 - **HUD width test covers more fights** ([#2601](https://github.com/cehinds/AshenSpire/pull/2601), `0.7.3.200`). The fixed-HUD browser test now also checks a fight with the player in a second cell, on phone and desktop.
