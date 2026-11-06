@@ -110,7 +110,8 @@ jobs:
   # THE RULE (second job). Delete every origin branch whose tip is an ancestor
   # of `origin/dev`, except the protected names (dev, test, release, main,
   # tools-archive), anything under `alternative/`, and the head branch of any
-  # OPEN pull request. A branch that is not merged into dev is kept. The open
+  # OPEN pull request, and any branch whose tip equals origin/dev (no work yet).
+  # A branch that is not merged into dev is kept. The open
   # PR list is read fail-closed: if that API call fails, nothing is deleted.
   cleanup-dev:
     runs-on: ubuntu-latest
@@ -156,6 +157,12 @@ jobs:
               continue
             fi
             tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ "$tip" = "$dev_tip" ]; then
+              # Cut from dev with no commits yet: keep it, do not treat it as merged.
+              echo "kept $b (no work yet)"
+              kept+=("$b: no work yet")
+              continue
+            fi
             if ! git merge-base --is-ancestor "$tip" "$dev_tip"; then
               echo "kept $b (not merged into dev)"
               kept+=("$b: not merged into dev")
