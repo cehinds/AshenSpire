@@ -104,7 +104,8 @@ test('callout CSS: the one floater size, HUD text shadow, reduced motion and Red
 });
 
 // ---- through the shipped timeline (the beat-order harness) ----------------
-const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 500, REACTION = 500;
+const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 500, REACTION = 500;
+// LEAD: intent word, one 500 ms gap, stance, one more gap, then the swing (owner, 2026-11-06).
 // Accuracy follows the complete swing; target reaction follows accuracy; the
 // final defense/effect word and number follow that reaction. Default gaps are
 // 500ms; the authored 300ms sprite duration remains independent.
@@ -206,7 +207,8 @@ for (const [name, events, want, accuracy] of CASES) {
       const shown = trace.filter((e) => e.what.startsWith('callout:') && !e.what.startsWith('callout:action:'));
       assert.deepEqual(shown.map((e) => e.what), [`callout:${accuracy}`, `callout:${want}`], 'accuracy then one final outcome, both on the right fighter');
       assert.equal(shown[0].at, LEAD + TOTAL + AFTER, 'accuracy follows the complete attacker sprite');
-      assert.equal(shown[1].at, LEAD + TOTAL + AFTER + 2 * REACTION, 'the final outcome follows the target reaction');
+      // Owner 2026-11-06: the damage number leads the numbers stage; the outcome word queues behind it in the column.
+      assert.ok(shown[1].at >= LEAD + TOTAL + AFTER + 2 * REACTION, 'the final outcome follows the target reaction');
     });
   });
 }
@@ -217,7 +219,7 @@ test('sequential: Hit precedes the hurt pose, then CRITICAL accompanies the dama
     finish();
     assert.equal(timeOf(trace, 'callout:hit@player'), LEAD + TOTAL + AFTER);
     assert.equal(timeOf(trace, 'reaction:player'), LEAD + TOTAL + AFTER + REACTION, 'the sprite reaction follows the accuracy word by a gap');
-    assert.equal(timeOf(trace, 'callout:critical@player'), LEAD + TOTAL + AFTER + 2 * REACTION, 'critical is the final outcome, after the hurt pose');
+    assert.ok(timeOf(trace, 'callout:critical@player') > timeOf(trace, 'float:-4'), 'critical is the final outcome, after the hurt pose and the damage number');
     assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the number waits a gap after the reaction; a damage number never waits behind the column');
   });
 });
@@ -250,7 +252,7 @@ test('COUNTERED shows on the attacker who got countered, after the counter\'s sp
     finish();
     assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER, 'the counter hit is announced before target reaction');
     assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER + REACTION);
-    assert.equal(timeOf(trace, 'callout:countered@e1'), LEAD + TOTAL + AFTER + 2 * REACTION, 'counter outcome follows the target reaction');
+    assert.ok(timeOf(trace, 'callout:countered@e1') >= LEAD + TOTAL + AFTER + 2 * REACTION, 'counter outcome follows the target reaction');
     assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the counter damage follows its reaction by a gap');
   });
 });
@@ -291,7 +293,7 @@ test('the STAGGERED word is on the fighter now, not a screen banner', (t2) => {
 test('a click-skip ends the callouts', (t2) => {
   drive(t2, ({ dom, layer, run, finish, tick }) => {
     run(CASES[0][1]);
-    for (let i = 0; i <= LEAD + TOTAL + AFTER + 2 * REACTION; i++) tick(1);
+    for (let i = 0; i <= LEAD + TOTAL + AFTER + 2 * REACTION + floaterStaggerMs(); i++) tick(1);
     assert.ok(callouts(layer).some(node => node.dataset.calloutKind === 'critical'), 'the CRITICAL callout is showing');
     globalThis.dispatchEvent(new dom.Event('pointerdown'));
     assert.equal(callouts(layer).length, 0, 'the skip removed it');
@@ -314,7 +316,7 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
     } else if (mode === 'sequential') {
       assert.equal(timeOf(trace, 'reaction:player') - outcome, REACTION, 'accuracy precedes the target reaction');
       assert.equal(damage - outcome, 2 * REACTION, 'accuracy leads damage by two gaps (accuracy → reaction → result)');
-      assert.equal(timeOf(trace, 'callout:evadeFailed@player'), damage, 'failed defense is the final outcome with damage');
+      assert.ok(timeOf(trace, 'callout:evadeFailed@player') >= damage, 'failed defense is the final outcome, after the damage number');
     } else assert.ok(outcome - damage >= 0 && outcome - damage <= floaterStaggerMs(), 'instant and reduced motion add no waits for the number; the word may queue one stagger behind the accuracy word');
   });
 });
@@ -354,7 +356,7 @@ test('a fully guarded contact says Hit, then Blocked after the target reaction',
     run(playerAttack({ ...hit('player', 'e1'), blocked: 4 })); finish();
     assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER);
     assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER + REACTION);
-    assert.equal(timeOf(trace, 'callout:blocked@e1'), LEAD + TOTAL + AFTER + 2 * REACTION);
+    assert.ok(timeOf(trace, 'callout:blocked@e1') >= LEAD + TOTAL + AFTER + 2 * REACTION);
     assert.ok(!trace.some(row => row.what === 'float:-4'), 'a fully absorbed contact paints no HP loss');
   });
 });

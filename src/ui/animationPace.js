@@ -133,9 +133,9 @@ export function actionPacing({ reduced = false } = {}) {
   const gapMs = scaled(combatPacing.gapMs);
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
-  // boundary. The action word fires with the action itself, so intentMs is 0.
+  // boundary. The cost and the action word open the beat; the stance follows the word by one gap (intentMs), then the animation.
   return {
-    gapMs, intentMs: 0, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
+    gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced })),

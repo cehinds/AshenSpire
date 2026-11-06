@@ -1453,6 +1453,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'energyGained':
           if (disp.ents.player) disp.ents.player.energy = Math.min(disp.ents.player.energyMax, disp.ents.player.energy + e.amount);
           break;
+        case 'staminaSpent':
+          if (disp.ents.player && Number.isFinite(disp.ents.player.stamina)) disp.ents.player.stamina = Math.max(0, disp.ents.player.stamina - e.amount);
+          break;
         case 'manaSpent':
           if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
           break;
@@ -3754,6 +3757,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (!disp?.rangeRanks) return;
           for (const e of events) applyRangeRankEvent(disp.rangeRanks, e);
           renderCombatantStage({ fit: true, refreshTargets: false });
+        },
+        // Owner 2026-11-06: the cost a card paid reaches the resource read-outs first (fx.js onIntent), ahead of the action word.
+        onLeadApplied: (beat) => {
+          applyBeatToDisp(beat);
+          renderTopbar();
+          renderCombatantStage({ fit: false, refreshTargets: false });
         },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);

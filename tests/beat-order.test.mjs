@@ -19,7 +19,9 @@ import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
-const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;
+const IMPACT = 100, TOTAL = 300, AFTER = 1000, REACTION = 500, GAP = 500;
+// Owner 2026-11-06: intent word → one gap → stance → one gap → swing.
+const LEAD = 2 * GAP;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -348,7 +350,7 @@ test('a delayed ordered contact retains the full hit-stop and remaining authored
       cancel() { trace.push({ what: 'settle', at: Date.now() }); },
     };
     run(accuracyHit(7), { animateActor: () => actor, maxHpFor: () => 54 });
-    tick(LEAD); // Let the required pre-sprite wait finish on time.
+    tick(GAP); tick(GAP); // Let each required pre-sprite wait (intent, then action word) finish on time.
     tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
     finish();
     const delivered = LEAD + 350;
@@ -393,3 +395,32 @@ test('impact order retains its existing terminal visual delay',t=>{
  });
 });
 
+
+// Owner 2026-11-06: card played → cost → intent word → stance → animation → hit word → reaction → damage → the rest.
+test('the card-play order: cost, intent word, stance, animation, hit word, reaction, damage numbers', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    const mark = what => trace.push({ what, at: Date.now() });
+    run([
+      { type: 'energySpent', amount: 2 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
+      { type: 'attackHit', sourceId: 'player', targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], {
+      onLeadApplied: () => mark('cost-applied'),
+      onStanceLead: () => mark('stance'),
+    });
+    finish();
+    const all = [...trace.map(e => ({ ...e })), ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))]
+      .filter(e => e.what !== 'bars').sort((a, b) => a.at - b.at);
+    const names = all.map(e => e.what);
+    const first = what => names.indexOf(what);
+    assert.deepEqual(names.filter(n => ['float:−2 EP', 'cost-applied', 'word:action:Strike', 'stance', 'swing', 'word:hit', 'reaction:e1', 'float:-4'].includes(n)),
+      ['float:−2 EP', 'cost-applied', 'word:action:Strike', 'stance', 'swing', 'word:hit', 'reaction:e1', 'float:-4']);
+    assert.ok(first('float:−2 EP') < first('word:action:Strike'));
+    const at = what => all.find(e => e.what === what).at;
+    assert.equal(at('cost-applied'), 0, 'the cost is the first thing that happens');
+    assert.equal(at('stance'), GAP, 'the stance follows the beat start by one gap (intentMs)');
+    assert.equal(at('word:action:Strike'), 0, 'the intent word is up with the cost, before the stance');
+  });
+});
