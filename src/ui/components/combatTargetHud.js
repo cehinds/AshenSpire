@@ -328,10 +328,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       setStyle(row.record.node, 'left', `${local.left}px`); setStyle(row.record.node, 'top', `${local.top}px`);
       boxes.push(row);
     }
-    // The Inspect control stands left of its panel (clamped to the screen edge), level with its middle.
+    // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as
+    // its cell never has a neighbour's control over it.
     const panelBoxes = boxes.map(row => ({ row, panel: row.record.node.querySelector('.target-hud-panel').getBoundingClientRect() }));
     for (const { row, panel } of panelBoxes) {
-      const info = anchorLocalBox(rootBox, { left: Math.max(rootBox.left, panel.left - 25), top: panel.top + panel.height / 2 - 10, width: 20, height: 20 });
+      const info = anchorLocalBox(rootBox, { left: panel.right - 20 - 5, top: panel.top + 5, width: 20, height: 20 });
       setStyle(row.record.info, 'left', `${info.left}px`); setStyle(row.record.info, 'top', `${info.top}px`);
       setStyle(row.record.info, 'width', `${info.width}px`); setStyle(row.record.info, 'height', `${info.height}px`);
     }

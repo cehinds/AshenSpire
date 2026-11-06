@@ -1887,6 +1887,8 @@
 /* An enemy's panel hangs from its bottom edge, which stays on the head: a taller status tray grows it upward. */
 .target-hud-detail[data-role='enemy'] { translate: 0 -100%; }
 .target-hud-inspect-info[hidden] { display: none !important; }
+/* The Inspect control sits in the panel's top-right corner: the name keeps clear of it. */
+.target-hud-detail .target-hud-name { padding-right: 1.9em; }
 .combat-health-badge[hidden] { display: none !important; }
 .target-hud-panel { box-sizing: border-box; padding: .65em .75em; border: 1px solid #84734c; border-radius: .35em; background: linear-gradient(145deg, #28231bf5, #15130ff5); box-shadow: 0 .2em .8em #0008; }
 .target-hud-name { font-family: Georgia, serif; font-size: 1.05em; margin-bottom: .4em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
