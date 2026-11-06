@@ -206,69 +206,6 @@ export function applyItemRatingConfig(configured, authored, settings = {}) {
   };
 }
 
-/**
- * migrateCombatRatingSettings(settings, bundle)
- *
- * A STORED PLUS BECOMES THE NUMBER IT USED TO MAKE. `bonuses.<item>.<rating>`
- * was the old per-item dial and it is gone; a profile that still holds one — or
- * a configuration file exported before this build — is read as the item's
- * rating: the authored value plus what the plus added. Keys are dropped only
- * when the item they name is gone, which is what the old table did anyway.
- * Relic and status bonuses are untouched: those ARE bonuses and stay bonuses.
- */
-const LEGACY_ITEM_BONUS_KEY = /^gameConfig\.combatRatings\.bonuses\.(armament|armor):/;
-
-/** Whether a stored profile still holds a per-item PLUS this build has retired. */
-export function hasLegacyItemRatingSettings(settings = {}) {
-  return Object.keys(settings || {}).some(key => LEGACY_ITEM_BONUS_KEY.test(key));
-}
-
-export function migrateCombatRatingSettings(settings = {}, bundle, warnings = null) {
-  const legacy = Object.keys(settings).filter(key => LEGACY_ITEM_BONUS_KEY.test(key));
-  if (!legacy.length || !bundle) return settings;
-  const byKey = new Map([...(bundle.equipment?.armaments || []), ...(bundle.equipment?.armour || [])]
-    .map(piece => [ratingSourceKey(piece), piece]));
-  const next = { ...settings };
-  const rounded = [];
-  const capped = [];
-  const weighed = [];
-  for (const key of legacy) {
-    const [source, id] = key.slice(`${prefix}bonuses.`.length).split('.');
-    const piece = byKey.get(source);
-    delete next[key];
-    if (!piece || !ratingIds.includes(id)) continue;
-    const current = `${prefix}itemRatings.${source}.${id}`;
-    if (next[current] !== undefined) continue;
-    const bonus = Number(settings[key]);
-    if (!Number.isFinite(bonus)) continue;
-    const exact = authoredItemRatings(bundle.equipment, piece)[id] + bonus;
-    const value = Math.max(0, Math.min(ITEM_RATING_MAX, Math.round(exact)));
-    if (value !== exact) (Math.round(exact) === value ? rounded : capped).push(`${piece.name} ${ratingLabel(id)} ${exact}→${value}`);
-    if (id === 'poise' && piece.kind === 'armor' && bonus) weighed.push(`${piece.name} ${piece.poiseThreshold || 0}→${value}`);
-    next[current] = value;
-  }
-  // THE TWO PLACES THE SUM CANNOT BE KEPT EXACTLY, said out loud rather than
-  // discovered later (Copilot, on #1242). The old row was a generic numeric
-  // row: it took fractions and it took 999 on top of an authored value. An
-  // item's rating is a WHOLE NUMBER in the column it is written to —
-  // `validate.js` refuses a non-integer `attackRating`, `defenseRating` or
-  // `poiseThreshold` outright — and the row's own ceiling is the old one, so a
-  // fractional plus rounds and a sum past the ceiling stops there. Both are
-  // named where a reader can see them; everything else survives exactly.
-  // AND THE ONE PLACE THE OLD DIAL AND THE NEW ROW ARE NOT THE SAME FACT. A
-  // set's Poise threshold is also its weight (`statProjection.ARMOUR_WEIGHT_RULE`),
-  // so a Poise plus that used to add a rating and nothing else now adds to what
-  // the set costs to wear. Said out loud rather than found in a load receipt.
-  if (warnings && weighed.length) {
-    warnings.push(`A set's Poise is also its weight, so ${weighed.length === 1 ? 'one armour Poise bonus became' : `${weighed.length} armour Poise bonuses became`} part of what it costs to wear: ${weighed.join(', ')}. Everything else in the file was imported.`);
-  }
-  if (warnings && (rounded.length || capped.length)) {
-    if (rounded.length) warnings.push(`An item's rating is a whole number, so ${rounded.length === 1 ? 'one fractional per-item bonus was' : `${rounded.length} fractional per-item bonuses were`} rounded: ${rounded.join(', ')}. Everything else in the file was imported.`);
-    if (capped.length) warnings.push(`${capped.length === 1 ? 'One per-item bonus added up' : `${capped.length} per-item bonuses added up`} past the ${ITEM_RATING_MAX} a rating row accepts and stopped there: ${capped.join(', ')}. Everything else in the file was imported.`);
-  }
-  return next;
-}
-
 export function combatRatingRows(bundle) {
   const rows = [];
   const add = (path, def, label, topic, extra = {}) => rows.push({
@@ -282,7 +219,7 @@ export function combatRatingRows(bundle) {
   });
   // (The per-rating formulas and the global multiplier moved to the stat rows
   // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
-  // keys convert on import: model/statRows.js migrateLegacyStatSettings.)
+  // keys are dropped on import: model/advancedConfig.js.)
   for (const group of ['resistance', 'impact', 'breaks']) {
     for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier', schoolTaken: 'Resisted school damage taken', wardPool: 'Ward pool share', poisePool: 'Poise pool share' })[field] || phrase(field), words(group), {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : field === 'schoolTaken' ? 0.1 : 0,
@@ -394,7 +331,7 @@ function onGrid(value, row) {
 }
 
 export function resolveCombatRatings(rawSettings, bundle) {
-  const settings = migrateCombatRatingSettings(rawSettings || {}, bundle);
+  const settings = rawSettings || {};
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   config.itemRatings = {};
@@ -535,14 +472,8 @@ export function ratingReceipt(registries, run, config) {
     const values = authoredItemRatings(registries.equipment, piece);
     const configured = config.itemRatings?.[ratingSourceKey(piece)] || {};
     for (const id of ratingIds) if (Number.isFinite(configured[id])) values[id] = configured[id];
-    // AN OLD PER-ITEM PLUS IS NOT ADDED HERE, and that is the compatibility
-    // story rather than a hole in it (Copilot, on #1242). A saved fight carries
-    // the rules it opened under, `bonuses.<item>` and all, and the registries
-    // it is restored into are rebuilt from the RUN's own configuration
-    // snapshot — the same settings those rules were resolved from — so
-    // `migrateCombatRatingSettings` has already put authored + plus on the
-    // piece above. Adding `config.bonuses[<item>]` on top of that would score
-    // the plus twice and hand a resumed fight authored + 2 × plus.
+    // A per-item plus (`bonuses.<item>`) is retired and dropped at the door
+    // (model/advancedConfig.js), so it is not added here.
     // The rating a card sourced from THIS piece reads (`sourceRatingValue`)
     // is the same item value: an override where the owner set one, the
     // column the item authors where they did not.
