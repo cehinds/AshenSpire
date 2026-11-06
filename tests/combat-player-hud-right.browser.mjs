@@ -27,6 +27,15 @@ try {
   await p.waitForTimeout(600);
   const after = await read();
   assert.deepEqual(after.hud, m.hud, 'a card select does not move the HUD');
+  // An address-bar sized height change stays under the relayout threshold; the panel stays locked to the figure (a
+  // shorter viewport may nudge it up to keep it clear of the hand, never further).
+  for (const delta of [-60, 60, -60, 60]) {
+    await p.setViewportSize({ width: 390, height: 844 + delta });
+    await p.waitForTimeout(700);
+    const now = await read();
+    const dx = (now.hud.left - now.sprite.left) - (m.hud.left - m.sprite.left), dy = (now.hud.top - now.sprite.top) - (m.hud.top - m.sprite.top);
+    assert.ok(Math.abs(dx) <= 8 && Math.abs(dy) <= 24, `height ${844 + delta}: the HUD drifted (${dx.toFixed(1)}, ${dy.toFixed(1)}) from the figure`);
+  }
   console.log('combat-player-hud-right ok');
 } finally { await b.close(); server.close?.(); }
 process.exit(0);

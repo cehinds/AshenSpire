@@ -336,10 +336,21 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       // The player's anchor is read once per battlefield layout pass (field.dataset.layoutEpoch): a pose, a stance
       // preview or a selection never moves the panel (owner, 2026-11-06).
       const epoch = field.dataset.layoutEpoch || '';
+      const frameBox = rect(frame);
       const kept = playerAnchors.get(frame);
-      const settled = measured && (kept && kept.epoch === epoch ? kept.anchor : null);
-      if (measured && !settled) playerAnchors.set(frame, { epoch, anchor: measured });
-      const anchor = measured ? settled || measured : frozenSpriteBox(frame.querySelector('.sprite'));
+      // Kept in the player frame's own coordinates (css px from its bottom-left: the figure stands on the frame's bottom) and projected through the current
+      // frame box and zoom each pass, so a viewport or page-zoom change below the relayout threshold cannot leave the
+      // panel behind the figure. Only a settled measurement (art and body both loaded) is kept; a fallback
+      // envelope is never frozen.
+      const settledNow = measured && body.settled !== false && ink?.settled !== false;
+      if (settledNow && !(kept && kept.epoch === epoch)) playerAnchors.set(frame, { epoch, local: {
+        left: (measured.left - frameBox.left) / zoom, top: (measured.top - frameBox.top) / zoom,
+        width: measured.width / zoom, height: measured.height / zoom } });
+      const keptNow = playerAnchors.get(frame);
+      const projected = measured && keptNow && keptNow.epoch === epoch
+        ? { left: frameBox.left + keptNow.local.left * zoom, top: frameBox.top + keptNow.local.top * zoom,
+          width: keptNow.local.width * zoom, height: keptNow.local.height * zoom } : null;
+      const anchor = measured ? projected || measured : frozenSpriteBox(frame.querySelector('.sprite'));
       return [{ id, panel, entry, frame, anchor, lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
         : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0]))),
         ...targetHudPanelSizing({ viewportWidth: rootBox.width, count: panels.size }, config) }];
