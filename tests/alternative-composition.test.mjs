@@ -5,6 +5,7 @@ import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
 import { insetPerspectiveFootprint, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 test('close alternative targets shrink uniformly and stay centred', () => {
@@ -204,4 +205,26 @@ test('perspective grid: a lone player stands on the hand top, never inside the h
   assert.equal(run(420), 420);
   assert.equal(run(560), 500, 'a hand lower than the cell leaves the cell ground alone');
   assert.equal(run(null), 500);
+});
+
+// Owner 2026-11-05 (phone shot): the party's front-row feet stood on their strip's bottom edge line while the
+// enemies stood inside their cells. Every combatant's composed foot is now inside its own strip, clear of both edges.
+test('composed party feet stand inside their strip, not on its edge, at every profile', () => {
+  const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx;
+  const profiles = [[390, 570, true], [375, 480, true], [360, 440, true], [844, 220, false], [1280, 516, false], [1440, 560, false], [1024, 430, false]];
+  for (const [width, height, narrow] of profiles) {
+    for (const friends of [['p'], ['p', 'q', 'r']]) {
+      const plan = alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+        friends, enemies: ['a', 'b', 'c'] }), width, height, narrow);
+      const actors = plan.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 60, visibleHeight: 160, leading: 58, ratio: 1, multiplier: 1 }));
+      const fit = alternativeCombatComposition({ actors, sizes: fitAlternativeSprites({ width, height, actors, narrow }), width, height, perspectiveGrid: true, solo: false });
+      for (const size of fit) {
+        const actor = actors.find(a => a.slot.id === size.id);
+        if (actor.side !== 'player') continue;
+        const { top, height: strip } = actor.slot.box;
+        assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${actor.side} ${size.id}: foot ${size.ground} is inside strip ${top}..${top + strip}`);
+        if (actor.side === 'player' && strip >= 2 * inset + 12) assert.ok(size.ground <= top + strip - inset + 1e-6, `${width}x${height} player foot clears the bottom line by the footprint inset`);
+      }
+    }
+  }
 });
