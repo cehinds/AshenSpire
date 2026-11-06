@@ -15,6 +15,7 @@ import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
 import { builtInFor } from './highResArt.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
+import { createPaintGate, paintSignature } from './paintSignature.js';
 
 import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
 const cached = new Map();
@@ -117,13 +118,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     effectsOff() ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
     : liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+  const paintGate=createPaintGate();
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
     paintedLite=liteRendering()+'/'+effectsOff();
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    currentArt=null;
     let x=0, effect=null;
-    if(el.dataset.effect!=='')el.dataset.effect='';
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
@@ -137,7 +136,18 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()]});
       pose=bodyReaction.sequence.poses[sampled.index];
     }
-    el.dataset.pose=pose;
+    if(el.dataset.pose!==pose)el.dataset.pose=pose;
+    // Static until something it shows changes (owner, 2026-11-06: the figure flickered because it was
+    // redrawn). The same pixels are never cleared and drawn again; a clear plus a filtered draw can show
+    // a blank frame on a phone GPU. Animations change this signature every frame, so they still paint.
+    const lite=liteRendering(),off=effectsOff(),noFlash=document.body.classList.contains('reduce-flashes');
+    const flashing=flashAt!==null?flashElapsed:-1;
+    const fresh=paintGate.changed(paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
+      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt}));
+    if(!fresh&&!materialize)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    currentArt=null;
+    if(el.dataset.effect!=='')el.dataset.effect='';
     if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128+leftPadding,top:16+topPadding,width:512,height:512};ctx.drawImage(down,128+leftPadding,16+topPadding,512,512); return; }
     const image=images.get(pose) || images.get('ready');
     // The canvas owns the hit reaction: the body (and its red mask) knocks back
