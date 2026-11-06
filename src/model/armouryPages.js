@@ -24,3 +24,19 @@ export const armouryPageOf = (viewId) => (viewId === 'grid' ? 'grid' : 'rack');
  */
 export const armouryReopenTarget = (stored, { deckDoor = false } = {}) =>
   (stored === 'cards' && deckDoor ? 'deck' : armouryPageOf(stored));
+
+/**
+ * The routing decision of showArmoury (main.js), as data so it can be driven without the app.
+ * `request` is what the caller passed: a view id ('grid' / 'rack'), or { destination, equipItemId }.
+ * Returns { open: 'armoury' | 'deck', view, destination, equipItemId, saveView }: `saveView` is the explicit
+ * view the player just chose, to remember as the last menu ('' when there is nothing new to save).
+ */
+export function armouryRoute(request, { stored, deckDoor = false } = {}) {
+  const view = typeof request === 'string' ? request : '';
+  const bag = request && typeof request === 'object' ? request : {};
+  const destination = bag.destination || '';
+  const equipItemId = bag.equipItemId || '';
+  const explicit = Boolean(view || destination || equipItemId);
+  const open = !explicit && armouryReopenTarget(stored, { deckDoor }) === 'deck' ? 'deck' : 'armoury';
+  return Object.freeze({ open, view, destination, equipItemId, saveView: view && view !== stored ? view : '' });
+}

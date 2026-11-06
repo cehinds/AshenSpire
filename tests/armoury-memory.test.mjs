@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { armouryReopenTarget } from '../src/model/armouryPages.js';
+import { armouryReopenTarget, armouryRoute } from '../src/model/armouryPages.js';
 
 test('the last tab is the one the Armoury reopens on', () => {
   assert.equal(armouryReopenTarget('grid'), 'grid');
@@ -15,9 +15,22 @@ test('the Deck tab counts only while its door is open; nothing saved is the defa
   assert.equal(armouryReopenTarget(undefined), 'rack');
 });
 
-test('leaving by the Deck tab saves it, and the button routes on it', () => {
+test('leaving by the Deck tab saves it', () => {
   const eq = readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
   assert.match(eq, /onEditDeck\) \{ onChange\?\.\(run\.loadout, \{ equipView: 'cards' \}\); leave\(\)/);
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /armouryReopenTarget\(armouryMeta\.settings\.equipView, \{ deckDoor: deckDoors\(\)\.armoury \}\) === 'deck'\) \{\s*showDeckEditor\(returnTo, true\)/);
+});
+
+test('the real route: no request on a saved Deck tab opens the editor', () => {
+  assert.equal(armouryRoute('', { stored: 'cards', deckDoor: true }).open, 'deck');
+  assert.equal(armouryRoute('', { stored: 'grid', deckDoor: true }).open, 'armoury');
+});
+
+test('navigating out of the editor to Character / Armory is saved, so the next visit does not reopen on Deck', () => {
+  const toCharacter = armouryRoute('grid', { stored: 'cards', deckDoor: true });
+  assert.equal(toCharacter.open, 'armoury');
+  assert.equal(toCharacter.saveView, 'grid');
+  assert.equal(armouryRoute('rack', { stored: 'cards', deckDoor: true }).saveView, 'rack');
+  assert.equal(armouryRoute('rack', { stored: 'rack', deckDoor: true }).saveView, '', 'nothing new to write');
+  // The next visit, with what was just saved:
+  assert.equal(armouryRoute('', { stored: toCharacter.saveView, deckDoor: true }).open, 'armoury');
 });

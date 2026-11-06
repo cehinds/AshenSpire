@@ -135,7 +135,7 @@ import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
-import { armouryReopenTarget } from './model/armouryPages.js';
+import { armouryRoute } from './model/armouryPages.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -2124,15 +2124,20 @@ function showOfflinePlay() {
 function showArmoury(request = '', returnTo = showMap) {
   // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
-  const initialView = typeof request === 'string' ? request : '';
-  const destination = request && typeof request === 'object' ? request.destination || '' : '';
-  const equipItemId = request && typeof request === 'object' ? request.equipItemId || '' : '';
   const armouryMeta = saves.loadMeta();
+  const route = armouryRoute(request, { stored: armouryMeta.settings.equipView, deckDoor: deckDoors().armoury });
   // THE LAST MENU IS REMEMBERED: the Armoury button (no named view) reopens on the tab the player left it on.
   // Character and Armory live in `equipView`; the Deck tab is the editor, saved there as 'cards'.
-  if (!initialView && !destination && !equipItemId && armouryReopenTarget(armouryMeta.settings.equipView, { deckDoor: deckDoors().armoury }) === 'deck') {
+  if (route.open === 'deck') {
     showDeckEditor(returnTo, true);
     return;
+  }
+  const { view: initialView, destination, equipItemId } = route;
+  // An explicit tab the player navigated to (the editor's Character / Armory tabs, quick-nav) is the new last menu.
+  if (route.saveView) {
+    const meta = saves.loadMeta();
+    meta.settings.equipView = route.saveView;
+    saves.saveMeta(meta);
   }
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
