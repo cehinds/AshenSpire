@@ -34,7 +34,13 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
       if (batch.length < 100) return rows;
     }
   };
-  const branches = (await pages(`repos/${repo}/branches`)).filter((b) => /^(feature|fix|chore)\//i.test(b.name));
+  // ONLY A BRANCH WITH AN OPEN PULL REQUEST INTO DEV GETS A PREVIEW (owner's size
+  // rule, 2026-11-06). Every feature/fix/chore branch used to qualify, so 13 stale
+  // ~80 MB previews of long-dead branches took 1 GB of the Pages artifact (run
+  // 42174299001). A closed or merged PR's branch drops out on the next publish.
+  const open = new Map((await pages(`repos/${repo}/pulls?state=open&base=dev`))
+    .filter((pr) => pr.head?.repo?.full_name === repo).map((pr) => [pr.head.ref, pr.number]));
+  const branches = (await pages(`repos/${repo}/branches`)).filter((b) => /^(feature|fix|chore)\//i.test(b.name) && open.has(b.name));
   const manifest = join(out, 'previews.json');
   const original = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8')).previews : [];
   if (!Array.isArray(original)) throw new Error('invalid existing previews manifest');
@@ -67,7 +73,7 @@ export async function collectFeaturePreviews({ repo, out, api, download, warn = 
       const html = readdirSync(destination).filter((f) => f.endsWith('.html'));
       if (html.length !== 1 || !lstatSync(join(destination, html[0])).isFile() || !lstatSync(join(destination, html[0])).size) throw new Error('expected exactly one non-empty regular HTML file');
       entries = entries.filter((e) => e.branch !== branch.name);
-      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: original.find((e) => e.branch === branch.name)?.pr || 0 });
+      entries.push({ branch: branch.name, dir, sha: selected.head_sha, pr: open.get(branch.name) });
     } catch (error) {
       rmSync(destination, { recursive: true, force: true });
       if (error.collectionFailure) throw error;

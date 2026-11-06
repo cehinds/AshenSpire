@@ -143,7 +143,7 @@ on:
     inputs:
       keep:
         description: newest builds to publish per branch
-        default: '5'
+        default: '3'
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
         default: ''
@@ -476,7 +476,10 @@ jobs:
             echo "$(jq '.previews | length' "$out/previews.json") current branch build(s) carry a playable preview."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
-        # THE DEFAULT IS 5, NOT 10 (2026-10-19). GitHub Pages refuses an artifact it
+        # THE DEFAULT IS 3, NOT 5 OR 10 (2026-11-06; it was 10 until 2026-10-19, then 5).
+        # At 5 the artifact was 7.4 GB raw / 5.2 GB packed and deploy-pages timed out
+        # (run 42174299001); see the size guard below for the cap this protects.
+        # THE DEFAULT WAS 5, NOT 10 (2026-10-19). GitHub Pages refuses an artifact it
         # cannot unpack ("Artifact could not be deployed ... total size is less than
         # 10GB"): with --keep 10 the artifact grew 6.56 -> 6.99 -> 7.30 GB in a day and
         # every dev deploy from 7.30 GB up failed (runs 39232459193, 39236238774) while
@@ -486,9 +489,9 @@ jobs:
         # `keep` from a dispatch is clamped here (1..25) and again in the
         # generator: each listed uncommitted build is a rebuild.
         env:
-          KEEP_INPUT: ${{ inputs.keep || '5' }}
+          KEEP_INPUT: ${{ inputs.keep || '3' }}
         run: |
-          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-5}
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-3}
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
@@ -511,6 +514,38 @@ jobs:
             du -sm _site/* | sort -rn | head -15
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      # THE SIZE GUARD (2026-11-06). The Pages artifact was 5.2 GB packed (7.4 GB on disk)
+      # and deploy-pages timed out ("Timeout reached, aborting!", run 42174299001), so the
+      # dev preview stayed stale. A site this big must stop HERE, naming where the bytes
+      # are, instead of uploading for ten minutes and failing opaquely in `deploy`.
+      # SITE_WARN_MB is the target (the Pages limit is 1 GB packed); SITE_MAX_MB is the
+      # hard stop, set well below the 5.2 GB that timed out and the 6.99 GB that last
+      # landed in October. Both are apparent sizes (du --apparent-size), not disk blocks.
+      - name: Fail if the assembled site is too big for Pages
+        env:
+          SITE_WARN_MB: 1000
+          SITE_MAX_MB: 2500
+        run: |
+          set -uo pipefail
+          total=$(du -sm --apparent-size _site | cut -f1)
+          {
+            echo "### Site size guard"
+            echo
+            echo "${total} MB assembled (warn at ${SITE_WARN_MB} MB, fail at ${SITE_MAX_MB} MB). Largest folders:"
+            echo
+            echo '```'
+            du -sm --apparent-size _site/* | sort -rn | head -12 || true
+            echo
+            du -sm --apparent-size _site/*/* 2>/dev/null | sort -rn | head -12 || true
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$total" -gt "$SITE_MAX_MB" ]; then
+            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower --keep, prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
+            exit 1
+          fi
+          if [ "$total" -gt "$SITE_WARN_MB" ]; then
+            echo "::warning title=Pages site above target::${total} MB is over the ${SITE_WARN_MB} MB target (the Pages limit is 1 GB packed); see the folder table in this run's summary."
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

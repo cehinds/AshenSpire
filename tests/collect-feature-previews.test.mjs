@@ -21,6 +21,7 @@ function setup(t, options = {}) {
   writeFileSync(join(out, 'previews.json'), JSON.stringify({ previews: original }));
   const api = async (url) => {
     if (url.includes('/compare/')) return options.comparison || comparison;
+    if (url.includes('/pulls?')) return options.noPr ? [] : [{ number: 41, head: { ref: 'Feature/test', repo: { full_name: 'owner/repo' } } }, { number: 42, head: { ref: 'feature/fork', repo: { full_name: 'fork/repo' } } }];
     if (url.includes('/branches?')) return [{ name: 'Feature/test', commit: { sha: options.head || built } }, { name: 'feature/../unsafe', commit: { sha: built } }];
     if (url.includes('/runs?')) return { workflow_runs: [{ id: 9, head_sha: built, head_branch: 'Feature/test', conclusion: options.conclusion || 'success' }] };
     if (url.includes('/artifacts?')) return { artifacts: [{ name: `feature-preview-${built}`, expired: !!options.expired }] };
@@ -33,6 +34,7 @@ test('case-insensitive feature inventory merges PR and other channel entries', a
   const entries = await collectFeaturePreviews(fixture);
   assert.deepEqual(entries.slice(0, 2), fixture.original);
   assert.equal(entries[2].branch, 'Feature/test');
+  assert.equal(entries[2].pr, 41);
   assert.match(branchPreviewSection([{ branch: 'Feature/test', path: 'Feature/test', file: 'a.html', pr: 0 }]), /feature branch build/);
 });
 test('documentation-only HEAD advance keeps the tested artifact source SHA', async (t) => {
@@ -55,4 +57,8 @@ test('inventory or download failure aborts without replacing manifest', async (t
 test('invalid individual artifact is skipped', async (t) => {
   const fixture = setup(t);
   assert.deepEqual(await collectFeaturePreviews({ ...fixture, download: async () => {} }), fixture.original);
+});
+test('a branch with no open pull request into dev gets no preview, however fresh its build', async (t) => {
+  const fixture = setup(t, { noPr: true });
+  assert.deepEqual(await collectFeaturePreviews(fixture), fixture.original);
 });
