@@ -782,6 +782,25 @@ function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
   combat.emit('enemyMoveEnded', { sourceId: enemy.id, moveId });
 }
 
+// Owner 2026-11-06: when an enemy loses SP during its own turn (a Poise break, a weakness, a reaction), the right-most
+// planned move leaves the plan first, as visible feedback, until the rest fits the SP it has left. Nothing is
+// re-picked and no RNG is drawn; each move is priced alone (enemyMoveQuote), as execution prices it.
+function trimEnemyPlanDuringTurn(combat, enemy) {
+  if (!core2ActionPolicyEnabled(combat) || combat.combatRounds || !enemy.alive || enemy.pendingMove || !enemy.plannedMoves?.length) return;
+  const def = combat.registries.enemies.get(enemy.enemyId);
+  const available = Rounds.enemyAvailableSp(enemy);
+  const price = row => Rounds.enemyMoveQuote(def.moves[row.moveId], { enemy, moveId: row.moveId, combat }).totalSp;
+  const before = enemy.plannedMoves, kept = [...before], dropped = [];
+  while (kept.length && kept.reduce((sum, row) => sum + price(row), 0) > available) dropped.unshift(kept.pop().moveId);
+  if (!dropped.length) return;
+  // The plan is the tail of movesHistory: drop the same moves there so maxConsecutive sees what will play.
+  const history = enemy.movesHistory, ids = rows => rows.map(row => row.moveId).join(',');
+  const start = history?.length - before.length;
+  if (history && start >= 0 && ids(before) === history.slice(start).join(',')) history.splice(start, before.length, ...kept.map(row => row.moveId));
+  enemy.plannedMoves = kept;
+  combat.emit('enemyPlanTrimmed', { sourceId: enemy.id, dropped, remaining: kept.map(row => row.moveId) });
+}
+
 function enemyPhase(combat) {
   // With the Combat Rounds Preview on, the turn start ran in the round commit, before the moves.
   const preview = Boolean(combat.combatRounds);
@@ -854,6 +873,7 @@ function enemyPhase(combat) {
     // anything after are their own exchanges.
     consumeEnemyIntent(combat, enemy);
     closeEnemyExchange(combat, enemy.id);
+    trimEnemyPlanDuringTurn(combat, enemy);
 
     // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
     // Each move leaves the plan before it runs, so a reaction pause resumes at the next planned move.
@@ -881,6 +901,7 @@ function enemyPhase(combat) {
       if (combat.result) return;
       consumeEnemyIntent(combat, enemy);
       closeEnemyExchange(combat, enemy.id);
+      trimEnemyPlanDuringTurn(combat, enemy);
     }
     if (enemy.plannedMoves?.length === 0) enemy.planDue = false;
 
@@ -964,6 +985,9 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
     if(required>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required,available,resource:'sp'});return 'refused';}
     enemy.fixCoreStaminaRemaining=available-(prepaid ? required : spCost);
     enemy.stamina=enemy.fixCoreStaminaRemaining;
+    // Owner 2026-11-06: the enemy visibly pays its move's SP before the move plays (the UI floats it and updates the SP meter).
+    const paid = prepaid ? required : spCost;
+    if (paid > 0) combat.emit('enemyStaminaSpent', { sourceId: enemy.id, moveId, amount: paid, remaining: enemy.fixCoreStaminaRemaining });
     if (prepaid && combat.rangeState) {
       // The charge already paid its accepted price. Retain that payment when
       // it lands; only a newly required Advance surcharge is charged above.

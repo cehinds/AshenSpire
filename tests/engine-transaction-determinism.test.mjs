@@ -76,9 +76,11 @@ export function digest(combat) {
 // player and enemy HP, turn and every RNG counter are identical (PERF1: player 60, enemy 4903, turn 6); only the preview figures differ.
 // Re-pinned 2026-11-05 for the Reach cap (maxRange): the run's range policy snapshot gains "maxRange":"reach", so the state hashes move.
 // Event logs, counts, turns and RNG are identical; removing that one field from the state text reproduces the previous hashes exactly.
+// Re-pinned 2026-11-06 for the enemy-turn order (fix/CombatReachPacingOrder): each move an enemy plays now emits one
+// enemyStaminaSpent receipt for the SP it pays (PERF1 195 -> 198 events, 4242 232 -> 235). Turns and RNG are unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'ad150271be11b3fc', state: 'a1faffd12f40ea90', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: 'd53eccb44b7816e0', state: '1da69c6ca96d651b', events: 232, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '59cbc3faf8caa4ca', state: '4d3ea9029decb3f3', events: 198, turn: 6 }],
+  [[4242, 'reaver'], { log: '787c07fd1c450c96', state: 'fbb19bbc171dddfa', events: 235, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
