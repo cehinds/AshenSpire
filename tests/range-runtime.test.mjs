@@ -5,7 +5,8 @@ import { uncappedCombat } from './helpers/uncapped-range.mjs';
 const live = () => uncappedCombat(cappedLive());
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
-import { rangeSourceContact } from '../src/engine/combatEngagement.js';
+import { rangeSourceContact, quoteRangeActions, previewRangeRoutes } from '../src/engine/combatEngagement.js';
+import { previewCardAttackHit } from '../src/engine/stanceHit.js';
 import * as Foundation from '../src/engine/combatRules.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
@@ -14,6 +15,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../src/model/core2ActionPolicy.js';
+import { combatRangeActionPlan } from '../src/ui/models/CombatRangeActionModel.js';
 import { enemyMoveSp } from '../src/engine/combatRoundsAdapter.js';
 function strike(ctx) {
   const card = ctx.piles.hand.find(row => row.cardId === 'core.strike');
@@ -203,4 +205,26 @@ test('a fight saved under Core 2 rules version 1 keeps v1 pricing and a temporar
   restored.player.stamina = previewCard(restored, card.instanceId, 'e1').staminaCost;
   dispatch(restored, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
   assert.equal(restored.rangeState.engagements[key], 2, 'a v1 fight keeps the Advance temporary');
+});
+test('a Reach-tagged card on a melee weapon covers a band-1 enemy: no Advance row, no Advance SP', () => {
+  const ctx = live(), card = strike(ctx);
+  ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')] = 1;
+  const def = resolveCombatCard(ctx, card);
+  const carrier = tacticalCarrier(def, card, ctx, ctx.player);
+  assert.equal(rangeSourceContact(ctx, ctx.player, ctx.enemies[0], carrier).coverage, 'melee', 'plain Strike stays melee');
+  const reach = { ...carrier, tags: [...(carrier.tags || []), 'range:reach'] };
+  const contact = rangeSourceContact(ctx, ctx.player, ctx.enemies[0], reach);
+  assert.equal(contact.weapon, true); assert.equal(contact.coverage, 'reach');
+  assert.equal(contact.weaponCoverage, 'melee', 'the precision bonus stays with the weapon own range');
+  const effect = { op: 'damage', target: 'enemy', amount: 6 };
+  const actions = [{ source: ctx.player, owner: ctx.player, target: ctx.enemies[0], card: reach, effect, meta: {} }];
+  const plan = quoteRangeActions(ctx, ctx.player, actions);
+  assert.equal(plan.advanceSp, 0, 'a Reach card on a band-1 enemy charges no Advance');
+  const routes = previewRangeRoutes(ctx, ctx.player, actions, { energy: 1, stamina: 1 }, { hitPreview: previewCardAttackHit });
+  assert.equal(routes.routes[0].advanceSp, 0);
+  assert.equal(routes.routes[0].targets[0].coverage, 1);
+  assert.equal(routes.routes[0].targets[0].currentInRange, true);
+  assert.equal(combatRangeActionPlan({ range: { ...routes, enabled: true } }, { targetId: 'e1' }), null);
+  const melee = previewRangeRoutes(ctx, ctx.player, [{ ...actions[0], card: carrier }], { energy: 1, stamina: 1 });
+  assert.equal(melee.routes[0].advanceSp, 1, 'the plain melee Strike still pays one Advance at band 1');
 });

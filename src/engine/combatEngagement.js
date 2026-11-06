@@ -65,14 +65,18 @@ function committedRangeSource(ctx,source,carrier,effect,profile) {
   }
   return resolved;
 }
+const fartherRange = (a, b) => rangeBand(b ?? a) > rangeBand(a) ? b : a;
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   ctx=rangeSourceContext(ctx,source);
   const profile=rangeSourceProfile(carrier,effect);
   const resolved=committedRangeSource(ctx,source,carrier,effect,profile);
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
-  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
-  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weapon,
+  // A weapon contact reaches as far as the weapon or the card, whichever is farther (CONTENT-NOTES: a card takes the
+  // largest range it carries); the reach precision bonus stays with the weapon's own range (weaponCoverage).
+  const weaponCoverage = weapon ? resolved.weaponRange ?? resolved.range ?? piece?.range ?? 'melee' : null;
+  const coverage = weapon ? fartherRange(weaponCoverage, profile.range) : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
+  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weaponCoverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
@@ -99,7 +103,7 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
       for (const target of targets) if (target.alive && source.kind !== target.kind) {
         const contact = rangeSourceContact(ctx, source, target, action.card, eff, `${index}:${r}:${h}:${actorRangeKey(ctx, target)}`);
         contacts.push(contact);
-        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, propertyTags: contact.throwCapable ? ['throw'] : [] } };
+        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, weaponRange: contact.weaponCoverage ?? undefined, propertyTags: contact.throwCapable ? ['throw'] : [] } };
       }
     }
     action.meta = { ...action.meta, rangeTargetBatches: batches };
