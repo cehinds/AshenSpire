@@ -785,9 +785,19 @@ function consumeEnemyIntent(combat, enemy, moveId = enemy.intent?.moveId) {
 // Owner 2026-11-06: when an enemy loses SP during its own turn (a Poise break, a weakness, a reaction), the right-most
 // planned move leaves the plan first, as visible feedback, until the rest fits the SP it has left. Nothing is
 // re-picked and no RNG is drawn; each move is priced alone (enemyMoveQuote), as execution prices it.
-function trimEnemyPlanDuringTurn(combat, enemy) {
+export function trimEnemyPlanDuringTurn(combat, enemy) {
   if (!core2ActionPolicyEnabled(combat) || combat.combatRounds || !enemy.alive || enemy.pendingMove || !enemy.plannedMoves?.length) return;
   const def = combat.registries.enemies.get(enemy.enemyId);
+  // Only a real SP loss trims: the SP the enemy was due to have after its last move (payment and Advance) must have dropped
+  // (a Poise break, a weakness, a reaction). A shortfall without one (the range changed) stays what it was, a refusal
+  // at act time, so the moves that play are exactly the ones that played before this trim existed.
+  let paidLeft = null;
+  for (let i = combat.eventLog.length - 1; i >= 0; i--) {
+    const row = combat.eventLog[i];
+    if (row.type === 'enemyTurnStart') break;
+    if (row.type === 'enemyStaminaSpent' && row.sourceId === enemy.id) { paidLeft = row.expectedLeft ?? row.remaining; break; }
+  }
+  if (paidLeft == null || Rounds.enemyAvailableSp(enemy) >= paidLeft) return;
   // trimEnemyPlan prices the plan in order against a detached projected range state (a move that closes the distance
   // makes the next one cheaper) from a pool; the pool here is what the enemy has left now.
   const left = { ...enemy, maxStamina: Rounds.enemyAvailableSp(enemy), pendingStaminaLoss: 0 };
@@ -990,7 +1000,7 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
     enemy.stamina=enemy.fixCoreStaminaRemaining;
     // Owner 2026-11-06: the enemy visibly pays its move's SP before the move plays (the UI floats it and updates the SP meter).
     const paid = prepaid ? required : spCost;
-    if (paid > 0) combat.emit('enemyStaminaSpent', { sourceId: enemy.id, moveId, amount: paid, remaining: enemy.fixCoreStaminaRemaining });
+    if (paid > 0) combat.emit('enemyStaminaSpent', { sourceId: enemy.id, moveId, amount: paid, remaining: enemy.fixCoreStaminaRemaining, expectedLeft: available - (prepaid ? required : totalSp) });
     if (prepaid && combat.rangeState) {
       // The charge already paid its accepted price. Retain that payment when
       // it lands; only a newly required Advance surcharge is charged above.

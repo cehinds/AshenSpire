@@ -129,15 +129,10 @@ test('a move refused for SP is not shown', () => {
   // The quote fits at planning time; an intervening loss leaves only the head
   // affordable and exercises refusal of the already-forecast follow-up.
   c.enemies[0].pendingStaminaLoss = 1;
-  const start = c.eventLog.length;
   const rows = rowsAfterPhase(c, regs);
-  // Owner 2026-11-06: an SP loss trims the plan from the right, as an enemyPlanTrimmed receipt, before the move can be
-  // refused at act time; the row never shows a move that cannot play.
-  const trimmed = c.eventLog.slice(start).filter(e => e.type === 'enemyPlanTrimmed');
-  assert.equal(trimmed.length, 1, 'the unaffordable follow-up leaves the plan');
-  assert.equal(trimmed[0].dropped.length, planned);
-  assert.ok(!(c.followTrace?.[c.enemies[0].id]?.length), 'it is never refused at act time');
-  assert.ok(rows.length >= 1, 'the head still played');
+  assert.equal(c.followTrace[c.enemies[0].id][0].outcome, 'refused');
+  assert.equal(rows[0].symbols.length, planned, 'the planned move shows until its own event, refused or not');
+  assert.equal(rows.at(-1).symbols.length, 0, 'the refusal event removes it');
 });
 
 test('no follow-up trace before the enemy phase: nothing shows (pre-play stays with the multi-action toggle)', () => {

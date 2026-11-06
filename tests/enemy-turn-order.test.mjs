@@ -8,7 +8,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, trimEnemyPlanDuringTurn } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -40,44 +40,50 @@ test('every move the enemy plays is paid for first: enemyStaminaSpent precedes i
 });
 
 test('an SP loss during the enemy turn trims the plan from the right-most move, with an enemyPlanTrimmed receipt', () => {
-  let trimmed = null;
-  for (const seed of [511, 2, 3, 4, 5, 6, 7, 8]) {
-    const combat = fight('fellWarden', seed);
-    const enemy = combat.enemies[0];
-    if ((enemy.plannedMoves?.length || 0) < 2) continue;
-    const plan = enemy.plannedMoves.map(row => row.moveId);
-    // The enemy can afford its head move but nothing after it (a Poise break took the rest of its SP).
-    enemy.pendingStaminaLoss = Math.max(0, (enemy.maxStamina ?? 3) - 1);
-    const log = enemyTurn(combat);
-    const events = log.filter(row => row.type === 'enemyPlanTrimmed');
-    const original = null;
-    if (events.length) { trimmed = { events, plan, original }; break; }
-  }
-  assert.ok(trimmed, 'a fixture plan is trimmed');
-  const [first] = trimmed.events;
-  assert.equal(first.dropped.at(-1), trimmed.plan.at(-1), 'the right-most planned move is dropped first');
-  assert.deepEqual(first.remaining, trimmed.plan.filter((id, i) => i < first.remaining.length), 'what remains is the plan prefix, in order');
-  assert.ok(first.remaining.length + first.dropped.length <= trimmed.plan.length);
+  const combat = fight('fellWarden', 511);
+  const enemy = combat.enemies[0];
+  assert.ok(enemy.plannedMoves.length >= 2, 'the fixture has a plan');
+  const plan = enemy.plannedMoves.map(row => row.moveId);
+  // The head was paid and left 2 SP; then a Poise break takes the rest, so nothing after it is affordable.
+  combat.eventLog.push({ type: 'enemyStaminaSpent', sourceId: enemy.id, moveId: plan[0], amount: 1, remaining: 2 });
+  enemy.stamina = enemy.fixCoreStaminaRemaining = 0;
+  const start = combat.eventLog.length;
+  trimEnemyPlanDuringTurn(combat, enemy);
+  const [first] = combat.eventLog.slice(start).filter(row => row.type === 'enemyPlanTrimmed');
+  assert.ok(first, 'the plan is trimmed');
+  assert.equal(first.dropped.at(-1), plan.at(-1), 'the right-most planned move is dropped first');
+  assert.deepEqual(first.remaining, plan.slice(0, first.remaining.length), 'what remains is the plan prefix, in order');
 });
 
-test('the trim prices the kept plan in sequence: a first move that closes the distance makes the next one cheaper', async () => {
-  const { rangePairKey } = await import('../src/model/combatEngagement.js');
+test('without an SP loss since the last payment nothing is trimmed (a range shortfall is still a refusal at act time)', () => {
+  const combat = fight('fellWarden', 511);
+  const enemy = combat.enemies[0];
+  combat.eventLog.push({ type: 'enemyStaminaSpent', sourceId: enemy.id, moveId: 'x', amount: 1, remaining: 0 });
+  enemy.stamina = enemy.fixCoreStaminaRemaining = 0;
+  const before = enemy.plannedMoves.map(row => row.moveId).join();
+  trimEnemyPlanDuringTurn(combat, enemy);
+  assert.equal(enemy.plannedMoves.map(row => row.moveId).join(), before);
+});
+
+test('the trim prices the kept plan in sequence: one band out of reach, two 1 SP melee moves left, 3 SP keeps both', async () => {
   const { uncappedRun } = await import('./helpers/uncapped-range.mjs');
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
   uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  combat.player.hp = combat.player.maxHp = 100000;
   const enemy = combat.enemies[0];
-  const pair = rangePairKey(`enemy:${enemy.id}`, 'player:player');
-  const key = Object.keys(combat.rangeState.engagements)[0] ?? pair;
+  const key = Object.keys(combat.rangeState.engagements)[0];
   combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [key]: 1 } };
-  // Head: a move that does not close distance (guard). Then two 1 SP melee attacks from Reach distance:
-  // the first pays 1 + 1 Advance, the second is at band 0 and pays 1, so 3 SP afford both (4 would be the per-move quote).
-  enemy.intent = { ...enemy.intent, moveId: 'guard' };
   enemy.plannedMoves = [{ moveId: 'slash', sp: 1 }, { moveId: 'slash', sp: 1 }];
-  const guardSp = registries.enemies.get('wanderingSoldier').moves.guard;
-  enemy.maxStamina = (guardSp.sp ?? 1) + 3; enemy.pendingStaminaLoss = 0; // the turn start refills the pool from these
-  const events = enemyTurn(combat);
-  assert.ok(events.some(row => row.type === 'enemyMoveStarted' && row.moveId === 'guard'), 'the head played');
-  assert.equal(events.filter(row => row.type === 'enemyPlanTrimmed').length, 0, 'both affordable attacks are kept');
+  // It was due to have 4 SP left and now has 3 (a 1 SP loss): the first attack pays 1 + 1 Advance, the second (at band 0) 1.
+  combat.eventLog.push({ type: 'enemyStaminaSpent', sourceId: enemy.id, moveId: 'guard', amount: 1, remaining: 4, expectedLeft: 4 });
+  enemy.stamina = enemy.fixCoreStaminaRemaining = 3;
+  const start = combat.eventLog.length;
+  trimEnemyPlanDuringTurn(combat, enemy);
+  assert.equal(combat.eventLog.slice(start).filter(row => row.type === 'enemyPlanTrimmed').length, 0, 'both affordable attacks are kept');
+  assert.equal(enemy.plannedMoves.length, 2);
+  // One more SP lost: only the first attack (2 SP with its Advance) fits, so the right-most goes.
+  enemy.stamina = enemy.fixCoreStaminaRemaining = 2;
+  trimEnemyPlanDuringTurn(combat, enemy);
+  const [trim] = combat.eventLog.slice(start).filter(row => row.type === 'enemyPlanTrimmed');
+  assert.deepEqual([trim?.dropped, trim?.remaining], [['slash'], ['slash']]);
 });
