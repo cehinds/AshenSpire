@@ -24,7 +24,17 @@ function panelFor(entry) {
   shell.dataset.role = entry.role;
   shell.setAttribute('aria-label', t('combat.targetHud.namedDetails', { name: entry.name }));
   const panel = node('div', 'target-hud-panel');
-  panel.append(node('div', 'target-hud-name', entry.name));
+  // Owner 2026-11-06: an enemy's panel shows its intent (the whole queue) where its name text was. The name stays for
+  // screen readers (aria-label/title) and in the inspect panel; the player's panel keeps its name.
+  const intent = entry.role === 'enemy' && entry.createIntent ? entry.createIntent() : null;
+  if (entry.role === 'enemy') {
+    const slot = node('div', 'target-hud-name target-hud-intent');
+    slot.title = entry.name; slot.setAttribute('aria-label', entry.name);
+    const sr = node('span', 'sr-only', entry.name);
+    slot.append(sr);
+    if (intent) slot.append(intent);
+    panel.append(slot);
+  } else panel.append(node('div', 'target-hud-name', entry.name));
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
