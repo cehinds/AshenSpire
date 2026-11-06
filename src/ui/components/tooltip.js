@@ -514,7 +514,9 @@ export function attachTooltip(el, contentFn, {
   });
   const focus = ev => { if (ev.target === el) queue(focusDelayMs ?? tooltipSettings.focus); };
   el.addEventListener('gpfocus', focus);
-  el.addEventListener('focus', ev => { if (el.matches(':focus-visible')) focus(ev); });
+  // A programmatic refocus (a list returning after a confirm) sets data-quiet-focus: no tip for that focus; real focus still tips.
+  el.addEventListener('focus', ev => { if (el.dataset.quietFocus) return; if (el.matches(':focus-visible')) focus(ev); });
+  el.addEventListener('blur', () => { delete el.dataset.quietFocus; });
   const blur = ev => {
     if (ev.target !== el) return;
     cancelOpen(el);

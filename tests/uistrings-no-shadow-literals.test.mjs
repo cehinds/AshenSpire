@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -101,6 +101,8 @@ const ALLOWED = [
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
   ['src/ui/screens/settings.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
+  ['src/ui/screens/settings.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Rewards', 'settings advancedGroup id in HIDDEN_LEGACY_SETTING_GROUPS, not displayed copy'],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/screens/settings.js', 'Changelog', `advanced-group id and a stored category value; ${ID}`],
   ['src/ui/screens/settings.js', 'About', `advanced-group id and a stored category value; ${ID}`],
