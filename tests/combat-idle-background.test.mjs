@@ -36,3 +36,8 @@ test('the hand pager re-syncs only when a veil is added or removed, not on every
   assert.match(observer, /records\.some\(touchesVeil\)/);
   assert.match(observer, /classList\.contains\('modal-veil'\)/);
 });
+
+test('the focus-memory watcher arms no timer while nothing is remembered', () => {
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  assert.match(input, /if \(scheduled \|\| !enabled \|\| !focusKey\) return;\s*scheduled = true;/);
+});

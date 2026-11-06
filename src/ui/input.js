@@ -1232,7 +1232,8 @@ export function initInput({ getSettings } = {}) {
   if (appRoot && typeof MutationObserver !== 'undefined') {
     let scheduled = false;
     const mo = new MutationObserver(() => {
-      if (scheduled) return;
+      // No remembered focus (a touch-only session never sets one): nothing to restore, so no timer per mutation burst.
+      if (scheduled || !enabled || !focusKey) return;
       scheduled = true;
       setTimeout(() => {
         scheduled = false;
