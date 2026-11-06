@@ -139,6 +139,7 @@ common.place.blacksmith,,Blacksmith,The Blacksmith's forge.,
 common.place.shrine,,Shrine,The Shrine you are resting at.,
 common.place.merchant,,Merchant,The merchant's stall.,
 common.place.rest,,Rest,The rest site.,
+common.place.rewards,,Rewards,The reward screen.,
 common.continue,,Continue,Move on from this screen.,Continue
 common.skip,,Skip,Leave this behind and move on.,Skip
 common.confirm,,Confirm,Commit the choice you have made.,Confirm

@@ -2198,12 +2198,14 @@ function deckDoors(services = null) {
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
-function showDeckEditor(returnTo = showMap, hub = true, focusCard = null) {
+// `place` names where Back leads (common.place.*): the exit reads "Back to {place}" instead of Cancel.
+function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place = '') {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
     focusCard,
+    backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
       persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
@@ -3705,7 +3707,7 @@ function showRest(openPanel = null, locationId = null) {
     services: smithServices,
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
-    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
     // The classic rest site's re-entry record and its consumed-choice hook.
     revisit: record,
     onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
@@ -3785,7 +3787,7 @@ function showGameProfileReward() {
     addRefusal: index => rewardDeckAddRefusal(registries, run, pending.offerId, index, saves.loadMeta().settings || {}),
     deckMax: deckEditBounds(saves.loadMeta().settings || {}).max,
     canEditDeck: !!deckDoors().armoury,
-    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null),
+    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null, 'rewards'),
     canEditEquipment: !!gameModule(run, 'equipment'),
     onEditEquipment: (index, back) => showArmoury('', back),
     onContinue: () => {
