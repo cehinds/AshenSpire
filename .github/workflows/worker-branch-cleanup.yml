@@ -147,8 +147,9 @@ jobs:
             case "$b" in
               dev|test|release|main|tools-archive) reason="protected branch" ;;
               alternative/*) reason="under alternative/" ;;
+              worker/*) reason="owned by the worker job" ;;
             esac
-            if [ -z "$reason" ] && printf '%s\n' "$open_heads" | grep -Fxq -- "$b"; then
+            if [ -z "$reason" ] && grep -Fxq -- "$b" <<< "$open_heads"; then
               reason="head of an open pull request"
             fi
             if [ -n "$reason" ]; then
