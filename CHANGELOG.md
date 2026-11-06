@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Stale branches can be swept** ([#2611](https://github.com/cehinds/AshenSpire/pull/2611), `0.7.3.208`). A dispatch-only workflow deletes origin branches whose last commit is older than a chosen number of days (default 7), always keeping main, release, test, dev and any branch with an open pull request; dry run by default, and the summary lists each deleted branch with its tip for restoring.
 - **Pages publish no longer fills the runner's disk** ([#2606](https://github.com/cehinds/AshenSpire/pull/2606), `0.7.3.208`). The Pages assemble frees each rebuild's build tree and output as soon as it is published, skips the offline single file for archived builds, prints a rebuild plan capped per run, and logs disk space around the assemble step.
 - **Merged branches are cleaned up** ([#2608](https://github.com/cehinds/AshenSpire/pull/2608), `0.7.3.206`). The branch cleanup workflow now also deletes origin branches already merged into dev, keeping protected branches, open PR branches and branches with no work yet; it has a dry-run switch.
 - **Pages keeps ten releases** ([#2605](https://github.com/cehinds/AshenSpire/pull/2605), `0.7.3.204`). The Pages site keeps the last 3 builds of main, dev and test and the last 10 releases; the workflow's keep input is now only an override.
