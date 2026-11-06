@@ -713,5 +713,5 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.blacksmith-compact .shop-offers { min-height:0; }
 /* A Blacksmith row can carry several actions (a refined-stone upgrade, one per owned sigil): the merchant's fixed row
    height would clip it, so the track and the row grow to fit. */
-:root .shop-workspace.blacksmith-workspace .shop-offers > .shop-shelf:not([hidden]) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
+:root .shop-workspace.blacksmith-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
 :root .shop-workspace.blacksmith-workspace .shop-shelf .merchant-offer { height:auto; min-height:var(--merchant-row-height,110px); }
