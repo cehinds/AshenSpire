@@ -382,7 +382,7 @@ function rebuildFailureDetail(error) {
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
 let buildTree = null;
 /** Rebuild one commit's standalone from source; returns { dir } or { error }. */
-function rebuildAt(sha, fullArt) {
+function rebuildAt(sha, fullArt, { skipSingle = false } = {}) {
   const key = `${sha}:${fullArt ? 'full' : 'light'}`;
   if (rebuilt.has(key)) return rebuilt.get(key);
   const env = { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' };
@@ -425,7 +425,11 @@ function rebuildAt(sha, fullArt) {
     if (dirty) throw new Error(`the rebuild changed committed files (${dirty.split('\n').slice(0, 3).join('; ')}) — not the build this commit names`);
     const dir = join(resolve(BUILD_MISSING), 'out', key.replace(':', '-'));
     mkdirSync(dir, { recursive: true });
+    // An archived pack build serves no download, so its ~157 MB single file is
+    // not copied; a non-pack build needs it as its page, so it is copied below.
+    const webTree = [join(buildTree, 'build', 'web'), join(buildTree, 'build')].find((d) => existsSync(join(d, 'AshenSpire.html')) && packPinOf(readFileSync(join(d, 'AshenSpire.html'))));
     for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+      if (skipSingle && webTree) continue;
       if (existsSync(join(buildTree, artifact))) cpSync(join(buildTree, artifact), join(dir, artifact));
     }
     // THE PACK-SHAPED WEB EDITION, where this commit builds one: its HTML and
@@ -521,17 +525,23 @@ function artifactsOf(b) {
   }
   const fullArt = fullArtFor(b.branch, b.sha);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
-  const r = seeded || rebuildAt(b.sha, fullArt);
+  const r = seeded || rebuildAt(b.sha, fullArt, { skipSingle: b.downloadArchived === true });
   if (r.error) return r;
-  const html = readFileSync(join(r.dir, 'AshenSpire.html'));
+  const archived = b.downloadArchived === true && existsSync(join(r.dir, WEB_DIR, 'AshenSpire.html'));
+  // An archived pack build's single file was not copied (rebuildAt skipSingle); its page is the web edition.
+  const html = archived ? null : readFileSync(join(r.dir, 'AshenSpire.html'));
   // THE REBUILD MUST CARRY THE SOURCE DIGEST ITS COMMIT'S BOX NAMES — the
   // bundle stamps it into the title screen, so a file built from other source
   // cannot pass.
-  if (b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
+  if (!archived && b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
   const mobilePath = join(r.dir, MOBILE_ARTIFACT);
   const mobile = existsSync(mobilePath) ? readFileSync(mobilePath) : null;
-  const edition = rebuiltEdition(fullArt, Boolean(mobile));
+  const edition = archived ? (fullArt ? 'full' : 'light') : rebuiltEdition(fullArt, Boolean(mobile));
   const web = webEditionIn(r.dir, seeded ? null : stagingStore());
+  if (archived && web) {
+    if (b.digest && !web.html.includes(b.digest)) return { error: `the rebuilt web edition does not carry src digest ${b.digest}` };
+    return { html: web.html, web, edition };
+  }
   if (!web) return { html, mobile, edition };
   // A PACK-SHAPED BUILD: the page is the web edition, and the download is the
   // build's LIGHT single file, kept whole (owner answer 3): AshenSpire.html on
@@ -1358,6 +1368,9 @@ function assemble(outDir, keepOverride) {
     // leaves the list (named in skippedBuilds) before any page links it.
     const served = new Map();
     for (const b of listed) {
+      // Decided BEFORE the rebuild, so an archived build skips its single file;
+      // the newest build that is actually served keeps its download.
+      b.downloadArchived = !downloadKept(branch, served.size === 0);
       const a = artifactsOf(b);
       if (a.error) skip(b, a.error); else served.set(b, a);
     }
@@ -1368,7 +1381,7 @@ function assemble(outDir, keepOverride) {
     const builds = [];
     for (const b of listed) {
       if (!served.has(b)) continue;
-      if (served.get(b).web) b.downloadArchived = !downloadKept(branch, builds.length === 0);
+      if (!served.get(b).web) b.downloadArchived = undefined;
       try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
       catch (error) {
         if (!error.refused) throw error;
