@@ -21,6 +21,14 @@ on:
         description: 'List what would be deleted without deleting anything'
         type: boolean
         default: true
+      delete_unmerged_before:
+        description: 'cleanup-dev only: also delete branches NOT merged into dev whose tip commit date is before this date (YYYY-MM-DD). Empty = off.'
+        type: string
+        default: ''
+      keep:
+        description: 'cleanup-dev only: comma-separated branch names never to delete (used with delete_unmerged_before)'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -105,4 +113,127 @@ jobs:
             echo
             echo "### Kept, tip equals test, no work yet (${#fresh[@]})"
             for b in "${fresh[@]+"${fresh[@]}"}"; do echo "- \`$b\`"; done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # THE RULE (second job). Delete every origin branch whose tip is an ancestor
+  # of `origin/dev`, except the protected names (dev, test, release, main,
+  # tools-archive), anything under `alternative/`, and the head branch of any
+  # OPEN pull request, and any branch whose tip equals origin/dev (no work yet).
+  # A branch that is not merged into dev is kept, unless the manual input
+  # `delete_unmerged_before` (YYYY-MM-DD) is set (owner, 2026-11-06): then an
+  # unmerged branch whose tip commit date is before that date is deleted too,
+  # unless it is protected by the rules above or listed in the `keep` input.
+  # With that input set, `worker/*` is handled here as well (merged or stale);
+  # with it empty, `worker/*` stays with the worker job. The open
+  # PR list is read fail-closed: if that API call fails, nothing is deleted.
+  cleanup-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Delete origin branches merged into dev
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          DELETE_BEFORE: ${{ github.event_name == 'workflow_dispatch' && inputs.delete_unmerged_before || '' }}
+          KEEP: ${{ github.event_name == 'workflow_dispatch' && inputs.keep || '' }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          dev_tip=$(git rev-parse refs/remotes/origin/dev)
+          open_heads=$(gh api --paginate "repos/$REPO/pulls?state=open" --jq '.[].head.ref')
+          if [ -n "$DELETE_BEFORE" ]; then
+            # Shape and a real calendar date: 2026-99-99 would sort after every
+            # valid date and make recent branches eligible for deletion.
+            if ! [[ "$DELETE_BEFORE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] \
+               || [ "$(date -u -d "$DELETE_BEFORE" +%F 2>/dev/null || true)" != "$DELETE_BEFORE" ]; then
+              echo "delete_unmerged_before must be a real YYYY-MM-DD date, got: $DELETE_BEFORE" >&2
+              exit 1
+            fi
+          fi
+          # Comma-separated keep list, one name per line, spaces trimmed.
+          keep_list=$(printf '%s' "$KEEP" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+          deleted=()
+          kept=()
+          would=()
+          while IFS= read -r b; do
+            [ -n "$b" ] || continue
+            [ "$b" = "HEAD" ] && continue
+            reason=""
+            case "$b" in
+              dev|test|release|main|tools-archive) reason="protected branch" ;;
+              alternative/*) reason="under alternative/" ;;
+              worker/*) [ -z "$DELETE_BEFORE" ] && reason="owned by the worker job" ;;
+            esac
+            if [ -z "$reason" ] && grep -Fxq -- "$b" <<< "$open_heads"; then
+              reason="head of an open pull request"
+            fi
+            if [ -z "$reason" ] && [ -n "$keep_list" ] && grep -Fxq -- "$b" <<< "$keep_list"; then
+              reason="listed in keep"
+            fi
+            if [ -n "$reason" ]; then
+              echo "kept $b ($reason)"
+              kept+=("$b: $reason")
+              continue
+            fi
+            tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ "$tip" = "$dev_tip" ]; then
+              # Cut from dev with no commits yet: keep it, do not treat it as merged.
+              echo "kept $b (no work yet)"
+              kept+=("$b: no work yet")
+              continue
+            fi
+            tip_date=$(git log -1 --format=%cs "$tip")
+            ahead=$(git rev-list --count "$dev_tip..$tip")
+            info="$b ($tip_date, $ahead ahead of dev)"
+            if git merge-base --is-ancestor "$tip" "$dev_tip"; then
+              info="$info, merged"
+            elif [ -n "$DELETE_BEFORE" ] && [[ "$tip_date" < "$DELETE_BEFORE" ]]; then
+              info="$info, unmerged and older than $DELETE_BEFORE"
+            else
+              echo "kept $b (not merged into dev)"
+              kept+=("$b: not merged into dev ($tip_date, $ahead ahead of dev)")
+              continue
+            fi
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "[dry run] would delete $info"
+              would+=("$info")
+              continue
+            fi
+            # Lease against the tip checked above: a branch pushed to since
+            # the ancestry check is rejected and kept.
+            if git push --force-with-lease="refs/heads/$b:$tip" origin ":refs/heads/$b"; then
+              echo "deleted $info"
+              deleted+=("$info")
+            else
+              echo "kept $b (moved since check)"
+              kept+=("$b: moved since check")
+            fi
+          done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin/)
+
+          {
+            echo "## Delete origin branches merged into dev"
+            echo
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Dry run: nothing was deleted."
+              echo
+              echo "### Would delete (${#would[@]})"
+              for b in "${would[@]+"${would[@]}"}"; do echo "- $b"; done
+              echo
+            fi
+            echo "### Deleted (${#deleted[@]})"
+            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- $b"; done
+            echo
+            echo "### Kept (${#kept[@]})"
+            for k in "${kept[@]+"${kept[@]}"}"; do echo "- \`${k%%:*}\`:${k#*:}"; done
           } >> "$GITHUB_STEP_SUMMARY"
