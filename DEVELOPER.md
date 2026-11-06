@@ -853,6 +853,8 @@ src/model/    schemas, registries, formulas, validation, state (headless)
 src/content/  pure data — every card/status/enemy/relic and every tuning number
 ```
 
+`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them.
+
 Rules that keep this honest:
 
 1. **No entity ids in engine/model.** There is no `if (status === 'bleed')`
