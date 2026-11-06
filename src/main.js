@@ -2127,7 +2127,7 @@ function showArmoury(request = '', returnTo = showMap) {
   const armouryMeta = saves.loadMeta();
   const route = armouryRoute(request, { stored: armouryMeta.settings.equipView, deckDoor: deckDoors().armoury });
   // THE LAST MENU IS REMEMBERED: the Armoury button (no named view) reopens on the tab the player left it on.
-  // Character and Armory live in `equipView`; the Deck tab is the editor, saved there as 'cards'.
+  // Character and Armory live in `equipView`; the Deck tab is the editor, saved there as 'deck'.
   if (route.open === 'deck') {
     showDeckEditor(returnTo, true);
     return;

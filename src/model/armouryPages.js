@@ -19,11 +19,14 @@ export const armouryPageOf = (viewId) => (viewId === 'grid' ? 'grid' : 'rack');
 
 /**
  * Where the Armoury button reopens: the last menu the player left it on. `stored` is the saved `equipView`
- * (grid = Character, rack = Armory, cards = the Deck tab's editor). The Deck tab only counts while its door is
+ * (grid = Character, rack = Armory, deck = the Deck tab's editor; the retired 'cards' stays the Armory page). The Deck tab only counts while its door is
  * open; nothing saved opens the default (the Armory page, as before).
  */
+/** The remembered Deck tab. A NEW value: the retired view id 'cards' still in old saves keeps opening the Armory page. */
+export const DECK_VIEW = 'deck';
+
 export const armouryReopenTarget = (stored, { deckDoor = false } = {}) =>
-  (stored === 'cards' && deckDoor ? 'deck' : armouryPageOf(stored));
+  (stored === DECK_VIEW && deckDoor ? 'deck' : armouryPageOf(stored));
 
 /**
  * The routing decision of showArmoury (main.js), as data so it can be driven without the app.

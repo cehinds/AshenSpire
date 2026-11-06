@@ -779,7 +779,7 @@ export function mountEquipment(host, {
   // be drawn is the defect, and assertSurfaces() fails the boot before any of
   // this runs, so `viewLayout` below can only be null for the stored case.
   const stored = meta.settings && meta.settings.equipView;
-  if (stored && !IDS.includes(stored)) {
+  if (stored && stored !== 'deck' && !IDS.includes(stored)) {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
@@ -2478,7 +2478,7 @@ export function mountEquipment(host, {
         hideTooltip();
         if (id === 'deck') {
           // Remember the Deck tab as the last menu, so the Armoury button reopens the editor (main.js showArmoury).
-          if (onEditDeck) { onChange?.(run.loadout, { equipView: 'cards' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
+          if (onEditDeck) { onChange?.(run.loadout, { equipView: 'deck' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
           else { notice = inCombat ? 'Deck editing is unavailable during combat.' : 'Deck editing is unavailable with the current settings.'; draw(); }
           return;
         }
