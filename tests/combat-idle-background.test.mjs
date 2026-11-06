@@ -41,3 +41,9 @@ test('the focus-memory watcher arms no timer while nothing is remembered', () =>
   const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
   assert.match(input, /if \(scheduled \|\| !enabled \|\| !focusKey\) return;\s*scheduled = true;/);
 });
+
+test('the Potions list disarms its Use doors when it closes', () => {
+  const row = readFileSync(new URL('../src/ui/components/combatActionRow.js', import.meta.url), 'utf8');
+  assert.match(row, /onClose: \(\) => \{ while \(disarmers\.length\) disarmers\.pop\(\)\?\.\(\); \}/);
+  assert.match(row, /disarmers\.push\(arm\(use, 'useFlask'/);
+});
