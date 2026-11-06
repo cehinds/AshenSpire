@@ -1,93 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { targetHudMatchup, targetHudPanelSizing, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, targetHudSide, targetHudPinnedWidth, targetHudEnemyRowWidth, placeTargetHudPanels, targetHudIntentObstacle, targetHudOverlaps, createTargetHudDwell } from '../src/ui/models/TargetHudModel.js';
+import { targetHudMatchup, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, createTargetHudDwell, miniHudScale, enemyHudPlacement, playerHudPlacement } from '../src/ui/models/TargetHudModel.js';
+
+// Owner 2026-11-06: "keep enemy mini HUDs above them in a fixed position; keep the player hud anchored to the right and
+// fixed". The avoidance and packing contract (placeTargetHudPanels, placeEnemyPanelRows, targetHudEnemyRowWidth,
+// targetHudSide, targetHudPinnedWidth, targetHudIntentObstacle, targetHudPanelSizing) is gone with its code; its sixteen
+// tests (player right in every lane, narrowing to fit, own-sprite and player-only obstacles, lone/crowded sides, rows under
+// their enemies, tight top inset, intent obstacles, hand clearance) are replaced by the fixed-placement tests below.
 
 test('target details support every alternative formation form factor', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
   for (const formFactor of ['mobile', 'tablet', 'desktop', 'widescreen']) assert.equal(targetHudEnabled({ formFactor }, config), true);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', layout: 'cards' }), false);
-  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right'], 'no count: lane fallback');
-  assert.equal(targetHudSide('enemy', 2, undefined, 1), 'left');
-  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane, undefined, 3)), ['below', 'below', 'below']);
-  assert.equal(targetHudSide('player', 0, undefined, 1), 'right');
-  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('player', lane)), ['right', 'right', 'right']);
-});
-test('player panel stays right of the player in every lane, even when enemies crowd that side', () => {
-  for (const lane of [0, 1, 2]) {
-    const bounds = { left: 0, top: 0, width: 390, height: 500 };
-    const player = { id: 'p', role: 'player', lane, anchor: { left: 120, top: 260, width: 90, height: 140 }, width: 145, height: 100 };
-    const enemies = [0, 1, 2].map(i => ({ id: `e${i}`, role: 'enemy', lane: i, anchor: { left: 20 + i * 120, top: 60, width: 90, height: 120 }, width: 145, height: 100 }));
-    const obstacles = [{ left: 215, top: 250, width: 60, height: 60 }];
-    const placed = placeTargetHudPanels({ bounds, panels: [...enemies, player], obstacles }).find(row => row.id === 'p');
-    assert.ok(placed.left >= player.anchor.left + player.anchor.width - 1, `lane ${lane}: player HUD at ${placed.left} left of the player`);
-  }
-});
-test('phone: a player panel too wide for the room on its right narrows to fit and stays right of the body, not over the player or up the field', () => {
-  const bounds = { left: 0, top: 0, width: 360, height: 480 };
-  const config = targetHudConfig();
-  const anchor = { left: 6, top: 340, width: 130, height: 120 };
-  const width = targetHudPinnedWidth({ bounds, anchor, width: 223, config });
-  assert.ok(width < 223 && width >= config.positioning.pinnedMinWidthPx, `narrowed to ${width}`);
-  const player = { id: 'p', role: 'player', lane: 0, anchor, width, height: 70 };
-  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 236, top: 159, width: 118, height: 161 }, width: 223, height: 70 };
-  const obstacles = [{ id: 'p', left: 6, top: 304, width: 166, height: 176 }, { id: 'e', left: 236, top: 159, width: 118, height: 161 }, { left: 252, top: 135, width: 102, height: 19 }];
-  const placed = placeTargetHudPanels({ bounds, panels: [enemy, player], obstacles }).find(row => row.id === 'p');
-  assert.ok(placed.left >= anchor.left + anchor.width, `panel at ${placed.left} is right of the body edge ${anchor.left + anchor.width}`);
-  assert.ok(placed.left + placed.width <= bounds.width && placed.top >= 0, 'inside the field');
-  assert.ok(placed.top >= anchor.top - 1 && placed.top > 280, `top ${placed.top} stays at the player's overhead, not shifted up over the enemy`);
-});
-test('an enemy panel never overlaps its own sprite (the own-sprite exemption is player-only)', () => {
-  const bounds = { left: 0, top: 0, width: 360, height: 480 };
-  const anchor = { left: 200, top: 180, width: 110, height: 140 };
-  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor, width: 223, height: 100 };
-  const placed = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e', ...anchor }] })[0];
-  assert.ok(!targetHudOverlaps(placed, anchor), `panel ${JSON.stringify(placed)} overlaps its own enemy sprite`);
-});
-test('reviewer repro: a lone enemy panel never sits over its own sprite; player-only obstacles do not move it', () => {
-  const bounds = { left: 0, top: 0, width: 800, height: 600 };
-  const sprite = { left: 40, top: 300, width: 118, height: 161 };
-  const enemy = { id: 'e0', role: 'enemy', lane: 0, anchor: sprite, width: 249, height: 142 };
-  const base = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e0', ...sprite }], enemyCount: 1 })[0];
-  assert.ok(!targetHudOverlaps(base, sprite), 'not over its own sprite');
-  const withMeter = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e0', ...sprite }, { ...base, playerOnly: true }], enemyCount: 1 })[0];
-  assert.deepEqual([withMeter.left, withMeter.top], [base.left, base.top]);
-});
-test('player panel: floor applies to the visible panel; it stays right of the player at the body top, never above (owner 2026-11-06)', () => {
-  const config = targetHudConfig(), floor = config.positioning.pinnedMinWidthPx;
-  const bounds = { left: 0, top: 0, width: 360, height: 480 };
-  const fit = targetHudPinnedWidth({ bounds, anchor: { left: 6, top: 340, width: 130, height: 120 }, width: 223, config });
-  assert.ok(fit - 25 >= floor, 'visible panel at least the floor');
-  const anchor = { left: 150, top: 340, width: 130, height: 120 };
-  const width = targetHudPinnedWidth({ bounds, anchor, width: 223, config });
-  const placed = placeTargetHudPanels({ bounds, panels: [{ id: 'p', role: 'player', lane: 0, anchor, width, height: 70 }] })[0];
-  assert.equal(placed.side, 'right');
-  assert.equal(placed.top, anchor.top, 'level with the body top');
-  assert.ok(placed.left >= 0 && placed.left + placed.width <= bounds.width, 'on screen');
-});
-test('a lone enemy gets its card left of it; a crowd gets it below, shifted in from the edge; the player stays right', () => {
-  const bounds = { left: 0, top: 0, width: 1000, height: 600 };
-  const lone = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 800, top: 200, width: 100, height: 140 }, width: 224, height: 110 };
-  const [one] = placeTargetHudPanels({ bounds, panels: [lone] });
-  assert.equal(one.side, 'left');
-  assert.ok(one.left + one.width <= lone.anchor.left && one.left >= bounds.left, 'entirely left of the sprite, inside bounds');
-  const edge = { id: 'c', role: 'enemy', lane: 2, anchor: { left: 880, top: 100, width: 100, height: 140 }, width: 224, height: 110 };
-  const others = [0, 1].map(i => ({ id: `o${i}`, role: 'enemy', lane: i, anchor: { left: 100 + i * 250, top: 100, width: 100, height: 140 }, width: 224, height: 110 }));
-  const crowd = placeTargetHudPanels({ bounds, panels: [...others, edge] }).find(row => row.id === 'c');
-  assert.equal(crowd.side, 'below');
-  assert.ok(crowd.top >= edge.anchor.top + edge.anchor.height, 'below the sprite');
-  assert.ok(crowd.left + crowd.width <= bounds.left + bounds.width, 'right edge inside bounds, shifted left');
-  const player = { id: 'p', role: 'player', lane: 0, anchor: { left: 200, top: 350, width: 90, height: 140 }, width: 224, height: 110 };
-  const placed = placeTargetHudPanels({ bounds, panels: [lone, player] }).find(row => row.id === 'p');
-  assert.equal(placed.side, 'right');
-  assert.ok(placed.left >= player.anchor.left + player.anchor.width);
-});
-test('a zero or tiny visible width still returns a clamped panel instead of hanging', () => {
-  for (const width of [0, 16]) {
-    const panel = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 0, top: 100, width: 80, height: 100 }, width: 224, height: 110 };
-    const [placed] = placeTargetHudPanels({ bounds: { left: 0, top: 0, width, height: 300 }, panels: [panel], obstacles: [{ left: 0, top: 100, width: 80, height: 100 }] });
-    assert.ok(placed && Number.isFinite(placed.left) && placed.width >= 0, `width ${width}`);
-  }
 });
 function clock() {
   let now = 0, serial = 0; const jobs = new Map();
@@ -107,24 +32,6 @@ test('enter, exit, and stable switch each use one 500ms clock, content updates d
   dwell.request(['player']); assert.equal(time.pending, 1); dwell.dispose(); time.advance(500);
   assert.deepEqual(changes.at(-1), ['enemy1', 'enemy2', 'enemy3']); assert.equal(time.pending, 0);
 });
-test('six crowded enemy panels remain visible, distinct and above the hand at desktop sizes', () => {
-  for (const width of [1366, 1440, 1920]) {
-    const bounds = { left: 0, top: 80, width, height: width === 1366 ? 430 : 500 };
-    const panels = Array.from({ length: 6 }, (_, i) => ({ id: `e${i}`, role: 'enemy', lane: i % 3,
-      anchor: { left: width * (.32 + i % 3 * .22), top: 125 + Math.floor(i / 3) * 130, width: 105, height: 135 },
-      width: width < 1400 ? 198 : 224, height: 125 }));
-    const result = placeTargetHudPanels({ bounds, panels });
-    assert.equal(new Set(result.map(row => row.id)).size, 6);
-    for (const panel of result) {
-      assert.ok(panel.left >= bounds.left && panel.top >= bounds.top);
-      assert.ok(panel.left + panel.width <= bounds.left + bounds.width);
-      assert.ok(panel.top + panel.height <= bounds.top + bounds.height);
-      for (const other of result) if (panel !== other) assert.equal(targetHudOverlaps(panel, other), false, `${width}: ${panel.id}/${other.id}`);
-    }
-  }
-  assert.equal(targetHudConfig().motion.dwellMs, 500);
-});
-
 test('selected-card matchup follows authored stances and never reads hidden amounts or profiles', () => {
   const rules = { matchups: { attack: ['smash', 'prepared'], counter: ['attack'] } };
   const action = { maneuver: 'attack' };
@@ -140,116 +47,8 @@ test('selected-card matchup follows authored stances and never reads hidden amou
   assert.deepEqual(Object.keys(TARGET_HUD_AURA), ['advantage','neutral','disadvantage']);
 });
 
-test('three mobile detail groups fit at 390x844 without covering sprites or the hand', () => {
-  const config = JSON.parse(readFileSync(new URL('../content/config/ui/components/combatTargetHud.json', import.meta.url)));
-  const sizing = targetHudPanelSizing({ viewportWidth: 390, count: 3 }, config);
-  assert.equal(sizing.width, 145); assert.equal(sizing.font, 11);
-  assert.equal(targetHudPanelSizing({ viewportWidth: 390, count: 1 }, config).width, 198);
-  const sprites = [{ left: 22, top: 349, width: 90, height: 95 },
-    ...[66, 180, 294].map(left => ({ left, top: 148, width: 66, height: 81 }))];
-  const panels = sprites.slice(1).map((anchor, index) => ({ id: `e${index}`, role: 'enemy', lane: index, anchor, width: sizing.width + 25, height: 98 }));
-  const result = placeTargetHudPanels({ bounds: { left: 0, top: 100, width: 390, height: 460 }, panels, obstacles: sprites, config });
-  assert.equal(result.length, 3);
-  for (const panel of result) {
-    assert.ok(panel.left >= 0 && panel.left + panel.width <= 390);
-    assert.ok(panel.top >= 100 && panel.top + panel.height <= 560, 'detail stays above hand at 600px');
-    for (const sprite of sprites) assert.equal(targetHudOverlaps(panel, sprite), false, `${panel.id} covers sprite`);
-    for (const other of result) if (other !== panel) assert.equal(targetHudOverlaps(panel, other), false, `${panel.id}/${other.id}`);
-  }
-});
-
-test('empty legacy leading hosts do not block otherwise clear panel space', () => {
-  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 2, top: 325, width: 130, height: 0 }), false);
-  assert.equal(targetHudOverlaps({ left: 12, top: 267, width: 170, height: 80 }, { left: 20, top: 290, width: 0, height: 100 }), false);
-});
-
-test('only phones and portrait take the tighter top inset; desktop keeps the common edge inset', () => {
-  const bounds = { left: 0, top: 100, width: 800, height: 400 };
-  const panels = [{ id: 'e', role: 'enemy', lane: 0, anchor: { left: 300, top: 120, width: 60, height: 60 }, width: 140, height: 60 }];
-  const config = targetHudConfig();
-  const highest = options => Math.min(...placeTargetHudPanels({ bounds, panels, ...options }).map(row => row.top));
-  assert.ok(highest({ tightTop: false }) >= bounds.top + config.positioning.edgeInsetPx - 1e-9, 'desktop panel stays 12px below the field top');
-  assert.ok(highest({ tightTop: true }) >= bounds.top + config.positioning.topInsetPx - 1e-9);
-  assert.ok(highest({ tightTop: true }) < bounds.top + config.positioning.edgeInsetPx, 'phone panel may rise above the common inset');
-});
-
-test('an unselected frame keeps its rendered intent rect clear; a selected frame uses the placement', () => {
-  const box = { left: 100, top: 50 }, placement = { center: 80, selectedTop: 10, miniTop: -40 };
-  // Desktop: the rack is 96px tall, so the intent renders at the group's top, far from what miniTop (61px group) predicts.
-  const rendered = { left: 140, top: 20, width: 50, height: 37 };
-  assert.deepEqual(targetHudIntentObstacle({ selected: false, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37, zoom: 1.3 }), rendered);
-  // Selected: moved to selectedTop over the body centre, scaled by the zoom.
-  assert.deepEqual(targetHudIntentObstacle({ selected: true, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37, zoom: 2 }),
-    { left: 100 + 160 - 25, top: 50 + 20, width: 50, height: 37 });
-  // A panel solved against the unselected obstacle lands clear of the rendered intent.
-  const bounds = { left: 0, top: 0, width: 600, height: 400 };
-  const obstacle = targetHudIntentObstacle({ selected: false, box, placement, intentBox: rendered, intentWidth: 50, intentHeight: 37 });
-  const placed = placeTargetHudPanels({ bounds, obstacles: [obstacle], panels: [{ id: 'e', role: 'enemy', lane: 0, anchor: { left: 120, top: 80, width: 60, height: 80 }, width: 140, height: 60 }] })[0];
-  assert.equal(targetHudOverlaps(placed, obstacle), false);
-});
-
-test('several enemy panels share a row, each near its own enemy, and wrap only when one row cannot hold them', () => {
-  const config = targetHudConfig();
-  const mk = (id, left, w = 223) => ({ id, role: 'enemy', lane: 0, anchor: { left, top: 91, width: 120, height: 190 }, width: w, height: 70 });
-  // Desktop: three panels, free band below the enemies.
-  const bounds = { left: 0, top: 0, width: 1366, height: 500 };
-  const panels = [mk('a', 360), mk('b', 590), mk('c', 840)];
-  const placed = placeTargetHudPanels({ bounds, panels, obstacles: panels.map(p => ({ id: p.id, ...p.anchor })), config });
-  assert.equal(new Set(placed.map(p => p.top)).size, 1, 'one shared top');
-  placed.forEach((p, i) => { assert.ok(p.left >= 0 && p.left + p.width <= bounds.width, 'on screen'); placed.slice(i + 1).forEach(q => assert.ok(!targetHudOverlaps(p, q), 'panels do not overlap')); });
-  assert.ok(placed.every(p => !panels.some(e => targetHudOverlaps(p, e.anchor))), 'no panel over an enemy sprite');
-  // Phone: two narrowed panels share a row; a third wraps to its own row instead of a column of three.
-  const phone = { left: 0, top: 0, width: 360, height: 480 };
-  const w = targetHudEnemyRowWidth({ bounds: phone, count: 3, width: 170, config });
-  assert.ok(w >= config.positioning.enemyRowMinWidthPx + 25 && w < 170, `narrowed to ${w}`);
-  const small = [mk('a', 230, w), mk('b', 45, w), mk('c', 126, w)].map(p => ({ ...p, anchor: { ...p.anchor, top: 151, height: 169 } }));
-  const rows = placeTargetHudPanels({ bounds: phone, panels: small, obstacles: small.map(p => ({ id: p.id, ...p.anchor })), config, tightTop: true });
-  const tops = [...new Set(rows.map(p => p.top))];
-  assert.ok(tops.length <= 2 && rows.length === 3, `rows ${tops}`);
-  assert.ok(rows.filter(p => p.top === tops[0]).length >= 2, 'at least two share a row');
-  assert.ok(rows.every(p => p.left >= 0 && p.left + p.width <= phone.width), 'on screen');
-});
-
-test('enemy panels in a row stay under their own enemy, never drifting beneath a neighbour', () => {
-  const bounds = { left: 0, top: 0, width: 1000, height: 600 };
-  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 120, top: 170, height: 115 } });
-  const a = panel('a', 300), b = panel('b', 560);
-  const obstacles = [{ id: 'a', ...a.anchor }, { id: 'b', ...b.anchor },
-    { left: 0, top: 0, width: 1000, height: 95 }, { left: 480, top: 480, width: 120, height: 120 }, { left: 150, top: 290, width: 280, height: 190 }];
-  const placed = placeTargetHudPanels({ bounds, panels: [a, b], obstacles, config: targetHudConfig() });
-  for (const [own, enemy] of [[a, a], [b, b]]) {
-    const rect = placed.find(row => row.id === own.id), centre = rect.left + rect.width / 2;
-    assert.ok(centre >= enemy.anchor.left - rect.width / 2 && centre <= enemy.anchor.left + enemy.anchor.width + rect.width / 2, `${own.id} centre ${centre} is within its enemy's span +/- half a panel`);
-  }
-});
-
-test('three adjacent enemies still get one row: a crowded group is centred on its enemies, not pushed only right', () => {
-  const bounds = { left: 0, top: 0, width: 1400, height: 600 };
-  const panel = (id, left) => ({ id, role: 'enemy', lane: 0, width: 200, height: 70, anchor: { left, width: 100, top: 100, height: 115 } });
-  const panels = [panel('a', 400), panel('b', 520), panel('c', 640)];
-  const placed = placeTargetHudPanels({ bounds, panels, obstacles: panels.map(p => ({ id: p.id, ...p.anchor })), config: targetHudConfig() });
-  assert.equal(new Set(placed.map(p => p.top)).size, 1, 'one shared row');
-  for (const p of panels) {
-    const rect = placed.find(row => row.id === p.id), centre = rect.left + rect.width / 2;
-    assert.ok(centre >= p.anchor.left - rect.width / 2 && centre <= p.anchor.left + p.anchor.width + rect.width / 2, `${p.id} centre ${centre} within its enemy span +/- half a panel`);
-  }
-});
-test('the player panel is pinned right even when an enemy panel and sprite crowd it; the enemy yields', () => {
-  const bounds = { left: 0, top: 0, width: 390, height: 600 };
-  const player = { id: 'p', role: 'player', lane: 0, anchor: { left: 10, top: 300, width: 90, height: 110 }, width: 230, height: 80 };
-  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 250, top: 220, width: 120, height: 140 }, width: 224, height: 100 };
-  const obstacles = [{ id: 'e', left: 106, top: 296, width: 100, height: 90 }];
-  const rows = placeTargetHudPanels({ bounds, panels: [enemy, player], obstacles });
-  const mine = rows.find(row => row.id === 'p'), theirs = rows.find(row => row.id === 'e');
-  assert.equal(mine.side, 'right');
-  assert.equal(mine.top, player.anchor.top);
-  assert.ok(mine.left >= player.anchor.left + player.anchor.width);
-  assert.ok(!(mine.left < theirs.left + theirs.width && mine.left + mine.width > theirs.left && mine.top < theirs.top + theirs.height && mine.top + mine.height > theirs.top), 'the enemy panel does not overlap the player panel');
-});
-
 // Owner 2026-11-06: fixed mini HUDs. Each is placed from its own figure alone; no avoidance, no packing.
-test('miniHudScale fits the HUD to its cell and never drops the font below the readable minimum', async () => {
-  const { miniHudScale } = await import('../src/ui/models/TargetHudModel.js');
+test('miniHudScale fits the HUD to its cell and never drops the font below the readable minimum', () => {
   const config = { designWidthPx: 140, baseFontPx: 13, minFontPx: 9, maxScale: 1.4 };
   assert.deepEqual(miniHudScale({ cellWidth: 140, config }), { scale: 1, fontPx: 13 });
   assert.equal(miniHudScale({ cellWidth: 280, config }).scale, 1.4, 'a wide cell stops at the maximum scale');
@@ -258,8 +57,7 @@ test('miniHudScale fits the HUD to its cell and never drops the font below the r
   assert.ok(miniHudScale({ cellWidth: 100, config }).fontPx < 13);
 });
 
-test('an enemy HUD is centred on its figure with its bottom at the head, and only the screen edge moves it', async () => {
-  const { enemyHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+test('an enemy HUD is centred on its figure with its bottom at the head, and only the screen edge moves it', () => {
   const bounds = { left: 0, top: 0, width: 390, height: 600 };
   assert.deepEqual(enemyHudPlacement({ centerX: 200, bottom: 300, width: 100, height: 60, bounds }), { left: 150, top: 240 });
   // Neighbours are never consulted: the same input gives the same answer, overlap accepted.
@@ -269,8 +67,7 @@ test('an enemy HUD is centred on its figure with its bottom at the head, and onl
   assert.equal(enemyHudPlacement({ centerX: 200, bottom: 20, width: 100, height: 60, bounds }).top, 0, 'top screen edge');
 });
 
-test('the player HUD stands right of the body at its top and is not moved by anything but the screen edge', async () => {
-  const { playerHudPlacement } = await import('../src/ui/models/TargetHudModel.js');
+test('the player HUD stands right of the body at its top and is not moved by anything but the screen edge', () => {
   const bounds = { left: 0, top: 0, width: 390, height: 600 };
   const anchor = { left: 40, width: 60, top: 320 };
   assert.deepEqual(playerHudPlacement({ anchor, width: 110, height: 70, gap: 6, bounds }), { left: 106, top: 320 });

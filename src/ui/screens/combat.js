@@ -1577,6 +1577,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const auraColor = role === 'player' ? '#87caff' : TARGET_HUD_AURA[matchup];
       return { id: entity.id, role, matchup, matchupActive, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
         intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup, matchupActive]),
+        statusKey: JSON.stringify(statusRows(entity)),
         createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
     });
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
@@ -2197,7 +2198,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
         const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
-        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp });
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);

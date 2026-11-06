@@ -105,16 +105,18 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     swaps += reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
   }
   if (statuses !== undefined) {
-    for (const node of kids(statusHost)) if (isStatuses(node)) { node.remove(); swaps++; }
+    // The status tray stays; its icons are written in place and only a status gained or lost adds or removes one.
     const list = statuses ? [].concat(statuses).filter(Boolean) : [];
-    if (statusHost === leadingHost) {
-      const action = find(leadingHost, isAction);
-      for (const node of list) { markBuilt(node); leadingHost.insertBefore(node, action); swaps++; }
-    } else {
-      const anchor = find(widget, isMeters) || find(widget, isName);
-      const before = anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
-      for (const node of list) { markBuilt(node); widget.insertBefore(node, before); swaps++; }
+    let anchor;
+    if (statusHost === leadingHost) anchor = find(leadingHost, isAction);
+    else {
+      const holder = find(widget, isMeters) || find(widget, isName);
+      anchor = holder ? holder.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
     }
+    // The anchor must not be one of the nodes being reconciled.
+    const live = kids(statusHost).filter(isStatuses);
+    if (live.includes(anchor)) anchor = live.at(-1).nextSibling;
+    swaps += reconcileList(statusHost, live, list, anchor);
   }
   if (chips !== undefined) {
     for (const node of kids(widget)) {

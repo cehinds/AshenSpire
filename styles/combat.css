@@ -1880,9 +1880,14 @@
 .combat[data-target-hud='true'] .target-hud-cells { z-index: 1; }
 .combat[data-target-hud='true'] .target-hud-layer { z-index: 28; }
 .target-hud-layer[hidden], .target-hud-cells[hidden] { display: none !important; }
-.target-hud-detail { position: absolute; box-sizing: border-box; pointer-events: auto; opacity: 0; transition: opacity var(--target-hud-fade, 150ms) ease; font-size: var(--target-hud-font, 13px); line-height: 1.2; color: #e9dfc8; }
-.target-hud-detail.visible { opacity: 1; }
+/* Owner (2026-11-06): every panel exists from combat mount and is only shown or hidden. A hidden one takes no pointer or focus. */
+.target-hud-detail { position: absolute; box-sizing: border-box; pointer-events: none; visibility: hidden; opacity: 0; transition: opacity var(--target-hud-fade, 150ms) ease, visibility 0s linear var(--target-hud-fade, 150ms); font-size: var(--target-hud-font, 13px); line-height: 1.2; color: #e9dfc8; }
+.target-hud-detail.visible { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s; }
 .target-hud-detail.leaving { opacity: 0; pointer-events: none; }
+/* An enemy's panel hangs from its bottom edge, which stays on the head: a taller status tray grows it upward. */
+.target-hud-detail[data-role='enemy'] { translate: 0 -100%; }
+.target-hud-inspect-info[hidden] { display: none !important; }
+.combat-health-badge[hidden] { display: none !important; }
 .target-hud-panel { box-sizing: border-box; padding: .65em .75em; border: 1px solid #84734c; border-radius: .35em; background: linear-gradient(145deg, #28231bf5, #15130ff5); box-shadow: 0 .2em .8em #0008; }
 .target-hud-name { font-family: Georgia, serif; font-size: 1.05em; margin-bottom: .4em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .target-hud-meters.meters { width: 100%; min-width: 0; gap: .4em; display: flex; flex-direction: column; }
@@ -1912,7 +1917,6 @@
 body.reduce-motion .target-hud-detail { transition: none; }
 .combat[data-target-hud='true'] .target-hud-overhead-meters { width: 100%; }
 .combat[data-target-hud='true'] .target-hud-overhead-meters .meters > :not([data-meter-row='hp']) { display: none !important; }
-.combat[data-target-hud='true'] .combatant.target-hud-selected .target-hud-overhead-meters { display: none !important; }
 :root .combat[data-target-hud='true'] .target-hud-layer { z-index: calc(var(--combat-layer-selection, 500) + 2); }
 :root .combat[data-target-hud='true'] .target-hud-cells { z-index: calc(var(--combat-layer-grid, 100) + 1); }
 :root .combat[data-target-hud='true'] .combatant .combatant-leading { display: flex; flex-direction: column; align-items: center; gap: calc(4px / var(--ui-zoom,1)); padding-bottom: 0 !important; width: calc(130px / var(--ui-zoom,1)) !important; }
