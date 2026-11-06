@@ -55,3 +55,9 @@ test('a phone that mounted sideways relays out once when it turns upright', () =
   assert.equal(shouldRelayout(sideways, viewportKey({ width: 390, height: 844 }), cfg, { phone: true }), true);
   assert.equal(shouldRelayout(sideways, viewportKey({ width: 800, height: 380 }), cfg, { phone: true }), false);
 });
+
+test('a display-setting change with an unchanged viewport forces one relayout; a viewport-driven one does not', () => {
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(source, /const settingChange = keyMoved && viewport === lastSeenViewport;/);
+  assert.match(source, /if \(setting !== lastSettingKey \|\| settingChange\) \{ lastSettingKey = setting; scheduleForced\(\); \}/);
+});

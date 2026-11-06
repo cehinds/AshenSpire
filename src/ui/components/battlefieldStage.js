@@ -422,7 +422,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (field.closest('.combat')?.dataset.targetHud === 'true') { centerTargetOverheads(); return; }
     // Placed once per layout pass: a later call (pose tracking, tool placement, selection) leaves it where it is.
     const seats = [...field.querySelectorAll('.combatant.player')].filter(player => player.querySelector('.combatant-mini-hud'));
-    if (reserveFirst !== true && seats.length && seats.every(player => player.hudEpoch === layoutEpoch)) return;
+    if (reserveFirst !== true && seats.length && seats.every(player => player.hudEpoch === layoutEpoch)) {
+      // Opening or closing the player's info panel moves only the intent glyph off (or back from) the Inspect door.
+      for (const player of seats) {
+        const expanded = player.classList.contains('context-selected'), glyph = player.hudGlyph;
+        if (!glyph || expanded === player.glyphExpanded) continue;
+        player.glyphExpanded = expanded;
+        placePlayerIntentGlyph(glyph.leading, { art: glyph.art, hudBottom: glyph.hudBottom, zoom: glyph.zoom, avoid: expanded ? glyph.infoRect : null, viewport: glyph.viewport });
+      }
+      return;
+    }
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -510,6 +519,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
       // Selected, the Inspect door is visible: the glyph keeps off it.
+      player.hudGlyph = { leading, art, hudBottom, zoom, infoRect, viewport }; player.glyphExpanded = expanded;
       placePlayerIntentGlyph(leading, { art, hudBottom, zoom, avoid: expanded ? infoRect : null, viewport });
       for (const [door, rect] of [[inspect, infoRect]]) {
         if (!rect) continue;
@@ -1569,6 +1579,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const settingKey = () => { const root = document.documentElement;
     return FORCING_ATTRIBUTES.map(name => root.getAttribute(name)).join('|'); };
   let lastSettingKey = settingKey();
+  let lastSeenViewport = `${window.innerWidth}x${window.innerHeight}`;
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();
@@ -1576,9 +1587,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (styleOnly && key === lastRootLayoutKey) return;
     // A phone's address bar moves --visible-height and the view box: those pass the viewport gate like a
     // resize (the page zoom follows the viewport height too). Only a formation setting forces a fresh layout.
+    const keyMoved = key !== lastRootLayoutKey;
     lastRootLayoutKey = key;
     const setting = settingKey();
-    if (setting !== lastSettingKey) { lastSettingKey = setting; scheduleForced(); }
+    // UI scale and text size (--ui-zoom, root font-size, --view-*) are live display settings: changed in Settings
+    // mid-combat they relay out once. The same variables also follow the viewport (a phone's address bar), so a
+    // change that arrives with a new viewport size goes through the viewport gate instead.
+    const viewport = `${window.innerWidth}x${window.innerHeight}`;
+    const settingChange = keyMoved && viewport === lastSeenViewport;
+    lastSeenViewport = viewport;
+    if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
     else schedule();
   });
   layoutObserver.observe(document.documentElement, {
