@@ -15,6 +15,7 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
     upcastRanksByCard: new Map(), resolveCombatCard: (_, inst) => inst, kindForCard: def => ({ maneuver: def.maneuver }),
     RESTING_PLAYER_ACTION: { maneuver: 'ready' }, selfArm: null,
     playCard: (...args) => plays.push(args), selectCombatant: id => inspections.push(id),
+    setPlayerActionManeuver: (node, profile) => { node.maneuver = profile.maneuver; },
     playerActionIntent: (_, activate) => { made++; const n = dom.document.createElement('button'); n.className = 'player-action-intent'; n.addEventListener('click', activate); return n; },
   };
   const sync = runInNewContext(source.slice(start, end) + '\nsyncPlayerActionIntent', scope);
@@ -29,14 +30,16 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   assert.equal(glyph.parentNode, rack); assert.equal(made, 1); assert.equal(changes, 1);
   scope.selfArm = 'current'; glyph.click(); assert.deepEqual(plays, [['current', null]]);
   scope.selfArm = null; glyph.click(); assert.deepEqual(inspections, ['player']);
+  // Owner (2026-11-06): a changed maneuver switches the glyph in place (the node draws every glyph once), so the node stays mounted,
+  // stays in the rack and asks for no geometry.
   sync(player, { instanceId: 'c', maneuver: 'defend' });
-  assert.notEqual(player.querySelector('.player-action-intent'), glyph); assert.equal(changes, 2);
-  assert.equal(player.querySelector('.player-action-intent').parentNode, rack, 'a changed maneuver stays inside the detailed HUD rack');
-  assert.equal(rack.firstElementChild, player.querySelector('.player-action-intent'));
-  sync(player, null, { maneuver: 'defend' }); assert.equal(changes, 2, 'confirmed held glyph stays when disarmed');
-  sync(player, null); assert.equal(changes, 3, 'neutral glyph replaces a different held action');
-  player.querySelector('.player-action-intent').remove(); sync(player, null);
-  assert.equal(changes, 4, 'rebuilt DOM restores the glyph even when maneuver is unchanged');
+  assert.equal(player.querySelector('.player-action-intent'), glyph, 'a changed maneuver keeps the mounted glyph'); assert.equal(changes, 1);
+  assert.equal(glyph.maneuver, 'defend'); assert.equal(glyph.parentNode, rack, 'it stays inside the detailed HUD rack');
+  sync(player, null, { maneuver: 'defend' }); assert.equal(changes, 1, 'confirmed held glyph stays when disarmed');
+  sync(player, null); assert.equal(glyph.maneuver, 'ready'); assert.equal(changes, 1, 'the neutral glyph is switched in place too');
+  assert.equal(made, 1, 'one glyph node is built, at mount');
+  glyph.remove(); sync(player, null);
+  assert.equal(made, 2, 'rebuilt DOM restores the glyph'); assert.equal(changes, 2);
 });
 
 test('selection sync sends one final HUD update for self, enemy and cleared selections', () => {
