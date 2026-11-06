@@ -117,7 +117,10 @@ export function statRow(registries, run, id, { settings = {} } = {}) {
   // The class a row with a per-class form is read for (a run's `class`, a
   // co-op seat's `classId`); a run's own snapshot already holds its class's row.
   const classId = run?.class ?? run?.classId ?? null;
-  if (table) return resolvedRuleRow(table, id, classId);
+  // A snapshot written before ruleset 7 has no rating or hand rows: those read
+  // the live table, as a run with no snapshot does. Nothing restates the
+  // retired formula (an older run is re-derived, never converted).
+  if (table) return resolvedRuleRow(table, id, classId) || resolvedRuleRow(registries?.derivedStatRules, id, classId);
   return resolvedRuleRow(registries?.derivedStatRules, id, classId);
 }
 
