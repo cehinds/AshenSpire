@@ -75,12 +75,12 @@ jobs:
           echo "cutoff: $(date -u -d @"$cutoff" +%Y-%m-%dT%H:%M:%SZ) (older than $DAYS days)"
 
           declare -A keep_set=([main]=1 [release]=1 [test]=1 [dev]=1)
+          # Every `keep` entry is a shell pattern (a plain name matches itself).
           keep_globs=()
           IFS=',' read -ra extra <<< "$KEEP"
           for k in "${extra[@]+"${extra[@]}"}"; do
             k=$(echo "$k" | xargs)
-            [ -n "$k" ] || continue
-            case "$k" in *[*?]*) keep_globs+=("$k") ;; *) keep_set["$k"]=1 ;; esac
+            [ -n "$k" ] && keep_globs+=("$k")
           done
           kept_by_glob() {
             local b=$1 g
