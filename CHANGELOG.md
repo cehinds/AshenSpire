@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-06
+
+- **Blacksmith matches the Merchant** ([#2588](https://github.com/cehinds/AshenSpire/pull/2588), `0.7.3.182`). The Blacksmith's figure no longer stands under the top bar, and its offers look and read like the Merchant's: item art, an action button, and the price underneath.
+
 ## 2026-11-05
 
 - **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.182`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
