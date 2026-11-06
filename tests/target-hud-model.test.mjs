@@ -74,3 +74,11 @@ test('the player HUD stands right of the body at its top and is not moved by any
   assert.equal(playerHudPlacement({ anchor: { ...anchor, left: 300 }, width: 110, height: 70, gap: 6, bounds }).left, 280, 'right screen edge');
   assert.equal(playerHudPlacement({ anchor: { ...anchor, top: 590 }, width: 110, height: 70, gap: 6, bounds }).top, 530, 'bottom screen edge');
 });
+
+import { playerMarginPlacement } from '../src/ui/models/TargetHudModel.js';
+test('the player margin placement takes the margin, caps it, and refuses one too narrow to clear the board', () => {
+  assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1350, gap: 10, top: 50 }), { width: 340, left: 1010, top: 50 });
+  assert.equal(playerMarginPlacement({ right: 1000, edge: 1900, gap: 10, top: 50 }).width, 420, 'capped');
+  assert.equal(playerMarginPlacement({ right: 1000, edge: 1185, gap: 10, top: 50 }), null, '175 px of room is under the 180 px floor: no overlap, fall back');
+  assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1190, gap: 10, top: 50 }), { width: 180, left: 1010, top: 50 });
+});

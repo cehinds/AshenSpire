@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
+import { playerMarginPlacement, targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -331,9 +331,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     let right = -Infinity;
     for (const cell of field.querySelectorAll('.formation-grid-cell')) right = Math.max(right, cell.getBoundingClientRect().right);
     if (!Number.isFinite(right)) return null;
-    const edge = bounds.left + bounds.width - gap;
-    const width = Math.min(MARGIN_MAX_PX, Math.max(MARGIN_MIN_PX, edge - (right + gap)));
-    return { width, left: Math.min(right + gap, edge - width), top: bounds.top + gap };
+    return playerMarginPlacement({ right, edge: bounds.left + bounds.width - gap, gap, top: bounds.top + gap, min: MARGIN_MIN_PX, max: MARGIN_MAX_PX });
   }
   function place(fieldBox, rootBox, zoom, bounds, epoch) {
     const gap = config.positioning.gapPx, sizing = config.sizing;
