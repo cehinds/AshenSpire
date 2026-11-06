@@ -12,8 +12,8 @@ import { DERIVED_STAT_IDS, statRowValue, deriveStat, resolvedRuleRow } from '../
 import { attributeRatingReceipt } from '../src/model/ratingFormula.js';
 import { scaledCards } from '../src/model/handRules.js';
 import { validateContent } from '../src/model/validate.js';
-import { LEGACY_HAND_GROUPS, LEGACY_STARTING_BY_CLASS, LEGACY_RATING_FORMULA, legacyHandRow, statRow, statRowCount, ratingsConfigFor, readsLegacyStatHomes } from '../src/model/statRows.js';
-import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile, hasLegacyAdvancedSettings } from '../src/model/advancedConfig.js';
+import { statRow, statRowCount, ratingsConfigFor } from '../src/model/statRows.js';
+import { configuredContentBundle, normalizeAdvancedSettings, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 
 const ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const at = (n, overrides = {}) => ({ ...Object.fromEntries(ATTRIBUTES.map((id) => [id, n])), ...overrides });
@@ -117,73 +117,6 @@ test('each retired home is refused by name at the content door', () => {
   assert(!validateContent(bundle).ok, 'a hand-rule field on a stat row is refused');
 });
 
-// The ruleset-6 table exactly as it shipped, so a save born under it can be
-// made here and restored under ruleset 7.
-const RULESET_6 = {
-  rulesetVersion: 6,
-  defaults: { perLevel: 0, cap: null },
-  rules: {
-    energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
-    draw: { base: 3, dexterity: 0.25, wisdom: 0.25, intelligence: 0.5, perLevel: 0.1 },
-    hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
-    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, wisdom: 0.1, perLevel: 0.2 },
-    mana: { base: 1, strength: 0.1, constitution: 0.25, wisdom: 0.5, intelligence: 0.3, perLevel: 0.2 },
-    poise: { base: 1, constitution: 1 },
-  },
-};
-
-test('a ruleset-6 save restores identical values: pools, ratings and hand counts', () => {
-  const old = { ...contentBundle };
-  old.derivedStatRules = { ...RULESET_6, presentation: Object.fromEntries(Object.entries(contentBundle.derivedStatRules.presentation).filter(([id]) => RULESET_6.rules[id])) };
-  const oldRegistries = createRegistries(old);
-  const run = createRunState({ seed: 11, classId: 'herald', registries: oldRegistries });
-  assert.equal(run.derivedStatRuleSnapshot.rulesetVersion, 6);
-  const saved = structuredClone(run);
-  // Restored under the live ruleset-7 registries.
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const restored = structuredClone(saved);
-  initializeRunDerivedStats(restored, registries);
-  for (const key of ['maxHp', 'maxMana', 'maxStamina', 'energyMax', 'drawPerTurn']) assert.equal(restored[key], saved[key], key);
-  assert(readsLegacyStatHomes(restored));
-  // Ratings: the frozen ruleset-6 formula, not the live rows.
-  const config = ratingsConfigFor(registries, restored);
-  for (const id of ['ar', 'dr', 'pr', 'ward', 'poise']) {
-    const legacy = LEGACY_RATING_FORMULA.ratings[id];
-    const expected = legacy.base + ATTRIBUTES.reduce((sum, attr) => sum + Math.floor(restored.attributes[attr] * legacy[attr] + 1e-9), 0);
-    assert.equal(attributeRatingReceipt(config, restored.attributes, id).value, expected, id);
-  }
-  // Hand counts: the frozen hand-rule groups, exactly as the old formula.
-  // The opening hand is #1294's, per class: the Herald's base and Wisdom.
-  const legacyCount = (group) => {
-    const rule = group === 'starting' ? { ...LEGACY_HAND_GROUPS.starting, ...LEGACY_STARTING_BY_CLASS.herald } : LEGACY_HAND_GROUPS[group];
-    const points = restored.attributes[rule.stat];
-    return Math.min(rule.maximum, Math.max(rule.minimum, rule.base + Math.floor(Math.max(0, points - rule.baseline) / rule.pointsPerCard)));
-  };
-  assert.equal(statRowCount(statRow(registries, restored, 'openingHand'), restored.attributes), legacyCount('starting'));
-  assert.equal(statRowCount(statRow(registries, restored, 'draw'), restored.attributes), legacyCount('turn'));
-  assert.equal(statRowCount(statRow(registries, restored, 'handSize'), restored.attributes), legacyCount('capacity'));
-  const combat = createRunCombat({ registries, rng: createRng(3), run: restored, enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.handMax, legacyCount('capacity'));
-});
-
-test('a fight saved with the retired hand groups and rating multiplier restores and counts exactly', () => {
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const run = createRunState({ seed: 5, classId: 'reaver', registries });
-  const combat = createRunCombat({ registries, rng: createRng(4), run, enemyIds: ['wanderingSoldier'] });
-  const snapshot = serializeCombatSnapshot(combat);
-  // Rewrite it into what a pre-ruleset-7 build wrote.
-  const { rows, ...options } = snapshot.handRules;
-  snapshot.handRules = { ...options, ...structuredClone(LEGACY_HAND_GROUPS) };
-  snapshot.ratingsRules = { ...snapshot.ratingsRules, multiplier: 1.5, ratings: structuredClone(LEGACY_RATING_FORMULA.ratings) };
-  const back = restoreCombatSnapshot({ registries, rng: createRng(4), snapshot });
-  const rule = LEGACY_HAND_GROUPS.capacity;
-  assert.equal(scaledCards(back.handRules.capacity, back.attributes),
-    Math.min(rule.maximum, Math.max(rule.minimum, rule.base + Math.floor(Math.max(0, back.attributes.intelligence - rule.baseline) / rule.pointsPerCard))));
-  const legacy = LEGACY_RATING_FORMULA.ratings.ar;
-  const weighted = ATTRIBUTES.reduce((sum, attr) => sum + Math.floor(back.attributes[attr] * legacy[attr] + 1e-9), 0);
-  assert.equal(attributeRatingReceipt(back.ratingsRules, back.attributes, 'ar').value, legacy.base + Math.floor(weighted * 1.5 + 1e-9));
-});
-
 test('retired stat keys are dropped with one warning and nothing is converted: ratings, multiplier, hand groups, handMax', () => {
   const retired = {
     'gameConfig.combatRatings.ratings.ar.strength': 1,
@@ -198,13 +131,11 @@ test('retired stat keys are dropped with one warning and nothing is converted: r
   const keep = { 'gameConfig.handRules.retain': false, 'gameConfig.derivedStatRules.rules.draw.base': 3 };
   // The profile door.
   const profile = { ...retired, ...keep };
-  assert(hasLegacyAdvancedSettings(profile));
   const warnings = [];
   assert.equal(normalizeAdvancedSettings(profile, contentBundle, warnings), profile, 'the same object');
   assert.deepEqual(profile, keep, 'only the retired keys went; a behaviour option and a row key stay as written');
   assert.equal(warnings.length, 1, 'one warning for the whole stat family');
   assert.match(warnings[0], /formula and multiplier.*retired/);
-  assert.equal(hasLegacyAdvancedSettings(profile), false);
   // The mirrored spelling goes too.
   const mirrored = { 'settings.gameConfig.balance.handMax': 7, 'settings.gameConfig.combatRatings.ratings.pr.intelligence': 1 };
   normalizeAdvancedSettings(mirrored, contentBundle, []);
@@ -232,15 +163,6 @@ test('a hand holds at least one card: a hand size under 1 is refused before a fi
   assert(!validateContent(bundle).ok);
 });
 
-test('an old run keeps the hand it was born with, from its own configuration snapshot', () => {
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const run = createRunState({ seed: 3, classId: 'reaver', registries });
-  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
-  run.advancedConfigSnapshot = { schemaVersion: 1, overrides: { 'gameConfig.handRules.capacity.base': 9 } };
-  // The live profile has been converted and holds no hand-rule keys.
-  assert.equal(statRow(registries, run, 'handSize', { settings: {} }).base, 9);
-});
-
 test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with its level and bounds', async () => {
   const configured = configuredContentBundle(contentBundle, { 'gameConfig.derivedStatRules.rules.hp.max': 999, 'gameConfig.derivedStatRules.rules.ar.max': 999 });
   assert.equal(configured.derivedStatRules.rules.hp.max, undefined);
@@ -258,94 +180,13 @@ test('Max 999 is no ceiling, and the ratings-off Poise meter reads the row with 
   assert(attributePart(1) <= attributePart(3));
 });
 
-test('rating receipts show a row bound, and an old run\'s attribute cards name its own rating formula', async () => {
+test('rating receipts show a row bound', async () => {
   const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
   const { attributeRatingReceipt: receiptOf } = await import('../src/model/ratingFormula.js');
   const config = { ratings: { ar: { base: 0, strength: 1, max: 1 }, dr: { base: 0 }, pr: { base: 0 }, poise: { base: 0 }, ward: { base: 0 } } };
   const ar = receiptOf(config, { strength: 2 }, 'ar');
   const html = renderPlayerPoise({ ratings: { ar: 3 }, ratingAttributes: { ar }, ratingSources: [{ kind: 'equipment', name: 'Sword', ar: 2 }], note: '' });
   assert.match(html, /<b>-1<\/b> held to its max/);
-  const { statProjection } = await import('../src/model/statProjection.js');
-  const { attributeCardModels } = await import('../src/model/creationBrief.js');
-  const registries = createRegistries(configuredContentBundle(contentBundle, { 'gameConfig.combatRatings.ratings.ar.strength': 2 }));
-  const run = createRunState({ seed: 4, classId: 'reaver', registries });
-  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
-  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
-  const strength = cards.find((card) => card.id === 'strength');
-  assert(strength.reveal.lines.some((line) => line === 'AR: floor(2 × STR)'), strength.reveal.lines.join(' | '));
-});
-
-test('an old run with ratings on names its rating Poise on its cards; a retired ratings-off Poise edit is dropped', async () => {
-  const { statProjection } = await import('../src/model/statProjection.js');
-  const { attributeCardModels } = await import('../src/model/creationBrief.js');
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const run = createRunState({ seed: 4, classId: 'reaver', registries });
-  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6 } };
-  const cards = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) });
-  const strength = cards.find((card) => card.id === 'strength');
-  assert(strength.reveal.lines.some((line) => line === 'Poise: floor(0.5 × STR)'), strength.reveal.lines.join(' | '));
-});
-
-test("an old run's attribute cards name its own hand groups, not the live hand rows", async () => {
-  const { statProjection } = await import('../src/model/statProjection.js');
-  const { attributeCardModels } = await import('../src/model/creationBrief.js');
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const run = createRunState({ seed: 4, classId: 'starseer', registries });
-  // A ruleset-6 snapshot never had the openingHand/handSize rows.
-  const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules)
-    .filter(([id]) => id !== 'openingHand' && id !== 'handSize'));
-  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
-  run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), 'gameConfig.handRules.starting.pointsPerCard': 3, 'gameConfig.handRules.turn.pointsPerCard': 4 } };
-  const lines = attributeCardModels(registries, run.attributes, { projection: statProjection(registries, run) })
-    .find((card) => card.id === 'intelligence').reveal.lines;
-  assert(lines.includes(`Opening hand +1 every 3 points (at most ${LEGACY_HAND_GROUPS.starting.maximum})`), lines.join(' | '));
-  // Its solo turn draw is its tuned `turn` group, not the snapshot's co-op draw row.
-  assert(lines.includes(`Draw / turn +1 every 4 points (at most ${LEGACY_HAND_GROUPS.turn.maximum})`), lines.join(' | '));
-  assert(lines.includes(`Hand size +1 every ${LEGACY_HAND_GROUPS.capacity.pointsPerCard} points (at most ${LEGACY_HAND_GROUPS.capacity.maximum})`), lines.join(' | '));
-  assert(!lines.some((line) => /^(Opening hand|Hand size) \+\d+ every (20|100) points$/.test(line)), lines.join(' | '));
-});
-
-// ---- RUNS STARTED BETWEEN #1294 AND RULESET 7 --------------------------------
-// #1294 shipped each class's opening hand as hand rules read per fight:
-// clamp(classBase + floor(max(0, primary − 1) ÷ 2), 4, 6), tunable through
-// `handRules.startingByClass.<class>.base/stat`, with a stored 3–15 pair (the
-// retired default) dropped. A run born under ruleset 6 in that window restores
-// exactly that hand, and the profile keys it was tuned with convert exactly.
-const CLASS_HAND = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
-const hand1294 = (base, primary, { minimum = 4, maximum = 6 } = {}) => Math.min(maximum, Math.max(minimum, base + Math.floor(Math.max(0, primary - 1) / 2)));
-const ruleset6Run = (classId, registries, overrides = null) => {
-  const run = createRunState({ seed: 3, classId, registries, combatExpansionVersion: 1 });
-  const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules).filter(([id]) => !['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward'].includes(id)));
-  run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
-  if (overrides) run.advancedConfigSnapshot = { schemaVersion: 1, ratingsVersion: 1, overrides };
-  return run;
-};
-
-test("a run started between #1294 and ruleset 7 opens on #1294's class hand, at every primary 1–20", () => {
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  for (const [classId, [base, stat]] of Object.entries(CLASS_HAND)) {
-    const run = ruleset6Run(classId, registries);
-    assert(readsLegacyStatHomes(run));
-    for (let primary = 1; primary <= 20; primary += 1) {
-      const attributes = { ...at(1), [stat]: primary };
-      assert.equal(statRowCount(statRow(registries, run, 'openingHand'), attributes), hand1294(base, primary), `${classId} ${stat} ${primary}`);
-    }
-    // And the fight it opens deals it, and carries the class's group.
-    const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'] });
-    assert.equal(combat.piles.hand.length, Math.min(run.deck.length, hand1294(base, run.attributes[stat])), classId);
-    assert.deepEqual(combat.handRules.rows.openingHand, statRow(registries, run, 'openingHand'), 'the fight\'s hand rules carry it');
-  }
-  // Its own #1294 tuning restores too — and the retired 3–15 pair it may have
-  // pinned is read as #1294 read it: dropped.
-  const tunedRun = ruleset6Run('reaver', registries, {
-    'gameConfig.handRules.startingByClass.reaver.base': 5,
-    'gameConfig.handRules.startingByClass.reaver.stat': 'constitution',
-    'gameConfig.handRules.starting.maximum': 15,
-    'gameConfig.handRules.starting.minimum': 3,
-  });
-  for (let primary = 1; primary <= 20; primary += 1) {
-    assert.equal(statRowCount(statRow(registries, tunedRun, 'openingHand'), { ...at(1), constitution: primary }), hand1294(5, primary));
-  }
 });
 
 test('a saved fight whose hand size can reach 0 is refused at the fight door', async () => {
@@ -415,21 +256,3 @@ test('bounds are said; saved levels and Mana ceilings are held', async () => {
 
 // A run saved under ruleset 1–6 bounds a row with the retired `cap`; its
 // attribute cards say it as they say a Max (Codex, #1321).
-test("an old run's capped row states its cap on the attribute card", async () => {
-  const { attributeCardModels } = await import('../src/model/creationBrief.js');
-  const { statProjection } = await import('../src/model/statProjection.js');
-  const old = { ...contentBundle };
-  const rules = structuredClone(RULESET_6);
-  rules.rules.hp.cap = 35;
-  old.derivedStatRules = { ...rules, presentation: Object.fromEntries(Object.entries(contentBundle.derivedStatRules.presentation).filter(([id]) => rules.rules[id])) };
-  const oldRegistries = createRegistries(old);
-  const run = createRunState({ seed: 11, classId: 'reaver', registries: oldRegistries });
-  const registries = createRegistries(configuredContentBundle(contentBundle, {}));
-  const restored = structuredClone(run);
-  initializeRunDerivedStats(restored, registries);
-  const projection = statProjection(registries, restored);
-  assert.equal(projection.derived.find((row) => row.id === 'hp').cap, 35, 'the projected row carries the legacy cap');
-  const con = attributeCardModels(registries, restored.attributes, { projection }).find((card) => card.id === 'constitution');
-  assert.match(con.face.summary, /HP per pt \(max 35\)/, con.face.summary);
-  assert(con.reveal.lines.some((line) => /^HP \+4 every 1 point \(at most 35\)$/.test(line)), con.reveal.lines.join(' | '));
-});

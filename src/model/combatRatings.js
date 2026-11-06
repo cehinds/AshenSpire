@@ -7,7 +7,7 @@ import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { evaluate } from './formulas.js';
 import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
-import { LEGACY_RATING_FORMULA, STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX, legacyRatingFormulaFromSettings } from './statRows.js';
+import { STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX } from './statRows.js';
 import { resolvedRuleRow } from './derivedStats.js';
 import { combatRules as damageTypeRules } from '../content/combatRules.js';
 
@@ -335,15 +335,12 @@ export function resolveCombatRatings(rawSettings, bundle) {
   const config = structuredClone(combatRatingDefaults);
   config.bonuses = {}; config.attackImpact = {}; config.enemyImpact = {}; config.enemyAttackType = {}; config.enemyRatings = {};
   config.itemRatings = {};
-  // What a run born before ruleset 7 was priced by: the frozen formula, with
-  // whatever its own configuration snapshot tuned (model/statRows.js).
-  config.legacyRatings = legacyRatingFormulaFromSettings(rawSettings || {});
   // The rating rows a caller with no run reads: the table's AR, DR, PR, Poise
   // and Ward rows with their own settings keys over them (Stats → each rating).
   // A run reads its own snapshot's instead (model/statRows.js ratingsConfigFor).
   config.ratings = Object.fromEntries(ratingIds.map((id) => {
     const authored = resolvedRuleRow(bundle?.derivedStatRules, id);
-    const row = authored ? { ...authored } : { ...LEGACY_RATING_FORMULA.ratings[id] };
+    const row = authored ? { ...authored } : { base: 0 };
     for (const field of ['base', ...attributes, 'perLevel', 'min', 'max']) {
       const value = Number(settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`]);
       if (settings[`${STAT_ROW_KEY_PREFIX}${id}.${field}`] !== undefined && Number.isFinite(value) && value >= 0) row[field] = value;

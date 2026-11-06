@@ -191,10 +191,9 @@ test('explicit Poise damage respects configured break rules without legacy penal
 // RULESET 7 (owner, 2026-09-24) retired the one global multiplier: a rating
 // is a row of the derived-stat table, tuned by its own
 // `derivedStatRules.rules.<id>.<field>` keys, and a new config carries no
-// multiplier at all. A fight SAVED under one still prices exactly as it did.
-test('every rating is the sum of its floored attribute terms; a saved multiplier still prices exactly', async () => {
+// multiplier at all.
+test('every rating is the sum of its floored attribute terms', async () => {
   const { createRunState } = await import('../src/model/state.js');
-  const { LEGACY_RATING_FORMULA } = await import('../src/model/statRows.js');
   const run = createRunState({ seed: 42, classId: 'reaver', registries });
   run.loadout = null; run.relics = [];
   run.attributes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 8 };
@@ -223,17 +222,6 @@ test('every rating is the sum of its floored attribute terms; a saved multiplier
   // A new config has no global multiplier: the row is the whole formula.
   assert.equal(resolveCombatRatings({}, contentBundle).multiplier, undefined);
   assert.equal(rules.multiplier, undefined);
-
-  // A SAVED legacy config states one multiplier over the frozen ruleset-6
-  // rows, and is priced as it always was: base + floor(Σ floored terms × 2).
-  // AR above: 2 × (1 + 0 + 0 + 0 + 2) = 6. The legacy AR row (STR .75, DEX .5,
-  // CON .25, WIS .25, INT .25) at the same attributes: 2 × (0+0+0+0+2) = 4.
-  const saved = { ...rules, multiplier: 2, ratings: { ...structuredClone(LEGACY_RATING_FORMULA.ratings), ar: { ...rules.ratings.ar } } };
-  assert.equal(ratingReceipt(registries, run, saved).totals.ar, 6);
-  const savedLegacyRows = { ...rules, multiplier: 2, ratings: structuredClone(LEGACY_RATING_FORMULA.ratings) };
-  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.ar, 4);
-  // Poise under the same legacy save: base 1 + floor(2 × (CON 1 + STR 0 + WIS 0 + INT 0)) = 3.
-  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.poise, 3);
 
   const zeroWeights = resolveCombatRatings(Object.fromEntries(
     ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
