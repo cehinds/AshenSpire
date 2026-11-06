@@ -11,7 +11,6 @@ import { mountRestFrame, restPresentation } from './restFrame.js';
 import { renderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
 import { mountCardUpgradeModal } from './cardUpgradeModal.js';
-import { modalParentLabel } from '../modalReturn.js';
 import { cardUpgradeModel } from '../models/CardUpgradeModel.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -69,12 +68,19 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   };
   const commit = (service, payload) => invoke(() => onCommit(service, payload));
 
+  // A confirmed upgrade lands back on the list once the rest screen has remounted (modalReturn.js): the option is
+  // re-queried then, and not reopened if it is spent (Back and the X still exit fully).
+  const shrineParent = (selector) => ({ place: t('common.place.shrine'), reopen: () => {
+    const option = app.querySelector(selector);
+    if (option && option.getAttribute('aria-disabled') !== 'true') option.click();
+  } });
   const openSmith = () => {
     let selected = null;
     screen.inert = true;
     const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all, levelUpOffered: model.services.some(service => service.id === 'levelUp') });
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
+      parent: shrineParent('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
       onConfirm: itemRef => { screen.inert = false; commit('smith', { itemRef }); },
@@ -89,7 +95,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
     const modal = mountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
-      backLabel: modalParentLabel({ place: t('common.place.shrine') }),
+      parent: shrineParent('#upgrade-card-opt'),
       decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },

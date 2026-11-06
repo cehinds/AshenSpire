@@ -1,4 +1,5 @@
 import { hideOnError } from '../artFallback.js';
+import { pushModalParent, dropModalParent, returnToModalParent, modalParentLabel } from '../modalReturn.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { renderEquipmentCard, equipmentDetails } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
@@ -60,13 +61,17 @@ export function mountSmithUpgradeModal(host, initialModel, {
   onBack,
   onConfirm,
   returnFocusElement,
+  // The list's return record ({ place, reopen(focus) }, modalReturn.js): a confirm lands back on a refreshed list.
+  parent = null,
+  focusItemRef = null,
 }) {
+  const parentRecord = parent ? pushModalParent(parent) : null;
   const returnFocus = returnFocusElement instanceof HTMLElement
     ? returnFocusElement
     : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const desk = mountUpgradeDesk(host, {
     title: initialModel.properties.title, titleId: 'smith-modal-title', listLabel: t('smith.items.upgrade'),
-    backLabel: initialModel.properties.backLabel, kind: 'item',
+    backLabel: parentRecord ? modalParentLabel(parentRecord) : initialModel.properties.backLabel, kind: 'item',
   });
   const { veil, panel: modal, purse, backBtn, confirmBtn } = desk;
   modal.classList.add('smith-upgrade-modal');
@@ -153,8 +158,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
   function commitSelected() {
     if (!currentModel.properties.canConfirm) return;
     const selectedId = currentModel.properties.selected.itemRef;
-    close({ restoreFocus: false });
-    onConfirm(selectedId);
+    close({ restoreFocus: false, keepParent: true });
+    try { onConfirm(selectedId); }
+    finally { if (parentRecord) returnToModalParent(selectedId); }
   }
 
   /**
@@ -260,9 +266,10 @@ export function mountSmithUpgradeModal(host, initialModel, {
     }
   }
 
-  function close({ restoreFocus = true } = {}) {
+  function close({ restoreFocus = true, keepParent = false } = {}) {
     if (closed) return;
     closed = true;
+    if (parentRecord && !keepParent) dropModalParent(parentRecord);
     disarmDecision?.();
     disarmDecision = null;
     window.removeEventListener('keydown', onKeydown, true);
@@ -309,7 +316,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   desk.closeBtn.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
-  queueMicrotask(() => modal.focus({ preventScroll: true }));
+  queueMicrotask(() => (cards.find((card) => card.dataset.itemRef === focusItemRef) || modal).focus({ preventScroll: true }));
   // Mounted with an item already chosen (the Blacksmith's per-item Upgrade): its modal opens at once.
   if (initialModel.properties.selected) review?.();
 
