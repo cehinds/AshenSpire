@@ -2567,11 +2567,17 @@ export function mountEquipment(host, {
     // The Armory page is ONE scrolling body: the equipment slots on top, the
     // Inventory's sections below them. The Character page carries neither.
     if (view !== 'grid') {
-      inventory.append(inventoryBlock());
-      if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
-      // SPEC §15.4: the Sigils panel sits below the item collection.
+      // Owner 2026-11-06: the Armory tab is the equipped-slot rows and nothing else, so there is no scrolling. The item
+      // collection and its detail pane are gone; items are chosen through the slot's picker (Choose item / Replace), which
+      // is this same block opened for one slot, and through the reward / purchase Equip flow (beginInventoryEquip).
+      if (picking) {
+        inventory.append(inventoryBlock());
+        if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
+      }
+      // SPEC §15.4: the Sigils panel stays below the slot rows.
       const sigils = sigilsPanel();
       if (sigils) inventory.append(sigils);
+      if (!inventory.childElementCount) inventory.remove();
     } else inventory.remove();
     wrap.querySelector('.armoury-strip').parentElement.remove();
 
