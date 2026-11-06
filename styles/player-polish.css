@@ -672,6 +672,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
+:root[data-layout='narrow'] .blacksmith-workspace .shop-frame .modal-head-status { grid-column:1 / -1; grid-row:2; font-size:11px; white-space:normal; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
 @container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
