@@ -268,7 +268,8 @@ export function mountCustomize(app, {
       seedRow,
       slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
       el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
-      el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
+      // Core 2 (a configured profile) has no feats step: show nothing rather than the placeholder (owner, 2026-11-06).
+      fixedCreation ? null : el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
       el('div', { id: 'cz-review-edit', class: 'as-stack cc-review-edit' }),
     ]),
   };
