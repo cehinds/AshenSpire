@@ -1,6 +1,6 @@
 import { handRulesDefaults } from '../content/handRules.js';
 import { HAND_STAT_IDS, statRowValue, storedStatRowProblems } from './derivedStats.js';
-import { HAND_GROUP_ROWS, handStatRows, statRowCount } from './statRows.js';
+import { handStatRows, statRowCount } from './statRows.js';
 
 export const HAND_RULES_PREFIX = 'gameConfig.handRules.';
 const groups = { starting: 'Starting hand', turn: 'Turn draws', capacity: 'Hand capacity' };
@@ -152,9 +152,6 @@ export function handRulesSettingsProblems() {
  */
 export function handRow(rules, id) {
   if (rules?.rows?.[id]) return rules.rows[id];
-  const group = Object.keys(HAND_GROUP_ROWS).find((key) => HAND_GROUP_ROWS[key] === id);
-  const legacy = group && rules?.[group];
-  if (legacy) return legacy;
   throw new Error(`Hand rules carry no ${id} row`);
 }
 
