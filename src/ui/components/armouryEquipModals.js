@@ -44,7 +44,10 @@ export function openSlotChoiceModal({ options, onChoose, opener }) {
 export function openEquipConfirmModal({ registries, item, name, slotLabel, onEquip, onBack, opener }) {
   const back = button({ label: t('common.back'), role: 'exit' });
   const equip = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'equip-confirm-equip' });
+  // Every way out but Equip (Back, Escape, browser Back, the X, the backdrop) lands on the list it came from (modalReturn.js).
+  let equipped = false;
   const shell = openModal({
+    onClose: () => { if (!equipped) queueMicrotask(() => onBack?.()); },
     title: t('armoury.confirm.title', { verb: t('armoury.picker.act.equip'), name, slot: slotLabel }), size: 'md', className: 'equip-confirm-modal',
     deferFocus: true, opener, closeLabel: t('common.back'), secondary: [back], primary: equip,
     initialFocus: () => equip,
@@ -53,7 +56,7 @@ export function openEquipConfirmModal({ registries, item, name, slotLabel, onEqu
       host.append(el('div', { class: 'equip-confirm-card' }, [rendered.card]));
     },
   });
-  back.addEventListener('click', () => { shell.close(); onBack?.(); }); // Back returns to the list it came from (modalReturn.js)
-  equip.addEventListener('click', () => { shell.close(); onEquip?.(); });
+  back.addEventListener('click', () => shell.close());
+  equip.addEventListener('click', () => { equipped = true; shell.close(); onEquip?.(); });
   return shell;
 }
