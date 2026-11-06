@@ -138,6 +138,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       if (first.ok) control.addEventListener('click', first.run);
       if (!first.ok && first.reason) control.title = first.reason;
     }
+    // A disabled action beside an affordable one still says why, in the row, not only as a tooltip.
+    if (available && first && !first.ok && first.reason) host.querySelector('.merchant-offer-details').append(statusText(first.reason, { class: 'shop-offer-avail' }));
     const actions = host.querySelector('.merchant-offer-actions');
     for (const action of rest) {
       const extra = button({ label: action.label, className: 'merchant-offer-action', disabled: !action.ok, attrs: action.ok ? {} : { title: action.reason } });
