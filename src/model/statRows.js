@@ -25,8 +25,6 @@ export const STAT_ROW_NO_MAX = 999;
 
 /** The hand size a run-context fight with no hand rules deals to (actions.js, combat.js). */
 export const FALLBACK_HAND_MAX = 5;
-/** Hand-rule group → the ruleset-7 row that replaced it. */
-export const HAND_GROUP_ROWS = Object.freeze({ starting: 'openingHand', turn: 'draw', capacity: 'handSize' });
 
 // THE OPENING-HAND LIMITS BEFORE #1294 WERE 3–15 (owner, 2026-09-24: "start
 // with 4-6 cards"). The Advanced panel stores — and an export writes — every
