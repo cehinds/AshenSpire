@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
+import { playerMarginPlacement, targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -24,7 +24,17 @@ function panelFor(entry) {
   shell.dataset.role = entry.role;
   shell.setAttribute('aria-label', t('combat.targetHud.namedDetails', { name: entry.name }));
   const panel = node('div', 'target-hud-panel');
-  panel.append(node('div', 'target-hud-name', entry.name));
+  // Owner 2026-11-06: an enemy's panel shows its intent (the whole queue) where its name text was. The name stays for
+  // screen readers (aria-label/title) and in the inspect panel; the player's panel keeps its name.
+  const intent = entry.role === 'enemy' && entry.createIntent ? entry.createIntent() : null;
+  if (entry.role === 'enemy') {
+    const slot = node('div', 'target-hud-name target-hud-name-intent');
+    slot.title = entry.name; slot.setAttribute('aria-label', entry.name);
+    const sr = node('span', 'sr-only', entry.name);
+    slot.append(sr);
+    if (intent) slot.append(intent);
+    panel.append(slot);
+  } else panel.append(node('div', 'target-hud-name', entry.name));
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
@@ -312,18 +322,31 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     setStyle(record.info, 'left', `${info.left}px`); setStyle(record.info, 'top', `${info.top}px`);
     setStyle(record.info, 'width', `${info.width}px`); setStyle(record.info, 'height', `${info.height}px`);
   }
+  // Owner 2026-11-06 (option B): on desktop the player's panel stands in the empty margin to the right of the board. The board
+  // keeps its size; the panel takes the margin's width (never below 180 px, the width its rows stack at) and shrinks with the
+  // viewport. null (the panel keeps standing beside the figure) off desktop or when the board's cells are not drawn.
+  const MARGIN_MIN_PX = 180, MARGIN_MAX_PX = 420;
+  function playerMargin(bounds, gap) {
+    if (!['desktop', 'widescreen'].includes(document.documentElement.dataset.formFactor)) return null;
+    let right = -Infinity;
+    for (const cell of field.querySelectorAll('.formation-grid-cell')) right = Math.max(right, cell.getBoundingClientRect().right);
+    if (!Number.isFinite(right)) return null;
+    return playerMarginPlacement({ right, edge: bounds.left + bounds.width - gap, gap, top: bounds.top + gap, min: MARGIN_MIN_PX, max: MARGIN_MAX_PX });
+  }
   function place(fieldBox, rootBox, zoom, bounds, epoch) {
     const gap = config.positioning.gapPx, sizing = config.sizing;
+    const margin = playerMargin(bounds, gap);
     const rows = [];
     for (const [id, record] of panels) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
-      const cellWidth = Number(frame.dataset.cellWidth) || rect(frame).width;
+      const cellWidth = entry.role === 'player' && margin ? margin.width : Number(frame.dataset.cellWidth) || rect(frame).width;
       rows.push({ id, record, frame, entry, cellWidth, ...miniHudScale({ cellWidth }) });
     }
     // Writes: the panel is exactly as wide as its cell, its contents scaled to it (never below the minimum font).
     for (const { record, cellWidth, scale, fontPx } of rows) {
       const node = record.node;
       setVar(node, '--mini-hud-scale', String(scale));
+      setData(node, 'margin', node.dataset.role === 'player' && margin ? (cellWidth < 260 ? 'stacked' : 'row') : 'off');
       setVar(node, '--target-hud-font', `${fontPx / zoom}px`);
       setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale / zoom}px`);
       setStyle(node, 'width', `${anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width: cellWidth, height: 0 }, { zoom }).width}px`);
@@ -344,7 +367,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const boxes = [];
     for (const row of rows) {
       let at;
-      if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
+      if (row.entry.role === 'player' && margin) at = { left: margin.left, top: margin.top };
+      else if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
       else if (row.rack) {
         const placed = enemyHudPlacement({ centerX: row.rack.centerX, bottom: row.rack.top - gap / 4, width: row.cellWidth, height: row.height, bounds });
         at = { left: placed.left, top: placed.top + row.height };
