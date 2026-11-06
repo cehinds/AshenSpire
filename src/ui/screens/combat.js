@@ -34,7 +34,7 @@ import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
@@ -976,16 +976,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
     const maneuver = profile.maneuver || 'prepare';
     const previous = player.querySelector('.player-action-intent');
-    // The glyph depends only on maneuver; its callback reads current selection.
-    // Keeping it also keeps focus and avoids a redundant full-board refit.
-    if (previous?.dataset.maneuver === maneuver) return;
-    previous?.remove();
+    // The glyph node is built once and kept (owner, 2026-11-06): a new maneuver only switches which of its drawn
+    // glyphs shows, so nothing is removed, re-created or refitted for it.
+    if (previous) { setPlayerActionManeuver(previous, profile); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
-      action.dataset.maneuver = maneuver;
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');

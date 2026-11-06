@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { combatantFrame, updateCombatantFrame } from '../src/ui/components/combatantFrame.js';
-import { playerActionIntent, RESTING_PLAYER_ACTION } from '../src/ui/components/combatantOverhead.js';
+import { playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION } from '../src/ui/components/combatantOverhead.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
@@ -16,7 +16,7 @@ for (const racked of [false, true]) test(`player action survives actual frame up
   document.body.appendChild(player);
   const combatEl = node('combat'), events = [], calls = [];
   combatEl.addEventListener('combatantselectionchange', e => events.push(e.detail));
-  const context = { combat: {}, upcastRanksByCard: new Map(), RESTING_PLAYER_ACTION, playerActionIntent,
+  const context = { combat: {}, upcastRanksByCard: new Map(), RESTING_PLAYER_ACTION, playerActionIntent, setPlayerActionManeuver,
     resolveCombatCard: (_combat, inst) => inst, kindForCard: def => def.profile,
     selfArm: null, selectCombatant: id => calls.push(['select', id]), playCard: (...args) => calls.push(['play', ...args]),
     combatEl, CustomEvent: class extends Event { constructor(type, options) { super(type); this.detail = options.detail; } } };
@@ -44,8 +44,10 @@ for (const racked of [false, true]) test(`player action survives actual frame up
   context.selfArm = null; action.dispatchEvent(new Event('click'));
   assert.deepEqual(calls.at(-1), ['select', 'player']);
   sync(player, { profile: { maneuver: 'attack' } });
-  const replacement = player.querySelector('.player-action-intent');
-  assert.notEqual(replacement, action); assert.equal(replacement.getAttribute('aria-label'), 'Selected action: attack');
+  // Owner (2026-11-06): a changed maneuver switches the drawn glyph in place. The node is never replaced and asks for no geometry.
+  assert.equal(player.querySelector('.player-action-intent'), action, 'a changed action keeps the same node');
+  assert.deepEqual(action.querySelectorAll('.intent-action').filter(group => !group.hidden).map(group => group.dataset.action), ['attack'], 'one glyph shows');
+  assert.equal(action.getAttribute('aria-label'), 'Selected action: attack');
   assert.equal(player.querySelectorAll('.player-action-intent').length, 1);
-  assert.equal(events.length, 1, 'a changed action still requests fresh geometry');
+  assert.equal(events.length, 0, 'a changed action does not request fresh geometry: the figure and its HUD are static');
 }));
