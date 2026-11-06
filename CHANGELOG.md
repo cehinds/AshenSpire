@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Retired settings dropped, not converted** ([#2616](https://github.com/cehinds/AshenSpire/pull/2616), `0.7.3.202`). Retired stat, rating and hand settings keys are dropped with a warning, and the ruleset-6 stat adapters and smithing conversion are deleted.
 - **Previews publish again** ([#2603](https://github.com/cehinds/AshenSpire/pull/2603), `0.7.3.202`). The Pages site drops stale branch previews, old per-build offline files and docs/preview, keeps 3 builds per branch, and fails early with a size breakdown if it grows past its limit, so the dev preview deploy no longer times out.
 - **HUD width test covers more fights** ([#2601](https://github.com/cehinds/AshenSpire/pull/2601), `0.7.3.200`). The fixed-HUD browser test now also checks a fight with the player in a second cell, on phone and desktop.
 - **Combat HUDs stay put** ([#2597](https://github.com/cehinds/AshenSpire/pull/2597), `0.7.3.198`). Each enemy's mini HUD stays above its own figure and the player's stays right of the player, each exactly as wide as its cell with text scaled to fit; the HUDs are built once per fight and updated in place instead of redrawn on select, play or damage.
