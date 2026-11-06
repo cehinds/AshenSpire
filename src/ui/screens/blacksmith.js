@@ -102,6 +102,12 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     if (!def) return null;
     try { return renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card; } catch { return null; }
   }
+  // The price line under a paid action: stones, cinders or both, never in the button's own label.
+  function priceLine({ stones = 0, cinders = 0 } = {}) {
+    if (stones && cinders) return t('blacksmith.price.stonesCinders', { stones, plural: plural(stones), cinders });
+    if (stones) return t('blacksmith.price.stones', { count: stones, plural: plural(stones) });
+    return cinders ? t('shop.price', { cost: cinders }) : '';
+  }
   function tile(glyph, title, desc, reason = '', { visual = null } = {}) {
     const node = el('div', { class: 'class-pick shop-offer' });
     node.innerHTML = `<div class="glyph">${engravedIconHtml(engravedGlyphId(glyph)) || glyph}</div>`;
@@ -109,8 +115,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     return node;
   }
   function addAction(host, action) { host._row.actions.push(action); return action; }
-  function actionButton(host, { id, label, plan, commit, kind = 'service', cost = null }) {
-    return addAction(host, { id: id || '', label, kind, ok: !!plan.ok, reason: plan.reason, price: cost == null ? '' : t('shop.price', { cost }), run: () => act(host, commit) });
+  function actionButton(host, { id, label, plan, commit, kind = 'service', cost = null, price = null }) {
+    return addAction(host, { id: id || '', label, kind, ok: !!plan.ok, reason: plan.reason, price: price ?? (cost == null ? '' : t('shop.price', { cost })), run: () => act(host, commit) });
   }
   function finishRow(host) {
     const row = host._row;
@@ -138,6 +144,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       extra.addEventListener('click', (event) => event.stopPropagation());
       if (action.ok) extra.addEventListener('click', action.run);
       actions.append(extra);
+      if (action.price) actions.append(statusText(action.price, { class: 'merchant-offer-price' }));
       if (!action.ok && available && action.reason) host.querySelector('.merchant-offer-details').append(statusText(action.reason, { class: 'shop-offer-avail' }));
     }
   }
@@ -183,8 +190,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     rankUp(shelf) {
       for (const card of rankUpCards(registries, run)) {
         const plan = rankUpPlan(registries, run, card.instanceId, { priceMult });
-        const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.line', { from: plan.from, to: plan.to, cost: plan.cost, stones: plan.stones, plural: plural(plan.stones) }), '', { visual: cardVisual(card) });
-        actionButton(host, { label: t('blacksmith.action.rankUp'), plan, commit: () => commitRankUp(registries, run, plan, { priceMult }) });
+        const host = tile(GLYPH.rankUp, plan.name, t('blacksmith.rankUp.desc', { from: plan.from, to: plan.to }), '', { visual: cardVisual(card) });
+        actionButton(host, { label: t('blacksmith.action.rankUp'), price: priceLine({ stones: plan.stones, cinders: plan.cost }), plan, commit: () => commitRankUp(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -203,12 +210,12 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         // The stone purse opens the smith's own upgrade modal (SmithSelectionModel),
         // whose confirm commits the blacksmith's quote.
         const stonesPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
-        const stoneAction = addAction(host, { label: t(!stonesPlan.cost ? 'blacksmith.action.upgrade' : candidate.cost ? 'blacksmith.action.upgradeCoin' : 'blacksmith.action.upgradeCinders', { cost: candidate.cost, plural: plural(candidate.cost), cinders: stonesPlan.cost }), kind: 'service', ok: !!stonesPlan.ok, reason: stonesPlan.reason, price: '' });
+        const stoneAction = addAction(host, { label: t('blacksmith.verb.upgrade'), kind: 'service', ok: !!stonesPlan.ok, reason: stonesPlan.reason, price: priceLine({ stones: candidate.cost, cinders: stonesPlan.cost }) });
         stoneAction.run = (event) => openUpgradeModal(candidate.itemRef, event.currentTarget);
         // Core has no refining, so there is no refined purse to offer.
         if (candidate.refinedCost !== null && !blacksmithWithholds(run, 'refineStones')) {
           const refinedPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'refined' });
-          actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan, { priceMult }) });
+          actionButton(host, { label: t('blacksmith.verb.upgradeRefined'), price: t('blacksmith.price.refined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan, { priceMult }) });
         }
         shelf.append(host);
       }
@@ -216,14 +223,14 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     refineStones(shelf) {
       const plan = refinePlan(registries, run, { priceMult });
       const host = tile(GLYPH.refineStones, t('blacksmith.refine.title'), t('blacksmith.refine.desc', { from: plan.stones, cost: plan.cost, value: plan.value ?? 0, plural: plural(plan.stones), valuePlural: plural(plan.value ?? 0) }));
-      actionButton(host, { id: 'blacksmith-refine', label: t('blacksmith.action.refine'), plan, commit: () => commitRefine(registries, run, plan, { priceMult }) });
+      actionButton(host, { id: 'blacksmith-refine', label: t('blacksmith.action.refine'), price: priceLine({ stones: plan.stones, cinders: plan.cost }), plan, commit: () => commitRefine(registries, run, plan, { priceMult }) });
       shelf.append(host);
     },
     sigilSlots(shelf) {
       for (const piece of sigilSlotPieces(registries, run)) {
         const plan = sigilSlotPlan(registries, run, piece.itemRef, { priceMult });
         const host = tile(GLYPH.sigilSlots, piece.name, t('blacksmith.slots.line', { count: piece.slots.length, max: piece.max, plural: plural(piece.max) }));
-        actionButton(host, { label: t('blacksmith.action.cutSlot', { cost: plan.cost }), plan, commit: () => commitSigilSlot(registries, run, plan, { priceMult }) });
+        actionButton(host, { label: t('blacksmith.verb.cutSlot'), cost: plan.cost, plan, commit: () => commitSigilSlot(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -264,7 +271,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = upgradeArtPlan(registries, run, card.instanceId);
         const name = registries.cards.get(card.cardId)?.name || card.cardId;
         const host = tile(GLYPH.upgradeArt, name, t('blacksmith.art.line'), '', { visual: cardVisual(card) });
-        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones, plural: plural(plan.stones) }), plan, commit: () => commitUpgradeArt(registries, run, plan, { priceMult }) });
+        actionButton(host, { label: t('blacksmith.verb.upgrade'), price: priceLine({ stones: plan.stones }), plan, commit: () => commitUpgradeArt(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -272,7 +279,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       for (const cardId of stackableCardIds(registries, run, meta?.settings)) {
         const plan = stackCopyPlan(registries, run, cardId, { priceMult, settings: meta?.settings });
         const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { owned: plan.owned }), '', { visual: cardVisual(cardId) });
-        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost, plural: plural(plan.stones) }), plan, commit: () => commitStackCopy(registries, run, plan, { priceMult, settings: meta?.settings }) });
+        actionButton(host, { label: t('blacksmith.verb.stack'), price: priceLine({ stones: plan.stones, cinders: plan.cost }), plan, commit: () => commitStackCopy(registries, run, plan, { priceMult, settings: meta?.settings }) });
         shelf.append(host);
       }
     },
