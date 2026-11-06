@@ -19,7 +19,18 @@ export function orderedImpactSample({ up, contact, number, timing, clip, holdMs 
   if (!(Number.isFinite(clip?.impactMs) && Number.isFinite(clip?.totalMs) && clip.totalMs >= clip.impactMs)) fail('missing declared authored clip timing');
   if (Number.isFinite(clip.activeMs) && Math.abs(clip.activeMs - clip.totalMs) > 1) fail('active clip differs from its declared duration');
   const order = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
-  const rows = stages.slice(0, order.length);
+  // Owner 2026-11-06: the beat opens with its cost (a 'cost' marker) and a stance change draws a 'stance-change' marker.
+  // Both are presentation markers, not timeline stages: the nine stages keep their exact order, and each marker must sit
+  // where the owner's order puts it (cost with the intent, before the action; the stance after the action, before the sprite).
+  const MARKERS = ['cost', 'stance-change'];
+  const marked = stages.filter(row => !MARKERS.includes(row[1]));
+  const rows = marked.slice(0, order.length);
+  const at = name => stages.find(row => row[1] === name)?.[0];
+  const stageAt = name => rows.find(row => row[1] === name)?.[0];
+  if (rows.length === order.length) {
+    if (at('cost') !== undefined && !(at('cost') >= stageAt('intent') && at('cost') <= stageAt('action'))) fail('the cost must be paid with the intent, before the action');
+    if (at('stance-change') !== undefined && !(at('stance-change') >= stageAt('action') && at('stance-change') <= stageAt('sprite'))) fail('the stance change must follow the action word and precede the sprite');
+  }
   if (rows.length !== order.length || rows.some((row, index) => row[1] !== order[index])) fail(`incomplete or reordered stages: ${rows.map(row => row[1]).join(', ')}`);
   const times = Object.fromEntries(rows.map(([at, name]) => [name, at]));
   const minimum = (start, end, ms) => { if (times[end] - times[start] < ms - 4) fail(`${start} → ${end} did not retain ${ms} ms`); };

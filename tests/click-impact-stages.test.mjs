@@ -69,3 +69,20 @@ test('one missed hit cannot excuse missing numbers from another hit or protectio
     assert.throws(() => orderedImpactSample(sample), /without a wholly missed action/);
   }
 });
+
+test('the cost and stance markers sit in the owner order and never replace a stage', () => {
+  const withMarkers = fixture();
+  withMarkers.stages.splice(1, 0, [10, 'cost', 'player']);
+  withMarkers.stages.splice(3, 0, [10 + GAP, 'stance-change', 'player']);
+  assert.doesNotThrow(() => orderedImpactSample(withMarkers));
+  const lateCost = fixture();
+  lateCost.stages.splice(3, 0, [SPRITE, 'cost', 'player']);
+  assert.throws(() => orderedImpactSample(lateCost), /cost must be paid with the intent/);
+  const earlyStance = fixture();
+  earlyStance.stages.splice(1, 0, [5, 'stance-change', 'player']);
+  assert.throws(() => orderedImpactSample(earlyStance), /stance change must follow the action/);
+  const reordered = fixture();
+  reordered.stages.splice(1, 0, [10, 'cost', 'player']);
+  [reordered.stages[3], reordered.stages[4]] = [reordered.stages[4], reordered.stages[3]];
+  assert.throws(() => orderedImpactSample(reordered), /reordered stages/);
+});
