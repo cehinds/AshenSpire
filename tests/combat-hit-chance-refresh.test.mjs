@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { setData } from '../src/ui/domWrite.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, previewCard, previewCardHit } from '../src/engine/combat.js';
@@ -132,7 +133,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
   const field = document.createElement('div'); field.className = 'field'; c.combatEl.append(field);
   Object.assign(c, {
     paintedAppearance: 'test', displayAppearance: () => 'test', selectedCombatantId: null,
-    formationOccupancy: () => [], renderPlayer() {},
+    setData, formationOccupancy: () => [], renderPlayer() {},
     renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
     syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
     combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,

@@ -116,6 +116,7 @@ import {
 import { MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavMode, saveAction, lockEquipmentRows } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
+import { setData, setAttr as setAttrIfChanged } from '../domWrite.js';
 import { haptic } from '../haptics.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen, OVERLAY_CLOSED_EVENT, SETTINGS_SETTLED_EVENT } from '../components/veil.js';
@@ -1722,16 +1723,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage({ fit = true, refreshTargets = true } = {}) {
-    $('.field').dataset.playerCell = combat.player.formationCell || '';
+    const field = $('.field');
+    setData(field, 'playerCell', combat.player.formationCell || '');
     globalThis.__perfCount?.('stage');
-    $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
-    $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
+    setData(field, 'formationPolicy', JSON.stringify(combat.formationPolicy || null));
+    setData(field, 'formationOccupancy', JSON.stringify(formationOccupancy(combat)));
     // Melee stands in the front strip, reach in the back (display only); keyed by frame id, empty without range state.
     // The displayed snapshot during playback, the live state otherwise. (The typeof guards keep the vm-sliced stage tests,
     // which inject only the names they exercise, rendering.)
     const shown = typeof disp !== 'undefined' ? disp?.rangeRanks : null;
     const rangeRanks = shown ? rangeRanksFromSnapshot(shown) : typeof combatRangeRanks === 'function' ? combatRangeRanks(combat) : null;
-    $('.field').dataset.rangeRanks = rangeRanks ? JSON.stringify(Object.fromEntries([...rangeRanks].map(([key, rank]) => [key.slice(key.indexOf(':') + 1), rank]))) : '';
+    setData(field, 'rangeRanks', rangeRanks ? JSON.stringify(Object.fromEntries([...rangeRanks].map(([key, rank]) => [key.slice(key.indexOf(':') + 1), rank]))) : '');
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
@@ -2610,7 +2612,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           && pendingTargetPlan().legalIds.includes(enemy.id) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
-      box.setAttribute('aria-pressed', String(selectedCombatantId === enemy.id));
+      setAttrIfChanged(box, 'aria-pressed', selectedCombatantId === enemy.id);
       // Frames and their listeners survive death for the defeat animation.
       // Disable descendants too: nameplates/tooltips can opt back into pointer
       // events even when the frame's .dead style disables its own hit area.

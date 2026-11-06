@@ -89,6 +89,7 @@ class FakeNode extends EventTarget {
   }
   append(child) { this.children.push(child); return child; }
   setAttribute(k, v) { this.attributes[k] = String(v); }
+  getAttribute(k) { return this.attributes[k] ?? null; }
   matches(sel) { return sel.startsWith('.') && this.classes.has(sel.slice(1)); }
   descendants() { return this.children.flatMap(c => [c, ...c.descendants()]); }
   querySelectorAll(sel) { return this.descendants().filter(n => n.matches(sel)); }

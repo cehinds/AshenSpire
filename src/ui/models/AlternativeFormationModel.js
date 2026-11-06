@@ -100,13 +100,21 @@ export function alternativeFormation(plan, width, height, narrow, presentation =
   // The profile's strip height holds for the default drawing; with the extra rank on, the strips shrink to stay in the field.
   const stripFraction = Math.min(profile.rowHeight, (1 - profile.top) / bandRows);
   const rowHeight = height * stripFraction;
-  const bandTop = band => height * profile.top + band.row * rowHeight;
   const bandOf = id => activeBands.find(b => b.id === id);
+  // Owner 2026-11-06: the party's lowest strip must not hide under the hand. When the hand's top (field px, from
+  // presentation.handTop) is above where a figure's feet would stand in that strip, the whole grid rises by the
+  // difference, up to handLiftMaxFraction of the field, so the feet stand inside the drawn cell and above the hand.
+  const lowestBand = activeBands.findLast(b => b.side === 'player');
+  const frontBottom = height * profile.top + (lowestBand.row + 1) * rowHeight;
+  const lift = Number.isFinite(presentation.handTop) && GRID.footInCellFraction > 0
+    ? Math.max(0, Math.min(height * (GRID.handLiftMaxFraction ?? 0), frontBottom - GRID.footInCellFraction * rowHeight - presentation.handTop)) : 0;
+  const gridTop = height * profile.top - lift;
+  const bandTop = band => gridTop + band.row * rowHeight;
   // The party's baseline (zero shear) is the bottom of its front strip, where the lead player's feet stand.
   const baseline = bandTop(bandOf('player-front')) + rowHeight;
   const shear = y => profile.skew * (baseline - y);
   const laneWidth = Math.max(1, (width * (profile.right - profile.left)
-    - shear(height * profile.top)) / lanes);
+    - shear(gridTop)) / lanes);
   const place = cell => {
     const enemy = cell.side ? cell.side === 'enemy' : Number(cell.cell.slice(1)) > plan.columns;
     if (!enemy && cell.column > 0) return null;
