@@ -2,8 +2,9 @@
 
 Review baseline: `dev` at `19877c0697bfdca4b7563769f1fa6480fae53618` (`build: stamp 0.7.3.212`), 2026-11-06.
 Read-only review; no runtime code changes. Four layer reviews (engine+model, ui, composition
-root+content+styles, tools+tests+CI) were run in parallel and consolidated here, with every
-cited line re-checked against the tree. Correctness bugs were out of scope except where a
+root+content+styles, tools+tests+CI) were run in parallel and consolidated here, then every
+cited line was re-checked against the tree by a separate citation pass (about 200 citations;
+the spans and counts it corrected are reflected below). Correctness bugs were out of scope except where a
 structural flaw implies one.
 
 Where a finding is already tracked in [CLEANUP-PLAN.md](../CLEANUP-PLAN.md) it says so; the
@@ -22,7 +23,7 @@ The debt is concentrated in five places:
 
 1. **Six functions hold a third of the game.** `mountCombat` (4,270 lines),
    `mountEquipment` (1,950), `collectContentProblems` (1,806), `createSaveManager` (1,363),
-   `showFirstScreen` (~700) and `runOpcode` (505) are single closures whose helpers share one
+   `showFirstScreen` (~700) and `runOpcode` (503) are single closures whose helpers share one
    scope and cannot be tested alone.
 2. **The layer contract is inverted in ~30 edges.** `src/model` imports `src/ui` (4 files)
    and `src/engine` (10+ files); `src/content` imports `src/engine`; the root `engine/`
@@ -33,8 +34,8 @@ The debt is concentrated in five places:
    screenshot-harness state branches, all in the player boot path.
 4. **`tools/` carries ~30k lines of orphans and ~96 hand-copied CDP clients**, plus 7.7 MB
    of committed screenshot evidence that the evidence gate does not see.
-5. **Ruleset-version branching is scattered**: 141 `combatExpansionVersion` checks across 40
-   files and 126 `fixCoreEnabled(` calls, 36 of them in views. CLEANUP-PLAN step 3i/3j will
+5. **Ruleset-version branching is scattered**: 161 `combatExpansionVersion` comparisons across
+   47 files and 129 `fixCoreEnabled(` calls, 31 of these checks in views. CLEANUP-PLAN step 3i/3j will
    remove most; the rest should collapse into one policy object.
 
 Metrics at baseline:
@@ -100,10 +101,10 @@ so the fix is a relocation plus re-export, not a redesign.
 - `src/engine/save.js:370-1733` `createSaveManager`: ~30 inner functions. Seams at 378
   (archive), 525 (meta/profile), 672 (shared-profile store), 841 (space reclaim); four
   factories over `storage`, composed.
-- `src/engine/actions.js:1647` `runOpcode`: 505-line switch with a minified one-liner at
+- `src/engine/actions.js:1647-2149` `runOpcode`: 503-line switch with a minified one-liner at
   1650. Replace with an `OPCODE_HANDLERS` map.
-- `src/model/state.js:990` `validateRunShape` 682 lines; `:423` `initializeRunDerivedStats`
-  454 lines; `src/engine/combat.js:2583` `previewCard` 443; `:161` `createCombat` 363.
+- `src/model/state.js:990-1670` `validateRunShape` 682 lines; `:423-690` `initializeRunDerivedStats`
+  268 lines; `src/engine/combat.js:2583-3024` `previewCard` 443; `:161-517` `createCombat` 357.
 - `src/model/loadout.js` (3,958 lines, 89 exports, 64 importers): banners at 54, 122, 742,
   885, 1177, 1447, 2045, 2892, 3072, 3174, 3347, 3402 mark a clean `loadout/*.js` split
   behind an `index.js` barrel so importers do not move. (Plan #13.)
@@ -125,7 +126,7 @@ it a shape.)
   (c) `src/ui/displaySettings.js` (`layoutForCap` … `applyDisplaySettings`, 517-590);
   (d) `src/engine/runPersistence.js` (`persist*`, `saveNow`, `*PendingEntryCheckpoint`
   3036-3073, `saveSlotRecords`, `loadActiveSlot`); (e) `src/ui/bootArt.js`;
-  (f) `src/ui/rewardFlow.js` (`onCombatEnd` 213 lines, `beginPendingReward`,
+  (f) `src/ui/rewardFlow.js` (`onCombatEnd` 3084-3286, 203 lines, `beginPendingReward`,
   `mountPendingReward`); (g) one `setRegistries()` that also refreshes debug handles.
 
 **H5. `tools/` hygiene.**
@@ -142,7 +143,7 @@ it a shape.)
   8.1 MB in 385 JSON files. `tests/qa-evidence-size.test.mjs:21-26` only guards `docs/` and
   JSON. Fix: untrack, send to CI artifacts, widen the gate to `tools/` and images.
 - 34 of 39 `tests/*.browser.mjs` are run by nothing (discovery matches only `.test.mjs`,
-  `run-node.mjs:121`); they need Playwright via `PLAYWRIGHT_MODULE` (undeclared), 24
+  `run-node.mjs:107-130`); they need Playwright via `PLAYWRIGHT_MODULE` (undeclared), 24
   hardcode `/usr/bin/chromium`, 23 use 77 `waitForTimeout` sleeps, against
   DEVELOPER.md:598. Fix: port the keepers to `tools/browser.mjs`, delete the rest.
 
@@ -156,9 +157,9 @@ it a shape.)
 the cache check; compute the key first. The `resolveCache` key includes `playsEver`
 (`registries.js:650`), so it grows without bound within a run.
 
-**M2. Ruleset-version branches.** 141 `combatExpansionVersion` checks / 40 files (38 in
-`engine/combat.js`, 25 in `actions.js`), 126 `fixCoreEnabled(` calls, 36 version checks in
-`src/ui` (16 in `screens/combat.js`). `components/acBadge.js:8` re-implements the engine's
+**M2. Ruleset-version branches.** 161 `combatExpansionVersion` comparisons / 47 files (38 in
+`engine/combat.js`, 25 in `actions.js`), 129 `fixCoreEnabled(` calls, 31 version checks in
+`src/ui` (13 in `screens/combat.js`). `ui/models/acBadge.js:8` re-implements the engine's
 floor rule. `screens/combat.js:2066-2077` branches on version, computes
 `ratingDamageMultiplier` and builds English sentences inline. Plan step 3i/3j deletes the
 legacy branch; what remains should be one policy object chosen in `createCombat`, and the
@@ -179,7 +180,7 @@ interaction model and make the classes write-only.
   `record` ×7; `finite` ×5; identical hostile-op Set in `combatEngagement.js:80` and
   `combatRangeLineage.js:11`. One `model/guards.js`, `HOSTILE_OPS` in `schemas.js`.
 - "copy the fight's plain data" ×3: `combat.js:2440` `isData`, `combatRules.js:280`,
-  `combatRounds/timeline.js:981`.
+  `combatRounds/timeline.js:982`.
 - `sandbox()` ×6 and `mkdtempSync` ×39 across tools; 124 tools embed their own `--selftest`
   mutant harness (`holdconfirm.mjs:211-378`). One `tools/lib/mutants.mjs` and sidecar
   `*.selftest.mjs`.
@@ -210,7 +211,7 @@ load lazily instead of parsing on boot.
 
 **M8. `src/ui/models/` mixes three kinds of file.** Only 18 of 120 use `componentModel()`;
 53 contain no freeze; 32 are under 30 lines; `CombatIntentProjectionModel.js:44-83` and
-`CombatRangeRankModel.js:23-39` mutate their input. Split into `models/` (frozen),
+`CombatRangeRankModel.js:23-39` mutate their input (the former's function starts at 44 and ends at 82). Split into `models/` (frozen),
 `projections/` (pure), `controllers/` (stateful) and merge single-caller stubs.
 
 **M9. CSS.** `kit.css` 6,813 lines (63 `!important`), `combat.css` 2,221 (98),
@@ -233,9 +234,9 @@ documented number collision (99-106) and the root-import block copied three time
 
 - `src/model/state.js:1752` `migrateRunSchema` uses 15 literal version lists
   (`[1,…,18].includes`); `schemaVersion < N` with named constants reads better.
-- `src/engine/combat.js` has ~95 imports including 10 namespace imports named `A`, `F`,
+- `src/engine/combat.js` has 82 import statements including 9 namespace imports named `A`, `F`,
   `R`, `S`; name them.
-- `screens/settings.js:274-878` holds a 600-line `ROWS` table and string-built row HTML with
+- `screens/settings.js:274-850` holds a 577-line `ROWS` table and string-built row HTML with
   unescaped `${r.label}`; move `ROWS` to a model and render with kit builders.
 - `data-component` ids bypass the registry at `equipCompareModal.js:53`,
   `equipment.js:610`, and as string literals at `artLoadNotice.js:24,26`,
@@ -247,7 +248,7 @@ documented number collision (99-106) and the root-import block copied three time
   `src/framework`, `src/services`, `src/config`, `src/dev` and root `engine/`.
 - `tools/README.md` misses 16 `.mjs` and 21 of 25 `.py` tools; `sync-alternatives.yml` vs
   `alternative-sync.yml` naming.
-- 35 tests assign `globalThis.document` and 29 hand-roll `classList` although
+- 39 tests assign `globalThis.document` and 29 hand-roll `classList` although
   `tests/helpers/*-dom.mjs` exists; `serve-watch.test.mjs` and `engine-export.test.mjs` use
   real 100 ms sleeps.
 
