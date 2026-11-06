@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Desktop HUD, Armory and reward equip** ([#2619](https://github.com/cehinds/AshenSpire/pull/2619), `0.7.3.214`). Combat shows the player panel in the right margin on desktop, enemy panels show their intent instead of a name, the Armory lists only equipped slots, Core 2 creation review gets Edit deck, and reward items equip straight into the chosen slot.
 - **Game rules stay portable** ([#2613](https://github.com/cehinds/AshenSpire/pull/2613), `0.7.3.214`). A repository check catches browser dependencies in game rules and keeps shared text and hashing available outside the browser UI.
 - **Pages publish fits again** ([#2614](https://github.com/cehinds/AshenSpire/pull/2614), `0.7.3.212`). Oversized legacy inline builds are skipped and /latest/download is a redirect instead of a second 157 MB copy, so the site passes the size guard.
 - **Old branches can be cleaned up** ([#2610](https://github.com/cehinds/AshenSpire/pull/2610), `0.7.3.210`). The branch cleanup workflow can delete unmerged branches older than a given date on manual dispatch, with a keep list; protected branches and open PR branches are never touched.
