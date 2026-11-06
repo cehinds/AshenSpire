@@ -36,3 +36,9 @@ test('assemble fails an oversized site before it is uploaded', () => {
   assert.ok(guard > 0 && guard < upload, 'the size guard runs before the artifact upload');
   assert.match(workflow, /SITE_MAX_MB: 2500/);
 });
+
+test('the workflow passes --keep only when the dispatch input is given', () => {
+  assert.doesNotMatch(workflow, /inputs\.keep \|\| '3'/);
+  assert.match(workflow, /KEEP_INPUT: \$\{\{ inputs\.keep \|\| '' \}\}/);
+  assert.match(workflow, /keep_args=\(--keep /);
+});
