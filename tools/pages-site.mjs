@@ -28,7 +28,7 @@
 // /index-game.html.
 //
 // USAGE
-//   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
+//   node tools/pages-site.mjs --out _site [--keep N  (override; default per channel, see RETENTION)] [--branches dev,test,release,main] [--remote origin]
 //                             [--branch-previews <dir>]   open-PR feature branch builds (branches/<branch>/latest/)
 //                             [--main-build <dir>] [--build-missing <workdir>]
 //   node tools/pages-site.mjs --branch-dir <name>  exit 0 and print the name if it can be a site path
@@ -67,7 +67,17 @@ const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...altern
 // Clamped: each listed build that is no longer committed costs a rebuild, so a
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
-const KEEP = Math.min(KEEP_MAX, Math.max(1, Number(flag('--keep', '10')) || 10));
+// PER-CHANNEL RETENTION (owner, 2026-11-06): how many builds each channel lists. main,
+// dev and test keep 3, release keeps 10; every other channel (alternative/*) keeps
+// DEFAULT_KEEP. Only the newest build of a primary channel carries the offline file
+// (downloadKept), so release's older builds are Play-only. `--keep N` (the workflow's
+// optional `keep` input) overrides every channel for one run; absent, this table rules.
+export const RETENTION = { main: 3, release: 10, dev: 3, test: 3 };
+export const DEFAULT_KEEP = 3;
+export const keepFor = (branch, override = null) => Math.min(KEEP_MAX, Math.max(1, override ?? RETENTION[branch] ?? DEFAULT_KEEP));
+const keepFlag = flag('--keep', null);
+const KEEP_OVERRIDE = keepFlag === null ? null : (Number(keepFlag) || null);
+const KEEP_NOTE = KEEP_OVERRIDE ? `${KEEP_OVERRIDE} builds per branch (override)` : `main ${RETENTION.main}, release ${RETENTION.release}, dev ${RETENTION.dev}, test ${RETENTION.test}, others ${DEFAULT_KEEP} builds`;
 // A directory holding AshenSpire.html and AshenSpire-mobile.html built by CI from
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
@@ -981,7 +991,7 @@ ${previews ? branchPreviewSection(previews) : ''}
 <h2>Other pages on this site</h2>
 ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)}">${esc(pg.title || pg.path)}</a>${pg.title ? '' : ' <span class="meta">(no &lt;title&gt; — listed by path)</span>'} <span class="meta">${esc(pg.path)}</span></li>`).join('')}</ul>` : '<p class="meta">no other pages found in the published tree</p>'}
 <p><a href="${REPO_URL}">repository</a></p>
-<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history and from the published tree — nothing on this page is typed by hand, this list included. Listing the newest ${KEEP} builds per branch.</footer>
+<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history and from the published tree — nothing on this page is typed by hand, this list included. Listing the newest builds per branch (${KEEP_NOTE}).</footer>
 </main></body></html>`;
 }
 
@@ -1241,7 +1251,7 @@ function publishBuild(outDir, b, a) {
   return checks;
 }
 
-function assemble(outDir, keep) {
+function assemble(outDir, keepOverride) {
   const generatedAt = new Date().toISOString();
   skippedBuilds.length = 0;
   rmSync(outDir, { recursive: true, force: true });
@@ -1327,7 +1337,7 @@ function assemble(outDir, keep) {
   let checks = 0;
   const branchData = [];
   for (const branch of BRANCHES) {
-    const { head, builds: listed, headTracksBuild, headOrdinal } = buildsOf(branch, keep);
+    const { head, builds: listed, headTracksBuild, headOrdinal } = buildsOf(branch, keepFor(branch, keepOverride));
     // Fetch or rebuild every listed build FIRST, so one that cannot be served
     // leaves the list (named in skippedBuilds) before any page links it.
     const served = new Map();
@@ -1423,7 +1433,7 @@ function assemble(outDir, keep) {
   writeOgImage(outDir, mainRef);
   writeSourceAssets(outDir, mainRef);
   dropBuildTree();
-  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
+  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep: KEEP_OVERRIDE ?? RETENTION, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
 
@@ -1826,7 +1836,7 @@ function packStorePlants(probe, box, good) {
 }
 
 function boundary() {
-  console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
+  console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest builds per branch (${KEEP_NOTE}) — older ordinals are in git, not on this site.`);
 }
 
 // `--branch-dir <name>`: the workflow's one check of a branch name. It prints the
@@ -2062,7 +2072,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (!process.exitCode) console.log(`pages-site --check: OK — ${n} checks passed`);
   } else {
     const outDir = resolve(ROOT, flag('--out', '_site'));
-    const { checks, branchData } = assemble(outDir, KEEP);
+    const { checks, branchData } = assemble(outDir, KEEP_OVERRIDE);
     for (const d of branchData) console.log(`  ${d.branch}: ${d.builds.length} build(s), latest ${d.builds[0] ? stampOf(d.builds[0]) : 'none'}`);
     // Named on its own line, above the verdict, so it cannot hide inside a green.
     if (missingBranches.length) console.log(`  MISSING: ${missingBranches.join(', ')} — no such branch on ${REMOTE}; assembled without it`);
