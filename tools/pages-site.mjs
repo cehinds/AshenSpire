@@ -142,6 +142,8 @@ const DOWNLOAD_PATH = 'download/AshenSpire.html';
 // ordinal's file); older builds and the alternative channels are Play-only.
 // The build's page and art in the store are untouched, so Play works for all of them.
 export const downloadKept = (branch, newest) => newest && !branch.startsWith('alternative/');
+/** Archived (no offline download) unless it is the first build of a primary channel actually published. */
+export const archivedFor = (branch, publishedCount) => !downloadKept(branch, publishedCount === 0);
 // BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
 //
 // Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
@@ -489,6 +491,8 @@ function rebuildAt(sha, fullArt, { skipSingle = false } = {}) {
     result = { dir };
   } catch (error) {
     result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
+    // A rebuild that failed after copying part of its output leaves no partial out dir.
+    try { rmSync(join(resolve(BUILD_MISSING), 'out', key.replace(':', '-')), { recursive: true, force: true }); } catch { /* best effort */ }
   }
   rebuilt.set(key, result);
   return result;
@@ -528,11 +532,12 @@ function webEditionIn(dir, objectsRoot) {
 }
 
 /** Delete the out/ dir of each rebuilt (non-seeded) build in `listed` and forget it. */
-function freeRebuilds(listed) {
+function freeRebuilds(listed, keepKeys = new Set()) {
   for (const b of listed) {
     if (b.source !== 'rebuild') continue;
     if (MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha) continue;
     const key = `${b.sha}:${fullArtFor(b.branch, b.sha) ? 'full' : 'light'}`;
+    if (keepKeys.has(key)) continue;   // a later branch lists the same build: keep it, do not rebuild twice
     const r = rebuilt.get(key);
     if (r && r.dir) rmSync(r.dir, { recursive: true, force: true });
     rebuilt.delete(key);
@@ -1408,34 +1413,32 @@ function assemble(outDir, keepOverride) {
     const { head, builds: allListed, headTracksBuild, headOrdinal } = listings.get(branch);
     const listed = [];
     for (const b of allListed) { if (overCap.has(b)) skip(b, `rebuild cap ${MAX_REBUILDS} reached`); else listed.push(b); }
-    // Fetch or rebuild every listed build FIRST, so one that cannot be served
-    // leaves the list (named in skippedBuilds) before any page links it.
-    const served = new Map();
-    for (const b of listed) {
-      // Decided BEFORE the rebuild, so an archived build skips its single file;
-      // the newest build that is actually served keeps its download.
-      b.downloadArchived = !downloadKept(branch, served.size === 0);
-      const a = artifactsOf(b);
-      if (a.error) skip(b, a.error); else served.set(b, a);
-    }
-    // A build the store refuses (a name another build already published with
-    // other bytes, or a pin or index naming a file outside packs/ and
-    // objects/) is skipped and named like any other unservable build; the
-    // rest of the publication goes ahead (review of #1456).
+    // Per build: decide whether it keeps its download (only the first build
+    // actually PUBLISHED does), fetch or rebuild it, publish it, free it. A build
+    // the store refuses (a name another build already published with other
+    // bytes, or a pin or index naming a file outside packs/ and objects/) is
+    // skipped and named like any other unservable build; the rest goes ahead
+    // (review of #1456), and the next build then becomes the first published.
     const builds = [];
+    const laterKeys = new Set();
+    for (const later of BRANCHES.slice(BRANCHES.indexOf(branch) + 1)) {
+      for (const lb of listings.get(later).builds) if (lb.source === 'rebuild') laterKeys.add(`${lb.sha}:${fullArtFor(lb.branch, lb.sha) ? 'full' : 'light'}`);
+    }
     for (const b of listed) {
-      if (!served.has(b)) continue;
-      if (!served.get(b).web) b.downloadArchived = undefined;
-      try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
+      b.downloadArchived = archivedFor(branch, builds.length);
+      const a = artifactsOf(b);
+      if (a.error) { skip(b, a.error); freeRebuilds([b], laterKeys); continue; }
+      if (!a.web) b.downloadArchived = undefined;
+      try { checks += publishBuild(outDir, b, a); builds.push(b); }
       catch (error) {
         if (!error.refused) throw error;
         rmSync(join(outDir, branch, String(b.ordinal)), { recursive: true, force: true });
         skip(b, error.message);
       }
+      // Published: its out/ dir is no longer read (a later branch listing the
+      // same sha:tier rebuilds it; store/ stays, shared).
+      freeRebuilds([b], laterKeys);
     }
-    // This branch is published: its rebuilds' out/ dirs are no longer read (a
-    // later branch listing the same sha:tier rebuilds it; store/ stays, shared).
-    freeRebuilds(listed);
     enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
     // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
     // or rebuilt from the head's source. Otherwise the newest listed build is

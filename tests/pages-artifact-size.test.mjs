@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds } from '../tools/pages-site.mjs';
+import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor } from '../tools/pages-site.mjs';
 
 // The Pages artifact must stay well under 1 GB (run 42174299001 was 5.2 GB and
 // timed out in deploy-pages). These rules are what keeps it there.
@@ -74,11 +74,18 @@ test('--max-rebuilds clamps to 1..200 with a default of 12', () => {
   assert.equal(clampMaxRebuilds('7'), 7);
 });
 
-test('downloadArchived is decided before a build is rebuilt, and an archived build skips the single file', () => {
+test('archivedFor keeps the download for the first PUBLISHED build of a primary channel only', () => {
+  assert.equal(archivedFor('dev', 0), false);
+  assert.equal(archivedFor('dev', 1), true);
+  assert.equal(archivedFor('alternative/dev', 0), true);
+});
+
+test('each build is decided, rebuilt, published and freed in turn', () => {
   const src = readFileSync(new URL('../tools/pages-site.mjs', import.meta.url), 'utf8');
-  const decide = src.indexOf('b.downloadArchived = !downloadKept(branch, served.size === 0)');
-  const rebuild = src.indexOf('const a = artifactsOf(b);');
-  assert.ok(decide > 0 && rebuild > decide, 'archived is set before artifactsOf rebuilds');
+  const decide = src.indexOf('b.downloadArchived = archivedFor(branch, builds.length)');
+  const rebuild = src.indexOf('const a = artifactsOf(b);', decide);
+  const publish = src.indexOf('publishBuild(outDir, b, a)', rebuild);
+  const free = src.indexOf('freeRebuilds([b], laterKeys);', publish);
+  assert.ok(decide > 0 && rebuild > decide && publish > rebuild && free > publish);
   assert.match(src, /rebuildAt\(b\.sha, fullArt, \{ skipSingle: b\.downloadArchived === true \}\)/);
-  assert.match(src, /freeRebuilds\(listed\)/);
 });
