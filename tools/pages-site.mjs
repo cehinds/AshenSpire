@@ -109,6 +109,17 @@ export function planRebuilds(lists, { max = MAX_REBUILDS_DEFAULT, tierOf = () =>
   }
   return { plan, over };
 }
+/**
+ * The sha:tier keys whose single file some branch may still publish: the newest
+ * listed build of every branch that keeps a download. Pure. A shared rebuild is
+ * only stripped of its single file when no branch needs it.
+ */
+export function singleNeededKeys(lists, tierOf = () => 'light') {
+  const keys = new Set();
+  for (const { branch, builds } of lists) if (builds[0] && downloadKept(branch, true)) keys.add(`${builds[0].sha}:${tierOf(branch, builds[0].sha)}`);
+  return keys;
+}
+let singleNeeded = new Set();
 const keepFlag = flag('--keep', null);
 const KEEP_OVERRIDE = keepFlag === null ? null : (Number(keepFlag) || null);
 const KEEP_NOTE = KEEP_OVERRIDE ? `${KEEP_OVERRIDE} builds per branch (override)` : `main ${RETENTION.main}, release ${RETENTION.release}, dev ${RETENTION.dev}, test ${RETENTION.test}, others ${DEFAULT_KEEP} builds`;
@@ -420,7 +431,14 @@ let buildTree = null;
 /** Rebuild one commit's standalone from source; returns { dir } or { error }. */
 function rebuildAt(sha, fullArt, { skipSingle = false } = {}) {
   const key = `${sha}:${fullArt ? 'full' : 'light'}`;
-  if (rebuilt.has(key)) return rebuilt.get(key);
+  if (rebuilt.has(key)) {
+    const cached = rebuilt.get(key);
+    // SAFETY NET: the cached out dir was stripped of its single file for an
+    // archived build, but this caller publishes it; rebuild rather than read a missing file.
+    if (!(cached.dir && cached.strippedSingle && !skipSingle)) return cached;
+    rmSync(cached.dir, { recursive: true, force: true });
+    rebuilt.delete(key);
+  }
   const env = { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' };
   const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, env, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
   let result;
@@ -488,7 +506,7 @@ function rebuildAt(sha, fullArt, { skipSingle = false } = {}) {
     // file (~157 MB, several copies) go before the next rebuild, not at its start.
     run('git', ['clean', '-ffdxq'], buildTree);
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
-    result = { dir };
+    result = { dir, strippedSingle: Boolean(skipSingle && webTree) };
   } catch (error) {
     result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
     // A rebuild that failed after copying part of its output leaves no partial out dir.
@@ -564,7 +582,7 @@ function artifactsOf(b) {
   }
   const fullArt = fullArtFor(b.branch, b.sha);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
-  const r = seeded || rebuildAt(b.sha, fullArt, { skipSingle: b.downloadArchived === true });
+  const r = seeded || rebuildAt(b.sha, fullArt, { skipSingle: b.downloadArchived === true && !singleNeeded.has(`${b.sha}:${fullArt ? 'full' : 'light'}`) });
   if (r.error) return r;
   const archived = b.downloadArchived === true && existsSync(join(r.dir, WEB_DIR, 'AshenSpire.html'));
   // An archived pack build's single file was not copied (rebuildAt skipSingle); its page is the web edition.
@@ -1408,6 +1426,7 @@ function assemble(outDir, keepOverride) {
     tierOf: (branch, sha) => (fullArtFor(branch, sha) ? 'full' : 'light'),
     seeded: (b) => Boolean(MAIN_BUILD) && b.branch === 'main' && b.sha === mainHeadSha,
   });
+  singleNeeded = singleNeededKeys([...listings].map(([branch, l]) => ({ branch, builds: l.builds })), (branch, sha) => (fullArtFor(branch, sha) ? 'full' : 'light'));
   console.log(`rebuild plan: ${rebuildPlan.length} builds (cap ${MAX_REBUILDS} on non-newest)${rebuildPlan.length ? ' — ' + rebuildPlan.map((x) => `${x.branch}/${x.ordinal} ${x.sha.slice(0, 7)} ${x.tier}`).join(', ') : ''}`);
   for (const branch of BRANCHES) {
     const { head, builds: allListed, headTracksBuild, headOrdinal } = listings.get(branch);

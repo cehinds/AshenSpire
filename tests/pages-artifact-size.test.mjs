@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor } from '../tools/pages-site.mjs';
+import { downloadKept, keepFor, RETENTION, planRebuilds, clampMaxRebuilds, archivedFor, singleNeededKeys } from '../tools/pages-site.mjs';
 
 // The Pages artifact must stay well under 1 GB (run 42174299001 was 5.2 GB and
 // timed out in deploy-pages). These rules are what keeps it there.
@@ -87,5 +87,21 @@ test('each build is decided, rebuilt, published and freed in turn', () => {
   const publish = src.indexOf('publishBuild(outDir, b, a)', rebuild);
   const free = src.indexOf('freeRebuilds([b], laterKeys);', publish);
   assert.ok(decide > 0 && rebuild > decide && publish > rebuild && free > publish);
-  assert.match(src, /rebuildAt\(b\.sha, fullArt, \{ skipSingle: b\.downloadArchived === true \}\)/);
+  assert.match(src, /rebuildAt\(b\.sha, fullArt, \{ skipSingle: b\.downloadArchived === true/);
+});
+
+test('a shared build keeps its single file when any download-keeping branch lists it newest', () => {
+  const lists = [mk('release', ['x1', 'r2']), mk('test', ['t1', 'x1']), mk('alternative/dev', ['x1']), mk('dev', ['d1', 'd2'])];
+  const need = singleNeededKeys(lists);
+  assert.deepEqual([...need].sort(), ['d1:light', 't1:light', 'x1:light'].sort());
+  assert.ok(!need.has('r2:light') && !need.has('d2:light'), 'older builds may skip the single file');
+  assert.ok(!singleNeededKeys([mk('alternative/dev', ['a1'])]).has('a1:light'), 'alternative channels keep no download');
+});
+
+test('rebuildAt drops a cached out dir that was stripped of its single file when a caller needs it', () => {
+  const src = readFileSync(new URL('../tools/pages-site.mjs', import.meta.url), 'utf8');
+  assert.match(src, /cached\.strippedSingle && !skipSingle/);
+  assert.match(src, /strippedSingle: Boolean\(skipSingle && webTree\)/);
+  assert.match(src, /!singleNeeded\.has\(/);
+  assert.ok(src.indexOf('cached.strippedSingle') < src.indexOf('const env = { ...process.env, GIT_LFS_SKIP_SMUDGE'), 'checked on the cache hit, before any rebuild');
 });
