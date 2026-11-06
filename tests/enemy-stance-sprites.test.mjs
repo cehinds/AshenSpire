@@ -114,7 +114,7 @@ test('planned stance persists through status changes and reactions, then follows
   t.mock.timers.tick(200);
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.play('attack', 260);
-  tickFrames(t, 380); // 4 frames at the 89 ms frame hold (was 260 ms), re-pinned 2026-11-02
+  tickFrames(t, 520); // 4 frames at the 125 ms frame hold (89 ms before the 550 ms default Animation step, 2026-11-06)
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.defend);
   stage.setState({ ...entity, presentationStance: 'preparing' });
   assert.equal(el.dataset.pose, enemyStanceSprites.stitchedHound.preparing);
