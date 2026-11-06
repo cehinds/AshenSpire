@@ -64,3 +64,19 @@ test('the battlefield fit routes its per-combatant writes through the change-onl
   assert.match(source, /setStyle\(sprite, 'zoom'/);
   assert.doesNotMatch(source, /frame\.dataset\.(formationRow|baseSpriteScale|spriteRatio|groundY)\s*=/);
 });
+
+test('re-selecting the same combatant rewrites no aria-pressed or class on any frame', async () => {
+  const { selectCombatantInfo } = await import('../src/ui/components/combatantOverhead.js');
+  const writes = [];
+  const frame = id => { const attrs = new Map([['aria-pressed', 'false']]), cls = new Set();
+    return { dataset: { eid: id }, classList: { contains: c => cls.has(c), toggle(c, on) { if (on) cls.add(c); else cls.delete(c); } },
+      getAttribute: n => attrs.get(n) ?? null, setAttribute(n, v) { writes.push(`${id}:${n}`); attrs.set(n, v); } }; };
+  const frames = [frame('player'), frame('e1')];
+  const root = { querySelectorAll: () => frames, matches: () => true, dispatchEvent() {} };
+  globalThis.document ??= {}; 
+  selectCombatantInfo(root, 'e1');
+  const first = writes.length;
+  selectCombatantInfo(root, 'e1');
+  selectCombatantInfo(root, 'e1');
+  assert.equal(writes.length, first, 'selecting the already selected combatant writes no attribute');
+});
