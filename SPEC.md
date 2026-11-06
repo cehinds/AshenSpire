@@ -358,19 +358,18 @@ one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabl
 baseline, pointsPerCard, minimum, maximum }`) and `balance.handMax`. `validateContent` refuses
 each by name if it returns (`balance.handMax`, `balance.combatRatings.multiplier`,
 `handRules.starting|turn|capacity`), as it refuses `balance.poise.playerPerConstitution`. Their
-settings keys convert on import and on profile load/restore into the rows' own keys
-(`gameConfig.derivedStatRules.rules.<id>.<field>`; `model/statRows.js`
-`migrateLegacyStatSettings`): rating weights and bases carry over, a multiplier ≠ 1 is folded
-into the weights, a tuned hand group is fitted to the closest weight row, each with a warning.
-**Old runs are priced as they were.** A run snapshots its rows at birth; a run born under
-ruleset 1–6 reads its own snapshot's pools plus the retired homes restated as rows with exact
-carrier fields (`pointsBaseline`, `pointsPerIncrease`, `multiplier`), from the frozen ruleset-6
-numbers and its own configuration snapshot, and a saved fight keeps the rating and hand rules it
-was saved with. Only new runs read ruleset 7.
+settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`,
+`balance.handMax`, and the per-item `combatRatings.bonuses.*`) are **dropped, never converted**,
+on import and on profile load/restore, with one warning per family
+(`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
+Unmarked pre-ruleset-7 settings are no longer detected: the `statRowsVersion` marker is gone, so
+any `derivedStatRules.rules.draw.*` or `.poise.*` key is read with its current meaning.
 
-Ruleset 6 (the owner's multi-attribute pool defaults of 2026-09-24) and ruleset 5's
-single-attribute rows (`30 + 4 × CON`, `3 + floor(INT / 5)`, `3 + floor(DEX / 5)`, `1 + WIS`,
-`1 + CON`, §13.4l) remain readable for the saves born under them.
+**Pre-ruleset-7 runs are refused, not priced.** The shipping game refuses any run without a pinned
+Core 2 profile at load (`engine/save.js` `retiredProfileReason`): the bytes stay in the slot and
+are never migrated, so no frozen ruleset-6 pricing exists. A run snapshot older than ruleset 7
+that does load (tools and tests with no game profile) reads the rating and hand rows its
+snapshot lacks from the live table (`model/statRows.js` `statRow`).
 
 The defaults above are independently configurable rows. “Configurable” never means parsing
 formula strings or letting a screen recompute them: the structured formula table remains the

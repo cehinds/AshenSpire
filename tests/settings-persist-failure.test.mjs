@@ -15,7 +15,6 @@ test('a thrown settings save restores live preference and cannot leak into a lat
   let settled=0;
   const context={structuredClone,seedAfterChange,SEED_KEY,run:null,xpCombat:null,
     activeMeta:null,activeSettings:null,app:{},
-    STAT_ROWS_CHANGED_MEANING:/$^/,STAT_ROWS_MARKER:'unused',STAT_ROWS_VERSION:1,
     saves:{profileStatus:()=>({quarantined:false}),loadMeta:()=>structuredClone(stored),
       saveMeta:async meta=>{if(fail)throw new Error('storage interrupted');stored=structuredClone(meta);return{ok:true};}},
     applyDisplaySettings:settings=>painted.push(structuredClone(settings)),
