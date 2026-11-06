@@ -1207,7 +1207,10 @@ export function playTimeline(events, ctx, done) {
         for (const event of costOf(beat)) {
           visualSafe(() => parts.get(event)?.contact?.(ctx));
           const label = COST_LABEL[event.type];
-          if (label && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
+          // On Core 2 energy is aliased to stamina (model/turnStamina.js) and a play emits both receipts for ONE payment:
+          // show that payment once, as SP. Distinct costs (SP and MP, say) all show.
+          const aliased = event.type === 'energySpent' && costOf(beat).some(row => row.type === 'staminaSpent' && row.amount === event.amount);
+          if (label && !aliased && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
         }
         visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: costOf(beat) }));
         traceBeat('cost', beat.actorId);
