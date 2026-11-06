@@ -534,9 +534,9 @@ jobs:
             echo "${total} MB assembled (warn at ${SITE_WARN_MB} MB, fail at ${SITE_MAX_MB} MB). Largest folders:"
             echo
             echo '```'
-            du -sm --apparent-size _site/* | sort -rn | head -12
+            du -sm --apparent-size _site/* | sort -rn | head -12 || true
             echo
-            du -sm --apparent-size _site/*/* 2>/dev/null | sort -rn | head -12
+            du -sm --apparent-size _site/*/* 2>/dev/null | sort -rn | head -12 || true
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$total" -gt "$SITE_MAX_MB" ]; then
