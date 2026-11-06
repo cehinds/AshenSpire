@@ -746,8 +746,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     // The resting hand's top, in field px, as the previous pass settled it (the hand lays out after this read, so its
-    // live rect is not yet final): the grid rises so the party's front strip stands above it (handLiftMaxFraction).
-    const planHandTop = layoutState.handAnchor?.top;
+    // live rect is not yet final): the grid rises so the party's lowest strip (player-back) stands above it
+    // (handLiftMaxFraction). Only an anchor settled for THIS layout key counts, so a rotation or resize lifts nothing.
+    const planHand = combat.querySelector('.hand'), planHandRect = planHand?.getBoundingClientRect();
+    const planHandKey = planHandRect && planHand.clientWidth > 0
+      ? handGeometryKey({ width: planHand.clientWidth, height: planHand.clientHeight, zoom: planHandRect.width / planHand.clientWidth,
+        fontSize: layoutMetrics().fontSize, left: planHandRect.left }) : null;
+    const planLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':'
+      + planHandKey?.split(':').map(value => Number.isFinite(Number(value)) ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
+    const planHandTop = layoutState.handAnchor?.key === planLayoutKey ? layoutState.handAnchor.top : null;
     alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop : null, formFactor: document.documentElement.dataset.formFactor });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
