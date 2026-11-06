@@ -1,3 +1,4 @@
+import { setData, setAttr } from '../src/ui/domWrite.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -216,7 +217,7 @@ test('an inspection-door panel is one button and keeps its content as its name',
     const panel = document.createElement('div'); panel.className = 'target-hud-panel';
     const name = document.createElement('div'); name.className = 'target-hud-name';
     panel.append(name); shell.append(panel); document.body.append(shell);
-    const scope = { document: target(), window: target(), gestures: new AbortController(), eligible: [], onActivate: () => {}, canInspect: () => true, entries: new Map(), hideTooltip() {}, setTimeout, clearTimeout, performance };
+    const scope = { setData, setAttr, document: target(), window: target(), gestures: new AbortController(), eligible: [], onActivate: () => {}, canInspect: () => true, entries: new Map(), hideTooltip() {}, setTimeout, clearTimeout, performance };
     const { syncActivation } = runInNewContext(`${source.slice(begin, end)}\n({ syncActivation });`, scope);
     syncActivation(shell, 'e1');
     assert.equal(panel.getAttribute('role'), 'button');

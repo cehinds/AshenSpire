@@ -474,11 +474,13 @@ export function attachTooltip(el, contentFn, {
 } = {}) {
   adoptTitle(el);
   el.dataset.tipAttached = 'true';
+  // The content function lives in a hook, so a HUD node kept across a rebuild (domWrite.morph) shows its newest text.
+  (el.__hooks ||= {}).tip = contentFn;
   const show = () => {
     pending = null;
     if (!el.isConnected || heldBackInCard(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
     const avoid = clear || el.parentElement;
-    return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
+    return showFn ? showFn() : showWith((el.__hooks?.tip || contentFn)(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
   const queue = (delay, origin = 'transient') => {
     if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
@@ -584,7 +586,7 @@ export function attachTooltip(el, contentFn, {
     });
   }
   if (expand) {
-    const open = () => { hideTooltip(); expander?.(contentFn(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
+    const open = () => { hideTooltip(); expander?.((el.__hooks?.tip || contentFn)(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
     if (!isControl()) el.addEventListener('click', (ev) => {
       ev.preventDefault();
       if (selectedControl === el) { open(); return; }

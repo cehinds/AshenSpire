@@ -257,34 +257,37 @@ test('every form factor fits the entire artwork envelope within its own cell', (
       assert(fit.x - half >= left + 6 - 1e-6, `${formFactor} complete left edge`);
       assert(fit.x + half <= right - 6 + 1e-6, `${formFactor} complete right edge`);
       if (formFactor === 'desktop') {
-        // Owner 2026-10-28: on desktop and widescreen the HP bar is capped at half the lane and centred on its body.
-        assert(Math.abs(actor.slot.miniHudWidth - (box.width * 0.5 - 4)) < 1e-6);
+        // Owner 2026-11-06: every mini HUD is exactly as wide as its cell (the old half-lane cap on desktop is gone; a
+        // font scale fits the contents). It stays centred on its body.
+        assert(Math.abs(actor.slot.miniHudWidth - box.width) < 1e-6);
         assert(Math.abs(actor.slot.miniHudLeft + actor.slot.miniHudWidth / 2 - actor.slot.x) < 1e-6, 'desktop HUD is centred over its body');
         continue;
       }
-      assert.equal(actor.slot.miniHudWidth, box.width - 4);
-      assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2 + 2)) < 1e-6);
+      assert.equal(actor.slot.miniHudWidth, box.width);
+      assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2)) < 1e-6);
     }
     const back = formation.slots.filter(slot => slot.formationRole === 'enemy-back');
     assert.equal(new Set(back.map(slot => slot.miniHudTop)).size, 1, 'back-row HP geometry is level');
   }
 });
 
-test('the short profile narrows each HUD to 0.55 of its lane, desktop to 0.5 centred on the body; phone keeps the whole lane', () => {
-  const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.miniHudInsetPx;
-  assert.equal(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.short.hudWidthFraction, 0.55);
-  for (const [width, height, narrow, fraction] of [[844, 240, false, 0.55], [1600, 620, false, 0.5], [390, 420, true, 1]]) {
+// Owner 2026-11-06: "make the mini HUD only as wide as the cell". The short and desktop profiles no longer narrow it to
+// 0.55 / 0.5 of the lane (that test is replaced): every profile gives the whole cell, and the contents are fitted by
+// the mini HUD font scale instead.
+test('every profile gives each HUD the whole width of its cell; desktop stays centred on the body', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  assert.equal(grid.miniHudInsetPx, 0);
+  assert.equal(grid.short.hudWidthFraction, 1);
+  for (const [width, height, narrow] of [[844, 240, false], [1600, 620, false], [390, 420, true]]) {
     const formation = alternativeFormation(plan(3), width, height, narrow);
     for (const cell of formation.cells) {
-      const lane = cell.box.width;
-      assert.ok(Math.abs(cell.miniHudWidth - (lane * fraction - 2 * inset)) < 1e-6, `${width}x${height}: HUD width is ${fraction} of the lane`);
+      assert.ok(Math.abs(cell.miniHudWidth - cell.box.width) < 1e-6, `${width}x${height}: HUD width is the cell width`);
       if (width === 1600) { // desktop: centred on the body, not the lane (owner 2026-10-28)
         assert.ok(Math.abs(cell.miniHudLeft + cell.miniHudWidth / 2 - cell.x) < 1e-6, `${width}x${height}: the desktop HUD is centred over its body`);
         continue;
       }
-      const slack = (lane - lane * fraction) / 2;
-      const flush = cell.box.left + cell.box.skew * cell.box.height / 2 + inset;
-      assert.ok(Math.abs(cell.miniHudLeft - (flush + slack)) < 1e-6, `${width}x${height}: the narrowed HUD stays centred in its lane`);
+      const flush = cell.box.left + cell.box.skew * cell.box.height / 2;
+      assert.ok(Math.abs(cell.miniHudLeft - flush) < 1e-6, `${width}x${height}: the HUD stands flush with its cell`);
     }
   }
 });

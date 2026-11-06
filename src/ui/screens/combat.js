@@ -34,7 +34,7 @@ import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
@@ -146,7 +146,7 @@ import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame, updateCombatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
+import { combatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
@@ -977,16 +977,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
     const maneuver = profile.maneuver || 'prepare';
     const previous = player.querySelector('.player-action-intent');
-    // The glyph depends only on maneuver; its callback reads current selection.
-    // Keeping it also keeps focus and avoids a redundant full-board refit.
-    if (previous?.dataset.maneuver === maneuver) return;
-    previous?.remove();
+    // The glyph node is built once and kept (owner, 2026-11-06): a new maneuver only switches which of its drawn
+    // glyphs shows, so nothing is removed, re-created or refitted for it.
+    if (previous) { setPlayerActionManeuver(previous, profile); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
-      action.dataset.maneuver = maneuver;
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');
@@ -1580,6 +1578,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const auraColor = role === 'player' ? '#87caff' : TARGET_HUD_AURA[matchup];
       return { id: entity.id, role, matchup, matchupActive, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
         intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup, matchupActive]),
+        statusKey: JSON.stringify(statusRows(entity)),
         createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
     });
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
@@ -2203,7 +2202,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
         const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
-        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp });
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -2320,11 +2319,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (changed.meters) slots.meters = build.meters();
     if (changed.statuses) slots.statuses = build.statuses();
     if (changed.chips) slots.chips = build.chips();
-    if (!updateCombatantSlots(box, slots)) {
-      // The target-HUD rack holds the meters: a full update discards it, as it always has.
-      updateCombatantFrame(box, { classNames: slots.classNames, leading: slots.leading ?? build.leading(), name: slots.name ?? build.name(),
-        meters: slots.meters ?? build.meters(), trailing: [slots.statuses ?? build.statuses(), ...(slots.chips ?? build.chips())] });
-    }
+    updateCombatantSlots(box, slots);
     record.slotKeys = keys;
    
     return true;
@@ -2528,7 +2523,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
-        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && targeting ? (idx < 9 ? idx : null) : null, settings]),
+        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, !!targeting, settings]),
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
@@ -2541,9 +2536,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // WCO1: Inspect above the intent; the intent shows per the overlay config.
           if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), showIntent ? intentEl(enemy) : null);
           // Target-number badge for keyboard targeting (SPEC §7.3).
-          if (enemy.alive && targeting) {
+          // Owner (2026-11-06): the key is part of the frame from the start and only shown while a card is armed,
+          // so arming a card adds no node to the HUD.
+          if (enemy.alive && idx >= 0 && idx < 9) {
             // The target number is a Keycap, the same atom every other key wears.
-            if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
+            const key = keycap(String(idx + 1), { class: 'enemy-key' });
+            key.hidden = !targeting;
+            leading.push(key);
           }
           return leading;
         },
