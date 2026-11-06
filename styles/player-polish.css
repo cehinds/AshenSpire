@@ -668,6 +668,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.merchant-workspace .shop-foot .modal-foot-actions { flex-direction:row; flex-wrap:nowrap; }
 :root .shop-workspace.merchant-workspace .shop-foot .as-btn { min-height:calc(44px / var(--ui-zoom,1)); }
 :root[data-layout='narrow'] .shop-workspace.merchant-workspace { padding:6rem .8rem .5rem; }
+:root[data-layout='narrow'] .shop-workspace.merchant-workspace.blacksmith-workspace { padding-top:calc(30 * var(--view-vh, 1vh)); }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
@@ -709,6 +710,3 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.blacksmith-compact .shop-switch > button { flex:1 1 0; min-width:0; justify-content:center; text-align:center; text-transform:uppercase; letter-spacing:.06em; white-space:normal; }
 :root .shop-workspace.blacksmith-compact .shop-pane { flex:1 1 auto; min-height:0; max-height:none; }
 :root .shop-workspace.blacksmith-compact .shop-offers { min-height:0; }
-:root .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { gap:.6rem 1rem; padding:.7rem 1rem; }
-:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { flex-wrap:wrap; }
-:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick > .as-btn { flex:1 1 100%; }
