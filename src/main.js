@@ -3796,7 +3796,8 @@ function showGameProfileReward() {
     canEditDeck: !!deckDoors().armoury,
     onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null, 'rewards'),
     canEditEquipment: !!gameModule(run, 'equipment'),
-    onEditEquipment: (index, back) => showArmoury('', back),
+    // Owner 2026-11-06: the Armoury opened from a reward carries the item, so choosing a slot equips THAT item (no second picker).
+    onEditEquipment: (index, back) => showArmoury({ equipItemId: run.gameProfileRewardOffers[pending.offerId]?.options?.[index]?.id || '' }, back),
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;
