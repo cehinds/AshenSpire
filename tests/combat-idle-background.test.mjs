@@ -19,3 +19,14 @@ test('auto combat arms its tick only while Auto is on, and every Auto change re-
 test('combat.js starts no interval at all', () => {
   assert.doesNotMatch(source, /\bsetInterval\(/);
 });
+
+test('leaving the combat screen disarms End Turn, whose hold door listens on window', () => {
+  const unmount = source.slice(source.indexOf('const pagerVeilObserver = new MutationObserver'), source.indexOf("combatEl.dataset.handPagerOwner = 'active'"));
+  assert.match(unmount, /endTurnBeat\?\.\(\); endTurnBeat = null;/);
+});
+
+test('the reward Continue door is disarmed before a repaint re-arms it and when the screen is left', () => {
+  const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
+  assert.match(reward, /disarmContinue\?\.\(\);\s*disarmContinue = beatArmer\(meta, registries\)\(cont, 'rewardContinue'/);
+  assert.match(reward, /onDone\(chosenCardId\);\s*disarmContinue\?\.\(\); disarmContinue = null;/);
+});

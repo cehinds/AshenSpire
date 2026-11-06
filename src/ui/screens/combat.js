@@ -4376,6 +4376,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         reactionShell?.dismiss();
         releaseRangeAction();
         handStrip.teardown();
+        endTurnBeat?.(); endTurnBeat = null; // its window keydown door would otherwise outlive the detached button
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
         enemyFrames.clear();
