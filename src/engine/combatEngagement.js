@@ -10,7 +10,7 @@ import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
-import { combatProfileFor } from '../model/combatCardProfile.js';
+import { combatProfileFor, defaultRangeFor } from '../model/combatCardProfile.js';
 import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
@@ -75,7 +75,7 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
   // A weapon contact reaches as far as the weapon or the card, whichever is farther (CONTENT-NOTES: a card takes the
   // largest range it carries); the reach precision bonus stays with the weapon's own range (weaponCoverage).
   const weaponCoverage = weapon ? resolved.weaponRange ?? resolved.range ?? piece?.range ?? 'melee' : null;
-  const coverage = weapon ? fartherRange(weaponCoverage, profile.range) : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
+  const coverage = weapon ? fartherRange(weaponCoverage, profile.range) : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || defaultRangeFor(profile);
   return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weaponCoverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),

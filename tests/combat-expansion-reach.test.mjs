@@ -42,3 +42,18 @@ test('an authored range wins over the ranged list and the delivery tag under v2'
   // An authored range: 'reach' beats a projectile delivery and the ranged list.
   assert.equal(applyCombatExpansionCard({ ...base, range: 'reach' }).range, 'reach');
 });
+
+test('an untagged spell attack is Reach on the card face and in the Advance math; an explicit range:melee stays melee', async () => {
+  const { combatCardRange, defaultRangeFor } = await import('../src/model/combatCardProfile.js');
+  const { rangeSourceContact } = await import('../src/engine/combatEngagement.js');
+  const { live } = await import('./helpers/fixcore-combat-rules.mjs');
+  const spell = { id: 'x', type: 'attack', tags: ['camp:spell', 'maneuver:casting', 'school:fire', 'damage:fire'], effects: [{ op: 'damage', target: 'enemy', amount: 4 }] };
+  assert.equal(combatCardRange(spell), 'reach');
+  assert.equal(combatCardRange({ ...spell, tags: [...spell.tags, 'range:melee'] }), 'melee');
+  assert.equal(defaultRangeFor({ camp: 'weapon' }), 'melee');
+  const ctx = live();
+  const carrier = { tags: spell.tags, combatProfile: { camp: 'spell', maneuver: 'casting' }, resolvedRangeSource: { sourceType: 'spell' } };
+  assert.equal(rangeSourceContact(ctx, ctx.player, ctx.enemies[0], carrier, { op: 'damage' }).coverage, 'reach');
+  const melee = { ...carrier, tags: [...spell.tags, 'range:melee'], combatProfile: { camp: 'spell', maneuver: 'casting', range: 'melee' } };
+  assert.equal(rangeSourceContact(ctx, ctx.player, ctx.enemies[0], melee, { op: 'damage' }).coverage, 'melee');
+});
