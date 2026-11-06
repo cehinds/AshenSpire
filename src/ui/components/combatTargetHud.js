@@ -293,7 +293,18 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as its
   // cell never has a neighbour's control over it. It follows the panel's box: placed with it, and again whenever the panel
   // changes size (a status tray appearing grows an enemy's panel upward), through a ResizeObserver, never a poll.
+  // The same resize path keeps an enemy's hanging panel inside the screen edge: it hangs from `hang` (just above its rack),
+  // so when it grows taller (a status tray appears) its top may pass `minTop`; then the hang point drops, never the figure anchor.
+  function clampHang(record) {
+    if (record.hang == null || !record.node.isConnected) return;
+    const fieldBox = rect(field), height = record.node.getBoundingClientRect().height;
+    const y = Math.max(record.hang, record.minTop + height);
+    if (y === record.hangApplied) return;
+    const local = anchorLocalBox(fieldBox, { left: 0, top: y, width: 0, height: 0 }, { zoom: record.zoom });
+    setStyle(record.node, 'top', `${local.top}px`); record.hangApplied = y;
+  }
   function placeInfo(record) {
+    clampHang(record);
     if (!record.node.isConnected) return;
     const panel = record.node.querySelector('.target-hud-panel').getBoundingClientRect(), rootBox = combat.getBoundingClientRect();
     if (!panel.width) return;
@@ -337,6 +348,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       else if (row.rack) {
         const placed = enemyHudPlacement({ centerX: row.rack.centerX, bottom: row.rack.top - gap / 4, width: row.cellWidth, height: row.height, bounds });
         at = { left: placed.left, top: placed.top + row.height };
+        Object.assign(row.record, { hang: row.rack.top - gap / 4, minTop: bounds.top, hangApplied: at.top, zoom });
       }
       if (!at) continue;
       const local = anchorLocalBox(fieldBox, { left: at.left, top: at.top, width: 0, height: 0 }, { zoom });

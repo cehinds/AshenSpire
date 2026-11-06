@@ -323,10 +323,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // combatant per tracked frame.
   // Owner (2026-11-06): an enemy's mini HUD stays above its own figure. Neighbouring intents are no longer slid apart; an
   // overlap is accepted and nothing moves.
+  // Owner (2026-11-06): the mini HUDs are fixed. Their placement depends on the layout pass (its epoch), the zoom and the
+  // set of combatants, so a selection, a play or a hover repeats nothing: the pass is skipped (it was ~25 ms of forced
+  // layout per card select). A pass over bodies that have not settled yet (art loading) is not remembered.
   function centerTargetOverheads() {
+    const zoom = uiZoom();
+    const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, field.clientWidth, field.clientHeight].join('|');
+    if (field.dataset?.layoutEpoch !== undefined && key === centerTargetOverheads.placedKey) return;
     globalThis.__perfCount?.('hudPass');
     invalidateSpriteRects();
-    const zoom = uiZoom();
     const commitBadges = readHitBadges();
     const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const racked = [], plain = [];
@@ -353,6 +358,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
+    centerTargetOverheads.placedKey = racked.length && racked.every(({ body }) => body.settled !== false) && !plain.length ? key : null;
     for (const { frame, body, placement } of racked) {
       for (const [name, value] of [
         ['--combat-mini-hud-top', `${placement.miniTop}px`],
