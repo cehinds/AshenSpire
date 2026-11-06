@@ -106,3 +106,98 @@ jobs:
             echo "### Kept, tip equals test, no work yet (${#fresh[@]})"
             for b in "${fresh[@]+"${fresh[@]}"}"; do echo "- \`$b\`"; done
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # THE RULE (second job). Delete every origin branch whose tip is an ancestor
+  # of `origin/dev`, except the protected names (dev, test, release, main,
+  # tools-archive), anything under `alternative/`, and the head branch of any
+  # OPEN pull request, and any branch whose tip equals origin/dev (no work yet).
+  # A branch that is not merged into dev is kept. The open
+  # PR list is read fail-closed: if that API call fails, nothing is deleted.
+  cleanup-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Delete origin branches merged into dev
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          dev_tip=$(git rev-parse refs/remotes/origin/dev)
+          open_heads=$(gh api --paginate "repos/$REPO/pulls?state=open" --jq '.[].head.ref')
+
+          deleted=()
+          kept=()
+          would=()
+          while IFS= read -r b; do
+            [ -n "$b" ] || continue
+            [ "$b" = "HEAD" ] && continue
+            reason=""
+            case "$b" in
+              dev|test|release|main|tools-archive) reason="protected branch" ;;
+              alternative/*) reason="under alternative/" ;;
+              worker/*) reason="owned by the worker job" ;;
+            esac
+            if [ -z "$reason" ] && grep -Fxq -- "$b" <<< "$open_heads"; then
+              reason="head of an open pull request"
+            fi
+            if [ -n "$reason" ]; then
+              echo "kept $b ($reason)"
+              kept+=("$b: $reason")
+              continue
+            fi
+            tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ "$tip" = "$dev_tip" ]; then
+              # Cut from dev with no commits yet: keep it, do not treat it as merged.
+              echo "kept $b (no work yet)"
+              kept+=("$b: no work yet")
+              continue
+            fi
+            if ! git merge-base --is-ancestor "$tip" "$dev_tip"; then
+              echo "kept $b (not merged into dev)"
+              kept+=("$b: not merged into dev")
+              continue
+            fi
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "[dry run] would delete $b"
+              would+=("$b")
+              continue
+            fi
+            # Lease against the tip checked above: a branch pushed to since
+            # the ancestry check is rejected and kept.
+            if git push --force-with-lease="refs/heads/$b:$tip" origin ":refs/heads/$b"; then
+              echo "deleted $b"
+              deleted+=("$b")
+            else
+              echo "kept $b (moved since check)"
+              kept+=("$b: moved since check")
+            fi
+          done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin/)
+
+          {
+            echo "## Delete origin branches merged into dev"
+            echo
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Dry run: nothing was deleted."
+              echo
+              echo "### Would delete (${#would[@]})"
+              for b in "${would[@]+"${would[@]}"}"; do echo "- \`$b\`"; done
+              echo
+            fi
+            echo "### Deleted (${#deleted[@]})"
+            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- \`$b\`"; done
+            echo
+            echo "### Kept (${#kept[@]})"
+            for k in "${kept[@]+"${kept[@]}"}"; do echo "- \`${k%%:*}\`:${k#*:}"; done
+          } >> "$GITHUB_STEP_SUMMARY"
