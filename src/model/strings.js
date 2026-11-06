@@ -1,4 +1,4 @@
-// src/ui/strings.js — the one lookup for every sentence the interface says.
+// src/model/strings.js — the one lookup for every sentence the interface says.
 //
 // WHY A TABLE. The copy audit counted 493 hardcoded copy sites across 64 files
 // in src/ui, 404 of them distinct. Three costs, all of them paid by a player:

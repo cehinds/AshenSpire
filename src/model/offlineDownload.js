@@ -1,6 +1,6 @@
 import { offlinePlay } from '../content/offlinePlay.js';
 import { FONT_TWIN_CALL, PACK_TWIN_CALL } from '../content/packTwins.js';
-import { createSha256, sha256Hex } from '../ui/sha256.js';
+import { createSha256, sha256Hex } from './sha256.js';
 import { createZipWriter } from './zipStream.js';
 
 // THE FILE A BUILD'S DOWNLOAD SAVES. An older (inline) build is its own page,
