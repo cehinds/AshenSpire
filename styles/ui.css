@@ -1986,6 +1986,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    modal; there is no detail pane here. The selected row wears the editor's own
    outline (it marks `aria-pressed` and `aria-selected`). */
 .upgrade-desk .deck-editor-panes { grid-template-columns: minmax(0, 1fr); }
+/* Owner 2026-11-06: the desktop dialog uses the phone's single column. The reading desk's two-column grid (inspector + list) has no inspector here, so the list was squeezed to the right edge. */
+.deck-editor-reading-desk.upgrade-desk > .deck-editor-panes { display: block; overflow: hidden; }
+.deck-editor-reading-desk.upgrade-desk > .deck-editor-panes > [data-pane] { height: 100%; box-sizing: border-box; }
 .upgrade-desk .upgrade-desk-head { flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: .8rem; padding-bottom: .6rem; }
 .upgrade-desk .upgrade-desk-headtext { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
 .upgrade-desk .deck-editor-title { font-size: 2.2rem; line-height: 1.15; }
