@@ -1,4 +1,4 @@
-// src/ui/sha256.js — SHA-256 for the pack loader (docs/EXTERNAL-ASSETS-PLAN.md §3.4).
+// src/model/sha256.js — SHA-256 for the pack loader (docs/EXTERNAL-ASSETS-PLAN.md §3.4).
 //
 // The loader checks every pack index against the sha256 the HTML pins. Where
 // the browser offers SubtleCrypto it is used; it is missing outside a secure
