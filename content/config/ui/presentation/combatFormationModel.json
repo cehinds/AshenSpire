@@ -250,5 +250,12 @@
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5
     }
+  },
+  "behavior": {
+    "relayout": {
+      "widthDelta": 0.08,
+      "heightDelta": 0.25,
+      "phoneShortSidePx": 500
+    }
   }
 }
