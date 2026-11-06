@@ -16,3 +16,32 @@ export const ARMOURY_PAGES = Object.freeze(['grid', 'rack']);
 
 /** The page a declared view id lands on: the Character page, or the combined Armory page. */
 export const armouryPageOf = (viewId) => (viewId === 'grid' ? 'grid' : 'rack');
+
+/**
+ * Where the Armoury button reopens: the last menu the player left it on. `stored` is the saved `equipView`
+ * (grid = Character, rack = Armory, deck = the Deck tab's editor; the retired 'cards' stays the Armory page). The Deck tab only counts while its door is
+ * open; nothing saved opens the default (the Armory page, as before).
+ */
+/** The remembered Deck tab. A NEW value: the retired view id 'cards' still in old saves keeps opening the Armory page. */
+export const DECK_VIEW = 'deck';
+
+export const armouryReopenTarget = (stored, { deckDoor = false } = {}) =>
+  (stored === DECK_VIEW && deckDoor ? 'deck' : armouryPageOf(stored));
+
+/**
+ * The routing decision of showArmoury (main.js), as data so it can be driven without the app.
+ * `request` is what the caller passed: a view id ('grid' / 'rack'), or { destination, equipItemId, remembered }.
+ * Returns { open: 'armoury' | 'deck', view, destination, equipItemId, saveView }: `saveView` is the explicit
+ * view the player just chose, to remember as the last menu ('' when there is nothing new to save).
+ */
+export function armouryRoute(request, { stored, deckDoor = false } = {}) {
+  const view = typeof request === 'string' ? request : '';
+  const bag = request && typeof request === 'object' ? request : {};
+  const destination = bag.destination || '';
+  const equipItemId = bag.equipItemId || '';
+  const explicit = Boolean(view || destination || equipItemId);
+  // Only the HUD Armoury button sets `remembered`; every other caller (the reward screen's Edit equipment, a purchase's
+  // Equip, a rest door) keeps opening the Armoury itself, whatever tab was saved.
+  const open = !explicit && bag.remembered === true && armouryReopenTarget(stored, { deckDoor }) === 'deck' ? 'deck' : 'armoury';
+  return Object.freeze({ open, view, destination, equipItemId, saveView: view && view !== stored ? view : '' });
+}

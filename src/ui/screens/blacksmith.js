@@ -79,7 +79,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     try { commit(); }
     catch (error) {
       refuse(tile, error);
-      return;
+      return false; // a refused commit: a list modal that asked does not reopen over the refusal (modalReturn.js)
     }
     sfx.play('shrine');
     onChanged();
@@ -87,6 +87,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
     // above keep the inline .bs-refusal and open nothing.
     showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
+    return true;
   }
 
   // Every offer is one merchant row (components/merchantOffer.js, the shop's own markup and CSS): art, name and
@@ -336,13 +337,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     });
   }
 
-  function openCardUpgradeModal(returnFocusElement, host) {
+  function openCardUpgradeModal(returnFocusElement, host, focusInstanceId = null) {
     let selection = null;
     // The rows are priced as the Blacksmith charges (cinders, no stones), not as a rest site does.
     const quote = (instanceId) => { const p = upgradeArtPlan(registries, run, instanceId, { priceMult }); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
     const model = () => cardUpgradeModel(registries, run, selection, { quote, blacksmith: true });
     const modal = mountCardUpgradeModal(app, model(), {
-      registries, meta, returnFocusElement, backLabel: t('smith.back.shrine'),
+      registries, meta, returnFocusElement, focusInstanceId,
+      // A confirmed upgrade lands back on this list, refreshed (modalReturn.js); Back names the Blacksmith, not the Shrine.
+      parent: { place: t('common.place.blacksmith'), reopen: (focus) => {
+        const control = app.querySelector('#blacksmith-upgrade-card');
+        if (control && !control.disabled) openCardUpgradeModal(control, control.parentNode, focus);
+      } },
       decisionConsequence: t('blacksmith.cardUpgrade.decision'),
       onSelect: (instanceId) => { selection = instanceId; modal.update(model()); },
       onBack: () => {},

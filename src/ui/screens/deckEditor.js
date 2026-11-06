@@ -78,7 +78,7 @@ let liveEditor = null;
 // Text search is off for now (owner, 2026-10-11): the search inputs are not
 // rendered unless a mount passes `search: true`. The filter code stays so the
 // search comes back by flipping that one option.
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, backLabel = '', dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -768,7 +768,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }, true);
 
   function footer() {
-    const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
+    const cancel = button({ label: backLabel || t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
     const done = button({
       label: t('deckEditor.accept'), weight: 'primary', id: 'deck-editor-done', className: 'deck-editor-done',
       disabled: model.done.disabled, attrs: { title: tFull('deckEditor.accept'), 'aria-describedby': 'deck-editor-refusal' },

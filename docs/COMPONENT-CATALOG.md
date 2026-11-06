@@ -498,7 +498,7 @@ smith-upgrade-modal
 ├─ smith-upgrade-preview × selected armament's grouped card deltas
 ├─ Header: available Smithing Stones, then the close button
 ├─ Upgrade selected armament in the preview pane (requires affordability)
-└─ Full-width Back to Shrine footer (also Escape)
+└─ Full-width Back to {place} footer (also Escape)
 ```
 
 Selection takes one tap and opens every affected card preview expanded. The compact

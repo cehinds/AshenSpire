@@ -245,7 +245,8 @@ export function wireRunHud(app, {
   hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
-  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury(); }); syncArmouryNew(armouryBtn, run); }
+  // Only this button asks to reopen on the last tab (`remembered`, see armouryRoute).
+  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury({ remembered: true }); }); syncArmouryNew(armouryBtn, run); }
   else armouryBtn?.remove();
 
   // menu — today it opens the overlay at Settings; under the quick-nav experiment
