@@ -9,7 +9,7 @@ import {
 import { deriveStat } from './derivedStats.js';
 import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
-import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
+import { ratingsConfigFor, ratingStatRows } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -1144,7 +1144,7 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   // THE RUN'S OWN RATING ROWS (ruleset 7, model/statRows.js): a card's rating
   // is priced by the rows the run was born with, or the live table for a
   // preview with no run behind it.
-  const ratingConfig = ratingsConfigFor(registries, run) || LEGACY_RATING_FORMULA;
+  const ratingConfig = ratingsConfigFor(registries, run) || { ratings: ratingStatRows(registries, run) };
   const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, run?.level?.level);
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
