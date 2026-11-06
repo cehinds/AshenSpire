@@ -99,13 +99,14 @@ function defaultFloaterLifeMs() {
 // The wait between two floaters spawning over one combatant, in ms (owner, 2026-11-05; content/config floaterStack.json).
 // It follows the floater life, so it scales with the Combat speed multiplier and shortens on Instant exactly as
 // the life does, never below 1 ms. At the default speed it is the JSON number itself.
-export function floaterStaggerMs() {
-  return Math.max(1, Math.round(FLOATER_STACK.floaterStaggerMs * floaterLifeMs() / defaultFloaterLifeMs()));
+export function floaterStaggerMs({ enemy = false } = {}) {
+  const base = enemy ? combatPacing.enemyFloaterIntervalMs : FLOATER_STACK.floaterStaggerMs;
+  return Math.max(1, Math.round(base * floaterLifeMs() / defaultFloaterLifeMs()));
 }
 // The shrunk wait used while more than floaterMaxQueued floaters are waiting over one combatant, so the backlog
 // drains and never falls behind the next action. It scales with the floater life like the full stagger.
-export function floaterStaggerMinMs() {
-  return Math.max(1, Math.min(floaterStaggerMs(), Math.round(FLOATER_STACK.floaterStaggerMinMs * floaterLifeMs() / defaultFloaterLifeMs())));
+export function floaterStaggerMinMs({ enemy = false } = {}) {
+  return Math.max(1, Math.min(floaterStaggerMs({ enemy }), Math.round(FLOATER_STACK.floaterStaggerMinMs * floaterLifeMs() / defaultFloaterLifeMs())));
 }
 // How long a callout word stays on screen, in ms. Presentation only: no beat waits on it.
 export function calloutLifeMs() {
@@ -114,12 +115,17 @@ export function calloutLifeMs() {
 }
 // The time one sprite frame is shown, in ms (0 on Instant and Reduced motion). The rate comes from
 // COMBAT_TIMING.spriteActionFps; the Combat speed divides it once and the Animation step duration scales it.
-function holdFor(fps, reduced) {
+function holdFor(fps, reduced, animationMs = combatPacing.animationMs) {
   if (reduced || !ANIM_SPEEDS[getAnimSpeed()]) return 0;
-  const hold = 1000 / fps * (combatPacing.animationMs / ACTION_PACING.animationStepDurationMs) / combatPacing.speed;
+  const hold = 1000 / fps * (animationMs / ACTION_PACING.animationStepDurationMs) / combatPacing.speed;
   return Math.round(Math.min(COMBAT_TIMING.frameHoldMaxMs, Math.max(COMBAT_TIMING.frameHoldMinMs, hold)));
 }
-export function frameHoldMs({ reduced = false } = {}) { return holdFor(COMBAT_TIMING.spriteActionFps, reduced); }
+export function frameHoldMs({ reduced = false, enemy = false } = {}) { return holdFor(COMBAT_TIMING.spriteActionFps, reduced, enemy ? enemyAnimationMs() : undefined); }
+// An enemy's Animation step: its attack length setting (750 ms by default) maps onto the player's default step the
+// way the shipped default pairs them, so the default enemy animation equals the default player animation.
+function enemyAnimationMs() {
+  return combatPacing.enemyAttackMs / ACTION_PACING.enemyAttackDefaultMs * ACTION_PACING.animationStepDefaultMs;
+}
 // The same for a looping idle (slower than an action).
 export function idleFrameMs({ reduced = false } = {}) { return holdFor(COMBAT_TIMING.spriteIdleFps, reduced); }
 // The sprite services' timing object: every entry scaled, then the lunge and the reaction (the two a single
@@ -129,12 +135,12 @@ function spriteSpeedFor(pace, spriteScale, minFrameMs) {
   if (minFrameMs > 0) for (const key of ['lungeMs', 'reactionMs']) speed[key] = Math.max(speed[key], minFrameMs);
   return { ...speed, minFrameMs };
 }
-export function actionPacing({ reduced = false } = {}) {
+export function actionPacing({ reduced = false, enemy = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
   const scaled = value => Math.max(0, Number(value) || 0) * scale;
   const spriteScale = scale / ACTION_PACING.spritePlaybackRate
-    * combatPacing.animationMs / ACTION_PACING.animationStepDurationMs;
+    * (enemy ? enemyAnimationMs() : combatPacing.animationMs) / ACTION_PACING.animationStepDurationMs;
   const gapMs = scaled(combatPacing.gapMs);
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
@@ -143,7 +149,7 @@ export function actionPacing({ reduced = false } = {}) {
     gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
-    spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced })),
+    spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),
     scale,
   };
 }

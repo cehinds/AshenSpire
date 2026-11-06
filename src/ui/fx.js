@@ -494,12 +494,12 @@ function stackFor(layer, anchor) {
       now: () => Date.now(),
       setTimer: (fn, ms) => setTimeout(fn, ms),
       clearTimer: (handle) => clearTimeout(handle),
-      staggerMs: () => floaterStaggerMs(),
+      staggerMs: () => floaterStaggerMs({ enemy: isEnemyAnchor(anchor) }),
       maxVisible: (item) => maxVisibleFor(rec, item),
       alive: (item) => floaterHostAlive(item),
       maxQueued: FLOATER_STACK.floaterMaxQueued,
       fadeMs: FLOATER_EARLY_MS + 20,
-      staggerMinMs: () => floaterStaggerMinMs(),
+      staggerMinMs: () => floaterStaggerMinMs({ enemy: isEnemyAnchor(anchor) }),
       show: (item, entry) => showFloater(rec, item, entry),
       fadeEarly: (entry) => fadeFloaterEarly(entry),
       layout: (entries) => liftFloaters(rec, entries),
@@ -516,6 +516,8 @@ function stackFor(layer, anchor) {
   set.add(rec.stack);
   return rec;
 }
+// Floaters over an enemy use the enemy's own interval setting (settings enemyFloaterIntervalMs).
+const isEnemyAnchor = anchor => Boolean(anchor?.closest?.('.enemy-row'));
 function enqueueFloater(item) {
   // Whether the combatant was in the document when this floater queued: one that was and has left is gone. (An
   // anchor that was never attached, as in a headless harness, is never gone.)
@@ -1136,6 +1138,7 @@ export function stanceState(stage) {
 export function playTimeline(events, ctx, done) {
   if ((ctx.beatOrder || getBeatOrder()) === 'impact') return playLegacyTimeline(events, ctx, done);
   const timing = actionPacing({ reduced: reducedMotionRequested() });
+  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });
   const beats = groupBeats(events);
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
@@ -1214,8 +1217,13 @@ export function playTimeline(events, ctx, done) {
       const entered = stanceLeadEvent(beat);
       if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
-    maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
-    onSprite: (beat, speed) => {
+    // The reservation covers the slower of the player's and the enemy's animation settings.
+    maxSpriteMs: speed => {
+      const one = s => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(s) : Number(ctx.maxActorAnimationMs) || s.lungeMs;
+      return Math.max(one(speed), one(enemyTiming.spriteSpeed));
+    },
+    onSprite: (beat, playerSpeed) => {
+      const speed = isEnemyAnchor(ctx.anchorFor(beat.actorId)) ? enemyTiming.spriteSpeed : playerSpeed;
       if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;

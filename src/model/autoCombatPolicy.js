@@ -13,6 +13,10 @@ export function resolveCombatAutomation(settings = {}) {
     // Owner D11 (2026-10-18): auto combat runs at its own multiplier, and the pause between steps is one setting.
     autoSpeed: bounded(settings.autoCombatSpeed, AUTOMATION_DEFAULTS.autoCombatSpeed, AUTOMATION_DEFAULTS.autoSpeedMinimum, AUTOMATION_DEFAULTS.autoSpeedMaximum),
     animationMs: bounded(settings.animationStepDuration, ACTION_PACING.animationStepDefaultMs, AUTOMATION_DEFAULTS.animationStepMinimumMs, AUTOMATION_DEFAULTS.animationStepMaximumMs),
+    // Owner 2026-11-06: the enemy's pacing is its own pair of settings. enemyAttackMs is the enemy attack animation's
+    // length at the shipped default speed; enemyFloaterIntervalMs the wait between floaters over an enemy.
+    enemyAttackMs: bounded(settings.enemyAttackMs, ACTION_PACING.enemyAttackDefaultMs, AUTOMATION_DEFAULTS.enemyPacingMinimumMs, AUTOMATION_DEFAULTS.enemyPacingMaximumMs),
+    enemyFloaterIntervalMs: bounded(settings.enemyFloaterIntervalMs, ACTION_PACING.enemyFloaterIntervalDefaultMs, AUTOMATION_DEFAULTS.enemyPacingMinimumMs, AUTOMATION_DEFAULTS.enemyPacingMaximumMs),
     delayMs: bounded(settings.combatStepPause, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
   };
 }

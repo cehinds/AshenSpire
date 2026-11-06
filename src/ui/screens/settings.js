@@ -330,6 +330,13 @@ const ROWS = [
   { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },
+  // Owner 2026-11-06: the enemy's pacing is separate from the player's (both default 750 ms).
+  { cat: 'Combat', key: 'enemyAttackMs', type: 'number', def: ACTION_PACING.enemyAttackDefaultMs,
+    min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
+    label: t('settings.row.enemyAttackMs'), note: tFull('settings.row.enemyAttackMs') },
+  { cat: 'Combat', key: 'enemyFloaterIntervalMs', type: 'number', def: ACTION_PACING.enemyFloaterIntervalDefaultMs,
+    min: AUTOMATION_DEFAULTS.enemyPacingMinimumMs, max: AUTOMATION_DEFAULTS.enemyPacingMaximumMs, step: 50,
+    label: t('settings.row.enemyFloaterIntervalMs'), note: tFull('settings.row.enemyFloaterIntervalMs') },
   { cat: 'Combat', key: 'combatPacingPreset', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
     label: t('settings.row.combatPacingPreset'), note: tFull('settings.row.combatPacingPreset') },
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
@@ -2429,7 +2436,7 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|animationStepDuration|enemyAttackMs|enemyFloaterIntervalMs|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);

@@ -133,3 +133,27 @@ test('a failed timing reset restores both the preset and control value', async (
   await resetKeys(settings, () => ({ ok: ++calls !== 1 }), ['combatStepPause'], 'Timing reset', { promoted: {} });
   assert.deepEqual(settings, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 275 });
 });
+
+test('enemy pacing is its own pair of settings, both 750 ms by default, and moves only enemy timing', async () => {
+  const { floaterStaggerMs } = await import('../src/ui/animationPace.js');
+  setAnimSpeed('normal'); setCombatPacing();
+  assert.equal(floaterStaggerMs(), 750);
+  assert.equal(floaterStaggerMs({ enemy: true }), 750, 'the enemy default equals the player default');
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, actionPacing().spriteSpeed.lungeMs, 'same default animation');
+  setCombatPacing({ enemyAttackMs: 1500, enemyFloaterIntervalMs: 375 });
+  assert.equal(floaterStaggerMs({ enemy: true }), 375);
+  assert.equal(floaterStaggerMs(), 750, 'the player interval is untouched');
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, 2 * actionPacing().spriteSpeed.lungeMs);
+  setCombatPacing({ enemyAttackMs: 1, enemyFloaterIntervalMs: 99999 });
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs > 0, true);
+  assert.equal(floaterStaggerMs({ enemy: true }), 3000, 'bounded to 3000 ms');
+  setCombatPacing();
+});
+
+test('the enemy pacing rows are persisted Combat settings with 750 ms defaults', () => {
+  const keys = profileKeys(settingsRows());
+  for (const key of ['enemyAttackMs', 'enemyFloaterIntervalMs']) {
+    assert.ok(keys.includes(key), key);
+    assert.deepEqual([row(key).def, row(key).min, row(key).max, row(key).cat], [750, 100, 3000, 'Combat']);
+  }
+});
