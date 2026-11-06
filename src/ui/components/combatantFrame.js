@@ -5,6 +5,7 @@ import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 import { markBuilt, reconcileList } from '../domWrite.js';
+import { refreshIconTray } from './iconTray.js';
 
 const ownedClasses = new WeakMap();
 
@@ -116,7 +117,10 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     // The anchor must not be one of the nodes being reconciled.
     const live = kids(statusHost).filter(isStatuses);
     if (live.includes(anchor)) anchor = live.at(-1).nextSibling;
-    swaps += reconcileList(statusHost, live, list, anchor);
+    const changed = reconcileList(statusHost, live, list, anchor);
+    swaps += changed;
+    // A tray whose icons were added, removed or replaced must not fit from its old items.
+    if (changed) live.forEach((tray, index) => { if (tray.isConnected !== false && list[index]) refreshIconTray(tray, list[index]); });
   }
   if (chips !== undefined) {
     for (const node of kids(widget)) {

@@ -114,6 +114,18 @@ export function setIconTrayOverflow(row, action) {
   if (row && typeof action === 'function') overflowActions.set(row, action);
 }
 
+/** A tray's children were changed under it (a status gained or lost, reconciled in place by domWrite): drop the fit's
+ *  cached items and overflow, take over the rebuilt row's overflow action, and refit to the width it last had. Without
+ *  this a later fit plans from the old items: it resurrects removed icons, misses new ones, and skips a recompute when the
+ *  shown count happens to match. `fresh` is the rebuilt tray the children were taken from. */
+export function refreshIconTray(row, fresh = null) {
+  if (!row) return;
+  const width = trays.get(row)?.width;
+  trays.delete(row);
+  if (fresh && overflowActions.has(fresh)) overflowActions.set(row, overflowActions.get(fresh));
+  if (width != null) fitIconTray(row, width);
+}
+
 /** Replace a tray's icons and fit them to the width it last had. */
 export function setIconTrayItems(row, items = []) {
   if (!row) return;

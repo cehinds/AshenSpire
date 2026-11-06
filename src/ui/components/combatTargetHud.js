@@ -6,6 +6,7 @@ import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
 import { anchorLocalBox } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
+import { refreshIconTray } from './iconTray.js';
 import { setVar, setStyle, setData, setAttr, markBuilt, morph } from '../domWrite.js';
 
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
@@ -215,7 +216,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (keeps) morph(livePanel, freshPanel);
     else { markBuilt(freshPanel); livePanel.replaceWith(freshPanel); }
     if (record.statusKey !== entry.statusKey) {
-      morph(live.querySelector('.target-hud-statuses'), fresh.querySelector('.target-hud-statuses'));
+      const tray = live.querySelector('.target-hud-statuses'), next = fresh.querySelector('.target-hud-statuses');
+      const swapped = morph(tray, next);
+      if (swapped) refreshIconTray(tray, next);
     }
     setAttr(live, 'aria-label', fresh.getAttribute('aria-label'));
     morph(record.info, buildInfo(entry.id, entry));
