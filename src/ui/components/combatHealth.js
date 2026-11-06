@@ -58,9 +58,9 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   }
   const { shown, overflow } = visibleBadges(model.badges);
   // Owner (2026-11-06): a HUD row (`persistent`) carries one node for every badge kind, in a fixed order, and a kind with
-  // nothing to show is `hidden`. A badge appearing or going then writes an attribute and a number; it adds or removes no node.
-  const slots = persistent ? [...BADGE_KINDS.map(kind => shown.find(badge => badge.kind === kind) || { kind, label: '', value: 0, hidden: true }),
-    overflow || { kind: 'overflow', label: '', value: '', names: [], hidden: true }] : (overflow ? [...shown, overflow] : shown);
+  // nothing to show is a hidden `placeholder`. A badge appearing or going then writes an attribute and a number; it adds or removes no node.
+  const slots = persistent ? [...BADGE_KINDS.map(kind => shown.find(badge => badge.kind === kind) || { kind, label: '', value: 0, placeholder: true }),
+    overflow || { kind: 'overflow', label: '', value: '', names: [], text: '', placeholder: true }] : (overflow ? [...shown, overflow] : shown);
   // The player's Block (owner 2026-11-02) takes the square slot left of the bar, where AC used to sit; enemies (no `values.ac`) keep it in the stack.
   let blockSquare = null;
   for (const badge of slots) {
@@ -68,7 +68,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
     if (badge.ward) node.dataset.ward = String(badge.wardStacks);
     node.dataset.defenseKind = badge.kind;
-    if (badge.hidden) node.hidden = true;
+    // Only an empty persistent slot is hidden. (`badge.hidden` on the +N overflow is its list of summarized badges.)
+    if (badge.placeholder) node.hidden = true;
     node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : `${badge.label} ${badge.value}`);
     if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip
     const value = document.createElement('span');
