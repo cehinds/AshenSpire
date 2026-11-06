@@ -22,7 +22,7 @@ test('a width change over 8% relays out', () => {
 test('an orientation flip relays out on desktop and tablet, not on a phone', () => {
   const flipped = viewportKey({ width: 800, height: 1280 });
   assert.equal(shouldRelayout(base, flipped, cfg), true);
-  assert.equal(shouldRelayout(viewportKey({ width: 390, height: 844 }), viewportKey({ width: 844, height: 390 }), cfg, { phone: true }), false);
+  assert.equal(shouldRelayout(viewportKey({ width: 390, height: 844 }), viewportKey({ width: 844, height: 390 }), cfg, { phone: true }), false, 'portrait to landscape is ignored');
 });
 test('a phone is a coarse pointer with a short side of 500px or less', () => {
   assert.equal(isPhoneViewport({ width: 390, height: 844, coarse: true }, cfg), true);
@@ -48,4 +48,10 @@ test('the stage refits when the formation key changes, ahead of the viewport gat
   const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   assert.match(source, /formationKey !== placedFormationKey/);
   assert.match(source, /placedFormationKey = formationKey;/);
+});
+
+test('a phone that mounted sideways relays out once when it turns upright', () => {
+  const sideways = viewportKey({ width: 844, height: 390 });
+  assert.equal(shouldRelayout(sideways, viewportKey({ width: 390, height: 844 }), cfg, { phone: true }), true);
+  assert.equal(shouldRelayout(sideways, viewportKey({ width: 800, height: 380 }), cfg, { phone: true }), false);
 });
