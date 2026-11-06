@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
-- **HUD width test covers more fights** ([#2601](https://github.com/cehinds/AshenSpire/pull/2601), `0.7.3.198`). The fixed-HUD browser test now also checks a fight with the player in a second cell, on phone and desktop.
+- **HUD width test covers more fights** ([#2601](https://github.com/cehinds/AshenSpire/pull/2601), `0.7.3.200`). The fixed-HUD browser test now also checks a fight with the player in a second cell, on phone and desktop.
 - **Combat HUDs stay put** ([#2597](https://github.com/cehinds/AshenSpire/pull/2597), `0.7.3.198`). Each enemy's mini HUD stays above its own figure and the player's stays right of the player, each exactly as wide as its cell with text scaled to fit; the HUDs are built once per fight and updated in place instead of redrawn on select, play or damage.
 - **Quieter combat in the background** ([#2598](https://github.com/cehinds/AshenSpire/pull/2598), `0.7.3.196`). Combat no longer runs a 500 ms auto-combat poll or a 250 ms busy-watch timer while idle, and End Turn, reward Continue and Potions hold doors release their window listeners when their screen closes.
 - **Combat is static** ([#2595](https://github.com/cehinds/AshenSpire/pull/2595), `0.7.3.194`). Combat no longer redraws: your figure repaints only when its pose changes (not when you select a card), the battlefield lays out once per fight and ignores the phone's address bar, your panel stays fixed right of your character, and all figures are 5% smaller.
