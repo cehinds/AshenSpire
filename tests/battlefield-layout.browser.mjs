@@ -198,7 +198,8 @@ try {
         };
         await clickArt();
         assert.equal(await actor.getAttribute("aria-pressed"), "true");
-        await actor.locator(".nm-inspect").click();
+        // The enemy name text is gone (its intent took the slot, owner 2026-11-06): the read opens from the panel's Inspect control.
+        await p.locator('.target-hud-inspect-info:visible, .combatant.enemy[data-eid="e3"] .combatant-info:visible').last().click();
         await p.locator(".combatant-inspector-body").waitFor();
         await p.keyboard.press("Escape");
         const before = await p.evaluate(() =>
