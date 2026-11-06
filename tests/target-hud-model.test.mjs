@@ -53,7 +53,7 @@ test('reviewer repro: a lone enemy panel never sits over its own sprite; player-
   const withMeter = placeTargetHudPanels({ bounds, panels: [enemy], obstacles: [{ id: 'e0', ...sprite }, { ...base, playerOnly: true }], enemyCount: 1 })[0];
   assert.deepEqual([withMeter.left, withMeter.top], [base.left, base.top]);
 });
-test('player panel: floor applies to the visible panel; with no room right at the floor it goes above the player', () => {
+test('player panel: floor applies to the visible panel; it stays right of the player at the body top, never above (owner 2026-11-06)', () => {
   const config = targetHudConfig(), floor = config.positioning.pinnedMinWidthPx;
   const bounds = { left: 0, top: 0, width: 360, height: 480 };
   const fit = targetHudPinnedWidth({ bounds, anchor: { left: 6, top: 340, width: 130, height: 120 }, width: 223, config });
@@ -61,7 +61,8 @@ test('player panel: floor applies to the visible panel; with no room right at th
   const anchor = { left: 150, top: 340, width: 130, height: 120 };
   const width = targetHudPinnedWidth({ bounds, anchor, width: 223, config });
   const placed = placeTargetHudPanels({ bounds, panels: [{ id: 'p', role: 'player', lane: 0, anchor, width, height: 70 }] })[0];
-  assert.ok(placed.top + placed.height <= anchor.top, 'entirely above the player');
+  assert.equal(placed.side, 'right');
+  assert.equal(placed.top, anchor.top, 'level with the body top');
   assert.ok(placed.left >= 0 && placed.left + placed.width <= bounds.width, 'on screen');
 });
 test('a lone enemy gets its card left of it; a crowd gets it below, shifted in from the edge; the player stays right', () => {
@@ -232,4 +233,16 @@ test('three adjacent enemies still get one row: a crowded group is centred on it
     const rect = placed.find(row => row.id === p.id), centre = rect.left + rect.width / 2;
     assert.ok(centre >= p.anchor.left - rect.width / 2 && centre <= p.anchor.left + p.anchor.width + rect.width / 2, `${p.id} centre ${centre} within its enemy span +/- half a panel`);
   }
+});
+test('the player panel is pinned right even when an enemy panel and sprite crowd it; the enemy yields', () => {
+  const bounds = { left: 0, top: 0, width: 390, height: 600 };
+  const player = { id: 'p', role: 'player', lane: 0, anchor: { left: 10, top: 300, width: 90, height: 110 }, width: 230, height: 80 };
+  const enemy = { id: 'e', role: 'enemy', lane: 2, anchor: { left: 250, top: 220, width: 120, height: 140 }, width: 224, height: 100 };
+  const obstacles = [{ id: 'e', left: 106, top: 296, width: 100, height: 90 }];
+  const rows = placeTargetHudPanels({ bounds, panels: [enemy, player], obstacles });
+  const mine = rows.find(row => row.id === 'p'), theirs = rows.find(row => row.id === 'e');
+  assert.equal(mine.side, 'right');
+  assert.equal(mine.top, player.anchor.top);
+  assert.ok(mine.left >= player.anchor.left + player.anchor.width);
+  assert.ok(!(mine.left < theirs.left + theirs.width && mine.left + mine.width > theirs.left && mine.top < theirs.top + theirs.height && mine.top + mine.height > theirs.top), 'the enemy panel does not overlap the player panel');
 });

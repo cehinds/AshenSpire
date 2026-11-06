@@ -687,6 +687,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!(force === true || forcePending) && !unplaced && !moved) return;
     forcePending = false;
     layoutEpoch++;
+    setData(field, 'layoutEpoch', layoutEpoch);
     if (moved) laidOut = now;
     for (const frame of frames) placedFrames.add(frame);
     invalidateSpriteRects();
