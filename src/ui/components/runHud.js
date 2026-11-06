@@ -245,7 +245,7 @@ export function wireRunHud(app, {
   hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
-  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury(); }); syncArmouryNew(armouryBtn, run); }
+  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury({ remembered: true }); }); // only this button reopens on the last tab (armouryRoute) syncArmouryNew(armouryBtn, run); }
   else armouryBtn?.remove();
 
   // menu — today it opens the overlay at Settings; under the quick-nav experiment

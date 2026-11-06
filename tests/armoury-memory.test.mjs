@@ -20,8 +20,11 @@ test('leaving by the Deck tab saves it', () => {
   assert.match(eq, /onEditDeck\) \{ onChange\?\.\(run\.loadout, \{ equipView: 'deck' \}\); leave\(\)/);
 });
 
-test('the real route: no request on a saved Deck tab opens the editor', () => {
-  assert.equal(armouryRoute('', { stored: 'deck', deckDoor: true }).open, 'deck');
+test('the real route: the HUD button (remembered) on a saved Deck tab opens the editor; no other caller does', () => {
+  assert.equal(armouryRoute({ remembered: true }, { stored: 'deck', deckDoor: true }).open, 'deck');
+  assert.equal(armouryRoute('', { stored: 'deck', deckDoor: true }).open, 'armoury', 'the reward screen\'s Edit equipment');
+  assert.equal(armouryRoute({ equipItemId: 'x', remembered: true }, { stored: 'deck', deckDoor: true }).open, 'armoury', 'an explicit destination wins');
+  assert.equal(armouryRoute({ remembered: true }, { stored: 'deck', deckDoor: false }).open, 'armoury', 'a closed deck door');
   assert.equal(armouryRoute('', { stored: 'grid', deckDoor: true }).open, 'armoury');
 });
 
@@ -32,10 +35,18 @@ test('navigating out of the editor to Character / Armory is saved, so the next v
   assert.equal(armouryRoute('rack', { stored: 'deck', deckDoor: true }).saveView, 'rack');
   assert.equal(armouryRoute('rack', { stored: 'rack', deckDoor: true }).saveView, '', 'nothing new to write');
   // The next visit, with what was just saved:
-  assert.equal(armouryRoute('', { stored: toCharacter.saveView, deckDoor: true }).open, 'armoury');
+  assert.equal(armouryRoute({ remembered: true }, { stored: toCharacter.saveView, deckDoor: true }).open, 'armoury');
 });
 
 test('the retired \'cards\' id in an old save keeps opening the Armory page, never the editor', () => {
   assert.equal(armouryReopenTarget('cards', { deckDoor: true }), 'rack');
-  assert.equal(armouryRoute('', { stored: 'cards', deckDoor: true }).open, 'armoury');
+  assert.equal(armouryRoute({ remembered: true }, { stored: 'cards', deckDoor: true }).open, 'armoury');
+});
+
+test('only the HUD Armoury button sets the remembered flag', () => {
+  const hud = readFileSync(new URL('../src/ui/components/runHud.js', import.meta.url), 'utf8');
+  assert.equal((hud.match(/remembered: true/g) || []).length, 1);
+  assert.match(hud, /armouryBtn\.addEventListener\('click'[^\n]*onArmoury\(\{ remembered: true \}\)/);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.equal((main.match(/remembered: true/g) || []).length, 0, 'no other caller sets it');
 });

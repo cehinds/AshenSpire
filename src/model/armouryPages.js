@@ -30,7 +30,7 @@ export const armouryReopenTarget = (stored, { deckDoor = false } = {}) =>
 
 /**
  * The routing decision of showArmoury (main.js), as data so it can be driven without the app.
- * `request` is what the caller passed: a view id ('grid' / 'rack'), or { destination, equipItemId }.
+ * `request` is what the caller passed: a view id ('grid' / 'rack'), or { destination, equipItemId, remembered }.
  * Returns { open: 'armoury' | 'deck', view, destination, equipItemId, saveView }: `saveView` is the explicit
  * view the player just chose, to remember as the last menu ('' when there is nothing new to save).
  */
@@ -40,6 +40,8 @@ export function armouryRoute(request, { stored, deckDoor = false } = {}) {
   const destination = bag.destination || '';
   const equipItemId = bag.equipItemId || '';
   const explicit = Boolean(view || destination || equipItemId);
-  const open = !explicit && armouryReopenTarget(stored, { deckDoor }) === 'deck' ? 'deck' : 'armoury';
+  // Only the HUD Armoury button sets `remembered`; every other caller (the reward screen's Edit equipment, a purchase's
+  // Equip, a rest door) keeps opening the Armoury itself, whatever tab was saved.
+  const open = !explicit && bag.remembered === true && armouryReopenTarget(stored, { deckDoor }) === 'deck' ? 'deck' : 'armoury';
   return Object.freeze({ open, view, destination, equipItemId, saveView: view && view !== stored ? view : '' });
 }
