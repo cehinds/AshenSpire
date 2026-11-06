@@ -156,10 +156,10 @@ const watchBody = combat.match(/onSelectionChange\(\(lit\) => \{[\s\S]*?\n  \}\)
 ok(!!watchBody, 'the selection watcher can still be read');
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(watchBody[0]),
   'the store watcher repaints the combatant stage before it re-dresses');
-// And the keycap really is built by the renderer rather than toggled, which is
-// the fact both assertions above depend on.
-ok(/if \(enemy\.alive && targeting\) \{/.test(combat),
-  'the target keycap is still built under `targeting` by renderEnemies');
+// And the keycap really is written by the renderer, which is the fact both assertions above depend on. Owner
+// (2026-11-06): the key is built with the frame and only `hidden` follows `targeting`, so arming adds no HUD node.
+ok(/key\.hidden = !targeting;/.test(combat),
+  'the target keycap is shown only under `targeting` by renderEnemies (hidden otherwise, never added or removed)');
 ok(!/enemy-key/.test(combat.match(/function syncCardSelection\(\)[\s\S]*?\n  \}/)[0]),
   'syncCardSelection still does not touch the keycap, so only a repaint can');
 

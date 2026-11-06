@@ -1646,6 +1646,7 @@
   box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
 }
 .combatant-leading .enemy-key { position: absolute; left: calc(100% + 3px); bottom: 0; }
+.combatant-leading .enemy-key[hidden] { display: none; }
 @container game-viewport (max-height: 700px) {
   :root .combat[data-layout='formation'] { grid-template-rows: 10% 55% 35%; }
 }

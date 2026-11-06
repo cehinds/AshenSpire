@@ -146,7 +146,7 @@ import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame, updateCombatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
+import { combatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
@@ -2314,11 +2314,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (changed.meters) slots.meters = build.meters();
     if (changed.statuses) slots.statuses = build.statuses();
     if (changed.chips) slots.chips = build.chips();
-    if (!updateCombatantSlots(box, slots)) {
-      // The target-HUD rack holds the meters: a full update discards it, as it always has.
-      updateCombatantFrame(box, { classNames: slots.classNames, leading: slots.leading ?? build.leading(), name: slots.name ?? build.name(),
-        meters: slots.meters ?? build.meters(), trailing: [slots.statuses ?? build.statuses(), ...(slots.chips ?? build.chips())] });
-    }
+    updateCombatantSlots(box, slots);
     record.slotKeys = keys;
    
     return true;
@@ -2522,7 +2518,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
-        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && targeting ? (idx < 9 ? idx : null) : null, settings]),
+        leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, !!targeting, settings]),
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
         statuses: JSON.stringify([statusIn, settings]),
@@ -2535,9 +2531,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // WCO1: Inspect above the intent; the intent shows per the overlay config.
           if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), showIntent ? intentEl(enemy) : null);
           // Target-number badge for keyboard targeting (SPEC §7.3).
-          if (enemy.alive && targeting) {
+          // Owner (2026-11-06): the key is part of the frame from the start and only shown while a card is armed,
+          // so arming a card adds no node to the HUD.
+          if (enemy.alive && idx >= 0 && idx < 9) {
             // The target number is a Keycap, the same atom every other key wears.
-            if (idx < 9) leading.push(keycap(String(idx + 1), { class: 'enemy-key' }));
+            const key = keycap(String(idx + 1), { class: 'enemy-key' });
+            key.hidden = !targeting;
+            leading.push(key);
           }
           return leading;
         },

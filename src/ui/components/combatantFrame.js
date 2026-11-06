@@ -4,6 +4,7 @@
 import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
+import { markBuilt, reconcileList } from '../domWrite.js';
 
 const ownedClasses = new WeakMap();
 
@@ -47,31 +48,85 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   return frame;
 }
 
-// The slot-level counterpart of updateCombatantFrame: replace only the slots
-// passed (`leading`, `name`, `meters`, `statuses`, `chips`; `classNames`
-// reconciles the frame's classes) and leave every other node in place. The
-// nodes land exactly where a full update puts them, so the frame's outerHTML
-// matches a fresh combatantFrame() built from the same slots. Returns false,
-// touching nothing, when a node slot is asked for while the target-HUD
-// overhead rack holds the meters and intent; the caller then does the full
-// update, which discards the rack as it always has.
+// The slot-level counterpart of updateCombatantFrame: update only the slots passed (`leading`, `name`, `meters`,
+// `statuses`, `chips`; `classNames` reconciles the frame's classes) and leave every other node in place. A slot whose
+// node already stands where it belongs (the intent and the meters live in the target-HUD overhead rack while it
+// exists) is morphed in place, so a value change writes text and widths and replaces nothing (owner, 2026-11-06).
+// The nodes land exactly where a full update puts them, so the frame's outerHTML matches a fresh combatantFrame()
+// built from the same slots, with the rack holding the intent and meters as the target HUD arranges them.
+// Returns how many nodes it added, removed or replaced (0 for a pure value change); `true` for a class-only write.
+// A proc bar or arcane row carries listeners a rebuild cannot hand over, so meters holding one are replaced.
+const meterMorphable = (live, fresh) => !live.querySelector('.procbar, .arcane') && !fresh.querySelector('.procbar, .arcane');
 export function updateCombatantSlots(frame, { classNames, leading, name, meters, statuses, chips } = {}) {
   const wantsNodes = leading !== undefined || name !== undefined || meters !== undefined
     || statuses !== undefined || chips !== undefined;
-  if (wantsNodes && [...frame.children].some(node => node.classList?.contains('target-hud-overhead-meters'))) return false;
   if (classNames) {
     const next = classNames.filter(Boolean);
     for (const value of ownedClasses.get(frame) || []) if (!next.includes(value)) frame.classList.remove(value);
     for (const value of next) frame.classList.add(value);
     ownedClasses.set(frame, next);
   }
-  if (!wantsNodes) return true;
+  if (!wantsNodes) return 0;
   const isPlayer = frame.classList.contains('player');
+  const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
   const leadingHost = frame.querySelector('.combatant-leading');
   const card = frame.querySelector('.combatant-card');
   const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
   const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
   const statusHost = !isPlayer ? leadingHost : widget;
+  const isStatuses = (node) => node.classList?.contains('statuses');
+  const isAction = (node) => node.classList?.contains('player-action-intent');
+  const isIntent = (node) => node.classList?.contains('intent');
+  const isName = (node) => node.dataset?.identityPart === 'name';
+  const isMeters = (node) => node.classList?.contains('meters');
+  const kids = (host) => [...host.children];
+  const find = (host, test) => kids(host).find(test) || null;
+  const isLeading = (node) => node !== widget && !isStatuses(node) && !isAction(node);
+  // Without the rack (the target HUD is off) the slots are replaced as they always were.
+  if (!rack) return replaceSlots({ leadingHost, widget, spriteHost, statusHost, isPlayer, leading, name, meters, statuses, chips });
+  let swaps = 0;
+  if (leading !== undefined) {
+    const next = leading.filter(Boolean);
+    // With the rack up the intent lives in it; the rest of the leading nodes (Inspect, the target key) stay in the host.
+    const nextIntent = rack ? next.filter(isIntent) : [];
+    const nextRest = rack ? next.filter(node => !isIntent(node)) : next;
+    if (rack) swaps += reconcileList(rack, kids(rack).filter(isIntent), nextIntent, rack.firstChild);
+    swaps += reconcileList(leadingHost, kids(leadingHost).filter(isLeading).filter(node => !(rack && isIntent(node))), nextRest,
+      kids(leadingHost).find(node => !isLeading(node)) || null);
+  }
+  if (name !== undefined) {
+    const live = find(widget, isName);
+    if (name) markName(name, isPlayer ? 'player' : 'enemy');
+    swaps += reconcileList(widget, live ? [live] : [], name ? [name] : [], isPlayer ? widget.firstChild : spriteHost.nextSibling, { morphable: () => false });
+  }
+  if (meters !== undefined) {
+    const host = rack || widget, live = find(host, isMeters) || (rack ? find(widget, isMeters) : null);
+    const anchor = rack ? null : (() => { const nameNode = find(widget, isName); return nameNode ? nameNode.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling); })();
+    swaps += reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
+  }
+  if (statuses !== undefined) {
+    for (const node of kids(statusHost)) if (isStatuses(node)) { node.remove(); swaps++; }
+    const list = statuses ? [].concat(statuses).filter(Boolean) : [];
+    if (statusHost === leadingHost) {
+      const action = find(leadingHost, isAction);
+      for (const node of list) { markBuilt(node); leadingHost.insertBefore(node, action); swaps++; }
+    } else {
+      const anchor = find(widget, isMeters) || find(widget, isName);
+      const before = anchor ? anchor.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
+      for (const node of list) { markBuilt(node); widget.insertBefore(node, before); swaps++; }
+    }
+  }
+  if (chips !== undefined) {
+    for (const node of kids(widget)) {
+      if (node !== spriteHost && !isName(node) && !isMeters(node) && !isStatuses(node)) { node.remove(); swaps++; }
+    }
+    appendAll(widget, [].concat(chips || []).filter(Boolean));
+  }
+  return swaps;
+}
+
+// The slot replacement used while the target-HUD rack is absent: each passed slot's old nodes are removed and the new ones inserted.
+function replaceSlots({ leadingHost, widget, spriteHost, statusHost, isPlayer, leading, name, meters, statuses, chips }) {
   const isStatuses = (node) => node.classList?.contains('statuses');
   const isAction = (node) => node.classList?.contains('player-action-intent');
   const isName = (node) => node.dataset?.identityPart === 'name';
@@ -115,7 +170,7 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     }
     appendAll(widget, [].concat(chips || []).filter(Boolean));
   }
-  return true;
+  return 0;
 }
 
 function appendAll(parent, nodes) {
@@ -210,6 +265,8 @@ export function combatantFrame({
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
+  // Remember what the builder wrote on each slot node, so a later in-place update drops only what the builder dropped.
+  for (const node of [...leading, name, meters, ...trailing]) if (node) markBuilt(node);
   return frame;
 }
 

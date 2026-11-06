@@ -40,7 +40,7 @@ export function combatantInfo(name, open) {
     selectionFirst: true, intent: 'above', align: 'center',
   });
   // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
-  node.addEventListener('click', event => {
+  onLive(node, 'click', event => {
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
     clearControlSelection(); open(node);
   }, true);
@@ -101,7 +101,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
   // A visible intent is also the owning enemy's target control. Resolve that
   // action before the tooltip's selecting tap can consume it on touch.
-  if (onTarget) node.addEventListener('click', event => {
+  if (onTarget) onLive(node, 'click', event => {
     if (onTarget() === false) return;
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
   }, true);

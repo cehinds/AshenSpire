@@ -126,3 +126,19 @@ export function morph(live, fresh) {
   for (const extra of have.slice(want.length)) { live.removeChild(extra); swaps++; }
   return swaps;
 }
+
+/** reconcileList(parent, live, fresh, anchor, { morphable }): make the `live` children of `parent` read as `fresh`,
+ *  pairing by position. A pair that `morphable` allows (default: all) is morphed and kept; any other is replaced.
+ *  Unmatched fresh nodes go before `anchor` (null: at the end); unmatched live nodes are removed.
+ *  Returns the number of nodes added, removed or replaced. */
+export function reconcileList(parent, live, fresh, anchor = null, { morphable = () => true } = {}) {
+  let swaps = 0;
+  fresh.forEach((next, index) => {
+    const current = live[index];
+    if (current && pairs(current, next) && morphable(current, next)) { swaps += morph(current, next); return; }
+    markBuilt(next);
+    if (current) { parent.replaceChild(next, current); swaps++; } else { parent.insertBefore(next, anchor); swaps++; }
+  });
+  for (const extra of live.slice(fresh.length)) { parent.removeChild(extra); swaps++; }
+  return swaps;
+}

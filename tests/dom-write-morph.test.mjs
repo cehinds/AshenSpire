@@ -84,3 +84,16 @@ test('a tooltip content hook follows the rebuild', () => {
   morph(live, fresh);
   assert.equal(live.__hooks.tip(), 'new');
 });
+
+test('reconcileList keeps paired children, appends new ones before the anchor and removes the rest', async () => {
+  const { reconcileList } = await import('../src/ui/domWrite.js');
+  El.prototype.insertBefore = function insertBefore(node, ref) { const at = ref ? this.childNodes.indexOf(ref) : -1; if (at < 0) this.childNodes.push(node); else this.childNodes.splice(at, 0, node); node.parent = this; return node; };
+  const tail = el('footer');
+  const a = markBuilt(el('span', {}, '1')), b = markBuilt(el('span', {}, '2'));
+  const parent = el('div', {}, a, b, tail);
+  assert.equal(reconcileList(parent, [a, b], [el('span', {}, '9')], tail), 1);
+  assert.deepEqual(parent.childNodes.map(node => node.tagName), ['SPAN', 'FOOTER']);
+  assert.equal(parent.childNodes[0], a); assert.equal(a.textContent, '9');
+  assert.equal(reconcileList(parent, [a], [el('span', {}, '1'), el('span', {}, '2')], tail), 1);
+  assert.deepEqual(parent.childNodes.map(node => node.tagName), ['SPAN', 'SPAN', 'FOOTER']);
+});
