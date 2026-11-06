@@ -67,10 +67,15 @@ so the fix is a relocation plus re-export, not a redesign.
 - Real engine logic in model: `model/combatRounds.js:14` (resolver parsers),
   `validate.js:5` and `combatSnapshot.js:4-5` (zone/burden validators), `formulas.js:15`
   (`counterstrikeAmount`), `attributePointPreview.js:15-16` (`stanceHit`).
-- Fix: move `d20Chance`, `rng`, `stance`, `strings`, `sha256` and the pure validators under
-  `src/model/` (or a `src/core/`), leave the old paths as one-line re-exports, and land the
-  dependency test CLEANUP-PLAN 4b already promises so it cannot regress. `attributePointPreview`
-  should take the engine functions as parameters.
+- Fix: move `d20Chance`, `rng`, `stance` and the pure validators under `src/model/` (or a
+  `src/core/`), leave the old paths as one-line re-exports, and widen the dependency test so it
+  cannot regress. `attributePointPreview` should take the engine functions as parameters.
+- **Landed since baseline:** [#2613](https://github.com/cehinds/AshenSpire/pull/2613)
+  (`chore/RulesLayerGuard`, on `dev` at `0.7.3.214`) moved `strings` and `sha256` into
+  `src/model/` behind UI shims and added `tests/layering.test.mjs`, which fails any import
+  from `src/engine`, `src/model` or root `engine/` into `src/ui`/`src/main.js` or a browser
+  global. That closes the model→ui half of this finding and is the guard CLEANUP-PLAN 4b
+  promised. The model→engine, content→engine and framework edges are not yet covered by it.
 
 **H2. Two undocumented layers with edges in every direction.**
 - Root `engine/` (kernel, runtime interpreter, mechanics and UI contracts, Unity export) is a
@@ -272,8 +277,8 @@ documented number collision (99-106) and the root-import block copied three time
 
 ## Suggested order (one area per PR, per CLEANUP-PLAN)
 
-1. **Guard first**: the dependency test from plan 4b (model/engine import no ui/browser;
-   content imports no engine; framework rank), the tools reachability test, and the wider
+1. **Guard first**: extend `tests/layering.test.mjs` (landed in #2613) to model→engine,
+   content→engine and the framework rank; add the tools reachability test and the wider
    evidence gate. These stop the debt growing while the rest lands.
 2. **Relocations with re-exports** (H1, H2): `d20Chance`, `rng`, `stance`, `strings`,
    `sha256`, pure validators; delete the framework barrel and header; map rows for
