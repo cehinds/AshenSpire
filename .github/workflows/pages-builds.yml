@@ -142,8 +142,8 @@ on:
   workflow_dispatch:
     inputs:
       keep:
-        description: newest builds to publish per branch
-        default: '3'
+        description: "override: newest builds per branch for EVERY channel (1..25); leave empty for the per-channel table in tools/pages-site.mjs (main 3, release 10, dev 3, test 3)"
+        default: ''
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
         default: ''
@@ -489,12 +489,22 @@ jobs:
         # `keep` from a dispatch is clamped here (1..25) and again in the
         # generator: each listed uncommitted build is a rebuild.
         env:
-          KEEP_INPUT: ${{ inputs.keep || '3' }}
+          KEEP_INPUT: ${{ inputs.keep || '' }}
         run: |
-          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-3}
-          if [ "$keep" -lt 1 ]; then keep=1; fi
-          if [ "$keep" -gt 25 ]; then keep=25; fi
-          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+          # PER-CHANNEL RETENTION (owner, 2026-11-06): with no `keep` input the generator's
+          # RETENTION table rules (main 3, release 10, dev 3, test 3). A given input overrides all.
+          keep_args=()
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3)
+          if [ -n "$keep" ]; then
+            if [ "$keep" -lt 1 ]; then keep=1; fi
+            if [ "$keep" -gt 25 ]; then keep=25; fi
+            keep_args=(--keep "$keep")
+          fi
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+          status=0
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site "${keep_args[@]}" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-} || status=$?
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+          exit "$status"
       - name: Capture the exact primary channel pages this assembly will deploy
         id: primary_targets
         run: |
@@ -540,7 +550,7 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
           if [ "$total" -gt "$SITE_MAX_MB" ]; then
-            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower --keep, prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
+            echo "::error title=Pages site too big::the assembled site is ${total} MB, over the ${SITE_MAX_MB} MB limit; deploy-pages times out on a site this size. Lower the retention table (or dispatch with the keep input), prune what the table above names (stale branch previews, per-build download/ files, base-tree docs) and re-run."
             exit 1
           fi
           if [ "$total" -gt "$SITE_WARN_MB" ]; then

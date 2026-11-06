@@ -17,7 +17,7 @@ import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.j
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
-import { t } from '../ui/strings.js';
+import { t } from './strings.js';
 
 /** Pool stats are compared by delta / POOL_SCALE against rating stats by delta, so +10 HP ties +1 Poise. */
 export const POOL_SCALE = 10;
