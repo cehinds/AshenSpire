@@ -127,7 +127,8 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const reason = row.reason || (available ? '' : failing.find((a) => a.reason)?.reason || '');
     const control = arrangeMerchantOffer({
       tile: host, name: row.name, desc: row.desc, visual: row.visual || undefined, price: first?.price || row.price,
-      avail: { available, reason: reason || null },
+      // No reason to print means no reason line (the shelf's idle line already says why); the lock is applied below.
+      avail: { available: available || !reason, reason: reason || null },
       action: first ? { kind: first.kind, label: first.label, enabled: first.ok } : null,
     }, { fallback: 'smith' });
     host.classList.toggle('locked', !available);
