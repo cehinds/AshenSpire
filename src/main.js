@@ -131,7 +131,7 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
-import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
+import { cancelDeckEdit, commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
@@ -1312,7 +1312,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1385,6 +1385,8 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
+  // Core 2 creation: the deck edited on the review step (a beginDeckEdit snapshot) replaces the starting deck piles.
+  if (deckEdit && isConfiguredRun(run)) cancelDeckEdit(run, deckEdit);
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
   // What the player chose to begin this climb, saved with the run so the
