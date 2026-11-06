@@ -226,13 +226,14 @@ test('composed party feet stand inside their strip, not on its edge, at every pr
       const fit = alternativeCombatComposition({ actors, sizes: fitAlternativeSprites({ width, height, actors, narrow }), width, height, perspectiveGrid: true, solo: false });
       for (const size of fit) {
         const actor = actors.find(a => a.slot.id === size.id);
-        if (actor.side !== 'player') continue;
         const { top, height: strip } = actor.slot.box;
         assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${actor.side} ${size.id}: foot ${size.ground} is inside strip ${top}..${top + strip}`);
-        if (actor.side === 'player' && strip >= 2 * inset + 12) assert.ok(size.ground <= top + strip - inset + 1e-6, `${width}x${height} player foot clears the bottom line by the footprint inset`);
+        if (strip >= 2 * inset + 12) assert.ok(size.ground <= top + strip - inset + 1e-6, `${width}x${height} player foot clears the bottom line by the footprint inset`);
         // Owner 2026-11-06: the drawn cell (the slot's box) holds the foot footInCellFraction above its bottom line, for both sides.
         const fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction;
-        if (strip >= 2 * inset + 20) assert.ok(Math.abs(top + strip - size.ground - fraction * strip) < 1e-6 || size.ground <= top + strip * (1 - fraction) + 1e-6, `${width}x${height} ${actor.side} foot stands ${fraction} of the cell above its bottom line`);
+        // Exactly the configured fraction wherever the shadow's envelope fits at that height, for both sides.
+        const shadow = actor.visibleHeight * size.scale * .08;
+        if (fraction * strip >= shadow / 2 + inset && (1 - fraction) * strip >= shadow / 2 + inset) assert.ok(Math.abs(top + strip - size.ground - fraction * strip) < 1e-6, `${width}x${height} ${actor.side} ${size.id}: foot stands exactly ${fraction} of the cell above its bottom line`);
       }
     }
   }
@@ -268,7 +269,7 @@ test('composed feet stand footInCellFraction above the drawn cell bottom for a s
     for (const size of fit) {
       const { top, height: strip } = actors.find(a => a.slot.id === size.id).slot.box;
       assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${size.id} foot ${size.ground} inside cell ${top}..${top + strip}`);
-      assert.ok(Math.abs(top + strip - size.ground - grid.footInCellFraction * strip) < 1e-6 || size.ground <= handTop, `${width}x${height} ${size.id} foot at the configured fraction or the hand top`);
+      assert.ok(Math.abs(top + strip - size.ground - grid.footInCellFraction * strip) < 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at the configured fraction or the hand top`);
       if (size.id === 'p') assert.ok(size.ground <= handTop + 1e-6, 'the player never stands inside the hand');
     }
   }
