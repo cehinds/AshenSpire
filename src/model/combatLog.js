@@ -5,7 +5,7 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
-import { t } from '../ui/strings.js';
+import { t } from './strings.js';
 
 /**
  * What reached the layers (Barrier, Ward, Poise, Block, then HP) after typed resistance or weakness.
