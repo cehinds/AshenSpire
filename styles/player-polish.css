@@ -433,7 +433,7 @@ main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5
 :root[data-layout='narrow'] :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) > .hud-top { grid-template-columns:14rem 1fr auto; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:calc(30 * var(--view-vh, 1vh)) 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
-:root[data-layout='narrow'] .merchant-workspace .shop-railitem { display:none; }
+:root[data-layout='narrow'] .merchant-workspace:not(.blacksmith-workspace) .shop-railitem { display:none; }
 :root[data-layout='narrow'] .shop-category-select { display:block; width:100%; min-height:44px; background:#17130f; color:var(--parchment); padding:.5rem; border:1px solid var(--gold); }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-pane { min-height:0; flex:1 1 auto; max-height:none; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-offers { min-height:10rem; }
