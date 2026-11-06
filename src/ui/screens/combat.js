@@ -3616,10 +3616,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const kind = chosen ? reactionKind(chosen) : null;
     const owner = combat.pendingReaction.ownerId;
     disp = takeSnapshot();
+    // A reaction offered during the enemy's turn resumes that turn: the dispatch may finish it (the engine is already in
+    // the player's phase) while its remaining beats (hit, reaction, damage) still have to play as the enemy's, so the
+    // ribbon and the input locks must keep saying Enemy Turn until that playback ends.
+    const enemyTurnReaction = combat.phase === 'enemy' || !!combat.reactionCursor;
     try {
       const out = dispatch(combat, { type: 'chooseReaction', ...intent });
       if (kind) recordManualReaction(run, owner || ownSeat(), kind);
-      enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
+      enemyPlayback = enemyTurnReaction || combat.phase === 'enemy' || !!combat.reactionCursor;
       setBusy(true); afterDispatch(out.events);
     } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
