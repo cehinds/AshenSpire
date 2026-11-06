@@ -167,7 +167,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     refreshDesired();
   }
   function clearPanels() {
-    for (const panel of panels.values()) { clearTimeout(panel.node.ashenRemove); panel.node.remove(); panel.info.remove(); }
+    for (const panel of panels.values()) { clearTimeout(panel.node.ashenRemove); panel.watch.disconnect(); panel.node.remove(); panel.info.remove(); }
     infoButtons.clear();
     panels.clear();
     for (const frame of field.querySelectorAll('.combatant')) {
@@ -204,6 +204,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     shell.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
     shell.addEventListener('focusout', event => { if (!shell.contains(event.relatedTarget)) { focusWithin = null; refreshDesired(); } });
     const record = { node: shell, info, key: entry.key, statusKey: entry.statusKey };
+    record.watch = new ResizeObserver(() => placeInfo(record)); record.watch.observe(shell);
     panels.set(id, record);
     return record;
   }
@@ -225,7 +226,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     record.key = entry.key; record.statusKey = entry.statusKey;
   }
   function removePanel(id, record) {
-    panels.delete(id); infoButtons.delete(id); record.info.remove(); record.node.classList.add('leaving');
+    panels.delete(id); infoButtons.delete(id); record.watch.disconnect(); record.info.remove(); record.node.classList.add('leaving');
     const remove = () => record.node.remove();
     if (reducedMotionRequested()) remove(); else record.node.addEventListener('transitionend', remove, { once: true });
     // A disconnected mount or a suppressed CSS transition still owns removal.
@@ -289,6 +290,17 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       width: now.local.width * zoom, height: now.local.height * zoom };
     return measured ? { settled: false, ...measured } : { settled: false, ...frozenSpriteBox(sprite) };
   }
+  // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as its
+  // cell never has a neighbour's control over it. It follows the panel's box: placed with it, and again whenever the panel
+  // changes size (a status tray appearing grows an enemy's panel upward), through a ResizeObserver, never a poll.
+  function placeInfo(record) {
+    if (!record.node.isConnected) return;
+    const panel = record.node.querySelector('.target-hud-panel').getBoundingClientRect(), rootBox = combat.getBoundingClientRect();
+    if (!panel.width) return;
+    const info = anchorLocalBox(rootBox, { left: panel.right - 20 - 5, top: panel.top + 5, width: 20, height: 20 });
+    setStyle(record.info, 'left', `${info.left}px`); setStyle(record.info, 'top', `${info.top}px`);
+    setStyle(record.info, 'width', `${info.width}px`); setStyle(record.info, 'height', `${info.height}px`);
+  }
   function place(fieldBox, rootBox, zoom, bounds, epoch) {
     const gap = config.positioning.gapPx, sizing = config.sizing;
     const rows = [];
@@ -331,14 +343,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       setStyle(row.record.node, 'left', `${local.left}px`); setStyle(row.record.node, 'top', `${local.top}px`);
       boxes.push(row);
     }
-    // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as
-    // its cell never has a neighbour's control over it.
-    const panelBoxes = boxes.map(row => ({ row, panel: row.record.node.querySelector('.target-hud-panel').getBoundingClientRect() }));
-    for (const { row, panel } of panelBoxes) {
-      const info = anchorLocalBox(rootBox, { left: panel.right - 20 - 5, top: panel.top + 5, width: 20, height: 20 });
-      setStyle(row.record.info, 'left', `${info.left}px`); setStyle(row.record.info, 'top', `${info.top}px`);
-      setStyle(row.record.info, 'width', `${info.width}px`); setStyle(row.record.info, 'height', `${info.height}px`);
-    }
+    for (const row of boxes) placeInfo(row.record);
     return ready;
   }
   function geometry() {

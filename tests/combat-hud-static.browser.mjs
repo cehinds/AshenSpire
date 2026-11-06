@@ -105,6 +105,22 @@ try {
     assert.equal(await swaps(page), 0, `${tag}: a damaging play replaces no HUD node`);
     assert.deepEqual(await rects(page), before, `${tag}: a damaging play moves no HUD box`);
     assert.deepEqual(await overflow(page), [], `${tag}: no HUD text overflows after a play`);
+    // A status gained mid-fight grows an enemy's panel upward; its Inspect control moves with it and stays inside its top-right corner.
+    await click(page, page.locator('.hand .card').nth(1)); await page.waitForTimeout(1200);
+    const inspectInside = () => page.evaluate(() => {
+      const shell = document.querySelector('.target-hud-detail[data-role="enemy"].visible'); if (!shell) return null;
+      const panel = shell.querySelector('.target-hud-panel').getBoundingClientRect(), info = document.querySelector(`.target-hud-inspect-info[data-eid="${shell.dataset.eid}"]`).getBoundingClientRect();
+      return { insideX: info.left >= panel.left - 1 && info.right <= panel.right + 1, insideY: info.top >= panel.top - 1 && info.bottom <= panel.bottom + 1, right: panel.right - info.right, top: info.top - panel.top, panelTop: panel.top };
+    });
+    const bare = await inspectInside();
+    if (bare) {
+      await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.statuses = { ...(enemy.statuses || {}), poison: { stacks: 3 } }; window.__renderCombatForShot?.(); });
+      await page.waitForTimeout(1200);
+      const grown = await inspectInside();
+      assert.ok(grown.panelTop < bare.panelTop - 5, `${tag}: the enemy's panel grew upward when the status appeared (${bare.panelTop} -> ${grown.panelTop})`);
+      assert.ok(grown.insideX && grown.insideY, `${tag}: the Inspect control stays inside its panel after a status appears (${JSON.stringify(grown)})`);
+      assert.ok(Math.abs(grown.top - bare.top) < 2 && Math.abs(grown.right - bare.right) < 2, `${tag}: and in the same corner (${JSON.stringify([bare, grown])})`);
+    }
     await page.close();
   }
   console.log('combat-hud-static ok');

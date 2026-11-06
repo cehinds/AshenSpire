@@ -42,7 +42,7 @@ export function combatantInfo(name, open) {
   // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
   onLive(node, 'click', event => {
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
-    clearControlSelection(); open(node);
+    clearControlSelection(); open(event.currentTarget || node); // the live node: after a morph the builder node is detached, and focus returns to the opener
   }, true);
   return node;
 }
