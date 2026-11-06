@@ -37,21 +37,68 @@ function scan(src) {
   const n = src.length;
   const push = (a, b) => { noComments += a; code += b; };
   const blank = (s) => s.replace(/[^\n]/g, ' ');
-  while (i < n) {
-    const c = src[i], d = src[i + 1];
-    if (c === '/' && d === '/') {
-      let j = i; while (j < n && src[j] !== '\n') j++;
-      push(blank(src.slice(i, j)), blank(src.slice(i, j))); i = j;
-    } else if (c === '/' && d === '*') {
-      let j = src.indexOf('*/', i + 2); j = j < 0 ? n : j + 2;
-      push(blank(src.slice(i, j)), blank(src.slice(i, j))); i = j;
-    } else if (c === '"' || c === "'" || c === '`') {
-      let j = i + 1;
-      while (j < n && src[j] !== c) { if (src[j] === '\\') j++; if (c !== '`' && src[j] === '\n') break; j++; }
-      j = Math.min(j + 1, n);
-      push(src.slice(i, j), blank(src.slice(i, j))); i = j;
-    } else { push(c, c); i++; }
+  function scanTemplate() {
+    push(src[i++], ' ');
+    while (i < n) {
+      const c = src[i];
+      if (c === '\\' && i + 1 < n) {
+        const escaped = src.slice(i, i + 2);
+        push(escaped, blank(escaped));
+        i += 2;
+      } else if (c === '$' && src[i + 1] === '{') {
+        push(src.slice(i, i + 2), '  ');
+        i += 2;
+        scanCode(true);
+      } else {
+        push(c, blank(c));
+        i++;
+        if (c === '`') return;
+      }
+    }
   }
+
+  function scanCode(templateExpression = false) {
+    let braces = 0;
+    while (i < n) {
+      const c = src[i], d = src[i + 1];
+      if (templateExpression && c === '}' && braces === 0) {
+        push(c, ' ');
+        i++;
+        return;
+      }
+      if (c === '{') braces++;
+      if (c === '}') braces--;
+      if (c === '/' && d === '/') {
+        let j = i;
+        while (j < n && src[j] !== '\n') j++;
+        const comment = blank(src.slice(i, j));
+        push(comment, comment);
+        i = j;
+      } else if (c === '/' && d === '*') {
+        const end = src.indexOf('*/', i + 2);
+        const j = end < 0 ? n : end + 2;
+        const comment = blank(src.slice(i, j));
+        push(comment, comment);
+        i = j;
+      } else if (c === '"' || c === "'") {
+        let j = i + 1;
+        while (j < n && src[j] !== c && src[j] !== '\n') {
+          if (src[j] === '\\') j++;
+          j++;
+        }
+        j = Math.min(j + 1, n);
+        push(src.slice(i, j), blank(src.slice(i, j)));
+        i = j;
+      } else if (c === '`') {
+        scanTemplate();
+      } else {
+        push(c, c);
+        i++;
+      }
+    }
+  }
+
+  scanCode();
   return { noComments, code };
 }
 
@@ -64,15 +111,25 @@ export function check(file, src) {
   const bad = [];
   const spec = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)(['"`])([^'"`\n]+)\1/g;
   for (let m; (m = spec.exec(noComments));) {
-    if (!m[2].startsWith('.')) continue;
+    if (code[m.index] !== noComments[m.index] || !m[2].startsWith('.')) continue;
     const target = relative(ROOT, resolve(dirname(file), m[2])).split(sep).join('/');
     if (target === 'src/main.js' || target === 'src/ui' || target.startsWith('src/ui/')) {
       bad.push(`${rel}:${lineOf(noComments, m.index)} imports ${m[2]} (resolves into ${target})`);
     }
   }
-  const glob = new RegExp(`(?<![\\w$.])(${BROWSER_GLOBALS.join('|')})\\b`, 'g');
-  for (let m; (m = glob.exec(code));) {
+  const names = BROWSER_GLOBALS.join('|');
+  const globals = new RegExp(
+    `(?<![\\w$.])(?:globalThis\\s*(?:\\?\\.|\\.)\\s*)?(${names})\\b`, 'g',
+  );
+  for (let m; (m = globals.exec(code));) {
     bad.push(`${rel}:${lineOf(code, m.index)} uses browser global ${m[1]}`);
+  }
+  const bracketGlobals = new RegExp(
+    `(?<![\\w$.])globalThis\\s*(?:\\?\\.\\s*)?\\[\\s*(['"])(${names})\\1\\s*\\]`, 'g',
+  );
+  for (let m; (m = bracketGlobals.exec(noComments));) {
+    if (code[m.index] !== noComments[m.index]) continue;
+    bad.push(`${rel}:${lineOf(code, m.index)} uses browser global ${m[2]}`);
   }
   return bad;
 }
@@ -89,5 +146,10 @@ test('layering checker catches what it should and ignores comments and strings',
   assert.equal(check(f, "import '../ui/fx.js';\n").length, 1);
   assert.equal(check(f, "import { a } from '../main.js';").length, 1); // ../main.js from src/model is src/main.js
   assert.equal(check(f, 'const a = document.body;').length, 1);
+  assert.equal(check(f, 'const a = globalThis?.document.body;').length, 1);
+  assert.equal(check(f, "globalThis['window'].name;").length, 1);
+  assert.equal(check(f, 'const a = `${{ a: document.body }.a}`;').length, 1);
+  assert.equal(check(f, 'const a = `${`inner ${window.name}`}`;').length, 1);
+  assert.equal(check(f, 'const a = "import \'../ui/fx.js\'";').length, 0);
   assert.equal(check(f, "// document\n/* window */ const s = 'localStorage'; const c = globalThis.crypto;").length, 0);
 });
