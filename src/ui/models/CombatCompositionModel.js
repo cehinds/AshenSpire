@@ -84,8 +84,13 @@ function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true
     // (size.x); the foot inset then only keeps the ground inside the cell.
     const moved = (size.slid === true || trustSizeX) && Number.isFinite(size.x);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
-    const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
-      { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
+    // Owner 2026-11-05: the party's feet stand inside their strip like the enemies', not on its bottom edge line.
+    // The party keeps its own x (its fit already cleared its neighbours); only the ground takes the shadow inset.
+    const shadowHeight = (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08;
+    const inner = actor.slot.box ? insetPerspectiveFootprint(actor.slot, { width: halfWidth * 2, height: shadowHeight }) : null;
+    const stripFits = inner && actor.slot.box.height >= shadowHeight + 2 * uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx;
+    // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
+    const foot = inner ? (actor.side === 'enemy' ? inner : { x, ground: stripFits ? inner.ground : actor.slot.box.top + actor.slot.box.height / 2 }) : { x, ground: actor.slot.ground };
     // A lone player's feet never stand inside the hand area: the ground line
     // moves up to the hand's top edge (the fit already sized the body for it).
     if (actor.side === 'player' && solo && Number.isFinite(handTop)) foot.ground = Math.min(foot.ground, handTop);

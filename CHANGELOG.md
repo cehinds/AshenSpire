@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-06
+
+- **Party feet inside their row** ([#2587](https://github.com/cehinds/AshenSpire/pull/2587), `0.7.3.182`). In combat your character now stands inside the front row's cell instead of on its line.
+
 ## 2026-11-05
 
 - **Rows show melee and reach** ([#2584](https://github.com/cehinds/AshenSpire/pull/2584), `0.7.3.182`). In combat, fighters at melee stand in the front row and fighters at Reach stand in the back row, on both sides, and they move between rows as the distance changes.
