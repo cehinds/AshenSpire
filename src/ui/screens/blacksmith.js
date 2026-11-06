@@ -74,7 +74,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     try { commit(); }
     catch (error) {
       refuse(tile, error);
-      return;
+      return false; // a refused commit: a list modal that asked does not reopen over the refusal (modalReturn.js)
     }
     sfx.play('shrine');
     onChanged();
@@ -82,6 +82,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     // The what-changed receipt (SPEC §14.4): after the redraw, so the page lock covers the new screen. Refusals
     // above keep the inline .bs-refusal and open nothing.
     showRunReceipt({ run, registries, before, title: t('whatChanged.blacksmith') });
+    return true;
   }
 
   function tile(glyph, title, desc, reason = '') {

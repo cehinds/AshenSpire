@@ -159,8 +159,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
     if (!currentModel.properties.canConfirm) return;
     const selectedId = currentModel.properties.selected.itemRef;
     close({ restoreFocus: false, keepParent: true });
-    try { onConfirm(selectedId); }
-    finally { if (parentRecord) returnToModalParent(selectedId); }
+    let committed = false; // `false` (or a throw) is a refusal: the list stays closed so the refusal text is not covered
+    try { committed = onConfirm(selectedId) !== false; }
+    finally { if (parentRecord) { if (committed) returnToModalParent(selectedId); else dropModalParent(parentRecord); } }
   }
 
   /**

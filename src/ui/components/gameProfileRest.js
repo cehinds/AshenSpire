@@ -63,8 +63,8 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   });
   screen.classList.add('core-rest'); // scopes the compact Core rest CSS away from the full-game rest screen
   const invoke = action => {
-    try { action(); }
-    catch (error) { screen.inert = false; status.textContent = error.message; }
+    try { action(); return true; }
+    catch (error) { screen.inert = false; status.textContent = error.message; return false; }
   };
   const commit = (service, payload) => invoke(() => onCommit(service, payload));
 
@@ -83,7 +83,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       parent: shrineParent('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
-      onConfirm: itemRef => { screen.inert = false; commit('smith', { itemRef }); },
+      onConfirm: itemRef => { screen.inert = false; return commit('smith', { itemRef }); },
     });
   };
 
@@ -99,7 +99,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
-      onConfirm: (instanceId, quote) => { screen.inert = false; commit('upgradeCard', { instanceId, quote }); },
+      onConfirm: (instanceId, quote) => { screen.inert = false; return commit('upgradeCard', { instanceId, quote }); },
     });
   };
 

@@ -105,3 +105,38 @@ test('the row refocused by the return is marked quiet (no tooltip); a plain focu
     door.close();
   });
 });
+
+test('a refused confirm (false or a throw) does not reopen the list over the refusal', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
+  const attempt = (result) => {
+    let opens = 0;
+    withKitDom((dom) => {
+      resetModalParents(); resetModalState();
+      const realSet = globalThis.setTimeout; const timers = [];
+      globalThis.setTimeout = (fn) => { timers.push(fn); return 0; };
+      try {
+        const run = createRunState({ registries, classId: 'reaver', seed: 3 }); run.smithingStones = 3;
+        const host = dom.document.createElement('main'); dom.document.body.append(host);
+        const strike = run.deck.find((c) => c.cardId === 'core.strike');
+        let door;
+        const open = () => { opens++; door = mountCardUpgradeModal(host, cardUpgradeModel(registries, run, null), {
+          registries, meta: {}, parent: { place: 'Blacksmith', reopen: open },
+          onSelect: (id) => door.update(cardUpgradeModel(registries, run, id)), onBack() {},
+          onConfirm() { if (result === 'throw') throw new Error('refused'); return result; } }); };
+        open();
+        host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
+        try { dom.document.querySelector('.confirmation-modal .confirmation-confirm').click(); } catch { /* the throw surfaces here */ }
+        flushModalReturns();
+        while (timers.length) timers.shift()();
+        closeConfirmationModal();
+      } finally { globalThis.setTimeout = realSet; }
+    });
+    return opens;
+  };
+  assert.equal(attempt(false), 1, 'false: no reopen');
+  assert.equal(modalParent(), null, 'a refusal leaves no parent recorded');
+  assert.equal(attempt('throw'), 1, 'a throw: no reopen');
+  assert.equal(attempt(true), 2, 'success: reopens');
+  assert.equal(attempt(undefined), 2, 'a caller that returns nothing still reopens');
+});

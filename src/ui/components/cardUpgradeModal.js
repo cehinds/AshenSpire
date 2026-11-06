@@ -178,8 +178,10 @@ export function mountCardUpgradeModal(host, initialModel, {
     if (selected.options?.length > 1 && !option) return;
     close({ restoreFocus: false, keepParent: true });
     // With a choice, the quote carries the picked step; the service re-plans the same list and checks it is on it.
-    try { onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan); }
-    finally { if (parentRecord) returnToModalParent(selected.instanceId); }
+    // `false` from onConfirm (or a throw) is a refusal: the list stays closed so the refusal text is not covered.
+    let committed = false;
+    try { committed = onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan) !== false; }
+    finally { if (parentRecord) { if (committed) returnToModalParent(selected.instanceId); else dropModalParent(parentRecord); } }
   }
 
   function draw(model) {
