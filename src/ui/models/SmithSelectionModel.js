@@ -169,7 +169,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
         : selected && !selected.affordable
         ? [`Need ${selected.shortfall} more Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`]
         : []),
-      backLabel: t('smith.back.shrine'),
+      backLabel: t('common.backTo', { place: t('common.place.shrine') }),
       confirmLabel: !selected
         ? 'Select an item'
         : selected.affordable

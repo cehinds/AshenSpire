@@ -135,7 +135,7 @@ export function mountServiceModel(registries, plan, selection = {}, { multiUse =
       selectedCard,
       canConfirm,
       blockedReasons: freeze(blockedReasons),
-      backLabel: place === 'merchant' ? 'Back to the merchant' : t('smith.back.shrine'),
+      backLabel: t('common.backTo', { place: t(place === 'merchant' ? 'common.place.merchant' : 'common.place.shrine') }),
       confirmLabel: !selected ? 'Select an item' : `${copy.verb} (${selected.cost})`,
       verb: copy.verb,
     }),
