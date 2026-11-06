@@ -298,7 +298,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const reads = frames.map(frame => {
       const sprite = frame.querySelector('.sprite');
       if (!sprite) return null;
-      const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
+      const body = currentSpriteBodyBounds(sprite, scheduleArt), box = frame.getBoundingClientRect();
       const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       const badge = frame.querySelector(':scope > .combat-hit-chance');
@@ -377,7 +377,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (!sprite || !leading) continue;
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
+        const body = currentSpriteBodyBounds(sprite, scheduleArt);
         const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
         const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
         const intentHeight = intentBox?.height || 37;
@@ -411,7 +411,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!plain.length) { separateRackedIntents(racked, zoom, { fieldBox: readsFieldBox }); return; }
     const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
     const placements = plain.map(({ frame, sprite, leading }) => {
-      const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
+      const art = currentSpriteArtBounds(sprite, scheduleArt), box = leading.getBoundingClientRect();
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
@@ -474,7 +474,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const players = [...field.querySelectorAll('.combatant.player')].flatMap(player => {
       const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
       if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) return [];
-      const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       art.width = art.right - art.left;
       const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
       const viewport = combat.getBoundingClientRect();
@@ -539,7 +539,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite');
       if (!sprite) continue;
-      const art = currentSpriteArtBounds(sprite, schedule);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       const spriteWidth = sprite.getBoundingClientRect().width;
       const artWidth = art.right - art.left;
       if (!(artWidth > 0 && spriteWidth > 0)) continue;
@@ -639,7 +639,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   function trackedBodies() {
     const rows = [];
     for (const sprite of field.querySelectorAll('.combatant .sprite')) {
-      const body = currentSpriteBodyBounds(sprite, schedule);
+      const body = currentSpriteBodyBounds(sprite, scheduleArt);
       rows.push(body.left, body.right, body.top, body.bottom, body.headY, body.feetY);
     }
     return rows;
@@ -1144,7 +1144,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Enemy overheads pack around the player's measured art and controls. An
     // obstacle never blocks its own owner, and the fitted artwork does not move.
     const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
-      const art = currentSpriteArtBounds(sprite, refresh);
+      const art = currentSpriteArtBounds(sprite, scheduleArt);
       const controls = [...frame.querySelectorAll('.combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud')]
         .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
       return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
@@ -1216,7 +1216,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       lockX: true, size: footerSize, maxShiftX: 44,
       obstacles: [...readFooterObstacles(),
         ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls),
-        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, refresh), ownerId: frame.dataset.eid }))].map(rect => ({
+        ...placed.map(({ frame, sprite }) => ({ ...currentSpriteArtBounds(sprite, scheduleArt), ownerId: frame.dataset.eid }))].map(rect => ({
         ownerId: rect.ownerId,
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
@@ -1361,7 +1361,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const selected = frame.classList.contains('context-selected') && !!sprite;
       let bottomLimit;
       if (selected) {
-        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
+        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, scheduleArt).top, width: 0, height: 0 }).top;
         bottomLimit = artTop - INTENT_ART_GAP;
       } else {
         const statusHeight = (leadingHost.querySelector(':scope > .statuses')?.getBoundingClientRect().height || 0) / zoom;
@@ -1413,7 +1413,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
     }
     if (targetHud) for (const { frame, sprite } of placed) {
-      syncCoreTinyTarget(frame, currentSpriteArtBounds(sprite, refresh), frame.getBoundingClientRect(), zoom);
+      syncCoreTinyTarget(frame, currentSpriteArtBounds(sprite, scheduleArt), frame.getBoundingClientRect(), zoom);
     }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
@@ -1428,14 +1428,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       : frame.matches('.enemy:not(.context-selected):not(.dead)'))
       .map(({frame, sprite}) => {
         const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
-        const artBox = targetHud ? currentSpriteArtBounds(sprite, refresh) : sprite.getBoundingClientRect();
+        const artBox = targetHud ? currentSpriteArtBounds(sprite, scheduleArt) : sprite.getBoundingClientRect();
         const art = { left:artBox.left, right:artBox.right, top:artBox.top, bottom:artBox.bottom, width:artBox.right - artBox.left };
         return { id: frame.dataset.eid, frame, box, art,
           x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
           y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
       });
     const actorArt = placed.map(({frame, sprite}) => {
-      const box = currentSpriteArtBounds(sprite, refresh);
+      const box = currentSpriteArtBounds(sprite, scheduleArt);
       return { ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
         right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top };
     });
@@ -1536,6 +1536,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
   const scheduleForced = () => { forcePending = true; schedule(); };
+  // An art image that finishes loading settles the bounds the fit fell back from (the whole sprite box): that one
+  // load forces one relayout through the gate. The callback fires once per load, so it cannot loop.
+  const scheduleArt = () => scheduleForced();
   const combatHost = field.closest('.combat');
   const releaseBackdrop = wireAlternativeBackdrop(combatHost);
   const releaseLayeredEnvironment = wireLayeredEnvironment(combatHost);
@@ -1577,7 +1580,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // these attributes on every pass, and a rewrite to the same value must not relayout.
   const FORCING_ATTRIBUTES = ['data-composition', 'data-form-factor', 'data-formation-settings', 'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'];
   const settingKey = () => { const root = document.documentElement;
-    return FORCING_ATTRIBUTES.map(name => root.getAttribute(name)).join('|'); };
+    return FORCING_ATTRIBUTES.map(name => typeof root?.getAttribute === 'function' ? root.getAttribute(name) : null).join('|'); };
   let lastSettingKey = settingKey();
   let lastSeenViewport = `${window.innerWidth}x${window.innerHeight}`;
   let lastRootLayoutKey = rootLayoutKey();

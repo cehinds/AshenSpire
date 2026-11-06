@@ -61,3 +61,12 @@ test('a display-setting change with an unchanged viewport forces one relayout; a
   assert.match(source, /const settingChange = keyMoved && viewport === lastSeenViewport;/);
   assert.match(source, /if \(setting !== lastSettingKey \|\| settingChange\) \{ lastSettingKey = setting; scheduleForced\(\); \}/);
 });
+
+test('an art-load callback forces one relayout through the gate (one per load, never a loop)', () => {
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(source, /const scheduleArt = \(\) => scheduleForced\(\);/);
+  assert.equal((source.match(/currentSprite(Art|Body)Bounds\(sprite, (schedule|refresh|placePlayerHud)\)/g) || []).length, 0, 'no art read registers an ungated callback');
+  assert.ok((source.match(/currentSprite(Art|Body)Bounds\(sprite, scheduleArt\)/g) || []).length >= 8);
+  // The forced pass is consumed once: refresh clears forcePending, so a settled sprite registers no further callback.
+  assert.match(source, /forcePending = false;\n    layoutEpoch\+\+;/);
+});
