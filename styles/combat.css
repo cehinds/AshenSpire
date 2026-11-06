@@ -1891,6 +1891,11 @@
 .target-hud-detail .target-hud-name { padding-right: 1.9em; }
 :root .combat .combat-health-row > .combat-health-badge[hidden] { display: none !important; }
 .target-hud-panel { box-sizing: border-box; padding: .65em .75em; border: 1px solid #84734c; border-radius: .35em; background: linear-gradient(145deg, #28231bf5, #15130ff5); box-shadow: 0 .2em .8em #0008; }
+/* Owner 2026-11-06: the enemy panel's name slot carries its intent, so the overhead copy steps aside while the panel is up. */
+.combat[data-target-hud='true'] .combatant.enemy.target-hud-selected > .target-hud-overhead-meters > .intent { display: none !important; }
+:root .combat .combatant.enemy .combatant-card > .nm.nm-sr { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 0 !important; overflow: hidden !important; clip-path: inset(50%); border: 0 !important; padding: 0 !important; background: none !important; display: block !important; }
+.target-hud-name.target-hud-name-intent { display: flex; justify-content: center; align-items: center; padding-right: 1.9em; overflow: visible; }
+.target-hud-detail .target-hud-name-intent .intent { position: static; width: auto; min-width: 0; height: auto; margin: 0; }
 .target-hud-name { font-family: Georgia, serif; font-size: 1.05em; margin-bottom: .4em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .target-hud-meters.meters { width: 100%; min-width: 0; gap: .4em; display: flex; flex-direction: column; }
 .target-hud-meters :is(.combat-health-row, .combat-health-meter, .m-track) { width: 100% !important; min-width: 0 !important; max-width: none !important; }
@@ -2219,3 +2224,17 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
 :root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-attack,
 :root[data-effects='off'] .reduced-motion .sprite[data-action-motion].act-move { animation: none; }
 
+
+/* Owner 2026-11-06: the intent in an enemy panel's name slot reads as the overhead intent does (compact form plus the
+   queue of follow-ups), filling the panel's width; the scope and stance notes stay out of the narrow panel. */
+:root .combat .target-hud-detail .target-hud-name-intent { min-width: 0; width: 100%; }
+:root .combat .target-hud-detail .target-hud-name-intent .intent { max-width: 100%; min-width: 0; box-sizing: border-box; }
+:root .combat .target-hud-detail .target-hud-name-intent .intent > :not(.intent-compact):not(.cr-followups) { display: none !important; }
+:root .combat .target-hud-detail .target-hud-name-intent .intent .intent-compact { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; min-width: 0; }
+:root .combat .target-hud-detail .target-hud-name-intent .intent-damage-scope { display: none; }
+
+/* Owner 2026-11-06: the desktop player panel stands in the board's right margin (combatTargetHud.js playerMargin). Where
+   the margin narrows to its 180 px floor the panel's rows stack vertically instead of sharing a line. */
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-meters,
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-panel { display: flex; flex-direction: column; align-items: stretch; gap: .3em; }
+:root .combat .target-hud-detail[data-margin='stacked'] .target-hud-statuses.statuses { flex-wrap: wrap; justify-content: flex-start; }

@@ -6811,3 +6811,10 @@ body.reduced-motion .as-toast { transition: none; }
 @media (prefers-reduced-motion: no-preference) {
   :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { transition: left .22s ease-out; }
 }
+
+/* Owner 2026-11-06: the Armory's Inventory section (usable items only, e.g. skill books) is compact rows under the slot rows;
+   its detail opens beneath them once an item is chosen and is absent before. */
+.armoury .ep-list.armoury-split.is-books-only { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
+.armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
+.armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
+.armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }

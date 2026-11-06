@@ -82,7 +82,7 @@ import { t, tFull, tTip } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
 import { openBookLearning } from '../components/bookLearning.js';
 import { renderBookArt } from '../components/bookArt.js';
-import { equipClassCard } from '../../model/classLibrary.js';
+import { equipClassCard, learnedClassIds } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
@@ -1555,7 +1555,14 @@ export function mountEquipment(host, {
     return root;
   }
 
-  /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
+  /** An owned item with an action of its own beyond equipping: a skill book (Read). Listed in and out of combat; the action is out of combat only. */
+  // A learned class card is one too (SPEC §14.3: the Inventory may equip one learned card or leave the core slot empty); it is
+  // listed only when there is a choice to make (more than one learned card, or the core slot already empty), out of combat,
+  // and never on a configured profile (Core 2 keeps its class fixed).
+  const classChoice = () => !inCombat && run.gameProfile?.foundation?.mode !== 'configured' && (learnedClassIds(run).length > 1 || run.classUnequipped === true);
+  const usableRow = (row) => row.read === true || (row.classCard === true && classChoice());
+
+  /** The Inventory section: the usable items normally (none, and no section, when there are none), compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list armoury-split';
@@ -1572,9 +1579,12 @@ export function mountEquipment(host, {
     const roleLabels = Object.fromEntries(layout.combatPower.cards.map((card) => [card.role, card.label]));
     const selectedSlot = picking ? eq.slots.find((slot) => slot.id === picking.slotId) : null;
     const allRows = inventoryRows(registries, run, meta);
+    // Owner 2026-11-06: outside a slot's picker the Armory lists only the usable non-equippable items (a skill book is
+    // Read here): compact rows, no grid, and the detail opens under the rows only once an item is chosen.
     const rows = selectedSlot
       ? allRows.filter((row) => row.item && fitsSlot(selectedSlot, row.item))
-      : allRows;
+      : allRows.filter(usableRow);
+    if (!selectedSlot) { box.classList.add('is-books-only'); box.dataset.detailOpen = 'false'; prompt.hidden = true; }
     const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
@@ -2567,11 +2577,17 @@ export function mountEquipment(host, {
     // The Armory page is ONE scrolling body: the equipment slots on top, the
     // Inventory's sections below them. The Character page carries neither.
     if (view !== 'grid') {
-      inventory.append(inventoryBlock());
-      if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
-      // SPEC §15.4: the Sigils panel sits below the item collection.
+      // Owner 2026-11-06: the Armory tab is the equipped-slot rows and nothing else, so there is no scrolling. The item
+      // collection and its detail pane are gone; items are chosen through the slot's picker (Choose item / Replace), which
+      // is this same block opened for one slot, and through the reward / purchase Equip flow (beginInventoryEquip).
+      if (picking || inventoryRows(registries, run, meta).some(usableRow)) {
+        inventory.append(inventoryBlock());
+        if (selectedInventoryKey) inventoryDisclosure?.open(selectedInventoryKey);
+      }
+      // SPEC §15.4: the Sigils panel stays below the slot rows.
       const sigils = sigilsPanel();
       if (sigils) inventory.append(sigils);
+      if (!inventory.children.length) inventory.remove();
     } else inventory.remove();
     wrap.querySelector('.armoury-strip').parentElement.remove();
 

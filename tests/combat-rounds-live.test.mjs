@@ -300,9 +300,9 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   const logs = [1, 2, 3].map((s) => scriptedLog(s));
   const all = logs.join('\n');
   assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
-    ['state', null, 45, [['e1', 31, true]], 5],
-    ['state', null, 49, [['e1', 6, true]], 5],
-    ['state', null, 24, [['e1', 27, true]], 5],
+    ['state', null, 45, [['e1', 29, true]], 5],
+    ['state', null, 49, [['e1', 3, true]], 5],
+    ['state', null, 24, [['e1', 24, true]], 5],
   ], 'accepted metadata and Mana-floor changes preserve the three ordinary fight outcomes');
   assert.equal([1, 2, 3].map((s) => scriptedLog(s)).join('\n'), all,
     'fresh fights reproduce the complete seeded event log byte for byte');
@@ -344,6 +344,9 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   // entry with origin/dev aba92c631: the only differences are the status chance events (new `target` and `mode` fields; roll,
   // rolls and success values from the d20 draws) and the gauge, removal and buildup numbers those outcomes feed. The three
   // end-state outcomes asserted above are unchanged and the fresh-fight repeat passed before the hash was recorded.
+  // Re-recorded for chore/DropSettingsMigrations: bare test registries (no balance.combatRatings) priced equipment ratings by the frozen
+  // ruleset-6 formula; they read the live rating rows now. The configured registries the game uses price identically (checked by hash
+  // of 12 created runs and opening hands on origin/dev and this branch), so no live fight changes. Enemy end HP 31/6/27 -> 29/3/24.
   const previousTotals = [], endedMoves = [], projectedRanges = [];
   const forecastCounts = { actor: 0, move: 0, action: 0 };
   const legacy = logs.map(text => {
@@ -425,7 +428,7 @@ test('with round preview off, seeded fight receipts preserve the golden apart fr
   }, {}), { '0-7': 11, '0-9': 6 }, 'projected HP ranges are present only on the public attacking forecasts');
   assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
     // Re-pinned 2026-11-01 with the receipt count above: the guard moves now log Barrier status events (SPEC 4.1a); merged with dev's d20 and weapon-art log changes.
-    { sha256: 'b8ed691db9957a529df389baa9c40bc3c81a38a760ee0f7e2ab595e0243981dc', length: 416396 });
+    { sha256: '74b2e28267b5c95920168c7fb46327c838c0be600ad3851223d7c8dfe88d8a30', length: 434698 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

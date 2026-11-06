@@ -61,7 +61,6 @@ import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armam
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
-import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
 import { advancedConfigSnapshot, coreAdvancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, retiredStoredSettingKeys } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
@@ -131,7 +130,7 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
-import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
+import { cancelDeckEdit, commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
@@ -1312,7 +1311,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile }) {
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1385,13 +1384,15 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
+  // Core 2 creation: the deck edited on the review step (a beginDeckEdit snapshot) replaces the starting deck piles.
+  if (deckEdit && isConfiguredRun(run)) cancelDeckEdit(run, deckEdit);
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
   // What the player chose to begin this climb, saved with the run so the
   // game-over screen can offer Run again with the same choices after any
   // reload. The STARTING attributes, not the levelled ones; the game profile
   // is already run.gameProfile. A run saved before this field has no Run again.
-  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes });
+  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, ...(deckEdit ? { deckEdit } : {}) });
   run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
@@ -2001,10 +2002,6 @@ async function persistSettingsChange(changed) {
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
-  // A `draw` or `poise` stat row written by this build means what it means
-  // now (ruleset 7); the marker keeps a later boot from reading it as the
-  // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
-  if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
   let res;
@@ -3794,7 +3791,8 @@ function showGameProfileReward() {
     canEditDeck: !!deckDoors().armoury,
     onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null, 'rewards'),
     canEditEquipment: !!gameModule(run, 'equipment'),
-    onEditEquipment: (index, back) => showArmoury('', back),
+    // Owner 2026-11-06: the Armoury opened from a reward carries the item, so choosing a slot equips THAT item (no second picker).
+    onEditEquipment: (index, back) => showArmoury({ equipItemId: run.gameProfileRewardOffers[pending.offerId]?.options?.[index]?.id || '' }, back),
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;

@@ -47,7 +47,7 @@ import * as F from './combatRules.js';
 import { stanceRulesFor } from '../model/stanceRules.js';
 import { allocateInteger, resolveDamageComponents, groupedResistance, taggedBonusFloor } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
-import { LEGACY_HAND_MAX } from '../model/statRows.js';
+import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { usesSingleBreakMeter } from '../model/breakMeter.js';
@@ -2370,7 +2370,7 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     enemies: [],
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
     // The run context never draws; the retired fallback keeps the field a number.
-    handMax: LEGACY_HAND_MAX,
+    handMax: FALLBACK_HAND_MAX,
     queue: [],
     eventLog: events,
     _buffer: null,

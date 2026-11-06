@@ -601,19 +601,19 @@ test('the shared opening-hand base and attribute have no row and move no class',
   const { statRow } = await import('../src/model/statRows.js');
   const keys = advancedConfigRows(contentBundle).map((row) => row.key);
   assert.ok(!keys.includes(OPEN_BASE) && !keys.includes(OPEN_STAT), 'neither key has a row');
-  // Ruleset 7: the shared pair is DROPPED, never converted onto the
-  // opening-hand row (#1318) — only the limit beside it converts.
+  // The shared pair is DROPPED, never converted onto the opening-hand row
+  // (#1318); so is the limit beside it (retired stat keys are dropped, not converted).
   const shared = { [OPEN_BASE]: 9, [OPEN_STAT]: 'constitution', 'gameConfig.handRules.starting.maximum': 10 };
   const converted = normalizeAdvancedSettings({ ...shared }, contentBundle);
   assert.ok(Object.keys(converted).every((key) => !key.startsWith('gameConfig.handRules.')), JSON.stringify(converted));
   assert.notEqual(converted['gameConfig.derivedStatRules.rules.openingHand.base'], 9, 'the shared base is not carried onto the row');
   assert.ok(!converted['gameConfig.derivedStatRules.rules.openingHand.constitution'], 'nor the shared attribute');
-  assert.equal(converted['gameConfig.derivedStatRules.rules.openingHand.max'], 10, 'the limit is kept');
+  assert.deepEqual(converted, {}, 'the limit is dropped, not converted onto the row');
   const registries = createRegistries(configuredContentBundle(contentBundle, converted));
-  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+  for (const classId of Object.keys(OPENING)) {
+    const authored = contentBundle.derivedStatRules.rules.openingHand.byClass[classId];
     const row = statRow(registries, { class: classId }, 'openingHand');
-    assert.equal(row.base, base, `${classId} opens on its own base`);
-    assert.equal(row[stat], 0.5, `${classId} grows with its own attribute`);
+    assert.equal(row.base, authored.base, `${classId} keeps its authored base`);
     assert.ok(!row.constitution, `${classId} does not read the shared attribute`);
   }
   assert.equal(statRow(registries, null, 'openingHand').base, contentBundle.derivedStatRules.rules.openingHand.base,
@@ -625,8 +625,8 @@ test('a stored profile carrying the shared opening hand drops it, warns once whe
   const saved = [];
   const warnings = [];
   const settings = bringProfileForward(restored, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
-  // The per-class row is kept — as the opening-hand row's own key (ruleset 7).
-  assert.equal(settings['gameConfig.derivedStatRules.rules.openingHand.byClass.rogue.base'], 5, 'the per-class row is kept');
+  // The retired per-class dial is dropped too, never converted onto the row.
+  assert.deepEqual(settings, {}, 'nothing is converted');
   assert.ok(!Object.hasOwn(settings, OPEN_BASE) && !Object.hasOwn(settings, OPEN_STAT));
   assert.deepEqual(saved, [restored]);
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
@@ -660,9 +660,8 @@ test('a profile holding only the settings.-prefixed shared opening hand or cap o
     const settings = bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
     assert.equal(settings, profile.settings, 'rewritten in place');
     assert.ok(!Object.hasOwn(profile.settings, key), `${key} is deleted from the profile`);
-    // The tuned turn draw beside it converts onto the Draw / turn row (ruleset 7).
-    assert.ok(Object.keys(profile.settings).every((k) => !k.startsWith('gameConfig.handRules.') && !k.startsWith('settings.')), JSON.stringify(profile.settings));
-    assert.ok(Object.keys(profile.settings).some((k) => k.startsWith('gameConfig.derivedStatRules.rules.draw.')));
+    // The retired turn-draw dial beside it is dropped, never converted onto the Draw / turn row.
+    assert.deepEqual(profile.settings, {});
     assert.equal(saves, 1, `${key} is saved once`);
     const opening = warnings.filter((line) => /^Opening hand/.test(line));
     assert.equal(opening.length, 1);
@@ -715,9 +714,9 @@ test('a v1 file carrying the shared opening hand imports without it, with a warn
   const warnings = [];
   const changes = parseAdvancedConfigFile(v1File({ [OPEN_BASE]: 5, [`settings.${OPEN_STAT}`]: 'strength', 'gameConfig.handRules.startingByClass.herald.base': 3 }),
     contentBundle, {}, advancedConfigRows(contentBundle), warnings);
-  // The rest of the file lands — #1294's per-class row as the opening-hand row's own key.
-  assert.equal(changes['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.base'], 3, 'the rest of the file lands');
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.handRules.')));
+  // The file lands; #1294's per-class dial is dropped with a warning, not converted.
+  assert.deepEqual(changes, {}, 'nothing is converted onto the opening-hand row');
+  assert.ok(warnings.some((line) => /hand rules' dials .* are retired/.test(line)));
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
   assert.equal(opening.length, 1);
   assert.match(opening[0], /each class opens on its own/);
@@ -747,12 +746,12 @@ test('a file written on the old, higher defaults still imports', () => {
     'gameConfig.classes.herald.startingFlaskAllocation.mana': 1,
   };
   // Ruleset 7 retired `balance.handMax` (every fight reads the handSize stat
-  // row), so it is converted away — said once — and everything else imports.
+  // row), so it is dropped — said once — and everything else imports.
   const warnings = [];
   const { 'gameConfig.balance.handMax': _retired, ...kept } = old;
   assert.deepEqual(parseAdvancedConfigFile(v1File(old), contentBundle, {}, [], warnings), kept);
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /fallback hand capacity was retired/);
+  assert.match(warnings[0], /fallback hand capacity are retired/);
   // And a larger tuning of the curves than either build shipped.
   const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
@@ -791,7 +790,6 @@ test('a retired row keeps both spellings importable: inert skipped, live mirror 
 test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 applies', () => {
   const MAX = 'gameConfig.handRules.starting.maximum';
   const MIN = 'gameConfig.handRules.starting.minimum';
-  const ROW = 'gameConfig.derivedStatRules.rules.openingHand.';
   const profile = { settings: { [MAX]: 15, [MIN]: 3 } };
   const saved = [];
   const warnings = [];
@@ -800,25 +798,19 @@ test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 
   assert.deepEqual(settings, {});
   assert.equal(saved.length, 1, 'written back');
   assert.match(warnings.join(' '), /3–15/);
-  // Only the retired values go: a chosen cap stays, and a lone floor of 3 is a
-  // choice — each converted onto the opening-hand row (ruleset 7).
+  // A chosen cap and a lone floor are retired dials too: dropped with a warning, never converted.
   const chosen = { [MAX]: 5, [MIN]: 3 };
-  normalizeAdvancedSettings(chosen, contentBundle);
-  assert.equal(chosen[`${ROW}max`], 5);
-  assert.equal(chosen[`${ROW}min`], 3);
-  assert.ok(!Object.hasOwn(chosen, MAX) && !Object.hasOwn(chosen, MIN));
-  const capOnly = { [MAX]: 15, [MIN]: 5 };
-  normalizeAdvancedSettings(capOnly, contentBundle);
-  assert.equal(capOnly[`${ROW}min`], 5);
-  assert.equal(capOnly[`${ROW}max`], 6, 'the retired cap of 15 is not carried into the row');
-  // The import door drops it too, in either spelling.
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3 } });
+  const chosenWarnings = [];
+  normalizeAdvancedSettings(chosen, contentBundle, chosenWarnings);
+  assert.deepEqual(chosen, {});
+  assert.match(chosenWarnings.join(' '), /hand rules' dials/);
+  // The import door drops them too, in either spelling, and nothing is converted.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3, [MAX.replace('maximum', 'minimum')]: 5 } });
   const importWarnings = [];
-  const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings);
-  assert.equal(imported[`${ROW}max`], 6);
-  assert.equal(imported[`${ROW}byClass.reaver.strength`], 1 / 3, 'a tuned points-per-card converts exactly, as its weight');
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings), {});
   assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
-  assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
+  assert.match(importWarnings.join(' '), /hand rules' dials/);
+  assert.deepEqual(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle), {});
 });
 
 // THE SKILL-LEVEL CARD UPGRADE IS RETIRED (SPEC §13.4o): `balance.skill.upgradeAt`

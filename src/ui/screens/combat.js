@@ -1597,7 +1597,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return { id: entity.id, role, matchup, matchupActive, auraColor, inspect: opener => openCombatantDoor(combatantSubject(role, entity), opener), name: role === 'enemy' ? registries.enemies.get(entity.enemyId).name : run.customization?.name || runClassIdentity(registries, run).name,
         intent, action: role === 'player' ? action : null, key: JSON.stringify([dv(entity), intent, role === 'player' && action, matchup, matchupActive]),
         statusKey: JSON.stringify(statusRows(entity)),
-        createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }) };
+        createMeters: () => meterBars(entity), createStatuses: () => statusRow(entity, { inspection: true }),
+        // The enemy panel's name slot holds its intent (owner 2026-11-06); null when intents are not shown.
+        createIntent: role === 'enemy' && entity.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy') ? () => intentEl(entity) : null };
     });
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
   }
@@ -2567,7 +2569,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         name: () => {
           // The nameplate is a LabelStack: the name, and under it what kind of
           // thing it is (its stature reads from the frame, so the hint is the tags).
-          const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
+          // Owner 2026-11-06: no visible enemy name (its intent took the panel's name slot); the label stays for screen readers.
+          const nm = labelStack({ label: def.name, attrs: { class: 'nm nm-sr' } });
           // With no card/flask selected, the name opens the full read directly;
           // the separate side core selects the fighter's contextual explanation.
           // During targeting both retain the existing card/flask commit behavior.

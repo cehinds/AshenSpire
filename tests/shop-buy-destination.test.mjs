@@ -100,3 +100,12 @@ test('the Master offers the destination choice only under the masterArtChoice se
   const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');
   assert.match(modal, /\(onDismiss \|\| onSecondary\)\?\.\(\)/);
 });
+
+test('a reward\'s Equip opens the Armoury with the offered item, so a slot choice equips it directly', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /onEditEquipment: \(index, back\) => showArmoury\(\{ equipItemId: run\.gameProfileRewardOffers\[pending\.offerId\]\?\.options\?\.\[index\]\?\.id \|\| '' \}, back\)/);
+  // The Armoury's item flow lists only the slots the item fits, then equips into the chosen one (requestEquip), never the slot's picker.
+  const equipment = readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
+  assert.match(equipment, /filter\(candidate => fitsSlot\(candidate, row\.item\)\)/);
+  assert.match(equipment, /requestEquip\(slot\.id, position\.index, row\.id, `Equip \$\{row\.name\} to \$\{label\}`/);
+});

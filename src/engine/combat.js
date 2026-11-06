@@ -63,7 +63,7 @@ import { spellCardCostSurcharge, combatProfileFor } from '../model/combatCardPro
 import * as R from './abilityRiders.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
-import { LEGACY_HAND_MAX } from '../model/statRows.js';
+import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
@@ -278,7 +278,7 @@ export function createCombat({
     result: null, // null | 'victory' | 'defeat'
     // THE HAND SIZE IS A STAT ROW (ruleset 7). A fight handed no hand rules —
     // an old headless fixture — keeps the retired fallback it always had.
-    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), player.attributes, player.level) : LEGACY_HAND_MAX,
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), player.attributes, player.level) : FALLBACK_HAND_MAX,
     // The character level a row's `perLevel` reads, for the hand and ratings.
     ...(Number.isInteger(player.level) ? { characterLevel: player.level } : {}),
     drawPerTurn: player.drawPerTurn,
