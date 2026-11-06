@@ -358,10 +358,10 @@ one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabl
 baseline, pointsPerCard, minimum, maximum }`) and `balance.handMax`. `validateContent` refuses
 each by name if it returns (`balance.handMax`, `balance.combatRatings.multiplier`,
 `handRules.starting|turn|capacity`), as it refuses `balance.poise.playerPerConstitution`. Their
-settings keys convert on import and on profile load/restore into the rows' own keys
-(`gameConfig.derivedStatRules.rules.<id>.<field>`; `model/statRows.js`
-`migrateLegacyStatSettings`): rating weights and bases carry over, a multiplier ≠ 1 is folded
-into the weights, a tuned hand group is fitted to the closest weight row, each with a warning.
+settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`,
+`balance.handMax`, and the per-item `combatRatings.bonuses.*`) are **dropped, never converted**,
+on import and on profile load/restore, with one warning per family
+(`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
 **Old runs are priced as they were.** A run snapshots its rows at birth; a run born under
 ruleset 1–6 reads its own snapshot's pools plus the retired homes restated as rows with exact
 carrier fields (`pointsBaseline`, `pointsPerIncrease`, `multiplier`), from the frozen ruleset-6
