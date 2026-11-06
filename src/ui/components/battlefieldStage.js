@@ -29,7 +29,7 @@ import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { effectsOff, coarsePointer } from '../performance.js';
-import { shouldRelayout, viewportKey, isPhoneViewport } from '../../model/relayoutGate.js';
+import { shouldRelayout, viewportKey, isPhoneViewport, formationKey as formationKeyOf } from '../../model/relayoutGate.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 import { separateOverheadIntents } from './overheadIntentSeparation.js';
 import { setData, setStyle, setVar } from '../domWrite.js';
@@ -495,8 +495,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // level with its upper body, placed once per layout pass; selecting, intents and enemy panels never move
       // it (the enemy panels pack around it instead). Nothing here reads the previous position.
       const hudTopLimit = (combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom ?? viewport.top) + 4;
-      const staticLeft = Math.max(viewport.left + 4, Math.min(art.right + 4 * zoom, viewport.right - panel.width - 4));
-      const staticTop = Math.max(hudTopLimit, art.top + 0.3 * (art.bottom - art.top) - panel.height / 2);
+      // The details offset tokens (hudOffsets.playerDetailsDx / Dy) still apply, as a fixed amount, inside the field.
+      const staticLeft = Math.max(viewport.left + 4, Math.min(art.right + 4 * zoom + hudOffsets.playerDetailsDx * zoom, viewport.right - panel.width - 4));
+      const staticTop = Math.max(hudTopLimit, art.top + 0.3 * (art.bottom - art.top) - panel.height / 2 + hudOffsets.playerDetailsDy * zoom);
       const handFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
       const hudBottom = combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom;
       const placed = { left: staticLeft, top: staticTop };
@@ -670,7 +671,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // flip off phones). Selecting, hovering, intents, the HUD and the hand never relayout it.
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
-  let laidOut = null, forcePending = false, layoutEpoch = 0;
+  let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
   const viewportNow = () => viewportKey({ width: window.innerWidth, height: window.innerHeight });
   const refresh = (force = false) => {
     cancelAnimationFrame(frameRequest);
@@ -682,13 +683,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!frames.length) return;
     const now = viewportNow();
     const phone = isPhoneViewport({ width: now.width, height: now.height, coarse: coarsePointer() }, relayoutConfig);
-    const unplaced = frames.some(frame => !placedFrames.has(frame));
+    // What the formation shows: who stands in which cell, who is alive, the strips and the policy. A committed move,
+    // an engagement step or a death changes it and must reposition the figures; the viewport and selection do not.
+    const formationKey = formationKeyOf({ playerCell: field.dataset.playerCell, occupancy: field.dataset.formationOccupancy,
+      rangeRanks: field.dataset.rangeRanks, policy: field.dataset.formationPolicy,
+      frames: frames.map(frame => ({ eid: frame.dataset.eid, cell: frame.dataset.formationCell, dead: frame.classList.contains('dead') })) });
+    const unplaced = frames.some(frame => !placedFrames.has(frame)) || formationKey !== placedFormationKey;
     const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone });
     if (!(force === true || forcePending) && !unplaced && !moved) return;
     forcePending = false;
     layoutEpoch++;
     setData(field, 'layoutEpoch', layoutEpoch);
     if (moved) laidOut = now;
+    placedFormationKey = formationKey;
     for (const frame of frames) placedFrames.add(frame);
     invalidateSpriteRects();
     const combat = field.closest('.combat');

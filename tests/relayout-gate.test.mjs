@@ -30,3 +30,22 @@ test('a phone is a coarse pointer with a short side of 500px or less', () => {
   assert.equal(isPhoneViewport({ width: 390, height: 844, coarse: false }, cfg), false);
   assert.equal(isPhoneViewport({ width: 820, height: 1180, coarse: true }, cfg), false);
 });
+
+import { readFileSync } from 'node:fs';
+import { formationKey } from '../src/model/relayoutGate.js';
+const state = over => ({ playerCell: 'A1', occupancy: '[]', rangeRanks: '{}', policy: 'null',
+  frames: [{ eid: 'player', cell: 'A1', dead: false }, { eid: 'e1', cell: 'D1', dead: false }], ...over });
+test('a formation change repositions: player move, enemy advance, strip change, death, removal', () => {
+  const base = formationKey(state());
+  assert.equal(formationKey(state()), base, 'an unchanged formation is the same key (select/hover never relayout)');
+  assert.notEqual(formationKey(state({ playerCell: 'A2', frames: [{ eid: 'player', cell: 'A2', dead: false }, { eid: 'e1', cell: 'D1', dead: false }] })), base, 'player moved');
+  assert.notEqual(formationKey(state({ occupancy: '[["A2","player"]]' })), base, 'occupancy');
+  assert.notEqual(formationKey(state({ rangeRanks: '{"e1":1}' })), base, 'enemy advance/retreat (rangeRanks)');
+  assert.notEqual(formationKey(state({ frames: [{ eid: 'player', cell: 'A1', dead: false }, { eid: 'e1', cell: 'D1', dead: true }] })), base, 'enemy death');
+  assert.notEqual(formationKey(state({ frames: [{ eid: 'player', cell: 'A1', dead: false }] })), base, 'frame removed');
+});
+test('the stage refits when the formation key changes, ahead of the viewport gate', () => {
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(source, /formationKey !== placedFormationKey/);
+  assert.match(source, /placedFormationKey = formationKey;/);
+});
