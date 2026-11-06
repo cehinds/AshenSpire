@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { targetHudMatchup, TARGET_HUD_AURA, targetHudConfig, targetHudEnabled, createTargetHudDwell, miniHudScale, enemyHudPlacement, playerHudPlacement } from '../src/ui/models/TargetHudModel.js';
 
 // Owner 2026-11-06: "keep enemy mini HUDs above them in a fixed position; keep the player hud anchored to the right and
