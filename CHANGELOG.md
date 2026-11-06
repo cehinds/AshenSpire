@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
+- **Behind the scenes: the code is reviewed for structure** ([#2617](https://github.com/cehinds/AshenSpire/pull/2617), `0.7.3.212`). This is a docs-only change, and nothing you play changes. A review of the whole `dev` code base for structure, readability, speed, flow and modularity is written down under docs/reviews, with every finding tied to a file and line and ordered into small pull requests that follow the cleanup plan.
 - **Pages publish fits again** ([#2614](https://github.com/cehinds/AshenSpire/pull/2614), `0.7.3.212`). Oversized legacy inline builds are skipped and /latest/download is a redirect instead of a second 157 MB copy, so the site passes the size guard.
 - **Old branches can be cleaned up** ([#2610](https://github.com/cehinds/AshenSpire/pull/2610), `0.7.3.210`). The branch cleanup workflow can delete unmerged branches older than a given date on manual dispatch, with a keep list; protected branches and open PR branches are never touched.
 - **Pages publish no longer fills the runner's disk** ([#2606](https://github.com/cehinds/AshenSpire/pull/2606), `0.7.3.208`). The Pages assemble frees each rebuild's build tree and output as soon as it is published, skips the offline single file for archived builds, prints a rebuild plan capped per run, and logs disk space around the assemble step.
