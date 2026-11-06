@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
-- **Retired settings dropped, not converted** ([#2616](https://github.com/cehinds/AshenSpire/pull/2616), `0.7.3.216`). Retired stat, rating and hand settings keys are dropped with a warning, and the ruleset-6 stat adapters and smithing conversion are deleted.
+- **Retired settings dropped, not converted** ([#2616](https://github.com/cehinds/AshenSpire/pull/2616), `0.7.3.218`). Retired stat, rating and hand settings keys are dropped with a warning, and the ruleset-6 stat adapters and smithing conversion are deleted.
 - **Behind the scenes: the code is reviewed for structure** ([#2617](https://github.com/cehinds/AshenSpire/pull/2617), `0.7.3.216`). This is a docs-only change, and nothing you play changes. A review of the whole `dev` code base for structure, readability, speed, flow and modularity is written down under docs/reviews, with every finding tied to a file and line and ordered into small pull requests that follow the cleanup plan.
 - **Game rules stay portable** ([#2613](https://github.com/cehinds/AshenSpire/pull/2613), `0.7.3.214`). A repository check catches browser dependencies in game rules and keeps shared text and hashing available outside the browser UI.
 - **Pages publish fits again** ([#2614](https://github.com/cehinds/AshenSpire/pull/2614), `0.7.3.212`). Oversized legacy inline builds are skipped and /latest/download is a redirect instead of a second 157 MB copy, so the site passes the size guard.
