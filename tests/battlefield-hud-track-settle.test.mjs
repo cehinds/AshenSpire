@@ -20,7 +20,7 @@ function loop(effectsAreOff = false) {
     field: { isConnected: true, querySelector: () => ({}), querySelectorAll: () => [sprite], closest: () => ({ dataset: { targetHud: 'true' } }) },
     currentSpriteBodyBounds: () => ({ left: x, right: x + 10, top: 0, bottom: 10, headY: 0, feetY: 10 }),
     reducedMotionRequested: () => false, effectsOff: () => effectsAreOff, invalidateSpriteRects() {}, stageFor: () => null,
-    placePlayerHud() {}, placeHitBadges() {}, placeEnemyInspect() {}, schedule() {}, settledTargetCores: null,
+    placePlayerHud() {}, placeHitBadges() {}, placeEnemyInspect() {}, schedule() {}, scheduleArt() {}, settledTargetCores: null,
   };
   const body = `let trackingRequest = 0, inspectTick = 0;\n${source.slice(start, end)}\nreturn { extendTracking, trackPlayerHud, running: () => trackingRequest };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));

@@ -25,7 +25,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const combat = { querySelector: () => null };
     const field = { querySelectorAll: () => [frame], closest: () => combat };
     const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-      uiZoom: () => zoom, field, schedule() {}, targetBodyHudPlacement, separateRackedIntents() {},
+      uiZoom: () => zoom, field, schedule() {}, scheduleArt() {}, targetBodyHudPlacement, separateRackedIntents() {},
       // Desktop draws the taller group (owner 2026-10-28): the stage's helper returns its own height there.
       miniHudGroupHeight: grid => formFactor === 'desktop' ? 96 : grid.miniHudGroupHeightPx,
       uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
@@ -101,7 +101,7 @@ test('every target body is measured before inherited HUD coordinates are written
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
     uiZoom: () => 1.25, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
-    schedule() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
+    schedule() {}, scheduleArt() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),
   });
@@ -138,7 +138,7 @@ test('detailed HUD selection coalesces its board fit without losing legacy synch
     let fits = 0, queued = 0;
     const change = runInNewContext(source.slice(begin, finish) + '\nselectionChanged', {
       combatHost: { dataset: { targetHud: String(detailed) } },
-      refresh: () => fits++, schedule: () => queued++,
+      refresh: () => fits++, schedule: () => queued++, scheduleArt: () => queued++,
     });
     change({});
     assert.equal(fits, detailed ? 0 : 1, 'legacy Info controls keep their synchronous first placement');

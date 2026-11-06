@@ -41,7 +41,7 @@ test('a detailed HUD rack rebuild cannot temporarily position a legacy leading h
   const place = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
     field, invalidateSpriteRects() {}, uiZoom: () => 1, readHitBadges: () => null,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: {} } } } },
-    separateRackedIntents() {}, currentSpriteArtBounds: () => ({}), schedule() {},
+    separateRackedIntents() {}, currentSpriteArtBounds: () => ({}), schedule() {}, scheduleArt() {},
     targetOverheadPlacement: () => ({ dx: 25, dy: -60 }),
   });
   place(); place();
@@ -56,7 +56,7 @@ test('glyph-only detailed selection coalesces overhead placement; inspection and
   const start = source.indexOf('  let overheadRequest = 0;'), end = source.indexOf("  combatHost.addEventListener('combatantselectionchange'", start);
   let serial = 0, overhead = 0, refresh = 0, scheduled = 0;
   const frames = new Map(), field = { isConnected: true }, combatHost = { dataset: { targetHud: 'true' } };
-  const scope = { field, combatHost, centerTargetOverheads() { overhead++; }, refresh() { refresh++; }, schedule() { scheduled++; },
+  const scope = { field, combatHost, centerTargetOverheads() { overhead++; }, refresh() { refresh++; }, schedule() { scheduled++; }, scheduleArt() {},
     requestAnimationFrame(fn) { frames.set(++serial, fn); return serial; }, cancelAnimationFrame(id) { frames.delete(id); } };
   const select = runInNewContext(source.slice(start, end) + '\nselectionChanged', scope);
   const glyph = { detail: { geometry: 'overhead' } };

@@ -19,7 +19,7 @@ test('the actual footer pack keeps an unselected armed player and every enemy ph
   const placed=boxes.map((box,index)=>({sprite:{art:{left:box.hostRect.left,right:box.hostRect.left+box.hostRect.width,top:box.hostRect.bottom-120,bottom:box.hostRect.bottom}},frame:{dataset:{eid:index?'enemy':'player'},classList:{contains:role=>role===(index?'enemy':'player')||role==='context-selected'&&!!index}}}));
   let packInput;
   runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,combatFrameTarget,COMBAT_TARGET_HIT_PX,combatTargetPackSize,
-    combat:{dataset:{targetHud:'false'},getBoundingClientRect:()=>({bottom:900})},currentSpriteArtBounds:sprite=>sprite.art,refresh:()=>{},readFooterObstacles:()=>[],placePlayerHud:()=>{},
+    combat:{dataset:{targetHud:'false'},getBoundingClientRect:()=>({bottom:900})},currentSpriteArtBounds:sprite=>sprite.art,refresh:()=>{},scheduleArt:()=>{},readFooterObstacles:()=>[],placePlayerHud:()=>{},
     combatTargetAnchors:input=>{packInput=input;return input.targets;},packCombatTargetsWithHud:input=>input.pack()});
   assert.equal(packInput.obstacles.length,2,'the pack reserves each painted combatant artwork box');
   assert.deepEqual(Array.from(packInput.obstacles,o=>o.ownerId),['player','enemy'],'painted reservations retain owner identity');
