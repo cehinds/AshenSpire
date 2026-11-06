@@ -142,8 +142,8 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // a blank frame on a phone GPU. Animations change this signature every frame, so they still paint.
     const lite=liteRendering(),off=effectsOff(),noFlash=document.body.classList.contains('reduce-flashes');
     const flashing=flashAt!==null?flashElapsed:-1;
-    const fresh=paintGate.changed(paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
-      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt}));
+    const sig=paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
+      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt});const fresh=paintGate.changed(sig);
     if(!fresh&&!materialize)return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
