@@ -75,6 +75,7 @@ import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORI
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 import { gameContent } from '../../model/gameProfile.js';
 import { mountDeckEditor } from './deckEditor.js';
+import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
@@ -1949,6 +1950,8 @@ export function mountCustomize(app, {
       $('#cz-review-edit').replaceChildren(...categories.filter(category => category !== 'review').map(category => {
         if (fixedCreation && category === 'class') {
           // Core 2: the review's class button is the deck door; the class itself is changed on the Class step, not from here.
+          // It follows the same gate as the Armory's deck door: the profile's editor and the deck-editing setting.
+          if (!armouryOpensDeckEditor(previewRun(), meta.settings || {})) return null;
           const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
           editDeck.dataset.creationEdit = 'deck';
           editDeck.addEventListener('click', openCreationDeckEditor);
@@ -1958,7 +1961,7 @@ export function mountCustomize(app, {
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }));
+      }).filter(Boolean));
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
