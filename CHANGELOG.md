@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
-- **Party feet inside their row** ([#2587](https://github.com/cehinds/AshenSpire/pull/2587), `0.7.3.182`). In combat your character now stands inside the front row's cell instead of on its line.
+- **Party feet inside their row** ([#2587](https://github.com/cehinds/AshenSpire/pull/2587), `0.7.3.184`). In combat your character now stands inside the front row's cell instead of on its line.
 
 ## 2026-11-05
 
