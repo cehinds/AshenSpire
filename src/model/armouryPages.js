@@ -16,3 +16,11 @@ export const ARMOURY_PAGES = Object.freeze(['grid', 'rack']);
 
 /** The page a declared view id lands on: the Character page, or the combined Armory page. */
 export const armouryPageOf = (viewId) => (viewId === 'grid' ? 'grid' : 'rack');
+
+/**
+ * Where the Armoury button reopens: the last menu the player left it on. `stored` is the saved `equipView`
+ * (grid = Character, rack = Armory, cards = the Deck tab's editor). The Deck tab only counts while its door is
+ * open; nothing saved opens the default (the Armory page, as before).
+ */
+export const armouryReopenTarget = (stored, { deckDoor = false } = {}) =>
+  (stored === 'cards' && deckDoor ? 'deck' : armouryPageOf(stored));

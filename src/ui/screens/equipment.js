@@ -2475,7 +2475,8 @@ export function mountEquipment(host, {
       onTab: id => {
         hideTooltip();
         if (id === 'deck') {
-          if (onEditDeck) { leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
+          // Remember the Deck tab as the last menu, so the Armoury button reopens the editor (main.js showArmoury).
+          if (onEditDeck) { onChange?.(run.loadout, { equipView: 'cards' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
           else { notice = inCombat ? 'Deck editing is unavailable during combat.' : 'Deck editing is unavailable with the current settings.'; draw(); }
           return;
         }
