@@ -145,8 +145,11 @@ const soloTargetLine = ({ def }) => (def.targeted ? 'Choose an enemy after Use.'
  */
 export function openCombatPotions({ rows, opener, shortcut = null, arm, useReason, stillUsable, onUse, targetLine = soloTargetLine }) {
   const shortcutIndex = shortcut == null ? -1 : rows.findIndex((row) => row.options.useActionId === shortcut || row.entry.key === shortcut);
+  // Each Use door listens on window (armHold); the list is thrown away on close, so its doors are disarmed then.
+  const disarmers = [];
   let shell;
-  shell = openModal({ title: t('potions.run.title'), size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
+  shell = openModal({ title: t('potions.run.title'), size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane',
+    onClose: () => { while (disarmers.length) disarmers.pop()?.(); }, body: host => {
     rows.forEach((row, index) => {
       const { def, options, entry } = row;
       const { slot = null, chargeKind = null, remaining, charges } = options;
@@ -174,7 +177,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
       };
       fold.addEventListener('toggle', moveUse);
       use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
-      if (action.enabled) arm(use, 'useFlask', {
+      if (action.enabled) disarmers.push(arm(use, 'useFlask', {
         ctx: { targeted: !!def.targeted },
         question: t('combat.potions.use.question', { name: def.name, remaining }), confirmLabel: t('combat.potions.use.confirm'),
         onConfirm: () => {
@@ -183,7 +186,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
           shell.close();
           onUse(row);
         },
-      });
+      }));
       host.appendChild(fold);
       if (index === shortcutIndex) { fold.open = true; moveUse(); }
     });

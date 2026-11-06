@@ -24,6 +24,8 @@ test('an ignored input past 3 s of busy adds a stuck line, and every ignored sit
   assert.doesNotMatch(source, /dlog\('ignored', (?:`(?:playCard|useFlask)|'endTurn')/, 'no ignored site bypasses logIgnored');
 });
 
-test('the busy age is sampled by a watchdog that stops when the screen leaves', () => {
-  assert.match(source, /const busyWatch = setInterval\(\(\) => \{\s*if \(!combatEl\.isConnected\) \{ clearInterval\(busyWatch\); return; \}/);
+test('the busy age is stamped where busy changes, with no sampling timer', () => {
+  assert.doesNotMatch(source, /const busyWatch = setInterval/, 'no 250 ms watchdog interval');
+  assert.match(source, /function setBusy\(value\) \{\s*busy = value;\s*if \(value\) busyStamp \|\|= performance\.now\(\); else busyStamp = 0;/);
+  assert.equal((source.match(/\bbusy = (?:true|false)\b/g) || []).length, 1, 'only the declaration assigns a literal; every write goes through setBusy');
 });
