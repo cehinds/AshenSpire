@@ -330,7 +330,7 @@ export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
     // Freeze source identity only. Stance acceptance and other root metadata
     // are established after this pre-hook boundary and must stay current.
     return {usedArmamentId:resolved?.sourceType==='unarmed'?null:resolved?.itemId || null,
-      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
+      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,...(row.weapon&&row.weaponCoverage?{weaponRange:row.weaponCoverage}:{}),propertyTags:row.throwCapable?['throw']:[]}};
   };
   const snapshots = new Map((def.effects || []).filter(effect=>effect.op==='damage').map(effect=>[effect,capture(effect)]));
   if (!snapshots.size && carrier.combatProfile?.maneuver === 'counter') snapshots.set(null,capture(null));

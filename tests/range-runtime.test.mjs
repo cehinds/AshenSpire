@@ -228,3 +228,15 @@ test('a Reach-tagged card on a melee weapon covers a band-1 enemy: no Advance ro
   const melee = previewRangeRoutes(ctx, ctx.player, [{ ...actions[0], card: carrier }], { energy: 1, stamina: 1 });
   assert.equal(melee.routes[0].advanceSp, 1, 'the plain melee Strike still pays one Advance at band 1');
 });
+
+test('a Reach card with a Melee weapon at band 0: the previewed hit chance equals the executed one (no reach-weapon bonus from the combined range)', () => {
+  const ctx = live();
+  ctx.piles.hand.push({ instanceId: 'ld', cardId: 'lethalDose', upgraded: false });
+  ctx.player.stamina = ctx.player.energy = 5; ctx.player.mana = 5;
+  const previewed = previewCard(ctx, 'ld', 'e1').range.targets[0].hitChance;
+  const start = ctx.eventLog.length;
+  dispatch(ctx, { type: 'playCard', cardInstanceId: 'ld', targetId: 'e1' });
+  const hit = ctx.eventLog.slice(start).find(row => row.type === 'attackHit' || row.type === 'attackMissed');
+  assert.ok(hit, 'the attack rolled');
+  assert.equal(hit.chance, previewed);
+});
