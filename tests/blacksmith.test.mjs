@@ -680,10 +680,9 @@ test('every Blacksmith offer is a Merchant row: shared markup, one action, art o
     mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
     app.querySelector('#shop-cat-armaments')?.click();
     const poor = app.querySelector('#blacksmith-armaments .merchant-offer');
-    if (poor) {
-      assert.ok(poor.classList.contains('locked'), 'an unaffordable row is locked, as the merchant draws it');
-      assert.ok(poor.querySelector('.merchant-offer-action').disabled);
-      assert.ok(poor.querySelector('.shop-offer-avail'), 'the reason is stated in the row');
-    }
+    assert.ok(poor, 'the armaments rack has a row to be unaffordable');
+    assert.ok(poor.classList.contains('locked'), 'an unaffordable row is locked, as the merchant draws it');
+    assert.ok(poor.querySelector('.merchant-offer-action').disabled);
+    assert.ok(poor.querySelector('.shop-offer-avail'), 'the reason is stated in the row');
   });
 });
