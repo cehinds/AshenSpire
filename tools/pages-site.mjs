@@ -443,6 +443,10 @@ function rebuildAt(sha, fullArt) {
       if (existsSync(join(web, 'packs'))) cpSync(join(web, 'packs'), join(dir, WEB_DIR, 'packs'), { recursive: true });
       mergeObjects(join(web, 'objects'), join(stagingStore(), 'objects'));
     }
+    // FREE THE TREE NOW (run 42186410401 died of ENOSPC): everything this build
+    // contributes is in out/ and store/, so build/, dist/ and the root single
+    // file (~157 MB, several copies) go before the next rebuild, not at its start.
+    run('git', ['clean', '-ffdxq'], buildTree);
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
@@ -483,6 +487,18 @@ function webEditionIn(dir, objectsRoot) {
   const html = readFileSync(file);
   if (!packPinOf(html)) return null;
   return { html, from: { packs: join(dir, WEB_DIR), objects: objectsRoot || join(dir, WEB_DIR) } };
+}
+
+/** Delete the out/ dir of each rebuilt (non-seeded) build in `listed` and forget it. */
+function freeRebuilds(listed) {
+  for (const b of listed) {
+    if (b.source !== 'rebuild') continue;
+    if (MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha) continue;
+    const key = `${b.sha}:${fullArtFor(b.branch, b.sha) ? 'full' : 'light'}`;
+    const r = rebuilt.get(key);
+    if (r && r.dir) rmSync(r.dir, { recursive: true, force: true });
+    rebuilt.delete(key);
+  }
 }
 
 function dropBuildTree() {
@@ -1360,6 +1376,9 @@ function assemble(outDir, keepOverride) {
         skip(b, error.message);
       }
     }
+    // This branch is published: its rebuilds' out/ dirs are no longer read (a
+    // later branch listing the same sha:tier rebuilds it; store/ stays, shared).
+    freeRebuilds(listed);
     enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
     // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
     // or rebuilt from the head's source. Otherwise the newest listed build is
