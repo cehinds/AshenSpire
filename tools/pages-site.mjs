@@ -569,11 +569,34 @@ function dropBuildTree() {
   buildTree = null;
 }
 
+// A COMMITTED INLINE BUILD OVER THIS SIZE IS NOT SERVED (2026-11-06, run 42254638934).
+// release/548 is a 255 MB single file (305 MB with its mobile copy) from before the pack
+// shape, and one such folder took the assembled site past the 2500 MB guard. Pack builds
+// are ~10 MB pages over the shared store and the largest other inline build is ~105 MB, so
+// 150 MB catches only the anomaly. It is skipped and named like any other unservable build.
+export const LEGACY_SINGLE_MAX_BYTES = 150e6;
+/** The size a Git LFS pointer file names, or null when `text` is not a pointer. Pure. */
+export function lfsPointerSize(text) {
+  const m = /^version https:\/\/git-lfs\.github\.com\/spec\/v1\n[\s\S]*?\nsize (\d+)\n?/.exec(String(text));
+  return m ? Number(m[1]) : null;
+}
+/** A reason string when a committed inline file of `bytes` is too big to serve, else null. Pure. */
+export function oversizeReason(bytes) {
+  return bytes > LEGACY_SINGLE_MAX_BYTES ? `its committed single file is ${(bytes / 1e6).toFixed(0)} MB, over the ${(LEGACY_SINGLE_MAX_BYTES / 1e6).toFixed(0)} MB cap for a legacy inline build (the site size guard)` : null;
+}
+
 /** The HTML (and mobile HTML, or null) a listed build serves, or { error }. */
 function artifactsOf(b) {
   if (b.source === 'git') {
+    // Judge the size from the LFS pointer first, so an oversized build is never fetched.
+    let pointer = null;
+    try { pointer = lfsPointerSize(git(['show', `${b.sha}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { /* not readable as text: judged after the fetch */ }
+    const tooBig = pointer !== null ? oversizeReason(pointer) : null;
+    if (tooBig) return { error: tooBig };
     const html = committedArtifact(b.sha, 'AshenSpire.html');
     if (!html) return { error: 'its committed HTML can no longer be fetched (LFS object unavailable)' };
+    const big = oversizeReason(html.length);
+    if (big) return { error: big };
     // Committed builds predate the light tier (#1332 stopped committing the
     // same day light arrived), so a committed file is the full edition.
     let hasMobile = true;
