@@ -34,7 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-06
 
-- **Combat redraws less** ([#2592](https://github.com/cehinds/AshenSpire/pull/2592), `0.7.3.182`). The battlefield now rewrites a figure's data and style only when something changed, so a screen resize no longer rewrites 158 unchanged attributes.
+- **Combat redraws less** ([#2592](https://github.com/cehinds/AshenSpire/pull/2592), `0.7.3.188`). The battlefield now rewrites a figure's data and style only when something changed, so a screen resize no longer rewrites 158 unchanged attributes.
+- **Menus return where you were** ([#2589](https://github.com/cehinds/AshenSpire/pull/2589), `0.7.3.188`). After upgrading a card you land back on the refreshed list, Back buttons name the place you're in (Back to Blacksmith, Shrine, Merchant, Rewards), and the Armoury reopens on the last tab you used.
+- **Blacksmith matches the Merchant** ([#2588](https://github.com/cehinds/AshenSpire/pull/2588), `0.7.3.186`). The Blacksmith's figure no longer stands under the top bar, and its offers look and read like the Merchant's: item art, an action button, and the price underneath.
+- **Party feet inside their row** ([#2587](https://github.com/cehinds/AshenSpire/pull/2587), `0.7.3.184`). In combat your character now stands inside the front row's cell instead of on its line.
 
 ## 2026-11-05
 

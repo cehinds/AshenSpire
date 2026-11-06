@@ -135,6 +135,7 @@ import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { armouryRoute } from './model/armouryPages.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -2123,10 +2124,21 @@ function showOfflinePlay() {
 function showArmoury(request = '', returnTo = showMap) {
   // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
   if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
-  const initialView = typeof request === 'string' ? request : '';
-  const destination = request && typeof request === 'object' ? request.destination || '' : '';
-  const equipItemId = request && typeof request === 'object' ? request.equipItemId || '' : '';
   const armouryMeta = saves.loadMeta();
+  const route = armouryRoute(request, { stored: armouryMeta.settings.equipView, deckDoor: deckDoors().armoury });
+  // THE LAST MENU IS REMEMBERED: the Armoury button (no named view) reopens on the tab the player left it on.
+  // Character and Armory live in `equipView`; the Deck tab is the editor, saved there as 'deck'.
+  if (route.open === 'deck') {
+    showDeckEditor(returnTo, true);
+    return;
+  }
+  const { view: initialView, destination, equipItemId } = route;
+  // An explicit tab the player navigated to (the editor's Character / Armory tabs, quick-nav) is the new last menu.
+  if (route.saveView) {
+    const meta = saves.loadMeta();
+    meta.settings.equipView = route.saveView;
+    saves.saveMeta(meta);
+  }
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
@@ -2191,12 +2203,14 @@ function deckDoors(services = null) {
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
-function showDeckEditor(returnTo = showMap, hub = true, focusCard = null) {
+// `place` names where Back leads (common.place.*): the exit reads "Back to {place}" instead of Cancel.
+function showDeckEditor(returnTo = showMap, hub = true, focusCard = null, place = '') {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
     focusCard,
+    backLabel: place ? t('common.backTo', { place: t(`common.place.${place}`) }) : '',
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
       persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
@@ -3698,7 +3712,7 @@ function showRest(openPanel = null, locationId = null) {
     services: smithServices,
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
-    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
     // The classic rest site's re-entry record and its consumed-choice hook.
     revisit: record,
     onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
@@ -3778,7 +3792,7 @@ function showGameProfileReward() {
     addRefusal: index => rewardDeckAddRefusal(registries, run, pending.offerId, index, saves.loadMeta().settings || {}),
     deckMax: deckEditBounds(saves.loadMeta().settings || {}).max,
     canEditDeck: !!deckDoors().armoury,
-    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null),
+    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null, 'rewards'),
     canEditEquipment: !!gameModule(run, 'equipment'),
     onEditEquipment: (index, back) => showArmoury('', back),
     onContinue: () => {

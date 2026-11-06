@@ -9,6 +9,7 @@ import { upgradeFacesNode, upgradeConfirmNodes } from './upgradeConfirm.js';
 import { changeSummary, economyNode } from './smithPaneParts.js';
 import { assetUrl } from '../assetmap.js';
 import { hideOnError } from '../artFallback.js';
+import { pushModalParent, dropModalParent, returnToModalParent, modalParentLabel } from '../modalReturn.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
@@ -28,9 +29,14 @@ const cardArt = (row, { small = false } = {}) => {
 };
 
 export function mountCardUpgradeModal(host, initialModel, {
-  registries, meta, title = t('cardUpgrade.title'), backLabel = t('common.back'), decisionConsequence = '',
-  onSelect, onBack, onConfirm, returnFocusElement,
+  registries, meta, title = t('cardUpgrade.title'), backLabel: backLabelOverride, decisionConsequence = '',
+  onSelect, onBack, onConfirm, returnFocusElement, focusInstanceId = null,
+  // The list's own return record ({ place: where Back leads, e.g. t('common.place.blacksmith'), reopen(focus): draw this list again), see modalReturn.js.
+  // With it, a confirmed upgrade lands back on a refreshed list, and the Back label names `place`.
+  parent = null,
 }) {
+  const parentRecord = parent ? pushModalParent(parent) : null;
+  const backLabel = backLabelOverride || modalParentLabel(parentRecord);
   const returnFocus = returnFocusElement instanceof HTMLElement ? returnFocusElement : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   const desk = mountUpgradeDesk(host, {
     title, titleId: 'card-upgrade-title', listLabel: t('cardUpgrade.items'), backLabel, kind: 'card',
@@ -170,9 +176,12 @@ export function mountCardUpgradeModal(host, initialModel, {
     const option = selected.options?.length > 1 ? selected.options[chosen] : null;
     // With a choice, a pick that no longer names an option commits nothing.
     if (selected.options?.length > 1 && !option) return;
-    close({ restoreFocus: false });
+    close({ restoreFocus: false, keepParent: true });
     // With a choice, the quote carries the picked step; the service re-plans the same list and checks it is on it.
-    onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan);
+    // `false` from onConfirm (or a throw) is a refusal: the list stays closed so the refusal text is not covered.
+    let committed = false;
+    try { committed = onConfirm(selected.instanceId, option ? { ...selected.plan, step: option.step, after: option.after } : selected.plan) !== false; }
+    finally { if (parentRecord) { if (committed) returnToModalParent(selected.instanceId); else dropModalParent(parentRecord); } }
   }
 
   function draw(model) {
@@ -223,9 +232,10 @@ export function mountCardUpgradeModal(host, initialModel, {
     if (restoreFocus) landControl(restoreFocus);
   }
 
-  function close({ restoreFocus = true } = {}) {
+  function close({ restoreFocus = true, keepParent = false } = {}) {
     if (closed) return;
     closed = true;
+    if (parentRecord && !keepParent) dropModalParent(parentRecord);
     disarmDecision?.();
     disarmDecision = null;
     window.removeEventListener('keydown', onKeydown, true);
@@ -253,7 +263,11 @@ export function mountCardUpgradeModal(host, initialModel, {
   desk.closeBtn.addEventListener('click', backOut);
   window.addEventListener('keydown', onKeydown, true);
   draw(initialModel);
-  queueMicrotask(() => modal.focus({ preventScroll: true }));
+  queueMicrotask(() => {
+    const row = cards.find((card) => card.dataset.instanceId === focusInstanceId);
+    if (row) row.dataset.quietFocus = 'true'; // refocused by the return, not by the player: no card tooltip over the list
+    (row || modal).focus({ preventScroll: true });
+  });
   // Mounted with a card already chosen: its modal opens at once.
   if (initialModel.selected) review?.();
   return { update(model) { draw(model); }, close };

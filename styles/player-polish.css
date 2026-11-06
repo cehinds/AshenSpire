@@ -249,6 +249,9 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .title-screen .build-stamp { position:absolute; bottom:1rem; left:0; width:100%; pointer-events:none; }
 .title-screen .tower-preview-replay { bottom:1rem; }
 
+/* The workspace is the portrait's containing block: left unpositioned, the
+   figure anchored to <main> and its head slid under the top HUD bar. */
+.shop-workspace { position:relative; }
 .service-portrait { margin:0; position:absolute; left:0; bottom:0; width:43%; height:92%; pointer-events:none; }
 .service-portrait img { width:100%; height:100%; object-fit:contain; object-position:left bottom; }
 :root[data-layout='wide']:not([data-composition='short-wide']) .shop-workspace:not(.master-workspace) .shop-frame { width:61%; margin-inline:auto 0; }
@@ -430,11 +433,11 @@ main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5
 :root[data-layout='narrow'] :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) > .hud-top { grid-template-columns:14rem 1fr auto; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:calc(30 * var(--view-vh, 1vh)) 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
-:root[data-layout='narrow'] .merchant-workspace .shop-railitem { display:none; }
+:root[data-layout='narrow'] .merchant-workspace:not(.blacksmith-workspace) .shop-railitem { display:none; }
 :root[data-layout='narrow'] .shop-category-select { display:block; width:100%; min-height:44px; background:#17130f; color:var(--parchment); padding:.5rem; border:1px solid var(--gold); }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-pane { min-height:0; flex:1 1 auto; max-height:none; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-offers { min-height:10rem; }
-:root[data-layout='narrow'] .service-portrait { width:58%; height:31%; top:0; }
+:root[data-layout='narrow'] .service-portrait { width:58%; height:28%; top:0; }
 @media (prefers-reduced-motion:reduce) { .shop-workspace .shop-pane { animation:none; } }
 body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-run-meta { display:none; }
@@ -665,9 +668,11 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.merchant-workspace .shop-foot .modal-foot-actions { flex-direction:row; flex-wrap:nowrap; }
 :root .shop-workspace.merchant-workspace .shop-foot .as-btn { min-height:calc(44px / var(--ui-zoom,1)); }
 :root[data-layout='narrow'] .shop-workspace.merchant-workspace { padding:6rem .8rem .5rem; }
+:root[data-layout='narrow'] .shop-workspace.merchant-workspace.blacksmith-workspace { padding-top:calc(30 * var(--view-vh, 1vh)); }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
+:root[data-layout='narrow'] .blacksmith-workspace .shop-frame .modal-head-status { grid-column:1 / -1; grid-row:2; font-size:11px; white-space:normal; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
 @container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
@@ -706,6 +711,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shop-workspace.blacksmith-compact .shop-switch > button { flex:1 1 0; min-width:0; justify-content:center; text-align:center; text-transform:uppercase; letter-spacing:.06em; white-space:normal; }
 :root .shop-workspace.blacksmith-compact .shop-pane { flex:1 1 auto; min-height:0; max-height:none; }
 :root .shop-workspace.blacksmith-compact .shop-offers { min-height:0; }
-:root .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { gap:.6rem 1rem; padding:.7rem 1rem; }
-:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick { flex-wrap:wrap; }
-:root[data-layout='narrow'] .shop-workspace.blacksmith-compact .shop-shelf > .class-pick > .as-btn { flex:1 1 100%; }
+/* A Blacksmith row can carry several actions (a refined-stone upgrade, one per owned sigil): the merchant's fixed row
+   height would clip it, so the track and the row grow to fit. */
+:root .shop-workspace.blacksmith-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
+:root .shop-workspace.blacksmith-workspace .shop-shelf .merchant-offer { height:auto; min-height:var(--merchant-row-height,110px); }
