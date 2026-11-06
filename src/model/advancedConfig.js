@@ -201,7 +201,7 @@ const RETIRED_UPGRADE_AT_WARNING = 'The skill-level card upgrade setting is reti
 const RETIRED_STAT_KEY = /^gameConfig\.(?:combatRatings\.(?:multiplier|ratings\.(?:ar|dr|pr|poise|ward)\.(?:base|strength|dexterity|constitution|wisdom|intelligence))|handRules\.(?:(?:starting|turn|capacity)\.(?:base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)|startingByClass\.[a-z]+\.(?:base|stat))|balance\.handMax)$/;
 const RETIRED_ITEM_BONUS_KEY = /^gameConfig\.combatRatings\.bonuses\.(?:armament|armor):/;
 const RETIRED_STAT_MARKER = 'statRowsVersion';
-const RETIRED_STAT_WARNING = 'The combat-rating formula and multiplier, the hand rules\' dials and the fallback hand capacity are retired and were left out: every stat is one row now (Stats → each stat). Everything else was kept.';
+const RETIRED_STAT_WARNING = 'The combat-rating formula and multiplier, the hand rules\' dials and the fallback hand capacity are retired and were left out: every stat is one row now (Stats → each rating; hand size, draw and opening hand under Stats → Draw & hand → Hand size). Everything else was kept.';
 const RETIRED_ITEM_BONUS_WARNING = 'The per-item rating bonuses are retired and were left out: an item\'s rating is set on the item (Equipment → item ratings). Everything else was kept.';
 const bareSetting = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
 const retiredStatKey = (key) => RETIRED_STAT_KEY.test(bareSetting(key));
@@ -249,11 +249,6 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
   run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides: Object.fromEntries(kept) };
   save(run);
   return warnings;
-}
-
-/** True when a stored profile holds a key `normalizeAdvancedSettings` drops. */
-export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasRetiredStatSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings);
 }
 
 /**
@@ -308,9 +303,9 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  */
 export function bringProfileForward(meta, bundle, save, warnings = null) {
   const settings = meta.settings || (meta.settings = {});
-  if (!hasLegacyAdvancedSettings(settings)) return settings;
+  const before = Object.keys(settings).length;
   normalizeAdvancedSettings(settings, bundle, warnings);
-  save(meta);
+  if (Object.keys(settings).length !== before) save(meta);
   return settings;
 }
 
