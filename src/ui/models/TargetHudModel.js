@@ -87,3 +87,13 @@ export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHe
     selectedTop: (head - frame.top - gap - intentHeight) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
 }
+
+/** The desktop player panel's slot in the board's right margin: `right` is the board's right edge, `edge` the visible right
+ *  edge less the gap. The panel takes the margin's width up to `max`; where the margin is narrower than `min` it would have to
+ *  cover the board's last column, so the answer is null and the panel keeps its beside-the-figure place (playerHudPlacement). */
+export function playerMarginPlacement({ right, edge, gap, top, min = 180, max = 420 }) {
+  const room = edge - (right + gap);
+  if (!Number.isFinite(room) || room < min) return null;
+  const width = Math.min(max, room);
+  return { width, left: right + gap, top };
+}

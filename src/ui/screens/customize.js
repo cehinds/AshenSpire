@@ -74,6 +74,9 @@ import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDet
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 import { gameContent } from '../../model/gameProfile.js';
+import { mountDeckEditor } from './deckEditor.js';
+import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
+import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 
@@ -268,7 +271,8 @@ export function mountCustomize(app, {
       seedRow,
       slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
       el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
-      el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
+      // Core 2 (a configured profile) has no feats step: show nothing rather than the placeholder (owner, 2026-11-06).
+      fixedCreation ? null : el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
       el('div', { id: 'cz-review-edit', class: 'as-stack cc-review-edit' }),
     ]),
   };
@@ -597,8 +601,15 @@ export function mountCustomize(app, {
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
+  // Core 2's review step opens the deck editor on the starting deck; the edit is kept per class and sent with Begin.
+  let deckEdit = null;
   function previewRun() {
-    if (fixedCreation) return createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
+    if (fixedCreation) {
+      const base = createRunState({ seed: 0, classId: state.classId, registries, gameProfile, profileMeta: meta });
+      // A deck edited from the review step rides on top of the class's starting deck (owner, 2026-11-06).
+      if (deckEdit?.classId === state.classId) cancelDeckEdit(base, deckEdit.snapshot);
+      return base;
+    }
     // Validate the live allocation independently of weapon requirements.
     // An incomplete draft previews from its OWN mode's class preset — not
     // from some other mode's, which is what the retired `STANDARD` alias
@@ -1861,6 +1872,19 @@ export function mountCustomize(app, {
     applyColumns();
   }
 
+  function openCreationDeckEditor() {
+    const draft = previewRun();
+    mountDeckEditor(document.body, {
+      registries, run: draft, settings: meta.settings || {},
+      onDone: () => {
+        deckEdit = { classId: state.classId, snapshot: beginDeckEdit(draft) };
+        fillSummary($('#cz-review-summary'));
+        focusElement($('#cz-review-edit [data-creation-edit="deck"]'));
+      },
+      onCancel: () => focusElement($('#cz-review-edit [data-creation-edit="deck"]')),
+    });
+  }
+
   // THE WAY ON, per step: what it waits for, and what it opens inside the next
   // section so the player lands on the next question rather than a shut fold.
   const openInside = {
@@ -1924,11 +1948,20 @@ export function mountCustomize(app, {
     if (id === 'review') {
       fillSummary($('#cz-review-summary'));
       $('#cz-review-edit').replaceChildren(...categories.filter(category => category !== 'review').map(category => {
+        if (fixedCreation && category === 'class') {
+          // Core 2: the review's class button is the deck door; the class itself is changed on the Class step, not from here.
+          // It follows the same gate as the Armory's deck door: the profile's editor and the deck-editing setting.
+          if (!armouryOpensDeckEditor(previewRun(), meta.settings || {})) return null;
+          const editDeck = button({ label: t('creation.review.editDeck'), weight: 'secondary' });
+          editDeck.dataset.creationEdit = 'deck';
+          editDeck.addEventListener('click', openCreationDeckEditor);
+          return editDeck;
+        }
         const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
         edit.dataset.creationEdit = category;
         edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
         return edit;
-      }));
+      }).filter(Boolean));
     }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
@@ -2017,7 +2050,7 @@ export function mountCustomize(app, {
   start.addEventListener('click', async () => {
     if (startPending || beginProblem()) return;
     startPending = true; start.disabled = true;
-    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile } : {
+    try { await onStart(fixedCreation ? { classId: state.classId, seedString: seedInput.value.trim(), gameProfile, ...(deckEdit?.classId === state.classId ? { deckEdit: deckEdit.snapshot } : {}) } : {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },

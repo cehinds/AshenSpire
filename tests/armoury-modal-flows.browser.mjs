@@ -5,6 +5,9 @@
 // inline sections. Inspect opens the card inspection modal (no aside in the
 // DOM); Equip asks "Choose a slot" only when the item fits more than one open
 // position, then compares (occupied) or confirms (empty) before equipping.
+// Owner, 2026-11-06: the Armory tab is the equipped-slot rows only. Items arrive through
+// a slot's picker (Choose item / Replace -> Equip) or through showArmoury({ equipItemId })
+// (a reward's or purchase's Equip: slot choice, then the item equips into that slot).
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
@@ -42,6 +45,7 @@ async function mount(page, emptyOffHand = true, combat = false, extra = {}) {
     mountEquipment(document.body, {
       registries, run, meta, inCombat: combat, onClose() {},
       destination: extra.destination || '',
+      equipItemId: extra.equipItemId || '',
       onEditDeck: extra.deck ? () => { window.__deckOpened = true; } : null,
       // In combat an equip is priced by the host: a refusal string is the notice (here: always refused).
       onEquip: combat ? () => 'Not enough Poise to change gear.' : undefined,
@@ -51,85 +55,86 @@ async function mount(page, emptyOffHand = true, combat = false, extra = {}) {
   }, { emptyOffHand, combat, extra });
   if (extra.deck) return; // the Deck door closes the Armoury onto the editor
   await page.waitForSelector('.armoury .armoury-position-card');
-  // The Armory page is one body: the slots on top, the Inventory below.
+  // The Armory page is the equipped-slot rows only (owner 2026-11-06); items come through a slot's picker.
   await page.waitForSelector('.armoury .armoury-position-card');
-  await page.waitForSelector('.armoury .disc-face');
 }
 
-const wait = (page, ms) => page.waitForTimeout(ms);
-const face = (page, name) => page.locator('.armoury .disc-face', { hasText: name }).first();
+const slotModal = (page) => page.locator('.equip-slot-choice');
+const confirmModal = (page) => page.locator('.equip-confirm-modal');
+const compareModal = (page) => page.locator('.equip-compare-modal');
+const sets = (page) => page.evaluate(() => structuredClone(window.__armouryRun.loadout.sets));
+/** A slot's picker: Choose item / Replace on the row, then the named item's Equip in the picker. */
+const pickEquip = async (page, position, name) => {
+  await page.locator(`.armoury-position-card[data-slot-position="${position}"] .armament-replace`).click();
+  await page.locator('.equip-picker-row', { hasText: name }).locator('.equip-picker-act').click();
+};
 
 try {
-  const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: 'no-preference' });
+  const page = await browser.newPage({ viewport: { width: 1365, height: 900 }, reducedMotion: 'no-preference' });
   page.setDefaultTimeout(15000);
   page.on('pageerror', (e) => errors.push(e.message));
   await mount(page);
-  const equipBtn = () => page.locator('.armoury-item-detail .ep-equip[data-act="equip"]:visible').first();
-  const sets = () => page.evaluate(() => structuredClone(window.__armouryRun.loadout.sets));
-  const open = async (name) => { await face(page, name).click(); await equipBtn().waitFor(); };
   assert.equal(await page.locator('.armament-list-inspection, .armament-destinations, .armament-destination').count(), 0, 'no inline aside or destination section');
 
-  // One destination (armour has one slot) and it is occupied: straight to the compare modal, no slot modal.
-  const slotModal = page.locator('.equip-slot-choice');
-  const confirm = page.locator('.equip-confirm-modal');
-  const compare = page.locator('.equip-compare-modal');
-  const spare = await page.evaluate(() => window.__armouryRun.loadout.boughtArmour?.[0]?.id);
-  assert.ok(spare, 'the fixture owns a spare outfit');
-  await open(await page.evaluate((id) => window.__armouryRegistries.equipment.armour.find((row) => row.classId === 'reaver' && row.id === id).name, spare));
-  await equipBtn().click();
-  await compare.waitFor();
-  assert.equal(await slotModal.count(), 0, 'one destination skips the slot modal');
-  assert.equal(await confirm.count(), 0, 'an occupied destination compares, it does not confirm');
-  await page.keyboard.press('Escape');
-  await compare.waitFor({ state: 'detached' });
-  assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-  assert.equal(await page.evaluate(() => document.activeElement?.className.includes('ep-equip')), true, 'focus returns to Equip after Back');
+  // The Armory tab is the slot rows only: no item collection, no detail pane, and no scrolling at 1365x900.
+  assert.equal(await page.locator('.armoury-item-collection, .armoury-item-detail, .armoury-detail-prompt, .armoury .disc-face').count(), 0, 'the item grid and its detail pane are gone');
+  assert.equal(await page.evaluate(() => { const b = document.querySelector('.armoury-body'); return b.scrollHeight <= b.clientHeight + 1; }), true, 'the slot rows fit without a scrollbar');
+  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-rows-desktop.png` });
 
-  // Two destinations (either hand): the slot modal first.
-  await open('Ash Staff');
-  await equipBtn().click();
-  await slotModal.waitFor();
-  const rows = await slotModal.locator('.option-row').evaluateAll((nodes) => nodes.map((n) => [n.querySelector('.option-row-name').textContent, n.querySelector('.option-row-status').textContent.trim(), n.disabled]));
+  // A slot's picker -> Equip on an occupied slot goes straight to the compare modal (the slot is already chosen).
+  await pickEquip(page, 'rightHand:0', 'Ash Staff');
+  await compareModal(page).waitFor();
+  assert.equal(await slotModal(page).count(), 0, 'a picked slot skips the slot modal');
+  assert.equal(await confirmModal(page).count(), 0, 'an occupied destination compares, it does not confirm');
+  await page.keyboard.press('Escape');
+  await compareModal(page).waitFor({ state: 'detached' });
+  assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
+  await pickEquip(page, 'rightHand:0', 'Ash Staff');
+  await compareModal(page).waitFor();
+  await page.locator('.equip-compare-equip').click();
+  await compareModal(page).waitFor({ state: 'detached' });
+  assert.equal((await sets(page)).rightHand[0], 'ashStaff', 'compare Equip changed run.loadout');
+
+  // An empty slot's picker -> Equip equips at once (the slot is chosen and nothing is replaced): no confirm, no compare.
+  await mount(page);
+  await pickEquip(page, 'leftHand:0', 'Round Shield');
+  await page.waitForFunction(() => window.__armouryRun.loadout.sets.leftHand[0] === 'roundShield');
+  assert.equal(await confirmModal(page).count() + await compareModal(page).count(), 0, 'an empty slot equips straight from its picker');
+
+  // REWARD / PURCHASE EQUIP: showArmoury({ equipItemId }) asks for a slot only (the item fits two), then equips THAT item
+  // into the chosen slot with no second picker. Before: the plain Armory (rows only). After: the slot choice.
+  await mount(page);
+  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/reward-equip-before-desktop.png` });
+  await mount(page, true, false, { equipItemId: 'ashStaff' });
+  await slotModal(page).waitFor();
+  const rows = await slotModal(page).locator('.option-row').evaluateAll((nodes) => nodes.map((n) => [n.querySelector('.option-row-name').textContent, n.querySelector('.option-row-status').textContent.trim(), n.disabled]));
   assert.deepEqual(rows.map(([label]) => label), ['Main Hand · 1', 'Off Hand · 1']);
   assert.match(rows[0][1], /^Active · Straight Sword$/);
   assert.match(rows[1][1], /^Active · Empty$/);
-  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-slot-desktop.png` });
-  await slotModal.locator('button', { hasText: 'Back' }).click();
-  await slotModal.waitFor({ state: 'detached' });
+  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/reward-equip-after-desktop.png` });
+  await slotModal(page).locator('button', { hasText: 'Back' }).click();
+  await slotModal(page).waitFor({ state: 'detached' });
   assert.equal(await page.evaluate(() => window.__armouryEquipped.length), 0, 'Back equips nothing');
-
-  // Occupied destination: the compare modal; Equip changes run.loadout.
-  await equipBtn().click();
-  await slotModal.waitFor();
-  await slotModal.locator('.option-row', { hasText: 'Main Hand · 1' }).click();
-  await compare.waitFor();
-  assert.equal(await slotModal.count(), 0, 'the slot modal closed');
-  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-compare-desktop.png` });
+  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'the slot picker never opened');
+  // Choose Main Hand: the compare modal (occupied) then Equip puts the offered item in that slot.
+  await mount(page, true, false, { equipItemId: 'ashStaff' });
+  await slotModal(page).waitFor();
+  await slotModal(page).locator('.option-row', { hasText: 'Main Hand · 1' }).click();
+  await compareModal(page).waitFor();
+  assert.equal(await slotModal(page).count(), 0, 'the slot modal closed');
+  assert.equal(await page.locator('.equip-picker-row').count(), 0, 'no second item picker after the slot choice');
   await page.locator('.equip-compare-equip').click();
-  await compare.waitFor({ state: 'detached' });
-  assert.equal((await sets()).rightHand[0], 'ashStaff', 'compare Equip changed run.loadout');
-
-  // Empty destination: the confirm modal with the item's card; Back changes nothing, Equip changes run.loadout.
-  await mount(page);
-  await open('Round Shield');
-  await equipBtn().click();
-  await slotModal.waitFor();
-  await slotModal.locator('.option-row', { hasText: 'Off Hand · 1' }).click();
-  await confirm.waitFor();
-  assert.match(await confirm.locator('[id^="modal-title"]').first().innerText(), /^Equip Round Shield to Off Hand · 1\?$/);
-  assert.ok(await confirm.locator('.equipment-poker-card').count(), 'the confirm modal shows the item card');
-  assert.equal(await compare.count(), 0, 'an empty destination confirms, it does not compare');
-  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/armoury-confirm-desktop.png` });
-  await confirm.locator('button', { hasText: 'Back' }).click();
-  await confirm.waitFor({ state: 'detached' });
-  assert.equal((await sets()).leftHand[0], null, 'Back left the Off Hand empty');
-  await equipBtn().click();
-  await slotModal.waitFor();
-  await slotModal.locator('.option-row', { hasText: 'Off Hand · 1' }).click();
-  await confirm.waitFor();
-  await confirm.locator('.equip-confirm-equip').click();
-  await confirm.waitFor({ state: 'detached' });
-  assert.equal((await sets()).leftHand[0], 'roundShield', 'Equip from the confirm modal changed run.loadout');
+  await compareModal(page).waitFor({ state: 'detached' });
+  assert.equal((await sets(page)).rightHand[0], 'ashStaff', 'the offered item equipped into the chosen slot');
+  if (SHOT_DIR) await page.screenshot({ path: `${SHOT_DIR}/reward-equip-done-desktop.png` });
+  // An empty slot: confirm, then the item is in the Off Hand.
+  await mount(page, true, false, { equipItemId: 'roundShield' });
+  await slotModal(page).waitFor();
+  await slotModal(page).locator('.option-row', { hasText: 'Off Hand · 1' }).click();
+  await confirmModal(page).waitFor();
+  await confirmModal(page).locator('.equip-confirm-equip').click();
+  await confirmModal(page).waitFor({ state: 'detached' });
+  assert.equal((await sets(page)).leftHand[0], 'roundShield', 'the offered shield equipped into the chosen Off Hand');
 
   // The Deck door (key D) names the `cards` destination: it opens the Deck tab's editor.
   await mount(page, true, false, { destination: 'cards', deck: true });
@@ -141,15 +146,10 @@ try {
 
   // In combat the equip is still priced by the host: its refusal is the notice and nothing changes.
   await mount(page, true, true);
-  await open('Round Shield');
-  await equipBtn().click();
-  await slotModal.waitFor();
-  await slotModal.locator('.option-row', { hasText: 'Off Hand · 1' }).click();
-  await confirm.waitFor();
-  await confirm.locator('.equip-confirm-equip').click();
-  await confirm.waitFor({ state: 'detached' });
+  await pickEquip(page, 'leftHand:0', 'Round Shield');
+  await page.locator('.as-toast').waitFor();
   assert.match(await page.locator('.as-toast').innerText(), /Not enough Poise/);
-  assert.equal((await sets()).leftHand[0], null, 'a refused combat equip changed nothing');
+  assert.equal((await sets(page)).leftHand[0], null, 'a refused combat equip changed nothing');
 
   // Inspect from the Equipment view is a modal, never an aside.
   await mount(page);
@@ -160,32 +160,20 @@ try {
   assert.ok(/Smithing tier/.test(inspectText), 'the Inspect modal keeps the smithing tier row');
   await page.keyboard.press('Escape');
 
-  // Phone width: the slot modal fits the screen.
-  const phone = await browser.newPage({ viewport: { width: 360, height: 800 }, hasTouch: true, isMobile: true });
+  // Phone width: the slot modal fits the screen, and the rows stay readable with little scrolling.
+  const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   phone.on('pageerror', (e) => errors.push(e.message));
   await mount(phone);
-  await phone.locator('.armoury .disc-face', { hasText: 'Ash Staff' }).first().click();
-  await phone.locator('.armoury-item-detail .ep-equip[data-act="equip"]:visible').first().click();
+  assert.equal(await phone.locator('.armoury-item-collection, .armoury-item-detail').count(), 0, 'no item grid on a phone either');
+  if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/reward-equip-before-phone.png` });
+  await mount(phone, true, false, { equipItemId: 'ashStaff' });
   await phone.locator('.equip-slot-choice').waitFor();
-  assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal overflow at 360');
+  assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal overflow at 390');
+  if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/reward-equip-after-phone.png` });
   await phone.keyboard.press('Escape');
   await phone.locator('.equip-slot-choice').waitFor({ state: 'detached' });
-  // A long inventory on a phone: selecting the FIRST item brings its detail and Equip into the viewport.
-  const firstFace = phone.locator('.armoury .disc-face').first();
-  await firstFace.scrollIntoViewIfNeeded();
-  const firstRow = phone.locator('.armoury .disc-face', { hasText: 'Wayfarer Plate' }).first();
-  await firstRow.click();
-  await phone.waitForTimeout(500);
-  const equipInView = await phone.evaluate(() => {
-    const b = [...document.querySelectorAll('.armoury-item-detail .ep-equip')].find((n) => n.getBoundingClientRect().width > 0);
-    if (!b) return null;
-    const r = b.getBoundingClientRect();
-    return r.top >= 0 && r.bottom <= innerHeight;
-  });
-  assert.equal(equipInView, true, 'the selected item\'s Equip/Unequip button is in the viewport on a phone');
-  if (SHOT_DIR) await phone.screenshot({ path: `${SHOT_DIR}/armoury-slot-phone.png` });
   assert.deepEqual(errors, [], 'no page errors');
-  console.log('Inventory Inspect and Equip are modal flows.');
+  console.log('Armory rows, slot pickers and the reward Equip flow pass.');
 } catch (error) {
   console.error(error);
   process.exitCode = 1;
