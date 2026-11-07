@@ -45,12 +45,12 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: branch feature/MiniHudLayout
 
 ## #7 Magic damage becomes plain damage; spells default to Reach
-- Status: requested
+- Status: in progress (owner workspace)
 - Asked: 2026-11-07 — "I'd like to change magic damage to just deal damage but are reach spells by default, with the school having it's unique status effect."
 - Means: Drop "magic" as a separate damage type: spell damage is just damage. Spells have Reach (ranged) by default. Each spell school gets its own unique status effect instead.
 - Answers 2026-11-07: school statuses — "check what's already in the code base" (existing damage riders in SPEC.md are the starting point: Fire→Burn, Lightning→Weak/Sap (+Shocked), Force→strip Ward, Holy→cleanse, Poison→Venom, Psychic→Confused, Earth→Slowed, Necrotic→Necrotic Blight; Frost/Alteration have none listed). Existing magic-damage resists/bonuses become normal damage ones.
 - Questions: none
-- Link: —
+- Link: branch feature/OwnerPlainSpellDamage
 - Answers 2026-11-07 (Frost/Alteration): Frost applies Chilled, and Chilled escalates to Frozen (as in Divinity: Original Sin 2 environmental statuses); a Damp target's Chilled advances to Frozen automatically. Alteration acts like D&D abjuration and transmutation: protective/warding and transforming effects, not a damage-rider status.
 
 ## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
@@ -82,7 +82,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Rescale all enemy levels to 1-5. Enemy stats follow the player's budget: 1 in each of 5 stats + 3 free points at level 1 (8 total), growing by the player's per-level rule, so saves/DCs (#8) stay sane.
 - Answers 2026-11-07: points per level = same as the player's rule; enemies carry the player's stat list.
 - Questions: none
-- Link: —
+- Link: owner workspace 2 (session_01YN4TdxvthJ8vsa4LvQRZNk); spec draft PR #2658 parked
 
 ## #10 Keep Poise (decision)
 - Status: done
@@ -105,7 +105,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Update 2026-11-07 — "keep intent left justified with health bar": the intent row stays left-aligned to the HP bar's left edge (not the Block icon's), above the bars.
 
 ## #12 Code review branch in the release pipeline
-- Status: requested
+- Status: in progress (owner workspace)
 - Asked: 2026-11-07 — "there should be a code review branch, move the dev code review as a sub branch to the merge develop to release branch"
 - Means: Add a dedicated code-review branch to the branch model, and move the code review that happens at `dev` to be a sub-step on the path that merges `dev` toward `release` (today: feature/* → dev → test → release → main; review is per PR into dev).
 - Owner 2026-11-07: no preference on placement or on whether per-PR review stops; asked for my recommendation.
@@ -115,5 +115,5 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Note: today the automatic bump happens only at `test`→`release` (3rd number +1, build ordinal reset) and `release`→`main` (2nd number +1); there is no bump at `test` (CLAUDE.md, docs/versioning.md, version-advance.yml).
 - Answer 2026-11-07: "Same as today + test" — `release` still raises the 3rd number (4th reset to 0) and `main` the 2nd (3rd and 4th reset to 0); the new `test` bump raises the 4th number (build ordinal +1), resetting nothing.
 - Questions: none
-- Link: —
+- Link: branch chore/OwnerReviewBranch
 - Answer 2026-11-07: reuse the existing pinned "Dev code review" session (session_01YN4Tdzu86M9f2RnGK78rX6) as the review-branch owner; no new session.
