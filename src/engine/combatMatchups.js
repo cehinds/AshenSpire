@@ -150,7 +150,7 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
     guardBypass: counter && ['ranged', 'spell', 'magic'].includes(target.combatCounter.mode) ? 0 : Math.min(amount, guardBefore, bypass) };
 }
 
-/** Preview only (SPEC §4.11): whether the target's armed Counter would answer an attack with this profile now. */
+/** Whether the target's armed Counter would answer an attack with this profile now. */
 export function liveCounterCovers(ctx, target, profile) {
   if (!profile) return false;
   if (combatExpansionEnabled(ctx)) {

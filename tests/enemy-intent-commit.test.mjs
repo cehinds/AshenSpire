@@ -14,7 +14,6 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
-import * as CR from '../src/model/combatRounds.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -200,23 +199,4 @@ test('an Advance paid in the enemy phase owes nothing against a later turn', () 
   const { refused } = endTurn(combat);
   assert.deepEqual(refused, []);
   assert.ok(!enemy.pendingStaminaLoss, 'its own turn draws on that turn\'s pool and carries nothing');
-});
-
-test('rounds mode: an enemy\'s own Advance (player phase, range on) owes nothing against its next turn', () => {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
-  run.advancedConfigSnapshot = { ...(run.advancedConfigSnapshot || {}), overrides: { ...(run.advancedConfigSnapshot?.overrides || {}), [CR.COMBAT_ROUNDS_KEY]: true } };
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['gildedKnight'] });
-  combat.player.hp = combat.player.maxHp = 100000;
-  combat.combatRounds = { rules: structuredClone(CR.combatRoundsFor({ [CR.COMBAT_ROUNDS_KEY]: true })), momentum: {}, poiseDouble: {}, charges: {} };
-  const enemy = combat.enemies[0];
-  assert.ok(combat.rangeState, 'range is on');
-  let moved = 0;
-  for (let turn = 0; turn < 8 && !combat.result; turn++) {
-    combat.rangeState.engagements[rangePairKey('player:player', `enemy:${enemy.id}`)] = 1;
-    const start = combat.eventLog.length;
-    dispatch(combat, { type: 'endTurn' });
-    settle(combat);
-    moved += combat.eventLog.slice(start).filter(row => row.type === 'combatEngagementMoved').length;
-    assert.ok(!enemy.pendingStaminaLoss, `turn ${turn}: nothing owed`);
-  }
 });

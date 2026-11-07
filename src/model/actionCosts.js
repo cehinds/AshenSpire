@@ -1,7 +1,7 @@
 import { fixCoreEnabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceStaminaCost } from './stanceRules.js';
-// src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
+// src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a).
 //
 // Pure model. Player cards: the per-resource cost formula (cardCostBudget). Enemy moves: their own `sp`, else the stance
 // table (enemyMoveSpOf). Enemy SP pool: stat-driven (enemyPoolOf). registries.resolveCard calls applyActionCosts once
