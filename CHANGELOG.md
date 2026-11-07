@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Combat rounds removed** ([#2628](https://github.com/cehinds/AshenSpire/pull/2628), `0.7.3.228`). Removed the legacy combat rounds preview, momentum and in-combat recovery settings; Core fights are unchanged.
 - **Behind the scenes: the code review has a checklist** ([#2626](https://github.com/cehinds/AshenSpire/pull/2626), `0.7.3.228`). This is a docs-only change, and nothing you play changes. The dev code review now ends with one checkbox per finding, in the order the review suggests, so each cleanup pull request can tick the box it lands.
 - **Reaction order and player panel** ([#2624](https://github.com/cehinds/AshenSpire/pull/2624), `0.7.3.226`). An enemy attack now shows the Hit or Miss word before your chosen reaction's animation, then the damage; on desktop the player panel stands beside your figure instead of in the right margin.
 - **Release keeps 5 builds** ([#2623](https://github.com/cehinds/AshenSpire/pull/2623), `0.7.3.224`). The Pages site lists the 5 newest release builds instead of 10, shrinking the deploy.
