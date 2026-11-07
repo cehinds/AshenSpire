@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { settingsRows, generalGroups, visibleAdvancedGroups, categoryHtml, settingsSearchHits } from '../src/ui/screens/settings.js';
+import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../src/ui/models/SettingsCapabilitiesModel.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { resolveMapMode, mapKnowledge } from '../src/model/map/mapknowledge.js';
@@ -16,6 +17,8 @@ const available=(key,profile)=>settingsRowAvailable(rows.find(row=>row.key===key
 test('Core hides legacy-only mechanics in groups, topics and search while retaining real controls',()=>{
   const groups=visibleAdvancedGroups(true,core).map(group=>group.id);
   for(const group of ['Progression','Combat','Stats','Recovery','Rewards','Shops','Equipment','World']) assert(!groups.includes(group),group);
+  assert(available('useRestorativeFlasksOutsideCombat', core), 'the flask setting the map points to stays reachable on Core');
+  assert(groups.includes('Interface'), 'Interface stays visible on Core');
   assert(groups.includes('Opening'), 'Core opening settings are live');
   assert(groups.includes('Deck'),'ordered draw still applies to configured fights');
   for(const key of ['viewPreset','uiScale','fullscreen','musicEnabled','sfxVolume','textSize','tapFloor','reducedMotion','screenShake','playInDeckOrder']) assert(available(key,core),key);
@@ -69,4 +72,11 @@ test('both standalone and in-run overlay settings receive the active profile con
   assert.match(main,/openOverlay\(\{\s+gameProfile: \{ read: \(\) => selectedGameProfile, active: \(\) => run\?\.gameProfile \|\| selectedGameProfile \}/);
   assert.match(overlay,/settings: ctx.settings,\s+gameProfile: ctx.gameProfile,/);
   assert.match(overlay,/onQuitWithoutSave, gameProfile,/);
+});
+test('the flask setting is filed under Interface > Map & HUD, not Rewards',()=>{
+  const key='useRestorativeFlasksOutsideCombat';
+  const map=advancedSubgroups(settingsRows(),'Interface').find(g=>g.id==='Map & HUD');
+  assert(map,'Map & HUD subgroup exists');
+  assert(map.rows.some(r=>r.key===key),'Map & HUD holds the flask setting');
+  assert(!advancedSubgroups(settingsRows(),'Rewards').some(g=>g.rows.some(r=>r.key===key)),'Rewards no longer holds it');
 });
