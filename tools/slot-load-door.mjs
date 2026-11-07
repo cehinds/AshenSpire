@@ -17,7 +17,7 @@
 //           resumeRun swaps the live run only after a successful load, so
 //           the climb in hand stands and a notice says the slot could not
 //           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
-//   RESTART Abandoning a legacy fight mid-combat and loading the slot
+//   RESTART Abandoning a Core fight mid-combat and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, RNG seed/counters, an unchanged deck. tests/midcombat-reload
 //           proves the same legacy property against a hand-copied mirror of
