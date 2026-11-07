@@ -18,7 +18,8 @@ import { smithingPlan } from '../src/model/smithing.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { upgradeArtPlan, commitUpgradeArt } from '../src/model/blacksmith.js';
-import { validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
+import { validateRunShape, serializeRun, deserializeRun, RUN_SCHEMA_VERSION } from '../src/model/state.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { shopStockProblems } from '../src/model/shopKinds.js';
 import { pruneUnknownAdditionOffers } from '../src/model/marketStock.js';
 import { rankUpPlan, commitRankUp, rankUpCards, serviceCandidates } from '../src/model/blacksmith.js';
@@ -337,4 +338,36 @@ test('a full deck refuses Add to deck for a bought weapon art and leaves the run
   assert.equal(shopCardDeckRefusal(coreOut, run, receipt.instanceId, settings), 'full');
   assert.throws(() => addPurchasedCardToDeck(coreOut, run, receipt.instanceId, settings), (error) => error.code === 'full');
   assert.equal(JSON.stringify(run), before);
+});
+
+test('a schema-16 save from the migration corpus loads through the save manager', () => {
+  const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  const v16 = JSON.parse(corpus.versions['16'].bytes);
+  assert.equal(v16.schemaVersion, 16, 'the schema-16 entry is untouched');
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, JSON.stringify(v16));
+  const run = createSaveManager(storage).loadRun(createRegistries(contentBundle));
+  assert.ok(run, 'the save loads');
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
+  assert.deepEqual(run.sigilSlots, v16.sigilSlots);
+});
+
+test('a malformed Core Blacksmith stock is refused by name; an unknown unsold armament is pruned at the load door', () => {
+  const run = smithRun(coreOut);
+  const cases = [
+    [{ armaments: {} }, /shopStock\.armaments/],
+    [{ tradeRevision: -1 }, /shopStock\.tradeRevision/],
+  ];
+  for (const [patch, pattern] of cases) {
+    const bad = { ...run, shopStock: { ...run.shopStock, ...patch } };
+    assert.ok(validateRunShape(bad).some((problem) => pattern.test(problem)), `${JSON.stringify(patch)} refused`);
+  }
+  assert.ok(run.shopStock.armaments.length > 0, 'the Core stock lays out armaments');
+  run.shopStock.armaments = [...run.shopStock.armaments, { id: 'retiredBlade', cost: 90 }];
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(run, createRng(31));
+  const back = createSaveManager(storage).loadRun(coreOut);
+  assert.ok(back, 'the save loads');
+  assert.equal(back.shopStock.armaments.some((item) => item.id === 'retiredBlade'), false, 'pruned, not rerolled');
+  assert.equal(back.shopStock.kind, 'blacksmith');
 });
