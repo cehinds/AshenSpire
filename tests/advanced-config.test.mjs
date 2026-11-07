@@ -47,6 +47,14 @@ test('settings import refuses malformed, oversized, unknown and invalid values a
   ]) assert.throws(() => parseAdvancedConfigFile(text, contentBundle));
 });
 
+test('settings import leaves out the removed legacy reward and shop rows instead of refusing the file', () => {
+  const rows = [{ cat: 'Advanced', key: 'shopSell', def: true, label: 'Sell items' }];
+  const text = v1File({ 'settings.masterArtChoice': false, 'settings.rewardBattleCards': true, 'settings.shopSell': true });
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows, warnings), { shopSell: true });
+  assert.deepEqual(warnings, ['Settings for the removed legacy reward and shop menus were left out. Everything else was kept.']);
+});
+
 test('settings import accepts exported legacy advanced settings using their row definitions', () => {
   const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
     { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
