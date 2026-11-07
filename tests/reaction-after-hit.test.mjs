@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import { playTimeline, groupBeats, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests floater sequencing for every kind; the allowlist is tests/floater-policy.test.mjs
 pinCombatPacing({ combatSpeed: 1 });
 
 const reaction = [
