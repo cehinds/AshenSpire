@@ -1605,41 +1605,45 @@ function runGuardStackOpcode(ctx, action, eff) {
   return false;
 }
 
-function runOpcode(ctx, action, eff) {
-  if (runGuardStackOpcode(ctx, action, eff)) return;
-  if (eff.op === 'addCinders' && ctx.player && !ctx.run) {
-    const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0));
-    ctx.proposalRewards ||= { cinders: 0 };
-    ctx.proposalRewards.cinders += amount;
-    if (ctx.playerKey) {
-      ctx.proposalRewards.byPlayer ||= {};
-      ctx.proposalRewards.byPlayer[ctx.playerKey] = (ctx.proposalRewards.byPlayer[ctx.playerKey] || 0) + amount;
-    }
-    ctx.emit('cindersChanged', { amount, total: ctx.proposalRewards.cinders, combatReward: true });
-    return;
-  }
-  if (RUN_OPCODES.includes(eff.op)) {
-    runRunOpcode(ctx, action, eff);
-    return;
-  }
-  if (!COMBAT_OPCODES.includes(eff.op)) {
-    throw new Error(`Unknown opcode '${eff.op}'`);
-  }
+function gainPoiseOrWard(ctx, action, eff) {
+      if (configuredCombat(ctx)) {
+        if (eff.op === 'gainPoise' && configuredModule(ctx, 'defenses')?.include?.includes('poise')) {
+          for (const t of resolveTargets(ctx, action, eff.target)) {
+            t.gameProfilePoise = (t.gameProfilePoise || 0) + Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+            ctx.emit('meterGuardGained', { targetId: t.id, meter: 'poise', amount: t.gameProfilePoise, total: t.gameProfilePoise });
+          }
+        }
+        return;
+      }
+      const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        // The same amount the preview shows: the base plus the card's rating bonus (computeMeterGuardGain).
+        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, computeMeterGuardGain(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card), { onceKey: eff.oncePerCombat });
+        else gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
+      }
+      return;
+}
 
-  switch (eff.op) {
-    case 'grantRollMode': {
+function modifyOrMoveCards(ctx, action, eff) {
+      const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
+      moveCards(ctx, resolved, evalNum(ctx, action, eff.amount, 1));
+      return;
+}
+
+export const OPCODE_HANDLERS = Object.freeze({
+    grantRollMode: (ctx, action, eff) => {
       if (ctx.combatExpansionVersion !== 2 || eff.roll !== 'evade') throw new Error('Unsupported next-roll mode');
       for (const target of resolveTargets(ctx, action, eff.target)) target.nextEvadeMode = { advantage: !!eff.advantage, disadvantage: !!eff.disadvantage };
-      break;
-    }
-    case 'retain': {
+      return;
+    },
+    retain: (ctx, action, eff) => {
       const owner = action.owner || action.source;
       const piles = ctx.players?.get(ctx.playerIdForEntity?.(owner))?.piles || ctx.piles;
       owner.combatRetainedCards ||= [];
       for (const card of piles.hand.filter(card => !owner.combatRetainedCards.includes(card.instanceId)).slice(0, evalNum(ctx, action, eff.amount, 0))) owner.combatRetainedCards.push(card.instanceId);
-      break;
-    }
-    case 'damage': {
+      return;
+    },
+    damage: (ctx, action, eff) => {
       action.meta ||= {};
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
@@ -1710,9 +1714,9 @@ function runOpcode(ctx, action, eff) {
           }
         }
       }
-      break;
-    }
-    case 'block': {
+      return;
+    },
+    block: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         // Stance entry and restoration already own their lane and exact budget.
@@ -1720,18 +1724,18 @@ function runOpcode(ctx, action, eff) {
           gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null, syntheticDefense: true }, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
-      break;
-    }
-    case 'gainBarrier': {
+      return;
+    },
+    gainBarrier: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
           gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card);
         } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
-      break;
-    }
-    case 'wardDamage': {
+      return;
+    },
+    wardDamage: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt?.avoided) continue;
@@ -1751,9 +1755,9 @@ function runOpcode(ctx, action, eff) {
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
         creditKnowledgeImpact(ctx, t, spent.spent);
       }
-      break;
-    }
-    case 'buildup': {
+      return;
+    },
+    buildup: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
         if (eff.chance !== undefined && !Control.rollStatusChance(ctx, eff.chance, { advantage: eff.advantage, disadvantage: eff.disadvantage, stream: 'statusPressure', event: { status: eff.status, targetId: t.id, sourceId: action.source?.id } }).success) continue;
         const authored = evalNum(ctx, action, eff.amount, 0, t);
@@ -1766,50 +1770,33 @@ function runOpcode(ctx, action, eff) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, pressure);
       }
-      break;
-    }
-    case 'gainPoise':
-    case 'gainWard': {
-      if (configuredCombat(ctx)) {
-        if (eff.op === 'gainPoise' && configuredModule(ctx, 'defenses')?.include?.includes('poise')) {
-          for (const t of resolveTargets(ctx, action, eff.target)) {
-            t.gameProfilePoise = (t.gameProfilePoise || 0) + Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
-            ctx.emit('meterGuardGained', { targetId: t.id, meter: 'poise', amount: t.gameProfilePoise, total: t.gameProfilePoise });
-          }
-        }
-        break;
-      }
-      const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
-      for (const t of resolveTargets(ctx, action, eff.target)) {
-        // The same amount the preview shows: the base plus the card's rating bonus (computeMeterGuardGain).
-        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, computeMeterGuardGain(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card), { onceKey: eff.oncePerCombat });
-        else gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
-      }
-      break;
-    }
+      return;
+    },
+    gainPoise: gainPoiseOrWard,
+    gainWard: gainPoiseOrWard,
     // Poise is refilled (never guarded by this op): the twin of gainWard's restore.
-    case 'restorePoise': {
+    restorePoise: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         if (ctx.combatExpansionVersion !== 2 || !t.persistentPoise) continue;
         syncPoiseMaximum(ctx, t);
         Control.restorePersistentPoise(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat, source: 'card' });
       }
-      break;
-    }
-    case 'moveEngagement': { Engagement.executeEngagementMovement(ctx, action); break; }
-    case 'dodgeRoll': {
+      return;
+    },
+    moveEngagement: (ctx, action, eff) => { Engagement.executeEngagementMovement(ctx, action); return; },
+    dodgeRoll: (ctx, action, eff) => {
       if (configuredCombat(ctx)) {
         if (configuredModule(ctx, 'stances')?.include?.includes('defend')) action.source.combatStance = { maneuver: 'defend', camp: 'physical' };
-        break;
+        return;
       }
-      if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); break; }
+      if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); return; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player
       // only — the class, Dexterity and the die live on the player's side of
       // the board. The engine rolls on its own stream; the framework decides
       // the check, the difficulty and the temporary guard, which lands as
       // Block through the same door every block does.
       const p = ctx.player;
-      if (!action.source || action.source.id !== p.id) break;
+      if (!action.source || action.source.id !== p.id) return;
       const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
       // No sheet reads as no Dexterity term (framework weight.js), never as
       // a number from the retired d20 scale.
@@ -1825,9 +1812,9 @@ function runOpcode(ctx, action, eff) {
         success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
       });
       if (receipt.success && receipt.temporaryGuard > 0) gainBlock(ctx, p, receipt.temporaryGuard);
-      break;
-    }
-    case 'applyStatus': {
+      return;
+    },
+    applyStatus: (ctx, action, eff) => {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
         const authored = evalNum(ctx, action, eff.stacks, 1, t);
         const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
@@ -1841,32 +1828,33 @@ function runOpcode(ctx, action, eff) {
           if (eff.status === 'grounded') Control.groundStatusPressure(ctx, t);
         }
       }
-      break;
-    }
-    case 'removeStatus': {
+      return;
+    },
+    removeStatus: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
         trimCombatStances(ctx,t);
       }
-      break;
-    }
-    case 'grantCardCharge': {
+      return;
+    },
+    grantCardCharge: (ctx, action, eff) => {
       for (const target of resolveTargets(ctx, action, eff.target)) {
         const charge = { ...eff };
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
         grantAbilityCharge(target, charge);
       }
-      break;
-    }
-    case 'castLinkedSpell': {
+      return;
+    },
+    castLinkedSpell: (ctx, action, eff) => {
       if((action.meta?.linkedDepth || 0)>=8) throw new Error('Linked spell recursion exceeds bound');
       const linked=ctx.registries.cards.get(eff.card);
       for(const effect of linked.effects || []) ctx.enqueue({...action,effect,card:{...action.card,...linked,cardId:linked.id},meta:{...action.meta,linkedDepth:(action.meta?.linkedDepth || 0)+1}});
-      break;
-    }
-    case 'addBurden':
-      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}break;
-    case 'revealIntent':
+      return;
+    },
+    addBurden: (ctx, action, eff) => {
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}return;
+    },
+    revealIntent: (ctx, action, eff) => {
       for (const enemy of resolveTargets(ctx, action, eff.target)) {
         if (enemy.kind !== 'enemy') continue;
         const until = ctx.turn + Math.max(1, Math.min(10, evalNum(ctx, action, eff.amount, 1)));
@@ -1877,26 +1865,23 @@ function runOpcode(ctx, action, eff) {
         enemy.proposalIntentRevealedUntilByOwner[ownerId] = until;
         ctx.emit('intentRevealed', { targetId: enemy.id, ownerId, until });
       }
-      break;
-    case 'modifyCards':
-    case 'moveCards': {
-      const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
-      moveCards(ctx, resolved, evalNum(ctx, action, eff.amount, 1));
-      break;
-    }
-    case 'draw': {
+      return;
+    },
+    modifyCards: modifyOrMoveCards,
+    moveCards: modifyOrMoveCards,
+    draw: (ctx, action, eff) => {
       const amount = Math.max(0, evalNum(ctx, action, eff.amount, 1));
       if (ctx.drawCardsFor) ctx.drawCardsFor(action.owner || action.source, amount);
       else drawCards(ctx, amount);
-      break;
-    }
-    case 'discard': {
+      return;
+    },
+    discard: (ctx, action, eff) => {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
-      if (eff.choose) { requestAbilityDiscard(ctx, action, n); break; }
+      if (eff.choose) { requestAbilityDiscard(ctx, action, n); return; }
       discardFromHand(ctx, n, { random: !!eff.random });
-      break;
-    }
-    case 'exhaust': {
+      return;
+    },
+    exhaust: (ctx, action, eff) => {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
       for (let i = 0; i < n && ctx.piles.hand.length > 0; i++) {
         const idx = eff.random ? Math.floor(ctx.rng.float('misc') * ctx.piles.hand.length) : ctx.piles.hand.length - 1;
@@ -1904,9 +1889,9 @@ function runOpcode(ctx, action, eff) {
         ctx.piles.exhaust.push(card);
         ctx.emit('cardExhausted', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
       }
-      break;
-    }
-    case 'addCard': {
+      return;
+    },
+    addCard: (ctx, action, eff) => {
       ctx.registries.cards.get(eff.card); // throws on dangling id
       const count = Math.max(1, evalNum(ctx, action, eff.count, 1));
       const pileName = eff.pile || 'discard';
@@ -1924,23 +1909,23 @@ function runOpcode(ctx, action, eff) {
         else if (position === 'bottom') pile.push(inst);
         else pile.splice(Math.floor(ctx.rng.float('shuffle') * (pile.length + 1)), 0, inst);
       }
-      break;
-    }
-    case 'gainEnergy': {
+      return;
+    },
+    gainEnergy: (ctx, action, eff) => {
       // `funded` is the part that already paid the card's own price (owner, 2026-10-13: restores break even).
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1) - (Number(eff.funded) || 0));
       ctx.player.energy += n;
       ctx.emit('energyGained', { amount: n });
-      break;
-    }
-    case 'restoreStamina': {
+      return;
+    },
+    restoreStamina: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const amount = Math.max(0, Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1))));
         t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
       }
-      break;
-    }
-    case 'restoreMana': {
+      return;
+    },
+    restoreMana: (ctx, action, eff) => {
       // BY an amount, or TO a floor (plan phase 7's floorOrFull rest): a pool
       // under the floor rises to it; one already at or above it fills.
       const toFloor = eff.toFloorPct !== undefined;
@@ -1957,9 +1942,9 @@ function runOpcode(ctx, action, eff) {
         }
         ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
       }
-      break;
-    }
-    case 'loseHp': {
+      return;
+    },
+    loseHp: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         // `cause` labels the hpLost event (e.g. 'proc:bleed') so the damage
         // record can attribute the loss — display + instruments read it.
@@ -1975,9 +1960,9 @@ function runOpcode(ctx, action, eff) {
           ctx.emit('hpOfferingPaid', { amount, cost: amount, sourceId: t.id, targetId: t.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(t), playerId: ctx.playerIdForEntity(t) } : {}) });
         }
       }
-      break;
-    }
-    case 'heal': {
+      return;
+    },
+    heal: (ctx, action, eff) => {
       // `ctx.healMult` is the run-level door's (createRunContext): a rest's
       // heal scaled by the custom mod and the restHealMult passive. A fight
       // never sets it and reads 1. Under a multiplier the amount is floored
@@ -1995,13 +1980,13 @@ function runOpcode(ctx, action, eff) {
         if(healing.damage) applyLoseHp(ctx,t,healing.damage,'healingInversion');
         applyHeal(ctx, t, healing.healing);
       }
-      break;
-    }
-    case 'shuffleDiscardIntoDraw': {
+      return;
+    },
+    shuffleDiscardIntoDraw: (ctx, action, eff) => {
       reshuffleDiscardIntoDraw(ctx);
-      break;
-    }
-    case 'enterStance': {
+      return;
+    },
+    enterStance: (ctx, action, eff) => {
       // A chosen stance (Warrior's Vow) is the play intent's pick, validated
       // before the card was paid for (model/cardChoices.js) and carried on meta.
       const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
@@ -2011,7 +1996,7 @@ function runOpcode(ctx, action, eff) {
           const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
           Matchups.setCombatStance(ctx,entity,carrier);
         }
-        break;
+        return;
       }
       // BOUNDARY (#1449 review, Codex P2): only a played card supplies a
       // choice. The validator checks `choose` wherever enterStance may appear
@@ -2021,7 +2006,7 @@ function runOpcode(ctx, action, eff) {
       // stance (tests/warriors-vow.test.mjs pins the throw).
       if (eff.choose && stanceId == null) throw new Error(`enterStance choose '${eff.choose}' needs a play choice; only a played card supplies one`);
       const def = ctx.registries.stances.get(stanceId);
-      if (ctx.player.stanceId === stanceId) break; // already in it: no-op (StS)
+      if (ctx.player.stanceId === stanceId) return; // already in it: no-op (StS)
       if (ctx.player.stanceId) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
@@ -2030,9 +2015,9 @@ function runOpcode(ctx, action, eff) {
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
-      break;
-    }
-    case 'poiseDamage': {
+      return;
+    },
+    poiseDamage: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt?.avoided) continue;
@@ -2050,15 +2035,15 @@ function runOpcode(ctx, action, eff) {
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
-      break;
-    }
-    case 'stagger': {
+      return;
+    },
+    stagger: (ctx, action, eff) => {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         breakEnemy(ctx, t);
       }
-      break;
-    }
-    case 'arcaneBuildup': {
+      return;
+    },
+    arcaneBuildup: (ctx, action, eff) => {
       // Buildup poured directly (plan phase 8): `pct` of each target's OWN
       // threshold, or `amount` points; the school is the firing event's (a
       // break's), else arcane. Immune and locked targets refuse by name.
@@ -2084,11 +2069,34 @@ function runOpcode(ctx, action, eff) {
             : evalNum(ctx, action, eff.amount, 0, t)),
         });
       }
-      break;
+      return;
+    },
+});
+
+function runOpcode(ctx, action, eff) {
+  if (runGuardStackOpcode(ctx, action, eff)) return;
+  if (eff.op === 'addCinders' && ctx.player && !ctx.run) {
+    const amount = Math.max(0, evalNum(ctx, action, eff.amount, 0));
+    ctx.proposalRewards ||= { cinders: 0 };
+    ctx.proposalRewards.cinders += amount;
+    if (ctx.playerKey) {
+      ctx.proposalRewards.byPlayer ||= {};
+      ctx.proposalRewards.byPlayer[ctx.playerKey] = (ctx.proposalRewards.byPlayer[ctx.playerKey] || 0) + amount;
     }
-    default:
-      throw new Error(`Opcode '${eff.op}' has no implementation`);
+    ctx.emit('cindersChanged', { amount, total: ctx.proposalRewards.cinders, combatReward: true });
+    return;
   }
+  if (RUN_OPCODES.includes(eff.op)) {
+    runRunOpcode(ctx, action, eff);
+    return;
+  }
+  if (!COMBAT_OPCODES.includes(eff.op)) {
+    throw new Error(`Unknown opcode '${eff.op}'`);
+  }
+
+  const handler = OPCODE_HANDLERS[eff.op];
+  if (!handler) throw new Error(`Opcode '${eff.op}' has no implementation`);
+  handler(ctx, action, eff);
 }
 
 /** Validate all authored HP payments before any card, resource, queue or RNG change. */
