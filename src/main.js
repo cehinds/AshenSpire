@@ -2156,7 +2156,6 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onProgression: isConfiguredRun(run) ? null : () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
       onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
     onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
@@ -3106,10 +3105,6 @@ async function onCombatEnd(result, combat, enc) {
     character: { ...run.level },
     tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
   };
-  const pendingBefore = pendingLevelCount(registries, run);
-  // Every level waits for its press (SPEC §13.4o): XP is always banked, and the
-  // reward door's Level up claims it. No setting applies a level on its own.
-  const manualLevelUp = !isConfiguredRun(run);
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -3126,10 +3121,10 @@ async function onCombatEnd(result, combat, enc) {
     receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: featMultiplier(run, 'classXp'),
   }) : null;
   const trackAwards = configuredAwards?.trackAwards || (!configuredProgression
-    ? applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp }) : []);
+    ? applySkillXp(registries, run, trackReceipt) : []);
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
+  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, multiplier: featMultiplier(run, 'classXp') }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
     run, beforeState: skillStateBefore,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
@@ -3141,15 +3136,11 @@ async function onCombatEnd(result, combat, enc) {
     characterMultiplier: featMultiplier(run, 'characterXp') * (configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1),
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
-  const levelAward = manualLevelUp
-    ? bankLevelXp(registries, run, levelXp)
-    : awardLevelXp(registries, run, levelXp, {
-      pointsPerLevel: configuredProgression ? gameModule(run, 'progression')?.attributePointsPerLevel || 0 : resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: configuredProgression ? !!gameModule(run, 'stats') : settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
-    });
-  const levelsEarned = manualLevelUp
-    ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
-    : levelAward.levelUps;
+  const levelAward = awardLevelXp(registries, run, levelXp, {
+    pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0,
+    grantStats: !!gameModule(run, 'stats'),
+  });
+  const levelsEarned = levelAward.levelUps;
   // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
   // above were paid before the door opens, so the screen cannot re-derive what
   // this fight paid — it is handed the amounts, on the offer, where the
@@ -3219,8 +3210,8 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
-    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss') : [];
+    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
     // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
     // from; one relic (or none) keeps the single relicId shape.
     const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
@@ -3229,9 +3220,9 @@ async function onCombatEnd(result, combat, enc) {
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps() : [],
+      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes() : [],
+      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats() : [],
       ...rollCardRows('boss', levelsEarned),
       ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
@@ -3241,22 +3232,22 @@ async function onCombatEnd(result, combat, enc) {
       xpReceipt,
       xpBefore,
       levelChoices,
-      characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
+      characterRewardStart: run.level.level,
     };
     return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: 'advanceAct' });
   }
 
   // Skill and class level rewards are independent of the combat card roll.
-  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
-  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool) : [];
+  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
   const rewards = {
     title: victoryTitle(enc),
     cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(manualLevelUp) : [],
-    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
-    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
+    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps() : [],
+    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes() : [],
+    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats() : [],
     ...rollCardRows(enc.pool, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
@@ -3271,13 +3262,13 @@ async function onCombatEnd(result, combat, enc) {
     xpReceipt,
     xpBefore,
     levelChoices,
-    characterRewardStart: manualLevelUp ? xpBefore.character.level + pendingBefore : run.level.level,
+    characterRewardStart: run.level.level,
   };
   beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
 
   function withSourceBonuses(offer) {
     return runSourceRewardOffer(registries, rng, run, offer, {
-      pool: enc.pool, includeBanked: manualLevelUp, levelsGained: classAward?.levelUps || 0, meta:saves.loadMeta(),
+      pool: enc.pool, includeBanked: false, levelsGained: classAward?.levelUps || 0, meta:saves.loadMeta(),
     });
   }
 }
@@ -3558,28 +3549,6 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       }
     },
   });
-}
-
-function showCharacterProgression(returnTo) {
-  if (isConfiguredRun(run)) return showCharacterSheet(null, { onClose: returnTo });
-  if (run.pendingReward) return mountPendingReward();
-  const settings = saves.loadMeta().settings || {};
-  const rewards = mergeProgressionRewards(run.deferredProgression, {
-    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
-    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
-    skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
-    skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
-    skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
-    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
-    classMilestoneRewards: expandedProgression(run) ? rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,classSkillId(run.class)),meta:saves.loadMeta()}) : [],
-  }, run);
-  const { available, deferred } = partitionProgressionRewards(rewards, run);
-  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
-  run.pendingReward.expanded = true;
-  if (Object.keys(deferred).length) run.deferredProgression = deferred;
-  else delete run.deferredProgression;
-  persist();
-  return mountPendingReward(run.pendingReward, returnTo);
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
