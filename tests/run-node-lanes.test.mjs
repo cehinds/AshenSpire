@@ -100,6 +100,8 @@ function fixture(run) {
   writeFileSync(join(dir, 'package.json'), '{"type":"module"}');
   copyFileSync(join(ROOT, 'tests/run-node.mjs'), join(dir, 'tests/run-node.mjs'));
   copyFileSync(join(ROOT, 'tests/run-node-lanes.mjs'), join(dir, 'tests/run-node-lanes.mjs'));
+  mkdirSync(join(dir, 'tests/helpers'));
+  copyFileSync(join(ROOT, 'tests/helpers/run-node-fixtures.mjs'), join(dir, 'tests/helpers/run-node-fixtures.mjs'));
   writeFileSync(join(dir, 'tests/engine.test.js'), 'export function runTests(){throw new Error("ENGINE_LANE_MUST_NOT_RUN")}');
   for (const file of ['confirmation-modal', 'card-removal-flick']) {
     writeFileSync(join(dir, `tests/${file}.test.mjs`), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
