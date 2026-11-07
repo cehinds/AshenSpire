@@ -4,7 +4,6 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { masteryRowId } from '../src/model/classMastery.js';
-import { skillFeatOptions } from '../src/model/skills.js';
 import { creationFeatBrowserGroups } from '../src/ui/models/CreationFeatBrowserModel.js';
 const registries = createRegistries(contentBundle);
 const born = classId => createRunState({ registries, classId, seed: 42 });

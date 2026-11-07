@@ -7,7 +7,7 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 // THIS MODULE READS, IT NEVER WRITES. Every number comes from the functions
 // that pay the reward: the XP steps from levelup.js / skills.js `xpToNext`,
 // the cadences from skills.js's own predicates (`levelQueuesRankUp`,
-// `levelQueuesSkillFeat`, `levelQueuesAttributePick`) and balance.skill's
+// `levelQueuesAttributePick`) and balance.skill's
 // rows, the pool growth from the run's own derived-stat snapshot at its own
 // attributes, the deck floor from loadout.js `deckMinimum`. So the sheet
 // cannot promise a reward the level door does not give: a balance edit moves
@@ -19,8 +19,8 @@ import { classRewardBudget, expandedProgression } from '../../model/classMilesto
 
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from '../../model/levelup.js';
 import {
-  classSkillId, levelQueuesAttributePick, levelQueuesRankUp, levelQueuesSkillFeat, linkedAttributes,
-  rankUpKind, skillLevel, skillMaxLevel, skillTracks, trackSkillFeats, xpToNext as skillXpToNext,
+  classSkillId, levelQueuesAttributePick, levelQueuesRankUp, linkedAttributes,
+  rankUpKind, skillLevel, skillMaxLevel, skillTracks, xpToNext as skillXpToNext,
 } from '../../model/skills.js';
 import { classTreeRows } from '../../model/classTree.js';
 import { deriveStat } from '../../model/derivedStats.js';
@@ -186,9 +186,6 @@ export function trackLadder(registries, run, track) {
     }
     if (!ability && levelQueuesRankUp(track.kind, level)) grants.push({ kind: 'rankUp' });
     if (classId) grants.push(...tiersOpeningAt(registries, classId, level));
-    if (!(expanded && classId) && levelQueuesSkillFeat(registries, track.id, level)) {
-      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id, false, registries).filter((f) => f.minLevel <= level).map((f) => f.name)) });
-    }
     if (!(expanded && classId) && levelQueuesAttributePick(registries, track.id, level)) {
       grants.push({ kind: 'attribute', options: Object.freeze(linkedAttributes(registries, track.id).map((id) => attrLabels.get(id) || id)) });
     }

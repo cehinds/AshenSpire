@@ -735,7 +735,7 @@ export const RUN_SHAPE = [
   { key: 'skillAttributePoints', type: 'number', optional: true },
   // Which track's pick granted which attribute point (SPEC §13.4o, D13a).
   { key: 'skillAttributeGrants', type: 'object', optional: true },
-  // The skill feats taken (SPEC §13.4o), absent until the first.
+  // Retired (skill feats are gone): an old save may still carry `skillFeats`; it loads, nothing reads it.
   { key: 'skillFeats', type: 'array', optional: true },
   // Plan phase 6. Required at schema 10; a preXpLevels save (≤ 9) is filled
   // at the migration door from its bought levels, with nothing waiting.
@@ -1231,9 +1231,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
   // fractional or negative value would silently shift the expected total there.
-  if (Array.isArray(run.skillFeats) && (run.skillFeats.some((id) => typeof id !== 'string' || !id) || new Set(run.skillFeats).size !== run.skillFeats.length)) {
-    problems.push('skillFeats must be distinct feat ids');
-  }
   for (const key of ['levelUps', 'levelPoints', 'skillAttributePoints']) {
     if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
       problems.push(`${key} must be a non-negative integer`);
@@ -1569,7 +1566,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (card.abilityRank !== undefined && !(Number.isInteger(card.abilityRank) && card.abilityRank >= 0 && card.abilityRank <= 5)) problems.push(`${pile}[${i}].abilityRank must be 0..5`);
       // The derived every-5th-level skill bonus (SPEC §13.4o), absent at 0.
       if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].skillBonus must be a whole number from 1 to ${MAX_CARD_RANK}`);
-      if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].passiveBlock must be a whole number from 1 to ${MAX_CARD_RANK}`);
       // Plays across earlier fights (SPEC §4.3 Zero-cost cards and ramp); Honed cards read it.
       if (card.playsEver !== undefined && !(Number.isInteger(card.playsEver) && card.playsEver >= 0)) problems.push(`${pile}[${i}].playsEver must be a non-negative whole number`);
       // A set-aside attack basic's slot is retired; any other would make the

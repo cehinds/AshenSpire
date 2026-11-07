@@ -1,5 +1,6 @@
 // Browse eligibility only. Meeting a level requirement never grants a feat.
-import { skillTracks, skillLevel, trackSkillFeats } from '../../model/skills.js';
+import { skillTracks, skillLevel } from '../../model/skills.js';
+import { skillFeats } from '../../content/skillFeats.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import { t } from '../strings.js';
 
@@ -25,7 +26,7 @@ export function creationFeatBrowserGroups(registries, run) {
   });
   const every = source.balance.skill.featEvery;
   const skill = tracks.filter(track => track.kind !== 'class')
-    .flatMap(track => trackSkillFeats(track.id, false, source).map(feat => {
+    .flatMap(track => skillFeats.filter(feat => feat.skillId === track.id).map(feat => {
       // The authored minLevel is additionally bounded by the existing
       // skill reward cadence; no new starting allowance is introduced.
       const minimum = Math.max(1, feat.minLevel || 0);

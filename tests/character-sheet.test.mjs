@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { xpToNext as levelXpToNext, awardLevelXp } from '../src/model/levelup.js';
 import {
-  awardSkillXp, classSkillId, levelQueuesAttributePick, levelQueuesRankUp, levelQueuesSkillFeat,
+  awardSkillXp, classSkillId, levelQueuesAttributePick, levelQueuesRankUp,
   skillMaxLevel, skillTracks, xpToNext as skillXpToNext,
 } from '../src/model/skills.js';
 import { deckMinimum } from '../src/model/loadout.js';
@@ -96,7 +96,7 @@ test('a skill ladder pays exactly what the ledger queues at each level', () => {
   for (const row of blade.rows) {
     assert.equal(row.stepXp, skillXpToNext(registries, 'weapon', row.level - 1));
     assert.equal(kinds(row).includes('rankUp'), levelQueuesRankUp('weapon', row.level), `rank-up at ${row.level}`);
-    assert.equal(kinds(row).includes('feat'), levelQueuesSkillFeat(registries, 'item:blade', row.level), `feat at ${row.level}`);
+    assert.equal(kinds(row).includes('feat'), false, `no skill feat at ${row.level}`);
     assert.equal(kinds(row).includes('attribute'), levelQueuesAttributePick(registries, 'item:blade', row.level), `attribute at ${row.level}`);
     assert.equal(kinds(row).includes('flat'), row.level % s.flatEvery === 0, `flat at ${row.level}`);
     assert.equal(row.grants.find((g) => g.kind === 'cardDraft').rank, Math.min(row.level, s.rankMax));
