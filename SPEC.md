@@ -2550,10 +2550,11 @@ Class and skill tracks cost about 100,000 XP in total to their top level ("100k 
 - XP fills a bar (character, class or skill). At a level the fill stops and the surplus is held, not applied.
 - A blue **Level up** button covers the full bar and waits. Nothing claims a level on its own (XP is always banked; only a press claims).
 - Pressing claims one level and opens the level popup (`levelView`, `ui/screens/reward.js`) listing that level's rewards as blue rows. Each row also stands in the victory list, lifted and blue, until accepted. A chooser's Back or confirmed pick returns to the popup; its Continue refills the held XP.
-- Closing without accepting resumes the surplus; unaccepted rows wait in the list and in `run.deferredProgression`.
+- Surplus XP is held until Level up is pressed; the modal's rows also stand lifted in the list until accepted; closing without accepting resumes the surplus. Unaccepted rows wait in the list and in `run.deferredProgression`.
 - Several ready bars take turns: character, then class, then skills in track order. Only the bar whose turn it is shows blue; the fill plays in that order. The victory door opens once and only swaps contents (no re-fade).
 - §13.4i's deferral and persistence rules stay (`run.deferredProgression`, absolute `requiredLevel`, class-gated offers, no reroll or duplicate). `awardLevelXp`/`awardSkillXp` pay the ledger at once.
-- Supersedes §13.4i auto-claim and pausing; §13.4e's `draftsPerCombat` cap (every claimed level opens its own modal; the cap is still live in `src/model/abilityOffers.js`); §13.4e "armour and class tracks have no schools" (their every-level draft uses the class pool under the skill's rarity gate); §13.4g "ONE per door" (each class level's modal carries its tree-node pick).
+- Supersedes §13.4i auto-claim and pausing; §13.4e's `draftsPerCombat` cap (every claimed level opens its own modal); §13.4e "armour and class tracks have no schools" (their every-level draft uses the class pool under the skill's rarity gate); §13.4g "ONE per door" (each class level's modal carries its tree-node pick); the per-level card draft and technique roll fold into the every-level card.
+- The `draftsPerCombat` cap is still live in `src/model/abilityOffers.js`.
 - The character bar keeps its own rewards (§13.4i: attribute points, the feat or class choice). Only skill and class bars use the table below; the class track also keeps §13.4g's tree node.
 
 #### Skill level rewards
@@ -2578,7 +2579,7 @@ Every level gives something; no level is points-only. Rewards stack, repeated bo
 - `resolveCard` applies rank last (`registries.js applyCardRank`): steps = rank - 1 + `skillBonus`, added to the primary number so play, preview and face agree. A multi-hit effect splits steps across its hits, rounded up (`rankBonus`; an X-hit card counts as 3 hits). Ranks never raise a price or tempo.
 - Face: upgraded ranks show "Rank X" centred above the effect panel as a separate top layer following adaptive expansion; authored Rank 0 and legacy unranked baselines are hidden.
 - **Draft rank.** A skill draft rolls each offered card's rank (`skills.js rollDraftRank`) 1 to min(level, `rankMax` 10), weight of rank *r* proportional to *r*, on the `cardRewards` stream. The offer carries `ranks` (checked on load); the taken card keeps it. Rarity stays the gate for which cards are offered; the upgrade row raises rank, not rarity.
-- **Rank-up row.** Each level from 2 on of a card-school track (weapon, focus, dual-wield) queues one rank-up (`skills.<id>.pendingRankUps`; level 1 queues none). The door offers each as a `skillRankUp` row (`rewards.skillRankUps`, key `skillRankUp:<skillId>:<ordinal>`, deferred and reserved like a draft) beside that level's draft. It lists the run's ordinary cards of the track's schools with rank below the track level (`skills.js rankUpCandidates`: deck then sideboard; equipment-bound and item-owned cards excluded), each at the rank it would reach. Confirm raises the card one rank (`raiseCardRank`; pick kept in `pendingReward.chosenRankUps`). With no candidate the row says so and waits. A taken rank-up must name its card, and a saved rank-up's track must be a card-school track.
+- **Rank-up row.** Each level from 2 on of a card-school track (weapon, focus, dual-wield) queues one rank-up (`skills.<id>.pendingRankUps`, absent on an older save; level 1 queues none). The door offers each as a `skillRankUp` row (`rewards.skillRankUps`, key `skillRankUp:<skillId>:<ordinal>`, deferred and reserved like a draft) beside that level's draft. It lists the run's ordinary cards of the track's schools with rank below the track level (`skills.js rankUpCandidates`: deck then sideboard; equipment-bound and item-owned cards excluded), each at the rank it would reach. Confirm raises the card one rank (`raiseCardRank`; pick kept in `pendingReward.chosenRankUps`). With no candidate the row says so and waits. A taken rank-up must name its card, and a saved rank-up's track must be a card-school track.
 - **Rank-up bonus** (Core runs, card ranks on). A rank-up also offers 2 to 3 bonus options; the player picks one before confirming.
   - Rolled by the blacksmith's upgrade generator (damage, Block, Poise, Stamina or Mana cut, a tag, the rest of its pool) under the same eligibility rules (no cut below 1 SP or 1 Mana, none on a cantrip's Mana, the multi-hit floor, the +100% guard), with each numeric amount multiplied by `balance.skill.rankUpBonusScale` (shipped 2), rounded, and never past a normal upgrade's guards.
   - 3 options when the generator has 3 distinct ones, else 2 (1, or none, when that is all it has). Seeded by (run seed, card instance, step count) with its own salt, seeing the card at its new rank, so a reload shows the same options.
@@ -2613,7 +2614,7 @@ Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progr
 A fighter has one break meter, Poise. Magical impact fills it like physical impact; the Ward and Arcane Exposure meters are gone. Magic damage meets Poise first, 1:1, then Block; physical keeps Block first (Core 2, §17, `docs/FIXCORE-DECISIONS.md` D17). Where an earlier section disagrees, this one wins inside its scope. Pointers sit in §3.6, §4.2, §7.2 (`arcane-exposure-bar`), §12.1, §13.4k and the ratings section.
 
 - **Scope.** Retired with the ratings meter: it governed fights created with combat ratings (`ratingsRules`), which no longer ship, on runs whose snapshot carries `breakMeterVersion: 1`. New runs stamp it at creation. A stamp is still accepted on a saved run and changes nothing; Stagger is §4.4's `dealPoiseDamage`.
-- **One meter: Poise.** Every hit that deals HP damage deals impact into the target's Poise, physical or magical. Impact values are unchanged (weapon weight, a card's own Poise or Ward value, category defaults). A fill is the Poise break, **Stagger**, with its existing growth and overflow: an enemy loses its next move, the player loses `poiseActionLoss` actions next turn. Disruption is retired (no second break, no `wardActionLoss`).
+- **One meter: Poise.** In scope, every hit that deals HP damage deals impact into the target's Poise, physical or magical. Impact values are unchanged (weapon weight, a card's own Poise or Ward value, category defaults). A fill is the Poise break, **Stagger**, with its existing growth and overflow: an enemy loses its next move, the player loses `poiseActionLoss` actions next turn. Disruption is retired (no second break, no `wardActionLoss`).
 - **Ward is a rating, not a meter.** It still reduces magical damage (Ward/(Ward+K)) and weighs in status resistance; its formula, item and relic contributions and settings rows are unchanged. A snapshot never carries `wardMeter`.
 - **One guard.** Dodge Roll (§12.1) grants 3 Block and a **Poise guard** of 3 (each plus the DR bonus). The Ward guard is retired; the Poise guard absorbs impact before the meter fills. `gainWard` stays a valid opcode and grants Poise guard.
 - **Arcane buildup is one formula.** A hit's added magical impact is `floor(exposureBuildupPerHit × schoolMult × target.buildupMultiplier × sourceExposureMult × foldScale)`: the first four factors are the old buildup factors (`cardExposure.csv`, `balance.arcaneExposure`, the enemy's multiplier, `exposureBuildupMult` passives such as Overcharge and Prismatic Thorn); `balance.exposure.foldScale` defaults to 0.5. It joins that hit's own magical impact before guards. An explicit `poiseDamage` effect stays authored impact and adds no buildup.
@@ -2623,7 +2624,7 @@ A fighter has one break meter, Poise. Magical impact fills it like physical impa
 - **Triggers.** Every `arcaneBreak` trigger moves to `arcaneStagger`: focus properties `siphon`, `overcharge`, `resonance` and the Starseer node `arcaneDraw` fire on an `arcaneStagger` whose `sourceId` is the holder. `staggerBreak` becomes +`balance.exposure.staggerBreakImpact` (2) magical impact on the holder's spell hits, added before the floor above.
 - **`resonance`** pours its percentage of the broken foe's Poise threshold as it stood before the break's growth into every other living enemy as magical impact, spent on each target's Poise guard first. A Stagger it causes applies `staggered` but is not the holder's hit: no `arcaneStagger` with the holder as source, so no focus trigger and no chain.
 - **Untouched:** `frostExposed` and `insanityExposed` are statuses from the Frost and Insanity procs, not meters.
-- **Screen.** A combatant shows HP and one Poise bar; no Ward bar, Arcane Exposure bar or Disruption read-out. The Ward rating still shows wherever ratings show.
+- **Screen.** In scope, a combatant shows HP and one Poise bar; no Ward bar, Arcane Exposure bar or Disruption read-out. The Ward rating still shows wherever ratings show.
 - **Configurable (D1).** `foldScale`, `staggerBreakImpact` and the default payoff are data rows; `foldScale` 0 makes buildup add nothing.
 
 #### Notes and history
@@ -2676,7 +2677,10 @@ Governs the class reward schedule, ability grades (rank 0-5), the Intelligence b
   - Starseer: Spellcraft, Blade, Light Armor, Medium Armor.
   - Rogue: Combat Maneuvers, Blade, Dual Wield, Light Armor.
   - Herald: Spellcraft, Blade, Shield, Medium Armor.
-- Class-tree choices keep their own earned budget. Combined reward doors preserve individually pending choices.
+- Class-tree choices keep their own earned budget. Combined reward doors preserve individually pending choices and replace conflicting old random class bonus rolls.
+- Class milestones no longer queue or pay bonus skill XP.
+  - `classMilestoneProblems` still validates saved receipts (`src/engine/save.js`).
+  - `featChance` is a retired row, so an old export still imports (`advancedConfig.js`).
 
 #### One action resource
 
@@ -2705,7 +2709,6 @@ Governs the class reward schedule, ability grades (rank 0-5), the Intelligence b
 - Spellcraft and Combat Maneuvers activate at level 1 once per run and grant one guaranteed matching card per ability-skill level.
   - Ability-skill XP to next level = `100 + 50*(level-1)` (2,700 total to level 10); other skill curves are unchanged.
   - Magical resolutions train Spellcraft (extra for Spell identity); successful physical actions train Maneuvers. Award per play, not per hit or target; never feed skill rewards back into class XP.
-- A newly claimed class level gives a configurable flat 25 XP to each of its four favored skills, once.
 
 #### Three choices and Intelligence
 
