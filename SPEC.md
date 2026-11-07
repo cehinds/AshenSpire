@@ -1709,114 +1709,59 @@ Ids are stable semantic names, not screen-specific markup.
 - Hit feedback is `damage-feedback`, with distinct `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and residual HP loss are never visually conflated.
 - These are independently referenceable; the catalog may add components later without declaring them leaves.
 
-- **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
-  composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
-  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
-  the footer composes `save-game-control` and `save-quit-control`. Potentially destructive
-  Load and Quit Without Saving commands enter one shared `confirmation-modal`, whose
-  `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
-  focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
-  without mutation and restore the invoking control. When it is stacked over the in-run menu,
-  one Escape removes only the top confirmation. After a commit, the service retains an empty
-  top-layer input shield for the bounded navigation activation window (600 ms by default) so a
-  physical second click cannot activate a newly rendered Title control or combatant beneath the
-  removed action; the shield releases after the destination paint settles. Danger borders retain
-  the blood/ember palette, while confirmation action and eyebrow text use the authored parchment
-  token and must measure at least 4.5:1 against their computed backgrounds. The equipment
-  family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
-  `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
-  `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
-  `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
-  `armoury-region-header`. These public Component Model ids remain stable; Armaments is a
-  configured `folding-tray` instance, not a second public primitive or a parallel equipment
-  implementation. The persisted view ids also remain `grid`, `rack`, and `hybrid` for save and
-  content compatibility, while their player-facing labels are respectively **Character**,
-  **Inventory**, and **Hybrid**. The equipment subject retains the compatibility region id
-  `slots`; the visible tray instance is `armaments`.
+#### Menu components
 
-  The three Armoury views are projections of the same loadout, not separate stores or screens:
+- Contextual launcher `quick-menu-panel` is composed from `quick-menu-caption` and `quick-menu-row`. The full in-run menu is `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, `menu-footer`; the footer composes `save-game-control` and `save-quit-control`.
+- Menu records are built in `MenuModels.js` and rendered by `menuComponents.js`; screen hosts bind commands and lifecycle callbacks; models stay immutable, serializable and DOM-free.
+- **Confirmation.** Potentially destructive Load and Quit Without Saving enter one shared `confirmation-modal`, whose `confirmation-action` is the only commit door.
+  - Danger variants are an `alertdialog`; focus goes first to the neutral `confirmation-cancel-control` (Back); Tab is trapped; Escape, Back or the scrim cancel without mutation and restore the invoking control. Stacked over the in-run menu, one Escape removes only the top confirmation.
+  - After a commit the service keeps an empty top-layer input shield for the bounded navigation activation window (600 ms default) so a second physical click cannot activate a newly rendered Title control or combatant; it releases after the destination paint settles.
+  - Danger borders keep the blood/ember palette; confirmation action and eyebrow text use the authored parchment token and must measure ≥4.5:1 against their computed backgrounds.
+- **Controls rebind capture.** `controls-rebind-capture` is the stable Controls component surface; `rebind-capture-service` ignores lone modifiers. Escape on an armed keyboard capture cancels it, restores `controls-key-rebind-control` from Press… to Key with focus intact, performs no binding mutation, and suppresses the event before the covered menu can close. With no capture armed, Escape keeps its ordinary one-layer Back behavior. A later re-arm accepts a free key; occupied-key conflict resolution is a separate, unspecified policy.
 
-  - **Character** (`grid`) is character-only and fills the available body width. It uses two
-    columns: identity, class/level text, and the responsive character sprite on the left; Combat
-    Power, Attributes, and Relics on the right. It does not mount an Armaments, Inventory, or
-    Stats tray.
-  - **Inventory** (`rack`) is the full-width equipment workspace. Armaments occupies the left
-    pane and exactly one shared Inventory occupies the right pane; their resizable divider uses
-    the authored ratios and snap stops. Stats is available as a context tray. There is never a
-    second, hand-specific Inventory below Armaments.
-  - **Hybrid** (`hybrid`) uses the authored compact Character/Armaments split, with its own
-    resizable and snapping divider. Inventory and Cards remain available as compact context
-    trays below; the separate Stats tray is not part of this view.
+#### Armoury components
 
-  Armaments, Inventory, Cards, and Stats all use the shared `folding-tray` → `tray-header` +
-  optional expanded-only `tray-resize-handle` + `tray-content` grammar. Their stable tray instance
-  ids are `armaments`, `inventory`, `cards`, and `stats`. The `trayModel` factory owns the edge,
-  expanded state, count/summary semantics, resize capability, and optional list/grid sort intent;
-  `renderTray` owns the uniform DOM and accessibility grammar. Sort controls appear only while
-  their tray is expanded. Closed arrows point inward and open arrows point back to the anchored
-  edge, including the open Right Tray form `> TRAY NAME`. A tray that declares the optional resize
-  capability exposes a 44px mouse, touch-hold, and keyboard surface: Top/Bottom resize vertically
-  and Left/Right resize horizontally. Size is remembered in memory by stable tray id and edge for
-  the current play session only; folding always returns to the standard bar or rail, reopening
-  restores the last expanded size, and starting/resuming a run or returning to Title resets the
-  authored default. Armoury supporting trays open at 45vh, retain at least 30vh when another tray
-  is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug
-  content before its first resize, while Armoury supporting trays intentionally apply the
-  configured default ratio immediately. Armaments
-  is non-resizable, and Inventory disables height resizing while it fills the Inventory-view pane.
-  Bottom trays remain bottom-anchored and grow upward.
+- Family: `armoury-overlay` → `armoury-panel`, with `armoury-header`, `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`, `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`, `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, `armoury-region-header`. These ids are stable.
+- Records are built in `ArmouryModels.js` and rendered by `armouryComponents.js`; hosts bind commands and lifecycle; models stay immutable, serializable, DOM-free.
+- Armaments is a configured `folding-tray` instance, not a second primitive or parallel implementation.
+- Persisted view ids stay `grid`, `rack`, `hybrid`; player-facing labels are **Character**, **Inventory**, **Hybrid**. The equipment subject keeps the compatibility region id `slots`; the visible tray instance is `armaments`.
 
-  Equipment positions are procedural content. `content/source/equipSlots.csv` supplies each slot
-  id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule,
-  storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
-  and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
-  set of slots. The Armoury iterates every authored position as one compact vertical list and renders its locked, empty, or
-  occupied state (the grid form was retired 2026-11-01). Each occupied or empty row is a button that
-  selects it for the Inspect panel beside the list; Replace and Unequip stay separate buttons. Empty
-  positions follow the occupied and locked positions automatically. Adding an authored position or slot group
-  must not require a branch in the screen. Item kind determines eligibility only: the selected
-  hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
-  position renders it in the right hand and placing a sword in a left-hand position renders it in
-  the left hand. The figure composer supports armour/body, the three worn layers the slot split
-  added (`head`, `hands`, `feet`, drawn from `assets/equipment/<slot>_<id>.webp` and drawing nothing
-  when the file is absent), plus authored left/right-hand layers; a back or other visible attachment
-  still requires an explicit asset-composer and configuration extension rather than an inferred
-  screen coordinate. Which zone a slot fills is `model/zones.js`'s one map (§13.4b), and a slot row
-  it does not name is refused at boot.
+The three views project the same loadout (no separate stores or screens):
 
-  Armaments List uses compact occupied rows: a complete scaled equipment-card thumbnail, authored
-  position code, name and Equipped/Reserve badge, with Inspect/Replace grouped and Unequip at the
-  right. Sizing is authored in armouryUi.layout.equipment.compactList. Inspect displays the full
-  equipment inspection beside desktop rows or in a separate mobile view with Back.
+| View (id) | Layout |
+|---|---|
+| **Character** (`grid`) | Character-only, full body width, two columns: identity, class/level text and responsive sprite left; Combat Power, Attributes, Relics right. Mounts no Armaments, Inventory or Stats tray. |
+| **Inventory** (`rack`) | Full-width equipment workspace: Armaments in the left pane, exactly one shared Inventory in the right pane, resizable divider with authored ratios and snap stops. Stats is a context tray. Never a second, hand-specific Inventory below Armaments. |
+| **Hybrid** (`hybrid`) | Authored compact Character/Armaments split with its own resizable, snapping divider. Inventory and Cards are compact context trays below; no separate Stats tray. |
 
-  Armament inventory faces use read-only first-tap disclosure and never equip on hold. The authored
-  armouryUi.layout.cardClasses.armamentItem has holdAction false and inline comparison. Other
-  Inventory classes retain the inventoryItem capability. An unassigned item requires an explicit
-  compatible destination; choices identify position, occupant, active/reserve and locked state.
-  Selecting a destination never equips or activates it. Equip/Move/Unequip use named buttons;
-  Make active is separate, including for empty reserves. Successful changes name the item and
-  destination. Requirements, grip and storage checks remain authoritative. Combat changes dispatch
-  priced engine intents; inspection never mutates a loadout. Mouse/pen drag remains available and
-  touch gestures scroll. Magic is the primary combat-power label; Potency remains its modifier.
+**Trays.**
+- Armaments, Inventory, Cards and Stats use `folding-tray` → `tray-header` + optional expanded-only `tray-resize-handle` + `tray-content`. Stable tray instance ids: `armaments`, `inventory`, `cards`, `stats`.
+- The `trayModel` factory owns edge, expanded state, count/summary semantics, resize capability and optional list/grid sort intent; `renderTray` owns the uniform DOM and accessibility grammar. Sort controls appear only while the tray is expanded.
+- Closed arrows point inward; open arrows point back to the anchored edge, including the open Right Tray form `> TRAY NAME`.
+- A tray with the resize capability exposes a 44px mouse, touch-hold and keyboard surface: Top/Bottom resize vertically, Left/Right horizontally. Size is remembered in memory by stable tray id and edge for the current play session only. Folding returns to the standard bar or rail; reopening restores the last expanded size; starting/resuming a run or returning to Title resets the authored default.
+- Armoury supporting trays open at 45vh, keep ≥30vh when another tray is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug content before its first resize; Armoury trays apply the configured default ratio immediately.
+- Armaments is non-resizable; Inventory disables height resizing while it fills the Inventory-view pane. Bottom trays stay bottom-anchored and grow upward.
 
-  Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
-  (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
-  Stats tray) renders the exact equipment card packages, the equip requirements, the Poise
-  threshold (`.player-poise-receipt`) and the **Equip load** (`.player-load-receipt`,
-  `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
-  decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
-  Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
-  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Every
-  piece weight is multiplied by `mechanics.weight.itemWeightScale` (0.2, owner's call 2026-09-24:
-  the lean attribute scale cut capacity, so item weights were rescaled to match) and kept to a
-  tenth. The item card's Weight label reads the same `pieceWeight` rule, so item and total agree
-  by construction.
+**Equipment positions are procedural content.**
+- `content/source/equipSlots.csv` supplies each slot's id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule, storage behavior and order; `content/source/unlocks.csv` supplies additional position rungs; `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the set of slots.
+- The Armoury iterates every authored position as one compact vertical list showing locked, empty or occupied state. Each row is a button that selects it for the Inspect panel beside the list; Replace and Unequip are separate buttons. Empty positions follow occupied and locked ones automatically. Adding a position or slot group must not need a screen branch.
+- Item kind decides eligibility only. The selected hand position owns the sprite socket: a shield in a right-hand position renders in the right hand, a sword in a left-hand position in the left.
+- The figure composer supports armour/body, the worn layers `head`, `hands`, `feet` (from `assets/equipment/<slot>_<id>.webp`; nothing drawn when the file is absent) and authored left/right-hand layers. A back or other visible attachment needs an explicit asset-composer and configuration extension, not an inferred screen coordinate.
+- Which zone a slot fills is `model/zones.js`'s one map (§13.4b); a slot row it does not name is refused at boot.
 
-  These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
-  records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records
-  are constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
-  commands and lifecycle callbacks, while presentation models remain immutable, serializable,
-  and DOM-free.
+**Armaments List and inventory faces.**
+- Compact occupied rows: complete scaled equipment-card thumbnail, authored position code, name and Equipped/Reserve badge, Inspect/Replace grouped, Unequip at the right. Sizing is authored in `armouryUi.layout.equipment.compactList`. Inspect shows the full equipment inspection beside desktop rows, or in a separate mobile view with Back.
+- Armament inventory faces use read-only first-tap disclosure and never equip on hold: `armouryUi.layout.cardClasses.armamentItem` has `holdAction` false and inline comparison. Other Inventory classes keep the `inventoryItem` capability.
+- An unassigned item needs an explicit compatible destination; choices identify position, occupant, active/reserve and locked state. Selecting a destination never equips or activates. Equip/Move/Unequip are named buttons; Make active is separate, including for empty reserves. Successful changes name the item and destination.
+- Requirements, grip and storage checks stay authoritative. Combat changes dispatch priced engine intents; inspection never mutates a loadout. Mouse/pen drag stays available; touch gestures scroll. Magic is the primary combat-power label; Potency remains its modifier.
+
+**Equipment receipts** are read models, never re-derived in a screen. The equipment receipt panel (`.armoury-equipment-receipts`, in the Character view's Equipment cards card and the Stats tray) renders:
+- the exact equipment card packages and equip requirements;
+- the Poise threshold (`.player-poise-receipt`);
+- the **Equip load** (`.player-load-receipt`, `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word from the framework Weight Class service (`registries.framework.weightClass`; capacity from Constitution and Strength plus `mechanics.weight.capacityBase`).
+
+Load counts each equipped armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Every piece weight is multiplied by `mechanics.weight.itemWeightScale` (0.2) and kept to a tenth. The item card's Weight label reads the same `pieceWeight` rule, so item and total agree.
+
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
   The center Cinders track and right metadata trail are each capped at 30% of the
