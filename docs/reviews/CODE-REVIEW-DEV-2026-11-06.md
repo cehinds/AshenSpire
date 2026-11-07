@@ -307,7 +307,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2)
 - [ ] Tools reachability test: fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
 - [ ] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5)
-- [ ] Test that every `data-component` id is in `UiComponentId` (Low)
+- [x] Test that every `data-component` id is in `UiComponentId` (Low) — [#2675](https://github.com/cehinds/AshenSpire/pull/2675)
 - [ ] Unused-export lint (M5)
 - [ ] Test that `tools/README.md` lists every tool (Low)
 
