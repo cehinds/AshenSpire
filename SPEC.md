@@ -2904,103 +2904,134 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 
 Full history: [docs/spec-history/14-statpools-shops.md](docs/spec-history/14-statpools-shops.md).
 
-## 14. The deck editor and the three shops (owner brief, 2026-09-26)
+## 14. The deck editor and the three shops
 
-**Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; step 4, the shop-kind framework, in #1371; step 5, the market additions, in #1374 and #1377; step 6, the blacksmith, in #1390; step 7, the wise master, in #1438). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
+The deck editor lets the player move cards between the deck and a sideboard under size and copy rules. Core's shop is the configured shop plus a Blacksmith (§14.4). Every number a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal.
 
-**The four owner rules this section carries:**
+**Four rules this section carries:**
+1. Content is data: defaults live in `src/content/deckRules.js` and `src/content/shops.js`; `validateContent` refuses a malformed row by name.
+2. Each rule is configurable: Settings reads its default from that data; a value the player picks is stored in the profile's `settings` (§3.12).
+3. Reuse what exists: `buildShopStock` and `ShopWorkspaceModel`, `smithingPlan`/`commitItemUpgrade`, `cardExtraction`, `cardMounts`, the location visit (§13.4j), `run.skills` (§13.4d), the plan/commit transactions of `armamentTrading.js`, the save migration door. A second copy of any is a defect.
+4. New run state is additive. A PR that adds a persisted field:
+   - bumps `RUN_SCHEMA_VERSION` once, adds a `RUN_SHAPE` row and the default at `migrateRunSchema`;
+   - appends one captured save of the new version to `tests/fixtures/run-save-schema-versions.json`, never editing an existing entry;
+   - never archives a save for a missing field.
 
-1. Content is data. The rules' defaults live in two new content files, `src/content/deckRules.js` and `src/content/shops.js`. `validateContent` refuses a malformed row by name.
-2. Each rule is configurable. Settings reads its default from that data, and a value the player picks is stored in the profile's `settings`, the one home §3.12 already gives.
-3. Reuse what exists. That means the merchant's `buildShopStock` and `ShopWorkspaceModel`, the smith's `smithingPlan`/`commitItemUpgrade`, `cardExtraction`, `cardMounts`, the location visit (§13.4j), `run.skills` (§13.4d), the plan/commit transactions of `armamentTrading.js`, and the save migration door. A second copy of any of them is a defect.
-4. New run state is additive. Each feature PR that adds a persisted field bumps `RUN_SCHEMA_VERSION` once, adds a `RUN_SHAPE` row, adds the default at `migrateRunSchema`, and appends one captured save of the new version to `tests/fixtures/run-save-schema-versions.json`. It never edits an existing entry. A missing field never archives a save. The new fields, their defaults at the migration door, and the step (§14.6) whose PR adds them:
-
-| Field | Default for an older save | Step |
-|---|---|---|
-| `sideboard` | `[]` | 2 |
-| `editMintCounter` | `0` | 2 |
-| `equipmentGuardSlotCount`, `removedGuardSlotIds` | not added: the guard count is derived | 2 |
-| shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, with no reroll) | 4 |
-| `consumables` | `{}` | 5 |
-| `sigils`, `sigilSlots` | `[]`, `{}` | 5 |
-| `loadout.boughtArmour` (the armour sets bought at a market, `[{ classId, id }]`, read by `ownership()`; optional, so no bump of its own) | absent (none bought) | 5 |
-| `companions` | `[]` | 5 |
-| `smithingStonesRefined` | `0` | 6 |
-| atlas smith `serviceStates[pointId].stock` | absent, rolled on first entry | 6 |
-| `trainingPool` | `0` | 7 |
+| Field | Default for an older save |
+|---|---|
+| `sideboard` | `[]` |
+| `editMintCounter` | `0` |
+| `equipmentGuardSlotCount`, `removedGuardSlotIds` | not added: the guard count is derived |
+| shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, no reroll) |
+| `consumables` | `{}` |
+| `sigils`, `sigilSlots` | `[]`, `{}` |
+| `loadout.boughtArmour` (`[{ classId, id }]` armour sets bought at a market, read by `ownership()`; optional, no bump of its own) | absent (none bought) |
+| `companions` | `[]` |
+| `smithingStonesRefined` | `0` |
+| atlas smith `serviceStates[pointId].stock` | absent, rolled on first entry |
+| `trainingPool` | `0` |
 
 ### 14.1 The deck editor
 
-**Settings.** These rows sit in a new Advanced group, **Deck**. Each default is `deckRules.defaults.<key>`; the column below names the shipped value, which the data file owns. They are plain profile settings read live, like `shrineMultiUse` (Advanced → World), not `gameConfig.*` rows, so they are **not** copied into `run.advancedConfigSnapshot`: changing one applies to the next time the editor opens, and `playInDeckOrder` to the next combat created.
+**Settings.** Advanced group **Deck**. Each default is `deckRules.defaults.<key>`. They are plain profile settings read live (like `shrineMultiUse`), not `gameConfig.*` rows, so not copied into `run.advancedConfigSnapshot`: a change applies the next time the editor opens, and `playInDeckOrder` to the next combat created.
 
-| Key | Type | Shipped default | Meaning |
+| Key | Type | Default | Meaning |
 |---|---|---|---|
-| `deckEditing` | bool | on | The editor exists at all. When it is off, no door opens it, and the deck changes only through today's paths: rewards, removal, and the Armoury. |
-| `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
-| `deckMinSize` | number ≥ 0 | 10 | The fewest cards the editor lets you confirm. |
-| `deckMinUnlimited` | bool | off | When on, there is no minimum and `deckMinSize` is ignored; the `deckMinSize` row is shown disabled. |
-| `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | The most cards the editor lets you confirm. A max below the effective min is refused in Settings by name. |
-| `deckMaxUnlimited` | bool | on | When on, there is no maximum; the `deckMaxSize` row is shown disabled. |
-| `playInDeckOrder` | bool | off | The draw pile is not shuffled (below). |
+| `deckEditing` | bool | on | The editor exists. Off: no door opens it; the deck changes only by rewards, removal and the Armoury. |
+| `deckEditingWhere` | `free` \| `restOnly` | `free` | `free`: from the Armoury any time out of combat (including before the first node). `restOnly`: only as an option card on the Rest screen of a place whose tags carry the `deckEdit` service tag (a marker like `smith`, no rule; `tagging.csv` gives it to shrine, inn, chapel, not camp). |
+| `deckMinSize` | number ≥ 0 | 10 | Fewest cards the editor lets you confirm. |
+| `deckMinUnlimited` | bool | off | On: no minimum, `deckMinSize` ignored (row shown disabled). |
+| `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | Most cards. A max below the effective min is refused in Settings by name. |
+| `deckMaxUnlimited` | bool | on | On: no maximum (`deckMaxSize` row disabled). |
+| `playInDeckOrder` | bool | off | Draw pile not shuffled (below). |
 
 **The collection is what the run owns plus the unlimited basics.**
 
-**Core 2 collection and Adept copies (owner ruling, 2026-10-23):** uncollected cards remain hidden. In Core 2, a run-scoped, monotonic `collectedCardIds` ledger records loose card definitions the run has collected, seeded from its starter deck and updated when it acquires an ordinary loose card. Collection tiles include those known definitions even after the last copy is removed or the class changes during the run. On loading an older Core 2 save without this ledger, initialize it from loose cards currently in the deck and sideboard; removed historical copies cannot be reconstructed. A temporary item-owned card, including one present through a `grantedBy` source, does not by itself enter the ledger. The Reaver and Rogue's equipped class grants the active `training.basic` Martial Adept entitlement, permitting unlimited pristine Basic copies of eligible definitions already in the ledger; the Starseer and Herald's equipped class grants the active `training.graduate` Magic Adept entitlement, permitting unlimited pristine Cantrip copies already in the ledger, except Mending Touch (`core.mendingTouch`), which the Starseer and Herald own only as the copies they collect (owner ruling, 2026-10-28; the bundle's graduate rule lists it in `excludeCards`). These stable mechanics tag IDs are unchanged. Entitlement requires the matching class to be equipped, and only the specified Basic or Cantrip classification qualifies; higher-rank spells, Powers, specials and weapon arts do not. Ledger membership survives removal and class swaps, but minting remains gated by the currently equipped class entitlement and the normal equipment, range, source and deck-size rules. A newly minted copy has a unique instance ID and default, unmodified state; it does not clone an upgraded or modified copy. Legacy, Current and archived Core 1 profiles keep their existing copy rules below.
+**Core collection and Adept copies** (owner, 2026-10-23): uncollected cards stay hidden.
+- Run-scoped, monotonic `collectedCardIds` ledger of loose card definitions the run has collected.
+  - Seeded from the starter deck; updated when the run acquires an ordinary loose card.
+  - Collection tiles include known definitions even after the last copy is removed or the class changes.
+  - An older Core 2 save without the ledger initialises it from loose cards in deck and sideboard (removed historical copies cannot be reconstructed).
+  - A temporary item-owned card (including one via a `grantedBy` source) does not enter the ledger by itself.
+- Entitlements (tag IDs stable): the Reaver and Rogue's equipped class grants active `training.basic` (Martial Adept): unlimited pristine **Basic** copies of ledger definitions. The Starseer and Herald's equipped class grants active `training.graduate` (Magic Adept): unlimited pristine **Cantrip** copies of ledger definitions, except Mending Touch (`core.mendingTouch`), which they own only as copies they collect (owner, 2026-10-28; the bundle's graduate rule lists it in `excludeCards`).
+  - Needs the matching class equipped. Only Basic or Cantrip qualifies; higher-rank spells, Powers, specials and weapon arts do not.
+  - Ledger membership survives removal and class swaps, but minting stays gated by the equipped class and the normal equipment, range, source and deck-size rules.
+  - A minted copy has a unique instance ID and default state; it never clones an upgraded or modified copy.
+- Legacy, Current and archived Core 1 profiles keep the copy rules below.
 
-**Core equipment grants (owner ruling, 2026-10-19):** equipped gear can grant cards in Core. A Core gear row may author `grantedCards` (`[{card, copies}]`, validated by the kernel against the Core card list); while the item is worn its cards ride in the deck as item-owned (`granted`) instances, added on equip, removed on unequip or swap, never duplicated, and held aside like any granted card. This data path and the weapon arts below are on in Core; kits and the Dodge Roll stay off.
+**Core equipment grants** (owner, 2026-10-19): a Core gear row may author `grantedCards` (`[{card, copies}]`, validated against the Core card list).
+- While worn, its cards ride in the deck as item-owned (`granted`) instances: added on equip, removed on unequip or swap, never duplicated, held aside like any granted card.
+- Grants and weapon arts are on in Core; kits and the Dodge Roll stay off.
 
-**Core weapon arts (owner ruling, 2026-11-01, reversing the 2026-10-19 "arts stay off"):** weapon arts turn on in Core and the default configured profile. The switch is data: the equipment module's `weaponArts` setting (`engine/modules/equipment/settings.schema.json`), set `true` by the Core bundle and absent (off) elsewhere. While it is on, a worn weapon lends its default art(s) (`weaponCardPackage.weaponArtDefaults`) to the deck as item-owned (`weaponArt`) instances, the same ids and shape as the legacy path: added on equip, removed on unequip, swapped on replace, never duplicated (two hands go through the framework split, so an art both author installs once), and held aside like any item-owned card (a sideboarded art stays in `run.sideboard` and is not re-minted). A weapon's art may be the art of its combat kit; the kit's basic Attack and Guard cards and the Dodge Roll are still not minted. Core's Blacksmith withholds extraction and installation, so there are no art mounts to edit and no mount overrides apply. A profile that turns a resource pool off prices an art's disabled pool at 0, the rule every Core variant has. The Bone Sceptre grants Mana Surge (1 SP, gain 2 Mana) to any class holding it, replacing the Resource Gain stand-in in the Starseer opening deck.
+**Core weapon arts** (owner, 2026-11-01): on in Core and the default configured profile via the equipment module's `weaponArts` setting (`engine/modules/equipment/settings.schema.json`), `true` in the Core bundle, absent (off) elsewhere.
+- A worn weapon lends its default art(s) (`weaponCardPackage.weaponArtDefaults`) to the deck as item-owned (`weaponArt`) instances: added on equip, removed on unequip, swapped on replace, never duplicated (two hands go through the framework split, so an art both author installs once), held aside like any item-owned card (a sideboarded art stays in `run.sideboard`, not re-minted).
+- The kit's basic Attack and Guard cards and the Dodge Roll are still not minted.
+- Core's Blacksmith withholds extraction and installation: no art mounts to edit, no mount overrides.
+- A profile that turns a resource pool off prices an art's disabled pool at 0.
+- The Bone Sceptre grants Mana Surge (1 SP, gain 2 Mana) to any class holding it, replacing the Resource Gain stand-in in the Starseer opening deck.
 
-**Core weapon arts per weapon (owner, 2026-11-05):** each Core weapon has one default art (`weaponArtDefaults`, granted while the weapon is worn, unchanged) and two learnable arts (`weaponCardPackage.learnableArts`, authored in `content/source/weaponCardPackages.json`, distinct from the default and from each other, no card on more than three weapons). A learnable art is never granted by wearing the weapon; rewards, shops and the Blacksmith offer the learnable arts (and defaults) of the weapons the player carries (equipped hands, storage and sets) that the player does not own, where owned means in the deck or sideboard, or currently granted by a worn weapon. The Reaver class special `core.reaverSpecial` (Sundering Art) is a class card, not a weapon art, and is no longer in the weapon-art pool. A bought or rewarded art is an ordinary deck card; it has no play gate tied to the weapon (the existing arts have none either).
+**Core weapon arts per weapon** (owner, 2026-11-05): each Core weapon has one default art (granted while worn) and two learnable arts (`weaponCardPackage.learnableArts`, authored in `content/source/weaponCardPackages.json`; distinct from the default and each other; no card on more than three weapons).
+- Wearing a weapon never grants a learnable art. Rewards, shops and the Blacksmith offer the learnable arts (and defaults) of carried weapons (equipped hands, storage, sets) that the player does not own. Owned = in deck or sideboard, or granted by a worn weapon.
+- `core.reaverSpecial` (Sundering Art) is a class card, not in the weapon-art pool.
+- A bought or rewarded art is an ordinary deck card with no weapon-tied play gate.
 
-- **Legacy and Current unlimited Strike/Defend basics are matched by role, not by `cardId`.** On an equipped run a starting Strike is an attack-slot instance (`equipmentRole: 'attack'`, `equipmentAttackSlotId`) whose `cardId` is the weapon's face, and a Defend is a guard instance (`equipmentRole: 'guard'`); `stampDeck` re-derives both from the slot plan (§3.8 "no re-minting of base cards mid-run", §13.4b). The editor keeps that model instead of minting bare cards:
-  - **Removing a basic retires its slot**, through the same retirement `removeDeckCard` uses (`removedAttackSlotIds`), and the instance is kept in `run.sideboard`.
-  - **Adding a basic first un-retires** a retired slot (its sideboarded instance returns). When none is retired, it **grows the allocation**: `equipmentAttackSlotCount` rises by one and the next `stampDeck` stamps slot `attack:<count>` with the weapon's current face and modifiers, exactly as it stamps a born slot. So a basic is unlimited, but never a bare card outside the plan.
-  - **Guard basics** have no allocation. The guard plan has no slot count today, so the step-2 PR adds no `equipmentGuardSlotCount` or `removedGuardSlotIds`: adding a Defend mints a `defend` guard instance with no slot, and the guard count is derived by the guard plan (`loadout.js`).
-  - A run with no equipment (a pre-equipment save the load door heals, §3.12) has plain `strike` and `defend` instances. For those, `deckRules.unlimitedCardIds` (shipped `['strike', 'defend']`) names the unlimited ids, and adding one mints a plain instance, `instanceId` `edit:<n>`, where n is the run counter `run.editMintCounter`.
-  - Every basic with unlimited-copy entitlement shows a count of ∞; in Core this requires an already-collected definition and the matching active Adept entitlement above.
-- **Every other card is limited to the copies the run owns.** A run owns the instances in `run.deck` plus those in the new **`run.sideboard`**, a `CardInstance[]` holding owned cards that are out of the deck. This covers weapon arts bought or extracted, skill-draft cards (§13.4e, the "techniques" earned by levelling), class-tree cards, and reward cards. Removing one in the editor moves the instance, with its `upgraded`, `mods` and every other field, to `run.sideboard`. Adding one moves it back. The editor never mints or destroys a limited card. The collection tile reads "N owned · M in deck" and greys out when M = N.
-- **Owned means deck ∪ sideboard everywhere.** Every existing reader that answers "which cards does the run own" reads both piles:
-  - `projectZones`, so `run.collection` includes sideboard cards (§13.4a);
-  - `cardExtraction`'s `installableCards` and `commitInstall`, so an art in the sideboard (moved there by the editor, or stacked there by the blacksmith) can be installed. The commit takes the instance from whichever pile holds it, so under `restOnly` no editor visit is needed first;
-  - `rankUpCandidates`, so a level's rank-up (§13.4o) reaches sideboard cards. (The standing upgrade rule of §13.4e that this line once named is retired.)
-  Combat reads only `run.deck`.
-- **A class's own spells and Powers are limited to one copy in the deck** (owner ruling, 2026-09-26), except that an eligible collected Cantrip may be minted without limit under the active Core Magic Adept entitlement above. The rule covers any card of a class, not colorless, whose type is `power` or that carries the `source:spell` tag (`deckRules.singleCopy`). The limit is the Settings row `classSpellPowerCopies`, default 1, and `deckCopyLimit(registries, cardId, settings)` answers it. The editor refuses to add a copy past the limit and names the card; further owned copies stay in the sideboard. In Core, an eligible collected Basic may likewise be minted without limit under active Martial Adept entitlement. Other copy rules are unchanged: Legacy and Current Strike and Defend remain unlimited, and weapon arts and techniques remain limited to copies owned and stack at the blacksmith (§14.4).
-- **Every deck card can be set aside** (owner revision, 2026-10-03), including item-owned cards. Its instance and ownership metadata stay in `sideboard`; equipment reconciliation must not re-mint an instance held there. The same excluded instance ids travel into combat and its snapshot, so a mid-fight equipment swap or reload cannot restore a card the player removed.
-- **Adding requires compatible equipped tags.** Unlimited Strike/Defend basics and the universal tags in `deckRules.equipmentEligibility.universalTags` are always available. Other cards with equipment-associated card-school tags require a matching worn piece; explicit weapon identity tags (`weaponTags`, shipped blade/bow/ranged) take precedence over secondary shared tags, so a bow cannot unlock blade skills through pierce/flourish. Cards with no equipment-associated school are universal. Item-lent instances additionally require their exact active source mount and card identity, because the mount remains item-owned. Extraction or installation updates a sideboarded mount to its current card before that entry suppresses the equipment deal; stale tile identities cannot restore a different card. Ineligible owned cards remain visible in the collection with “Equipment not found”; all editor addition paths refuse them. Existing copy limits still apply.
-- **The shop's Remove service** (today's `removeDeckCard`) still destroys a card and does not sideboard it. That is the paid, permanent removal it has always been; in Core it removes the instance but does not erase its definition from `collectedCardIds`.
+**Unlimited basics (Legacy and Current), matched by role, not `cardId`.** A starting Strike is an attack-slot instance (`equipmentRole: 'attack'`, `equipmentAttackSlotId`) whose `cardId` is the weapon's face; a Defend is a guard instance (`equipmentRole: 'guard'`). `stampDeck` re-derives both from the slot plan (§3.8, §13.4b).
+- **Removing a basic** retires its slot via `removeDeckCard`'s retirement (`removedAttackSlotIds`); the instance goes to `run.sideboard`.
+- **Adding a basic** first un-retires a retired slot (its sideboarded instance returns). With none retired it grows the allocation: `equipmentAttackSlotCount` +1, and the next `stampDeck` stamps slot `attack:<count>` with the weapon's current face and modifiers.
+- **Guard basics** have no allocation or slot count: adding a Defend mints a `defend` guard instance with no slot; the guard plan (`loadout.js`) derives the count.
+- A run with no equipment (a pre-equipment save healed at the load door, §3.12) has plain `strike` and `defend` instances. `deckRules.unlimitedCardIds` (shipped `['strike', 'defend']`) names the unlimited ids; adding one mints a plain instance, `instanceId` `edit:<n>`, n = `run.editMintCounter`.
+- Every basic with unlimited-copy entitlement shows ∞; in Core it needs an already-collected definition and the matching active Adept entitlement.
 
-**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(count, settings)` returns `''` when `effectiveMin ≤ count ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores every field an editor session can change, exactly as it was when the editor opened: the deck and the sideboard instance for instance, plus `equipmentAttackSlotCount`, `removedAttackSlotIds`, and `editMintCounter`. This goes through `beginDeckEdit` and `cancelDeckEdit`, so a cancelled edit leaves no slot allocation that disagrees with the restored instances and uses up no mint number. The bounds are checked **only when the editor confirms**. A reward, a purchase or an equipment swap may leave the deck outside them, and the next editor visit then shows the refusal until the deck is brought back inside. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
+**Every other card is limited to the copies the run owns.** Owned = `run.deck` plus **`run.sideboard`** (`CardInstance[]` of owned cards out of the deck): weapon arts bought or extracted, skill-draft cards (§13.4e), class-tree cards, reward cards.
+- Removing one in the editor moves the instance, with `upgraded`, `mods` and every field, to `run.sideboard`; adding moves it back. The editor never mints or destroys a limited card.
+- The collection tile reads "N owned · M in deck" and greys out when M = N.
+- **Owned means deck ∪ sideboard everywhere:** `projectZones` (so `run.collection` includes the sideboard, §13.4a); `cardExtraction`'s `installableCards` and `commitInstall` (the commit takes the instance from whichever pile holds it, so `restOnly` needs no editor visit first); `rankUpCandidates` (§13.4o). Combat reads only `run.deck`.
 
-**Play in deck order.** While `playInDeckOrder` is off, the editor's deck list is one row per card variant (card id, upgrade and mods, plus the owner for a locked card) with a ×N count, and a row's － takes one copy. While it is on, the list is one row per instance and has a reorder handle. `run.deck`'s array order is the arrangement, so no new field is needed.
-- `createCombat` builds the draw pile in `run.deck` order in place of `rng.shuffle('shuffle', deck)`. The draw pile is drawn from the top, so the first card in the list is drawn first. Innate cards still go to the top, keeping their relative order.
-- When the draw pile empties, `drawCards` takes its **own ordered path**. It does not call `reshuffleDiscardIntoDraw`, which the `shuffleDiscardIntoDraw` effect also uses. It returns the discard pile ordered by each instance's index in `run.deck`. Cards that are not in the deck, meaning ones created in combat, follow in the order they were discarded.
-- Combat start and the empty-pile return consume **no** `shuffle`-stream value while the setting is on. A seed played with it off is unchanged.
-- Card effects that shuffle still draw on that stream, as they do today: the `shuffleDiscardIntoDraw` effect, and `addCard`'s random position. The setting governs only the start of combat and the empty-pile return.
-- The setting is read once at combat creation and carried on the combat as `orderedDraw`, so a saved fight resumes under the rule it started with.
-  - A combat snapshot without the field restores as `orderedDraw: false`.
+**Class spells and Powers: one copy in the deck** (owner, 2026-09-26), except an eligible collected Cantrip (Magic Adept) or Basic (Martial Adept) minted without limit in Core.
+- Covers any class (not colorless) card whose type is `power` or that carries `source:spell` (`deckRules.singleCopy`). Limit = Settings row `classSpellPowerCopies` (default 1), answered by `deckCopyLimit(registries, cardId, settings)`.
+- The editor refuses a copy past the limit and names the card; further owned copies stay in the sideboard.
+- Legacy and Current Strike and Defend remain unlimited; weapon arts and techniques stay limited to copies owned.
 
-**UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones show one list, the collection, whose rows carry － count ＋ steppers; inspection opens over it and Back returns to the list; an ordered deck adds a Draw order view for reordering. A selected card shows a round (i) on its art; the (i), or pressing the selected card's art again, opens the inspector, and no row reserves room for it (owner, 2026-10-11). Each row and the inspector name the card's stance: its maneuver (Attack, Defend, Counter, Smash, Sweep or Ranged), otherwise Spell, Power, Consumable or Skill. A row also shows its rank as a badge on the art (Rank N; rank 0 or unranked reads Cantrip for a magical card and Basic for the rest; powers, skills and consumables without a rank show none), its range after the stance for a card that attacks (Melee, Reach or Ranged from its contact, near or far reach, under expanded combat an untagged spell takes its delivery as reach: projectile Ranged, melee Melee, otherwise Reach; an untagged physical card takes combat's default, near for projectiles and ranged maneuvers, otherwise contact; a Ranged maneuver shows no separate range, since its stance already reads Ranged), and a mark before its costs: the Smash sigil in silver for physical cards, the Spell flame in blue for magical ones. Phone rows read grip, art, then name, stance and range, and rules, with the mark and MP/SP sprites at the top right and the stepper at the bottom right, the same at every phone width, smaller phones shrinking the art, costs and stepper rather than moving them (owner, 2026-10-11). Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Text search is off for now (owner, 2026-10-11). Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
-- **Undo.** Undo reverses the last successful add, removal or reorder, restoring the same complete editing state as Cancel (including allocation and card mint counters). Failed and unchanged actions do not create history. Cancel still restores the state from when the editor opened; Done confirms the current valid state.
-- **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
-- **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
-- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries explicit Add to deck and Remove from deck actions; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes (on a phone, only between the list and Draw order). A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
-- **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
+**Every deck card can be set aside** (owner, 2026-10-03), item-owned included.
+- Its instance and ownership metadata stay in `sideboard`; equipment reconciliation must not re-mint an instance held there.
+- The same excluded instance ids travel into combat and its snapshot, so a mid-fight equipment swap or reload cannot restore a removed card.
 
-*Falsify:*
-- The header has no **Edit Deck** button; with defaults a fresh run opens **Edit Deck** through the Armoury. With `restOnly`, the shrine's Rest screen offers it while the camp's does not.
-- Removing a weapon art moves the same instance to `run.sideboard` with its fields, and re-adding it moves it back. A further copy cannot be added when every owned copy is already in the deck.
-- The sideboarded art appears in `run.collection` and in the smith's installable list.
-- Removing an equipped Strike retires its slot and sideboards it, and adding a Strike un-retires that slot first.
-- With no slot retired, adding a Strike raises `equipmentAttackSlotCount` by one, and the next `stampDeck` stamps it with the weapon's face without throwing.
-- A 9-card draft is refused under min 10 with a sentence naming 9 and 10, and is allowed with `deckMinUnlimited`.
-- A granted card can be removed; restamp, save/reload and combat equipment reconciliation leave it in the library until explicitly restored.
-- Cancel restores both piles exactly.
-- With `playInDeckOrder`, the opening hand is the first cards of `run.deck`, Innate first, and a reshuffle returns discards in deck order. With it off, a seeded opening hand is unchanged from before this section.
-- A fight saved in ordered mode resumes ordered after the setting is turned off.
-- A schema-10 save loads with `sideboard: []`.
+**Adding requires compatible equipped tags.**
+- Always available: unlimited Strike/Defend basics and `deckRules.equipmentEligibility.universalTags`. Cards with no equipment-associated school are universal.
+- Other cards with equipment-associated school tags need a matching worn piece. Explicit weapon identity tags (`weaponTags`, shipped blade/bow/ranged) take precedence over secondary shared tags (a bow cannot unlock blade skills through pierce/flourish).
+- Item-lent instances also need their exact active source mount and card identity. Extraction or installation updates a sideboarded mount to its current card before that entry suppresses the equipment deal; stale tile identities cannot restore a different card.
+- Ineligible owned cards stay visible with "Equipment not found"; every add path refuses them. Copy limits still apply.
+
+**The shop's Remove service** (`removeDeckCard`) still destroys a card, no sideboard. In Core it removes the instance but does not erase its definition from `collectedCardIds`.
+
+**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize`; `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(count, settings)` returns `''` when `effectiveMin ≤ count ≤ effectiveMax`, else one sentence naming the count and the bound ("Your deck has 8 cards; it needs at least 10.").
+- **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only a colour.
+- **Cancel** restores every field a session can change: deck and sideboard instance for instance, plus `equipmentAttackSlotCount`, `removedAttackSlotIds`, `editMintCounter`. It goes through `beginDeckEdit` and `cancelDeckEdit`, leaving no disagreeing slot allocation and no used mint number.
+- Bounds are checked **only on confirm**. A reward, purchase or equipment swap may leave the deck outside them; the next visit shows the refusal until fixed.
+- Independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury; FINISH's Owner decisions list records whether to fold them together.
+
+**Play in deck order.** Off: the deck list is one row per card variant (card id, upgrade and mods, plus owner for a locked card) with ×N, a row's － takes one copy. On: one row per instance with a reorder handle. `run.deck` array order is the arrangement (no new field).
+- `createCombat` builds the draw pile in `run.deck` order instead of `rng.shuffle('shuffle', deck)`; drawn from the top, first card first. Innate cards still go on top, keeping relative order.
+- When the draw pile empties, `drawCards` takes its own ordered path (not `reshuffleDiscardIntoDraw`, which `shuffleDiscardIntoDraw` also uses): the discard pile ordered by each instance's index in `run.deck`, then cards not in the deck (created in combat) in discard order.
+- Combat start and the empty-pile return consume no `shuffle`-stream value while on; a seed played with it off is unchanged. Card effects that shuffle (`shuffleDiscardIntoDraw`, `addCard`'s random position) still use that stream.
+- Read once at combat creation and carried on the combat as `orderedDraw`, so a saved fight resumes under its starting rule; a snapshot without the field restores as `orderedDraw: false`.
+
+**UX.** `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
+- **Layout.** Reading Desk: collection left, persistent card inspection middle, deck right. Phones: one list (the collection) with － count ＋ steppers; inspection opens over it, Back returns; an ordered deck adds a Draw order view.
+  - A selected card shows a round (i) on its art; the (i), or pressing the selected art again, opens the inspector; no row reserves room for it (owner, 2026-10-11).
+  - Each row and the inspector name the stance: maneuver (Attack, Defend, Counter, Smash, Sweep, Ranged), otherwise Spell, Power, Consumable or Skill.
+  - A row shows rank as an art badge (Rank N; rank 0 or unranked reads Cantrip for a magical card, Basic otherwise; powers, skills and consumables without a rank show none).
+  - A card that attacks shows range after the stance (Melee, Reach or Ranged from contact, near or far reach). Untagged spell under expanded combat: projectile → Ranged, melee → Melee, otherwise Reach. Untagged physical card: combat's default (near for projectiles and ranged maneuvers, otherwise contact). A Ranged maneuver shows no separate range.
+  - A mark precedes costs: Smash sigil in silver for physical, Spell flame in blue for magical.
+  - Phone rows read grip, art, then name, stance and range, then rules; mark and MP/SP sprites top right, stepper bottom right, the same at every phone width (smaller phones shrink art, costs and stepper rather than moving them; owner, 2026-10-11).
+  - Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Ordered decks keep exact sequence instead of type groups. Copy counts show for single and grouped copies. Text search is off for now (owner, 2026-10-11).
+- **Undo** reverses the last successful add, removal or reorder, restoring the full Cancel state (allocation and mint counters included). Failed or unchanged actions create no history. Cancel restores the state at open; Done confirms the current valid state.
+- **Header:** live counter "N / min–max", red with the refusal sentence out of bounds; beside it a compact cost-curve histogram.
+- **Filters and sort:** filter chips for type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded; sort chips for cost, name, type, source.
+- **Every drag has two twins.** A tap on a tile or row inspects without changing the run. The inspector carries explicit Add to deck and Remove from deck; rows carry ＋ and －. Reordering is a handle drag or ▲/▼.
+- **Gamepad:** D-pad moves grid focus; LB/RB switch panes (phone: list ↔ Draw order); A inspects or activates the focused Add/Remove; X picks up the focused deck row, D-pad moves it, X or A drops; Y cycles filters; B cancels; Start confirms (§7.3).
+- **Target size:** every target ≥ 48 CSS px on a coarse pointer, ≥ 44 px otherwise; text ≥ 11 px at 360×640 (FINISH §8).
+- Not adopted: crafting/dusting inside the editor, and auto-fill "complete my deck" (v1).
 
 ### 14.2 The shop kinds
 
