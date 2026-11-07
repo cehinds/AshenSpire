@@ -581,9 +581,14 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   // The actual write, shared by saveMeta (updates the live profile) and
   // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
   // so both paths get it.
+  // Keys the profile no longer writes (SPEC §13.4q, 2026-11-07). An old profile
+  // still loads with them; the write drops them so they never come back.
+  const RETIRED_META_KEYS = ['classMastery', 'classMasteryReceipts'];
+
   function saveMetaInternal(meta) {
     if (readOnlyProfile) return { ok: false, reason: 'Profile writes require the shared storage owner' };
     const canonical = { ...meta, enemyKnowledge: meta.enemyKnowledge || emptyEnemyKnowledge() };
+    for (const key of RETIRED_META_KEYS) delete canonical[key];
     const problems = enemyKnowledgeProblems(canonical.enemyKnowledge);
     if (problems.length) return { ok: false, reason: problems.join('; ') };
     const json = JSON.stringify({ ...canonical, schemaVersion: META_SCHEMA_VERSION });

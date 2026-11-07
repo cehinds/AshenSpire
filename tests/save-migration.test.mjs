@@ -14,7 +14,8 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { RUN_SCHEMA_VERSION, deserializeRun } from '../src/model/state.js';
-import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
+import { emptyEnemyKnowledge } from '../src/model/enemyKnowledgeProfile.js';
 import { defaultSeatOrder } from '../src/model/seats.js';
 import { projectZones } from '../src/model/zones.js';
 import { slotFacts, slotFactsSpoken } from '../src/ui/components/saveSlotSelector.js';
@@ -149,4 +150,27 @@ test('the slot picker flags a newer-build save, and its facts say why it will no
     assert.equal(held.newer, false, `schema ${JSON.parse(entry.bytes).schemaVersion} is not newer`);
     assert.notEqual(slotFacts(held), t('title.slots.newer'));
   }
+});
+
+// SPEC §13.4q (2026-11-07): a profile no longer writes classMastery or
+// classMasteryReceipts. An old profile that carries them still loads, and the
+// next save must not write them back, or the spec is false on every save.
+test('an old profile with the retired class-mastery keys loads, and its next save drops them', () => {
+  const old = {
+    schemaVersion: META_SCHEMA_VERSION, settings: { music: true }, results: [{ victory: true, seed: 3 }],
+    discoveredArmaments: ['a1'], discoveryReceipts: [], enemyKnowledge: emptyEnemyKnowledge(),
+    classMastery: { reaver: { xp: 120, level: 2, unlockedRows: [] } }, classMasteryReceipts: [{ id: 'r1' }],
+  };
+  const storage = createMemoryStorage();
+  storage.setItem(META_KEY, JSON.stringify(old));
+  const saves = createSaveManager(storage);
+  const meta = saves.loadMeta();
+  assert.deepEqual(meta.results, old.results, 'the old profile loads with its progress');
+  assert.equal(saves.saveMeta(meta).ok, true);
+  const raw = JSON.parse(storage.getItem(META_KEY));
+  assert.equal('classMastery' in raw, false, 'classMastery is not written back');
+  assert.equal('classMasteryReceipts' in raw, false, 'classMasteryReceipts is not written back');
+  assert.deepEqual(raw.results, old.results);
+  assert.deepEqual(raw.settings, old.settings);
+  assert.deepEqual(raw.discoveredArmaments, old.discoveredArmaments);
 });
