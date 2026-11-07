@@ -212,7 +212,7 @@ async function boot(context, classId) {
 
 async function fixture(page, row) {
   return page.evaluate(async ({ source, row }) => {
-    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan, dispatch }, { cardTargetPlan }, { assertFoundationPlayable, candidateState }, { controlGate }] = await Promise.all([
+    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan, dispatch }, { cardTargetPlan }, { candidateState }, { controlGate }] = await Promise.all([
       import(source + 'engine/runCombat.js'), import(source + 'engine/combatExpansion.js'), import(source + 'engine/combat.js'),
       import(source + 'model/cardTargets.js'), import(source + 'engine/combatRules.js'), import(source + 'engine/combatStatusControl.js')]);
     const c = window.__combat;
@@ -270,7 +270,6 @@ async function fixture(page, row) {
     if (preview.costIsX && !row.deniedCost) { c.player.energy = 3; preview = previewCard(c, inst.instanceId, undefined, row.upcastTier); }
     let refused = c.registries.framework.isUnplayable(def) ? 'authored unplayable card' : null;
     if (!controlGate(c, c.player, def).allowed) refused = 'active control restriction';
-    try { assertFoundationPlayable(c, def); } catch (error) { refused = error.message; }
     const choice = cardChoicePlan(c, inst.instanceId);
     const plan = cardTargetPlan({ ...def, combatPreview: preview }, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
     window.__auditOracle = candidateState(c);

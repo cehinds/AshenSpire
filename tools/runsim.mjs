@@ -213,7 +213,7 @@ const STEP_BUDGET = STEP_BUDGET_ARG ? Number(STEP_BUDGET_ARG) : null;
 if (STEP_BUDGET_ARG && !(Number.isInteger(STEP_BUDGET) && STEP_BUDGET > 0)) throw new Error(`--step-budget expects a positive integer — got '${STEP_BUDGET_ARG}'`);
 const ACTION_GUARD = 9000; // bot actions one fight may take before it is a soft-lock
 // THE ENGINE'S DOOR REFUSALS (src/engine/combat.js doPlayCard / doUseFlask and
-// combatRules.js assertFoundationPlayable): the checks that turn an intent away
+// the card-play rules): the checks that turn an intent away
 // before anything resolves. The bot may set a card or flask aside for one of
 // these and play on. ANY OTHER error out of a dispatch is an engine bug in the
 // middle of resolution and escapes as a CRASH — a catch-all here once let a
