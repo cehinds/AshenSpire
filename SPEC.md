@@ -435,6 +435,8 @@ frost:      { stackMode: 'add', decay: 'none',
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
+Generators are code in `src/engine/`; their knobs are data in `src/content/`. Every generator is a pure function of `(config, rngStream, runState)`, so it is snapshot-testable with fixed seeds (§8). This section also holds the equipment composition rules (swap cost, starting deck, item-owned cards, mounts, kits).
+
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
 | Act map | StS path-walk + typing constraints (§6), `src/engine/mapgen.js` + `src/model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
@@ -442,202 +444,116 @@ frost:      { stackMode: 'add', decay: 'none',
 | Rewards | rarity odds in `model/rewardOdds.js`; flask decay in `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
-Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+#### Armament swap cost and equipment changes
 
-**Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
+Two closed vocabularies in `balance.equipment`, derived rather than authored per row:
 
-Two closed vocabularies, both in `balance.equipment`, both derived rather than authored per row:
-
-| Question | Word | Chain |
+| Question | Word | Rule |
 |---|---|---|
-| what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
-| may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
-| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — the shipped default is `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`). |
+| What does a mid-fight equipment action cost? | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Prepared-set swaps and item replace/move/unequip actions use this price. |
+| May carried equipment change during combat? | `allowChangesInCombat` | True: the player-turn Armoury may replace, move or unequip carried gear via the `changeEquipment` intent. False closes both UI and mutation paths. |
+| Which pieces need no finding? | `basicTag` | A piece carrying the tag answers the **found** gate for free (`ownership()`). It has no opinion on the **earned** gate; a row carrying both is refused by name. |
 
-**A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
-column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
-rule fields are closed and **their product is total**: all four cells price a swap, and a fourth
-rule is one row of `swapCostRules` with no code (proven by test 28q).
+- Swap price (`swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number):
+  - `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`. `base: 'default'` is `swapCost` for everything.
+  - `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods.
+  - The two fields are closed and their product is total (all four cells price a swap); a fourth rule is one row of `swapCostRules`, no code.
+- `changeEquipment` applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile and persists the same loadout object.
+- A weapon's category is its tags (`heavy`, `flourish`), never a `swapCost` column.
+- `persistence` is the only scope word: default `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`).
+- `apply` in `equipMods.csv` is a closed set per scope (`CARD_MOD_APPLIES` / `RUN_MOD_APPLIES` in `model/loadout.js`); any other value is a validation failure.
 
-`apply` in `equipMods.csv` is a closed set **per scope** — `CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`
-in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
-validation failure; before A8 it validated clean and silently did nothing.
+#### The starting deck
 
-**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
-strikes and defends the game mints for you — and it applies at **character creation and
-nowhere else**. The order is fixed:
+`balance.startingDeckSize` caps the BASE cards (the strikes and defends the game mints), applied at **character creation and nowhere else**. Fixed order:
 
-1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
-   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
-   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
-   never capped, never dropped and never refused. They belong to the equipment, not the run.
-2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
-   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
-   `startingDeck.oddFillerGoesTo` names — `attack` by default.
-3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
-   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
-   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
-   up a floor.
+1. **Bound cards first.** Everything equipment brings: cards from a piece with the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its `weaponArtDefaults`, the class signature, `startingDeck.global.grants`. Never capped, dropped or refused; they belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between attack and guard by the class's `strikeBias`. An odd remainder goes to the role `startingDeck.oddFillerGoesTo` names (`attack` by default).
+3. **The equipped profile gives base cards their identity** (a sword-wielder's attacks are Slashing Strikes; a bare hand's are the `unarmedProfiles` set). It supplies identity, not a floor top-up.
 
-If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
-with only its equipment cards. That is a **balance question for whoever authors the gear**,
-not a validation failure — `startingDeckWarnings()` reports it as a warning, naming the class and
-the loadout, and refuses nothing. `validateEquipment` returns problems only and does not show that warning.
+- If equipment alone meets or exceeds the cap, no base cards are minted; the run begins with only equipment cards. This is a balance question for gear authors, not a validation failure: `startingDeckWarnings()` reports a warning naming the class and loadout and refuses nothing (`validateEquipment` returns problems only and does not show it).
+- **After creation the cap does not apply.** Swapping to gear that lends fewer or more cards makes a smaller or larger deck. No re-minting of base cards, no holding a total.
+- **Attack count holds mid-run.** A swap re-skins the attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation, read never re-derived), minus permanently removed slots.
+  - `removedAttackSlotIds` holds unique stable `attack:N` ids from the birth allocation; absent means none.
+  - Merchant and event removal may remove run-owned basic attacks, including their current weapon-derived faces. Removal retires the slot for the run without renumbering survivors.
+  - Equipment swaps, combat setup, save/load and mid-combat restamping use the same surviving slot plan and never restore a removed copy.
+  - Item-owned grants are ineligible for permanent deck removal. The merchant revalidates the selected instance, funds and nonempty-deck guard before charging.
+- Authored data: the cap, per-class bias and default, odd-split winner and grant-source vocabulary. Sources are rows in the `grantSource` tag domain (adding one is a spreadsheet line).
+  - The engine mints bound cards at four seams (global, armor, weapon, class) and reads each seam's stamped tag from `startingDeck.sources`; renaming a source is a data edit (map, tag row and `sourceOrder` move together).
+  - A binding naming no registered source, or an unbound seam, is refused by name rather than dealing that source's cards last.
 
-**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
-smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
-attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
-attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
-read, never re-derived), minus permanently removed slots. `removedAttackSlotIds`
-records unique stable `attack:N` ids from that birth allocation; absent means none.
-Merchant and event removal may remove run-owned basic attacks, including their
-current weapon-derived faces. Removal retires that slot for the run without
-renumbering survivors. Equipment swaps, combat setup, save/load and mid-combat
-restamping use the same surviving slot plan and never restore a removed copy.
-Item-owned grants remain ineligible for permanent deck removal. The merchant
-revalidates the selected instance, funds and nonempty-deck guard before charging.
+**Card ownership: the run, or one item.**
+- Run-owned cards are the run's for good: base strikes and defends (gear only re-skins them), class signature, global grants, rewards.
+- Item-owned cards ride with the item: equip it and they arrive, unequip it and they leave, re-equip and they return identical. **If the item is not equipped, its cards are gone** (owner ruling).
+- Three authoring sources feed it: a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table (`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included). One reconcile applies it on every equip transition, in or out of combat.
+- Item-owned instances carry deterministic ids and the owner's namespaced ref, so reconcile is idempotent and a save is stable across it.
 
-**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
-the base strikes and defends (gear only re-skins them), the class signature, global grants,
-rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
-leave, equip it again and they return identical. **If the item is not equipped, its cards are
-gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
-a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
-(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
-reconcile that applies it on every equip transition, in or out of combat. Item-owned
-instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
-idempotent and a save is stable across it.
+#### Card mounts: the smith's services
 
-Everything above is data. The cap, the per-class bias and its default, the odd-split
-winner, and the grant-source vocabulary are all authored — the sources are rows in the
-`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
-The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
-tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
-the map, the tag row and `sourceOrder` move together, and a binding that names no
-registered source — or a seam left unbound — is refused by name rather than silently
-dealing that source's cards last.
+Every card an item lends sits in a **mount** on that item, keyed by the instance id the composer mints, so "the sword's art" is the same mount on every restamp, save and fight. A smith (the Shrine's, or one a merchant rolls) does three things: **upgrade** an item (tier promotion), **extract** a card from a mount, **seat** a run-owned card in an emptied or open mount.
 
-**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
-on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
-same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
-does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
-its mounts, and **seat** a run-owned card in an emptied or open mount.
+- **Extract.** The card becomes the run's own (a run-owned instance joins the deck and stays whatever the item does).
+  - The mount it left shows its kind's **fallback** until something is seated: a weapon-art mount falls back to the unarmed technique (the Dodge Roll, read from `unarmedProfiles`); a granted mount falls back to nothing. Any item may override under `cardMounts.fallbackByItem`.
+  - A fallback is the mount's, not the item's, and is never extractable.
+- **Extractable = a tag on the card** (`cardMounts.extractableTag`, `extractable`). Strikes and defends do not carry it. A mount accepts a card carrying any tag in its kind's `accepts` list.
+- **Seat.** The deck instance leaves; the card rides with the item from then on and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`, per item, a kind) sit behind a flag that is off.
+- **Not in a Sealed or Draft run.** A pool-built deck is never dealt the equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`).
+  - `extractionRefusal` answers `poolDeck` from the run's Custom Climb rules or a stored `run.poolDeck === true` flag on a fight's synthetic run.
+  - `extractionPlan` lists no candidate and carries the `refusal`; `commitExtraction` refuses it by name (a free grant too) before touching the run.
+  - Every smith door (Shrine, a merchant's rolled smith, the blacksmith's `extractArt`) shows the service unavailable with the `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is unchanged.
+- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by the owner's word.
+- **Who offers what:** `smithing.services.offeredAt` = a node kind, a chance and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls once per visit on the smith's own RNG stream and rides with the stock (a reload does not re-roll; no later reward in an existing seed shifts).
+- `run.itemMounts` records what a smith did, per item per mount (emptied, or the card seated). The composer reads it on every restamp and carries it into combat and a saved fight like the birth quota, so a mid-fight swap or load cannot re-mint an extracted card. It never touches an item's authoring; absent means untouched (no migration invents the field).
 
-- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
-  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
-  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
-  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
-  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
-  item's, and is never itself extractable.
-- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
-  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
-  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
-- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
-  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
-  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
-- **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
-  equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
-  hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
-  from the run's own Custom Climb rules, or from a stored `run.poolDeck === true` flag on a fight's
-  synthetic run (`isPoolDeckRun`): `extractionPlan`
-  lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
-  grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
-  smith, the blacksmith's `extractArt` — shows the service unavailable with the
-  `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is
-  unchanged.
-- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
-  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
-  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
-  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
-  roll again and the roll shifts no later reward in an existing seed.
+#### Equipped weapon card packages
 
-What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
-read by the composer on every restamp and carried into combat and into a saved fight the way
-the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
-item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
-migration invents the field.
-
-**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
-priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
-`EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
-weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
-two eligible one-handed weapons split right `ceil(N/2)` then left `floor(N/2)`. Within a hand,
-ordered priority/effect references precede repeated filler. Shields and other items without a
-weapon package consume no quota.
-
-The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades, and acquisition metadata and
-changes only package-derived card/profile/receipt/mod fields. Equip, unequip, hand move, and active
-set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt; creation
-and load/continue call the same composition service directly. Combat rebinds generated attack
-instances wherever they currently live in hand, draw, discard, or exhaust after the current card
-resolution. Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are
-never appended. Explicit `handsRequired: 2` claims the whole attack quota and is never inferred
-from tags, names, art, or kind. A conflicting off-hand, duplicate piece without distinct equipment
-instance identity, or a claimed but invalid package fails closed; Unarmed is only the valid
-zero-weapon plan.
-
-An exact active-combat snapshot uses its own saved loadout as the authority. After snapshot shape
-and content-reference validation, the same service migrates the complete generated attack set in
-the fixed pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated
-snapshot loadout replaces the stale top-level run projection before continue. Package migration
-must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card
-reference. Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived
-fail-closed rather than normalized or replaced with Unarmed.
+- `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered priority list plus that profile as filler. `WeaponDeckCompositionService` builds an `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place.
+- Slot allocation:
+  - No eligible weapon: Unarmed in every attack slot.
+  - One eligible weapon in either hand: owns every slot.
+  - Two eligible one-handed weapons: split right `ceil(N/2)`, left `floor(N/2)`.
+  - Within a hand, ordered priority/effect references precede repeated filler. Shields and other items without a weapon package consume no quota.
+  - Explicit `handsRequired: 2` claims the whole attack quota and is never inferred from tags, names, art or kind.
+- The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades and acquisition metadata; it changes only package-derived card/profile/receipt/mod fields.
+- Equip, unequip, hand move and active set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt. Creation and load/continue call the same service directly.
+- Combat rebinds generated attack instances wherever they live (hand, draw, discard, exhaust) after the current card resolution.
+- Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are never appended.
+- A conflicting off-hand, a duplicate piece without distinct equipment instance identity, or a claimed but invalid package fails closed. Unarmed is only the valid zero-weapon plan.
+- **Exact active-combat snapshot:** its own saved loadout is the authority.
+  - After snapshot shape and content-reference validation, the same service migrates the complete generated attack set in pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated loadout replaces the stale top-level run projection before continue.
+  - Migration must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card reference.
+  - Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived fail-closed, not normalized or replaced with Unarmed.
 
 #### Complete armament kits
 
-Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
-`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, and staves (sceptres
-are staves) each lend one Strike, one Guard, and one signature Armament Art while
-equipped. Armour, talismans, and consumables do not acquire this kit.
+Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`: `{ attackProfileId, guardProfileId, artCardId }`.
+- Weapons, shields and staves (sceptres are staves) each lend one Strike, one Guard and one signature Armament Art while equipped. Armour, talismans and consumables get no kit.
+- The three cards are guaranteed before the starting filler budget is divided: a shield supplies a Strike even beside a sword or at a filler budget of zero.
+- A shield's Strike and Guard use its own profiles, attribute scaling, damage school and smithing level. Attack modifiers are restricted to their source armament; Guard modifiers keep the loadout-wide rule.
+- Run-owned filler attack slots and permanent removals keep their identities. Shield + non-shield: the non-shield retains the filler attack quota, the shield still lends its Strike. Two other one-handed armaments split filler as before. A two-handed armament lends one kit.
+- Kit basics use deterministic `kit:<item>:attack|guard` identities, are not smith mounts, and cannot be extracted or permanently removed. Recorded: `grantedBy`, `equipmentRole: granted`, `kitRole`, `profileId`.
+- The signature Art uses the weapon-art mount and its extraction/fallback rules, so a smith replacement can change it. Each item's signature mount is installed independently even when two items author the same card; optional non-kit arts keep the shared-art rule.
+- Reconciliation preserves cards already in discard or exhaust. Unequipping removes item-owned contributions; re-equipping restores their stable ids.
+- New armed starting decks omit the redundant global technique grant (`tests/framework.test.mjs`). Fully unarmed Strike/Guard/technique behavior is unchanged.
+- Existing saves keep run-owned cards and their original attack-slot quota; normal reconciliation adopts missing item-owned kits without re-minting permanently removed filler. Equipment previews use the same composer and show the exact contributed cards, including counts.
 
-These three item-owned cards are guaranteed before the starting filler budget
-is divided. A shield therefore supplies a Strike even beside a sword or when
-the filler budget is zero. Its Strike and Guard use its own profiles, attribute
-scaling, damage school, and smithing level. Attack modifiers are restricted to
-their source armament; Guard modifiers retain the existing loadout-wide rule.
-Run-owned filler attack slots and permanent removals retain their existing
-identities. In a shield/non-shield pair the non-shield retains the filler attack
-quota; the shield still lends its guaranteed Strike. Two other one-handed
-armaments split filler as before. A two-handed armament lends one kit.
+**Everyone has the Dodge Roll** (owner rule). Holding equipment never costs the dodge: every composed deck carries exactly one Dodge Roll as a `weaponArt` instance.
+- An empty hand owns it (`grantedBy: unarmed:<hand>`, right before left). With no empty hand (both armed, or a two-handed armament) the body owns it (`unarmed:body`). Filling a hand moves it, never removes it.
+- An art mount already holding the Dodge Roll counts: one, not two.
+- Like every bound card it is dealt before the base cards and counts against `startingDeckSize`; Strikes and Defends are added last from what the cap leaves.
 
-Kit basics use deterministic `kit:<item>:attack|guard` identities, are not smith
-mounts, and cannot be extracted or permanently removed. Their owner is recorded
-in `grantedBy`, with `equipmentRole: granted`, `kitRole`, and `profileId`.
-The signature Art uses the existing weapon-art mount and extraction/fallback
-rules. A deliberate smith replacement can therefore change the signature Art.
-Each item's signature mount is installed independently, even when two items
-author the same card; optional non-kit arts retain the existing shared-art rule.
-Reconciliation preserves cards already in discard or exhaust. Unequipping
-removes item-owned contributions and re-equipping restores their stable IDs.
+**Shield signature Arts:**
 
-New armed starting decks omit the redundant global technique grant
-(proved in `tests/framework.test.mjs`). Fully
-unarmed Strike/Guard/technique behavior remains unchanged.
+| Shield | Art | Cost | Effect |
+|---|---|---|---|
+| Round Shield | Shield Bash | | |
+| Buckler | Riposte | | |
+| Kite Shield | Guardian | 1 Stamina | 5 Block; adds a temporary 1-Stamina Enter: Bulwark skill to hand; Exhausts |
+| Tower Shield | Bastion | 1 Stamina | 12 Block; 1 Weak to self; Exhausts |
+| Spiked Shield | Spiked Reprisal | 1 Stamina | 4 Block; 4 damage; 2 Bleed |
 
-**Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
-2026-09-02 empty-hand rule). Holding equipment never costs the dodge: every
-composed deck carries exactly one Dodge Roll as a `weaponArt` instance. An
-empty hand owns it (`grantedBy: unarmed:<hand>`, right before left); with no
-empty hand — both hands armed, or a two-handed armament — the body owns it
-(`unarmed:body`). Filling a hand moves it and never removes it. An art mount
-already holding the Dodge Roll counts, so there is one, not two. Like every
-bound card it is dealt before the base cards and counts against
-`startingDeckSize`; Strikes and Defends are added last, from what the cap leaves.
-Existing saves retain run-owned cards and their original attack-slot quota;
-normal equipment reconciliation adopts missing item-owned kits without
-re-minting permanently removed filler. Equipment previews use the same composer
-and show the exact contributed cards, including counts.
-
-Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
-Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
-Guardian costs 1 Stamina, grants 5 Block, adds a temporary 1-Stamina Enter: Bulwark
-skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
-every class, and enters the existing Bulwark stance. A full hand sends it to
-discard. It never enters the permanent run deck and disappears after combat.
-Bastion costs 1 Stamina, grants 12 Block, applies 1 Weak to self, and Exhausts.
-Spiked Reprisal costs 1 Stamina, grants 4 Block, deals 4 damage, and applies 2
-Bleed. Existing card effects supply the other authored armament Arts.
+- Guardian's generated skill also Exhausts, is usable by every class and enters the existing Bulwark stance. A full hand sends it to discard. It never enters the permanent run deck and disappears after combat.
+- Existing card effects supply the other authored armament Arts.
 
 ### 3.9 Action queue
 

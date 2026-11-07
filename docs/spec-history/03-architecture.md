@@ -17,3 +17,13 @@ The previous edition of this section was a hand-maintained inventory that had dr
 - Stat table: `energy` row history: DEX weight 0.2 to 0.25 (A3, FINISH D28, 2026-09-27). HP defaults are the owner's +1 main-bonus defaults (2026-10-06). Mana rounding decision: owner, 2026-09-24, answering "Per attribute (keep)"; rounding the total was declined.
 - Derived-stat ruleset 7: owner 2026-09-24; current defaults 2026-10-06.
 - Status model: the ratings-meter variant (a break applying no status, growth by `breaks.thresholdGrowth` in `applyRatingImpact`) was retired with the ratings meter (#2633). The `statRowsVersion` marker is gone (no longer detected).
+
+## 3.8 Procedural systems and equipment composition
+
+- Armaments swap-cost and shelf vocabularies: A8/A7, Constantine 2026-08-08. Before A8, an `apply` value outside the closed set validated clean and silently did nothing. The product of the two swap-cost rule fields being total is proven by test 28q.
+- A weapon's category is its tags, never a `swapCost` column, because a column would compel an author to restate what the tags already imply (Law 0 clause 1).
+- Card ownership ruling ("if the item is not equipped, its cards are gone"): owner, 2026-09-03.
+- Pool-deck extraction refusal: owner, 2026-10-02 (extracting would hand the run a free copy of what Sealed/Draft modes exclude).
+- Smithing services priced in Smithing Stones, "free by the owner's word".
+- Dodge Roll for everyone: owner 2026-09-24, widening the 2026-09-02 empty-hand rule.
+- Complete armament kits: #904, 0.6.0.115 (proved in `tests/framework.test.mjs`).
