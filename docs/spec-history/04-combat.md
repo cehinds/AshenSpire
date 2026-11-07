@@ -55,3 +55,11 @@ Archive of dates, rationale, provenance and superseded designs moved out of SPEC
 ## 4.8 / 4.9 / 4.10
 - Owner authorized the complete revised combat expansion for implementation on 2026-10-07. "This specification precedes the implementation" (card traits). Enemy-knowledge contract: "lands before its runtime implementation".
 - 4.10: owner's 2026-10-08 reaction-contract revision. The reaction system has shipped.
+
+## Second pass (provenance stripped from SPEC)
+- Owner provenance removed from rule text and headings (all dates 2026-09-19 to 2026-11-02): hand-rule default 2026-10-03; Core 2 magic-then-Block amendment D17 2026-10-31; Smithing 2026-10-28 / 2026-10-31; action-costs 2026-10-12 (restores 2026-10-13, smashes 2026-10-13, 0-cost 2026-10-31, cantrips and basics cost no Mana 2026-11-01); Necrotic Blight lasts the fight 2026-10-12; enemy SP 2026-10-13; multi-hit floor 2026-10-23 / 2026-10-25; intent commitment 2026-11-02; Core intent follow-ups and always-on outlines 2026-10-12; reads exact 2026-10-18; Oath decision 11 2026-10-12; weaknesses 2026-10-31, discovery 2026-11-01.
+- 4.3a shipped hit rates (basics 81%, cantrips 78% at 1 SP / 0 MP and 94% at 1 SP, smashes and sweeps 100% at rank 0, rank 1–2 84%, rank 1–3 spells 82%, 0-SP magic 95% at 1+, 99% not 2+/2+); `spDivisor` 6 was the owner's ruling, not tuned; the 1.8 multiplier is "provisional, owner to tune".
+- 4.3: the shipped Legacy/Current tier cap of 1 Smithing tier (1 Stone) was dropped; Core's 3-tier ladder is the shipping rule.
+- 4.6a: measured class spreads: Lone Soldier near 100% (Wandering Soldier shared with the Twin Patrol, which falls far below 50% at any Soldier strong enough to threaten alone); Twin Patrol Starseer and Herald ~45%, Reaver and Rogue ~75%; Wyrm Aspirant Herald ~60%, Rogue under 10% (band 25 points); Bell Keeper and Thorn Matriarch spreads over 15 points. Boss numbers accepted 2026-10-13.
+- Damage-number "about twice its former size" intent UI sizing (2026-10-18) is history; SPEC states placement and styling only.
+- Test lists for the cost formula were reduced to file names.
