@@ -691,7 +691,8 @@ try {
               await page.screenshot({ path: resolve(out, `${device}-${classId}-victory-reward.png`) });
               await tap(page, page.locator('#reward-continue'), device);
               await tap(page, page.locator('.confirmation-modal .confirmation-confirm'), device);
-              await page.waitForFunction(done => window.__spoils().done === done + 1 && !window.__spoils().pendingReward, before.done, { timeout: 15000 });
+              // Core reward door: rewardDoneCount never moves, so completion is the live and saved receipts both clearing.
+              await page.waitForFunction(() => { const s = window.__spoils(); return !s.pendingReward && !s.savedPendingReward; }, null, { timeout: 15000 });
               const after = await page.evaluate(() => window.__spoils());
               assert.equal(after.savedPendingReward, null, 'reward completion clears persisted receipt');
               entry.reward = { before, after };
