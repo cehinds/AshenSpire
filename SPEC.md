@@ -1622,8 +1622,8 @@ Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed 
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-- Screen router in `main.js`. Each routed full-screen module exports `mountX(app, opts)` (`mountMap` in `src/ui/screens/map.js`); a re-mount releases the previous mount's handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers instead (`openCharacterSheet` in `characterSheet.js`; the settings and profile-archive render/open APIs).
-- A Shrine, camp, inn or chapel is a location: a property carrier whose tag set says what it restores (§13.4j). Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered (§5.5.1), because the Shrine carries `restFlasks`. The screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+- Screen router in `main.js`. Routed full-screen modules export `mountX(app, opts)` (`mountMap`, `src/ui/screens/map.js`); a re-mount releases the previous handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers (`openCharacterSheet`; settings and profile-archive APIs).
+- A Shrine, camp, inn or chapel is a location: a property carrier whose tag set says what it restores (§13.4j). Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered (§5.5.1), because the Shrine carries `restFlasks`. The screen reports what it was handed and what the slots could not hold; silent when nothing to say.
 - **Startup gate.** Cold boot mounts `startup-gate` before the Title DOM exists. It holds only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp.
   - Click/tap, Enter, Space, controller A/Cross and controller Start/Menu are consumed by the gate and reveal Title exactly once; that physical press cannot activate a Title control.
   - Prompt copy follows the most recent pointer, touch, keyboard or controller family.
@@ -1653,9 +1653,8 @@ Component architecture, stable component ids, the shared run HUD (Map and Combat
 
   `main.js` trends toward a composition root; existing paths migrate incrementally.
 - Every reusable UI component receives an immutable **Component Model** that names its semantic component id and variant, owns only serializable presentation properties, declares named behaviors, and recursively composes child Component Models. Screen ViewModels compose those records; renderers translate them to DOM; behavior adapters connect declared commands to callbacks.
-- Shared primitives (panels, metadata fields, meters, trays, slots, action controls, hotkey badges) are composed, not redefined. Component Models never own mutable simulation state or import engine rules; ViewModels project current domain state into model properties.
+- Shared primitives are composed, not redefined. Component Models never own mutable simulation state or import engine rules; ViewModels project domain state into model properties. A component owns structure and accessibility; its screen supplies state and callbacks.
 - A migrated surface has one ViewModel composition and one renderer, never a model path beside a hand-written fallback.
-- A component owns structure and accessibility; its screen supplies state and callbacks.
 
 #### Component ids
 
@@ -1673,7 +1672,6 @@ Ids are stable semantic names, not screen-specific markup.
 | Title | `title-brand-lockup` (`title-wordmark`, `title-subtitle`, `title-divider`); `title-menu` (six `title-menu-item`, each with `title-menu-gem`); independent `title-tagline`; `title-menu-modal` (see below) |
 
 - **`hud-quick-settings`** is shared by Title, Map and Combat. It anchors beneath the top-right HUD edge as a vertical pair of live positive-state Fullscreen and Music controls. Music persists through the profile settings service; Fullscreen is read from the browser (no duplicate flag). On narrow screens: same composition, 44px square glyph controls so enemy intent stays unobscured. Browsers without a fullscreen API show Fullscreen as unavailable, not a dead switch.
-- UI components never own simulation state.
 
 #### Startup Gate and Title components
 
@@ -1729,8 +1727,7 @@ Ids are stable semantic names, not screen-specific markup.
 #### Armoury components
 
 - Family: `armoury-overlay` → `armoury-panel`, with `armoury-header`, `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`, `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`, `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, `armoury-region-header`. Ids are stable.
-- Records: `ArmouryModels.js`; renderers: `armouryComponents.js`; models immutable, serializable, DOM-free.
-- Armaments is a configured `folding-tray` instance, not a second primitive.
+- Records: `ArmouryModels.js`; renderers: `armouryComponents.js`. Armaments is a configured `folding-tray` instance.
 - Persisted view ids `grid`, `rack`, `hybrid` are labelled **Character**, **Inventory**, **Hybrid**. Equipment region id `slots`; tray instance `armaments`.
 
 The views project one loadout:
@@ -1753,7 +1750,7 @@ The views project one loadout:
 **Equipment positions are procedural content**
 - `content/source/equipSlots.csv` supplies slot id, label, position label/code, accepted kinds, hand/socket, set capacity, swap rule, storage behavior, order; `content/source/unlocks.csv` adds position rungs; `armouryUi.layout.equipment.slotOrder` sets preferred group order.
 - One compact vertical list shows every authored position as locked, empty or occupied; empty ones follow occupied and locked. Each row is a button selecting it for the Inspect panel; Replace and Unequip are separate buttons. A new position needs no screen branch.
-- Item kind decides eligibility only; the selected hand position owns the sprite socket (shield in a right-hand position draws in the right hand).
+- Item kind decides eligibility only; the selected hand position owns the sprite socket.
 - The figure composer draws armour/body, `head`, `hands`, `feet` (`assets/equipment/<slot>_<id>.webp`, nothing when absent) and left/right-hand layers. Other attachments need an explicit composer and configuration extension.
 - `model/zones.js` is the one slot→zone map (§13.4b); a slot it does not name is refused at boot.
 
@@ -1761,7 +1758,7 @@ The views project one loadout:
 - Occupied rows: scaled equipment-card thumbnail, position code, name, Equipped/Reserve badge, Inspect/Replace grouped, Unequip at right (`armouryUi.layout.equipment.compactList`). Inspect opens beside desktop rows, or in a separate mobile view with Back.
 - Armament faces use read-only first-tap disclosure and never equip on hold (`armouryUi.layout.cardClasses.armamentItem`: `holdAction` false, inline comparison); other classes keep `inventoryItem`.
 - An unassigned item needs an explicit compatible destination (choices show position, occupant, active/reserve, locked). Selecting never equips. Equip/Move/Unequip are named buttons; Make active is separate, including for empty reserves. Changes name item and destination.
-- Requirements, grip and storage checks stay authoritative. Combat changes dispatch priced engine intents; inspection never mutates a loadout. Mouse/pen drag works; touch scrolls. Magic is the primary combat-power label; Potency its modifier.
+- Requirements, grip and storage checks stay authoritative. Combat changes dispatch priced engine intents; inspection never mutates a loadout. Mouse/pen drag works; touch scrolls. Magic is the primary combat-power label (Potency its modifier).
 
 **Equipment receipts** are read models, never re-derived in a screen. `.armoury-equipment-receipts` (Character view's Equipment cards card, Stats tray) shows card packages, equip requirements, the Poise threshold (`.player-poise-receipt`) and **Equip load** (`.player-load-receipt`, `model/statProjection.playerLoadReceipt`): load / capacity, percent, Weight Class word (`registries.framework.weightClass`; capacity from Constitution, Strength and `mechanics.weight.capacityBase`).
 - Load sums each equipped armament's `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Each piece is multiplied by `mechanics.weight.itemWeightScale` (0.2), kept to a tenth; the item card's Weight label reads the same `pieceWeight` rule.
@@ -1769,19 +1766,19 @@ The views project one loadout:
 #### Shared HUD composition and combat layout
 
 - **One shared HUD on Map and Combat.** Neither screen hand-writes a second HUD. The one-row `run-header-strip` holds character identity left, Cinders truly centred, Act/Floor/Build/Seed/Source right.
-  - The center Cinders track and right metadata trail are each capped at 30% of the viewport by data-owned settings; the three tracks negotiate rather than overlap.
-  - The five metadata items share one data-owned font size, one baseline and one vertically centred row; none staggers.
+  - Cinders track and right metadata trail are each capped at 30% of the viewport (data-owned); the three tracks never overlap.
+  - The five metadata items share one data-owned font size and one centred baseline.
   - When width is insufficient, the right trail hides Source, then Seed, then Build (Act and Floor last), including at the smallest supported width, before it may touch centred Cinders.
   - `metadataShowTotals` defaults to false: Act/Floor show current values (`ACT 1 · FLOOR 1`), not totals; enabling it is data-only.
   - No duplicate Act/Floor line beneath the character name.
 - **Primary and inventory geometry.**
   - `vitals-panel` is one outer card holding the unchanged HP/MP stack; Stamina is the Stamina orb (below).
   - `quick-access-panel` is one outer square holding the Armoury and Menu controls: visible tiles 18 px inside ≥44 px accessible hit areas. The two panels have equal outer height.
-  - HP/Mana flasks are not in this panel (Potions projection); refillable flasks are controls, not utility potions.
+  - Refillable HP/Mana flasks are controls (Potions projection), not utility potions, and are not in this panel.
   - `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick Access on the same row.
   - Utility potions form one right-anchored horizontal tray packed from the Quick Access right edge (flush with the panel), growing or scrolling left. Relic and Potion trays share one vertically centred baseline and one data-owned item gap (default 2 px); utility potion tiles match relic tile size.
   - Vitals and Quick Access panel-background opacity is data-owned, default 0%: at default the Vitals shell and resource-card frames have no visible border or background, the troughs and labels stay visible, and invisible reference frames do not size the panel.
-  - The map's `− ⊙ + ?` controls stay the board's separate lower control group.
+  - The map's `− ⊙ + ?` controls stay a separate lower group.
 - **Responsive combat composition.**
   - `battlefield-stage` vertically centres player and enemy combatant frames at every supported shape (not bottom-aligned).
   - Narrow layouts keep larger accessible player cards in the horizontal `player-hand-tray`, clear of combatants and `combat-action-rail`.
@@ -1821,13 +1818,13 @@ Advanced Settings is the player-facing editor for authored configuration (not a 
 - **Rules and accessibility:** eligible boolean flags and closed-set modes. Ordinary Display, Audio and Accessibility controls stay in their homes and appear in Advanced only in the searchable inventory; both resolve through one descriptor and one persisted value.
 
 **Combat formation**: the perspective grid is the only combat layout.
-- One sheared grid (each row slides right in proportion to depth; every cell the same parallelogram): three lanes, an enemy back rank and front rank, one player rank nearest the camera, open ground between. Sky above; the grid stands on ground. A cell's shadow is its foot anchor.
-- The gap is `teamGapRows` strip heights (default 0.6), no tiles. The party has a front strip (nearer the enemies) and a back strip; the extra enemy strip is drawn only when Core enables the extra row.
-- Enemies fill the back rank first, spread across lanes (one in the middle, two on the outer lanes), then the front rank, up to six; the party shares its rank and the player starts in the left lane. More than six enemies widens the grid to more lanes, never two bodies on one anchor.
-- Cells keep gameplay addresses (column is depth, outer = back; row is a lane); the player's front column is not a perspective destination. Pressing anywhere in an occupied enemy cell acts on that enemy (select, or play the armed card or flask).
+- One sheared grid (rows slide right with depth; every cell the same parallelogram): three lanes, an enemy back and front rank, one player rank nearest the camera, open ground between (`teamGapRows` strip heights, default 0.6, no tiles). A cell's shadow is its foot anchor.
+- The party has a front strip (nearer the enemies) and a back strip; the extra enemy strip is drawn only when Core enables the extra row.
+- Enemies fill the back rank first (one in the middle, two on the outer lanes), then the front rank, up to six; the party shares its rank and the player starts in the left lane. More than six enemies widens the grid to more lanes, never two bodies on one anchor.
+- Cells keep gameplay addresses (column is depth, outer = back; row is a lane); the player's front column is not a perspective destination. Pressing an occupied enemy cell acts on that enemy (select, or play the armed card or flask).
 - Lane span, rank tops/heights, shear and foot fractions per phone, desktop and short strip are data (`combatFormationModel.positioning.perspectiveGrid`).
 - A saved `classicAppearance: true` is ignored; an old profile loads as the grid.
-- Supplied 1×1 and 2×2 layouts use responsive percentages (reference anchors at 1641×526 checked against the exports). Explicit saved group edits (offsets as percentages of battlefield width/height, optional snapping, default 50 CSS px step) take precedence. Combat has no in-battle positioning control.
+- Supplied 1×1 and 2×2 layouts use responsive percentages (reference anchors at 1641×526 checked against the exports). Explicit saved group edits (percent offsets, optional snapping, default 50 CSS px step) take precedence. No in-battle positioning control.
 
 **Rows, reset and persistence**
 - Search and section navigation work at every supported viewport and text size.
@@ -1903,17 +1900,17 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - Victory: title "Victory", aria-label "Ember restored".
 
 **Sound** is shipped and procedural.
-- `sfx.js` is the hook bus: feedback moments call `sfx.play(id)`; `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine synthesizing every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
-- Content, one home each: `src/content/music.js` (scales, beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
-- A recipe is a list of layers in the closed vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id.
-- `resolveRecipe` (`content/sfx.js`): exact id → family row (segment before the first `_`) → required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row; no engine change or registration list.
+- `sfx.js` is the hook bus (`sfx.play(id)`); `main.js` wires it to `src/ui/audio.js`, a WebAudio engine synthesizing every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
+- Content: `src/content/music.js` (scales, beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
+- A recipe is layers in the closed vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id.
+- `resolveRecipe`: exact id → family row (segment before the first `_`) → required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row; no engine change or registration list.
 - Volumes/mute are settings; music default is non-zero.
 - A context's bed is a bed object or exactly `'silence'` (`MUSIC_SILENCE_WORD`, `src/model/schemas.js`). `validateContent` rejects quiet-shaped mistakes by name (null, missing variants, `[]`, zero gain, wrong or miscased word); an unknown context at runtime warns naming itself and plays nothing.
-- Only rendered tracks ship as audio files, listed in a music manifest, rendered offline from `music/score/<id>.mjs` by `tools/score/render.mjs`. Tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`); scores and render tool live under `art/music/`. `music/*.mp3` and `music/manifest.json` are gitignored.
+- Rendered tracks are the only shipped audio, rendered offline from `music/score/<id>.mjs` by `tools/score/render.mjs`; tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), scores and render tool under `art/music/`. `music/*.mp3` and `music/manifest.json` are gitignored.
 - Overrides:
-  - A music folder with `manifest.json` replaces a context's bed; a missing/unplayable track falls back to the synth bed. The folder is the Settings folder or, with it blank on http(s), the shipped tracks (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth.
+  - A music folder with `manifest.json` (the Settings folder or, blank on http(s), the shipped tracks via `SHIPPED_MUSIC_FOLDER`, `content/music.js`) replaces a context's bed; a missing/unplayable track falls back to the synth. A `file://` page cannot fetch shipped tracks and keeps the synth.
   - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; a failed sample load falls back to the synth (`src/ui/audio.js:152-154`).
-  - `MUSIC_MANIFEST` is imported and never read: a dormant slot.
+  - `MUSIC_MANIFEST` is imported and never read (dormant).
 
 ### 7.5 Visual style
 
