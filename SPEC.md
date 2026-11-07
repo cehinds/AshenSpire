@@ -1762,46 +1762,40 @@ The three views project the same loadout (no separate stores or screens):
 
 Load counts each equipped armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Every piece weight is multiplied by `mechanics.weight.itemWeightScale` (0.2) and kept to a tenth. The item card's Weight label reads the same `pieceWeight` rule, so item and total agree.
 
-- **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
-  character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
-  The center Cinders track and right metadata trail are each capped at 30% of the
-  viewport by data-owned settings; the three tracks negotiate rather than overlap.
-  Those five metadata items share one data-owned font size, one horizontal baseline, and one
-  vertically centred row; no item may stagger above or below another. When width is insufficient,
-  the right trail progressively hides Source, then Seed, then Build; Act and Floor remain visible
-  longest. `metadataShowTotals` defaults to false, so Act/Floor show current values (`ACT 1 · FLOOR 1`)
-  rather than totals; enabling it is a data-only setting. At the smallest supported width, the
-  right trail progressively hides Source, then Seed, then Build before it may touch centred Cinders. There is no duplicate Act/Floor
-  line beneath the character name. Neither screen hand-writes a second HUD.
-- **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
-  HP/MP stack; Stamina is the Stamina orb (below). `quick-access-panel` is one outer square
-  holding the Armoury and Menu controls. Its visible tiles are 18 px inside at least 44 px
-  accessible hit areas. The two panels have equal outer height. The HP/Mana flasks are not in
-  this panel; they belong to the Potions projection. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
-  Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
-  scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
-  narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
-  The Vitals and Quick Access component-panel background opacity is data-owned and defaults to
-  0%. The Vitals shell and its resource-card frames have no visible border or background at the
-  default; the resource troughs and labels remain visible and their invisible reference frames do
-  not visually size the panel. Refillable HP/Mana
-  flasks are controls, not utility potions. The map's `− ⊙ + ?` controls remain the board's
-  separate lower control group. Utility potion tiles are packed from the Quick Access right edge
-  toward the left, so the tray's visible right edge is flush with that panel.
-- **Responsive combat composition.** `battlefield-stage` vertically centres player and enemy
-  combatant frames at every supported shape rather than bottom-aligning them. Narrow layouts keep
-  larger, accessible player cards in the horizontal `player-hand-tray` without colliding with the
-  combatants or `combat-action-rail`. The shared HUD and combat composition are verified at
-  1440×860, 1200×730, 844×390, 390×844, and 320×640.
-- **Resource-bar length is data-scaled, not a cap.** The default reference maxima are HP 200,
-  MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
-  maximum with the data-owned reference and obeys the shared viewport cap. A character may
-  exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** at most 3 enemies (owner, 2026-11-03: "Limit to just 3 enemies max"; supersedes the 2026-10-12 cap-setting plan; see the Enemy cap rule under the Encounter schema). Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
+#### Shared HUD composition and combat layout
+
+- **One shared HUD on Map and Combat.** Neither screen hand-writes a second HUD. The one-row `run-header-strip` holds character identity left, Cinders truly centred, Act/Floor/Build/Seed/Source right.
+  - The center Cinders track and right metadata trail are each capped at 30% of the viewport by data-owned settings; the three tracks negotiate rather than overlap.
+  - The five metadata items share one data-owned font size, one baseline and one vertically centred row; none staggers.
+  - When width is insufficient, the right trail hides Source, then Seed, then Build (Act and Floor last), including at the smallest supported width, before it may touch centred Cinders.
+  - `metadataShowTotals` defaults to false: Act/Floor show current values (`ACT 1 · FLOOR 1`), not totals; enabling it is data-only.
+  - No duplicate Act/Floor line beneath the character name.
+- **Primary and inventory geometry.**
+  - `vitals-panel` is one outer card holding the unchanged HP/MP stack; Stamina is the Stamina orb (below).
+  - `quick-access-panel` is one outer square holding the Armoury and Menu controls: visible tiles 18 px inside ≥44 px accessible hit areas. The two panels have equal outer height.
+  - HP/Mana flasks are not in this panel (Potions projection); refillable flasks are controls, not utility potions.
+  - `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick Access on the same row.
+  - Utility potions form one right-anchored horizontal tray packed from the Quick Access right edge (flush with the panel), growing or scrolling left. Relic and Potion trays share one vertically centred baseline and one data-owned item gap (default 2 px); utility potion tiles match relic tile size.
+  - Vitals and Quick Access panel-background opacity is data-owned, default 0%: at default the Vitals shell and resource-card frames have no visible border or background, the troughs and labels stay visible, and invisible reference frames do not size the panel.
+  - The map's `− ⊙ + ?` controls stay the board's separate lower control group.
+- **Responsive combat composition.**
+  - `battlefield-stage` vertically centres player and enemy combatant frames at every supported shape (not bottom-aligned).
+  - Narrow layouts keep larger accessible player cards in the horizontal `player-hand-tray`, clear of combatants and `combat-action-rail`.
+  - HUD and combat composition are verified at 1440×860, 1200×730, 844×390, 390×844 and 320×640.
+- **Resource-bar length is data-scaled, not a cap.**
+  - Default reference maxima: HP 200, MP 20, SP 20.
+  - Fill is `current / maximum`; visual length compares that maximum with the data-owned reference and obeys the shared viewport cap.
+  - A character exceeding a reference lengthens only to the layout cap; gameplay state is never clamped.
+
+**Combat zones**
+- **Enemy row (upper right 60%):** at most 3 enemies (owner, 2026-11-03; see the Enemy cap rule under the Encounter schema).
+  - Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** and status icon row, and **intent icon + number above the head**.
+  - Proc bars: up to two active proc statuses (e.g. Bleed, Frost), each with its status's own glyph and `tint`, only when >0 (`src/ui/screens/combat.js`).
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
-- **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
-- **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
-- **Piles:** draw (bottom-left corner, count) / discard (bottom-right, count) / exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display, like StS).
+- **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises the card ×1.5 with full text.
+- **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`).
+- **End Turn:** bottom right; pulses if Stamina remains and any card is playable; confirm-free.
+- **Piles:** draw (bottom-left corner, count), discard (bottom-right, count), exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display).
 
 #### 7.2.1 Advanced game configuration
 
