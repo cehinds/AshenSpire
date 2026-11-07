@@ -691,7 +691,7 @@ const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
  */
 export function stackPriority(kind = '') {
   if (String(kind).startsWith('status:')) return 6;
-  if (kind === 'evaded') return 5;
+  if (kind === 'evaded' || kind === 'missed') return 5; // a dodge or evade draws as Missed (floater policy, 2026-11-07)
   if (kind === 'immune') return 4;
   if (kind === 'blocked') return 2;
   if (kind === 'resisted' || kind === 'wardResisted') return 1;
