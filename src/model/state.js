@@ -637,28 +637,9 @@ function resolveDerivedReceipt(run, registries, ctx) {
   return receipt;
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
-  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
-  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
-
-  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
-
-  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
-
-  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
-  if (existingIsCurrent && run.derivedStatRuleSnapshot
-    && run.maxHp !== undefined && run.hp !== undefined
-    && run.maxMana !== undefined && run.mana !== undefined
-    && run.maxStamina !== undefined && run.stamina !== undefined
-    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    return run;
-  }
-
-  const receipt = resolveDerivedReceipt(run, registries, ctx);
+/** Phase: write the derived maxima onto the run and carry (or reset) the current pools. */
+function applyDerivedPools(run, receipt, ctx, hpEquipmentBonus, equipmentDeficitsAbsent, preserveDeficits) {
+  const { effectiveAttributes, blightStaminaPenalty, classDef } = ctx;
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
   const mana = deriveStat(rules, 'mana', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
@@ -727,6 +708,31 @@ export function initializeRunDerivedStats(run, registries, {
       stamina: Math.max(0, run.maxStamina - run.stamina),
     };
   }
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
+
+  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
+
+  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    return run;
+  }
+
+  const receipt = resolveDerivedReceipt(run, registries, ctx);
+  applyDerivedPools(run, receipt, ctx, hpEquipmentBonus, equipmentDeficitsAbsent, preserveDeficits);
   return run;
 }
 
