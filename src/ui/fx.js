@@ -1076,7 +1076,36 @@ export function groupBeats(events) {
     }
   }
   push();
-  return beats;
+  return reactionAfterResult(beats);
+}
+
+// Owner 2026-11-07, an enemy attack the player can react to: the reaction prompt and its calculations come before
+// hit/miss, then the Hit/Miss word shows, then the reaction's animation, then the damage. The engine emits the chosen
+// reaction card's receipts first (cardPlayed ... cardResolved) and the attack's receipts after, so the presentation
+// splits the attack beat at its first accuracy receipt: [move + Hit/Miss word] [the reaction card's beats] [the rest,
+// already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
+const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+  || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
+const RESULT_TYPES = new Set(['attackHit', 'attackMissed', 'attackEvaded', 'combatAvoidanceResolved']);
+const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');
+function reactionAfterResult(beats) {
+  const out = [];
+  for (let i = 0; i < beats.length; i++) {
+    const first = beats[i];
+    if (!(reactionCardBeat(first) && first.events.some(e => e.type === 'combatReactionChosen'))) { out.push(first); continue; }
+    let j = i;
+    while (beats[j + 1] && reactionCardBeat(beats[j + 1])) j++;
+    const attack = beats[j + 1];
+    const at = attack && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(e => RESULT_TYPES.has(e.type)) : -1;
+    if (at < 0) { out.push(...beats.slice(i, j + 1)); i = j; continue; }
+    const result = attack.events.slice(0, at + 1), rest = attack.events.slice(at + 1);
+    const lead = (attack.lead || []).filter(e => result.includes(e));
+    const later = rest.length > 0 || result.some(isDodge);
+    out.push({ ...attack, events: result, ...(lead.length ? { lead } : { lead: undefined }), ...(later ? { dodgeLater: true } : {}) }, ...beats.slice(i, j + 1));
+    if (later) out.push({ actorId: attack.actorId, banner: null, kind: attack.kind, events: rest, prepared: true, resultSaid: true, carried: result });
+    i = j + 1;
+  }
+  return out;
 }
 
 /**
@@ -1271,6 +1300,7 @@ export function playTimeline(events, ctx, done) {
     // Accuracy is known before the target reacts; the defense/effect outcome
     // belongs after that animation, with the numeric result.
     onResult: beat => {
+      if (beat.resultSaid) return; // the Hit/Miss word already played ahead of the reaction beat (reactionAfterResult)
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
@@ -1299,10 +1329,12 @@ export function playTimeline(events, ctx, done) {
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
         for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
+        for (const event of beat.carried || []) {
+          if (isDodge(event)) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+        }
         for (const event of beat.events) {
-          if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-            || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
-            visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+          if (isDodge(event)) {
+            if (!beat.dodgeLater) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
             continue;
           }
           if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
