@@ -29,3 +29,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Every status effect on a combatant renders as the same small round icon badge with a stack count, in the same row as Automatic Sweep, instead of differing styles/places.
 - Questions: "batches" read as "badges"; circled clock status read as the one not matching today.
 - Link: —
+
+## #5 Enemy Block to the left of the health bar
+- Status: pending
+- Asked: 2026-11-07 — "move the block to the left of the health bar for enemies" (screenshot: Block shield "7" sits below-left of the bar, under its left end; red box marks the spot at the bar's left end)
+- Means: On enemy mini HUDs, the Block badge moves from under the bar to directly left of the HP bar, in line with it. Player HUD and the rest of the layout (#2) stay.
+- Questions: none
+- Link: —
