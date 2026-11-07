@@ -65,5 +65,17 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
   - Suggested school → save: frost → Fortitude (slow/chill); fire → Reflex (Burn, dodge the flame); lightning → Reflex (shock/stun); force → Fortitude (knock-back/stagger); earth → Fortitude (root/crush); decay → Fortitude (poison/wither); illusion → Will; divine → Will (fear/smite/sanctify); alteration → Will for mind-shape, Fortitude for body-shape (card-level override).
   - Martial: Smash/stagger/bleed/knockdown → Fortitude; Sweep/trip/net/entangle/disarm → Reflex; Intimidate/taunt/shout/feint → Will.
 - Update 2026-11-07 — "per haps I should make the resistance be related to the card huh?": the save type (Will/Fortitude/Reflex) is authored per card, not fixed by school. School becomes only the default/suggested value (table above) when a card sets none.
-- Questions: negate vs halve on save; stats as scores or modifiers; replace Damp "shock contest"? (asked in chat)
+- Owner answers 2026-11-07:
+  - Save result: most statuses negate on a save; some cards halve, or negate only some of their effects. A card can inflict several statuses, each with its own save (think D&D).
+  - Stats: use the stat values as-is (stats are already modifiers, small numbers). Problem to fix: enemy levels are far too high (see #9).
+  - Damp: no caster advantage; the *target* rolls its save at disadvantage while Damp (replaces the Damp "shock contest" idea).
+  - Save not required on every card: some cards just deal damage. Spell attack/hit = 10 + max(INT, WIS); damage = base damage + max(INT, WIS) + 1d4 × rank. Status DC (new formula, supersedes the earlier one) = 10 + max(INT, WIS) + rank + level.
+- Questions: "level" in the DC = caster (player) level? Does Damp's disadvantage apply to every save or only Reflex?
+- Link: —
+
+## #9 Enemy levels 1-5 with the player's stat budget
+- Status: pending
+- Asked: 2026-11-07 — "the problem is that enemies levels are way too high and need to be reduced to 1 throuh 5 level with reasonable stats per level. if a player starts with 8 points (1 in each stat, and 3 other points applied in other stats, the enemies shoudl follow that rule too"
+- Means: Rescale all enemy levels to 1-5. Enemy stats follow the player's budget: 1 in each of 5 stats + 3 free points at level 1 (8 total), growing by the player's per-level rule, so saves/DCs (#8) stay sane.
+- Questions: How many stat points per level above 1? Which 5 stats (INT, WIS, CON, DEX, STR?)
 - Link: —
