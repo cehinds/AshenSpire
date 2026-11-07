@@ -17,3 +17,8 @@ Archive of rationale, dates and superseded values moved out of SPEC.md by the co
   - "the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the faucet) is gone with the purse."
 - Cinders: "(owner, 2026-09-24). A run opens with `balance.startingCinders` **20** cinders (0 before)." The retired multiplier: owner, 2026-09-24: "I hate the 20x cinder, that needs to die". The owner's exported `progression.rewardMultiplier: 20`.
 
+### From §5.3 Enemy roster
+
+- "Weaknesses (owner, 2026-10-31): every enemy in this roster and the later acts has authored weaknesses".
+- "the seat the act-1 rows became" for `encounters/weald.js` (history of the encounter table move).
+

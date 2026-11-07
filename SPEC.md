@@ -1373,9 +1373,9 @@ Rogue ships as a complete fourth class, not a selectable shell:
 
 ### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
-The base reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards as they unlock (53 in all). This table is the M1 set.
+The Reaver reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards as they unlock (53 in all). The table is the M1 set.
 
-Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine id `energy` is an alias). `+` column = upgrade delta.
+Rarity: S = starter, C = common, U = uncommon, R = rare. Cost is in Stamina (engine id `energy` is an alias). The last column is the upgrade delta.
 
 | Card | R | Cost | Type | Text | Upgrade |
 |---|---|---|---|---|---|
@@ -1404,13 +1404,20 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
 | Warrior's Vow | R | 0 | Skill | Innate. Enter a Stance of your choice. Exhaust. | draw 1 |
 
-Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (status, unplayable, Ethereal), **Guilt** (curse, unplayable, at turn end in hand: lose 1 HP), **Slimed** (status, cost 1, Exhaust) — enemies and events inject these.
+Colorless/curse/status M1 minimum (enemies and events inject these):
+
+| Card | Kind | Rules |
+|---|---|---|
+| Wound | status | Unplayable. |
+| Dazed | status | Unplayable, Ethereal. |
+| Guilt | curse | Unplayable; at turn end in hand: lose 1 HP. |
+| Slimed | status | Cost 1, Exhaust. |
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Weaknesses (owner, 2026-10-31): every enemy in this roster and the later acts has authored weaknesses (SPEC §4.7, *Enemy weaknesses in Core*): hounds and beasts are weak to fire and blunt, spirits and wisps to sacred and magic, armoured soldiers and knights to blunt, lightning and blunt staggers, undead to sacred and burn ticks, insects and vermin to frost and slashing, constructs to blunt and lightning (Stamina loss), casters to piercing and Paralysis stacks, and each boss to one themed trigger.
+Act 1 enemies, elite and boss. Encounters roll from the weighted table in `src/content/encounters/weald.js` (the seat the act-1 rows became, §13.2). Act 2/3 rosters are designed in M3; their signature mechanics are listed in §10 so engine hooks exist: the Grafted-King-inspired phase boss, and the final Malenia-inspired boss that heals 3 per hit landed on you and inflicts Bleed on the *player*.
 
-Basics (encounters roll from the weighted table in `src/content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
+**Basics**
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
@@ -1420,17 +1427,33 @@ Basics (encounters roll from the weighted table in `src/content/encounters/weald
 | Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Wyrm Aspirant** (HP 82–86, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
-Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
-- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
-- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
-- Staggering him cancels a Held Blade in progress (satisfying counterplay).
+**Boss — The Fell Warden** (Margit-inspired, HP 120, Poise 30)
+
+- Phase 1 (>50% HP): pattern cycle with a signature **delay** mechanic.
+  - *Held Blade* shows "Attack 14 — Delayed". On its turn it does nothing (gains 8 Block); the **following** turn it attacks for 14 regardless of newly rolled intents.
+  - Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
+- Phase 2 (≤50% HP, `phases` trigger, once): roars, applying 1 Frail + 1 Weak to the player; gains +2 Strength; unlocks *Twin Daggers 3×4*.
+- Staggering him cancels a Held Blade in progress.
 - Reward: 225–270 cinders, a choice of boss relics (§6), card reward with rare upgrade odds boosted.
 
-(Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
+**Authored weaknesses** (SPEC §4.7, *Enemy weaknesses in Core*): every enemy here and in later acts has them.
+
+| Enemy kind | Weak to |
+|---|---|
+| Hounds, beasts | fire, blunt |
+| Spirits, wisps | sacred, magic |
+| Armoured soldiers, knights | blunt (lightning and blunt staggers) |
+| Undead | sacred, burn ticks |
+| Insects, vermin | frost, slashing |
+| Constructs | blunt, lightning (Stamina loss) |
+| Casters | piercing, Paralysis stacks |
+| Each boss | one themed trigger |
 
 ### 5.4 Relics (M2 set of 16; 74 ship in all: 64 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
+
+Relic behavior uses the trigger DSL (§3.6), the same declarative form as powers, statuses and boss phases.
 
 | Relic | Rarity | Effect |
 |---|---|---|
@@ -1451,8 +1474,6 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 | Wyrm Heart | rare | +1 Stamina each turn. Shrines and chapels no longer offer Rest (`restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
 | Ash of Remembrance | boss | **+1 Stamina each turn; at combat start, gain 1 Madness.** |
-
-Relic behavior uses the trigger DSL (§3.6) — the same declarative form as powers, statuses, and boss phases.
 
 ### 5.5 Flasks (potions)
 
