@@ -42,7 +42,6 @@ import {
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
   CARD_RARITIES,
-  SIGIL_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems } from './tree.js';
@@ -102,94 +101,9 @@ import {
 import { relicPropertyTagIndex, propertyRuleProblems, usesScript } from './validate/propertyRules.js';
 import { deckRulesTableProblems as deckRulesTableProblems_ } from './validate/deckRulesTable.js';
 export const deckRulesTableProblems = deckRulesTableProblems_;
+import { validateSigils } from './validate/sigilRows.js';
+import { KNOWN_BUNDLE_KEYS } from './validate/bundleKeys.js';
 
-const KNOWN_BUNDLE_KEYS = new Set([
-  'proposalStatusRules',
-  ...REGISTRY_TYPES,
-  'version',
-  'contentVersion',
-  'balance',
-  'shops', // SPEC §14.2: the shop kinds and their offerings (content/shops.js)
-  'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
-  'consumables', // SPEC §14.3: skill books and revive tokens (content/consumables.js)
-  'companions', // SPEC §14.3: temporary companions (content/companions.js)
-  'enemyMoves', // Scoped moves participate in the same canonical tag join.
-  'mapConfigs',
-  'scripts',
-  'equipment',
-  'unlocks',
-  'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
-  'classMasteryVersion',
-  'legacyProgression',
-  'progressionModuleOwnership',
-  'breakMeterVersion', // configured bundle's scoped card faces, never stamped onto old runs
-  'classMastery',
-  'classSkillFeats',
-  'sfx',
-  'music',
-  'tagDomains', // what a tag can be about — the domain lookup
-  'tags', // THE tag registry — one vocabulary for every carrier (#61)
-  'tagFamilies', // what can be tagged: its collection, and how its id is keyed
-  'tagFamilyDomains', // family x domain — which words each family may carry
-  'tagging', // family, scope, objectId, tagId — the only home a tag is written
-  'propertyRules', // what each `property` tag confers (content/propertyRules.js)
-  // THE TREE the five tag tables and the property rules are views of
-  // (content/source/nodes.csv and companions; treeProblems checks it).
-  'nodes', // id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
-  'nodeRelations', // sourceId, relation, targetId, precedence
-  'familyNodes', // family × subtree root — who may carry what
-  'nodeTerms', // nodeId → playerTermId, tooltipTermId, template
-  'nodeVariables', // the variables a conferring node exposes
-  'variableBindings', // what each variable reads, per scope — balance paths, never numbers
-  'nodeEffects', // { [nodeId]: { passives?, triggers? } } naming variables
-  'attributeRules',
-  'derivedStatRules',
-  'characterCreation',
-  'eventHistoryRequirements', // quest steps (E12): event-level history gates
-  // Plan phase 10a: quest chains, who speaks each step, and the rows they name.
-  'eventChoiceIds', // the durable choice ids a completion ref names
-  'questChains', // { [questId]: { steps, completes } }
-  'eventSpeakers', // { [eventId]: speakerId }
-  'speakers', // content/source/speakers.csv
-]);
-
-/**
- * computeTokenBindings(effects) → [{ token, index, field, op, literal }]
- *
- * Deterministic binding of template tokens to opcode values, in effect order.
- * The first occurrence of a token base binds as `{base}`, repeats as
- * `{base.2}`, `{base.3}` ... (SPEC §3.13). `hits` on a damage op binds as
- * `{hits}` (then `{hits.2}` ...). Shared by validation, previewCard, and the UI.
- */
-/**
- * relicTokens(def) → { token: number }
- *
- * A relic's template says `{block}` and its data says `do: [{ op: 'block',
- * amount: 2 }]`. The token IS the opcode and the value is the field the opcode
- * carries, so the number a player reads is DERIVED from the entry that produces
- * it — never a second copy typed into the prose (Law 1 clause 2, which calls a
- * restatement a defect "even in tooltip prose").
- *
- * EldenSpire#38. Three call sites rendered relic text as
- * `textTemplate.replace(/[{}]/g, '')` — strip the braces, ship the key. Sunna
- * caught it on the ugliest one, "also deals poiseDamage Poise damage", and it
- * turned out to be 51 tokens across 46 token-carrying relics of 54: "gain block Block", "heal heal
- * HP", "draw draw extra card". The camelCase one was visible; the rest read as
- * clumsy English and hid in plain sight. EVERY relic number in the game was
- * invisible to the player.
- *
- * WHAT 51/51 IS AND IS NOT (Vira, #41): it is a fact about today's 54 entries,
- * not about this function. `starstoneShard` already ships
- * `stacks: { f: 'add', args: [1] }` — a formula, not a number — and any template
- * binding it renders `{token}` unresolved. That is the honest degrade and not a
- * silent one, but "every relic number resolves" is a census, and a census is not
- * an invariant. The invariant belongs with validateRelicTemplate, which is the
- * other decider of this same fact and should own it.
- *
- * Numbers only, and deliberately: a token bound to a non-number would render
- * "[object Object]", so an unresolved token is left as `{token}` for the caller
- * to decide about rather than papered over. Bad data stays visible (clause 5).
- */
 /**
  * The template-token grammar, in ONE place. `{block}`, `{bleed}`, `{damage.2}`.
  *
@@ -2044,61 +1958,3 @@ function collectContentProblems(bundle, errors = [], options = {}) {
 // ---------------------------------------------------------------------------
 // SFX recipes (#46) — shape via the layer schemas, meaning via the ramp checks
 // ---------------------------------------------------------------------------
-
-const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb']);
-
-// WHAT A SIGIL DOES IS ITS TAGGING ROW (SPEC §14.3, §14.4; Codex on #1376). A
-// sigil authors no `triggers` or `modifiers`: its `family = sigil` row in
-// tagging.csv names a leaf under the `sigil` branch of `property`, whose rule
-// is in nodeEffects.json, and stampTags derives its `propertyTags`. A tag that
-// is the branch itself, sits elsewhere in the tree, or has no rule is refused.
-function validateSigils(rows, vctx, bundle = {}) {
-  const { err } = vctx;
-  // SPEC §15.4's numbers: how many legendaries a run may attune (a whole
-  // number from 0) and each pool's drop chance (a whole percent, 0-100).
-  const numbers = isPlainObject(bundle.balance) && isPlainObject(bundle.balance.sigils) ? bundle.balance.sigils : null;
-  if (numbers) {
-    if (!(Number.isSafeInteger(numbers.attuneMax) && numbers.attuneMax >= 0)) err('balance.sigils.attuneMax', `must be a whole number from 0, got ${describe(numbers.attuneMax)}`);
-    const chances = numbers.dropChancePct;
-    if (!isPlainObject(chances)) err('balance.sigils.dropChancePct', `must be { normal, elite, boss, treasure }, got ${describe(chances)}`);
-    else for (const pool of ['normal', 'elite', 'boss', 'treasure']) {
-      const pct = chances[pool];
-      if (!(Number.isSafeInteger(pct) && pct >= 0 && pct <= 100)) err(`balance.sigils.dropChancePct.${pool}`, `must be a whole percent from 0 to 100, got ${describe(pct)}`);
-    }
-  }
-  if (!Array.isArray(rows)) { err('sigils', `must be an array of sigil rows, got ${describe(rows)}`); return; }
-  const tagging = Array.isArray(bundle.tagging) ? bundle.tagging : [];
-  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : []).filter((tag) => tag && tag.domain === 'property').map((tag) => tag.id));
-  const nodes = new Map((Array.isArray(bundle.nodes) ? bundle.nodes : []).map((node) => [node.id, node]));
-  const effects = isPlainObject(bundle.nodeEffects) ? bundle.nodeEffects : {};
-  const underSigil = (id) => {
-    for (let at = nodes.get(id); at; at = nodes.get(at.parentId)) if (at.parentId === 'sigil') return true;
-    return false;
-  };
-  const seen = new Set();
-  rows.forEach((row, index) => {
-    if (!isPlainObject(row) || typeof row.id !== 'string' || !row.id) { err(`sigils[${index}]`, 'must be a sigil { id, name, rarity, cost, blurb }'); return; }
-    const at = `sigils.${row.id}`;
-    if (seen.has(row.id)) err(at, 'is listed twice');
-    seen.add(row.id);
-    for (const key of ['triggers', 'modifiers']) {
-      if (row[key] !== undefined) err(`${at}.${key}`, 'is not authored on a sigil (Codex on #1376): what a sigil does is its property row in tagging.csv, a leaf under the sigil branch with its rule in nodeEffects.json');
-    }
-    for (const key of Object.keys(row)) if (!SIGIL_FIELDS.has(key) && key !== 'triggers' && key !== 'modifiers') err(`${at}.${key}`, `is not a sigil field (fields: ${[...SIGIL_FIELDS].join(', ')})`);
-    if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
-    if (typeof row.blurb !== 'string' || !row.blurb) err(`${at}.blurb`, 'must be a non-empty string (the sentence the shelf shows)');
-    if (!SIGIL_RARITIES.includes(row.rarity)) err(`${at}.rarity`, `must be one of ${SIGIL_RARITIES.join(', ')}, got ${describe(row.rarity)}`);
-    // A legendary (SPEC §15.4) is `{ id, name, rarity, blurb }`: attuned, never
-    // sold, so it has no price. Every other sigil is sold and has one.
-    if (row.rarity === 'legendary') {
-      if (row.cost !== undefined) err(`${at}.cost`, 'is not authored on a legendary sigil (SPEC §15.4): a legendary is never shop stock, and a drop is its only source');
-    } else if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
-    const props = tagging.filter((tag) => tag && tag.family === 'sigil' && tag.objectId === row.id && propertyIds.has(tag.tagId)).map((tag) => tag.tagId);
-    if (!props.length) err(at, 'derives no property tag: give it a `sigil` row in tagging.csv naming a leaf under the sigil branch of property');
-    else if (row.rarity === 'legendary' && props.length !== 1) err(at, `is legendary and must derive exactly one property tag from tagging.csv, got ${props.length} (${props.join(', ')})`);
-    for (const tag of props) {
-      if (!underSigil(tag)) err(at, `carries property '${tag}', which is not a leaf under the sigil branch of property`);
-      else if (!Object.hasOwn(effects, tag)) err(at, `carries property '${tag}', which has no rule in nodeEffects.json`);
-    }
-  });
-}

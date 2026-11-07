@@ -60,6 +60,35 @@ export function relicModifierTokenBindings(def) {
   return out;
 }
 
+/**
+ * relicTokens(def) → { token: number }
+ *
+ * A relic's template says `{block}` and its data says `do: [{ op: 'block',
+ * amount: 2 }]`. The token IS the opcode and the value is the field the opcode
+ * carries, so the number a player reads is DERIVED from the entry that produces
+ * it — never a second copy typed into the prose (Law 1 clause 2, which calls a
+ * restatement a defect "even in tooltip prose").
+ *
+ * EldenSpire#38. Three call sites rendered relic text as
+ * `textTemplate.replace(/[{}]/g, '')` — strip the braces, ship the key. Sunna
+ * caught it on the ugliest one, "also deals poiseDamage Poise damage", and it
+ * turned out to be 51 tokens across 46 token-carrying relics of 54: "gain block Block", "heal heal
+ * HP", "draw draw extra card". The camelCase one was visible; the rest read as
+ * clumsy English and hid in plain sight. EVERY relic number in the game was
+ * invisible to the player.
+ *
+ * WHAT 51/51 IS AND IS NOT (Vira, #41): it is a fact about today's 54 entries,
+ * not about this function. `starstoneShard` already ships
+ * `stacks: { f: 'add', args: [1] }` — a formula, not a number — and any template
+ * binding it renders `{token}` unresolved. That is the honest degrade and not a
+ * silent one, but "every relic number resolves" is a census, and a census is not
+ * an invariant. The invariant belongs with validateRelicTemplate, which is the
+ * other decider of this same fact and should own it.
+ *
+ * Numbers only, and deliberately: a token bound to a non-number would render
+ * "[object Object]", so an unresolved token is left as `{token}` for the caller
+ * to decide about rather than papered over. Bad data stays visible (clause 5).
+ */
 export function relicTokens(def, rules = [], registries = null) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
@@ -100,6 +129,14 @@ export function relicTokens(def, rules = [], registries = null) {
   return tokens;
 }
 
+/**
+ * computeTokenBindings(effects) → [{ token, index, field, op, literal }]
+ *
+ * Deterministic binding of template tokens to opcode values, in effect order.
+ * The first occurrence of a token base binds as `{base}`, repeats as
+ * `{base.2}`, `{base.3}` ... (SPEC §3.13). `hits` on a damage op binds as
+ * `{hits}` (then `{hits.2}` ...). Shared by validation, previewCard, and the UI.
+ */
 export function computeTokenBindings(effects) {
   const counts = {};
   const out = [];
