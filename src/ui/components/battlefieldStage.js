@@ -1130,7 +1130,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Position the player's visible reading widget from the final art before
     // reserving target space. Its hit-testable health row and ability badges
     // must not split the independent frame plate's complete tap area.
-    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    // The status tray shares the HUD's badge row, so it fits the width the row leaves it, at the badges' own size.
+    for (const frame of frames) {
+      const tray = frame.querySelector('.statuses');
+      if (!tray) continue;
+      const row = tray.closest('.combat-health-badges');
+      fitIconTray(tray, row ? tray.getBoundingClientRect().width : nameWidth, { iconPx: row ? row.getBoundingClientRect().height : 0 });
+    }
     settledTargets = [];
     settledTargetCores = [];
     placePlayerHud();

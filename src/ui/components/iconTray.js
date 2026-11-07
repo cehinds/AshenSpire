@@ -26,9 +26,12 @@ import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
 import { layoutMetrics } from '../layoutMetrics.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 
 const trays = new WeakMap();
 const overflowActions = new WeakMap();
+// The icon size a host asked for, kept across a refit that is not handed one (refreshIconTray, a rebuilt tray's children).
+const iconSizes = new WeakMap();
 // Each observed tray's ResizeObserver, so a board that throws its tray away
 // (co-op, per snapshot) can stop it with unobserveIconTray (#1436 review).
 const observed = new WeakMap();
@@ -159,8 +162,12 @@ function trayMetrics() {
   return { zoom, rem };
 }
 
-export function fitIconTray(row, width) {
+// `iconPx` (viewport px, optional): the icon size the host's own stylesheet draws, for a tray that shares a row with
+// badges of a fixed size (the combat HUD's badge row). Capacity is planned from that size and the tray's custom
+// property carries it; without it the plan's size is used.
+export function fitIconTray(row, width, { iconPx = iconSizes.get(row) || 0 } = {}) {
   if (!row) return;
+  if (iconPx > 0) iconSizes.set(row, iconPx);
   let state = trays.get(row);
   if (!state) {
     const items = [...row.children];
@@ -201,7 +208,8 @@ export function fitIconTray(row, width) {
   // `width` arrives in viewport px; the tray is laid out in local (pre-zoom) px.
   // A reference rem is at least 16 physical px, as in the hand and footer plans.
   const { zoom, rem } = trayMetrics();
-  const plan = planIconTray({ count: items.length, width: width / zoom, rem });
+  const plan = planIconTray({ count: items.length, width: width / zoom, rem },
+    iconPx > 0 ? { ...wireframeUi.iconTray, iconRem: iconPx / zoom / rem } : wireframeUi.iconTray);
   row.style.setProperty('--icon-tray-size', `${plan.size}px`);
   row.style.setProperty('--icon-tray-gap', `${plan.gap}px`);
   if (state.count === plan.shown) return;

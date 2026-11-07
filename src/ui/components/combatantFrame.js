@@ -104,7 +104,10 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   if (meters !== undefined) {
     const host = rack || widget, live = find(host, isMeters) || (rack ? find(widget, isMeters) : null);
     const anchor = rack ? null : (() => { const nameNode = find(widget, isName); return nameNode ? nameNode.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling); })();
-    swaps += reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
+    const changedMeters = reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
+    swaps += changedMeters;
+    // The status tray lives in the meters' badge row: a status gained or lost must not fit from its old items.
+    if (changedMeters) for (const tray of (live && live.isConnected !== false ? live : meters)?.querySelectorAll?.('.statuses') || []) refreshIconTray(tray);
   }
   if (statuses !== undefined) {
     // The status tray stays; its icons are written in place and only a status gained or lost adds or removes one.
