@@ -3,18 +3,22 @@
 Single-player browser roguelike deckbuilder, mechanically faithful to Slay the Spire, thematically inspired by (legally distinct from) Elden Ring. Companions: `DEVELOPER.md`, `CREDITS.md`.
 
 - Numbers are **initial balance targets** (M3 pass may move them); structures (formulas, orderings, state shapes) are contractual.
-- Two contracts supersede conflicting older prose here:
-  - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned): stance discounts, ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.
+- Two contracts supersede conflicting older prose:
+  - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned) supersedes conflicting older prose in this specification and its combat contracts: revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.
     - Unrelated WardToBlock and reaction rules stay in force.
     - Implemented in a separate PR (CONTRIBUTING ground rule 1).
-  - [combat-clarity-2026-10-20](docs/design/combat-clarity-2026-10-20.md): Precision, reaction costs, per-hit Counters, combat feedback, progression presentation. Implementation tracked separately.
+  - [combat-clarity-2026-10-20](docs/design/combat-clarity-2026-10-20.md) supersedes conflicting earlier rules (in any document) for: Precision, reaction costs, per-hit Counters, combat feedback, progression presentation. Implementation tracked separately.
 
 > **Known debt: vocabulary.** Largely pre-scrub names: runes/Vagabond/Astrologer/Prophet/Erdtree
-> = cinders/Reaver/Starseer/Herald/Goldbough as shipped. [docs/IP-SCRUB.md](docs/IP-SCRUB.md) is the authoritative old→new map. No broad rename (owner, 2026-09-27). Audited sections use canonical names throughout. Old-name count: `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
+> = cinders/Reaver/Starseer/Herald/Goldbough as shipped.
+> - [docs/IP-SCRUB.md](docs/IP-SCRUB.md) is the authoritative old→new map; every name in it is a shipped fact.
+> - No broad rename (owner, 2026-09-27); read historical prose through that map rather than sweeping it piecemeal.
+> - When an audited section describes current shipped definitions, it uses the canonical names consistently throughout that section and records the reconciliation in its audit.
+> - Old-name count: `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
 ### Scope status
 
-**planned** = contract written before its code (CONTRIBUTING rule 1). **built** = features ship; "Left to do" is not exhaustive. Verdicts for §12, §14–§15: [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); release criteria: [docs/FINISH.md](docs/FINISH.md). Update a row in the PR that changes it.
+**planned** = contract written before its code (CONTRIBUTING rule 1). **built** = features ship; "Left to do" is not exhaustive; a gap found later is a correction to this table, not a contradiction of it. Verdicts for §12, §14–§15: [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); release criteria: [docs/FINISH.md](docs/FINISH.md). Update a row in the PR that changes it.
 
 | § | Area | Status | Left to do |
 |---|---|---|---|
@@ -88,7 +92,7 @@ These override everything else in the spec.
 3. Planned sources:
    - **game-icons.net** (CC BY 3.0): card art, relic, status, intent icons (primary; ~4000 icons).
    - **Kenney.nl** (CC0): UI nine-slices, buttons, panel borders.
-   - **OpenGameArt.org** (CC0/CC-BY only): combat backgrounds, enemy portraits.
+   - **OpenGameArt.org** (CC0/CC-BY only): combat backgrounds, enemy portraits if suitable ones exist.
    - **Google Fonts** (OFL): display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
 4. Every image is referenced through `src/ui/assets.js` (id → URL/inline-SVG map); game code never hardcodes an asset path.
    - **Not yet true until §2.4 lands:** CSS backdrops in `styles/` and several UI modules (e.g. `src/ui/components/scenePainting.js`, `src/ui/components/engravedIcon.js`, `src/ui/cardArtwork.js`, `src/ui/defaultCardArtwork.js`) still build `assets/…` paths directly.

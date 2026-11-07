@@ -11,7 +11,7 @@ Archive of material moved out of SPEC.md. Not rules.
 ## Scope status — evidence
 Checked 2026-09-27 against `dev` @ `7f78c5d0` (build `0.7.1.625`). Rows 14 and 13.4p–r re-checked 2026-10-10 against `dev` @ `73a1342aa` (build `0.7.1.1262`); other rows as of 2026-09-27.
 
-- top: parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1); cutover not performed ([framework-cutover-report](framework-cutover-report.md)).
+- top: parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1); cutover not performed ([framework-cutover-report](../framework-cutover-report.md)).
 - 1: 4 classes, 3 seats climbed as 3 tiers, profile and slots.
 - 2: attribution `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; e.g. `styles/combat.css`, `styles/ui.css`) bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*).
 - 3: run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors.
