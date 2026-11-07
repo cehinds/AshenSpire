@@ -1,10 +1,15 @@
-// tests/layering.test.mjs — the rules layer imports nothing from the browser or the UI.
+// tests/layering.test.mjs — two layering checks.
 //
-// Owner decision 2026-11-04 (Unity-port shape): game rules in src/engine/,
-// src/model/ and engine/ stay headless. DEVELOPER.md, "The four layers".
-// Fails with file:line on (a) an import that resolves into src/ui/ or src/main.js,
-// (b) a browser global used outside comments and string literals.
-// globalThis.crypto is allowed (injectable default, not a DOM dependency).
+// 1. Headless rules layer (owner decision 2026-11-04, Unity-port shape): game rules in
+//    src/engine/, src/model/ and engine/ stay headless. DEVELOPER.md, "The four layers".
+//    Fails with file:line on (a) an import that resolves into src/ui/ or src/main.js,
+//    (b) a browser global used outside comments and string literals.
+//    globalThis.crypto is allowed (injectable default, not a DOM dependency).
+// 2. Layer rank (docs/ARCHITECTURE-MAP.md, "Layer rank"): a relative import must point
+//    to the same or a lower rank, and src/framework imports no ui. Inversions that exist
+//    today are listed in KNOWN_INVERSIONS; a new one fails, and so does a listed one that
+//    no longer occurs (delete it). The list only shrinks. *.generated.js files are skipped,
+//    as in check 1.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +23,73 @@ const BROWSER_GLOBALS = ['document', 'window', 'localStorage', 'sessionStorage',
 
 // A future exception is a visible edit here: entries are 'path/to/file.js' (repo-relative, posix).
 const ALLOW = [];
+
+// Layer rank, lowest first. Longest matching prefix wins. src/model and src/framework are peers.
+const RANKS = [
+  ['src/config', 0],
+  ['src/content', 1],
+  ['engine', 2],
+  ['src/model', 3],
+  ['src/framework', 3],
+  ['src/engine', 4],
+  ['src/services', 4],
+];
+const TOP_RANK = 5; // src/ui, src/main.js, src/dev and any other src/* file
+const RANK_DIRS = RANKS.map(([d]) => d);
+
+export function rankOf(rel) {
+  let best = null;
+  for (const [d, r] of RANKS) {
+    if ((rel === d || rel.startsWith(`${d}/`)) && (!best || d.length > best[0].length)) best = [d, r];
+  }
+  if (best) return best[1];
+  return rel.startsWith('src/') ? TOP_RANK : null;
+}
+
+// Every rank inversion that exists today, as 'importer -> target' (repo-relative, posix; target as
+// resolved). Each group names the review box that removes it. Delete an entry when it is fixed.
+const KNOWN_INVERSIONS = [
+  // H2: the root kernel imports the model; bindings.mjs back-edge removed by its own box, formulas later
+  'engine/runtime/bindings.mjs -> src/model/mechanicsKernel.js',
+  'engine/runtime/evaluator.mjs -> src/model/formulas.js',
+  // M6: content imports model helpers; the projections (combatExpansionCards, traitProjection, equipment) move into src/model, the rest move down
+  'src/content/combatExpansionCards.js -> src/model/combatRanges.js',
+  'src/content/combatExpansionCards.js -> src/model/spellDefense.js',
+  'src/content/equipment.js -> src/model/combatRanges.js',
+  'src/content/generated/gameProfiles.js -> src/model/catalogJson.js',
+  'src/content/generated/tagging.js -> src/model/catalogJson.js',
+  'src/content/index.js -> src/model/enemyMoveSources.js',
+  'src/content/index.js -> src/model/progressionContent.js',
+  'src/content/music.js -> src/model/schemas.js',
+  'src/content/progression/cards.js -> src/model/combatCardProfile.js',
+  'src/content/progression/feats.js -> src/model/classSkillFeatDescription.js',
+  'src/content/progression/lessons.js -> src/model/combatCardProfile.js',
+  'src/content/traitProjection.js -> src/model/cardClassification.js',
+  'src/content/traitProjection.js -> src/model/combatCardProfile.js',
+  // H2: framework optionDecision imports ui components; the ui side must import the framework instead
+  'src/framework/optionDecision.js -> src/ui/components/holdconfirm.js',
+  'src/framework/optionDecision.js -> src/ui/components/optionDecision.js',
+  // H2: framework statusSemantics imports src/engine statuses; move the status data below the framework
+  'src/framework/statusSemantics.js -> src/engine/combatStatusControl.js',
+  'src/framework/statusSemantics.js -> src/engine/statuses.js',
+  // H1: d20Chance/rng/stance/cardZones/enemyBurdens/elementRules/combatCardTraitMath move to src/model
+  'src/model/actionCosts.js -> src/engine/combatRounds/stance.js',
+  'src/model/attributePointPreview.js -> src/engine/gameProfileCombat.js',
+  'src/model/attributePointPreview.js -> src/engine/stanceHit.js',
+  'src/model/bookBonusRewards.js -> src/engine/rng.js',
+  'src/model/cardFaceProjection.js -> src/engine/d20Chance.js',
+  'src/model/cardFaceText.js -> src/engine/d20Chance.js',
+  'src/model/cardUpgradeSteps.js -> src/engine/rng.js',
+  'src/model/combatSnapshot.js -> src/engine/cardZones.js',
+  'src/model/combatSnapshot.js -> src/engine/enemyBurdens.js',
+  'src/model/equipmentCard.js -> src/engine/elementRules.js',
+  'src/model/formulas.js -> src/engine/combatCardTraitMath.js',
+  'src/model/gameProfileRewards.js -> src/engine/rng.js',
+  'src/model/playingCard.js -> src/engine/d20Chance.js',
+  'src/model/proposalStatusRules.js -> src/engine/d20Chance.js',
+  'src/model/rollReceipts.js -> src/engine/d20Chance.js',
+  'src/model/validate.js -> src/engine/cardZones.js',
+];
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -134,6 +206,41 @@ export function check(file, src) {
   return bad;
 }
 
+// Returns [{ importer, target, line }] for relative imports that break the rank rule.
+export function rankCheck(file, src) {
+  const rel = relative(ROOT, file).split(sep).join('/');
+  const from = rankOf(rel);
+  if (from === null || from >= TOP_RANK) return [];
+  const { noComments, code } = scan(src);
+  const out = [];
+  const spec = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)(['"`])([^'"`\n]+)\1/g;
+  for (let m; (m = spec.exec(noComments));) {
+    if (code[m.index] !== noComments[m.index] || !m[2].startsWith('.')) continue;
+    const target = relative(ROOT, resolve(dirname(file), m[2])).split(sep).join('/');
+    const to = rankOf(target);
+    if (to === null) continue;
+    const frameworkUi = rel.startsWith('src/framework/') && to === TOP_RANK
+      && (target === 'src/ui' || target.startsWith('src/ui/'));
+    if (from < to || frameworkUi) out.push({ importer: rel, target, line: lineOf(noComments, m.index) });
+  }
+  return out;
+}
+
+test('layer rank: imports point to the same or a lower rank (ratchet: KNOWN_INVERSIONS only shrinks)', () => {
+  const files = RANK_DIRS.flatMap((d) => walk(join(ROOT, d)));
+  assert.ok(files.length > 200, `expected to scan the ranked layers, found ${files.length} files`);
+  const found = files.flatMap((f) => rankCheck(f, readFileSync(f, 'utf8')));
+  const known = new Set(KNOWN_INVERSIONS);
+  const seen = new Set(found.map((v) => `${v.importer} -> ${v.target}`));
+  const fresh = found.filter((v) => !known.has(`${v.importer} -> ${v.target}`))
+    .map((v) => `${v.importer}:${v.line} imports ${v.target} (rank ${rankOf(v.importer)} -> ${rankOf(v.target)})`);
+  const stale = KNOWN_INVERSIONS.filter((e) => !seen.has(e))
+    .map((e) => `stale entry — delete it from KNOWN_INVERSIONS: ${e}`);
+  assert.deepEqual(fresh, [], `new layer-rank inversions:\n${fresh.join('\n')}`);
+  assert.deepEqual(stale, [], stale.join('\n'));
+  assert.deepEqual([...KNOWN_INVERSIONS].sort(), KNOWN_INVERSIONS, 'keep KNOWN_INVERSIONS sorted');
+});
+
 test('rules layer (src/engine, src/model, engine) imports no UI and uses no browser globals', () => {
   const files = RULE_DIRS.flatMap((d) => walk(join(ROOT, d)));
   assert.ok(files.length > 50, `expected to scan the rules layer, found ${files.length} files`);
@@ -152,4 +259,20 @@ test('layering checker catches what it should and ignores comments and strings',
   assert.equal(check(f, 'const a = `${`inner ${window.name}`}`;').length, 1);
   assert.equal(check(f, 'const a = "import \'../ui/fx.js\'";').length, 0);
   assert.equal(check(f, "// document\n/* window */ const s = 'localStorage'; const c = globalThis.crypto;").length, 0);
+});
+
+test('rank checker flags upward imports and allows peers, downward and comments', () => {
+  const at = (p, src) => rankCheck(join(ROOT, p), src).map((v) => `${v.importer} -> ${v.target}`);
+  assert.deepEqual(at('src/model/x.js', "import '../engine/rng.js';"), ['src/model/x.js -> src/engine/rng.js']);
+  assert.deepEqual(at('src/model/x.js', "export { a } from '../engine/rng.js';"), ['src/model/x.js -> src/engine/rng.js']);
+  assert.deepEqual(at('engine/runtime/x.mjs', "import '../../src/model/formulas.js';"), ['engine/runtime/x.mjs -> src/model/formulas.js']);
+  assert.deepEqual(at('src/content/x.js', "import '../model/a.js';"), ['src/content/x.js -> src/model/a.js']);
+  assert.deepEqual(at('src/framework/x.js', "import '../ui/a.js';"), ['src/framework/x.js -> src/ui/a.js']);
+  assert.deepEqual(at('src/model/x.js', "import '../../engine/a.js';"), []); // root engine is below model
+  assert.deepEqual(at('src/model/x.js', "import '../content/a.js'; import './b.js';"), []);
+  assert.deepEqual(at('src/model/x.js', "import '../framework/a.js';"), []);
+  assert.deepEqual(at('src/framework/x.js', "import '../model/a.js';"), []);
+  assert.deepEqual(at('src/engine/x.js', "import '../services/a.js'; import '../model/a.js';"), []);
+  assert.deepEqual(at('src/ui/x.js', "import '../engine/a.js';"), []);
+  assert.deepEqual(at('src/model/x.js', "// import '../engine/rng.js'\nconst s = \"import '../engine/rng.js'\";"), []);
 });
