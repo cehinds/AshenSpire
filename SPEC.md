@@ -1682,59 +1682,33 @@ Ids are stable semantic names, not screen-specific markup.
 - The DOM-free `saveSlotSelectionModel` projects Load and New from the same immutable slot records and Behavior Models; selected styling, `aria-pressed`, selected-focus restoration target, primary-action availability and the load/create command payload all resolve to one slot. Save data and callbacks stay screen inputs.
 - Every modal close control paints a square at 75% of its shared icon-button box while keeping the full authored tap target for pointer, touch, keyboard and controller.
 
-- **Character Creation components.** The reusable creation family is `character-disclosure`,
-  `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
-  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
-  `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`,
-  `equipment-choice-card`, and `relic-choice-card`. Hand selectors include an Empty Hand
-  card for the existing unequipped state. The focused choice drives the detail panel and
-  a compact two-column grid of its starting combat cards, with quantities derived from
-  the current loadout. Choosing updates existing cards in place; the focused card lifts
-  and enlarges over 180 ms (less movement on phones; no movement with reduced motion).
-  Only the focused candidate exposes Choose/Selected and Information controls. Two
-  columns of equipment choices sit beside the details and combat-card preview, with
-  Continue at the bottom-right; phones stack these areas. Title strips fit their text.
-  Continue names the next equipment section. Automatic advancement remains optional and
-  defaults off. Flavor occupies one line with an ellipsis on overflow, and its complete
-  text remains available through inspection. In card and equipment inspection, lore is
-  one identity line (the flavor text's first paragraph). When more follows, the line is
-  one line with an ellipsis on overflow and is a
-  control that opens the lore modal over the inspection with the whole text. Its typeface,
-  size, spacing and slant are presentation settings under Advanced → Text & lore. These are presentation rules; starting-deck
-  composition and unarmed fallback mechanics remain as defined above. `class-preview-pane` composes
-  `class-resource-grid`; `character-disclosure` composes the stat and appearance
-  choices (keepsakes were removed with the keepsake cleanup). A new character defaults to the Animated sprite style while preserving any explicit
-  style stored on an existing character. `primary-stat-card` is one shared
-  attribute model and disclosure renderer across
-  Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
-  short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
-  authored description plus benefits derived from stat rules and equipment gates. Art and copy
-  arrive through content/asset inputs, while screens own mutable selection state and callbacks.
-  In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
-  attribute face, current value, decrement/increment controls, and a reveal that spans the whole
-  row instead of inheriting the face column width. Opening or reopening Assign Points is a refund
-  boundary: every authored attribute returns to the mode baseline before the modal opens, making
-  the full bonus pool available instead of resuming an earlier allocation. Shared setting rows
-  keep one equal positive inset on all four sides; a surface does not remove individual sides.
-- **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
-  Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
-  `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
-  Smith opens the dedicated `smith-upgrade-modal`, composed from
-  `smith-candidate-card` and `smith-upgrade-preview`. Each candidate is one distinct owned
-  armament below the run's tier cap, never an individual deck copy. Choosing a candidate is a
-  presentation-only operation that shows its current and next tier, cost, Stone purse,
-  shortfall, and every grouped sourced-basic-card delta. `Back to Shrine` and Escape close the
-  modal without changing the run; only an affordable enabled `Confirm` spends the shown cost,
-  promotes the selected armament, updates all of its sourced basic cards, and leaves the Shrine.
-  The DOM-free `SmithSelectionModel` owns the choose/review state and player-facing consequence
-  copy.
-- **Combatant Component Model.** `combatant-frame` may compose `component-background`,
-  `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
-  `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar` *(not drawn in §13.4p's scope)*, and
-  `status-effect-tray`. Combat hit feedback is `damage-feedback`, with distinct
-  `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and
-  residual HP loss cannot be visually conflated. These are independently referenceable
-  components; the catalog may expand other components later without declaring them leaves.
+#### Character Creation components
+
+- Ids: `character-disclosure`, `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`, `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`, `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `equipment-choice-card`, `relic-choice-card`. `class-preview-pane` composes `class-resource-grid`; `character-disclosure` composes the stat and appearance choices.
+- Hand selectors include an Empty Hand card for the unequipped state.
+- The focused choice drives the detail panel and a compact two-column grid of its starting combat cards (quantities from the current loadout). Choosing updates cards in place; the focused card lifts and enlarges over 180 ms (less movement on phones; none with reduced motion). Only the focused candidate exposes Choose/Selected and Information controls.
+- Layout: two columns of equipment choices beside the details and combat-card preview, Continue bottom-right; phones stack these areas. Title strips fit their text. Continue names the next equipment section. Automatic advancement is optional, default off.
+- Flavor is one line with an ellipsis on overflow; the complete text stays available through inspection. In card and equipment inspection, lore is one identity line (the flavor text's first paragraph); when more follows, that line ellipsizes and is a control opening the lore modal over the inspection with the whole text. Its typeface, size, spacing and slant are settings under Advanced → Text & lore.
+- These are presentation rules; starting-deck composition and unarmed fallback mechanics are unchanged.
+- A new character defaults to the Animated sprite style; an explicit style stored on an existing character is preserved.
+- `primary-stat-card` is one attribute model and disclosure renderer across Character Creation, Shrine point assignment and the Armoury. Folded face: short label, one-line summary, current value. Reveal and focus/hover tooltip: authored description plus benefits derived from stat rules and equipment gates. Art and copy arrive through content/asset inputs; screens own mutable selection state and callbacks.
+- In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the attribute face, current value, decrement/increment controls and a reveal spanning the whole row (not the face column width). Opening or reopening Assign Points is a refund boundary: every authored attribute returns to the mode baseline before the modal opens, making the full bonus pool available.
+- Shared setting rows keep one equal positive inset on all four sides; a surface does not remove individual sides.
+
+#### Shrine components
+
+- `shrine-option-card` is the shared folded option footprint for Rest, Smith, Flask Allocation and Level Up. Its viewport-relative width and height are data-owned by `balance.ui.shrinePresentation`; expanding a disclosure adds content below the uniform face.
+- Smith opens `smith-upgrade-modal`, composed from `smith-candidate-card` and `smith-upgrade-preview`. Each candidate is one distinct owned armament below the run's tier cap, never an individual deck copy.
+- Choosing a candidate is presentation-only and shows current and next tier, cost, Stone purse, shortfall and every grouped sourced-basic-card delta.
+- `Back to Shrine` and Escape close the modal without changing the run. Only an affordable, enabled `Confirm` spends the shown cost, promotes the armament, updates all its sourced basic cards, and leaves the Shrine.
+- The DOM-free `SmithSelectionModel` owns the choose/review state and player-facing consequence copy.
+
+#### Combatant components
+
+- `combatant-frame` may compose `component-background`, `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`, `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar` *(not drawn in §13.4p's scope)* and `status-effect-tray`.
+- Hit feedback is `damage-feedback`, with distinct `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and residual HP loss are never visually conflated.
+- These are independently referenceable; the catalog may add components later without declaring them leaves.
+
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
   `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
