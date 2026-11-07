@@ -2314,11 +2314,11 @@ Selected combat cards preview legal targets without committing: pure friendly ca
 
 ## 13. Seats — regions bound to content, order seeded
 
-*Phase 0 of the former seat-adventure proposal (removed 2026-10-11; see git history); the world it serves is [docs/LORE.md](docs/LORE.md) §1 and §6. This section is the mechanics contract for the 0.7 line. Everything below is stated so a command can falsify it.*
+Seats bind a region's enemies, encounters, boss pool and scenery to the run; a seeded per-run seat order decides which seat each tier climbs. World: [docs/LORE.md](docs/LORE.md) §1, §6. Mechanics contract for the 0.7 line; every rule is stated so a command can falsify it.
 
 ### 13.1 What a seat is
 
-A **seat** is a region with its content: enemies, encounters, boss pool, combat scenery, and (later phases) its city and tower. Three seats ship, and the closed set has one home, `SEATS` in `src/content/seats.js`:
+A **seat** is a region with its content: enemies, encounters, boss pool, combat scenery (later: city, tower). The closed set lives in `SEATS` (`src/content/seats.js`); a row is `{ id, regionId, name, baseTier }`.
 
 | seat id | region id (`content/environments.js`) | display name | authored baseline tier |
 |---|---|---|---|
@@ -2326,43 +2326,41 @@ A **seat** is a region with its content: enemies, encounters, boss pool, combat 
 | `marches` | `pale-marches` | The Pale Marches | 2 |
 | `reach` | `cinder-reach` | The Cinder Reach | 3 |
 
-A seat row is `{ id, regionId, name, baseTier }`. `validateContent` refuses a seat whose `regionId` is not an `ENVIRONMENTS` id, a duplicate id, or a set that is not exactly the three above until a fourth seat is authored with its own content (Law 1: a new seat is content, not an engine change, but the three-seat run shape is a rule until §13.4 says otherwise).
-
-**An act is a seat at a tier.** `run.actNumber` (1–3, and looping under Endless as today) is the **tier**; the seat climbed at that tier is `run.seatOrder[contentAct - 1]`. Nothing else derives one from the other. Difficulty is the tier's; place, roster, boss and scenery are the seat's.
-
-*Falsify:* `node -e "import('./src/content/seats.js').then(m=>console.log(m.SEATS.map(s=>s.id)))"` → `[ 'weald', 'marches', 'reach' ]`.
+- `validateContent` refuses a `regionId` that is not an `ENVIRONMENTS` id, a duplicate id, and any set other than exactly these three (a fourth seat is content, Law 1, but the three-seat run shape is a rule until §13.4 says otherwise).
+- **An act is a seat at a tier.** `run.actNumber` (1–3, looping under Endless) is the **tier**; the seat climbed is `run.seatOrder[contentAct - 1]`. Nothing else derives one from the other. Difficulty is the tier's; place, roster, boss and scenery are the seat's.
+- Check: `node -e "import('./src/content/seats.js').then(m=>console.log(m.SEATS.map(s=>s.id)))"` → `[ 'weald', 'marches', 'reach' ]`.
 
 ### 13.2 Content binds to the seat, never to the act number
 
-- **Encounters** carry `seat: ref('seats')` (schema `encounter.seat`, required). The `act` field is **retired**: the schema refuses it, and the three encounter files are re-homed as `content/encounters/{weald,marches,reach}.js` with their rows unchanged except for `act: n` → `seat: '<id>'` (act 1 → `weald`, 2 → `marches`, 3 → `reach`). `floorBand` and `targetBand` keep their meaning (floors within the act) and are unchanged.
-- **`rollEncounter(registries, rng, { pool, seat, exclude })`** filters by `seat`; an `act` argument is a thrown error, not a default. `buildActMap(registries, rng, seat, tier, mapShape, { history })` takes the seat for its boss pool and the tier for `mapConfigs[tier]` (geometry stays per tier, exactly the three identical `ACT_SHAPE`s it is today). `resolveUnknownNode` takes `tier` for `unknownWeights` (events are seat-agnostic until Phase 3).
-- **Enemies** need no new field: an enemy is reachable only through its encounters. The Blighted Valkyrie's encounter (`a3_bossRotValkyrie`) is the one exception to the pool rule and is stated in §13.5.
-- **Boss destinations** (§12.4) are unchanged in mechanism: the pool is `encounters where pool === 'boss' && seat === run seat`, chosen at act birth on the `map` stream exactly as today. `LEGACY_ACT_BOSSES` stays keyed by act number and is consulted only for a legacy graph, whose run is migrated to the default order (§13.4), so act n still maps to the boss it always did.
-- **Combat scenery**: `regionForRun(run)` returns the seat's region — no seed hash, no rotation. `combatEnvironment` is otherwise unchanged (road / city / dungeon settings, saved scene selection). The `ashen-crown` region is **not** a seat: under this section it is the scenery of the **boss node of the tier-3 act**, whichever seat holds it (LORE §1: the Ashen Crown is the Spire's summit, reached by the causeway that opens from the last relit tower). `drowned-coast` stays a World Journey region only.
-- **HUD and map**: the act header and the map's act title read `Act <tier> · <seat name>` (`runHud.js`, `map.js`) from `SEATS`, not from a per-act string.
-
-*Falsify:* `grep -rnE "^\s*\{ id:.*\bact:" src/content/encounters/` → 0 hits; `grep -rn "\.act\b\|act = 1" src/engine/encounters.js src/engine/actmap.js` → 0 hits; `node -e "import('./src/content/index.js').then(m=>console.log(m.registries.encounters.all().every(e=>['weald','marches','reach'].includes(e.seat))))"` → `true`.
+- **Encounters** carry `seat: ref('seats')` (schema `encounter.seat`, required). `act` is retired; the schema refuses it. Files are `content/encounters/{weald,marches,reach}.js` (old act 1/2/3 → `weald`/`marches`/`reach`). `floorBand` and `targetBand` keep their meaning (floors within the act).
+- `rollEncounter(registries, rng, { pool, seat, exclude })` filters by `seat`; an `act` argument throws.
+- `buildActMap(registries, rng, seat, tier, mapShape, { history })`: seat gives the boss pool, tier gives `mapConfigs[tier]` (geometry per tier: three identical `ACT_SHAPE`s).
+- `resolveUnknownNode` takes `tier` for `unknownWeights` (events are seat-agnostic until Phase 3).
+- **Enemies** have no seat field; they are reachable only through encounters. The Blighted Valkyrie's encounter (`a3_bossRotValkyrie`) is the one exception to the pool rule (§13.5).
+- **Boss destinations** (§12.4): pool is `encounters where pool === 'boss' && seat === run seat`, chosen at act birth on the `map` stream. `LEGACY_ACT_BOSSES` stays keyed by act number and is used only for a legacy graph, whose run migrates to the default order (§13.4).
+- **Combat scenery:** `regionForRun(run)` returns the seat's region (no seed hash, no rotation); `combatEnvironment` is otherwise unchanged. `ashen-crown` is not a seat: it is the scenery of the **boss node of the tier-3 act**, whichever seat holds it (LORE §1). `drowned-coast` stays a World Journey region only.
+- **HUD and map:** the act header and map act title read `Act <tier> · <seat name>` from `SEATS` (`runHud.js`, `map.js`).
+- Check: `grep -rnE "^\s*\{ id:.*\bact:" src/content/encounters/` → 0 hits; `grep -rn "\.act\b\|act = 1" src/engine/encounters.js src/engine/actmap.js` → 0 hits; `registries.encounters.all().every(e=>['weald','marches','reach'].includes(e.seat))` → `true`.
 
 ### 13.3 Tier scaling — the seat's numbers are authored at its baseline
 
-Every enemy's HP and every encounter's bands were authored assuming the seat's `baseTier` (the act it used to be). Climbing a seat at a different tier scales the roll, not the definition:
+Enemy HP and encounter bands are authored at the seat's `baseTier`; a different tier scales the roll, not the definition.
 
-- `balance.seatTiers = { 1: 1.0, 2: 1.5, 3: 1.9 }` — one multiplier per tier, data (`src/content/balance.js:940-941`). `hpMult` for a fight is `seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers exactly where they compose today (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll, so the same seed rolls the same base.
-- **A seat climbed at its baseline tier scales by exactly 1** — `seatTiers[n] / seatTiers[n]` — which is the byte-identity claim of §13.6.
-- **Bosses scale by the tier they are met at** (`balance.bossTiers = { 1: { hp, damage }, 2: …, 3: … }`, data; `bossTierScale` in `model/seats.js` is its one reader, used by `main.js` fight modifiers and the sims). The seat order is drawn per run (§13.4), so a boss's difficulty cannot be authored into its roster row — the Marches boss is a run's first boss in a third of climbs. A `boss`-pool fight at tier T takes, in place of the seat ratio above, `ratio × bossTiers[T].hp` on HP and `ratio × bossTiers[T].damage` on every move's damage, where `ratio = seatTiers[T] / seatTiers[the encounter's own seat's baseTier]` — the causeway's null-seat boss (the Valkyrie) is authored at the final tier whichever seat holds it. Move damage reaches the engine as `createCombat`'s `enemyDamageMult`, stamped on each enemy entity (`damageMult`, rounded per hit, never below 1) so the intent, the hit, the move card and a saved fight agree. Other pools keep the seat ratio on HP alone. Shipped (#1284, A2): tier 1 `{ 0.8, 0.8 }`, tiers 2 and 3 `{ 2.2, 1.5 }`, tuned with `node tools/runsim.mjs <n> --seeded-seats` (the real per-run order; the tool's default is the fixed weald → marches → reach order, one climb in six).
-- Strength scaling per tier is **not** introduced here; Endless already owns per-loop Strength and a second knob on the same status is a balance decision for the tuning pass, not this contract. The tier 2 and tier 3 values (1.5 and 1.9) were set from the measured HP ratio of the shipped rosters (`tools/runsim.mjs` at 300 seeds prints per-tier win rate before and after).
-
-*Falsify:* `node tools/runsim.mjs --seeds 300` win rate per tier recorded in BALANCE.md (a report, not a pass band: owner ruling D1, 2026-09-26); `node -e "..."` computing `hpMult` for `(seat: 'reach', tier: 3)` → `1`.
+- `balance.seatTiers = { 1: 1.0, 2: 1.5, 3: 1.9 }` (data, `src/content/balance.js`). Fight `hpMult = seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers where they already compose (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll (same seed, same base roll).
+- A seat at its baseline tier scales by exactly 1 (`seatTiers[n] / seatTiers[n]`): the byte-identity claim of §13.6.
+- **Bosses scale by the tier they are met at.** `balance.bossTiers = { 1: { hp, damage }, 2: …, 3: … }` (data); `bossTierScale` in `model/seats.js` is its one reader (`main.js` fight modifiers, sims). A `boss`-pool fight at tier T uses, instead of the seat ratio, `ratio × bossTiers[T].hp` on HP and `ratio × bossTiers[T].damage` on every move's damage, with `ratio = seatTiers[T] / seatTiers[encounter's own seat's baseTier]`. The causeway's null-seat boss (the Valkyrie) is authored at the final tier whichever seat holds it. Move damage reaches the engine as `createCombat`'s `enemyDamageMult`, stamped on each enemy entity (`damageMult`, rounded per hit, never below 1) so intent, hit, move card and saved fight agree. Other pools keep the seat ratio on HP alone.
+- Shipped: tier 1 `{ 0.8, 0.8 }`; tiers 2 and 3 `{ 2.2, 1.5 }`. Tune with `node tools/runsim.mjs <n> --seeded-seats` (the real per-run order; the tool's default is the fixed weald → marches → reach order).
+- No per-tier Strength scaling here: Endless owns per-loop Strength; a second knob on the same status is a balance-pass decision.
+- Check: `node tools/runsim.mjs --seeds 300` win rate per tier recorded in BALANCE.md (a report, not a pass band: owner ruling D1); `hpMult` for `(seat: 'reach', tier: 3)` → `1`.
 
 ### 13.4 The run carries its order; the order is seeded
 
-- **Run schemaVersion 6.** `run.seatOrder` is a persisted array of the three seat ids, each exactly once (`RUN_SHAPE` row `{ key: 'seatOrder', type: 'array' }`; `validateRunShape` refuses a missing, short, long, duplicated or unknown id). `run.seatId` is **not stored** — it is `seatOrder[contentAct - 1]`, derived where `contentAct()` already is.
-- **Migration** (`migrateRunSchema`): a run at schemaVersion ≤ 5 gains `seatOrder: ['weald', 'marches', 'reach']` — the order every existing save was already climbing — and nothing else moves. No RNG draw during migration (§12.4's rule, kept).
-- **Creation**: `createRunState` sets the default order only. The run-start orchestrator (`src/main.js:1255`) draws the order **once** on the `seats` stream right after it: `drawSeatOrder(registries, rng, { firstSeat })` (`src/engine/actmap.js:119-124`), which shuffles the default order with `rng.shuffle('seats', …)`. The stream is new, so every existing stream's counters and draws are unchanged for every existing seed (§13.6).
-- **Custom Run** gains `firstSeat: <id> | null` on `run.custom`. When set, the drawn order is **rotated** until that seat is first (one draw either way, so pinning does not change what any later stream rolls). The Custom Run screen offers the three seats by display name; the setting rides on `run.custom` and is saved like the rest of it.
-- **Endless** loops the order: loop `k` climbs `seatOrder[(contentAct - 1) % 3]` at the tier `endlessActInfo` already computes; the Valkyrie rule in §13.5 applies to every third act.
-
-*Falsify:* a fixture save at schemaVersion 5 loads with `seatOrder` `['weald','marches','reach']` and `streamCounters` unchanged; `validateRunShape({ ...run, seatOrder: ['weald','weald','reach'] })` names `seatOrder`; two runs with the same seed and different `firstSeat` pins have identical `streamCounters` after creation.
+- **Run schemaVersion 6.** `run.seatOrder` is a persisted array of the three seat ids, each once (`RUN_SHAPE` row `{ key: 'seatOrder', type: 'array' }`; `validateRunShape` refuses missing, short, long, duplicated or unknown ids). `run.seatId` is not stored: it is `seatOrder[contentAct - 1]`, derived where `contentAct()` is.
+- **Migration** (`migrateRunSchema`): schemaVersion ≤ 5 gains `seatOrder: ['weald', 'marches', 'reach']` and nothing else moves; no RNG draw (§12.4).
+- **Creation:** `createRunState` sets the default order only. The run-start orchestrator (`src/main.js`) then draws the order **once** on the new `seats` stream: `drawSeatOrder(registries, rng, { firstSeat })` (`src/engine/actmap.js`) shuffles the default with `rng.shuffle('seats', …)`. No existing stream's counters or draws change for any seed (§13.6).
+- **Custom Run** adds `run.custom.firstSeat: <id> | null`. When set, the drawn order is **rotated** until that seat is first (one draw either way, so pinning changes no later stream). The Custom Run screen lists the three seats by display name; the setting is saved with `run.custom`.
+- **Endless** loops the order: loop `k` climbs `seatOrder[(contentAct - 1) % 3]` at the tier `endlessActInfo` computes; the Valkyrie rule (§13.5) applies to every third act.
+- Check: a schemaVersion-5 fixture loads with `seatOrder` `['weald','marches','reach']` and `streamCounters` unchanged; `validateRunShape({ ...run, seatOrder: ['weald','weald','reach'] })` names `seatOrder`; two runs with the same seed and different `firstSeat` have identical `streamCounters` after creation.
 
 ### 13.4a The run carries its zones (plan phase 3a)
 
