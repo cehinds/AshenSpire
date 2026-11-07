@@ -9,7 +9,7 @@ import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { applyStatus, advanceStatusClock, decayAtTurnEnd } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { syncPoiseMaximum } from '../src/engine/combatPools.js';
 

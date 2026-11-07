@@ -511,7 +511,6 @@ function startPlayerTurn(combat) {
   decayAtTurnStart(combat, p);
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
-  F.startFoundationTurn(combat, p);
   p.counters.cardsPlayedThisTurn = 0;
   const eqcfg = combat.registries.balance.equipment || {};
   combat.swapsLeft = eqcfg.swapCostKind === 'allowance' ? eqcfg.swapAllowancePerTurn || 0 : 0;
@@ -1128,7 +1127,7 @@ export function dispatch(combat, intent) {
     combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
     if (configuredSkillProgression(combat)) attachSkillXp(combat);
   }
-  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'chooseDiscard', 'chooseCards'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: ['chooseDiscard','chooseCards'].includes(intent.type) ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
+  if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || ['playCard', 'chooseDiscard', 'chooseCards'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: ['chooseDiscard','chooseCards'].includes(intent.type) ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
   try {
@@ -1510,10 +1509,10 @@ function effectiveCost(combat, def) {
   // The cost profile is the framework's call; this engine supplies the live
   // relic reduction and the framework applies it only where the card's
   // classification permits (Powers).
-  return F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, {
+  return combat.registries.framework.costProfile(def, {
     powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}, propertyMountsOf(combat, combat.player)),
     weightClass: playerWeightClass(combat).weightClass,
-  })).action;
+  }).action;
 }
 
 // What playing this card costs right now, in every pool: Actions (X spends
@@ -1549,7 +1548,7 @@ function baseCardPriceReceipt(combat, def) {
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
   }
   const weightClass = playerWeightClass(combat).weightClass;
-  const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
+  const pools = combat.registries.framework.costProfile(def, { weightClass });
   // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
   const funds = ownRestoreFunds(def);
   // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
@@ -1588,7 +1587,7 @@ function preparedPlayCosts(combat, inst, def, targetId) {
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
-    && !combat._foundationTransaction && !combat._foundationAncestry?.length
+    && !combat._foundationTransaction
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def);
   return playCosts(preparingPreview(combat, inst, def, targetId), def);
 }
@@ -1621,7 +1620,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !hasCardChoice(combat) && !combat._abilityAction && !combat._emitDepth
-    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
+    && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
     const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
     const charges = R.matchingAbilityCharges(combat.player, {
       ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags,
@@ -1644,7 +1643,6 @@ function preparingPreview(combat, inst, def, targetId) {
 
 // One card's cardPreparing on a detached preview, drained.
 function emitPreparing(clone, inst, def, targetId) {
-  if (clone.foundation) { clone.foundation.actionSerial++; clone.foundation.eventCount = 0; clone.foundation.rolls = {}; clone.foundation.counts = {}; }
   clone._buffer = null;
   const target = targetId ? findEntity(clone, targetId) : clone.enemies.find(e => e.alive);
   clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: abilityKindOf(def), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) });
@@ -1676,7 +1674,6 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
-  F.assertFoundationPlayable(combat, def, chosen);
 
   if (combat.registries.framework.isUnplayable(def)) throw F.playRefusal(`'${def.name}' is unplayable`, 'unplayable');
 
@@ -1738,7 +1735,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (combat._reactionPlaying) cardRef.reactionDepth = 1;
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
-  const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef) || rangeCardSourceSnapshots(combat,def,p,cardRef);
+  const sourceSnapshots = rangeCardSourceSnapshots(combat,def,p,cardRef);
   if (combat.gameProfile?.foundation?.mode === 'configured' && (sourceSnapshots?.size || def.effects.some(effect => effect.op === 'damage') || cardRef.combatProfile?.maneuver === 'counter')) {
     // Reuse the damage-type resolver's chosen piece. This receipt field must
     // never become sourceArmamentId, which also scopes combat rating bonuses.
@@ -2199,16 +2196,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     R.attachAbilityCharges(action, charges, applied, combat);
     switch (eff.op) {
       case 'damage': {
-        let attackTags = A.attackTagsFor(action, eff, combat.registries);
-        const carrier = combat.foundation ? F.foundationCarrier(combat, p, action.card, eff.attack) : action.card;
-        if (combat.foundation) {
-          entry.sourceInstanceId = carrier.resolvedSource.id;
-          entry.sourceName = carrier.resolvedSource.name || combat.registries.equipment.armaments.find((piece) => piece.id === carrier.resolvedSource.itemId)?.name || 'Attack source';
-          entry.tags = carrier.tags;
-          entry.inheritedTags = carrier.tags.filter((tag) => !attackTags.includes(tag));
-          entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
-          attackTags = carrier.tags;
-        }
+        const attackTags = A.attackTagsFor(action, eff, combat.registries);
+        const carrier = action.card;
         const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
         entry.hits = isCounterReply
           ? previewCounter(primary, i).hitDamages.length
@@ -2402,7 +2391,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   }
 
   const rangeActions = F.cardActions(combat, { ...def, effects: preparedEffects }, p, action.target, action.card,
-    action.meta || {}, F.cardSourceSnapshots(combat, { ...def, effects: preparedEffects }, p, action.card));
+    action.meta || {}, null);
   const range = previewRangeRoutes(combat, p, rangeActions, paidCosts, { rangeRoute, hitPreview: previewCardAttackHit });
   const rangeCosts = range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
   return {
@@ -2412,7 +2401,6 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
     combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
-    foundation: !!combat.foundation,
     coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
@@ -2529,7 +2517,7 @@ export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks, { 
     ? Math.max(0, (combat.enemies || []).filter(enemy => enemy.alive).length - 1) : 0;
   const visibleTarget = observerId ? previewTargetFor(target, observerId, { turn: combat.turn, legacySolo: !(combat.players instanceof Map) }) : target;
   const preview = previewCardAttackHit(combat, combat.player, visibleTarget, carrier, { additionalTargets });
-  const resolved = combat.foundation ? F.foundationCarrier(combat, combat.player, carrier) : carrier;
+  const resolved = carrier;
   const range = previewRangeRoutes(combat, combat.player, [{ source: combat.player, target: visibleTarget, card: resolved, effect: { op: 'damage', target: 'enemy', amount: 0 } }],
     resolvedCardPlayCosts(combat, def), { rangeRoute, hitPreview: previewCardAttackHit });
   return preview && { ...preview, ...(range ? { range } : {}) };

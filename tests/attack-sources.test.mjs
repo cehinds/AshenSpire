@@ -6,7 +6,7 @@ import { validateContent } from '../src/model/validate.js';
 import { attackDescriptor } from '../src/model/attackTags.js';
 import { cardEquipmentCompatibility } from '../src/model/loadout.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { foundationCarrier, foundationSource, cardActions, previewFoundationAction } from '../src/engine/combatRules.js';
+
 import { executeAction as applyAction } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';

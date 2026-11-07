@@ -70,7 +70,6 @@ import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.j
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
-import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
@@ -1077,7 +1076,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function combatantSubject(role, entity) {
     const v = dv(entity);
     if (role === 'player') {
-      const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade }, Boolean(combat.foundation));
+      const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade });
       return {
         role: 'player',
         name: (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase(),
@@ -2082,7 +2081,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
       if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
-      if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
+      if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id));
       if (bar.id !== 'poise') return '';
       if (kind === 'player') {
         return esc(helpText('playerPoise'));
@@ -2267,7 +2266,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function bindAbilityBadge(chip, entity, abilityId) {
-    const ability = () => activeCombatAbilities(registries, entity, Boolean(combat.foundation)).find(row => row.id === abilityId);
+    const ability = () => activeCombatAbilities(registries, entity).find(row => row.id === abilityId);
     chip.classList.add('combat-ability-badge');
     chip.tabIndex = 0;
     chip.setAttribute('role', 'button');
@@ -2355,8 +2354,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const def = registries.companions.get(id);
       companionRows.push({ id, def, fightsLeft: ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1 });
     }
-    const evadeChip = !!(combat.foundation && p.evade > 0);
-    const abilityName = (id) => activeCombatAbilities(registries, p, Boolean(combat.foundation)).find(row => row.id === id)?.name;
+    const abilityName = (id) => activeCombatAbilities(registries, p).find(row => row.id === id)?.name;
     const playerName = combatantName('player', p);
     const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
@@ -2369,8 +2367,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       meters: JSON.stringify([meterIn.key, settings]),
       statuses: JSON.stringify([statusIn, settings]),
       chips: JSON.stringify([stanceDef && [p.stanceId, stanceDef.name, stanceDef.icon, abilityName(p.stanceId)],
-        companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]),
-        evadeChip && [p.evade, abilityName('evade')], settings]),
+        companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]), settings]),
     };
     const build = {
       classNames,
@@ -2401,11 +2398,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           chip.setAttribute('title', def.blurb);
           const art = alternativeCompanionIcon(id);
           if (art) chip.prepend(art);
-          chips.push(chip);
-        }
-        if (evadeChip) {
-          const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
-          bindAbilityBadge(chip, p, 'evade');
           chips.push(chip);
         }
         return chips;
@@ -2832,7 +2824,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
     if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
-    try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
     return '';
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }

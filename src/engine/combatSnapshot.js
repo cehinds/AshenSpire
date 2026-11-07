@@ -15,7 +15,6 @@ import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // service validates the versioned model and reconnects those dependencies.
 
 import { bindTurnStamina } from '../model/turnStamina.js';
-import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
 import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
@@ -90,7 +89,6 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
     ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
-      ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
       ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
       ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
@@ -102,7 +100,6 @@ export function serializeCombatSnapshot(combat) {
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
-    ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
@@ -208,7 +205,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
   if (saved.pendingCardChoice?.effect?.transformTo) registries.cards.get(saved.pendingCardChoice.effect.transformTo);
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
-  if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     ...(saved.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: saved.core2ActionRulesVersion } : {}),
     ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
@@ -232,7 +228,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     // Absent on a snapshot written before Play in deck order: that fight shuffles.
     orderedDraw: saved.orderedDraw || null,
-    foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
     sideboardedEquipmentCardIds: saved.sideboardedEquipmentCardIds || [],
@@ -303,7 +298,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   if (!configuredCombat(combat) || configuredSkillProgression(combat)) attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
-  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
+  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
   }
   if (saved.abilityQueue) {

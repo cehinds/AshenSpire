@@ -3,15 +3,13 @@ import { helpText } from '../../model/tooltipSettings.js';
 import { combatTacticsRows } from '../../model/combatTacticsDisplay.js';
 
 /** The live abilities shown by both battlefield badges and the inspector. */
-export function activeCombatAbilities(registries, entity, foundation = false) {
+export function activeCombatAbilities(registries, entity) {
   const rows = [];
   if (entity.stanceId) {
     const stance = registries.frameworkTerms.withStanceWords(registries.stances.get(entity.stanceId));
     if (stance) rows.push({ id: stance.id, kind: 'stance', name: stance.name,
       detail: `${statusTooltipText(stance) || helpText('stanceFallback')} ${helpText('stanceDuration')}` });
   }
-  if (foundation && entity.evade > 0) rows.push({ id: 'evade', kind: 'evade', name: helpText('evadeTitle', { count: entity.evade }),
-    detail: helpText('evade', { count: entity.evade, charges: helpText(entity.evade === 1 ? 'charge' : 'charges') }) });
   // Expanded combat: the stance the last accepted play set, and a prepared Evade.
   rows.push(...combatTacticsRows(entity));
   for (const [id, instance] of Object.entries(entity.statuses || {})) {

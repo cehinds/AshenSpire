@@ -30,7 +30,6 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   if (![1, 2].includes(state.reactionRulesVersion) || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
   if (state.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(state.reactionRules).map(problem => `Reaction rules: ${problem}`));
   else if (state.reactionRules !== undefined) problems.push('Reaction rules tuning requires reaction rules version 2');
-  if (state.foundationNextSerial !== undefined && (!Number.isSafeInteger(state.foundationNextSerial) || state.foundationNextSerial < 0)) problems.push('Invalid reaction foundation serial');
   if (state.reactionCursor !== undefined && (!record(state.reactionCursor) || !Number.isSafeInteger(state.reactionCursor.index)
     || state.reactionCursor.index < 0 || state.reactionCursor.index >= state.enemies.length
     || !['start', 'payload', 'drain'].includes(state.reactionCursor.stage))) problems.push('Invalid enemy reaction cursor');
@@ -125,16 +124,6 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
     || !(state.pendingAbilityDiscard || state.pendingCardChoice) || !state.pendingAbilityPlay)) problems.push('Paid reaction continuation requires its nested choice');
-  if (record(state.reactionResume)) {
-    const saved = state.reactionResume.foundation;
-    if (state.foundation ? !record(saved) : saved !== null) problems.push('Reaction continuation requires its retained foundation context');
-    if (record(saved) && (!Number.isSafeInteger(saved.actionSerial) || saved.actionSerial < 0
-      || !Number.isSafeInteger(saved.eventCount) || saved.eventCount < 0
-      || !record(saved.rolls) || Object.values(saved.rolls).some(value => typeof value !== 'boolean')
-      || !record(saved.counts) || Object.values(saved.counts).some(value => !Number.isSafeInteger(value) || value < 0))) {
-      problems.push('Invalid retained reaction foundation context');
-    }
-  }
   return problems;
 }
 

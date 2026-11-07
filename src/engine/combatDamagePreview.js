@@ -33,7 +33,6 @@ export function damagePreviewState(ctx, target) {
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
-  if (ctx.foundation && defender.impactProtectedUntil >= ctx.turn) return;
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
   if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
