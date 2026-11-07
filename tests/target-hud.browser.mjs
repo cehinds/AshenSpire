@@ -33,8 +33,11 @@ try {
     await enemy.click(); await page.waitForTimeout(700);
     assert.equal(await played(), before + 1, 'clicking the enemy still plays the card');
     await page.mouse.move(4, 4);
-    await enemy.dblclick();
+    // Inspect is the existing Core door: a ~650 ms press-and-hold on the figure (combat.js wireCombatantContext).
+    const fb = await enemy.boundingBox();
+    await page.mouse.move(fb.x + fb.width / 2, fb.y + fb.height / 2); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up();
     await page.locator('.combatant-inspector-body').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('.combatant-inspector-body').count(), 1, 'exactly one inspector modal opens');
     await page.keyboard.press('Escape');
     await page.locator('.combatant-inspector-body').waitFor({ state: 'detached' });
     assert.deepEqual(errors, []);

@@ -28,6 +28,13 @@ try {
     await page.waitForTimeout(750);
     assert.equal(await shown(page), 0, `${width} targeting opens no selected panel`);
     assert.equal(await miniOk(page), true, 'mini HUDs stay while targeting');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+    await page.mouse.move(4, 4);
+    // Inspect via the existing figure hold (~650 ms): one inspector modal only.
+    const fb = await enemy.boundingBox();
+    await page.mouse.move(fb.x + fb.width / 2, fb.y + fb.height / 2); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up();
+    await page.locator('.combatant-inspector-body').first().waitFor({ state: 'visible' });
+    assert.equal(await page.locator('.combatant-inspector-body').count(), 1, `${width} one inspector modal`);
     assert.deepEqual(errors, []);
     await page.close();
   }

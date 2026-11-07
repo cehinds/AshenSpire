@@ -38,3 +38,11 @@ test('the HUD meter plan drops the poise row; the inspect panel still lists Pois
   assert.match(js, /bar\.id !== 'poise' && !stackHidden\.has\(bar\.id\)/, 'meterInputs filters poise out of the plan');
   assert.match(js, /label: 'Poise', value: v\.poiseMeter/, 'combatantSubject resources keep Poise');
 });
+
+test('inspect is the existing figure-hold / mini-HUD-click door only; the target HUD adds no second gesture', () => {
+  const hud = readFileSync(new URL('../src/ui/components/combatTargetHud.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(hud, /figureHold/);
+  const js = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(js, /openCombatantDoor\(combatantSubject\(/);
+  assert.match(js, /closest\('\.combatant-mini-hud, \.meters'\)/);
+});
