@@ -35,9 +35,8 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
   const { ctx, player, source } = detached(combat, enemy, neutral);
   const effect = move.effects?.find(row => row.op === 'damage');
   const moveId = action?.meta?.moveId || enemy.intent?.moveId;
-  const school = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${moveId}`];
   const carrier = { ...(action?.card || Tactics.enemyMoveCarrier(source, move, moveId, ctx)),
-    damageSchool: action?.effect?.damageSchool || action?.card?.damageSchool || (school && school !== 'auto' ? school : effect?.damageSchool || move.damageSchool) };
+    damageSchool: action?.effect?.damageSchool || action?.card?.damageSchool || (effect?.damageSchool || move.damageSchool) };
   const proposal = Proposal.proposalTargetPlan(ctx, source, player, carrier);
   // Dynamic perception/charge consumption and reactive damage are not a
   // deterministic HP promise; the shared attack-only projection reports a range.

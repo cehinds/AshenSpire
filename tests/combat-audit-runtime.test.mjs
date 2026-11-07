@@ -19,7 +19,7 @@ for (const mode of ['native', 'bundled']) test(`${mode}: explicit configured def
     'the settings mode preserves the four classes and every canonical variant candidate');
   for (const api of [raw, configured]) {
     const { combat, run } = makeAuditCombat(api, { classId: 'rogue', instance: { cardId: 'strike' } });
-    assert.equal(Boolean(combat.ratingsRules), api.configuration.ratingsEnabled, 'fixture retains the selected ratings rules');
+    assert.equal(combat.ratingsRules, undefined, 'the retired ratings rules are never stamped');
     assert.equal(combat.combatExpansionVersion, 2);
     assert.equal(combat.breakMeterVersion, 2);
     if (api.configuration.snapshot) assert.equal(JSON.stringify(run.advancedConfigSnapshot), JSON.stringify(api.configuration.snapshot),

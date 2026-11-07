@@ -16,8 +16,8 @@ import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
 // Run: node tools/runsim.mjs [runsPerClass=30] [--incoming] [--level-stat=<attr>]
-//   --single-break-meter: use the configured ratings and version-1 run stamp
-//   from SPEC §13.4p; assert that each measured fight uses the shared meter.
+//   --single-break-meter: use the configured Advanced settings (the combat
+//   ratings meter rules themselves are retired; fights run the configured Core path).
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
 //   default order. Off by default so the win-rate corpus keeps comparing the
 //   same climbs it always measured (§13.6); on, it measures every order — the
@@ -213,7 +213,7 @@ const STEP_BUDGET = STEP_BUDGET_ARG ? Number(STEP_BUDGET_ARG) : null;
 if (STEP_BUDGET_ARG && !(Number.isInteger(STEP_BUDGET) && STEP_BUDGET > 0)) throw new Error(`--step-budget expects a positive integer — got '${STEP_BUDGET_ARG}'`);
 const ACTION_GUARD = 9000; // bot actions one fight may take before it is a soft-lock
 // THE ENGINE'S DOOR REFUSALS (src/engine/combat.js doPlayCard / doUseFlask and
-// combatRules.js assertFoundationPlayable): the checks that turn an intent away
+// the card-play rules): the checks that turn an intent away
 // before anything resolves. The bot may set a card or flask aside for one of
 // these and play on. ANY OTHER error out of a dispatch is an engine bug in the
 // middle of resolution and escapes as a CRASH — a catch-all here once let a
@@ -352,9 +352,6 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyStatuses: cm.enemyStatuses || [],
   });
   stampCombatPlaysEver(run, combat);
-  if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
-    throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
-  }
   if (DIGEST) decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a

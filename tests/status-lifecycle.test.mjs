@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { applyStatus, decayAtTurnEnd, advanceStatusClock } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { statusTooltipText, statusInstancePresentation } from '../src/ui/uiContent.js';
 import { statusLifecycleText } from '../src/ui/statusLifecycle.js';
 import { combatStatusRules } from '../src/content/combatStatusRules.js';
@@ -79,25 +79,6 @@ test('meter points and tooltip tokens remain tied to registered definitions', ()
   assert.doesNotMatch(full, /\{proc\./);
   assert.equal(statusTooltipText({ tooltip: 'Unknown {unbound}.' }), 'Unknown {unbound}.');
   assert.equal(statusTooltipText({ tooltip: 'A stance.', onEnter: [] }), 'A stance.');
-});
-
-test('foundation rules require context and use their own magnitude and expiry clock', () => {
-  const def = { id: 'test', stackMode: 'add', decay: 'perTurnEnd', tooltip: '',
-    stacking: { mode: 'refresh', cap: 9, duration: 2, clock: 'ownerTurnStart', refresh: false } };
-  assert.match(statusTooltipText(def), /Reapplying adds to the stack total/);
-  const h = harness(def, true);
-  h.grant(3);
-  advanceStatusClock(h.ctx, h.target, 'ownerTurnStart');
-  h.grant(8);
-  assert.equal(h.target.statuses.test.stacks, 3);
-  assert.equal(h.target.statuses.test.applications[0].expires, 1);
-  const full = statusInstancePresentation(def, h.target.statuses.test).tooltip;
-  assert.match(full, /keeps the existing stack total up to 9/);
-  assert.match(full, /2 ticks at the start of the owner's turn/);
-  assert.match(full, /keeps the existing timer/);
-  assert.doesNotMatch(full, /decreases by 1 at the end/);
-  advanceStatusClock(h.ctx, h.target, 'ownerTurnStart');
-  assert.equal(h.target.statuses.test, undefined);
 });
 
 test('expanded active status reapplication resets its timer below cap but not at cap', () => {

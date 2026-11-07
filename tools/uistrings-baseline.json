@@ -57,7 +57,6 @@
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
     "src/ui/screens/about.js": 1,
-    "src/ui/screens/combatTest.js": 1,
     "src/ui/screens/map.js": 1
   }
 }

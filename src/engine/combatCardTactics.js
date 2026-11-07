@@ -39,8 +39,8 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
     const piece = wieldedArmament(ctx, carrier, source, kind);
     // No piece of that kind in hand: a physical weapon card is thrown with bare hands
-    // and deals the unarmed profile's type (owner #19), as foundationSource does.
-    const rules = ctx.foundation?.rules || combatRules;
+    // and deals the unarmed profile's type (owner #19), as the unarmed source does.
+    const rules = combatRules;
     const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
     // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
     const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
@@ -51,7 +51,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     const pieceType = (piece && attackDescriptor(piece).damageType) || bare;
     if (weaponPart) {
       // The resolved parts travel on the carrier, so every effect and the
-      // rules foundation read the same split as this profile.
+      // damage rules read the same split as this profile.
       const components = weaponDamageComponents(attack, family, pieceType);
       carrier.attack = { ...carrier.attack, components };
       carrier.combatProfile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));

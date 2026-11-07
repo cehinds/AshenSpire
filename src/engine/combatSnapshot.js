@@ -15,14 +15,12 @@ import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // service validates the versioned model and reconnects those dependencies.
 
 import { bindTurnStamina } from '../model/turnStamina.js';
-import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
 import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
-import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
@@ -91,7 +89,6 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
     ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
-      ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
       ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
       ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
@@ -100,11 +97,9 @@ export function serializeCombatSnapshot(combat) {
       ...(combat.enemyReactionRolls ? { enemyReactionRolls: combat.enemyReactionRolls } : {}),
       ...(combat.reactionRootPlay ? { reactionRootPlay: combat.reactionRootPlay } : {}),
       ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
-    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
-    ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
@@ -210,7 +205,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
   if (saved.pendingCardChoice?.effect?.transformTo) registries.cards.get(saved.pendingCardChoice.effect.transformTo);
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
-  if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     ...(saved.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: saved.core2ActionRulesVersion } : {}),
     ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
@@ -223,7 +217,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
-    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
     // saved by an earlier build holds the creation-scale divisor its ratings
@@ -235,7 +228,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     // Absent on a snapshot written before Play in deck order: that fight shuffles.
     orderedDraw: saved.orderedDraw || null,
-    foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
     sideboardedEquipmentCardIds: saved.sideboardedEquipmentCardIds || [],
@@ -306,7 +298,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   if (!configuredCombat(combat) || configuredSkillProgression(combat)) attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
-  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
+  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
   }
   if (saved.abilityQueue) {
@@ -340,9 +332,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —
   // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
-  if (combat.ratingsRules) {
-    refreshCombatRatings(combat);
-  } else if (!configuredCombat(combat) && combat.player && combat.loadout) {
+  if (!configuredCombat(combat) && combat.player && combat.loadout) {
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,

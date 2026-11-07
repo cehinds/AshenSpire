@@ -63,7 +63,7 @@ export function endTurnCardFate(ctx, card) {
   }
   if (ctx.combatExpansionVersion === 2 && ctx.player.combatRetainedCards?.includes(card.instanceId)) return 'keep';
   const def = resolveCard(ctx.registries, card);
-  const fate = ctx.foundation && def.effects.some(e => e.op === 'dodgeRoll') ? 'keep' : ctx.registries.framework.endTurnFate(def);
+  const fate = ctx.registries.framework.endTurnFate(def);
   return fate === 'discard' && ctx.handRules?.retain ? 'keep' : fate;
 }
 

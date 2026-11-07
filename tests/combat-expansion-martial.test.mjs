@@ -98,26 +98,6 @@ test('a bow equipment projection keeps Ranged delivery and spell basics retain a
   assert.equal(applyCombatExpansionMartial(spell), spell);
 });
 
-test('Quickstep and Dodge retain authored Block plus the Martial bonus and DR and return exactly3 plus AR without restoring Ward', () => {
-  for (const id of ['quickstep', 'dodgeRoll']) {
-    const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
-    const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
-    const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
-    assert.equal(def.counterPayload.hp, 3, 'the printed return keeps its authored base');
-    const activeAr = stanceRatingBonus(f.ctx, f.target, 'ar');
-    assert.equal(activeAr, 1, 'hybrid Evade retains the Counter offensive rating');
-    assert.equal(f.target.combatCounter.payload.hp, 3 + f.target.ratings.ar + activeAr);
-    assert.equal(f.target.combatCounter.payload.poise, 3, 'absent authored Poise receives the Counter fallback');
-    assert.equal(f.target.combatStance.maneuver, 'counter');
-    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
-    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
-      'hybrid Counter grants its offensive Precision once');
-    assert.equal(support.find(effect => effect.op === 'block').amount, id === 'quickstep' ? 9 : 5, 'Quickstep retains its retuned 8 Block plus the Martial +1; Dodge retains 3 plus 2');
-    assert.ok(!support.some(effect => ['damage', 'gainWard', 'dodgeRoll'].includes(effect.op)));
-    assert.deepEqual(combatExpansionEntityProblems(f.target), []);
-  }
-});
-
 test('printed zero HP cannot invent an AR/PR return and explicit bonuses remain effective', () => {
   const f = fixture(), def = { id: 'guardCounter', type: 'attack', tags: ['camp:spell', 'maneuver:counter'],
     counterPayload: { hp: 0, poise: 4, ward: 2 }, effects: [] };

@@ -196,7 +196,7 @@ export function combatSnapshotProblems(snapshot) {
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
   }
   if (snapshot.breakMeterVersion !== undefined) {
-    if (![1, 2].includes(snapshot.breakMeterVersion) || (snapshot.breakMeterVersion === 1 && !snapshot.ratingsRules?.enabled)) problems.push('breakMeterVersion must be 1 with enabled ratings, or 2');
+    if (![1, 2].includes(snapshot.breakMeterVersion)) problems.push('breakMeterVersion must be 1 or 2');
     if (snapshot.breakMeterVersion === 1) for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
       for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
     }

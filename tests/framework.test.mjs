@@ -792,12 +792,6 @@ test('the status-semantics door forwards shipped state, results and errors', () 
     read();
     eq(reads[3].instance, null, 'final decay removes the status');
     eq(reads[3].anyFlag, false, 'expired status no longer supplies a combat flag');
-    ctx.foundation = {};
-    api.applyStatus(ctx, player, 'clocked', 2, player);
-    api.advanceStatusClock(ctx, player, 'enemyTurnEnd');
-    eq(api.getStacks(player, 'clocked'), 2, 'another clock cannot expire the application');
-    api.advanceStatusClock(ctx, player, 'ownerTurnEnd');
-    eq(api.hasStatus(player, 'clocked'), false, 'the authored clock expires the application');
     const error = assertThrows(() => api.applyStatus(ctx, player, 'missing'), /Unknown status: missing/);
     return { reads, player, events, error: { name: error.name, message: error.message } };
   };

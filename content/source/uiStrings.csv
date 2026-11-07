@@ -29,9 +29,6 @@
 # than joining it back into a sentence nobody authored.
 id,extends,short,full,tip
 combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in status resistance.,Ward rating
-combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
-combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
-combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
 combat.protection.block,,Block,Absorbs physical attack damage.,Block
 combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",Arcane Ward
 combat.card.splitDamage,,"{amount} damage ({physical} {physicalType}, {magic} {magicType})",,
@@ -1544,36 +1541,7 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "strings.error.unknownId","","uiStrings: unknown id '{id}'","",""
 "strings.error.extendsCycle","","uiStrings: extends cycle {chain}","",""
 "strings.error.noForm","","uiStrings: '{id}' has no {form} form","",""
-# ---- the combat test build and its debug log chrome (screens/combatTest.js, components/debugChrome.js). The copy button reads common.copied, the one common.* row this block uses.
-combatTest.build.legend,,Your build,,
-combatTest.equipment.bloodRune,,Blood Rune,,
-combatTest.equipment.buildDefault,,Build default,,
-combatTest.equipment.grip,,Grip,,
-combatTest.equipment.legend,,Try different equipment,,
-combatTest.grip.oneHanded,,One handed,,
-combatTest.grip.twoHanded,,Two handed,,
-combatTest.help.keepDodge,,Keep Dodge Roll in hand or spend stamina to Evade the next hit this turn. It costs no actions.,,
-combatTest.help.select,,"Select a card, then its target. Select a self-targeted card and confirm it on your character. Press E to end your turn.",,
-combatTest.help.staminaRecovers,,Stamina recovers each turn. Mana does not. The route carries all three pools between fights.,,
-combatTest.help.summary,,What to try,,
-combatTest.info.fight,,· Fight {n} of {total},,
-combatTest.info.locked,,"Equipment is locked for this route. Change armor, grip, or the rune in build selection to compare. Select a card, then confirm its target. Hold a card to inspect it. E ends your turn.",,
-combatTest.info.returnToBuild,,Return to build selection,,
-combatTest.info.title,,Combat test build,,
-combatTest.options.challenge,,Challenge,,
-combatTest.options.enemyStrength,,Enemy strength,,
-combatTest.options.threeFightRoute,,Three-fight route,,
-combatTest.pressure.hard,,Hard — double damage,,
-combatTest.pressure.practice,,Practice — half damage,,
-combatTest.pressure.standard,,Standard,,
-combatTest.result.chooseABuild,,Choose a build,,
-combatTest.result.eyebrow,,ASHENSPIRE · TEST RUN,,
-combatTest.rune.install,,Install · +{amount} Bleed per contact,,
-combatTest.setup.begin,,Begin test run,,
-combatTest.setup.documentTitle,,AshenSpire {version} — Combat test build,,
-combatTest.setup.eyebrow,,ASHENSPIRE {version} · TEST BUILD,,
-combatTest.setup.heading,,Choose your way through.,,
-combatTest.setup.lead,,"Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.",,
+# ---- the debug log chrome (components/debugChrome.js). The copy button reads common.copied, the one common.* row this block uses.
 debugChrome.refresh,,Refresh,,
 common.copy,,Copy,,
 common.export,,Export,,

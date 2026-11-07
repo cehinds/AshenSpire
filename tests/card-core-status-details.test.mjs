@@ -7,10 +7,10 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { previewCard } from '../src/engine/combat.js';
-import { applyStatus, decayAtTurnStart, decayAtTurnEnd, advanceStatusClock, statusDefinition } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnStart, decayAtTurnEnd, statusDefinition } from '../src/engine/statuses.js';
 import { cardDetailHtml } from '../src/ui/components/card.js';
 import { statusTooltipText, statusInstancePresentation } from '../src/ui/uiContent.js';
-import { createFoundation } from '../src/engine/combatRules.js';
+
 import { combatRules } from '../src/content/combatRules.js';
 import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 import { activeCombatAbilities } from '../src/ui/components/combatAbilities.js';
@@ -145,24 +145,6 @@ test('Core-only status wording adapts custom timers without changing versioned d
   assert.strictEqual(statusPresentationDefinition({ ...off, combatExpansionVersion: 1 }, 'crimsonBlight', custom), custom);
   assert.strictEqual(statusPresentationDefinition(off, 'burn', reg.statuses.get('burn')), reg.statuses.get('burn'));
   assert.match(original.tooltip, /after 3 turns\. Re-applying adds stacks and refreshes/);
-});
-
-test('Core foundation stacking keeps its application cap/clock together with Core decay', () => {
-  const { combat, reg, inst } = fixture({ amount: 2, mode: 'unique',
-    stacking: { mode: 'add', cap: 7, duration: 2, clock: 'ownerTurnEnd' } });
-  combat.foundation = createFoundation(combatRules);
-  applyStatus(combat, combat.player, 'weak', 5); applyStatus(combat, combat.player, 'weak', 5);
-  assert.equal(combat.player.statuses.weak.stacks, 7);
-  const text = weakInfo(reg, inst, previewCard(combat, inst.instanceId));
-  assert.match(text, /adds to the stack total up to 7/);
-  assert.match(text, /Application timer: 2 ticks at the end/);
-  assert.match(text, /decreases by 2 at the start/);
-  assert.doesNotMatch(text, /up to 3|Does not stack/);
-  combat.turn++; decayAtTurnStart(combat, combat.player);
-  assert.equal(combat.player.statuses.weak.stacks, 5);
-  advanceStatusClock(combat, combat.player, 'ownerTurnEnd');
-  advanceStatusClock(combat, combat.player, 'ownerTurnEnd');
-  assert.equal(combat.player.statuses.weak, undefined);
 });
 
 test('Core duration clocks tick once at owner turn start and retain non-overridden expansion caps', () => {

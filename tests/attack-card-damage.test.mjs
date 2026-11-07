@@ -166,22 +166,6 @@ test('DR and PR calculate physical and magical Block from card costs', () => {
   assert(!('vesperWard' in registries.balance.damage.defenseCards.cardBonuses));
 });
 
-test('Poise and Ward card values drive physical and magical impact', async () => {
-  const { attackImpact } = await import('../src/model/combatRatings.js');
-  const registries = createRegistries(contentBundle);
-  const ctx = { registries, ratingsRules: { attackImpact: {}, impact: {} } };
-  const physical = registries.cards.get('strike');
-  const magical = registries.cards.get('supernova');
-  assert.equal(
-    attackImpact(ctx, null, { cardId: physical.id, upgraded: false }),
-    physical.cardRatingValues.poise,
-  );
-  assert.equal(
-    attackImpact(ctx, null, { cardId: magical.id, upgraded: false, energySpent: 3 }),
-    evaluate(magical.cardRatingValues.ward, { energySpent: 3 }),
-  );
-});
-
 // UNTOUCHED DEFAULTS CHANGE NO CARD, ANYWHERE IN ITS EFFECTS (#1247 review).
 // The numeric-only check above could not see a whole NEW effect: a formula-
 // only face (Last Stand's missing HP, Blight Nova's Crimson Blight) used to
@@ -201,43 +185,6 @@ test('untouched defaults leave every card face’s effects exactly as authored',
   const damage = registries.balance.damage;
   assert.ok(!('lastStand' in damage.defenseCards.cardBonuses));
   assert.ok(!('blightNova' in damage.potencyCards.cardBonuses));
-});
-
-// THE SAME, IN A FIGHT: Last Stand at 20 missing HP with DR 5 gains 25, as on
-// dev — not 2 + 5 + 20 + 5 from a second Block effect.
-test('Last Stand adds DR once to its missing-HP Block', async () => {
-  const { createCombat, dispatch } = await import('../src/engine/combat.js');
-  const { createRng } = await import('../src/engine/rng.js');
-  const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
-  const registries = createRegistries(contentBundle);
-  const c = createCombat({
-    registries, rng: createRng(998), ratingsRules: resolveCombatRatings({}, contentBundle),
-    player: { classId: 'reaver', maxHp: 100, hp: 80, maxMana: 10, maxStamina: 10, stamina: 10, energyMax: 3, drawPerTurn: 3,
-      attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
-      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `l${i}`, cardId: 'lastStand', upgraded: false })), relicIds: [] },
-    enemyIds: ['wanderingSoldier'],
-  });
-  c.player.ratings.dr = 5;
-  const before = c.player.block || 0;
-  dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId });
-  assert.equal((c.player.block || 0) - before, 20 + 5);
-});
-
-// A CARD THAT AUTHORS ITS OWN POISE DAMAGE CARRIES ITS IMPACT THERE (#1247
-// review). Its per-hit value used to be seeded from that same effect, so
-// Poise Breaker's 10 landed as 10 + 10. The hit keeps the category default.
-test('an explicit poiseDamage card does not add a second impact of the same size', async () => {
-  const { attackImpact } = await import('../src/model/combatRatings.js');
-  const registries = createRegistries(contentBundle);
-  const ctx = { registries, ratingsRules: { attackImpact: {}, impact: { unarmed: 1, magic: 1, enemyPhysical: 2 } } };
-  const explicit = contentBundle.cards.filter((card) => card.type === 'attack'
-    && (card.effects || []).some((effect) => effect.op === 'poiseDamage'));
-  assert.ok(explicit.some((card) => card.id === 'poiseBreaker'), 'Poise Breaker authors its own poise damage');
-  for (const card of explicit) {
-    const def = registries.cards.get(card.id);
-    assert.equal(def.cardRatingValues, undefined, `${card.id} carries no per-hit value`);
-    assert.equal(attackImpact(ctx, null, { cardId: card.id, damageSchool: 'physical' }), 1, `${card.id}: the unarmed default`);
-  }
 });
 
 // A PROFILE THAT CROSSES THE PHYSICAL/MAGICAL LINE RESOLVES THROUGH THE OTHER
@@ -289,44 +236,6 @@ test('a staff resolves its cards through PR and Ward, a sword through AR/DR and 
   const defense = tuned('defenseCards.globalMultiplier', 5);
   assert.equal(block(resolveCard(defense, { cardId: staffTechnique.baseCardId, profileId: staffTechnique.id })), authoredBlock);
   assert.notEqual(block(resolveCard(defense, { cardId: staffTechnique.baseCardId })), authoredBlock);
-});
-
-// THE SAME, IN A FIGHT: the engine's action carrier is built from the
-// instance, so it has to carry the resolved face's values — the registry def
-// only knows the physical Strike.
-test('a staff Strike played in combat lands its configured Ward impact', async () => {
-  const { createCombat, dispatch } = await import('../src/engine/combat.js');
-  const { createRng } = await import('../src/engine/rng.js');
-  const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
-  const impactOf = (settings, instance) => {
-    const configured = configuredContentBundle(contentBundle, settings);
-    const registries = createRegistries(configured);
-    const c = createCombat({
-      registries, rng: createRng(998), ratingsRules: resolveCombatRatings(settings, contentBundle),
-      player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, energyMax: 3, drawPerTurn: 3,
-        attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
-        deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `s${i}`, upgraded: false, ...instance })), relicIds: [] },
-      enemyIds: ['wanderingSoldier'],
-    });
-    const enemy = c.enemies[0];
-    enemy.poiseMeter = { value: 0, max: 999 };
-    enemy.wardMeter = { value: 0, max: 999 };
-    const seen = [];
-    const emit = c.emit;
-    c.emit = (type, payload) => { if (type === 'ratingImpact') seen.push(payload); return emit(type, payload); };
-    dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: enemy.id });
-    return { seen: c.eventLog.filter(event => event.type === 'ratingImpact'), face: resolveCard(registries, c.piles.discard[0] || instance) };
-  };
-  const staffStrike = { cardId: 'strike', profileId: 'staffMagicAttack', damageSchool: 'magic', exposureBuildupPerHit: 0 };
-  for (const multiplier of [1, 3]) {
-    const { seen, face } = impactOf({ 'gameConfig.balance.damage.wardCards.globalMultiplier': multiplier }, staffStrike);
-    assert.equal(seen.length, 1, 'one impact');
-    assert.equal(seen[0].meter, 'ward');
-    assert.equal(seen[0].amount, face.cardRatingValues.ward, `Ward ×${multiplier} is the hit's impact`);
-  }
-  const low = impactOf({ 'gameConfig.balance.damage.wardCards.globalMultiplier': 1 }, staffStrike).seen[0].amount;
-  const high = impactOf({ 'gameConfig.balance.damage.wardCards.globalMultiplier': 3 }, staffStrike).seen[0].amount;
-  assert.ok(high > low, 'the Ward formula reaches the staff hit');
 });
 
 // THE PER-CARD BONUS IS SIGNED (SPEC §3.4), so its settings row must accept a

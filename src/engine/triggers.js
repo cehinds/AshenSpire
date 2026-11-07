@@ -11,7 +11,6 @@ import { activeCombatStances, statusStacksWithStance } from './concurrentStances
 //
 // Headless: no document/window/localStorage/timers.
 
-import * as Foundation from './combatRules.js';
 import { TRIGGER_EVENTS } from '../model/schemas.js';
 import * as StatusHelpers from '../framework/statusSemantics.js';
 import * as Statuses from './statuses.js';
@@ -60,7 +59,7 @@ export function emitEvent(ctx, type, payload = {}) {
   if (ctx.players && payload.targetId === 'player' && PLAYER_TARGET_EVENTS.has(type)) {
     payload = { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? ctx.playerKey };
   }
-  const event = { type, ...Foundation.foundationEvent(ctx, type, payload) };
+  const event = { type, ...payload };
   ctx.eventLog.push(event);
   recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
@@ -90,8 +89,7 @@ export function emitEvent(ctx, type, payload = {}) {
  * keep their own (already unique) entity ids.
  */
 function ownerKeyFor(ctx, entity) {
-  // A combat that can name seats (co-op, with or without a foundation
-  // ruleset) keys by the seat the ENTITY sits in, so an inactive seat's
+  // A combat that can name seats (co-op) keys by the seat the ENTITY sits in, so an inactive seat's
   // mounts and gates are its own when an event names it (a heal's
   // targetPlayerId); the active seat's key is unchanged, since its entity
   // resolves to the same id ctx.playerKey holds.
@@ -169,17 +167,13 @@ function scanTriggers(ctx, event, rangeCarrier = null) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
-  const pending = [];
   const schedule = (key, trigger, owner, after, origin) => {
-    if (ctx.foundation) pending.push({ key, trigger, owner, after, origin });
-    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin, rangeCarrier); if (fired) after?.(); }
+    const fired = maybeFire(ctx, key, trigger, owner, event, origin, rangeCarrier); if (fired) after?.();
   };
 
   // A heal names its seat (targetPlayerId), so every seat's mounts hear it
-  // with or without a foundation ruleset — an ally's heal is the ally's.
-  const everySeat = ctx.players && (
-    (ctx.foundation && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded', 'healed'].includes(event.type))
-    || ['healed', 'arcaneStagger', 'statusApplied', 'enemyDied'].includes(event.type));
+  // — an ally's heal is the ally's.
+  const everySeat = ctx.players && ['healed', 'arcaneStagger', 'statusApplied', 'enemyDied'].includes(event.type);
   const owners = everySeat
     ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
   // Relics and stances react for their actual owner, including inactive co-op seats.
@@ -239,8 +233,6 @@ function scanTriggers(ctx, event, rangeCarrier = null) {
     }
   }
 
-  pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin, rangeCarrier)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -254,8 +246,7 @@ function scanTriggers(ctx, event, rangeCarrier = null) {
 }
 
 function allCombatants(ctx) {
-  const players = ctx.foundation && ctx.players ? [...ctx.players.values()].filter((p) => p.connected).map((p) => p.entity) : [ctx.player];
-  return [...players, ...(ctx.enemies || [])];
+  return [ctx.player, ...(ctx.enemies || [])];
 }
 
 /**
@@ -265,7 +256,6 @@ function allCombatants(ctx) {
  */
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
-  Statuses.advanceStatusClock(ctx, entity, hookName);
   // Reaction rules version 2: a status's fluxPerTurn is Ward damage to its owner at turn start.
   if (hookName === 'ownerTurnStart' && ctx.reactionRulesVersion === 2) {
     for (const statusId of Object.keys(entity.statuses)) {
@@ -273,7 +263,7 @@ export function fireOwnerHooks(ctx, entity, hookName) {
       if (flux > 0 && entity.statuses[statusId]?.stacks > 0) spendPersistentWard(ctx, entity, flux, { sourceId: entity.id, cause: 'flux', statusId });
     }
   }
-  const syntheticEvent = { type: hookName, ...Foundation.foundationEvent(ctx, hookName, { ownerId: entity.id }) };
+  const syntheticEvent = { type: hookName, ownerId: entity.id };
   const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -309,15 +299,12 @@ function maybeFire(ctx, key, trigger, owner, event, origin = null, rangeCarrier 
   const target = resolveEventEntity(ctx, event);
   if (trigger.if && !evalPredicate(ctx, trigger.if, { owner, target, event })) return false;
 
-  if (!Foundation.foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
-  const ratingCard = ctx.ratingsRules && key.startsWith('status:')
-    ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   const actions=[];
   for (const [effectIndex,eff] of (trigger.do || []).entries()) {
-    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard,rangeCarrier);
-    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : ratingCard ? { card: ratingCard } : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,null,rangeCarrier);
+    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}) } });
   }
   for(const action of RangeLineage.acceptIndependentTrigger(ctx,owner,actions,key))ctx.enqueue(action);
   return true;
