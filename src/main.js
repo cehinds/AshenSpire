@@ -1381,7 +1381,8 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
-  if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
+  // Core 2 keeps breakMeterVersion 2 (its run is expanded whatever the shot asks).
+  if (legacyArcaneShot && !configuredProfile) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot, null, gameProfile);
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({

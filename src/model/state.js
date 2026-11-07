@@ -1,6 +1,7 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
 import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
@@ -181,7 +182,8 @@ export function createRunState({
   // was archived (tools/slot-load-door.mjs, 2026-11-07).
   if (configured) {
     combatExpansionVersion = 2;
-    reactionRulesVersion = gameModule(profileSubject, 'reactions')?.chainLimit > 0 ? 2 : null;
+    const reactions = configuredModule(profileSubject, 'reactions');
+    reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
   }
   if (configured) enemyKnowledgeVersion = null;
   if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
