@@ -7,7 +7,6 @@ import { progressionTip } from '../components/progressionCards.js';
 import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress } from '../../model/progression.js';
-import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection, equipmentDetails } from '../components/equipmentCard.js';
 import { openCardInspection } from '../components/cardInspection.js';
@@ -17,7 +16,6 @@ import { mountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
 import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
-import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
 //
@@ -72,6 +70,7 @@ import {
 } from '../components/armouryComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { armouryStatsPanel } from '../components/armouryStatsPanel.js';
+import { armouryPickerTable, thumbSrc } from '../components/armouryPicker.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
@@ -81,7 +80,6 @@ import { renderBookArt } from '../components/bookArt.js';
 import { equipClassCard, learnedClassIds } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
-import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -416,17 +414,6 @@ function figureFor(registries, run, cz) {
   const fig = equippedFigure({ classId: run.class, ...spec });
   el.appendChild(fig || playerSprite(cz, run.class, spec.armourId));
   return el;
-}
-
-/**
- * A piece's thumbnail. Armaments have a tight icon render; an armour set's
- * "icon" is the set itself — the body in its own palette — because there is no
- * separate object to photograph.
- */
-function thumbSrc(piece) {
-  return piece.kind === 'armor'
-    ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(armamentIconAsset(piece));
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -1452,103 +1439,15 @@ export function mountEquipment(host, {
   }
 
   /** While a position is picked: the candidates as an Item / Status / Actions table. */
-  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }) {
-    // A redraw replaces every control; put keyboard focus back on the one pressed.
-    const redrawFocus = (selector) => { draw(); wrap.querySelector(selector)?.focus({ preventScroll: true }); };
-    const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
-    const shown = pickerShowAll ? all : all.filter((r) => r.fits);
-    const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
-    const root = el('div', { class: 'equip-picker', dataset: { component: UI.armouryEquipPickerTable } });
-    const filter = button({
-      label: pickerShowAll ? t('armoury.picker.fitsOnly') : t('armoury.picker.showAll'),
-      className: 'equip-picker-filter',
-      attrs: { 'aria-pressed': String(pickerShowAll) },
-    });
-    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; redrawFocus('.equip-picker-filter'); });
-    root.append(filter);
-    if (!shown.length) {
-      root.append(flavour(`Nothing in Inventory fits ${selectedSlot.label}.`, { class: 'ep-hint' }));
-      setFooterPrimary(null);
-      return root;
-    }
-    const sortHead = (key, label) => {
-      const active = pickerSort.column === key;
-      const sortButton = el('button', { type: 'button', class: 'equip-picker-sort', dataset: { sort: key } }, [label]);
-      sortButton.addEventListener('click', () => {
-        pickerSort = pickerSort.column === key
-          ? { column: key, direction: pickerSort.direction === 'asc' ? 'desc' : 'asc' }
-          : { column: key, direction: 'asc' };
-        redrawFocus(`.equip-picker-sort[data-sort="${key}"]`);
-      });
-      return el('th', { role: 'columnheader', 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
-    };
-    const thead = el('thead', { role: 'rowgroup' }, [el('tr', { role: 'row' }, [
-      sortHead('name', t('armoury.picker.col.item')),
-      sortHead('status', t('armoury.picker.col.status')),
-      el('th', { role: 'columnheader' }, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
-    ])]);
-    const tbody = el('tbody', { role: 'rowgroup' });
-    for (const r of shown) {
-      const parts = pickerParts.get(r.key);
-      const first = r.elsewhere[0];
-      const metaBits = [r.category];
-      if (r.status === 'nofit') metaBits.push(t(r.reason === 'kind' ? 'armoury.picker.reason.kind' : 'armoury.picker.reason.hand', { slot: selectedSlot.label }));
-      if (r.status === 'elsewhere' && r.row.count === 1) metaBits.push(t('armoury.picker.onlyCopy', { slot: slotLabel(first.slotId), n: first.setIndex + 1 }));
-      const statusLabel = r.status === 'elsewhere'
-        ? t('armoury.picker.status.elsewhere', { slot: slotLabel(first.slotId), n: first.setIndex + 1 })
-        : t(`armoury.picker.status.${r.status}`, {});
-      const img = el('img', { class: 'equip-picker-thumb', src: thumbSrc(r.row.item), alt: '', loading: 'lazy', decoding: 'async' });
-      // The cell stays a table cell; its flex layout lives on an inner wrapper.
-      // Phones drop the Status column, so the pill also rides under the name.
-      const statusPill = () => pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } });
-      const itemCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
-        el('strong', { class: 'equip-picker-name' }, [r.name]),
-        el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
-        el('span', { class: 'equip-picker-inline-status' }, [statusPill()]),
-      ])])]);
-      const statusCell = el('td', { role: 'cell', class: 'equip-picker-status' }, [statusPill()]);
-      const inspect = button({
-        label: t('armoury.action.inspect'),
-        className: 'equip-picker-inspect',
-        attrs: { 'aria-haspopup': 'dialog' },
-      });
-      inspect.addEventListener('click', () => openItemInspection(r.row.item, r.row.category, { owned: r.row.count, opener: inspect }));
-      const actions = [inspect];
-      if (r.fits && parts?.target) {
-        const target = parts.target;
-        // The row already names the slot, so its button is the short verb;
-        // the full destination stays in the accessible name.
-        const act = button({
-          label: t(`armoury.picker.act.${target.kind}`),
-          weight: target.kind === 'unequip' ? 'danger' : 'primary',
-          className: 'equip-picker-act',
-          attrs: { 'aria-label': parts.actionLabel, title: parts.actionLabel },
-        });
-        act.dataset.act = target.kind;
-        if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
-        else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
-        else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
-        actions.push(act);
-      }
-      const actionsCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-actions' }, actions)]);
-      // Buttons are taps, not drag handles: keep the row's pointer capture off them.
-      actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
-      const tr = el('tr', { role: 'row',
-        class: `equip-picker-row is-${r.status}`,
-        dataset: { itemId: r.id, rowKey: r.key, status: r.status },
-      }, [itemCell, statusCell, actionsCell]);
-      // Mouse and pen users can still drag a row onto any named position.
-      const draggableRow = draggableRows.get(r.key);
-      if (draggableRow) attachInventoryDrag(tr, draggableRow);
-      tbody.append(tr);
-    }
-    setFooterPrimary(null);
-    root.append(el('table', { role: 'table', class: 'equip-picker-table' }, [
-      el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
-      thead,
-      tbody,
-    ]));
-    return root;
+  function pickerTable(args) {
+    return armouryPickerTable({
+      run, eq, wrap, draw, setFooterPrimary, openItemInspection, requestEquip,
+      getPicking: () => picking,
+      getPickerSort: () => pickerSort,
+      setPickerSort: (sort) => { pickerSort = sort; },
+      getPickerShowAll: () => pickerShowAll,
+      setPickerShowAll: (showAll) => { pickerShowAll = showAll; },
+    }, args);
   }
 
   /** An owned item with an action of its own beyond equipping: a skill book (Read). Listed in and out of combat; the action is out of combat only. */
