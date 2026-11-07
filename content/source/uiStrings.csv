@@ -29,9 +29,6 @@
 # than joining it back into a sentence nobody authored.
 id,extends,short,full,tip
 combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in status resistance.,Ward rating
-combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
-combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
-combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
 combat.protection.block,,Block,Absorbs physical attack damage.,Block
 combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",Arcane Ward
 combat.card.splitDamage,,"{amount} damage ({physical} {physicalType}, {magic} {magicType})",,
