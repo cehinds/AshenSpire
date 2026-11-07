@@ -20,24 +20,25 @@ How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
 A session merges its own PRs into `dev` once they are reviewed, mergeable and
 green (rule 6 below, standing approval, owner, 2026-10-13), then
-promotes `dev` to `test`; only the owner merges to `release` or `main`,
+promotes `dev` to `review` (the pinned "Dev code review" session then carries `review` to `test`); only the owner merges to `release` or `main`,
 creates a release tag, or publishes a release.
 
 ## Branch model
 
 ```
-worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
-                      (smoke on PR→dev, heavy suites at test, polish + Windows installer at release)
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► review ──► test ──► release ──► main
+                      (smoke on PR→dev, code review at review, heavy suites at test, polish + Windows installer at release)
 ```
 
 | Branch | Rules |
 |---|---|
-| `worker/<parent-topic>/<task>` | One worker's task, cut from its parent branch (`worker/CdCiPipelines/branch-cleanup` for `chore/CdCiPipelines`) and pushed to origin. Only the orchestrator merges it into the parent. The local copy and worktree are removed once the parent merges into `dev`. The origin copy is deleted by `worker-branch-cleanup.yml` once `dev` is promoted to `test`. |
+| `worker/<parent-topic>/<task>` | One worker's task, cut from its parent branch (`worker/CdCiPipelines/branch-cleanup` for `chore/CdCiPipelines`) and pushed to origin. Only the orchestrator merges it into the parent. The local copy and worktree are removed once the parent merges into `dev`. The origin copy is deleted by `worker-branch-cleanup.yml` on a push to `test` (unchanged: it runs when `review` is promoted to `test`). |
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`. A `feature/*`, `chore/*` or `fix/*` PR merges once it is reviewed by another agent or session, conflicts are resolved and fast checks are green; the session merges it itself (rule 6, standing approval, owner, 2026-10-13). |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
-| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
+| `review` | Long-lived branch between `dev` and `test` (owner, 2026-11-07). Owned by the pinned "Dev code review" Claude Code session, which is read-only on code: it reviews what each `dev` → `review` promotion brought in and, when clean, promotes `review` → `test` with a PR it merges (merge commit). Sessions that merge a PR into `dev` promote `dev` → `review` (rule 6). Nothing is fixed on `review`: a finding is fixed by a `chore/*` branch cut from `dev`, a PR into `dev`, a new promotion to `review`, review, then on to `test`. No CI workflows run on `review`; the heavy CI stays on `test`. |
+| `test` | Where the heavy CI runs: every push to `test` runs the long suites, and raises the build ordinal (the fourth number) by one (`version-advance.yml`). Only `review` promotions land here (a `review` → `test` PR the review session merges, rule 6), and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `review` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. After a successful feature build, CI publishes the current branch at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is refreshed after successful code builds; stale previews are omitted. No open PR is required. |
 
 ## Commits & PRs
@@ -148,7 +149,7 @@ gallery still identifies that build; identical images do not need recapturing.
 Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26; standing merge
 approval 2026-10-13, replacing the 2026-10-11 per-PR owner review), for every
 session and agent working here. The session that opens a PR takes it all the
-way: through review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
+way: through review, into `dev`, then promoted to `review` (rule 6; the review session carries it on to `test`). The owner merges only to
 `release` and `main`.
 
 1. **Open it ready for review, never as a draft.** Say in the body what is
@@ -204,8 +205,10 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
    yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Merge into `dev` yourself, then promote to `test`** (owner, 2026-09-26;
-   standing merge approval 2026-10-13). The long suites run at `test`.
+6. **Merge into `dev` yourself, then promote to `review`** (owner, 2026-09-26;
+   standing merge approval 2026-10-13; `review` stage added 2026-11-07, before
+   that the promotion went straight to `test`). The long suites run at `test`,
+   which only the "Dev code review" session promotes to (from `review`).
    - **Standing merge approval.** The owner no longer approves each PR; this
      replaced the 2026-10-11 per-PR review gate. A `feature/*`, `chore/*` or
      `fix/*` PR, in any letter case (`Feature/`, `Chore/`, `FIX/` …), merges
@@ -231,21 +234,24 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
      only when that run has succeeded and `dev`'s tip is that stamp commit, or a
      later docs-only bot commit. Its dispatched `dev-preview` run on the stamped tip
      must also have succeeded, since that artifact is the playable build for it.
-     Then open a PR from `dev` into `test` and
-     merge it yourself, with a merge commit. Immediately before merging,
+     Then open a PR from `dev` into `review` and
+     merge it yourself, with a merge commit. The pinned "Dev code review"
+     session reviews it and, when clean, merges `review` into `test` the same
+     way; a push to `test` is what runs the heavy suites. Immediately before merging,
      check again: the PR's head must still be the `dev` tip, that tip's
      latest `architecture-sync` run must have succeeded, and its `build-stamp`
      run must have succeeded. If `dev` moved,
-     wait for its syncs to settle and check again. That push to `test` runs the heavy suites. If one is
+     wait for its syncs to settle and check again. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
    - A promotion does not advance the release candidate (the third
-     component of `contentBundle.version`). A push to `release` (the cut)
+     component of `contentBundle.version`); a push to `test` raises only the
+     build ordinal (the fourth number) by one. A push to `release` (the cut)
      advances the candidate, and a push to `main` advances MINOR, both
      automatically through `version-advance.yml`; do not open a bump PR or
      hand-edit the triple ([docs/versioning.md](docs/versioning.md)).
-   - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
+   - Every push to `test` (a `review` → `test` promotion) also starts `sync-alternatives.yml`.
      Existing named pairs such as `alternative/art/dev` → `alternative/art/test` receive
      the promoted snapshot, then the alternative dev result is merged into its
      test branch. No missing branch is created. Both updates are pushed
@@ -264,8 +270,10 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
      promotion. Alternative previews have their own Pages section and README
      build badges; successful preview runs refresh Pages through the default
      branch, without changing the Pages environment's allowed branches.
-   - Watch the `test` run. A red there is yours to fix with a new PR into
-     `dev`, which you then promote again.
+   - Watch the `test` run if you are the review session; otherwise the review
+     session owns it. A red there, or a finding in review, is fixed with a new
+     `chore/*` PR cut from `dev` into `dev`, which is then promoted to `review`
+     again. Never fix on `review` or `test` directly.
    - Never merge to `release` or `main` (see
      [Coordination and release boundary](#coordination-and-release-boundary)).
      A push to `release` publishes the Pages site on its own (owner, 2026-10-11),

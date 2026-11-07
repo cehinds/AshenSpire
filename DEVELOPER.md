@@ -100,7 +100,7 @@ pull requests that landed, regenerates `src/content/changelog.generated.js`, and
 commits those three files to `dev` as `build: stamp <release>.<ordinal>
 [build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
 rebuild that changes only those two derived files; test, release and main still
-require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+require the rebuild to change nothing. Promotion from `dev` to `review` (and so on to `test`) waits for
 the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
 commit or a later docs-only bot commit, since `test`'s strict check would otherwise
 refuse the promotion. After a successful stamp push, build-stamp dispatches
@@ -788,7 +788,7 @@ node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(c
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
 Every merged pull request must be named by an entry in
-[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `review`.
 The changelog you can read inside the game is a projection of that file (#189),
 so a merge with no receipt is missing for a **player**, not only for the
 repository.

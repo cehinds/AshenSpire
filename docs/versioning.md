@@ -73,8 +73,10 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **`rc.<n>` advances when the owner names a new candidate for QA** (historical; since 2026-11-01 version-advance.yml advances the candidate on each release cut) — every
   candidate QA receives is distinguishable by its stamp, and the ordinal keeps
   ordering builds within it. It once advanced at every `dev → test` promotion;
-  since 2026-09-26 every session promotes `dev` to `test` after each merge
-  (CONTRIBUTING.md rule 6), so a promotion alone no longer advances it.
+  since 2026-09-26 every session promotes `dev` after each merge
+  (CONTRIBUTING.md rule 6; to `review` since 2026-11-07), so a promotion alone no longer
+  advances the candidate. A push to `test` (the `review` → `test` promotion) raises only
+  the ordinal.
 - **Ordering is by the WHOLE version, component-wise numeric** — superseded
   2026-09-01, see "The candidate is the third component" below. Until then the
   ordinal was the one monotonic key: it never reset, so any two builds sorted
@@ -356,7 +358,7 @@ hold both editions.
 | Trigger | Why it builds | What it keeps |
 |---|---|---|
 | pull request into `dev`, push to `dev` | the gates that read a bundle (`verify-shipped`, `buildversion --check`, the bundler parse gate, the tests that open the HTML) must see one, and a reviewer plays the PR's own build | `dev-standalone-<commit>`, 14 days (today's `dev-preview.yml` retention) |
-| **push to `test`** | the owner's request: the playtest build QA receives on each `dev → test` promotion | `test-standalone-<commit>`, 30 days |
+| **push to `test`** | the owner's request: the playtest build QA receives on each `review → test` promotion (`dev → test` before 2026-11-07) | `test-standalone-<commit>`, 30 days |
 | push to `release`, push to `main` | Pages publishes those sections (a push to `release` publishes the site, owner, 2026-10-11, once the `github-pages` environment admits `release`), and the release gate (`ci.yml` on push to `release`) reads a build | `<branch>-standalone-<commit>`, 90 days (GitHub's maximum) |
 
 A check that used to read a committed build now builds on demand in the same
