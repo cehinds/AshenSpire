@@ -72,7 +72,7 @@ import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/ski
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, xpToNext as levelXpToNext } from './model/levelup.js';
+import { allocateAttributePoint, awardLevelXp, combatXpReceipt, xpToNext as levelXpToNext } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
@@ -3807,8 +3807,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
         const points = Number(rawPoints);
         if (!Number.isInteger(points) || ![0, 1].includes(points)) throw new Error('?shotRestPoints: expected exactly 0 or 1');
         if (points === 1) {
-          bankLevelXp(registries, run, levelXpToNext(registries, run.level.level));
-          claimBankedLevel(registries, run, { pointsPerLevel: 1 });
+          awardLevelXp(registries, run, levelXpToNext(registries, run.level.level), {
+            pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
         }
       }
       if (shotParams.get('shotRestState') === 'wounded') {

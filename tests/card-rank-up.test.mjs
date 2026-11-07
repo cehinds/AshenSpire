@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
-import { awardSkillXp, xpToNext, rankUpCandidates, raiseCardRank, skillsProblems, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
+import { awardSkillXp, xpToNext, rankUpCandidates, raiseCardRank, skillsProblems } from '../src/model/skills.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
 
 const registries = createRegistries(contentBundle);
@@ -32,11 +32,10 @@ test('a card-school track queues one rank-up per level from 2; armour queues non
   levelUp(run, 'armour:heavy', 'armour', 3);
   assert.equal(run.skills['armour:heavy'].pendingRankUps, undefined);
   const banked = createRunState({ seed: 3, classId: 'reaver', registries });
-  bankSkillXp(registries, banked, BLADE, xpToNext(registries, 'weapon', 0) + xpToNext(registries, 'weapon', 1));
-  claimBankedSkillLevel(registries, banked, BLADE);
-  assert.equal(banked.skills[BLADE].pendingRankUps, undefined, 'claiming level 1 queues none');
-  claimBankedSkillLevel(registries, banked, BLADE);
-  assert.equal(banked.skills[BLADE].pendingRankUps, 1, 'claiming level 2 queues one');
+  awardSkillXp(registries, banked, BLADE, xpToNext(registries, 'weapon', 0));
+  assert.equal(banked.skills[BLADE].pendingRankUps, undefined, 'reaching level 1 queues none');
+  awardSkillXp(registries, banked, BLADE, xpToNext(registries, 'weapon', 1));
+  assert.equal(banked.skills[BLADE].pendingRankUps, 1, 'reaching level 2 queues one');
   assert.deepEqual(skillsProblems(run.skills), []);
   assert.ok(skillsProblems({ [BLADE]: { xp: 0, level: 2, pendingDrafts: 0, pendingRankUps: -1 } }).length);
 });

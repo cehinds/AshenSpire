@@ -10,7 +10,6 @@ import { attributesCard, characterStatsButton, progressionTip } from '../compone
 import { skillInspection } from '../models/ProgressionInspectionModel.js';
 import { renderCard } from '../components/card.js';
 import { hideTooltip } from '../components/tooltip.js';
-import { pendingLevelCount } from '../../model/levelup.js';
 import { deferredProgressionCount, deferredOtherClassRewardCount } from '../../model/deferredProgression.js';
 import { t } from '../strings.js';
 
@@ -82,7 +81,7 @@ function characterPane(registries, run, sheet, state) {
     el('summary', { text: t('progression.levels') }), ladder(sheet.character.rows, t('progression.characterLevels')),
   ]);
   progressionTip(levelDetails.querySelector('summary'), 'Show every level and its rewards');
-  const rewards = pendingLevelCount(registries, run) + deferredProgressionCount(run);
+  const rewards = deferredProgressionCount(run);
   const otherClassRewards = deferredOtherClassRewardCount(run);
   const claim = state.onRewards ? button({ label: rewards ? `Level rewards · ${rewards} waiting` : t('progression.rewards') }) : null;
   claim?.addEventListener('click', () => { state.close(); state.onRewards(); });

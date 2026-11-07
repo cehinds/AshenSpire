@@ -11,7 +11,7 @@
 // exclude one another by content rule (validate.js), so the top pick is the
 // subclass, never a stack.
 
-import { classSkillId, awardSkillXp, bankSkillXp, skillLevel } from './skills.js';
+import { classSkillId, awardSkillXp, skillLevel } from './skills.js';
 
 /** The tree rows of one class, in table order. */
 export function classTreeRows(registries, classId) {
@@ -77,13 +77,13 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
  * combat does not. A lost fight pays nothing; a boss pays `bossKill` on top
  * of `perWin`.
  */
-export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1, queueRewards = true } = {}) {
+export function awardClassXp(registries, run, { victory = false, pool = 'normal', multiplier = 1, queueRewards = true } = {}) {
   if (!victory || !run || !run.class || run.classUnequipped) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
   const base = (xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0);
   const amount = Math.floor(base * multiplier);
   if (!(amount > 0)) return null;
-  return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount, { queueRewards });
+  return awardSkillXp(registries, run, classSkillId(run.class), amount, { queueRewards });
 }
 
 /**

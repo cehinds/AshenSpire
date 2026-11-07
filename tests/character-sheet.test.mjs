@@ -16,7 +16,7 @@ import { deckMinimum } from '../src/model/loadout.js';
 import { deriveStat } from '../src/model/derivedStats.js';
 import { characterSheetModel, characterLadder, rowState } from '../src/ui/models/CharacterSheetModel.js';
 import { cadenceLine, grantText } from '../src/ui/screens/characterSheet.js';
-import { queueClassMilestone, classRewardBudget } from '../src/model/classMilestones.js';
+import { classRewardBudget } from '../src/model/classMilestones.js';
 import { abilityRankAt } from '../src/model/abilityGrades.js';
 
 // These historical assertions replay the pre-expansion ladder. The expanded
