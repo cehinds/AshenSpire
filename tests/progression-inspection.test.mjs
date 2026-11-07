@@ -11,7 +11,6 @@ import { abilityOfferPool } from '../src/model/abilityOffers.js';
 import { abilityRankAt } from '../src/model/abilityGrades.js';
 import { getFeatDescription } from '../src/model/classSkillFeatDescription.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const registries = createRegistries(contentBundle);
 const fresh = () => createRunState({ seed: 4242, classId: 'reaver', registries });

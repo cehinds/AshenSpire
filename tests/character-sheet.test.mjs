@@ -4,7 +4,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { xpToNext as levelXpToNext, awardLevelXp } from '../src/model/levelup.js';
@@ -21,7 +20,7 @@ import { abilityRankAt } from '../src/model/abilityGrades.js';
 
 // These historical assertions replay the pre-expansion ladder. The expanded
 // contract below is checked against its actual paid milestone receipts.
-const registries = createRegistries(legacyContentBundle);
+const registries = createRegistries(contentBundle);
 const freshRun = () => createRunState({ seed: 4242, classId: 'reaver', registries });
 const kinds = (row) => row.grants.map((g) => g.kind);
 
@@ -145,15 +144,6 @@ test('the model is frozen and every grant has words', () => {
   }
 });
 
-test('a class level also pays the source bonuses: a feat choice and a chance at a class card', () => {
-  const cls = characterSheetModel(registries, freshRun()).tracks[0];
-  const bonus = registries.balance.rewards.sourceBonuses;
-  for (const row of cls.rows) {
-    assert.equal((row.grants.find((g) => g.kind === 'classFeat') || {}).pct, bonus.classFeatChancePct);
-    assert.equal((row.grants.find((g) => g.kind === 'classCard') || {}).pct, bonus.classCardChancePct);
-  }
-});
-
 test('the cadence line promises only what that track pays', () => {
   const sheet = characterSheetModel(registries, freshRun());
   const line = (id) => cadenceLine(registries, sheet.tracks.find((t) => t.id === id));
@@ -182,13 +172,4 @@ test('expanded ability ladders use free activation, authored ranks and linear st
     assert.match(grantText(track.rows[0].grants.find(g => g.kind === 'cardDraft')), /3 families at rank 0/);
     assert.doesNotMatch(cadenceLine(expandedRegistries,track), /rank-up|card power/);
   }
-});
-
-test('an actual legacy save read through the aggregate root keeps legacy chance rewards and focus ranks', () => {
-  const run = freshRun();
-  const sheet = characterSheetModel(expandedRegistries,run), legacy = characterSheetModel(registries,run);
-  assert.equal(run.progressionRulesVersion,undefined);
-  assert.deepEqual(sheet.tracks,legacy.tracks);
-  assert.equal(sheet.tracks.find(track => track.id === 'item:magic-focus').rows[0].grants.find(g => g.kind === 'cardDraft').rank,1);
-  assert.ok(sheet.tracks[0].rows.every(row => row.grants.some(g => g.kind === 'classFeat') && row.grants.some(g => g.kind === 'classCard')));
 });

@@ -4,7 +4,7 @@
 // by one rank, never past the track's level.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, rankUpCandidates, raiseCardRank, skillsProblems } from '../src/model/skills.js';
@@ -20,7 +20,7 @@ const levelUp = (run, track, kind, levels) => {
 const bladeRun = (level) => {
   const run = createRunState({ seed: 21, classId: 'reaver', registries });
   if (level) levelUp(run, BLADE, 'weapon', level);
-  run.deck.push({ instanceId: 'own-rend', cardId: 'rend', upgraded: false });
+  run.deck.push({ instanceId: 'own-rend', cardId: 'gorefireSlash', upgraded: false });
   return run;
 };
 
@@ -42,8 +42,8 @@ test('a card-school track queues one rank-up per level from 2; armour queues non
 
 test('a rank-up raises an ordinary owned card of the schools, never past the track level', () => {
   const run = bladeRun(3);
-  run.deck.push({ instanceId: 'own-bound', cardId: 'rend', upgraded: false, sourceArmamentId: 'x' });
-  run.deck.push({ instanceId: 'own-top', cardId: 'rend', upgraded: false, rank: 3 });
+  run.deck.push({ instanceId: 'own-bound', cardId: 'gorefireSlash', upgraded: false, sourceArmamentId: 'x' });
+  run.deck.push({ instanceId: 'own-top', cardId: 'gorefireSlash', upgraded: false, rank: 3 });
   const ids = rankUpCandidates(registries, run, BLADE).map((inst) => inst.instanceId);
   assert.ok(ids.includes('own-rend'));
   assert.ok(!ids.includes('own-bound'), 'an equipment-bound card is the piece\'s');

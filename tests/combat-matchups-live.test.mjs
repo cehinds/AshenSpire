@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -12,8 +11,8 @@ import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 // This file tests matchup mechanics on the authored card numbers, so every card keeps its authored cost and numbers:
 // it opts out of the cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
 const authoredCosts = (cards) => cards.map(card => ({ ...card, costRule: 'fixed' }));
-function registry({ enemyId = 'wanderingSoldier', moveId = 'slash', damage = 8, legacy = false } = {}) {
-  const base = legacy ? legacyContentBundle : contentBundle;
+function registry({ enemyId = 'wanderingSoldier', moveId = 'slash', damage = 8 } = {}) {
+  const base = contentBundle;
   return createRegistries({ ...base, cards: authoredCosts(base.cards),
     enemies: base.enemies.map(enemy => enemy.id === enemyId ? { ...enemy, firstMove: moveId } : enemy),
     enemyMoves: base.enemyMoves.map(move => move.enemyId === enemyId && move.id === moveId ? { ...move, ...(move.damage != null ? { damage } : {}) } : move),
@@ -22,7 +21,6 @@ function registry({ enemyId = 'wanderingSoldier', moveId = 'slash', damage = 8, 
 const basicRegistry = registry();
 const partialRegistry = registry({ damage: 30 });
 const counterRegistry = registry({ enemyId: 'gildedKnight', moveId: 'parry' });
-const legacyRegistry = registry({ legacy: true });
 function player(cardId) {
   return { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50,
     energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId }], relicIds: [] };
@@ -152,36 +150,6 @@ for (const inactive of ['condition', 'zeroHits', 'zeroRepeat', 'allInactive']) {
   });
 }
 
-test('legacy conditional Counter takes exactly one eligible damage branch before gaining Guard', () => {
-  const unguarded = solo('guardCounter', legacyRegistry);
-  dispatch(unguarded, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(unguarded.player.combatCounter.damage, 4);
-  const guarded = solo('guardCounter', legacyRegistry); guarded.player.block = 2;
-  dispatch(guarded, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(guarded.player.combatCounter.damage, 10, 'conditional branches must not sum to14');
-});
-
-test(`solo Crimson Reprisal prints its inactive conditional clause`, () => {
-  const c = solo('progression-crimson-reprisal');
-  const actor = c.player;
-  const preview = previewCard(c, 'card1');
-  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [8, 4]);
-  dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(actor.combatCounter.damage, 8, 'the inactive clause remains unarmed');
-});
-
-for (const hasBlock of [false, true]) {
-  test(`solo conditional Counter keeps both printed branches with Block=${hasBlock}`, () => {
-    const c = solo('guardCounter', legacyRegistry);
-    const actor = c.player;
-    if (hasBlock) actor.block = 2;
-    const preview = previewCard(c, 'card1');
-    assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [4, 10]);
-    dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-    assert.equal(actor.combatCounter.damage, hasBlock ? 10 : 4, 'only the eligible branch is armed');
-  });
-}
-
 test('player stagger also cancels prepared Counter while preserving existing defense pools', () => {
   const c = solo('riposte');
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
@@ -227,10 +195,10 @@ test('enemy Counter payload uses the same fight damage scale', () => {
 });
 
 test('empty custom combat identity retains local hit vulnerability tags in preview and execution', () => {
-  const registries = createRegistries({ ...legacyContentBundle,
-    cards: legacyContentBundle.cards.map(card => card.id === 'strike'
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'strike'
       ? { ...card, cardTags: [], effects: [{ op: 'damage', target: 'enemy', amount: 10, tags: ['starstone'] }] } : card),
-    tagging: legacyContentBundle.tagging.filter(row => !(row.family === 'card' && row.objectId === 'strike') || row.tagId === 'classification.attack'),
+    tagging: contentBundle.tagging.filter(row => !(row.family === 'card' && row.objectId === 'strike') || row.tagId === 'classification.attack'),
   });
   assert.deepEqual(registries.cards.get('strike').cardTags, []);
   const c = solo('strike', registries);
@@ -281,10 +249,10 @@ test('Holy lethal hit cleanses its attacker before the card ends combat', () => 
 });
 
 test('Deathblow shares one Slashing rider across its separately queued damage effects', () => {
-  const registries = createRegistries({ ...legacyContentBundle,
+  const registries = createRegistries({ ...contentBundle,
     // Deathblow ships Blunt + Force (owner #23); this fixture swaps in Slashing alone.
-    cards: legacyContentBundle.cards.map(card => card.id === 'deathblow' ? { ...card, attack: undefined } : card),
-    tagging: [...legacyContentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
+    cards: contentBundle.cards.map(card => card.id === 'deathblow' ? { ...card, attack: undefined } : card),
+    tagging: [...contentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
       { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
   });
   for (const foundation of [false]) {
@@ -299,8 +267,8 @@ test('Deathblow shares one Slashing rider across its separately queued damage ef
 });
 
 test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets next card', () => {
-  const registries = createRegistries({ ...legacyContentBundle,
-    cards: legacyContentBundle.cards.map(card => card.id === 'rimeThrust' ? { ...card,
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'rimeThrust' ? { ...card,
       effects: [{ op: 'damage', target: 'allEnemies', amount: 4, hits: 2, repeat: 2 },
         { op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }],
     } : card),

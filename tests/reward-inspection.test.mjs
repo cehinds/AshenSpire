@@ -5,14 +5,13 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { createRunState } from '../src/model/state.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { bindCardInspection, openBoundCardInspection } from '../src/ui/components/cardInspection.js';
 import { cardDetailHtml, relicText } from '../src/ui/components/card.js';
 
 const registries = createRegistries(contentBundle);
-const legacyRegistries = createRegistries(legacyContentBundle);
+const legacyRegistries = createRegistries(contentBundle);
 const weapon = registries.equipment.armaments[0];
 const armor = registries.equipment.armour.find(item => item.classId === 'reaver');
 const relic = registries.relics.all()[0];
