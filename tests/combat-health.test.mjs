@@ -38,23 +38,21 @@ test('Ward alone keeps its border while health returns to red', () => withKitDom
   assert.equal(row.children.length, 2);
 }));
 
-test('Poise has a numeric badge and retains the HP trim and accessible value', () => withKitDom(() => {
+test('Poise is hidden on the HP row: no badge, no trim, no accessible poise label (owner 2026-11-07)', () => withKitDom(() => {
   const hp = meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true });
   const row = combatHealthRow(hp, { defense: 0, ward: 0, poise: 7, poiseMax: 10 }, { tooltips: false });
-  assert.equal(row.querySelectorAll('.combat-health-badge').length, 1, 'Poise has its gold numeric badge');
-  assert.equal(row.querySelector('.combat-health-poise .combat-health-badge-value').textContent, '7');
-  assert.equal(hp.dataset.poised, 'true', 'the gold trim stays while Poise is above zero');
-  assert.match(hp.querySelector('.m-value').getAttribute('aria-label'), /Poise 7\/10/);
-  const none = combatHealthRow(meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true }), { poise: 0, poiseMax: 10 }, { tooltips: false });
-  assert.equal(none.querySelector('.combat-health-meter').dataset.poised, 'false');
+  assert.equal(row.querySelectorAll('.combat-health-badge').length, 0);
+  assert.equal(row.querySelector('.combat-health-poise'), null);
+  assert.equal(hp.dataset.poised, 'false');
+  assert.doesNotMatch(hp.querySelector('.m-value').getAttribute('aria-label'), /Poise/);
 }));
 
-test('PIP badges preserve actual Evasion stacks independently of other defenses (fourth+ collapse into +N)', () => withKitDom(() => {
+test('PIP badges preserve actual Evasion stacks independently of other defenses (Poise is not drawn)', () => withKitDom(() => {
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }),
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['shield', '5'], ['poise', '3'], ['overflow', '+2']]);
+  [['shield', '5'], ['evade', '2'], ['ward', '4']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 
@@ -107,18 +105,10 @@ test('while Ward is active, Poise is drawn over the HP bar on the HP scale (10 P
   assert.equal(combatHealthModel({ poise: 0, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 0);
 });
 
-test('a warded Poise badge renders purple (combat-health-poise-ward, data-ward) with the HP-scale overlay', () => withKitDom(() => {
+test('a warded row keeps its Ward state but draws no Poise badge or overlay', () => withKitDom(() => {
   const row = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50, wardStacks: 2 }, { tooltips: false });
-  const poise = row.querySelector('.combat-health-badge[data-defense-kind="poise"]');
-  assert.ok(poise, 'the Poise badge is drawn');
-  assert.equal(poise.dataset.ward, '2');
-  assert.ok(poise.classList.contains('combat-health-poise-ward'));
-  const overlay = row.querySelector('.combat-health-poise-overlay');
-  assert.ok(overlay, 'the overlay bar is drawn');
-  assert.equal(overlay.style.width, '20%');
+  assert.equal(row.querySelector('.combat-health-badge[data-defense-kind="poise"]'), null);
+  assert.equal(row.querySelector('.combat-health-poise-overlay'), null);
   assert.equal(row.querySelector('.combat-health-meter').dataset.wardActive, 'true');
-  const plain = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50 }, { tooltips: false });
-  assert.equal(plain.querySelector('.combat-health-poise-overlay'), null);
-  assert.ok(!plain.querySelector('.combat-health-badge[data-defense-kind="poise"]').classList.contains('combat-health-poise-ward'));
 }));
 
