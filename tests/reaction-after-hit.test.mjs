@@ -81,3 +81,23 @@ test('a declined reaction (no card played) keeps the attack beat whole', () => {
   assert.equal(beats.filter(beat => beat.actorId === 'e1').length, 1);
   assert.ok(!beats.some(beat => beat.resultSaid));
 });
+
+const floatsOf = timeline => timeline.filter(r => /^float:/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
+const kinds = timeline => timeline.filter(r => /^(word:(hit|missed|dodged)|anim:player|float:)/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
+const hitOf = amount => [{ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount, blocked: 0 }];
+
+test('a multi-hit attack: every landed hit keeps its Hit word after the reaction animation', t => {
+  drive(t, [...reaction, move, ...hitOf(5), ...hitOf(6), { type: 'enemyMoveEnded', sourceId: 'e1' }], timeline => {
+    const seq = kinds(timeline);
+    assert.deepEqual(seq.map(w => w.replace(/\u2212|-/, '-')), ['word:hit', 'anim:player', 'float:-5', 'word:hit', 'float:-6'], JSON.stringify(seq));
+  });
+});
+
+test('a dodged first hit, then two landed hits: Miss, reaction animation, DODGED, then Hit and damage for each', t => {
+  const miss = { type: 'attackMissed', sourceId: 'e1', targetId: 'player', missReason: 'accuracy', evadeActive: true };
+  drive(t, [...reaction, move, miss, ...hitOf(5), ...hitOf(6), { type: 'enemyMoveEnded', sourceId: 'e1' }], timeline => {
+    const seq = kinds(timeline).map(w => w.replace(/\u2212|-/, '-'));
+    assert.deepEqual(seq.slice(0, 3), ['word:missed', 'anim:player', 'word:dodged'], JSON.stringify(seq));
+    assert.deepEqual(seq.slice(3), ['word:hit', 'float:-5', 'word:hit', 'float:-6'], JSON.stringify(seq));
+  });
+});

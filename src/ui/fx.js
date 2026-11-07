@@ -1172,6 +1172,7 @@ export function playTimeline(events, ctx, done) {
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
   const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
+  const dodgeSaid = new Set();
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
   const runParts = (beat, key) => {
     // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
@@ -1300,7 +1301,14 @@ export function playTimeline(events, ctx, done) {
     // Accuracy is known before the target reacts; the defense/effect outcome
     // belongs after that animation, with the numeric result.
     onResult: beat => {
-      if (beat.resultSaid) return; // the Hit/Miss word already played ahead of the reaction beat (reactionAfterResult)
+      // The carried first receipt's DODGED word follows the reaction animation, once, ahead of the next hit's word.
+      for (const event of beat.carried || []) if (isDodge(event) && !dodgeSaid.has(event)) {
+        dodgeSaid.add(event);
+        visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+      }
+      // The first hit's Hit/Miss word already played ahead of the reaction beat (reactionAfterResult); a group with its
+      // own accuracy receipt (a later hit of a multi-hit attack) still says its word.
+      if (beat.resultSaid && !beat.events.some(event => RESULT_TYPES.has(event.type))) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
@@ -1329,9 +1337,6 @@ export function playTimeline(events, ctx, done) {
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
         for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
-        for (const event of beat.carried || []) {
-          if (isDodge(event)) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
-        }
         for (const event of beat.events) {
           if (isDodge(event)) {
             if (!beat.dodgeLater) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
@@ -1593,7 +1598,7 @@ function playLegacyTimeline(events, ctx, done) {
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
     let actorAnimation = null;
-    if (actorEl && ctx.animateActor) {
+    if (actorEl && ctx.animateActor ) {
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
         traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
