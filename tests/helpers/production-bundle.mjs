@@ -7,7 +7,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 // Exercise the shipped compiler and loader without packaging artwork. Native
 // ESM keeps cyclic named imports live; the production transform does not.
-export function productionBundle({ additionalModules = [] } = {}) {
+export function loadBundleCompiler({ root = ROOT, indexHtml } = {}) {
   const source = readFileSync(resolve(ROOT, 'tools/bundle.mjs'), 'utf8');
   const extract = (start, end) => {
     const first = source.indexOf(start), last = source.indexOf(end, first);
@@ -16,12 +16,12 @@ export function productionBundle({ additionalModules = [] } = {}) {
   };
   const bindings = {
     resolve, dirname, relative, existsSync,
-    ROOT,
+    ROOT: root,
     readText: path => readFileSync(path, 'utf8').replace(/\r\n?/g, '\n'),
     fail: message => { throw new Error(message); },
-    indexHtml: readFileSync(resolve(ROOT, 'index.html'), 'utf8'),
+    indexHtml: indexHtml ?? readFileSync(resolve(root, 'index.html'), 'utf8'),
   };
-  const compiler = vm.runInNewContext(`(() => {
+  return vm.runInNewContext(`(() => {
     ${extract('function idOf(', '// ---------------------------------------------------------------------------')}
     ${extract('let entrySrc = null;', 'const entryAbs =')}
     ${extract('const entryAbs =', '// ---------------------------------------------------------------------------\n// 2b.')}
@@ -31,7 +31,10 @@ export function productionBundle({ additionalModules = [] } = {}) {
     ${extract('function assembleRuntime(', 'const runtime =')}
     return { sources, order, visit, entryAbs, idOf, IMPORT_RE, transformModule, guardScript, MODULE_FN, assembleRuntime };
   })()`, bindings, { filename: 'production-bundle-compiler.js' });
+}
 
+export function productionBundle({ additionalModules = [] } = {}) {
+  const compiler = loadBundleCompiler();
   const { sources, order, entryAbs, idOf, IMPORT_RE, transformModule, guardScript, MODULE_FN, assembleRuntime } = compiler;
   // Extra entry points (e.g. the co-op server engine) initialize only after
   // the shipped main has loaded, preserving the production cycle ordering.
