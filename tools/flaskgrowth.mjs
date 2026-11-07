@@ -569,7 +569,7 @@ function selftest() {
   //    base and chain cannot account for goes to `granted` (the untracked door
   //    owns the untracked charge); base is witnessed by the current authored
   //    balance.flaskCapacity, clamped so the attribution invents nothing. ────
-  behave('MIGRATION: a v2 save with an untracked keepsake surplus loads, attributed granted=surplus — and round-trips as v3', () => {
+  behave('MIGRATION: a v2 save with an untracked granted surplus loads, attributed granted=surplus — and round-trips as v3', () => {
     const grant = shippedMomentGrant();
     if (!grant) return { ok: false, saw: 'no shipped moment grant' };
     const eff = grant.effects.find((e) => e.op === 'addFlaskCapacity');

@@ -803,7 +803,7 @@ export function mountCustomize(app, {
   function advanceAfterStats({ focus = true } = {}) {
     if (catalog) return;
     if (focus) advanceFrom('attributes');
-    else { const to = creationStep(categories, 'attributes', 1); if (to) activate(to); }
+    else if (categories.includes('attributes')) { const to = creationStep(categories, 'attributes', 1); if (to) activate(to); }
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
