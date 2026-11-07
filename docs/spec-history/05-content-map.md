@@ -47,3 +47,9 @@ Archive of rationale, dates and superseded values moved out of SPEC.md by the co
 - Owner quotes, 2026-10-27: "I noticed that the map seems to re[group] at rest points, it should be branching trees without rejoining. so one starting point, but 1-3 separate branches", then "it can remerge but not consistently". Sub-branches: "Refull potions between acts, each branching path should also branch but join into one boss. So 3 main branches each with a boss but those sub branches can branches too", clarified as: main branch count stays 1-3.
 - Measured over 200 seeds x 3 acts: 71.6% of branches open with one node (all two-lane branches, half of three-lane ones), 1.26 fork edges and 3.8 distinct paths per branch, remerge 17.7% of eligible gaps.
 - Rewards: card choice count "(owner, 2026-11-05)"; merchant prices "(the old rune prices ×3)".
+
+### Second tightening pass (evidence moved out of rules)
+
+- Tests/contracts proving shipped state: `tests/act-change-flask-refill.test.mjs` (act-change refill); `tests/game-profile-map.test.mjs` (distinct bosses, narrow openings, outward forks, rests per existing lane, no collapse at rests, rare remerges over 200 seeds, per-lane elite, branch-local edges, reachability, identical replays) and `tests/core-rest-sites.test.mjs`; `tools/quest-choice-contract.mjs` (gates, ids, engine door for the quest chain).
+- Quest completion: `RUN_SHAPE` is unchanged by `questCompleted`; "nothing else emits" `questCompleted`; run-history rows carry no wall clock. Dialogue screen ids W4c, WGQ0–WGQ8. Choice-level quest example: the digger may repay or fight, the mourner is thanked; Second Cairn answers: the vigil, the rest, or a second looting.
+- Rogue: "not a selectable shell"; art "needed for every authored Rogue kit"; presets "derived from the registries rather than new Rogue-only branches".
