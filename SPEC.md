@@ -2938,7 +2938,7 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `deckEditing` | bool | on | The editor exists. Off: no door opens it; the deck changes only by rewards, removal and the Armoury. |
-| `deckEditingWhere` | `free` \| `restOnly` | `free` | `free`: from the Armoury any time out of combat (including before the first node). `restOnly`: only as an option card on the Rest screen of a place whose tags carry the `deckEdit` service tag (a marker like `smith`, no rule; `tagging.csv` gives it to shrine, inn, chapel, not camp). |
+| `deckEditingWhere` | `free` \| `restOnly` | `free` | `free`: from the Armoury any time out of combat (including before the first node). `restOnly` ("Rest sites only"): only as an option card on the Rest screen of a place whose tags carry the `deckEdit` service tag (a marker like `smith`, no rule; `tagging.csv` gives it to shrine, inn, chapel, not camp). |
 | `deckMinSize` | number ≥ 0 | 10 | Fewest cards the editor lets you confirm. |
 | `deckMinUnlimited` | bool | off | On: no minimum, `deckMinSize` ignored (row shown disabled). |
 | `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | Most cards. A max below the effective min is refused in Settings by name. |
@@ -3035,75 +3035,69 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 
 ### 14.2 The shop kinds
 
-**Removed (owner, 2026-11-07, Unity-port cleanup).** Only Core ships, and non-Core runs and saves are refused at load, so the classic `merchant` node's kind roll, the weighted `shopOffers` offering roll with its `guaranteedMinimum`, the market and master kinds and their stock builders no longer exist in the engine. Core's shop is the configured shop (`gameProfileShopStock`, `mountConfiguredShop`): a share of shop nodes is a Blacksmith (§14.4), decided from the run seed and the node (`configuredShopKind`), and the rest sell the configured offer. The kind rides the persisted stock as `stock.kind`; a stock of a kind this build does not have is refused by name at load. `content/source/shops.json` still authors the kind tables Core's validation reads (the Blacksmith's offerings), and its market and master tables are retained only so existing validation and Settings rows keep resolving.
-
-All prices are in cinders unless stated otherwise, and all are data.
+Only Core ships; non-Core runs and saves are refused at load. Core's shop is the configured shop (`gameProfileShopStock`, `mountConfiguredShop`).
+- A share of shop nodes is a Blacksmith (§14.4), decided from the run seed and the node (`configuredShopKind`); the rest sell the configured offer.
+- The kind rides the persisted stock as `stock.kind`; a stock of a kind this build lacks is refused by name at load.
+- `content/source/shops.json` authors the kind tables Core's validation reads (the Blacksmith's offerings); its market and master tables are kept only so existing validation and Settings rows resolve.
+- All prices are in cinders unless stated, and all are data.
 
 ### 14.3 The market (usual shop)
 
-**Removed (owner, 2026-11-07).** The legacy market (its shelves, armour, smith stones, sigils, inn rest, skill books, revive tokens, quest event and companions, the market-addition plans in `model/marketAdditions.js`, and the merchant workspace `mountShop`) is gone with the legacy merchant. Core's shop keeps what it already used: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellFraction` (the sell price of an owned relic, flask or armament), the `shopSell` setting, `applyShopPriceMult` (a custom run's price multiplier) and `armamentTrading`'s sale. The [class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) no longer depends on a market shelf.
+Core's shop keeps: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellFraction` (sell price of an owned relic, flask or armament), the `shopSell` setting, `applyShopPriceMult` (a custom run's price multiplier) and `armamentTrading`'s sale. The [class-book rewards contract](docs/CLASS-BOOK-REWARDS-CONTRACT.md) does not depend on a market shelf.
 
 ### 14.4 The blacksmith
 
-**The what-changed receipt (owner ask, 2026-10-31).** Every Blacksmith purchase that commits (armament, weapon art, tier upgrade, card upgrade, rank-up, stones, refine, sigil work) ends in a page-locked **What changed** receipt, opened after the screen redraws: the run's before and after (`model/runChangeReceipt.js`) as stat and resource deltas, card faces before and after for a card, the armament's tier stat rows (`coreSmithingStats`), and a strip of the cinders and stones spent. One Continue button closes it. A refusal keeps the inline `.bs-refusal` and opens nothing; a commit that changes nothing opens nothing.
+**What-changed receipt** (owner, 2026-10-31). Every committed Blacksmith purchase (armament, weapon art, tier upgrade, card upgrade, rank-up, stones, refine, sigil work) ends in a page-locked **What changed** receipt, opened after the screen redraws.
+- Shows the run's before/after (`model/runChangeReceipt.js`): stat and resource deltas, card faces before and after, the armament's tier stat rows (`coreSmithingStats`), and a strip of cinders and stones spent. One Continue button closes it.
+- A refusal keeps the inline `.bs-refusal` and opens nothing; a commit that changes nothing opens nothing.
 
-**The Core Blacksmith (owner ask, 2026-10-31).** Core (`progression.cardRanks`) lays out a fixed workshop: `upgrade`, `upgradeArt` (the card upgrade, §13.4s), `rankUp`, `armaments` and `weaponArts`; every other offering stays withheld. About 25% of Core shop nodes are one (`shops.blacksmithChance`). The numbers are the profile's `shops.blacksmith` block (`games/ashenspire/packs/core/shops.json`):
-
-- **Tier reach.** Equipment goes up to the ladder's top, tier 3, here; a rest-site Smith stops at tier 2 (`restSmithMaxTier`; §4).
-- **Stones.** `stoneDiscount` (1) comes off every stone price and the price is never below 0: tiers 1, 2, 3 cost 0, 1, 2 stones; a card upgrade costs 0 stones. `rankUp` costs `rankUpStones` (1).
-- **Cinders.** Every service costs cinders, scaled by a custom run's shop price multiplier, rounding up: a tier upgrade `prices.tierUpgrade` = 60, 100, 150 for tier 1, 2, 3; a card upgrade `prices.cardUpgrade` = 40; a rank-up `prices.rankUp` = 120. A rest site's Smith stays free.
-- **Rank-up.** `rankUp` raises one run-owned card's `rank` by 1 (not an equipment-bound or granted card; never past rank 99). Plan and commit on the stock's `tradeRevision` like every service; a stale quote is refused and one quote commits once.
-- **Armaments.** The rack is `armamentStock` (6) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry (not the legacy `armamentCost` catalog). Each is rolled at a tier from `tierWeights` (`{0: 20, 1: 40, 2: 30, 3: 10}`, capped at the piece's ladder top), so most pieces come above the default tier, and priced over the `priceTable.armament` row of its rarity, times `tierPriceMult` (`[1, 1.4, 1.8, 2.3]`), rounded. The stock entry is `{ id, cost, tier }` (the cost is scaled once by the run's shop price multiplier when the visit opens). Buying one adds it to storage and writes `run.itemUpgradeLevels[armament/<id>] = tier` when the tier is above 0, never lowering a tier the run already holds for that piece. The tile reads "Sold at tier N"; a piece the run already carries is refused.
-- **Weapon arts.** (Owner, 2026-11-05: the shelf sells the learnable arts of the weapons the player carries, minus arts the player owns or has granted.) `weaponArts` sells each Core `rewards.eligibility.weaponArts` card at a price drawn from `priceTable.weaponArt`, into the sideboard (`shop-art:<n>:<cardId>`); the shelf is not restocked.
-
-The blacksmith is a screen of its own, reusing `SmithSelectionModel` and the smith modals, and replacing today's atlas handler that opens only the upgrade modal.
+**The Core Blacksmith** (owner, 2026-10-31). Core (`progression.cardRanks`) lays out a fixed workshop: `upgrade`, `upgradeArt` (card upgrade, §13.4s), `rankUp`, `armaments`, `weaponArts`; every other offering stays withheld (`blacksmithWithholds`). About 25% of Core shop nodes are one (`shops.blacksmithChance`). Numbers are the profile's `shops.blacksmith` block (`games/ashenspire/packs/core/shops.json`). Every service is a plan/commit pair on the stock's `tradeRevision`; a stale quote is refused by name and one quote commits once; stock and prices persist across a reload.
 
 | Offering | What it does | Reuses |
 |---|---|---|
-| `armaments` | A larger armament shelf (its own stock key) | §12.2 transactions |
-| `weaponArts` | Core only: weapon arts for sale (owner, 2026-11-05: learnable arts of carried weapons not already owned or granted) | the Core `rewards.eligibility.weaponArts` list and each weapon's `learnableArts` |
-| `rankUp` | Core only: raise an owned card's `rank` by 1 | `blacksmithStock`, `rankUpPlan` / `commitRankUp` |
+| `armaments` | Armament shelf (own stock key) | §12.2 transactions |
+| `weaponArts` | Weapon arts for sale | Core `rewards.eligibility.weaponArts` list; each weapon's `learnableArts` |
+| `rankUp` | Raise an owned card's `rank` by 1 | `blacksmithStock`, `rankUpPlan` / `commitRankUp` |
 | `upgrade` | Item tier upgrade | `smithingPlan` / `commitItemUpgrade` |
-| `upgradeArt` | Core: the card upgrade of any deck card (§13.4s) | `cardUpgradeService` |
+| `upgradeArt` | Card upgrade of any deck card (§13.4s) | `cardUpgradeService` |
 
-**Removed (owner, 2026-11-07).** The legacy blacksmith's `smithStones`, `refineStones`, `sigilSlots`, `sigils`, `extractArt`, `installArt` and `stackCopy` offerings, the refined purse, and the legacy `upgradeArt` and rack are gone; Core withholds them (`blacksmithWithholds`) and an old saved stock that lists one is not drawn. What remains is the Core workshop above: a plan/commit pair on the stock's `tradeRevision` for every service, a stale quote refused by name, stock and prices persisting across a reload.
+It is a screen of its own, reusing `SmithSelectionModel` and the smith modals.
+
+- **Tier reach.** Equipment up to the ladder's top, tier 3; a rest-site Smith stops at tier 2 (`restSmithMaxTier`; §4).
+- **Stones.** `stoneDiscount` (1) comes off every stone price, never below 0: tiers 1, 2, 3 cost 0, 1, 2 stones; a card upgrade costs 0 stones; `rankUp` costs `rankUpStones` (1).
+- **Cinders.** Every service costs cinders, scaled by a custom run's shop price multiplier, rounding up. A rest site's Smith stays free.
+
+| Service | Price key | Cinders |
+|---|---|---|
+| Tier upgrade (tier 1 / 2 / 3) | `prices.tierUpgrade` | 60 / 100 / 150 |
+| Card upgrade | `prices.cardUpgrade` | 40 |
+| Rank-up | `prices.rankUp` | 120 |
+
+- **Rank-up.** Raises one run-owned card's `rank` by 1 (not an equipment-bound or granted card; never past rank 99).
+- **Armaments.** The rack is `armamentStock` (6) distinct pieces drawn on `shopOffers` from the Core weapon pool the run does not carry.
+  - Each is rolled at a tier from `tierWeights` (`{0: 20, 1: 40, 2: 30, 3: 10}`, capped at the piece's ladder top) and priced over the `priceTable.armament` row of its rarity × `tierPriceMult` (`[1, 1.4, 1.8, 2.3]`), rounded.
+  - Stock entry `{ id, cost, tier }` (cost scaled once by the shop price multiplier when the visit opens).
+  - Buying adds it to storage and, when tier > 0, writes `run.itemUpgradeLevels[armament/<id>] = tier`, never lowering a tier the run holds. The tile reads "Sold at tier N"; a piece the run carries is refused.
+- **Weapon arts.** `weaponArts` sells the learnable arts of carried weapons not owned or granted (owner, 2026-11-05) at a price from `priceTable.weaponArt`, into the sideboard (`shop-art:<n>:<cardId>`); the shelf is not restocked.
 
 ### 14.5 The wise master
 
-**Removed (owner, 2026-11-07).** The wise master (training, respec, lesson, appraisal, redistribute, the master screen and its stock) was a legacy shop kind with no Core door; it is gone, with `model/master.js`, `withdrawSkillAttributes` and the Master art-destination setting. Class mastery and skill content belong to the class-mastery lane, not the shops.
+Not in the game: the wise master, its shop kind and `trainingPool` training/respec have no Core door. Class mastery and skills belong to the class-mastery lane. (`trainingPool` stays in the run shape, default `0`.)
 
 ### 14.6 Build order
 
-Each item is one PR into `dev`, test-first, with a receipt, and a screenshot and a catalog update where there is UI:
+Retired: the original seven-step delivery plan is complete or removed with the legacy shops. See the history file.
 
-1. **This SPEC PR**, with the research note and FINISH §14.
-2. **The deck rules engine and settings.** It adds `deckRules.js`, the Deck settings group, `run.sideboard` (a schema bump), `deckEditRefusal`, and ordered draw in `createCombat`/`drawCards`. It has no UI beyond the settings rows.
-3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Armoury and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
-4. **The shop-kind framework.** It adds `shops.js`, the offering roll with the guaranteed minimum, the Shops settings group, `stock.kind`, and the existing shelves re-expressed as offerings, with seeds byte-identical.
-5. **The market additions.** It adds the smith-stone shelf, armour, and inn rest, then consumables (skill books and revive tokens), sigils (inventory only), the quest event and companions. Each is its own PR if it grows past one review.
-6. **The blacksmith screen.** It adds refining, sigil slots and sigil install, art upgrade, and stack copy.
-7. **The wise master.** It added masters data, the atlas service type, training, respec with the training pool, lesson, appraisal and redistribute. (Steps 4 to 7 describe the legacy shops, removed 2026-11-07; see §14.2 to §14.5.)
+### 14.7 Deck-editor research
 
-### 14.7 Deck-editor research — what we adopt, and why
+Surveyed deck builders and roguelikes; the adopted patterns are the rules of §14.1. Details in the history file.
 
-Surveyed: Hearthstone, Legends of Runeterra, Marvel Snap, MTG Arena, Monster Train,
-Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
+#### Notes and history
+- Core's shop is the configured shop; the legacy market and wise master are gone (§14.3, §14.5).
+- Deck Settings rows are profile settings read live, not run-snapshotted.
+- Legacy and Current basic-slot rules in §14.1 remain in code for non-Core profiles.
 
-| Pattern | Seen in | Adopted? | Why |
-|---|---|---|---|
-| Two panes: collection grid left, deck list right, drag either way | Hearthstone, MTG Arena, LoR | **Yes** | The layout every player of the genre already reads; drag is the fast path. |
-| Tap/click-to-add, tap-to-remove as the equal of drag | Hearthstone, Snap, LoR (mobile) | **Yes** | Drag is unreliable on small touch screens and impossible on a gamepad; every drag has a tap and a button twin. |
-| Deck list collapsed to one row per card variant (id + upgrade + mods; for a locked card, also its owner) with a ×N count | Hearthstone, Arena, LoR | **Yes**, except while **Play in deck order** is on | Counts are the scan-friendly view; in ordered mode each copy is its own row so it can be placed. A Strike and a Strike+ stay two rows: merging them would hide the upgrade and make ＋/－ ambiguous, and the collection tiles use the same variant key. |
-| Live size counter "N / min–max", red when out of bounds, Done disabled with a sentence | Hearthstone (30/30), Snap (12/12), Arena (60+) | **Yes** | The invalid state must be explained, not just coloured (SPEC §7.5, FINISH §6). |
-| Copy limit shown on the collection tile ("2 owned, 1 in deck") and greyed when exhausted | Hearthstone, LoR, Arena | **Yes** | Weapon arts and techniques are limited to owned copies; basics show ∞. |
-| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules (currently off). |
-| Mana/cost curve histogram | Hearthstone, Arena, LoR | **Yes, compact** | Cheap to derive; the one analytic players ask for. |
-| Undo / "revert to deck on entry" | Snap (discard changes), Arena | **Yes** — Cancel restores the entry deck | Editing is out of combat, so a whole-session revert is simple and safe. |
-| Deck edited mid-run only at rest or through removals | Slay the Spire, Monster Train, Inscryption | **As an option** (`Rest sites only`) | The owner wants to compare it with Free editing; roguelike tension comes from this restriction. |
-| Hand-ordered draw ("stacked deck") | StS mods (e.g. "Ordered Draw"), Inscryption's squirrel/side-deck split | **Yes**, behind **Play in deck order** | The owner asked for it; the reorder handle only appears when it matters. |
-| Unlimited basics, limited rares | Inscryption (squirrels), Monster Train (starter cards) | **Yes** | Matches the owner's copy rule: Strike/Defend ∞, arts and techniques by ownership. |
-| Crafting / dusting inside the editor | Hearthstone, LoR, Arena | **No** | Copies are earned in play and stacked at the blacksmith (§14.3); a second economy in the editor would duplicate it. |
-| Auto-fill "complete my deck" | Hearthstone, Arena | **No (v1)** | The deck starts from the run's real deck; nothing to fill. |
+Full history: [docs/spec-history/14-statpools-shops.md](docs/spec-history/14-statpools-shops.md).
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
 
