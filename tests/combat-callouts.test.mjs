@@ -13,6 +13,8 @@ import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const callouts = (layer) => layer.children.filter((node) => node.dataset?.calloutFor !== undefined);
