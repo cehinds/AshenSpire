@@ -574,6 +574,11 @@ export function passiveFlag(registries, relicIds, key, mounts = null) {
 
 // Cache resolved upgrade merges per registries object.
 const resolveCache = new WeakMap();
+// A run keeps resolving new keys (play counts, upgrades, mods), so the per-registries map is bounded: at the cap it
+// is emptied before the next insert. Every entry is derivable, so a clear costs a re-resolve and nothing else.
+const RESOLVE_CACHE_LIMIT = 4096;
+/** Entries held for these registries (test and diagnostics reader). */
+export const resolveCacheSize = (registries) => resolveCache.get(registries)?.size ?? 0;
 
 /**
  * resolveCard(registries, cardInstanceOrRef) → effective (frozen) card def.
@@ -718,6 +723,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (!usesAbilityGrade && (rank > 1 || skillBonus > 0)) result = applyCardRank(result, rank, skillBonus);
   // Ramp lands last, after rank and upgrade growth, so the base amount it wraps is still a plain number.
   if (result.ramp) result = deepFreeze(applyRamp(result, playsEver, tagService(registries).idsOf('card', result)));
+  if (cache.size >= RESOLVE_CACHE_LIMIT) cache.clear();
   cache.set(key, result);
   return result;
 }
