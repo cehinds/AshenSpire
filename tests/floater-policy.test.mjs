@@ -77,3 +77,9 @@ test('floatNum() with a hidden class spawns nothing but still runs onSpawn; dmg 
     assert.equal(layer.children[0].textContent, '-9');
   });
 });
+
+test('buff-gain popups are hidden words too', async () => {
+  const { floaterWordShown } = await import('../src/ui/models/FloaterPolicyModel.js');
+  assert.equal(floaterWordShown('buff:precision'), null);
+  assert.equal(floaterWordShown('buff:block'), null);
+});

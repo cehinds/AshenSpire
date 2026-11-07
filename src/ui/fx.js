@@ -714,7 +714,9 @@ export function callout(layer, anchor, forId, kind) {
 // Buff gains use the same column and cleanup as outcome words. Each
 // committed gain stays visible even when two receipts have the same amount.
 function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
-  if (!layer || !anchor || !def || forId == null) return null;
+  // Floater policy (owner, 2026-11-07): every word, the buff-gain popups included, passes the same allowlist.
+  kind = floaterWordShown(kind);
+  if (kind == null || !layer || !anchor || !def || forId == null) return null;
   layer = combatReadoutLayer(layer);
   const rec = stackFor(layer, anchor);
   const same = (item) => item.kind === kind && item.forId === String(forId);
