@@ -428,11 +428,8 @@ export function characterLevelOf(run) {
   return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
+/** Phase: the inputs every initializeRunDerivedStats phase reads (and the run's equipment-profile snapshot). */
+function derivedStatContext(run, registries, snapshot, derivedStatOptions) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
   const effectiveAttributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
@@ -461,7 +458,12 @@ export function initializeRunDerivedStats(run, registries, {
   const existingIsCurrent = existing && existing.rulesetVersion >= 3 && existing.rulesetVersion <= currentRuleset;
   let restoredExisting = null;
   if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries, effectiveDerivedStatOptions));
+  return { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods };
+}
 
+/** Phase: equipment pool bonuses and deficits, inferred once for saves that predate them. */
+function inferEquipmentPools(run, ctx) {
+  const { effectiveAttributes, classDef, restoredExisting, liveEquipmentMods } = ctx;
   // Schema v4 and older persisted the resulting pools but not the equipment
   // contribution that produced them. Infer that contribution once from the
   // run's own immutable rule snapshot. A later content edit therefore cannot
@@ -515,6 +517,18 @@ export function initializeRunDerivedStats(run, registries, {
       throw new Error(`Persisted equipmentPoolDeficits.${field} must be a non-negative integer`);
     }
   }
+  return { hpEquipmentBonus, equipmentDeficitsAbsent };
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
 
   // Schema v3 and older had no explanation for permanent max-HP reductions.
   // Infer the exact residual once from the old authoritative rule plus current
