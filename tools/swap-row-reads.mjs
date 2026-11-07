@@ -302,7 +302,7 @@ const ROW_BOX = (i) => `(() => {
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 const oi = args.indexOf('--out');
-const OUT = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'tools/results/swap-row-reads');
+const OUT = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'scratch/qa/swap-row-reads');
 
 // The two Constantine looks at, plus the smaller one I was told to add. 360x640
 // is not decoration: it is the narrowest shape still common, and a row that
@@ -1092,7 +1092,7 @@ function ref() {
   const names = (git(['rev-parse', '--abbrev-ref', 'HEAD']) || '?');
   const dirty = (git(['status', '--porcelain']) || '')
     .split('\n').map((l) => l.slice(3)).filter(Boolean)
-    .filter((p) => p !== 'content/source/weapons.csv' && !p.startsWith('src/content/generated/') && !p.startsWith('tools/results/'));
+    .filter((p) => p !== 'content/source/weapons.csv' && !p.startsWith('src/content/generated/') && !p.startsWith('scratch/'));
   return `${head} (${names})${dirty.length ? `  DIRTY — ${dirty.length} path(s) not in that commit: ${dirty.slice(0, 6).join(', ')}${dirty.length > 6 ? ' …' : ''}. Every number below is about the WORKING TREE, not about ${head}.` : '  clean — the numbers below are about this commit.'}`;
 }
 
@@ -1330,7 +1330,7 @@ function copyTree(dir) {
     // tool bug rather than a full disk. Nothing under docs/ is served to the
     // page; assets/, content/, styles/ and src/ still are.
     filter: (src) => !/(^|\/)(\.git|node_modules|dist|build|docs)(\/|$)/.test(src.replace(ROOT, ''))
-      && !src.replace(ROOT, '').startsWith('/tools/results'),
+      && !src.replace(ROOT, '').startsWith('/scratch'),
   });
   const csv = join(dir, 'content', 'source', 'weapons.csv');
   writeFileSync(csv, readFileSync(csv, 'utf8').replace(/\n*$/, '\n') + TALISMAN + '\n' + MAUL + '\n');
