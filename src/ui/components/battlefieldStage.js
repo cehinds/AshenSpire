@@ -326,6 +326,26 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Owner (2026-11-06): the mini HUDs are fixed. Their placement depends on the layout pass (its epoch), the zoom and the
   // set of combatants, so a selection, a play or a hover repeats nothing: the pass is skipped (it was ~25 ms of forced
   // layout per card select). A pass over bodies that have not settled yet (art loading) is not remembered.
+  // A rack can grow after its pass (badge row wrapping, fonts, a status tray): its new height re-places it, else its bottom
+  // would land on the art. The first observation of a rack is its current size and changes nothing.
+  const watchedRacks = new WeakSet();
+  let rackRequest = 0;
+  const rackObserver = new ResizeObserver(entries => {
+    const fresh = entries.filter(({ target }) => watchedRacks.has(target));
+    if (!fresh.length) return;
+    cancelAnimationFrame(rackRequest);
+    rackRequest = requestAnimationFrame(() => {
+      rackRequest = 0;
+      centerTargetOverheads.placedKey = null;
+      if (field.isConnected) centerTargetOverheads();
+    });
+  });
+  centerTargetOverheads.watchRack = rack => {
+    if (watchedRacks.has(rack)) return;
+    rackObserver.observe(rack);
+    // The initial observation fires once; it re-places once, which is harmless and settles the first measure.
+    watchedRacks.add(rack);
+  };
   function centerTargetOverheads() {
     const zoom = uiZoom();
     const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, field.clientWidth, field.clientHeight].join('|');
@@ -350,7 +370,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // configured group height (the HP row's padding), and the rack's bottom, not its estimate, keeps the gap.
         const rackHeight = (read ? read.rackBox : rack.getBoundingClientRect()).height || 0; // one read per rack: the intent's skip key shares it
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
-          groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
+          groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight,
+          // SPEC: the player's rack keeps a fixed 10 screen-pixel gap above the art; enemies keep the configured gap.
+          gap: frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx, zoom }) });
+        centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
       // legacy overhead here would make the controls jump between beats.
