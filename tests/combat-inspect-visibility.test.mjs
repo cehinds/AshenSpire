@@ -62,10 +62,9 @@ test('the dead inspectReady timer is gone and nothing reads it', () => {
 
 test('A: a hand card Inspect is shown once, as the portal, never in place on the card', () => {
   assert.match(kit, /\.hand \.card-inspection-target > \.card-info-button \{ visibility:hidden; pointer-events:none; \}/);
-  // The rule must come after the shared in-card visibility rule to win at equal specificity.
-  assert.ok(kit.indexOf(".hand .card-inspection-target > .card-info-button { visibility:hidden")
-    > kit.indexOf(".card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible"),
-  'the hand rule must follow the shared visible rule');
+  // The portal (made only for the selected card) is the one visible (i); the in-card copy never paints.
+  assert.match(kit, /\.hand-overlay > \.hand-info-portal\s*\{[^}]*visibility: visible/);
+  assert.match(read('../src/ui/components/handInspectionOverlay.js'), /querySelector\('\.card\.inspection-selected'\)/);
 });
 
 test('C: the stance chip and statuses are not in the rest-state hide list', () => {
@@ -90,6 +89,7 @@ class FakeNode extends EventTarget {
   }
   append(child) { this.children.push(child); return child; }
   setAttribute(k, v) { this.attributes[k] = String(v); }
+  getAttribute(k) { return this.attributes[k] ?? null; }
   matches(sel) { return sel.startsWith('.') && this.classes.has(sel.slice(1)); }
   descendants() { return this.children.flatMap(c => [c, ...c.descendants()]); }
   querySelectorAll(sel) { return this.descendants().filter(n => n.matches(sel)); }

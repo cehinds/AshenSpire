@@ -18,6 +18,8 @@ function run(t, clickTarget) {
   withKitDom((dom) => {
     const anchor = dom.document.createElement('div');
     const layer = dom.document.createElement('div');
+    // Live combat anchors are in the document; a queued floater for a detached anchor is dropped (fx.js spawnQueued).
+    dom.document.body.append(layer, anchor);
     const append = layer.appendChild.bind(layer);
     layer.appendChild = (node) => { if (/\bfloat-num\b/.test(String(node.className))) floats.push(node.textContent); return append(node); };
     const events = [1, 2, 3, 4].map((amount) => ({ type: 'blockGained', targetId: 'player', amount }));
@@ -27,6 +29,9 @@ function run(t, clickTarget) {
     globalThis.dispatchEvent(new dom.Event('pointerdown', { target }));
     for (let i = 0; i < 1000 && !done; i++) t.mock.timers.tick(10);
     assert.equal(done, 1);
+    // Floaters over one combatant spawn one stagger apart (ui/floaterStack.js), so the later ones show
+    // after playback has already handed control back: let the column drain.
+    for (let i = 0; i < 4000; i++) t.mock.timers.tick(1);
   });
   return floats;
 }
@@ -82,6 +87,7 @@ test('a callout between hits never pulls the next hit into the same Instant tick
   withKitDom((dom) => {
     const anchor = dom.document.createElement('div');
     const layer = dom.document.createElement('div');
+    dom.document.body.append(anchor, layer); // live: a waiting floater for a detached anchor is dropped
     const floats = [];
     const append = layer.appendChild.bind(layer);
     layer.appendChild = (node) => { if (/\bfloat-num\b/.test(String(node.className))) floats.push(node.textContent); return append(node); };
@@ -89,9 +95,10 @@ test('a callout between hits never pulls the next hit into the same Instant tick
       { type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount, isAttack: true }];
     let done = 0;
     animateEvents([...hit(3), ...hit(4), ...hit(5)], { layer, combatEl: dom.document.createElement('div'), anchorFor: () => anchor }, () => done++);
-    assert.equal(floats.length, 1, `first tick plays one hit, not ${floats.length}`);
+    assert.ok(floats.length < 3, `the first tick does not play all three hits at once (${floats.length} floats)`);
     for (let i = 0; i < 1000 && !done; i++) t.mock.timers.tick(10);
     assert.equal(done, 1);
+    for (let i = 0; i < 400; i++) t.mock.timers.tick(10); // the column spawns the numbers one stagger apart
     assert.equal(floats.length, 3, 'every hit still plays its float');
   });
 });

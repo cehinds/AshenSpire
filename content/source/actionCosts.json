@@ -382,6 +382,14 @@
       "weight": 0,
       "side": "sp"
     },
+    "ramp.momentum": {
+      "weight": 0,
+      "side": "sp"
+    },
+    "ramp.honed": {
+      "weight": 0,
+      "side": "sp"
+    },
     "lifecycle.retain": {
       "weight": 1,
       "side": "sp"

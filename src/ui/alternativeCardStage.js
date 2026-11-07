@@ -1,6 +1,6 @@
 import { t } from './strings.js';
 import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
-import { bodyPlacement } from './models/CombatBodyModel.js';
+import { bodyPlacement, bodyResize } from './models/CombatBodyModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
 import { sampleSequence, hitFlashOpacity, hitRecoilX, HURT_CLIP_MIN_MS } from '../model/alternativeCardAnimation.js';
 import { alternativeArtUrl } from './alternativeArt.js';
@@ -13,9 +13,9 @@ import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
 import { ANIM_SPEEDS, getAnimSpeed } from './animationPace.js';
 import { builtInFor } from './highResArt.js';
-import { classicAppearance } from './displayAppearance.js';
 import { markArtPlaceholder, ART_PLACEHOLDER_ATTR } from './artFallback.js';
 import { warmImageBoundsWhenIdle } from './artBounds.js';
+import { createPaintGate, paintSignature } from './paintSignature.js';
 
 import { alternativeCardAnimationFamily, cardSequenceTiming, CARD_ANIMATION_ALIASES } from '../model/cardAnimationFamily.js';
 const cached = new Map();
@@ -34,7 +34,6 @@ function load(url) {
 
 /** Base armour actions with explicitly selected reviewed weapon attacks. */
 export function createAlternativeCardStage(classId, { still = false, weaponProfile = null, smashProfile = null } = {}) {
-  if (classicAppearance()) return null;
   const assembled = alternativeCardAnimationFamily(classId, { weaponProfile, smashProfile });
   if (!assembled) return null;
   const { family, selected, pilotFrames, classSmash, heldFrames, frames } = assembled;
@@ -49,6 +48,9 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const readyBody = COMBAT_BODY_LANDMARKS[family.frames.ready.path];
   const readyDrawHeight = family.frames.ready.size?.[1] || 512;
   const bodyHeight = readyBody ? (readyBody.feetY - readyBody.headY) * readyDrawHeight / readyBody.height : height;
+  // The ready body's share of the 190 px stage: the battlefield sizes the player
+  // by this head-to-feet body (combatSpriteGeometry), like every enemy.
+  if (readyBody) el.dataset.bodyHeightRatio = String(bodyHeight * scale / 190);
   el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>(frame.stageBounds || frame.bounds)[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
@@ -116,13 +118,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     effectsOff() ? auraFilter('ready', ['defend','counter'].includes(rest) ? 'guard' : rest, [], false)
     : liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+  const paintGate=createPaintGate();
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
     paintedLite=liteRendering()+'/'+effectsOff();
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    currentArt=null;
     let x=0, effect=null;
-    el.dataset.effect='';
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
@@ -136,7 +136,18 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       const sampled=sampleSequence(bodyReaction.sequence,bodyReaction.elapsed,bodyReaction.duration,{reduced:still||reducedMotionRequested()||!ANIM_SPEEDS[getAnimSpeed()]});
       pose=bodyReaction.sequence.poses[sampled.index];
     }
-    el.dataset.pose=pose;
+    if(el.dataset.pose!==pose)el.dataset.pose=pose;
+    // Static until something it shows changes (owner, 2026-11-06: the figure flickered because it was
+    // redrawn). The same pixels are never cleared and drawn again; a clear plus a filtered draw can show
+    // a blank frame on a phone GPU. Animations change this signature every frame, so they still paint.
+    const lite=liteRendering(),off=effectsOff(),noFlash=document.body.classList.contains('reduce-flashes');
+    const flashing=flashAt!==null?flashElapsed:-1;
+    const sig=paintSignature({pose,x,effect,rest,stance,lite,off,reduced:reducedMotionRequested(),noFlash,flashing,
+      action:playing?.sequence.action||playing?.action||'',resources:resources.join(','),loaded:images.size,hurt:!!hurt,down:!!down,clip:!bodyReaction&&flashAt!==null&&!!hurt});const fresh=paintGate.changed(sig);
+    if(!fresh&&!materialize)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    currentArt=null;
+    if(el.dataset.effect!=='')el.dataset.effect='';
     if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128+leftPadding,top:16+topPadding,width:512,height:512};ctx.drawImage(down,128+leftPadding,16+topPadding,512,512); return; }
     const image=images.get(pose) || images.get('ready');
     // The canvas owns the hit reaction: the body (and its red mask) knocks back
@@ -161,8 +172,12 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // body registration while the action clock starts; only different action
     // images retain their authored transient crouch, jump and travel.
     const heldRegistration = !playing || frame?.path === frames[restPose()]?.path;
-    const normalized = landmarks && heldRegistration && !bodyReaction
-      ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding) : authored;
+    // Every measured frame is drawn at the ready body's height (owner, 2026-11-02:
+    // one size in every pose). Held bodies also register on the floor; action
+    // and reaction frames are resized about their own feet so a jump keeps its lift.
+    const normalized = !landmarks ? authored
+      : heldRegistration && !bodyReaction ? bodyPlacement(authored, landmarks, bodyHeight, 480+topPadding)
+        : readyBody ? bodyResize(authored, landmarks, bodyHeight) : authored;
     const {left,top,width,height} = normalized;
     const body = normalized.body || (landmarks ? {
       headY: top + landmarks.headY * height / landmarks.height,
@@ -175,7 +190,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !effectsOff() && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
-      if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);el.dataset.effect=effect;}
+      if(overlay){ctx.drawImage(overlay,128+leftPadding+x,16+topPadding,512,512);if(el.dataset.effect!==effect)el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
     const flash=flashAt===null||effectsOff()||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});
@@ -226,6 +241,18 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     get busy(){return !!playing||flashAt!==null||!!bodyReaction||holdUntil>performance.now();},
     get pose(){return pose;},
     get currentArt(){return currentArt;},
+    // The neutral ready frame's placement, whatever pose is showing: the pose-independent box the battlefield
+    // anchors the player's HUD to (owner 2026-11-05: layout is fixed once combat starts, poses never move it).
+    get restArt(){
+      const image=images.get('ready'),frame=frames.ready;
+      if(!image||!frame)return null;
+      const offset=frame.drawOffset||[128,0],dimensions=frame.drawOffset?frame.size:[512,512];
+      const authored={left:leftPadding+offset[0],top:16+topPadding+offset[1],width:dimensions[0],height:dimensions[1],anchorX:leftPadding+384};
+      const landmarks=COMBAT_BODY_LANDMARKS[frame.path];
+      const placed=landmarks?bodyPlacement(authored,landmarks,bodyHeight,480+topPadding):authored;
+      const {left,top,width,height}=placed;
+      return {canvas,image,left,top,width,height,body:placed.body||(landmarks?{headY:top+landmarks.headY*height/landmarks.height,feetY:top+landmarks.feetY*height/landmarks.height,source:'authored'}:null)};
+    },
     get rest(){return rest;},
     get stance(){return stance;},
     // Capability belongs to the selected profile, not transient bitmap readiness.

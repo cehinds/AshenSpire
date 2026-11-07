@@ -36,19 +36,6 @@ test('range descriptors use canonical keys and authored defaults including expli
   }
 });
 
-test('Range is one visible Core-only Combat topic with honest on/off and zero controls', () => {
-  const core = resolveGameProfile('core'), current = resolveGameProfile('current');
-  assert.deepEqual(generalGroups('Combat', core).get('Range').map(row => row.key), keys);
-  assert.equal(generalGroups('Combat', current).has('Range'), false);
-  for (const row of rows) {
-    assert.equal(settingsRowAvailable(row, core), true);
-    assert.equal(settingsRowAvailable(row, current), false);
-  }
-  const toggle = rows[0];
-  assert.match(settingsRowHtml({}, toggle), /type="checkbox" role="switch"[^>]* checked/);
-  assert.doesNotMatch(settingsRowHtml({ rangeMechanics: false }, toggle), / checked/);
-  for (const row of rows.slice(1)) assert.match(settingsRowHtml({ [row.key]: 0 }, row), /class="set-num"[^>]*value="0"[^>]*min="0"/);
-});
 
 test('range choices persist/export/import unchanged and reset through the normal settings door', () => {
   const settings = Object.fromEntries(rows.map(row => [row.key, row.type === 'number' ? 0 : false]));
@@ -74,7 +61,7 @@ test('settings produce a new policy snapshot without altering a policy already i
   settings.rangeAdvanceSpPerBand = 3;
   const next = snapshotRangePolicy(authored, settings);
   assert.deepEqual(first, saved);
-  assert.deepEqual(first, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0 });
+  assert.deepEqual(first, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0, maxRange: 'ranged' });
   assert.equal(next.enabled, false);
   assert.equal(next.advanceSpPerBand, 3);
   assert.equal(snapshotRangePolicy(authored).enabled, false);
@@ -94,64 +81,18 @@ test('an imported Core author supplies unset controls and the next real run snap
   const selected = readNewGameProfile(settings);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, selected)), selected);
   const run = createRunState({ seed: 1, classId: 'reaver', registries, profileMeta: { settings } });
-  assert.deepEqual(run.rangePolicy, authored);
+  assert.deepEqual(run.rangePolicy, { ...authored, maxRange: 'ranged' }, 'an authored policy with no maxRange snapshots the code default');
   settings.rangeMechanics = true;
   settings.rangeAdvanceSpPerBand = 0;
   settings.rangeReachPrecisionBonus = 0;
   settings.rangeThrowPrecisionPenalty = 0;
   const next = createRunState({ seed: 2, classId: 'reaver', registries, profileMeta: { settings } });
-  assert.deepEqual(next.rangePolicy, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0 });
-  assert.deepEqual(run.rangePolicy, authored, 'an active run keeps its snapshot');
+  assert.deepEqual(next.rangePolicy, { version: 1, enabled: true, advanceSpPerBand: 0, reachPrecisionBonus: 0, throwPrecisionPenalty: 0, maxRange: 'ranged' });
+  assert.deepEqual(run.rangePolicy, { ...authored, maxRange: 'ranged' }, 'an active run keeps its snapshot');
   delete settings.newGameProfile;
   assert.deepEqual(rows.slice(1).map(row => row.defaultFor(settings)), [1, 1, 1], 'changing author invalidates the panel default cache');
 });
 
 
-test('future-run Range controls follow the selected author while other capabilities follow the active run', () => {
-  const core = resolveGameProfile('core'), legacy = resolveGameProfile('current');
-  const settings = { newGameProfile: 'core', settingsGeneralCategory: 'Combat', 'settingsGeneralTopic.Combat': 'Range' };
-  assert.ok(rows.every(row => settingsRowAvailable(row, legacy, core)));
-  assert.ok(rows.every(row => !settingsRowAvailable(row, core, legacy)));
-  const ordinary = settingsRows().find(row => row.key === 'askToUpcastAfterTarget');
-  assert.equal(settingsRowAvailable(ordinary, legacy, core), true);
-  assert.equal(settingsRowAvailable(ordinary, core, legacy), false);
-  assert.deepEqual(generalGroups('Combat', legacy, core).get('Range').map(row => row.key), keys);
-  const html = categoryHtml('General', settings, null, null, null, null, '', false, legacy, core);
-  assert.ok(keys.every(key => html.includes(`data-key="${key}"`)));
-  assert.ok(settingsSearchHits('Range mechanics', true, settings, { profile: legacy, nextProfile: core }).some(hit => hit.row.key === 'rangeMechanics'));
-  settings.newGameProfile = 'current';
-  assert.ok(!settingsSearchHits('Range mechanics', true, settings, { profile: core, nextProfile: legacy }).some(hit => hit.row.key === 'rangeMechanics'));
-  assert.doesNotMatch(categoryHtml('General', settings, null, null, null, null, '', false, core, legacy), /data-key="rangeMechanics"/);
-});
 
 
-test('settings subsection and search repaints retain a split controller selection before it is persisted', () => {
-  const source = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  const start = source.indexOf('  function repaintPanel('), end = source.indexOf('  // ---- the Undo bar', start);
-  assert.ok(start >= 0 && end > start);
-  const core = resolveGameProfile('core'), legacy = resolveGameProfile('current');
-  const controller = { active: () => legacy, read: () => core };
-  const run = (code, query = '') => {
-    const settings = { settingsGeneralCategory: 'Combat', 'settingsGeneralTopic.Combat': 'Range' };
-    assert.equal(settings.newGameProfile, undefined, 'the controller selection is not yet a stored preference');
-    const panel = { innerHTML: '', scrollTop: 0, parentElement: { scrollTop: 0 }, dataset: {}, setAttribute() {} };
-    const context = {
-      applyPendingFormationSettings: () => true,
-      container: { querySelector: selector => selector === '.set-panel' ? panel : null },
-      current: 'General', settings, saves: null, previewAttributes: null, previewLevel: null, previewClassId: null,
-      searchQuery: () => query, changedOnly: () => false,
-      activeProfile: () => activeSettingsProfile(controller), nextProfile: () => controller.read(), categoryHtml,
-      captureView: () => ({}), restoreView() {}, filtering: () => Boolean(query),
-      headerTools: { querySelector: () => null }, paintUndo() {}, wire() {},
-    };
-    runInNewContext(code + '\nrepaintPanel;', context)();
-    return panel.innerHTML;
-  };
-  const body = source.slice(start, end);
-  assert.ok(keys.every(key => run(body).includes(`data-key="${key}"`)), 'subsection repaint keeps all Range controls');
-  assert.match(run(body, 'Range mechanics'), /data-key="rangeMechanics"/, 'search repaint keeps Range');
-  assert.match(run(body, 'upcast'), /data-key="askToUpcastAfterTarget"/, 'unrelated options still use the active legacy run');
-  const historical = body.replace('activeProfile(), nextProfile()', 'activeProfile()');
-  assert.notEqual(historical, body);
-  assert.doesNotMatch(run(historical), /data-key="rangeMechanics"/, 'the missing-forwarding mutation recreates the reported defect');
-});

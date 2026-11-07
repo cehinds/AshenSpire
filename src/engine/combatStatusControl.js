@@ -1,3 +1,4 @@
+import { rollD20Check } from './d20Chance.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
@@ -192,8 +193,9 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const increase = ward.value - valueBefore, missingRecovered = restored - increase;
   emit(ctx, 'persistentWardChanged', entity, { restored: increase, missingRecovered, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {
-    entity.barrier = (entity.barrier || 0) + barrier;
-    emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.barrier });
+    // The part past a full pool becomes Barrier stacks, one per point (SPEC 4.1a).
+    Statuses.applyStatus(ctx, entity, 'barrier', barrier, null);
+    emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.statuses?.barrier?.stacks || 0 });
   }
   return { restored: increase, missingRecovered, barrier, credited: credit, carry: s.wardRestoreCarry };
 }
@@ -400,12 +402,14 @@ export function effectiveChance(chance, { advantage = false, disadvantage = fals
   return advantage === disadvantage ? chance : 100 * (advantage ? 1 - (1 - p) ** 2 : p ** 2);
 }
 
-export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery' } = {}) {
-  const first = ctx.rng.int(stream, 1, 100);
-  const rolls = [first];
-  if (advantage !== disadvantage) rolls.push(ctx.rng.int(stream, 1, 100));
-  const roll = advantage === disadvantage ? first : advantage ? Math.min(...rolls) : Math.max(...rolls);
-  return { rolls, roll, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: roll <= chance };
+// `event` (optional) is the label of a roll worth logging: { status, targetId, sourceId }. It emits
+// statusChanceRolled (owner, 2026-10-31) and never changes the draws; recovery logs its own statusRecoveryRolled.
+export function rollStatusChance(ctx, chance, { advantage = false, disadvantage = false, stream = 'statusRecovery', event = null } = {}) {
+  // Rolled as a d20 (owner, 2026-11-01): success on d20 >= 21 - round(chance% / 5); advantage keeps the higher die.
+  const check = rollD20Check(ctx.rng, stream, chance, { advantage, disadvantage });
+  const receipt = { rolls: check.rolls, roll: check.roll, target: check.target, mode: check.mode, chance, effectiveChance: effectiveChance(chance, { advantage, disadvantage }), success: check.success };
+  if (event) ctx.emit?.('statusChanceRolled', { ...event, ...receipt });
+  return receipt;
 }
 
 /** Call after mandatory turn-start ticks. Owner cycle is entity-relative. */

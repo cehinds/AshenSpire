@@ -1,6 +1,55 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
 import {layoutMetrics} from '../layoutMetrics.js';
+import {uiConfig} from '../../config/generated/ui.js';
+import {FACE_BUDGET} from '../../model/cardFaceBudget.js';
+// Tunables live in content/config/ui/components/card.json (components.rulesFace.rulesText).
+const FACE_TEXT=uiConfig.components.card.components?.rulesFace?.rulesText||{};
+const RULES_MIN_PX=Number(FACE_TEXT.minPx)||6;
+const LINE_HEIGHT_FLOOR=Number(FACE_TEXT.lineHeightFloor)||0.92;
+const LINE_HEIGHT_STEP=Number(FACE_TEXT.lineHeightStep)||0.04;
 const ruleGeometry = new WeakMap();
+// A rules row may carry two readings as inert <template>s (illustratedCard.js): the compact one it shows by default and a
+// fuller "roomy" one. showReading swaps the visible clauses between them. The compact nodes are the painted ones (card.js
+// binds the damage receipt to their numbers), so they are never cloned: they are set aside while the roomy reading shows
+// and put back as they were. The roomy nodes are fresh clones, so the row announces `facereadingchange` for card.js to bind them.
+const readings = new WeakMap();
+export function showReading(text,reading){
+  if(!text.childNodes||!text.querySelector)return false;
+  let state=readings.get(text);
+  const roomyShown=Boolean(state?.roomy?.length&&state.roomy[0].parentNode===text);
+  if(reading==='compact'){
+    if(roomyShown){
+      for(const node of state.roomy)node.remove();
+      state.roomy=null;
+      const first=text.firstChild;
+      for(const node of state.compact)text.insertBefore(node,first);
+    }else{
+      // Compact is on show (or the row was rewritten in place): what is there now is the painted reading.
+      readings.set(text,{compact:[...text.childNodes].filter(node=>node.nodeName!=='TEMPLATE'),roomy:null});
+    }
+    text.dataset.faceReading='compact';
+    return Boolean(text.querySelector?.(':scope > template[data-face-roomy]'));
+  }
+  const source=text.querySelector?.(':scope > template[data-face-roomy]');
+  if(!source)return false;
+  if(!state||roomyShown||state.compact.some(node=>node.parentNode!==text)){
+    // Reached without a compact pass first: record what shows now.
+    showReading(text,'compact');state=readings.get(text);
+  }
+  for(const node of state.compact)node.remove();
+  const clone=source.content.cloneNode(true);
+  for(const line of clone.querySelectorAll('[data-reading-line]')){line.classList.add('face-line');line.removeAttribute('data-reading-line');}
+  state.roomy=[...clone.childNodes];
+  text.insertBefore(clone,text.firstChild);
+  text.dataset.faceReading='roomy';
+  return true;
+}
+// The roomy reading's smallest font (layout px): FACE_BUDGET.minScale of the face's own full size, and never under
+// FACE_BUDGET.minPx on screen; a face whose full size is already below that keeps its full size as the floor.
+export function roomyFloor(high,low,zoom){
+  return Math.min(high,Math.max(low,high*FACE_BUDGET.minScale,Math.min(FACE_BUDGET.minPx/zoom,high)));
+}
+const GLANCE_LINES = 2;
 // A face's fit is a pure function of its width, its text, its line budgets, the
 // page scale and the loaded fonts, and a full fit is a search of many forced
 // layouts. The inputs the last fit used are kept per face, and a face asked to
@@ -31,9 +80,56 @@ function fitSignature(face, width) {
 
 // Search fonts inside the authored bays. Text must never resize the parchment
 // or consume artwork; names and costs retain their line budgets.
+// One shared ResizeObserver refits a face whose own box changes (window resize, zoom, a selected card
+// growing, a modal opening) and every watched face once the fonts are ready; batched in one frame, and
+// faces that are off the page or hidden (width 0) are skipped by the fit itself. The observer measures the
+// face's layout box, which the hand's rotate/scale transforms do not change.
+// face -> its CURRENT card (a reused face moves to a new card element); liveFaces is the strong set the fonts
+// pass walks, pruned whenever a face is found detached, so removed faces are released.
+const faceCards = new WeakMap(), liveFaces = new Set(), pendingRefit = new Set();
+let refitFrame = 0, sizeObserver = null, fontsAwaited = false;
+function scheduleRefit(card) {
+  pendingRefit.add(card);
+  if (refitFrame || typeof requestAnimationFrame !== 'function') return;
+  refitFrame = requestAnimationFrame(() => {
+    refitFrame = 0;
+    const batch = [...pendingRefit].filter(c => c.isConnected); pendingRefit.clear();
+    if (batch.length) fitIllustratedCards(batch);
+  });
+}
+function releaseFace(face) {
+  liveFaces.delete(face); faceCards.delete(face); sizeObserver?.unobserve(face);
+}
+function watchFaces(pairs) {
+  for (const face of [...liveFaces]) if (!face.isConnected) releaseFace(face);   // removed while hidden: no resize callback ever comes
+  if (typeof ResizeObserver === 'function' && !sizeObserver) {
+    sizeObserver = new ResizeObserver(list => {
+      for (const e of list) {
+        const face = e.target;
+        if (!face.isConnected) { releaseFace(face); continue; }
+        const card = faceCards.get(face);
+        if (card && e.contentRect.width > 0) scheduleRefit(card);
+      }
+    });
+  }
+  for (const [card, face] of pairs) {
+    if (typeof face.nodeType !== 'number') continue;
+    faceCards.set(face, card);                       // every call: a reused face now belongs to this card
+    if (!liveFaces.has(face)) { liveFaces.add(face); sizeObserver?.observe(face); }
+  }
+  if (!fontsAwaited && typeof document !== 'undefined' && document.fonts?.ready) {
+    fontsAwaited = true;
+    document.fonts.ready.then(() => {
+      fontEpoch++;
+      for (const face of [...liveFaces]) { if (!face.isConnected) { releaseFace(face); continue; } const card = faceCards.get(face); if (card?.isConnected) scheduleRefit(card); }
+    }).catch(() => {});
+  }
+}
+
 export function fitIllustratedCards(cards) {
-  const faces=[];
-  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  const faces=[],pairs=[];
+  for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face){faces.push(face);pairs.push([card,face]);}}
+  watchFaces(pairs);
   watchFonts();
   const widths=faces.map(face=>face.clientWidth);
   const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
@@ -48,26 +144,27 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
+      const hasRoomy=rules&&showReading(text,'compact')&&Boolean(text.querySelector(':scope > template[data-face-roomy]'));
       const clauses=[...(text.querySelectorAll?.('[data-face-clause]')||[])];
       const bounded=text.dataset.faceLines==='true'&&clauses.length>0;
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:bounded?1.25:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:bounded?3:rules?Infinity:Number(text.dataset.maxLines)||1,
+      const row={face,text,layer,scale,rules,bounded,clauses,signature:signatures[i],textIndex:textIndex++,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:bounded?Infinity:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
-        hasHiddenRules:face.dataset.rulesHidden==='true'};
+        hasHiddenRules:face.dataset.rulesHidden==='true',hasRoomy};
+      // A glance face shows its rules in one or two rendered lines; the font
+      // shrinks (to the readable floor) to get there. Rules that still need more
+      // keep their real words (owner 2026-11-02: no Inspect replacement text).
+      if(row.compact&&!bounded)row.lines=GLANCE_LINES;
       if(bounded){
-        row.fallback=text.querySelector('[data-face-fallback]');
-        row.fallbackShort=text.querySelector('[data-face-fallback-short]');
         for(const clause of clauses)clause.style.display='';
-        if(row.fallback)row.fallback.style.display='none';
-        if(row.fallbackShort)row.fallbackShort.style.display='none';
       }
       if(rules){
         // A previous clipped fit must not constrain this fit's measurements.
         text.style.maxHeight='none';layer.style.justifyContent='';
-        row.cue=face.querySelector('.card-rules-inspect-cue');
-        if(bounded&&row.cue)row.cue.style.display='none';
+        // A previous fit's ellipsis clamp must not outlive the need for it.
+        text.style.overflow='';text.style.textOverflow='';text.style.webkitBoxOrient='';text.style.webkitLineClamp='unset';
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -86,9 +183,10 @@ export function fitIllustratedCards(cards) {
         // Two short benefit rows remain readable in the narrow native hand bay.
         text.style.lineHeight=String(row.lineHeight);
       }
-      // Rules may shrink below the design font minimum, but never below
-      // eleven on-screen pixels after the page's native zoom.
-      row.low=rules?11/zoom:Number(text.dataset.minFont)*scale;
+      // Rules shrink until they fit their box, down to the configured on-screen
+      // floor (rulesText.minPx). They used to stop at eleven on-screen pixels
+      // and then overflow the parchment on a phone-sized card (owner 2026-11-04).
+      row.low=rules?RULES_MIN_PX/zoom:Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -107,7 +205,27 @@ export function fitIllustratedCards(cards) {
     row.layer.style.height=Math.max(1,row.rankHeight-row.rankInset)/row.faceHeight*100+'%';
   }
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
-  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset].join('\u0002');
+  // THE ROOMY READING, IF IT FITS. Each roomy-capable row tries its fuller text at the floor font in three phases (write
+  // them all, read them all, put back the ones that did not fit) so a hand costs two layouts, not two per card.
+  const roomyRows=texts.filter(row=>row.hasRoomy);
+  for(const row of roomyRows){
+    row.floor=roomyFloor(row.high,row.low,zoom);
+    showReading(row.text,'roomy');
+    Object.assign(row.text.style,{maxHeight:'none',lineHeight:String(row.lineHeight),fontSize:row.floor+'px',webkitLineClamp:'unset'});
+  }
+  for(const row of roomyRows){
+    const lineBox=row.floor*row.lineHeight;
+    row.roomy=row.text.scrollHeight<=row.boxHeight+1&&row.text.scrollWidth<=row.text.clientWidth+1
+      &&row.text.scrollHeight<=lineBox*FACE_BUDGET.lines+1;
+  }
+  for(const row of roomyRows){
+    if(!row.roomy)showReading(row.text,'compact');
+    else row.low=Math.max(row.low,row.floor);
+    row.clauses=[...row.text.querySelectorAll('[data-face-clause]')];
+    row.face.dataset.rulesRoomy=String(row.roomy);
+    if(row.roomy)row.text.dispatchEvent(new CustomEvent('facereadingchange',{bubbles:true}));
+  }
+  for(const row of texts)row.fitKey=[row.signature,row.textIndex,row.boxHeight,row.low,row.high,row.lineHeight,row.lines,row.rankInset,row.roomy?1:0].join('\u0002');
   // A face is taken from the cache only whole: its rows then all keep their old answer.
   const unknownFaces=new Set(texts.filter(row=>!fitResults.has(row.fitKey)).map(row=>row.face));
   for(const row of texts)if(!unknownFaces.has(row.face))row.result=fitResults.get(row.fitKey);
@@ -139,43 +257,21 @@ export function fitIllustratedCards(cards) {
     row.text.dataset.fittedFont=String(row.result/row.scale);
     if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
   }
-  // Cached font searches and page zoom keep their current-dev semantics.
-  // At that readable floor, omit only whole clauses, remeasure the primary,
-  // and switch the entire reading to Information if its fixed bay is short.
+  // Last resorts for rules that still overflow at the smallest size: tighten the
+  // line height, then clamp with an ellipsis. Text never leaves the parchment.
+  fitRulesToBox(texts.filter(row=>row.rules));
+  // Every clause stays on the face at the readable floor; nothing is swapped for an Inspect prompt.
+  // `rulesOverflow` still reports a bay too short for the words, for the Information door.
   const bounded=texts.filter(row=>row.bounded);
-  const overBudget=row=>row.text.scrollHeight>Math.min(row.boxHeight,row.result*row.lineHeight*row.lines)+1
-    ||row.text.scrollWidth>row.text.clientWidth+1;
-  for(const row of bounded)row.omitSecondary=overBudget(row);
-  for(const row of bounded)if(row.omitSecondary&&row.clauses.length>1)row.clauses.at(-1).style.display='none';
-  for(const row of bounded)row.needsFallback=overBudget(row);
+  const overBudget=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
   for(const row of bounded){
-    if(row.needsFallback&&row.fallback){
-      for(const clause of row.clauses)clause.style.display='none';
-      row.fallback.style.display='inline';
-    }
-    if(row.omitSecondary||row.needsFallback)row.face.dataset.faceOmitted='true';
+    row.omitSecondary=overBudget(row)||Boolean(row.clipped);
+    if(row.omitSecondary||row.hasHiddenRules)row.face.dataset.faceOmitted='true';
     row.face.dataset.rulesExpanded='false';
     row.face.dataset.rulesDense='false';
     row.face.dataset.rulesNarrowFit=String(row.omitSecondary);
-    row.face.dataset.rulesFallback=String(row.needsFallback);
-    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.needsFallback||row.hasHiddenRules);
+    row.face.dataset.rulesOverflow=String(row.omitSecondary||row.hasHiddenRules);
     row.text.dataset.rulesComplete=String(!row.omitSecondary&&!row.hasHiddenRules);
-  }
-  // At the zoom-aware 11px floor even the full instruction can need two
-  // lines in the smallest authored bays. Use the existing localized short
-  // Inspect label, retaining the full instruction as its accessible name.
-  for(const row of bounded)row.useShortFallback=row.needsFallback&&overBudget(row);
-  for(const row of bounded)if(row.useShortFallback&&row.fallbackShort){
-    if(row.fallback)row.fallback.style.display='none';
-    row.fallbackShort.style.display='inline';
-  }
-  for(const row of bounded)row.fallbackUnavailable=row.useShortFallback&&overBudget(row);
-  for(const row of bounded){
-    // A designer can author a bay shorter than a single readable line. Keep
-    // the existing Information button as the reading door in that case,
-    // rather than clipping an instruction or shrinking below the font floor.
-    if(row.fallbackUnavailable&&row.fallbackShort)row.fallbackShort.style.display='none';
-    row.face.dataset.rulesShortFallback=String(row.useShortFallback);
   }
   for(const row of rules){
     row.face.dataset.rulesExpanded='false';
@@ -184,17 +280,46 @@ export function fitIllustratedCards(cards) {
   // Content beyond the readable floor remains available through inspection.
   for(const row of rules){
     row.finalHeight=row.layer.clientHeight;
-    row.cueHeight=Math.min(row.finalHeight,row.cue?.offsetHeight||0);
-    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow
+    // Lines actually rendered at the settled size (guarding a zero line box).
+    const lineBox=(parseFloat(row.text.style.fontSize)||0)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
+    row.renderedLines=lineBox>0?Math.round(row.text.scrollHeight/lineBox):0;
+    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow||row.clipped
+      ||(row.compact&&!row.bounded&&row.renderedLines>GLANCE_LINES)
       ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
       ||row.text.scrollWidth>row.text.clientWidth+1);
   }
   for(const row of rules){
-    row.text.style.maxHeight=row.overflow?`calc(100% - ${row.cueHeight}px)`:'100%';
+    row.text.style.maxHeight='100%';
     row.layer.style.justifyContent=row.overflow?'flex-start':'';
     row.text.dataset.rulesComplete=String(!row.overflow);
     row.face.dataset.rulesOverflow=String(row.overflow);
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
-  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,fitSignature(face,widths[i]));});
+  // The signature is taken after the reading was chosen (the roomy swap changes the face's text), so a settled face is one pass, not two.
+}
+
+const overflowing=row=>row.text.scrollHeight>row.boxHeight+1||row.text.scrollWidth>row.text.clientWidth+1;
+/**
+ * Rows (`{text,boxHeight,lineHeight}`) that still overflow their box at the smallest font: tighten the line
+ * height step by step to the floor, then clamp the lines with an ellipsis. Returns the rows it had to clip.
+ */
+export function fitRulesToBox(rows){
+  let failing=rows.filter(overflowing);
+  while(failing.length){
+    let moved=false;
+    for(const row of failing){
+      const now=parseFloat(row.text.style.lineHeight)||row.lineHeight,next=Math.max(LINE_HEIGHT_FLOOR,now-LINE_HEIGHT_STEP);
+      if(next<now-1e-6){row.text.style.lineHeight=String(next);moved=true;}
+    }
+    if(!moved)break;
+    failing=failing.filter(overflowing);
+  }
+  for(const row of failing){
+    const lineBox=(parseFloat(row.text.style.fontSize)||1)*(parseFloat(row.text.style.lineHeight)||row.lineHeight);
+    const lines=Math.max(1,Math.floor(row.boxHeight/lineBox));
+    Object.assign(row.text.style,{display:'-webkit-box',webkitBoxOrient:'vertical',webkitLineClamp:String(lines),overflow:'hidden',textOverflow:'ellipsis'});
+    row.clipped=true;
+  }
+  return failing;
 }

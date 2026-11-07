@@ -1,5 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -8,14 +6,14 @@ import { validateContent } from '../src/model/validate.js';
 import { attackDescriptor } from '../src/model/attackTags.js';
 import { cardEquipmentCompatibility } from '../src/model/loadout.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { foundationCarrier, foundationSource, cardActions, previewFoundationAction } from '../src/engine/combatRules.js';
 import { executeAction as applyAction } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { prototypeInput, prototypeBundle } from '../src/content/prototypes/combatBuilds.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
-const regs = createRegistries(contentBundle);
+const regs = createRegistries(withWeaponRack(contentBundle));
 function inHand(c, cardId) {
   for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
     const i = c.piles[pile].findIndex((card) => card.cardId === cardId);
@@ -90,24 +88,20 @@ test('explicit wrong-hand spells fail atomically instead of borrowing the sword'
   assert.equal(stored(c), before);
 });
 
-test('solo and co-op capture the focus before a resource-spent event changes it', () => {
-  for (const coop of COOP_MODES) {
-    const input = mixedInput();
-    const c = coop ? createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }], combatProfiles: {
-      p1: input.combatProfiles.player, e1: input.combatProfiles.e1,
-    } }) : createCombat(input);
-    const actorId = coop ? 'p1' : 'player';
-    const id = inHand(coop ? { piles: c.players.get('p1').piles } : c, 'prototypeSpell');
-    const emit = c._emitEvent;
-    c._emitEvent = (candidate, type, payload) => {
-      if (type === 'energySpent') candidate.foundation.profiles[actorId].sources.offHand = { ...focus, id: 'replacement-focus', buildup: [] };
-      return emit(candidate, type, payload);
-    };
-    const result = coop ? playCard(c, 'p1', id, 'e1') : dispatch(c, { type: 'playCard', cardInstanceId: id, targetId: 'e1' });
-    assert.equal(c.foundation.profiles[actorId].sources.offHand.id, 'replacement-focus');
-    assert.equal(result.events.find((event) => event.type === 'damageDealt').sourceInstanceId, focus.id);
-    assert.equal(c.enemies[0].statuses.frost.meter.value, 1);
-  }
+test('capture the focus before a resource-spent event changes it', () => {
+  const input = mixedInput();
+  const c = createCombat(input);
+  const actorId = 'player';
+  const id = inHand(c, 'prototypeSpell');
+  const emit = c._emitEvent;
+  c._emitEvent = (candidate, type, payload) => {
+    if (type === 'energySpent') candidate.foundation.profiles[actorId].sources.offHand = { ...focus, id: 'replacement-focus', buildup: [] };
+    return emit(candidate, type, payload);
+  };
+  const result = dispatch(c, { type: 'playCard', cardInstanceId: id, targetId: 'e1' });
+  assert.equal(c.foundation.profiles[actorId].sources.offHand.id, 'replacement-focus');
+  assert.equal(result.events.find((event) => event.type === 'damageDealt').sourceInstanceId, focus.id);
+  assert.equal(c.enemies[0].statuses.frost.meter.value, 1);
 });
 
 test('live equipment maps staff, hammer, and left/right hand carriers correctly', () => {
@@ -126,6 +120,7 @@ test('live equipment maps staff, hammer, and left/right hand carriers correctly'
 
 test('real equipment swap refreshes all piles without persisting inherited tags', () => {
   const input = prototypeInput('heavy', 'basic', 5);
+  input.registries = createRegistries(withWeaponRack(prototypeBundle())); // swapping needs a second set, which the shipped hands no longer carry
   delete input.combatProfiles.player.sources;
   input.player.loadout = { sets: { rightHand: ['katana', 'straightSword', null], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } };
   const c = createCombat(input);
@@ -173,18 +168,3 @@ test('save restoration preserves source ownership and exact-preview behavior', (
   assert.deepEqual(dispatch(copy, intent), expected);
 });
 
-test('co-op spells inherit from their own focus rather than another seat or their sword', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const input = mixedInput();
-  const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }, { ...input.player, id: 'p2' }], combatProfiles: {
-    p1: input.combatProfiles.player,
-    p2: { ...input.combatProfiles.player, sources: { offHand: { ...focus, id: 'p2-focus', buildup: [] } } }, e1: input.combatProfiles.e1,
-  } });
-  for (const playerId of ['p1', 'p2']) {
-    const id = inHand({ piles: c.players.get(playerId).piles }, 'prototypeSpell');
-    playCard(c, playerId, id, 'e1');
-  }
-  const hits = c.eventLog.filter((e) => e.type === 'damageDealt' && e.sourcePlayerId);
-  assert.deepEqual(hits.map((e) => [e.sourcePlayerId, e.sourceInstanceId]), [['p1', focus.id], ['p2', 'p2-focus']]);
-  assert.equal(c.enemies[0].statuses.bleed, undefined);
-  assert.equal(c.enemies[0].statuses.frost.meter.value, 1);
-});

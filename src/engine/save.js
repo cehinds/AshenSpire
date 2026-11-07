@@ -30,13 +30,14 @@ import { migrateAbilityGrades } from '../model/abilityGrades.js';
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { storedGameProfile, compactRun, expandStoredRun } from '../model/runStorage.js';
+import { retiredProfileReason } from '../model/retiredProfile.js';
+import { storedGameProfile, compactRun, expandStoredRun, withLeanCheckpoints } from '../model/runStorage.js';
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
-import { healMissingSlotCells, isItemOwned } from '../model/loadout.js';
+import { healMissingSlotCells, trimExtraSets, isItemOwned } from '../model/loadout.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from '../model/cardRemoval.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
@@ -46,8 +47,6 @@ import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
-import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
-import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
@@ -216,6 +215,21 @@ function pendingRewardReferenceProblems(pending, registries) {
   return problems;
 }
 
+// Status ids retired from the game (glassCannon went with Custom Climb, 2026-11-05). A saved fight may still
+// carry one; it is dropped on load, BEFORE the snapshot reference check, so the save is not archived for it.
+// Only ids named here are dropped: any other unknown status id is still refused.
+const RETIRED_STATUS_IDS = ['glassCannon'];
+function dropRetiredStatuses(run) {
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    const snapshot = holder?.snapshot;
+    if (!snapshot) continue;
+    for (const entity of [snapshot.player, ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : [])]) {
+      if (!entity?.statuses || typeof entity.statuses !== 'object') continue;
+      for (const id of RETIRED_STATUS_IDS) delete entity.statuses[id];
+    }
+  }
+}
+
 /**
  * Migrate one exact active-combat snapshot through the same weapon-package
  * composer as an ordinary run. The snapshot loadout is authoritative while a
@@ -298,6 +312,11 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // even when zero attacks were recognized keeps the authored count fail closed.
   WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
   stampDeck(registries, {
+    // The profile rides along so a configured (Core 2) fight's piles are left
+    // exactly as saved — the legacy carrier stamp (damageSchool,
+    // exposureBuildupPerHit) is for legacy profiles — and a restored fight
+    // serializes as it was saved (SPEC 3.12).
+    gameProfile: run.gameProfile,
     class: classId,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
@@ -761,8 +780,9 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     if (next.length >= json.length) return null;
     try {
       // The reference may point only at a copy that is written and verified.
+      // compactRun also strips the legacy ability context from checkpoint logs, so the original is compared in that lean form.
       if (writeCopy) ensureSharedProfile(parsed.gameProfile);
-      if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(parsed)) return null;
+      if (canonical({ ...expandStoredRun(JSON.parse(next), readSharedProfile), schemaVersion: parsed.schemaVersion }) !== canonical(withLeanCheckpoints(parsed))) return null;
     } catch { return null; }
     return next;
   }
@@ -945,7 +965,14 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (parsedForProfile) pinned = storedGameProfile(parsedForProfile, readSharedProfile);
         if (pinned) {
           validateResolvedGameProfile(pinned);
+          // Core 2 is the only supported game: a retired profile is refused like a mismatch, bytes kept.
+          if (retiredProfileReason(pinned)) throw new Error(`retired game mode: ${retiredProfileReason(pinned)}`);
           if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
+        } else if (parsedForProfile && registries.gameProfile) {
+          // A run with no pinned profile predates game profiles (legacy). Under the Core 2
+          // registries the game always loads with, it is refused and kept, never migrated,
+          // archived or imported (saveTransfer validates imports through this same load).
+          throw new Error(`retired game mode: ${retiredProfileReason(null)}`);
         }
       } catch (error) {
         runStatusRecord = { state: 'profile-mismatch', reason: error.message, ledger: null };
@@ -961,8 +988,13 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         return null;
       }
       let run;
+      let trimmedLoadout = [];
       try {
         run = deserializeRun(json, readSharedProfile);
+        // A run saved while LAN co-op existed may carry its host-held card
+        // receipts. Co-op is gone (owner, 2026-10-31); the run is a solo run, so
+        // the field is dropped here, once, and the save loads as it always did.
+        delete run.coopLevelCards;
         // SPEC §13.4: a save from before seats climbs the order it was already
         // climbing — the default — and nothing else about it moves, no draw.
         // A save that HAS an order must name every seat once, or it is a
@@ -970,16 +1002,23 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
         const seatProblems = seatOrderProblems(run.seatOrder, registries);
         if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
-        const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
-        if (run.journey) {
-          // deserializeRun validated the pinned manifest. Its graph is a derived
-          // projection, and its dungeon may belong to a different classic act.
-          for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
-          run.mapGraph = journeyGraph(run.journey);
-        } else {
-          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
-          run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
-        }
+        const mapAct = run.actNumber;
+        assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
+        run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
+        // A hand slot carried three weapon sets until 2026-11-01 and carries one
+        // now. A save that holds a piece in set 2 or 3 (or an active set past the
+        // first) keeps the piece: it moves to storage, the extra cells are cut,
+        // and the active set is set 1. This runs BEFORE the snapshot reference
+        // check, which requires exactly `slot.sets` positions and would archive
+        // every fight an older build saved with its three cells. The ledger is
+        // not open yet, so the note is written below, once it is.
+        dropRetiredStatuses(run);
+        trimmedLoadout = [
+          ...trimExtraSets(registries, run.loadout),
+          ...[run.combatEntered, run.combatPendingOutcome]
+            .map((holder) => holder && holder.snapshot && holder.snapshot.loadout ? trimExtraSets(registries, holder.snapshot.loadout) : [])
+            .flat(),
+        ];
         const snapshotReferenceProblems = [
           ...combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries),
           ...combatSnapshotReferenceProblems(run.combatPendingOutcome?.snapshot, registries),
@@ -1007,6 +1046,16 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
             was: run.migratedFromRunSchemaVersion,
             now: RUN_SCHEMA_VERSION,
             why: 'an older build wrote this save; the schema stamp was brought forward',
+          });
+        }
+        if (trimmedLoadout.length) {
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field: 'loadout.sets',
+            was: trimmedLoadout,
+            now: { sets: run.loadout?.sets, storage: run.loadout?.storage },
+            why: 'a hand slot now carries one set; armaments held in a later set were moved to storage and the active set was reset to the first',
           });
         }
         // Plan phase 3a: `zones`/`collection` are a projection of the legacy
@@ -1051,6 +1100,22 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
         // the run's own frozen attuneMax and is what a fight in progress carries.
         const rarityProblems = sigilRarityProblems(registries, run);
         if (rarityProblems.length) throw new Error(`Malformed sigils: ${rarityProblems.join('; ')}`);
+        // Owner, 2026-11-05: a profile unlock no longer makes a set owned in a
+        // run. A save from before that wears such a set without recording it,
+        // so it would vanish once unequipped. Grant it to the run here, once,
+        // at load; ownership() stays pure.
+        if (run.loadout && run.loadout.sets) {
+          const worn = new Set(Object.values(run.loadout.sets).flat().filter(Boolean));
+          const grant = run.loadout.creationArmourGrant;
+          for (const piece of registries.equipment.armour || []) {
+            if (piece.classId !== run.class || !piece.unlock || !worn.has(piece.id)) continue;
+            if (grant && grant.classId === piece.classId && grant.id === piece.id) continue;
+            const bought = Array.isArray(run.loadout.boughtArmour) ? run.loadout.boughtArmour : (run.loadout.boughtArmour = []);
+            if (!bought.some((row) => row && row.classId === piece.classId && row.id === piece.id)) {
+              bought.push({ classId: piece.classId, id: piece.id });
+            }
+          }
+        }
         // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
         // this build has no row for, for that class, would vanish from the
         // run's wardrobe without a word (Codex, on #1374).
@@ -1079,7 +1144,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           // art or a rolled card this build no longer has is pruned.
           cardKnown: (id) => registries.cards.has(id),
         };
-        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        const stocks = [['shopStock', run.shopStock]];
         for (const [field, stock] of stocks) {
           const removed = pruneUnknownAdditionOffers(stock, known);
           if (!removed.length) continue;

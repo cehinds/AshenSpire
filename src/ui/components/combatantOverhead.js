@@ -4,6 +4,7 @@ import { intentIcon } from './intentIcon.js';
 import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
+import { setAttr, setData, onLive } from '../domWrite.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -13,7 +14,7 @@ export function selectCombatantInfo(root, id) {
     const selected = frame.dataset.eid === id;
     if (frame.classList.contains('context-selected') !== selected) changed = true;
     frame.classList.toggle('context-selected', selected);
-    frame.setAttribute('aria-pressed', String(selected));
+    setAttr(frame, 'aria-pressed', selected);
   }
   // Every card tap clears the reading selection first. When nothing was
   // selected there is nothing for the battlefield to refit, and its refit (a
@@ -39,9 +40,9 @@ export function combatantInfo(name, open) {
     selectionFirst: true, intent: 'above', align: 'center',
   });
   // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
-  node.addEventListener('click', event => {
+  onLive(node, 'click', event => {
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
-    clearControlSelection(); open(node);
+    clearControlSelection(); open(event.currentTarget || node); // the live node: after a morph the builder node is detached, and focus returns to the opener
   }, true);
   return node;
 }
@@ -100,7 +101,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
   // A visible intent is also the owning enemy's target control. Resolve that
   // action before the tooltip's selecting tap can consume it on touch.
-  if (onTarget) node.addEventListener('click', event => {
+  if (onTarget) onLive(node, 'click', event => {
     if (onTarget() === false) return;
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
   }, true);
@@ -114,15 +115,36 @@ export const RESTING_PLAYER_ACTION = Object.freeze({ maneuver: 'ready' });
 
 // Selected card previews use authored action identity, never card-name guesses.
 // Spells and untyped cards (no attack/smash/sweep/defend/counter maneuver) show the prepare sigil.
+// Owner (2026-11-06): the node is built once and never replaced. Every glyph the figure can show is drawn inside it
+// at mount; a change of maneuver only moves `hidden` and the label (setPlayerActionManeuver), so no node is added
+// or removed while the fight runs.
+const PLAYER_ACTION_ICONS = Object.freeze({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'sweep', ranged: 'attack', casting: 'prepare', ready: 'prepare' });
+const PLAYER_ACTION_GLYPHS = Object.freeze(['attack', 'defend', 'counter', 'smash', 'sweep', 'prepare']);
+export const playerActionIcon = profile => PLAYER_ACTION_ICONS[profile?.maneuver] || 'prepare';
 export function playerActionIntent(profile, onTarget) {
   if (!profile) return null;
-  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'sweep', ranged: 'attack', casting: 'prepare', ready: 'prepare' })[profile.maneuver] || 'prepare';
   const node = document.createElement('button');
   node.type = 'button'; node.className = 'player-action-intent overhead-control';
-  node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'prepare'}`);
-  node.append(intentParts([{ icon, value: null }]));
-  node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
+  const row = document.createElement('span'); row.className = 'intent-actions';
+  for (const icon of PLAYER_ACTION_GLYPHS) {
+    const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = icon; group.dataset.valueKind = ['defend', 'counter', 'prepare'].includes(icon) ? 'count' : 'damage';
+    group.append(intentIcon(icon)); row.append(group);
+  }
+  node.append(row);
+  onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
+  setPlayerActionManeuver(node, profile);
   return node;
+}
+
+/** Shows `profile`'s glyph on a node playerActionIntent built; writes only what differs, replaces nothing. */
+export function setPlayerActionManeuver(node, profile) {
+  const maneuver = profile?.maneuver || 'prepare', icon = playerActionIcon(profile);
+  setData(node, 'maneuver', maneuver);
+  setAttr(node, 'aria-label', `Selected action: ${maneuver}`);
+  for (const group of node.querySelectorAll('.intent-action')) {
+    const hidden = group.dataset.action !== icon;
+    if (group.hidden !== hidden) group.hidden = hidden;
+  }
 }
 
 // One centered action row for both combatant roles and their detailed HUD.

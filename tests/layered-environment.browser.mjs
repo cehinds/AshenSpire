@@ -64,16 +64,6 @@ try{
 
   await page.screenshot({path:path.join(out,name+'.png')});results.push({name,width,height,state,stacking,errors});await page.close();
  }
- const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'?shot=atlas&shotProfile=wanderer',{waitUntil:'load',timeout:60000});await page.locator('[data-atlas-node="crownfall"]').first().click();
- const before=await page.evaluate(()=>window.__worldJourney().currentNodeId);
- for(const [id,scene,file]of [['crownfall/forge','intro-forge','map-forge'],['crownfall/archive','intro-archive','map-archive']]){
-  await page.locator(`[data-local-point="${id}"]`).click();await waitArt(page);
-  assert.equal(await page.locator('.atlas-layered-preview .layered-environment').getAttribute('data-scene'),scene);
-  assert.equal(await page.evaluate(()=>window.__worldJourney().currentNodeId),before,'inspecting art must not travel');
-  await page.screenshot({path:path.join(out,file+'.png')});
- }
- await page.locator('[data-atlas-close]').click();assert.equal(await page.locator('.atlas-layered-preview').count(),0);assert.deepEqual(errors,[]);await page.close();
- fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({game:base,viewports:results,introMap:{locations:['crownfall/forge','crownfall/archive'],travelUnchanged:true,errors}},null,2)+'\n');
- console.log('PASS: four responsive combat views, reduced motion, loaded layers, chrome above weather across current/option-c/alternative/co-op CSS contexts, world actors below weather, and Crownfall inspection without travel or page errors.');
+ fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({game:base,viewports:results},null,2)+'\n');
+ console.log('PASS: four responsive combat views, reduced motion, loaded layers, chrome above weather across current/option-c/alternative/co-op CSS contexts, and world actors below weather.');
 }finally{await browser.close();}

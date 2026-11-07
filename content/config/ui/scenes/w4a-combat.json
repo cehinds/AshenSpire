@@ -5,21 +5,24 @@
   "sizing": {
     "bands": { "hud": 6, "scene": 61, "context": 20, "footer": 13 },
     "floorPercent": 80,
+    "mobileHandReservePx": 36,
+    "mobileFieldHandOverlapPx": 66,
     "desktopHeader": { "heightPx": 56,
-        "splitHeightPx": 44.8, "stackedHeightPx": 76, "singleRowMinWidthPx": 640, "coopHeightPx": 40, "coopTallHeightPx": 64, "coopShortHostMaxPx": 500 },
+        "splitHeightPx": 44.8, "stackedHeightPx": 76, "singleRowMinWidthPx": 640 },
     "desktopFooter": {
       "referenceHeightPx": 900,
       "scaleHeightPx": 1400,
       "minimumScale": 0.74,
       "maximumScale": 0.86,
-      "cardWidthPx": 163.2,
-      "cardMaxViewportPx": 97,
-      "cardHeightPx": 244.8,
-      "cardStepPx": 160,
+      "cardWidthPx": 195.84,
+      "cardMaxViewportPx": 128.04,
+      "cardHeightPx": 293.76,
+      "cardStepPx": 192,
       "fanAngleDegrees": 4,
       "arcPx": 8,
-      "handHeightPx": 270,
+      "handHeightPx": 285,
       "handGapPx": 10,
+      "handOverlapFraction": 0.12,
       "backgroundTopPx": 700,
       "backgroundFadeHeightPx": 90,
       "cornerInsetPx": 32,
@@ -131,6 +134,6 @@
   },
   "behavior": {
     "shortHostRails": true,
-    "hand": { "dragThresholdPx": 12 }
+    "hand": { "dragThresholdPx": 12, "playSettle": { "holdMs": 700, "maxShiftPx": 2 } }
   }
 }

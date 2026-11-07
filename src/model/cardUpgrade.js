@@ -1,3 +1,6 @@
+import { RANGES } from './combatRanges.js';
+import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
+
 // A card definition with its authored upgrade merged over the base. A leaf
 // module: gameProfile.js and registries.js both use it, and importing
 // registries.js from gameProfile.js would reorder the bundle's load cycle.
@@ -29,7 +32,39 @@ export function upgradedDefinition(base) {
 //   addStatus { status, stacks }   a new applyStatus on the enemy
 //   cost { pool: 'sp' | 'mp' }     -1 stamina (and action) cost, or -1 mana cost
 //   hits { hits, per }             the first damage effect becomes `per` x `hits`
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits']);
+//   poise { n }                    +n on the first plain poiseDamage effect
+//   tag { tag?, retarget?, damageSchool? }   a new identity tag (it replaces any tag of the same `range:`,
+//                                  `targeting:`, `maneuver:` or `school:` family; `rank.cantrip` just adds),
+//                                  `retarget` 'area' | 'single' moves the first damage effect between enemy
+//                                  and allEnemies (amount x0.75 up, or x1.25 up), `damageSchool` sets the
+//                                  card's damage school (a magical property), with the `exposureBuildupPerHit` an
+//                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag']);
+// The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
+// (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
+// The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
+// tag value ('force', 'area') for that tag's reader, and this file only stores and replays tags.
+const words = (text) => text.split(' ');
+export const TARGETING = Object.freeze(words('single area'));
+export const TAG_FAMILIES = Object.freeze({
+  'range:': RANGES,
+  'targeting:': TARGETING,
+  'maneuver:': Object.freeze(words('attack defend counter sweep ranged smash casting')),
+  'school:': Object.freeze(words('frost fire lightning force alteration illusion divine decay earth')),
+});
+export const UPGRADE_ELEMENTS = Object.freeze(['magic', 'arcane', 'holy', 'fire']);
+// What an element step writes beside the card's damageSchool: the `school:` and `damage:` tags an authored
+// elemental card of that kind carries (frostNova: school:frost + damage:frost; the star spells: school:force +
+// damage:arcane; the divine spells: school:divine + damage:sacred), so the combat profile, its magic share and
+// the Ward lane all read the new element. `magic` is the generic school and, like the authored cards, shows as frost.
+const [FROST, FORCE, DIVINE, FIRE] = words('frost force divine fire');
+export const ELEMENT_IDENTITY = Object.freeze({
+  magic: Object.freeze({ school: FROST, damage: FROST }),
+  arcane: Object.freeze({ school: FORCE, damage: 'arcane' }),
+  holy: Object.freeze({ school: DIVINE, damage: 'sacred' }),
+  fire: Object.freeze({ school: FIRE, damage: FIRE }),
+});
+export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
@@ -47,6 +82,14 @@ export function upgradeStepsOf(instance) {
 /** How many upgrades the instance has. */
 export function upgradeCount(instance) {
   return upgradeStepsOf(instance).length;
+}
+
+/**
+ * How many upgrades the instance has paid for or earned from its allowance: a rank-up bonus step (`bonus: true`,
+ * SPEC card ranks, owner 2026-11-01) is a gift on top of the rank, so it does not use up a free upgrade.
+ */
+export function paidUpgradeCount(instance) {
+  return upgradeStepsOf(instance).filter((step) => !(step && step.bonus === true)).length;
 }
 
 /** A short cache-key part: 0 and 1 (authored only) match the old `upgraded ? 1 : 0`. */
@@ -70,6 +113,19 @@ export function firstPlainIndex(effects, op) {
   return (effects || []).findIndex((effect) => isPlainEffect(effect, op));
 }
 
+const hitsOf = (effect) => (Number.isInteger(effect.hits) && effect.hits > 1 ? effect.hits : 1);
+// Core 2 charges a multi-hit card at least max(hits - offset, minimum) SP (SPEC 4.3a, model/actionCosts.js multiHitFloorFor):
+// offset 0, or 1 for a `finesse` card, or 2 for a Mana card. Mirrored here (not imported from actionCosts) because this module must stay a leaf.
+export const hitFloor = (card, hits) => {
+  if (!(hits > 1)) return 0;
+  const rule = MULTI_HIT_SP_FLOOR;
+  const finesse = [...(card.tags || []), ...(card.cardTags || []), ...(card.authoredTags || [])].includes('finesse');
+  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, card.manaCost > 0 ? rule.manaOffset : 0);
+  return Math.max(hits - offset, rule.minimum);
+};
+export const currentHits = (effects) => effects.reduce((most, e) => (e.op === 'damage' ? Math.max(most, hitsOf(e)) : most), 1);
+
+
 function applyStep(card, step) {
   const effects = (card.effects || []).map((effect) => ({ ...effect }));
   let out = { ...card, effects };
@@ -89,8 +145,11 @@ function applyStep(card, step) {
       effects.push({ op: 'applyStatus', target: 'enemy', status: step.status, stacks: step.stacks });
       break;
     case 'cost':
-      if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - 1;
-      else { out.staminaCost = (card.staminaCost || 0) - 1; out.cost = (card.cost ?? 0) - 1; }
+      {
+        const cut = isCount(step.n, 9) ? step.n : 1;
+        if (step.pool === 'mp') out.manaCost = (card.manaCost || 0) - cut;
+        else { out.staminaCost = (card.staminaCost || 0) - cut; out.cost = (card.cost ?? 0) - cut; }
+      }
       break;
     case 'hits': {
       const index = firstPlainIndex(effects, 'damage');
@@ -102,6 +161,52 @@ function applyStep(card, step) {
           out.textTemplate = template.replace('{damage} damage', '{damage} damage {hits} times');
         }
       }
+      break;
+    }
+    case 'poise': {
+      const index = firstPlainIndex(effects, 'poiseDamage');
+      if (index >= 0) effects[index].amount += step.n;
+      break;
+    }
+    case 'tag': {
+      if (step.tag) {
+        const family = Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix));
+        const keep = (tag) => tag !== step.tag && !(family && (tag.startsWith(family) || (family === 'range:' && tag.startsWith('reach:'))));
+        const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+        for (const key of keys.length ? keys : ['tags']) out[key] = [...(card[key] || []).filter(keep), step.tag];
+        // combatProfileFor lets an explicit `range` / `reach` / `targeting` field beat the tag, so those follow the step.
+        const value = family ? step.tag.slice(family.length) : '';
+        if (family === 'range:') {
+          if (card.range !== undefined) out.range = value;
+          if (typeof card.reach === 'string') out.reach = value;
+        }
+        if (family === 'targeting:' && card.targeting !== undefined) out.targeting = value;
+      }
+      if (step.retarget) {
+        const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && (e.target === 'enemy' || e.target === 'allEnemies'));
+        if (index >= 0) {
+          const area = step.retarget === TARGETING[1];
+          effects[index].target = area ? 'allEnemies' : 'enemy';
+          effects[index].amount = Math.max(1, Math.ceil(effects[index].amount * (area ? 0.75 : 1.25)));
+        }
+      }
+      if (step.damageSchool) out.damageSchool = step.damageSchool;
+      if (step.damage) {
+        const keepType = (tag) => !tag.startsWith('damage:');
+        const keys = ['tags', 'cardTags'].filter((key) => Array.isArray(card[key]));
+        for (const key of keys.length ? keys : ['tags']) out[key] = [...(out[key] || card[key] || []).filter(keepType), `damage:${step.damage}`];
+        // combatProfileFor reads an authored `attack` (damage components, a damage type) before the tags, and a
+        // weaponDamage block re-derives the components from the wielded weapon, so the whole hit becomes the element:
+        // every component takes its type (the shares stay) and the weapon block goes.
+        if (card.attack && typeof card.attack === 'object') {
+          const { weaponDamage, ...attack } = card.attack;
+          if (Array.isArray(attack.components)) attack.components = attack.components.map((part) => ({ ...part, type: step.damage }));
+          if (attack.damageType !== undefined) attack.damageType = step.damage;
+          out.attack = attack;
+        }
+      }
+      if (Number.isInteger(step.exposureBuildupPerHit)) out.exposureBuildupPerHit = step.exposureBuildupPerHit;
+      if (Number.isFinite(step.magicShare)) out.magicShare = step.magicShare;
       break;
     }
     default:
@@ -125,6 +230,18 @@ export function applyUpgradeSteps(base, steps) {
     if (steps[i].k === 'authored') throw new Error('An authored upgrade step must be the first step');
     card = applyStep(card, steps[i]);
   }
+  // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
+  // order of the steps, so a saved instance resolves the same way (no migration).
+  if (steps.some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
+    card.manaCost = 0;
+    // Zeroing Mana also drops the Mana offset of the Core 2 multi-hit Stamina floor, so the engine could charge more
+    // than the face prints: print the floor instead, so face, preview and combat agree.
+    const floor = hitFloor({ ...card, manaCost: 0 }, currentHits(card.effects || []));
+    if (Number.isInteger(card.staminaCost) && floor > card.staminaCost) {
+      card.cost = (card.cost ?? card.staminaCost) + (floor - card.staminaCost);
+      card.staminaCost = floor;
+    }
+  }
   if (steps.length >= 2) card.name = `${base.name}+${steps.length}`;
   return card;
 }
@@ -146,12 +263,25 @@ export function upgradeStepsProblems(instance, path) {
     }
     if (step.k === 'authored' && i !== 0) problems.push(`${at}: an authored step may only be the first step`);
     const bad = (field) => problems.push(`${at}.${field} is not valid for a '${step.k}' step`);
-    if (['dmg', 'blk', 'stk'].includes(step.k) && !isCount(step.n)) bad('n');
+    if (['dmg', 'blk', 'stk', 'poise'].includes(step.k) && !isCount(step.n)) bad('n');
     if (['stk', 'addStatus'].includes(step.k) && !(typeof step.status === 'string' && step.status)) bad('status');
     if (step.k === 'addStatus' && !isCount(step.stacks)) bad('stacks');
     if (step.k === 'cost' && step.pool !== 'sp' && step.pool !== 'mp') bad('pool');
+    if (step.k === 'cost' && step.n !== undefined && !isCount(step.n, 9)) bad('n');
     if (step.k === 'hits' && !(isCount(step.hits, 3) && step.hits >= 2)) bad('hits');
     if (step.k === 'hits' && !isCount(step.per)) bad('per');
+    if (step.k === 'tag') {
+      if (step.tag === undefined && step.retarget === undefined && step.damageSchool === undefined) bad('tag');
+      if (step.damage !== undefined && !Object.values(ELEMENT_IDENTITY).some((identity) => identity.damage === step.damage)) bad('damage');
+      if (step.tag !== undefined && step.tag !== RANK_DOWN_TAG) {
+        const family = typeof step.tag === 'string' ? Object.keys(TAG_FAMILIES).find((prefix) => step.tag.startsWith(prefix)) : null;
+        if (!family || !TAG_FAMILIES[family].includes(step.tag.slice(family.length))) bad('tag');
+      }
+      if (step.retarget !== undefined && !TARGETING.includes(step.retarget)) bad('retarget');
+      if (step.damageSchool !== undefined && !UPGRADE_ELEMENTS.includes(step.damageSchool)) bad('damageSchool');
+      if (step.magicShare !== undefined && !(Number.isFinite(step.magicShare) && step.magicShare >= 0 && step.magicShare <= 1)) bad('magicShare');
+      if (step.exposureBuildupPerHit !== undefined && !(Number.isInteger(step.exposureBuildupPerHit) && step.exposureBuildupPerHit >= 0 && step.exposureBuildupPerHit <= 99)) bad('exposureBuildupPerHit');
+    }
   });
   return problems;
 }

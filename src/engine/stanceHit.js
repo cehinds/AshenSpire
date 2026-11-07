@@ -6,8 +6,11 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
 import { attackAccuracy, counterBaseEvasion, attributesOf, levelOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
+import * as Contest from './contest.js';
+import { shockedPenalty, lightningPrecisionBonus } from './elementRules.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
+import { mechanics } from '../framework/data/mechanics.js';
 import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
@@ -43,8 +46,22 @@ export function precisionStatMix(ctx, entity, carrier = null) {
   return Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
     + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * mixLevel(ctx, entity));
 }
-/** Precision stacks an offensive stance entry grants under FixCore: the base grant plus the stat mix. */
-export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base + precisionStatMix(ctx, entity, carrier) : 0;
+/** The stat mix itemised for the roll receipt: one part per non-zero contributor, plus a rounding part so the parts add up to the floored mix exactly. Display only; weights come from `accuracy.precisionWeights`. */
+export function precisionStatParts(ctx, entity, carrier = null) {
+  const wt = fixCoreRules(ctx, entity, carrier).accuracy.precisionWeights, attrs = attributesOf(ctx, entity) || {};
+  const cents = n => Math.round(n * 100) / 100;
+  const raw = [['DEX', Number(attrs.dexterity) || 0, wt.dex], ['STR', Number(attrs.strength) || 0, wt.str], ['INT', Number(attrs.intelligence) || 0, wt.int], ['WIS', Number(attrs.wisdom) || 0, wt.wis]]
+    .map(([label, score, weight]) => ({ label, value: cents(score * weight), note: `${score} ×${weight}` }));
+  const level = mixLevel(ctx, entity);
+  raw.push({ label: 'level', value: cents(level * wt.level), ...(wt.level === 1 ? {} : { note: `${level} ×${wt.level}` }) });
+  const parts = raw.filter(part => part.value), total = precisionStatMix(ctx, entity, carrier);
+  const rounding = cents(total - parts.reduce((sum, part) => sum + part.value, 0));
+  return rounding ? [...parts, { label: 'rounding', value: rounding }] : parts;
+}
+/** Core 2 Accuracy constants (owner, 2026-10-31): editable data in content/framework/mechanics.json, not the locked FixCore rules. */
+export const accuracyRules = () => mechanics.accuracy;
+/** Precision stacks an offensive stance entry grants under FixCore: the base grant only (owner, 2026-10-31; the stat mix is Precision, not stacks). */
+export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base : 0;
 /** Evade stacks one Evade play adds under FixCore: evadeStackBase + evadeStackDex × DEX (config, owner 2026-10-19); 0 elsewhere. */
 export function evadeStackGain(ctx, entity, carrier = null) {
   if (!fixCoreEnabled(ctx) || !entity) return 0;
@@ -54,11 +71,10 @@ export function evadeStackGain(ctx, entity, carrier = null) {
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
   if (fixCoreEnabled(ctx)) {
-    const cfg = fixCoreRules(ctx, entity).accuracy;
     const dex = Number(attributesOf(ctx, baseEntity)?.dexterity) || 0;
-    // Fixed defense: base + DEX + flat gear + stacks × (baseAC + DEX).
-    const perStack = cfg.baseAC + dex;
-    return cfg.evasionBase + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
+    // Fixed defense (owner, 2026-10-31): 8 + DEX + flat gear + 2 per Evade stack + prepared bonus.
+    const acc = accuracyRules(), perStack = acc.evadePerStack;
+    return acc.evasionBase + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
       + (evadeDisabled ? 0 : perStack * stacks(entity, 'evade') + (prepared ? Number(prepared.bonus) || 0 : 0));
   }
   const preparedBonus = prepared ? stanceRulesFor(ctx).evasionPerStack + (Number.isFinite(prepared.bonus) ? prepared.bonus : 0) : 0;
@@ -79,9 +95,16 @@ export function previewTargetFor(target, observerId = 'player', reveal = {}) {
   return blind;
 }
 
+/** The seeded contest of an insight-contest card against one target (SPEC §17 Contests); null for any other card. */
+export const rollContestFor = (ctx, source, target, carrier) => Contest.rollCarrierContest(ctx, source, target, carrier, { attributesOf, levelOf });
+
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   if (ctx.combatExpansionVersion !== 2 || !source || !target || source === target || source.kind === target.kind) return null;
   const profile = carrier?.combatProfile || {};
+  // An insight contest card never rolls Accuracy and never cares about range (SPEC §17 Contests): it prices a DC, not a hit chance.
+  const contest = Contest.previewCarrierContest(ctx, source, target, carrier, { attributesOf, levelOf });
+  if (contest) return { range: profile.range || 'melee', requiredRange: 'melee', inRange: true, accuracy: 0, evasion: 0, need: 0, bypass: true, opposed: false,
+    mode: 'normal', advantage: false, disadvantage: false, evadeStacks: 0, evadeActive: false, evadeAttempted: false, hitChance: 100, chance: 100, contest };
   const tags = carrier?.authoredTags || carrier?.tags || [];
   const spell = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp);
   // Explicit Target identity is different from an effect's target selector.
@@ -102,9 +125,15 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Precision and fixed Evasion are whole numbers, rounded down.
-  const precisionMultiplier = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) * (precision + 1) : 0;
+  const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
+  const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
+  // Lightning (SPEC 4.7): +1 against a target using metal; each Shocked stack on the attacker is -1.
+  const elementDelta = fixCoreEnabled(ctx) ? lightningPrecisionBonus(ctx, target, carrier) - shockedPenalty(source) : 0;
+  // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
+  const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, ...precisionStatParts(ctx, source, carrier), { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
+    ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0], ['lightning / Shocked', elementDelta]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
-    ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
+    ? Math.floor(cfg.precisionBase + precisionMultiplier + elementDelta + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options)) : effectiveEvasion(ctx, target, options);
@@ -119,13 +148,15 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   // Under FixCore a shown percentage is whole, rounded down (owner, 2026-10-18); advantage and disadvantage give quarters.
   const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
-  return { range, requiredRange, inRange, accuracy, evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
+  return { range, requiredRange, inRange, accuracy, ...(precisionParts ? { precisionParts } : {}), evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
 }
 
 export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   const preview = attackHitPreview(ctx, source, target, carrier, options);
   if (!preview) return null;
+  // A contest is rolled by the contest helper (combatMatchups.beginTacticalAction); this path only reports it as unavoidable.
+  if (preview.contest) return { ...preview, d20: null, dice: [], hit: true };
   const d20 = preview.inRange && !preview.bypass ? (typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20)) : null;
   const dice = d20 == null ? [] : [d20];
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));

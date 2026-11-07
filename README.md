@@ -15,6 +15,8 @@
 
 
 
+
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
@@ -53,7 +55,7 @@ The chooser identifies the selected game build; its installer can be newer than 
 
 **Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
 
-[All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
+[All builds](https://cehinds.github.io/AshenSpire/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
 **How fresh:** the site is rebuilt from git history and republished after each `dev` build stamp
 (about every 10 to 40 minutes while work lands) and after each push to `release`. A push to `test` or
 `main` does not publish by itself; its newest build appears at the next publication, and the
@@ -63,28 +65,28 @@ for a red `deploy` job. Publication can lag source changes. For ZIPs, open a suc
 
 ## Screenshots
 
-Latest published Release candidate **0.7.1.1920**, captured 2026-10-31 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/1920/) · [Capture details](docs/preview/releases/0.7.1.1920/README.md).
+Latest published Release candidate **0.7.2.47**, captured 2026-10-31 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/47/) · [Capture details](docs/qa/releases/0.7.2.47/README.md).
 Captures use the actual published Release and its native showcase states.
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Release 0.7.1.1920 creation with two class choices, one locked](docs/preview/releases/0.7.1.1920/creation.png) | ![Release 0.7.1.1920 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1920/map.png) |
+| ![Release 0.7.2.47 creation with two class choices, one locked](docs/qa/releases/0.7.2.47/creation.png) | ![Release 0.7.2.47 map with a posed five-step route and encounter nodes](docs/qa/releases/0.7.2.47/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Release 0.7.1.1920 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1920/combat.png) | ![Release 0.7.1.1920 configured shop offers, costs and services](docs/preview/releases/0.7.1.1920/shop.png) |
+| ![Release 0.7.2.47 combat with enemy intentions and cards in hand](docs/qa/releases/0.7.2.47/combat.png) | ![Release 0.7.2.47 configured shop offers, costs and services](docs/qa/releases/0.7.2.47/shop.png) |
 
 <details>
 <summary>Title screen</summary>
 
-![Release 0.7.1.1920 title after native Enter](docs/preview/releases/0.7.1.1920/title.png)
+![Release 0.7.2.47 title after native Enter](docs/qa/releases/0.7.2.47/title.png)
 
 </details>
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Release 0.7.1.1920 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1920/combat-phone.png)
+![Release 0.7.2.47 phone combat with enemy intentions, cards and turn controls](docs/qa/releases/0.7.2.47/combat-phone.png)
 
 </details>
 
@@ -97,8 +99,7 @@ Checked items are implemented; build channels and older saves can differ.
 - [x] Card combat with enemy intentions, equipment and statuses
 - [x] Deck building, skill training, attributes and rewards
 - [x] Saved runs, offline play and phone layouts
-- [x] Optional LAN co-op
-- [x] Alternative appearance by default; optional Classic appearance with the debug flag on
+- [x] Perspective-grid ("alternative") appearance only; the optional Classic appearance was removed (owner, 2026-11-03)
 - [ ] Complete 1.0 release acceptance — [remaining work](docs/FINISH.md)
 
 ## Guides

@@ -51,6 +51,7 @@ function boot(options = {}) {
       if (!profile?.id) throw new Error('unknown fixture profile');
       return Object.freeze(profile);
     },
+    retiredProfileReason: () => null, // the real predicate has its own test (retired-profile.test.mjs)
     isConfiguredRun: subject => subject?.foundation?.mode === 'configured',
     applyGameProfileToContent(bundle, profile) {
       assert.equal(bundle, raw);
@@ -86,6 +87,7 @@ function boot(options = {}) {
     promotionDebug: () => false, promotionFor: value => value,
     settingsRows: () => record('settings-rows', []),
     needsSettingsChoice: () => !!f.settingsChoicePending,
+    retiredStoredSettingKeys: () => [], // main.js boot cleanup of retired battlefield keys; not under test here
     seedSettingsDefaults: () => record('seed-defaults', f.promoted),
     showSettingsNotice: (...args) => record('notice', args),
     initAudio(settings) { return record('audio', plain(settings)); },

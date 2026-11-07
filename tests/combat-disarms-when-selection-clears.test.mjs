@@ -10,7 +10,7 @@
 // could not outlive the screen that spent it. The mid-fight Armoury is a screen
 // that mounts OVER a live fight, on `document.body`, without remounting combat.
 // Its `clearSelection()` runs the hand card's `douse`, and that douse removes
-// `inspection-selected`, `inspection-info-visible` AND `selected`, and sets
+// `inspection-selected` AND `selected`, and sets
 // `aria-pressed="false"`.
 //
 // WHAT A PLAYER GOT: the card stopped saying it was armed, the enemies kept
@@ -94,7 +94,7 @@ ok(/releaseSelectionWatch\(\);/.test(combat.replace(/const releaseSelectionWatch
 // If the douse stopped removing `selected`, the desync would not arise — and
 // this test would be guarding nothing. Name the line it depends on.
 const inspection = strip(read('src/ui/components/cardInspection.js'));
-ok(/classList\.remove\('inspection-selected', 'inspection-info-visible', 'selected'\)/.test(inspection),
+ok(/classList\.remove\('inspection-selected', 'selected'\)/.test(inspection),
   "the douse still strips the combat hand card's `selected` class, which is why combat must be told");
 
 
@@ -156,10 +156,10 @@ const watchBody = combat.match(/onSelectionChange\(\(lit\) => \{[\s\S]*?\n  \}\)
 ok(!!watchBody, 'the selection watcher can still be read');
 ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(watchBody[0]),
   'the store watcher repaints the combatant stage before it re-dresses');
-// And the keycap really is built by the renderer rather than toggled, which is
-// the fact both assertions above depend on.
-ok(/if \(enemy\.alive && targeting\) \{/.test(combat),
-  'the target keycap is still built under `targeting` by renderEnemies');
+// And the keycap really is written by the renderer, which is the fact both assertions above depend on. Owner
+// (2026-11-06): the key is built with the frame and only `hidden` follows `targeting`, so arming adds no HUD node.
+ok(/key\.hidden = !targeting;/.test(combat),
+  'the target keycap is shown only under `targeting` by renderEnemies (hidden otherwise, never added or removed)');
 ok(!/enemy-key/.test(combat.match(/function syncCardSelection\(\)[\s\S]*?\n  \}/)[0]),
   'syncCardSelection still does not touch the keycap, so only a repaint can');
 

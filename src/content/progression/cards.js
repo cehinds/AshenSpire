@@ -2,7 +2,7 @@
 // Stays JS: the rider functions and familyGrade are logic. The grade budget and the
 // area-family list it reads are data, authored in content/source/progressionGradeRules.json.
 import { cardFamilies } from './cardFamilies.js';
-import { recipeText } from './cardRecipeText.js';
+import { recipeText, recipeFace } from './cardRecipeText.js';
 import { progressionCardLore } from './cardLore.js';
 import { abilityCardUpdates as lessonUpdates } from './lessons.js';
 import { progressionGradeRules } from '../generated/progressionGradeRules.js';
@@ -73,7 +73,7 @@ export function familyGrade(family, rank) {
   if (family.grades) {
     const grade = structuredClone(family.grades[rank]);
     const magical = ['starseer', 'herald'].includes(family.classId);
-    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(family.id)),
+    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(family.id)), faceTemplate: recipeFace(grade.effects, combatProfileFor(family.id)),
       traits: { costRule: 'fixed',
         ...(family.primary === 'damage' ? { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } : {}),
       },
@@ -98,7 +98,7 @@ export function familyGrade(family, rank) {
   if (rank >= 4) effects.push(block(2, { oncePerTurn: 'grade-block' }));
   if (rank >= 5) effects.push(draw(1, { oncePerTurn: 'grade-draw' }));
   const magical = ['starseer', 'herald'].includes(family.classId);
-  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(family.id)),
+  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(family.id)), faceTemplate: recipeFace(effects, combatProfileFor(family.id)),
     ...(family.primary === 'damage' ? { traits: { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }
@@ -114,7 +114,7 @@ export const progressionCards = cardFamilies.map(family => {
     flavor: progressionCardLore[family.id.replace(/^progression-/, '')].join('\n\n'),
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,
-    effects: base.effects, textTemplate: base.textTemplate, gradeProfiles,
+    effects: base.effects, textTemplate: base.textTemplate, ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}), gradeProfiles,
     ...base.traits,
   };
 });

@@ -25,7 +25,7 @@ test('a player keeps all three rows at 0; an enemy shows Precision and Evasion o
 test('rules sharing a tag add up, as an attack with those tags rolls them', () => {
   const keen = { tags: ['blade'], base: 0.03, weights: {}, divisor: 100, cap: 0.5, multiplier: 1.5 };
   const rows = combatStatRows({ statuses: {}, critRules: [keen, rule], attributes, kind: 'player' }, t);
-  assert.equal(rows[2].value, '13%'); // 3% + 10%, not the larger one alone
+  assert.equal(rows[2].value, '15%'); // 3% + 10% = 13%, rolled as the 15% step
 });
 
 test('Evasion reads status stacks first and falls back to the Foundation dodge charges on entity.evade', () => {
@@ -40,8 +40,8 @@ test('rules on different tags sum for an attack card that carries both', () => {
   const blood = { tags: ['blood'], base: 0.12, weights: {}, divisor: 100, cap: 0.5, multiplier: 1.5 };
   const chance = (attackTagSets) => combatStatRows({ statuses: {}, critRules: [keen, blood], attributes, kind: 'player', attackTagSets }, t)[2].value;
   assert.equal(chance([['blade', 'blood']]), '20%');
-  assert.equal(chance([['blade'], ['blood']]), '12%');
-  assert.equal(chance([]), '12%'); // no attack cards known: each rule's own tags
+  assert.equal(chance([['blade'], ['blood']]), '10%');
+  assert.equal(chance([]), '10%'); // no attack cards known: each rule's own tags
   assert.equal(chance([['guard']]), '0%');
 });
 

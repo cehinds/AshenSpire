@@ -10,6 +10,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
+import { uncappedRun } from './helpers/uncapped-range.mjs';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -17,6 +18,7 @@ const PAIR = rangePairKey('player:player', 'enemy:e1');
 function setup(cardId, stamina, band = 1, regs = registries) {
   const registries = regs;
   const run = createRunState({ registries, seed: 777, classId: 'reaver', profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  uncappedRun(run);
   const combat = createRunCombat({ registries, run, rng: createRng(777), enemyIds: ['wanderingSoldier'] });
   combat.player.stamina = stamina; combat.player.energy = stamina;
   combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [PAIR]: band } };
@@ -36,8 +38,11 @@ test('Driving Thrust at band 1 with 1 SP left plays for its own price and closes
   assert.ok(combat.enemies[0].hp < combat.enemies[0].maxHp);
 });
 
-test('a card with trailing movement still pays the implicit Advance for its hit (Gale Push is unchanged)', () => {
-  const combat = setup('core.galePush', 2);
+test('a card with trailing movement still pays the implicit Advance for its hit (Gale Push, now a Reach spell, from band 2)', () => {
+  // Owner 2026-11-06: an untagged spell is Reach, so Gale Push covers band 1 for free and pays one Advance from band 2.
+  const near = previewCard(setup('core.galePush', 2), 'qa', 'e1');
+  assert.equal(near.range.routes.find(r => r.id === 'advance').advanceSp, 0, 'band 1 is inside Reach');
+  const combat = setup('core.galePush', 2, 2);
   const pv = previewCard(combat, 'qa', 'e1');
   assert.equal(pv.range.routes.find(r => r.id === 'advance').advanceSp, 1);
 });

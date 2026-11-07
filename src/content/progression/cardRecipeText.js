@@ -53,3 +53,51 @@ function predicateText(p) {
     default: throw new Error(`No progression condition description for ${p.p}`);
   }
 }
+
+// The glance face's short reading of a recipe (card `faceTemplate`): the first two unconditional effects, each in at
+// most five words, never a conditional bonus or a once-per-turn family rider (those stay in Information). Tokens are
+// numbered exactly as recipeText numbers them so both bind to the same effect values.
+const words = text => text.replace(/\{[^}]*\}/g, 'N').split(/\s+/).filter(word => /[\p{L}\p{N}]/u.test(word)).length;
+const cardsWord = amount => amount === 1 ? 'card' : 'cards';
+const statusName = id => String(id).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+export function recipeFace(effects, { counterMode = null } = {}) {
+  const counts = {};
+  const token = base => { const n = counts[base] = (counts[base] || 0) + 1; return `{${base}${n > 1 ? '.' + n : ''}}`; };
+  const phrases = [];
+  if (counterMode) phrases.push({ plain: true, options: [`Prepare ${counterMode === 'spell' ? 'Spell' : counterMode === 'ranged' ? 'Ranged' : 'Melee'} Counter`] });
+  for (const e of effects) {
+    const t = e.amount != null && e.op !== 'grantCardCharge' ? token(e.op) : e.stacks != null ? token(e.status) : null;
+    const all = e.target === 'allEnemies';
+    let options;
+    switch (e.op) {
+      case 'damage': { const hits = e.hits ? token('hits') : null;
+        options = counterMode ? [`Prepare ${t} reply damage`] : [`Deal ${t} damage${all ? ' to all' : ''}${hits ? `, ${hits}×` : ''}`, `Deal ${t} damage${all ? ' to all' : ''}`, `Deal ${t} damage`]; break; }
+      case 'block': options = [`Gain ${t} Block`]; break;
+      case 'draw': options = [`Draw ${t} ${cardsWord(e.amount)}`]; break;
+      case 'discard': options = [`Discard ${t} ${cardsWord(e.amount)}`]; break;
+      case 'applyStatus': options = e.target === 'self' ? [`Gain ${t} ${statusName(e.status)}`] : [`Apply ${t} ${statusName(e.status)}${all ? ' to all' : ''}`, `Apply ${t} ${statusName(e.status)}`]; break;
+      case 'poiseDamage': options = counterMode ? [`Prepare ${t} reply Poise damage`] : [`Deal ${t} Poise damage`]; break;
+      case 'restoreMana': options = [`Restore ${t} Mana`]; break;
+      case 'gainEnergy': options = [`Restore ${t} Stamina`]; break;
+      case 'heal': options = [`Heal ${t} HP`]; break;
+      case 'loseHp': options = [`Offer ${t} HP`]; break;
+      case 'removeStatus': options = [`Remove ${statusName(e.status)}`]; break;
+      case 'addCard': options = [`Add ${e.card === 'smokePellet' ? 'a Smoke Pellet' : e.card} to hand`]; break;
+      case 'grantCardCharge': options = e.damage ? [`Next ${e.abilityKind === 'spell' ? 'spell' : 'attack'} deals +${token('chargeDamage')}`] : [`Next spell costs ${token('chargeManaDiscount')} less`]; break;
+      default: options = [];
+    }
+    // A debuff gated on one of the caster's own statuses is still an effect the face must name ("Starstone: Apply 4 Weak").
+    const gated = e.op === 'applyStatus' && e.target !== 'self' && e.if?.p === 'hasStatus' && !e.oncePerTurn;
+    if (gated) options = [`${statusName(e.if.status).replace(/ Charge$/, '')}: Apply ${t} ${statusName(e.status)}`];
+    phrases.push({ conditional: !gated && !!(e.if || e.oncePerTurn), gated, cost: e.op === 'discard' || e.op === 'loseHp', debuff: e.op === 'applyStatus' && e.target !== 'self', selfStatus: e.op === 'applyStatus' && e.target === 'self' && !e.if && !e.oncePerTurn, options });
+  }
+  const plainOnes = phrases.filter(p => !p.conditional);
+  // A payment or mandatory discard is always said on the face; the other effects fill what is left.
+  const pool = plainOnes.length ? plainOnes : phrases;
+  const costs = pool.filter(p => p.cost), others = pool.filter(p => !p.cost);
+  const chosen = new Set([...costs, ...others].slice(0, 2).concat(others.filter(p => p.gated || p.debuff)));
+  // A status the card gives itself is an effect the face names too, while the face still fits its three lines.
+  for (const p of others) if (p.selfStatus && chosen.size < 3) chosen.add(p);
+  const lines = [...costs, ...others].filter(p => chosen.has(p)).map(p => p.options.find(o => words(o) <= 5)).filter(Boolean);
+  return lines.length ? lines : undefined;
+}

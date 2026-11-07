@@ -4,7 +4,7 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // Acceptance retains the 400/750 ms overhead budgets after excluding only the
 // independently checked four 500 ms waits, the active authored half-rate clip,
 // and hit-stop derived from this action's committed receipts. Every sample must
-// retain intent → action → sprite → contact → reaction → damage → HUD → resolution.
+// retain intent (with its cost) → action (then the stance) → sprite → contact → reaction → damage → HUD → resolution.
 // Missing or shortened waits, missing readouts and missing samples fail.
 //
 // The Core entry matchup can put a melee card outside the enemy's spell range.

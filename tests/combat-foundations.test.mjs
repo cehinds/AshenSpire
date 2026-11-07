@@ -1,10 +1,8 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { combatRules } from '../src/content/combatRules.js';
 import { createPrototypeCombat, prototypeInput, prototypeBundle } from '../src/content/prototypes/combatBuilds.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createRegistries } from '../src/model/registries.js';
 import { triggerOwnerKey } from '../src/engine/triggers.js';
 import { validateContent } from '../src/model/validate.js';
@@ -263,23 +261,6 @@ test('strongest stacking restores a weaker independent source after expiry', () 
   const rows = resolveStackApplications([{ sourceId: 'a', value: 4, expires: 1 }], { sourceId: 'b', value: 8, expires: 3 }, { mode: 'refresh', cap: 9 });
   assert.equal(stackMagnitude(rows, 'refresh', 9), 4);
 });
-test('co-op commits seat-local Evade and resource costs without corrupting another seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const input = prototypeInput('heavy', 'basic', 1);
-  const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }, { ...input.player, id: 'p2' }], combatProfiles: { p1: input.combatProfiles.player, p2: { ...input.combatProfiles.player, weightClass: 'light' }, e1: input.combatProfiles.e1 } });
-  const p1 = c.players.get('p1');
-  const id = inHand({ piles: p1.piles }, 'dodgeRoll');
-  playCard(c, 'p1', id);
-  assert.equal(c.players.get('p1').entity.stamina, 2);
-  assert.equal(c.players.get('p2').entity.stamina, 5);
-  assert.equal(c.players.get('p1').entity.evade, 1);
-  endTurn(c, 'p1'); endTurn(c, 'p2');
-  assert.equal(c.players.get('p1').entity.stamina, 5);
-  assert.equal(c.players.get('p2').entity.stamina, 5);
-  assert(c.eventLog.some((e) => e.type === 'attackEvaded' && e.targetPlayerId === 'p1'));
-  const impacts = c.eventLog.filter((e) => e.type === 'impactDealt' && e.targetId === 'player');
-  assert(impacts.length > 0, 'the undefended second seat receives impact');
-  assert(impacts.every((e) => e.targetPlayerId === 'p2'), 'only the struck seat owns foundation impact receipts');
-});
 
 test('grouped resistance does not multiply equivalent sources; logs conserve typed HP damage', () => {
   const input = prototypeInput('heavy', 'basic', 1);
@@ -360,15 +341,4 @@ test('a relic carries as many property tags as it is given, and every one confer
   assert.ok(c.player.block >= 2, `the first tag conferred its block (got ${c.player.block})`);
   assert.ok(c.enemies[0].poiseMeter.value - poiseBefore >= 3,
     `and the second tag conferred its Poise on the same event (${poiseBefore} → ${c.enemies[0].poiseMeter.value})`);
-});
-test('co-op hooks keep event ownership distinct between seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const input = prototypeInput('heavy', 'boss', 1);
-  const bundle = withRelicProperties(prototypeBundle(), 'prototypeOwnedHit', [
-    { tag: 'prototypeOwnedHit', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'block', target: 'self', amount: 2 }] }] },
-  ]);
-  input.registries = createRegistries(bundle);
-  const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1', relicIds: ['prototypeOwnedHit'] }, { ...input.player, id: 'p2', relicIds: ['prototypeOwnedHit'] }], combatProfiles: { p1: input.combatProfiles.player, p2: input.combatProfiles.player, e1: input.combatProfiles.e1 } });
-  playCard(c, 'p1', inHand({ piles: c.players.get('p1').piles }, 'prototypeHeavy'), 'e1');
-  assert.equal(c.players.get('p1').entity.block, 2);
-  assert.equal(c.players.get('p2').entity.block, 0);
 });

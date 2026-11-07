@@ -140,7 +140,6 @@ async function main() {
     report.titleStamp = stamp;
     report.entries = await frame.locator('.title-menu > li > button').evaluateAll(buttons => buttons.map(button => ({ label: button.textContent.trim(), action: button.dataset.titleAction })));
     assert.equal(report.entries.at(-1)?.action, 'quit', 'Quit is the last primary menu entry');
-    assert.ok(!report.entries.some(entry => entry.action === 'lan'), 'paused co-op entry is hidden');
     await frame.locator('#quit-game').scrollIntoViewIfNeeded(); await page.screenshot({ path: resolve(out, 'public-menu.png') });
     await frame.locator('#quit-game').click();
     await frame.locator('#farewell-status').filter({ hasText: 'browser kept this window open' }).waitFor();

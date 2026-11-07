@@ -83,8 +83,6 @@
     "gameProfile.settings.invalid",
     "gameProfile.settings.saveFailed",
     "gameProfile.settings.title",
-    "lobby.beginWaiting",
-    "lobby.ready",
     "mastery.treeAria",
     "progression.chooseRank",
     "quit.message",

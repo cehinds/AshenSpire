@@ -17,7 +17,7 @@ import { expansionCarrierTraits } from './combatExpansionEquipment.js';
 
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
-  for (const key of ['targetLimit', 'range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['targetLimit', 'contest', 'range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'mirrors', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues', 'mechanicTags', 'mechanicBindings']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
@@ -240,6 +240,8 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   const payloadOps = counterPayloadOps(ctx);
   const support = effects.filter(effect => !payloadOps.includes(effect.op));
   if (!combatExpansionEnabled(ctx) && !support.some(effect => effect.op === 'block')) support.unshift({ op: 'block', target: 'self', amount: rules.guard });
+  // Counter stacks (owner 2026-10-31): the Block the player stands behind, read after the card's own Block grant (last in line).
+  if (arm && source.kind === 'player' && fixCoreEnabled(ctx)) support.push({ op: 'gainCounterStacks', target: 'self' });
   return counterstrikeEffects(ctx, source, target, carrier, support, arm);
 }
 

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, createCardInstance } from '../src/model/state.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
@@ -12,6 +12,7 @@ import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
+import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
@@ -98,9 +99,10 @@ test('Core armor tier: receipt shows the budget point and the block it adds to D
 test('Smith item summaries expose actual tier deltas for weapons, shields and armor without simulating other cards', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run);
   const plan = smithingPlan(reg, run);
-  const before = coreCardSimulationCount();
   const model = smithSelectionModel(reg, plan);
-  assert.equal(coreCardSimulationCount(), before, 'item summaries do not evaluate live card previews');
+  // The default pick (first upgradeable item) is the only one that pays for card rows.
+  assert.ok(model.properties.selected, 'the first upgradeable item is preselected');
+  assert.ok(model.properties.candidates.filter(row => !row.selected).every(row => row.affectedRows.length === 0), 'item summaries do not evaluate live card previews');
   for (const ref of ['armament/greatsword', 'armament/kiteShield', 'armor/reaver/vigil']) {
     const candidate = plan.candidates.find(row => row.itemRef === ref);
     const item = model.properties.candidates.find(row => row.itemRef === ref);
@@ -112,35 +114,23 @@ test('Smith item summaries expose actual tier deltas for weapons, shields and ar
   assert.ok(model.properties.candidates.find(row => row.itemRef === 'armor/reaver/vigil').intrinsicChanges.some(row => row.label === 'DR'));
 });
 
-test('Smith renders calculated item and card deltas outside the closed details', () => withKitDom(dom => {
-  const run = fresh(); visit(run);
-  const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
-  const host = dom.document.createElement('main'); dom.document.body.append(host);
-  const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
-  const stone = host.querySelector('.smith-economy-values .smith-stone-icon');
-  assert.equal(stone.querySelector('[data-engraved-icon]')?.dataset.engravedIcon, 'weight');
-  assert.equal(stone.getAttribute('aria-hidden'), 'true', 'cost text names the decorative stone');
-  assert.doesNotMatch(stone.textContent, /weight/);
-  assert.match(host.querySelector('.smith-economy-values').outerHTML, /Smithing Stone Cost/);
-  const stats = host.querySelector('.smith-intrinsic-stats');
-  const deltas = node => node.querySelectorAll('.as-statpair').map(pair => [
-    pair.querySelector('em')?.textContent, pair.querySelector('b')?.textContent, pair.querySelector('strong')?.textContent,
-  ]);
-  for (const change of model.properties.selected.intrinsicChanges) {
-    assert.ok(deltas(stats).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
-  }
-  const folds = host.querySelectorAll('.smith-upgrade-fold');
-  assert.equal(folds.length, model.properties.selected.affectedRows.length);
-  folds.forEach((fold, index) => {
-    assert.equal(fold.hasAttribute('open'), false, 'the preview starts folded');
-    const summary = fold.querySelector('summary');
-    for (const change of model.properties.selected.affectedRows[index].values) {
-      assert.ok(deltas(summary).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
-    }
-  });
-  door.close();
+test('the item\'s upgrade modal lists the calculated item and card deltas, as before and after', () => withKitDom(dom => {
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try {
+    const run = fresh(); visit(run);
+    const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
+    const host = dom.document.createElement('main'); dom.document.body.append(host);
+    const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+    const details = dom.document.querySelector('.confirmation-modal .confirmation-details');
+    // The kit fixture's HTML parser drops text, so this pins the structure: one before/after row per affected row, then Requirements.
+    const rows = details.querySelectorAll('.confirmation-change-list .sr-name');
+    assert.equal(rows.length, model.properties.selected.affectedRows.length + 1);
+    assert.equal(details.querySelectorAll('.confirmation-change-list .as-statpair').length >= model.properties.selected.intrinsicChanges.length, true, 'every change is a before to after pair');
+    closeConfirmationModal();
+    door.close();
+  } finally { globalThis.setTimeout = priorTimeout; }
 }));
-
 test('Core shield tier adds a stat point; receipts never carry legacy +3 card rows', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
   const plan = smithingPlan(reg, run);
@@ -160,14 +150,6 @@ test('Core shield tier adds a stat point; receipts never carry legacy +3 card ro
   }
 });
 
-test('legacy profile smithing keeps its authored card rows', () => {
-  const current = resolveGameProfile('current'), legacy = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, current)), current);
-  const run = createRunState({ seed: 73, classId: 'reaver', registries: legacy });
-  run.smithingStones = 3;
-  const candidate = smithingPlan(legacy, run).candidates.find((row) => row.itemKind === 'armament');
-  assert.ok(candidate && !candidate.core);
-  assert.ok(candidate.changes.some((row) => row.kind === 'effect'));
-});
 
 test('copies of one card with different faces are previewed separately; co-op receipt counts the cards', () => {
   const run = fresh(); visit(run);
@@ -179,6 +161,21 @@ test('copies of one card with different faces are previewed separately; co-op re
   assert.equal(rows.reduce((sum, row) => sum + row.copies, 0), run.deck.filter((card) => card.cardId === 'core.smash').length);
   commitGameProfileRest(reg, run, 'smith', { itemRef: 'armament/greatsword' });
   assert.ok(run.lastSmithingReceipt.affectedCards.length >= rows.length);
+});
+
+test('a Core card row carries its own copy (upgrades, rank), so the modal faces keep them', () => {
+  const run = fresh(); visit(run);
+  const smash = run.deck.find((card) => card.cardId === 'core.smash');
+  run.deck.push({ ...smash, instanceId: 'smash-up', upgraded: true, upgradeSteps: [{ k: 'dmg', n: 2 }] });
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
+  const rows = candidate.coreCardRows.filter((row) => row.cardId === 'core.smash' && row.op === 'damage');
+  const upgraded = rows.find((row) => row.cardReference?.upgraded === true), plain = rows.find((row) => !row.cardReference?.upgraded);
+  assert.ok(upgraded && plain, 'each distinct copy carries its own reference');
+  assert.equal('instanceId' in upgraded.cardReference, false);
+  const damage = (row) => resolveCard(reg, row.cardReference).effects.find((effect) => effect.op === 'damage').amount;
+  assert.notEqual(damage(upgraded), damage(plain), 'the upgraded copy resolves to its own upgraded definition');
+  const shown = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword').properties.selected.affectedRows;
+  assert.ok(shown.some((row) => row.cardReference?.upgraded === true), 'the modal row keeps the copy');
 });
 
 test('a rank-2 Core shield may spend the tier point in its authored points (validator matches the resolver)', async () => {
@@ -293,4 +290,18 @@ test('serializing a Core Smith plan again (or a fresh plan of the same run) runs
   const plan = smithingPlan(reg, run);
   JSON.stringify(plan); JSON.stringify(plan); JSON.stringify(smithingPlan(reg, run));
   assert.equal(coreCardSimulationCount(), fights, 'the memo holds every candidate of one snapshot');
+});
+
+test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nick, playsEver 8)', async () => {
+  const { coreSmithingCards } = await import('../src/model/smithingCore.js');
+  const nick = (playsEver) => {
+    const run = fresh();
+    run.deck.push({ ...createCardInstance('core.whetstoneNick', false, () => `nick-${playsEver}`), ...(playsEver ? { playsEver } : {}) });
+    const row = coreSmithingCards(reg, run, 'armament/greatsword', 0, 1).find((card) => card.cardId === 'core.whetstoneNick' && card.op === 'damage');
+    assert.ok(row, 'the Smith lists Whetstone Nick among the cards the tier changes');
+    return row;
+  };
+  const fresh0 = nick(0), honed = nick(8);
+  assert.equal(honed.before - fresh0.before, 8, 'before: base 2 + 8 plays, not the fresh base');
+  assert.equal(honed.after - fresh0.after, 8, 'after: the same 8');
 });

@@ -175,23 +175,19 @@
 // green, and that silence is the whole argument for watching each arm on its
 // own rather than trusting a suite's total.
 //
-// STILL UNWATCHED AFTER THIS ACT — A7, A8, A9, A10, and they are named here
-// rather than quietly left, because an instrument that hides its own gaps is the
-// thing this whole batch was called to fix:
-//   A7 mana identity · A8 co-op seat identity — each HAS a declared negative
-//     control (proveManaNumericDriftFails, proveAnonymousLabelFails,
-//     proveMissingSeatIdentityFails) and each is DOWNSTREAM by construction: a
-//     hand-built object goes straight to the judging function, below the render
-//     and the read the real defect would travel through. They are honest about
-//     being controls; they are not same-door known-bads.
-//   A9 battlefield crop · A10 co-op action floor — NO control of any kind.
-// All four run only under --shots, which serves the source tree and writes PNGs,
-// so planting them needs the capture path driven from the selftest as well as a
-// plant. That is a second act, not a line. Until it is done these four arms are
-// `unknown`, not green, and this comment is the debt — not a note in a log
-// nobody greps. (Freja, 2026-08-15. The same discipline as flaskSeed's unwaked
-// refusal: say the gap in the instrument's own home, do not force a plant that
-// would prove the half that was never in doubt.)
+// STILL UNWATCHED AFTER THIS ACT — A7, and it is named here rather than quietly
+// left, because an instrument that hides its own gaps is the thing this whole
+// batch was called to fix:
+//   A7 mana identity — HAS a declared negative control
+//     (proveManaNumericDriftFails, proveAnonymousLabelFails) and is DOWNSTREAM
+//     by construction: a hand-built object goes straight to the judging
+//     function, below the render and the read the real defect would travel
+//     through. It is honest about being a control; it is not a same-door
+//     known-bad.
+// It runs only under --shots, which serves the source tree and writes PNGs, so
+// planting it needs the capture path driven from the selftest as well as a
+// plant. That is a second act, not a line. Until it is done this arm is
+// `unknown`, not green, and this comment is the debt. (Freja, 2026-08-15.)
 //
 // BOUNDARY, printed on every run including the clean ones: headless Chromium on
 // Linux, dist/AshenSpire.html, the shapes listed below, the reaver class, one
@@ -380,38 +376,6 @@ const READ = `(() => {
 const fails = [];
 const notes = [];
 const fail = (id, msg) => { fails.push(`${id}  ${msg}`); };
-
-function seatIdentityFailures(seats, expectedName = 'Wren') {
-  const errors = [];
-  for (const seat of seats) {
-    if (!seat.identity) {
-      errors.push(`seat "${seat.rawText || '?'}" has no .coop-seat-name identity span`);
-      continue;
-    }
-    if (seat.line.left < -0.5 || seat.line.right > seat.viewport + 0.5
-      || seat.identity.left < -0.5 || seat.identity.right > seat.viewport + 0.5) {
-      errors.push(`seat "${seat.text}" leaves the viewport (${seat.line.left.toFixed(1)}..${seat.line.right.toFixed(1)} of ${seat.viewport})`);
-    }
-  }
-  if (!seats.some((seat) => seat.identity && seat.text.includes(expectedName))) {
-    errors.push(`${expectedName}'s seat identity is absent`);
-  }
-  return errors;
-}
-
-// Negative control for A8: deleting the authored identity span must make both
-// the per-seat and expected-name clauses fail. This prevents a future optional
-// lookup from turning an absent identity into a green containment reading.
-function proveMissingSeatIdentityFails() {
-  const mutant = [{
-    line: { left: 0, right: 100 }, identity: null, text: '', rawText: 'Wren (you)', viewport: 320,
-  }];
-  const errors = seatIdentityFailures(mutant);
-  if (!errors.some((error) => error.includes('identity span'))
-    || !errors.some((error) => error.includes("Wren's seat identity is absent"))) {
-    throw new Error('A8 negative control is dead: deleting the co-op identity did not fail');
-  }
-}
 
 function compactResourceIdentityFailures(label, expected, glyph, name) {
   const errors = [];
@@ -636,10 +600,8 @@ async function judgePlayerVessel(b, href, [w, h]) {
 async function captureLayoutPage(b, href, [w, h], state, tree) {
   const outDir = resolve(SHOTS_OUT);
   mkdirSync(outDir, { recursive: true });
-  const query = state === 'solo' ? 'shot=combat&shotMana=1' : 'shot=coop';
-  const ready = state === 'solo'
-    ? `!!document.querySelector('.combat .topbar .resbar[data-res="mana"]')`
-    : `document.querySelectorAll('.combat.coop .coop-seat-name').length === 2`;
+  const query = 'shot=combat&shotMana=1';
+  const ready = `!!document.querySelector('.combat .topbar .resbar[data-res="mana"]')`;
   await b.cdp.send('Page.navigate', { url: `${href}?${query}` }, b.S);
   await b.until(ready, `${tree} ${state} @ ${w}x${h}`);
   await wait(320);
@@ -667,102 +629,6 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
       } else {
         notes.push(`A7 ${tree} ${w}x${h}: MANA IDENTITY ok — visible compact label is "${compact.label}", matching the posed combat entity`);
       }
-    }
-  } else {
-    const seats = await b.ev(`(() => {
-      const n = (r) => ({ left: r.left, right: r.right, width: r.width });
-      return [...document.querySelectorAll('.combat.coop .coop-seat')].map((seat) => {
-        const line = seat.querySelector('.coop-seat-name');
-        const identity = line && line.querySelector(':scope > span');
-        return {
-          seat: n(seat.getBoundingClientRect()),
-          line: n(line.getBoundingClientRect()),
-          identity: identity ? n(identity.getBoundingClientRect()) : null,
-          text: identity ? identity.textContent.trim() : '',
-          rawText: line.textContent.trim(),
-          viewport: innerWidth,
-        };
-      });
-    })()`);
-    for (const error of seatIdentityFailures(seats)) fail('A8', `${tree} ${w}x${h}: ${error}`);
-    if (!fails.some((f) => f.startsWith('A8') && f.includes(`${tree} ${w}x${h}`))) {
-      notes.push(`A8 ${tree} ${w}x${h}: SEAT CONTAINMENT ok — Wren and both seat lines stay inside the viewport`);
-    }
-
-    // A seat label fitting is weaker than the battlefield fitting. At 320 px
-    // the old side-by-side field kept both names in view while its min-content
-    // width pushed the last enemy off the right edge. Cards are deliberately a
-    // horizontal strip, so they pass when every whole card has a feasible
-    // scroll position; fighters have no horizontal scroller and must fit now.
-    const battlefield = await b.ev(`(() => {
-      const rect = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
-      const hand = document.querySelector('.combat.coop .hand');
-      const field = document.querySelector('.combat.coop .field');
-      const hr = rect(hand);
-      const fr = rect(field);
-      const handScale = hand.clientWidth ? hr.width / hand.clientWidth : 1;
-      const fieldScale = field.clientHeight ? fr.height / field.clientHeight : 1;
-      const maxScroll = Math.max(0, hand.scrollWidth - hand.clientWidth) * handScale;
-      const cards = [...hand.querySelectorAll('.card')].map((card) => {
-        const r = rect(card);
-        const left = r.left - hr.left + hand.scrollLeft * handScale;
-        const right = r.right - hr.left + hand.scrollLeft * handScale;
-        const lo = Math.max(0, right - hr.width);
-        const hi = Math.min(maxScroll, left);
-        return { name: card.querySelector('.cname')?.textContent.trim() || '?', width: r.width, left, right, reachable: r.width <= hr.width + 0.5 && lo <= hi + 0.5 };
-      });
-      const maxFieldScroll = Math.max(0, field.scrollHeight - field.clientHeight) * fieldScale;
-      const fighters = [...document.querySelectorAll('.combat.coop .field .combatant')].map((el) => {
-        const r = rect(el);
-        const top = r.top - fr.top + field.scrollTop * fieldScale;
-        const bottom = r.bottom - fr.top + field.scrollTop * fieldScale;
-        const lo = Math.max(0, bottom - fr.height);
-        const hi = Math.min(maxFieldScroll, top);
-        return {
-          kind: el.classList.contains('player') ? 'player' : 'enemy',
-          name: el.querySelector('.coop-seat-player, .nm')?.textContent.trim() || '?',
-          ...r, verticalReachable: r.height <= fr.height + 0.5 && lo <= hi + 0.5,
-        };
-      });
-      return { viewport: innerWidth, field: { ...fr, clientHeight: field.clientHeight, scrollHeight: field.scrollHeight }, hand: { ...hr, clientWidth: hand.clientWidth, scrollWidth: hand.scrollWidth }, cards, fighters };
-    })()`);
-    const cropped = battlefield.fighters.filter((f) => f.left < -0.5 || f.right > battlefield.viewport + 0.5);
-    const verticallyUnreachable = battlefield.fighters.filter((f) => !f.verticalReachable);
-    const unreachableCards = battlefield.cards.filter((card) => !card.reachable);
-    const handCropped = battlefield.hand.left < -0.5 || battlefield.hand.right > battlefield.viewport + 0.5;
-    if (cropped.length || verticallyUnreachable.length || unreachableCards.length || handCropped) {
-      fail('A9', `${tree} ${w}x${h}: BATTLEFIELD HORIZONTAL CROP — viewport ${battlefield.viewport}px; `
-        + `${cropped.map((f) => `${f.kind} ${f.name} ${f.left.toFixed(1)}..${f.right.toFixed(1)}`).join(', ') || 'fighters fit'}; `
-        + `${verticallyUnreachable.length ? `vertically unreachable ${verticallyUnreachable.map((f) => `${f.kind} ${f.name}`).join(', ')}` : `field vertical reach ${battlefield.field.clientHeight}/${battlefield.field.scrollHeight}`}; `
-        + `hand ${battlefield.hand.left.toFixed(1)}..${battlefield.hand.right.toFixed(1)} client/scroll ${battlefield.hand.clientWidth}/${battlefield.hand.scrollWidth}; `
-        + `${unreachableCards.length ? `unreachable cards ${unreachableCards.map((c) => c.name).join(', ')}` : 'all cards have a whole-card scroll position'}`);
-    } else {
-      notes.push(`A9 ${tree} ${w}x${h}: BATTLEFIELD REACH ok — ${battlefield.fighters.length} fighters fit horizontally and are vertically reachable; ${battlefield.cards.length} cards each have a whole-card scroll position`);
-    }
-
-    // Leave and the action row's Potions control (which holds both charge
-    // flasks since 2026-10-01, as solo's does) are always visible and obey
-    // the floor.
-    // Read the floor from the same custom property they must obey; a typed 44
-    // here would disagree as soon as UI zoom changes.
-    const actions = await b.ev(`(() => {
-      const probe = document.createElement('div');
-      probe.style.cssText = 'position:absolute;left:-9999px;height:var(--tap-floor)';
-      document.body.appendChild(probe);
-      const floor = probe.getBoundingClientRect().height;
-      probe.remove();
-      return { floor, controls: [...document.querySelectorAll('.combat.coop .coop-leave, .combat.coop .combat-potions')].map((el) => ({
-        text: el.textContent.trim(), height: el.getBoundingClientRect().height,
-      })) };
-    })()`);
-    const undersized = actions.controls.filter((control) => control.height < actions.floor - 0.5);
-    const names = actions.controls.map((control) => control.text);
-    const required = ['Leave', 'Potions'].filter((name) => !names.some((text) => text.includes(name)));
-    if (required.length || undersized.length) {
-      fail('A10', `${tree} ${w}x${h}: CO-OP ACTION FLOOR — missing ${required.join(', ') || 'none'} or below ${actions.floor}px; `
-        + `${actions.controls.map((control) => `${control.text}=${control.height.toFixed(1)}`).join(', ') || 'no controls'}`);
-    } else {
-      notes.push(`A10 ${tree} ${w}x${h}: CO-OP ACTION FLOOR ok — Leave and Potions are at/above ${actions.floor}px`);
     }
   }
 
@@ -1147,9 +1013,9 @@ NOT PASSED: the plants are judged at 320x640 only, on the reaver, one seed, Text
       able to fire, not proven to fire at every shape. A4 is planted through the STYLESHEET door; a
       long resource NAME through the content door (content/resources.js) would reach the same clause
       by a second road and is not planted here.
-      AND FOUR ARMS ARE NOT PLANTED AT ALL: A7 and A8 hold DOWNSTREAM negative controls (a built object
-      handed to the judging function, below the render); A9 and A10 hold none. All four run only under
-      --shots. They are \`unknown\`, not green, and the header block above says why.
+      AND ONE ARM IS NOT PLANTED AT ALL: A7 holds DOWNSTREAM negative controls (a built object
+      handed to the judging function, below the render). It runs only under --shots. It is
+      \`unknown\`, not green, and the header block above says why.
 BOUNDARY: this proves A4 and A5 can go red on real code. It says nothing about whether they would catch
       a defect shaped differently from the one planted — full recall on a corpus of one is not recall.`);
   console.log(bad.length || !cleanOk
@@ -1266,7 +1132,6 @@ async function printFloor(b, href) {
 
 // ---------------------------------------------------------------------------
 async function main() {
-  proveMissingSeatIdentityFails();
   proveManaNumericDriftFails();
   proveAnonymousLabelFails();
   const artifact = resolve(TREE, 'dist/AshenSpire.html');
@@ -1350,9 +1215,7 @@ async function main() {
       }
       if (SHOTS_OUT) {
         await captureLayoutPage(b, source.url, shape, 'solo', 'source');
-        await captureLayoutPage(b, source.url, shape, 'coop', 'source');
         await captureLayoutPage(b, href, shape, 'solo', 'dist');
-        await captureLayoutPage(b, href, shape, 'coop', 'dist');
       }
     }
     // A resource whose linearity was unclaimable at EVERY shape was never

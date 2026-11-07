@@ -145,8 +145,8 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
 // ---------------------------------------------------------------------------
 
 // The schedule itself — which rows a fight earns, and the chance roll — is
-// model/rewardplan.js `cardRewardPlan`, the one door solo, co-op
-// (tools/session.mjs) and the simulator (tools/runsim.mjs) read it through.
+// model/rewardplan.js `cardRewardPlan`, the one door the game
+// and the simulator (tools/runsim.mjs) read it through.
 // This rolls the CARDS for the rows that plan grants.
 
 /**

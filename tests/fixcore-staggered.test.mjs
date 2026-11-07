@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
 import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction, fixCoreStagger } from '../src/engine/actions.js';
@@ -138,7 +138,9 @@ test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerab
 test('preview of a multihit card sees the break: later hits take Vulnerable', () => {
   const { combat, target } = live(1);
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  assert.deepEqual(preview.hitDamages, [19, 25], 'hit 1: Poise absorbed its last 1; hit 2 meets Vulnerable x1.25');
+  // Owner, 2026-11-03: hitDamages is the raw hit (Poise is not subtracted); the receipt's hpLoss carries the resolved figures.
+  assert.deepEqual(preview.hitDamages, [20, 25], 'hit 2 meets Vulnerable x1.25 after the break');
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 25], 'hit 1: Poise absorbed its last 1');
 });
 
 test('one break is one stagger: a smash-advantage hit that also breaks Poise staggers once', () => {
@@ -164,7 +166,8 @@ test('preview skips the break Vulnerable when impact protection would refuse the
   combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
   target.impactProtectedUntil = combat.turn;
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  assert.deepEqual(preview.hitDamages, [19, 20], 'no Vulnerable on the second hit');
+  assert.deepEqual(preview.hitDamages, [20, 20], 'no Vulnerable on the second hit');
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 20]);
 });
 
 test('preview equals live when an earlier hit breaks Poise (stance replaced, one stagger per round)', () => {

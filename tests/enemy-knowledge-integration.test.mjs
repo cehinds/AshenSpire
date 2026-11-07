@@ -1,6 +1,5 @@
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -11,8 +10,6 @@ import { dispatch, previewIntent } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dealPoiseDamage } from '../src/engine/actions.js';
 import { runCombatPlayer } from '../src/engine/runCombat.js';
-import { createCoopCombat, previewCoopIntent, predictCoopIntent, endTurn, joinCombat } from '../src/engine/coopCombat.js';
-import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 import { previewCard } from '../src/engine/combat.js';
 import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
@@ -288,42 +285,3 @@ test('actual delayed move retains its serial and read through charge, snapshot a
   assert.equal(restored.enemies[0].knowledgeAction.serial, original.serial + 1);
 });
 
-test('actual co-op uses host-private draws, owner predictions, exact restore and inert reconnect', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const registries = createRegistries(contentBundle);
-  const runs = ['z', 'a'].map(id => ({ id, run: createRunState({ registries, seed: 11, classId: 'reaver' }) }));
-  const rules = structuredClone(runs[0].run.enemyKnowledgeRules);
-  Object.assign(rules.reads, { minimumExact: 0, maximumExact: 0, minimumClue: 0, maximumClue: 0 });
-  const players = runs.map(({ id, run }) => ({ id, ...runCombatPlayer(run), combatExpansionVersion: 2 }));
-  const options = { registries, players, enemyIds: ['wanderingSoldier'], knowledge: {
-    rules, privateSeed: 0x13579bdf, encounter: { id: 'co-op-unique-room/1/node/encounter', enemyIds: ['wanderingSoldier'] }, bankable: true } };
-  const rng = createRng(11), combat = createCoopCombat({ ...options, rng });
-  assert.deepEqual(Object.keys(combat.enemies[0].knowledgeAction.reads), ['a', 'z']);
-  assert.equal(rng.getCounters().enemyIntentVisibility, 0, 'public map seed carries no private read draws');
-  assert.deepEqual(combat.enemyKnowledge.readCounters, { enemyIntentVisibility: 2, enemyIntentClue: 2 });
-  assert.equal(previewCoopIntent(combat, 'a', 'e1').label, '?');
-  const before = JSON.stringify(serializeCoopCombatSnapshot(combat));
-  assert.throws(() => predictCoopIntent(combat, 'foreign', 'e1', 1, 'Attack'));
-  assert.equal(JSON.stringify(serializeCoopCombatSnapshot(combat)), before);
-  predictCoopIntent(combat, 'a', 'e1', 1, combat.enemies[0].knowledgeAction.category);
-  assert.equal(combat.enemies[0].knowledgeAction.reads.z.prediction, null);
-  const predicted = structuredClone(combat.enemies[0].knowledgeAction);
-  joinCombat(combat, players.find(player => player.id === 'a'));
-  assert.deepEqual(combat.enemies[0].knowledgeAction, predicted);
-  assert.equal(combat.enemyKnowledge.readCounters.enemyIntentVisibility, 2);
-  const snapshot = serializeCoopCombatSnapshot(combat);
-  const restored = createCoopCombat({ ...options, rng: createRng(11, rng.getCounters()), snapshot });
-  assert.deepEqual(restored.enemyKnowledge, combat.enemyKnowledge);
-  assert.deepEqual(restored.enemies[0].knowledgeAction, predicted);
-  endTurn(restored, 'a'); endTurn(restored, 'z');
-  assert.equal(restored.enemyKnowledge.owners.a.earnedXp, 1);
-  assert.equal(restored.enemyKnowledge.owners.z.earnedXp, 0);
-  assert.equal(restored.enemyKnowledge.readCounters.enemyIntentVisibility, 4);
-  const malformed = structuredClone(snapshot);
-  const cursor = malformed.nodes.find(node => node.kind === 'object' && node.entries?.some(([key]) => key === 'enemyIntentClue'));
-  cursor.entries = cursor.entries.map(([key]) => [key, 0]);
-  assert.throws(() => decodeCoopCombatSnapshot(malformed), /private seed|carried visibility/);
-  restored.result = 'victory'; restored.phase = 'ended';
-  const terminalKnowledge = structuredClone(restored.enemyKnowledge);
-  assert.doesNotThrow(() => joinCombat(restored, players.find(player => player.id === 'a')));
-  assert.deepEqual(restored.enemyKnowledge, terminalKnowledge);
-});

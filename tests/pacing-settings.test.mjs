@@ -51,7 +51,7 @@ test('the shorter default preserves an explicitly saved pause and authored sprit
   setCombatPacing({ combatSpeed: 1, combatStepPause: 1000 });
   assert.equal(actionPacing().gapMs, 1000);
   assert.equal(actionPacing().spriteSpeed.lungeMs, defaultClip);
-  assert.equal(defaultClip, 390);
+  assert.equal(defaultClip, 550);
   setCombatPacing();
 });
 
@@ -66,19 +66,21 @@ test('a saved pre-D11 combatActionDelay (old Action delay) does not carry into t
 test('animation duration and combat interval independently control their timeline paths', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
   const baseline = actionPacing();
-  setCombatPacing({ combatSpeed: 1, animationStepDuration: 195 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: 275 });
   const quickSprite = actionPacing();
-  assert.equal(quickSprite.spriteSpeed.lungeMs, 195);
+  assert.equal(quickSprite.spriteSpeed.lungeMs, 275);
   for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'stepMs']) {
     assert.equal(quickSprite[key], baseline[key], key);
   }
-  setCombatPacing({ combatSpeed: 1, animationStepDuration: 195, combatStepPause: 1000 });
+  setCombatPacing({ combatSpeed: 1, animationStepDuration: 275, combatStepPause: 1000 });
   assert.equal(actionPacing().gapMs, 1000);
   assert.deepEqual(actionPacing().spriteSpeed, quickSprite.spriteSpeed);
   setCombatPacing({ combatSpeed: 1, animationStepDuration: Infinity });
-  assert.equal(actionPacing().spriteSpeed.lungeMs, 390);
+  assert.equal(actionPacing().spriteSpeed.lungeMs, 550);
   setCombatPacing({ combatSpeed: 1, animationStepDuration: -5 });
-  assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 50) < 1e-9);
+  // Re-pinned 2026-11-02 (sprite pacing): the shortest step (50 ms) is lifted to the 75 ms frame-hold floor
+  // (animationPace.js COMBAT_TIMING.frameHoldMinMs, was 40 ms), so a lunge is never shorter than one held frame.
+  assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 75) < 1e-9);
   setCombatPacing({ combatSpeed: 1, animationStepDuration: 99999 });
   assert.equal(actionPacing().spriteSpeed.lungeMs, 3000);
   setCombatPacing();
@@ -89,7 +91,7 @@ test('mobile fast preset writes visible persisted controls, manual edits return 
   const saved = { combatStepPause: 2000, animationStepDuration: 1000, combatSpeed: 2 };
   Object.assign(saved, combatPacingChanges('combatPacingPreset', 'mobile-fast'));
   assert.equal(saved.combatStepPause, 250);
-  assert.equal(saved.animationStepDuration, 195);
+  assert.equal(saved.animationStepDuration, 275);
   assert.equal(saved.combatSpeed, 2);
   Object.assign(saved, combatPacingChanges('animationStepDuration', 400));
   assert.equal(saved.combatPacingPreset, 'custom');
@@ -97,7 +99,7 @@ test('mobile fast preset writes visible persisted controls, manual edits return 
   assert.equal(saved.animationStepDuration, 400);
   const keys = profileKeys(settingsRows());
   for (const key of ['animationStepDuration', 'combatPacingPreset']) assert.ok(keys.includes(key));
-  assert.deepEqual([row('animationStepDuration').def, row('animationStepDuration').min, row('animationStepDuration').max], [390, 50, 3000]);
+  assert.deepEqual([row('animationStepDuration').def, row('animationStepDuration').min, row('animationStepDuration').max], [550, 50, 3000]);
 });
 
 
@@ -107,13 +109,13 @@ test('zero pause is a valid committed value and preserves normal sprite duration
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: committed.value });
   const timing = actionPacing();
   for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 0, key);
-  assert.equal(timing.spriteSpeed.lungeMs, 390, 'turning pauses off retains normal animation');
+  assert.equal(timing.spriteSpeed.lungeMs, 550, 'turning pauses off retains normal animation');
   setCombatPacing();
 });
 
 test('resetting either timing row updates the saved preset in the same transaction', async () => {
   for (const key of ['combatStepPause', 'animationStepDuration']) {
-    const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 };
+    const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 275 };
     const writes = [];
     const snapshot = await resetKeys(settings, changes => { writes.push(changes); return { ok: true }; }, [key], 'Timing reset', { promoted: {} });
     assert.equal(settings.combatPacingPreset, 'custom');
@@ -121,13 +123,37 @@ test('resetting either timing row updates the saved preset in the same transacti
     assert.equal(snapshot.combatPacingPreset, 'mobile-fast', 'undo retains the original preset');
     assert.equal(settings[key], undefined);
     const untouched = key === 'combatStepPause' ? 'animationStepDuration' : 'combatStepPause';
-    assert.equal(settings[untouched], untouched === 'animationStepDuration' ? 195 : 250);
+    assert.equal(settings[untouched], untouched === 'animationStepDuration' ? 275 : 250);
   }
 });
 
 test('a failed timing reset restores both the preset and control value', async () => {
-  const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 };
+  const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 275 };
   let calls = 0;
   await resetKeys(settings, () => ({ ok: ++calls !== 1 }), ['combatStepPause'], 'Timing reset', { promoted: {} });
-  assert.deepEqual(settings, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 });
+  assert.deepEqual(settings, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 275 });
+});
+
+test('enemy pacing is its own pair of settings, both 750 ms by default, and moves only enemy timing', async () => {
+  const { floaterStaggerMs } = await import('../src/ui/animationPace.js');
+  setAnimSpeed('normal'); setCombatPacing();
+  assert.equal(floaterStaggerMs(), 750);
+  assert.equal(floaterStaggerMs({ enemy: true }), 750, 'the enemy default equals the player default');
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, actionPacing().spriteSpeed.lungeMs, 'same default animation');
+  setCombatPacing({ enemyAttackMs: 1500, enemyFloaterIntervalMs: 375 });
+  assert.equal(floaterStaggerMs({ enemy: true }), 375);
+  assert.equal(floaterStaggerMs(), 750, 'the player interval is untouched');
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs, 2 * actionPacing().spriteSpeed.lungeMs);
+  setCombatPacing({ enemyAttackMs: 1, enemyFloaterIntervalMs: 99999 });
+  assert.equal(actionPacing({ enemy: true }).spriteSpeed.lungeMs > 0, true);
+  assert.equal(floaterStaggerMs({ enemy: true }), 3000, 'bounded to 3000 ms');
+  setCombatPacing();
+});
+
+test('the enemy pacing rows are persisted Combat settings with 750 ms defaults', () => {
+  const keys = profileKeys(settingsRows());
+  for (const key of ['enemyAttackMs', 'enemyFloaterIntervalMs']) {
+    assert.ok(keys.includes(key), key);
+    assert.deepEqual([row(key).def, row(key).min, row(key).max, row(key).cat], [750, 100, 3000, 'Combat']);
+  }
 });

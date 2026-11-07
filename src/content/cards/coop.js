@@ -2,9 +2,9 @@
 //
 // Support cards built around the 'ally' target (a chosen living teammate;
 // resolves to self in solo, so every card here is engine-valid everywhere).
-// Rarity 'special' keeps them out of class pools AND merchant stock — the
-// co-op session injects one as an extra option into combat rewards whenever
-// the party has 2+ living members (see tools/session.mjs rollRewardFor).
+// Rarity 'special' keeps them out of class pools AND merchant stock. Co-op is
+// removed (owner, 2026-10-31): these three are inert legacy data, kept because
+// saves and fixtures name them, and unreachable in play.
 // Pure data: block / heal / applyStatus are the same generic opcodes solo uses.
 
 export const coopCards = [
@@ -21,6 +21,7 @@ export const coopCards = [
     keywords: ['exhaust'], icon: 'health',
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
     textTemplate: 'An ally heals {heal} HP. Exhaust.',
+    faceTemplate: ['Ally heals {heal} HP.'],
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
     flavor: "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire.",
   },
@@ -31,7 +32,7 @@ export const coopCards = [
       { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 2 },
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
     ],
-    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2}. Exhaust.',
+    textTemplate: 'An ally gains {strength} Strength; you gain {strength.2} Strength. Exhaust.',
     upgrade: {
       effects: [
         { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 3 },

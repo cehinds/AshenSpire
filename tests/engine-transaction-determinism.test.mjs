@@ -49,9 +49,39 @@ export function digest(combat) {
 
 // Re-pinned 2026-10-31 after merging dev cf6417b4d9: the same fights on the dev tree
 // (no transaction caches) give these digests, so the rules moved, not the caches.
+// Core 2 accuracy: Precision = 1 + stat mix + stacks, Evasion = 8 + DEX + 2/stack moves the seeded hit rolls.
+// Re-pinned again 2026-10-31 on merging #2430 (enemy weaknesses) with #2436 (Core 2 accuracy): both change the
+// seeded fights, #2436 through the hit rolls and #2430 through the weakness damage stage (reaver rows only; turn unchanged).
+// Re-pinned 2026-11-01 on merging #2434 (roll log): it adds six roll-receipt log entries per fight and
+// itemised perception dcParts on the enemy's read; RNG counters, HP, turn and every other state field match dev.
+// Re-pinned 2026-11-01 for Precision swift decay (accuracy.precisionDecayPerTurn 1 -> 3): the PERF1/reaver fight's hit
+// chances change, so one log entry fewer (196 -> 195); log 1bb7a14785574ec3 -> c53a18793f401fb2, state 95f05cf25b2cb35a -> ff21e46141b6f702.
+// The 4242/reaver fight is unchanged.
+// Re-pinned 2026-11-01 for one weapon set per hand (equipSlots.csv sets 3 -> 1): the state hashes change only through the
+// loadout's shape (one cell per hand, not three). Log hashes, event counts, turns and RNG counters are identical, and the same
+// fights built with three-set hands (tests/withWeaponRack.mjs) reproduce the previous state hashes exactly.
+// Re-pinned 2026-11-01 for the per-stat Precision receipt lines (precisionParts only; events, turn and RNG unchanged).
+// Re-pinned 2026-11-01 for Core weapon arts (#2474): the Reaver's starter deck trades its class special for the
+// greatsword's Sundering Hew, so both reaver fights draw and play a different card (PERF1 195 -> 197 events; turns unchanged).
+// Re-pinned 2026-11-01 for Ward/Barrier as stacked statuses (SPEC 4.1a): the old numeric barrier pool is gone from
+// combat state and Barrier grants are stacks, so both reaver fights' state and log hashes move; event counts and turns are unchanged.
+// Combined (#2483 after #2474): Sundering Hew plus Barrier stacks; re-pinned from the merged run.
+// Re-pinned 2026-11-02 for enemy intent commitment (SPEC 4.6b, fix/EnemyIntentCommit). Each fight has two turns where a
+// Poise break took the Wandering Soldier's only SP: it used to show Slash/Warcry and then refuse it at act time
+// (enemyActorTurnStarted + enemyMoveUnavailable + enemyMoveEnded). The intent now drops to "no move" during the player's turn,
+// so the enemy turn logs one fewer event pair (event counts 197 -> 195 and 234 -> 232); turns and the RNG position are unchanged.
+// Verified by diffing the two event logs: those are the only differences.
+// Re-pinned 2026-11-03 for raw-hit damage previews (owner: intents and quotes show the hit before Block/Poise/Ward/Counter/Reflect/defensive
+// stance): the stored enemy intent previews (hitDamages/totalDamage) carry the raw hit. Verified by running the fight on the previous engine:
+// player and enemy HP, turn and every RNG counter are identical (PERF1: player 60, enemy 4903, turn 6); only the preview figures differ.
+// Re-pinned 2026-11-05 for the Reach cap (maxRange): the run's range policy snapshot gains "maxRange":"reach", so the state hashes move.
+// Event logs, counts, turns and RNG are identical; removing that one field from the state text reproduces the previous hashes exactly.
+// Re-pinned 2026-11-06 for the enemy-turn order (fix/CombatReachPacingOrder): each move an enemy plays now emits one
+// enemyStaminaSpent receipt for the SP it pays (PERF1 195 -> 198 events, 4242 232 -> 235; the receipt also carries the
+// SP the enemy is due to have left, which the mid-turn plan trim reads). Turns and RNG are unchanged.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'eee368ba97f97147', state: '89938021e2dd2945', events: 184, turn: 6 }],
-  [[4242, 'reaver'], { log: 'f666484a313541df', state: 'd83928c1fe5a833b', events: 226, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '9ccfbdb41ed2f0ad', state: '098169fbdd360285', events: 198, turn: 6 }],
+  [[4242, 'reaver'], { log: '3ac47e4b5a03e967', state: '26ca689811432de3', events: 235, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

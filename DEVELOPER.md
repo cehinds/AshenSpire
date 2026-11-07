@@ -19,10 +19,10 @@ Open the repository root with **File → Open → Folder**. Install Visual Studi
 **Node.js development** workload and Node.js 22.14 or newer; this project has no
 root npm dependencies and does not need a generated solution or project file.
 The shared [`tasks.vs.json`](tasks.vs.json) adds Play, Serve, Fast core tests,
-Full Node test suite, Compile authored content, Build standalone, Start
-Workbench and Editor tests to the right-click menu for `package.json` in
-Solution Explorer. Tasks apply only to the root package file and run from the
-workspace root. Play, Serve and Workbench are long-running server tasks.
+Full Node test suite, Compile authored content and Build standalone to the
+right-click menu for `package.json` in Solution Explorer. Tasks apply only to
+the root package file and run from the workspace root. Play and Serve are
+long-running server tasks.
 See Microsoft's guides for [Open Folder](https://learn.microsoft.com/en-us/visualstudio/ide/develop-code-in-visual-studio-without-projects-or-solutions)
 and [custom tasks](https://learn.microsoft.com/en-us/visualstudio/ide/customize-build-and-debug-tasks-in-visual-studio?view=vs-2022)
 if Visual Studio's folder view or task menu is unfamiliar.
@@ -41,7 +41,6 @@ Use these folders as the first stops when finding code:
 | `styles/` | Game stylesheets and generated design-token CSS. |
 | `tests/` | Game behavior tests, fixtures and the shared Node test runner. |
 | `tools/` | Build, validation, QA and repository commands; [`tools/README.md`](tools/README.md) indexes them. |
-| `workbench/`, `editor/`, `ui-studio/`, `pose-studio/` | Separate local browser-based authoring tools. The Workbench combines them; they are not Visual Studio projects. |
 | `docs/` | Guides, architecture contracts, design notes and review evidence. |
 
 For the dependency boundaries and root-folder rules, see the
@@ -50,18 +49,9 @@ quick reference in [CONTRIBUTING.md](CONTRIBUTING.md) and its linked sections
 in this guide. The detailed layout is a contract: keep browser import paths and
 generated outputs where the architecture map places them.
 
-## Workbench — every authoring tool in one window
+## Authoring tools
 
-`node workbench/server.mjs` (or **workbench/Start Workbench.cmd** on Windows,
-`workbench/start.sh` elsewhere) opens <http://127.0.0.1:4300>: the Content
-Editor, UI Studio and Pose & FX side by side with a live game preview that
-reloads (rebuilding content or config first) when content/, src/ or styles/
-change; a Library of every editor, viewer, exporter and QA page
-(`workbench/tools.json`); Engine Export; and Build & Checks (allowlisted
-builds and the tool tests, with logs and history). Ctrl+K searches everything.
-See [workbench/README.md](workbench/README.md). A new HTML tool page must be
-added to `workbench/tools.json`; `workbench/tests/registry.test.mjs` fails
-otherwise.
+Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-archive` branch.
 
 ## Run & test
 
@@ -150,15 +140,6 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
-Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
-`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
-While false, discovery prints the skip reason before sharding; mixed suites
-keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
-retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
-the co-op lanes automatically (`tests/feature-scopes.js` also works in the
-browser test harness).
-
-
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -182,9 +163,7 @@ browser test harness).
 | `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | only when release differs from test |
 | `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
 | `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
-| `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | — | a PR into `dev` only when it touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, `content/`, `src/content/`, `.github/actions/`, `tools/launch.mjs`, the engine exporter, the build-lock and build-step libraries or `docs/workbench/` (the full list is in the workflow; also a push to `feature/**`, `chore/**`, `Chore/**`, `fix/**` with the same paths). It also runs those tests on Windows and macOS, each test limited to 3 minutes. Path-filtered, so never make it a required check | — | — |
 | `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
 | `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
 | `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |
@@ -192,7 +171,7 @@ browser test harness).
 | `ci.yml` → mobile and combat layout, all five layouts, hint strip and Armoury, and their known-bads (`browser-layout-*`, `browser-hintstrip-plants`) | — | — | — | yes |
 | `ci.yml` → idle animation and reduced motion in a real browser (`browser-motion`, sharded) | — | — | — | yes |
 | `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
-| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`); the same run also publishes the Workbench as a static site at `/workbench/` (built from this checkout, `continue-on-error` so it never stops the game site) | — | yes (push to `dev`) | yes | yes |
+| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`) | — | yes (push to `dev`) | yes | yes |
 | `pages-builds.yml` → deploy to GitHub Pages (push to `dev` or `release`, or the owner's dispatch with `PUBLISH` for any branch the environment admits; `release` needs the owner's one-time `github-pages` deployment-branch addition, see the workflow header) | — | yes (push to `dev`) | — | — |
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
@@ -372,7 +351,7 @@ node tools/fetch-art.mjs --pack all            # also the high pack: --full-art 
 The builds (`bundle.mjs`, which `launch.mjs` runs, and `asset-pack.mjs`, whose
 `--source` defaults to `auto`), `tools/serve.mjs` (a request under `/assets/`,
 `/assets-mobile/`, `/assets/fonts/`, `/music/` or `/map-detail/` of a served
-checkout), the browser tools' sandboxes and the dev-preview workbench take
+checkout) and the browser tools' sandboxes take
 those paths' files from the fetched packs through `tools/art-source.mjs`
 (`/assets/` is the high pack; without it `serve.mjs` answers with the light
 pack's twin, so source play still has art after a `light,common` fetch), and
@@ -429,13 +408,6 @@ compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
-`ui-studio/` is a standalone local editor for that JSON (see
-[ui-studio/README.md](ui-studio/README.md)): `node ui-studio/server.mjs` draws
-the approved wireframes at real device sizes on a snapping grid, edits any
-value with its unit and variables, validates the tree with `compileEntries`
-before writing, keeps backups, and opens the live game at the chosen size.
-`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
-`node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
@@ -444,15 +416,15 @@ this ruleset yet. See the workshop's remaining content-expansion gate.
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
 compatibility alias. Resolve the chosen terminal through
-`bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
+`bossEncounterForNode()` in solo play and simulations. Legacy maps without this
 metadata resolve their original act boss without consuming RNG. Run
-`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
-LAN choice and real save-manager round trips.
+`node tests/branchingBosses.test.mjs` for topology, deterministic selection
+and real save-manager round trips.
 Loading validates explicit and legacy boss references before accepting a save.
 Existing destination labels refresh from current content without changing the
 saved graph's paths, encounter identities, selection or RNG counters. Run
 `node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
-for content-update regressions in solo and LAN restoration.
+for content-update regressions in save restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
@@ -480,7 +452,7 @@ Attack motion uses the actor/action, tag, intent and neutral precedence in
 
 `node tools/full-run-probe.mjs` (FINISH §3 "A browser full run") plays one
 whole run in Chromium from a normal boot of the source tree, served as
-`tools/launch.mjs` serves it (LAN layer on): the startup gate and the title's
+`tools/launch.mjs` serves it: the startup gate and the title's
 New Game, character creation step by step with the fixed seed (`--seed`,
 default `FULLRUN1`) typed into the Review's Seed field, the act map, a first
 fight played with the Attack cards in hand, the map walked to the act boss
@@ -652,6 +624,31 @@ undelivered notifications` is the one a player met, arriving with no filename an
 no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
+
+## OpenRouter for dev tools (`tools/lib/openrouter.mjs`)
+
+A zero-dependency, server-side OpenRouter client for Node tools. It must never be imported from `src/` or browser code (the game references
+no AI service; `node tools/ai-disclosure.mjs --check` enforces it).
+
+- Key: `OPENROUTER_API_KEY` in your shell, or in `.env` at the repo root. `.env` is
+  gitignored (`*.env`); never commit the key. `.env.local` is not ignored, so do not use it.
+- Check it: `node tools/openrouter.mjs --check` (prints usage and limit, never the key or its label).
+  Ask a model: `node tools/openrouter.mjs --model <slug> --system "..." "prompt"`.
+- Default model is `$OPENROUTER_MODEL` or `openrouter/auto`.
+
+```js
+import { openRouterKey, chat } from './lib/openrouter.mjs';
+const key = openRouterKey(); // throws a clear message when unset
+const { text } = await chat({ key, messages: [{ role: 'user', content: 'Name a boss.' }] });
+console.log(text);
+```
+
+Browser UIs must call a local server route that uses this module,
+never OpenRouter directly, so the key stays on the machine running the server.
+
+## Deterministic gate: tools/jev.mjs
+
+`node tools/jev.mjs <triage|checks|regen|restamp|devmerge>` is a zero-dependency gate that applies fixed rules before any model sees a failure. `triage [log]` matches a CI or local log against `tools/jev.rules.json` (stale generated files, conflict markers in generated files, receipt order, golden hashes, sparse-checkout ENOENT, runner loss, uistrings and mechanics-generate drift); `checks` runs the fast-check list and triages each failure; `regen` rebuilds every generated file, including the token and HUD-layout CSS projections (config-build and framework-data-build before content-build, which refuses config whose source hashes do not match `src/config/generated/ui.js` and framework JSON with no generated mirror); `restamp` (orchestrator only) re-points a PR's receipt at `buildordinal.json`; `devmerge` merges `origin/dev` into the current branch, resolving the derived files, and never pushes. Each command prints one JSON line (`--human` for text); exit 0 is resolved, 1 is explained with no safe fix, 2 needs a model. To add a rule, append it to the JSON and add a fixture to `tests/jev.test.mjs`. Skill: `.claude/skills/jev/SKILL.md`.
 
 ## Where a build comes from (not committed since 2026-09-26)
 
@@ -856,6 +853,8 @@ src/model/    schemas, registries, formulas, validation, state (headless)
 src/content/  pure data — every card/status/enemy/relic and every tuning number
 ```
 
+`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them.
+
 Rules that keep this honest:
 
 1. **No entity ids in engine/model.** There is no `if (status === 'bleed')`
@@ -969,7 +968,7 @@ remount with the selected destination kept, and the world atlas must not remount
 (`--shard i/n` runs part of them). They run in `ci.yml`'s *every flask menu in
 a real browser* and, in two shards, *flask-menu known-bads in a real browser*;
 `tools/flask-action-contract.mjs`
-keeps the Node half (the pure plan, the map model, co-op's host intent):
+keeps the Node half (the pure plan and the map model):
 
 ```bash
 node tools/flask-menu-probe.mjs            # --only persistence|dispatch|plan
@@ -1039,11 +1038,7 @@ node tools/hud-layout-css.mjs --write # content/hud-layout/*.json → styles/hud
 `node tools/launch.mjs --build-only` already runs `game-config build` and the
 HUD layout step before it bundles, so a build from a clean checkout is current.
 Use `game-config check` to see whether the generated files are stale without
-rewriting them. The Workbench does the same work on save: a change under `games/ashenspire/` or in an engine module's
-contracts, foundation, kernel or modules rebuilds the profiles, and a change under
-`content/hud-layout/` rebuilds the HUD layout. The Build & Checks jobs
-**Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
-The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
+rewriting them. The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
 
 ### Edit Core range and movement
 
@@ -1066,7 +1061,7 @@ Use these source locations when changing it in Visual Studio:
 After editing authored data, run `node tools/content-build.mjs` followed by
 `node tools/game-config.mjs build`. Range settings apply to new runs; an active
 fight uses its saved policy and accepted action receipts. Keep price formulas
-in the shared planner so solo play, co-op and displayed choices agree.
+in the shared planner so solo play and displayed choices agree.
 
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
@@ -1119,8 +1114,8 @@ they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
 (`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`) and commit
 the regenerated file. Design notes that used to be comments in the JS live in
 `content/source/CONTENT-NOTES.md` under "Cards", keyed by card id. JSON has no comments, no
-shared constants and no functions, so write a repeated value out in full. The two builder
-pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the JS file.
+shared constants and no functions, so write a repeated value out in full. The builder
+pool `rogue.js` holds functions and stays JS: author it in the JS file.
 
 ```json
 {
@@ -1151,7 +1146,7 @@ should appear in rewards. Notes:
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
   each copy still in hand, before the hand is discarded — Guilt's
-  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in solo and co-op
+  `[{ op: 'loseHp', target: 'self', amount: 1 }]`. Fires in
   combat. Its numbers bind to the card's text template after `effects`
   (Guilt's text says `{loseHp}`).
 
@@ -1319,12 +1314,9 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
 D48 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
-opening (a boss fight's waits for its name splash to close), and
-`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
-`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
-scene the host marks `opening`). `playEventCues` stings once per shared turn,
-however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
-covers them, including the opening turn and the real co-op session digest;
+opening (a boss fight's waits for its name splash to close);
+`playEventCues` stings once per turn. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn;
 `node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
 a remounted one, and a fresh boss fight behind its splash
 (`?shot=boss&shotBossHold=0` lets the splash close).
@@ -1345,10 +1337,9 @@ are:
 - the opening's `tick` (`src/ui/screens/prologue.js`), a `requestAnimationFrame`
   loop that runs every frame while the prologue is mounted, paused or not;
 - timers: the gamepad poller (`src/ui/input.js`, only while a controller is
-  connected), the co-op seat gamepad poll (`src/ui/screens/coop.js`, every
-  120 ms for as long as the co-op screen is open), the music scheduler
-  (`src/ui/audio.js`), and 2 s polls for fullscreen state
-  (`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+  connected), the music scheduler
+  (`src/ui/audio.js`), and a 2 s poll for fullscreen state
+  (`hudQuickSettings.js`). Ambient title effects (embers, gold
 glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
 Rendering-quality options and phone measurements are in
 [docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).
@@ -1530,13 +1521,12 @@ falsifier), not deferred.
 
 None open.
 
-Resolved: **Warrior's Vow** enters a stance of your choice, solo and in co-op.
+Resolved: **Warrior's Vow** enters a stance of your choice.
 Its `enterStance` effect carries `choose: 'classStance'` instead of a fixed
-`stance`; `cardChoicePlan` (engine/combat.js, and engine/coopCombat.js for a
-seat) offers every stance row whose `class` is the player's class (the card's
+`stance`; `cardChoicePlan` (engine/combat.js) offers every stance row whose `class` is the player's class (the card's
 own class when the player's owns none, `model/cardChoices.js`), the play intent
 answers it with `choice`, and a play without a legal choice is refused before
-anything is spent. Solo and co-op screens ask through one dialog
+anything is spent. The combat screen asks through one dialog
 (`ui/components/cardChoiceModal.js`); bots take the first option
 (`tests/warriors-vow.test.mjs`).
 
@@ -1545,7 +1535,7 @@ thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
 only Poise, and the card text and tooltip say Poise only.
 
 Resolved: **Guilt** is no longer inert. Since #1286 it loses its HP at the end
-of each of your turns while in hand, solo and in co-op, through the card's
+of each of your turns while in hand, through the card's
 `onTurnEndInHand` hook (see *Add a card* above); the card text binds the amount.
 
 ## Dodge outcome presentation
@@ -1554,25 +1544,13 @@ Since 2026-10-05 only Evasive Guard rolls; the Dodge Roll card grants a flat Blo
 
 Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption.
 
-### Every-weapon card preview
-Open `weapon-cards-preview.html` through the local server to browse every canonical
-armament using the production card renderer. Search by name, type or tag; enlarge
-any card or open its full explanations. Merchant offers and buy/sell inspectors
-reuse this card while preserving the live quote, smithing tier and mounted cards.
-
-Run `node tools/weapon-card-preview.mjs --shots <output-directory>` to check every
-armament at 1280x1000 and 390x844, capture every card and grouped gallery screenshots,
-and verify keyboard tooltips, full details, filtering and read-only merchant
-inspection. Uses `tools/browser.mjs`; set `CHROME` when automatic discovery does
-not locate your Chromium browser. `--shots` is optional for test-only runs.
-
 ### Mobile card interaction checks
 
 Combat cards select before committing. A selected card retains its fan position and reveals above its siblings. Confirm using the shared hold duration/progress, a double-tap after selection, or a valid target tap/drop. A single extra tap does not play. Empty-field taps and Escape cancel; invalid/cancelled drags spend nothing. Test both a self skill and an enemy attack, including switching selection, at 320x568, 375x667 and desktop sizes.
 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
-Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
 
 ## Opening sequence
 
@@ -1651,7 +1629,7 @@ explicit visual class/set alias. Shared armor retains the reviewed package's
 mapping; future class-by-armor artwork can add exact IDs without replacing this
 collection or changing gameplay equipment definitions.
 
-Solo and co-op use `combatEnvironment` / saved dungeon selection through
+Combat uses `combatEnvironment` / saved dungeon selection through
 `combatBackdropHtml`. `fitAlternativeBackdrop` fits each art canvas to the
 battlefield and its formation ground; it does not import review-page HUD or
 actor positions. Companion art decorates the existing ally indicators. Named
@@ -1661,8 +1639,23 @@ with no action/hand anchors, pose strips or invented animation coverage.
 
 Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
 tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
-all 32 settings at desktop and phone sizes, co-op, a mounted resize, and real
+all 32 settings at desktop and phone sizes, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
 portable file. Outputs and temporary/browser storage must stay on D: locally.
 
+
+## Editing enemies
+
+Every Core enemy has a character sheet, `games/ashenspire/packs/core/enemies/<enemyId>.json` (the file name is the
+unique key and equals the enemy's `id`). The sheets are the source of truth for the `character.enemy` rows of
+`characters.json`; do not hand-edit those rows.
+
+- **Stats:** `stats` (attributes, attributePriority, levelProfile, poiseMax, spFloor). `derived` is generated; edits are ignored.
+- **Equipment:** `equipment` (gear by slot) and `relics`, each `{ "slot", "ref" }`.
+- **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`); each reserve card must also be listed in a `behaviour.phases[].unlockCards` (and the reverse), or `--check` fails, because only a phase brings a reserve card into play. `ai` holds the planner hints per card.
+- **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.
+- **References** carry a type prefix: `card:<enemyCards id>`, `gear:<gear id>`, `relic:<enemyRelics id>`, and `enemy:<id>` (reference table only). `enemies/_reference.md` and `_reference.json` (generated) list what every id means.
+
+After editing, run `node tools/enemy-sheets.mjs --write` (part of `node tools/jev.mjs regen`, which then also runs `tools/derived-tables.mjs`; run that yourself if you used --write alone); `--check` runs in `jev checks --fast`
+and rejects unknown refs, duplicate ids and a stale `characters.json`. `--extract --force` rebuilds sheets from `characters.json` (use it if another tool, such as `tools/enemy-decks-convert.mjs`, rewrote the rows). Deleting a sheet and running `--write` removes that enemy.

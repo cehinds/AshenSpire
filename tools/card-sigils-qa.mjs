@@ -90,8 +90,7 @@ try {
   // Tap the mark's screen position through that lane, as a player does.
   const mark = await glyph.boundingBox(), point={x:mark.x+mark.width/2,y:mark.y+mark.height/2};
   if(phone)await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
-  assert.ok(await card.locator('.card-info-button').isVisible(),'sigil tap selects the card');
-  if(phone)await card.locator('.card-info-button').tap();else await card.locator('.card-info-button').click();
+  await card.click({button:'right'});
   await page.locator('.card-inspection-modal .inspection-sigils').waitFor();
   assert.ok((await page.locator('.card-inspection-modal .inspection-sigils').innerText()).length>15);
   // The modal can exist while its entrance fade is still painting. Capture
@@ -104,7 +103,7 @@ try {
   await page.screenshot({path:resolve(output,name+'-inspection.png')});
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('.card-inspection-modal').count(),0);
-  assert.ok(await page.evaluate(()=>document.activeElement.matches('.card, .card-info-button')),'focus returned');
+  assert.ok(await page.evaluate(()=>document.activeElement.matches('.card')),'focus returned');
   assert.equal(await page.evaluate(()=>JSON.stringify({plays:window.__combat.eventLog.filter(e=>e.type==='cardPlayed'),energy:window.__combat.player.energy,mana:window.__combat.player.mana,stamina:window.__combat.player.stamina})),beforeInspect,'inspection spends no resources and plays no card');
   if(standalone){
    const geometry=await page.locator('.hand .card').evaluateAll(cardGeometry);
@@ -220,15 +219,14 @@ try {
    const face=page.locator('[data-qa-inspection-school="'+representative.school+'"]');
    await face.scrollIntoViewIfNeeded();
    // Read-only desktop click opens directly; touch first selects. Both then
-   // use the real Information control, followed by the native Enter door.
+   // use the right-click door, followed by the I-key door.
    if(phone)await face.tap();else{
     await face.click();await page.locator('.card-inspection-modal').waitFor();await page.keyboard.press('Escape');
    }
-   const info=face.locator('.card-info-button');
-   await info.waitFor({state:'visible'});
-   if(phone)await info.tap();else await info.click();
+   const info=face;
+   await face.click({button:'right'});
    for(const door of ['Information','Enter']){
-    if(door==='Enter'){await face.focus();await face.press('Enter');}
+    if(door==='Enter'){await face.focus();await face.press('i');}
     const modal=page.locator('.card-inspection-modal');await modal.waitFor();
     const schoolMark=modal.locator('.inspection-sigils .combat-sigil-school');
     assert.equal(await schoolMark.getAttribute('data-sigil'),representative.school);

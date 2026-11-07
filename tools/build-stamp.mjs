@@ -277,6 +277,9 @@ export const SAFE_STAMP_FOLLOWUP_SUBJECTS = new Set([
   'docs: refresh current-dev architecture [architecture-sync]',
   'docs: refresh README [readme-sync]',
 ]);
+// version-advance.yml's commit (tools/version-advance.mjs advanceSubject). It writes its own
+// box and is bot-authored, so a stamp with one on top is still the stamp for the tip.
+export const VERSION_ADVANCE_SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (?:release|main) [0-9a-f]{7,40} \[version-advance\]$/;
 export const WORKFLOW_PATH = '.github/workflows/build-stamp.yml';
 export function isStampCommit(author, subject) {
   return author === BOT_AUTHOR && STAMP_SUBJECT.test(subject);
@@ -315,7 +318,7 @@ export function stampIsCurrent(commits) {
   const i = commits.findIndex((c) => isStampCommit(c.author, c.subject));
   if (i < 0) return false;
   return commits.slice(0, i).every((c) => c.author === BOT_AUTHOR
-    && SAFE_STAMP_FOLLOWUP_SUBJECTS.has(c.subject));
+    && (SAFE_STAMP_FOLLOWUP_SUBJECTS.has(c.subject) || VERSION_ADVANCE_SUBJECT.test(c.subject)));
 }
 
 // The first parent of the oldest first-parent commit that added the stamp workflow, or
@@ -700,6 +703,15 @@ function selftest() {
     stampIsCurrent([{ sha: 'a', author: BOT_AUTHOR, subject: ARCH }, STAMP]) === true);
   check('current: a stamp with readme-sync and architecture-sync above it',
     stampIsCurrent([{ sha: 'a', author: BOT_AUTHOR, subject: ARCH }, { sha: 'r', author: BOT_AUTHOR, subject: README }, STAMP]) === true);
+  const VA = 'version-advance: 0.7.3 after release ' + 'a'.repeat(40) + ' [version-advance]';
+  check('current: a stamp with a version-advance commit above it',
+    stampIsCurrent([{ sha: 'v', author: BOT_AUTHOR, subject: VA }, STAMP]) === true);
+  check('current: a stamp with version-advance and readme-sync above it',
+    stampIsCurrent([{ sha: 'r', author: BOT_AUTHOR, subject: README }, { sha: 'v', author: BOT_AUTHOR, subject: VA }, STAMP]) === true);
+  check('not current: a human commit with the version-advance subject',
+    stampIsCurrent([{ sha: 'v', author: 'dev', subject: VA }, STAMP]) === false);
+  check('not current: a bot commit that merely mentions version-advance',
+    stampIsCurrent([{ sha: 'v', author: BOT_AUTHOR, subject: 'fix version-advance: 0.7.3 after release ' + 'a'.repeat(40) + ' [version-advance]' }, STAMP]) === false);
   check('not current: a stamp with a human merge above it',
     stampIsCurrent(onStamp({ sha: 'h', author: 'dev', subject: 'Merge pull request #7 from a/b' })) === false);
   check('not current: a stamp with a bot commit whose subject lands a pull request',

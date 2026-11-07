@@ -44,7 +44,7 @@ function seedContractState(op, combat) {
   if (op === 'poiseDamage') enemy.poiseMeter = { value: 0, max: 10000 };
   if (op === 'draw') combat.piles.draw = [{ cardId: 'defend', instanceId: 'audit:draw-a' }, { cardId: 'strike', instanceId: 'audit:draw-b' }, ...combat.piles.draw];
   if (op === 'applyStatus') enemy.statuses.bleed = undefined;
-  if (op === 'gainBarrier') { player.barrier = 0; player.ward = 0; }
+  if (op === 'gainBarrier') { delete player.statuses.barrier; player.ward = 0; }
   if (op === 'removeStatus') enemy.statuses.venom = { stacks: 2 };
   if (op === 'loseHp') player.hp = 9000;
   if (op === 'gainEnergy') player.energy = 0;
@@ -64,14 +64,14 @@ function stateFor(op, combat, cardId, effect) {
       const target = effect?.target === 'self' ? p : e;
       return { stacks: target.statuses[effect.status]?.stacks || 0 };
     }
-    case 'gainBarrier': return { barrier: p.barrier || 0, ward: p.ward || 0 };
+    case 'gainBarrier': return { barrier: p.statuses.barrier?.stacks || 0, ward: p.ward || 0 };
     case 'removeStatus': return { venom: e.statuses.venom?.stacks || 0 };
     case 'loseHp': return { hp: p.hp };
     case 'gainEnergy': return { energy: p.energy };
     case 'addCard': return { hand: combat.piles.hand.map(c => c.cardId), draw: combat.piles.draw.map(c => c.cardId), discard: combat.piles.discard.map(c => c.cardId) };
     case 'grantRollMode': return { nextEvadeMode: p.nextEvadeMode || null };
     case 'restoreMana': return { mana: p.mana };
-    case 'gainWard': return { ward: p.ward || 0, barrier: p.barrier || 0 };
+    case 'gainWard': return { ward: p.ward || 0, barrier: p.statuses.barrier?.stacks || 0 };
     case 'discard': return { hand: combat.piles.hand.map(c => c.instanceId), discard: combat.piles.discard.map(c => c.instanceId) };
     case 'grantCardCharge': return structuredClone(p.abilityRiders?.charges || {});
     default: throw new Error(`No state contract for ${op}/${cardId}`);

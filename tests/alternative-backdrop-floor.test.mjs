@@ -57,3 +57,14 @@ test('backdrop pointer motion stays canonical when reduced, ambient-off or touch
     for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
   }
 });
+
+// Owner 2026-10-31: the painted ground never starts below the back rank's cell top, so the grid's back edge stands
+// on ground. Measured in Chromium: data-mobile-floor-paint-top equals band A's top at 1280x800, 1200x730 and 390x844.
+test('combat passes the back rank top as a ceiling for the painted ground', () => {
+  const art = read('../src/ui/alternativeArt.js');
+  assert.match(art, /floorTop/);
+  assert.match(art, /Math\.min\(floorShadowTop - floor\.shadowClearancePx \/ zoom, floorTop\)/);
+  const stage = read('../src/ui/components/battlefieldStage.js');
+  const combatCall = stage.slice(stage.indexOf('fitAlternativeBackdrop(combat, {'), stage.indexOf('});', stage.indexOf('fitAlternativeBackdrop(combat, {')));
+  assert.match(combatCall, /floorTop: plan\.visualBands\?\.length \? fieldTop \+ plan\.visualBands\[0\]\.top \/ zoom/);
+});

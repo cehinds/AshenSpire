@@ -1,0 +1,174 @@
+name: version-advance
+
+# THE RELEASE TRIPLE ADVANCES ITSELF (owner, 2026-11-01).
+#
+# A push to `release` (the test -> release cut) moves the CANDIDATE, the third
+# number, by one: 0.7.2.93 -> 0.7.3.0. A push to `main` (release -> main) moves
+# MINOR, the second number, by one and resets the candidate: 0.7.3.x -> 0.8.0.0.
+# MAJOR is never touched. Until now a person did this in "the PR that follows the
+# cut"; nobody does that now, and a session must not hand-bump
+# (docs/versioning.md, "Release candidates"; CLAUDE.md, "Release numbering").
+#
+# WHAT IT COMMITS, AND WHERE. One commit on `dev` (the next candidate is built
+# from dev, not from the branch that was just cut), subject
+#   version-advance: <triple> after <release|main> <source sha> [version-advance]
+# touching src/content/index.js (the literal and its marker comment),
+# tools/release-series.mjs (minor only: the series gate) and buildordinal.json,
+# which restarts at 0 through tools/buildversion.mjs bumpOrdinal, the same function
+# the build calls. The pushed identity, token and retry loop are build-stamp.yml's.
+#
+# NO LOOP, NO DOUBLE BUMP.
+#  * The commit goes to dev with GITHUB_TOKEN, which starts no push-triggered
+#    workflow; this workflow listens to release and main only, never dev.
+#  * build-stamp.yml also skips a [version-advance] head by author and subject prefix,
+#    in case a different token ever pushes it, and pr-restamp only follows a build-stamp
+#    run that concluded success, so neither can chain off this commit.
+#  * IDEMPOTENCE. The record carries the feed event id (trailer) and the subject the branch and source sha. Before bumping, the job asks
+#    `tools/version-advance.mjs --done-event <id>` whether a commit on dev already records
+#    that event; a re-run, a re-delivered push event or a manual re-dispatch stops there, and
+#    so does a retry whose first push actually landed.
+#  * A ref update whose commits are all github-actions[bot] commits is not a cut and is
+#    ignored (re-checked each run from that event's own before..after; nothing is recorded).
+#
+# WHERE THE CUTS COME FROM: THE ACTIVITY FEED, NOT RUN HISTORY. GET /repos/{repo}/activity
+# lists every update of refs/heads/release and refs/heads/main, whether or not a workflow ran
+# for it. Each record on dev carries a `Version-Advance-Event: <id> <timestamp>` trailer. The
+# CURSOR is the newest recorded event (timestamp, id); `tools/version-advance.mjs --plan` pages
+# the feed newest-first back to the cursor and prints every later non-bot event, oldest first,
+# and this job applies them in that order (release then main = 0.8.0; main then release =
+# 0.8.1). So a cancelled, failed or never-started run loses nothing: the next run, a push or
+# a manual dispatch from any head, applies what is owed. FAIL CLOSED: if the pushed event is not
+# in the feed yet (lag) it retries 5 times (10s to 80s) and then fails; if dev has records and the
+# feed no longer shows the cursor it fails; either way nothing is written and a rerun recovers.
+# docs/versioning.md, "Version advance: the cursor model".
+#
+# This workflow's group is its own, not build-stamp's: GitHub keeps ONE pending run
+# per group, so a shared group would let a build-stamp run replace a queued bump and
+# lose it. Pushes racing build-stamp on dev are settled by the same non-fast-forward
+# retry loop build-stamp uses (each try starts from the current origin/dev).
+
+on:
+  push:
+    branches: [release, main]
+  workflow_dispatch:
+
+concurrency:
+  group: version-advance-dev
+  cancel-in-progress: false
+
+# contents: write pushes to dev (the activity API itself needs only contents: read);
+# actions: write dispatches dev-preview.
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out dev with its history
+        uses: actions/checkout@v5
+        with:
+          ref: refs/heads/dev
+          fetch-depth: 0
+          filter: blob:none
+          lfs: false
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Advance the triple on dev for every cut not yet recorded
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_AFTER: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          delays=(2 4 8)
+
+          # The work list: every feed event after the cursor, oldest first ("id timestamp branch sha").
+          # A failure (lag, lost cursor, unreadable range) fails the job before anything is written.
+          node tools/version-advance.mjs --plan > "$RUNNER_TEMP/cuts"
+          echo "Cuts owed, oldest first:"; cat "$RUNNER_TEMP/cuts"
+
+          pushed=0
+          recorded=0
+          # A RERUN OF A PUSH WHOSE RECORD LANDED BUT WHOSE PREVIEW DISPATCH FAILED has nothing owed
+          # (its event is behind the cursor), so it recognises its own record by the pushed sha
+          # and dispatches below (build-stamp's no-diff recovery).
+          # NOT grep -q: it exits at the first match, git log dies of SIGPIPE, and pipefail reports 141.
+          if [ "$EVENT_NAME" = "push" ] && git log --format=%s | grep -E "^version-advance: [0-9.]+ after (release|main) ${EVENT_AFTER}( |$)" >/dev/null; then
+            recorded=1
+          fi
+          # dev-preview for the tip, three tries (2 and 4 seconds of backoff), as build-stamp does.
+          dispatch_preview() {
+            local try
+            for try in 1 2 3; do
+              if gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref dev; then
+                echo "Dispatched dev-preview on dev (try $try)."
+                return 0
+              fi
+              echo "dev-preview dispatch failed (try $try)."
+              if [ "$try" -lt 3 ]; then sleep $((2 ** try)); fi
+            done
+            echo "::error::dev-preview could not be dispatched for dev after 3 tries. Rerun this workflow to dispatch it."
+            return 1
+          }
+          while read -r event_id event_ts branch src_sha <&3; do
+            case "$branch" in
+              release) kind=candidate ;;
+              main)    kind=minor ;;
+              *) echo "::error::source_ref must be release or main, got '$branch'."; exit 1 ;;
+            esac
+
+            done_here=0
+            for attempt in 1 2 3 4; do
+              git fetch -q origin "+refs/heads/dev:refs/remotes/origin/dev"
+              git reset -q --hard origin/dev
+              if node tools/version-advance.mjs --done-event "$event_id"; then
+                echo "dev already records feed event $event_id ($branch $src_sha)."
+                done_here=1
+                recorded=1
+                break
+              fi
+
+              node tools/version-advance.mjs --kind "$kind" --write
+              next="$(node tools/version-advance.mjs --kind "$kind" --read-current)"
+              # The generated changelog module is inside the digest; refresh it first, then
+              # write the box ONCE, so it restarts at 0 (bumpOrdinal resets on a new release).
+              node tools/about-changelog.mjs --write
+              node -e "import('./tools/buildversion.mjs').then((m) => console.log(JSON.stringify(m.bumpOrdinal())))"
+              node tools/release-series.mjs
+              node tools/about-changelog.mjs --check-order
+
+              git add -- src/content/index.js tools/release-series.mjs buildordinal.json CHANGELOG.md src/content/changelog.generated.js
+              node tools/version-advance.mjs --message "$next" "$branch" "$src_sha" "$event_id" "$event_ts" > "$RUNNER_TEMP/msg"
+              git commit -q -F "$RUNNER_TEMP/msg"
+              if git push -q origin "HEAD:dev"; then
+                echo "Pushed $(head -1 "$RUNNER_TEMP/msg") to dev (attempt $attempt)."
+                pushed=1
+                done_here=1
+                break
+              fi
+              echo "Push to dev rejected (attempt $attempt)."
+              if [ "$attempt" -lt 4 ]; then sleep "${delays[$((attempt - 1))]}"; fi
+            done
+            if [ "$done_here" != "1" ]; then
+              echo "::error::The version advance for event $event_id ($branch $src_sha) could not be pushed to dev after 4 attempts."
+              exit 1
+            fi
+          done 3< "$RUNNER_TEMP/cuts"
+
+          # No push-triggered run starts from GITHUB_TOKEN, so build the new tip the way
+          # build-stamp does. A failure fails the job; the commits are already on dev, and a
+          # rerun stops at the idempotence guard without bumping again.
+          # A RERUN WHOSE PUSH LANDED BUT WHOSE DISPATCH FAILED finds every cut recorded and
+          # pushes nothing, so it dispatches here too (build-stamp's no-diff recovery).
+          if [ "$pushed" = "1" ] || [ "$recorded" = "1" ]; then
+            dispatch_preview
+          fi

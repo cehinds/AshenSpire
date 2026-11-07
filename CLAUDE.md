@@ -20,6 +20,14 @@ merge commit, then promotes `dev` to `test` as before. It still sends the owner
 the PR link, the preview link and screenshots of visible changes, but does not
 stop and wait. `main` stays owner-only.
 
+**Combine a long merge queue** (owner, 2026-11-01). When more than 5 reviewed
+pull requests are waiting to merge, combine them into merge branches of at
+most 3 related pull requests each (`chore/MergeTrain<Topic>`), merging each
+pull request's branch in with `git merge --no-ff` so its own PR closes as
+merged. Resolve the conflicts once on the combined branch, run the fast checks
+and the merged PRs' tests, have the conflict resolution reviewed, and merge the
+combined PR on green CI. Every combined pull request must already be reviewed.
+
 **Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
 visible (UI, tools, the Workbench, art, layout), finish the report with fresh
 screenshots of the changed screens and a preview the owner can open (a
@@ -47,6 +55,14 @@ request in `cef8ed00`. The coordination rules it carried — one task per branch
 pull requests into `dev` opened ready for review, and only the owner merging to
 `main` — live in CONTRIBUTING.md under *Coordination and release boundary*,
 *Branch model* and *Commits & PRs*.)
+
+**Release numbering** (owner, 2026-10-31; automated 2026-11-01): the bump is automatic. A merge
+to `release` (the `test` → `release` cut) raises the third number by one and restarts the fourth
+(the build ordinal) at 0, so after `0.7.2.93` comes `0.7.3.0`; a merge of `release` to `main`
+raises the second number by one and resets the third and fourth to 0, so `0.7.3.x` is followed by
+`0.8.0.0`. `.github/workflows/version-advance.yml` does it, committing to `dev`
+(docs/versioning.md, *The automatic bump*). A session must not hand-bump the triple in
+`src/content/index.js` for either event, and there is no bump PR to open. MAJOR stays a hand edit.
 
 **Never commit built HTML on `dev`** (`AshenSpire.html`, `AshenSpire-mobile.html`,
 `build/*.html`, `dist/*.html`). It exhausted the Git LFS budget; it is ignored,

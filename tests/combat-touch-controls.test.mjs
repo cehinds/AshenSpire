@@ -1,3 +1,4 @@
+import { uiConfig } from '../src/config/generated/ui.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -8,7 +9,6 @@ const css = read('../styles/combat-layers.css');
 const hand = read('../src/ui/components/hand.js');
 const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
-const coop = read('../src/ui/screens/coop.js');
 
 test('approved compact Inspect and HP shapes retain active paging', () => {
   const inspectSizes = [...css.matchAll(/[^{}]*\.combatant-leading > \.combatant-info\s*\{([^}]*)\}/g)]
@@ -39,13 +39,17 @@ test('compact hand leaves the footer tool and Grid rows below its resting cards'
       return plan.top + card.y + plan.cardHeight / 2
         + (Math.abs(Math.sin(radians)) * plan.cardWidth + Math.abs(Math.cos(radians)) * plan.cardHeight) / 2;
     }));
-    assert.ok((input.height - bottom) * zoom >= 62, `${count} cards at zoom ${zoom} clear the 30px tools and 28px Grid rows plus their gap`);
+    // Owner (2026-11-01): the cards sit lower, into the band above the strip. The strip is one 30px row now (Combat log,
+    // Grid, Reaction and Auto share it; the separate 28px Grid row is gone), measured 10px below the lowest card in a
+    // real browser at 360x740, 390x844 and 467x920. The authored reserve (mobileHandReservePx) is that contract.
+    // Pin the floor too, so cutting the authored reserve cannot silently drop the cards onto the 30px strip.
+    assert.ok(uiConfig.scenes.w4a.sizing.mobileHandReservePx >= 36, 'the phone hand reserve keeps the 30px strip plus a 6px gap');
+    assert.ok((input.height - bottom) * zoom >= uiConfig.scenes.w4a.sizing.mobileHandReservePx, `${count} cards at zoom ${zoom} keep the authored reserve above the 30px tool and Grid strip`);
   }
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
   assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
-  assert.match(coop, /selectCombatant\((?:e\.id|enemyId)\);[\s\S]*?return false;/);
 });
 
 test('an armed self-target HUD click reaches only one frame listener', () => {
@@ -73,7 +77,6 @@ test('a tap on a playable card plays it only when its target is unambiguous (own
   assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
   assert.doesNotMatch(wire, /lastConfirmTap|performance\.now\(\)/, 'no timing window: the tap after the selecting tap carries no timestamp');
   assert.match(wire, /if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}\s*(?:\/\/[^\n]*\n\s*)*play\(\);\s*\};/, 'with one-tap off the first tap selects and the NEXT tap on the selected card plays, however long after (owner 14:15)');
-  assert.match(wire, /const tap = \(\) => \{\s*\/\/[^\n]*\n\s*if \(isRoundQueued\(inst\.instanceId\)\) \{ unqueueCard\(inst\.instanceId\); return; \}/, 'a queued card still unqueues first');
   assert.match(read('../src/ui/screens/settings.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
 });
 
@@ -84,4 +87,15 @@ test('One-tap play reads the setting live, so a mid-combat toggle changes the ne
   assert.match(wire, /const oneTapOn = \(\) => \(readSettings \?/);
   assert.match(wire, /if \(oneTapPlays\(\)\) \{ play\(\); return; \}/, 'each tap re-evaluates the setting');
   assert.match(combat, /readSettings = \(\) => meta\.settings \|\| \{\}/, 'mountCombat falls back to meta when no reader is passed');
+});
+
+test('the hand info portal keeps its centring transform in combat', () => {
+  assert.doesNotMatch(css, /\.hand-info-portal\s*\{[^}]*transform:\s*none/);
+  assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
+});
+
+test('the combat hand asks for the (i) badge and no other card surface does', () => {
+  assert.equal(hand.match(/actionOwnsTouch: true, infoBadge: true/g)?.length, 2);
+  assert.doesNotMatch(read('../src/ui/components/equipmentCard.js'), /infoBadge/);
+  assert.doesNotMatch(read('../src/ui/screens/deckEditor.js'), /infoBadge/);
 });

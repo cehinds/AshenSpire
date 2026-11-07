@@ -5,7 +5,19 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
-import { t } from '../ui/strings.js';
+import { t } from './strings.js';
+
+/**
+ * What reached the layers (Barrier, Ward, Poise, Block, then HP) after typed resistance or weakness.
+ * `event.amount` is what is left after Barrier, Ward and Poise, so the whole hit is the sum. The combat
+ * log's "for N" and the damage floater both read this, so the two always agree.
+ */
+export function hitAsLayered(event = {}) {
+  const magicPoise = Number(event.magicPoise) || 0;
+  const poise = Math.max(0, (Number(event.poiseAbsorbed) || 0) - magicPoise);
+  return Math.max(0, Number(event.amount) || 0) + (Number(event.barrierAbsorbed) || 0) + (Number(event.wardAbsorbed ?? event.wardMitigated) || 0) + poise + magicPoise;
+}
+import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollReceipt, critRollReceipt, distanceRollReceipt, perceptionRollReceipt, percentRollReceipt, rollCompactText } from './rollReceipts.js';
 
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
@@ -61,7 +73,7 @@ function nameLookup({ registries, players = [], enemies = [] }) {
   return id => names.get(id) || (id === 'player' ? 'Forsaken' : 'Enemy');
 }
 
-/** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
+/** The log's own words for one combatReactionUnavailable, without a seat prefix. */
 export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
   if (event.type === 'combatRangeReturnUnavailable') return rangeReturnUnavailableText(event);
   if (event.type === 'combatRangeActionUnavailable') return rangeActionUnavailableText(event);
@@ -101,7 +113,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
   let round = 1;
   events.forEach((event, id) => {
     if (event.type === 'playerTurnStart' && Number.isSafeInteger(event.turn)) round = Math.max(round, event.turn);
-    // Seats first: in co-op every player entity is 'player', and the seat id tells them apart.
+    // Seats first: where several players share one fight every player entity is 'player', and the seat id tells them apart.
     const sourceKey = event.sourcePlayerId || event.sourceId || event.playerId;
     const targetKey = event.targetPlayerId || (event.targetId === 'player' ? event.playerId || event.sourcePlayerId || 'player' : event.targetId);
     const source = name(sourceKey);
@@ -116,7 +128,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       const card = row(registries?.cards, event.cardId)?.name;
       if (card) return { actorKey: sourceKey, label: card };
       if (event.moveId) return { actorKey: sourceKey, label: moveName(event.sourceId, event.moveId) };
-      // A trigger's owner, by seat when it is this event's target or source (co-op players are all 'player').
+      // A trigger's owner, by seat when it is this event's target or source (a multi-seat fight's players are all 'player').
       if (origin?.id) return { actorKey: origin.ownerId === event.targetId ? targetKey : origin.ownerId === event.sourceId ? sourceKey : origin.ownerId,
         label: originName(registries, origin) };
       if (event.statusId) return { actorKey: null, label: `${statusName(registries, event.statusId)} flux` };
@@ -142,7 +154,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       return `${source}'s ${label || 'attack'}`;
     };
 
-    let text;
+    let text, rollReceipt = null, lineReceipts = null;
     switch (event.type) {
       case 'cardPreparing':
         playing = { actorKey: sourceKey, label: row(registries?.cards, event.cardId)?.name || null };
@@ -164,15 +176,50 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = event.reaction ? `${source} reacts with ${move}.` : `${source} used ${move}.`;
         break;
       }
+      case 'counterStacksChanged':
+        if (event.decay) text = `${source}'s Counter fades to ${event.stacks}.`;
+        break;
+      case 'reflectTriggered':
+        text = `${source} reflected ${event.amount} back at ${target} (${event.stacks} stack${event.stacks === 1 ? '' : 's'}).`;
+        break;
       case 'combatCounterTriggered': {
         const { label } = causeOf();
-        text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        // Core (SPEC §17, 2026-10-31): the return is the card's base damage plus stacks x 10% of the incoming hit (plus the stance-advantage share).
+        if (event.counterStacks !== undefined && event.amount > 0) {
+          const advantage = Math.max(0, event.amount - (event.counterBase || 0) - (event.counterStackShare || 0));
+          text = `${source} countered ${target}${label ? ` with ${label}` : ''} for ${event.amount} (base ${event.counterBase || 0} + stacks ${event.counterStacks}×10% of ${event.counterIncoming || 0}${advantage ? ` + advantage ${advantage}` : ''}).`;
+        } else text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        break;
+      }
+      // SPEC §17 Contests: "Read Intent contest: 9 vs 9 · success"; the full detail itemises d20 + attributes + rank vs Poise + attributes + level.
+      case 'contestPassed': case 'contestFailed': {
+        rollReceipt = contestRollReceipt(event);
+        const card = row(registries?.cards, event.cardId)?.name;
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText(`${card ? `${card} ` : ''}contest`, rollReceipt)}`;
+        break;
+      }
+      // A critical-hit roll, a perception (Intent read) check, a status buildup chance and a status recovery roll.
+      case 'critRolled':
+        rollReceipt = critRollReceipt(event);
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText('Crit', rollReceipt)}`;
+        break;
+      case 'perceptionRolled':
+        rollReceipt = perceptionRollReceipt(event);
+        if (rollReceipt) text = `${name(event.ownerId || 'player')} → ${name(event.enemyInstanceId)}: ${rollCompactText('Perception', rollReceipt)}`;
+        break;
+      case 'statusChanceRolled': case 'statusRecoveryRolled': {
+        const recovery = event.type === 'statusRecoveryRolled';
+        rollReceipt = percentRollReceipt(event, recovery ? 'statusRecovery' : 'statusChance');
+        if (rollReceipt) text = `${target}'s ${rollCompactText(`${statusName(registries, event.status)} ${recovery ? 'recovery' : 'buildup'}`, rollReceipt)}`;
         break;
       }
       case 'attackHit': case 'attackMissed': {
         const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
         const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
-        if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        rollReceipt = accuracyRollReceipt(event);
+        // Every roll reads "<what>: <total> vs <DC> · hit|miss"; the bonuses are in the full-detail receipt.
+        if (rollReceipt) text = `${source} → ${target}: ${rollCompactText(causeOf().label || 'Attack', rollReceipt)}${event.missReason === 'range' ? ' (out of range)' : ''}`;
+        else if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.opposed || event.fixedDefense) {
           // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
@@ -186,11 +233,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const hit = `${attackText()} hit ${target}`;
         // Silenced: a hit that is all Force is negated whole.
         if (event.silencedImmune) { text = `${hit}: ${target} is immune to Force (Silenced).`; break; }
-        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0, poiseDamage = event.poiseDamage || 0;
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, magicPoise = event.magicPoise || 0, poise = Math.max(0, (event.poiseAbsorbed || 0) - magicPoise), poiseDamage = event.poiseDamage || 0;
         const blocked = event.blocked || 0;
         const hp = Math.max(0, event.amount - blocked);
         // What reached the layers (Barrier, Ward, Block, Poise, then HP), after typed resistance or weakness.
-        const layered = event.amount + barrier + ward + poise;
+        const layered = hitAsLayered(event);
         // The hit as it arrived. Newer events say so (`incoming`); an older one's typed reduction is
         // the whole protection before Block (`resisted`) less what Barrier and Ward took.
         const incoming = Number.isFinite(event.incoming) ? event.incoming
@@ -202,14 +249,19 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const kind = event.damageType ? `${word(event.damageType)} ` : '';
         const parts = [
           ...(mod ? [`modifiers ${mod > 0 ? '+' : '−'}${Math.abs(mod)} (${base} → ${incoming})`] : []),
+          ...(event.weaknesses || []).filter(row => row.effect === 'damage').map(row => `Weak to ${word(row.to)} +${row.amount}%`),
           ...(typed > 0 ? [`${kind}resisted ${typed} (${incoming} → ${layered})`] : []),
           ...(typed < 0 ? [`${kind}weakness +${-typed} (${incoming} → ${layered})`] : []),
+          // Ward (SPEC 4.1a): all damage meets Poise first, then Block, then HP, so Poise is read before Block.
+          ...(event.wardRouted && poise ? [`Ward: Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           // A piercing hit: the part that went past Block, and how much of it Poise took 1:1 first.
           ...(event.pierced > 0 ? [t(event.piercePoise > 0 ? 'combat.receipt.piercedPoise' : 'combat.receipt.pierced', { n: event.pierced, poise: event.piercePoise || 0 })] : []),
           ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked + (event.pierced || 0)} → ${event.blockRemaining || 0})`] : []),
-          ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
+          // Magic hits Poise first, 1:1 (owner, 2026-10-31), before the Block it leaves.
+          ...(magicPoise ? [t('combat.receipt.magicPoise', { n: magicPoise }) + ` (${(event.poiseRemaining || 0) + magicPoise + poise} → ${(event.poiseRemaining || 0) + poise})`] : []),
+          ...(poise && !event.wardRouted ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           // Smash vs a defensive stance: the Poise pool loses a share of the hit; none of the hit is absorbed by it.
           ...(poiseDamage ? [`Poise damage ${poiseDamage} (${(event.poiseRemaining || 0) + poiseDamage} → ${event.poiseRemaining || 0})`] : []),
           // Silenced: the hit's Force part was negated, the rest went on.
@@ -223,14 +275,23 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const e = event.evade, d = event.distance, attack = attackText();
         const lines = [];
         if (event.prevention) lines.push(`${target} avoided ${attack} (${PREVENTION_WORDS[event.prevention] || word(event.prevention)}).`);
-        if (d) lines.push(d.success ? `${target} avoided ${attack} at range: distance roll ${d.roll}, needed ${d.chance} or less.`
-          : `${target}'s range failed against ${attack}: distance rolled ${d.roll}, needed ${d.chance} or less.`);
+        const receipts = lines.map(() => null);
+        if (d) {
+          // Distance is a d20 against a target (owner, 2026-11-01); a log written before that holds a d100 under the chance.
+          const needs = Number.isFinite(d.target) ? `${d.target} or more` : `${d.chance} or less`, die = Number.isFinite(d.target) ? 'd20 ' : '';
+          lines.push(d.success ? `${target} avoided ${attack} at range: distance ${die}roll ${d.roll}, needed ${needs}.`
+            : `${target}'s range failed against ${attack}: distance ${die}rolled ${d.roll}, needed ${needs}.`);
+          receipts.push(distanceRollReceipt(d));
+        }
         if (e) {
           const roll = Number.isFinite(e.total) && e.total !== e.roll ? `${e.roll} + ${e.total - e.roll} = ${e.total}` : `${e.roll}`;
           lines.push(e.success ? `${target} evaded ${attack}: Evade roll ${roll} beat ${e.difficulty}.`
             : `${target}'s Evade failed against ${attack}: rolled ${roll}, needed more than ${e.difficulty}.`);
+          receipts.push(evadeRollReceipt(e));
         }
         text = lines.length ? lines : null;
+        // Each receipt belongs to its own row only: a failed distance row never shows the Evade's d20.
+        lineReceipts = receipts;
         break;
       }
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
@@ -278,6 +339,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'statusExpired': text = `${target}'s ${statusName(registries, event.status)} expired.`; break;
       // The framework dodge (v1): the player rolls on playing a dodge card; a success lays down a guard.
       case 'dodgeRolled': {
+        rollReceipt = dodgeRollReceipt(event);
         const dodger = name(sourceKey || 'player');
         const via = paren(causeText({ self: sourceKey }));
         text = event.success
@@ -291,7 +353,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       }
       case 'playerDowned': text = `${name(event.playerId || 'player')} was downed${event.reason ? ` (${word(event.reason)})` : ''}.`; break;
-      case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
+      case 'combatReactionChosen': if (event.autoCounter) text = `${name(event.ownerId)} answered with a Counter and no card.`; else if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
       case 'combatRangeReturnUnavailable': {
         const why = rangeReturnUnavailableText(event);
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
@@ -318,7 +380,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) {
+    [].concat(text || []).forEach((line, lineIndex) => {
+      const receipt = lineReceipts ? lineReceipts[lineIndex] : rollReceipt;
       const segments = [];
       let cursor = 0;
       for (const match of line.matchAll(/\u0001(\d+)\u0002/g)) {
@@ -328,8 +391,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       if (cursor < line.length) segments.push({ text: line.slice(cursor) });
       rows.push({ id, round, text: segments.map(segment => segment.text).join(''), segments,
-        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
-    }
+        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}), ...(receipt ? { rollReceipt: receipt } : {}) });
+    });
   });
   return rows;
 }

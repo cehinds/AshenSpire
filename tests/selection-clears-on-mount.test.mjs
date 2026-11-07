@@ -30,7 +30,7 @@ const ok = (cond, what) => { checks++; assert.ok(cond, what); };
 
 // The screens that put a card on the glass. A screen added to this list without
 // the call fails here; a screen that stops drawing cards should leave the list.
-const SCREENS = ['combat', 'coop', 'customize', 'draft', 'equipment', 'reward', 'shop'];
+const SCREENS = ['combat', 'customize', 'draft', 'equipment', 'reward', 'shop'];
 
 for (const screen of SCREENS) {
   const source = strip(read(`src/ui/screens/${screen}.js`));

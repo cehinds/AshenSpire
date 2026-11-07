@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { createRuntime, runCases, loadMechanics } from '../engine/runtime/interpreter.mjs';
 import { evaluate } from '../src/model/formulas.js';
-import { resolveAtlasPath } from '../tools/maps-validate.mjs';
 import { buildGame, hashOf, summaryFile, summaryText } from '../tools/build-game.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -132,7 +131,6 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const c = Object.values(uiComponents).find(x => x.layout?.ref); c.layout = { ...c.layout, path: 'no.such.path' }; } }), /layout path 'no\.such\.path' not found/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { delete uiComponents.hud.viewModel; } }), /ui\/components\/hud.*viewModel/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { const vm = uiComponents.enemyPanel.viewModel; vm.bindings = { ...vm.bindings, spShown: '$entity.pools.sp' }; delete vm.visibility; } }), /enemyPanel: binds sp without the enemy_visibility\.visibleFields visibility query/);
-  assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs).find(x => x.atlas); m.atlas = { ...m.atlas, path: 'nope.nothing' }; } }), /atlas path 'nope\.nothing' does not resolve/);
   assert.throws(() => buildGame({ patch: ({ mapDocs }) => { const m = Object.values(mapDocs)[0]; m.generator.proposed = { ...(m.generator.proposed || {}), names: { elite: 'node.nope' } }; } }), /proposed\.names elite -> 'node\.nope' is not a node component/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.id = 'wrong'; } }), /ui\/components\/hud: id 'wrong' does not match the file name/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { const m = Object.values(mechanics).find(x => (x.service.handlers || []).some(h => h.on?.startsWith('command.'))); const h = m.service.handlers.find(x => x.on.startsWith('command.')); h.on = 'command.typo'; } }), /handler 'command\.typo' is not a command in its interface/);
@@ -212,20 +210,11 @@ test('the artifact file is build output and git-ignored', () => {
   assert.ok(existsSync(join(ROOT, 'games/ashenspire/build.summary.json')));
 });
 
-test('the artifact carries every atlas document its maps and map components reference', () => {
+test('the artifact carries no atlas document: no map or map component references one now', () => {
   const refs = [...Object.values(artifact.maps.maps).map(m => m.atlas?.ref), ...Object.values(artifact.maps.components).map(c => c.placement?.atlas)].filter(Boolean);
-  assert.ok(refs.length > 0);
-  for (const ref of refs) assert.ok(artifact.maps.atlas[ref] && typeof artifact.maps.atlas[ref] === 'object', ref);
-});
-
-test('serialized maps resolve their atlas paths without repository access', () => {
-  const { maps } = JSON.parse(first.text);
-  for (const map of Object.values(maps.maps)) if (map.atlas) {
-    assert.ok(maps.atlas[map.atlas.ref], `embedded atlas: ${map.atlas.ref}`);
-    assert.notEqual(resolveAtlasPath(maps.atlas[map.atlas.ref], map.atlas.path), undefined, map.id);
-  }
-  assert.deepEqual(Object.keys(maps.atlas), ['content/source/worldAtlas.json']);
-  assert.deepEqual(maps.atlas['content/source/worldAtlas.json'], readJson('content/source/worldAtlas.json'));
+  assert.deepEqual(refs, []);
+  assert.deepEqual(artifact.maps.atlas, {});
+  assert.deepEqual(JSON.parse(first.text).maps.atlas, {});
 });
 
 test('atlas embedding refuses references outside authored content sources', () => {

@@ -21,7 +21,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatRounds/resolver.js",
-    "symbol": "resolveRound"
+    "file": "src/model/combatCardProfile.js"
   }
 }

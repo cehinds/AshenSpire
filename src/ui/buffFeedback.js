@@ -9,7 +9,7 @@ export const BUFF_STATUS_IDS = Object.freeze([
   'constellation', 'azureCoil', 'waxingMoon', 'moonlitShield', 'astromancer',
   'thornHalo', 'communion', 'lifeTithe', 'stigmata', 'zealotry', 'emberTide',
   'harbingerOfBlight', 'bloodUnction', 'ironVow', 'bulwarkEcho', 'prepared',
-  'afterimage', 'deadlyTempo', 'opportunist', 'envenom', 'glassCannon',
+  'afterimage', 'deadlyTempo', 'opportunist', 'envenom',
   'stoneskin', 'grounded', 'invulnerability', 'decoy', 'concealed',
 ]);
 const buffs = new Set(BUFF_STATUS_IDS);

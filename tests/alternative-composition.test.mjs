@@ -5,6 +5,7 @@ import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
 import { insetPerspectiveFootprint, alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 test('close alternative targets shrink uniformly and stay centred', () => {
@@ -116,8 +117,14 @@ test('a 130px field keeps short enemies readable on their distinct foot anchors'
   for (const size of enemies) {
     const actor = actors.find(candidate => candidate.slot.id === size.id);
     assert.ok(size.visibleHeight >= actor.slot.box.height - 1e-9, 'the overhead union cannot collapse the body');
-    assert.equal(size.ground, insetPerspectiveFootprint(actor.slot,{width:actor.visibleWidth*size.scale,
-      height:actor.visibleHeight*size.scale*.08}).ground, 'the body stays on its inset cell shadow');
+    const { top, height: strip } = actor.slot.box;
+    const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const wanted = { ...actor.slot, ground: top + strip * (1 - grid.footInCellFraction) };
+    const shadow = actor.visibleHeight * size.scale * .08;
+    // A strip too short for the shadow plus both insets stands the foot at its middle, inside both lines.
+    const expected = strip >= shadow + 2 * grid.footprintInsetPx
+      ? insetPerspectiveFootprint(wanted, { width: actor.visibleWidth * size.scale, height: shadow }).ground : top + strip / 2;
+    assert.equal(size.ground, expected, 'the body stays inside its drawn cell, footInCellFraction above the bottom line when the shadow fits');
   }
   assert.equal(new Set(enemies.map(size => size.ground)).size, 2, 'the two enemy ranks keep distinct foot lines');
 });
@@ -183,4 +190,102 @@ test('impossibly wide custom footprints report the limit without silently shrink
   const foot=insetPerspectiveFootprint(slot,{width:200,height:12});
   assert.equal(foot.footprintFits,false);
   assert.equal(foot.x,50,'impossible footprint remains centred in its owning cell');
+});
+
+test('a slid neighbour makes every size.x authoritative over the cell footprint clamp', () => {
+  const box = { left: 100, top: 100, width: 80, height: 60, skew: 0 };
+  const actors = ['a', 'b'].map((id, i) => ({ side: 'enemy', visibleWidth: 60, leading: 40,
+    slot: { id, x: 140 + i * 5, ground: 150, box } }));
+  const sizes = [{ id: 'a', x: 140, visibleHeight: 100, scale: 1, multiplier: 1 },
+    { id: 'b', x: 230, visibleHeight: 100, scale: 1, multiplier: 1, slid: true }];
+  const fit = alternativeCombatComposition({ actors, sizes, width: 390, perspectiveGrid: true });
+  assert.equal(fit[1].x, 230, 'the slid figure keeps the sizing rule\'s x');
+  assert.equal(fit[0].x, 140, 'its neighbour is not pulled back by the footprint clamp');
+});
+
+test('perspective grid: a lone player stands on the hand top, never inside the hand area', async () => {
+  const { alternativeCombatComposition } = await import('../src/ui/models/CombatCompositionModel.js');
+  const actors = [{ side: 'player', visibleWidth: 60, visibleHeight: 100, boxHeight: 100, leading: 30, slot: { id: 'p', x: 80, ground: 500 } }];
+  const sizes = [{ id: 'p', x: 80, visibleHeight: 100, scale: 1, multiplier: 1 }];
+  const run = handTop => alternativeCombatComposition({ perspectiveGrid: true, sizes, actors, width: 390, height: 600, handTop, solo: true })[0].ground;
+  assert.equal(run(420), 420);
+  assert.equal(run(560), 500, 'a hand lower than the cell leaves the cell ground alone');
+  assert.equal(run(null), 500);
+});
+
+// Owner 2026-11-05 (phone shot): the party's front-row feet stood on their strip's bottom edge line while the
+// enemies stood inside their cells. Every combatant's composed foot is now inside its own strip, clear of both edges.
+test('composed party feet stand inside their strip, not on its edge, at every profile', () => {
+  const inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx;
+  const profiles = [[390, 570, true], [375, 480, true], [360, 440, true], [844, 220, false], [1280, 516, false], [1440, 560, false], [1024, 430, false]];
+  for (const [width, height, narrow] of profiles) {
+    for (const friends of [['p'], ['p', 'q', 'r']]) {
+      const plan = alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+        friends, enemies: ['a', 'b', 'c'] }), width, height, narrow);
+      const actors = plan.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 60, visibleHeight: 160, leading: 58, ratio: 1, multiplier: 1 }));
+      const fit = alternativeCombatComposition({ actors, sizes: fitAlternativeSprites({ width, height, actors, narrow }), width, height, perspectiveGrid: true, solo: false });
+      for (const size of fit) {
+        const actor = actors.find(a => a.slot.id === size.id);
+        const { top, height: strip } = actor.slot.box;
+        assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${actor.side} ${size.id}: foot ${size.ground} is inside strip ${top}..${top + strip}`);
+        if (strip >= 2 * inset + 12) assert.ok(size.ground <= top + strip - inset + 1e-6, `${width}x${height} player foot clears the bottom line by the footprint inset`);
+        // Owner 2026-11-06: the drawn cell (the slot's box) holds the foot footInCellFraction above its bottom line, for both sides.
+        const fraction = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footInCellFraction;
+        // Exactly the configured fraction wherever the shadow's envelope fits at that height, for both sides.
+        const shadow = actor.visibleHeight * size.scale * .08;
+        if (fraction * strip >= shadow / 2 + inset && (1 - fraction) * strip >= shadow / 2 + inset) assert.ok(Math.abs(top + strip - size.ground - fraction * strip) < 1e-6, `${width}x${height} ${actor.side} ${size.id}: foot stands exactly ${fraction} of the cell above its bottom line`);
+      }
+    }
+  }
+});
+
+// Owner 2026-11-06 (live build 0.7.3.186): the party's lowest strip lay under the hand, so the solo player's feet were
+// pulled up to the strip's TOP line. When the hand top is given, the grid rises until the feet stand inside the drawn cell.
+test('the grid rises above the hand so the lowest party cell holds its feet above the hand top', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const [width, height, handTop] = [390, 488.36, 431];
+  const run = top => alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop: top });
+  const low = plan => plan.visualCells.filter(cell => cell.side === 'player').reduce((a, b) => b.box.top > a.box.top ? b : a);
+  const before = low(run(null)).box, after = low(run(handTop)).box;
+  assert.ok(before.top + before.height * (1 - grid.footInCellFraction) > handTop, 'without the hand the cell\'s feet would stand under it');
+  assert.ok(Math.abs(after.top + after.height * (1 - grid.footInCellFraction) - handTop) < 1e-6, 'with it the feet stand exactly at the hand top');
+  assert.ok(handTop - (after.top) > 0 && after.top < handTop, 'and the cell still opens above the hand top');
+  const lifted = run(handTop), plain = run(null);
+  assert.equal(lifted.cells.length, plain.cells.length);
+  assert.ok(Math.abs((lifted.slots[0].box.height) - plain.slots[0].box.height) < 1e-9, 'lifting never resizes a cell');
+  assert.equal(run(height * 2).slots[0].box.top, plain.slots[0].box.top, 'a hand below the grid leaves it alone');
+  const capped = run(0).slots[0].box.top;
+  assert.ok(plain.slots[0].box.top - capped <= height * grid.handLiftMaxFraction + 1e-9, 'the lift is capped by handLiftMaxFraction');
+});
+
+test('composed feet stand footInCellFraction above the drawn cell bottom for a solo party under a hand', () => {
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  for (const [width, height, handTop] of [[390, 488.36, 431], [360, 455, 410]]) {
+    const plan = alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+      friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop });
+    const actors = plan.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 60, visibleHeight: 160, leading: 58, ratio: 1, multiplier: 1 }));
+    const fit = alternativeCombatComposition({ actors, sizes: fitAlternativeSprites({ width, height, actors, narrow: true }), width, height, perspectiveGrid: true, handTop, solo: true });
+    for (const size of fit) {
+      const { top, height: strip } = actors.find(a => a.slot.id === size.id).slot.box;
+      assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${size.id} foot ${size.ground} inside cell ${top}..${top + strip}`);
+      assert.ok(Math.abs(top + strip - size.ground - grid.footInCellFraction * strip) < 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at the configured fraction or the hand top`);
+      if (size.id === 'p') assert.ok(size.ground <= handTop + 1e-6, 'the player never stands inside the hand');
+    }
+  }
+});
+
+// The model lifts nothing for a missing or non-finite hand top; the stage reads the hand's top in the same pass
+// (owner, 2026-11-06: static layout, nothing carried from an earlier pass).
+test('no hand top, or a stale anchor the stage drops, gives no grid lift', async () => {
+  const [width, height] = [390, 488.36];
+  const run = handTop => alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+    friends: ['p'], enemies: ['a'] }), width, height, true, { formFactor: 'mobile', handTop }).slots[0].box.top;
+  const lifted = run(431);
+  assert.ok(lifted < run(null), 'a matching anchor does lift');
+  for (const stale of [null, undefined, NaN, Infinity]) assert.equal(run(stale), run(null), `handTop ${stale} lifts nothing`);
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(source, /const planHandTop = planHandRect && planHand\.clientWidth > 0 \? planHandRect\.top - fieldRect\.top : null/, 'the stage reads the hand top in the same pass');
+  assert.doesNotMatch(source, /layoutState\.handAnchor\?\.key === planLayoutKey/, 'no earlier pass feeds the grid lift');
 });

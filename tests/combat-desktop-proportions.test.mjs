@@ -18,7 +18,7 @@ const gridFor = (width, height, narrow) => {
 
 // The grid still receives the layout flag, plus the explicit camera profile.
 test('the formation grid still follows the layout mode, as it did before the change', () => {
-  assert.match(stageSource, /alternativeFormation\(plan, fieldRect\.width, fieldRect\.height, document\.documentElement\.dataset\.layout === 'narrow', \{ \.\.\.presentation, formFactor: document\.documentElement\.dataset\.formFactor \}\)/);
+  assert.match(stageSource, /alternativeFormation\(plan, fieldRect\.width, fieldRect\.height, document\.documentElement\.dataset\.layout === 'narrow', \{ \.\.\.presentation, handTop: Number\.isFinite\(planHandTop\) \? planHandTop : null, formFactor: document\.documentElement\.dataset\.formFactor \}\)/);
 });
 
 // The caller, not allocateCombatBands, decides the form factor's bands: combatLayout.js

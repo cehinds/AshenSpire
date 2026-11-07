@@ -4,12 +4,10 @@
 // Executioner's Staggered damage. The direct path still bypasses the bar: the
 // poise max does not grow (SPEC §4.4). Shipped registry, solo and co-op.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { getStacks } from '../src/engine/statuses.js';
 
@@ -39,16 +37,6 @@ function solo(withInsanity) {
   return { ...state, hit: lastHit(c, enemy.id) };
 }
 
-function coop(withInsanity) {
-  const c = createCoopCombat({ registries, rng: createRng(50), players: [{ id: 'p1', ...player(withInsanity) }],
-    enemyIds: ['wanderingSoldier'], ratingsRules: null });
-  const enemy = c.enemies[0];
-  if (withInsanity) playCard(c, 'p1', 'ins', enemy.id);
-  const staggered = getStacks(enemy, 'staggered');
-  playCard(c, 'p1', 'exe', enemy.id);
-  return { staggered, hit: lastHit(c, enemy.id) };
-}
-
 test('an Insanity break applies Staggered, so Executioner deals its Staggered damage', () => {
   const clean = solo(false);
   const broken = solo(true);
@@ -61,10 +49,3 @@ test('an Insanity break applies Staggered, so Executioner deals its Staggered da
   assert.ok(broken.hit > clean.hit * 2, `Staggered rider fired (${clean.hit} -> ${broken.hit})`);
 });
 
-test('co-op matches solo after an Insanity break', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const s = solo(true);
-  const c = coop(true);
-  assert.equal(c.staggered, s.staggered);
-  assert.equal(c.hit, s.hit);
-  assert.equal(coop(false).hit, solo(false).hit);
-});

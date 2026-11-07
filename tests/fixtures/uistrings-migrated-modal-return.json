@@ -1,0 +1,11 @@
+{
+  "reason": "Back-to-place copy from the modal-return PR (#2589); retain the copy checks after origin/dev advances.",
+  "ids": [
+    "common.backTo",
+    "common.place.blacksmith",
+    "common.place.shrine",
+    "common.place.merchant",
+    "common.place.rest",
+    "common.place.rewards"
+  ]
+}

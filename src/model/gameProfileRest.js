@@ -6,6 +6,7 @@ import { withGameProfileService } from './gameProfileRun.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { applyLevelUp, rederivePools } from './levelup.js';
 import { commitSmithing } from './smithing.js';
+import { restSmithMaxTier } from './blacksmithConfig.js';
 import { coreSmithingActive, coreSmithingCards, coreAffectedCards, withoutCoreCardSimulation } from './smithingCore.js';
 import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
@@ -71,7 +72,7 @@ function applyService(registries, draft, service, payload) {
   if (service === 'levelUp') withGameProfileService(draft, service, () => applyLevelUp(registries, draft, payload.attributeId));
   if (service === 'smith') {
     if (rules.smith?.tiersPerService !== 1) throw new Error('Smith requires an authored single-tier service policy');
-    withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef, undefined, { free: rules.smith.free === true }));
+    withGameProfileService(draft, service, () => commitSmithing(registries, draft, payload.itemRef, undefined, { free: rules.smith.free === true, maxTier: restSmithMaxTier(draft) }));
     rederivePools(registries, draft, 'Smith equipment upgrade');
   }
   let upgraded = null;

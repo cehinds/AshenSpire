@@ -8,50 +8,20 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
-import { combatRoundsRows } from './combatRounds.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
 } from './startingStatConfig.js';
-import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
+import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
 import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
-import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
+import { STAT_ROW_NO_MAX, hasRetiredOpeningHand, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 import { shopConfigRows, cloneShops, shopSettingsProblems, shopOverridesSetAside } from './shopKinds.js';
 import { consumableConfigRows, cloneItems } from './consumables.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
-
-export function isLiveXpSetting(key) {
-  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)|classMastery\.(?:xp\.|pay\.)))/.test(key);
-}
-
-export function updatedXpSnapshot(snapshot, changed) {
-  const overrides = { ...(snapshot?.overrides || {}) };
-  for (const [key, value] of Object.entries(changed || {})) {
-    if (!isLiveXpSetting(key)) continue;
-    if (value === undefined) delete overrides[key];
-    else overrides[key] = value;
-  }
-  return xpSnapshotWithOverrides(snapshot, overrides);
-}
-
-export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
-  const overrides = Object.fromEntries(Object.entries(snapshot?.overrides || {}).filter(([key]) => !isLiveXpSetting(key)));
-  for (const [key, value] of Object.entries(profileSettings)) {
-    if (isLiveXpSetting(key) && value !== undefined) overrides[key] = value;
-  }
-  return xpSnapshotWithOverrides(snapshot, overrides);
-}
-
-// XP changes preserve the run's non-XP compatibility contract. In particular,
-// an absent ratingsVersion must stay absent for pre-ratings saves.
-function xpSnapshotWithOverrides(snapshot, overrides) {
-  return Object.freeze({ ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
-    overrides: advancedConfigSnapshot(overrides).overrides });
-}
 
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
@@ -131,6 +101,7 @@ const BALANCE_DOMAINS = Object.freeze({
   // Card ranks and the every-Nth-level flat (SPEC §13.4o): validate.js wants a
   // positive whole number, and a save refuses a rank past 99.
   'skill.rankMax': Object.freeze({ integer: true, step: 1, min: 1, max: 99 }),
+  'skill.rankUpBonusScale': Object.freeze({ step: 0.25, min: 1, max: 10 }),
   'skill.flatEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'skill.attributeEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
   'skill.featEvery': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
@@ -140,7 +111,6 @@ const BALANCE_DOMAINS = Object.freeze({
   'rewards.cardRewards.chancePct.normal': PERCENT,
   'rewards.cardRewards.chancePct.elite': PERCENT,
   'rewards.cardRewards.chancePct.boss': PERCENT,
-  'atlas.townsPerActMax': Object.freeze({ min: 1 }),
   // SPEC §15.3's drop chances are percents: a normal fight's armament chance
   // ships at 0, which a range read off the value would cap at 20.
   'equipment.drops.chance.normal': PERCENT,
@@ -213,6 +183,42 @@ const RETIRED_UPGRADE_AT_KEY = `${ADVANCED_CONFIG_PREFIX}balance.skill.upgradeAt
 const RETIRED_UPGRADE_AT_KEYS = Object.freeze([RETIRED_UPGRADE_AT_KEY, `settings.${RETIRED_UPGRADE_AT_KEY}`]);
 const RETIRED_UPGRADE_AT_WARNING = 'The skill-level card upgrade setting is retired and was left out: levels raise card ranks instead.';
 
+// STAT SETTINGS FROM BEFORE RULESET 7 ARE DROPPED, NEVER CONVERTED (owner,
+// 2026-11-04: Core 2 is the only game; profiles from before it are refused or
+// dropped, not converted). Two families of stored key have no row left to land
+// on, in either spelling (plain or `settings.`-prefixed):
+//
+//   stat    the rating formula (`combatRatings.multiplier` and
+//           `combatRatings.ratings.<id>.<field>`), the hand rules' single-stat
+//           dials (`handRules.<group>.*`, `handRules.startingByClass.*`),
+//           `balance.handMax` and the `statRowsVersion` marker that guarded
+//           their conversion;
+//   item    the per-item rating plus `combatRatings.bonuses.armament:<id>.<r>`
+//           and `.armor:`.
+//
+// Each family is said once, aloud, when it was present.
+const RETIRED_STAT_KEY = /^gameConfig\.(?:combatRatings\.(?:multiplier|ratings\.(?:ar|dr|pr|poise|ward)\.(?:base|strength|dexterity|constitution|wisdom|intelligence))|handRules\.(?:(?:starting|turn|capacity)\.(?:base|statEnabled|stat|baseline|pointsPerCard|minimum|maximum)|startingByClass\.[a-z]+\.(?:base|stat))|balance\.handMax)$/;
+const RETIRED_ITEM_BONUS_KEY = /^gameConfig\.combatRatings\.bonuses\.(?:armament|armor):/;
+const RETIRED_STAT_MARKER = 'statRowsVersion';
+const RETIRED_STAT_WARNING = 'The combat-rating formula and multiplier, the hand rules\' dials and the fallback hand capacity are retired and were left out: every stat is one row now (Stats → each rating; hand size, draw and opening hand under Stats → Draw & hand → Hand size). Everything else was kept.';
+const RETIRED_ITEM_BONUS_WARNING = 'The per-item rating bonuses are retired and were left out: an item\'s rating is set on the item (Equipment → item ratings). Everything else was kept.';
+const bareSetting = (key) => (key.startsWith('settings.') ? key.slice('settings.'.length) : key);
+const retiredStatKey = (key) => RETIRED_STAT_KEY.test(bareSetting(key));
+const retiredItemBonusKey = (key) => RETIRED_ITEM_BONUS_KEY.test(bareSetting(key));
+const retiredStatMarker = (key) => bareSetting(key) === RETIRED_STAT_MARKER;
+
+/** withoutRetiredStatSettings(entries, warnings) → the entries without either retired stat family, one warning each. */
+function withoutRetiredStatSettings(entries, warnings = null) {
+  const kept = entries.filter(([key]) => !retiredStatKey(key) && !retiredItemBonusKey(key) && !retiredStatMarker(key));
+  if (kept.length !== entries.length && Array.isArray(warnings)) {
+    if (entries.some(([key]) => retiredStatKey(key))) warnings.push(RETIRED_STAT_WARNING);
+    if (entries.some(([key]) => retiredItemBonusKey(key))) warnings.push(RETIRED_ITEM_BONUS_WARNING);
+  }
+  return kept;
+}
+
+const hasRetiredStatSettings = (settings = {}) => Object.keys(settings || {}).some((key) => retiredStatKey(key) || retiredItemBonusKey(key) || retiredStatMarker(key));
+
 /**
  * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
  * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
@@ -244,32 +250,15 @@ export function bringRunSnapshotForward(run, save, warnings = []) {
   return warnings;
 }
 
-/** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
-export function hasLegacyAdvancedSettings(settings = {}) {
-  // An unmarked profile holding a `draw` or `poise` row is one of them
-  // (model/statRows.js hasLegacyStatSettings).
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || Object.hasOwn(settings || {}, RETIRED_UPGRADE_AT_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
-}
-
 /**
  * normalizeAdvancedSettings(settings, bundle) → the same object, holding only
- * keys this build knows.
- *
- * ONE NUMBER, ONE ROW, WHEREVER IT IS READ (Copilot, on #1242). The per-item
- * rating migration is value-bearing — it reads the item's authored rating to
- * turn an old plus into the value it used to make — so it cannot live in the
- * static key map above, and a reader that skipped it saw a different number
- * from a reader that did: the item card took the migrated 8 while the settings
- * row still opened on the authored 5, and typing in that row overwrote the 8.
- * Rewriting the profile ITSELF, once, at boot, leaves every reader — the row,
- * the export, the configured bundle, the fight — looking at one key.
+ * keys this build knows: every retired key is deleted, with one warning per
+ * family, and none is converted.
  *
  * In place, because the profile object is shared (`main.js` holds
  * `activeMeta.settings` by reference and saves it); the return value is the
  * same object, for callers that would rather read than mutate.
  */
-export { hasLegacyItemRatingSettings };
-
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
@@ -281,23 +270,16 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
     if (Array.isArray(warnings)) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   }
   // #1294's retired 3–15 opening-hand limits and the retired shared opening
-  // base and attribute go first (#1318), so they are never converted into the
-  // opening-hand row below.
+  // base and attribute (#1318).
   if (hasRetiredOpeningHand(settings)) {
     const kept = new Set(withoutRetiredOpeningHand(Object.entries(settings), warnings).map(([key]) => key));
     for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
-  // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
-  // fallback hand size are stat rows now; their old keys become row keys.
-  // A profile whose stat rows were read here is marked as read by a ruleset-7
-  // build, so its `draw` and `poise` rows are never re-read as the old ones.
-  const readStatRows = hasLegacyStatSettings(settings);
-  const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
-  if (migrated !== settings) {
-    for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
-    Object.assign(settings, migrated);
+  // Ruleset 7's retired stat keys and per-item rating plusses.
+  if (hasRetiredStatSettings(settings)) {
+    const kept = new Set(withoutRetiredStatSettings(Object.entries(settings), warnings).map(([key]) => key));
+    for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
   }
-  if (readStatRows) settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   return settings;
 }
 
@@ -320,9 +302,9 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  */
 export function bringProfileForward(meta, bundle, save, warnings = null) {
   const settings = meta.settings || (meta.settings = {});
-  if (!hasLegacyAdvancedSettings(settings)) return settings;
+  const before = Object.keys(settings).length;
   normalizeAdvancedSettings(settings, bundle, warnings);
-  save(meta);
+  if (Object.keys(settings).length !== before) save(meta);
   return settings;
 }
 
@@ -355,10 +337,18 @@ export function bringProfileForward(meta, bundle, save, warnings = null) {
 //                                           and its bounds retired with them.
 const RETIRED_KEYS = /^(settings\.)?gameConfig\.(startingStats\.autoScale|combatRatings\.ratings\.(ar|dr|pr|poise|ward)\.(pointsPerIncrease|gain|multiplier)|derivedStatRules\.(rules\.(energy|draw|hp|stamina|mana|poise)\.(pointsPerTier|gainPerTier)|defaults\.pointsPerTier)|balance\.levelUp\.tierSize(Min|Max))$/;
 
+// Co-op (Forsaken Together) was removed; a configuration file written while it
+// existed may still carry its three balance numbers. They are skipped on import.
+const REMOVED_COOP_KEYS = /^(settings\.)?gameConfig\.balance\.coop\.(headcountHpFactor|mendHealPct|reviveHp)$/;
+const REMOVED_COOP_WARNING = 'Co-op settings were removed with the multiplayer mode. Those entries were skipped; everything else in the file was imported.';
+
 function withoutRetired(entries, warnings) {
   const upgradeAt = entries.filter(([key]) => !RETIRED_UPGRADE_AT_KEYS.includes(key));
   if (upgradeAt.length !== entries.length) warnings.push(RETIRED_UPGRADE_AT_WARNING);
   entries = upgradeAt;
+  const noCoop = entries.filter(([key]) => !REMOVED_COOP_KEYS.test(key));
+  if (noCoop.length !== entries.length) warnings.push(REMOVED_COOP_WARNING);
+  entries = noCoop;
   const kept = entries.filter(([key]) => !RETIRED_KEYS.test(key));
   if (kept.length !== entries.length) {
     warnings.push('Per-rating tiers and multipliers, and the per-stat tier and gain on HP, Mana, Stamina, Actions, draw and Poise, were replaced by direct attribute weights. Retired entries were skipped; everything else in the file was imported.');
@@ -430,7 +420,7 @@ function balanceGroup(path) {
   if (/^(level|xp\.|skill\.|classTree\.|progressionFeats\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
-  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|coop|endless|customMods)/.test(path)) return 'World';
+  if (/^(map|floors|act|seat|event|treasure|journey|node|atlas|rest|gauntlet|endless)/.test(path)) return 'World';
   return 'Combat';
 }
 
@@ -456,7 +446,7 @@ function balanceGroup(path) {
 // File` abort the file on an unknown key, which is the defect #1238 fixed for
 // the preset cells. `retired` is the same flag a hidden creation mode's pool
 // row carries, and settings.js filters on it.
-const OFF_SCREEN_BALANCE_PATH = /^(coop|gauntlet)\./;
+const OFF_SCREEN_BALANCE_PATH = /^gauntlet\./;
 const RETIRED_BALANCE_PATHS = new Set([
   'energy',
   'draw',
@@ -576,6 +566,7 @@ const BALANCE_LABELS = Object.freeze({
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
   'mana.minStaminaCost': 'Least stamina cost of a mana card',
+  'mana.focusManaDiscount': 'Mana off every magic card in prepared stance with a focus armament equipped',
   'level.maxLevelsPerFight': 'Most levels one award can give',
 });
 
@@ -629,9 +620,7 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // must not end by promising it applies to a new run, so the note beside
       // the number decides that rather than this line appending it to
       // everything.
-      note: isLiveXpSetting(`${ADVANCED_CONFIG_PREFIX}balance.${joined}`)
-        ? (described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`).replace(NEW_RUN_CLAUSE, 'Applies immediately to future XP gains and level costs in the current run.')
-        : described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
+      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
       // `inert` as well as `retired`: nothing reads it, so a stored value is
@@ -741,6 +730,13 @@ function explicitRows(bundle) {
   return rows;
 }
 
+// THE PRESENTATION MODEL. The formation, grid, spawn, layer, offset and movement values the combat
+// battlefield stage and formation movement read. None of them is a setting any more (owner,
+// 2026-11-05): Core draws its formation from the viewport model, and presentationConfig() reads a
+// stored value for only the live keys (the panel size pair and showFormationGrid, LIVE_PRESENTATION_KEYS).
+// Every other stored key is deleted at boot (retiredStoredSettingKeys, main.js) and dropped by Reset,
+// sync and import, so in play they are always PRESENTATION_DEFAULTS. The reader stays because Core
+// combat still consumes the config (docs/CLEANUP-PLAN.md, 3e follow-up).
 const PRESENTATION_ROWS = Object.freeze([
   ...FORMATION_FIELDS.map(field => ({ ...field, note: 'Preview and apply in Formation layout. Grid dimensions are shared by both sides.' })),
   ...[...FORMATION_ROWS].flatMap(row => [
@@ -758,7 +754,7 @@ const PRESENTATION_ROWS = Object.freeze([
   { key: 'settingsHeightPercent', label: 'Settings panel height', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings panel may use.' },
 ]);
 
-function presentationRows() {
+function presentationModelRows() {
   return [
     { cat: 'Advanced', advancedGroup: 'Interface', type: 'text', presentationKey: 'formationGroups',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.formationGroups`, def: '[]', maxLength: 20000, label: 'Formation groups', note: 'Saved group offsets and member positions.' },
@@ -837,6 +833,15 @@ function presentationRows() {
   ];
 }
 
+
+// The one presentation row still a setting: how much of the viewport the Settings panel uses.
+const SETTINGS_PANEL_KEYS = ['settingsWidthPercent', 'settingsHeightPercent'];
+// presentationConfig() reads these only: the panel size, and the combat-tools grid toggle (a live debug key, default on).
+const LIVE_PRESENTATION_KEYS = [...SETTINGS_PANEL_KEYS, 'showFormationGrid'];
+function presentationRows() {
+  return presentationModelRows().filter((row) => SETTINGS_PANEL_KEYS.includes(row.presentationKey));
+}
+
 /**
  * appliedXpMultiplier(settings) → the XP multiplier `configuredContentBundle`
  * applies to the awards, or null when none is stored (the authored awards
@@ -857,7 +862,7 @@ function progressionRows(bundle) {
       min: 0.05, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`,
       label: 'Experience gain multiplier',
-      note: 'Multiply character and skill XP from combat and quests. 1 keeps authored awards. Applies immediately to future XP awards in the current run.',
+      note: 'Multiply character and skill XP from combat and quests. 1 keeps authored awards.',
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
@@ -985,7 +990,17 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...combatRoundsRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
+}
+
+/**
+ * The rows Core 2 still reads as settings: the opening and the presentation rows
+ * (cleanup row 3e). The Settings screen and the import door build THESE rather
+ * than the ~5,000 legacy mechanics rows `advancedConfigRows` also generates for
+ * the content-bundle path (`configuredContentBundle`), which is 3i/3k's to retire.
+ */
+export function liveAdvancedConfigRows(bundle) {
+  return withGates([...prologueRows(), ...presentationRows()], bundle);
 }
 
 /**
@@ -1018,6 +1033,23 @@ export function advancedConfigSnapshot(settings = {}) {
     classMasteryVersion: 1,
     xpCurveVersion: 1,
     overrides: advancedConfigSettings(settings),
+  });
+}
+
+/**
+ * A Core 2 run's snapshot (cleanup 3e): the version fields plus the
+ * `gameConfig.prologue.*` overrides, the only frozen settings a Core 2 run
+ * reads back (the opening scenes). Legacy mechanics keys stored in the profile
+ * (`gameConfig.balance.*`, `recovery.*`, ...) no longer reach the run: Core 2
+ * builds its registries from the profile, not from overrides. An older save
+ * that still carries extra keys loads unchanged; nothing reads them.
+ */
+export function coreAdvancedConfigSnapshot(settings = {}) {
+  const snapshot = advancedConfigSnapshot(settings);
+  const prefix = `${ADVANCED_CONFIG_PREFIX}prologue.`;
+  return Object.freeze({
+    ...snapshot,
+    overrides: Object.fromEntries(Object.entries(snapshot.overrides).filter(([key]) => key.startsWith(prefix))),
   });
 }
 
@@ -1199,7 +1231,7 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // one, or an older snapshot the line above disables — would otherwise have
   // its equip load moved by a dial that changes nothing else (review, #1242).
   if (configured.balance.combatRatings.enabled) {
-    applyItemRatingConfig(configured, bundle, migrateCombatRatingSettings(settings, bundle));
+    applyItemRatingConfig(configured, bundle, settings);
   }
   // A per-class value switched off leaves the class following the global:
   // drop its entry and the engine's own fallback applies.
@@ -1379,7 +1411,8 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
 
 export function presentationConfig(settings = {}) {
   const values = { ...PRESENTATION_DEFAULTS };
-  for (const row of presentationRows()) {
+  // Only a live row's key is read: the battlefield keys are retired, so a stored one never drives combat.
+  for (const row of presentationModelRows().filter((r) => LIVE_PRESENTATION_KEYS.includes(r.presentationKey))) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
     if (row.presentationKey === 'formationGroups') {
@@ -1396,7 +1429,8 @@ export function presentationConfig(settings = {}) {
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, row.integer ? Math.round(number) : number));
     }
   }
-  if (!(`${ADVANCED_CONFIG_PREFIX}presentation.formationGroups` in settings)) {
+  {
+    // formationGroups is retired (no row reads a stored value): always derived from the formation.
     values.formationGroups = suppliedFormationPositioning(`${values.formationColumns}x${values.formationRows}`)?.formationGroups || '[]';
   }
   return values;
@@ -1407,9 +1441,6 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     game: 'Ashen Spire',
     build,
-    // Written by a ruleset-7 build: its `draw` and `poise` rows mean what they
-    // mean now (model/statRows.js).
-    statRows: STAT_ROWS_VERSION,
     overrides: advancedConfigSettings(settings, additionalKeys),
   }, null, 2) + '\n';
 }
@@ -1452,7 +1483,31 @@ function tolerateRaisedFloors(entries, rows, warnings) {
   return kept.filter(([key]) => !skippedGroups.has(rows.get(key)?.floorGroup));
 }
 
-export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = []) {
+// THE RETIRED LEGACY SETTINGS GROUPS (cleanup row 3e). Core 2 reads none of the
+// Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World or
+// (bar `playInDeckOrder`) Deck rows, and the Settings screen no longer draws
+// them, so a file or sync profile exported while they existed still carries
+// their keys. They are dropped with one named warning, never refused as
+// unknown: only `gameConfig.prologue.*` and `gameConfig.presentation.*` are
+// still settings. The plain-key settings game code still reads by key
+// (shopSell, reward*, victory*, deck*, ...) are NOT dropped: they keep their rows.
+const RETIRED_LEGACY_GROUP_KEYS = /^(settings\.)?(gameConfig\.(?!prologue\.|presentation\.(?:settings(?:Width|Height)Percent|showFormationGrid)$)|recovery\.(hp|stamina|mana)\.)/;
+// A live row exported under a gameConfig alias (see advancedConfigSettings and the additional-row
+// mapping in parseAdvancedConfigFile): the alias is not retired while its row is. levelUpValue is
+// the only one.
+const LIVE_ALIAS_KEYS = /^(settings\.)?gameConfig\.balance\.levelUp\.pointsPerLevel$/;
+export const RETIRED_LEGACY_GROUPS_WARNING = 'Progression, Combat, Stats, Recovery, Rewards, Shops, Equipment, World and Battlefield settings were retired: Core 2 takes its mechanics from the game profile. Those entries were skipped; everything else in the file was imported.';
+/** isRetiredLegacySettingKey(key) → true for a stored key the retired legacy groups left behind. */
+export const isRetiredLegacySettingKey = (key) => RETIRED_LEGACY_GROUP_KEYS.test(key) && !LIVE_ALIAS_KEYS.test(key);
+/** retiredStoredSettingKeys(settings) → the stored keys the boot cleanup deletes (every retired legacy key). */
+export const retiredStoredSettingKeys = (settings = {}) => Object.keys(settings || {}).filter(isRetiredLegacySettingKey);
+export function withoutRetiredLegacyGroups(entries, warnings) {
+  const kept = entries.filter(([key]) => !isRetiredLegacySettingKey(key));
+  if (kept.length !== entries.length) warnings.push(RETIRED_LEGACY_GROUPS_WARNING);
+  return kept;
+}
+
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = [], warnings = [], { dropRetiredLegacy = false } = {}) {
   if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
   let file;
   try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
@@ -1461,21 +1516,21 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
     throw new Error('Choose an Ashen Spire configuration exported by this version.');
   }
-  const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
+  // Dropped FIRST, before any migration reads the keys it would otherwise convert.
+  if (dropRetiredLegacy) file = { ...file, overrides: Object.fromEntries(withoutRetiredLegacyGroups(Object.entries(file.overrides), warnings)) };
+  const rows = new Map((dropRetiredLegacy ? liveAdvancedConfigRows(bundle) : advancedConfigRows(bundle)).map(row => [row.key, row]));
+  // The combat-tools grid key has no Settings control but is still a live, importable key.
+  for (const row of presentationModelRows().filter((r) => r.presentationKey === 'showFormationGrid')) if (!rows.has(row.key)) { rows.set(row.key, row); rows.set(`settings.${row.key}`, row); }
   for (const row of additionalRows) {
     if (!['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
     if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
   }
   const changes = {};
-  // A file exported before the per-item rows became the item's own ratings
-  // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
-  // reads each as the value it used to make. Done HERE, at the door, because
-  // the next line refuses an unknown key by aborting the whole file.
-  // A file exported before ruleset 7 carries no `statRows` stamp. #1294's
-  // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
-  // converted into the opening-hand row.
-  const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
-  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningHand(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
+  // A file exported before ruleset 7 carries retired stat keys and per-item
+  // rating plusses. They are dropped with a warning, never converted, and the
+  // retired opening-hand limits go with them: all BEFORE the check below that
+  // refuses an unknown key by aborting the whole file.
+  const overrides = Object.fromEntries(withoutRetiredStatSettings(withoutRetiredOpeningHand(Object.entries(file.overrides), warnings), warnings));
   // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
   // before an unknown key could refuse the file; said here, once. The retired
   // opening-hand limits and shared opening base/attribute (which have no row)

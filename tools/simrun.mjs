@@ -38,7 +38,6 @@ import {
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
-import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 /** A run that stops making progress (a fight that never resolves, a walk that never reaches its boss). */
 export class SoftLock extends Error {}
@@ -71,7 +70,7 @@ export function payFightXp(REG, run, combat, enc) {
  *   pilot: { pathHurtBelow, restBelow }   defaults PILOT
  *   levelPick(run) → attribute id         default 'constitution'
  *   attributes(classId) → allocation      default the shipped preset
- *   graceOn (default true), seededSeats, endless, endlessActCap (default 15),
+ *   graceOn (default true), seededSeats,
  *   stepBudget (default: the act map's node count), mapCycle (the runsim plant)
  *   hooks: onRunStart(run, ctx), onActOpen(run, act, ctx),
  *          onDeath(run, act, hpIn, ctx), onFightWon(run, { act, floor, pool }, ctx)
@@ -210,24 +209,19 @@ export function createRunLoop(REG, config) {
       return null;
     };
 
-    const lastAct = config.endless ? (config.endlessActCap || 15) : 3;
-    for (let act = 1; act <= lastAct; act++) {
+    for (let act = 1; act <= 3; act++) {
       run.actNumber = act;
       result.act = act;
       hook('onActOpen', run, act, ctx);
-      // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
-      const { contentAct, loop } = config.endless ? endlessActInfo(act) : { contentAct: act, loop: 0 };
+      const contentAct = act;
       const seat = seatAtTier(run.seatOrder, contentAct);
       result.tiers.push({ tier: contentAct, seat, cleared: false });
-      // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; exactly 1
-      // when the seat is climbed at its authored baseline, i.e. every default-
-      // order run).
+      // The seat's tier ratio (SPEC §13.3; exactly 1 when the seat is climbed
+      // at its authored baseline, i.e. every default-order run).
       const tierMult = seatTierHpMult(REG, seat, contentAct);
-      const hpMult = (1 + ENDLESS_HP_PER_LOOP * loop) * tierMult;
-      const cm = hpMult !== 1 || loop > 0
-        ? { hpMult, loopMult: 1 + ENDLESS_HP_PER_LOOP * loop, enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * loop }] : [] }
-        : {};
-      // The ONE boot path (#54) — same module main.js and session.mjs use, so a
+      const hpMult = tierMult;
+      const cm = hpMult !== 1 ? { hpMult, loopMult: 1, enemyStatuses: [] } : {};
+      // The ONE boot path (#54) — same module main.js uses, so a
       // signature change lands on the game and the harnesses in the same act.
       const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
       // Plant (runsim --selftest): every node a skipped merchant whose only exit

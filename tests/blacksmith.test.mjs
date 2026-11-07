@@ -560,7 +560,10 @@ test('Stack Copy refuses capped Rogue Powers, respects a raised limit and leaves
 });
 
 test('the blacksmith upgrade modal commits its displayed quote and reports a stale refusal', () => {
-  withKitDom((dom) => {
+  // The confirmation door arms an input-shield timer on commit; it must not fire after the fixture is torn down.
+  const priorTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = () => 0;
+  try { withKitDom((dom) => {
     globalThis.HTMLElement = dom.document.body.constructor;
     const { run } = smithRun(OUT);
     const app = dom.document.createElement('main');
@@ -568,16 +571,16 @@ test('the blacksmith upgrade modal commits its displayed quote and reports a sta
     let changed = 0;
     mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
     app.querySelector('#shop-cat-upgrade').click();
-    app.querySelector('#blacksmith-upgrade button').click();
-    const confirm = app.querySelector('.smith-confirm');
-    assert.ok(confirm, 'the upgrade quote is displayed');
+    app.querySelector('#blacksmith-upgrade .merchant-offer-action').click();
+    const confirm = document.querySelector('.confirmation-confirm');
+    assert.ok(confirm, 'the upgrade quote is displayed in the item\'s own modal');
     commitRefine(OUT, run, refinePlan(OUT, run));
     const before = JSON.stringify(run);
     confirm.click();
     assert.equal(JSON.stringify(run), before, 'confirm cannot silently requote');
     assert.equal(changed, 0);
     assert.ok(app.querySelector('.bs-refusal').textContent.includes(shopSentence('shop.refuse.stale')));
-  });
+  }); } finally { globalThis.setTimeout = priorTimeout; }
 });
 
 for (const service of ['extract', 'install']) {
@@ -591,7 +594,7 @@ for (const service of ['extract', 'install']) {
       let changed = 0;
       mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
       app.querySelector(`#shop-cat-${service}Art`).click();
-      app.querySelector(`#blacksmith-${service}Art button`).click();
+      app.querySelector(`#blacksmith-${service}Art .merchant-offer-action`).click();
       const item = app.querySelector(`[data-item-ref="${KATANA}"]`);
       item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
       item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
@@ -610,3 +613,76 @@ for (const service of ['extract', 'install']) {
     });
   });
 }
+
+// ---------------------------------------------------------------------------
+// The what-changed receipt on the legacy Blacksmith (SPEC §14.4)
+// ---------------------------------------------------------------------------
+test('what-changed: a cut sigil slot diffs to a slot-capacity row naming the item', async () => {
+  const { snapshotRunForDiff, diffRunSnapshots } = await import('../src/model/runChangeReceipt.js');
+  const { run } = smithRun(OUT, { cinders: 5000 });
+  const before = snapshotRunForDiff(run);
+  const slots = offeringOf(OUT, 'sigilSlots').sigilSlots;
+  commitSigilSlot(OUT, run, sigilSlotPlan(OUT, run, SWORD));
+  const diff = diffRunSnapshots(before, snapshotRunForDiff(run), OUT);
+  const row = diff.rows.find((r) => /SIGIL SLOTS/.test(r.label));
+  assert.ok(row, 'a slot row');
+  assert.equal(row.before, String(slots.base)); assert.equal(row.after, String(slots.base + 1));
+  assert.match(row.label, /Straight Sword|straightSword/i);
+});
+
+test('what-changed: committing the extract service opens a receipt with the art and the cinder cost', () => {
+  withKitDom((dom) => {
+    globalThis.HTMLElement = dom.document.body.constructor;
+    const { run } = smithRun(OUT);
+    run.loadout.storage.push('katana');
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    app.querySelector('#shop-cat-extractArt').click();
+    app.querySelector('#blacksmith-extractArt .merchant-offer-action').click();
+    const item = app.querySelector(`[data-item-ref="${KATANA}"]`);
+    item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+    item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+    app.querySelector('[data-mount-key]').click();
+    const cinders = run.cinders;
+    app.querySelector('.mount-confirm').click();
+    const modal = dom.document.body.querySelector('.what-changed-modal');
+    assert.ok(modal, 'receipt open');
+    assert.ok(modal.querySelector('[data-what-changed-kind="card"]'), 'the extracted art is a card row');
+    if (run.cinders < cinders) assert.ok(modal.querySelector('.what-changed-cost'), 'cinder cost strip');
+  });
+});
+
+test('every Blacksmith offer is a Merchant row: shared markup, one action, art or glyph, unaffordable rows locked', () => {
+  withKitDom((dom) => {
+    const { run } = smithRun(OUT, { stones: 10, cinders: 1000 });
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    assert.ok(app.querySelector('.shop-workspace').classList.contains('merchant-workspace'), 'the merchant row CSS applies');
+    for (const shelf of app.querySelectorAll('[data-shop-shelf]')) {
+      for (const row of shelf.querySelectorAll(':scope > .shop-offer')) {
+        assert.ok(row.classList.contains('merchant-offer'), `${shelf.dataset.shopShelf}: an offer uses the merchant row`);
+        assert.ok(row.querySelector('.merchant-offer-media'), 'art or glyph slot');
+        assert.ok(row.querySelector('.merchant-offer-details h3'), 'name');
+        assert.ok(row.querySelector('.merchant-offer-actions'), 'actions column');
+      }
+    }
+    const arms = app.querySelector('#blacksmith-armaments .merchant-offer');
+    assert.ok(arms, 'armaments are rows');
+    assert.ok(arms.querySelector('.merchant-offer-price'), 'a buy row shows its price under the button');
+    assert.equal(arms.querySelector('.merchant-offer-action').textContent, shopSentence('blacksmith.action.buy'));
+  });
+  withKitDom((dom) => {
+    const { run } = smithRun(OUT, { stones: 10, cinders: 0 });
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    app.querySelector('#shop-cat-armaments')?.click();
+    const poor = app.querySelector('#blacksmith-armaments .merchant-offer');
+    assert.ok(poor, 'the armaments rack has a row to be unaffordable');
+    assert.ok(poor.classList.contains('locked'), 'an unaffordable row is locked, as the merchant draws it');
+    assert.ok(poor.querySelector('.merchant-offer-action').disabled);
+    assert.ok(poor.querySelector('.shop-offer-avail'), 'the reason is stated in the row');
+  });
+});

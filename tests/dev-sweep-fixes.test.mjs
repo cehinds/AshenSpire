@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 // tests/dev-sweep-fixes.test.mjs — the four dev defects reported with evidence
 // on #999, which was closed without merging. Each check pins the FIX, and each
 // one fails on the code as it stood:
@@ -23,10 +22,8 @@ import { readFileSync } from 'node:fs';
 // Historical defect receipts retain their original character/combat contract.
 import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
-import { createSession } from '../tools/session.mjs';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
-import { projectCombatantInspector } from '../src/ui/models/CombatantInspectorSections.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 // These files EXPLAIN the defect in their comments, naming the very expression
@@ -84,67 +81,7 @@ ok(!/\.act\s*\|\|\s*1/.test(balanceSrc),
   'and no longer defaults a missing `act` to tier 1');
 
 // ---- 2 + 3. the co-op snapshot carries the seat and the fight's history -----
-if (COOP_TESTS_ENABLED) {
-const host = createSession({ registries: reg, seedString: 'GUARD2' });
-for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
-host.start();
-// This receipt verifies the historical performed-move snapshot contract. New
-// reaction behavior is exercised separately with resumable choice commands.
-for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
-const preFight = host.snapshot();
-ok(Array.isArray(preFight.seatOrder) && preFight.seatOrder.length === reg.seats.all().length,
-  'the snapshot carries the drawn seat order');
-ok(typeof preFight.seatId === 'string' && reg.seats.has(preFight.seatId),
-  'the snapshot names the seat the party is climbing');
-ok(preFight.seatName === reg.seats.get(preFight.seatId).name,
-  `the snapshot carries the seat's display name ('${preFight.seatName}') — what coop.js reads for the fight header`);
 
-for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
-const opening = host.snapshot();
-ok(opening.scene.kind === 'combat', 'the party is in a fight');
-ok(opening.scene.enemies.every((e) => Array.isArray(e.performedMoves)),
-  'every enemy carries a performedMoves array — an EMPTY one is "has not acted yet"');
-ok(opening.scene.enemies.every((e) => e.performedMoves.length === 0),
-  'nothing has resolved on the opening turn, and the field says so rather than being absent');
-
-// Play the fight out far enough that an enemy actually acts.
-//
-// THE READING COMES FROM THE LAST TURN THAT WAS STILL A FIGHT (2026-09-21). A
-// finished fight's snapshot carries no enemies at all, and a party can now
-// FALL inside six turns — the derived-stat bases moved, so two Reavers climb
-// on 36 HP rather than the 70 this loop was written against. Reading the sixth
-// snapshot unconditionally made the assertion depend on the party surviving,
-// which is not what it is about: what it tests is that a snapshot of a fight
-// in progress reports the moves each enemy has PERFORMED.
-let later = opening;
-for (let turn = 0; turn < 6 && !host.live?.combat?.result; turn++) {
-  for (const id of ['p1', 'p2']) host.combatEndTurn(id);
-  const snapshot = host.snapshot();
-  if (snapshot.scene.kind !== 'combat') break;
-  later = snapshot;
-}
-const acted = (later.scene.enemies || []).filter((e) => e.performedMoves.length);
-ok(acted.length > 0, 'after the enemy phases, at least one enemy reports the moves it PERFORMED');
-ok(acted.every((e) => e.performedMoves.every((m) => typeof m === 'string' && m)),
-  'each recorded move is a move id the client can name');
-
-const coopSrc = code('src/ui/screens/coop.js');
-ok(/const\s+history\s*=\s*def\s*&&\s*Array\.isArray\(entity\.performedMoves\)/.test(coopSrc),
-  'coop.js builds the inspector\'s history from performedMoves');
-ok(/\{\s*moveCards\s*,\s*history\s*[,}]/.test(coopSrc),
-  'the enemy subject carries that history, so the section reads `known`/`none` instead of `unknown`');
-const historySection = (enemy) => projectCombatantInspector({
-  name: enemy.defId || enemy.id,
-  history: enemy.performedMoves.map((moveId) => ({ name: moveId })),
-}).sections.find((section) => section.id === 'history');
-ok(opening.scene.enemies.every((enemy) => historySection(enemy).knowledge === 'none'),
-  'opening snapshot histories project as known empty, rather than unread');
-ok(acted.every((enemy) => historySection(enemy).knowledge === 'known'
-  && historySection(enemy).rows[0].label === enemy.performedMoves.at(-1)),
-  'performed snapshot moves project as known history, newest first');
-ok(/seatName\s*:\s*snap\.seatName\s*\|\|\s*null/.test(coopSrc),
-  'coop.js passes the seat name through to the map board\'s act plate');
-}
 
 // ---- 4. a finished fight is not a resume point ------------------------------
 const finished = { result: 'victory', loadout: {}, player: { flasks: [], flaskCharges: {}, hp: 1, maxHp: 1, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0 }, equipmentPoolDeficits: {}, itemUpgradeLevels: {} };

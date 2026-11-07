@@ -242,9 +242,11 @@ try {
       "artwork remains selectable through grid",
     );
     if (profile === "core") {
-      assert.ok(
-        initial.visualOnlyC > 0,
-        "Core C outlines are presentation only",
+      // Owner 2026-11-05: the extra enemy strip is drawn only when Core enables it, so none is drawn by default.
+      assert.equal(
+        initial.visualOnlyC,
+        0,
+        "no extra (C) strip while Core's extra row is disabled",
       );
       assert.equal(
         await page.locator('.combatant.enemy[data-visual-band="C"]').count(),
@@ -301,7 +303,11 @@ try {
     : [
         [1920, 1080],
         [1024, 768],
+        [1280, 800],
+        [1440, 900],
         [390, 844],
+        [375, 667],
+        [844, 390],
       ]) {
     const page = await browser.newPage({
       viewport: { width, height },
@@ -321,7 +327,17 @@ try {
       ),
     );
     await capture(page, `core-${width}.png`);
-    results.push({ width, height, grid: shown });
+    // The player's back strip (reach) must be fully visible above the resting cards, with the open gap above its front strip.
+    const strips = await page.evaluate(() => {
+      const rects = band => [...document.querySelectorAll(`.formation-grid-cell[data-visual-band="${band}"]`)].filter(n => !n.hidden).map(n => n.getBoundingClientRect());
+      const cards = [...document.querySelectorAll(".hand .card")].map(n => n.getBoundingClientRect().top);
+      return { enemyFrontBottom: Math.max(...rects("B").map(r => r.bottom)), playerFrontTop: Math.min(...rects("D").map(r => r.top)),
+        playerBackBottom: Math.max(...rects("E").map(r => r.bottom)), playerBackCount: rects("E").length, cardTop: Math.min(...cards) };
+    });
+    assert.equal(strips.playerBackCount, 3, `${width}x${height}: the player back strip is drawn`);
+    assert.ok(strips.playerFrontTop - strips.enemyFrontBottom > 0, `${width}x${height}: open ground between the teams`);
+    assert.ok(strips.playerBackBottom <= strips.cardTop + 1, `${width}x${height}: the player back strip ends above the cards (${strips.playerBackBottom} vs ${strips.cardTop})`);
+    results.push({ width, height, grid: shown, strips });
     await page.close();
   }
   writeFileSync(

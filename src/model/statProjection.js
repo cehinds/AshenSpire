@@ -8,7 +8,7 @@ import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
-import { handStatRows, ratingStatRows, ratingsConfigFor, readsLegacyStatHomes, statRow } from './statRows.js';
+import { handStatRows, ratingStatRows, ratingsConfigFor, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { handSizeReceipts, resolveHandRules } from './handRules.js';
 
@@ -262,19 +262,10 @@ export function statProjection(registries, run) {
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''}`
         + `${receipt.raw !== receipt.value ? `, held to ${receipt.value === receipt.min ? `at least ${receipt.min}` : `at most ${receipt.value}`}` : ''} = ${value}`,
-      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: solo fights draw by its hand rules, co-op by this value.' : '',
+      note: id === 'stamina' ? 'Pays card and combat costs; refills at the start of every turn.' : id === 'draw' && !isStatRowRuleset(snapshot.rulesetVersion) ? 'This run was born before the hand rows: its fights draw by its hand rules.' : '',
     };
   });
-  // The rating rows this run reads (its own, or its retired formula restated),
-  // so an attribute card names the weights its fights actually use.
-  // A RUN BORN BEFORE RULESET 7 has no openingHand/handSize rows in its
-  // snapshot, and its `draw` row is the co-op draw: its solo fights deal by
-  // its retired hand groups — all three — restated as rows here so its
-  // attribute cards name the scaling combat uses (Codex, #1296).
-  const handRows = readsLegacyStatHomes(run)
-    ? Object.fromEntries(['openingHand', 'draw', 'handSize'].map((id) => [id, statRow(registries, run, id)]))
-    : null;
-  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows };
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows: null };
 }
 
 /**

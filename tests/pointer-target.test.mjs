@@ -32,12 +32,13 @@ test('pointer target refuses a wholly covered or offscreen control', () => {
   assert.throws(fixture(({target}) => target, {x:250,y:250,width:100,height:100}), /no unobstructed/);
 });
 
-function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, targetStyle = {}, coreStyle = null } = {}) {
+function formationFixture(hitAt, { zoom = 1, originY = 10, localHeight = 400, targetStyle = {}, coreStyle = null, spriteRect = null } = {}) {
   const rect = { x: 20, y: originY, width: 100 * zoom, height: localHeight * zoom };
   const core = { x: 20 + parseFloat(targetStyle.left ?? '70') * zoom, y: originY + parseFloat(targetStyle.top ?? '333') * zoom };
   const samples = [];
   const target = { scrollIntoView() {}, getBoundingClientRect: () => rect,
     matches: () => true, offsetWidth: 100,
+    querySelector: sel => sel === '.sprite' && spriteRect ? { getBoundingClientRect: () => spriteRect } : null,
     contains: el => [target, art, nested].includes(el), closest: () => target };
   const art = { closest: () => target }, nested = { closest: () => nested }, blocker = { closest: () => null };
   const style = { left: '70px', top: '333px', width: `${104 / zoom}px`, height: `${44 / zoom}px`,
@@ -75,6 +76,23 @@ test('formation sampling reaches its independently fitted 44px core before the o
     ({ x: probe.rect.x + probe.rect.width * fx, y: probe.rect.y + probe.rect.height * fy })));
   assert.ok(oldGrid.every(({ x, y }) => Math.abs(x - probe.core.x) >= 22 || Math.abs(y - probe.core.y) >= 22),
     'this placement genuinely defeats all original 15 points');
+});
+
+test('core mode: a sprite box the tall frame grid misses is sampled first', () => {
+  // Frame 100x400 at (20,10); the sprite sits between the frame grid's sample rows.
+  const spriteRect = { x: 50, y: 120, width: 40, height: 40 };
+  const hitSprite = ({ target, blocker }, x, y) => x >= 50 && x < 90 && y >= 120 && y < 160 ? target : blocker;
+  const probe = formationFixture(hitSprite, { spriteRect, targetStyle: { pointerEvents: 'none' } });
+  const oldGrid = [0.5, 0.75, 0.25, 0.9, 0.1].flatMap(fy => [0.5, 0.25, 0.75].map(fx =>
+    ({ x: probe.rect.x + probe.rect.width * fx, y: probe.rect.y + probe.rect.height * fy })));
+  assert.ok(oldGrid.every(({ x, y }) => !(x >= 50 && x < 90 && y >= 120 && y < 160)), 'the frame grid genuinely misses the sprite');
+  assert.deepEqual(probe.run(), { x: 70, y: 140 });
+  assert.deepEqual(probe.samples, [{ x: 70, y: 140 }]);
+});
+test('core mode without a sprite falls back to the frame box and still refuses a covered one', () => {
+  const probe = formationFixture(({ target }) => target, { targetStyle: { pointerEvents: 'none' } });
+  assert.deepEqual(probe.run(), { x: 70, y: 210 });
+  assert.throws(formationFixture(({ blocker }) => blocker, { targetStyle: { pointerEvents: 'none' } }).run, /no unobstructed/);
 });
 
 test('formation target coordinates account for CSS zoom without scaling the physical core twice', () => {

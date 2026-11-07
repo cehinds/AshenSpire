@@ -1,17 +1,17 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
 import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
-import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
-import { advancedConfigSnapshot } from './advancedConfig.js';
+import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
 import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
@@ -29,7 +29,6 @@ import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 import { bindTurnStamina } from './turnStamina.js';
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, reconcileGrantedCards, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
-import { journeyProblems } from './worldAtlas.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
 import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
@@ -49,11 +48,12 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { snapshotEnemyKnowledgeRules } from './enemyKnowledgeRules.js';
+import { weaknessDiscoveryProblems } from './weaknessDiscovery.js';
 import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
-import { combatSnapshotProblems } from './combatSnapshot.js';
+import { combatSnapshotProblems, bringStancesForward } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
 import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
@@ -175,6 +175,16 @@ export function createRunState({
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const profileSubject = { gameProfile };
   const configured = isConfiguredRun(profileSubject);
+  // A configured profile (Core 2) fights expanded combat with the profile's own
+  // reaction rules whatever the caller asked — engine/combat.js createCombat
+  // forces the same — so the run and every checkpoint its fights write agree.
+  // A run born v1 against a v2 fight failed validation at the load door and
+  // was archived (tools/slot-load-door.mjs, 2026-11-07).
+  if (configured) {
+    combatExpansionVersion = 2;
+    const reactions = configuredModule(profileSubject, 'reactions');
+    reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
+  }
   if (configured) enemyKnowledgeVersion = null;
   if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
   const fixedAttributes = gameModule(profileSubject, 'class-selection')?.mode === 'configured' ? gameProfileAttributes(profileSubject, classId) : null;
@@ -228,7 +238,7 @@ export function createRunState({
       ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
     ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
-    advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
+    advancedConfigSnapshot: { ...(configured ? coreAdvancedConfigSnapshot : advancedConfigSnapshot)(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -703,6 +713,8 @@ export const RUN_SHAPE = [
   { key: 'collectedCardIds', type: 'array', optional: true },
   { key: 'gameProfile', type: 'object', optional: true },
   { key: 'rangePolicy', type: 'object', optional: true },
+  // Weakness discovery (SPEC 5.3): { enemyId: ['piercing:damage'] }, set when the player triggers an enemy's weakness.
+  { key: 'weaknessDiscovery', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
   { key: 'rewardOfferHistory', type: 'object', optional: true },
@@ -870,10 +882,8 @@ export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
  * The ONE writer of `zones` and `collection`. Called at createRunState, in
  * serializeRun (so what is written is what the legacy fields say at that
  * moment, whatever a writer did between), at the migration door, at the end
- * of the two load doors that heal and re-stamp after the migration
- * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
- * session's serialize, which emits member runs without serializeRun. Until
- * phase 3b, nothing else may write these two fields.
+ * of the load door that heals and re-stamps after the migration (save.js
+ * loadRun). Until phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {
   recordCollectedCards(run);
@@ -1098,12 +1108,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!id || !Number.isInteger(level) || level < 0) problems.push(`classRewardLevels.${id} must be a non-negative integer`);
     }
   }
-  problems.push(...legacyDungeonProblems(run));
-  if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  if (run.legacyDungeon !== undefined) problems.push('legacyDungeon: legacy dungeons are no longer supported');
+  if (run.journey !== undefined) problems.push('journey: World Journey runs are no longer supported');
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
-  for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
-    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`, { required: !preShopKinds }));
-  }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
@@ -1143,7 +1150,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   problems.push(...enemyKnowledgeRunProblems(run));
   if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
-  problems.push(...coopProgressionProblems(run));
+  problems.push(...weaknessDiscoveryProblems(run.weaknessDiscovery));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
@@ -1570,6 +1577,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       // The derived every-5th-level skill bonus (SPEC §13.4o), absent at 0.
       if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].skillBonus must be a whole number from 1 to ${MAX_CARD_RANK}`);
       if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_CARD_RANK)) problems.push(`${pile}[${i}].passiveBlock must be a whole number from 1 to ${MAX_CARD_RANK}`);
+      // Plays across earlier fights (SPEC §4.3 Zero-cost cards and ramp); Honed cards read it.
+      if (card.playsEver !== undefined && !(Number.isInteger(card.playsEver) && card.playsEver >= 0)) problems.push(`${pile}[${i}].playsEver must be a non-negative whole number`);
       // A set-aside attack basic's slot is retired; any other would make the
       // next restamp disagree with the allocation.
       if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
@@ -1820,7 +1829,7 @@ export function migrateRunSchema(run) {
   // A saved fight's own stances, counters, carriers and tags read the range
   // rename the same way (combatRanges.js), in memory only.
   for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
-    if (holder?.snapshot) bringRangesForward(holder.snapshot);
+    if (holder?.snapshot) { bringRangesForward(holder.snapshot); bringStancesForward(holder.snapshot); }
   }
   if (preShopKinds) bringShopStockForward(run);
   // Status rows added to the shipped rule table after a v2 run began join its frozen copy.
@@ -1952,7 +1961,7 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, weaknesses, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
@@ -1975,6 +1984,8 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     ? { ...structuredClone(arcaneExposure), value: 0 }
     : { mode: 'immune' };
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  // Authored weaknesses (SPEC 5.3, model/enemyWeaknessRules.js): read by engine/weaknesses.js.
+  if (Array.isArray(weaknesses) && weaknesses.length) entity.weaknesses = structuredClone(weaknesses);
   // A fight-wide move-damage scale (SPEC §13.3 balance.bossTiers). Stamped
   // only when it is not 1, so every unscaled enemy — and every snapshot
   // written before the row existed — keeps its exact shape.
@@ -1995,4 +2006,3 @@ export function enemyMoveDamage(enemy, move) {
   if (mult === 1 || !(move.damage > 0)) return move.damage;
   return Math.max(1, Math.round(move.damage * mult));
 }
-import { legacyDungeonProblems } from './legacyDungeon.js';

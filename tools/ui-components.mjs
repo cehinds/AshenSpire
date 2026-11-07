@@ -149,8 +149,6 @@ export function catalogDisagreement(md, html) {
 //   - a preference guard written with CSS nesting is rejected; un-nest it;
 //   - a hexadecimal escape in a quoted guard value (`'fal\73 e'`) is not
 //     decoded, so the guard is rejected; write the value plainly.
-// Unseen here: combat.css's co-op formation rule sets the HUD top to
-// display:flex (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
@@ -522,6 +520,8 @@ export function receipt() {
     smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
     saveSlotSelectionModel: read('src/ui/models/SaveSlotSelectionModel.js'),
     smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
+    // The Smith's door stands in the deck editor's desk, which owns the dialog frame and the two ways out.
+    upgradeDesk: read('src/ui/components/upgradeDesk.js'),
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
@@ -529,7 +529,7 @@ export function receipt() {
     health: read('src/ui/components/combatHealth.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
-    spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
+    spriteScale: read('src/ui/models/CombatViewportSizeModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
@@ -546,9 +546,8 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
-    // The combat action row's one home since 2026-10-01; solo and co-op both mount it.
+    // The combat action row's one home since 2026-10-01.
     actionRow: read('src/ui/components/combatActionRow.js'),
-    coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
     controls: read('src/ui/screens/controls.js'),
@@ -645,28 +644,18 @@ export function findings(r) {
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
-      // ONE SCALE FOR THE STAGE (2026-09-04; re-homed 2026-09-09 in
-      // models/CombatSpriteScaleModel.js `fitCombatSprites`). The stage used
-      // to divide each card by its OWN sprite's natural height, so every
-      // combatant rendered a different width. The fitter now reduces ONE
-      // `base` across every actor and derives each sprite's height from it —
-      // this asserts the reduce and the apply, so a return to per-frame
-      // scaling is red.
-      // The alternative camera has a separate, bounded silhouette fitter;
-      // its geometry is exercised by alternative-formation.test.mjs.
-      || !(/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors[,\s}]/.test(r.battlefieldStage)
-        || (/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
-          && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
-      || (/alternativeFormation\(plan/.test(r.battlefieldStage)
-        && !(/import \{ alternativeFormation, fitAlternativeSprites \} from '\.\.\/models\/AlternativeFormationModel\.js';/.test(r.battlefieldStage)
-          && /fitAlternativeSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors, narrow \}\)/.test(r.battlefieldStage)))
-      || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
-      // A presentation multiplier (sprite scale settings) grows a figure after
-      // this shared height, capped per side to the screen (2026-09-27).
-      || !/const heightOf = a => base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
+      // ONE SIZE RULE FOR THE STAGE (owner, 2026-11-02; replaces the 2026-09-04 shared
+      // `base` fit). Every combatant's head-to-feet body is a share of the viewport
+      // height times a capped stature (models/CombatViewportSizeModel.js
+      // `fitViewportSprites`), whatever the enemy count, hand or HUD band. This
+      // asserts the stage calls it and the model keeps the percentage rule, so a
+      // return to per-frame or shared-base scaling is red.
+      || !(/import \{ fitViewportSprites \} from '\.\.\/models\/CombatViewportSizeModel\.js';/.test(r.battlefieldStage)
+        && /fitViewportSprites\(\{ width: fieldRect\.width, actors,/.test(r.battlefieldStage))
+      || !/viewportHeight \* bodyHeightFraction\(portraitPhone, config\) \* statureMultiplier\(ratio, config\)/.test(r.spriteScale)
       || !stableCombatStageRendering(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
-      || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat) || !/combatActionRowHtml\(/.test(r.coop)
+      || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
       || !/UI\.combatantSprite/.test(r.frame)
       || !/UI\.combatantNameplate/.test(r.frame)
@@ -675,7 +664,7 @@ export function findings(r) {
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
       || !/UI\.intentIndicator/.test(r.overhead)
-      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat) || !/combatHealthRow\(/.test(r.coop)
+      || !/UI\.blockBadge/.test(r.health) || !/combatHealthRow\(/.test(r.combat)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
       || !/UI\.guardedDamageIndicator/.test(r.fx)
@@ -839,8 +828,6 @@ export function findings(r) {
       || /\btrayModel\s*\(/.test(r.armouryModels)
       || !/const regionModels = regions\.map\([\s\S]*return item;/.test(r.armouryModels)
       || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
-      || !/view === 'cards'/.test(r.equipment)
-      || !/gallery\.appendChild\(card\)/.test(r.equipment)
       // THE EDGE TABLE MOVED, AND THE ASSERTION FOLLOWED IT RATHER THAN BEING
       // DROPPED. What C15 has always guarded is that a tray's mark is EDGE-AWARE
       // and frozen — four edges, each with a closed and an open answer — not
@@ -924,13 +911,6 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
   }
-  if (!/import \{ hudQuickSettingsHtml, wireHudQuickSettings \}/.test(r.coop)
-      || !/import \{ hudQuickSettingsModel \}/.test(r.coop)
-      || (r.coop.match(/hudQuickSettingsHtml\(hudQuickSettingsModel\(\{/g) || []).length !== 2
-      || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
-      || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
-    bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
-  }
   const smithIds = ['smith-upgrade-modal', 'smith-candidate-card', 'smith-upgrade-preview'];
   if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
@@ -938,19 +918,20 @@ export function findings(r) {
       || !/itemRef,/.test(r.smithSelectionModel)
       || !/currentLevel:\s*candidate\.currentLevel[\s\S]*nextLevel:\s*candidate\.nextLevel[\s\S]*cost:\s*candidate\.cost[\s\S]*stones:\s*candidate\.stones[\s\S]*shortfall:\s*candidate\.shortfall[\s\S]*affordable:\s*candidate\.affordable/.test(r.smithSelectionModel)
       || !/affectedRows:\s*itemKind === 'armament'[\s\S]*groupedAffected\(candidate\.previewCards \|\| candidate\.affectedCards\)[\s\S]*genericAffected\(candidate\)/.test(r.smithSelectionModel)
-      || !/canConfirm:\s*Boolean\(selected\?\.affordable\)/.test(r.smithSelectionModel)
+      || !/canConfirm:\s*Boolean\(selected\?\.affordable && !selected\.needsBlacksmith\)/.test(r.smithSelectionModel)
       || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
-      || !/role', 'dialog'/.test(r.smithUpgradeModal)
-      || !/aria-modal/.test(r.smithUpgradeModal)
+      || !/mountUpgradeDesk\(/.test(r.smithUpgradeModal)
+      || !/role: 'dialog'/.test(r.upgradeDesk)
+      || !/aria-modal/.test(r.upgradeDesk)
       // The two ways out are kit buttons now (builder form), or literal markup.
-      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.smithUpgradeModal)
-      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.smithUpgradeModal)
+      || !/(<button[^>]+smith-back|className: '[^']*smith-back')/.test(r.upgradeDesk)
+      || !/(<button[^>]+smith-confirm|className: '[^']*smith-confirm')/.test(r.upgradeDesk)
       || !/attachTooltip\(card/.test(r.smithUpgradeModal)
       || !/card\.dataset\.itemRef = item\.itemRef/.test(r.smithUpgradeModal)
       || !/Tier \$\{item\.currentLevel\} → \$\{item\.nextLevel\}/.test(r.smithUpgradeModal)
       || !/selected\.affectedRows\.map/.test(r.smithUpgradeModal)
-      || !/confirm\.disabled = !selected/.test(r.smithUpgradeModal)
-      || !/confirm\.setAttribute\('aria-disabled', String\(!model\.properties\.canConfirm\)\)/.test(r.smithUpgradeModal)
+      // A tapped row opens its confirmation modal (the control it is armed on is not in the page).
+      || !/review\?\.\(\)/.test(r.smithUpgradeModal)
       || !/canCommit: \(\) => Boolean\(currentModel\.properties\.canConfirm\)/.test(r.smithUpgradeModal)
       || !/blockedTitle: `Cannot upgrade \$\{selected\.name\}`/.test(r.smithUpgradeModal)
       || !/onConfirm\(selectedId\)/.test(r.smithUpgradeModal)
@@ -958,12 +939,12 @@ export function findings(r) {
       || !/const smith = smithingPlan\(registries, run\)/.test(r.rest)
       // #522: the Shrine hands the model its multi-use mode, and the model —
       // never the modal — derives every stay/leave sentence from it.
-      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true \}\)/.test(r.rest)
+      || !/smithSelectionModel\(registries, smithingPlan\(registries, run\), selectedItemRef, \{ multiUse, repeatUpgrades: true, autoSelect: false \}\)/.test(r.rest)
       || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
       || !/commitSmithing\(registries, run, itemRef\)/.test(r.rest)
       || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
-    bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
+    bad.push('C19 Smith selection no longer uses its model-driven list/confirmation modal contract');
   }
   if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)
@@ -1066,11 +1047,9 @@ function selftest() {
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
-    ['remove Armoury card gallery', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('gallery.appendChild(card)', 'gallery.remove()') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
-    ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
-    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
+    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, upgradeDesk: r.upgradeDesk.replace('smith-back', 'smith-return') })],
     ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
     ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
     ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],

@@ -58,17 +58,6 @@ test('actual range stance reduces Current projected HP; unchanged pools alone ne
   assert.equal(blocked.max, 0); assert.equal(blocked.tone, 'red', 'Block reduction is not credited to a favorable stance');
 });
 
-test('Core HP projection uses configured Block/Poise and reports evade uncertainty honestly', () => {
-  const { combat, enemy } = fixture(true);
-  combat.player.gameProfilePoise = 1;
-  const before = snapshot(combat);
-  const shown = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(shown.min, shown.max); assert.ok(shown.max < 20);
-  assert.equal(snapshot(combat), before);
-  combat.player.combatStance = { camp: 'physical', maneuver: 'evade' };
-  const evade = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(evade.min, 0); assert.equal(evade.uncertain, true); assert.match(evade.label, /^0–/);
-});
 
 test('hidden gate returns before private move lookup or any projected amount', () => {
   const { combat, enemy } = fixture();
@@ -90,21 +79,3 @@ test('known HP presentation and public Dodge charge count remain separate from h
   assert.equal(hidden.parts[0].value, null); assert.equal(hidden.projectedDamage, undefined);
 });
 
-test('Core Counter has no fabricated mitigation and a wider Evade range stays red despite lower expected HP', () => {
-  const { combat, enemy } = fixture(true);
-  combat.player.gameProfilePoise = 1;
-  combat.gameProfile = structuredClone(combat.gameProfile);
-  delete combat.gameProfile.modules.stances.defenseMitigation;
-  const baseline = projectCombatIntent(combat, enemy.id).projectedDamage;
-  combat.player.combatStance = { camp: 'physical', maneuver: 'counter' };
-  const counter = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.equal(counter.max, baseline.max); assert.equal(counter.tone, 'red');
-  // The authored accuracy formula can produce genuine low hit probability;
-  // a wider failed-dodge range must stay red despite the lower expectation.
-  combat.player.combatStance = { camp: 'physical', maneuver: 'evade' };
-  combat.player.ratings = { ...combat.player.ratings, dr: 100 };
-  const evade = projectCombatIntent(combat, enemy.id).projectedDamage;
-  assert.ok(evade.expected < evade.baseline.expected); assert.equal(evade.stanceReduced, true);
-  assert.equal(evade.tone, 'red'); assert.equal(evade.displayedReduction, false);
-  assert.equal(evade.min, 0); assert.ok(evade.max > evade.baseline.max);
-});

@@ -20,6 +20,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { t } from './strings.js';
+import { hitAsLayered } from '../model/combatLog.js';
 import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 
 
@@ -34,7 +35,8 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { actionPacing, floaterLifeMs, calloutLifeMs } from './animationPace.js';
+import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
+import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
@@ -148,7 +150,8 @@ export function viewportLocalBox() {
  *   a number           — at least that many px. For anything that TRACKS THE
  *                        POINTER, which must be free to hang off the edge the
  *                        pointer is against but must never vanish entirely.
- * A box too big to fit pins to the low edge rather than sliding off the far one.
+ * A box too big to fit between the pads but within the span is centred; one wider than the span pins to the low
+ * edge rather than sliding off the far one.
  *
  * Pure arithmetic, no DOM: unit-testable without a browser — which is the only
  * part of Rule 2 that can be. The rest needs layout, and that is zoomplace.mjs.
@@ -158,6 +161,9 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
     const k = Math.min(keep, size);
     const lo = pad + k - size;
     const hi = span - pad - k;
+    // Too wide for the pads but not for the span: centre it, so it overhangs neither edge (pinning to `lo` pushed the
+    // far edge past the span). Wider than the span itself still pins low, as below.
+    if (k === size && size > span - 2 * pad && size <= span) return (span - size) / 2;
     return Math.min(Math.max(v, lo), Math.max(lo, hi));
   };
   return {
@@ -365,89 +371,34 @@ export function combatReadoutLayer(layer, create = true) {
   host.className = 'combat-floater-layer';
   host.setAttribute('aria-hidden', 'true');
   Object.assign(host.style, { position: 'absolute', inset: '0', pointerEvents: 'none', overflow: 'visible', zIndex: '800' });
+  // One text size for every floater (owner, 2026-11-05; content/config floaterStack.json). The config is in design px
+  // at the 10 px root, so rem keeps the player's display scale; the vw term (divided by --ui-zoom, which scales every length under body, so it is a true share of the screen) shrinks it on a phone down to the minimum.
+  host.style.setProperty('--floater-font', `clamp(${FLOATER_STACK.floaterFontMinPx / 10}rem, calc(${FLOATER_STACK.floaterFontVw}vw / var(--ui-zoom, 1)), ${FLOATER_STACK.floaterFontPx / 10}rem)`);
+  // The pop peaks are config, written here so the keyframes (num-pop, callout-rise) and the edge clamp read one number.
+  host.style.setProperty('--pop', String(FLOATER_STACK.floaterPopPeak));
+  host.style.setProperty('--callout-pop', String(FLOATER_STACK.floaterCalloutPeak));
+  host.style.setProperty('--floater-shift-ms', `${FLOATER_STACK.floaterShiftMs}ms`);
   combat.appendChild(host);
   combatReadoutLayers.set(combat, host);
   return host;
 }
 
-// Per anchor: the floaters still showing, each with its lane and the lift that lane earned.
-// Lane 0 is the spawn point; a higher lane lifts its number above the numbers still in its way.
-// A number rises as it ages (num-life in styles/combat.css: 3 px by 12% of its life, 30 px by
-// 66.6%, 52 px at the end; nothing under Reduced motion), so an older number that has already
-// risen past its own height is out of the newcomer's way and the newcomer starts at lane 0 below
-// it, as it would have without lanes. Only numbers that have not cleared their own height block,
-// and a blocked newcomer is lifted to clear the highest current top among them. Three lanes, then
-// the lane freeing soonest is reused.
-const FLOAT_LANES = 3;
-const floaterLanes = new WeakMap();
-function floaterRise(entry, now) {
-  if (reducedMotionRequested()) return 0;
-  const f = Math.max(0, Math.min(1, (now - entry.start) / Math.max(1, entry.until - entry.start)));
-  if (f < 0.12) return f < 0.04 ? 0 : (f - 0.04) / 0.08 * 3;
-  if (f < 0.666) return 3 + (f - 0.12) / 0.546 * 27;
-  return 30 + (f - 0.666) / 0.334 * 22;
-}
-function floaterBlocks(entry, now) {
-  return !entry.height || floaterRise(entry, now) < entry.height * 1.1;
-}
-function floaterLaneFor(anchor, lifeMs) {
-  const now = Date.now();
-  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now);
-  const blocking = live.filter((entry) => floaterBlocks(entry, now));
-  let lane = -1;
-  for (let i = 0; i < FLOAT_LANES && lane < 0; i++) if (!blocking.some((entry) => entry.lane === i)) lane = i;
-  if (lane < 0) {
-    const soonest = blocking.reduce((a, b) => (b.until < a.until ? b : a));
-    lane = soonest.lane;
-    live.splice(live.indexOf(soonest), 1);
-  }
-  const entry = { lane, start: now, until: now + lifeMs, height: 0, lift: 0, el: null };
-  live.push(entry);
-  floaterLanes.set(anchor, live);
-  return entry;
-}
-// Floaters share one top edge, so a lane's lift must put the number's bottom above the current
-// top of every live number in a lower lane: that number's lift plus how far it has risen, less
-// how far this one has risen itself, plus this one's own height. Every live lower number counts
-// here, cleared or not (the blocking test picks lanes only): a re-lift that skipped a cleared
-// middle number would drop the one above it onto that number. Lane 0 never lifts.
-function floaterLaneLift(anchor, entry, now) {
-  if (entry.lane === 0) return 0;
-  let clear = -Infinity;
-  for (const other of floaterLanes.get(anchor) || []) {
-    if (other.lane >= entry.lane || other.until <= now) continue;
-    clear = Math.max(clear, other.lift + floaterRise(other, now) - floaterRise(entry, now));
-  }
-  return clear === -Infinity ? 0 : Math.max(0, clear) + (entry.height || 22) * 1.1;
-}
-// A newcomer in a reused lower lane may be taller than the number it replaced, and the numbers
-// below it keep rising, so every live floater at the anchor is re-lifted, lane by lane, from the
-// lanes as they stand now, not as they were when it spawned.
-function reliftFloaterLanes(anchor) {
-  const now = Date.now();
-  const live = (floaterLanes.get(anchor) || []).filter((entry) => entry.until > now).sort((a, b) => a.lane - b.lane);
-  for (const entry of live) {
-    entry.lift = floaterLaneLift(anchor, entry, now);
-    if (entry.el && entry.lane > 0) entry.el.style.setProperty('--float-lane', `${Math.round(entry.lift)}px`);
-  }
-}
-
 /**
- * Spawn a floating number over an anchor element.
+ * Spawn a floating number over an anchor element (owner, 2026-11-05: one sequenced column per combatant).
  *
  * EXPORTED so an instrument can drive the SHIPPED function with the exact
  * strings that were measured clipping, rather than a copy of it that would
  * agree with itself (#69).
+ *
+ * Every floater over one combatant (damage, heal, Block, status words, callouts) shares one stack
+ * (ui/floaterStack.js): it spawns `floaterStaggerMs` after the previous one, at the same x above the head, and the
+ * earlier ones are lifted a line each. The element is made now and returned; it joins the layer when its turn
+ * comes (a damage number's turn is at once). `onSpawn` runs when it joins the layer, so its sound plays with it.
+ * There are no side lanes and no jitter, so a caller passes no placement.
  */
-export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
+export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null, immediate: forceImmediate = false } = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
-  const x = Number.isFinite(placement.x) ? placement.x : 0;
-  const y = Number.isFinite(placement.y) ? placement.y : 0;
-  const jitter = placement.jitter !== false;
-  const zoom = uiZoom();
-  const b = anchorLocalBoxCached(layer, anchor, zoom);
-  const view = anchorLocalBoxCached(layer, layer, zoom);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   const feedbackComponent = /\bblk\b/.test(cls)
@@ -457,49 +408,226 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
-  // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
-  // `.float-num { translate: -50% 0 }` takes off its own half-width — so the
-  // width is the browser's to know and nobody's to maintain. It used to be
-  // `- 14`, a hardcoded half-width that the CSS owned and nothing checked, so
-  // every float sat off-centre by (realHalfWidth - 14): measured -6px for "-7",
-  // +31px for "BLOCKED", and worst for multi-codepoint text, which is exactly
-  // where a guess lies hardest. At 390 that pushed "BLOCKED" to right=412 —
-  // 22px off-screen, in a layer with no scrollport, so unreachable.
-  //
-  // `translate` is the standalone property on purpose: num-pop animates
-  // `transform`, and a `transform: translateX(-50%)` here would be overwritten
-  // by the first keyframe. The two compose.
-  const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
-  const top = b.top + b.height * 0.25 + y;
-  el.style.left = `${centre}px`;
-  el.style.top = `${top}px`;
   const life = floaterLifeMs();
   el.style.setProperty('--float-ms', `${life}ms`);
-  // Lanes: floaters that spawn at one anchor within one floater life stack upward instead of overlapping.
-  // `lane: false` opts a floater out: an impact bundle that already places its parts in fixed slots
-  // (Block beside Health, Barrier/Ward/Poise a row up) keeps those slots instead.
-  const entry = placement.lane === false ? null : floaterLaneFor(anchor, life);
-  const lane = entry?.lane ?? 0;
-  el.dataset.floatLane = String(lane);
+  // The number outlives its animation by a beat, as it always has.
+  // A damage number never waits behind the column (its bars follow in the same beat, so it must paint first); it
+  // spawns at once at the bottom and the other floaters stagger after it. `onSpawn` is the floater's own sound.
+  const immediate = forceImmediate || /\b(dmg|burst)\b/.test(cls);
+  enqueueFloater({ layer, anchor, el, kind: 'number', lifeMs: life + 60, immediate, onSpawn });
+  return el;
+}
+// How many floaters of `line` px (plus `gap` px between them) fit in `room` px above the HUD (see FLOAT_EDGE_PX).
+// A floater rises about 30 px before it fades (num-life, styles/combat.css), so the top one keeps that much
+// clear of the battlefield top besides the 4 px gap above the HUD and the 6 px margin.
+const FLOAT_EDGE_PX = 40;
+export function floaterLanesFit(room, line, gap = line * 0.35, edge = FLOAT_EDGE_PX) {
+  if (room - edge - line < 0) return 0;
+  return Math.floor((room - edge - line) / (line + gap)) + 1;
+}
+// The top of the room the column may use: the battlefield top, or the bottom of the combat top bar
+// (cinders, icon buttons, turn banner) when that sits lower. Layer px.
+// Another combatant standing wholly above this one's HUD and overlapping its column (a back-rank enemy over
+// the player on a phone) also caps the room, so the column never rises into that figure or its badges.
+function floaterRoomTop(layer, view, zoom, anchor = null, b = null, ceiling = null) {
+  const combat = layer.closest?.('.combat');
+  let top = view.top;
+  const bar = combat?.querySelector?.('.topbar');
+  if (bar) {
+    const box = anchorLocalBoxCached(layer, bar, zoom);
+    if (box.height > 0) top = Math.max(top, box.top + box.height);
+  }
+  if (anchor && b && ceiling != null && combat?.querySelectorAll) {
+    const own = anchor.closest?.('.combatant');
+    for (const other of combat.querySelectorAll('.combatant')) {
+      if (other === own || other.contains?.(anchor)) continue;
+      const box = anchorLocalBoxCached(layer, other, zoom);
+      if (!(box.width > 0 && box.height > 0)) continue;
+      const bottom = box.top + box.height;
+      const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+      if (overlapsX && bottom <= ceiling) top = Math.max(top, bottom);
+    }
+  }
+  return top;
+}
+// Floaters start above the combatant's overhead HUD (HP bar, badges, intent), not through it
+// (owner, 2026-11-02). The ceiling is the highest top edge of the HUD pieces over the figure's head, in
+// layer px, or null when none sits there. Same pieces and tests as overheadFloor, other edge.
+export function overheadCeiling(layer, anchor, b, zoom) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let ceiling = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBoxCached(layer, node, zoom);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    // Any piece of this combatant's HUD above the figure's middle counts, however far above the head (the
+    // intent sits a full row up).
+    if (overlapsX && box.top < b.top + b.height / 2) ceiling = Math.min(ceiling ?? Infinity, box.top);
+  }
+  return ceiling;
+}
+
+// Per combatant (its anchor element): the sequenced column, plus the tallest floater measured so far (every
+// floater is one font size, so one line height sets the spacing).
+const floaterStacks = new WeakMap();
+// Every stack that has fed a layer, so a click-skip can drop the floaters still waiting there.
+const floaterStacksByLayer = new WeakMap();
+const FALLBACK_LINE_PX = Math.round(FLOATER_STACK.floaterFontPx * 1.2);
+const FLOATER_EARLY_MS = 180;
+// A rebuilt figure is a new element with the same data-eid: it shares the old element's column, so there are never
+// two unsequenced columns over one figure. Keyed by layer, then by eid.
+const floaterRecsByEid = new WeakMap();
+function stackFor(layer, anchor) {
+  let rec = floaterStacks.get(anchor);
+  const eid = anchor.closest?.('[data-eid]')?.dataset?.eid ?? null;
+  if (!rec && eid != null) {
+    rec = floaterRecsByEid.get(layer)?.get(eid);
+    if (rec) floaterStacks.set(anchor, rec);
+  }
+  if (!rec) {
+    // A combatant that was in the document when its first floater queued and has left it since is gone: its waiting
+    // floaters are dropped. (An anchor that was never attached, as in a headless harness, is never gone.)
+    rec = { line: 0 };
+    rec.stack = createFloaterStack({
+      now: () => Date.now(),
+      setTimer: (fn, ms) => setTimeout(fn, ms),
+      clearTimer: (handle) => clearTimeout(handle),
+      staggerMs: () => floaterStaggerMs({ enemy: isEnemyAnchor(anchor) }),
+      maxVisible: (item) => maxVisibleFor(rec, item),
+      alive: (item) => floaterHostAlive(item),
+      maxQueued: FLOATER_STACK.floaterMaxQueued,
+      fadeMs: FLOATER_EARLY_MS + 20,
+      staggerMinMs: () => floaterStaggerMinMs({ enemy: isEnemyAnchor(anchor) }),
+      show: (item, entry) => showFloater(rec, item, entry),
+      fadeEarly: (entry) => fadeFloaterEarly(entry),
+      layout: (entries) => liftFloaters(rec, entries),
+    });
+    floaterStacks.set(anchor, rec);
+    if (eid != null) {
+      let byEid = floaterRecsByEid.get(layer);
+      if (!byEid) floaterRecsByEid.set(layer, byEid = new Map());
+      byEid.set(eid, rec);
+    }
+  }
+  let set = floaterStacksByLayer.get(layer);
+  if (!set) floaterStacksByLayer.set(layer, set = new Set());
+  set.add(rec.stack);
+  return rec;
+}
+// Floaters over an enemy use the enemy's own interval setting (settings enemyFloaterIntervalMs).
+const isEnemyAnchor = anchor => Boolean(anchor?.closest?.('.enemy-row'));
+function enqueueFloater(item) {
+  // Whether the combatant was in the document when this floater queued: one that was and has left is gone. (An
+  // anchor that was never attached, as in a headless harness, is never gone.)
+  item.wasAttached = item.anchor.isConnected !== false && item.layer.isConnected !== false;
+  item.eid = item.anchor.closest?.('[data-eid]')?.dataset?.eid ?? null;
+  return stackFor(item.layer, item.anchor).stack.push(item);
+}
+// Is the combatant this waiting floater belongs to still on screen? A rebuilt figure (the player's art key
+// re-arms, a re-render) is a new element with the same data-eid: the floater is retargeted to it, not dropped.
+function floaterHostAlive(item) {
+  if (!item.wasAttached) return true;
+  if (item.layer.isConnected === false) return false;
+  if (item.anchor.isConnected !== false) return true;
+  if (item.eid == null) return false;
+  const root = item.layer.closest?.('.combat') || item.layer.ownerDocument;
+  const next = root?.querySelector?.(`[data-eid="${item.eid}"] .sprite`) || root?.querySelector?.(`[data-eid="${item.eid}"]`);
+  if (!next) return false;
+  item.anchor = next;
+  return true;
+}
+// One floater's step up the column: its own line plus the gap (floaterLineGapPx).
+function floaterStepPx(rec) {
+  return (rec.line || FALLBACK_LINE_PX) + FLOATER_STACK.floaterLineGapPx;
+}
+// Where the column starts and how many floaters it can hold. The slot-0 floater sits just above the combatant's
+// overhead HUD, as the owner asked on 2026-11-02 (never over the HUD), when at least two lines fit between the HUD
+// and the top of the battlefield; otherwise it starts on the figure (a quarter of the way down, where damage
+// numbers always showed) and the column rises over the HUD. With no HUD it starts just above the head. The cap is
+// floaterMaxVisible, fewer when the room above the start cannot hold that many (never below one, or two on the figure).
+const FLOAT_RISE_RESERVE_PX = 6; // the page margin; a floater's last 30 px of rise is a fade, so it may drift over the top bar
+function columnStart(rec, layer, anchor, b, zoom, view) {
+  const cap = Math.max(1, Math.floor(FLOATER_STACK.floaterMaxVisible));
+  const line = rec.line || FALLBACK_LINE_PX, gap = FLOATER_STACK.floaterLineGapPx;
+  const ceiling = overheadCeiling(layer, anchor, b, zoom);
+  const roomTop = floaterRoomTop(layer, view, zoom, anchor, b, ceiling);
+  const edge = ceiling ?? b.top + 8; // no HUD: the column starts just above the head
+  const above = floaterLanesFit(edge - 4 - roomTop, line, gap, FLOAT_RISE_RESERVE_PX);
+  if (ceiling == null || above >= 2) return { bottom: edge - 4, cap: Math.max(1, Math.min(cap, above)) };
+  const top = b.top + b.height * 0.25;
+  return { top, cap: Math.max(2, Math.min(cap, floaterLanesFit(top + line - roomTop, line, gap, FLOAT_RISE_RESERVE_PX))) };
+}
+function maxVisibleFor(rec, item) {
+  try {
+    const { layer, anchor } = item;
+    const zoom = uiZoom();
+    return columnStart(rec, layer, anchor, anchorLocalBoxCached(layer, anchor, zoom), zoom, anchorLocalBoxCached(layer, layer, zoom)).cap;
+  } catch { return Math.max(1, Math.floor(FLOATER_STACK.floaterMaxVisible)); }
+}
+// Lift every visible floater by its slot (how many newer floaters are showing). Under Reduced motion the CSS drops
+// the transition, so the column still stacks but nothing glides.
+function liftFloaters(rec, entries) {
+  // An empty column forgets its measured line, so a smaller font (a rotated phone) is not held to an old height.
+  // The same moment drops the column's base, so a figure that moved meanwhile gets a fresh one for the next sequence.
+  if (!entries.length && !rec.stack.visible.length) { rec.line = 0; rec.start = null; }
+  const step = floaterStepPx(rec);
+  for (const entry of entries) {
+    const el = entry.item.el;
+    el.dataset.floatSlot = String(entry.slot);
+    if (entry.slot > 0) el.style.setProperty('--float-lift', `${Math.round(entry.slot * step)}px`);
+    else el.style.removeProperty('--float-lift');
+  }
+}
+// The cap was exceeded: the oldest fades early (CSS .float-early adds a quick opacity fade), then goes.
+function fadeFloaterEarly(entry) {
+  const el = entry.item.el;
+  el.classList.add('float-early');
+  setTimeout(() => el.remove(), FLOATER_EARLY_MS + 20);
+}
+
+function showFloater(rec, item, entry) {
+  const { layer, anchor, el } = item;
+  if (typeof item.onSpawn === 'function') { try { item.onSpawn(); } catch { /* a sound must not stop its number */ } }
+  const zoom = uiZoom();
+  const b = anchorLocalBoxCached(layer, anchor, zoom);
+  const view = anchorLocalBoxCached(layer, layer, zoom);
+  // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
+  // `.float-num { translate: -50% ... }` takes off its own half-width — so the
+  // width is the browser's to know and nobody's to maintain (#69). `translate` is the
+  // standalone property on purpose: num-pop animates `transform`, and the two compose.
+  const centre = b.left + b.width / 2;
+  el.style.left = `${centre}px`;
+  el.style.top = `${b.top + 4}px`;
+  el.dataset.floatSlot = String(entry.slot);
   layer.appendChild(el);
-  // In the DOM, so the size is REAL — emoji, ligatures and all, measured by
-  // layout rather than guessed from the string. offsetWidth is the untransformed
-  // box, so the running pop animation cannot skew it. Keep it inside the layer
-  // through the one home for that arithmetic (clampBox), then hand `left` back
-  // as a centre, which is what the CSS expects. The measure waits for the end
-  // of this task (before paint), so every float and word of a beat shares one
-  // layout flush instead of forcing one apiece.
+  // In the DOM, so the size is REAL — emoji, ligatures and all, measured by layout rather than guessed from the
+  // string. The measure waits for the end of this task (before paint), so every float and word of a beat shares
+  // one layout flush instead of forcing one apiece.
   measureThenMutate(el, () => {
     const width = el.offsetWidth, height = el.offsetHeight;
     const half = width / 2;
-    const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
-    if (entry) { entry.height = height; entry.el = el; }
+    // The line is measured BEFORE the column's start is chosen, and the start is kept while the column has an older
+    // floater, so one sequence is one strictly ordered stack even when the measured line differs from the fallback.
+    if (height > rec.line) rec.line = height;
+    const others = rec.stack.visible.some((e) => e.item !== item);
+    if (!others || !rec.start) rec.start = columnStart(rec, layer, anchor, b, zoom, view);
+    const start = rec.start;
+    const placed = start.top ?? start.bottom - height;
+    // The box is measured at scale 1 but pops to its peak scale about its centre, so the margin is kept at the PEAK:
+    // pad by the overhang half * (peak - 1) on each side (measured 18 px past the edge on a 360 px phone without it).
+    const peak = el.classList.contains('float-num') ? FLOATER_STACK.floaterPopPeak : FLOATER_STACK.floaterCalloutPeak;
+    const box = { left: centre - half, top: placed, width, height }, margin = FLOATER_STACK.floaterEdgeMarginPx;
+    const at = { left: clampBox(box, view, { pad: margin + half * (peak - 1) }).left, top: clampBox(box, view, { pad: margin }).top };
     return () => {
       el.style.left = `${at.left + half}px`;
-      if (entry) reliftFloaterLanes(anchor);
+      el.style.top = `${at.top}px`;
+      liftFloaters(rec, rec.stack.visible);
     };
   });
-  setTimeout(() => el.remove(), life + 60);
+  // The element leaves at the end of its life; a skip removes it sooner.
+  setTimeout(() => el.remove(), item.lifeMs);
   return el;
 }
 
@@ -514,7 +642,12 @@ export const CALLOUT_KINDS = {
   hit: { string: 'combat.callout.hit', tone: 'white' },
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
+  // Insight contests (SPEC §17 Contests): the word over the target a Read Intent style spell read or failed to read.
+  contestPassed: { string: 'combat.callout.contestPassed', tone: 'white' },
+  contestFailed: { string: 'combat.callout.contestFailed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  // Owner 2026-11-06: an enemy that cannot pay its next move's SP says so, then skips it.
+  outOfSp: { string: 'combat.callout.outOfSp', tone: 'white' },
   dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
@@ -532,45 +665,23 @@ export const CALLOUT_KINDS = {
   wardResisted: { string: 'combat.callout.resisted', tone: 'ward' },
   blocked: { string: 'combat.callout.blocked', tone: 'block' },
   immune: { string: 'combat.callout.immune', tone: 'immune' },
+  // An enemy weakness met (SPEC 5.3). There is no "resisted" counterpart for it.
+  weak: { string: 'combat.callout.weak', tone: 'gold' },
 };
 export const CALLOUT_MS = 900; // legacy base; live words use calloutLifeMs() (animationPace.js)
 export const CALLOUT_INSTANT_MS = COMBAT_TIMING.calloutInstantMs;
-// The words over one fighter (owner, 2026-10-12): at most three show at once, in three
-// lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
-// for the earliest visible one to finish, and nothing is dropped.
-export const STACK_LANES = 3;
+// The words over one fighter (owner, 2026-10-12) used to show three at a time in three lanes. They now share the
+// fighter's one floater column (owner, 2026-11-05; ui/floaterStack.js): a word spawns floaterStaggerMs after the
+// floater before it, at most floaterMaxVisible show at once, and nothing is dropped. STACK_STEP_MS stays the
+// beat's lead for an accuracy word ahead of the result.
 export const STACK_STEP_MS = 150;
-// One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
-const CALLOUT_SLOT_PX = 34;
-
-// How far the rise animation (combat.css callout-rise) lifts the word.
-const CALLOUT_RISE_PX = 26;
 // The fighter's overhead HUD pieces drawn over the top of its figure.
 const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
 
-/** The lowest bottom edge (layer space) of the HUD sitting over the figure's top, or null. */
-function overheadFloor(layer, anchor, b, zoom) {
-  const root = anchor.closest?.('.combatant');
-  if (!root?.querySelectorAll) return null;
-  let floor = null;
-  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
-    if (anchor.contains?.(node)) continue;
-    const box = anchorLocalBoxCached(layer, node, zoom);
-    if (!(box.width > 0 && box.height > 0)) continue;
-    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
-    const overHead = box.top + box.height >= b.top - 16 && box.top < b.top + b.height / 2;
-    if (overlapsX && overHead) floor = Math.max(floor ?? -Infinity, box.top + box.height);
-  }
-  return floor;
-}
-
-const liveCallouts = (layer, forId) => [...(layer.children || [])]
-  .filter((node) => node.dataset?.calloutFor === String(forId));
-
 /**
  * Priority of a word, highest first: STATUS > MISSED > IMMUNE > BREAKS (and the
- * stagger/crit words that land with them) > BLOCKED > RESISTED. DAMAGE numbers are
- * not words: they are one grouped row of floats, below every word.
+ * stagger/crit words that land with them) > BLOCKED > RESISTED. Among the words waiting in one
+ * fighter's column the higher priority spawns first (ties keep arrival order); numbers keep their own order.
  */
 export function stackPriority(kind = '') {
   if (String(kind).startsWith('status:')) return 6;
@@ -579,122 +690,6 @@ export function stackPriority(kind = '') {
   if (kind === 'blocked') return 2;
   if (kind === 'resisted' || kind === 'wardResisted') return 1;
   return 3;
-}
-
-/**
- * The pure schedule for one fighter's words (owner, 2026-10-12). `items` are [{ id, kind }]
- * in arrival order. They start in priority order, one step apart; at most `lanes.length`
- * show at once, so each later word starts when the earliest visible one has lived `lifeMs`.
- * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
- * start in ms from now, in priority order (ties keep arrival order).
- */
-export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = calloutLifeMs(), after = null } = {}) {
-  const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
-    .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
-  const free = [...lanes];
-  const out = [];
-  // `after`: when the last word before this batch started (ms from now), or null.
-  let prev = after;
-  for (const item of sorted) {
-    let lane = 0;
-    for (let l = 1; l < free.length; l++) if (free[l] < free[lane]) lane = l;
-    let start = Math.max(0, free[lane]);
-    if (prev !== null) start = Math.max(start, prev + stepMs);
-    free[lane] = start + lifeMs;
-    prev = start;
-    out.push({ id: item.id, start, lane });
-  }
-  return out;
-}
-
-// Per layer, per fighter: the words still showing or waiting, with their lanes and times.
-const calloutQueues = new WeakMap();
-let calloutArrival = 0;
-function queueFor(layer, forId) {
-  let byFighter = calloutQueues.get(layer);
-  if (!byFighter) calloutQueues.set(layer, byFighter = new Map());
-  const key = String(forId);
-  if (!byFighter.has(key)) byFighter.set(key, { items: [] });
-  return byFighter.get(key);
-}
-
-/**
- * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
- * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
- */
-function layoutCallouts(layer, anchor, q, now, lifeMs = calloutLifeMs()) {
-  const active = q.items.filter((it) => it.start <= now);
-  const pending = q.items.filter((it) => it.start > now);
-  const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
-  // The stagger counts from the last word that has started, never from one still waiting (it is re-planned).
-  const started = active.map((it) => it.start);
-  const after = started.length ? Math.max(...started) - now : null;
-  const plan = planWordQueue(pending.map((it) => ({ id: it.arrival, kind: it.kind })), { lanes, lifeMs, after });
-  for (const row of plan) {
-    const it = pending.find((p) => p.arrival === row.id);
-    it.start = now + row.start;
-    it.lane = row.lane;
-    it.end = it.start + lifeMs;
-    it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
-    clearTimeout(it.timer);
-    if (it.kind.startsWith('buff:') && row.start > 0) {
-      // Static reduced-motion callouts cannot use animation-delay to hide
-      // queued words. Keep each pending gain hidden until its planned lane
-      // start, then reuse its single timer for the same queued lifetime.
-      const revealBuff = () => {
-        const at = Date.now();
-        const predecessors = q.items.filter(other => other !== it && other.lane === it.lane
-          && other.start < it.start && other.el.parentNode === layer);
-        for (const previous of predecessors) if (previous.end <= at) {
-          // A same-deadline start timer can run before the predecessor's
-          // expiry timer. Its lifetime has ended, so remove it here before
-          // exposing the next word in this lane.
-          clearTimeout(previous.timer);
-          previous.el.remove();
-        }
-        const stillShowing = predecessors.find(previous => previous.end > at);
-        if (stillShowing) {
-          it.timer = setTimeout(revealBuff, Math.max(1, stillShowing.end - at));
-          return;
-        }
-        it.el.style.visibility = '';
-        it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - Date.now()));
-      };
-      it.el.style.visibility = 'hidden';
-      it.timer = setTimeout(revealBuff, row.start);
-    } else {
-      if (it.kind.startsWith('buff:')) it.el.style.visibility = '';
-      it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - now));
-    }
-  }
-  // Placement is measured and written once per fighter at the end of this task,
-  // with every other pending float and word: a word made now waits for its own
-  // box, and each box read right after the last word was appended forced a
-  // layout. The slot is decided there too (it depends on the HUD over the head).
-  const zoom = uiZoom();
-  measureThenMutate(q, () => {
-    const b = anchorLocalBoxCached(layer, anchor, zoom);
-    const floor = overheadFloor(layer, anchor, b, zoom);
-    const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
-    const centre = b.left + b.width / 2;
-    // Every word's box is read before any word is moved: a left/top write
-    // between two offsetWidth reads made each later read a forced layout.
-    const bounds = anchorLocalBoxCached(layer, layer, zoom);
-    const boxes = q.items.map((it) => ({ it, width: it.el.offsetWidth || 0, height: it.el.offsetHeight || 30 }));
-    return () => {
-      for (const { it, width, height } of boxes) {
-        const el = it.el;
-        // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
-        const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
-        el.dataset.calloutSlot = String(slot);
-        const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
-        let at = { left: centre - width / 2, top: bottom - height };
-        if (width) at = clampBox({ left: at.left, top: at.top, width, height }, bounds, { pad: 6 });
-        el.style.left = `${at.left + width / 2}px`;
-        el.style.top = `${at.top + height}px`;
-      }
-    };
-  });
 }
 
 /** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
@@ -707,47 +702,48 @@ export function callout(layer, anchor, forId, kind) {
   return queuedCallout(layer, anchor, forId, kind, def);
 }
 
-// Buff gains use the same overhead lanes and cleanup as outcome words. Each
+// Buff gains use the same column and cleanup as outcome words. Each
 // committed gain stays visible even when two receipts have the same amount.
 function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   if (!layer || !anchor || !def || forId == null) return null;
   layer = combatReadoutLayer(layer);
-  const now = Date.now();
-  const q = queueFor(layer, forId);
-  // Words that have finished leave the queue.
-  q.items = q.items.filter((it) => it.end > now || it.end === undefined);
-  if (!repeat && (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
+  const rec = stackFor(layer, anchor);
+  const same = (item) => item.kind === kind && item.forId === String(forId);
+  if (!repeat && (rec.stack.has(same) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
   el.dataset.calloutFor = String(forId);
   el.dataset.calloutKind = kind;
   el.setAttribute('aria-hidden', 'true');
   el.textContent = def.word || t(def.string);
-  if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
   const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
-  // Not started yet: the layout plans it (start Infinity until then).
-  const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
-  q.items.push(item);
-  layer.appendChild(el);
-  layoutCallouts(layer, anchor, q, now, ms);
+  // Through enqueueFloater, so a word gets the same host tracking as a number (a rebuilt figure retargets it).
+  // The intent word is the beat's marker (cost first, word, then the stance one gap later): it never waits behind the cost floater.
+  enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true, immediate: kind.startsWith('action:') });
   return el;
 }
+const liveCallouts = (layer, forId) => [...(layer.children || [])]
+  .filter((node) => node.dataset?.calloutFor === String(forId));
 
 /** A click-skip ends every callout in the layer. */
 export function clearCallouts(layer) {
   layer = combatReadoutLayer(layer, false);
-  const queues = layer && calloutQueues.get(layer);
-  for (const queue of queues?.values() || []) for (const item of queue.items) clearTimeout(item.timer);
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
-  // The waiting queue goes with the visible words. Numbers keep their lifetime through a skip
-  // (combat-readout-layer test), so their lane records stay with them until they expire.
-  if (layer) calloutQueues.delete(layer);
+  dropWaitingFloaters(layer);
+}
+// Every floater still waiting for its turn goes (damage numbers never wait); a word that was showing leaves its column.
+function dropWaitingFloaters(layer) {
+  // Numbers keep their lifetime through a skip (combat-readout-layer test).
+  for (const stack of (layer && floaterStacksByLayer.get(layer)) || []) {
+    stack.drop((item) => item.word === true, { visible: true });
+    stack.dropWaiting();
+  }
 }
 
 /**
- * One semantic split for every attack hit, shared by solo and co-op.
+ * One semantic split for every attack hit.
  * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
  * Guard consumption is unsigned. Guard gain remains the separate +N channel.
  */
@@ -755,11 +751,15 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // The whole hit as it reached the layers. `event.amount` is what is left AFTER Barrier, Ward and Poise,
+  // so the floater reads the same sum the combat log does (owner, 2026-11-02: show the actual hit).
+  const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
-  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  const magicPoise = Math.max(0, Number(event && event.magicPoise) || 0);
+  const poise = Math.max(0, (Number(event && event.poiseAbsorbed) || 0) - magicPoise);
   // The Force part a Silenced target was immune to (the rest of the hit landed).
   const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   const pierced = Math.max(0, Number(event && event.pierced) || 0);
@@ -772,10 +772,18 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
     poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
+    // Magic hits Poise first, 1:1 (owner, 2026-10-31).
+    magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
+    // The number floats the FULL hit before Block / Poise / Ward / Barrier; the Block badge drops by the guard
+    // on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome words key off
+    // HP loss as before; `fullHit` is the number a guarded hit that cost no HP floats (beside BLOCKED or Pierced).
+    full,
+    damage: residual > 0 ? { text: `-${full}`, cls: dmgClass(full, targetMaxHp) } : null,
+    // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
+    fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
 }
 
@@ -941,7 +949,7 @@ export function animateEvents(events, ctx, done) {
   const beatOf = new Map();
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
-  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor }); };
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { maxHpFor: ctx.maxHpFor }); };
   pending = events.filter((e) => visualFor(e, undefined, receiptVisuals) !== null);
   const skip = (event) => {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
@@ -1033,6 +1041,15 @@ export function groupBeats(events) {
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
+      // The SP check failed: a beat of its own (the OUT OF SP word), the move is skipped.
+      case 'enemyMoveUnavailable':
+        startActor(e.sourceId, 'reveal', e);
+        break;
+      // The enemy pays its move's SP: a loose run, so it rides the move's beat as `lead` (cost first, as for a card).
+      case 'enemyStaminaSpent':
+        push();
+        cur = { actorId: null, banner: null, kind: null, events: [e] };
+        break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
         cur.prepared = e.contactPrepared === true;
@@ -1059,20 +1076,48 @@ export function groupBeats(events) {
     }
   }
   push();
-  return beats;
+  return reactionAfterResult(beats);
+}
+
+// Owner 2026-11-07, an enemy attack the player can react to: the reaction prompt and its calculations come before
+// hit/miss, then the Hit/Miss word shows, then the reaction's animation, then the damage. The engine emits the chosen
+// reaction card's receipts first (cardPlayed ... cardResolved) and the attack's receipts after, so the presentation
+// splits the attack beat at its first accuracy receipt: [move + Hit/Miss word] [the reaction card's beats] [the rest,
+// already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
+const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+  || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
+// A receipt that announces an outcome (onResult says Hit or Miss for it); combatAvoidanceResolved announces one only when avoided.
+const announces = event => ['attackHit', 'attackMissed', 'attackEvaded'].includes(event.type) || event.type === 'combatAvoidanceResolved' && event.avoided === true;
+const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');
+function reactionAfterResult(beats) {
+  const out = [];
+  for (let i = 0; i < beats.length; i++) {
+    const first = beats[i];
+    if (!(reactionCardBeat(first) && first.events.some(e => e.type === 'combatReactionChosen'))) { out.push(first); continue; }
+    let j = i;
+    while (beats[j + 1] && reactionCardBeat(beats[j + 1])) j++;
+    const attack = beats[j + 1];
+    const at = attack && attack.prepared && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(announces) : -1;
+    if (at < 0) { out.push(...beats.slice(i, j + 1)); i = j; continue; }
+    const result = attack.events.slice(0, at + 1), rest = attack.events.slice(at + 1);
+    const lead = (attack.lead || []).filter(e => result.includes(e));
+    const later = rest.length > 0 || result.some(isDodge);
+    out.push({ ...attack, events: result, ...(lead.length ? { lead } : { lead: undefined }), ...(later ? { dodgeLater: true } : {}) }, ...beats.slice(i, j + 1));
+    if (later) out.push({ actorId: attack.actorId, banner: null, kind: attack.kind, events: rest, prepared: true, resultSaid: true, carried: result });
+    i = j + 1;
+  }
+  return out;
 }
 
 /**
  * playTimeline(events, ctx, done)
  *   ctx = animateEvents ctx + {
+ *     onStanceLead(beat, event) — draw a stance this beat enters, before its action animation starts
  *     onBeatApplied(beat)  — apply this beat's events to the display state
  *                            (HP/block bars, hand, statuses) AFTER its visuals,
  *     onFlush()            — skip: jump display to true final state,
  *     beatOrder?           — 'sequential' | 'impact'; defaults to the
  *                            animationPace.js setting (getBeatOrder),
- *     isLocalPlayer?(seatId) — co-op: the seats this screen plays; the damage and
- *                            turn-start haptics buzz for those only. Absent
- *                            (solo), every player receipt is local.
  *   }
  * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
  * animateEvents' classic behavior (final state + fast floats).
@@ -1085,6 +1130,17 @@ const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 
 const traceBeat = (step, detail) => {
   if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
 };
+
+// The receipt that makes the actor's stance figure change in a beat. The player's stance sprite follows every card
+// play (createStanceLedger.accept on cardPlayed), so cardPlayed leads; Core 2 plays also emit combatStanceChanged
+// (prepareTacticalCard / setCombatStance) and the legacy enterStance effect emits stanceEntered. All three are drawn
+// before the action word and animation (owner 2026-11-05); the stance receipts are preferred for the trace detail.
+const STANCE_LEAD_TYPES = new Set(['stanceEntered', 'combatStanceChanged']);
+function stanceLeadEvent(beat) {
+  return beat.events.find(e => STANCE_LEAD_TYPES.has(e.type)
+    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId))
+    || beat.events.find(e => e.type === 'cardPlayed');
+}
 
 // Is this figure in its stance? 'out' — mid-action or in a pose other than its
 // rest; 'in'; or 'unknown' for a figure that cannot tell. The stage contracts
@@ -1112,14 +1168,21 @@ export function stanceState(stage) {
 export function playTimeline(events, ctx, done) {
   if ((ctx.beatOrder || getBeatOrder()) === 'impact') return playLegacyTimeline(events, ctx, done);
   const timing = actionPacing({ reduced: reducedMotionRequested() });
+  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });
   const beats = groupBeats(events);
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
   const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
+  const dodgeSaid = new Set();
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
   const runParts = (beat, key) => {
-    for (const event of beat.events) if (!terminal(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
+    // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
+    for (const event of beat.events) if (!terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
   };
+  // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
+  // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
+  const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
@@ -1130,13 +1193,21 @@ export function playTimeline(events, ctx, done) {
     cued.add(original);
     const starts = original.events.filter(event => event.type === 'playerTurnStart');
     const stinger = starts.some(event => !stung.has(event.turn));
-    const mine = starts.filter(event => localTurnStart(event, ctx.isLocalPlayer));
+    const mine = starts.filter(event => localTurnStart(event));
     const turnBuzz = mine.some(event => !buzzed.has(event.turn));
     for (const event of starts) stung.add(event.turn);
     for (const event of mine) buzzed.add(event.turn);
-    const options = { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, stinger, turnBuzz };
+    const options = { maxHpFor: ctx.maxHpFor, stinger, turnBuzz };
     if (sounds) playBeatCues(original.events, options);
     else playBeatHaptics(original.events, options);
+  };
+  const sayAction = beat => {
+    const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+    const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
+    const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
+      || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
+      || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
+    callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
   };
   let handle, skippedPointer = false;
   const skip = event => {
@@ -1149,8 +1220,8 @@ export function playTimeline(events, ctx, done) {
     clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
   };
   const release = () => { if (skippedPointer) handle?.skip(); };
-  const blur = () => handle?.skip();
-  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') handle?.skip(); };
+  const blur = () => { clearCallouts(ctx.layer); handle?.skip(); };
+  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') { clearCallouts(ctx.layer); handle?.skip(); } };
   addEventListener('pointerdown', skip, { capture: true });
   addEventListener('pointerup', release, { capture: true });
   addEventListener('pointercancel', release, { capture: true });
@@ -1162,19 +1233,34 @@ export function playTimeline(events, ctx, done) {
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
+      // Owner 2026-11-06: the cost the card pays comes first (visual, floater, resource HUD), then the intent word.
+      if (costOf(beat).length) {
+        for (const event of costOf(beat)) {
+          visualSafe(() => parts.get(event)?.contact?.(ctx));
+          const label = COST_LABEL[event.type];
+          // On Core 2 energy is aliased to stamina (model/turnStamina.js) and a play emits both receipts for ONE payment:
+          // show that payment once, as SP. Distinct costs (SP and MP, say) all show.
+          const aliased = event.type === 'energySpent' && costOf(beat).some(row => row.type === 'staminaSpent' && row.amount === event.amount);
+          if (label && !aliased && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
+        }
+        visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: costOf(beat) }));
+        traceBeat('cost', beat.actorId);
+      }
       ctx.onIntent?.(beat);
+      if (!beat.prepared && beat.actorId && !beat.banner && beat.kind !== 'reveal') sayAction(beat);
     },
     onAction: beat => {
-      if (beat.prepared) return;
-      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
-      const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
-      const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
-        || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
-        || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
-      callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
+      // Owner 2026-11-06: the stance a card enters follows the intent word by one gap, before the action animation.
+      const entered = stanceLeadEvent(beat);
+      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
-    maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
-    onSprite: (beat, speed) => {
+    // The reservation covers the slower of the player's and the enemy's animation settings.
+    maxSpriteMs: speed => {
+      const one = s => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(s) : Number(ctx.maxActorAnimationMs) || s.lungeMs;
+      return Math.max(one(speed), one(enemyTiming.spriteSpeed));
+    },
+    onSprite: (beat, playerSpeed) => {
+      const speed = isEnemyAnchor(ctx.anchorFor(beat.actorId)) ? enemyTiming.spriteSpeed : playerSpeed;
       if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
@@ -1186,6 +1272,13 @@ export function playTimeline(events, ctx, done) {
       }
       return { impactMs: speed.lungeMs * COMBAT_TIMING.windupFraction, totalMs: speed.lungeMs,
         cancel: () => { if (ctx.figureAnimations !== false) stageFor(actorEl)?.settle?.(); } };
+    },
+    // A step in or out of range that the engine committed before the hit lands (an Advance the attack paid for, Driving Thrust's push)
+    // changes the formation strips as contact begins; one after the damage (Hit and Run's retreat) waits for the group's HUD apply.
+    onEngagement: beat => {
+      const hit = beat.events.findIndex(e => e.type === 'damageDealt');
+      const early = beat.events.filter((e, i) => e.type === 'combatEngagementMoved' && (hit < 0 || i < hit));
+      if (early.length) visualSafe(() => ctx.onEngagementMoved?.(early));
     },
     onContact: (beat, actor) => {
       runParts(beat, 'contact');
@@ -1204,15 +1297,24 @@ export function playTimeline(events, ctx, done) {
         group.push(event); if (event.type === 'damageDealt') hadHit = true;
       }
       if (group.length) groups.push({ ...beat, events: group });
-      return groups;
+      return groups.length ? groups : [beat]; // an empty rest beat (reactionAfterResult) still says its carried DODGED
     },
     // Accuracy is known before the target reacts; the defense/effect outcome
     // belongs after that animation, with the numeric result.
     onResult: beat => {
+      // The carried first receipt's DODGED word follows the reaction animation, once, ahead of the next hit's word.
+      for (const event of beat.carried || []) if (isDodge(event) && !dodgeSaid.has(event)) {
+        dodgeSaid.add(event);
+        visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+      }
+      // The first hit's Hit/Miss word already played ahead of the reaction beat (reactionAfterResult); a group with its
+      // own accuracy receipt (a later hit of a multi-hit attack) still says its word.
+      if (beat.resultSaid && !beat.events.some(announces)) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
-          || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed' : null;
+          || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed'
+          : event.type === 'contestPassed' || event.type === 'contestFailed' ? event.type : null;
         if (!kind || saidTargets.has(event.targetId)) continue;
         visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, kind));
         saidTargets.add(event.targetId);
@@ -1232,20 +1334,28 @@ export function playTimeline(events, ctx, done) {
     },
     onNumbers: beat => {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
-      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
-      else for (const event of beat.events) {
-        if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-          || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
-          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
-          continue;
+      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
+      else {
+        // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
+        for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
+        for (const event of beat.events) {
+          if (isDodge(event)) {
+            if (!beat.dodgeLater) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+            continue;
+          }
+          if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
+          visualSafe(() => parts.get(event)?.callout?.(ctx));
         }
-        if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
-        visualSafe(() => parts.get(event)?.callout?.(ctx));
+        for (const event of beat.events) if (event.type !== 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
       }
-      runParts(beat, 'numbers');
       cue(beat);
     },
-    onApply: beat => ctx.onBeatApplied?.(beat),
+    onApply: beat => {
+      const moves = beat.events.filter(e => e.type === 'combatEngagementMoved');
+      if (moves.length) visualSafe(() => ctx.onEngagementMoved?.(moves));
+      // The cost events were applied to the HUD in onIntent (ctx.onLeadApplied); apply the rest here, once each.
+      ctx.onBeatApplied?.(costOf(beat).length && typeof ctx.onLeadApplied === 'function' ? { ...beat, events: beat.events.filter(e => !costOf(beat).includes(e)) } : beat);
+    },
     onResolution: beat => {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
       ctx.onResolution?.(beat);
@@ -1307,7 +1417,7 @@ function playLegacyTimeline(events, ctx, done) {
   const flushHaptics = () => {
     const rest = beats.slice(cued);
     cued = beats.length;
-    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(cued - rest.length + i) });
+    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(cued - rest.length + i) });
   };
   let flushed = false;
   let finished = false;
@@ -1433,7 +1543,7 @@ function playLegacyTimeline(events, ctx, done) {
 
     if (beat.banner) {
       cueBeat(beatIndex);
-      safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor }));
+      safe(() => playBeatCues(beat.events, { maxHpFor: ctx.maxHpFor }));
       const hold = turnBannerHoldMs(speed);
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn', hold); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
@@ -1468,6 +1578,13 @@ function playLegacyTimeline(events, ctx, done) {
         safe(() => stage.settle());
       }
     }
+    // A card that enters a stance draws the stance before its action plays (owner 2026-11-05): the figure is in its new
+    // stance when the swing, cast or guard starts, never switched after it. No time is added; the intent and word
+    // waits that already precede the action still run.
+    if (actorEl && ctx.onStanceLead) {
+      const stanceEvent = stanceLeadEvent(beat);
+      if (stanceEvent) { safe(() => ctx.onStanceLead(beat, stanceEvent)); traceBeat('stance-change', stanceEvent.stance || stanceEvent.maneuver); }
+    }
     const playBeat = () => {
     if (finished) return;
     if (flushed) {
@@ -1482,7 +1599,7 @@ function playLegacyTimeline(events, ctx, done) {
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
     let actorAnimation = null;
-    if (actorEl && ctx.animateActor) {
+    if (actorEl && ctx.animateActor && !beat.resultSaid) { // a rest beat (reactionAfterResult) never swings again
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
         traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
@@ -1497,7 +1614,7 @@ function playLegacyTimeline(events, ctx, done) {
       activeActorAnimation = actorAnimation;
     } else {
       actorAnimation = null;
-      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal') {
+      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal' && !beat.resultSaid) {
         const attacking = beat.kind === 'attack' || beat.kind === 'counter';
         safe(() => flash(actorEl, attacking ? 'act-attack' : 'act-move', speed.lungeMs));
         safe(() => playPoseOn(actorEl, attacking ? 'attack' : 'guard', speed.lungeMs));
@@ -1591,7 +1708,7 @@ function playLegacyTimeline(events, ctx, done) {
             reactionEndAt = Math.max(reactionEndAt, Date.now() + (Number(ctx.reactionTimingForReceipt?.(event, paced)) || 0));
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
-          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
+          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
           }
@@ -1605,7 +1722,7 @@ function playLegacyTimeline(events, ctx, done) {
         }
         const applyBeat = () => {
           cueBeat(beatIndex);
-          safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
+          safe(() => playBeatCues(beat.events, { maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -1649,7 +1766,7 @@ function playLegacyTimeline(events, ctx, done) {
               }
               traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
-              if (!damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
+              if (!damageCued.has(beatIndex) && playerLostHp(event)) {
                 damageCued.add(beatIndex);
                 safe(() => haptic.play('damageTaken'));
               }
@@ -1725,46 +1842,34 @@ export function playHitSound(e) {
 }
 
 /**
- * playerLostHp(e, isLocalPlayer?) → did this receipt cost a player HP? In
- * co-op, `isLocalPlayer(seatId)` narrows it to the seats this screen plays.
+ * playerLostHp(e) → did this receipt cost the player HP?
  */
-export function playerLostHp(e, isLocalPlayer) {
+export function playerLostHp(e) {
   if (!e) return false;
-  let lost = false;
-  if (e.type === 'damageDealt') lost = hurtsPlayer(e) && guardHitFloatParts(e).residual > 0;
-  else if (e.type === 'hpLost') lost = hurtsPlayer(e) && e.cause !== 'attack' && (e.amount || 0) > 0;
-  if (!lost || typeof isLocalPlayer !== 'function') return lost;
-  // A co-op receipt that names no seat is nobody's here: every player entity
-  // is id 'player', so treating it as local would buzz every device.
-  const seat = e.targetPlayerId ?? e.playerId;
-  return seat != null && isLocalPlayer(seat);
+  if (e.type === 'damageDealt') return hurtsPlayer(e) && guardHitFloatParts(e).residual > 0;
+  if (e.type === 'hpLost') return hurtsPlayer(e) && e.cause !== 'attack' && (e.amount || 0) > 0;
+  return false;
 }
 
 /**
- * bigHitLanded(e, { isLocalPlayer?, maxHpFor? }) → did this receipt take an
- * enemy down by BIG_HIT_SHARE of its max HP or more? `maxHpFor(entityId)` says
- * the target's max HP (the screen's, as for the damage float's size); with none
- * the hit cannot be measured and is not big. In co-op, only a hit a seat this
- * screen plays landed buzzes this device; a receipt naming no seat is nobody's.
+ * bigHitLanded(e, { maxHpFor? }) → did this receipt take an enemy down by
+ * BIG_HIT_SHARE of its max HP or more? `maxHpFor(entityId)` says the target's
+ * max HP (the screen's, as for the damage float's size); with none the hit
+ * cannot be measured and is not big.
  */
-export function bigHitLanded(e, { isLocalPlayer, maxHpFor } = {}) {
+export function bigHitLanded(e, { maxHpFor } = {}) {
   if (!e || e.type !== 'damageDealt' || hurtsPlayer(e) || typeof maxHpFor !== 'function') return false;
   const maxHp = Number(maxHpFor(e.targetId)) || 0;
-  if (!(maxHp > 0) || guardHitFloatParts(e).residual / maxHp < BIG_HIT_SHARE) return false;
-  if (typeof isLocalPlayer !== 'function') return true;
-  const seat = e.sourcePlayerId ?? e.playerId;
-  return seat != null && isLocalPlayer(seat);
+  return maxHp > 0 && guardHitFloatParts(e).residual / maxHp >= BIG_HIT_SHARE;
 }
 
 /**
- * enemyPoiseBroken(e, isLocalPlayer?) → did an enemy's Poise break (the
- * stagger starts)? A player's Poise break (targetKind 'player') is not an enemy's and is false.
- * Legacy events without targetKind keep the old reading. The receipt names no seat, so in co-op it is nobody's here, as in
- * playerLostHp.
+ * enemyPoiseBroken(e) → did an enemy's Poise break (the stagger starts)? A
+ * player's Poise break (targetKind 'player') is not an enemy's and is false.
+ * Legacy events without targetKind keep the old reading.
  */
-export function enemyPoiseBroken(e, isLocalPlayer) {
-  if (!e || e.type !== 'poiseBroken' || e.targetKind === 'player' || !(e.interrupted || e.poiseBreak)) return false;
-  return typeof isLocalPlayer !== 'function';
+export function enemyPoiseBroken(e) {
+  return !!e && e.type === 'poiseBroken' && e.targetKind !== 'player' && !!(e.interrupted || e.poiseBreak);
 }
 
 /**
@@ -1772,9 +1877,9 @@ export function enemyPoiseBroken(e, isLocalPlayer) {
  * refill or a whole-hand discard is ONE sound, not five, and adds no step to
  * the beat's pacing (these events have no visual of their own).
  */
-export function playBeatCues(events, { isLocalPlayer, maxHpFor, stinger = true, turnBuzz = true, damageBuzz = true } = {}) {
+export function playBeatCues(events, { maxHpFor, stinger = true, turnBuzz = true, damageBuzz = true } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  playBeatHaptics(events, { isLocalPlayer, maxHpFor, turnBuzz, damageBuzz });
+  playBeatHaptics(events, { maxHpFor, turnBuzz, damageBuzz });
   if (stinger && has('playerTurnStart')) sfx.play('turnStinger');
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
@@ -1789,91 +1894,42 @@ export function playBeatCues(events, { isLocalPlayer, maxHpFor, stinger = true, 
  * playBeatCues plays it with the beat's sounds; a skipped timeline plays it
  * alone for the beats it jumped past.
  */
-export function playBeatHaptics(events, { isLocalPlayer, maxHpFor, turnBuzz = true, damageBuzz = true } = {}) {
-  if (damageBuzz && events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+export function playBeatHaptics(events, { maxHpFor, turnBuzz = true, damageBuzz = true } = {}) {
+  if (damageBuzz && events.some((e) => playerLostHp(e))) haptic.play('damageTaken');
   // The player's blows: a big hit on an enemy, and an enemy's Poise breaking (once each per beat).
-  if (events.some((e) => bigHitLanded(e, { isLocalPlayer, maxHpFor }))) haptic.play('bigHit');
-  if (events.some((e) => enemyPoiseBroken(e, isLocalPlayer))) haptic.play('poiseBreak');
-  if (turnBuzz && events.some((e) => localTurnStart(e, isLocalPlayer))) haptic.play('turnStart');
+  if (events.some((e) => bigHitLanded(e, { maxHpFor }))) haptic.play('bigHit');
+  if (events.some((e) => enemyPoiseBroken(e))) haptic.play('poiseBreak');
+  if (turnBuzz && events.some((e) => localTurnStart(e))) haptic.play('turnStart');
 }
 
 /**
- * localTurnStart(e, isLocalPlayer?) → is this the start of a turn this screen
- * plays? Solo (no predicate) always is. In co-op the turn stinger is shared,
- * but the buzz is personal: only a local seat's own playerTurnStart, so a
- * downed seat spectating its teammates' turns stays still. A receipt naming
- * no seat is nobody's, as in playerLostHp.
+ * localTurnStart(e) → is this the start of the player's turn?
  */
-export function localTurnStart(e, isLocalPlayer) {
-  if (!e || e.type !== 'playerTurnStart') return false;
-  if (typeof isLocalPlayer !== 'function') return true;
-  return e.playerId != null && isLocalPlayer(e.playerId);
+export function localTurnStart(e) {
+  return !!e && e.type === 'playerTurnStart';
 }
 
 /**
  * The cues of a whole event list, one playBeatCues per beat exactly as the
  * paced timeline groups them (groupBeats). Used where the events are not
- * paced: instant/reduced-motion playback, a fresh fight's setup (the opening
- * draw and turn start), and co-op receipts.
+ * paced: instant/reduced-motion playback and a fresh fight's setup (the
+ * opening draw and turn start).
  */
 export function playEventCues(events, opts = {}) {
-  // ONE STINGER PER SHARED TURN. Co-op's startPlayerPhase emits a
-  // playerTurnStart per living seat while the shared turn moves once, and
-  // groupBeats gives each its own beat; a turn already stung in this list
-  // does not sting again. The key is each receipt's `turn`, so the co-op
-  // digest (tools/session.mjs) must keep that field: without it every start
-  // reads as the same turn and a list with two turns stings once.
-  // The buzz keeps its own once-per-turn set, over this screen's seats only:
-  // the turn's first start may be a teammate's, which stings for everyone
-  // but buzzes nobody here, and a later local start must still buzz.
+  // ONE STINGER PER TURN: a turn already stung in this list does not sting
+  // again. The key is each receipt's `turn`; without it every start reads as
+  // the same turn and a list with two turns stings once. The buzz keeps its
+  // own once-per-turn set.
   const stung = new Set();
   const buzzed = new Set();
   for (const beat of groupBeats(events || [])) {
     const starts = beat.events.filter((e) => e && e.type === 'playerTurnStart');
     const repeat = starts.length > 0 && starts.every((e) => stung.has(e.turn));
     for (const e of starts) stung.add(e.turn);
-    const mine = starts.filter((e) => localTurnStart(e, opts.isLocalPlayer));
+    const mine = starts.filter((e) => localTurnStart(e));
     const turnBuzz = mine.some((e) => !buzzed.has(e.turn));
     for (const e of mine) buzzed.add(e.turn);
     playBeatCues(beat.events, { ...opts, stinger: !repeat, turnBuzz });
-  }
-}
-
-/**
- * Every sound a batch of authoritative receipts carries: the HP half of each
- * attack (playHitSound) and the per-beat cues. Co-op plays its receipts
- * through this, since its floats are drawn by coop.js, not by visualFor.
- */
-export function playReceiptSounds(events, opts = {}) {
-  const local = (seat) => typeof opts.isLocalPlayer !== 'function' || seat == null || opts.isLocalPlayer(seat);
-  for (const e of events || []) {
-    if (e && e.type === 'damageDealt') playHitSound(e);
-    // Co-op plays no 'cardPlay' sound or haptic at the tap (it only sends an
-    // intent); the card-play buzz follows the authoritative receipt, for a
-    // card this screen's own seat played.
-    if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
-  }
-  playEventCues(events, opts);
-}
-
-/**
- * The haptics alone of a batch of receipts, with no sound: card plays for
- * this screen's seats, and one damage buzz per beat that cost a local seat
- * HP, and a local seat's turn start once per turn. Co-op uses it for a
- * fight's final receipts, which ride the reward or completion scene that
- * replaces the combat scene (tools/session.mjs settleCombat), so the card
- * that ends a fight still buzzes, and for combat frames a paced enemy turn
- * held back behind that scene (coop.js paceEnemyTurn).
- */
-export function playReceiptHaptics(events, { isLocalPlayer, maxHpFor } = {}) {
-  const local = (seat) => typeof isLocalPlayer !== 'function' || seat == null || isLocalPlayer(seat);
-  for (const e of events || []) if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
-  const buzzed = new Set();
-  for (const beat of groupBeats(events || [])) {
-    const mine = beat.events.filter((e) => localTurnStart(e, isLocalPlayer));
-    const turnBuzz = mine.some((e) => !buzzed.has(e.turn));
-    for (const e of mine) buzzed.add(e.turn);
-    playBeatHaptics(beat.events, { isLocalPlayer, maxHpFor, turnBuzz });
   }
 }
 
@@ -1973,18 +2029,22 @@ export function statusPopupFor(e = {}) {
 
 /**
  * calloutForEvent(e) → { kind, targetId } | null — the word an event earns
- * and the fighter it shows over (co-op screens pass seat ids as targetId).
+ * and the fighter it shows over.
  */
 export function calloutForEvent(e = {}) {
   let kind = null;
+  if (e.type === 'enemyMoveUnavailable') return e.resource === 'sp' && e.sourceId != null ? { kind: 'outOfSp', targetId: e.sourceId } : null;
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
     case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
     case 'attackMissed': kind = 'missed'; break;
+    case 'contestPassed': kind = 'contestPassed'; break;
+    case 'contestFailed': kind = 'contestFailed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
-    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
+    case 'enemyStaggered': if (!e.cause || e.cause === 'weakness') kind = 'staggered'; break;
+    case 'weaknessTriggered': kind = 'weak'; break;
     case 'playerStaggered': kind = 'staggered'; break;
     case 'enemyInterrupted': kind = 'interrupted'; break;
     // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
@@ -2058,11 +2118,10 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
     }
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
-      // only the HP residual as damage. Paired results sit side-by-side without
+      // the full hit as damage (HP residual drives flinch and shake). Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
       const outcome = outcomeKindForEvent(e);
-      const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
@@ -2101,23 +2160,27 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: (ctx) => {
           if (sequential && !outcome) hitSounds();
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
-          if (outcome) return;
+          // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
+          if (outcome) {
+            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls);
+            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls);
+            return;
+          }
           const anchor = ctx.anchorFor(e.targetId);
-          // A bundle of several parts places them in fixed slots (Barrier and Ward stack above the
-          // Block / Health pair) and takes no lane; a lone number lanes against earlier hits.
-          const lane = parts.barrier || parts.ward || parts.poise || parts.pierced || parts.immune || paired ? false : undefined;
-          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false, lane });
-          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false, lane });
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false, lane });
-          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls, null, { x: -26, y: -62, jitter: false, lane });
-          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false, lane });
-          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false, lane });
+          // One column per combatant (owner, 2026-11-05): the parts spawn in the order below, one stagger apart,
+          // all at the same x. The layers the hit met come first, then the hit's HP loss.
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls);
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls);
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls);
+          if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls);
+          if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls);
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls);
+          // A pierced hit that cost no HP has no outcome word, so its full number floats here.
+          if (!parts.damage && parts.fullHit && parts.pierced) floatNum(ctx.layer, anchor, parts.fullHit.text, parts.fullHit.cls);
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
-              { x: paired ? 26 : 0, jitter: !paired, lane });
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.full, maxHp));
           }
         },
       };
@@ -2128,8 +2191,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
             // Sequential order: the sound arrives with its number (SPEC §7.4).
             reaction: () => { if (!sequential) sfx.play('block'); },
             numbers: (ctx) => {
-              if (sequential) sfx.play('block');
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+              // The sound plays when this number spawns in its column, not when it queued.
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk', undefined, sequential ? { onSpawn: () => sfx.play('block') } : undefined);
             },
           }
         : null;
@@ -2163,8 +2226,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
               if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
             },
             numbers: (ctx) => {
-              if (sequential) sfx.play('heal');
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal', undefined, sequential ? { onSpawn: () => sfx.play('heal') } : undefined);
             },
           }
         : null;

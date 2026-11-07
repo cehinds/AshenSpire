@@ -1,5 +1,5 @@
 {
-  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction \u2014 regenerate with --write-baseline only alongside the change that explains it.",
+  "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
       "tool": "tools/armoury-picked-up.mjs",
@@ -124,7 +124,7 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "18d86ea31ac4eaac"
+      "digest": "ef5c29683b8c33a0"
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
@@ -140,15 +140,7 @@
     },
     "tools/confirmation-modal.mjs": {
       "count": 10,
-      "digest": "1f5c08d068934c04"
-    },
-    "tools/coop-hand-parity.mjs": {
-      "count": 1,
-      "digest": "e753cef1956378c6"
-    },
-    "tools/coop-secondbeat.mjs": {
-      "count": 3,
-      "digest": "2029f5a47f49c665"
+      "digest": "a983e412b7d5bd49"
     },
     "tools/derived-runtime-authority.mjs": {
       "count": 3,
@@ -163,20 +155,16 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 10,
-      "digest": "63c88aea3a42c684"
-    },
-    "tools/flask-intent-smoke.mjs": {
-      "count": 3,
-      "digest": "e60db1b613402d0b"
+      "count": 9,
+      "digest": "914686cf81027ce3"
     },
     "tools/flask-menu-cancel.mjs": {
       "count": 6,
       "digest": "fd574eb2f9dd3290"
     },
     "tools/flask-menu-probe.mjs": {
-      "count": 19,
-      "digest": "d275e3c5d7fae584"
+      "count": 17,
+      "digest": "07cb8419c6d47115"
     },
     "tools/flaskbox.mjs": {
       "count": 6,
@@ -284,7 +272,7 @@
     },
     "tools/screenreach.mjs": {
       "count": 10,
-      "digest": "3318769333c0b08f"
+      "digest": "c47a88f1fe5b5421"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
@@ -308,7 +296,7 @@
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
-      "digest": "8828ae5f798ba270"
+      "digest": "3a1addc6a9ae4e8a"
     },
     "tools/swap-cost-relic-surface.mjs": {
       "count": 2,

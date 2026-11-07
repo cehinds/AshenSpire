@@ -186,7 +186,7 @@ test('legal slow four-hit Fell Warden reactions finish every group without watch
       onWatchdog: () => { watchdog++; },
       onDone: () => { done++; doneAt = clock.time; },
     }, timing, options(clock));
-    const expectedDone = timing.wordMs + timing.spriteSpeed.lungeMs + timing.afterSpriteMs
+    const expectedDone = timing.intentMs + timing.wordMs + timing.spriteSpeed.lungeMs + timing.afterSpriteMs
       + groups.reduce((sum, group) => sum + timing.resultMs + Math.max(timing.reactionMs + timing.damageMs, reactionLife(group)), 0)
       + Math.max(timing.resetMs, timing.stepMs);
     clock.runUntil(expectedDone - 1);

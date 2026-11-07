@@ -29,23 +29,21 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
       }
       return Math.min(this.scrollHeight, cap);
     } };
-  const cue = { offsetHeight: 9 };
   const face = { className: '', parentElement: { className: '' },
     dataset: { designWidth: '360', fullRules: String(full), rulesHidden: String(hidden) },
     get clientWidth() { return state.width; }, clientHeight: faceHeight,
     get textContent() { return 'x'.repeat(state.chars); },
     querySelector(selector) {
-      if (selector === '.card-rules-inspect-cue') return cue;
       if (selector === '[data-card-binding="name"]' && titleBottom) return { parentElement: { offsetTop: 0, clientHeight: titleBottom }, offsetTop: 0, offsetHeight: titleBottom };
       if (selector === '.card-tag-rail' && railBottom) return { offsetTop: 0, offsetHeight: railBottom };
       return null;
     },
     querySelectorAll(selector) { return selector === '.ic-text[data-auto-fit="true"]' ? [text] : []; } };
   const card = { querySelector: () => face };
-  return { state, face, text, layer, cue, fit: () => fitIllustratedCards([card]) };
+  return { state, face, text, layer, fit: () => fitIllustratedCards([card]) };
 }
 
-test('unfit inspection rules keep full text but reserve an in-bay cue and report incomplete', () => withKitDom(() => {
+test('unfit inspection rules keep full text, reserve no cue and report incomplete', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture();
   f.fit();
@@ -53,13 +51,13 @@ test('unfit inspection rules keep full text but reserve an in-bay cue and report
   assert.equal(f.text.dataset.rulesComplete, 'false');
   assert.equal(f.face.dataset.rulesOverflow, 'true');
   assert.equal(f.layer.style.justifyContent, 'flex-start', 'clipped text cannot center above its bay');
-  assert.equal(f.text.clientHeight + f.cue.offsetHeight, f.layer.clientHeight);
+  assert.equal(f.text.clientHeight, f.layer.clientHeight, 'no Inspect cue takes space from the words');
   assert.equal(f.face.textContent.length, 500, 'full rules remain available to the Rules tooltip');
 }));
 
 test('a later fit of shorter copy clears its previous cap and geometric overflow', () => withKitDom(() => {
   invalidateLayoutMetrics();
-  const f = fixture({ chars: 80 });
+  const f = fixture({ chars: 400 });
   f.fit();
   assert.equal(f.text.dataset.rulesComplete, 'false');
   f.state.width = 180;
@@ -74,13 +72,13 @@ test('a later fit of shorter copy clears its previous cap and geometric overflow
   assert.deepEqual(f.text.style, settled, 'unchanged inputs retain the settled fit');
 }));
 
-test('compact hidden rules retain their cue even when visible copy fits', () => withKitDom(() => {
+test('compact hidden rules still report incomplete even when visible copy fits', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 3, full: false, hidden: true });
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true');
   assert.equal(f.text.dataset.rulesComplete, 'false');
-  assert.equal(f.text.style.maxHeight, 'calc(100% - 9px)');
+  assert.equal(f.text.style.maxHeight, '100%', 'no cue reserves space');
 }));
 
 test('long rules shrink inside a fixed bay, preserving parchment and artwork geometry', () => withKitDom(() => {
@@ -89,16 +87,16 @@ test('long rules shrink inside a fixed bay, preserving parchment and artwork geo
   const geometry = { ...f.layer.style };
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) < 15, 'preferred font does not fit');
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'readable floor');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6, 'configured minimum');
   assert.deepEqual({ top: f.layer.style.top, height: f.layer.style.height }, geometry);
   assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-  f.state.chars = 300;
+  f.state.chars = 900;
   f.fit();
   assert.equal(f.face.dataset.rulesOverflow, 'true', 'unfit copy offers inspection without growing');
   assert.equal(f.layer.clientHeight, 45);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
   f.state.chars = 3;
   f.fit();
   assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
@@ -111,9 +109,47 @@ test('two live Counter rows shrink below design minimum within the native hand b
   const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false, printedRows: 2 });
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) < 15);
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 6);
   assert.ok(Math.abs(f.layer.clientHeight - 28) < .001);
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.equal(f.face.dataset.rulesOverflow, 'false');
   assert.equal(f.text.style.maxHeight, '100%', 'no inspection cue reserves space when both rows fit');
+}));
+
+test('a one-liner that needs shrinking to fit shows its rules with no Inspect cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) < 15, 'the font shrank first');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+}));
+
+test('rules that need three lines at 11px shrink until they fit the glance, with every word kept', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 60, width: 180, top: 80, height: 45, full: false });
+  f.fit();
+  const font = parseFloat(f.text.style.fontSize);
+  assert.ok(font < 11 && font >= 6, 'shrunk past 11px, above the configured minimum');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1, 'the words sit inside the parchment');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+}));
+
+test('rules that cannot fit even at the minimum tighten the line height, then clip with an ellipsis', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 5000, width: 180, top: 80, height: 45, full: false });
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize) >= 6, true);
+  assert.equal(parseFloat(f.text.style.lineHeight) < 1.05, true, 'line height was tightened');
+  assert.equal(f.text.style.textOverflow, 'ellipsis');
+  assert.equal(f.text.style.overflow, 'hidden');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
+  assert.equal(f.text.dataset.rulesComplete, 'false');
+}));
+
+test('two face lines that each render on one line show no cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 10, width: 180, top: 80, height: 45, full: false, printedRows: 2 });
+  f.fit();
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
 }));

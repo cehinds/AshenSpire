@@ -60,17 +60,18 @@ export const STREAM_NAMES = Object.freeze([
   // nothing here, so fights without them keep every counter unchanged. A save
   // written before the stream existed starts it at 0.
   'enemyReaction',
-  // The Combat Rounds Preview's own stream (SPEC §4.11): appended last so no
-  // stream above moves. Nothing draws on it while the preview is off, so its
-  // counter stays 0 and getCounters() omits it: an off-mode save has no new
-  // key and is byte-identical. A save written before the stream existed
-  // reads it as 0.
+  // The retired Combat Rounds Preview's stream. Nothing draws on it any more, but the name stays so
+  // every stream's position (and a save's counters) is unchanged: its counter stays 0 and getCounters()
+  // omits it. A save written before the stream existed reads it as 0.
   'combatRounds',
+  // Insight contests (SPEC §17 Contests): the d20 of a Read Intent / status contest.
+  // Appended last; an untouched run writes no key for it.
+  'combatContest',
 ]);
 
 // Streams whose zero counter is left out of getCounters() (and so out of a
 // save). Their counter is restored as 0 when missing.
-const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds']);
+const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds', 'combatContest']);
 
 const MULBERRY_INC = 0x6d2b79f5;
 

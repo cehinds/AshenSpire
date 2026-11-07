@@ -117,28 +117,43 @@ try {
         assert.equal(await confirm.isDisabled(), false);
         await tone(confirm, "green");
         await capture(page, `${key}-reward-selected`);
-        await confirm.click();
-        if (await page.locator(".reward-choice-option").count())
-          assert.equal(
-            await page.locator(".reward-choice-option:visible").count(),
-            1,
-            "review shows only chosen reward",
+        if (profile === "core") {
+          // A selected configured card shows its three actions at once (no review step).
+          const labels = await page
+            .locator(".reward-foot button:visible")
+            .allInnerTexts();
+          assert.deepEqual(
+            labels.map((l) => l.trim()),
+            ["Skip", "Edit deck", "Add to library", "Add to deck"],
+            "selected card actions",
           );
-        assert.match(await confirm.innerText(), /Continue/i);
-        assert.match(await back.innerText(), /Back/i);
-        await tone(confirm, "green");
-        await tone(back, "red");
-        assert.deepEqual(
-          await inventory(page),
-          before,
-          "Confirm review grants nothing",
-        );
-        await capture(page, `${key}-reward-review`);
-        await back.click();
-        assert.deepEqual(await inventory(page), before, "Back grants nothing");
-        await page.locator(".reward-pick").first().click();
-        await confirm.click();
-        await confirm.click();
+          assert.deepEqual(await inventory(page), before, "Selecting grants nothing");
+          await capture(page, `${key}-reward-review`);
+          await confirm.click();
+        } else {
+          await confirm.click();
+          if (await page.locator(".reward-choice-option").count())
+            assert.equal(
+              await page.locator(".reward-choice-option:visible").count(),
+              1,
+              "review shows only chosen reward",
+            );
+          assert.match(await confirm.innerText(), /Continue/i);
+          assert.match(await back.innerText(), /Back/i);
+          await tone(confirm, "green");
+          await tone(back, "red");
+          assert.deepEqual(
+            await inventory(page),
+            before,
+            "Confirm review grants nothing",
+          );
+          await capture(page, `${key}-reward-review`);
+          await back.click();
+          assert.deepEqual(await inventory(page), before, "Back grants nothing");
+          await page.locator(".reward-pick").first().click();
+          await confirm.click();
+          await confirm.click();
+        }
         if (profile === "core")
           await page.waitForFunction(() =>
             Object.values(window.__rewardStateForShot().live.offers || {}).some(

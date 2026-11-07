@@ -26,7 +26,7 @@ Run `node tools/combat-test-browser.mjs` after rebuilding. It checks all three b
 
 The user-friendly standalone tool now lives in its own private repository, [AshenSpire Combat Workshop](https://github.com/cehinds/AshenSpire-Combat-Workshop). Its pinned engine snapshot is documented there. Start it with `npm start` in that repository and open `http://localhost:8623/`. The page below remains a small engine regression fixture.
 
-Run `node tools/serve.mjs --port 8618 --no-open --no-lan`, then open `http://localhost:8618/tests/combat-prototypes.html`. Choose a build and encounter, select an enemy, and play cards. The workshop uses `createCombat`, `dispatch`, and `previewCard`. It does not read or overwrite saved runs.
+Run `node tools/serve.mjs --port 8618 --no-open`, then open `http://localhost:8618/tests/combat-prototypes.html`. Choose a build and encounter, select an enemy, and play cards. The workshop uses `createCombat`, `dispatch`, and `previewCard`. It does not read or overwrite saved runs.
 
 The expandable rules editor accepts the complete configuration from `src/content/combatRules.js`. Restart the encounter to apply changes. Build decks, attributes, armor, resource caps, and opponent definitions are in `src/content/prototypes/combatBuilds.js`. The prototype bundle passes the production content validator and is excluded from ordinary run registries and reward pools. Its definitions are bundled so the explicit game test entry also works in the standalone HTML.
 
@@ -38,13 +38,13 @@ The expandable rules editor accepts the complete configuration from `src/content
 - Deterministic Dodge Roll: Retain, no action cost, weight-priced stamina, one Evade charge, and an explicit once-per-turn limit. Evade prevents a complete hit and its contact buildup. Blocked contact can still apply buildup.
 - Explicit turn-start stamina recovery and no automatic mana recovery in the new ruleset.
 - Candidate-state execution: failed actions leave cards, pools, queues, events, and RNG unchanged. Exact previews execute on a clone. Save snapshots retain the rules fingerprint, source profiles, Evade, and trigger state.
-- Trigger priority, ancestry, activation limits, and play/target/hit chance scopes on a separate persisted RNG stream. Secondary damage does not inherit weapon buildup or impact. Co-op trigger ownership distinguishes seats.
+- Trigger priority, ancestry, activation limits, and play/target/hit chance scopes on a separate persisted RNG stream. Secondary damage does not inherit weapon buildup or impact.
 - Add, refresh, replace, strongest, independent, and unique application stacking with caps and explicit owner-turn expiry clocks. Existing buildup meters retain their own threshold behavior.
 - Three ten-card prototype decks, five encounter types, and a three-encounter sequence carrying HP, stamina, and mana. The browser workshop uses existing class idle/guard art and persistent glow as a presentation test.
 
 ## Verification
 
-`node tests/run-node.mjs` includes `node --test tests/combat-foundations.test.mjs`. The focused suite covers damage/Block/rounding, impact allocation, Bleed contact, deterministic Dodge, recovery, failed-action rollback, previews, saves, trigger loops, and co-op ownership.
+`node tests/run-node.mjs` includes `node --test tests/combat-foundations.test.mjs`. The focused suite covers damage/Block/rounding, impact allocation, Bleed contact, deterministic Dodge, recovery, failed-action rollback, previews, saves, and trigger loops.
 
 `node tools/combat-prototypes-browser.mjs` drives real pointer/touch input at 1365×1000 and 390×844, with reduced motion on the phone. Screenshots and logs are written to `artifacts/combat-foundations/`. It checks all three presets, stance persistence, Dodge retention/consumption, resolved card text, and overflow, then exercises the new-rules adapter in the standalone bundle. The bundled check catches dependency cycles that native source-module tests cannot. It is a controlled workshop, not an end-to-end production run.
 

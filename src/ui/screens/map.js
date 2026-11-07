@@ -4,13 +4,10 @@ import { gameModule } from '../../model/gameProfile.js';
 // THE BOARD IS NOT HERE ANY MORE. Geometry, edges, nodes, fog, the camera, the
 // zoom ladder and the delivered-tap-size note live in ONE renderer,
 // `ui/components/mapboard.js`, because there were two of them: this file and a
-// second, independent one inside `ui/screens/coop.js` with its own `ROW_H = 46`
-// and its own `r = boss ? 20 : 15`. Read that file's header for the ruling —
-// the co-op map is the SAME MAP with a second player on it, so what varies is
-// the VIEWER and never the act.
+// second, independent one with its own `ROW_H = 46` and its own
+// `r = boss ? 20 : 15`. Read that file's header for the ruling.
 //
-// WHAT IS STILL THIS FILE'S: the chrome a solo run needs and a co-op client does
-// not — the hero header, the relic strip, the legend, the quick-nav, the map
+// WHAT IS STILL THIS FILE'S: the chrome a solo run needs — the hero header, the relic strip, the legend, the quick-nav, the map
 // tray (hint bar, Potions, the selected node and Back / Enter), and this
 // screen's own keyboard handler.
 //
@@ -165,12 +162,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   });
 
   app.innerHTML = `
-    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${mapAdapter ? ' legacy-dungeon' : ''}${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
       ${runHudHtml({
         registries, run, meta, place: 'map', headerClass: 'map-header',
       })}
-      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)), graph: map, path: mapAdapter?.path || run.path || [], current })}
+      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, seatNameOf(registries, run)), graph: map, path: mapAdapter?.path || run.path || [], current })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for

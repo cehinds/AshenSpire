@@ -4,7 +4,9 @@ import { combatEnvironment, mapTerrainSetting } from './environmentArt.js';
 import { hasProfile } from './locationPresentation.js';
 
 const nodeProfiles = new Map(locationPresentation.nodeProfiles.map(row => [row.nodeId, row.profileId]));
-const REGION_SETTINGS = {
+// One table names the layered scene (its backdrop and ground travel together)
+// per region and setting, so the two cannot be picked apart.
+export const REGION_SETTINGS = {
   'ashen-crown': { road: 'open-road', city: 'city-street', town: 'city-street', castle: 'castle-grounds', dungeon: 'dungeon-corridor' },
   'hollow-weald': { road: 'forest-path', forest: 'forest-path', city: 'village-lane', town: 'village-lane' },
   'pale-marches': { city: 'snowy-street', town: 'snowy-street', street: 'snowy-street' },
@@ -14,12 +16,12 @@ const REGION_SETTINGS = {
 // Art selection reads presentation inputs only. It neither consumes gameplay
 // randomness nor stores scene IDs in the run's existing atlas selection.
 export function layeredCombatScene(run = {}, environment) {
-  const nodeId = run.journey?.currentNodeId || run.mapNodeId || run.cursorId;
+  const nodeId = run.mapNodeId || run.cursorId;
   const node = run.mapGraph?.nodes?.[nodeId]
     || (Array.isArray(run.map?.nodes) ? run.map.nodes.find(candidate => candidate.id === nodeId) : undefined);
   // Co-op projects its graph as an array and names the current point cursorId.
   // Adapt that read-only view for the same seat/final-causeway rules as solo.
-  if (!run.journey && !run.mapNodeId && run.cursorId && node) {
+  if (!run.mapNodeId && run.cursorId && node) {
     environment = combatEnvironment({ ...run, mapNodeId: nodeId, mapGraph: { nodes: { [nodeId]: node } } });
   }
   const binding = INTRO_LAYERED_SCENES[nodeId];

@@ -59,7 +59,7 @@ function liveSnapshot() {
 }
 try {
   if (!process.env.VIEW_PRESETS_CAPTURE_ONLY) {
-  for (const profile of ['core','current']) {
+  for (const profile of ['core']) {
     const page = await pageFor(profile, 'combat');
     await page.locator('.end-turn').waitFor();
     await page.evaluate(() => { window.__qaCombatIdentity = window.__combat; });
@@ -86,7 +86,7 @@ try {
     await page.mouse.down();
     await page.waitForTimeout(700);
     await page.mouse.up();
-    } else await page.locator('.nm-inspect').last().click();
+    } else await page.locator('.target-hud-inspect-info:visible, .combatant.enemy .combatant-info:visible').last().click(); // the name text is gone (owner 2026-11-06)
     await page.locator('.combatant-inspector-body').waitFor();
     await page.keyboard.press('Escape');
     await openCombatSettings(page);

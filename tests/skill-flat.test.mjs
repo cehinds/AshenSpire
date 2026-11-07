@@ -3,7 +3,6 @@
 // its schools. Derived (stamped as `skillBonus`) as the sum over its tracks,
 // applied in resolveCard beside the rank, and carried into combat.
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard, primaryEffectIndex } from '../src/model/registries.js';
@@ -77,11 +76,6 @@ test('a card earns the sum of its tracks\' flats, and never past the cap', async
   const flood = { ...run, skills: { [BLADE]: { xp: 0, level: 1000, pendingDrafts: 0 } } };
   const capped = { ...registries, balance: { ...registries.balance, skill: { ...registries.balance.skill, flatEvery: 1 } } };
   assert.equal(skillBonusFor(capped, flood, { cardId: 'rend' }), MAX_SKILL_BONUS, 'no setting stamps what a save refuses');
-});
-
-test('co-op seats stamp the bonus before their fight', () => {
-  const session = readFileSync(new URL('../tools/session.mjs', import.meta.url), 'utf8');
-  assert.match(session, /function memberAsPlayer\(m\) \{[\s\S]{0,400}?stampSkillBonuses\(registriesForClassMastery\(registries,m\.run\), m\.run\);[\s\S]{0,40}?return \{/);
 });
 
 test('the level popup counts the cards a claim actually raised', async () => {

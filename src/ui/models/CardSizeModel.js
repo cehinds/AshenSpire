@@ -540,5 +540,16 @@ export function restingWidthPx(viewportWidthPx, levels, tokens = uiConfig.tokens
   return (viewportWidthPx < cardMobileBelowPx(tokens) && Number.isFinite(mobile)) ? mobile : glance.widthPx;
 }
 
+/**
+ * The width a level RESTS at in a viewport: its `mobile` variant on a phone, its authored width elsewhere. `glance`
+ * has always done this (restingWidthPx above); `focus` and `inspect` follow it so the desktop's 20% larger cards
+ * (owner, 2026-11-02) leave a phone's sizes exactly where they were.
+ */
+export function levelRestingWidthPx(name, viewportWidthPx, levels, tokens = uiConfig.tokens) {
+  const row = levels[name];
+  const mobile = row.variants && row.variants.mobile;
+  return (viewportWidthPx < cardMobileBelowPx(tokens) && Number.isFinite(mobile)) ? mobile : row.widthPx;
+}
+
 /** Where `cardSizingExport`'s text belongs, for whatever presents the copy. */
 export const cardSizingExportPath = 'merge at the root of content/config/ui/components/card.json (replaces sizing.levels)';

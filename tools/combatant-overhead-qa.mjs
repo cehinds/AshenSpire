@@ -115,16 +115,7 @@ try {
     await page.keyboard.press('Tab');
     await card.focus();
     assert.equal(await visibleInfo(), await selectedInfo(), 'card selection shows only the selected combatant Information');
-    const motif = el => {
-      const s=getComputedStyle(el);
-      // CSS zoom can round computed lengths by a fraction of a pixel.
-      const px = value => Math.round(parseFloat(value) * 10) / 10;
-      let zoom = 1;
-      for (let node=el; node; node=node.parentElement) zoom *= Number(getComputedStyle(node).zoom) || 1;
-      return [px(s.width),px(s.height),s.borderTopColor,px(parseFloat(s.borderTopWidth)*zoom),s.backgroundColor,s.color,s.fontFamily,s.fontStyle,s.fontWeight,s.fontSize];
-    };
-    assert.deepEqual(await info.evaluate(motif), await card.locator('.card-info-button').evaluate(motif), 'card and combatant Information share the same motif');
-    await card.locator('.card-info-button').click();
+    await card.click({button:'right'});
     await page.getByRole('button', { name: 'Play card', exact: true }).click();
     assert(await page.locator('.enemy.targetable').count(), 'card is armed for a target');
     const before = await page.evaluate(() => JSON.stringify(window.__combat.piles));
@@ -150,21 +141,6 @@ try {
     }
     await page.screenshot({ path: resolve(out, `targeting-${width}.png`) });
     console.log('PASS overhead input and geometry', width, height);
-    await page.goto(`${base}?shot=coop`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.__coopSnapshotForShot);
-    await page.waitForTimeout(1200);
-    assert.equal(await visibleInfo(), 0, 'co-op shows no Information at rest');
-    for (const role of ['player','enemy']) {
-      await tapCombatant(page.locator(`.combatant.${role}`).first());
-      assert.equal(await visibleInfo(), 1, `co-op ${role} selection shows exactly its Information`);
-      assert(await page.locator(`.${role} .combatant-info`).first().isVisible(), 'the tapped combatant owns Information');
-      await page.locator(`.${role} .combatant-info`).first().click();
-      await page.locator('.combatant-door').waitFor();
-      await page.keyboard.press('Escape');
-    }
-    await tapCombatant(page.locator('.combatant.enemy').first());
-    await page.screenshot({ path: resolve(out, `coop-${width}.png`) });
-    console.log('PASS co-op inspection', width, height);
     await page.close();
   }
   assert.deepEqual(errors, []);

@@ -1,11 +1,9 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 
 const registries = createRegistries(contentBundle);
@@ -40,14 +38,3 @@ test('solo paid Power copies each exhaust while their installed buff persists th
   assert.equal(combat.piles.exhaust.length, 2);
 });
 
-test('co-op uses the same per-instance Power exhaustion and combat-long buff', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = createCoopCombat({ registries, rng: createRng(128), combatExpansionVersion: 2,
-    players: [player('a')], enemyIds: ['wanderingSoldier'] });
-  for (const id of ['first', 'replica']) playCard(combat, 'a', id);
-  const seat = combat.players.get('a');
-  assert.deepEqual(seat.piles.exhaust.map(card => card.instanceId), ['first', 'replica']);
-  assert.equal(seat.entity.statuses.rallyingStandard.stacks, 2);
-  endTurn(combat, 'a');
-  assert.equal(combat.players.get('a').entity.statuses.rallyingStandard.stacks, 2);
-  assert.equal(combat.players.get('a').piles.exhaust.length, 2);
-});

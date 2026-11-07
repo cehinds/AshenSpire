@@ -15,7 +15,6 @@ test('a thrown settings save restores live preference and cannot leak into a lat
   let settled=0;
   const context={structuredClone,seedAfterChange,SEED_KEY,run:null,xpCombat:null,
     activeMeta:null,activeSettings:null,app:{},
-    STAT_ROWS_CHANGED_MEANING:/$^/,STAT_ROWS_MARKER:'unused',STAT_ROWS_VERSION:1,
     saves:{profileStatus:()=>({quarantined:false}),loadMeta:()=>structuredClone(stored),
       saveMeta:async meta=>{if(fail)throw new Error('storage interrupted');stored=structuredClone(meta);return{ok:true};}},
     applyDisplaySettings:settings=>painted.push(structuredClone(settings)),
@@ -35,28 +34,4 @@ test('a thrown settings save restores live preference and cannot leak into a lat
   assert.equal(stored.settings.musicEnabled,false);
   await persist({[grid]:false});
   assert.equal(stored.settings[grid],false,'successful grid writes still persist');
-});
-
-test('a rollback whose run restore throws still repaints, notices and announces, then rethrows',async()=>{
-  assert.ok(start>=0&&end>start);
-  const stored={settings:{[grid]:true}};
-  const painted=[];
-  let settled=0;
-  let noticed=0;
-  const run={advancedConfigSnapshot:{rules:1}};
-  const context={structuredClone,seedAfterChange,SEED_KEY,run,xpCombat:null,isLiveXpSetting:()=>false,
-    activeMeta:null,activeSettings:null,app:{},
-    STAT_ROWS_CHANGED_MEANING:/$^/,STAT_ROWS_MARKER:'unused',STAT_ROWS_VERSION:1,
-    saves:{profileStatus:()=>({quarantined:false}),loadMeta:()=>structuredClone(stored),
-      saveMeta:async()=>{throw new Error('storage interrupted');}},
-    rebuildRegistries(){},persist(){throw new Error('QuotaExceededError');},
-    applyDisplaySettings:settings=>painted.push(structuredClone(settings)),
-    refreshHudQuickSettings(){},showSettingsNotice(){noticed+=1;},QUARANTINE_NOTICE:'save refused',remountMapIfShowing(){},
-    announceSettingsSettled:()=>{settled+=1;},
-  };
-  const persist=runInNewContext(source.slice(start,end)+'\npersistSettingsChange;',context);
-  await assert.rejects(persist({[grid]:false}),/QuotaExceededError/);
-  assert.equal(settled,1,'the rolled-back write still announces that it settled');
-  assert.equal(noticed,1,'the rolled-back write still shows the notice');
-  assert.equal(painted.at(-1)[grid],true,'the HUD still repaints from the durable value');
 });

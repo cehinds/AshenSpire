@@ -68,14 +68,10 @@ const graceUi = text('src/ui/screens/rest.js') + text('src/main.js');
 check(/Reallocate Flask Charges/.test(graceUi) && !/Relocate Flask Charges/i.test(graceUi),
   'Grace names the feature Reallocate Flask Charges');
 
-const session = text('tools/session.mjs');
-check(/flaskCharges/.test(session) && /reallocateFlaskCharges/.test(session),
-  'host session snapshots, restores, and authors reallocation');
-
-const combat = text('src/engine/combat.js') + text('src/engine/coopCombat.js');
+const combat = text('src/engine/combat.js');
 check(/flaskCharges/.test(combat) && /chargeFlaskId/.test(combat)
   && !/['"](?:crimsonFlask|azureFlask)['"]/.test(combat),
-  'solo and co-op consumption spend the same authoritative charge pools');
+  'combat consumption spends the authoritative charge pools');
 
 const soloRun = fresh[0];
 soloRun.mana = 0;

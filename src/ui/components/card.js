@@ -46,6 +46,7 @@ import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { cardFaceProjection, FACE_EFFECT_LINES } from '../../model/cardFaceProjection.js';
+import { roomyBudgetFor } from '../../model/cardFaceBudget.js';
 import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
@@ -126,7 +127,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
   let comparedTokens = baseTokens;
   // Complex cards retain authored clauses; their defensive amount still reads
   // the same allocation as the compact face and combat execution.
-  template = template.replace(/\{((?:gainBarrier|block)(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
+  template = template.replace(/\{(block(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
     if (token.startsWith('block') && def.defenseRulesVersion !== 2 && def.minCombatExpansionVersion !== 2) return match;
     const liveBlock = liveTokens[token + '.block'], liveWard = liveTokens[token + '.ward'];
     const split = Number.isFinite(liveBlock) && Number.isFinite(liveWard)
@@ -172,6 +173,7 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise
 // innerHTML (before the appearance pass and the fitter touched the nodes),
 // `at` the level it was drawn at, `receipt` what its damage numbers explain.
 const paintedFaces = new WeakMap();
+const receiptRebound = new WeakSet();
 // A card element's in-place refresher (renderCard fills it): the opts it was built with, replaced.
 const refreshers = new WeakMap();
 // The art <img>'s error handler is bound once, to the image, and reads this: a
@@ -254,7 +256,7 @@ export function renderCard(registries, ref, opts = {}) {
       tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
     model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
     // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
-    model.range = opts.range ? combatCardRange(def) : null;
+    model.range = opts.range ? combatCardRange(def, opts.maxRange) : null;
     damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
     accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
       model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
@@ -265,7 +267,7 @@ export function renderCard(registries, ref, opts = {}) {
       rawModel.type.abilityLabel,
       rawModel.type.weaponArt,
       model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
-    ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
+    ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Click, tap or press Enter to inspect.' : '');
   };
   deriveModel();
   const sourcePiece = ref.sourceArmamentId
@@ -395,16 +397,24 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
-    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: authoredRules, registries,
-      effects: opts.preview?.chargedEffects || def.effects || [] });
-    const rulesHtml = compactCardRules(projection.clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}" data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '))
-      + `<span data-face-fallback style="display:none">${esc(t('card.face.inspectEffect'))}.</span>`
-      + `<span data-face-fallback-short style="display:none" aria-label="${esc(t('card.face.inspectEffect'))}">${esc(t('deckEditor.inspect'))}.</span>`;
+    // Under version-one combat a sentence that opens "In expanded combat," does not apply, so the face need not carry it.
+    const appliedRules = expanded ? authoredRules : authoredRules.replace(/\s*In expanded combat,[^.]*\./g, '');
+    // An authored short summary (`faceTemplate`) stands in for the Inspect cue; same live tokens, no shared rider clauses.
+    const summaryHtml = Array.isArray(def.faceTemplate) && def.faceTemplate.length
+      ? def.faceTemplate.map(line => fillTemplate({ id: def.id, type: def.type, tags: def.tags, cardTags: def.cardTags, combatProfile: def.combatProfile, evade: def.evade, textTemplate: line.replace(/\[v2:([^\]]*)\]/g, expanded ? '$1' : '').replace(/,? ?(\{[\w.]+\})×/, ', $1 times'), defenseRulesVersion: def.defenseRulesVersion, minCombatExpansionVersion: def.minCombatExpansionVersion },
+        model.tokens, model.baseTokens, model.damageSequences, null, null).replace(/(<span class="val[^"]*">1<\/span>) cards\b/gi, '$1 card').replace(/[.,]\s*$/, '')) : null;
+    // `roomy` asks for the second, fuller reading (cardFaceBudget.js); the fitter shows it only where it fits at its floor font.
+    const projection = cardFaceProjection(def, { lines: faceLines, authoredHtml: appliedRules, faceHtml: summaryHtml, registries,
+      effects: opts.preview?.chargedEffects || def.effects || [], roomy: registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect' ? roomyBudgetFor(faceRules) : roomyBudgetFor(null), roomyLines: allFaceLines });
+    const clauseHtml = clauses => compactCardRules(clauses.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${line.downside || line.kind === 'cost' ? ' data-face-downside="true"' : ''} data-face-clause="${i}">${line.html.replace(/\.$/, '')}.</span>`).join(' '));
+    const rulesHtml = clauseHtml(projection.clauses);
     el.dataset.faceLines = String(projection.clauses.length);
     el.dataset.faceOmitted = String(projection.omitted);
+    if (projection.summarized) el.dataset.faceSummary = 'true'; else delete el.dataset.faceSummary;
     const faceHtml = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
       rules: rulesHtml,
+      roomyRules: projection.roomy ? clauseHtml(projection.roomy.clauses) : null,
       painting:artwork===null?null:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -439,6 +449,8 @@ export function renderCard(registries, ref, opts = {}) {
       bindDamageReceipt(el, opts.preview);
     }
     paintedFaces.set(el, { html: faceHtml, at, receipt: receiptKey });
+    // The fitter swaps in the roomy reading as fresh nodes: their damage numbers take the receipt binding too.
+    if (!receiptRebound.has(el)) { receiptRebound.add(el); el.addEventListener?.('facereadingchange', () => bindDamageReceipt(el, opts.preview)); }
     for (const node of kept)el.append(node);
     el.dataset.level=at;
     el.dataset.cardLayout='illustrated-v1';
@@ -515,6 +527,7 @@ export function renderCard(registries, ref, opts = {}) {
   if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
     touchSelectionSafe: Boolean(opts.preview?.needsTarget),
     actionOwnsTouch: opts.actionOwnsTouch === true,
+    infoBadge: opts.infoBadge === true,
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
@@ -884,6 +897,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
+  const commonStart = html.length;
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
   if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const stance = stanceOf(def);
@@ -899,6 +913,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + (stance.maneuver === 'defend' ? ' While in Defend stance, Defend, Counter and Evade cards all take Adept discounts.' : '')
         + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
         + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
     }
@@ -923,15 +938,36 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
+  // KEY FIRST (owner, 2026-11-01): the card's effect line and its effect-tag
+  // definitions lead; the common type, school, stance and element explanations
+  // follow, then the chips.
+  const common = html.slice(commonStart);
+  html = html.slice(0, commonStart);
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
   html += cardStatusDetailsHtml(registries, def, statusContext);
   // Nested keyword + status tooltips (SPEC §7.3).
-  const lines = [];
+  // ONE CHIP PER DISTINCT TAG. Three authored ids carry the label "Spell"
+  // (camp:spell, source:spell, maneuver:casting), so a spell card used to print
+  // "Spell Spell Spell" — the old Set only removed byte-identical markup, and
+  // each chip's tooltip differs. Chips are keyed by label; the tooltips of the
+  // ids that share a label are merged into the one chip.
+  // EFFECT TAGS (keywords and applied statuses) also list their tooltip text
+  // inline, under the chips; card type, stance and element tags stay tooltip-only.
+  const chips = new Map();
+  const addChip = (label, tip, effect = false) => {
+    const key = String(label).trim().toLowerCase();
+    const chip = chips.get(key) || { label, tips: [], effectTips: [], effect: false };
+    if (tip && !chip.tips.includes(tip)) chip.tips.push(tip);
+    // Only effect sources (keyword, applied status) feed the inline text.
+    if (effect && tip && !chip.effectTips.includes(tip)) chip.effectTips.push(tip);
+    chip.effect ||= effect;
+    chips.set(key, chip);
+  };
   for (const kw of def.keywords || []) {
     // Words resolve through the framework TermRegistry (one vocabulary home);
     // an id outside the keyword vocabulary is skipped, as before.
     const k = registries.framework.keywordDisplay(kw);
-    if (k) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(k.tooltip)}">${esc(k.name)}</span>`);
+    if (k) addChip(k.name, k.tooltip, true);
   }
   for (const eff of def.effects || []) {
     // Status/stance WORDS resolve through the per-bundle framework term
@@ -954,22 +990,26 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     // (mechanics numbers for tooltip substitution)". This is that site.
     if (eff.op === 'applyStatus') {
       const s = glossaryEntry(registries, 'status', eff.status, statusContext);
-      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+      if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip, true);
     }
     if (eff.op === 'enterStance') {
       // A chosen stance (Warrior's Vow) explains every stance it can offer.
       const ids = eff.choose ? (cardChoice(registries, def, def.class)?.options || []).map((o) => o.id) : [eff.stance];
       for (const id of ids) {
         const s = glossaryEntry(registries, 'stance', id, statusContext);
-        if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+        if (s && !def.textTemplate.includes(s.name)) addChip(s.name, s.tooltip);
       }
     }
   }
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row, registries))}">${esc(row.label)}</span>`); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag, registries))}">${esc(tag.label)}</span>`);
-  if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); addChip(row.label, cardTagExplanation(def, row, registries)); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) addChip(tag.label, cardTagExplanation(def, tag, registries));
+  const rows = [...chips.values()];
+  const effects = rows.filter((chip) => chip.effect && chip.effectTips.length);
+  if (effects.length) html += `<dl class="inspection-effect-tags">${effects.map((chip) => `<dt>${esc(chip.label)}</dt><dd>${esc(chip.effectTips.join(' '))}</dd>`).join('')}</dl>`;
+  html += common;
+  if (rows.length) html += `<div class="inspection-tags">${rows.map((chip) => `<span class="inspection-tag${chip.effect ? ' inspection-tag-effect' : ''}" role="button" tabindex="0" data-tip="${esc(chip.tips.join(' '))}">${esc(chip.label)}</span>`).join('')}</div>`;
   return html;
 }

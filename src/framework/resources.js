@@ -83,3 +83,22 @@ export function staminaDeficitAtCombatStart(carriedDeficit) {
   if (rule === 'carry') return carriedDeficit;
   throw new Error(`mechanics.stamina.combatStartRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
 }
+
+/**
+ * The Mana a fight leaves the run with (mechanics.mana.combatEndRefill):
+ * 'full' refills to the maximum when the fight ends, 'carry' keeps what is left.
+ */
+export function manaAtCombatEnd({ currentMana, maxMana }) {
+  const rule = mechanics.mana.combatEndRefill;
+  if (rule === 'full') return maxMana;
+  if (rule === 'carry') return currentMana;
+  throw new Error(`mechanics.mana.combatEndRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
+}
+
+/** The Mana deficit that survives a fight's end: none under 'full', else as carried. */
+export function manaDeficitAtCombatEnd(carriedDeficit) {
+  const rule = mechanics.mana.combatEndRefill;
+  if (rule === 'full') return 0;
+  if (rule === 'carry') return carriedDeficit;
+  throw new Error(`mechanics.mana.combatEndRefill: expected 'full' or 'carry', got ${JSON.stringify(rule)}`);
+}

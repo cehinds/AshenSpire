@@ -9,12 +9,6 @@
 :root .illustrated-card-face .ic-text { flex-shrink:0; width:100%; height:auto; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.25; overflow:hidden; }
 :root .illustrated-card-face .ic-text .val,:root .illustrated-card-face .ic-text .kw { font:inherit; color:inherit; }
 :root .illustrated-card-face:not([data-full-rules='true']) [data-face-overflow='true'] { display:none !important; }
-:root .illustrated-card-face .card-rules-inspect-cue {
-  display:block;visibility:hidden;position:absolute;bottom:0;left:0;width:100%;max-height:100%;overflow:hidden;
-  color:#654923;font:600 clamp(8px,4.3cqw,12px)/1.1 Georgia,serif;text-align:center;
-  letter-spacing:.02em;text-shadow:0 1px #f0dfba;pointer-events:none;
-}
-:root .illustrated-card-face[data-rules-overflow='true'] .card-rules-inspect-cue { visibility:visible; }
 :root .illustrated-card-face .card-title-fade {
   position:absolute;z-index:3;left:6%;right:6%;top:3.5%;height:22%;pointer-events:none;
   border-radius:3cqw 3cqw 0 0;
@@ -32,6 +26,10 @@
 :root .illustrated-card-face .ic-glyph .engraved-icon { width:35%; height:35%; }
 :root .card.illustrated-card.unaffordable .illustrated-card-face { filter:brightness(.65) saturate(.65); }
 :root .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face { filter:drop-shadow(0 0 3px #c49b56); }
+/* Owner, 2026-10-31: a combat hand card has no gold state. Hover and focus are a neutral lift; selected,
+   held and inspected wear the selection colour. Later and more specific than the gold rule above. */
+:root .hand .card.illustrated-card:is(:hover,:focus-visible) .illustrated-card-face { filter:drop-shadow(0 0 3px rgba(255,255,255,.6)); }
+:root .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face { filter:drop-shadow(0 0 3px var(--selection-color,var(--green))); }
 
 /* Leave room for cost pennants that extend above and left of the card. */
 :root .card-inspection-layout:has(.illustrated-card) { padding:32px; }
@@ -69,7 +67,10 @@
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
-:root .card-tag-symbol {pointer-events:auto;cursor:pointer;}
+:root .card-tag-symbol {pointer-events:none;cursor:inherit;}
+/* Card tooltips open only in the card inspector (owner, 2026-11-05): everywhere else a tag symbol is
+   decoration, takes no pointer, and a tap on it is a tap on the card. */
+:root :is(.card-inspection-modal, .card-inspection-layout) .card-tag-symbol {pointer-events:auto;cursor:pointer;}
 :root .card-tag-rail .card-tag-symbol {position:relative;z-index:21;}
 :root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:6cqw;height:6cqw;box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 5.2cqw/5.3cqw Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
@@ -117,4 +118,10 @@
 }
 :root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face {
   filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-performance='lite'] .hand .card.illustrated-card:is(.selected,.inspection-selected) .illustrated-card-face {
+  filter: none; box-shadow: 0 0 0 2px var(--selection-color,var(--green)), 0 0 8px color-mix(in srgb, var(--selection-color,var(--green)) 55%, transparent);
+}
+:root[data-performance='lite'] .hand .card.illustrated-card:is(:hover,:focus-visible):not(.selected,.inspection-selected) .illustrated-card-face {
+  filter: none; box-shadow: 0 0 0 2px rgba(255,255,255,.6);
 }

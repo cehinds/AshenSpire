@@ -25,8 +25,8 @@ test('illustrated HUD icons crop with an svg viewBox and meet-fit, not stretched
   assert.doesNotMatch(polish, /illustrated-hud-icon img[^}]*object-fit:\s*fill/);
 });
 
-test('Defense (Block) is the leftmost badge, then Evade, Poise, Ward (owner 2026-10-18)', async () => {
+test('Defense (Block) is the leftmost badge, then Poise, Evade, Ward (owner 2026-10-18, order revised 2026-11-01)', async () => {
   const { combatHealthModel } = await import('../src/ui/models/CombatHealthModel.js');
   const kinds = combatHealthModel({ evasion: 2, poise: 3, ward: 4, defense: 5 }).badges.map(b => b.kind);
-  assert.deepEqual(kinds, ['shield', 'evade', 'poise', 'ward']);
+  assert.deepEqual(kinds, ['shield', 'poise', 'evade', 'ward']);
 });

@@ -17,7 +17,6 @@ import { discardCandidates } from '../src/engine/abilityRiders.js';
 import { zoneCandidates } from '../src/engine/cardZones.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
-import { cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { controlGate, recoveryControls } from '../src/engine/combatStatusControl.js';
@@ -65,23 +64,14 @@ export function firstAffordableCard(registries, combat, refused = new Set()) {
 }
 
 /** Keep the chosen foe for hostile cards; source/friendly cards resolve automatically. */
-export function botCardTargetId(registries, combat, hand, enemyId, playerId = undefined) {
-  // Existing solo callers need no owner. Co-op callers name the seat; an exact
-  // hand-object match also keeps older callers safe without guessing by card ID.
-  const ownerId = combat.players
-    ? playerId ?? [...combat.players.values()].find(seat => seat.piles.hand.includes(hand))?.id
-    : combat.player?.id;
-  if (combat.players && !ownerId) throw new Error('A co-op target preview requires the card owner');
+export function botCardTargetId(registries, combat, hand, enemyId) {
+  const ownerId = combat.player?.id;
   const ownerRegistries = combat.registriesForPlayer?.(ownerId) || registries;
-  const owner = combat.players?.get(ownerId)?.entity || combat.player;
-  const def = resolveCombatCard({ ...combat, registries: ownerRegistries, player: owner,
-    combatExpansionVersion: owner?.combatExpansionVersion || combat.combatExpansionVersion }, hand);
+  const def = resolveCombatCard({ ...combat, registries: ownerRegistries, player: combat.player,
+    combatExpansionVersion: combat.player?.combatExpansionVersion || combat.combatExpansionVersion }, hand);
   const plan = cardTargetPlan(def, ownerId, combat.enemies);
   if (plan.mode === 'enemy') return enemyId;
-  const hostile = combat.players
-    ? cardNeedsEnemyTargetForPlayer(combat, ownerId, hand.instanceId)
-    : cardNeedsEnemyTargetNow(combat, hand.instanceId);
-  return hostile ? enemyId : undefined;
+  return cardNeedsEnemyTargetNow(combat, hand.instanceId) ? enemyId : undefined;
 }
 
 /** A per-combat refusal set that empties itself at each new player turn. */

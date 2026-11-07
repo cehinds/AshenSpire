@@ -15,11 +15,9 @@ import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 // This is a completability floor, not a balance target: the bot can't pilot
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
-// Run: node tools/runsim.mjs [runsPerClass=30] [--endless] [--incoming] [--level-stat=<attr>]
+// Run: node tools/runsim.mjs [runsPerClass=30] [--incoming] [--level-stat=<attr>]
 //   --single-break-meter: use the configured ratings and version-1 run stamp
 //   from SPEC §13.4p; assert that each measured fight uses the shared meter.
-//   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
-//   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
 //   default order. Off by default so the win-rate corpus keeps comparing the
 //   same climbs it always measured (§13.6); on, it measures every order — the
@@ -46,6 +44,7 @@ import { configuredContentBundle, advancedConfigSnapshot } from '../src/model/ad
 import { createRegistries } from '../src/model/registries.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
+import { stampCombatPlaysEver, foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { botCardTargetId, affordableCards, refusalsFor, outOfPlaysAction, botControlAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { createRunLoop, payFightXp, SoftLock, fleetSeed } from './simrun.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
@@ -83,7 +82,6 @@ const levelBundle = XP_CURVE
 const CLASS_MASTERY = argv.includes('--class-mastery');
 const SINGLE_BREAK = argv.includes('--single-break-meter') || CLASS_MASTERY;
 const REG = createRegistries(SINGLE_BREAK ? configuredContentBundle(levelBundle, advancedConfigSnapshot()) : levelBundle);
-const ENDLESS = argv.includes('--endless');
 // THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
 // — "However, that would mean making combat harder" — and a nod is not an
 // answer. `--grace-ab` runs the whole fleet twice, refill OFF then ON, same
@@ -106,13 +104,6 @@ let MANA_ON = true;
 // THE SEAT-TIER REPORT (SPEC §13.3, FINISH §4 *Seat-tier tolerance is stated*).
 // READ-ONLY: it records which seat each act climbed and whether its boss fell.
 const SEAT_TIERS = argv.includes('--seat-tiers');
-// Endless acts past 3 repeat content tiers 1..3 with cycle HP and Strength on
-// top, so a per-tier table would pool act 4 with act 1 under tier 1's base
-// multipliers and label both wrongly. The combination is refused, not guessed.
-if (SEAT_TIERS && ENDLESS) {
-  console.error('runsim: --seat-tiers cannot be combined with --endless — endless acts past 3 reuse tiers 1-3 with cycle scaling the per-tier report does not carry. Run --seat-tiers on the 3-act climb.');
-  process.exit(2);
-}
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the
@@ -210,7 +201,6 @@ function resetFleetCounters() {
   loop.resetCounters();
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
-const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 const STALEMATE_TURNS = 150; // a fight still open this long is conceded (botFight)
 // THE CI RUNG (FINISH §3). A crash is an exception out of a run; a SOFT-LOCK is
 // a run that stops making progress — a fight whose actions never resolve it, or
@@ -361,6 +351,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
+  stampCombatPlaysEver(run, combat);
   if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
     throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
   }
@@ -454,8 +445,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
-  // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
-  // the next fight, as they do for a player. Only HP used to, so every fight
+  // the first thing main.js onCombatEnd does): HP and Stamina carry to
+  // the next fight, as they do for a player; Mana is refilled by runCombatEnd
+  // (mechanics.mana.combatEndRefill, 2026-10-31). Only HP used to, so every fight
   // opened on full pools and cross-fight starvation was invisible here.
   //
   // Flask charges, the reason this write-back first existed (src/main.js:1335), and without
@@ -466,6 +458,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
   runCombatEnd(run, combat);
+  foldCombatPlaysEver(run, combat);
   // A waived arm may have lifted the pool past its maximum; the run keeps no
   // more than it could hold.
   if (!MANA_ON && run.mana > run.maxMana) run.mana = run.maxMana;
@@ -503,8 +496,6 @@ const loop = createRunLoop(REG, {
   attributes: spendAllocation,
   get graceOn() { return GRACE_ON; },
   seededSeats: SEEDED_SEATS,
-  endless: ENDLESS,
-  endlessActCap: ENDLESS_ACT_CAP,
   stepBudget: STEP_BUDGET,
   mapCycle: PLANT === 'map-cycle',
   hooks: {
@@ -522,7 +513,7 @@ const { simulateRun, counters } = loop;
 
 // ---- fleet -------------------------------------------------------------------
 function fleet() {
-console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
+console.log(`AshenSpire full-run simulation — ${N} runs/class, greedy bot`);
 console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}  |  level-up points into ${LEVEL_STAT}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
 let crashes = 0, softLocks = 0;
@@ -578,12 +569,9 @@ for (const cls of REG.classes.all()) {
   }
   if (crash) break;
   console.log(
-    ENDLESS
-      ? `${cls.name.padEnd(11)} avg depth act ${(acts / N).toFixed(2)}  deepest act ${maxAct}` +
-        `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
-      : `${cls.name.padEnd(11)} full-run wins ${String(wins).padStart(2)}/${N}` +
-        `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
-        `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
+    `${cls.name.padEnd(11)} full-run wins ${String(wins).padStart(2)}/${N}` +
+    `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
+    `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
   if (CLASS_MASTERY) {
     const sorted = [...masteryXp].sort((a,b)=>a-b);

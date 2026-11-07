@@ -1,13 +1,10 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, endTurn, chooseReaction, chooseDiscard, playCard } from '../src/engine/coopCombat.js';
-import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatReactionProblems } from '../src/model/combatReactionState.js';
 
 // `strike` is tagged `trait:reaction` in this bundle only (the real projection is separate work).
@@ -229,69 +226,6 @@ test('a saved stack with a depth 1 offer resumes to the same state as an unsaved
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
 });
 
-test('co-op seats answer in order and the whole stack resolves last pushed first across seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { registries } = fixture();
-  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
-    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
-  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  endTurn(C, 'a'); endTurn(C, 'b');
-  const pick = (id, instanceId) => C.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a', 'a:sweep') });
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  // Seat a has no option left after its second push, so seat b is offered next.
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a', 'a:guard') });
-  assert.equal(C.pendingReaction.ownerId, 'b');
-  assert.equal(C.reactionStack.entries.length, 2);
-  chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: pick('b', 'b:sweep') });
-  assert.equal(C.pendingReaction.ownerId, 'b');
-  const out = chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: pick('b', 'b:guard') });
-  const played = out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId);
-  assert.deepEqual(played, ['b:guard', 'b:sweep', 'a:guard', 'a:sweep']);
-  assert.equal(C.reactionStack, undefined);
-  assert.equal(C.pendingReaction, undefined);
-});
-
-test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { registries } = fixture();
-  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
-    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: 'rc1', upgraded: false }] }));
-  const C = createCoopCombat({ registries, rng: createRng(713), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  endTurn(C, 'a'); endTurn(C, 'b');
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'));
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: C.pendingReaction.options.find(row => row.play.cardInstanceId === 'rc1').id });
-  assert.equal(C.reactionStack.entries.length, 1);
-  assert.equal(C.reactionStack.entries[0].ownerId, 'a');
-  // Seat A has no card left; seat B's own rc1 must still be offered.
-  assert.equal(C.pendingReaction.ownerId, 'b');
-  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'), 'seat B rc1 is offered');
-});
-
-test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { registries } = fixture();
-  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
-    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
-  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  endTurn(C, 'a'); endTurn(C, 'b');
-  const pick = instanceId => C.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a:sweep') });
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a:guard') });
-  assert.equal(C.pendingReaction.ownerId, 'b');
-  const seatA = C.players.get('a');
-  seatA.connected = false;
-  const out = chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: null });
-  const fizzled = out.events.filter(event => event.type === 'combatReactionFizzled' && event.ownerId === 'a');
-  assert.deepEqual(fizzled.map(event => [event.cardInstanceId, event.reason]), [['a:guard', 'ownerGone'], ['a:sweep', 'ownerGone']]);
-  // Payment is the cardPlayed receipt: none for either seat (seat b passed).
-  assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 0);
-});
-
 for(const zoneChoice of [false,true]) test(`a stacked play that pauses for ${zoneChoice ? 'card-zone selection' : 'discard'} resumes the rest of the stack`, () => {
   // Pushed: a Sweep (r0), then the discarding Strike (r1). The Strike resolves first and pauses,
   // leaving the Sweep on the stack; the discard choice then resumes the Sweep and the attack.
@@ -318,31 +252,6 @@ for(const zoneChoice of [false,true]) test(`a stacked play that pauses for ${zon
   assert.equal(combat.turn, 2);
 });
 
-test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { registries } = fixture();
-  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
-    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
-  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  endTurn(C, 'a'); endTurn(C, 'b');
-  const pick = (state, instanceId) => state.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
-  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick(C, 'a:sweep') });
-  const json = value => JSON.parse(JSON.stringify(value));
-  const saved = json(serializeCoopCombatSnapshot(C));
-  const restored = createCoopCombat({ registries, rng: createRng(709, C.rng.getCounters()), players, enemyIds: [], snapshot: json(saved) });
-  const decoded = state => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state));
-  assert.deepEqual(decoded(restored), decoded(C));
-  const outs = [C, restored].map(state => {
-    chooseReaction(state, 'a', { offerId: state.pendingReaction.id, optionId: pick(state, 'a:guard') });
-    chooseReaction(state, 'b', { offerId: state.pendingReaction.id, optionId: pick(state, 'b:sweep') });
-    return chooseReaction(state, 'b', { offerId: state.pendingReaction.id, optionId: pick(state, 'b:guard') });
-  });
-  assert.deepEqual(json(outs[0].events), json(outs[1].events));
-  assert.deepEqual(decoded(restored), decoded(C));
-  assert.deepEqual(restored.rng.getCounters(), C.rng.getCounters());
-});
-
 test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
   const { combat } = fixture({ cardIds: ['strike', 'strike', 'strike', 'strike', 'strike'] });
   for (const enemy of combat.enemies) { enemy.hp = 500; enemy.maxHp = 500; }
@@ -363,8 +272,7 @@ test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
 // and saved counters while putting their ordinary Accuracy threshold below every
 // non-fumble result. Dedicated stance-hit tests cover misses and natural ones.
 function landedContacts(combat) {
-  const actors = combat.players ? [...combat.players.values()].map(seat => seat.entity) : [combat.player];
-  for (const actor of [...actors, ...combat.enemies]) { actor.accuracy = 100; actor.evasion = 0; }
+  for (const actor of [combat.player, ...combat.enemies]) { actor.accuracy = 100; actor.evasion = 0; }
 }
 
 function lowHpFixture(cardIds) {

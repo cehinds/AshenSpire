@@ -24,30 +24,33 @@ function fixture() {
   return { combat, enemy };
 }
 
-test('committed full-action and each contact retain adjusted AR, Block and Poise values', () => {
+// Owner, 2026-11-03: the intent shows the raw hit (13), whatever Block, Poise, Counter or reactions the player holds; only stances and
+// statuses change it. The 7/9/12 net-of-defense figures this test used to pin are now the real HP loss only (damageDealt.hpLoss).
+test('committed full-action and each contact retain the raw adjusted-AR hit, not the Block/Poise net', () => {
   const { combat, enemy } = fixture(); primeAccuracyRolls(combat, { count: 3 });
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const revealed = combat.eventLog.slice(start).find(e => e.type === 'enemyActorTurnStarted');
   assert.ok(revealed.intentPreview);
   assert.equal(revealed.intent.damage, 5, 'raw compatibility intent stays authored');
-  assert.deepEqual(revealed.intentPreview.hitDamages, [7, 9, 12]);
-  assert.equal(revealed.intentPreview.totalDamage, 28);
+  assert.deepEqual(revealed.intentPreview.hitDamages, [13, 13, 13]);
+  assert.equal(revealed.intentPreview.totalDamage, 39);
   const shown = combatIntentPresentation(revealed.intentPreview);
-  assert.equal(shown.parts[0].value, '7+9+12');
-  assert.match(shown.parts[0].summary, /Total.*28 HP/);
+  assert.equal(shown.parts[0].value, '13×3');
+  assert.match(shown.parts[0].summary, /Total.*39 damage/);
   for (let hit = 0; hit < 3; hit++) {
     const before = combat.eventLog.length;
     dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
     const events = combat.eventLog.slice(before);
     const begun = events.find(e => ['enemyMoveStarted', 'combatHitStarted'].includes(e.type));
     const damage = events.find(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
-    assert.equal(begun.intentPreview.damage, damage.hpLoss);
+    assert.equal(begun.intentPreview.damage, 13, 'the contact shows the full hit');
+    assert.ok(damage.hpLoss < 13, 'while Block and Poise still cut the real HP loss');
     assert.equal(begun.intentPreview.hits, 1);
     assert.equal(begun.intentPreview.contactIndex, hit);
     assert.equal(begun.intentPreview.contactCount, 3);
     const projected = begun.intentPreview.projectedDamage;
-    assert.ok(projected.min <= damage.hpLoss && projected.max >= damage.hpLoss, 'the pre-roll contact forecast contains the landed HP outcome');
+    assert.equal(projected.max, 13, 'the pre-roll contact forecast is the raw hit');
     assert.equal(combatIntentPresentation(begun.intentPreview).parts[0].value, projected.label);
     assert.match(combatIntentPresentation(begun.intentPreview).parts[0].summary, new RegExp(`Hit ${hit + 1}/3`));
   }
@@ -66,7 +69,7 @@ test('a freshly paid Counter refreshes only the imminent contact after its defen
     const events = combat.eventLog.slice(start);
     const begun = events.find(e => ['enemyMoveStarted', 'combatHitStarted'].includes(e.type));
     const damage = events.find(e => e.type === 'damageDealt' && e.sourceId === enemy.id);
-    assert.equal(begun.intentPreview.damage, damage.hpLoss, `paid response contact ${hit}`);
+    assert.equal(begun.intentPreview.damage, 13, `paid response contact ${hit}: Counter Block does not change the shown hit`);
     assert.equal(begun.intentPreview.hitDamages.length, 1, 'a refresh never forecasts the whole remaining action');
   }
 });
@@ -91,7 +94,7 @@ test('long varying attacks use a bounded per-hit range and retain an explicitly 
   const view = combatIntentPresentation({ kind: 'attack', moveId: 'long', damage: 1, hits: 10,
     hitDamages: [1,2,3,4,5,6,7,8,9,10], totalDamage: 55, damageBasis: 'hp' });
   assert.equal(view.parts[0].value, '1–10×10');
-  assert.equal(view.parts[0].summary, 'Total 55 HP');
+  assert.equal(view.parts[0].summary, 'Total 55 damage');
 });
 
 test('revealing one actor never projects another unread enemy or its future choices', () => {
@@ -116,10 +119,10 @@ test('HUD and reaction prompt distinguish per-hit values from marked totals and 
     const node = combatantIntent({ kind: 'attack', moveId: 'flurry', damage: 5, hits: 3, hitDamages: [5,5,5], totalDamage: 15,
       projectedDamage: { basis: 'hp', label: '0–15' } }, () => '', baseRegistries);
     assert.equal(node.querySelector('.intent-action-value').textContent, '5×3');
-    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Total 0–15 HP');
+    assert.equal(node.querySelector('.intent-damage-scope').textContent, 'Total 0–15 damage');
     const shell = openReactionChoiceModal({ pending: { options: [], intentPreview: { kind: 'attack', moveId: 'flurry', damage: 9,
       hits: 1, hitDamages: [9], totalDamage: 9, damageBasis: 'hp', damageScope: 'contact', contactIndex: 1, contactCount: 3 } }, onAnswer() {} });
-    assert.equal(document.querySelector('.reaction-incoming-damage').textContent, '9 · Hit 2/3 · next 9 HP');
+    assert.equal(document.querySelector('.reaction-incoming-damage').textContent, '9 · Hit 2/3 · next 9 damage');
     shell.close();
   });
 });

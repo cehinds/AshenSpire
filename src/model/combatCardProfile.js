@@ -1,12 +1,12 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
 import { withCoreSmashBlurb } from './smashBlurb.js';
-import { RANGES, normalizeRange } from './combatRanges.js';
+import { RANGES, normalizeRange, displayRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
 const CAMP = new Set(['physical', 'spell']);
-const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
-const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
+export const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
+export const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
 const COUNTER = new Set(['melee', 'ranged', 'spell']);
 const RANGE = new Set(RANGES);
 const TARGETING = new Set(['single', 'area']);
@@ -86,7 +86,7 @@ export function combatProfileFor(carrier = {}) {
   if (traits.length) profile.traits = traits;
   // These are authored payloads, not guessed from a card's name or damage type.
   if (typeof carrier.reach === 'string' && carrier.range === undefined && RANGE.has(normalizeRange(carrier.reach))) profile.range = normalizeRange(carrier.reach);
-  for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload', 'contest',
     'evade', 'upcast', 'stanceTrigger', 'mirrors', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }
@@ -104,13 +104,21 @@ const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'd
   || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0)
   || (def.defenseRulesVersion === 2 && def.counterPayload?.poise > 0);
 
-/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
-export function combatCardRange(def = {}) {
+/** The one default range (owner, 2026-11-06: most spells are Reach unless specifically Melee): an explicit `range`
+ * wins; else a spell-camp card, a projectile or a Ranged maneuver is Reach; everything else is Melee. The card face
+ * (combatCardRange) and the Advance math (rangeSourceContact) both read it, so they cannot disagree. */
+export function defaultRangeFor(profile = {}) {
+  return profile.range || (profile.camp === 'spell' || profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
+}
+
+/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. `maxRange` is the
+ * fight's cap (owner, 2026-11-05): a range past it reads as the cap. */
+export function combatCardRange(def = {}, maxRange = undefined) {
   const profile = combatProfileFor(def);
   const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
   if (!attacking || !dealsDamage(def)) return null;
-  const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
-  return RANGES.includes(range) ? range : null;
+  const range = defaultRangeFor(profile);
+  return RANGES.includes(range) ? displayRange(range, maxRange) : null;
 }
 
 /** Reaction rules v2: the Impact and Flux chips read "Impact 2" and "Flux 1". */

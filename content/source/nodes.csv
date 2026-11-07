@@ -486,8 +486,10 @@ trait:conductive,trait,Conductive,9FC3E8,◇,,,,,Conductive combat interaction.
 trait:counterstrike,trait,Counterstrike,9FC3E8,◇,,,,,"+50% effectiveness; +75% when the player's stance has advantage over the target's."
 trait:flux,trait,Flux,9FC3E8,◇,,,,,"On hit: N Ward damage, or double the Ward damage the card already deals."
 trait:grounded,trait,Grounded,9FC3E8,◇,,,,,Grounded combat interaction.
+ramp.honed,card,Honed,9FC3E8,◇,,,,,"+N damage per play this run, across fights; the count keeps growing between fights."
 trait:impact,trait,Impact,9FC3E8,◇,,,,,"On hit: N Poise damage, or double the Poise damage the card already deals."
 trait:insulated,trait,Insulated,9FC3E8,◇,,,,,Insulated combat interaction.
+ramp.momentum,card,Momentum,9FC3E8,◇,,,,,"+N damage or Block for each earlier play of this card this combat."
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
 trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.

@@ -19,12 +19,13 @@ export function wardBlockReceipt(entity) {
 export function protectionPresentation(entity) {
   const { defense, ward } = blockPresentation(entity);
   const whole = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-  // Barrier is Ward charged past full: it counts in the badge and gilds it.
-  const barrier = whole(entity?.barrier);
+  // Barrier is a stacked status now (SPEC 4.1a), not a pool: nothing here is "charged past full".
+  const barrier = 0;
   // wardPool is the Ward that is not Barrier: the magical Block share plus the persistent pool.
   const wardPool = ward + whole(entity?.persistentWard?.value);
-  // Poise has no badge: the HP bar's gold trim and its tooltip carry value/max.
-  return { defense, ward: wardPool + barrier, wardPool, wardBlock: ward, barrier, poise: whole(entity?.persistentPoise?.value), poiseMax: whole(entity?.persistentPoise?.max) };
+  // Ward status stacks (SPEC 4.1a) turn the Poise badge purple and draw Poise over the HP bar on the HP scale.
+  const wardStacks = whole(entity?.statuses?.ward?.stacks);
+  return { defense, ward: wardPool + barrier, wardPool, wardBlock: ward, barrier, wardStacks, maxHp: whole(entity?.maxHp), poise: whole(entity?.persistentPoise?.value), poiseMax: whole(entity?.persistentPoise?.max) };
 }
 
 // Which layer colours the HP bar's fill: the highest defence still standing,

@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { equipPickerTableRows, sortEquipPickerRows } from '../src/model/equipPickerTable.js';
+import { readFileSync } from 'node:fs';
 
 const leftHand = { id: 'leftHand', kinds: ['weapon', 'shield', 'staff'], hand: 'left' };
 
@@ -98,4 +99,17 @@ test('a negative setIndex throws', () => {
     () => equipPickerTableRows(rows, leftHand, { setIndex: -1, loadout: baseLoadout }),
     /equipPickerTableRows requires a slot and an integer setIndex/,
   );
+});
+
+// Owner screenshot 2026-11-01 (phone, 390px): selecting a row narrowed the list to half width and laid the Inspect/Unequip
+// buttons over the name and tag (the open row's colspan=3 detail cell is a phantom third column once Status is hidden).
+// Layout needs a browser; this pins the phone CSS that fixed it: rows are blocks and the buttons wrap beneath the text.
+test('phone picker rows are blocks with the action buttons wrapped beneath the name', () => {
+  const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
+  const phone = (selector) => css.match(new RegExp(`\\.armoury\\[data-responsive="phone"\\] ${selector} \\{([^}]*)\\}`))?.[1] || '';
+  assert.match(phone('\\.equip-picker-table :is\\(thead, tbody, tr, th, td\\)'), /display:\s*block/, 'no table layout, so no phantom colspan column');
+  const actions = phone('\\.equip-picker-actions');
+  assert.match(actions, /flex-direction:\s*row/);
+  assert.match(actions, /flex-wrap:\s*wrap/);
+  assert.doesNotMatch(actions, /flex-direction:\s*column/, 'buttons no longer stack beside the name');
 });

@@ -1,10 +1,28 @@
 // Saved tactical tuning is authoritative for the rest of that fight.
 import { combatMatchups } from '../content/combatMatchups.js';
 import { RANGES } from './combatRanges.js';
+import { mechanics } from '../framework/data/mechanics.js';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
 const whole = value => Number.isSafeInteger(value) && value >= 0;
+
+/** Counter and Reflect stack counts (owner 2026-10-31): whole, capped by mechanics.counter / mechanics.reflect; absent means 0 (older saves). */
+/** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
+export function clampStackCounts(entity) {
+  if (!entity) return;
+  if (entity.counterStacks > 999) entity.counterStacks = 999; // safety ceiling, not a rule
+  if (entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
+}
+
+export function stackCountProblems(entity, path = 'entity') {
+  const problems = [];
+  // Type and sign only: a later cap change must not brick a save; the loader clamps to the live cap.
+  for (const key of ['counterStacks', 'reflectStacks']) {
+    if (entity?.[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
+  }
+  return problems;
+}
 
 export function combatIntentRulesProblems(rules, path = 'combatIntentRules') {
   if (!record(rules)) return [`${path} must be an object`];
@@ -72,7 +90,7 @@ export function combatCounterProblems(counter, path, version = 1) {
 
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
-const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting', 'evade'];
+const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
 // A saved combatStance may also be the Poise-break Staggered stance; counter coverage (MANEUVERS) must not accept it.
 const STANCE_MANEUVERS = [...MANEUVERS, 'staggered'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
@@ -155,6 +173,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
     if (entity[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
   if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
+  problems.push(...stackCountProblems(entity, path));
   const stance = entity.combatStance;
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);
@@ -162,16 +181,14 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
       for (const [key, allowed] of [['maneuver', STANCE_MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
-      if (stance.counterStance !== undefined && (stance.counterStance !== true || stance.maneuver !== 'evade')) problems.push(`${path}.combatStance.counterStance requires true in Evade stance`);
+      if (stance.counterStance !== undefined) problems.push(`${path}.combatStance.counterStance is no longer a stance field (Evade is not a stance)`);
       if (stance.school !== undefined && !SCHOOLS.includes(stance.school)) problems.push(`${path}.combatStance.school is unsupported`);
       if (stance.expiresOnOwnerCycle !== undefined && !whole(stance.expiresOnOwnerCycle)) problems.push(`${path}.combatStance.expiresOnOwnerCycle must be a non-negative whole number`);
     }
   }
   if (entity.combatCounter !== undefined) {
     problems.push(...expansionCounterProblems(entity.combatCounter, `${path}.combatCounter`));
-    const hybridEvade = stance?.maneuver === 'evade'
-      && entity.combatCounter.carrier?.combatProfile?.maneuver === 'counter';
-    if (stance?.maneuver !== 'counter' && !hybridEvade) problems.push(`${path}.combatCounter requires Counter stance or an authored Counter in Evade stance`);
+    if (stance?.maneuver !== 'counter') problems.push(`${path}.combatCounter requires Counter stance`);
     if (entity.combatPreparationSerial !== entity.combatCounter.serial) problems.push(`${path}.combatCounter.serial must match its preparation serial`);
   }
   const evade = entity.combatEvade;

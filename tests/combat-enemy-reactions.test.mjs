@@ -1,12 +1,9 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, playCard as coopPlay, chooseReaction as coopChoose, endTurn as coopEnd, leaveCombat, joinCombat } from '../src/engine/coopCombat.js';
-import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { createRng } from '../src/engine/rng.js';
 import { enemyReactionsActive, reactionMovesOf, incomingAgainst, decideEnemyReaction, clearEnemyReactionRolls, openEnemyWindow } from '../src/engine/enemyReactions.js';
@@ -428,122 +425,7 @@ test('no window on Counter-return roots or reaction plays', () => {
   assert.equal(duel.rng.getCounters().enemyReaction || 0, before);
 });
 
-// ---- co-op ------------------------------------------------------------------
-function coop({ seed = 9, hands = { a: ['heavyStrike', 'strike'], b: ['strike', 'strike'] }, firstMoves, enemyIds = ['gildedKnight'], counterGuard } = {}) {
-  const registries = engineRegistries({ firstMoves, counterGuard });
-  const players = Object.entries(hands).map(([id, cards]) => ({ id, ...seatStats, drawPerTurn: cards.length, combatExpansionVersion: 2,
-    deck: cards.map((cardId, index) => ({ cardId, instanceId: `${id}:${index}`, upgraded: false })) }));
-  const C = createCoopCombat({ registries, rng: createRng(seed), players, enemyIds, reactionRulesVersion: 2 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  return { C, registries, players };
-}
-
-test('co-op: Gilded Guard pushes before the heavy hit, and only the acting seat may answer', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { C } = coop();
-  const knight = C.enemies[0];
-  const opened = coopPlay(C, 'a', 'a:0', knight.id);
-  assert.ok(opened.events.some(event => event.type === 'combatEnemyReactionStacked' && event.targetPlayerId === 'a'));
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  assert.throws(() => coopChoose(C, 'b', { offerId: C.pendingReaction.id, optionId: null }), /unavailable/);
-  assert.throws(() => coopPlay(C, 'b', 'b:0', knight.id), /pending reaction/);
-  const out = coopChoose(C, 'a', { offerId: C.pendingReaction.id, optionId: optionFor(C, 'a:1') });
-  const reaction = indexOf(out, event => event.type === 'cardPlayed' && event.cardInstanceId === 'a:1');
-  const guard = indexOf(out, event => event.type === 'enemyMoveStarted' && event.reaction);
-  const root = indexOf(out, event => event.type === 'cardResolved' && event.cardInstanceId === 'a:0');
-  assert.ok(reaction >= 0 && reaction < guard && guard < root);
-  assert.ok(C.players.get('a').piles.discard.some(inst => inst.instanceId === 'a:0'));
-  assert.equal(C.reactionStack, undefined);
-});
-
-test('co-op: a dead acting seat cancels the root', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { C } = coop({ hands: { a: ['heavyStrike'], b: ['strike'] } });
-  const knight = C.enemies[0], seat = C.players.get('a').entity;
-  seat.block = 0; seat.hp = 1;
-  const hp = knight.hp;
-  const out = coopPlay(C, 'a', 'a:0', knight.id);
-  assert.ok(out.events.some(event => event.type === 'enemyMoveStarted' && event.reaction));
-  assert.equal(seat.alive, false);
-  assert.equal(out.events.some(event => event.type === 'damageDealt' && event.targetId === knight.id), false);
-  assert.equal(knight.hp, hp);
-  assert.equal(C.reactionStack, undefined);
-});
-
-test('co-op: a memoised roll and a committed plan survive save/restore', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  let found = null;
-  for (let seed = 1; seed < 80 && !found; seed++) {
-    const built = coop({ seed, enemyIds: ['courtDuelist'], firstMoves: { courtDuelist: 'lunge' }, hands: { a: ['strike', 'strike'], b: ['strike'] } });
-    coopEnd(built.C, 'a'); coopEnd(built.C, 'b');
-    if (built.C.pendingReaction?.ownerId !== 'a') continue;
-    coopChoose(built.C, 'a', { offerId: built.C.pendingReaction.id, optionId: optionFor(built.C, 'a:0') });
-    if (built.C.reactionStack?.entries.some(entry => entry.side === 'enemy')) found = built;
-  }
-  assert.ok(found, 'some seed reacts');
-  const { C, registries, players } = found;
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  const saved = json(serializeCoopCombatSnapshot(C));
-  const restored = createCoopCombat({ registries, rng: createRng(C.rng.seed, C.rng.getCounters()), players, enemyIds: [], snapshot: json(saved) });
-  const decoded = state => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state));
-  assert.deepEqual(decoded(restored), decoded(C));
-  assert.equal(Object.keys(decoded(restored).enemyReactionRolls).length, 1);
-  const outs = [C, restored].map(state => coopChoose(state, 'a', { offerId: state.pendingReaction.id, optionId: null }));
-  assert.deepEqual(json(outs[0].events), json(outs[1].events));
-  assert.deepEqual(decoded(restored), decoded(C));
-  assert.deepEqual(restored.rng.getCounters(), C.rng.getCounters());
-});
-
-test('co-op: the acting seat leaving during its window cancels the root', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { C } = coop({ hands: { a: ['heavyStrike', 'strike'], b: ['strike'] } });
-  const knight = C.enemies[0];
-  coopPlay(C, 'a', 'a:0', knight.id);
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  const hits = () => C.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === knight.id).length;
-  const before = hits();
-  leaveCombat(C, 'a');
-  assert.equal(C.pendingReaction, undefined);
-  assert.equal(C.reactionStack, undefined);
-  // The guard fizzles (its target left) and the root is cancelled: nothing hits the Knight.
-  assert.ok(C.eventLog.some(event => event.type === 'combatReactionFizzled' && event.side === 'enemy'));
-  assert.equal(hits(), before);
-});
-
-test('co-op: the last connected seat leaving mid-window resumes its root on rejoin, with the card discarded once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { C, players, registries } = coop({ hands: { a: ['heavyStrike', 'strike'], b: ['strike'] } });
-  // The host saves every committed transaction, as the session does.
-  const saves = [];
-  C.beforeCombatCommit = candidate => { saves.push(JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(candidate)))); return { ok: true }; };
-  const knight = C.enemies[0];
-  leaveCombat(C, 'b');
-  coopPlay(C, 'a', 'a:0', knight.id);
-  assert.equal(C.pendingReaction.ownerId, 'a');
-  leaveCombat(C, 'a');
-  assert.equal(C.phase, 'suspended');
-  assert.ok(C.queue.length > 0 && (C.reactionRootPlay || C.reactionStack), 'suspended with the paused player root');
-  // The suspended disconnect commits: its save serialises, decodes and restores.
-  const saved = saves.at(-1);
-  assert.doesNotThrow(() => decodeCoopCombatSnapshot(saved));
-  const restored = createCoopCombat({ registries, rng: createRng(C.rng.seed, C.rng.getCounters()), players, enemyIds: [], snapshot: saved });
-  for (const state of [C, restored]) {
-    joinCombat(state, players.find(player => player.id === 'a'));
-    assert.equal(state.reactionStack, undefined);
-    assert.equal(state.reactionRootPlay, undefined);
-    const seat = state.players.get('a');
-    const copies = [...seat.piles.hand, ...seat.piles.discard, ...seat.piles.draw, ...seat.piles.exhaust].filter(inst => inst.instanceId === 'a:0');
-    assert.equal(copies.length, 1, 'the root card sits in exactly one pile');
-    assert.doesNotThrow(() => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state)));
-  }
-});
-
-test('a playerReaction window opens only for the root owner or enemies the root card targets', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const { C } = coop({ enemyIds: ['gildedKnight', 'courtDuelist'] });
-  const [knight, duelist] = C.enemies;
-  const group = { key: 'g', sourceId: knight.id, targets: {}, enemyWindows: 1 };
-  // The pushed reaction hits the Duelist, but the Duelist neither owns the root nor is its target.
-  const opened = openEnemyWindow(C, group, 'playerReaction', { ownerId: 'a', incoming: { [duelist.id]: 9 } }, {});
-  assert.deepEqual(opened, []);
-  assert.equal(C.rng.getCounters().enemyReaction || 0, 0, 'no window, so no draw');
-});
-
-test('co-op: a Counter reaction move plans no direct hit, as in solo', () => {
+test('a Counter reaction move plans no direct hit', () => {
   // The reaction's own segment: from its enemyMoveStarted to the next event from anyone else.
   const reactionHits = (events, knightId) => {
     const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.reaction);
@@ -554,11 +436,6 @@ test('co-op: a Counter reaction move plans no direct hit, as in solo', () => {
   const { combat } = solo({ counterGuard: true, cards: ['heavyStrike'] });
   const soloOut = play(combat, 'c0');
   assert.equal(reactionHits(soloOut.events, combat.enemies[0].id), 0);
-  if (COOP_TESTS_ENABLED) {
-    const { C } = coop({ counterGuard: true, hands: { a: ['heavyStrike'], b: ['strike'] } });
-    const coopOut = coopPlay(C, 'a', 'a:0', C.enemies[0].id);
-    assert.equal(reactionHits(coopOut.events, C.enemies[0].id), 0, 'the Counter delivers its damage, not a planned hit');
-  }
 });
 
 test('a reaction move start leaves the telegraphed knowledge action unresolved', async () => {

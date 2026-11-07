@@ -13,6 +13,7 @@
       "file": "content/source/weapons.csv",
       "id": "straightSword"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -31,6 +32,7 @@
       "file": "content/source/weapons.csv",
       "id": "greatsword"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -49,6 +51,7 @@
       "file": "content/source/weapons.csv",
       "id": "dagger"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -84,6 +87,7 @@
       "file": "content/source/weapons.csv",
       "id": "katana"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -102,6 +106,7 @@
       "file": "content/source/weapons.csv",
       "id": "halberd"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -119,6 +124,7 @@
       "file": "content/source/weapons.csv",
       "id": "warhammer"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -137,6 +143,7 @@
       "file": "content/source/weapons.csv",
       "id": "twinblade"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -154,6 +161,7 @@
       "file": "content/source/weapons.csv",
       "id": "battleaxe"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -170,6 +178,7 @@
       "file": "content/source/weapons.csv",
       "id": "buckler"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -186,6 +195,7 @@
       "file": "content/source/weapons.csv",
       "id": "kiteShield"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -204,6 +214,7 @@
       "file": "content/source/weapons.csv",
       "id": "towerShield"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -220,6 +231,7 @@
       "file": "content/source/weapons.csv",
       "id": "roundShield"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -236,6 +248,7 @@
       "file": "content/source/weapons.csv",
       "id": "spikedShield"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -255,6 +268,7 @@
       "file": "content/source/weapons.csv",
       "id": "lantern"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -289,6 +303,7 @@
       "file": "content/source/weapons.csv",
       "id": "parryDagger"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -326,6 +341,7 @@
       "file": "content/source/weapons.csv",
       "id": "starstoneStaff"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -341,16 +357,16 @@
     "points": {
       "intelligence": 1
     },
+    "source": {
+      "file": "content/source/weapons.csv",
+      "id": "boneSceptre"
+    },
     "grantedCards": [
       {
         "card": "core.manaSurge",
         "copies": 1
       }
     ],
-    "source": {
-      "file": "content/source/weapons.csv",
-      "id": "boneSceptre"
-    },
     "range": "reach"
   },
   {
@@ -407,6 +423,7 @@
       "file": "content/source/weapons.csv",
       "id": "blightRod"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -425,6 +442,7 @@
       "file": "content/source/weapons.csv",
       "id": "gorefireBrand"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -462,6 +480,7 @@
       "file": "content/source/weapons.csv",
       "id": "frostSpear"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -480,6 +499,7 @@
       "file": "content/source/weapons.csv",
       "id": "cinderAxe"
     },
+    "material": "metal",
     "range": "melee"
   },
   {
@@ -499,6 +519,7 @@
       "file": "content/source/weapons.csv",
       "id": "duskChime"
     },
+    "material": "metal",
     "range": "reach"
   },
   {
@@ -523,7 +544,8 @@
     "source": {
       "file": "content/source/outfits.csv",
       "id": "wayfarerPlate"
-    }
+    },
+    "material": "metal"
   },
   {
     "id": "armor.ashenVigil",
@@ -543,7 +565,8 @@
     "source": {
       "file": "content/source/outfits.csv",
       "id": "vigil"
-    }
+    },
+    "material": "metal"
   },
   {
     "id": "armor.gildedOathsworn",
@@ -564,7 +587,8 @@
     "source": {
       "file": "content/source/outfits.csv",
       "id": "oathsworn"
-    }
+    },
+    "material": "metal"
   },
   {
     "id": "armor.wardenMail",
@@ -585,7 +609,8 @@
     "source": {
       "file": "content/source/outfits.csv",
       "id": "warden"
-    }
+    },
+    "material": "metal"
   },
   {
     "id": "armor.nightweave",
@@ -856,7 +881,8 @@
     "source": {
       "file": "content/source/outfits.csv",
       "id": "bastion"
-    }
+    },
+    "material": "metal"
   },
   {
     "id": "armor.rimeweaveRobes",

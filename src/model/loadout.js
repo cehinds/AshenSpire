@@ -9,7 +9,7 @@ import {
 import { deriveStat } from './derivedStats.js';
 import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
-import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
+import { ratingsConfigFor, ratingStatRows } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -810,11 +810,20 @@ export const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
 /**
  * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
  *
+ * IN A RUN, AN ARMOUR SET IS OWNED BY THE RUN, NOT BY THE PROFILE (owner,
+ * 2026-11-05; SPEC §14.2/§14.3). A set with an `unlock` is owned when it is the
+ * creation grant, in `loadout.boughtArmour`, or already worn in `loadout.sets`
+ * (saves from before this rule keep what they wear). `meta.unlocked` does NOT
+ * make it owned there: the profile wardrobe must not fill a fresh run's
+ * inventory. `profileWardrobe: true` is the one explicit way to ask the
+ * wardrobe question instead ("is this set unlocked on the profile?"), for the
+ * Compendium, which has no run. Hand armaments and relics are unchanged.
+ *
  * The one predicate. A PIECE, not an id: armour ids repeat across classes
  * ("`id` is unique per class, not globally"), so an id set would say the Reaver
  * owns the Starseer's habit.
  */
-export function ownership(registries, { meta = {}, loadout = null } = {}) {
+export function ownership(registries, { meta = {}, loadout = null, profileWardrobe = false } = {}) {
   const cfg = ((registries || {}).balance || {}).equipment || {};
   const drops = cfg.drops || {};
   const unlocked = new Set(meta.unlocked || []);
@@ -848,6 +857,7 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   // so this order is not a tiebreak, it is the absence of a tie.
   const basicTag = cfg.basicTag;
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
+  const wornIds = new Set(carriedIds(loadout));
   const why = (piece) => {
     if (!piece) return 'unearned';
     if (creationArmourGrant
@@ -855,6 +865,9 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
       && creationArmourGrant.id === piece.id) return null;
     if (boughtArmour.some((row) => row && row.classId === piece.classId && row.id === piece.id)) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
+      if (piece.kind === 'armor' && !profileWardrobe) {
+        return loadout && wornIds.has(piece.id) ? null : 'unearned';
+      }
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
     if (fromDropPool(piece) && drops.requireFound) {
@@ -1131,7 +1144,7 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   // THE RUN'S OWN RATING ROWS (ruleset 7, model/statRows.js): a card's rating
   // is priced by the rows the run was born with, or the live table for a
   // preview with no run behind it.
-  const ratingConfig = ratingsConfigFor(registries, run) || LEGACY_RATING_FORMULA;
+  const ratingConfig = ratingsConfigFor(registries, run) || { ratings: ratingStatRows(registries, run) };
   const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, run?.level?.level);
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
@@ -1260,6 +1273,19 @@ export const WeaponCardPackageModel = Object.freeze({
       artSeen.add(artId);
       return artId;
     });
+    // Learnable arts (owner 2026-11-05): cards the weapon's family can teach. Never granted by wearing the
+    // weapon; rewards, shops and the Blacksmith offer them while the weapon is carried. Distinct from the defaults.
+    const learnableRaw = source.learnableArts == null ? [] : source.learnableArts;
+    if (!Array.isArray(learnableRaw)) throw new Error(`${piece.id}: learnableArts must be an array`);
+    const learnableSeen = new Set();
+    const learnableArts = learnableRaw.map((artId, index) => {
+      if (typeof artId !== 'string' || !artId) throw new Error(`${piece.id}: learnableArts[${index}] must name a card id`);
+      if (!registries.cards.has(artId)) throw new Error(`${piece.id}: learnable art '${artId}' is unknown`);
+      if (learnableSeen.has(artId)) throw new Error(`${piece.id}: duplicate learnable art '${artId}'`);
+      if (artSeen.has(artId)) throw new Error(`${piece.id}: learnable art '${artId}' is already a default art`);
+      learnableSeen.add(artId);
+      return artId;
+    });
     let combatKit = null;
     if (source.combatKit != null) {
       const kit = source.combatKit;
@@ -1291,6 +1317,7 @@ export const WeaponCardPackageModel = Object.freeze({
       priorityAttackRefs: Object.freeze(priorities),
       grantedCards: Object.freeze(grantedCards),
       weaponArtDefaults: Object.freeze(weaponArtDefaults),
+      learnableArts: Object.freeze(learnableArts),
       combatKit,
       fillerAttackProfileId: filler.id,
       compatibility: WEAPON_CARD_PACKAGE_COMPATIBILITY,
@@ -2131,13 +2158,49 @@ function configuredGearGrantSubject(registries, run) {
   const subject = run?.gameProfile ? run : registries;
   if (subject?.gameProfile?.foundation?.mode !== 'configured') return null;
   if (gameModule(subject, 'cards')?.mode !== 'configured') return null;
-  return Array.isArray(gameContent(subject, 'gear')) ? subject : null;
+  return Array.isArray(gameContent(subject, 'gear')) || configuredWeaponArtsOn(subject) ? subject : null;
+}
+
+/**
+ * CORE'S WEAPON ARTS (owner 2026-11-01, reversing the 2026-10-19 "arts stay off"). A configured
+ * profile turns them on with the equipment module's `weaponArts` setting (the Core bundle sets
+ * it). Only the arts: kits and the Dodge Roll stay off, and Core has no smith mounts to edit.
+ */
+function configuredWeaponArtsOn(subject) {
+  return gameModule(subject, 'equipment')?.weaponArts === true;
+}
+
+/**
+ * The worn weapons' default arts as item-owned instances, the same ids and shape a legacy weapon
+ * art has. Two hands go through the framework split, so an art both author installs once. A
+ * kit's art (`combatKit.artCardId`, the default art of most weapons) is still the weapon's art; the
+ * kit's basic attack and guard cards are not minted.
+ */
+function configuredWeaponArtInstances(registries, run) {
+  const subject = configuredGearGrantSubject(registries, run);
+  if (!subject || !configuredWeaponArtsOn(subject) || !run.loadout) return [];
+  const sources = { right: null, left: null };
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    if (source.package) sources[hand] = source;
+  }
+  const authored = (source) => source.package.weaponArtDefaults;
+  const picks = sources.right && sources.left
+    ? splitAuthoredWeaponArts(authored(sources.right), authored(sources.left))
+    : ['right', 'left'].flatMap((hand) => (sources[hand] ? authored(sources[hand]).map((id) => ({ id, hand })) : []));
+  const weaponSource = grantSourceFor(startingDeckSettings(registries), 'weapon');
+  return picks.map((art) => weaponArtInstance(sources[art.hand].package.weaponId, art.id, weaponSource));
+}
+
+/** Everything the worn gear lends a configured profile: its authored grantedCards, then its weapon arts. */
+function configuredGrantInstances(registries, run) {
+  return [...configuredGearGrantInstances(registries, run), ...configuredWeaponArtInstances(registries, run)];
 }
 
 /** Item-owned instances the worn Core gear lends: same ids and shape as a weapon package grant. */
 function configuredGearGrantInstances(registries, run) {
   const subject = configuredGearGrantSubject(registries, run);
-  if (!subject || !run.loadout) return [];
+  if (!subject || !run.loadout || !Array.isArray(gameContent(subject, 'gear'))) return [];
   const rows = gameContent(subject, 'gear').filter((row) => Array.isArray(row.grantedCards) && row.grantedCards.length);
   const copies = new Map();
   const out = [];
@@ -2170,7 +2233,7 @@ function configuredGearGrantInstances(registries, run) {
 /** Sweep stale item-owned cards from the deck and sideboard, append the missing ones. In place. */
 function reconcileConfiguredGearGrants(registries, run) {
   if (!run.deck) run.deck = [];
-  const desired = configuredGearGrantInstances(registries, run);
+  const desired = configuredGrantInstances(registries, run);
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   if (Array.isArray(run.sideboard)) {
@@ -2199,7 +2262,8 @@ export function reconcileGrantedCards(registries, run) {
   if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) {
     // A Core (configured-cards) deck is its authored list, except for the cards
     // the worn gear's data-driven grantedCards lend it (owner 2026-10-19).
-    // Legacy weapon packages, arts, kits and the Dodge Roll stay off.
+    // Weapon arts ride the same path when the profile's equipment.weaponArts is on
+    // (owner 2026-11-01); legacy weapon packages, kits and the Dodge Roll stay off.
     return configuredGearGrantSubject(registries, run) ? reconcileConfiguredGearGrants(registries, run) : undefined;
   }
   if (!run.deck) run.deck = [];
@@ -2269,7 +2333,7 @@ export function isCurrentEquipmentGrant(registries, run, card) {
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
-  if (configuredGearGrantSubject(registries, run)) return configuredGearGrantInstances(registries, run);
+  if (configuredGearGrantSubject(registries, run)) return configuredGrantInstances(registries, run);
   // Stamped from the authored binding, not typed here — see grantSourceFor.
   const settings = startingDeckSettings(registries);
   const weaponSource = grantSourceFor(settings, 'weapon');
@@ -2680,9 +2744,8 @@ export function gripRefusal(registries, loadout, classId, slotId, setIndex, item
  * were absent and are now present, empty. A save written before a slot row
  * existed (phase 3b added head, hands and feet) carries no cells for it, so
  * the Armoury drew no position and equipPiece refused the slot; this gives it
- * what createLoadout gives a fresh run, and nothing else. Both load doors
- * call it (save.js loadRun, which notes it on the ledger; tools/session.mjs
- * restoreSession, which has no ledger).
+ * what createLoadout gives a fresh run, and nothing else. The load door
+ * calls it (save.js loadRun, which notes it on the ledger).
  */
 export function healMissingSlotCells(registries, loadout) {
   if (!loadout || typeof loadout !== 'object') return [];
@@ -2696,6 +2759,45 @@ export function healMissingSlotCells(registries, loadout) {
     added.push(slot.id);
   }
   return added;
+}
+
+/**
+ * trimExtraSets(registries, loadout) → [{ slotId, setIndex, id }] for every
+ * armament that sat in a set the slot no longer has. A hand carried three sets
+ * until 2026-11-01 and carries one now (equipSlots.csv `sets`), so an older
+ * save can hold a weapon in MH2/MH3 or OH2/OH3 and an `active` index past the
+ * last set. Each such piece moves to `loadout.storage` (never deleted, and never
+ * duplicated if storage already lists it), the array is cut to the slot's
+ * `sets`, and `active` is reset to set 1 if it pointed past the cut. Works on any slot whose
+ * cap shrinks, not only the hands. The load door calls it and notes the result.
+ */
+export function trimExtraSets(registries, loadout) {
+  if (!loadout || typeof loadout !== 'object' || !loadout.sets) return [];
+  loadout.active = loadout.active || {};
+  loadout.storage = Array.isArray(loadout.storage) ? loadout.storage : [];
+  const moved = [];
+  for (const slot of (((registries || {}).equipment || {}).slots || [])) {
+    const ids = loadout.sets[slot.id];
+    if (!Array.isArray(ids)) continue;
+    const cap = Math.max(1, Number(slot.sets) || 1);
+    if (ids.length > cap) {
+      for (let setIndex = cap; setIndex < ids.length; setIndex += 1) {
+        const id = ids[setIndex];
+        if (!id) continue;
+        moved.push({ slotId: slot.id, setIndex, id });
+        if (!loadout.storage.includes(id) && !ids.slice(0, cap).includes(id)) loadout.storage.push(id);
+      }
+      loadout.sets[slot.id] = ids.slice(0, cap);
+      // Only a slot that really lost cells has its active set reset: an
+      // out-of-range index on a slot of the right size is a corrupt save, and
+      // the load door's shape check still refuses it by name.
+      if (loadout.active[slot.id] !== 0) {
+        if (Number.isInteger(loadout.active[slot.id]) && loadout.active[slot.id] >= cap) moved.push({ slotId: slot.id, setIndex: loadout.active[slot.id], id: null });
+        if (!Number.isInteger(loadout.active[slot.id]) || loadout.active[slot.id] >= cap) loadout.active[slot.id] = 0;
+      }
+    }
+  }
+  return moved;
 }
 
 /**

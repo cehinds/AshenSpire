@@ -73,18 +73,28 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
 // A spell-only card (camp:spell, no maneuver, e.g. Scholar's Insight) shows the
 // prepare glyph, both armed and as the held kind after it is confirmed.
 const overheadSource = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
-const overheadBegin = overheadSource.indexOf('export function playerActionIntent(');
-const overheadEnd = overheadSource.indexOf('\n}\n', overheadBegin) + 3;
-const iconOf = node => node.icon || node.children?.map(iconOf).find(Boolean);
+// Owner (2026-11-06): the glyph node draws every glyph once and shows one (the others are `hidden`), so "the icon" a
+// profile shows is the one visible glyph.
+const overheadBegin = overheadSource.indexOf('const PLAYER_ACTION_ICONS');
+const overheadEnd = overheadSource.indexOf('// One centered action row for both combatant roles');
+const iconOf = node => node.querySelectorAll('.intent-action').find(group => !group.hidden)?.children[0]?.icon;
 function loadPlayerActionIntent() {
   const fakeDocument = { createElement: tag => ({
-    tag, type: '', className: '', attrs: {}, dataset: {}, children: [], listeners: {},
+    tag, type: '', className: '', attrs: {}, dataset: {}, children: [], listeners: {}, hidden: false,
     setAttribute(key, value) { this.attrs[key] = value; },
+    getAttribute(key) { return key in this.attrs ? this.attrs[key] : null; },
     append(...nodes) { this.children.push(...nodes); },
     addEventListener(type, fn) { this.listeners[type] = fn; },
+    querySelectorAll(selector) {
+      const found = [], walk = node => { for (const child of node.children || []) { if (selector === '.intent-action' && child.className === 'intent-action') found.push(child); walk(child); } };
+      walk(this); return found;
+    },
   }) };
-  const body = overheadSource.slice(overheadBegin, overheadEnd).replace(/^export /, '') + '\n' + overheadSource.slice(overheadSource.indexOf('export function intentParts(')).replace(/^export /, '');
-  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }) });
+  const body = overheadSource.slice(overheadBegin, overheadEnd).replace(/^export /gm, '');
+  const setData = (el, key, value) => { el.dataset[key] = String(value); };
+  const setAttr = (el, key, value) => { el.attrs[key] = String(value); };
+  const onLive = (el, type, fn) => { el.listeners[type] = fn; };
+  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }), setData, setAttr, onLive });
 }
 function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
@@ -148,10 +158,11 @@ test('an armed untyped card shows the prepare glyph over a held defend', () => {
   assert.equal(iconOf(actions.at(-1)), 'prepare');
 });
 
-test('selection previews the card stance on the figure sprite; deselect returns to the held stance', () => {
+test('selection never previews a card stance on the figure sprite; it keeps the held stance (owner 2026-11-06)', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(playerStance\(def\)\);/);
-  assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(playerStance\(activeDef\)\);/);
+  assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(playerStance\(null\)\);/);
+  assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(playerStance\(null\)\);/);
+  assert.doesNotMatch(source, /setStance\?\.\(playerStance\((def|activeDef)\)\)/);
 });
 
 // Owner (2026-10-12): the glyph and the figure's stance agree, even for a card

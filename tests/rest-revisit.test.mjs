@@ -122,16 +122,4 @@ test('a run carrying restRevisit serializes and validates clean', () => {
   assert.deepEqual(validateRunShape(restored), []);
 });
 
-test('the atlas (journey) never re-enters a rest site', () => {
-  const run = classicRun();
-  openRestRecord(run);
-  run.journey = {};
-  assert.equal(restRevisitNodeId(run), null);
-});
 
-test('the legacy dungeon never re-enters a rest site', () => {
-  const run = classicRun();
-  openRestRecord(run);
-  run.legacyDungeon = {};
-  assert.equal(restRevisitNodeId(run), null);
-});

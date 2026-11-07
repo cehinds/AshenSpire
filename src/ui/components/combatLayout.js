@@ -1,4 +1,4 @@
-import { desktopFooterEnabled, desktopFooterLayout, desktopFieldBottom } from '../models/DesktopCombatFooter.js';
+import { desktopFooterEnabled, desktopFooterLayout, desktopFieldBottom, mobileFieldOverlap } from '../models/DesktopCombatFooter.js';
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { footerSizing } from '../../content/footerLayout.js';
@@ -121,25 +121,22 @@ export function wireCombatLayout(combatEl) {
     // so the header is not measured: a first-pass measure would catch the old
     // layout (the data-header-row gate is written here) and the memo would keep
     // that tall band for the life of the fight.
-    const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
-    const alternative = document.documentElement.dataset.displayAppearance === 'alternative';
+    const split = desktopFooterEnabled({ formFactor, layout: combatEl.dataset.layout });
     const headerSizing = uiConfig.scenes.w4a.sizing.desktopHeader;
-    // The co-op board has its own header markup: it keeps the measured band, with a
-    // floor for its resource bars and fight label (a short host folds them inline).
+    // A board without the shared header keeps the measured band.
     const sharedHeader = !!combatEl.querySelector(':scope > .combat-hud.shared-hud');
-    const headerRow = !alternative || !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
+    const headerRow = !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
     if (combatEl.dataset.headerRow !== headerRow) combatEl.dataset.headerRow = headerRow;
     const hudBand = headerRow
       // Desktop (owner, 2026-10-31): the header band is its own height, not floored at the 6% share,
       // so a tall host does not keep an empty strip under the smaller header.
       ? (split && headerRow === 'single' ? headerSizing.splitHeightPx / zoom
         : Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom))
-      : Math.max(combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo),
-        alternative ? (clientHeight * zoom <= headerSizing.coopShortHostMaxPx ? headerSizing.coopHeightPx : headerSizing.coopTallHeightPx) / zoom : 0);
+      : combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo);
     combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
     combatEl.dataset.desktopFooter = String(split);
-    desktopHeader.apply(document.documentElement.dataset.displayAppearance === 'alternative');
+    desktopHeader.apply(true);
     if (combatEl.dataset.desktopHeader === 'true') {
       const ribbonWidth = combatEl.querySelector('.combat-hud > .turn-ribbon')?.getBoundingClientRect().width / zoom || 0;
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
@@ -164,6 +161,9 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--w4-band-hud', hudBand + 'px');
     combatEl.style.setProperty('--w4-band-context', handBand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
+    // Owner (2026-11-01): on a phone the battlefield runs under the top of the cards (the gap above them plus ~12% of a card).
+    combatEl.style.setProperty('--combat-field-overlap', (formFactor === 'mobile' ? mobileFieldOverlap({ natural: clientHeight - hudBand - handBand - bands.footer, width, handHeight: handBand, rem, zoom, compact,
+      controlsHeight: parseFloat(combatEl.querySelector('.hand')?.style.getPropertyValue('--hand-controls-height')) || 0 }) : 0) + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
     // WCM0: every combatant's meter rows share one geometry.
     const meters = combatantMeterGeometry({ zoom, rem });
@@ -231,8 +231,10 @@ export function wireCombatLayout(combatEl) {
     headerObserver = new MutationObserver(schedule);
     headerObserver.observe(combatEl, { attributes: true, attributeFilter: ['data-target-hud', 'data-layout'], childList: true });
     formFactorObserver = new MutationObserver(schedule);
-    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance'] });
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor'] });
   }
+  // The hand publishes its chooser reserve with its layout; the phone field's extension depends on it.
+  combatEl.addEventListener?.('handlayoutchange', schedule);
   apply();
-  return { apply, release };
+  return { apply, release: () => { combatEl.removeEventListener?.('handlayoutchange', schedule); release(); } };
 }

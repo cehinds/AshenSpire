@@ -77,7 +77,7 @@ with tempfile.TemporaryDirectory(prefix='hurt-path-fixture-') as temporary:
 for(const scenario of ['external','explicit','missing','cache-and-output']) {
   test(`player HURT registration source ownership: ${scenario}`,()=>{
     const result=spawnSync(process.env.PYTHON||(process.platform==='win32'?'python':'python3'),
-      ['-I','-c',script,tool,scenario],{encoding:'utf8',timeout:10_000});
+      ['-I','-c',script,tool,scenario],{encoding:'utf8',timeout:process.platform==='win32'?30_000:10_000}); // cold Windows Python start can exceed 10 s on CI runners
     assert.equal(result.status,0,result.stderr);
     assert.deepEqual(JSON.parse(result.stdout),{scenario,result:'PASS'});
   });

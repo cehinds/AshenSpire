@@ -28,6 +28,17 @@
       "tileWidthFraction": 0.62,
       "tileRowFraction": 0.5,
       "legacyTileRowFraction": 0.7
+    },
+    "viewportScale": {
+      "bodyHeightFraction": {
+        "portraitPhone": 0.22,
+        "landscape": 0.26
+      },
+      "statureCap": 1.15,
+      "combatantScale": 0.5866,
+      "overlapAllowance": 0.4,
+      "edgeMarginPx": 6,
+      "minCommonFactor": 0.35
     }
   },
   "positioning": {
@@ -46,9 +57,9 @@
         "playerTop": 0.68,
         "playerRowHeight": 0.26,
         "skew": 0.6,
-        "top": 0.3,
-        "rowHeight": 0.17,
-        "hudWidthFraction": 0.5,
+        "top": 0.41,
+        "rowHeight": 0.125,
+        "hudWidthFraction": 1,
         "hudCenterOnBody": true
       },
       "narrow": {
@@ -59,8 +70,8 @@
         "playerTop": 0.68,
         "playerRowHeight": 0.28,
         "skew": 0.15,
-        "top": 0.32,
-        "rowHeight": 0.16
+        "top": 0.41,
+        "rowHeight": 0.125
       },
       "footFraction": {
         "enemy": 0.62,
@@ -75,6 +86,8 @@
       "bodyWidthFraction": 0.8,
       "bodyWidthMaxPx": 180,
       "footprintInsetPx": 6,
+      "footInCellFraction": 0.35,
+      "handLiftMaxFraction": 0.12,
       "playerBelowFootPx": 32,
       "shortBelowPx": 280,
       "short": {
@@ -84,10 +97,10 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "hudWidthFraction": 0.55,
+        "hudWidthFraction": 1,
         "skew": 1.6,
-        "top": 0.48,
-        "rowHeight": 0.115
+        "top": 0.5,
+        "rowHeight": 0.105
       },
       "shortLandscape": {
         "left": 0.12,
@@ -96,16 +109,19 @@
         "enemyRowHeight": 0.12,
         "playerTop": 0.8,
         "playerRowHeight": 0.2,
-        "hudWidthFraction": 0.55,
+        "hudWidthFraction": 1,
         "skew": 4.2,
-        "top": 0.7,
-        "rowHeight": 0.06,
-        "minArtLaneFraction": 0.4
+        "top": 0.63,
+        "rowHeight": 0.04,
+        "minArtLaneFraction": 0.4,
+        "teamGapRows": 1.2
       },
+      "teamGapRows": 0.6,
       "bands": [
         {
           "id": "enemy-back",
           "index": 0,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
@@ -116,6 +132,7 @@
         {
           "id": "enemy-front",
           "index": 1,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
@@ -126,28 +143,43 @@
         {
           "id": "extra-combatants",
           "index": 2,
+          "side": "enemy",
           "anchor": {
             "x": 0.5,
             "y": 1
           },
           "depth": 0.96,
-          "layer": 2
+          "layer": 2,
+          "optional": true
         },
         {
-          "id": "player",
+          "id": "player-front",
           "index": 3,
+          "side": "player",
           "anchor": {
             "x": 0.5,
             "y": 1
           },
           "depth": 1,
           "layer": 3
+        },
+        {
+          "id": "player-back",
+          "index": 4,
+          "side": "player",
+          "anchor": {
+            "x": 0.5,
+            "y": 1
+          },
+          "depth": 1.04,
+          "layer": 4
         }
       ],
       "playerArtworkScale": 1.5,
       "miniHudScale": 1.8,
       "scene": {
         "topHeightFraction": -0.1556,
+        "backdropZoom": 0.94,
         "widthScale": 1,
         "heightPerWidth": 0.6666666666666666,
         "mobileFloor": {
@@ -180,8 +212,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.28,
           "skew": 0.15,
-          "top": 0.32,
-          "rowHeight": 0.16
+          "top": 0.5,
+          "rowHeight": 0.095,
+          "teamGapRows": 1.0
         },
         "tablet": {
           "left": 0.06,
@@ -191,8 +224,9 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.32,
-          "top": 0.38,
-          "rowHeight": 0.145
+          "top": 0.41,
+          "rowHeight": 0.12,
+          "teamGapRows": 0.8
         },
         "desktop": {
           "left": 0.1125,
@@ -202,18 +236,32 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.6,
-          "top": 0.3,
-          "rowHeight": 0.17,
-          "hudWidthFraction": 0.5,
-          "hudCenterOnBody": true
+          "top": 0.41,
+          "rowHeight": 0.12,
+          "hudWidthFraction": 1,
+          "hudCenterOnBody": true,
+          "teamGapRows": 0.8
         }
       },
-      "miniHudInsetPx": 2,
+      "miniHudInsetPx": 0,
       "miniHudGroupHeightPx": 61,
       "desktopMiniHudGroupHeightPx": 96,
       "desktopShortMiniHudGroupHeightPx": 80,
       "desktopMiniHudBandOverlapPx": 30,
-      "miniHudSpriteGapPx": 5
+      "miniHudSpriteGapPx": 5,
+      "miniHud": {
+        "designWidthPx": 140,
+        "baseFontPx": 13,
+        "minFontPx": 9,
+        "maxScale": 1.2
+      }
+    }
+  },
+  "behavior": {
+    "relayout": {
+      "widthDelta": 0.08,
+      "heightDelta": 0.25,
+      "phoneShortSidePx": 500
     }
   }
 }

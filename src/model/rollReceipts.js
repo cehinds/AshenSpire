@@ -1,0 +1,130 @@
+// Roll receipts (owner, 2026-10-31): every roll in the combat log is "total vs DC", and the
+// full-detail log itemises it. A receipt is plain data built from a public event, never from
+// hidden state, and never draws a number:
+//   { kind, die, dice?, mode?, parts: [{label, value, note?}], total, dcParts: [{label, value}], dc,
+//     success, chance?, compare? }
+// `compare` is how the total meets the DC: 'gte' (default, d20 rolls), 'lte' (an old d100 under a
+// percentage chance) or 'lt' (an old crit roll under its chance). Percentage chances are now d20s that
+// meet a target: 'gte' with dc = the target and dcParts = the source chance.
+import { t } from './strings.js';
+import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
+import { d20ModeChance, effectiveD20Percent } from '../engine/d20Chance.js';
+
+const finite = value => Number.isFinite(Number(value)) && value !== null && value !== '';
+const num = value => (finite(value) ? Number(value) : 0);
+const attr = id => ATTRIBUTES.find(row => row.id === id)?.shortLabel || String(id || '');
+
+export function accuracyRollReceipt(event) {
+  const dice = Array.isArray(event.dice) ? event.dice.filter(finite) : [];
+  if (!dice.length) return null; // automatic outcome: nothing was rolled
+  const success = event.type === 'attackHit';
+  const mode = event.mode || 'normal';
+  const itemised = [event.precisionParts, event.accuracyParts].find(list => Array.isArray(list) && list.length);
+  const precision = itemised ? itemised.map(({ label, value, note }) => ({ label, value: num(value), ...(note ? { note } : {}) }))
+    : [{ label: 'Precision', value: num(event.accuracy) }];
+  const base = { kind: 'accuracy', die: 'd20', dice, mode, success, ...(finite(event.hitChance) ? { chance: num(event.hitChance) } : {}) };
+  if (event.evasionDie != null && finite(event.attackTotal)) {
+    return { ...base, parts: precision, total: num(event.attackTotal),
+      dcParts: [{ label: 'd20', value: num(event.evasionDie) }, { label: 'Evasion', value: num(event.evasion) }], dc: num(event.evasionTotal) };
+  }
+  if (event.fixedDefense && finite(event.attackTotal)) {
+    // The kept die (stanceHit.diceHit, strict natural): a kept 1 always misses and a kept 20 always hits, whatever the total.
+    const kept = mode === 'disadvantage' ? Math.min(...dice) : mode === 'advantage' ? Math.max(...dice) : dice[0];
+    const natural = kept === 1 || kept === 20 ? kept : null;
+    const total = num(event.attackTotal), dc = num(event.evasionTotal ?? event.evasion);
+    // Decided: the natural die overrode what the total alone would have said.
+    const decided = natural != null && (total >= dc) !== (natural === 20);
+    return { ...base, ...(natural ? { note: t(natural === 20 ? 'combat.roll.natural20' : 'combat.roll.natural1') } : {}), ...(decided ? { natural } : {}), parts: precision, total: num(event.attackTotal), dcParts: [{ label: 'Evasion', value: num(event.evasion) }], dc: num(event.evasionTotal ?? event.evasion) };
+  }
+  if (!finite(event.need)) return null;
+  // Legacy: the used die must reach the number Precision and Evasion leave it needing.
+  // A natural 20 on either die hits whatever the mode keeps (stanceHit.diceHit), so that die is the one shown.
+  const natural = dice.includes(20);
+  const used = natural ? 20 : mode === 'disadvantage' ? Math.min(...dice) : mode === 'advantage' ? Math.max(...dice) : dice[0];
+  return { ...base, ...(natural && dice.length > 1 ? { note: 'natural 20 hits' } : {}), parts: [], total: used, dcParts: [{ label: 'Needed (8 + Evasion − Precision)', value: num(event.need) }], dc: num(event.need) };
+}
+
+export function contestRollReceipt(event) {
+  const c = event.contest || event;
+  if (!finite(c.roll) || !finite(c.total) || !finite(c.dc)) return null;
+  const parts = (c.parts || []).map(part => ({ label: attr(part.id), value: num(part.value) }));
+  const rank = finite(c.rank) ? num(c.rank) : 1;
+  if (rank) parts.push({ label: 'rank', value: rank });
+  const dcParts = (c.dcParts || []).map(part => ({ label: part.id === 'poise' ? 'Poise' : part.id === 'level' ? 'level' : attr(part.id), value: num(part.value) }));
+  return { kind: 'contest', die: 'd20', dice: [num(c.roll)], parts, total: num(c.total), dcParts, dc: num(c.dc), success: event.type === 'contestPassed' };
+}
+
+// A crit is a d20 that must meet a target derived from its chance (owner, 2026-11-01): "d20 [17] needs ≥ 18 (Chance 15%)".
+// Events logged before that carry a float roll under the chance and no target; they keep the percentile receipt.
+export function critRollReceipt(event) {
+  if (!finite(event.roll) || !finite(event.chance)) return null;
+  if (finite(event.target)) return d20ChanceReceipt(event, 'crit');
+  return { kind: 'crit', die: 'd100', dice: [num(event.roll)], parts: [], total: num(event.roll), compare: 'lt',
+    dcParts: [{ label: 'Crit chance %', value: num(event.chance) }], dc: num(event.chance), success: !!event.success };
+}
+
+// The shared shape of a percentage chance rolled as a d20: success on d20 >= target, the source chance kept as the note.
+// The chance shown is the one the d20 really rolls, round(chance / 5) × 5 (owner, 2026-11-01): 32% reads 30%.
+function d20ChanceReceipt(event, kind) {
+  const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
+  const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode : null;
+  // A modified (advantage or disadvantage) chance gets a suffix when the event carries one; it is worked from the
+  // rounded chance (32% with advantage reads 51%, not the raw 53.8%).
+  // Only when the modified figure differs from the base shown (a sure 100% with advantage prints no suffix).
+  const base = effectiveD20Percent(event.chance);
+  const modifiedValue = Math.round(d20ModeChance(event.chance, { advantage: mode === 'advantage', disadvantage: mode === 'disadvantage' }) * 10) / 10;
+  const modified = mode && finite(event.effectiveChance) && modifiedValue !== base ? modifiedValue : null;
+  return { kind, die: 'd20', dice: rolls, ...(rolls.length > 1 && mode ? { mode } : {}), parts: [], total: num(event.roll), compare: 'gte',
+    dcParts: [{ label: 'Chance %', value: effectiveD20Percent(event.chance) }], dc: num(event.target),
+    ...(modified != null ? { chance: modified } : {}), success: !!event.success };
+}
+
+export function perceptionRollReceipt(event) {
+  if (!finite(event.roll) || !finite(event.dc)) return null;
+  return { kind: 'perception', die: 'd20', dice: [num(event.roll)], parts: [{ label: 'WIS', value: num(event.wisdom) }], total: num(event.total ?? num(event.roll) + num(event.wisdom)),
+    dcParts: (event.dcParts || []).map(({ label, value }) => ({ label, value: num(value) })), dc: num(event.dc), success: !!event.passed };
+}
+
+// A status buildup or recovery chance, rolled as a d20 that must meet a target (owner, 2026-11-01).
+// Events logged before that carry a d100 (low roll wins) and no target; they keep the percentile receipt.
+export function percentRollReceipt(event, kind) {
+  if (!finite(event.roll) || !finite(event.chance)) return null;
+  if (finite(event.target)) {
+    const mode = ['advantage', 'disadvantage'].includes(event.mode) ? event.mode
+      : Array.isArray(event.rolls) && event.rolls.length > 1 && event.rolls[0] !== event.rolls[1]
+        ? (num(event.roll) === Math.max(...event.rolls) ? 'advantage' : 'disadvantage') : null;
+    return d20ChanceReceipt({ ...event, mode }, kind);
+  }
+  const rolls = Array.isArray(event.rolls) && event.rolls.length ? event.rolls.map(num) : [num(event.roll)];
+  // The kept die says which mode it was (advantage keeps the lower d100, disadvantage the higher); equal dice cannot tell, so no label.
+  const mode = event.mode || (rolls.length > 1 && rolls[0] !== rolls[1] ? (num(event.roll) === Math.min(...rolls) ? 'advantage' : 'disadvantage') : null);
+  return { kind, die: 'd100', dice: rolls, ...(rolls.length > 1 && ['advantage', 'disadvantage'].includes(mode) ? { mode } : {}),
+    parts: [], total: num(event.roll), compare: 'lte', dcParts: [{ label: 'Chance %', value: num(event.chance) }], dc: num(event.chance),
+    ...(finite(event.effectiveChance) && event.effectiveChance !== event.chance ? { chance: Math.round(event.effectiveChance * 10) / 10 } : {}), success: !!event.success };
+}
+
+// Distance avoidance: a d20 that must meet a target; an old log (d100, no target) has no itemised receipt.
+export function distanceRollReceipt(distance) {
+  if (!finite(distance?.roll) || !finite(distance.target) || !finite(distance.chance)) return null;
+  return d20ChanceReceipt({ ...distance, rolls: distance.dice }, 'distance');
+}
+
+export function dodgeRollReceipt(event) {
+  const total = event.check ?? event.roll;
+  if (!finite(total) || !finite(event.difficulty)) return null;
+  return { kind: 'dodge', die: 'd20', dice: finite(event.roll) ? [num(event.roll)] : [], parts: finite(event.roll) && num(event.check) !== num(event.roll)
+    ? [{ label: 'Dexterity + Weight Class', value: num(event.check) - num(event.roll) }] : [], total: num(total), dcParts: [], dc: num(event.difficulty), success: !!event.success };
+}
+
+export function evadeRollReceipt(evade) {
+  if (!finite(evade?.roll) || !finite(evade.difficulty)) return null;
+  const total = finite(evade.total) ? num(evade.total) : num(evade.roll);
+  const dice = Array.isArray(evade.dice) && evade.dice.length ? evade.dice.map(num) : [num(evade.roll)];
+  return { kind: 'evade', die: 'd20', dice, ...(['advantage', 'disadvantage'].includes(evade.mode) ? { mode: evade.mode } : {}), parts: total !== num(evade.roll) ? [{ label: 'bonus', value: total - num(evade.roll) }] : [],
+    total, dcParts: [], dc: num(evade.difficulty), success: !!evade.success };
+}
+
+const VERDICT = { accuracy: ['hit', 'miss'], contest: ['success', 'fail'], crit: ['crit', 'noCrit'], perception: ['read', 'unread'] };
+export const rollVerdictWord = (kind, success) => t(`combat.roll.${(VERDICT[kind] || ['success', 'fail'])[success ? 0 : 1]}`);
+/** The compact log line: "Strike: 18 vs 9 · hit". */
+export const rollCompactText = (what, receipt) => t(receipt.natural ? 'combat.log.rollNatural' : 'combat.log.roll', { natural: receipt.natural ? t(receipt.natural === 20 ? 'combat.roll.nat20' : 'combat.roll.nat1') : '', what, total: Number(receipt.total.toFixed(2)), dc: Number(receipt.dc.toFixed(2)), verdict: rollVerdictWord(receipt.kind, receipt.success) });

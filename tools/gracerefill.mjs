@@ -133,9 +133,6 @@ function report() {
   console.log('    Whether the refusals can go red is --selftest, and nothing else here claims it.');
   console.log('  · it says nothing about release balance. The old no-Mana A/B is stale; a');
   console.log('    Mana-aware run simulation and player review remain separate gates.');
-  console.log('  · co-op refills every living member at enterShrine (tools/session.mjs) with the');
-  console.log('    AUTHORED counts — the server has no meta.settings — and this report does not');
-  console.log('    open a session.');
 }
 
 // ---------------------------------------------------------------------------
@@ -217,7 +214,7 @@ const PLANTS = [
 
 // Behaviour plants: door 2. Each drives the charge model through registries
 // built from a real bundle copy and a run built by `createRunState` — the door
-// every real run comes through, in the game, in co-op and in every sim.
+// every real run comes through, in the game and in every sim.
 const BEHAVIOUR = [
   {
     name: 'a grace refills current charges to the run\'s allocation',
@@ -245,7 +242,7 @@ const BEHAVIOUR = [
     // could replace which flask a grace POURED. The charge model pours no
     // flasks — so the same claim, on the surface that survived: one content
     // row, ZERO engine commits, and every screen that names the Mana charge
-    // (rest.js, combat.js, coop.js all call chargeFlaskDefinition) names the
+    // (rest.js and combat.js call chargeFlaskDefinition) names the
     // new entry instead. The row enters `content/source/flasks.json`'s array
     // through the real bundle and the real registry build.
     name: 'LAW 0: one content row re-points the Mana charge, no engine edit',
@@ -435,8 +432,6 @@ function selftest() {
   console.log('    src/content/index.js assembles the bundle is invisible here.');
   console.log('  · no browser ran. The settings rows and shrine sentence');
   console.log('    are rendered HTML and are photographed, not asserted, here.');
-  console.log('  · the co-op path (tools/session.mjs enterShrine) is covered by');
-  console.log('    `node tools/session-smoke.mjs`, not by this file.');
 
   console.log(`\nRESULT: ${fails === 0 ? 'all plants behaved' : `${fails} MISS`} — ${PLANTS.length} content plants, ${behaviourChecks} behaviour checks, ${RETIRED.length} retired (counted at run time, never typed).`);
   return fails;

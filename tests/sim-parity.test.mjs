@@ -47,14 +47,14 @@ test('profile settings reach the fight through the same door', () => {
   assert.equal(combat.handRules.retain, false);
 });
 
-test('runCombatEnd writes HP, Mana and Stamina back to the run', () => {
+test('runCombatEnd writes HP and Stamina back to the run and refills Mana (owner, 2026-10-31)', () => {
   const { run, combat } = fight('starseer');
   combat.player.hp = run.maxHp - 5;
   combat.player.mana = 0;
   combat.player.stamina = 1;
   runCombatEnd(run, combat);
   assert.equal(run.hp, run.maxHp - 5);
-  assert.equal(run.mana, 0);
+  assert.equal(run.mana, run.maxMana, 'Mana refills to full when the fight ends (mechanics.mana.combatEndRefill)');
   assert.equal(run.stamina, 1);
 });
 

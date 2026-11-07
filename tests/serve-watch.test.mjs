@@ -78,7 +78,7 @@ function makeTree() {
 /** Start serve.mjs; resolves { port, child } once it prints its address. */
 function start(root, extraArgs = [], env = {}) {
   return new Promise((done, fail) => {
-    const child = spawn(process.execPath, [SERVE, '--port', '0', '--no-open', '--no-lan', '--root', root, ...extraArgs],
+    const child = spawn(process.execPath, [SERVE, '--port', '0', '--no-open', '--root', root, ...extraArgs],
       { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
     cleanups.push(() => child.kill());
     let out = '';

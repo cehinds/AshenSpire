@@ -40,7 +40,8 @@ for (const die of [1, 20]) test(`retained Evade multi-contact Smash rolls ${die}
   assert.equal(target.poiseMeter.value - before.poise, die === 20 ? 6 : 0);
   assert.equal(before.ward - target.persistentWard.value, die === 20 ? 4 : 0);
 });
-function fixture(maneuver, stance = 'evade') {
+// Owner 2026-11-01: Evade is a status, not a stance. The target holds Evade stacks in a Sweep stance, which neither Smash nor Counter beats by stance, so only a real evade attempt earns the matchup.
+function fixture(maneuver, stance = 'sweep') {
   const source = { id: 'player', kind: 'player', alive: true, statuses: {} };
   const target = { id: 'enemy', kind: 'enemy', alive: true, statuses: { evade: { stacks: 1 } },
     combatStance: { camp: 'physical', maneuver: stance, range: 'melee' } };

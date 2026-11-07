@@ -17,13 +17,13 @@ test('as each layer breaks the fill drops to the next one', () => {
   assert.equal(healthGuardTone({ barrier: 0, defense: 0, wardPool: 0 }), 'none', 'Ward broke');
 });
 
-test('protectionPresentation keeps the Ward pool apart from Barrier and Block', () => {
+test('protectionPresentation keeps the Ward pool apart from Block; the numeric Barrier is gone (Barrier is a status, SPEC 4.1a)', () => {
   const p = protectionPresentation({ block: 5, wardBlock: 2, persistentWard: { value: 3 }, barrier: 1, persistentPoise: { value: 4 } });
   assert.equal(p.defense, 3);
-  assert.equal(p.barrier, 1);
+  assert.equal(p.barrier, 0);
   assert.equal(p.wardPool, 5);
   assert.equal(p.poise, 4);
-  assert.equal(p.ward, 6, 'the badge total still counts Barrier');
+  assert.equal(p.ward, 5, 'the badge total is the Ward pool');
 });
 
 test('combatHealthModel carries the guard tone and the Poise trim', () => {

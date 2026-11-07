@@ -1,11 +1,9 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, chooseDiscard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
@@ -15,37 +13,35 @@ import { computeTokenBindings, validateEffects } from '../src/model/validate.js'
 import { skillXpReceipt } from '../src/engine/skillXp.js';
 
 // The fixture pins its own Stamina and Mana: costRule 'fixed' opts it out of the cost formula (SPEC §4.3a).
-function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = false } = {}) {
+function fixture(effects, { manaCost = 0, cost = 1, expanded = false } = {}) {
   const base = createRegistries(contentBundle);
   const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Rider fixture', costRule: 'fixed', cost, manaCost, effects, upgrade: {}, abilityKind: 'spell', abilityFamily: 'fixture', cardTags: ['kind.skill', 'source:spell'] };
   const registries = { ...base, progressionEnabled: expanded, cards: { ...base.cards, get: id => id === 'defend' ? card : base.cards.get(id) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
-  const combat = coop ? createCoopCombat({ registries, rng: createRng(9), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
+  const combat = createCombat({ registries, rng: createRng(9), player, enemyIds: ['wanderingSoldier'] });
   for (const enemy of combat.enemies) { enemy.hp = enemy.maxHp = 1000; enemy.block = 0; }
   return combat;
 }
 const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: botCardTargetId(combat.registries, combat, combat.piles.hand[0], combat.enemies[0].id) });
 
-test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
-  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) {
-    const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, coop, expanded: true });
-    const seat = coop ? combat.players.get('a') : { entity: combat.player, piles: combat.piles };
-    const id = seat.piles.hand[0].instanceId;
-    seat.piles.hand[0].grantedBy = 'armament/ashStaff';
-    const owner = coop ? 'a' : 'player';
-    const before = structuredClone(combat.skillXp);
-    if (coop) previewCoopCard(combat, owner, id); else previewCard(combat, id);
-    assert.deepEqual(combat.skillXp, before);
-    seat.entity.mana = 0;
-    assert.throws(() => coop ? playCard(combat, owner, id, combat.enemies[0].id) : play(combat), /Not enough mana/);
-    assert.deepEqual(combat.skillXp, before);
-    assert.ok(seat.piles.hand.some(card => card.instanceId === id));
-    seat.entity.mana = 20;
-    if (coop) playCard(combat, owner, id, combat.enemies[0].id); else play(combat);
-    assert.equal(skillXpReceipt(combat, owner)['item:magic-focus'], 10);
-    if (coop) assert.equal(skillXpReceipt(combat, 'b')['item:magic-focus'], undefined);
-    assert.equal(combat.eventLog.filter(event => event.type === 'cardResolved').length, 1);
-  }
+test('transactional real plays bank skill XP once', () => {
+  const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, expanded: true });
+  const seat = { entity: combat.player, piles: combat.piles };
+  const id = seat.piles.hand[0].instanceId;
+  seat.piles.hand[0].grantedBy = 'armament/ashStaff';
+  const owner = 'player';
+  const before = structuredClone(combat.skillXp);
+  previewCard(combat, id);
+  assert.deepEqual(combat.skillXp, before);
+  seat.entity.mana = 0;
+  assert.throws(() => play(combat), /Not enough mana/);
+  assert.deepEqual(combat.skillXp, before);
+  assert.ok(seat.piles.hand.some(card => card.instanceId === id));
+  seat.entity.mana = 20;
+  play(combat);
+  assert.equal(skillXpReceipt(combat, owner)['item:magic-focus'], 10);
+
+  assert.equal(combat.eventLog.filter(event => event.type === 'cardResolved').length, 1);
 });
 
 test('preplay target snapshots prevent a card from satisfying its own status and Block conditions', () => {
@@ -107,21 +103,6 @@ test('lethal plays finish their draw/discard and resolve exactly once before com
   const types = combat.eventLog.map(e => e.type); assert.ok(types.indexOf('cardResolved') < types.indexOf('combatEnd'));
 });
 
-test('co-op discard belongs to its seat and charges and resolution carry seat ownership', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = fixture([{ op: 'draw', amount: 1 }, { op: 'discard', amount: 1, choose: true }], { coop: true });
-  const owner = combat.players.get('a'); const id = owner.piles.hand[0].instanceId;
-  grantAbilityCharge(owner.entity, { key: 'discount', manaDiscount: 1 });
-  assert.equal(previewCoopCard(combat, 'a', id).manaCost, 0);
-  playCard(combat, 'a', id); assert.equal(combat.pendingAbilityDiscard.playerId, 'a');
-  assert.throws(() => endTurn(combat, 'b'), /Choose the cards/);
-  assert.throws(() => chooseDiscard(combat, 'b', []), /another player/);
-  chooseDiscard(combat, 'a', [combat.players.get('a').piles.hand[0].instanceId]);
-  assert.equal(combat.pendingAbilityDiscard, undefined); assert.equal(combat.pendingAbilityPlay, undefined);
-  const resolved = combat.eventLog.find(e => e.type === 'cardResolved'); assert.equal(resolved.sourcePlayerId, 'a');
-  assert.equal(combat.players.get('a').entity.abilityRiders.discarded, 1);
-  assert.equal(combat.players.get('b').entity.abilityRiders.discarded, 0);
-});
-
 test('kill predicates retain the actual target status immediately before a fatal hit', () => {
   const combat = fixture([{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }, { op: 'damage', target: 'enemy', amount: 2000 }]);
   play(combat); const event = combat.eventLog.find(e => e.type === 'enemyDied');
@@ -154,16 +135,6 @@ test('partial strongest status consumption cannot resurrect the consumed magnitu
   target.statuses.weak = { stacks: 5, applications: [{ sourceId: 'a', value: 5, expires: 1 }, { sourceId: 'b', value: 4, expires: 3 }] };
   removeStatus(combat, target, 'weak', { amount: 2, reason: 'consumed' }); assert.equal(getStacks(target, 'weak'), 3);
   advanceStatusClock(combat, target, 'ownerTurnEnd'); assert.equal(getStacks(target, 'weak'), 3);
-});
-
-test('co-op lethal play still awaits its owner choice and resolves before victory', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = fixture([{ op: 'damage', target: 'enemy', amount: 2000 }, { op: 'draw', amount: 1 }, { op: 'discard', amount: 1, choose: true }], { coop: true });
-  playCard(combat, 'a', combat.players.get('a').piles.hand[0].instanceId);
-  assert.equal(combat.result, null);
-  chooseDiscard(combat, 'a', [combat.players.get('a').piles.hand[0].instanceId]);
-  assert.equal(combat.result, 'victory');
-  const resolved = combat.eventLog.find(e => e.type === 'cardResolved'); assert.equal(resolved.sourcePlayerId, 'a');
-  assert.ok(combat.eventLog.indexOf(resolved) < combat.eventLog.findIndex(e => e.type === 'combatEnd'));
 });
 
 test('buildup charges retain independent status filters and augment only the first matching effect', () => {
@@ -205,21 +176,21 @@ test('explicit-discard predicates exclude overflow and end-turn cleanup even aft
   assert.equal(evalPredicate(combat, { p: 'turnMetric', metric: 'discarded', atLeast: 1, snapshot: 'current' }, { event }), true);
 });
 
-test('buildup charges supply a missing low-grade status and augment an authored status once in solo and co-op', () => {
-  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) for (const existing of [false, true]) {
+test('buildup charges supply a missing low-grade status and augment an authored status once', () => {
+  for (const existing of [false, true]) {
     const effects = [{ op: 'block', target: 'self', amount: 4 }, ...(existing ? [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 }] : [])];
-    const combat = fixture(effects, { coop });
-    const source = coop ? combat.players.get('a').entity : combat.player;
-    const piles = coop ? combat.players.get('a').piles : combat.piles;
+    const combat = fixture(effects);
+    const source = combat.player;
+    const piles = combat.piles;
     const id = piles.hand[0].instanceId;
     grantAbilityCharge(source, { key: 'rime', abilityKind: 'spell', buildupStatus: 'frost', buildup: 2 });
     const snapshot = () => JSON.stringify({ source, enemies: combat.enemies, hand: piles.hand, events: combat.eventLog, rng: combat.rng.getCounters() });
     const saved = snapshot();
-    const preview = coop ? previewCoopCard(combat, 'a', id) : previewCard(combat, id);
+    const preview = previewCard(combat, id);
     assert.equal(preview.needsTarget, true);
     assert.equal(preview.values.find(value => value.status === 'frost').value, existing ? 5 : 2);
     assert.equal(snapshot(), saved);
-    if (coop) playCard(combat, 'a', id); else dispatch(combat, { type: 'playCard', cardInstanceId: id });
+    dispatch(combat, { type: 'playCard', cardInstanceId: id });
     assert.equal(getStacks(combat.enemies[0], 'frost'), existing ? 5 : 2);
     assert.equal(combat.eventLog.filter(event => event.type === 'statusApplied' && event.status === 'frost').length, 1);
     assert.deepEqual(source.abilityRiders.charges, {});
@@ -246,20 +217,17 @@ test('area predicates respect the resolved event face before the default registr
 });
 
 
-test('charged self cards accept enemies and reject their source before spending in solo and co-op', () => {
-  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) {
-    const combat = fixture([{ op: 'block', target: 'self', amount: 4 }], { coop });
-    const source = coop ? combat.players.get('a').entity : combat.player;
-    const hand = coop ? combat.players.get('a').piles.hand : combat.piles.hand;
-    grantAbilityCharge(source, { key: 'rime', buildupStatus: 'frost', buildup: 2 });
-    const snapshot = () => JSON.stringify(coop ? { players: [...combat.players], enemies: combat.enemies, eventLog: combat.eventLog, skillXp: combat.skillXp, rng: combat.rng.getCounters() } : serializeCombatSnapshot(combat));
-    const before = snapshot();
-    const playAt = targetId => coop ? playCard(combat, 'a', hand[0].instanceId, targetId)
-      : dispatch(combat, { type: 'playCard', cardInstanceId: hand[0].instanceId, targetId });
-    assert.throws(() => playAt(coop ? 'a' : source.id), /Invalid enemy target/);
-    assert.equal(snapshot(), before);
-    playAt(combat.enemies[0].id);
-    assert.equal(getStacks(combat.enemies[0], 'frost'), 2);
-    assert.deepEqual(source.abilityRiders.charges, {});
-  }
+test('charged self cards accept enemies and reject their source before spending', () => {
+  const combat = fixture([{ op: 'block', target: 'self', amount: 4 }]);
+  const source = combat.player;
+  const hand = combat.piles.hand;
+  grantAbilityCharge(source, { key: 'rime', buildupStatus: 'frost', buildup: 2 });
+  const snapshot = () => JSON.stringify(serializeCombatSnapshot(combat));
+  const before = snapshot();
+  const playAt = targetId => dispatch(combat, { type: 'playCard', cardInstanceId: hand[0].instanceId, targetId });
+  assert.throws(() => playAt(source.id), /Invalid enemy target/);
+  assert.equal(snapshot(), before);
+  playAt(combat.enemies[0].id);
+  assert.equal(getStacks(combat.enemies[0], 'frost'), 2);
+  assert.deepEqual(source.abilityRiders.charges, {});
 });

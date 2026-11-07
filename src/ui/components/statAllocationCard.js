@@ -18,6 +18,7 @@ import {
   el, eyebrow, titleS, flavour, hairline, statPair, row, button, buttonRow, openModal,
 } from '../kit/index.js';
 import { t } from '../strings.js';
+import { attributeGainSummary } from '../../model/attributePointPreview.js';
 
 function stepperFor(rowModel, { onDecrease, onIncrease }) {
   const step = (glyph, action, allowed, label) => {
@@ -52,6 +53,10 @@ function drawRows(rowsHost, rows, handlers) {
     const attribute = attributes[index];
     attribute.classList.add('se-attribute-card');
     attribute.querySelector('.disc-face > .as-row').appendChild(stepperFor(rowModel, handlers));
+    // The largest thing one more point buys; the title lists them all (model/attributePointPreview.js).
+    const main = rowModel.card?.mainGain;
+    const label = attribute.querySelector('.ls-label');
+    if (main && label) label.appendChild(el('span', { class: 'se-gain', text: main.text, title: attributeGainSummary(rowModel.card.gains) }));
     const line = row({
       tag: 'div', setting: true, className: 'se-row',
       labelNode: attribute,

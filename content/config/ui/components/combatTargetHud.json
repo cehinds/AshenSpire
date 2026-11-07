@@ -22,6 +22,8 @@
     "edgeInsetPx": 12,
     "topInsetPx": 4,
     "staggerStepPx": 36,
+    "loneEnemySide": "left",
+    "crowdedEnemySide": "below",
     "enemyLaneSides": [
       "left",
       "below",
@@ -31,7 +33,9 @@
       "right",
       "right",
       "right"
-    ]
+    ],
+    "pinnedMinWidthPx": 150,
+    "enemyRowMinWidthPx": 120
   },
   "motion": {
     "dwellMs": 500,

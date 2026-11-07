@@ -56,11 +56,11 @@ permissions:
 
 jobs:
   stamp:
-    # Skip the bot's own stamp commit, and any push that is not a dev branch. A dispatch
+    # Skip the bot's own stamp commit and version-advance.yml's commit (which writes its own box), and any push that is not a dev branch. A dispatch
     # always runs. The skip is by AUTHOR and SUBJECT PREFIX here, and build-stamp.mjs
     # --stamp-is-current checks the exact subject: a human squash that merely mentions
     # [build-stamp] is not skipped, so its own pull request is stamped and counted.
-    if: "github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'build: stamp ') && contains(github.event.head_commit.message, '[build-stamp]')))"
+    if: "github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'build: stamp ') && contains(github.event.head_commit.message, '[build-stamp]')) && !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'version-advance: ') && contains(github.event.head_commit.message, '[version-advance]')))"
     runs-on: ubuntu-latest
     env:
       # The art packs the build reads, as dev-preview's preview job fetches them.

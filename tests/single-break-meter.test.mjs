@@ -1,11 +1,9 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
 import { applyAttackDamage, computeAttackDamage, executeAction } from '../src/engine/actions.js';
@@ -18,9 +16,6 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { validateContent } from '../src/model/validate.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
 import { breakPropertyText } from '../src/model/breakMeter.js';
-import { createSession } from '../tools/session.mjs';
-import { initialClassTreeChoices } from '../src/model/classTree.js';
-import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 
 const magic = { damageSchool: 'magic', exposureBuildupPerHit: 5 };
 const physical = { damageSchool: 'physical' };
@@ -178,58 +173,7 @@ test('old and ratings-free fights keep both older meters; old snapshots restore 
   assert.equal(restored.breakMeterVersion, 1); assert.equal(restored.player.wardMeter, undefined);
 });
 
-test('new-run snapshots stamp the version and co-op follows the host stamp', () => {
+test('new-run snapshots stamp the version', () => {
   assert.equal(advancedConfigSnapshot().breakMeterVersion, 1);
-  if (COOP_TESTS_ENABLED) {
-    const reg = createRegistries(contentBundle); const ratingsRules = resolveCombatRatings({}, contentBundle);
-    for (const stamp of [null, 1]) {
-      const c = createCoopCombat({ registries: reg, rng: createRng(7), players: [{ id: 'a', ...player() }], enemyIds: ['wanderingSoldier'], ratingsRules, breakMeterVersion: stamp });
-      assert.equal(!!c.enemies[0].wardMeter, stamp !== 1); assert.equal(!!c.enemies[0].arcaneExposure, stamp !== 1);
-      assert.equal(!!c.players.get('a').entity.wardMeter, stamp !== 1);
-    }
-  }
-
 });
 
-test('co-op Stagger triggers refund and draw only for the source, including an inactive seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const reg = createRegistries(contentBundle);
-  const players = ['a', 'b'].map(id => ({ id, ...player(), deck: Array.from({ length: 8 }, (_, n) => ({ cardId: 'dodgeRoll', instanceId: `${id}-${n}`, upgraded: false })) }));
-  const c = createCoopCombat({ registries: reg, rng: createRng(7), players, enemyIds: ['wanderingSoldier'], ratingsRules: resolveCombatRatings({}, contentBundle), breakMeterVersion: 1 });
-  for (const id of ['a', 'b']) for (const tag of ['siphon', 'arcaneDraw']) mountProperties(c, { kind: 'armament', id: tag, instanceId: tag, ownerKey: id, tagIds: [tag] });
-  const active = c.player;
-  const owner = [...c.players.values()].find(seat => seat.entity !== active).entity; const sourceId = c.playerIdForEntity(owner);
-  const otherId = sourceId === 'a' ? 'b' : 'a';
-  const before = Object.fromEntries([...c.players].map(([id, seat]) => [id, seat.piles.hand.length]));
-  c.enemies[0].poiseMeter.max = 2;
-  applyRatingImpact(c, owner, c.enemies[0], magic, 8);
-  while (c.queue.length) executeAction(c, c.queue.shift());
-  assert.equal(c.players.get(sourceId).entity.mana, 1); assert.equal(c.players.get(otherId).entity.mana, 0);
-  assert.equal(c.players.get(sourceId).piles.hand.length, before[sourceId] + contentBundle.balance.classTree.arcaneDraw.draw);
-  assert.equal(c.players.get(otherId).piles.hand.length, before[otherId]);
-  assert.equal(events(c, 'arcaneStagger').length, 1);
-  assert.equal(events(c, 'arcaneStagger')[0].sourcePlayerId, sourceId);
-  assert.equal(c.player, active);
-});
-
-test('the real co-op session sends Ward ratings and omits retired meters under the host stamp', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
-  const host = createSession({ registries: reg, seedString: 'BOSSTIER', combatExpansionVersion: 1 });
-  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' }); host.start();
-  assert.equal(host.serialize().advancedConfigSnapshot.breakMeterVersion, 1);
-  // Keep this a current-run host fixture, including its required starting pick.
-  const run = host.session.members.get('p1').run;
-  while (run.classMasteryState?.initialTreeTiers?.length) {
-    const choices = initialClassTreeChoices(registriesForClassMastery(reg, run), run);
-    assert.ok(choices.length, 'the starting class tier has an eligible choice');
-    assert.equal(host.chooseMasteryNode('p1', choices[0]).ok, true);
-  }
-  const graph = host.session.mapGraph; const node = (graph.bossIds || [graph.bossId])[0];
-  host.session.reachableIds = [node]; assert.equal(host.chooseNode('p1', node).ok, true);
-  const scene = host.snapshot().scene;
-  assert.equal(scene.breakMeterVersion, 1); assert.equal(scene.kind, 'combat');
-  for (const enemy of scene.enemies) {
-    assert.equal(enemy.ratings.ward, host.live.combat.enemies.find(e => e.id === enemy.id).ratings.ward);
-    assert.equal(enemy.wardMeter, undefined); assert.equal(enemy.arcaneExposure, undefined);
-  }
-  for (const seat of scene.players) { assert.ok(Number.isFinite(seat.ratings.ward)); assert.equal(seat.wardMeter, undefined); }
-});

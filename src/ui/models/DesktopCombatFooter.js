@@ -1,9 +1,10 @@
 import { uiConfig } from '../../config/generated/ui.js';
-import { responsiveHandLayout } from './HandLayout.js';
+import { perspectiveBandRows } from './AlternativeFormationModel.js';
+import { responsiveHandLayout, handLayout } from './HandLayout.js';
 
 // Physical desktop geometry; UI zoom changes the ruler, never the art's shape.
-export function desktopFooterEnabled({ formFactor, appearance, layout }) {
-  return ['desktop', 'widescreen'].includes(formFactor) && appearance === 'alternative' && layout === 'formation';
+export function desktopFooterEnabled({ formFactor, layout }) {
+  return ['desktop', 'widescreen'].includes(formFactor) && layout === 'formation';
 }
 export function desktopFooterLayout({ width, height, zoom = 1 }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
   const scale = Math.max(config.minimumScale, Math.min(config.maximumScale, height * zoom / config.scaleHeightPx));
@@ -43,7 +44,10 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
   const restTop = Math.min(...cards.map(c => top + c.y + cardHeight / 2 - (Math.abs(Math.sin(c.angle * Math.PI / 180)) * cardWidth + Math.cos(c.angle * Math.PI / 180) * cardHeight) / 2), top);
   return { cardWidth, cardHeight, cards, capacity: Math.max(1, count), span, start, step, top, lift: 18 * unit,
     // Owner (2026-10-31): the fan docks to the hand box's bottom; handGapPx above End Turn is its only buffer.
-    restLeft: start - 12 * unit, restTop, clearanceTop: -10 * unit, controlsReserve: 0, reserve: 0, dock: 1 };
+    restLeft: start - 12 * unit,
+    // Owner (2026-11-02): desktop cards are 20% larger (cap 128.04 viewport px). The fan docks to the box bottom, so only the
+    // arc and tilt need headroom (16 px, not the phone's 40 px lift room); handHeightPx grew 270 to 285 with it.
+    fitReservePx: 16, restTop, clearanceTop: -10 * unit, controlsReserve: 0, reserve: 0, dock: 1 };
 }
 
 // The battlefield's bottom edge, in combat-root px: the fan's clearance line (its resting top
@@ -52,5 +56,32 @@ export function desktopHandLayout({ width, height, count, zoom = 1 }, config = u
 export function desktopFieldBottom(plan, { width, zoom = 1, rem = 16, formFactor = 'desktop' }, config = uiConfig.scenes.w4a.sizing.desktopFooter) {
   const input = { width, height: plan.handHeight, count: 5, rem, zoom, compact: false, controlsHeight: 0, controlled: [], headroom: 0, formFactor };
   const fan = responsiveHandLayout(input, desktopHandLayout(input, config));
-  return plan.handTop + fan.clearanceTop;
+  // Owner (2026-11-01): the cards overlap the battlefield's lower edge by handOverlapFraction of their height,
+  // but never so far that the player rank's feet (the profile's top + the band rows * rowHeight of the field) pass the resting
+  // top card edge: on a short desktop the overlap shrinks until the feet stand one px above that edge.
+  const cardTop = plan.handTop + fan.restTop;
+  const header = uiConfig.scenes.w4a.sizing.desktopHeader.splitHeightPx / zoom;
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const profile = grid.profiles?.[formFactor] || grid.wide;
+  const feet = profile.top + perspectiveBandRows(grid, false, profile).rows * profile.rowHeight;
+  return Math.min(cardTop + (config.handOverlapFraction || 0) * fan.cardHeight, header + (cardTop - 1 / zoom - header) / feet);
+}
+
+// Phone (owner, 2026-11-01): the field runs up to mobileFieldHandOverlapPx under the cards, but never so far that the
+// player rank's feet (the phone profile's top + the band rows * rowHeight of the extended field) pass the resting top card edge,
+// which is where the real fan puts it: the hand band's top (the field's natural bottom) plus the fan's restTop. The
+// extension is whatever that allows, between 0 and the authored cap; a field that would fall under shortBelowPx once
+// extended keeps its natural height (it then draws the short profile, whose rank D ends at 94% of that height).
+// Lengths are layout units; zoom converts to the viewport px the authored values use. Five cards stand for the hand
+// (the resting top moves under half a pixel with the count; the 1px margin covers it). controlsHeight is the hand's
+// live chooser reserve (hand.js publishes it as --hand-controls-height), which raises the resting cards.
+export function mobileFieldOverlap({ natural, width, handHeight, rem = 16, zoom = 1, compact = true, controlsHeight = 0 }, sizing = uiConfig.scenes.w4a.sizing) {
+  const input = { width, height: handHeight, count: 5, rem, zoom, compact, controlsHeight, controlled: [], headroom: 0, formFactor: 'mobile' };
+  const { restTop } = responsiveHandLayout(input, handLayout(input));
+  const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+  const profile = grid.profiles.mobile;
+  const feet = profile.top + perspectiveBandRows(grid, false, profile).rows * profile.rowHeight;
+  const room = (natural + restTop - 1 / zoom) / feet - natural;
+  const extension = Math.max(0, Math.min(sizing.mobileFieldHandOverlapPx / zoom, room));
+  return (natural + extension) * zoom < grid.shortBelowPx ? 0 : extension;
 }

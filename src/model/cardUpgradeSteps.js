@@ -7,12 +7,16 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from '../engine/rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainStatus } from './cardUpgrade.js';
+import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
-import { MULTI_HIT_SP_FLOOR } from '../content/actionCosts.js';
 
 export { STACK_CAPS };
-const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5 });
+// Owner ask 2026-10-31: poise, a range / targeting / stance / school / element change and a rank-down join the
+// pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
+// several never offers the same thing twice.
+const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
+  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -37,19 +41,17 @@ const totalOf = (effects, op) => {
   return index < 0 ? 0 : effects[index].amount * hitsOf(effects[index]);
 };
 
-// Core 2 charges a multi-hit card at least max(hits - offset, minimum) SP (SPEC 4.3a, model/actionCosts.js multiHitFloorFor):
-// offset 0, or 1 for a `finesse` card, or 2 for a Mana card. Mirrored here because this module must stay a leaf.
-const hitFloor = (card, hits) => {
-  if (!(hits > 1)) return 0;
-  const rule = MULTI_HIT_SP_FLOOR;
-  const finesse = [...(card.tags || []), ...(card.cardTags || []), ...(card.authoredTags || [])].includes('finesse');
-  const offset = Math.max(rule.baseOffset, finesse ? rule.finesseOffset : 0, card.manaCost > 0 ? rule.manaOffset : 0);
-  return Math.max(hits - offset, rule.minimum);
+// The largest amount from `plain` up to its rank-up scale (limits.scale, 1 for a blacksmith upgrade) that `ok`
+// still allows, 0 when even the plain amount is refused. A rank-up bonus is bigger than a normal upgrade
+// (owner, 2026-11-01), yet never past the guards a normal upgrade keeps.
+const biggest = (plain, scale, ok) => {
+  for (let n = Math.max(plain, Math.round(plain * (scale > 1 ? scale : 1))); n >= plain; n -= 1) if (ok(n)) return n;
+  return 0;
 };
-const currentHits = (effects) => effects.reduce((most, e) => (e.op === 'damage' ? Math.max(most, hitsOf(e)) : most), 1);
 
 function options(base, current, applied, limits) {
   const type = base.type;
+  const scale = Number.isFinite(limits.scale) ? limits.scale : 1;
   const restricted = RESTRICTED_TYPES.has(type);
   const found = {};
   const spMin = Math.max(1, limits.minStaminaCost | 0);
@@ -58,29 +60,39 @@ function options(base, current, applied, limits) {
   // cost: once per card; SP never below 1, MP never below 1, cost tracks staminaCost.
   if (!applied.some((s) => s.k === 'cost')) {
     const pools = [];
-    if (Number.isInteger(current.staminaCost) && current.staminaCost - 1 >= spMin && current.cost === current.staminaCost
-      && current.cost - 1 >= actionMin
+    const by = {};
+    if (Number.isInteger(current.staminaCost) && current.cost === current.staminaCost) {
       // a multi-hit card pays at least its hit floor, so a cheaper printed SP would buy nothing
-      && hitFloor(current, currentHits(current.effects || [])) <= current.staminaCost - 1) pools.push('sp');
-    if (Number.isInteger(current.manaCost) && current.manaCost >= 2) pools.push('mp');
-    if (pools.length) found.cost = { pools };
+      const floor = hitFloor(current, currentHits(current.effects || []));
+      by.sp = biggest(1, scale, (n) => current.staminaCost - n >= spMin && current.cost - n >= actionMin && floor <= current.staminaCost - n);
+      if (by.sp) pools.push('sp');
+    }
+    // A cantrip or basic costs no Mana (owner, 2026-11-01), so a Mana cut is pointless on one, or on a copy that becomes one.
+    if (Number.isInteger(current.manaCost) && !basicDef(base) && !tagsOf(current).includes(RANK_DOWN_TAG)) {
+      by.mp = biggest(1, scale, (n) => current.manaCost - n >= 1);
+      if (by.mp) pools.push('mp');
+    }
+    if (pools.length) found.cost = { pools, by };
   }
   if (restricted) return found;
 
   const effects = current.effects || [];
   const baseEffects = base.effects || [];
+  // prepareTacticalCard turns a counter card's damage and poise into a return payload aimed at the one attacker it
+  // answers (the same `maneuver` test it makes), and Core 2 replaces that payload's HP and Poise with the fixed
+  // return: a range, area, damage, hits or poise step could never be honoured, so none of them is offered.
+  const counterReturn = familyValue(tagsOf(current), 'maneuver:') === 'counter';
   const dmgIndex = firstPlainIndex(effects, 'damage');
-  if (dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
+  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
-    const n = Math.max(2, Math.ceil(baseTotal * 0.15));
-    const after = (effects[dmgIndex].amount + n) * hitsOf(effects[dmgIndex]);
-    if (after - baseTotal <= baseTotal) found.dmg = { n };
+    const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.15)), scale, (k) => (effects[dmgIndex].amount + k) * hitsOf(effects[dmgIndex]) - baseTotal <= baseTotal);
+    if (n) found.dmg = { n };
   }
   const blkIndex = firstPlainIndex(effects, 'block');
   if (blkIndex >= 0) {
     const baseTotal = totalOf(baseEffects, 'block') || totalOf(effects, 'block');
-    const n = Math.max(2, Math.ceil(baseTotal * 0.2));
-    if (effects[blkIndex].amount + n - baseTotal <= baseTotal) found.blk = { n };
+    const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.2)), scale, (k) => effects[blkIndex].amount + k - baseTotal <= baseTotal);
+    if (n) found.blk = { n };
   }
   // apply raises the FIRST plain effect of a status, so only that one is a candidate. It is judged on the
   // FINAL face, rank applied: a status the rank already holds at its cap gains nothing from a step.
@@ -97,7 +109,11 @@ function options(base, current, applied, limits) {
     const stepped = applyUpgradeSteps(base, [...applied, { k: 'stk', status: e.status, n: 1 }]);
     return finalStacks(stepped, e.status) > finalStacks(current, e.status);
   });
-  if (stackable) found.stk = { status: stackable.status };
+  if (stackable) {
+    const n = biggest(1, scale, (k) => stackable.stacks + k <= STACK_CAPS[stackable.status]
+      && finalStacks(applyUpgradeSteps(base, [...applied, { k: 'stk', status: stackable.status, n: k }]), stackable.status) > finalStacks(current, stackable.status));
+    found.stk = { status: stackable.status, n };
+  }
 
   if (!effects.some((e) => e.op === 'applyStatus') && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy') {
     // The card's school: its damage school, else its `camp:` tag (kept unquoted so the
@@ -108,7 +124,7 @@ function options(base, current, applied, limits) {
     else if (school === 'physical') found.addStatus = { statuses: ['bleed', 'weak'] };
   }
 
-  if (dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
+  if (!counterReturn && dmgIndex >= 0 && !applied.some((s) => s.k === 'hits') && !effects.some((e) => e.op === 'damage' && hitsOf(e) > 1)
     && effects[dmgIndex].target === 'enemy' && effects[dmgIndex].amount <= 8) {
     const baseTotal = totalOf(baseEffects, 'damage') || totalOf(effects, 'damage');
     const amount = effects[dmgIndex].amount;
@@ -118,7 +134,67 @@ function options(base, current, applied, limits) {
     const counts = [2, 3].filter((hits) => hits <= 3 && per * hits - baseTotal <= baseTotal && per * hits > amount && hitFloor(current, hits) <= sp);
     if (counts.length) found.hits = { per, counts };
   }
+  addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
   return found;
+}
+
+const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
+const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
+const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash', 'ranged'].some((x) => x === m));
+// Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
+const basicDef = (def) => {
+  const tags = def.tags || [];
+  return tags.includes(RANK_DOWN_TAG) || (def.rarity === 'common' && !tags.includes('source:spell') && !tags.includes('camp:spell'));
+};
+
+/** The identity-change options (poise, range, targeting, stance, school, element, rank-down) for a non-restricted card. */
+function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, counterReturn = false) {
+  const effects = current.effects || [];
+  const tags = tagsOf(current);
+  const camp = familyValue(tags, 'camp:');
+  const maneuver = familyValue(tags, 'maneuver:');
+  const spell = camp === 'spell' || tags.includes('source:spell');
+  const hitsEnemy = dmgIndex >= 0 && (effects[dmgIndex].target === 'enemy' || effects[dmgIndex].target === 'allEnemies');
+  const attacking = hitsEnemy && (['attack', 'smash', 'sweep', 'ranged', 'counter'].includes(maneuver) || spell);
+  const tagged = (predicate) => applied.some((s) => s.k === 'tag' && predicate(s));
+
+  const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
+  if (poiseIndex >= 0 && !counterReturn) {
+    const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
+    const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
+    if (n) found.poise = { n };
+  }
+  if (attacking && !counterReturn) {
+    const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
+    const next = { melee: 'reach', reach: 'ranged' }[raw];
+    // Owner, 2026-11-05: a fight capped at Reach never offers Reach to Ranged (limits.maxRange, from the run's range policy).
+    const cap = RANGES.indexOf(limits.maxRange);
+    if (next && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
+  }
+  if (hitsEnemy && maneuver !== 'sweep' && !counterReturn && !tagged((s) => s.retarget)) {
+    const [SINGLE, AREA] = TARGETING;
+    const area = familyValue(tags, 'targeting:') ? familyValue(tags, 'targeting:') === AREA : effects[dmgIndex].target === 'allEnemies';
+    // Single-target hits harder (x1.25 up): it stays inside the same +100% guard a damage step keeps.
+    const baseTotal = totalOf(base.effects || [], 'damage') || totalOf(effects, 'damage');
+    const grown = Math.ceil(effects[dmgIndex].amount * 1.25) * hitsOf(effects[dmgIndex]);
+    if (!area) found.targeting = { tag: `targeting:${AREA}`, retarget: AREA };
+    else if (grown - baseTotal <= baseTotal) found.targeting = { tag: `targeting:${SINGLE}`, retarget: SINGLE };
+  }
+  if (hitsEnemy && !spell && ATTACK_MANEUVERS.includes(maneuver) && !tagged((t) => t.tag?.startsWith('maneuver:'))) {
+    const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
+    const tags2 = ATTACK_MANEUVERS.filter((m) => m !== maneuver && (m !== 'smash' || sp >= 2));
+    if (tags2.length) found.maneuver = { tags: tags2.map((m) => `maneuver:${m}`) };
+  }
+  if (camp === 'spell' && !tagged((t) => t.tag?.startsWith('school:'))) {
+    const own = familyValue(tags, 'school:');
+    const schools = TAG_FAMILIES['school:'].filter((school) => school !== own);
+    if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
+  }
+  if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
+  // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0
+    // zeroing Mana drops the multi-hit Stamina offset: never offer it when the floor would then exceed the printed SP
+    && hitFloor({ ...current, manaCost: 0 }, currentHits(current.effects || [])) <= (current.staminaCost || 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
 
 /**
@@ -129,32 +205,64 @@ function options(base, current, applied, limits) {
  * eligible the card is fully upgraded and the result is null (no filler step).
  */
 export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = {}) {
-  const applied = appliedSteps || [];
-  const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
-  const found = options(baseDef, current, applied, limits);
-  const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);
-  // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
-  const pick = rng();
-  const choice = rng();
-  if (!kinds.length) return null;
-  let roll = pick * kinds.reduce((sum, kind) => sum + WEIGHTS[kind], 0);
-  let kind = kinds[kinds.length - 1];
-  for (const candidate of kinds) {
-    roll -= WEIGHTS[candidate];
-    if (roll < 0) { kind = candidate; break; }
-  }
-  const option = found[kind];
+  return rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits, 1)[0] || null;
+}
+
+const stepOf = (kind, option, choice) => {
   const pickOf = (list) => list[Math.min(list.length - 1, Math.floor(choice * list.length))];
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
     case 'blk': return { k: 'blk', n: option.n };
-    case 'stk': return { k: 'stk', status: option.status, n: 1 };
+    case 'stk': return { k: 'stk', status: option.status, n: option.n || 1 };
     case 'addStatus': return { k: 'addStatus', status: pickOf(option.statuses), stacks: 1 };
-    case 'cost': return { k: 'cost', pool: pickOf(option.pools) };
+    case 'cost': {
+      // A bigger cut (a rank-up bonus) names its amount; the plain -1 stays the bare step every save already holds.
+      const pool = pickOf(option.pools);
+      return option.by?.[pool] > 1 ? { k: 'cost', pool, n: option.by[pool] } : { k: 'cost', pool };
+    }
+    case 'poise': return { k: 'poise', n: option.n };
+    case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
+    case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
+    case 'maneuver': case 'school': return { k: 'tag', tag: pickOf(option.tags) };
+    case 'element': {
+      const damageSchool = pickOf(option.schools);
+      const identity = ELEMENT_IDENTITY[damageSchool];
+      return { k: 'tag', tag: `school:${identity.school}`, damage: identity.damage, damageSchool, magicShare: 1,
+        ...(Number.isInteger(option.exposure) && option.exposure > 0 ? { exposureBuildupPerHit: option.exposure } : {}) };
+    }
     default: {
       // Three hits only on the rarer roll; two otherwise.
       const hits = option.counts.includes(3) && choice >= 0.7 ? 3 : option.counts[0];
       return { k: 'hits', hits, per: option.per };
     }
   }
+};
+
+/**
+ * rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits, count) → up to `count` DISTINCT steps (distinct
+ * kinds of option, so never the same step twice) from the one per-step stream: each takes two draws (pick, then the
+ * option's own choice), so the first option is exactly rollUpgradeStep's. Fewer than `count` come back when the card
+ * has fewer eligible options; [] when it is fully upgraded.
+ */
+export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits = {}, count = 1) {
+  const applied = appliedSteps || [];
+  const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
+  const found = options(baseDef, current, applied, limits);
+  const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);
+  const out = [];
+  // Draw order is fixed (pick, then the kind's own choice) so a roll is a pure function of its stream.
+  for (let n = 0; n < Math.max(1, count | 0); n += 1) {
+    const pick = rng();
+    const choice = rng();
+    if (!kinds.length) break;
+    let roll = pick * kinds.reduce((sum, kind) => sum + WEIGHTS[kind], 0);
+    let kind = kinds[kinds.length - 1];
+    for (const candidate of kinds) {
+      roll -= WEIGHTS[candidate];
+      if (roll < 0) { kind = candidate; break; }
+    }
+    out.push(stepOf(kind, found[kind], choice));
+    kinds.splice(kinds.indexOf(kind), 1);
+  }
+  return out;
 }

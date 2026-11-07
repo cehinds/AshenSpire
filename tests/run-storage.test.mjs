@@ -106,11 +106,11 @@ test('saving keeps ONE shared copy of the profile, written before the slot names
 });
 
 // BUILD N -> BUILD N+1. A content edit changes the profile's hash while the runtime hash (which gates
-// saves) stays, so the catalog's profile for the id is no longer the one the run pinned. 'ashen.core@1.0.0'
+// saves) stays, so the catalog's profile for the id is no longer the one the run pinned. A Core 2 author with another hand size
 // is a real second profile with the same id 'core' and another hash: the run pins it, the catalog says
 // 'core' is something else, and the run must still resume from the shared copy with its own rules.
 test('a run pinned to a profile the catalog no longer holds resumes from the shared copy', () => {
-  const old = resolveGameProfile('ashen.core@1.0.0');
+  const old = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { cards: { handBase: 3 } } });
   assert.equal(old.id, profile.id);
   assert.notEqual(old.hash, profile.hash);
   const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, old)), old);

@@ -1,5 +1,6 @@
 import { t } from '../strings.js';
-import { resolveGameProfile } from '../../model/gameProfile.js';
+import { resolveGameProfile, isCoreProfile } from '../../model/gameProfile.js';
+import { retiredProfileReason } from '../../model/retiredProfile.js';
 
 // Store author JSON rather than a resolved snapshot: the next build resolves it
 // against its own catalog. A running save retains its immutable snapshot.
@@ -9,7 +10,8 @@ export function resolveNewGameProfile(value = 'default') {
 
 export function readNewGameProfile(settings = {}, fallback = resolveGameProfile('default')) {
   if (!settings.newGameProfile) return fallback;
-  try { return resolveNewGameProfile(settings.newGameProfile); }
+  // A stored retired choice (the legacy `current` game, Core 1) is no longer offered: new games use the fallback.
+  try { const stored = resolveNewGameProfile(settings.newGameProfile); return retiredProfileReason(stored) ? fallback : stored; }
   catch { return fallback; }
 }
 
@@ -64,10 +66,10 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   const select = document.createElement('select');
   select.className = 'set-choice-select';
   select.setAttribute('aria-label', t('gameProfile.selector.copy2'));
-  const names = { current: t('gameProfile.settings.current'), core: t('gameProfile.settings.core'), imported: t('gameProfile.settings.imported') };
-  for (const id of ['current', 'core']) select.append(new Option(names[id], id));
+  const names = { core: t('gameProfile.settings.core'), imported: t('gameProfile.settings.imported') };
+  for (const id of ['core']) select.append(new Option(names[id], id));
   if (importedProfile) select.append(new Option(names.imported, 'imported'));
-  const chosen = importedProfile?.hash === profile.hash ? 'imported' : profile.id === 'core' ? 'core' : 'current';
+  const chosen = importedProfile?.hash === profile.hash ? 'imported' : 'core';
   select.value = chosen;
   label.append(select);
   const upload = document.createElement('input');
@@ -104,7 +106,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
     finally { upload.value = ''; }
   });
   panel.append(label, importButton, upload, status);
-  if (profile.author?.core === 'ashen.core@2.0.0') {
+  if (isCoreProfile(profile)) {
     const note = document.createElement('p');
     note.textContent = t('gameProfile.settings.xpPolicy');
     panel.append(note);

@@ -10,13 +10,13 @@ import { builtInFor } from '../highResArt.js';
 //
 // WHY THIS FILE EXISTS, and it is a collapse and not a repair.
 //
-// There were two act-map renderers in this tree: `ui/screens/map.js` and, eighty
-// lines inside `ui/screens/coop.js`, a second one with its own `ROW_H = 46`, its
-// own `y(floor)` and its own `r = boss ? 20 : 15` — the literals every other map
+// There were two act-map renderers in this tree: `ui/screens/map.js` and a
+// second one (a retired screen's) with its own `ROW_H = 46`, its own
+// `y(floor)` and its own `r = boss ? 20 : 15` — the literals every other map
 // number was derived away from on 2026-08-08. It imported neither map module, so
 // none of that work reached it. Measured at dev `cd3da94`, 390x844, `?shot=`:
 //
-//                                        solo          co-op
+//                                        solo          retired
 //   node diameter, device px             44.09         27
 //   at 320x640                           36.25         22.2
 //   the tap-size setting 44 -> 24        (honest note) nothing moves
@@ -30,7 +30,7 @@ import { builtInFor } from '../highResArt.js';
 // copy stops existing.
 //
 // THE RULING THIS FILE IS SHAPED BY — ask what the predicate's subject is.
-// "Is the co-op map a different map, or the same map with a second player on
+// "Is a party's map a different map, or the same map with a second player on
 // it?" It is the SAME MAP. The graph, the geometry, the radii solved from the
 // tap floor, the zoom ladder, the camera, the fog rule and the act title are
 // properties of THE ACT. They are not properties of who is looking at it.
@@ -49,7 +49,7 @@ import { builtInFor } from '../highResArt.js';
 //   2. The camera. My zoom and my scroll position are mine. Nothing syncs them
 //      and nothing should — a partner panning my map is not a feature.
 //   3. WHO DECIDES WHAT I KNOW. In solo the client derives its own fog, because
-//      the client IS the authority. In co-op the server is, and a client may
+//      the client IS the authority. Under a server-authoritative board the server is, and a client may
 //      never widen what it was sent — which is why the snapshot ships `unknown`
 //      instead of `event` and why this file never tries to lift that rung.
 //      Same ladder, different hand on it, deliberately.
@@ -93,7 +93,7 @@ const HALO_PAD = 6;
  *
  * IT LIVES HERE BECAUSE THE ZOOM IS THE VIEWER'S, NOT THE MAP'S. Two players
  * looking at one act have two zooms and that is correct. Moved out of
- * `ui/screens/map.js` unchanged so the co-op board honours the same preference
+ * `ui/screens/map.js` unchanged so any other board honours the same preference
  * from the same key rather than opening at a literal.
  *
  * `Fit` stays a REAL VALUE of the setting rather than an absence, so choosing it
@@ -126,25 +126,11 @@ function snapToLadder(z) {
 }
 
 /**
- * ONE GRAPH SHAPE, AND THE CONVERSION HAPPENS ONCE, HERE.
- *
- * The solo run carries `mapGraph.nodes` as an OBJECT keyed by id; the co-op
- * snapshot carries `map.nodes` as an ARRAY. That is the same second copy one
- * level down — and it is not cosmetic: `litNodes` (the fog light) does
- * `graph.nodes[id]`, which is an index on one shape and a subscript on the
- * other, so the fog ladder can physically only read one of the two.
- *
- * So the board speaks ONE shape and converts at the boundary the other arrives
- * at, rather than every reader learning to accept both.
+ * The run carries `mapGraph.nodes` as an OBJECT keyed by id; the board reads
+ * that one shape (`litNodes`, the fog light, indexes `graph.nodes[id]`).
  */
 function indexNodes(nodes) {
-  if (!nodes) return {};
-  if (Array.isArray(nodes)) {
-    const by = {};
-    for (const n of nodes) by[n.id] = n;
-    return by;
-  }
-  return nodes;
+  return nodes || {};
 }
 
 // Journey pairs, not visited nodes: revisiting a junction must retain every
@@ -249,7 +235,7 @@ export function refitCamera({ look, centerOnCurrent, centerOnNode }) {
  * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
- *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
+ *   `nodes` is the run's object keyed by id.
  *   `columns` absent falls back to the widest column in use AND SAYS SO — a
  *   silent fallback here re-opens the class of defect it was added to close.
  *
@@ -273,8 +259,8 @@ export function refitCamera({ look, centerOnCurrent, centerOnNode }) {
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
  * of the viewport, so once the zoom bar stopped floating the two claimed one
  * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
- * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
- * omits it because that screen has no matching legend popover.
+ * `showLegendControl` adds the solo map's help control to the bottom row. A board
+ * without a matching legend popover omits it.
  *
  * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
  * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
@@ -288,17 +274,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
 
   // COLUMNS COME FROM THE GRAPH, not from a literal. This was `7 * COL_X + 60`
-  // in both renderers, so an act tuned to 6 or 9 columns drew its SVG at 7
+  // in two renderers, so an act tuned to 6 or 9 columns drew its SVG at 7
   // regardless — a tunable map whose view ignores the tuning is not tunable.
-  //
-  // AND THE CO-OP HALF OF THAT FIX WAS ONE-SIDED AT dev cd3da94, which is
-  // exactly what one home makes visible: `coop.js` was taught to read
-  // `map.columns` from the snapshot, and `tools/session.mjs`'s `snapshot()` sent
-  // `{ floors, startIds, bossId, nodes }` and never `columns` — so the warning
-  // below was the SHIPPING path in every real co-op session, while
-  // `?shot=coopmap` handed a canned snapshot that DID carry the field. The
-  // harness was green about a value no host had ever sent. Fixed at the
-  // producer in the same commit; the warning stays for an older host.
   let columns = act.columns;
   if (typeof columns !== 'number') {
     columns = Math.max(...nodes.map((n) => n.col)) + 1;

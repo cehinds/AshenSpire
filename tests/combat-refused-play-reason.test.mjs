@@ -13,15 +13,14 @@ const shipped = ['refusePlay', 'playCard'].map(name => {
   return source.slice(start, end + 4);
 }).join('\n');
 
-function harness({ energy = 5, stamina = 5, mana = 9, legalIds = ['e1'], cost = 0, manaCost = 0, staminaCost = 0, unplayable = null, queued = false, choice = false } = {}) {
+function harness({ energy = 5, stamina = 5, mana = 9, legalIds = ['e1'], cost = 0, manaCost = 0, staminaCost = 0, unplayable = null, choice = false } = {}) {
   const logs = [], tips = [], calls = [];
   const cardEl = { id: 'card-el' };
   const inst = { instanceId: 'c1' };
-  const combat = { result: null, combatRounds: null, piles: { hand: [inst] },
+  const combat = { result: null, piles: { hand: [inst] },
     player: { energy, mana, stamina } };
-  if (queued) combat.combatRounds = { playerQueue: [{ instanceId: 'c1' }] };
   const context = {
-    combat, busy: false, upcastRanksByCard: new Map(), CSS: { escape: v => v },
+    combat, busy: false, inputBusy: () => false, upcastRanksByCard: new Map(), CSS: { escape: v => v },
     hasCardChoice: () => choice, t: key => ({ 'combat.actions': 'Actions' })[key] || key, getEntity: () => ({ alive: true }),
     cardTargets: () => ({ legalIds }), unplayableReason: () => unplayable,
     resolveCombatCard: () => ({}), readSettings: () => ({}), upcastOptions: () => [],
@@ -29,7 +28,7 @@ function harness({ energy = 5, stamina = 5, mana = 9, legalIds = ['e1'], cost = 
     dlog: (...args) => logs.push(args), esc: v => String(v),
     showTooltipFor: (el, html) => tips.push({ el, html }),
     combatEl: { querySelector: () => cardEl },
-    logIgnored: (what, why) => logs.push(['ignored', what, why]), lockReport: () => ({}), showPendingDiscard: () => calls.push('showPendingDiscard'), unqueueCard: () => calls.push('unqueueCard'),
+    logIgnored: (what, why) => logs.push(['ignored', what, why]), lockReport: () => ({}), showPendingDiscard: () => calls.push('showPendingDiscard'),
     expansionChoiceShell: null, hideTooltip() {}, selected: null,
     takeSnapshot: () => ({}), dispatch: () => { throw new Error('must not dispatch'); },
     lastTargetId: null, render() {}, console: { debug() {}, warn() {} },
@@ -86,12 +85,7 @@ test('an unplayable card shows its own reason', () => {
   assert.match(h.tips[0].html, /This card cannot be played\./);
 });
 
-test('the queued take-back and a pending choice log without a tooltip and still act', () => {
-  const q = harness({ queued: true });
-  q.context.playCard('c1', 'e1');
-  assert.deepEqual(q.calls, ['unqueueCard']);
-  assert.equal(q.tips.length, 0);
-  assert.ok(q.logs.some(l => l[0] === 'ignored'));
+test('a pending choice logs without a tooltip and still acts', () => {
   const c = harness({ choice: true });
   c.context.playCard('c1', 'e1');
   assert.deepEqual(c.calls, ['showPendingDiscard']);

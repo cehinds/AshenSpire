@@ -4,16 +4,21 @@
     "bands": [1, 4, 4, 1],
     "levels": {
       "glance": {
-        "widthPx": 152,
+        "widthPx": 182.4,
         "variants": { "compact": 108, "mobile": 152 }
       },
-      "focus": { "widthPx": 280 },
-      "inspect": { "widthPx": 320 }
+      "focus": { "widthPx": 336, "variants": { "mobile": 280 } },
+      "inspect": { "widthPx": 384, "variants": { "mobile": 320 } }
     },
     "shelf": { "maxColumns": 4, "gapPx": 12, "minTrackPx": 120 },
     "doorReadableMinPx": 384,
     "tuning": { "minPx": 64, "maxPx": 640, "slidered": ["mobile"] }
   },
+  "components": { "rulesFace": {
+    "rulesBoxGrow": 0.3,
+    "rulesText": { "minPx": 6, "lineHeightFloor": 0.92, "lineHeightStep": 0.04 },
+    "face": { "maxLines": 5, "wordsPerLine": 7, "minScale": 0.7, "minPx": 10 }
+  } },
   "behavior": {
     "fields": {
       "levels": {

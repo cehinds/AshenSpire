@@ -98,7 +98,7 @@ try {
   await page.screenshot({path:resolve(output,`${host}-rest.png`)});
   await page.locator('#smith-opt').click();await page.locator('.smith-upgrade-modal').waitFor();
   await page.locator('.smith-candidate-card').first().click();
-  await page.locator('.smith-upgrade-modal .rest-recovery').waitFor();
+  await page.locator('.smith-upgrade-modal .smith-preview-card').waitFor();
   await page.screenshot({path:resolve(output,`${host}-smith.png`)});
   await page.keyboard.press('Escape');await page.locator('.smith-upgrade-modal').waitFor({state:'detached'});
   await page.locator('#level-opt').click();await page.locator('.cc-stat-modal').waitFor();

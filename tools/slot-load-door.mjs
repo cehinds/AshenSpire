@@ -17,7 +17,7 @@
 //           resumeRun swaps the live run only after a successful load, so
 //           the climb in hand stands and a notice says the slot could not
 //           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
-//   RESTART Abandoning a legacy fight mid-combat and loading the slot
+//   RESTART Abandoning a Core fight mid-combat and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, RNG seed/counters, an unchanged deck. tests/midcombat-reload
 //           proves the same legacy property against a hand-copied mirror of
@@ -34,7 +34,7 @@
 //           rather than <body> (#1355). tests/slot-load-focus pins the order
 //           in source; this is the focus a player actually lands on.
 //
-// The boot is `?gameProfile=current&shot=combat` — newRun and the first monster node entered the
+// The boot is `?gameProfile=core&shot=combat` — newRun and the first monster node entered the
 // way the map enters it, so the entry receipt is written by enterCombat's own
 // persist. `?shotNewerSlot=2` puts slot 1's bytes into slot 2 with the schema
 // one ahead. Both run on the shot boot's memory storage.
@@ -210,11 +210,9 @@ try {
   // Port 0: the OS picks a free one, so this never collides with another tool.
   const served = await serve({ root: ROOT, port: 0, open: false });
   server = served.server;
-  // These legacy/expanded checkpoint variants belong to the Current profile,
-  // including its independent knowledge rules. The default Core profile owns
-  // different combat rules; mixing its run with shotCombatVersion=1 creates
-  // an invalid save rather than a witness of the legacy restart contract.
-  const sourceUrl = `http://127.0.0.1:${server.address().port}/?gameProfile=current&`;
+  // The boot is Core 2: always expanded combat with the profile's own
+  // reactions and battle-local knowledge, one rule set.
+  const sourceUrl = `http://127.0.0.1:${server.address().port}/?gameProfile=core&`;
   const launched = await launchBrowser({ prefix: 'slot-load-door-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);
@@ -308,7 +306,7 @@ try {
     await until(`!document.querySelector('.confirmation-input-shield')`, 'combat confirmation input shield to close');
   };
 
-  await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat&shotCombatVersion=1&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
+  await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot', bootTimeout);
   measuring = true;
   const opening = await pose();
@@ -528,14 +526,13 @@ try {
   } catch (error) {
     check(false, 'SLOT-LOAD-OVERLAY-FOCUS', error.message);
   }
-  // Expanded combat without knowledge preserves its explicit Save Game
-  // checkpoint after later unsaved actions. Keep the two versions independent.
+  // Expanded Core combat preserves its explicit Save Game checkpoint after
+  // later unsaved actions.
   try {
     await ev('window.__staleDoc = 1');
-    await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat&shotKnowledgeVersion=0` }, sessionId);
-    await until(`!window.__staleDoc && location.search.includes('shotKnowledgeVersion=0') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded combat without knowledge', bootTimeout);
+    await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat` }, sessionId);
+    await until(`!window.__staleDoc && !location.search.includes('shotNewerSlot') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'a fresh expanded Core combat', bootTimeout);
     if (!(await ev('window.__combat.combatExpansionVersion === 2'))) throw new Error('the default fixture is not expanded combat');
-    if (await ev('!!window.__combat.enemyKnowledge')) throw new Error('the checkpoint fixture unexpectedly enables knowledge');
     const snapshotWithRng = () => ev(`(async () => {
       const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');
       return JSON.stringify({ snapshot: serializeCombatSnapshot(window.__combat), rng: { seed: window.__combat.rng.seed, counters: window.__combat.rng.getCounters() } });
@@ -546,10 +543,16 @@ try {
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
     await confirmIfAsked();
-    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the restored expanded entry');
+    // The new fight, whatever phase it mounts in: a missing entry checkpoint
+    // lets the first ordinary action write a mid-turn snapshot, and a reload
+    // of that lands in the enemy turn. The exact-snapshot comparison below is
+    // the witness of that defect; waiting for the player phase first would
+    // hide it behind a timeout.
+    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn')`, 'the restored expanded entry');
     const restoredEntry = await snapshotWithRng();
     check(entryPose.turn === 1 && restoredEntry === entry, 'SLOT-LOAD-EXPANDED-ENTRY',
       restoredEntry === entry ? 'ordinary unsaved combat restores the exact opening snapshot, RNG seed and counters' : 'ordinary combat replaced or changed its opening checkpoint');
+    await until(`window.__combat.phase === 'player'`, 'the restored expanded entry on its player turn');
     // Loading installs the new combat before the confirmation input shield
     // finishes closing. Wait for its actual removal before the next action.
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'the restored entry input shield to close');
@@ -586,7 +589,7 @@ try {
   try {
     await ev('window.__staleDoc = 1');
     await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat` }, sessionId);
-    await until(`!window.__staleDoc && !location.search.includes('shotKnowledgeVersion') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'fresh default knowledge-enabled combat', bootTimeout);
+    await until(`!window.__staleDoc && !location.search.includes('shotNewerSlot') && !!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'fresh default knowledge-enabled combat', bootTimeout);
     if (!(await ev('window.__combat.combatExpansionVersion === 2 && window.__combat.enemyKnowledge?.version === 1'))) throw new Error('the default fixture lacks independent knowledge rules');
     const snapshotWithRng = () => ev(`(async () => {
       const { serializeCombatSnapshot } = await import('/src/engine/combatSnapshot.js');

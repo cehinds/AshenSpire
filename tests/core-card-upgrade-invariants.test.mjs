@@ -11,7 +11,7 @@ const ids = gameContent(subject, 'cards').filter((c) => c.id.startsWith('core.')
 const sum = (face, op) => face.effects.filter((e) => e.op === op).reduce((t, e) => t + (Number.isFinite(e.amount) ? e.amount * (e.hits > 1 ? e.hits : 1) : 0), 0);
 const first = (face, op) => face.effects.find((e) => e.op === op && Number.isFinite(e.amount));
 const total = (face, op) => { const e = first(face, op); return e ? e.amount * (e.hits > 1 ? e.hits : 1) : 0; };
-const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects]);
+const numbers = (face) => JSON.stringify([face.cost, face.staminaCost, face.manaCost, face.effects, face.tags, face.damageSchool]);
 
 test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost rules and "every step changes something" hold for 10 seeds x 10 upgrades', () => {
   assert.ok(ids.length >= 50);
@@ -50,7 +50,9 @@ test('real Core cards at ranks 1, 3 and 10: caps, the +100% guard, loseHp, cost 
         assert.ok(kinds.filter((k) => k === 'cost').length <= 1 && kinds.filter((k) => k === 'hits').length <= 1, `${where}: cost or hits more than once`);
         assert.equal(face.cost, plain.cost - (plain.staminaCost - face.staminaCost) - 0, `${where}: cost must track staminaCost`);
         if (base.staminaCost > 0) assert.ok(face.staminaCost >= 1, `${where}: SP floor`);
-        if (base.manaCost > 0) assert.ok(face.manaCost >= 1 && face.cost >= 1, `${where}: MP floor`);
+        const cantripped = instance.upgradeSteps.some((x) => x.k === 'tag' && x.tag === 'rank.cantrip');
+        // a cantrip costs no Mana (owner, 2026-11-01): a rank-down step zeroes it; otherwise the MP floor holds
+        if (base.manaCost > 0) assert.ok(cantripped ? face.manaCost === 0 : face.manaCost >= 1 && face.cost >= 1, `${where}: MP floor`);
       }
     }
   }

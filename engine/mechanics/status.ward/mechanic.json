@@ -1,0 +1,26 @@
+{
+  "id": "status.ward",
+  "tag": "status.ward",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Ward",
+  "description": "While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose 1 stack at the start of your turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.ward"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "gainMeterGuard"
+  }
+}

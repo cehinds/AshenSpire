@@ -12,8 +12,7 @@ test('the actual selected action resolves effective equipment tags and the chose
   const inst={instanceId:'shield-instance',cardId:'shieldBash'},ranks=[0,2];
   const calls=[],actions=[],events=[];
   const leading={append:action=>actions.push(action)};
-  const previous={dataset:{maneuver:'smash'},remove:()=>calls.push('remove')};
-  const player={querySelector:selector=>({'.combatant-leading':leading,'.player-action-intent':previous}[selector] || null)};
+  const player={querySelector:selector=>({'.combatant-leading':leading}[selector] || null)};
   const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
@@ -30,20 +29,21 @@ test('the actual selected action resolves effective equipment tags and the chose
   assert.deepEqual(events,['combatantselectionchange']);
 });
 
-test('both real selection/render callers pass the instance and clear removes the previous action',()=>{
+test('both real selection/render callers pass the instance; a kept glyph node is switched in place, never replaced',()=>{
   assert.match(source,/syncPlayerActionIntent\(player, inst, heldKinds\.get\(\)\);/);
   assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
-  const leading={append:()=>assert.fail('no selected action')};
+  const leading={append:()=>assert.fail('the kept node is reused, nothing is appended')};
   const previous={dataset:{maneuver:'attack'},remove:()=>calls.push('removed')};
   const player={querySelector:selector=>({'.combatant-leading':leading,'.player-action-intent':previous}[selector] || null)};
   const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
     combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
-    playerActionIntent:profile=>{shown.push(profile);return null;},
+    playerActionIntent:()=>assert.fail('a node is built once, at mount'),
+    setPlayerActionManeuver:(node,profile)=>{assert.equal(node,previous);shown.push(profile);},
     combatEl:{dispatchEvent:()=>calls.push('refit')},CustomEvent:class{}};
   runInNewContext(source.slice(begin,end)+'\nsyncPlayerActionIntent',context)(player,null);
-  assert.deepEqual(calls,['removed','refit']);
+  assert.deepEqual(calls,[],'nothing removed and no refit: the figure and its HUD are static (owner, 2026-11-06)');
   assert.deepEqual(shown,[{maneuver:'ready'}],'with nothing armed or held, the resting mark is what the figure shows');
 });
 

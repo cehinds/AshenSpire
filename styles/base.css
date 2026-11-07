@@ -215,7 +215,7 @@ body.cb-safe {
   /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
      moved out of a selector and into the token block where a palette decision
      belongs. It now reaches card text wherever card text is drawn, which is
-     the whole change: the card face is byte-identical and the Smith/coop
+     the whole change: the card face is byte-identical and the Smith
      upgrade preview stops calling a keyword by the danger hue. */
   --bleed: #cc79a7;
 }

@@ -551,9 +551,7 @@
           "statuses",
           "equipment"
         ],
-        "elements": [
-          "fire"
-        ]
+        "elements": []
       },
       "decay": {
         "phase": "start",

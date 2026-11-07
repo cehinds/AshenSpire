@@ -617,6 +617,7 @@
       }
     ],
     "textTemplate": "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
+    "faceTemplate": ["Double Blight[v2:, stops at 3]."],
     "upgrade": {
       "keywords": [
         "retain"
@@ -715,6 +716,7 @@
       }
     ],
     "textTemplate": "At the start of your turn, apply 1 Crimson Blight to ALL enemies.",
+    "faceTemplate": ["Turn start: Crimson Blight all."],
     "upgrade": {
       "manaCost": 0
     }
@@ -906,6 +908,7 @@
       }
     ],
     "textTemplate": "Whenever you lose HP, heal 2 HP.",
+    "faceTemplate": ["On HP loss: heal 2."],
     "upgrade": {
       "manaCost": 0
     }
@@ -991,6 +994,7 @@
       }
     ],
     "textTemplate": "Heal 1 HP for every 2 Blight (Crimson or Necrotic) on all enemies. Exhaust.",
+    "faceTemplate": ["Heal per Blight, max 5."],
     "upgrade": {
       "keywords": [
         "exhaust",
@@ -1051,6 +1055,7 @@
       }
     ],
     "textTemplate": "Heal half of your missing HP. Exhaust.",
+    "faceTemplate": ["Heal half missing HP."],
     "upgrade": {
       "cost": 1
     }
@@ -1157,6 +1162,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage, scaling with Stamina spent, then heal 2 per Stamina.",
+    "faceTemplate": ["Deal {damage} damage, scales Stamina.", "Heal {heal}."],
     "upgrade": {
       "effects": [
         {
@@ -1220,6 +1226,7 @@
       }
     ],
     "textTemplate": "Deal damage equal to twice the target's Blight.",
+    "faceTemplate": ["Damage scales with Blight."],
     "upgrade": {
       "effects": [
         {
@@ -1281,6 +1288,7 @@
       }
     ],
     "textTemplate": "Heal 20% of your max HP. Draw {draw} cards. Exhaust.",
+    "faceTemplate": ["Heal 20% max HP.", "Draw {draw} cards."],
     "upgrade": {
       "keywords": [
         "retain"
@@ -1313,6 +1321,7 @@
       }
     ],
     "textTemplate": "Whenever you lose HP, deal 3 damage to a random enemy.",
+    "faceTemplate": ["Hurt: 3 damage, random enemy."],
     "upgrade": {
       "cost": 1
     }
@@ -1347,6 +1356,7 @@
       }
     ],
     "textTemplate": "Deal {damage} damage to ALL enemies, scaling with Stamina spent. Then heal 3 per Stamina.",
+    "faceTemplate": ["Hit all, scales with Stamina.", "Heal 3 per Stamina."],
     "upgrade": {
       "effects": [
         {
@@ -1605,6 +1615,7 @@
       }
     ],
     "textTemplate": "Whenever Blight (Crimson or Necrotic) is applied to an enemy, heal 1 HP.",
+    "faceTemplate": ["On Blight applied: heal 1."],
     "upgrade": {
       "cost": 1
     }

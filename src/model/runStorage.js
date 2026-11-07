@@ -12,7 +12,8 @@
 //   compactRun(run)    → a plain object ready for JSON.stringify (never mutates `run`)
 //   expandStoredRun(o) → the object a run save means (mutates and returns `o`)
 //
-// Both are lossless: expandStoredRun(compactRun(run)) deep-equals run.
+// Both are lossless but for the per-event evaluation context in a checkpoint's event log
+// (dropped on write, see persistedEventLog): expandStoredRun(compactRun(run)) deep-equals run.
 //
 // A reference is only as durable as the catalog behind it, and a content edit
 // changes the profile's hash (the runtime hash, which gates saves, stays). So
@@ -35,7 +36,39 @@ function catalogHash(id) {
   return catalogHashById.get(id);
 }
 
+// The per-event evaluation context (see combatSnapshot.js) is read only while an
+// event is scanned, never from a stored log. Pure data: returns the same array
+// when no row carries it, else copies the rows that do; never mutates its input.
+const EVENT_EVALUATION_CONTEXT = ['abilityBefore', 'abilityEntities'];
+export function persistedEventLog(eventLog) {
+  if (!Array.isArray(eventLog)) return eventLog;
+  if (!eventLog.some((e) => e && typeof e === 'object' && EVENT_EVALUATION_CONTEXT.some((k) => k in e))) return eventLog;
+  return eventLog.map((event) => {
+    if (!event || typeof event !== 'object' || !EVENT_EVALUATION_CONTEXT.some((k) => k in event)) return event;
+    const row = { ...event };
+    for (const k of EVENT_EVALUATION_CONTEXT) delete row[k];
+    return row;
+  });
+}
+
+// A checkpoint written by an older build (or resumed from one) still carries the
+// context in its log; strip it on every write so a knowledge-only autosave, which
+// never re-serializes the checkpoint, cannot keep a legacy save over the quota.
+export function withLeanCheckpoints(run) {
+  let out = run;
+  for (const key of SNAPSHOT_HOLDERS) {
+    const snapshot = run[key] && run[key].snapshot;
+    if (!snapshot) continue;
+    const eventLog = persistedEventLog(snapshot.eventLog);
+    if (eventLog === snapshot.eventLog) continue;
+    if (out === run) out = { ...run };
+    out[key] = { ...run[key], snapshot: { ...snapshot, eventLog } };
+  }
+  return out;
+}
+
 export function compactRun(run, hasCopy = null) {
+  if (run && typeof run === 'object') run = withLeanCheckpoints(run);
   const profile = run && run.gameProfile;
   if (!profile || typeof profile !== 'object' || typeof profile.hash !== 'string') return run;
   const out = { ...run };

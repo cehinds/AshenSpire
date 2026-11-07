@@ -5,6 +5,7 @@ import { BUFF_STATUS_IDS, buffGainFor, buffPopupFor } from '../src/ui/buffFeedba
 import { playTimeline, setAnimSpeed, setBeatOrder, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
+import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const definitions = new Map(statuses.map(row => [row.id, row]));
@@ -45,7 +46,7 @@ function playback(t, fn) {
       const append = layer.appendChild.bind(layer);
       let peakVisibleBuffs = 0;
       const visibleBuffCount = () => [...layer.children].filter(node =>
-        node.dataset?.calloutKind?.startsWith('buff:') && node.style.visibility !== 'hidden').length;
+        node.dataset?.calloutKind?.startsWith('buff:') && node.style.visibility !== 'hidden' && !String(node.className).includes('float-early')).length;
       layer.appendChild = node => {
         shown.push({ node, at: Date.now() });
         const result = append(node);
@@ -66,7 +67,10 @@ function playback(t, fn) {
         onStage: name => stages.push({ name, at: Date.now() }), ...options }, () => { completions++; endedAt = Date.now(); });
       return { layer, shown, stages, handle, peakVisibleBuffs: () => peakVisibleBuffs, finish() {
         for (let i = 0; i < 20000 && !completions; i++) t.mock.timers.tick(1);
-        assert.equal(completions, 1); return endedAt;
+        assert.equal(completions, 1);
+        // Floaters still waiting in a combatant's column spawn after the beat has handed control back.
+        for (let i = 0; i < 4000; i++) t.mock.timers.tick(1);
+        return endedAt;
       } };
     };
     try { fn({ dom, run }); }
@@ -89,7 +93,7 @@ for (const mode of ['normal', 'instant', 'reduced-motion']) test(`${mode}: buff 
     assert.equal(buffs.length, 1);
     assert.equal(buffs[0].node.textContent, '+3 Precision');
     assert.equal(buffs[0].node.dataset.calloutFor, 'player');
-    assert.equal(buffs[0].at, result.stages.find(stage => stage.name === 'damage').at, 'gain lands in numbers after reaction');
+    assert.ok(buffs[0].at >= result.stages.find(stage => stage.name === 'damage').at, 'gain lands in numbers after reaction (behind any word already in the column)');
     assert.deepEqual(result.stages.filter(stage => ['action', 'sprite', 'result', 'reaction', 'damage'].includes(stage.name)).map(stage => stage.name),
       ['action', 'sprite', 'result', 'reaction', 'damage']);
   });
@@ -114,45 +118,36 @@ test('normal sequential playback batches multiple positive status receipts into 
     const damageStages = result.stages.filter(stage => stage.name === 'damage');
     assert.equal(buffs.length, gains.length);
     assert.equal(damageStages.length, 1, 'the action uses one shared numbers stage');
-    assert.ok(buffs.every(row => row.at === damageStages[0].at), 'all gains are submitted together in that stage');
+    // One column over the player: the gains spawn in order, one stagger apart, from the shared numbers stage on.
+    assert.ok(buffs[0].at >= damageStages[0].at, 'the first gain waits for the shared numbers stage');
+    assert.deepEqual(buffs.slice(1).map((row, i) => row.at - buffs[i].at), [1, 2, 3].map(() => floaterStaggerMs()), 'each later gain follows one stagger behind');
     assert.deepEqual(buffs.map(row => row.node.textContent), ['+2 Precision', '+3 Strength', '+4 Regen', '+5 Evade']);
   });
 });
 
-test('reduced-motion buff gains stay readable, start in queued lanes and clear on skip', t => {
+test('reduced-motion buff gains stay readable, join the column one stagger apart and clear on skip', t => {
   playback(t, ({ dom, run }) => {
     setAnimSpeed('instant');
     dom.document.body.classList.add('reduced-motion');
     const result = run(['precision', 'precision', 'regen', 'evade', 'decoy', 'concealed', 'strength'].map(status => grant(status)));
     result.finish();
-    const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:')).map(row => row.node);
+    const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:'));
     assert.equal(buffs.length, 7, 'equal repeated gains are separate committed outcomes');
-    const starts = buffs.map(node => Number.parseInt(node.style.animationDelay || '0', 10));
-    assert.deepEqual(starts, [0, 150, 300, 500, 650, 800, 1000]);
-    assert.equal(buffs[0].style.visibility, '', 'the first lane is visible immediately');
-    assert.ok(buffs.slice(1).every(node => node.style.visibility === 'hidden'), 'future lane words stay hidden until scheduled');
-    flushMeasureJobs(); // placement is measured at the end of the task
-    assert.equal(new Set(buffs.slice(0, 3).map(node => node.dataset.calloutSlot)).size, 3);
-
-    // The second lane starts within its planned 150 ms offset and keeps the
-    // existing 500 ms life, even when the timeline itself uses a short step.
-    let waitedForStart = 0;
-    while (buffs[1].style.visibility === 'hidden' && waitedForStart <= starts[1]) {
-      t.mock.timers.tick(1);
-      waitedForStart++;
-    }
-    assert.ok(waitedForStart > 0 && waitedForStart <= starts[1], 'the queued timer reveals the word by its planned start');
-    assert.equal(buffs[1].style.visibility, '');
-    t.mock.timers.tick(499);
-    assert.ok(result.layer.children.includes(buffs[1]), 'the word stays readable for its selected lifetime');
-    t.mock.timers.tick(1);
-    assert.ok(!result.layer.children.includes(buffs[1]), 'the lane word clears at the end of its lifetime');
-    t.mock.timers.tick(500);
-    assert.ok(result.peakVisibleBuffs() <= 3, 'a later lane never appears before its expired predecessor leaves the DOM');
+    const stagger = floaterStaggerMs();
+    // While more than floaterMaxQueued words wait the stagger shrinks to the minimum so the backlog drains (7 queued: 6 wait,
+    // then 5, 4, then at 3 or fewer the full stagger again).
+    const gaps = buffs.slice(1).map((row, i) => row.at - buffs[i].at);
+    assert.deepEqual(gaps, [...Array(3).fill(floaterStaggerMinMs()), ...Array(3).fill(stagger)], 'one at a time, the backlog drained faster');
+    assert.ok(buffs.every(({ node }) => node.style.visibility !== 'hidden'), 'no word is ever added hidden: it joins the layer when it shows');
+    // The 500 ms Instant life: only the words spawned within the last life are still in the layer.
+    const last = buffs.at(-1).at;
+    flushMeasureJobs();
+    assert.ok(result.peakVisibleBuffs() <= 4, 'never more than the cap showing at once');
+    assert.equal(result.layer.children.filter(node => node.dataset?.calloutKind?.startsWith('buff:')).length, 0, 'every word cleared at the end of its life');
+    assert.ok(last > buffs[0].at);
     clearCallouts(result.layer);
-    assert.ok(buffs.every(node => !result.layer.children.includes(node)));
     t.mock.timers.tick(5000);
-    assert.equal(result.layer.children.length, 0, 'pending queue timers cannot resurrect a gain');
+    assert.equal(result.layer.children.length, 0, 'pending timers cannot resurrect a gain');
   });
 });
 
@@ -180,7 +175,7 @@ test('legacy impact playback keeps buff gains in its callout-only step and durat
     const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:'));
     assert.equal(duration, baselineDuration, 'a positive gain adds no extra legacy impact steps');
     assert.equal(buffs.length, statusGains.length);
-    assert.equal(new Set(buffs.map(row => row.at)).size, 1, 'the callout-only gains appear together in their existing beat');
+    assert.deepEqual(buffs.slice(1).map((row, i) => row.at - buffs[i].at), [1, 2, 3].map(() => floaterStaggerMs()), 'the gains appear one stagger apart in their existing beat');
   });
 });
 

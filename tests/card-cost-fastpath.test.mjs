@@ -1,5 +1,3 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -7,7 +5,6 @@ import {createRegistries} from '../src/model/registries.js';
 import {createRunState} from '../src/model/state.js';
 import {createRunCombat} from '../src/engine/runCombat.js';
 import {createCombat,cardPlayCosts,dispatch,cardChoicePlan} from '../src/engine/combat.js';
-import {createCoopCombat} from '../src/engine/coopCombat.js';
 import {createRng} from '../src/engine/rng.js';
 import {emitEvent,hasEventTriggers} from '../src/engine/triggers.js';
 import {serializeCombatSnapshot} from '../src/engine/combatSnapshot.js';
@@ -17,11 +14,11 @@ import {botCardTargetId,firstAffordableCard,refusalsFor} from '../tools/simbot.m
 const base=createRegistries(contentBundle);
 const charge={op:'grantCardCharge',target:'self',key:'cost-probe',manaDiscount:2};
 const mount=triggers=>({kind:'feat',id:'cost-probe',instanceId:'cost-probe',rules:[{tag:'probe',triggers}]});
-function fixture(coop=false){
+function fixture(){
   const def={...base.cards.get('stigmataCard'),cost:3,costRule:'fixed',manaCost:4,effects:[{op:'block',target:'self',amount:1}],upgrade:{}};
   const registries={...base,cards:{...base.cards,get:id=>id==='stigmataCard'?def:base.cards.get(id)}};
   const player={id:'a',classId:'herald',hp:80,maxHp:80,mana:10,maxMana:10,stamina:10,maxStamina:10,energyMax:10,drawPerTurn:1,relicIds:[],deck:[{instanceId:'probe',cardId:'stigmataCard',upgraded:false}]};
-  return coop?createCoopCombat({registries,rng:createRng(11),players:[player,{...player,id:'b'}],enemyIds:['wanderingSoldier']}):createCombat({registries,rng:createRng(11),player,enemyIds:['wanderingSoldier']});
+  return createCombat({registries,rng:createRng(11),player,enemyIds:['wanderingSoldier']});
 }
 // Every class mount carries the Oath rule, which listens to cardPreparing. The
 // no-listener fast path is about a bus nobody listens on, so drop class mounts.
@@ -47,18 +44,16 @@ function assertPureEqual(combat){
 }
 
 test('no-listener pricing retains live charge discounts and passive costs with exact clone parity',()=>{
-  for(const coop of COOP_MODES){
-    const combat=withoutClassMounts(fixture(coop)),key=coop?combat.playerKey:'player';
-    combat.propertyMounts[key] ||= {};
-    combat.propertyMounts[key].probe={...mount([]),rules:[{tag:'probe',passives:{powerCostReduction:1}}]};
-    grantAbilityCharge(combat.player,charge);
-    assert.equal(hasEventTriggers(combat,'cardPreparing'),false);
-    assert.deepEqual(assertPureEqual(combat),{energy:2,mana:2,stamina:2});
-    assert.ok(combat.player.abilityRiders.charges['cost-probe'],'a price never consumes its charge');
-  }
+  const combat=withoutClassMounts(fixture()),key='player';
+  combat.propertyMounts[key] ||= {};
+  combat.propertyMounts[key].probe={...mount([]),rules:[{tag:'probe',passives:{powerCostReduction:1}}]};
+  grantAbilityCharge(combat.player,charge);
+  assert.equal(hasEventTriggers(combat,'cardPreparing'),false);
+  assert.deepEqual(assertPureEqual(combat),{energy:2,mana:2,stamina:2});
+  assert.ok(combat.player.abilityRiders.charges['cost-probe'],'a price never consumes its charge');
 });
 
-test('preparing properties, status hooks, stances, enemy phases and inactive co-op mounts all retain detached pricing',()=>{
+test('preparing properties, status hooks, stances, enemy phases all retain detached pricing',()=>{
   const cases=[
     combat=>{combat.propertyMounts.player ||= {};combat.propertyMounts.player.probe=mount([{on:'cardPreparing',do:[charge]}]);},
     combat=>{const statuses=combat.registries.statuses;combat.registries={...combat.registries,statuses:{...statuses,get:id=>id==='prepared'?{...statuses.get(id),hooks:[{on:'cardPreparing',do:[charge]}]}:statuses.get(id)}};combat.player.statuses.prepared={stacks:1};},
@@ -68,11 +63,6 @@ test('preparing properties, status hooks, stances, enemy phases and inactive co-
   for(const setup of cases){const combat=fixture();setup(combat);assert.equal(hasEventTriggers(combat,'cardPreparing'),true);assertPureEqual(combat);}
   const discount=fixture();discount.propertyMounts.player ||= {};discount.propertyMounts.player.probe=mount([{on:'cardPreparing',do:[charge]}]);
   assert.equal(assertPureEqual(discount).mana,2,'an enqueued preparing discount affects the exact cost');
-  if (COOP_TESTS_ENABLED) {
-    const coop=fixture(true),inactive=[...coop.players.keys()].find(id=>id!==coop.playerKey);
-    coop.propertyMounts[inactive] ||= {};coop.propertyMounts[inactive].probe=mount([{on:'cardPreparing',do:[charge]}]);
-    assert.equal(hasEventTriggers(coop,'cardPreparing'),true,'inactive seat listeners conservatively retain the full bus');assertPureEqual(coop);
-  }
 });
 
 test('queued work, paused discard and unknown buses keep clone semantics without mutating live state',()=>{

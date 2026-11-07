@@ -19,7 +19,8 @@ const collect = (run, card) => executeRunEffects({ run, registries, rng: createR
 
 test('Core collection knowledge survives acquisition and last removal before any save', () => {
   const run = live();
-  assert.deepEqual(run.collectedCardIds, ['core.strike', 'core.defend', 'core.counter', 'core.reaverSpecial']);
+  // The lent weapon art is item-owned, so the ledger no longer starts with the class special.
+  assert.deepEqual(run.collectedCardIds, ['core.strike', 'core.defend', 'core.counter']);
   executeRunEffects({ run, registries, rng: createRng(run.seed) }, [
     { op: 'addCardToDeck', card: 'core.cantrip' }, { op: 'removeCardFromDeck', card: 'core.cantrip' },
   ]);

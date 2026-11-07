@@ -49,18 +49,18 @@ test('Poise has a numeric badge and retains the HP trim and accessible value', (
   assert.equal(none.querySelector('.combat-health-meter').dataset.poised, 'false');
 }));
 
-test('PIP badges preserve actual Evasion stacks independently of other defenses', () => withKitDom(() => {
+test('PIP badges preserve actual Evasion stacks independently of other defenses (fourth+ collapse into +N)', () => withKitDom(() => {
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }),
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['shield', '5'], ['evade', '2'], ['poise', '3'], ['ward', '4']]);
+  [['shield', '5'], ['poise', '3'], ['overflow', '+2']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 
-test('Precision badge sits right after Evade and is hidden at zero, negative or null', () => withKitDom(() => {
+test('Precision badge sits after Ward and is hidden at zero, negative or null', () => withKitDom(() => {
   const kinds = values => combatHealthModel(values).badges.map(b => b.kind);
-  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'evade', 'precision', 'poise', 'ward']);
+  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'poise', 'evade', 'ward', 'precision']);
   for (const precision of [0, -2, null, undefined, NaN]) assert.ok(!kinds({ precision }).includes('precision'));
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { evasion: 2, precision: 3 }, { tooltips: false });
   const badge = row.querySelector('.combat-health-precision');
@@ -91,3 +91,34 @@ test('the Precision badge glyph is the reticle, not the ranged arrow the card-ra
   const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { precision: 2 }, { tooltips: false });
   assert.equal(row.querySelector('.combat-health-precision-icon svg').outerHTML, reticle);
 }));
+
+test('the Ward status turns the Poise badge purple and marks it with its stacks', () => {
+  const plain = combatHealthModel({ poise: 10, poiseMax: 20, maxHp: 50 }).badges.find(b => b.kind === 'poise');
+  assert.equal(plain.ward, undefined);
+  const warded = combatHealthModel({ poise: 10, poiseMax: 20, maxHp: 50, wardStacks: 2 }).badges.find(b => b.kind === 'poise');
+  assert.equal(warded.ward, true);
+  assert.equal(warded.wardStacks, 2);
+});
+
+test('while Ward is active, Poise is drawn over the HP bar on the HP scale (10 Poise on 50 HP covers 20%)', () => {
+  assert.equal(combatHealthModel({ poise: 10, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 20);
+  assert.equal(combatHealthModel({ poise: 80, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 100, 'never past the bar');
+  assert.equal(combatHealthModel({ poise: 10, maxHp: 50 }).poiseOverlayPct, 0, 'no Ward, no overlay');
+  assert.equal(combatHealthModel({ poise: 0, maxHp: 50, wardStacks: 1 }).poiseOverlayPct, 0);
+});
+
+test('a warded Poise badge renders purple (combat-health-poise-ward, data-ward) with the HP-scale overlay', () => withKitDom(() => {
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50, wardStacks: 2 }, { tooltips: false });
+  const poise = row.querySelector('.combat-health-badge[data-defense-kind="poise"]');
+  assert.ok(poise, 'the Poise badge is drawn');
+  assert.equal(poise.dataset.ward, '2');
+  assert.ok(poise.classList.contains('combat-health-poise-ward'));
+  const overlay = row.querySelector('.combat-health-poise-overlay');
+  assert.ok(overlay, 'the overlay bar is drawn');
+  assert.equal(overlay.style.width, '20%');
+  assert.equal(row.querySelector('.combat-health-meter').dataset.wardActive, 'true');
+  const plain = combatHealthRow(meter({ id: 'hp', value: '18/50', cur: 18, max: 50 }), { poise: 10, poiseMax: 20, maxHp: 50 }, { tooltips: false });
+  assert.equal(plain.querySelector('.combat-health-poise-overlay'), null);
+  assert.ok(!plain.querySelector('.combat-health-badge[data-defense-kind="poise"]').classList.contains('combat-health-poise-ward'));
+}));
+

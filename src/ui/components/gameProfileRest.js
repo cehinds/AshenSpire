@@ -6,6 +6,7 @@ import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
 import { esc } from './tooltip.js';
 import { engravedIconHtml } from './engravedIcon.js';
+import { recoveryLedgerHtml } from './recoveryLedger.js';
 import { mountRestFrame, restPresentation } from './restFrame.js';
 import { renderStatAllocationCard } from './statAllocationCard.js';
 import { mountSmithUpgradeModal } from './smithUpgradeModal.js';
@@ -45,18 +46,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
 
   // The recovery ledger is projected from the final transaction, including
   // newly derived maxima after a selected attribute/equipment upgrade.
-  const recoveryHtml = after => {
-    const rows = [
-      ['health', t('gameProfile.rest.pool.hp'), run.hp, after.hp],
-      ['mana', t('gameProfile.rest.pool.mp'), run.mana, after.mana],
-      ['stamina', t('gameProfile.rest.pool.sp'), run.stamina, after.stamina],
-      ...(run.flaskCharges ? [
-        ['flask-health', t('gameProfile.rest.pool.healingFlask'), run.flaskCharges.hpCurrent, after.flaskCharges.hpCurrent],
-        ['flask-mana', t('gameProfile.rest.pool.mpFlask'), run.flaskCharges.manaCurrent, after.flaskCharges.manaCurrent],
-      ] : []),
-    ];
-    return `<section class="rest-recovery" aria-label="${esc(t('rest.recovery.heading'))}"><h3 class="as-eyebrow">${esc(t('rest.recovery.heading'))}</h3>${rows.map(([icon, label, before, next]) => `<div class="rest-recovery-row">${engravedIconHtml(icon)}<span>${esc(label)}</span><span>${before} → <strong>${next}</strong></span><span class="rest-recovery-gain">${next > before ? `+${next - before}` : '—'}</span></div>`).join('')}</section>`;
-  };
+  const recoveryHtml = after => recoveryLedgerHtml(run, after);
   // Core: one line, since arrival always restores HP and MP in full. The recovery table, intro and
   // availability list are gone; each option card already says what it does or why it cannot be used.
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
@@ -73,20 +63,27 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   });
   screen.classList.add('core-rest'); // scopes the compact Core rest CSS away from the full-game rest screen
   const invoke = action => {
-    try { action(); }
-    catch (error) { screen.inert = false; status.textContent = error.message; }
+    try { action(); return true; }
+    catch (error) { screen.inert = false; status.textContent = error.message; return false; }
   };
   const commit = (service, payload) => invoke(() => onCommit(service, payload));
 
+  // A confirmed upgrade lands back on the list once the rest screen has remounted (modalReturn.js): the option is
+  // re-queried then, and not reopened if it is spent (Back and the X still exit fully).
+  const shrineParent = (selector) => ({ place: t('common.place.shrine'), reopen: () => {
+    const option = app.querySelector(selector);
+    if (option && option.getAttribute('aria-disabled') !== 'true') option.click();
+  } });
   const openSmith = () => {
     let selected = null;
     screen.inert = true;
     const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all, levelUpOffered: model.services.some(service => service.id === 'levelUp') });
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
+      parent: shrineParent('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#smith-opt')?.focus({ preventScroll: true }); },
-      onConfirm: itemRef => { screen.inert = false; commit('smith', { itemRef }); },
+      onConfirm: itemRef => { screen.inert = false; return commit('smith', { itemRef }); },
     });
   };
 
@@ -98,11 +95,11 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       { blockedReason: selected && model.cardPreviews.get(selected)?.available === false ? model.cardPreviews.get(selected).reason : '' });
     const modal = mountCardUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#upgrade-card-opt'),
-      backLabel: t('smith.back.shrine'),
-      consequence: t('gameProfile.rest.upgradeCardConsequence'), decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
+      parent: shrineParent('#upgrade-card-opt'),
+      decisionConsequence: t('gameProfile.rest.upgradeCardDecision'),
       onSelect: instanceId => { selected = instanceId; modal.update(makeModel()); },
       onBack: () => { screen.inert = false; app.querySelector('#upgrade-card-opt')?.focus({ preventScroll: true }); },
-      onConfirm: (instanceId, quote) => { screen.inert = false; commit('upgradeCard', { instanceId, quote }); },
+      onConfirm: (instanceId, quote) => { screen.inert = false; return commit('upgradeCard', { instanceId, quote }); },
     });
   };
 

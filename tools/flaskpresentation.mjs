@@ -32,16 +32,16 @@ check('Crimson and Azure are red/blue and remain distinct without color', () => 
   assert(crimson.name !== azure.name, 'Crimson and Azure share the same accessible name');
 });
 
-check('one presenter reaches inventory, solo, co-op, map and Grace receipt', () => {
+check('one presenter reaches inventory, solo, map and Grace receipt', () => {
   for (const rel of [
     'src/ui/components/overlay.js',
-    // Solo and co-op both draw their potions through the one action row
-    // (2026-10-01): its list and its minis are the combat presenters.
+    // Combat draws its potions through the one action row (2026-10-01): its
+    // list and its minis are the combat presenters.
     'src/ui/components/combatActionRow.js',
     'src/ui/screens/map.js',
     'src/ui/screens/rest.js',
   ]) assert(/flaskPresentation|flaskIdentityHtml/.test(source(rel)), `${rel} bypasses shared flask identity`);
-  for (const rel of ['src/ui/screens/combat.js', 'src/ui/screens/coop.js']) {
+  for (const rel of ['src/ui/screens/combat.js']) {
     assert(/from '\.\.\/components\/combatActionRow\.js'/.test(source(rel)), `${rel} no longer draws potions through the shared action row`);
   }
 });

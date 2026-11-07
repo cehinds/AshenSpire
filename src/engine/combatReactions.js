@@ -30,7 +30,6 @@ export function setReactionsEnabled(ctx, entity, enabled) {
 }
 
 // A Counter (a card whose resolved maneuver is counter) answers an attack its coverage reaches (SPEC §4.10).
-// Shared by the live offer and the Combat Rounds Preview's offer (SPEC §4.11), so both answer the same attacks.
 export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
   const tags = def.cardTags || def.tags || [];
   if (!tags.includes('maneuver:counter')) return false;
@@ -199,6 +198,16 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       }
     }
   }
+  // Auto-Counter (owner 2026-10-31): in Counter stance a covered hit may be answered with no card, for the data-set SP.
+  const owner = ctx.players ? ctx.players.get(seat)?.entity : ctx.player;
+  const seatEntries = entries.filter(entry => entry.side === 'player' && entry.ownerId === seat);
+  const stackedCards = seatEntries.map(entry => (ctx.players ? ctx.players.get(seat)?.piles.hand : ctx.piles.hand)?.find(card => card.instanceId === entry.cardInstanceId))
+    .filter(Boolean).map(card => resolveCombatCard(ctx, card));
+  if (!counterStacked && Matchups.autoCounterAvailable(ctx, owner, seatEntries.reduce((sum, entry) => sum + (entry.staminaCost || 0), 0), stackedCards)
+    && threats.some(threat => threat.row.contacts.some(contact => counterCoversAttack(ctx, Matchups.autoCounterCarrier(), contact, contact.effect || 'damage')))) {
+    options.push({ id: 'autoCounter', name: 'Counter', cardId: null, autoCounter: true, play: { autoCounter: true },
+      staminaCost: Matchups.autoCounterCost(), manaCost: 0, choiceName: null, ...(captureIncoming ? { incoming: {} } : {}) });
+  }
   return options;
 }
 
@@ -269,9 +278,6 @@ export function beforeReactionAction(ctx, action, hooks) {
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth) return false;
   if (action.source?.kind !== 'enemy') return !group.begun && action.source?.kind === 'player' && beforePlayerRoot(ctx, group, hooks);
-  // Combat Rounds (SPEC §4.11): an enemy move resolving a timeline entry had its reaction point in the round prompt,
-  // answered or not, so the live window never opens for it (one prompt per attack).
-  if (group.roundSettled) return false;
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (ctx.reactionRules?.contactPolicy === 'perHit' && !group.contactTelegraphed
     && action.source.alive && !haltReason(ctx, action.source)
@@ -537,16 +543,26 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     const row = playerRootSeat(ctx, group) ? null : Object.values(group.targets).find(target => ctx.players ? target.playerId === ownerId : target.id === ctx.player.id);
     const canonical = optionsFor(ctx, row, group, hooks, null, ownerId).find(current => current.id === optionId);
     if (!canonical || JSON.stringify(canonical.play) !== JSON.stringify(option.play)
-      || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost
-      || canonical.manaCost !== option.manaCost) throw new Error('That reaction card is no longer playable');
+      || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost) throw new Error('That reaction card is no longer playable');
+    // The stored manaCost may predate a price rule (e.g. the Focus discount); the live price is the authority.
     option = canonical;
+  }
+  // The card-less auto-Counter pays and arms at once; it never stacks (nothing to re-offer or answer).
+  if (option?.autoCounter) {
+    Matchups.armAutoCounter(ctx, ctx.player);
+    (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
+    (group.reactionAnswered ||= []).push(ownerId);
+    delete ctx.pendingReaction;
+    ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: null, autoCounter: true });
+    reportRestOfRoot(ctx, group, ownerId, hooks);
+    return;
   }
   if (option && stackedReactions(ctx)) {
     const instance = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand)?.find(inst => inst.instanceId === option.play.cardInstanceId);
     const def = resolveCombatCard(ctx, instance);
     const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };
     const entry = { side: 'player', ownerId, optionId: option.id, play: option.play, cardId: option.cardId,
-      cardInstanceId: option.play.cardInstanceId, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
+      cardInstanceId: option.play.cardInstanceId, staminaCost: option.staminaCost || 0, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
       ...(option.sourceId ? { sourceId: option.sourceId } : {}), ...(option.incoming ? { incoming: option.incoming } : {}) };
     stack.entries.push(entry);
     if (ctx.reactionRules.contactPolicy === 'perHit') group.reactionAnswered.push(ownerId);

@@ -35,7 +35,6 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents } from '../models/PotionContentsModel.js';
 import { useRunChargeFlask } from '../../engine/actions.js';
 import { seatAtTier } from '../../model/seats.js';
-import { activeMods, endlessActInfo } from '../../content/customMods.js';
 import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
@@ -62,11 +61,10 @@ export function syncArmouryNew(button, run) {
  * is the hook a screen's own stylesheet reads (`map-header` on the map).
  */
 /** The seat's display name for the run's current act (SPEC §13.2), or null
- * for a run that has no seat (World Journey, a snapshot without an order). */
+ * for a run that has no seat (a snapshot without an order). */
 export function seatNameOf(registries, run) {
-  if (run.journey || !Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
-  const tier = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
-  const id = seatAtTier(run.seatOrder, tier);
+  if (!Array.isArray(run.seatOrder) || !run.seatOrder.length) return null;
+  const id = seatAtTier(run.seatOrder, run.actNumber);
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }
 
@@ -247,7 +245,8 @@ export function wireRunHud(app, {
   hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
-  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury(); }); syncArmouryNew(armouryBtn, run); }
+  // Only this button asks to reopen on the last tab (`remembered`, see armouryRoute).
+  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury({ remembered: true }); }); syncArmouryNew(armouryBtn, run); }
   else armouryBtn?.remove();
 
   // menu — today it opens the overlay at Settings; under the quick-nav experiment

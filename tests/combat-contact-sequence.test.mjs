@@ -45,7 +45,7 @@ function live(damage = 5, effects = undefined, enemyIds = ['wanderingSoldier']) 
   enemy.actorIntentRevealed = true;
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
-    Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
+    Object.assign(entity, { hp: 100, maxHp: 100, block: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
   }
   return combat;
@@ -142,6 +142,7 @@ test('three live 5-damage contacts lose 15 HP and paint three -5 readouts', t =>
       playTimeline(events, { layer, anchorFor: id => anchors.get(id), onBeatApplied() {} }, () => { done = true; });
       for (let i = 0; i < 1000 && !done; i++) t.mock.timers.tick(1);
       assert.equal(done, true);
+      for (let i = 0; i < 4000; i++) t.mock.timers.tick(1); // the three numbers share one column: one spawns per stagger
       assert.deepEqual(floats, ['-5', '-5', '-5']);
     } finally { setAnimSpeed('normal'); }
   });
@@ -294,7 +295,7 @@ test('Core2 next-contact forecasts survive reaction pauses and JSON reload witho
   ctx.player.block = 12;
   ctx.enemies[0].intent.damage = 8; ctx.enemies[0].intent.hits = 3;
   const whole = projectCombatIntent(ctx, ctx.enemies[0].id);
-  let totalLoss = 0;
+  let totalLoss = 0, totalRaw = 0;
   const id = ctx.enemies[0].id;
   const entities = { [id]: { kind: 'enemy', intentPreview: projectCombatIntent(ctx, id) } };
   primeAccuracyRolls(ctx, { count: 3 }); dispatch(ctx, { type: 'endTurn' });
@@ -315,15 +316,17 @@ test('Core2 next-contact forecasts survive reaction pauses and JSON reload witho
     primeAccuracyRolls(ctx, { count: 3 }); answer(ctx);
     const events = ctx.eventLog.slice(start);
     const damage = events.find(event => event.type === 'damageDealt' && event.sourceId === id);
-    totalLoss += damage.amount - damage.blocked;
-    assert.equal(damage.amount - damage.blocked, shown.projectedDamage.max, 'the displayed current-contact HP matches the actual landed contact');
+    totalLoss += damage.amount - damage.blocked; totalRaw += damage.damageReceipt.hits[0].incoming;
+    // Owner, 2026-11-03: the displayed contact is the raw hit (the receipt's incoming, before Block/Poise/Ward), not the HP that lands.
+    assert.equal(damage.damageReceipt.hits[0].incoming, shown.projectedDamage.max, 'the displayed current-contact hit is the landed contact before Block');
     for (const event of [prepared, ...events]) {
       applyCombatIntentReceipt(entities, event);
       if (event.type === 'damageDealt' && event.sourceId === id)
         assert.equal(entities[id].intentPreview.damage, undefined, 'the completed damage is no longer a forecast');
     }
   }
-  assert.equal(totalLoss, whole.projectedDamage.max, 'the pre-action forecast and all landed contacts spend defenses identically');
+  assert.equal(totalRaw, whole.projectedDamage.max, 'the pre-action forecast is the sum of the raw contacts');
+  assert.equal(totalLoss, 12, 'Block (12) still cuts the real HP loss of 24');
 });
 
 test('intent playback clears only the acting instance and restores a prepared hold after a Counter', async () => {
@@ -371,8 +374,12 @@ test('Core2 armed Counter is priced identically before the move, at the first co
   const start = ctx.eventLog.length;
   while (ctx.pendingReaction) { primeAccuracyRolls(ctx, { count: 3 }); answer(ctx); }
   const actual = ctx.eventLog.slice(start).filter(event => event.type === 'damageDealt' && event.sourceId === id);
-  assert.equal(first.projectedDamage.max, actual[0].amount - actual[0].blocked);
-  assert.equal(before.projectedDamage.max, initialHp - ctx.player.hp);
+  // Owner, 2026-11-03: the shown hit is the raw hit, so an armed Counter prices it exactly as it was before the move was announced.
+  // The Counter stance's defensive 0.75 (20 -> 15 incoming) and its Block are defenses: the shown hit stays the raw 20.
+  assert.equal(first.projectedDamage.max, 20);
+  assert.equal(actual[0].damageReceipt.hits[0].incoming, 15, 'the real hit is cut by the defensive stance');
+  assert.equal(before.projectedDamage.max, 60, 'the whole action is its three raw hits');
+  assert.ok(initialHp - ctx.player.hp <= before.projectedDamage.max, 'real HP loss never exceeds the shown hit');
 });
 
 test('completed enemy intent stays consumed while another instance pauses, and a pooled follow-up gets a fresh forecast', async () => {

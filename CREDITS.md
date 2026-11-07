@@ -59,7 +59,7 @@ profile registration, export hashes and shared floor anchors. These poses apply
 only to default-armour Reaver holding the sole greatsword in either active hand
 with the other hand empty. The paintings visually use both hands on the sword;
 eligibility does not depend on the equipment grip-mode field. They add held preparation and bounded target reactions; existing full
-attack/retaliation sequences remain. Co-op does not opt into this pilot.
+attack/retaliation sequences remain.
 The [external reference ledger](docs/design/update-stances/references.md)
 records research links and evidence limits; no external reference artwork was
 imported. First-party generated artwork; no third-party asset license is claimed.

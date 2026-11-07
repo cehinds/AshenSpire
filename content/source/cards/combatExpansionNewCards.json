@@ -972,6 +972,7 @@
       }
     ],
     "textTemplate": "Gain {invulnerability} Invulnerability: avoid the next direct damaging action. Status buildup still applies. Exhaust.",
+    "faceTemplate": ["Gain {invulnerability} Invulnerability.", "Avoids next direct hit."],
     "minCombatExpansionVersion": 2
   },
   {
@@ -999,6 +1000,7 @@
       }
     ],
     "textTemplate": "Gain {decoy} Decoy: avoid a Single Reach/Ranged damaging action. Status buildup still applies; Sweep and Holy reveal it.",
+    "faceTemplate": ["Gain {decoy} Decoy.", "Sweep, Holy reveal it."],
     "minCombatExpansionVersion": 2
   },
   {
@@ -1027,6 +1029,7 @@
       }
     ],
     "textTemplate": "Gain {grounded} Grounded for 2 turns and clear pending Paralysis pressure.",
+    "faceTemplate": ["Gain {grounded} Grounded, 2 turns.", "Clears Paralysis pressure."],
     "minCombatExpansionVersion": 2
   },
   {
@@ -1054,6 +1057,7 @@
       }
     ],
     "textTemplate": "Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.",
+    "faceTemplate": ["Gain {sleep} Sleep, lock cards.", "Become Vulnerable.", "Heals next turn, capped."],
     "minCombatExpansionVersion": 2
   },
   {
@@ -1103,6 +1107,7 @@
       }
     ],
     "textTemplate": "Usable through Sleep, Paralysis and Dazed. Cleanse {removeStatus} Sleep, {removeStatus.2} Paralysis and {removeStatus.3} Dazed. Gain {gainBarrier} Barrier.",
+    "faceTemplate": ["Cleanse Sleep, Paralysis, Dazed.", "Gain {gainBarrier} Barrier."],
     "minCombatExpansionVersion": 2
   }
 ]

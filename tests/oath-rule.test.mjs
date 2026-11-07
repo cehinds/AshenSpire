@@ -4,12 +4,10 @@
 // entered a stance earlier this fight; entering one sets the fight-long
 // `stanceShifted` marker. The entering card itself still counts as kept.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 
 const base = createRegistries(contentBundle);
@@ -52,17 +50,3 @@ test('an Oath card grants 2 Block until a stance is entered, then none for the r
   assert.ok(combat.player.statuses.stanceShifted, 'the marker lasts the whole fight, not the turn');
 });
 
-test('co-op: one seat entering a stance does not break the other seat\'s Oath', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const C = createCoopCombat({ registries, rng: createRng(3), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] });
-  for (const enemy of C.enemies) { enemy.hp = enemy.maxHp = 500; }
-  const seat = id => C.players.get(id);
-  seat('a').entity.block = 0; seat('b').entity.block = 0;
-  playCard(C, 'a', 'c2');
-  assert.ok(seat('a').entity.statuses.stanceShifted);
-  assert.equal(seat('b').entity.statuses.stanceShifted, undefined);
-  playCard(C, 'b', 'c0');
-  assert.equal(seat('b').entity.block, 2);
-  const before = seat('a').entity.block;
-  playCard(C, 'a', 'c0');
-  assert.equal(seat('a').entity.block, before + (seat('a').entity.stanceId === 'bulwark' ? 2 : 0), 'only the Bulwark skill Block, no Oath');
-});

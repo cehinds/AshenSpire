@@ -30,17 +30,14 @@ import { balanceSigils } from './generated/balanceSigils.js';
 import { balancePowers } from './generated/balancePowers.js';
 import { balanceClassTree } from './generated/balanceClassTree.js';
 import { balanceCosts } from './generated/balanceCosts.js';
-import { balanceCustomMods } from './generated/balanceCustomMods.js';
 import { balanceBossTiers } from './generated/balanceBossTiers.js';
 import { balanceSeatTiers } from './generated/balanceSeatTiers.js';
 import { balanceEndless } from './generated/balanceEndless.js';
-import { balanceCoop } from './generated/balanceCoop.js';
 import { balanceGauntlet } from './generated/balanceGauntlet.js';
 import { balanceLevelUp } from './generated/balanceLevelUp.js';
 import { balanceXp } from './generated/balanceXp.js';
 import { balanceLevels } from './generated/balanceLevels.js';
 import { balanceSmithing } from './generated/balanceSmithing.js';
-import { balanceAtlas } from './generated/balanceAtlas.js';
 import { balanceRest } from './generated/balanceRest.js';
 import { balanceShop } from './generated/balanceShop.js';
 import { balanceRewards } from './generated/balanceRewards.js';
@@ -179,7 +176,6 @@ const cardValueStatusMultipliers = {
   deadlyTempo: 1,
   opportunist: 1,
   envenom: 1,
-  glassCannon: 1,
   magicVulnerable: 1,
   silenced: 1,
   stanceShifted: 1,
@@ -263,7 +259,6 @@ export const balance = {
   rewards: balanceRewards,
   shop: balanceShop,
   rest: balanceRest,
-  atlas: balanceAtlas,
   smithing: balanceSmithing,
   levels: balanceLevels,
   level: balanceCore.level,
@@ -272,11 +267,9 @@ export const balance = {
   graceRefill: balanceCore.graceRefill,
   graceRefillAtRunStart: balanceCore.graceRefillAtRunStart,
   gauntlet: balanceGauntlet,
-  coop: balanceCoop,
   endless: balanceEndless,
   seatTiers: balanceSeatTiers,
   bossTiers: balanceBossTiers,
-  customMods: balanceCustomMods,
   // ui is JSON except the one number derived from the tooltip settings table
   // (the key sits first in tooltipPlacement, as it always did).
   ui: {

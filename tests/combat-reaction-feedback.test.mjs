@@ -1,13 +1,11 @@
 // SPEC §4.10: when a seat holds a Counter or defensive Sweep but is offered no
 // reaction, the engine says why (combatReactionUnavailable), once per root.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCoopCombat, endTurn, chooseReaction, setReactions, leaveCombat } from '../src/engine/coopCombat.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
@@ -39,16 +37,6 @@ function solo({ cardIds = ['guardCounter'], move, offer = null } = {}) {
   combat.player.block = 100;
   for (const enemy of combat.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
   return combat;
-}
-
-function coop({ cardIds = ['guardCounter'], move, seats = ['a'] } = {}) {
-  const players = seats.map(id => ({ id, ...seatStats, drawPerTurn: cardIds.length, combatExpansionVersion: 2,
-    deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `${id}:${index}`, upgraded: false })) }));
-  const C = createCoopCombat({ registries: registriesWith(move), rng: createRng(701), players,
-    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  for (const enemy of C.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-  return C;
 }
 
 const unavailable = events => events.filter(event => event.type === 'combatReactionUnavailable')
@@ -179,12 +167,6 @@ test('skipping the offer on one action with hits:2 reports alreadyAnswered exact
   assert.equal(events.findIndex(event => event.type === 'combatReactionUnavailable'), chosenAt + 1, 'right after the answer');
   assert.deepEqual(combatLogEntries(events, { registries: createRegistries(contentBundle) }).map(row => row.text)
     .filter(text => text.startsWith('One reaction')), ["One reaction per attack: the rest of this attack can't be answered."]);
-  if (COOP_TESTS_ENABLED) {
-    const coopHits = coop({ cardIds: ['guardCounter', 'guardCounter'] });
-    endTurn(coopHits, 'a');
-    chooseReaction(coopHits, 'a', { offerId: coopHits.pendingReaction.id });
-    assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
-  }
 });
 
 test('a reaction that kills the attacker reports no alreadyAnswered for the cancelled rest', () => {
@@ -206,64 +188,6 @@ test('a single-hit root that was skipped reports nothing more', () => {
   soloEnd(combat);
   const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }).events;
   assert.deepEqual(unavailable(events), []);
-});
-
-test('mixed-version co-op resolves a seat\'s candidates under that seat\'s own rules', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  // Seat a runs the legacy rules, seat b the expansion; Whirling Guard is a
-  // candidate only under b's. With b's Reaction switch off, b still hears why.
-  const players = [
-    { id: 'a', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 1, deck: [{ cardId: 'strike', instanceId: 'a:0', upgraded: false }] },
-    { id: 'b', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 2, deck: [{ cardId: 'whirlingGuard', instanceId: 'b:0', upgraded: false }] }];
-  const C = createCoopCombat({ registries: registriesWith({ hits: 1, cardTags: SWEEP }), rng: createRng(701), players,
-    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
-  for (const P of C.players.values()) P.entity.block = 100;
-  for (const enemy of C.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-  setReactions(C, 'b', false);
-  endTurn(C, 'a'); endTurn(C, 'b');
-  assert.deepEqual(unavailable(C.eventLog).map(row => [row.ownerId, row.reason, row.cardIds]), [['b', 'switchOff', ['whirlingGuard']]]);
-});
-
-test('co-op reports the same reasons through the same offer door', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const cost = coop();
-  cost.players.get('a').entity.energy = 0;
-  endTurn(cost, 'a');
-  assert.deepEqual(unavailable(cost.eventLog), [{ ownerId: 'a', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
-  const sweep = coop({ move: { cardTags: SWEEP } });
-  endTurn(sweep, 'a');
-  assert.deepEqual(unavailable(sweep.eventLog).map(row => [row.ownerId, row.reason, row.attackKind]), [['a', 'notCovered', 'sweep']]);
-  const off = coop();
-  setReactions(off, 'a', false);
-  endTurn(off, 'a');
-  assert.deepEqual(unavailable(off.eventLog).map(row => row.reason), ['switchOff']);
-  const later = coop({ move: { hits: 1, effects: [{ op: 'damage', target: 'player', amount: 1 }] } });
-  endTurn(later, 'a');
-  chooseReaction(later, 'a', { offerId: later.pendingReaction.id });
-  assert.deepEqual(unavailable(later.eventLog).map(row => row.reason), ['alreadyAnswered']);
-  const frozen = coop({ seats: ['a', 'b'] });
-  for (const P of frozen.players.values()) P.entity.energy = 0;
-  leaveCombat(frozen, 'b');
-  endTurn(frozen, 'a');
-  assert.ok(unavailable(frozen.eventLog).every(row => row.ownerId !== 'b'), 'a disconnected seat gets no receipt');
-});
-
-test('mixed-version co-op reports an expanded seat reaction using that seat\'s card rules', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const registries = registriesWith({ cardTags: SWEEP });
-  const players = [
-    { id: 'legacy', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 1,
-      deck: [{ cardId: 'strike', instanceId: 'legacy:0', upgraded: false }] },
-    { id: 'expanded', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 2,
-      deck: [{ cardId: 'whirlingGuard', instanceId: 'expanded:0', upgraded: false }] },
-  ];
-  const combat = createCoopCombat({ registries, rng: createRng(701), players,
-    enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
-  for (const P of combat.players.values()) P.entity.block = 100;
-  for (const enemy of combat.enemies) enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-  combat.players.get('expanded').entity.energy = 0;
-  endTurn(combat, 'expanded');
-  endTurn(combat, 'legacy');
-  assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
-    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 2, have: 0 }]); // Whirling Guard: 2 SP under the cost formula (SPEC §4.3a)
 });
 
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);

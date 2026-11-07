@@ -1,12 +1,9 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, endTurn, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 import { combatRules } from '../src/content/combatRules.js';
@@ -34,11 +31,6 @@ function player(cardId) {
 }
 function solo(cardId, registries = basicRegistry, enemyId = 'wanderingSoldier') {
   return createCombat({ registries, rng: createRng(50), player: player(cardId), enemyIds: [enemyId] });
-}
-function coop(cardId, count = 1) {
-  return createCoopCombat({ registries: basicRegistry, rng: createRng(50),
-    players: Array.from({ length: count }, (_, i) => ({ id: 'p' + (i + 1), ...player(cardId) })),
-    enemyIds: ['wanderingSoldier'], ratingsRules: null });
 }
 const counterEvents = combat => combat.eventLog.filter(event => event.type === 'combatCounterTriggered');
 
@@ -114,39 +106,30 @@ test('live enemy damage tags produce status rider through real enemy-phase dispa
   assert.equal(getStacks(c.player, 'bleed'), 1, 'CSV Slashing move applies Bleed');
 });
 
-test('solo and one-seat co-op execute same deferred Counter health and Poise outcome', () => {
+test('deferred Counter health and Poise outcome', () => {
   const s = solo('riposte');
   dispatch(s, { type: 'playCard', cardInstanceId: 'card1' });
   dispatch(s, { type: 'endTurn' });
   assert.ok(counterEvents(s).length);
-  if (COOP_TESTS_ENABLED) {
-    const c = coop('riposte');
-    playCard(c, 'p1', 'card1'); endTurn(c, 'p1');
-    assert.equal(c.players.get('p1').entity.hp, s.player.hp);
-    assert.equal(c.enemies[0].hp, s.enemies[0].hp);
-    assert.equal(c.enemies[0].poiseMeter.value, s.enemies[0].poiseMeter.value);
-    assert.deepEqual(counterEvents(c).map(event => [event.amount, event.poiseDamage]), counterEvents(s).map(event => [event.amount, event.poiseDamage]));
-  }
 });
 
-for (const isCoop of COOP_MODES) test(`${isCoop ? 'co-op' : 'solo'} Counter preview ignores the support target's Vulnerable modifier`, () => {
-  const c = isCoop ? coop('spikedReprisal') : solo('spikedReprisal');
+test(`solo Counter preview ignores the support target's Vulnerable modifier`, () => {
+  const c = solo('spikedReprisal');
   const enemy = c.enemies[0];
   applyStatus(c, enemy, 'vulnerable', 1);
-  const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
+  const preview = previewCard(c, 'card1', enemy.id);
   const damage = preview.values.find(value => value.op === 'damage');
   assert.equal(damage.value, 4);
   assert.equal(damage.perTarget[enemy.id], 4);
   assert.deepEqual(damage.hitDamages, [4]);
-  if (isCoop) playCard(c, 'p1', 'card1', enemy.id);
-  else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
-  const actor = isCoop ? c.players.get('p1').entity : c.player;
+  dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+  const actor = c.player;
   assert.equal(actor.combatCounter.damage, damage.totalDamage);
   assert.equal(getStacks(enemy, 'bleed'), 2, 'the selected enemy still receives immediate support');
 });
 
-for (const isCoop of COOP_MODES) for (const inactive of ['condition', 'zeroHits', 'zeroRepeat', 'allInactive']) {
-  test(`${isCoop ? 'co-op' : 'solo'} charged Counter preserves its bonus after ${inactive}`, () => {
+for (const inactive of ['condition', 'zeroHits', 'zeroRepeat', 'allInactive']) {
+  test(`solo charged Counter preserves its bonus after ${inactive}`, () => {
     const effects = [{ op: 'damage', target: 'enemy', amount: 4,
       ...(inactive === 'condition' || inactive === 'allInactive' ? { if: { p: 'hasStatus', of: 'self', status: 'starstoneCharge' } }
         : inactive === 'zeroHits' ? { hits: 0 } : { repeat: 0 }) },
@@ -155,35 +138,21 @@ for (const isCoop of COOP_MODES) for (const inactive of ['condition', 'zeroHits'
       const def = basicRegistry.cards.get(id);
       return id === 'riposte' ? { ...def, effects, gradeProfiles: undefined } : def;
     } } };
-    const c = isCoop ? createCoopCombat({ registries, rng: createRng(50),
-      players: [{ id: 'p1', ...player('riposte') }], enemyIds: ['wanderingSoldier'], ratingsRules: null })
-      : solo('riposte', registries);
-    const actor = isCoop ? c.players.get('p1').entity : c.player;
+    const c = solo('riposte', registries);
+    const actor = c.player;
     grantAbilityCharge(actor, { key: 'counter-card-charge', cardType: 'attack', damage: 2 });
     grantAbilityCharge(actor, { key: 'counter-effect-charge', cardType: 'attack', damage: 1, damageScope: 'effect' });
     const before = structuredClone(actor.abilityRiders);
-    const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', c.enemies[0].id) : previewCard(c, 'card1', c.enemies[0].id);
+    const preview = previewCard(c, 'card1', c.enemies[0].id);
     const damage = preview.values.filter(value => value.op === 'damage');
     assert.deepEqual(actor.abilityRiders, before, 'preview leaves both one-use charges intact');
     assert.deepEqual(damage.map(value => value.hitDamages), inactive === 'allInactive' ? [[7]] : [inactive === 'condition' ? [4] : [], [7, 4]]);
-    if (isCoop) playCard(c, 'p1', 'card1');
-    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
     if (inactive !== 'condition' && inactive !== 'allInactive')
       assert.equal(actor.combatCounter.damage, damage.reduce((total, value) => total + value.totalDamage, 0));
     assert.equal(actor.combatCounter.damage, inactive === 'allInactive' ? 3 : 11);
   });
 }
-
-test('two co-op seats keep independent Counter charges and retaliation owners', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const c = coop('riposte', 2);
-  playCard(c, 'p1', 'card1'); playCard(c, 'p2', 'card1');
-  endTurn(c, 'p1'); endTurn(c, 'p2');
-  assert.deepEqual(counterEvents(c).map(event => event.sourcePlayerId).sort(), ['p1', 'p2']);
-  for (const seat of c.players.values()) {
-    assert.equal(seat.entity.hp, 200);
-    assert.equal(seat.entity.combatCounter, undefined);
-  }
-});
 
 test('legacy conditional Counter takes exactly one eligible damage branch before gaining Guard', () => {
   const unguarded = solo('guardCounter', legacyRegistry);
@@ -194,27 +163,23 @@ test('legacy conditional Counter takes exactly one eligible damage branch before
   assert.equal(guarded.player.combatCounter.damage, 10, 'conditional branches must not sum to14');
 });
 
-for (const isCoop of COOP_MODES) test(`${isCoop ? 'co-op' : 'solo'} Crimson Reprisal prints its inactive conditional clause`, () => {
-  const c = isCoop ? coop('progression-crimson-reprisal') : solo('progression-crimson-reprisal');
-  const actor = isCoop ? c.players.get('p1').entity : c.player;
-  const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
+test(`solo Crimson Reprisal prints its inactive conditional clause`, () => {
+  const c = solo('progression-crimson-reprisal');
+  const actor = c.player;
+  const preview = previewCard(c, 'card1');
   assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [8, 4]);
-  if (isCoop) playCard(c, 'p1', 'card1');
-  else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+  dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
   assert.equal(actor.combatCounter.damage, 8, 'the inactive clause remains unarmed');
 });
 
-for (const isCoop of COOP_MODES) for (const hasBlock of [false, true]) {
-  test(`${isCoop ? 'co-op' : 'solo'} conditional Counter keeps both printed branches with Block=${hasBlock}`, () => {
-    const c = isCoop ? createCoopCombat({ registries: legacyRegistry, rng: createRng(50),
-      players: [{ id: 'p1', ...player('guardCounter') }], enemyIds: ['wanderingSoldier'], ratingsRules: null })
-      : solo('guardCounter', legacyRegistry);
-    const actor = isCoop ? c.players.get('p1').entity : c.player;
+for (const hasBlock of [false, true]) {
+  test(`solo conditional Counter keeps both printed branches with Block=${hasBlock}`, () => {
+    const c = solo('guardCounter', legacyRegistry);
+    const actor = c.player;
     if (hasBlock) actor.block = 2;
-    const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
+    const preview = previewCard(c, 'card1');
     assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [4, 10]);
-    if (isCoop) playCard(c, 'p1', 'card1');
-    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
     assert.equal(actor.combatCounter.damage, hasBlock ? 10 : 4, 'only the eligible branch is armed');
   });
 }
@@ -279,7 +244,7 @@ test('Counter preserves one-use damage and Break charges in deferred payload', (
   }
 });
 
-test('solo and co-op carry enemy damage tags through while-charging effects', () => {
+test('carry enemy damage tags through while-charging effects', () => {
   const registries = createRegistries({ ...contentBundle,
     enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier' ? { ...enemy, firstMove: 'slash' } : enemy),
     enemyMoves: contentBundle.enemyMoves.map(move => move.enemyId === 'wanderingSoldier' && move.id === 'slash'
@@ -289,30 +254,15 @@ test('solo and co-op carry enemy damage tags through while-charging effects', ()
   dispatch(s, { type: 'endTurn' });
   assert.equal(s.player.hp, 198);
   assert.equal(getStacks(s.player, 'bleed'), 1);
-  if (COOP_TESTS_ENABLED) {
-    const c = createCoopCombat({ registries, rng: createRng(50),
-      players: [{ id: 'p1', ...player('strike') }], enemyIds: ['wanderingSoldier'], ratingsRules: null });
-    endTurn(c, 'p1');
-    assert.equal(c.players.get('p1').entity.hp, s.player.hp);
-    assert.equal(getStacks(c.players.get('p1').entity, 'bleed'), 1);
-  }
 });
 
-test('enemy Counter payload uses the same fight damage scale in solo and co-op', () => {
+test('enemy Counter payload uses the same fight damage scale', () => {
   const s = createCombat({ registries: counterRegistry, rng: createRng(50), player: player('strike'),
     enemyIds: ['gildedKnight'], enemyDamageMult: 2 });
   assert.equal(s.enemies[0].combatCounter.damage, 12);
   dispatch(s, { type: 'playCard', cardInstanceId: 'card1', targetId: s.enemies[0].id });
   assert.equal(counterEvents(s)[0].amount, 23);
   assert.equal(s.player.hp, 177);
-  if (COOP_TESTS_ENABLED) {
-    const c = createCoopCombat({ registries: counterRegistry, rng: createRng(50),
-      players: [{ id: 'p1', ...player('strike') }], enemyIds: ['gildedKnight'], enemyDamageMult: 2, ratingsRules: null });
-    assert.equal(c.enemies[0].combatCounter.damage, 12);
-    playCard(c, 'p1', 'card1', c.enemies[0].id);
-    assert.equal(counterEvents(c)[0].amount, 23);
-    assert.equal(c.players.get('p1').entity.hp, 177);
-  }
 });
 
 test('empty custom combat identity retains local hit vulnerability tags in preview and execution', () => {
@@ -376,17 +326,15 @@ test('Deathblow shares one Slashing rider across its separately queued damage ef
     tagging: [...legacyContentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
       { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
   });
-  for (const foundation of [false, true]) for (const coopMode of COOP_MODES) {
+  for (const foundation of [false, true]) {
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
       ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
-    const c = coopMode ? createCoopCombat({ ...options, players: [{ id: 'p1', ...player('deathblow') }] })
-      : createCombat({ ...options, player: player('deathblow') });
+    const c = createCombat({ ...options, player: player('deathblow') });
     const enemy = c.enemies[0]; enemy.hp = enemy.maxHp = 200;
     applyStatus(c, enemy, 'bleed', 1); applyStatus(c, enemy, 'venom', 1);
-    if (coopMode) playCard(c, 'p1', 'card1', enemy.id);
-    else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+    dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
     assert.equal(c.eventLog.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length, 3);
-    assert.equal(getStacks(enemy, 'bleed'), 2, `one extra Bleed, foundation=${foundation}, coop=${coopMode}`);
+    assert.equal(getStacks(enemy, 'bleed'), 2, `one extra Bleed, foundation=${foundation}`);
   }
 });
 
@@ -397,20 +345,18 @@ test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets n
         { op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }],
     } : card),
   });
-  for (const foundation of [false, true]) for (const coopMode of COOP_MODES) {
+  for (const foundation of [false, true]) {
     const inputs = player('rimeThrust'); inputs.drawPerTurn = 2;
     inputs.deck.push({ instanceId: 'card2', cardId: 'rimeThrust' });
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'],
       ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
-    const c = coopMode ? createCoopCombat({ ...options, players: [{ id: 'p1', ...inputs }] })
-      : createCombat({ ...options, player: inputs });
+    const c = createCombat({ ...options, player: inputs });
     for (const enemy of c.enemies) { enemy.hp = enemy.maxHp = 200; enemy.block = 100; }
     for (const instanceId of ['card1', 'card2']) {
-      if (coopMode) playCard(c, 'p1', instanceId);
-      else dispatch(c, { type: 'playCard', cardInstanceId: instanceId });
+      dispatch(c, { type: 'playCard', cardInstanceId: instanceId });
       const expectedLoss = instanceId === 'card1' ? 2 : 4;
       for (const enemy of c.enemies) assert.equal(enemy.hp, 200 - expectedLoss,
-        `one bypass per card and target, foundation=${foundation}, coop=${coopMode}`);
+        `one bypass per card and target, foundation=${foundation}`);
       assert.equal(c.eventLog.filter(event => event.type === 'damageDealt' && event.sourceId === 'player').length,
         instanceId === 'card1' ? 12 : 24, 'all six contacts resolve against both targets');
     }
@@ -430,21 +376,18 @@ test('enemy move damage payloads share a rider budget per seat, including chargi
         && row.objectId === 'slash' && row.tagId.startsWith('damage:'))),
       { family: 'enemyMove', scope: 'wanderingSoldier', objectId: 'slash', tagId: `damage:${type}` }],
     });
-    for (const foundation of [false, true]) for (const coopMode of COOP_MODES) {
+    for (const foundation of [false, true]) {
       const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
         ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
-      const c = coopMode ? createCoopCombat({ ...options,
-        players: ['p1', 'p2'].map(id => ({ id, ...player('strike') })) })
-        : createCombat({ ...options, player: player('strike') });
-      const targets = coopMode ? [...c.players.values()].map(seat => seat.entity) : [c.player];
+      const c = createCombat({ ...options, player: player('strike') });
+      const targets = [c.player];
       if (type === 'piercing') for (const target of targets) target.block = 100;
-      if (coopMode) { endTurn(c, 'p1'); endTurn(c, 'p2'); }
-      else dispatch(c, { type: 'endTurn' });
+      dispatch(c, { type: 'endTurn' });
       for (const target of targets) {
         assert.equal(target.hp, type === 'piercing' ? 198 : 194,
-          `one rider per root move/seat: ${type}, charging=${charging}, foundation=${foundation}, coop=${coopMode}`);
+          `one rider per root move/seat: ${type}, charging=${charging}, foundation=${foundation}`);
         if (type === 'slashing') assert.equal(getStacks(target, 'bleed'), 1,
-          `one Bleed: charging=${charging}, foundation=${foundation}, coop=${coopMode}`);
+          `one Bleed: charging=${charging}, foundation=${foundation}`);
       }
     }
   }

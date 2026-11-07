@@ -1,12 +1,10 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { cardTargetPlan, assertCardTarget, forbiddenCardDrop } from '../src/model/cardTargets.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 
 const registries = createRegistries(contentBundle);
 const enemies = [{ id: 'e1', alive: true }, { id: 'e2', alive: false }, { id: 'e3', alive: true }];
@@ -93,16 +91,3 @@ test('solo explicit self and legacy omitted self/ally targets still play', () =>
   }
 });
 
-test('co-op hostile cards refuse the source and teammates before spending', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const combat = createCoopCombat({ registries, rng: createRng(123), players: [player('a', 'p1'), player('b', 'p2')], enemyIds: ['blightHound'] });
-  const seat = combat.players.get('p1');
-  const strike = instance(seat.piles.hand, 'strike');
-  for (const targetId of ['p1', 'p2', 'player']) {
-    const before = JSON.stringify({ entity: seat.entity, piles: seat.piles, enemies: combat.enemies, log: combat.eventLog });
-    assert.throws(() => playCoopCard(combat, 'p1', strike, targetId), /Invalid enemy target/);
-    assert.equal(JSON.stringify({ entity: seat.entity, piles: seat.piles, enemies: combat.enemies, log: combat.eventLog }), before);
-  }
-  const hp = combat.enemies[0].hp;
-  playCoopCard(combat, 'p1', strike, 'e1');
-  assert.ok(combat.enemies[0].hp < hp);
-});

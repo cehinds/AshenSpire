@@ -65,7 +65,15 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
 export function blacksmithStockProblems(stock, path = 'shopStock') {
   const problems = [];
   if (stock.tradeRevision !== undefined && !count(stock.tradeRevision)) problems.push(`${path}.tradeRevision must be a whole number of at least 0, got ${JSON.stringify(stock.tradeRevision)}`);
-  if (stock.kind === 'blacksmith' && stock.armaments !== undefined) itemList(stock.armaments, `${path}.armaments`, problems);
+  if (stock.kind === 'blacksmith' && stock.armaments !== undefined) {
+    itemList(stock.armaments, `${path}.armaments`, problems);
+    // A Core rack entry also carries the tier it is sold at (`{ id, cost, tier }`).
+    if (Array.isArray(stock.armaments)) stock.armaments.forEach((item, index) => {
+      if (object(item) && item.tier !== undefined && !count(item.tier)) problems.push(`${path}.armaments[${index}].tier must be a whole number of at least 0`);
+    });
+  }
+  // The Core weapon-art shelf (`{ id, cost }`).
+  if (stock.kind === 'blacksmith' && stock.weaponArts !== undefined) itemList(stock.weaponArts, `${path}.weaponArts`, problems);
   return problems;
 }
 
@@ -84,7 +92,7 @@ export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, con
   const keep = {
     // The blacksmith's armament shelf (SPEC §14.4): an unsold offer for an
     // armament this build no longer has is pruned like any market offer.
-    ...(stock.kind === 'blacksmith' ? { armaments: (item) => armamentKnown(item.id) } : {}),
+    ...(stock.kind === 'blacksmith' ? { armaments: (item) => armamentKnown(item.id), weaponArts: (item) => cardKnown(item.id) } : {}),
     // The master's rack and art shelf (SPEC §14.5), the same way; his skill
     // books are the `skillBooks` row below.
     ...(stock.kind === 'master' ? { armaments: (item) => armamentKnown(item.id), weaponArts: (item) => cardKnown(item.id) } : {}),

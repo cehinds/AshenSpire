@@ -20,7 +20,7 @@
 //
 // WHAT ELSE IS SERVED. `main`'s tree is copied first, so every page the site
 // serves from it (/index-game.html, /docs/component-catalog.html,
-// /docs/preview/…, /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
+// /docs/low-poly-fighters/) keeps working — less the media and authoring roots and the committed build HTML
 // (BASE_TREE_PATHSPECS, docs/EXTERNAL-ASSETS-PLAN.md step 6a). The stable Play
 // links and the score and tiles they read beside themselves are written back
 // explicitly as that build's payload. The one deliberate replacement is the
@@ -28,7 +28,7 @@
 // /index-game.html.
 //
 // USAGE
-//   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
+//   node tools/pages-site.mjs --out _site [--keep N  (override; default per channel, see RETENTION)] [--branches dev,test,release,main] [--remote origin]
 //                             [--branch-previews <dir>]   open-PR feature branch builds (branches/<branch>/latest/)
 //                             [--main-build <dir>] [--build-missing <workdir>]
 //   node tools/pages-site.mjs --branch-dir <name>  exit 0 and print the name if it can be a site path
@@ -67,7 +67,62 @@ const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...altern
 // Clamped: each listed build that is no longer committed costs a rebuild, so a
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
-const KEEP = Math.min(KEEP_MAX, Math.max(1, Number(flag('--keep', '10')) || 10));
+// PER-CHANNEL RETENTION (owner, 2026-11-06): how many builds each channel lists. main,
+// dev and test keep 3, release keeps 5 (owner changed release from 10 to 5 on
+// 2026-11-07); every other channel (alternative/*) keeps DEFAULT_KEEP. Only the
+// newest build of a primary channel carries the offline file (downloadKept), so release's older builds are Play-only. `--keep N` (the workflow's
+// optional `keep` input) overrides every channel for one run; absent, this table rules.
+export const RETENTION = { main: 3, release: 5, dev: 3, test: 3 };
+export const DEFAULT_KEEP = 3;
+export const keepFor = (branch, override = null) => Math.min(KEEP_MAX, Math.max(1, override ?? RETENTION[branch] ?? DEFAULT_KEEP));
+// A run's rebuild budget (run 42186410401 ran out of disk). Applies only to builds
+// that are not a branch's newest; the newest of every branch is always rebuilt.
+export const MAX_REBUILDS_DEFAULT = 12;
+export const clampMaxRebuilds = (v) => Math.min(200, Math.max(1, Math.floor(Number(v)) || MAX_REBUILDS_DEFAULT));
+const MAX_REBUILDS = clampMaxRebuilds(flag('--max-rebuilds', MAX_REBUILDS_DEFAULT));
+/**
+ * The rebuild plan for one run: `lists` is [{branch, builds}] (each newest first),
+ * `tierOf(branch, sha)` is 'full' | 'light', `seeded(b)` is true for a build served
+ * from --main-build. Builds with source 'rebuild' are deduped by sha:tier; every
+ * branch's newest is kept, and a non-newest build past `max` unique rebuilds is
+ * returned in `over` (to be skipped). Pure.
+ */
+export function planRebuilds(lists, { max = MAX_REBUILDS_DEFAULT, tierOf = () => 'light', seeded = () => false } = {}) {
+  const keys = new Set();
+  const plan = [];
+  const over = new Set();
+  const take = (b) => {
+    const tier = tierOf(b.branch, b.sha);
+    const key = `${b.sha}:${tier}`;
+    if (!keys.has(key)) { keys.add(key); plan.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, tier, key }); }
+  };
+  const want = (b) => b.source === 'rebuild' && !seeded(b);
+  for (const { builds } of lists) if (builds[0] && want(builds[0])) take(builds[0]);
+  for (const { builds } of lists) {
+    builds.forEach((b, i) => {
+      if (i === 0 || !want(b)) return;
+      const key = `${b.sha}:${tierOf(b.branch, b.sha)}`;
+      if (keys.has(key)) return;
+      if (keys.size >= max) { over.add(b); return; }
+      take(b);
+    });
+  }
+  return { plan, over };
+}
+/**
+ * The sha:tier keys whose single file some branch may still publish: the newest
+ * listed build of every branch that keeps a download. Pure. A shared rebuild is
+ * only stripped of its single file when no branch needs it.
+ */
+export function singleNeededKeys(lists, tierOf = () => 'light') {
+  const keys = new Set();
+  for (const { branch, builds } of lists) if (builds[0] && downloadKept(branch, true)) keys.add(`${builds[0].sha}:${tierOf(branch, builds[0].sha)}`);
+  return keys;
+}
+let singleNeeded = new Set();
+const keepFlag = flag('--keep', null);
+const KEEP_OVERRIDE = keepFlag === null ? null : (Number(keepFlag) || null);
+const KEEP_NOTE = KEEP_OVERRIDE ? `${KEEP_OVERRIDE} builds per branch (override)` : `main ${RETENTION.main}, release ${RETENTION.release}, dev ${RETENTION.dev}, test ${RETENTION.test}, others ${DEFAULT_KEEP} builds`;
 // A directory holding AshenSpire.html and AshenSpire-mobile.html built by CI from
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
@@ -90,6 +145,22 @@ const SW_KILL_RUN = SW_KILL || has('--sw-kill');
 // folder) keep their shape until they age out of --keep.
 const WEB_DIR = 'web';
 const DOWNLOAD_PATH = 'download/AshenSpire.html';
+// THE OFFLINE FILE IS KEPT FOR ONE BUILD PER CHANNEL (2026-11-06). Each pack build's
+// download/ is a ~157 MB single file and the site held six copies per channel (five
+// builds plus /latest/), which put the Pages artifact at 5.2 GB (run 42174299001;
+// Pages 1 GB limit). Now only a primary channel's newest build carries it (its
+// /latest/download/ is a redirect stub to that file, for the README link; the in-game
+// download reads the newest ordinal's file); older builds and the alternative channels are Play-only.
+// The build's page and art in the store are untouched, so Play works for all of them.
+export const downloadKept = (branch, newest) => newest && !branch.startsWith('alternative/');
+/** Archived (no offline download) unless it is the first build of a primary channel actually published. */
+export const archivedFor = (branch, publishedCount) => !downloadKept(branch, publishedCount === 0);
+/** The page at <branch>/latest/download/AshenSpire.html: sends the visitor to the newest build's file. Pure. */
+export function latestDownloadStub(ordinal) {
+  const to = `../../${ordinal}/${DOWNLOAD_PATH}`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=${to}"><title>Download</title></head><body><p>The offline file for build ${ordinal} is at <a href="${to}">${to}</a>.</p><script>location.replace(${JSON.stringify(to)});</script></body></html>
+`;
+}
 // BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
 //
 // Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
@@ -188,19 +259,22 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 //     two are written back from main's tree as that build's payload
 //     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
 // assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
-// docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
-// pose-studio/ load their images from it. It is served from main's tree while
+// docs/component-catalog.html and docs/low-poly-fighters/ load their images
+// from it. It is served from main's tree while
 // main still tracks it; a main from after docs/EXTERNAL-ASSETS-PLAN.md step 13
 // tracks none, and /assets/ is then written from the object store instead
 // (writeSourceAssets: the light tier of main's manifest, about 15 MB). art/ GOES: its seven review sections
 // leave the site and, because discovery reads the assembled tree, the index
-// with them. Plain links into art/ now 404: docs/component-catalog.html,
-// pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
-// docs/preview stays (owner answer 7).
+// with them. Plain links into art/ now 404: docs/component-catalog.html
+// and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
+// docs/preview was removed (owner decision 2026-11-04).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
-const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
+// docs/preview and docs/design are excluded too (owner decision 2026-11-04; they
+// were 163 MB and 79 MB on main, and cc505ac9ce only dropped docs/preview from the
+// KEPT list, so main's tree still shipped both: measured in run 42174299001).
+const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music', 'docs/preview', 'docs/design']);
 // Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
-const BASE_TREE_KEPT_DIRS = Object.freeze(['assets', 'docs/preview']);
+const BASE_TREE_KEPT_DIRS = Object.freeze(['assets']);
 const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
 const BASE_TREE_PATHSPECS = Object.freeze(['.',
   ...BASE_TREE_EXCLUDED_DIRS.map((d) => `:(exclude)${d}`),
@@ -361,9 +435,16 @@ function rebuildFailureDetail(error) {
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
 let buildTree = null;
 /** Rebuild one commit's standalone from source; returns { dir } or { error }. */
-function rebuildAt(sha, fullArt) {
+function rebuildAt(sha, fullArt, { skipSingle = false } = {}) {
   const key = `${sha}:${fullArt ? 'full' : 'light'}`;
-  if (rebuilt.has(key)) return rebuilt.get(key);
+  if (rebuilt.has(key)) {
+    const cached = rebuilt.get(key);
+    // SAFETY NET: the cached out dir was stripped of its single file for an
+    // archived build, but this caller publishes it; rebuild rather than read a missing file.
+    if (!(cached.dir && cached.strippedSingle && !skipSingle)) return cached;
+    rmSync(cached.dir, { recursive: true, force: true });
+    rebuilt.delete(key);
+  }
   const env = { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' };
   const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, env, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
   let result;
@@ -404,7 +485,11 @@ function rebuildAt(sha, fullArt) {
     if (dirty) throw new Error(`the rebuild changed committed files (${dirty.split('\n').slice(0, 3).join('; ')}) — not the build this commit names`);
     const dir = join(resolve(BUILD_MISSING), 'out', key.replace(':', '-'));
     mkdirSync(dir, { recursive: true });
+    // An archived pack build serves no download, so its ~157 MB single file is
+    // not copied; a non-pack build needs it as its page, so it is copied below.
+    const webTree = [join(buildTree, 'build', 'web'), join(buildTree, 'build')].find((d) => existsSync(join(d, 'AshenSpire.html')) && packPinOf(readFileSync(join(d, 'AshenSpire.html'))));
     for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+      if (skipSingle && webTree) continue;
       if (existsSync(join(buildTree, artifact))) cpSync(join(buildTree, artifact), join(dir, artifact));
     }
     // THE PACK-SHAPED WEB EDITION, where this commit builds one: its HTML and
@@ -422,10 +507,16 @@ function rebuildAt(sha, fullArt) {
       if (existsSync(join(web, 'packs'))) cpSync(join(web, 'packs'), join(dir, WEB_DIR, 'packs'), { recursive: true });
       mergeObjects(join(web, 'objects'), join(stagingStore(), 'objects'));
     }
+    // FREE THE TREE NOW (run 42186410401 died of ENOSPC): everything this build
+    // contributes is in out/ and store/, so build/, dist/ and the root single
+    // file (~157 MB, several copies) go before the next rebuild, not at its start.
+    run('git', ['clean', '-ffdxq'], buildTree);
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
-    result = { dir };
+    result = { dir, strippedSingle: Boolean(skipSingle && webTree) };
   } catch (error) {
     result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
+    // A rebuild that failed after copying part of its output leaves no partial out dir.
+    try { rmSync(join(resolve(BUILD_MISSING), 'out', key.replace(':', '-')), { recursive: true, force: true }); } catch { /* best effort */ }
   }
   rebuilt.set(key, result);
   return result;
@@ -464,6 +555,19 @@ function webEditionIn(dir, objectsRoot) {
   return { html, from: { packs: join(dir, WEB_DIR), objects: objectsRoot || join(dir, WEB_DIR) } };
 }
 
+/** Delete the out/ dir of each rebuilt (non-seeded) build in `listed` and forget it. */
+function freeRebuilds(listed, keepKeys = new Set()) {
+  for (const b of listed) {
+    if (b.source !== 'rebuild') continue;
+    if (MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha) continue;
+    const key = `${b.sha}:${fullArtFor(b.branch, b.sha) ? 'full' : 'light'}`;
+    if (keepKeys.has(key)) continue;   // a later branch lists the same build: keep it, do not rebuild twice
+    const r = rebuilt.get(key);
+    if (r && r.dir) rmSync(r.dir, { recursive: true, force: true });
+    rebuilt.delete(key);
+  }
+}
+
 function dropBuildTree() {
   if (!buildTree) return;
   try { execFileSync('git', ['worktree', 'remove', '--force', buildTree], { cwd: ROOT, stdio: 'ignore' }); } catch { /* left for the runner to discard */ }
@@ -471,11 +575,40 @@ function dropBuildTree() {
   buildTree = null;
 }
 
+// A COMMITTED INLINE BUILD OVER THIS SIZE IS NOT SERVED (2026-11-06, run 42254638934).
+// release/548 is a 255 MB single file (305 MB with its mobile copy) from before the pack
+// shape, and one such folder took the assembled site past the 2500 MB guard. Pack builds
+// are ~10 MB pages over the shared store and the largest other inline build is ~105 MB, so
+// 150 MB catches only the anomaly. It is skipped and named like any other unservable build.
+export const LEGACY_SINGLE_MAX_BYTES = 150e6;
+/** The size a Git LFS pointer file names, or null when `text` is not a pointer. Pure. */
+export function lfsPointerSize(text) {
+  const m = /^version https:\/\/git-lfs\.github\.com\/spec\/v1\n[\s\S]*?\nsize (\d+)\n?/.exec(String(text));
+  return m ? Number(m[1]) : null;
+}
+/** The cap reason for the text of a committed file when it is an over-cap LFS pointer, else null. Pure. */
+export function pointerOversize(text) {
+  const n = lfsPointerSize(text);
+  return n === null ? null : oversizeReason(n);
+}
+/** A reason string when a committed inline file of `bytes` is too big to serve, else null. Pure. */
+export function oversizeReason(bytes) {
+  return bytes > LEGACY_SINGLE_MAX_BYTES ? `its committed single file is ${(bytes / 1e6).toFixed(0)} MB, over the ${(LEGACY_SINGLE_MAX_BYTES / 1e6).toFixed(0)} MB cap for a legacy inline build (the site size guard)` : null;
+}
+
 /** The HTML (and mobile HTML, or null) a listed build serves, or { error }. */
 function artifactsOf(b) {
   if (b.source === 'git') {
+    // Judge the size from the LFS pointer first, so an oversized build is never fetched.
+    let pointerText = '';
+    // The selftest's simulated purge must reach committedArtifact, so no pre-fetch cap check then.
+    if (!SIMULATE_PURGE) try { pointerText = git(['show', `${b.sha}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { /* not readable as text: judged after the fetch */ }
+    const tooBig = pointerOversize(pointerText);
+    if (tooBig) return { error: tooBig };
     const html = committedArtifact(b.sha, 'AshenSpire.html');
     if (!html) return { error: 'its committed HTML can no longer be fetched (LFS object unavailable)' };
+    const big = oversizeReason(html.length);
+    if (big) return { error: big };
     // Committed builds predate the light tier (#1332 stopped committing the
     // same day light arrived), so a committed file is the full edition.
     let hasMobile = true;
@@ -484,17 +617,23 @@ function artifactsOf(b) {
   }
   const fullArt = fullArtFor(b.branch, b.sha);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
-  const r = seeded || rebuildAt(b.sha, fullArt);
+  const r = seeded || rebuildAt(b.sha, fullArt, { skipSingle: b.downloadArchived === true && !singleNeeded.has(`${b.sha}:${fullArt ? 'full' : 'light'}`) });
   if (r.error) return r;
-  const html = readFileSync(join(r.dir, 'AshenSpire.html'));
+  const archived = b.downloadArchived === true && existsSync(join(r.dir, WEB_DIR, 'AshenSpire.html'));
+  // An archived pack build's single file was not copied (rebuildAt skipSingle); its page is the web edition.
+  const html = archived ? null : readFileSync(join(r.dir, 'AshenSpire.html'));
   // THE REBUILD MUST CARRY THE SOURCE DIGEST ITS COMMIT'S BOX NAMES — the
   // bundle stamps it into the title screen, so a file built from other source
   // cannot pass.
-  if (b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
+  if (!archived && b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
   const mobilePath = join(r.dir, MOBILE_ARTIFACT);
   const mobile = existsSync(mobilePath) ? readFileSync(mobilePath) : null;
-  const edition = rebuiltEdition(fullArt, Boolean(mobile));
+  const edition = archived ? (fullArt ? 'full' : 'light') : rebuiltEdition(fullArt, Boolean(mobile));
   const web = webEditionIn(r.dir, seeded ? null : stagingStore());
+  if (archived && web) {
+    if (b.digest && !web.html.includes(b.digest)) return { error: `the rebuilt web edition does not carry src digest ${b.digest}` };
+    return { html: web.html, web, edition };
+  }
   if (!web) return { html, mobile, edition };
   // A PACK-SHAPED BUILD: the page is the web edition, and the download is the
   // build's LIGHT single file, kept whole (owner answer 3): AshenSpire.html on
@@ -670,7 +809,9 @@ function downloadLink(rel, b, label = 'Download', edition = 'full') {
   return `<a class="play dl" href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(label)}</a>`;
 }
 /** Both download buttons for one build, sized; the mobile one only when the build has it. */
+const ARCHIVED_NOTE = 'Play only: the offline file is kept for the newest build of each channel';
 function downloadButtons(rel, b, suffix) {
+  if (b.downloadArchived) return `<span class="meta">${ARCHIVED_NOTE}.</span>`;
   // A LIGHT BUILD (dev/test since 2026-09-26) is one file with phone-sized art
   // and no mobile twin; calling it "full" would promise art it does not carry.
   if (b.shape === 'pack') return downloadLink(rel, b, `Download${suffix} — light art single file (${mb(downloadBytes(b))})`, 'full');
@@ -680,6 +821,7 @@ function downloadButtons(rel, b, suffix) {
   return full + mobile;
 }
 function tableDownload(rel, b, edition) {
+  if (b.downloadArchived && edition === 'full') return `<span class="meta">— (${ARCHIVED_NOTE})</span>`;
   if (edition === 'mobile' && b.shape === 'pack') return '<span class="meta">— (web edition: its download is the light single file)</span>';
   if (edition === 'mobile' && b.edition === 'light' && !b.mobileBytes) return '<span class="meta">— (light build: the one file is already phone-sized)</span>';
   if (edition === 'mobile' && !b.mobileBytes) return '<span class="meta">— (predates the mobile edition)</span>';
@@ -967,7 +1109,7 @@ ${previews ? branchPreviewSection(previews) : ''}
 <h2>Other pages on this site</h2>
 ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)}">${esc(pg.title || pg.path)}</a>${pg.title ? '' : ' <span class="meta">(no &lt;title&gt; — listed by path)</span>'} <span class="meta">${esc(pg.path)}</span></li>`).join('')}</ul>` : '<p class="meta">no other pages found in the published tree</p>'}
 <p><a href="${REPO_URL}">repository</a></p>
-<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history and from the published tree — nothing on this page is typed by hand, this list included. Listing the newest ${KEEP} builds per branch.</footer>
+<footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code> from git history and from the published tree — nothing on this page is typed by hand, this list included. Listing the newest builds per branch (${KEEP_NOTE}).</footer>
 </main></body></html>`;
 }
 
@@ -1026,8 +1168,8 @@ function writeOgImage(outDir, mainRef) {
 }
 /**
  * /assets/ FOR THE SOURCE PAGES, FROM THE STORE (docs/EXTERNAL-ASSETS-PLAN.md
- * step 13). /index-game.html, docs/component-catalog.html, items-preview.html,
- * docs/low-poly-fighters/ and pose-studio/ name images by their `assets/…` id.
+ * step 13). /index-game.html, docs/component-catalog.html and
+ * docs/low-poly-fighters/ name images by their `assets/…` id.
  * While main's tree carries assets/ the base tree serves it; once it does not,
  * every id main's art-manifest.json lists is written at /<id> from the store
  * this run published: the light object for an art id (the tier dev and test
@@ -1143,13 +1285,20 @@ function publishBuild(outDir, b, a) {
     b.shape = 'pack';
     const { pin } = publishPack(outDir, rel, html, a.web.from);
     b.tier = pin.tier || null;
-    // THE DOWNLOAD, KEPT WHOLE: the light single file, beside the page.
-    const target = join(dir, DOWNLOAD_PATH);
-    mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, a.download);
-    if (Buffer.compare(readFileSync(target), a.download) !== 0) throw new Error(`${rel}: written download differs from its source`);
-    b.download = { path: DOWNLOAD_PATH, bytes: a.download.length, sha256: sha256(a.download) };
-    checks++;
+    if (b.downloadArchived) {
+      // Archived: no download/ on the site, so build.json names none and the
+      // in-game downloader refuses it ("not ready") rather than saving a game
+      // with no art (see the top-level `bytes: null` below).
+      b.download = null;
+    } else {
+      // THE DOWNLOAD, KEPT WHOLE: the light single file, beside the page.
+      const target = join(dir, DOWNLOAD_PATH);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, a.download);
+      if (Buffer.compare(readFileSync(target), a.download) !== 0) throw new Error(`${rel}: written download differs from its source`);
+      b.download = { path: DOWNLOAD_PATH, bytes: a.download.length, sha256: sha256(a.download) };
+      checks++;
+    }
   } else {
     b.shape = 'single';
     writeFileSync(join(dir, 'index.html'), html);
@@ -1220,7 +1369,7 @@ function publishBuild(outDir, b, a) {
   return checks;
 }
 
-function assemble(outDir, keep) {
+function assemble(outDir, keepOverride) {
   const generatedAt = new Date().toISOString();
   skippedBuilds.length = 0;
   rmSync(outDir, { recursive: true, force: true });
@@ -1305,28 +1454,44 @@ function assemble(outDir, keep) {
 
   let checks = 0;
   const branchData = [];
+  // Every branch's list once, so the run can say what it will rebuild and cap it.
+  const listings = new Map(BRANCHES.map((branch) => [branch, buildsOf(branch, keepFor(branch, keepOverride))]));
+  const { plan: rebuildPlan, over: overCap } = planRebuilds([...listings].map(([branch, l]) => ({ branch, builds: l.builds })), {
+    max: MAX_REBUILDS,
+    tierOf: (branch, sha) => (fullArtFor(branch, sha) ? 'full' : 'light'),
+    seeded: (b) => Boolean(MAIN_BUILD) && b.branch === 'main' && b.sha === mainHeadSha,
+  });
+  singleNeeded = singleNeededKeys([...listings].map(([branch, l]) => ({ branch, builds: l.builds })), (branch, sha) => (fullArtFor(branch, sha) ? 'full' : 'light'));
+  console.log(`rebuild plan: ${rebuildPlan.length} builds (cap ${MAX_REBUILDS} on non-newest)${rebuildPlan.length ? ' — ' + rebuildPlan.map((x) => `${x.branch}/${x.ordinal} ${x.sha.slice(0, 7)} ${x.tier}`).join(', ') : ''}`);
   for (const branch of BRANCHES) {
-    const { head, builds: listed, headTracksBuild, headOrdinal } = buildsOf(branch, keep);
-    // Fetch or rebuild every listed build FIRST, so one that cannot be served
-    // leaves the list (named in skippedBuilds) before any page links it.
-    const served = new Map();
-    for (const b of listed) {
-      const a = artifactsOf(b);
-      if (a.error) skip(b, a.error); else served.set(b, a);
-    }
-    // A build the store refuses (a name another build already published with
-    // other bytes, or a pin or index naming a file outside packs/ and
-    // objects/) is skipped and named like any other unservable build; the
-    // rest of the publication goes ahead (review of #1456).
+    const { head, builds: allListed, headTracksBuild, headOrdinal } = listings.get(branch);
+    const listed = [];
+    for (const b of allListed) { if (overCap.has(b)) skip(b, `rebuild cap ${MAX_REBUILDS} reached`); else listed.push(b); }
+    // Per build: decide whether it keeps its download (only the first build
+    // actually PUBLISHED does), fetch or rebuild it, publish it, free it. A build
+    // the store refuses (a name another build already published with other
+    // bytes, or a pin or index naming a file outside packs/ and objects/) is
+    // skipped and named like any other unservable build; the rest goes ahead
+    // (review of #1456), and the next build then becomes the first published.
     const builds = [];
+    const laterKeys = new Set();
+    for (const later of BRANCHES.slice(BRANCHES.indexOf(branch) + 1)) {
+      for (const lb of listings.get(later).builds) if (lb.source === 'rebuild') laterKeys.add(`${lb.sha}:${fullArtFor(lb.branch, lb.sha) ? 'full' : 'light'}`);
+    }
     for (const b of listed) {
-      if (!served.has(b)) continue;
-      try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
+      b.downloadArchived = archivedFor(branch, builds.length);
+      const a = artifactsOf(b);
+      if (a.error) { skip(b, a.error); freeRebuilds([b], laterKeys); continue; }
+      if (!a.web) b.downloadArchived = undefined;
+      try { checks += publishBuild(outDir, b, a); builds.push(b); }
       catch (error) {
         if (!error.refused) throw error;
         rmSync(join(outDir, branch, String(b.ordinal)), { recursive: true, force: true });
         skip(b, error.message);
       }
+      // Published: its out/ dir is no longer read (a later branch listing the
+      // same sha:tier rebuilds it; store/ stays, shared).
+      freeRebuilds([b], laterKeys);
     }
     enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
     // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
@@ -1347,9 +1512,14 @@ function assemble(outDir, keep) {
       const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
       writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44" role="img" aria-label="Published build ${stamp}"><rect width="220" height="44" rx="6" fill="#243344"/><text x="110" y="28" text-anchor="middle" fill="white" font-family="sans-serif" font-size="18" font-weight="600">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
-      for (const extra of [ASSET_BASE_FILE, 'download']) {
-        const from = join(outDir, branch, String(builds[0].ordinal), extra);
-        if (existsSync(from)) cpSync(from, join(latest, extra), { recursive: true });
+      const from0 = join(outDir, branch, String(builds[0].ordinal), ASSET_BASE_FILE);
+      if (existsSync(from0)) cpSync(from0, join(latest, ASSET_BASE_FILE), { recursive: true });
+      // /latest/download/ stays a working link (README, readme-sync) but is a redirect to
+      // the newest build's file, not a second 157 MB copy (run 42254638934: three copies
+      // of the same file were 470 MB of the 2810 MB site).
+      if (existsSync(join(outDir, branch, String(builds[0].ordinal), DOWNLOAD_PATH))) {
+        mkdirSync(join(latest, 'download'), { recursive: true });
+        writeFileSync(join(latest, DOWNLOAD_PATH), latestDownloadStub(builds[0].ordinal));
       }
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
@@ -1382,6 +1552,11 @@ function assemble(outDir, keep) {
   // it is the mobile failure this pass exists to remove, moved one layer out.
   for (const d of branchData) for (const b of d.builds) {
     for (const edition of b.mobileBytes ? ['full', 'mobile'] : ['full']) {
+      if (b.downloadArchived && edition === 'full') {
+        if (existsSync(join(outDir, downloadHref('', b, edition)))) throw new Error(`${d.branch}/${b.ordinal} is archived but still carries its download`);
+        checks++;
+        continue;
+      }
       const href = downloadHref('', b, edition);
       if (!root.includes(`href="${href}" download="`)) throw new Error(`root index does not offer a ${edition} download for ${d.branch}/${b.ordinal}`);
       if (!existsSync(join(outDir, href))) throw new Error(`${edition} download target missing on disk: ${href}`);
@@ -1396,7 +1571,7 @@ function assemble(outDir, keep) {
   writeOgImage(outDir, mainRef);
   writeSourceAssets(outDir, mainRef);
   dropBuildTree();
-  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
+  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep: KEEP_OVERRIDE ?? RETENTION, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
 
@@ -1440,7 +1615,10 @@ function check(outDir) {
       // THE DOWNLOAD, KEPT WHOLE: the light single file the build list and
       // offlineDownload.js name, present with the bytes recorded for it.
       const file = join(bdir, b.download?.path || DOWNLOAD_PATH);
-      if (!b.download || !existsSync(file)) red(`MISSING ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the build's Download names it and the site has no such file`);
+      if (b.downloadArchived) {
+        if (existsSync(file) || b.download || download.download) red(`ARCHIVED ${d.branch}/${b.ordinal} still carries a download that is said to be archived`);
+        else checks++;
+      } else if (!b.download || !existsSync(file)) red(`MISSING ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the build's Download names it and the site has no such file`);
       else {
         const bytes = readFileSync(file);
         const meta = download.download || {};
@@ -1796,7 +1974,7 @@ function packStorePlants(probe, box, good) {
 }
 
 function boundary() {
-  console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
+  console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest builds per branch (${KEEP_NOTE}) — older ordinals are in git, not on this site.`);
 }
 
 // `--branch-dir <name>`: the workflow's one check of a branch name. It prints the
@@ -2032,7 +2210,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (!process.exitCode) console.log(`pages-site --check: OK — ${n} checks passed`);
   } else {
     const outDir = resolve(ROOT, flag('--out', '_site'));
-    const { checks, branchData } = assemble(outDir, KEEP);
+    const { checks, branchData } = assemble(outDir, KEEP_OVERRIDE);
     for (const d of branchData) console.log(`  ${d.branch}: ${d.builds.length} build(s), latest ${d.builds[0] ? stampOf(d.builds[0]) : 'none'}`);
     // Named on its own line, above the verdict, so it cannot hide inside a green.
     if (missingBranches.length) console.log(`  MISSING: ${missingBranches.join(', ')} — no such branch on ${REMOTE}; assembled without it`);

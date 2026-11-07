@@ -99,19 +99,10 @@
 //
 // R5 IS THE WEAKEST EDGE IN THIS FILE AND IT IS A SUBSTRING MATCH — the same
 // technique this file's own header calls a trap. It is admissible only because
-// it is CLOSED (one entry), RATCHETED (a declared needle that has vanished is
-// a FAILURE, never a silent drop back to red), and because the alternative is
-// worse: `glassCannon` would sit red forever for a reason that is not the class
-// this check exists to catch, and "the first person to see a check permanently
-// red turns it off."
-//
-// THE FINDING R5 RECORDS, not fixed here because it is not content:
-// src/main.js:1101 does `if (mods.glassCannon) playerStatuses.push({ status:
-// 'glassCannon', stacks: 1 })`. The Custom Climb mod IDs are data
-// (content/customMods.js); the mapping from id to status is code. A fourth
-// chaos mod granting a status is an engine edit today. That is Law 1 clause 1's
-// business, and it is one line to fix by moving the status onto the mod row —
-// on the day someone owns that call.
+// it is CLOSED (a short declared list), RATCHETED (a declared needle that has
+// vanished is a FAILURE, never a silent drop back to red), and because the
+// alternative is a status that sits red forever for a reason that is not the
+// class this check exists to catch.
 //
 // ---------------------------------------------------------------------------
 // THE FLOORS — because an empty population is how a dead instrument prints a
@@ -204,10 +195,34 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // and keep the reason in the row.
 export const CODE_APPLIERS = [
   {
-    status: 'glassCannon',
-    file: 'src/main.js',
-    needle: `playerStatuses.push({ status: 'glassCannon'`,
-    why: 'Custom Climb chaos mod: the mod id is data, the status it grants is code',
+    status: 'barrier',
+    file: 'src/engine/actions.js',
+    needle: `statuses.applyStatus(ctx, entity, 'barrier', amount, null);`,
+    why: 'SPEC 4.1a: every gainBarrier point (and stance/enemy barrier grants) becomes one Barrier stack in code',
+  },
+  {
+    status: 'ward',
+    file: 'games/ashenspire/packs/core/cards.json',
+    needle: `"status": "ward"`,
+    why: 'SPEC 4.1a: Mote Shield applies Ward from the Core pack, which this walk of the default bundle does not read',
+  },
+  {
+    status: 'shocked',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, target, 'shocked'`,
+    why: 'a passed lightning Shocked contest (SPEC 4.7); the 1 stack is a rule, not a card row',
+  },
+  {
+    status: 'bedrock',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, enemy, rules.bedrockStatus`,
+    why: 'an earth-element enemy opens the fight with Bedrock (SPEC 4.7); the element is data, the status is the rule',
+  },
+  {
+    status: 'damp',
+    file: 'src/engine/elementLightning.js',
+    needle: `applyStatus(ctx, enemy, row.status, row.stacks`,
+    why: 'an enemy row\'s authored startStatuses (Stitch Crab opens Damp, SPEC 4.7) is seeded at spawn',
   },
 ];
 

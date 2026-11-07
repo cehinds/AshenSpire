@@ -146,7 +146,9 @@ test('Core Block and rating modifiers distinguish base payload from projected an
   assert.ok(open.totalDamage > unmodified.totalDamage, 'the base payload has not included live AR');
   combat.player.block = 3;
   const blocked = previewIntent(combat, enemy.id);
-  assert.ok(blocked.totalDamage < open.totalDamage, 'Core preview already spends Block');
+  // Owner, 2026-11-03: the quoted hit is the raw hit, so Block no longer lowers it; it still lowers the resolved hpLoss.
+  assert.equal(blocked.totalDamage, open.totalDamage, 'Core preview quotes the raw hit, ignoring Block');
+  assert.ok(blocked.hpLoss < open.hpLoss, 'while Block still cuts the forecast HP loss');
   const cards = enemyMoveCards(registries.enemies.get(enemy.enemyId), { enemy, registries,
     preview: blocked, actionPreviews: { slash: actionPreview } });
   const shown = cards.find(row => row.moveId === 'slash');
@@ -155,7 +157,7 @@ test('Core Block and rating modifiers distinguish base payload from projected an
   const before = combat.player.hp;
   dispatch(combat, { type: 'setReactions', enabled: false });
   dispatch(combat, { type: 'endTurn' });
-  assert.equal(before - combat.player.hp, blocked.totalDamage);
+  assert.equal(before - combat.player.hp, blocked.hpLoss);
   const receipt = combat.eventLog.find(row => row.type === 'enemyMoveStarted' && row.sourceId === enemy.id);
   const snapshot = enemyDeckInspection(combat, enemy, cards, blocked).last;
   const committedBase = receipt.actionPreview.actionEffects.find(row => row.op === 'damage').amount;

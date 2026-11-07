@@ -1,19 +1,14 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, targetHudPanelSizing, targetBodyHudPlacement, placeTargetHudPanels, targetHudIntentObstacle, createTargetHudDwell } from '../models/TargetHudModel.js';
-import { classicAppearance } from '../displayAppearance.js';
+import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
-import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
-import { isWideFormFactor } from '../models/FormFactorModel.js';
-import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
+import { anchorLocalBox } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
+import { refreshIconTray } from './iconTray.js';
+import { setVar, setStyle, setData, setAttr, markBuilt, morph } from '../domWrite.js';
 
-// Inline writes that skip an unchanged value, so a repeated geometry pass
-// dirties no layout and the next pass's reads are not forced flushes.
-const setVar = (node, name, value) => { if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value); };
-const setStyle = (node, name, value) => { if (node.style[name] !== value) node.style[name] = value; };
-const setData = (node, name, value) => { if (node.dataset[name] !== value) node.dataset[name] = value; };
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
 const contains = (r, x, y, pad = 0) => x >= r.left - pad && x <= r.left + r.width + pad && y >= r.top - pad && y <= r.top + r.height + pad;
 function corridor(a, b, x, y, radius) {
@@ -29,7 +24,17 @@ function panelFor(entry) {
   shell.dataset.role = entry.role;
   shell.setAttribute('aria-label', t('combat.targetHud.namedDetails', { name: entry.name }));
   const panel = node('div', 'target-hud-panel');
-  panel.append(node('div', 'target-hud-name', entry.name));
+  // Owner 2026-11-06: an enemy's panel shows its intent (the whole queue) where its name text was. The name stays for
+  // screen readers (aria-label/title) and in the inspect panel; the player's panel keeps its name.
+  const intent = entry.role === 'enemy' && entry.createIntent ? entry.createIntent() : null;
+  if (entry.role === 'enemy') {
+    const slot = node('div', 'target-hud-name target-hud-name-intent');
+    slot.title = entry.name; slot.setAttribute('aria-label', entry.name);
+    const sr = node('span', 'sr-only', entry.name);
+    slot.append(sr);
+    if (intent) slot.append(intent);
+    panel.append(slot);
+  } else panel.append(node('div', 'target-hud-name', entry.name));
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
@@ -43,6 +48,7 @@ function panelFor(entry) {
 }
 
 /** Scoped presentation owner. Target activation delegates to the combat owner. */
+const playerAnchors = new WeakMap();
 export function mountCombatTargetHud(combat, { field = combat.querySelector('.field'), config = targetHudConfig(), onActivate, canInspect = () => true } = {}) {
   const layer = node('div', 'target-hud-layer'), cells = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   layer.setAttribute('aria-label', t('combat.targetHud.details'));
@@ -50,7 +56,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   field.append(cells, layer);
   let entries = new Map(), eligible = [], focused = null, hover = null, focusWithin = null, shown = [], enabled = false, disposed = false, raf = null;
   const panels = new Map(), infoButtons = new Map();
-  let drawnCells = null;
+  let drawnCells = null, placedKey = null, placeTries = 0;
   const gestures = new AbortController();
   let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, readGesture = null, clickSeriesActivated = false, tapInspected = false, pressMoved = false;
   const cancelHold = () => { clearTimeout(holdTimer); held = null; };
@@ -61,16 +67,16 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const inspect = (id, opener) => { cancelHold(); hideTooltip(); entries.get(id)?.inspect?.(opener); };
   const syncActivation = (shell, id) => {
     const active = !!onActivate && eligible.includes(id);
-    shell.dataset.targeting = String(active);
+    setData(shell, 'targeting', active);
     const name = shell.querySelector('.target-hud-name');
-    if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
-    else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
+    const mark = (el, role) => { // each write only when it differs: this runs on every paint
+      if (role) { setAttr(el, 'role', 'button'); setAttr(el, 'tabindex', 0); }
+      else { if (el.hasAttribute('role')) el.removeAttribute('role'); if (el.hasAttribute('tabindex')) el.removeAttribute('tabindex'); }
+    };
+    mark(name, active);
     // Owner 2026-10-25: out of targeting the whole panel is the inspection door.
     // Its name comes from its content (name, HP, stats), not an override.
-    const panel = shell.querySelector('.target-hud-panel');
-    const door = !active && canInspect();
-    if (door) { panel.setAttribute('role', 'button'); panel.tabIndex = 0; }
-    else { panel.removeAttribute('role'); panel.removeAttribute('tabindex'); }
+    mark(shell.querySelector('.target-hud-panel'), !active && canInspect());
   };
   function wireInspect(shell, id) {
     // The visible name/HP replaces the frame footer in this layout. While
@@ -157,11 +163,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   listen(window, 'blur', () => { cancelHold(); lastTap = null; inspectionPointer = null; readGesture = null; clickSeriesActivated = false; });
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
-  const desired = () => [...new Set([...eligible, focused, hover, focusWithin].filter(id => entries.has(id)))];
+  const desired = () => targetHudDesiredIds({ entries: entries.values(), eligible, focused, hover, focusWithin });
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
   function gate() {
     const next = targetHudEnabled({ formFactor: document.documentElement.dataset.formFactor,
-      classic: classicAppearance(), layout: combat.dataset.layout || 'formation' }, config);
+      layout: combat.dataset.layout || 'formation' }, config);
     enabled = next;
     if (combat.dataset.targetHud !== String(next)) combat.dataset.targetHud = String(next);
     if (layer.hidden === next) layer.hidden = !next;
@@ -171,8 +177,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     refreshDesired();
   }
   function clearPanels() {
-    for (const panel of panels.values()) panel.node.remove();
-    for (const button of infoButtons.values()) button.remove();
+    for (const panel of panels.values()) { clearTimeout(panel.node.ashenRemove); panel.watch.disconnect(); panel.node.remove(); panel.info.remove(); }
     infoButtons.clear();
     panels.clear();
     for (const frame of field.querySelectorAll('.combatant')) {
@@ -181,195 +186,222 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       delete frame.dataset.matchup;
       frame.style.removeProperty('--combat-matchup-color');
     }
-    cells.replaceChildren(); drawnCells = null;
+    cells.replaceChildren(); drawnCells = null; placedKey = null;
   }
   function frameFor(id) { return [...field.querySelectorAll('.combatant')].find(frame => frame.dataset.eid === id); }
+  // The Inspect control beside a panel is built with it and kept; only its label and handlers follow a rebuild.
+  const buildInfo = (id, entry) => {
+    const info = combatantInfo(entry.name, opener => inspect(id, opener));
+    info.classList.add('target-hud-inspect-info'); info.dataset.eid = id;
+    return info;
+  };
+  // Owner (2026-11-06): every HUD node is created once, when the combatant first appears (at combat mount). After that a
+  // change of value is written into the nodes that stand (morph), a panel is shown or hidden by class, and nothing is
+  // re-created, replaced or re-placed. Only a combatant leaving the board (a defeat) removes its panel.
+  function createPanel(id, entry) {
+    const shell = panelFor(entry); markBuilt(shell);
+    shell.style.setProperty('--combat-matchup-color', entry.auraColor || '#e4cd59');
+    const info = buildInfo(id, entry); markBuilt(info);
+    combat.append(info); infoButtons.set(id, info);
+    info.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
+    info.addEventListener('pointerleave', () => { hover = null; refreshDesired(); });
+    info.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
+    info.addEventListener('focusout', () => { focusWithin = null; refreshDesired(); });
+    wireInspect(shell, id);
+    layer.append(shell);
+    shell.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
+    shell.addEventListener('pointerleave', event => pointer(event));
+    shell.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
+    shell.addEventListener('focusout', event => { if (!shell.contains(event.relatedTarget)) { focusWithin = null; refreshDesired(); } });
+    const record = { node: shell, info, key: entry.key, statusKey: entry.statusKey };
+    record.watch = new ResizeObserver(() => placeInfo(record)); record.watch.observe(shell);
+    panels.set(id, record);
+    return record;
+  }
+  // The panel's text and bars are rewritten where they stand. Meters holding a proc bar carry listeners a rebuild cannot
+  // hand over, so those are replaced (a build-up bar appearing is a real structural change); so is a changed status tray.
+  function refreshPanel(record, entry) {
+    const fresh = panelFor(entry), live = record.node;
+    const livePanel = live.querySelector('.target-hud-panel'), freshPanel = fresh.querySelector('.target-hud-panel');
+    const keeps = !livePanel.querySelector('.procbar, .arcane') && !freshPanel.querySelector('.procbar, .arcane');
+    if (keeps) morph(livePanel, freshPanel);
+    else { markBuilt(freshPanel); livePanel.replaceWith(freshPanel); }
+    if (record.statusKey !== entry.statusKey) {
+      const tray = live.querySelector('.target-hud-statuses'), next = fresh.querySelector('.target-hud-statuses');
+      const swapped = morph(tray, next);
+      if (swapped) refreshIconTray(tray, next);
+    }
+    setAttr(live, 'aria-label', fresh.getAttribute('aria-label'));
+    morph(record.info, buildInfo(entry.id, entry));
+    record.key = entry.key; record.statusKey = entry.statusKey;
+  }
+  function removePanel(id, record) {
+    panels.delete(id); infoButtons.delete(id); record.watch.disconnect(); record.info.remove(); record.node.classList.add('leaving');
+    const remove = () => record.node.remove();
+    if (reducedMotionRequested()) remove(); else record.node.addEventListener('transitionend', remove, { once: true });
+    // A disconnected mount or a suppressed CSS transition still owns removal.
+    record.node.ashenRemove = setTimeout(remove, config.motion.fadeMs);
+  }
   function paint() {
     if (disposed || !enabled) return;
     const next = new Set(shown.filter(id => entries.has(id)));
-    for (const [id, panel] of panels) if (!next.has(id)) {
-      panels.delete(id); infoButtons.get(id)?.remove(); infoButtons.delete(id); panel.node.classList.add('leaving');
-      const remove = () => panel.node.remove();
-      if (reducedMotionRequested()) remove(); else panel.node.addEventListener('transitionend', remove, { once: true });
-      // A disconnected mount or a suppressed CSS transition still owns removal.
-      panel.node.ashenRemove = setTimeout(remove, config.motion.fadeMs);
-    }
-    for (const id of next) {
-      const entry = entries.get(id), old = panels.get(id);
-      if (old && old.key === entry.key) {
-        old.node.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
-        syncActivation(old.node, id);
-        continue;
-      }
-      const shell = panelFor(entry);
-      shell.dataset.matchup = entry.matchup || 'neutral';
-      shell.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
+    for (const [id, record] of panels) if (!entries.has(id)) removePanel(id, record);
+    let created = false;
+    for (const [id, entry] of entries) {
+      let record = panels.get(id);
+      if (!record) { record = createPanel(id, entry); created = true; } else if (record.key !== entry.key) refreshPanel(record, entry);
+      const shell = record.node, visible = next.has(id);
+      setData(shell, 'matchup', entry.matchup || 'neutral');
+      setData(shell, 'matchupActive', !!entry.matchupActive && eligible.includes(id));
+      setVar(shell, '--combat-matchup-color', entry.auraColor || '#e4cd59');
       syncActivation(shell, id);
-      shell.style.setProperty('--combat-matchup-color', entry.auraColor || '#e4cd59');
-      infoButtons.get(id)?.remove();
-      const info = combatantInfo(entry.name, opener => inspect(id, opener));
-      info.classList.add('target-hud-inspect-info'); info.dataset.eid = id;
-      combat.append(info); infoButtons.set(id, info);
-      info.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
-      info.addEventListener('pointerleave', () => { hover = null; refreshDesired(); });
-      info.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
-      info.addEventListener('focusout', () => { focusWithin = null; refreshDesired(); });
-      wireInspect(shell, id);
-      if (old) old.node.replaceWith(shell); else layer.append(shell);
-      panels.set(id, { node: shell, key: entry.key });
-      shell.addEventListener('pointerenter', () => { hover = id; refreshDesired(); });
-      shell.addEventListener('pointerleave', event => pointer(event));
-      shell.addEventListener('focusin', () => { focusWithin = id; refreshDesired(); });
-      shell.addEventListener('focusout', event => { if (!shell.contains(event.relatedTarget)) { focusWithin = null; refreshDesired(); } });
-
+      if (shell.classList.contains('visible') !== visible) shell.classList.toggle('visible', visible);
+      // A hidden panel and its Inspect control take no pointer or focus (CSS: visibility), and say so to assistive tech.
+      if (record.info.hidden === visible) record.info.hidden = !visible;
     }
     for (const frame of field.querySelectorAll('.combatant')) {
       const id = frame.dataset.eid;
       const entry = entries.get(id);
       const matchup = entry?.matchup || 'neutral', active = String(!!entry?.matchupActive && eligible.includes(id));
       const color = entry?.auraColor || '#e4cd59';
-      if (frame.dataset.matchup !== matchup) frame.dataset.matchup = matchup;
-      if (frame.dataset.matchupActive !== active) frame.dataset.matchupActive = active;
-      if (frame.style.getPropertyValue('--combat-matchup-color') !== color) frame.style.setProperty('--combat-matchup-color', color);
-      frame.classList.toggle('target-hud-selected', next.has(id));
-      frame.classList.toggle('target-hud-focused', id === focused || id === hover);
-      frame.classList.toggle('target-hud-candidate', eligible.includes(id));
+      setData(frame, 'matchup', matchup); setData(frame, 'matchupActive', active); setVar(frame, '--combat-matchup-color', color);
+      const toggle = (name, on) => { if (frame.classList.contains(name) !== on) frame.classList.toggle(name, on); };
+      toggle('target-hud-selected', next.has(id));
+      setData(frame, 'hudPinned', targetHudPinnedOnly({ entries: entries.values(), id, eligible, focused, hover, focusWithin }));
+      toggle('target-hud-focused', id === focused || id === hover);
+      toggle('target-hud-candidate', eligible.includes(id));
     }
+    if (created) placedKey = null;
     scheduleGeometry();
   }
+  const tintIds = () => targetHudTintIds({ entries: entries.values(), shown, eligible, focused, hover, focusWithin });
   function scheduleGeometry() { if (!disposed && raf === null) raf = requestAnimationFrame(geometry); }
-  // The two computed-style reads a frame's geometry needs (the core marker's
-  // custom properties and the active target's ::after box) change only when the
-  // frame's classes, inline style or the layout words change, so they are read
-  // once per such change and not once per run (each was a style flush after the
-  // run's own writes).
-  const frameMetrics = new WeakMap();
-  function metricsFor(frame, zoom) {
-    const root = document.documentElement;
-    const key = [frame.className, frame.getAttribute('style') || '', zoom, combat.dataset.layout, combat.dataset.targetHud,
-      root.dataset.displayAppearance, root.dataset.formFactor, root.dataset.viewPreset].join('|');
-    const known = frameMetrics.get(frame);
-    if (known?.key === key) return known.value;
-    const style = getComputedStyle(frame);
-    const x = parseFloat(style.getPropertyValue('--enemy-core-x')), y = parseFloat(style.getPropertyValue('--enemy-core-y'));
-    const value = { core: Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null, pseudo: null };
-    // The active target pseudo-element can extend past the sprite. Reserve
-    // its exact computed box; inactive legacy proxies do not consume room.
-    const pseudo = getComputedStyle(frame, '::after');
-    if (!(pseudo.display === 'none' || pseudo.visibility === 'hidden' || pseudo.pointerEvents === 'none' || ['none', 'normal'].includes(pseudo.content))) {
-      const width = parseFloat(pseudo.width), height = parseFloat(pseudo.height), left = parseFloat(pseudo.left), top = parseFloat(pseudo.top);
-      if ([width, height, left, top].every(Number.isFinite)) {
-        const matrix = new DOMMatrixReadOnly(pseudo.transform === 'none' ? undefined : pseudo.transform);
-        value.pseudo = { width, height, left: left + matrix.e, top: top + matrix.f };
+  // Owner (2026-11-06): "keep enemy mini HUDs above them in a fixed position; keep the player HUD anchored to the right and
+  // fixed". Each panel is placed once per layout pass (field.dataset.layoutEpoch, or a real viewport change) from its own
+  // figure alone: an enemy's centred on its mini rack, bottom at the rack's top, as wide as its cell; the player's right of
+  // the body at its top, as wide as its cell. No avoidance, no packing; only the screen edge clamps. A pose, a stance
+  // preview, a selection, a hover, an intent or damage never moves a panel. The anchor is kept in the player frame's own
+  // coordinates (css px from its top-left) and projected through the current frame box and zoom, so a page-zoom change
+  // below the relayout threshold cannot leave the panel behind the figure. Only a settled measurement (art and body both
+  // loaded) is kept; a fallback envelope is never frozen.
+  const bodyAnchors = new WeakMap();
+  function playerAnchor(frame, epoch, zoom) {
+    const sprite = frame.querySelector('.sprite');
+    const body = currentSpriteBodyBounds(sprite, scheduleGeometry), ink = currentSpriteArtBounds(sprite, scheduleGeometry);
+    const edge = ink && Number.isFinite(ink.left) && Number.isFinite(ink.right) && ink.right > ink.left ? ink : body;
+    const measured = body && Number.isFinite(edge?.left) && Number.isFinite(edge?.right)
+      ? { left: edge.left, width: edge.right - edge.left, top: body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (body.headY ?? body.top)) } : null;
+    const box = rect(frame), kept = bodyAnchors.get(frame);
+    const settled = measured && body.settled !== false && ink?.settled !== false;
+    if (settled && !(kept && kept.epoch === epoch)) bodyAnchors.set(frame, { epoch, local: {
+      left: (measured.left - box.left) / zoom, top: (measured.top - box.top) / zoom, width: measured.width / zoom, height: measured.height / zoom } });
+    const now = bodyAnchors.get(frame);
+    if (measured && now && now.epoch === epoch) return { settled: true, left: box.left + now.local.left * zoom, top: box.top + now.local.top * zoom,
+      width: now.local.width * zoom, height: now.local.height * zoom };
+    return measured ? { settled: false, ...measured } : { settled: false, ...frozenSpriteBox(sprite) };
+  }
+  // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as its
+  // cell never has a neighbour's control over it. It follows the panel's box: placed with it, and again whenever the panel
+  // changes size (a status tray appearing grows an enemy's panel upward), through a ResizeObserver, never a poll.
+  // The same resize path keeps an enemy's hanging panel inside the screen edge: it hangs from `hang` (just above its rack),
+  // so when it grows taller (a status tray appears) its top may pass `minTop`; then the hang point drops, never the figure anchor.
+  function clampHang(record) {
+    if (record.hang == null || !record.node.isConnected) return;
+    const fieldBox = rect(field), height = record.node.getBoundingClientRect().height;
+    const y = Math.max(record.hang, record.minTop + height);
+    if (y === record.hangApplied) return;
+    const local = anchorLocalBox(fieldBox, { left: 0, top: y, width: 0, height: 0 }, { zoom: record.zoom });
+    setStyle(record.node, 'top', `${local.top}px`); record.hangApplied = y;
+  }
+  function placeInfo(record) {
+    clampHang(record);
+    if (!record.node.isConnected) return;
+    const panel = record.node.querySelector('.target-hud-panel').getBoundingClientRect(), rootBox = combat.getBoundingClientRect();
+    if (!panel.width) return;
+    const info = anchorLocalBox(rootBox, { left: panel.right - 20 - 5, top: panel.top + 5, width: 20, height: 20 });
+    setStyle(record.info, 'left', `${info.left}px`); setStyle(record.info, 'top', `${info.top}px`);
+    setStyle(record.info, 'width', `${info.width}px`); setStyle(record.info, 'height', `${info.height}px`);
+  }
+  function place(fieldBox, rootBox, zoom, bounds, epoch) {
+    const gap = config.positioning.gapPx, sizing = config.sizing;
+    const rows = [];
+    for (const [id, record] of panels) {
+      const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
+      const cellWidth = Number(frame.dataset.cellWidth) || rect(frame).width;
+      rows.push({ id, record, frame, entry, cellWidth, ...miniHudScale({ cellWidth }) });
+    }
+    // Writes: the panel is exactly as wide as its cell, its contents scaled to it (never below the minimum font).
+    for (const { record, cellWidth, scale, fontPx } of rows) {
+      const node = record.node;
+      setVar(node, '--mini-hud-scale', String(scale));
+      setVar(node, '--target-hud-font', `${fontPx / zoom}px`);
+      setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale / zoom}px`);
+      setStyle(node, 'width', `${anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width: cellWidth, height: 0 }, { zoom }).width}px`);
+    }
+    // Reads: each panel's height (after its font and width), each enemy's rack and the player's anchor.
+    let ready = true;
+    for (const row of rows) {
+      row.height = row.record.node.getBoundingClientRect().height || sizing.panelHeightPx;
+      if (row.entry.role === 'player') { row.anchor = playerAnchor(row.frame, epoch, zoom); if (!row.anchor.settled) ready = false; }
+      else {
+        const rack = row.frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack ? rack.getBoundingClientRect() : null;
+        if (!box || !box.height) { ready = false; continue; }
+        row.rack = { centerX: box.left + box.width / 2, top: box.top };
       }
     }
-    frameMetrics.set(frame, { key, value });
-    return value;
+    // Writes: positions. An enemy panel hangs from its bottom edge (CSS translates it up by its own height), so a taller
+    // status tray never moves it down; the player's top is the body's top.
+    const boxes = [];
+    for (const row of rows) {
+      let at;
+      if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
+      else if (row.rack) {
+        const placed = enemyHudPlacement({ centerX: row.rack.centerX, bottom: row.rack.top - gap / 4, width: row.cellWidth, height: row.height, bounds });
+        at = { left: placed.left, top: placed.top + row.height };
+        Object.assign(row.record, { hang: row.rack.top - gap / 4, minTop: bounds.top, hangApplied: at.top, zoom });
+      }
+      if (!at) continue;
+      const local = anchorLocalBox(fieldBox, { left: at.left, top: at.top, width: 0, height: 0 }, { zoom });
+      setStyle(row.record.node, 'left', `${local.left}px`); setStyle(row.record.node, 'top', `${local.top}px`);
+      boxes.push(row);
+    }
+    for (const row of boxes) placeInfo(row.record);
+    return ready;
   }
-  // Reads and writes are in separate phases (a write between two reads made each
-  // later read a forced layout, one per combatant or panel): everything is read
-  // from the DOM as it stands, then each write group is followed only by the
-  // reads that depend on it (a panel's height after its font size, its box after
-  // its position).
   function geometry() {
     raf = null;
     if (disposed || !enabled || !field.isConnected) return;
-    // Phase 1: reads.
     const fieldBox = rect(field), zoom = fieldBox.width / field.clientWidth || 1;
     const hand = combat.querySelector('.hand'), handTop = hand?.getBoundingClientRect().top;
     const rootBox = combat.getBoundingClientRect();
     const bottom = Math.min(fieldBox.top + fieldBox.height, Number.isFinite(handTop) ? handTop - config.positioning.gapPx : rootBox.bottom);
-    const bounds = { ...fieldBox, height: Math.max(0, bottom - fieldBox.top) };
+    // Clamp against what is visible: the field, the combat root and the viewport, then the hand-top cut.
+    const vw = window.innerWidth || rootBox.right, vh = window.innerHeight || rootBox.bottom;
+    const visLeft = Math.max(fieldBox.left, rootBox.left, 0), visTop = Math.max(fieldBox.top, rootBox.top, 0);
+    const visRight = Math.min(fieldBox.left + fieldBox.width, rootBox.right, vw), visBottom = Math.min(bottom, rootBox.bottom, vh);
+    const bounds = { left: visLeft, top: visTop, width: Math.max(0, visRight - visLeft), height: Math.max(0, visBottom - visTop) };
+    const epoch = field.dataset.layoutEpoch || '';
     const frames = [...field.querySelectorAll('.combatant:not(.dead)')];
-    const intents = frames.map(frame => {
-      const body = currentSpriteBodyBounds(frame.querySelector('.sprite'), scheduleGeometry);
-      const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-      const intentBox = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect();
-      return { frame, intentWidth: intentBox?.width || 0, intentHeight, intentBox: intentBox && { left: intentBox.left, top: intentBox.top, width: intentBox.width, height: intentBox.height }, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
-    });
-    // Phase 2: reads that follow. The intent placement itself is written last:
-    // it moves only the intent inside its own frame, and none of the boxes read
-    // here, so writing it first made every one of these reads a forced layout.
-    const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...rect(frame.querySelector('.sprite')) }));
-    const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
-      ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
-    const boxes = frames.map(frame => rect(frame));
-    // Owner 2026-10-28: an armed card's panel never covers an enemy's intent. A selected frame's intent moves to
-    // where the placement below will put it; an unselected one stays where it renders, so its own rect is the
-    // obstacle (the group height and lane centring differ by profile).
-    intents.forEach(({ frame, intentWidth, intentHeight, intentBox, placement }, index) => {
-      if (!intentWidth || frame.classList.contains('player')) return;
-      obstacles.push(targetHudIntentObstacle({ selected: frame.classList.contains('target-hud-selected'), box: boxes[index], placement, intentBox, intentWidth, intentHeight, zoom }));
-    });
-    frames.forEach((frame, index) => {
-      const { core } = metricsFor(frame, zoom), box = boxes[index];
-      if (core) obstacles.push({ left: box.left + core.x * zoom - 22, top: box.top + core.y * zoom - 22, width: 44, height: 44 });
-    });
-    frames.forEach((frame, index) => {
-      const { pseudo } = metricsFor(frame, zoom), box = boxes[index];
-      if (pseudo) obstacles.push({ left: box.left + pseudo.left * zoom, top: box.top + pseudo.top * zoom, width: pseudo.width * zoom, height: pseudo.height * zoom });
-    });
-    const sizing = [...panels].flatMap(([id, panel]) => {
-      const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) return [];
-      return [{ id, panel, entry, frame, anchor: rect(frame.querySelector('.sprite')), lane: frame.dataset.targetHudLane != null ? frame.dataset.targetHudLane
-        : Math.max(0, Math.min(2, 'ABCDEF'.indexOf(frame.dataset.formationCell?.[0]))),
-        ...targetHudPanelSizing({ viewportWidth: rootBox.width, count: panels.size }, config) }];
-    });
-    // Each frame's grid tile, read now: the writes below never move a tile, and
-    // reading it after them was a forced layout per tile.
+    // The placement key is what a layout pass changes. Anything else (selection, hover, play, damage) leaves it alone, so
+    // the panels are not touched; a not-yet-ready anchor (art still loading) retries a few times, then waits for an event.
+    const key = [epoch, fieldBox.left, fieldBox.top, fieldBox.width, fieldBox.height, zoom, bounds.left, bounds.top, bounds.width, bounds.height,
+      [...panels.keys()].join(), frames.map(frame => frame.dataset.cellWidth).join(), document.documentElement.dataset.formFactor].join('|');
+    if (key !== placedKey) {
+      if (place(fieldBox, rootBox, zoom, bounds, epoch)) { placedKey = key; placeTries = 0; }
+      else if (placeTries++ < 20) scheduleGeometry();
+    }
+    // The tint cells, rebuilt only when what they draw changed (replacing them dirtied layout).
     const tiles = new Map();
-    for (const id of new Set([...shown, ...eligible, focused].filter(Boolean))) {
+    for (const id of tintIds()) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry || frame.dataset.targetHudCellPolygon) continue;
       const tile = field.querySelector(`.formation-grid-cell[data-cell="${frame.dataset.formationCell}"]`);
       const path = tile?.querySelector('[data-perspective-outline]');
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
-    // Phase 3: panel sizing writes, then every panel's height.
-    for (const { panel, crowded, width, font, statusSize } of sizing) {
-      setData(panel.node, 'crowded', String(crowded));
-      setVar(panel.node, '--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
-      setVar(panel.node, '--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
-      // The width term only. A plain origin stands in for VIEWPORT_ORIGIN, whose
-      // getters read window.innerWidth (a forced layout) for a `left` not used here.
-      const panelLocalWidth = anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width, height: 0 }, { zoom }).width;
-      setStyle(panel.node, 'width', `${panelLocalWidth}px`);
-      setVar(panel.node, '--target-hud-font', `${font / zoom}px`);
-      setVar(panel.node, '--target-hud-status-size', `${statusSize / zoom}px`);
-    }
-    const requests = sizing.map(({ id, entry, panel, anchor, lane, width }) => ({ id, role: entry.role, lane, anchor, width: width + 25,
-      height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }));
-    const placed = placeTargetHudPanels({ bounds, panels: requests, obstacles, config, tightTop: !isWideFormFactor(document.documentElement.dataset.formFactor) });
-    // Phase 4: panel positions, then each panel's box; then the Info buttons.
-    const positioned = [];
-    for (const box of placed) {
-      const panel = panels.get(box.id)?.node; if (!panel) continue;
-      // anchorLocalBox(field, ...) with the field box read above, not read again.
-      const panelLocal = anchorLocalBox(fieldBox, { left: box.left + 25, top: box.top, width: 0, height: 0 }, { zoom });
-      setStyle(panel, 'left', `${panelLocal.left}px`); setStyle(panel, 'top', `${panelLocal.top}px`);
-      setData(panel, 'side', box.side); panel.classList.add('visible');
-      const info = infoButtons.get(box.id);
-      if (info) positioned.push({ info, panel });
-    }
-    const infoBoxes = positioned.map(({ info, panel }) => ({ info, panelBox: panel.querySelector('.target-hud-panel').getBoundingClientRect() }));
-    for (const { info, panelBox } of infoBoxes) {
-      // The separate root control escapes the detail's layer while sharing its measured position.
-      const infoBox = anchorLocalBox(rootBox, { left: panelBox.left - 25,
-        top: panelBox.top + panelBox.height / 2 - 10, width: 20, height: 20 });
-      setStyle(info, 'left', `${infoBox.left}px`);
-      setStyle(info, 'top', `${infoBox.top}px`);
-      setStyle(info, 'width', `${infoBox.width}px`);
-      setStyle(info, 'height', `${infoBox.height}px`);
-    }
-    for (const { frame, placement } of intents) {
-      setVar(frame, '--combat-selected-intent-top', `${placement.selectedTop}px`);
-      setVar(frame, '--combat-selected-intent-center', `${placement.center}px`);
-    }
-    // Phase 5: the tint cells, rebuilt only when what they draw changed (replacing
-    // them dirtied layout, so the next run's first read was a forced layout).
     const viewBox = `0 0 ${fieldBox.width} ${fieldBox.height}`;
     if (cells.getAttribute('viewBox') !== viewBox) cells.setAttribute('viewBox', viewBox);
     const drawn = [];
-    for (const id of new Set([...shown, ...eligible, focused].filter(Boolean))) {
+    for (const id of tintIds()) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
       const fill = entry.role === 'player' ? config.behavior.playerTint : config.behavior.enemyTint;
       const opacity = id === focused ? config.behavior.focusedTintOpacity : config.behavior.candidateTintOpacity;

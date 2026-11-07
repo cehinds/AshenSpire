@@ -115,12 +115,12 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     if (!record(pending) || !text(pending.id) || !text(pending.groupKey) || !ownerIds.has(pending.ownerId)
       || !state.enemies.some(enemy => enemy.id === pending.sourceId)
       || !Array.isArray(pending.options) || !pending.options.length
-      || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play) || !text(option.play.cardInstanceId)
+      // The card-less auto-Counter option (owner 2026-10-31) has no card instance: {id:'autoCounter', cardId:null, autoCounter:true}.
+      || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play)
+        || !(option.autoCounter === true ? option.id === 'autoCounter' && option.cardId === null && option.play.autoCounter === true : text(option.play.cardInstanceId))
         || !Number.isFinite(option.staminaCost) || option.staminaCost < 0 || !Number.isFinite(option.manaCost) || option.manaCost < 0)
       || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('Invalid pending reaction choice');
-    // A Combat Rounds Preview pause (SPEC §4.11) holds its attack in the round, not in the action queue.
-    const roundPause = Boolean(state.combatRounds?.paused && state.combatRounds.round?.awaiting);
-    if (!roundPause && (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun))) problems.push('Reaction choice requires its unstarted contact plan');
+    if (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun)) problems.push('Reaction choice requires its unstarted contact plan');
     if (!['enemy', 'player', 'suspended'].includes(state.phase)) problems.push('Reaction choice is outside combat');
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
@@ -162,7 +162,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   // Only transaction-bearing runtime records are traversed. Logs, registries,
   // catalogues and RNG state do not carry authority to execute an action.
   const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
-    state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
+    state.reactionRootPlay, ...actors.map(([entity]) => entity?.combatCounter)];
   const seen = new Set(), plans = [], reservations = [], groups = [], lineagePlans = [], rangeCarriers = [];
   const inspect = (value, quoted = false) => {
     if (!value || typeof value !== 'object' || seen.has(value)) return;
@@ -171,10 +171,11 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     if (Object.hasOwn(value, 'rangeContactId') && (!hasRange || !text(value.rangeContactId))) problems.push('Invalid frozen range contact identity');
     if (Object.hasOwn(value, 'resolvedRangeSource')) {
       const source = value.resolvedRangeSource;
-      const keys = ['sourceType', 'itemId', 'range', 'propertyTags'];
+      const keys = ['sourceType', 'itemId', 'range', 'weaponRange', 'propertyTags'];
       const valid = hasRange && record(source) && Object.keys(source).every(key => keys.includes(key))
         && ['weapon', 'unarmed', 'spell'].includes(source.sourceType)
         && ['melee', 'reach', 'ranged'].includes(source.range)
+        && (source.weaponRange === undefined || ['melee', 'reach', 'ranged'].includes(source.weaponRange))
         && (source.sourceType === 'weapon' ? text(source.itemId) : source.itemId === null)
         && Array.isArray(source.propertyTags) && source.propertyTags.length <= 1
         && source.propertyTags.every(tag => tag === 'throw' && source.sourceType === 'weapon');

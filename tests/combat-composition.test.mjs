@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { combatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeCombatComposition, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../src/ui/models/CombatCompositionModel.js';
 import { fitCombatSprites } from '../src/ui/models/CombatSpriteScaleModel.js';
 
 test('taller intent and Inspect controls cannot change settled artwork; explicit layout changes can', () => {
@@ -45,8 +45,8 @@ test('changed visible header keepout invalidates consecutive fits without field 
 
 test('playing, hovering and emptying the hand do not move the initial composition anchor', () => {
   const anchor = stableHandAnchor(null, 'desktop', { left: 400, top: 540 });
-  const actors = [{ side: 'player', visibleWidth: 60, leading: 40, slot: { id: 'p', ground: 300 } }];
-  const compose = hand => combatComposition({ actors, sizes: [{ id: 'p', x: 150, visibleHeight: 150, scale: 1.5, multiplier: 1 }], width: 1440, height: 600, handLeft: hand.left, handTop: hand.top });
+  const actors = [{ side: 'player', visibleWidth: 60, leading: 40, slot: { id: 'p', x: 150, ground: 600 } }];
+  const compose = hand => alternativeCombatComposition({ perspectiveGrid: true, actors, sizes: [{ id: 'p', x: 150, visibleHeight: 150, scale: 1.5, multiplier: 1 }], width: 1440, height: 600, handLeft: hand.left, handTop: hand.top });
   const before = compose(anchor);
   for (const left of [380, 480, 560, 640, Infinity]) {
     const next = stableHandAnchor(anchor, 'desktop', { left, top: 600 });
@@ -61,26 +61,25 @@ test('playing, hovering and emptying the hand do not move the initial compositio
   assert.notDeepEqual(compose(resized), before);
 });
 
-test('solo player is raised above the hand and enemies recede toward the upper right', () => {
+test('solo player stands on the hand top and enemies keep their grid cells', () => {
   const actors = ['p','a','b'].map((id,i) => ({side:i?'enemy':'player', visibleWidth:60, visibleHeight:100,
-    leading:40, slot:{id,ground:300}}));
+    leading:40, slot:{id,x:[80,270,340][i],ground:[500,300,300][i]}}));
   const sizes = actors.map((a,i) => ({id:a.slot.id,x:[80,270,340][i],visibleHeight:150,scale:1.5,multiplier:1}));
   const before=structuredClone(sizes);
-  const result=combatComposition({actors,sizes,width:390,height:400,handTop:440});
+  const result=alternativeCombatComposition({perspectiveGrid:true,actors,sizes,width:390,height:400,handTop:440});
   assert.deepEqual(sizes,before);
-  assert.equal(result[0].visibleHeight,192);
-  assert.equal(result[0].ground-result[0].visibleHeight*.12,440);
-  assert.equal(result[0].x,390*.32);
-  assert.equal(result[1].visibleHeight,75);
-  assert.equal((result[1].x+result[2].x)/2,390*.76);
-  assert(Math.abs(result[2].x-result[1].x-70*.72)<1e-10);
-  assert(result[1].ground<300);
+  // Composition only places; sizes pass through. The feet never stand inside the hand area.
+  assert.equal(result[0].visibleHeight,150);
+  assert.equal(result[0].ground,440);
+  assert.equal(result[1].visibleHeight,150);
+  assert.equal(result[1].ground,300);
+  assert.equal(result[1].x,270);
 });
 
 test('co-op does not push players beneath the hand and every painted figure stays in bounds', () => {
   for(const width of [320,390,844,1440]) {
-    const actors=[{side:'player',visibleWidth:80,visibleHeight:100,leading:30,slot:{id:'p',ground:250}}];
-    const [r]=combatComposition({actors,sizes:[{id:'p',x:25,visibleHeight:100,scale:1,multiplier:1}],width,height:300,handTop:290,solo:false});
+    const actors=[{side:'player',visibleWidth:80,visibleHeight:100,leading:30,slot:{id:'p',x:25,ground:250}}];
+    const [r]=alternativeCombatComposition({perspectiveGrid:true,actors,sizes:[{id:'p',x:25,visibleHeight:100,scale:1,multiplier:1}],width,height:300,handTop:290,solo:false});
     assert.equal(r.ground,250); assert.equal(r.visibleHeight,100);
     assert(r.x-r.scale*40>=6); assert(r.x+r.scale*40<=width-6);
   }

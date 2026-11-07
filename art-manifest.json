@@ -7,7 +7,7 @@
     "high": "assets/ — full resolution; release/main builds and the Local high-res setting",
     "common": "one file for every tier: assets/fonts/ (the fonts), licenses/OFL.txt (from asset-data/fonts/OFL.txt), music/ and map-detail/"
   },
-  "count": 8242,
+  "count": 8243,
   "assets": {
     "assets-display/alternative/ashRevenant-mobile.webp": {"common":{"path":"assets-display/alternative/ashRevenant-mobile.webp","bytes":2964,"sha256":"09ba73056631d6931e73a7f66d700ca95b33aa26252f715ecd2f979f7e842ea1"}},
     "assets-display/alternative/ashRevenant.webp": {"common":{"path":"assets-display/alternative/ashRevenant.webp","bytes":2964,"sha256":"09ba73056631d6931e73a7f66d700ca95b33aa26252f715ecd2f979f7e842ea1"}},
@@ -658,6 +658,7 @@
     "assets-display/card-cutouts/symbol.spiral.png": {"common":{"path":"assets-display/card-cutouts/symbol.spiral.png","bytes":186521,"sha256":"85823e2b7cb02d789a17442a8dbd53b30be26fe87662ef14791705f82b6ff21e"}},
     "assets-display/card-cutouts/symbol.stone.png": {"common":{"path":"assets-display/card-cutouts/symbol.stone.png","bytes":186504,"sha256":"956091c7ae77740594f5f64dd7f56884567668f82df46fb5608bd489bc8576cb"}},
     "assets-display/card-cutouts/symbol.vial.png": {"common":{"path":"assets-display/card-cutouts/symbol.vial.png","bytes":168427,"sha256":"342d713af34d1cb09c904b9e1a580ed8c9737c25ce912ece1148c3ec072ea371"}},
+    "assets-display/card-cutouts/weapon.spear.png": {"common":{"path":"assets-display/card-cutouts/weapon.spear.png","bytes":250101,"sha256":"d616223ce0a03a6a4818e6636c6c80f5b68695ff48ae767d7d7d8818870dec7c"}},
     "assets-display/layered/batch-04-atmosphere--filters--filter-cold.webp": {"common":{"path":"assets-display/layered/batch-04-atmosphere--filters--filter-cold.webp","bytes":41478,"sha256":"664d6c9de7484b5227a3693d51a3d227698a3b410bef2d766144899535783141"}},
     "assets-display/layered/batch-04-atmosphere--filters--filter-day.webp": {"common":{"path":"assets-display/layered/batch-04-atmosphere--filters--filter-day.webp","bytes":706,"sha256":"675b16a69824eed9f3029c960cf5b1f48026d5e7e7d2602bc5e45f0a8f530899"}},
     "assets-display/layered/batch-04-atmosphere--filters--filter-hot.webp": {"common":{"path":"assets-display/layered/batch-04-atmosphere--filters--filter-hot.webp","bytes":809608,"sha256":"c5b601ff466266cde3eac727e687ca7a2a1428ea3fdc2b4c1bc555bb3f2c97f6"}},

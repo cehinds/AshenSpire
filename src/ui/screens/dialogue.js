@@ -28,6 +28,8 @@ import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { speakerPortraitAsset } from '../../content/speakerArt.js';
 import { availableEventChoices } from '../../model/quests.js';
+import { snapshotRunForDiff } from '../../model/runChangeReceipt.js';
+import { showRunReceipt } from '../components/whatChangedModal.js';
 import { figureSpec } from '../../model/loadout.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -39,7 +41,6 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
-import { onDisplayAppearanceChange } from '../displayAppearance.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -193,13 +194,6 @@ export function mountDialogue(app, options) {
     });
   }
   const stage = wireDialogueStage(root, { layout, parent, scene: wireframeUi.scene });
-  const releaseAppearance = onDisplayAppearanceChange(root, () => {
-    teardown();
-    clearTimeout(entranceTimer);
-    stage.release();
-    releaseAppearance();
-    mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true });
-  });
 
   function teardown() {
     // A hold owns a window-level Escape listener; drop every one before its
@@ -213,15 +207,19 @@ export function mountDialogue(app, options) {
     state = step.state;
     if (step.exit) {
       teardown();
-      releaseAppearance();
       clearTimeout(entranceTimer);
       stage.release();
       onDone();
       return;
     }
     if (step.command) {
+      const before = snapshotRunForDiff(run);
       const receipt = options.commitChoice ? options.commitChoice(step.command) : commitEventChoice({ run, registries, rng }, step.command);
       state = dialogueStep(view(), state, { type: 'resolved', choiceId: receipt.choice.id, resultText: receipt.choice.resultText }).state;
+      render();
+      // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
+      showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
+      return;
     }
     render();
   }

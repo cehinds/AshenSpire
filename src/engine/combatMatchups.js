@@ -2,8 +2,10 @@ import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
 import * as CounterRule from './counterRule.js';
+import { mechanics } from '../framework/data/mechanics.js';
+import { decayCounterStacks } from './guardStacks.js';
 const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
-const counterReturnForReceipt = (ctx, receipt) => CounterRule.counterReturnForReceipt(ctx, receipt);
+const counterReturnForReceipt = (ctx, receipt, options) => CounterRule.counterReturnForReceipt(ctx, receipt, options);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -148,7 +150,7 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
     guardBypass: counter && ['ranged', 'spell', 'magic'].includes(target.combatCounter.mode) ? 0 : Math.min(amount, guardBefore, bypass) };
 }
 
-/** Preview only (SPEC §4.11): whether the target's armed Counter would answer an attack with this profile now. */
+/** Whether the target's armed Counter would answer an attack with this profile now. */
 export function liveCounterCovers(ctx, target, profile) {
   if (!profile) return false;
   if (combatExpansionEnabled(ctx)) {
@@ -302,6 +304,36 @@ function restrictions(ctx, entity, options = {}) {
   };
 }
 
+// Auto-Counter (owner 2026-10-31, SPEC §17): standing in Counter stance, an enemy hit the stance covers may be answered with no
+// card at all for `mechanics.counter.autoCounterStamina` SP. It arms a Counter with base damage 0, so its return is the stacks' share only.
+const autoCounterTags = () => mechanics.counter.autoCounterTags;
+/** The card-less carrier an auto-Counter arms with (the melee default coverage, no authored payload). */
+export const autoCounterCarrier = () => ({ instanceId: 'autoCounter', cardId: 'autoCounter', name: 'Counter', type: 'skill',
+  tags: [...autoCounterTags()], cardTags: [...autoCounterTags()], autoCounter: true, skipRatingBonus: true, combatRiderTargets: [],
+  combatProfile: { camp: 'physical', maneuver: 'counter', school: null, damageType: 'blunt', counterMode: 'melee', range: 'melee', targeting: 'single', traits: [] } });
+export const autoCounterCost = () => Math.max(0, Math.floor(mechanics.counter.autoCounterStamina));
+/** True when `entity` may answer a hit with an auto-Counter right now: Core, Counter stance, nothing armed or spent, SP in hand. */
+export function autoCounterAvailable(ctx, entity, unpaid = 0, stackedCards = []) {
+  if (!counterRuleActive(ctx) || !combatExpansionEnabled(ctx) || entity?.kind !== 'player' || !entity.alive) return false;
+  if (entity.combatStance?.maneuver !== 'counter' || entity.combatCounter?.charges > 0) return false;
+  if (CounterRule.counterReturnSpent(entity) || restrictions(ctx, entity).counterDisabled) return false;
+  // A stacked card that changes stance resolves before the hit lands and would drop the Counter stance, so the arm would be wasted.
+  if (stackedCards.some(card => { const next = stanceOf(card, entity); return next && next.maneuver !== 'counter'; })) return false;
+  // SP already promised to cards stacked this root (they pay when the stack resolves) is not free to spend again.
+  return (entity.energy ?? 0) - Math.max(0, unpaid) >= autoCounterCost();
+}
+/** Pays the auto-Counter's SP (as a card play pays it) and arms it; returns the armed counter. */
+export function armAutoCounter(ctx, entity) {
+  const cost = autoCounterCost();
+  entity.energy -= cost;
+  if (cost > 0) {
+    entity.counters.staminaSpentThisTurn = (entity.counters.staminaSpentThisTurn || 0) + cost;
+    ctx.emit?.('energySpent', { amount: cost });
+    ctx.emit?.('staminaSpent', { amount: cost });
+  }
+  return armCombatCounter(ctx, entity, autoCounterCarrier(), { payload: { hp: 0, poise: 0, ward: 0 }, mode: 'melee' });
+}
+
 /** Called only for an accepted play/telegraph; support preserves posture. */
 export function setCombatStance(ctx, entity, carrier) {
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
@@ -375,6 +407,8 @@ export function startTacticalTurn(ctx, entity) {
   if (!combatExpansionEnabled(ctx) || !entity) return { block: 0, barrier: 0 };
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   clearCombatCounter(entity, ctx);
+  // Counter stacks fade by mechanics.counter.decayPerTurn at the owner's turn start, after the charge clears (owner 2026-10-31).
+  if (entity.kind === 'player' && fixCoreEnabled(ctx)) decayCounterStacks(ctx, entity);
   delete entity.combatEvade;
   delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null
@@ -443,13 +477,12 @@ function preparedCounter(ctx, target, carrier, options) {
   const counter = target?.combatCounter;
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
   const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
-  const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
   // Core: a spell Counter (owner 2026-10-19) arms while its owner still stands in the stance the card entered (prepared).
   const coreSpell = fixCoreEnabled(ctx) && isSpellCounter(counter.carrier) && armsAsCoreCounter(ctx, counter.carrier);
   // Any card accepted after a spell Counter was armed (Spell, Skill, Strike, Evade) disarms it, whatever stance that card leaves.
   if (coreSpell && (counter.armedAtCardCount ?? 0) !== (target.counters?.cardsPlayedThisCombat ?? 0)) return null;
   const spellCounter = coreSpell && stance === configuredStance(counter.carrier);
-  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter) && !spellCounter) return null;
+  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !spellCounter) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
 }
@@ -555,6 +588,21 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   if (options.receipt?.begun) return options.receipt;
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
+  // An insight contest replaces the hit roll (SPEC §17 Contests): one seeded contest per target per card play.
+  const contest = Hit.rollContestFor(ctx, source, target, carrier);
+  if (contest) {
+    receipt.contest = contest;
+    receipt.avoided = !contest.passed;
+    receipt.connected = contest.passed;
+    ctx.emit?.(contest.passed ? 'contestPassed' : 'contestFailed', { sourceId: source?.id, targetId: target?.id, cardId: carrier?.cardId,
+      ...seats(ctx, source, target), contest, contestKind: contest.kind, roll: contest.roll, total: contest.total, dc: contest.dc, passed: contest.passed });
+    if (receipt.counterEligible && !receipt.avoided) {
+      target.combatCounter.charges = 0;
+      ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
+        sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
+    }
+    return receipt;
+  }
   if (configuredCombat(ctx)) {
     if (fixCoreEnabled(ctx)) {
       const hit = Hit.resolveAttackHit(ctx, source, target, carrier);
@@ -728,11 +776,14 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
   }
-  // Core 2 (SPEC §17): the return is a fraction of the damage that hit, not the card's printed numbers.
+  // Core 2 (SPEC §17, owner 2026-10-31): the return is the card's authored damage plus the owner's Counter stacks x 10% of
+  // the incoming hit (stacks persist across turns; a card-less auto-Counter has base 0), not a fraction of that hit alone.
+  let counterBreakdown = null;
   if (counterRuleActive(ctx)) {
-    const core = counterReturnForReceipt(ctx, receipt);
+    const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp) });
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
     payload.hp = core.hp; payload.poise = core.poise;
+    counterBreakdown = { counterBase: number(counter.payload.hp), counterStacks: target.counterStacks || 0, counterIncoming: core.incoming, counterStackShare: core.stackShare };
     if (isSpellCounter(counter.carrier)) payload.ward = 0;
   }
   const magical = isSpell(counter.carrier.combatProfile);
@@ -756,7 +807,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
-    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
+    sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0, ...(counterBreakdown || {}) };
   if (deferredRangeReturn) {
     // No offensive action exists after rounding: do not reserve hypothetical
     // rider targets or spend its cycle. The interception is already resolved.

@@ -1,7 +1,7 @@
-// Enemy action pool (owner decisions, 2026-10-12; SPEC §4.6a, §4.11): each enemy move costs its own `sp`, else SP from
+// Enemy action pool (owner decisions, 2026-10-12; SPEC §4.6a): each enemy move costs its own `sp`, else SP from
 // the action-cost table by its stance; an enemy's per-turn pool is its stats (the stamina row on its attributes, plus
 // its equipment SP; 1 with no stats), it spends the pool until it is empty, a move it cannot afford is not picked, and
-// it always plays at least one move. Normal combat and the rounds preview share the pool.
+// it always plays at least one move.
 // Replaced rule: a flat pool of 2 (ENEMY_SP_POOL); the expectations that read 2 now read the stat pool, 3.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +12,6 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { COMBAT_ROUNDS_KEY, MULTI_ACTION_KEY } from '../src/model/combatRounds.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
@@ -40,8 +39,8 @@ function registriesWith({ pool, extraMoves } = {}) {
 
 const SMASH = { intent: 'attack', damage: 9, weight: 40, maxConsecutive: 1, tags: ['maneuver:smash'] };
 
-function fight({ reg = registriesWith(), seed = 5, settings = {}, rounds = false } = {}) {
-  const run = createRunState({ seed, classId: 'reaver', registries: reg, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: rounds, ...settings } } });
+function fight({ reg = registriesWith(), seed = 5 } = {}) {
+  const run = createRunState({ seed, classId: 'reaver', registries: reg });
   return createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: [ENEMY], settings: {} });
 }
 
@@ -77,7 +76,7 @@ test('an enemy spends its pool until it is empty, deterministically for a seed',
     const runOnce = () => {
       const rng = createRng(seed);
       const enemy = { movesHistory: [] };
-      const queue = Rounds.buildEnemyQueue(enemy, def, { pick: (e, d, maxSp) => pickWithin(d, maxSp, rng) });
+      const queue = Rounds.extendEnemyQueue(enemy, def, [], { pick: (e, d, maxSp) => pickWithin(d, maxSp, rng) });
       return queue.map((q) => q.moveId);
     };
     const first = runOnce();
@@ -121,25 +120,19 @@ test('the minimum of one move: an enemy whose pool is below every move cost stil
   // The pick is offered only the affordable moves: with a 1-SP pool nothing is affordable (null), so the enemy
   // takes the minimum-one fallback, an unlimited pick (maxSp Infinity).
   const offered = [];
-  const queue = Rounds.buildEnemyQueue({ movesHistory: [] }, enemyDef, { pick: (e, d, maxSp) => { offered.push(maxSp); return maxSp >= 2 ? 'crush' : null; } });
+  const queue = Rounds.extendEnemyQueue({ movesHistory: [] }, enemyDef, [], { pick: (e, d, maxSp) => { offered.push(maxSp); return maxSp >= 2 ? 'crush' : null; } });
   assert.deepEqual(offered, [1, Infinity], 'the affordable pick found nothing, then the fallback asked with no limit');
   assert.equal(queue.length, 1, 'one move, though a 2-SP move is more than the 1-SP pool');
   assert.equal(queue[0].moveId, 'crush');
 });
 
-test('normal combat: the intent is the first move, and follow-ups show only with the multi-action toggle', () => {
+test('a legacy fight: the intent is the first move, the follow-ups are planned all the same, and none shows in the box', () => {
   const reg = registriesWith({ extraMoves: { crush: SMASH } });
   const off = fight({ reg, seed: 9 });
   const offEnemy = off.enemies[0];
   assert.ok(offEnemy.intent.moveId, 'the enemy has a first move');
-  assert.equal(enemyPlanActions(off, offEnemy).length, 0, 'toggle off: no follow-up symbols');
-  assert.equal(spentOf(planOf(offEnemy), reg), POOL, 'toggle off: the follow-ups are planned all the same, and held back from the box');
-  const on = fight({ reg, seed: 9, settings: { [MULTI_ACTION_KEY]: true } });
-  const onEnemy = on.enemies[0];
-  assert.equal(onEnemy.intent.moveId, off.enemies[0].intent.moveId, 'the same first move with or without the toggle');
-  const shown = enemyPlanActions(on, onEnemy);
-  assert.equal(shown[0].id, onEnemy.intent.moveId, 'the first shown symbol is the main intent');
-  assert.equal(shown.length, planOf(onEnemy).length, 'toggle on: every planned move is a symbol');
+  assert.equal(enemyPlanActions(off, offEnemy).length, 0, 'no follow-up symbols outside a Core fight');
+  assert.equal(spentOf(planOf(offEnemy), reg), POOL, 'the follow-ups are planned all the same, and held back from the box');
 });
 
 test('normal combat: an enemy plays every move of its pool in its turn, one at a time, and reveals each as it plays', () => {
@@ -153,17 +146,6 @@ test('normal combat: an enemy plays every move of its pool in its turn, one at a
     if (!enemy.alive) return;
     assert.deepEqual(enemy.performedMoves.slice(-planned[i].length), planned[i], `${enemy.id} played its plan in order`);
   });
-});
-
-test('rounds mode uses the same pool: the rounds enemy SP is the pool, and each queue fits it', () => {
-  const reg = registriesWith({ extraMoves: { crush: SMASH } });
-  assert.equal(Rounds.enemyPool(reg.enemies.get(ENEMY)), POOL);
-  const combat = fight({ reg, seed: 5, rounds: true });
-  for (const enemy of combat.enemies.filter((e) => e.alive)) {
-    const queue = combat.combatRounds.enemyQueues[enemy.id];
-    assert.ok(queue.length >= 1, 'at least one move');
-    assert.ok(queue.reduce((s, q) => s + q.sp, 0) <= POOL, `within the pool of ${POOL}`);
-  }
 });
 
 test('save and restore mid-turn keeps the enemy plan and the intent', () => {

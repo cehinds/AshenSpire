@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
+import { hitAsLayered } from '../src/model/combatLog.js';
 const require = productionBundle();
 const { contentBundle } = require('src/content/index.js');
 const { createRegistries } = require('src/model/registries.js');
@@ -43,7 +44,7 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
     dispatch(combat, { type: 'endTurn' });
     const damage = combat.eventLog.slice(before).filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
     assert.deepEqual(damage.map(e => e.hpLoss), view.hitDamages);
-    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage.text), view.hitDamages.map(n => `-${n}`));
+    assert.deepEqual(damage.map(e => guardHitFloatParts(e).damage?.text ?? null), damage.map(e => e.hpLoss > 0 ? `-${hitAsLayered(e)}` : null), 'the float is the full hit, shown only when HP was lost');
     assert.equal(combat.player.hp, 1000 - view.totalDamage);
   });
 }
@@ -131,8 +132,10 @@ test('authored Stitched King ratings and starter protection agree with the live 
   const events = combat.eventLog.slice(start);
   const contacts = events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
   assert.equal(events.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id).length, 1);
-  assert.deepEqual(contacts.map(e => e.hpLoss), view.hitDamages);
-  assert.equal(combat.player.hp, 1000 - view.totalDamage);
+  // Owner, 2026-11-03: hitDamages/totalDamage are the raw hits; the receipt's hpLoss is the resolved figure the live contacts must match.
+  assert.deepEqual(contacts.map(e => e.hpLoss), view.damageReceipt.hits.map(hit => hit.hpLoss));
+  assert.deepEqual(contacts.map(e => e.damageReceipt.hits[0].incoming), view.damageReceipt.hits.map(hit => hit.incoming));
+  assert.equal(combat.player.hp, 1000 - view.hpLoss);
 });
 
 test('formula effects resolve against the proper owner and target without running the effect', () => {

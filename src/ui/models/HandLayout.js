@@ -122,6 +122,8 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
 }
 
 // Each form factor authors its own fan; all distances scale with the card.
+// The tool-row reserve every other form factor keeps below the fan.
+export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
   mobile: { spread: .55, angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
   tablet: { spread: .64, angle: 4, arc: .045, dock: .96, widthFraction: .168, minPx: 120, maxPx: 150 },
@@ -135,7 +137,7 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const profileWidth = style.widthFraction
     ? Math.max(style.minPx / zoom, Math.min(style.maxPx / zoom, width * style.widthFraction))
     : sizePlan.cardWidth;
-  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - 40 / zoom) * wireframeUi.card.ratio);
+  const cardWidth = Math.min(profileWidth, (height - sizePlan.controlsReserve - (sizePlan.fitReservePx ?? 40) / zoom) * wireframeUi.card.ratio);
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   const angle = style.angle * Math.PI / 180;
   const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
@@ -153,7 +155,8 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const extra = (Math.sin(angle) * cardWidth + Math.cos(angle) * cardHeight - cardHeight) / 2;
   // The size plan may own the docking: the desktop footer plan docks the fan to the hand box's bottom with no
   // tool-row reserve (its handGapPx buffer above End Turn replaces it); every other plan keeps the 66 px reserve.
-  const reserve = sizePlan.reserve ?? 66, dock = sizePlan.dock ?? style.dock;
+  // Owner (2026-11-01): a phone's fan sits lower, into the band above its tool strip (mobileHandReservePx).
+  const reserve = sizePlan.reserve ?? (input.formFactor === 'mobile' ? uiConfig.scenes.w4a.sizing.mobileHandReservePx : HAND_TOOL_ROW_RESERVE_PX), dock = sizePlan.dock ?? style.dock;
   const top = Math.max(0, (height - cardHeight - arc - extra - sizePlan.controlsReserve - reserve / zoom) * dock);
   const restTop = cards.length ? Math.min(...cards.map(card => {
     const radians = card.angle * Math.PI / 180;
@@ -161,6 +164,37 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   })) : 0;
   return { ...sizePlan, cardWidth, cardHeight, cards, step, span, start, top, capacity: Math.max(1, count),
     restLeft: start - edge, restTop, clearanceTop: Math.min(restTop, top - sizePlan.lift) };
+}
+
+// Owner 2026-11-05: "When playing cards, try not to move hand position too much so players can easily play multiple
+// cards." The fan is centred on its count, so taking one card out slid every other card by half a step (and more
+// where the step itself grows). `holdPlaySlots` keeps each survivor on the slot it already had, leaving the played
+// card's gap open, for `holdMs` after the last play; the hand then closes up once (hand.js settles it with a short
+// ease). Authored in content/config/ui/scenes/w4a-combat.json (behavior.hand.playSettle); `maxShiftPx` is the most a
+// held card may differ from where it was: sub-pixel rounding, far below the exposed touch target.
+export const HAND_PLAY_SETTLE = Object.freeze({ ...uiConfig.scenes.w4a.behavior.hand.playSettle });
+
+/**
+ * previous: { ids, key, plan } as last applied; ids: the hand now, in order; plan: the fresh plan for `ids`; key: the
+ * geometry the plan was made from (anything but the count). Returns the previous plan restricted to the surviving
+ * cards, or null when the hand did not only lose cards (a draw, a reorder, a resize) and must lay out fresh.
+ */
+export function holdPlaySlots(previous, ids, plan, key, { maxShiftPx = HAND_PLAY_SETTLE.maxShiftPx } = {}) {
+  if (!previous || previous.key !== key || !(ids.length && ids.length < previous.ids.length)) return null;
+  const at = new Map(previous.ids.map((id, i) => [id, i]));
+  let last = -1;
+  for (const id of ids) {
+    const i = at.get(id);
+    if (i === undefined || i <= last) return null;
+    last = i;
+  }
+  if (Math.abs(plan.cardWidth - previous.plan.cardWidth) > maxShiftPx || Math.abs(plan.top - previous.plan.top) > maxShiftPx) return null;
+  const cards = ids.map(id => previous.plan.cards[at.get(id)]);
+  // Survivors keep their old x, so each one's clickable lane runs to its next survivor (capped at the card width):
+  // the part of a card the played gap exposed stays tappable. The last card keeps its full width.
+  const hitWidths = cards.map((card, i) => i === cards.length - 1 ? plan.cardWidth
+    : Math.min(plan.cardWidth, Math.max(0, cards[i + 1].x - card.x)));
+  return { ...previous.plan, cards, hitWidths };
 }
 
 export function handGeometryKey({ width, height, zoom, fontSize, left }) {

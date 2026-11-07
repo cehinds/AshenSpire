@@ -690,6 +690,7 @@
     "abilityRank": 2,
     "actionCost": 1,
     "primaryIndex": 0,
+    "face": ["Heal per Blight, capped."],
     "values": [2,3,5,7,9,12]
   },
   {

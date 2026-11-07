@@ -642,8 +642,8 @@ function auditStatusModifierConsumers(registries, silencedProof) {
     row.ok = row.observed === row.expected;
     addRow(id, 'attackDamageAdd', row);
   }
-  for (const id of ['weak', 'glassCannon', 'confused', 'slowed']) addRow(id, 'damageDealtMult', scalar(id, 'damageDealtMult'));
-  for (const id of ['vulnerable', 'staggered', 'glassCannon', 'entombed']) addRow(id, 'damageTakenMult', scalar(id, 'damageTakenMult', true));
+  for (const id of ['weak', 'confused', 'slowed']) addRow(id, 'damageDealtMult', scalar(id, 'damageDealtMult'));
+  for (const id of ['vulnerable', 'staggered', 'entombed']) addRow(id, 'damageTakenMult', scalar(id, 'damageTakenMult', true));
   for (const id of ['dexterity', 'frail', 'slowed']) {
     const value = registries.statuses.get(id).modifiers[id === 'dexterity' ? 'blockAdd' : 'blockGainedMult'];
     const action = play(id, 'defend');

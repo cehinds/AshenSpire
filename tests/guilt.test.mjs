@@ -5,7 +5,6 @@
 // costs HP, anywhere else costs nothing, copies stack, and a malformed hook is
 // refused by the validator naming the row.
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -109,30 +108,6 @@ test('the engine stays free of the DOM', async () => {
   const src = readFileSync(new URL('../src/engine/combat.js', import.meta.url), 'utf8')
     .split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
   assert.ok(!/\bdocument\.|\bwindow\./.test(src));
-});
-
-// Co-op: the production session route ends a seat's turn through
-// coopCombat.endTurn, which must fire the same in-hand hook on that seat only.
-test('co-op: Guilt in a seat\'s hand costs that seat 1 HP at its turn end', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createCoopCombat, endTurn } = await import('../src/engine/coopCombat.js');
-  const seat = (id) => ({
-    id, classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5,
-    deck: Array.from({ length: 8 }, (_, i) => ({ instanceId: `${id}s${i + 1}`, cardId: 'strike', upgraded: false })), relicIds: [], flasks: [],
-  });
-  const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
-  const p1 = C.players.get('p1'), p2 = C.players.get('p2');
-  p1.piles.hand.push({ instanceId: 'g1', cardId: 'guilt', upgraded: false });
-  const hp1 = p1.entity.hp, hp2 = p2.entity.hp;
-  endTurn(C, 'p1'); // p2 has not ended, so no enemy phase runs yet
-  assert.equal(p1.entity.hp, hp1 - 1, 'the seat holding Guilt loses 1 HP');
-  assert.equal(p2.entity.hp, hp2, 'the other seat loses nothing');
-  // Guilt's turn-end hook fires before the ordinary hand is shuffled back.
-  assert.equal(p1.handRules.retain, false);
-  assert.equal(p1.handRules.shuffleHand, true);
-  assert.ok(p1.piles.draw.some(c => c.instanceId === 'g1'), "Guilt returns to this seat's draw pile after firing");
-  assert.ok(!p1.piles.hand.some(c => c.instanceId === 'g1'));
-  assert.ok(!p1.piles.discard.some(c => c.instanceId === 'g1'));
-
 });
 
 // The shown number is bound to the hook, not typed into the sentence.

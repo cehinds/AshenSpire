@@ -261,6 +261,8 @@ player's piles).
 | `trait:impact` | 1 | SP | Poise damage on hit: 1. As counterstrike, added after the cost is derived. |
 | `trait:flux` | 1 | SP | Ward damage on hit: 1. As counterstrike, added after the cost is derived. |
 | `trait:reaction` | 0 | SP | A timing rule (playable on the opponent's turn), not power. Enemy moves carry it; no card is priced by it. |
+| `ramp.momentum` | 0 | SP | Damage or Block grows per play this combat. Carried only by zero-cost `costRule: fixed` cards; it never reprices a card. |
+| `ramp.honed` | 0 | SP | Damage grows per play across the run. Carried only by zero-cost `costRule: fixed` cards; it never reprices a card. |
 
 ### Keywords
 
@@ -337,6 +339,11 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `constellation` | 2 | card | The owner's floor for a status. |
 | `azureCoil` | 2 | card | The owner's floor for a status. |
 | `waxingMoon` | 2 | card | The owner's floor for a status. |
+| `ward` | 2 | card | The owner's floor for a status. |
+| `barrier` | 2 | card | The owner's floor for a status. |
+| `shocked` | 2 | card | The owner's floor for a status. |
+| `damp` | 2 | card | The owner's floor for a status. |
+| `bedrock` | 2 | card | The owner's floor for a status. |
 | `moonlitShield` | 2 | card | The owner's floor for a status. |
 | `astromancer` | 2 | card | The owner's floor for a status. |
 | `thornHalo` | 2 | card | The owner's floor for a status. |
@@ -355,7 +362,6 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `deadlyTempo` | 2 | card | The owner's floor for a status. |
 | `opportunist` | 2 | card | The owner's floor for a status. |
 | `envenom` | 2 | card | The owner's floor for a status. |
-| `glassCannon` | 2 | card | The owner's floor for a status. |
 | `magicVulnerable` | 2 | card | The owner's floor for a status. |
 | `bleeding` | 2 | card | The owner's floor for a status. |
 | `frozen` | 2 | card | The owner's floor for a status. |

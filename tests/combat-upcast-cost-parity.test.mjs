@@ -1,16 +1,11 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
-import { createCoopCombat, previewCoopCard, playCard } from '../src/engine/coopCombat.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
-import { combatCardView } from '../src/ui/models/CombatCardView.js';
-import { combatSnapshotCardCosts } from '../src/ui/models/CombatSnapshotCardCosts.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
@@ -30,24 +25,20 @@ function registry({ cost = 1, manaCost = 1, upcast = tiers } = {}) {
     ...(upcast ? { upcast } : {}),
   }] });
 }
-function fixture({ coop = false, version = 2, stamina = 10, mana = 10, ...configuration } = {}) {
+function fixture({ version = 2, stamina = 10, mana = 10, ...configuration } = {}) {
   const registries = registry(configuration);
   const input = playerId => ({ id: playerId, classId: 'reaver', combatExpansionVersion: version,
     hp: 80, maxHp: 80, maxMana: 10, mana, maxStamina: 10, stamina, energyMax: stamina,
     drawPerTurn: 1, relicIds: [], orderedDraw: true,
     deck: [{ ...ref, instanceId: playerId === 'b' ? 'other-instance' : ref.instanceId }] });
-  const combat = coop ? createCoopCombat({ registries, rng: createRng(11), combatExpansionVersion: version,
-    players: [input('a'), input('b')], enemyIds: ['wanderingSoldier'] })
-    : createCombat({ registries, rng: createRng(11), combatExpansionVersion: version,
+  const combat = createCombat({ registries, rng: createRng(11), combatExpansionVersion: version,
       player: input('player'), enemyIds: ['wanderingSoldier'] });
-  return { combat, registries, coop };
+  return { combat, registries };
 }
-const actor = fixture => fixture.coop ? fixture.combat.players.get('a').entity : fixture.combat.player;
-const preview = (fixture, tier = 5) => fixture.coop ? previewCoopCard(fixture.combat, 'a', ref.instanceId, 'a', tier)
-  : previewCard(fixture.combat, ref.instanceId, 'player', tier);
-const play = (fixture, tier = 5) => fixture.coop ? playCard(fixture.combat, 'a', ref.instanceId, 'a', undefined, tier)
-  : dispatch(fixture.combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId: 'player', upcastTier: tier });
-const state = combat => JSON.stringify({ player: combat.player, seats: combat.players && [...combat.players],
+const actor = fixture => fixture.combat.player;
+const preview = (fixture, tier = 5) => previewCard(fixture.combat, ref.instanceId, 'player', tier);
+const play = (fixture, tier = 5) => dispatch(fixture.combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId: 'player', upcastTier: tier });
+const state = combat => JSON.stringify({ player: combat.player,
   piles: combat.piles, enemies: combat.enemies, events: combat.eventLog, queue: combat.queue, rng: combat.rng.getCounters() });
 function badges(registries, receipt, energy, mana) {
   const model = playingCardModel(registries, ref, { preview: receipt });
@@ -67,26 +58,24 @@ function convert(fixture) {
   for (const threshold of [25, 50, 75]) chooseAshenBlightFeat(fixture.combat, owner, { threshold, path: 'martial' });
 }
 
-for (const coop of COOP_MODES) for (const converted of [false, true]) {
-  test(`${coop ? 'co-op' : 'solo'} base 2 to tier 5 ${converted ? 'converted Blight' : 'normal'} preview, badge and payment agree`, () => {
-    const f = fixture({ coop });
+for (const converted of [false, true]) {
+  test(`solo base 2 to tier 5 ${converted ? 'converted Blight' : 'normal'} preview, badge and payment agree`, () => {
+    const f = fixture();
     if (converted) convert(f);
     const before = state(f.combat), receipt = preview(f);
     const energy = converted ? 3 : 4;
     assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [energy, energy, 4]);
     badges(f.registries, receipt, energy, 4);
     assert.equal(state(f.combat), before, 'pricing is pure, including RNG and Blight payment history');
-    const other = coop && structuredClone(f.combat.players.get('b'));
     const oldSP = actor(f).energy, oldMana = actor(f).mana;
     play(f);
     assert.equal(actor(f).energy, oldSP - energy);
     assert.equal(actor(f).stamina, oldSP - energy);
     assert.equal(actor(f).mana, oldMana - 4);
-    if (coop) assert.deepEqual(f.combat.players.get('b'), other, 'other seat resources, charges and cards are untouched');
   });
 }
-for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} insufficient selected-tier SP refuses atomically while base is affordable`, () => {
-  const f = fixture({ coop, cost: 0, stamina: 2 });
+test(`solo insufficient selected-tier SP refuses atomically while base is affordable`, () => {
+  const f = fixture({ cost: 0, stamina: 2 });
   actor(f).energy = actor(f).stamina = 2;
   const base = preview(f, 2), selected = preview(f, 5);
   assert.equal(base.cost, 0);
@@ -97,12 +86,12 @@ for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} insufficient sel
   assert.throws(() => play(f), /Not enough (energy|stamina|Actions)/i);
   assert.equal(state(f.combat), before, 'no card, resources, statuses, RNG or queued work committed');
 });
-for (const coop of COOP_MODES) for (const preparing of [false, true]) {
-  test(`${coop ? 'co-op' : 'solo'} ${preparing ? 'preparing' : 'live'} over-base Mana discount clamps the complete tier price`, () => {
-    const f = fixture({ coop, cost: 0, mana: 0 });
+for (const preparing of [false, true]) {
+  test(`solo ${preparing ? 'preparing' : 'live'} over-base Mana discount clamps the complete tier price`, () => {
+    const f = fixture({ cost: 0, mana: 0 });
     const effect = { op: 'grantCardCharge', target: 'self', key: 'paid-price-discount', manaDiscount: 5 };
     if (preparing) {
-      const key = coop ? 'a' : 'player';
+      const key = 'player';
       f.combat.propertyMounts[key] ||= {};
       f.combat.propertyMounts[key].probe = { kind: 'feat', id: 'paid-price-discount', instanceId: 'paid-price-discount',
         rules: [{ tag: 'probe', triggers: [{ on: 'cardPreparing', do: [effect] }] }] };
@@ -118,28 +107,6 @@ for (const coop of COOP_MODES) for (const preparing of [false, true]) {
     assert.equal(actor(f).mana, 0);
   });
 }
-
-test('co-op selected-tier host receipt is exact; missing receipt gives a marked conservative price once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const f = fixture({ coop: true });
-  grantAbilityCharge(actor(f), { key: 'hidden-discount', manaDiscount: 5 });
-  const owner = actor(f), base = preview(f, 2), selected = preview(f, 5);
-  const wire = { ...ref, combatPreview: base, upcastPreviews: { 5: selected } };
-  const context = { ...f.combat, player: owner, combatExpansionVersion: 2 };
-  const actual = combatSnapshotCardCosts(f.registries, combatCardView(context, wire, 5), owner);
-  assert.equal(actual.preview, selected);
-  assert.deepEqual([actual.energy, actual.mana, actual.stamina], [4, 0, 4]);
-  badges(f.registries, actual.preview, 4, 0);
-  const missing = combatSnapshotCardCosts(f.registries, combatCardView(context, { ...wire, upcastPreviews: undefined }, 5), owner);
-  assert.deepEqual([missing.energy, missing.mana, missing.stamina], [4, 4, 4]);
-  assert.equal(missing.preview.costIsEstimate, true);
-  assert.equal(playingCardModel(f.registries, ref, { preview: missing.preview }).costs.estimated, true);
-  badges(f.registries, missing.preview, 4, 4);
-  assert.equal(owner.mana >= actual.mana, true);
-  const other = f.combat.players.get('b').entity;
-  const otherPreview = previewCoopCard(f.combat, 'b', 'other-instance', 'b', 5);
-  assert.equal(otherPreview.manaCost, 4, 'another owner does not inherit the hidden charge');
-  assert.equal(other.abilityRiders?.charges?.['hidden-discount'], undefined);
-});
 
 for (const version of [1, 2]) test(`version ${version} fixed and X card prices preserve their existing resource rules`, () => {
   const fixed = fixture({ version, cost: 2, manaCost: 1, upcast: null });
@@ -160,18 +127,16 @@ for (const version of [1, 2]) test(`version ${version} fixed and X card prices p
   assert.equal(variable.combat.player.energy, 0);
 });
 
-for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} authored Shield Bash tier 2 badge is its SP plus two, matching payment`, () => {
+test(`solo authored Shield Bash tier 2 badge is its SP plus two, matching payment`, () => {
   const registries = createRegistries(contentBundle);
   const shield = { instanceId: 'shield-price-probe', cardId: 'shieldBash' };
   const input = { id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
     stamina: 10, maxStamina: 10, energyMax: 10, mana: 10, maxMana: 10,
     drawPerTurn: 1, deck: [shield], orderedDraw: true };
-  const combat = coop ? createCoopCombat({ registries, rng: createRng(11), combatExpansionVersion: 2,
-    players: [input], enemyIds: ['wanderingSoldier'] }) : createCombat({ registries,
+  const combat = createCombat({ registries,
     rng: createRng(11), combatExpansionVersion: 2, player: input, enemyIds: ['wanderingSoldier'] });
-  const owner = coop ? combat.players.get('a').entity : combat.player;
-  const receipt = coop ? previewCoopCard(combat, 'a', shield.instanceId, 'a', 2)
-    : previewCard(combat, shield.instanceId, 'player', 2);
+  const owner = combat.player;
+  const receipt = previewCard(combat, shield.instanceId, 'player', 2);
   // Shield Bash's SP is the cost formula's (SPEC §4.3a), plus the tier-2 surcharge of 2.
   const base = resolveCard(registries, { cardId: 'shieldBash' });
   const sp = base.cost + 2, mp = base.manaCost + 2;
@@ -179,15 +144,14 @@ for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} authored Shield 
   const html = renderCard(registries, shield, { preview: receipt, tooltip: false, inspection: false }).innerHTML;
   assert.match(html, new RegExp(`data-card-binding="stamina"[^>]*>${sp}</div>`));
   assert.match(html, new RegExp(`data-card-binding="mana"[^>]*>${mp}</div>`));
-  if (coop) playCard(combat, 'a', shield.instanceId, 'a', undefined, 2);
-  else dispatch(combat, { type: 'playCard', cardInstanceId: shield.instanceId, targetId: 'player', upcastTier: 2 });
-  const paid = coop ? combat.players.get('a').entity : combat.player;
+  dispatch(combat, { type: 'playCard', cardInstanceId: shield.instanceId, targetId: 'player', upcastTier: 2 });
+  const paid = combat.player;
   assert.deepEqual([paid.energy, paid.stamina, paid.mana], [10 - sp, 10 - sp, 10 - mp]);
   assert.equal(paid.combatCounter.charges, 1);
 });
 
-for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} upcast X keeps its badge and cannot spend more than the whole SP pool`, () => {
-  const f = fixture({ coop, cost: 'X', manaCost: 0 });
+test(`solo upcast X keeps its badge and cannot spend more than the whole SP pool`, () => {
+  const f = fixture({ cost: 'X', manaCost: 0 });
   const receipt = preview(f, 3);
   assert.equal(receipt.costIsX, true);
   assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [11, 11, 1]);

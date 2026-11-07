@@ -1104,6 +1104,25 @@
       ]
     },
     {
+      "id": "status.barrier",
+      "tag": "status.barrier",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "defenses",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.bedrock",
+      "tag": "status.bedrock",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.bleed",
       "tag": "status.bleed",
       "family": "status",
@@ -1214,6 +1233,15 @@
       ]
     },
     {
+      "id": "status.damp",
+      "tag": "status.damp",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.dazed",
       "tag": "status.dazed",
       "family": "status",
@@ -1285,7 +1313,6 @@
       "portability": "legacy",
       "modules": [
         "deck-training",
-        "stances",
         "statuses"
       ]
     },
@@ -1340,9 +1367,7 @@
       "tag": "status.glassCannon",
       "family": "status",
       "portability": "legacy",
-      "modules": [
-        "statuses"
-      ]
+      "modules": []
     },
     {
       "id": "status.goreblood",
@@ -1556,6 +1581,15 @@
       ]
     },
     {
+      "id": "status.shocked",
+      "tag": "status.shocked",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "statuses"
+      ]
+    },
+    {
       "id": "status.silenced",
       "tag": "status.silenced",
       "family": "status",
@@ -1690,6 +1724,17 @@
       "portability": "portable",
       "modules": [
         "stagger",
+        "statuses"
+      ]
+    },
+    {
+      "id": "status.ward",
+      "tag": "status.ward",
+      "family": "status",
+      "portability": "legacy",
+      "modules": [
+        "defenses",
+        "gear",
         "statuses"
       ]
     },

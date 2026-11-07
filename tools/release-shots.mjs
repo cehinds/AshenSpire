@@ -93,6 +93,7 @@ import { menuTabs } from '../src/ui/uiContent.js';
 // denominator. This tool wants what the screen draws.
 import { settingsCategories } from '../src/ui/screens/settings.js';
 import { balance } from '../src/content/balance.js';
+import { ARMOURY_PAGES, armouryPageOf } from '../src/model/armouryPages.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
@@ -113,25 +114,12 @@ const SHAPES = [
   { tag: '1200x730', width: 1200, height: 730, dsf: 1, mobile: false },
 ];
 
-// D2 (Vira): coverage was HAND-LISTED and had already drifted from the app by
-// five — eleven ?shot= states exist in src/, this file covered six, and the
-// five co-op states were silently absent. That is precisely the failure this
-// harness exists to correct in screenshot.mjs, reproduced by me in the tool
-// that was supposed to be the fix. So the list is now DERIVED: the app's own
-// states are read out of src/main.js, and any state with neither a shot entry
-// nor an explicit exclusion below is a hard failure. A silent gap cannot
-// recur; an intentional gap must be typed out and justified in one line.
-const EXCLUDED_STATES = {
-  // Co-op is a LAN mode whose shots need a canned server snapshot through a
-  // stub socket (main.js coopStubMount, tools/coop-shoot.mjs is its own
-  // instrument). Whether co-op ships in 0.4.x is Marina's call; until it is
-  // in the release set, these are excluded BY NAME rather than missing.
-  coop: 'LAN co-op — photographed by tools/coop-shoot.mjs; not in the 0.4.x solo delivery set',
-  coopmap: 'LAN co-op — see coop',
-  coopreward: 'LAN co-op — see coop',
-  coopshrine: 'LAN co-op — see coop',
-  coopcatchup: 'LAN co-op — see coop',
-};
+// D2 (Vira): coverage was HAND-LISTED and had already drifted from the app. So
+// the list is DERIVED: the app's own states are read out of src/main.js, and
+// any state with neither a shot entry nor an explicit exclusion below is a hard
+// failure. A silent gap cannot recur; an intentional gap must be typed out and
+// justified in one line. Empty today.
+const EXCLUDED_STATES = {};
 
 /** The states the APP actually has, read from src/main.js — never retyped. */
 function appShotStates() {
@@ -154,22 +142,7 @@ const SCREENS = [
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'victory', query: '?shot=victory', landmark: '.stats-table', state: 'victory' },
   { name: 'history', query: '?shot=history', landmark: '.history .as-row', state: 'history' },
-  { name: 'lobby', query: '?shot=lobby', landmark: '#lb-name', state: 'lobby' },
   { name: 'about', query: '?shot=about', landmark: '.settings-modal .about-ai', state: 'about' },
-  // The Custom Climb — a SCREENS entry and NOT an EXCLUDED_STATES line, for the
-  // reason written below about the Shrine and the event. `?shot=customrun` is
-  // the screen's ONLY door: title.js voids `onCustom` today, so nothing a player
-  // can click reaches it and a photograph is the only way anyone sees it. It
-  // rode into the release promotion (PR #795) with no line here and the
-  // preflight refused the entire tool — "1 app shot state neither photographed
-  // nor excluded: customrun", exit 1 before the browser ever launched. That
-  // refusal is the derivation working; the fix is to account for the state, not
-  // to quiet the check.
-  //
-  // `#cr-classes` and not `.customrun`: the landmark has to prove the screen's
-  // own controls rendered. The root div draws whether or not the registries
-  // resolved; the class picker is built from them.
-  { name: 'custom-climb', query: '?shot=customrun', landmark: '#cr-classes', state: 'customrun' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
   { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
@@ -186,7 +159,7 @@ const SCREENS = [
   { name: 'shrine', query: '?shot=rest', landmark: '#smith-opt', state: 'rest' },
   // The Smith with its upgrade transaction open — a state since 2026-09-11, so
   // the review sheet stops photographing the title for it.
-  { name: 'smith', query: '?shot=smith', landmark: '.smith-candidate-region', state: 'smith' },
+  { name: 'smith', query: '?shot=smith', landmark: '.upgrade-desk', state: 'smith' },
   // The blacksmith (SPEC §14.4, §14.6 step 6): the atlas smith's own screen,
   // its rail drawn from the offerings the visit laid out.
   { name: 'blacksmith', query: '?shot=blacksmith', landmark: '.blacksmith-workspace .shop-rail [data-shop-category]', state: 'blacksmith' },
@@ -303,7 +276,7 @@ const SCREENS = [
     // whose landmark never resolved is Bjorn's animated-title finding pointed
     // the other way, and the instrument that catches it has to assert the
     // landmark RESOLVED before it is allowed to hash anything.
-    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.smith-preview-card',
+    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.confirmation-modal',
     drive: `(()=>{const smith=document.querySelector('#smith-opt');if(!smith)return 'Smith option missing';smith.click();const card=document.querySelector('.smith-candidate-card');if(!card)return 'Smith armament candidate missing';card.click();return true})()`,
   },
   // THE COMPENDIUM — photographed in the act that creates it (Marina's condition
@@ -535,6 +508,11 @@ const SUB_SURFACE_GROUPS = [
     // STOPS THE RUN BY NAME — never `.filter(Boolean)`, which would drop the
     // unreadable row and quietly shrink the denominator. That is Law 0 clause 5
     // and it is the failure this whole file exists to make loud.
+    // The view dropdown is gone (2026-11-05): the Armoury draws two pages, the
+    // Character tab's (`grid`) and the Armory tab's combined page (`rack`).
+    // `hybrid` and `cards` are still declared (data is untouched) but have no
+    // screen of their own, so they are NOT shot: ids() lists only declared
+    // views that are a page (src/model/armouryPages.js).
     ids: () => (balance.equipment.views || []).map((v, i) => {
       if (typeof v === 'string' && v) return v;
       if (v && typeof v === 'object' && typeof v.id === 'string' && v.id) return v.id;
@@ -543,7 +521,7 @@ const SUB_SURFACE_GROUPS = [
       console.error('Neither fits, so the armoury denominator cannot be derived and no number');
       console.error('printed below it would mean anything. Fix the row, or teach this reader.');
       return process.exit(1);
-    }),
+    }).filter((id) => ARMOURY_PAGES.includes(id) && armouryPageOf(id) === id),
     // NO `authoredIn` ANY MORE, and its absence is the point. It asked the
     // stylesheet whether anyone had authored a `.view-<id>` rule, because the
     // stylesheet was a SECOND, SILENT DECIDER of the layout — `kanban` rendered
@@ -561,8 +539,8 @@ const SUB_SURFACE_GROUPS = [
         const a = document.querySelector('#combat-armoury');
         if (!a) return 'no #combat-armoury on the combat screen';
         a.click();
-        const b = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}]');
-        if (!b) return 'no view button for ' + ${q(id)};
+        const b = document.querySelector('.armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + ']');
+        if (!b) return 'no head tab for ' + ${q(id)};
         b.click();
         return true;
       })()`,
@@ -574,8 +552,8 @@ const SUB_SURFACE_GROUPS = [
       // first attempt put it inside, where `//` is text and a `<` is a syntax
       // error. The tool told me immediately, which is the arrangement working.)
       assert: `(() => {
-        const on = document.querySelector('[data-surface="armouryView"] [data-member=${q(id)}].on');
-        if (!on) return 'view ' + ${q(id)} + ' is not the selected view';
+        const on = document.querySelector('.armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + '][aria-selected="true"], .armoury-head [data-modal-tab=' + ${q(id === 'grid' ? 'character' : 'armory')} + '].on');
+        if (!on) return 'page ' + ${q(id)} + ' is not the selected tab';
         const body = document.querySelector('.armoury-body');
         if (!body || !body.innerText.trim().length) return 'view ' + ${q(id)} + ' renders an EMPTY armoury body';
         return true;
@@ -594,17 +572,14 @@ const SUB_SURFACE_GROUPS = [
 // two members of a set that render the same panel are not two members.
 const DISTINCT_PANELS = 'no two ids in a set render the same panel';
 
-// Excluded sub-surfaces, keyed `group:id`, named exactly as the co-op states
-// are (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
+// Excluded sub-surfaces, keyed `group:id` (SPEC §8 clause 5: a release-gating instrument prints what it did NOT
 // check). Empty today — every derived sub-surface is photographed.
 const EXCLUDED_SUBSURFACES = {};
 
 // Sub-surface SETS this tool knows exist and does NOT enumerate. This list is
 // the honest edge of denominator 2 and is printed with the run: it is the part
 // no derivation can close while the set-of-sets has no home.
-const UNENUMERATED_SETS = [
-  ['co-op seat tabs', 'src/ui/screens/coop.js renderSeatTabs() — one tab per connected player, built at runtime from the lobby; no static list exists and the whole co-op surface is excluded from the 0.4.x solo delivery set (see EXCLUDED_STATES)'],
-];
+const UNENUMERATED_SETS = [];
 
 // D2's gate: derived denominators vs what this file covers. Runs BEFORE the
 // browser so a coverage gap costs no time and cannot be mistaken for a render

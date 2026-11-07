@@ -1,12 +1,9 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveCombatAnimation as route, combatRestAfterEvent as restAfter } from '../src/model/combatAnimation.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { tagService } from '../src/model/tagService.js';
-import { createSession } from '../tools/session.mjs';
 import { equipmentAnimationForLoadout, animationClip, animationArt } from '../src/model/equipmentAnimation.js';
 import { createRunState } from '../src/model/state.js';
 import { paintedOutfit } from '../src/model/paintedOutfitArt.js';
@@ -89,24 +86,4 @@ test('rest reducer is owner-relative and paced/flush reduction agree',()=>{
   rest=restAfter(rest,events[2],'a');assert.equal(rest,'parry');
   rest=restAfter(rest,events[3],'a');assert.equal(rest,'idle');
   assert.equal(events.reduce((r,e,i)=>restAfter(r,e,'a',plans[i]),'idle'),rest);
-});
-test('authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
-  // The actor/profile receipt fixture replays the pre-expansion character setup.
-  const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
-  for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
-  host.start();
-  for(const member of host.session.members.values())delete member.run.reactionRulesVersion;
-  for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);
-  const combat=host.live.combat,p= combat.players.get('p2');
-  p.piles.hand.push({instanceId:'animation-guard',cardId:'defend',profileId:'shieldGuard',equipmentRole:'guard',upgraded:false});
-  p.entity.energy=10;p.entity.stamina=100;
-  const accepted=host.combatPlay('p2','animation-guard');assert.ok(accepted.ok,accepted.error);
-  const snapshot=host.snapshot();
-  const event=snapshot.scene.events.find(event=>event.type==='cardPlayed');
-  assert.equal(event.playerId,'p2');assert.equal(event.profileId,'shieldGuard');
-  assert.ok(snapshot.party.every(member=>member.loadout));
-  assert.equal(host.combatPlay('p2','not-in-hand').ok,false);
-  host.combatEndTurn('p1');host.combatEndTurn('p2');
-  const starts=host.snapshot().scene.events.filter(event=>event.type==='playerTurnStart');
-  assert.deepEqual(starts.map(event=>event.playerId).sort(),['p1','p2']);
 });

@@ -65,11 +65,6 @@ const secondOffer = (registries, seed, keepHistory) => {
   return gameProfileRewardOffers(registries, run, createRng(seed), { offerId: 'b', source: 'level' }).options;
 };
 const SEEDS_20 = Array.from({ length: 20 }, (_, i) => i + 1);
-test('Core 1 pins the weight to 1: a history changes no second offer', () => {
-  const core1 = build(undefined, 'ashen.core@1.0.0');
-  for (const seed of SEEDS_20)
-    assert.equal(JSON.stringify(secondOffer(core1, seed, true)), JSON.stringify(secondOffer(core1, seed, false)), `seed ${seed}`);
-});
 test('Core 2 (weight 0.25) changes at least one second offer over seeds 1..20 when the history is present', () => {
   const core2 = build();
   const differs = SEEDS_20.filter(seed => JSON.stringify(secondOffer(core2, seed, true)) !== JSON.stringify(secondOffer(core2, seed, false)));
@@ -111,26 +106,15 @@ test('the history survives a save round trip and an old save without it still lo
   back.rewardOfferHistory = 'x';
   assert.ok(validateRunShape(back).some(p => p.includes('rewardOfferHistory')));
 });
-test('offeredCopyWeight is a 0..1 schema setting; Core 2 default 0.25, Core 1 bundle pins 1', () => {
-  const schema = JSON.parse(readFileSync(new URL('../engine/modules/reward-ranks/settings.schema.json', import.meta.url)));
-  const defaults = JSON.parse(readFileSync(new URL('../engine/modules/reward-ranks/defaults.json', import.meta.url)));
-  const bundle = JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/core-v1/bundle.json', import.meta.url)));
-  assert.deepEqual([schema.properties.offeredCopyWeight.minimum, schema.properties.offeredCopyWeight.maximum], [0, 1]);
-  assert.equal(defaults.offeredCopyWeight, 0.25);
-  assert.equal(bundle.modules['reward-ranks'].settings.offeredCopyWeight, 1);
-  assert.throws(() => build(1.5)); assert.throws(() => build(-0.1));
-});
 
 // Owner 2026-10-31 (stance coverage, 93fc9e5): the reserved stance slot weights its stance and its card by the history too.
-// Stance coverage is a Core 2 setting (on by default); this run owns a casting card, so only sweep and evade are missing.
+// Stance coverage is a Core 2 setting (on by default); this run owns no sweep or casting card, so those two are missing (Evade is a tag, not a stance: owner 2026-11-01).
 const stanceOfId = (registries, id) => { try { return stanceOf(registries.cards.get(id))?.maneuver ?? null; } catch { return null; } };
 const SEEDS_200 = Array.from({ length: 200 }, (_, i) => i + 1);
 const stanceRun = registries => {
   const run = createRunState({ seed: 1, classId: 'reaver', registries });
   const ids = registries.cards.all().map(card => card.id);
-  const casting = ids.find(id => stanceOfId(registries, id) === 'casting');
-  run.sideboard.push({ instanceId: `t:${casting}`, cardId: casting, upgraded: false });
-  // Every sweep-stance card has been offered three times; no evade-stance card ever has.
+  // Every sweep-stance card has been offered three times; no casting-stance card ever has.
   run.rewardOfferHistory = { cards: {} };
   for (const id of ids) if (stanceOfId(registries, id) === 'sweep') run.rewardOfferHistory.cards[id] = 3;
   return run;
@@ -141,14 +125,14 @@ function reservedStances(registries) {
   return SEEDS_200.map(seed => {
     const offer = gameProfileRewardOffers(registries, structuredClone(base), createRng(seed), { offerId: `s${seed}`, source: 'combat' });
     const stance = stanceOfId(registries, offer.options[0].id);
-    assert.ok(stance === 'sweep' || stance === 'evade', `seed ${seed}: reserved ${offer.options[0].id} is of stance ${stance}`);
+    assert.ok(stance === 'sweep' || stance === 'casting', `seed ${seed}: reserved ${offer.options[0].id} is of stance ${stance}`);
     return stance;
   });
 }
 test('the reserved stance slot favours the stance never offered, and is not skewed by history at weight 1', () => {
   const share = (stances, stance) => stances.filter(value => value === stance).length / stances.length;
   const skewed = reservedStances(build()), neutral = reservedStances(build(1));
-  console.log(`reserved evade share: Core 2 0.25 = ${share(skewed, 'evade').toFixed(3)}, weight 1 = ${share(neutral, 'evade').toFixed(3)}`);
-  assert.ok(share(skewed, 'evade') >= 0.7, `unoffered stance (evade) at 0.25: ${share(skewed, 'evade')}`);
+  console.log(`reserved casting share: Core 2 0.25 = ${share(skewed, 'casting').toFixed(3)}, weight 1 = ${share(neutral, 'casting').toFixed(3)}`);
+  assert.ok(share(skewed, 'casting') >= 0.7, `unoffered stance (casting) at 0.25: ${share(skewed, 'casting')}`);
   assert.ok(share(neutral, 'sweep') >= 0.3 && share(neutral, 'sweep') <= 0.7, `offered stance (sweep) at weight 1: ${share(neutral, 'sweep')}`);
 });

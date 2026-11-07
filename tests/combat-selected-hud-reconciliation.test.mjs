@@ -11,41 +11,6 @@ import {COMBAT_TARGET_HIT_PX,combatTargetPackSize} from '../src/ui/models/Combat
 
 const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
 
-test('compact selected and idle panels reserve all seats actual22px Info and24px action doors before placement',()=>{
-  const oldStyle=globalThis.getComputedStyle,zoom=.75;
-  globalThis.getComputedStyle=node=>({width:String(node.size/zoom),minWidth:'0'});
-  try{
-    const viewport={left:0,top:0,right:320,bottom:650,width:320,height:650},options=[],doors=[];
-    const players=[true,false].map((selected,index)=>{
-      const sprite={index},art={left:40+index*160,right:100+index*160,top:190,bottom:300};
-      const inspect={size:22,style:{},dataset:{},getBoundingClientRect:()=>({width:0,height:0})};
-      const action={size:24,style:{},getBoundingClientRect:()=>({width:24,height:24})};
-      const infoRect=combatPlayerInfoRect(inspect,art,viewport,zoom);
-      doors.push(infoRect,combatPlayerActionRect(action,infoRect,art,zoom));
-      const leading={style:{},getBoundingClientRect:()=>({left:110,top:230,width:128,height:26}),
-        querySelector:selector=>selector==='.combatant-info'?inspect:selector==='.player-action-intent'?action:{}};
-      return {dataset:{},classList:{contains:()=>selected},querySelector:selector=>selector==='.sprite'?sprite:
-        selector==='.combatant-leading'?leading:{getBoundingClientRect:()=>({left:0,top:0})}};
-    });
-    const combat={dataset:{targetHud:'false'},getBoundingClientRect:()=>viewport,querySelector:()=>null};
-    const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),querySelectorAll:s=>s==='.combatant.player'?players:[]};
-    const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
-    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
-      field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
-      readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
-      combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,
-      playerDetailsPlacement:input=>{options.push(input);return {left:110,top:230};},
-      anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
-    });
-    sync(true);
-    assert.deepEqual(options.map(o=>o.gap),[3,4],'incoming compact selected/idle gaps survive');
-    assert.equal(options[0].art.top,274,'selected preferred panel remains at artwork bottom');
-    assert.equal(options[1].art.top,287,'idle preferred panel remains below the art before obstacle search');
-    for(const input of options)for(const door of doors)assert.ok(input.obstacles.some(o=>o.left===door.left&&o.top===door.top&&o.width===door.width),
-      'even the later hidden Info and action are precollected');
-  }finally{if(oldStyle===undefined)delete globalThis.getComputedStyle;else globalThis.getComputedStyle=oldStyle;}
-});
-
 test('the actual footer pack keeps an unselected armed player and every enemy physical44 target',()=>{
   const begin=source.indexOf('    const footerSize ='),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const fieldRect={left:0,top:90,width:1440,height:417.28125};
@@ -54,7 +19,7 @@ test('the actual footer pack keeps an unselected armed player and every enemy ph
   const placed=boxes.map((box,index)=>({sprite:{art:{left:box.hostRect.left,right:box.hostRect.left+box.hostRect.width,top:box.hostRect.bottom-120,bottom:box.hostRect.bottom}},frame:{dataset:{eid:index?'enemy':'player'},classList:{contains:role=>role===(index?'enemy':'player')||role==='context-selected'&&!!index}}}));
   let packInput;
   runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,combatFrameTarget,COMBAT_TARGET_HIT_PX,combatTargetPackSize,
-    combat:{dataset:{targetHud:'false'},getBoundingClientRect:()=>({bottom:900})},currentSpriteArtBounds:sprite=>sprite.art,refresh:()=>{},readFooterObstacles:()=>[],placePlayerHud:()=>{},
+    combat:{dataset:{targetHud:'false'},getBoundingClientRect:()=>({bottom:900})},currentSpriteArtBounds:sprite=>sprite.art,refresh:()=>{},scheduleArt:()=>{},readFooterObstacles:()=>[],placePlayerHud:()=>{},
     combatTargetAnchors:input=>{packInput=input;return input.targets;},packCombatTargetsWithHud:input=>input.pack()});
   assert.equal(packInput.obstacles.length,2,'the pack reserves each painted combatant artwork box');
   assert.deepEqual(Array.from(packInput.obstacles,o=>o.ownerId),['player','enemy'],'painted reservations retain owner identity');
@@ -78,3 +43,5 @@ test('native target HUD delegates to its body-head owner before legacy panel pla
   sync();
   assert.equal(calls,1);
 });
+
+// The details-panel placement these tests pinned (obstacle avoidance, tools ceiling, per-frame follow) was removed on purpose: the player HUD is fixed right of the figure (owner, 2026-11-06). tests/player-hud-fixed-right.test.mjs holds the new contract.

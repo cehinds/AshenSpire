@@ -1,4 +1,5 @@
 import { uiConfig } from '../../config/generated/ui.js';
+import { separateRow } from './CombatViewportSizeModel.js';
 
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
@@ -12,8 +13,8 @@ export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
 // artwork. Only layout, presentation settings, art geometry or formation changes
 // invalidate the settled body sizes and foot positions. The measured header
 // keepout is layout geometry too, including captions outside its border box.
-export function combatArtworkKey({ width, height, zoom, wide = false, presentation, appearance, handAnchor, ceiling = 0, actors }) {
-  return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, ceiling, actors.map(actor => [
+export function combatArtworkKey({ width, height, zoom, wide = false, presentation, handAnchor, ceiling = 0, actors }) {
+  return JSON.stringify([width, height, zoom, wide, presentation, handAnchor, ceiling, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset, actor.artLeading,
@@ -42,30 +43,6 @@ export function combatStandingGround(sizes, actors, fallback) {
   return grounds.length ? Math.min(...grounds) : fallback;
 }
 
-export function combatComposition({ sizes, actors, width, height, handTop, solo = true }) {
-  const enemies = actors.filter(actor => actor.side === 'enemy');
-  const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
-  const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
-  // Full-grid fitting can leave a two-enemy encounter as thumbnails. Lift the
-  // enemy group uniformly, preserving its relative stature and depth ratios.
-  const enemyFloor = Math.min(120, width * .17, Math.max(64, height * .26));
-  const enemyFactor = Math.max(.5, enemyFloor / Math.min(...enemyFits.map(f => f.visibleHeight)));
-  return sizes.map(size => {
-    const actor = actors.find(actor => actor.slot.id === size.id);
-    const player = actor.side === 'player';
-    const factor = player ? (solo ? Math.max(1.28, Math.min(240, width * .32, height * .6) / size.visibleHeight) : 1) : enemyFactor;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7));
-    const ratio = visibleHeight / size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
-    const proposedX = player ? (solo ? width * .32 : size.x) : (size.x - center) * .72 + width * .76;
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
-    const ground = player && solo && Number.isFinite(handTop)
-      ? handTop + visibleHeight * .12
-      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground) : height * .34);
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio };
-  });
-}
-
 // Attach the foreground player's feet to the battlefield edge, above the
 // health strip and card-band tools. Selection never changes this resting fit.
 // Share of the field height a short portrait phone lifts its enemies by, so
@@ -81,9 +58,9 @@ const SPACIOUS_SPREAD = 1.3;
 // Room the intent and HP plates need under the turn ribbon, above each figure.
 export const SPACIOUS_RIBBON_RESERVE = 30;
 
-// The perspective grid is the live path (the default appearance). The legacy
-// composition below is kept for the classic-field tests and any caller that
-// passes no perspectiveGrid; every form factor takes the same placement.
+// The perspective grid is the live path. The legacy composition below is kept
+// for any caller that passes no perspectiveGrid; every form factor takes the
+// same placement.
 export function alternativeCombatComposition(options) {
   return options.perspectiveGrid
     ? perspectiveGridComposition(options)
@@ -93,17 +70,51 @@ export function alternativeCombatComposition(options) {
 // The perspective grid places every body on its cell's foot anchor: the
 // sprite's feet stand on the cell's shadow. The shared fit already sized each
 // body to its lane and its headroom; composition only keeps it in the field.
-function perspectiveGridComposition({ sizes, actors, width }) {
-  return sizes.map(size => {
+function perspectiveGridComposition({ sizes, actors, width, handTop, solo = true }) {
+  // Once the sizing rule slid any figure to clear a neighbour, its x for every
+  // figure is authoritative: the cell footprint clamp below would pull a
+  // neighbour back across the cleared gap.
+  const trustSizeX = sizes.some(size => size.slid === true);
+  const placed = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
     // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
     const halfWidth = actor.visibleWidth * size.scale / 2;
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
-    const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
-      { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
-    return { ...size, ...foot };
+    // The sizing rule may have slid a figure sideways to clear a neighbour
+    // (size.x); the foot inset then only keeps the ground inside the cell.
+    const moved = (size.slid === true || trustSizeX) && Number.isFinite(size.x);
+    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, moved ? size.x : actor.slot.x));
+    // Owner 2026-11-06: every figure's feet (its shadow's centre) stand inside the DRAWN cell, footInCellFraction of
+    // the cell's height above its bottom line, never on a line. The drawn cell is the slot's own box.
+    // The party keeps its own x (its fit already cleared its neighbours); only the ground moves.
+    const shadowHeight = (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08;
+    const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const box = actor.slot.box;
+    const wanted = box ? { ...actor.slot, ground: box.top + box.height * (1 - grid.footInCellFraction) } : actor.slot;
+    const inner = box ? insetPerspectiveFootprint(wanted, { width: halfWidth * 2, height: shadowHeight }) : null;
+    const stripFits = inner && box.height >= shadowHeight + 2 * grid.footprintInsetPx;
+    // A strip too short for the shadow plus both insets (a landscape phone's 9px strip) stands the foot at its middle, so it stays inside.
+    const ground = inner ? (stripFits ? inner.ground : box.top + box.height / 2) : actor.slot.ground;
+    const foot = inner ? (actor.side === 'enemy' ? { x: inner.x, ground } : { x, ground }) : { x, ground };
+    // A lone player's feet never stand inside the hand area: the ground line
+    // moves up to the hand's top edge (the fit already sized the body for it).
+    if (actor.side === 'player' && solo && Number.isFinite(handTop)) foot.ground = Math.min(foot.ground, handTop);
+    return { ...size, ...foot, ...(moved ? { x } : {}) };
   });
+  // The footprint clamp can pull two neighbours of one band back together;
+  // clear them again on the final positions, as the fit did.
+  const bands = new Map();
+  placed.forEach(size => {
+    const actor = actors.find(actor => actor.slot.id === size.id);
+    const key = `${actor.side}:${actor.slot.visualBand ?? actor.slot.row ?? Math.round(actor.slot.ground / 10)}`;
+    bands.set(key, [...(bands.get(key) || []), { size, x: size.x, width: actor.visibleWidth * size.scale }]);
+  });
+  for (const band of bands.values()) {
+    if (band.length < 2) continue;
+    separateRow(band, width);
+    for (const row of band) row.size.x = row.x;
+  }
+  return placed;
 }
 
 // Constrain the shadow's complete bounding envelope inside its skewed cell.
@@ -140,12 +151,9 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
-    const availablePlayerHeight = player && solo && Number.isFinite(handTop)
-      ? Math.max(1, handTop - actor.leading - 32) : Infinity;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
-    const ratio = visibleHeight / size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
+    // Placement only: size is the viewport rule's alone (CombatViewportSizeModel).
+    const visibleHeight = size.visibleHeight;
+    const halfWidth = actor.visibleWidth * size.scale / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
       : (size.x - center) * spread + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
@@ -171,7 +179,7 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
     // the backdrop then keeps the back-row feet on its floor.
     const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
     const standingGround = lift ? backGround : undefined;
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
+    return { ...size, x, ground, visibleHeight, scale: size.scale, multiplier: size.multiplier,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
       ...(standingGround === undefined ? {} : { standingGround }),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };

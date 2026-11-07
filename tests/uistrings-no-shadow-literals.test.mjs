@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -53,17 +53,15 @@ const ALLOWED = [
   ['src/ui/components/creationCards.js', 'Draw', 'character resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
   ['src/ui/models/ProgressionInspectionModel.js', 'Draw', 'progression resource stat label for cards drawn per turn; not the builder draw-effect art cue'],
   ['src/ui/models/SmithSelectionModel.js', 'Draw', 'card upgrade draw-amount stat label; not the builder draw-effect art cue'],
+  ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
   ['src/ui/screens/settings.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
-  ['src/ui/screens/coop.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
   ['src/ui/components/overlay.js', 'The', 'declared-tab diagnostic sentence; not a status value decay sentence'],
-  ['src/ui/models/LocalServiceModel.js', 'The', 'relic-denied rest service sentence; not a status value decay sentence'],
   ['src/ui/models/PossessionVariantModel.js', 'The', 'missing resource-tier authoring diagnostic; not a status value decay sentence'],
-  ['src/ui/screens/coop.js', 'The', 'scene spoils fallback article and relic-denied rest sentence; neither describes status value decay'],
   ['src/ui/screens/equipment.js', 'The', 'declared-view layout diagnostic sentence; not a status value decay sentence'],
   ['src/ui/screens/rest.js', 'The', 'relic-denied rest sentence; not a status value decay sentence'],
   ['src/ui/screens/settings.js', 'The', 'settings section tooltip fallback sentence; not a status value decay sentence'],
@@ -71,8 +69,6 @@ const ALLOWED = [
   ['src/ui/models/AdvancedSettingsGroups.js', 'Export', 'stable advanced-section key compared for topic routing; its displayed heading reads settings.group.Export'],
   ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Stats', `legacy advanced-group capability key; ${ID}`],
-  ['src/ui/models/SettingsCapabilitiesModel.js', 'Recovery', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Deck', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Progression', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/screens/settings.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
@@ -80,13 +76,11 @@ const ALLOWED = [
 
   ['src/ui/components/card.js', 'Evade', 'the Evade stat granted on a stance change; not the Evade stance name row'],
   ['src/ui/components/damageReceipt.js', 'Against', 'leading word of the per-target damage receipt scope line; not the Core Smash stance-matchup sentence'],
-  ['src/ui/previews/itemCards.js', 'Prepared', 'item-card preview pose option label; not the Prepared stance name row'],
   ['src/ui/components/card.js', 'Spell', 'the card face camp subtype and range-name table; not the deck editor stance label'],
   ['src/ui/components/collectibleCard.js', 'Consumable', 'a potion usage line on the collectible card; not the deck editor stance label'],
   ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
   ['src/ui/screens/deckEditor.js', 'disabled', 'DOM attribute name; not reaction switch copy'],
   ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
-  ['src/ui/components/coopProgressionDoor.js', 'disabled', 'DOM property key; not reaction switch copy'],
   ['src/ui/components/holdconfirm.js', 'disabled', 'stored hold mode; not reaction switch copy'],
   ['src/ui/components/optionDecision.js', 'disabled', 'stored hold mode; not reaction switch copy'],
   ['src/ui/models/CombatToolsModel.js', 'Small', 'stable log size id; its rendered face reads combat.log.size.small'],
@@ -95,40 +89,26 @@ const ALLOWED = [
   ['src/ui/models/WireframeChoiceModel.js', 'Medium', 'wireframe preview size, separate from the combat log size'],
   ['src/ui/screens/combat.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
   ['src/ui/screens/combat.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
-  ['src/ui/screens/coop.js', 'disabled', 'HTML disabled attribute; not reaction switch copy'],
-  ['src/ui/screens/coop.js', 'Upcast', 'ordinary hand-card upcast control, separate from the reaction option tier sentence'],
-  ['src/ui/components/coopUpcastControl.js', 'Upcast', 'ordinary hand-card default label, separate from the reaction option tier sentence'],
   ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
-  ['src/ui/screens/worldAtlas.js', 'disabled', 'HTML disabled attributes; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
   ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
   ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
-  ['src/ui/screens/customRun.js', 'Class', 'custom run class selector, separate from the progression tab'],
   ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
   ['src/ui/components/illustratedCard.js', 'Georgia', 'CSS font-family fallback, not a displayed font-selection label'],
   ['src/ui/components/engravedIcon.js', 'Inter', 'CSS font-family identifier for standalone historical-glyph SVGs, not the lore font-selection label'],
-  ['src/ui/screens/settings.js', 'Stamina', `Recovery topic id; ${ID}`],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
   ['src/ui/screens/settings.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
-  ['src/ui/screens/settings.js', 'Stats', `advanced-group id (group.id === 'Stats', MERGED_ADVANCED_GROUPS); ${ID}`],
-  ['src/ui/screens/settings.js', 'Recovery', `advancedGroup id; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
+  ['src/ui/screens/settings.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Rewards', 'settings advancedGroup id in HIDDEN_LEGACY_SETTING_GROUPS, not displayed copy'],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
-  ['src/ui/screens/settings.js', 'Battlefield', `advanced-group id; ${ID}`],
   ['src/ui/screens/settings.js', 'Changelog', `advanced-group id and a stored category value; ${ID}`],
   ['src/ui/screens/settings.js', 'About', `advanced-group id and a stored category value; ${ID}`],
-  ['src/ui/screens/settings.js', 'Poise', `Stats topic ids and their migration map; ${ID}`],
   ['src/ui/screens/settings.js', 'Move', 'the opening-scene reorder buttons\' aria ("Move <scene> up"), not the formation Move confirm'],
   ['src/ui/screens/settings.js', 'Copied', '"Copied <what>." is the export status sentence, not the Copy button face (that reads common.copied)'],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Stats', `advanced-group id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Deck', `advanced-group / topic id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Interface', `advanced-group id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Battlefield', `advanced-group id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Poise', `Stats topic id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Stamina', `Stats topic id; ${ID}`],
-  ['src/ui/models/StatsPreviewModel.js', 'Poise', `Stats topic id and the rating abbreviation table (RATING_LABELS keys ratings, not this overview row); ${ID}`],
   ['src/ui/models/WireframeChoiceModel.js', 'Modals', `layout family id, persisted (tests/uistrings-stable-ids.test.mjs); ${ID}`],
   ['src/ui/models/WireframeChoiceModel.js', 'Menus', `layout family id, persisted; ${ID}`],
   ['src/ui/models/WireframeChoiceModel.js', 'Scenes', `layout family id, persisted; ${ID}`],
@@ -146,17 +126,12 @@ const ALLOWED = [
   ['src/ui/components/offlinePlay.js', 'All', 'the save-import replacement warning begins with All slots; it is not the collection filter'],
   ['src/ui/input.js', 'Inspect', 'global input binding label, separate from the Reading Desk card action'],
   ['src/ui/screens/settings.js', 'Undo', 'settings change undo, separate from the deck transaction undo'],
-  ['src/ui/screens/worldAtlas.js', 'Inspect', 'local map point inspection aria-label, separate from card inspection'],
-  ['src/ui/models/LocalServiceModel.js', 'Cards', 'a service receipt\'s item category, not the Armoury tab'],
   ['src/ui/screens/equipment.js', 'Hand', 'the Armoury Resources table\'s hand-size line, not the Stats preview "Hand" topic title'],
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],
-  ['src/ui/screens/customRun.js', 'Deck', 'Custom Climb\'s Deck section, not the Settings Deck topic'],
   ['src/ui/input.js', 'Deck', 'control-bar short for Open Armoury (Deck); no migrated row names this action (the Armoury tab is "Cards")'],
   ['src/ui/models/SmithSelectionModel.js', 'Discard', 'a card upgrade\'s discard value ("Discard +1"), not the combat Discard pile'],
-  ['src/ui/screens/worldAtlas.js', 'Map zoom', 'the local map\'s live zoom readout, not the Settings row that sets the world map\'s default zoom'],
   ['src/ui/screens/combat.js', 'Poise', 'the stat meter and resistance sentence name the Poise stat; statsPreview.overview.poise labels one preview line'],
-  ['src/ui/screens/coop.js', 'Poise', 'the stat meter names the Poise stat, not the Stats preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
   ['src/ui/components/creationCards.js', 'Poise', 'character creation\'s Poise chip, not the Stats preview line'],
   ['src/ui/components/equipmentCard.js', 'Requires', 'parses an attribute requirement string prefix from the card model; not the creation feat lock copy'],
@@ -293,7 +268,7 @@ test('every allowance still matches something, and gives a reason', () => {
 
 test('shared controls and hidden intent copy remain protected after promotion', () => {
   const ids = frozenMigrationIds('common-controls');
-  assert.equal(ids.length, 29);
+  assert.equal(ids.length, 27);
   for (const id of ids) {
     assert.ok(permanentMigratedIds().has(id), id);
     assert.ok(uiStrings.some(row => row.id === id), id);
@@ -306,8 +281,8 @@ test('shared controls and hidden intent copy remain protected after promotion', 
 
 test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
   const frozen = frozenMigrationIds('core-profile');
-  assert.equal(frozen.length, 99, 'retain all97 added rows and both migrated Deck Editor rows from PR2023');
-  assert.equal(new Set(frozen).size, 99, 'each migration row is frozen once');
+  assert.equal(frozen.length, 97, 'retain all95 added rows and both migrated Deck Editor rows from PR2023');
+  assert.equal(new Set(frozen).size, 97, 'each migration row is frozen once');
   const permanent = permanentMigratedIds();
   for (const id of frozen) {
     assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);

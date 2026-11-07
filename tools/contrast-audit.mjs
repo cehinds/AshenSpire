@@ -605,8 +605,8 @@ const selectorContract = (source) => {
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
   if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
-  // The run seed left the solo map header (it lives only in the co-op header,
-  // src/ui/screens/coop.js), so a `.mh-seed` map target can only read BLIND.
+  // The run seed left the solo map header, so a `.mh-seed` map target can only
+  // read BLIND.
   if (targetBlock.includes("sel: '.map-header .mh-seed'")) bad.push('S3 removed map-header Seed selector returned');
   if (targetBlock.includes("sel: '.map-header .mh-prog'")) bad.push('S5 removed combined progress selector returned');
   if (targetBlock.includes("sel: '.map-header #map-legend'")) bad.push('S6 removed map-header legend selector returned');

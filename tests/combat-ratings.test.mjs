@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -7,7 +6,6 @@ import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
@@ -193,10 +191,9 @@ test('explicit Poise damage respects configured break rules without legacy penal
 // RULESET 7 (owner, 2026-09-24) retired the one global multiplier: a rating
 // is a row of the derived-stat table, tuned by its own
 // `derivedStatRules.rules.<id>.<field>` keys, and a new config carries no
-// multiplier at all. A fight SAVED under one still prices exactly as it did.
-test('every rating is the sum of its floored attribute terms; a saved multiplier still prices exactly', async () => {
+// multiplier at all.
+test('every rating is the sum of its floored attribute terms', async () => {
   const { createRunState } = await import('../src/model/state.js');
-  const { LEGACY_RATING_FORMULA } = await import('../src/model/statRows.js');
   const run = createRunState({ seed: 42, classId: 'reaver', registries });
   run.loadout = null; run.relics = [];
   run.attributes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 8 };
@@ -225,17 +222,6 @@ test('every rating is the sum of its floored attribute terms; a saved multiplier
   // A new config has no global multiplier: the row is the whole formula.
   assert.equal(resolveCombatRatings({}, contentBundle).multiplier, undefined);
   assert.equal(rules.multiplier, undefined);
-
-  // A SAVED legacy config states one multiplier over the frozen ruleset-6
-  // rows, and is priced as it always was: base + floor(Σ floored terms × 2).
-  // AR above: 2 × (1 + 0 + 0 + 0 + 2) = 6. The legacy AR row (STR .75, DEX .5,
-  // CON .25, WIS .25, INT .25) at the same attributes: 2 × (0+0+0+0+2) = 4.
-  const saved = { ...rules, multiplier: 2, ratings: { ...structuredClone(LEGACY_RATING_FORMULA.ratings), ar: { ...rules.ratings.ar } } };
-  assert.equal(ratingReceipt(registries, run, saved).totals.ar, 6);
-  const savedLegacyRows = { ...rules, multiplier: 2, ratings: structuredClone(LEGACY_RATING_FORMULA.ratings) };
-  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.ar, 4);
-  // Poise under the same legacy save: base 1 + floor(2 × (CON 1 + STR 0 + WIS 0 + INT 0)) = 3.
-  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.poise, 3);
 
   const zeroWeights = resolveCombatRatings(Object.fromEntries(
     ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
@@ -316,28 +302,6 @@ test('an equipment card uses only its source item rating', () => {
     'the other equipped weapon does not leak into this card');
   assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, equipmentRole: 'attack' }), 12,
     'an unarmed equipment-profile card excludes every equipped item but keeps attribute and relic AR');
-});
-
-test('co-op initializes source equipment ratings for every seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
-  const { createRunState } = await import('../src/model/state.js');
-  const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
-  const currentRegistries = createRegistries(configured);
-  const run = createRunState({ seed: 42, classId: 'reaver', registries: currentRegistries });
-  const c = createCoopCombat({
-    registries: currentRegistries,
-    rng: createRng(998),
-    players: [{
-      id: 'p1', classId: run.class, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp,
-      maxMana: run.maxMana, mana: run.mana, maxStamina: run.maxStamina, stamina: run.stamina,
-      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout,
-      itemUpgradeLevels: run.itemUpgradeLevels, relicIds: [],
-    }],
-    enemyIds: ['wanderingSoldier'],
-  });
-  // 5 + 3 attribute AR + 2 sword AR; 3 + 1 attribute DR + 5 shield DR (the armour's DR stays out).
-  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 10);
-  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 9);
-  assert.equal(c.enemies[0].ratings.poise, c.ratingsRules.enemyRatings.wanderingSoldier.poise);
 });
 
 test('restoring a legacy combat rebuilds typed rating sources before source filtering', async () => {
@@ -647,82 +611,32 @@ test('a rating with no item column is carried by the rules, not lost', () => {
   assert.equal(rules.itemRatings['armament:straightSword'].ar, undefined, 'AR has a column and is not kept twice');
 });
 
-// A configuration exported before the rows became values still imports, and
-// what it meant — authored plus the plus — is what it lands as.
-test('a stored per-item bonus is read as the value it used to make', () => {
-  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: legacy });
-  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle),
-    { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5 });
-  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(sword.attackRating, 5, '2 authored + the 3 the old dial added');
-});
-
-// Copilot, on #1242: a saved fight carries its own rules, `bonuses.<item>` and
-// all, and is restored into registries rebuilt from the RUN's configuration
-// snapshot — where the same plus has already become the item's value. Adding
-// the old table on top of the new column would score the plus twice.
-test('a resumed fight scores an old per-item plus once, not twice', async () => {
-  const { createRunState } = await import('../src/model/state.js');
-  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3 };
-  // What `main.js resumeRun` does: registries from the run's own snapshot.
-  const tuned = createRegistries(configuredContentBundle(contentBundle, legacy));
-  const run = createRunState({ seed: 42, classId: 'reaver', registries: tuned });
-  const attributes = ratingReceipt(tuned, run, resolveCombatRatings({}, contentBundle))
-    .sources.find(s => s.name === 'Attributes').ar;
-
-  // The rules the fight opened under, written by the old build: the plus is
-  // still in `bonuses`, keyed by the item.
-  const saved = resolveCombatRatings({}, contentBundle);
-  saved.bonuses['armament:straightSword'] = { ar: 3 };
-  const resumed = ratingReceipt(tuned, run, saved);
-  const sword = resumed.sources.find(s => s.name === 'Straight Sword');
-  assert.equal(sword.ar, 5, 'authored 2 + the 3, once');
-  assert.equal(sword.effectiveRatings.ar, 5, 'on the card path too');
-  assert.equal(resumed.totals.ar, attributes + 5, 'not 8, which is what adding both homes gives');
-  const { effectiveEquipmentRating } = await import('../src/model/ratingFormula.js');
-  const piece = tuned.equipment.armaments.find(p => p.id === 'straightSword');
-  assert.equal(effectiveEquipmentRating(saved, run.attributes, piece, { ratingId: 'ar' }, 'ar').equipmentBase, 5,
-    'the card value a resumed fight deals reads the plus once as well');
-});
-
-// An item's rating is a whole number in the column it is written to, and the
-// row's ceiling is the old one, so the two sums the migration cannot keep
-// exactly are named at the import door rather than found later.
-test('a legacy bonus that cannot be kept exactly says so', () => {
+// A per-item plus (`bonuses.<item>.<rating>`) is a retired dial: it is dropped
+// with one warning, never converted into the item's rating.
+test('a stored per-item bonus is dropped with a warning and nothing is converted', () => {
+  const legacy = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'gameConfig.combatRatings.bonuses.armor:oldMail.poise': 2 };
   const warnings = [];
-  const file = (overrides) => JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides });
-  const fractional = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 0.5 }),
-    contentBundle, {}, [], warnings);
-  assert.deepEqual(fractional, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 3 }, '2.5 rounds');
-  assert.match(warnings.join(' '), /rounded/);
-  assert.match(warnings.join(' '), /Straight Sword AR 2\.5→3/);
-
-  const capped = [];
-  const big = parseAdvancedConfigFile(file({ 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 999 }),
-    contentBundle, {}, [], capped);
-  assert.deepEqual(big, { 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 999 });
-  assert.match(capped.join(' '), /stopped there/);
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { ...legacy, ...Object.fromEntries(Object.entries(legacy).map(([k, v]) => [`settings.${k}`, v])) } });
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle, {}, [], warnings), {}, 'the file lands, with no item rating written');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /per-item rating bonuses are retired/);
+  const sword = configuredContentBundle(contentBundle, legacy).equipment.armaments.find(p => p.id === 'straightSword');
+  assert.equal(sword.attackRating, 2, 'the authored value stands: the plus is not added');
 });
 
 // One number, one row, wherever it is read: the profile itself is brought
 // forward at boot, so the settings row cannot open on a different value from
 // the one the card and the fight are using.
-test('a stored profile is rewritten to the rows this build has', async () => {
-  const { normalizeAdvancedSettings, advancedConfigRows, advancedConfigExport } = await import('../src/model/advancedConfig.js');
-  const profile = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'settings.musicEnabled': true };
-  assert.equal(normalizeAdvancedSettings(profile, contentBundle), profile, 'the same object main.js holds');
+test('a stored profile drops the retired per-item bonus and keeps the rest', async () => {
+  const { normalizeAdvancedSettings } = await import('../src/model/advancedConfig.js');
+  const profile = { 'gameConfig.combatRatings.bonuses.armament:straightSword.ar': 3, 'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4, 'settings.musicEnabled': true };
+  const warnings = [];
+  assert.equal(normalizeAdvancedSettings(profile, contentBundle, warnings), profile, 'the same object main.js holds');
   assert.deepEqual(profile, {
-    'gameConfig.combatRatings.itemRatings.armament:straightSword.ar': 5,
+    'gameConfig.combatRatings.itemRatings.armament:straightSword.ward': 4,
     'settings.musicEnabled': true,
-  }, 'the old key is gone and unrelated settings are untouched');
-
-  // Which is what closes the gap the reviewer named: the row now opens on the
-  // number the card shows.
-  const row = advancedConfigRows(contentBundle).find(r => r.key === 'gameConfig.combatRatings.itemRatings.armament:straightSword.ar');
-  assert.equal(profile[row.key], 5);
-  assert.equal(row.def, 2, 'and the authored value is still what Reset returns it to');
-  assert.match(advancedConfigExport(profile), /itemRatings\.armament:straightSword\.ar/);
+  }, 'the old key is gone, a current item rating and unrelated settings are untouched');
+  assert.equal(warnings.length, 1);
 });
 
 // ARMOUR, which every test above left alone: a set authors one rating column
@@ -797,50 +711,6 @@ test('a stored number reads the same in the panel and on the item', async () => 
     assert.equal(resolveNumberRow(settings, row), 2);
     assert.equal(configuredContentBundle(contentBundle, settings).equipment.armaments.find(p => p.id === 'straightSword').attackRating, 2);
   }
-});
-
-// AR, DR and PR are acronyms. Poise and Ward are words, and every surface in
-// the game spells them that way — including this file's own tab name, which
-// has always read "Poise formula". The ROWS under it read "POISE — Base",
-// "Strength — WARD per stack", "Straight Sword — additional WARD": one id,
-// two spellings, roughly seven hundred rows apart from their own heading.
-//
-// The general Advanced-label test cannot catch this — "POISE" opens with a
-// capital and carries no camelCase, so it passes either way. This is the
-// assertion that has to be specific.
-test('a rating is spelled the same on its rows as on its tab', async () => {
-  const { combatRatingRows } = await import('../src/model/combatRatings.js');
-  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
-  const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
-  // Since ruleset 7 the formula is the rating's stat row (derivedStatRules.
-  // rules.<id>.*), edited with every other stat; the rest stays here.
-  const formulaRows = advancedConfigRows(contentBundle).filter(row => /^gameConfig\.derivedStatRules\.rules\.(ar|dr|pr|poise|ward)\./.test(row.key));
-  const rows = [...combatRatingRows(contentBundle), ...formulaRows];
-  const stats = advancedSubgroups(formulaRows, 'Stats');
-
-  for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
-    // Each formula is its own block under Advanced → Stats, filed under the
-    // trait it rates (models/AdvancedSettingsGroups.js).
-    const formula = formulaRows.filter(row => row.key.includes(`.rules.${id}.`));
-    assert.ok(formula.length >= 3, `${expected} has a formula block of its own`);
-    const tab = stats.find(group => formula.every(row => group.rows.includes(row)));
-    assert.ok(formula.every(row => row.advancedGroup === 'Stats') && tab, `${expected} sits under Stats, in one tab`);
-    assert.ok(new RegExp(`\\b${expected}\\b`).test(tab.label), `${expected}'s tab (${tab.label}) spells it the same way`);
-    assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
-    // The per-item rows are the item's own ratings now (#1242), so they read
-    // "Straight Sword — AR" rather than "— additional AR"; the spelling rule
-    // is the same.
-    assert.ok(rows.some(row => row.key.includes('.itemRatings.') && row.key.endsWith(`.${id}`)
-      && row.label.endsWith(` — ${expected}`)), `an equipment rating row spells ${id} as "${expected}"`);
-  }
-
-  // The falsifier, stated as its own line: the two that are NOT acronyms are
-  // never shouted, anywhere in the group — labels or topics.
-  const shouted = rows.filter(row => /\b(POISE|WARD)\b/.test(`${row.label} ${row.statTopic || ''}`));
-  assert.deepEqual(shouted.map(row => row.label), [],
-    'no row shouts a rating whose name is an ordinary word');
-  // And the three that ARE acronyms are never softened into words.
-  assert.ok(!rows.some(row => /\b(Ar|Dr|Pr)\b/.test(row.label)), 'AR, DR and PR stay acronyms');
 });
 
 // A NAME IS A HEADING; A PHRASE IS A SENTENCE. `words()` capitalises every

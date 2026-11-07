@@ -15,9 +15,9 @@ function declaration(source, name) {
 }
 // Execute the real travel/RAF/encounter/checkpoint path. Only imported services
 // and combat construction AFTER the entry checkpoint are detached boundaries.
-function fixture({ full = false, scarce = false, refillEnabled = true } = {}) {
+function fixture({ full = false, refillEnabled = true } = {}) {
   const run = {
-    hp: 2, maxHp: 10, custom: scarce ? {} : null, floor: 0, path: [],
+    hp: 2, maxHp: 10, custom: null, floor: 0, path: [],
     mapNodeId: null, lastEncounters: [],
     flaskCharges: { hp: 3, mana: 2, hpCurrent: 0, manaCurrent: 0 },
     mapGraph: { nodes: { n1_0: { id: 'n1_0', type: 'fight', floor: 1, refill: refillEnabled } } },
@@ -25,10 +25,10 @@ function fixture({ full = false, scarce = false, refillEnabled = true } = {}) {
   const saves = [], warnings = [], frames = [], tasks = [], entered = [];
   const context = vm.createContext({
     run, shotState: null, activeSlot: 1, rng: {}, fightEntryPending: false,
-    registries: { balance: { customMods: { lessHealingMult: 0.5 } } },
+    registries: { balance: {} },
     sfx: { play() {} }, clearRestRevisitOnTravel() {},
-    activeMods: () => ({ lessHealing: scarce }), currentSeat: () => 'weald',
-    contentAct: () => 1, rollEncounter: () => 'opening-encounter',
+    currentSeat: () => 'weald',
+    rollEncounter: () => 'opening-encounter',
     refreshRunClassMastery() {}, stampSkillBonuses() {}, sendLanStatus() {},
     saves: { loadMeta: () => ({}), saveRun(value) {
       saves.push(JSON.parse(JSON.stringify(value)));
@@ -41,7 +41,7 @@ function fixture({ full = false, scarce = false, refillEnabled = true } = {}) {
     recordEntered: () => entered.push(run.combatEntered.encounterId),
   });
   const entry = declaration(main, 'enterCombat');
-  const checkpointEnd = entry.indexOf('  const enc = combatEncounterFor');
+  const checkpointEnd = entry.indexOf('  const enc = registries.encounters.get(');
   assert.ok(checkpointEnd > 0, 'real encounter receipt and guarded checkpoint boundary');
   vm.runInContext([
     declaration(grace, 'refillFlaskCharges'),
@@ -80,11 +80,7 @@ for (const full of [false, true]) {
     assert.deepEqual(f.run.path, ['n1_0']);
   });
 }
-test('Scarce Embers refill and disabled/legacy refill retain their entry semantics', () => {
-  const scarce = fixture({ scarce: true });
-  scarce.enter(); scarce.paint();
-  assert.equal(scarce.run.hp, 6);
-  assert.equal(scarce.saves[0].hp, 6);
+test('disabled/legacy refill retains its entry semantics', () => {
   const disabled = fixture({ refillEnabled: false });
   disabled.enter(); disabled.paint();
   assert.equal(disabled.run.hp, 2);

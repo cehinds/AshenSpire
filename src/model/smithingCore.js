@@ -9,6 +9,7 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 import { itemRefIdentity, coreGearActive } from './itemUpgrades.js';
+import { stampCombatPlaysEver } from './playsEver.js';
 // The combat engine is bound, not imported: this module is reached from the Smith screens and from actions.js, and a
 // static import of runCombat/combat here would reorder the engine's import cycle, which the production bundler does
 // not keep live (named imports inside a cycle read undefined). runCombat.js binds it once it has loaded.
@@ -120,6 +121,7 @@ function liveCardValues(registries, run, itemRef, level) {
     if (!enemyId) return new Map();
     const staged = { ...run, itemUpgradeLevels: levels };
     const combat = createRunCombat({ registries, run: staged, rng: createRng(17), enemyIds: [enemyId] });
+    stampCombatPlaysEver(staged, combat); // pile copies keep the deck copy's lifetime plays (Honed cards)
     const rows = new Map();
     for (const pile of ['hand', 'draw', 'discard']) for (const instance of combat.piles[pile]) {
       // Copies of one card can differ (mods, upgraded, rank...): each distinct face is its own row.
@@ -129,9 +131,9 @@ function liveCardValues(registries, run, itemRef, level) {
       if (row) { row.copies++; continue; }
       // A card with no damage or block effect cannot change; skip its (costly) detached preview.
       const def = resolveCombatCard(combat, instance);
-      if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(key, { cardId: instance.cardId, name: def.name, copies: 1, values: {} }); continue; }
+      if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(key, { cardId: instance.cardId, name: def.name, copies: 1, cardReference: face, values: {} }); continue; }
       const preview = previewCard(combat, instance.instanceId, undefined, undefined, { rawFace: true });
-      rows.set(key, { cardId: instance.cardId, name: preview.name, copies: 1,
+      rows.set(key, { cardId: instance.cardId, name: preview.name, copies: 1, cardReference: face,
         values: Object.fromEntries(CARD_VALUES.map(({ op }) => { const entry = preview.values.find((value) => value.op === op); return [op, entry?.faceValue ?? entry?.value]; })) });
     }
     return rows;
@@ -167,7 +169,7 @@ export function coreSmithingCards(registries, run, itemRef, currentLevel, nextLe
     const b = was.get(key)?.values[spec.op], a = row.values[spec.op];
     if (b === undefined || a === undefined || b === a) continue;
     cards.push({ kind: 'card', tag: `core:card:${key}:${spec.op}`, label: `${row.name} ${spec.label.toLowerCase()}`,
-      cardId: row.cardId, name: row.name, op: spec.op, opLabel: spec.label, rating: spec.rating, copies: row.copies, before: b, after: a });
+      cardId: row.cardId, name: row.name, op: spec.op, opLabel: spec.label, rating: spec.rating, copies: row.copies, cardReference: row.cardReference, before: b, after: a });
   }
   return cards;
 }
@@ -181,7 +183,7 @@ export function coreSmithingPreviewRows(itemName, stats, cards = []) {
   });
   for (const card of cards) rows.push({
     instanceId: null, cardId: card.cardId, role: 'card', name: card.name, rating: { id: card.rating.toLowerCase(), label: card.rating },
-    reference: null, used: true, activeCopies: card.copies,
+    reference: null, cardReference: card.cardReference, used: true, activeCopies: card.copies,
     changes: [{ kind: 'card', tag: card.tag, op: card.op, label: card.opLabel, before: card.before, after: card.after }],
   });
   return rows;

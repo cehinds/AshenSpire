@@ -66,16 +66,6 @@ test('a counter with Poise and Ward effects reads them as Return parts', () => {
 });
 // The screens cannot run here without a browser, so these pin the two call-site rules by source.
 import { readFileSync } from 'node:fs';
-test('co-op base reaction options resolve at tier 0, not the hand-selected tier', () => {
-  const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
-  assert.match(source, /cardDef\(inst, o\.play\.upcastTier \|\| 0\)/);
-});
-test('co-op card-zone and discard candidates resolve at the base tier, ignoring a leftover upcast tier', () => {
-  const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
-  assert.match(source, /defOf: \(\) => inst \? cardDef\(inst, 0\) : null, previewOf: \(\) => inst \? cardDef\(inst, 0\)\?\.combatPreview/);
-  // cardDef without a tier falls back to the stored upcast tier (the leftover) - the reason for the explicit 0.
-  assert.match(source, /const cardDef = \(c, tier = upcastTiersByCard\.get\(upcastKey\(c\.instanceId\)\)\)/);
-});
 test('solo round reactions preview against the pending offer attacker', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(source, /o\.play\.targetId \?\? o\.sourceId \?\? pending\.sourceId/);

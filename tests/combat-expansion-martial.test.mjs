@@ -108,7 +108,7 @@ test('Quickstep and Dodge retain authored Block plus the Martial bonus and DR an
     assert.equal(activeAr, 1, 'hybrid Evade retains the Counter offensive rating');
     assert.equal(f.target.combatCounter.payload.hp, 3 + f.target.ratings.ar + activeAr);
     assert.equal(f.target.combatCounter.payload.poise, 3, 'absent authored Poise receives the Counter fallback');
-    assert.equal(f.target.combatStance.maneuver, 'evade');
+    assert.equal(f.target.combatStance.maneuver, 'counter');
     assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
     assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
       'hybrid Counter grants its offensive Precision once');

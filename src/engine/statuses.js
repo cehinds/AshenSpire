@@ -1,5 +1,6 @@
 import { fixCoreEnabled, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
+import { mechanics } from '../framework/data/mechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
 // Statuses are CONTENT, not code: this module interprets stackMode, decay
@@ -24,6 +25,8 @@ import { resolveStackApplications, stackMagnitude } from '../model/combatRules.j
 import { ratingValue } from '../model/combatRatings.js';
 import * as Control from './combatStatusControl.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+import { weaknessStackBonus } from './weaknesses.js';
+import { dampBurnStacks } from './elementRules.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -52,8 +55,13 @@ function syncPoolsAfterStatus(ctx, target) {
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  // Damp (SPEC 4.7): Burn applied to a Damp holder is halved.
+  if (statusId === 'burn' && fixCoreEnabled(ctx)) stacks = dampBurnStacks(target, stacks);
   const before = getStacks(target, statusId);
-  const result = applyStatusRaw(ctx, target, statusId, stacks, source);
+  // Enemy weaknesses (SPEC 5.3): a status an opponent applies to an enemy weak to it lands with extra stacks.
+  const weakBonus = stacks > 0 ? weaknessStackBonus(ctx, target, statusId, source) : 0;
+  if (weakBonus > 0) ctx.emit?.('weaknessTriggered', { sourceId: source?.id || null, targetId: target.id, to: statusId, effect: 'stacks', amount: weakBonus });
+  const result = applyStatusRaw(ctx, target, statusId, stacks + weakBonus, source);
   // Persistence belongs to the granting effect, not every later application.
   if (fixCoreEnabled(ctx) && statusId === 'precision') {
     const inst = target?.statuses?.[statusId];
@@ -270,18 +278,13 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
  *   'none' / 'onConsume' → untouched
  */
 export function decayAtTurnEnd(ctx, entity) {
-  if (fixCoreEnabled(ctx)) {
-    const precision = entity.statuses?.precision;
-    const temporary = precision ? Math.max(0, precision.stacks - (precision.persistentStacks || 0)) : 0;
-    // Precision only changes Accuracy; its expiry cannot resize/refill defenses.
-    if (temporary > 0) removeStatusRaw(ctx, entity, 'precision', {
-      amount: temporary, reason: 'ownerTurnEnd'
-    });
-    return;
-  }
+  // Core 2 (owner, 2026-10-31): Precision no longer clears wholesale at owner turn end; it loses a stack at turn start like Evade.
+  if (fixCoreEnabled(ctx)) return;
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = statusDefinition(ctx, statusId);
+    // Precision decays only under Core 2, at turn start (decayAtTurnStart); legacy Precision never decays.
+    if (statusId === 'precision') continue;
     if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
@@ -415,7 +418,12 @@ export function decayAtTurnStart(ctx, entity) {
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {
     const inst = entity.statuses[id], def = statusDefinition(ctx, id);
-    if (id !== 'precision' && (def.decay === 'perTurnEnd' || id === 'evade')) {
+    if (id === 'precision') {
+      // Persistent stacks are exempt; the decay amount is the Core 2 accuracy constant, not statuses.decayAmount.
+      const temporary = Math.max(0, inst.stacks - (inst.persistentStacks || 0));
+      const lost = Math.min(temporary, mechanics.accuracy.precisionDecayPerTurn);
+      if (lost > 0) removeStatus(ctx, entity, id, { amount: lost, reason: 'ownerTurnStart' });
+    } else if (def.decay === 'perTurnEnd' || id === 'evade') {
       removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {
       inst.duration -= 1;

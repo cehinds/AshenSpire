@@ -142,13 +142,13 @@ test('enemy SP comes from stats: ENEMY_SP_ROW on the attributes, blight shifted,
   assert.ok(ENEMY_BLIGHT_SHIFT.intelligence < 0 && ENEMY_BLIGHT_SHIFT.wisdom < 0 && ENEMY_BLIGHT_SHIFT.dexterity < 0);
   assert.ok(ENEMY_BLIGHT_SHIFT.strength > 0 && ENEMY_BLIGHT_SHIFT.constitution > 0);
   assert.notEqual(enemyPoolOf({ attributes: stats, blighted: true }), enemyPoolOf({ attributes: stats }), 'blight moves the pool');
-  // The rounds adapter reads the same pool.
+  // The enemy SP planner reads the same pool.
   for (const def of registries.enemies.all()) assert.equal(Rounds.enemyPool(def), enemyPoolOf(def), def.id);
 });
 
 test('every enemy can afford its cheapest move: its pool covers the resolved (registry-tagged) move price', () => {
   // A caster's moves pick up camp:spell tags in the registry, which the action-cost table prices at 2 SP; a pool
-  // below its cheapest move would leave the round planner one move it cannot validate (SPEC §4.6a).
+  // below its cheapest move would leave the enemy planner one move it cannot validate (SPEC §4.6a).
   for (const def of registries.enemies.all()) {
     const cheapest = Math.min(...Object.values(def.moves).map((move) => Rounds.moveSp(move)));
     assert.ok(cheapest <= enemyPoolOf(def), `${def.id}: cheapest move ${cheapest} SP, pool ${enemyPoolOf(def)} SP`);
@@ -207,6 +207,9 @@ test('Attune and Ember Communion pay one Mana and restore two through the real i
   for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
     for (const start of [0, 1, 2]) {
       const run = createRunState({ seed: 3, classId, registries });
+      // The class staff is a Focus armament, which would take this Mana off (tests/focus-mana-discount.test.mjs):
+      // price the printed 1 Mana with a non-Focus weapon in hand.
+      run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
       const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
       combat.player.maxMana = Math.max(combat.player.maxMana, start + 2);
       combat.player.mana = start;

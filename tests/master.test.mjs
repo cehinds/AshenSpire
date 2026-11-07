@@ -41,8 +41,6 @@ import {
   redistributePlan, commitRedistribute, lessonPool, lessonPlan, commitLesson,
   masterAppraisal, masterServiceCandidates,
 } from '../src/model/master.js';
-import { createAtlasIndex, generateJourney, journeyProblems } from '../src/model/worldAtlas.js';
-import { worldAtlas } from '../src/content/generated/worldAtlas.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountMaster } from '../src/ui/screens/master.js';
 
@@ -280,47 +278,16 @@ test('services stay once rolled: a respec on a visit with no pool lays out a rol
   }
 });
 
-test('a classic merchant that rolls master opens a master visit; the atlas service type exists and no shipped point carries it', () => {
+test('a classic merchant that rolls master opens a master visit', () => {
   const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
   const forced = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 0, master: 1 } } };
   const stock = buildMerchantStock(forced, createRng(5), run);
   assert.equal(stock.kind, 'master');
-  const atlas = JSON.parse(readFileSync(new URL('../content/source/worldAtlas.json', import.meta.url), 'utf8'));
-  assert.ok(atlas.service_handlers.some((row) => row.handlerId === 'master'));
-  const type = atlas.service_types.find((row) => row.serviceTypeId === 'master');
-  assert.equal(type?.handlerId, 'master');
-  const service = atlas.services.find((row) => row.serviceTypeId === 'master');
-  assert.ok(service, 'one services row names the type');
-  assert.equal(atlas.node_services.some((row) => row.serviceId === service.serviceId), false, 'no shipped atlas point carries it');
   const priced = masterVisitStock(OUT, createRng(9), createRunState({ seed: 9, classId: 'reaver', registries: OUT }), { priceMult: 1.5 });
   const plain = buildMasterStock(OUT, createRng(9), createRunState({ seed: 9, classId: 'reaver', registries: OUT }));
   for (const shelf of ['skillBooks', 'weaponArts', 'armaments']) {
     assert.deepEqual(priced[shelf], plain[shelf]?.map((item) => ({ ...item, cost: Math.ceil(item.cost * 1.5) })), `${shelf} scales, rounding up`);
   }
-});
-
-test('declaring the unplaced master service moves no atlas revision, so no seed reroutes and no journey is stranded', () => {
-  // The revision every World Journey was generated under before this step.
-  assert.equal(createAtlasIndex().revision, 'atlas-1-3e9433d6-d1447e50');
-  // Placing it on a point is a route change and does move the revision.
-  const placed = structuredClone(worldAtlas);
-  placed.node_services.push({ nodeId: 'crownfall/market', serviceId: 'master' });
-  assert.notEqual(createAtlasIndex(placed).revision, createAtlasIndex().revision);
-});
-
-test('a saved journey standing in an atlas smith or master visit validates (the active service names its handler)', () => {
-  const smith = generateJourney('SMITH');
-  assert.equal(smith.currentNodeId, 'crownfall');
-  smith.serviceStates['crownfall/forge'] = {};
-  smith.activeService = { ownerId: 'crownfall', pointId: 'crownfall/forge', handlerId: 'smith' };
-  assert.deepEqual(journeyProblems(smith), []);
-  const data = structuredClone(worldAtlas);
-  data.node_services.push({ nodeId: 'crownfall/market', serviceId: 'master' });
-  const atlas = createAtlasIndex(data);
-  const j = generateJourney('MASTER', 'wanderer', atlas);
-  j.serviceStates['crownfall/market'] = {};
-  j.activeService = { ownerId: j.currentNodeId, pointId: 'crownfall/market', handlerId: 'master' };
-  assert.deepEqual(journeyProblems(j, atlas), []);
 });
 
 // ---------------------------------------------------------------------------
@@ -615,7 +582,7 @@ test('Codex and Copilot on #1438: a custom price multiplier scales the master\'s
   for (const shelf of ['skillBooks', 'weaponArts', 'armaments']) assert.deepEqual(merchant[shelf], up(merchantPlain[shelf]), `merchant: ${shelf} scaled once`);
   // The market's own art shelf takes the same multiplier now; under the
   // defaults it is byte-identical (tests/master-shop-identity.test.mjs).
-  const market = (mult) => marketVisitStock(REG, createRng(4), createRunState({ seed: 4, classId: 'reaver', registries: REG }), { meta: {}, door: 'atlas', priceMult: mult });
+  const market = (mult) => marketVisitStock(REG, createRng(4), createRunState({ seed: 4, classId: 'reaver', registries: REG }), { meta: {}, door: 'merchant', priceMult: mult });
   const base = market(1);
   assert.ok(base.weaponArts.length > 0);
   assert.deepEqual(market(1.5).weaponArts, up(base.weaponArts));

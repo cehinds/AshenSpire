@@ -7,7 +7,7 @@ import { openModal } from './modalShell.js';
 /** Small art target; the complete description and original visual stay inspectable. */
 export function merchantThumbnail({ visual, detail = visual, name, desc = '', inspect = null }) {
   const control = button({ label: '', className: 'merchant-thumbnail', attrs: { 'aria-label': t('deckEditor.inspectNamed', { name }) } });
-  control.append(visual, el('span', { class: 'merchant-inspect-label', text: t('deckEditor.inspectAction') }));
+  control.append(visual);
   control.addEventListener('keydown', event => event.stopPropagation());
   control.addEventListener('click', event => {
     event.stopPropagation();
@@ -50,10 +50,17 @@ export function arrangeMerchantOffer(offer, { fallback = 'dexterity' } = {}) {
   tile.tabIndex = -1;
   tile.removeAttribute('aria-pressed');
   tile.style.cssText = '';
+  // A CARD OFFER'S (i). There is no selection step in a shop (a row's own button buys), so the shared badge a card
+  // is built with (renderCard `infoBadge`) is shown on every card row, beside the thumbnail, and it only inspects:
+  // it is lifted out of the detached card face before the art is cloned, keeps its own handler, and never buys.
+  const info = [...(visual.children || [])].find(child => child.classList?.contains('card-info-button')) || null;
+  info?.remove();
   const image = visual.matches('img') ? visual : visual.querySelector('.epc-art img, img');
   // Clone only artwork, never miniature card text or interactive card controls.
   const art = offer.thumbnail || (image || visual).cloneNode(true);
   const media = merchantThumbnail({ visual: art, detail: visual, name, desc, inspect: offer.inspect });
-  tile.replaceChildren(el('div', { class: 'merchant-offer-media' }, media), details, actions);
+  const mediaBox = el('div', { class: `merchant-offer-media${info ? ' has-card-info' : ''}` }, media);
+  if (info) mediaBox.append(info);
+  tile.replaceChildren(mediaBox, details, actions);
   return control;
 }

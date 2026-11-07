@@ -6,7 +6,7 @@ import { allResettableKeys, resetKeys, generalGroups } from '../src/ui/screens/s
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { validateResolvedGameProfile, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
 
-const author = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
+const author = { formatVersion: 1, core: 'ashen.core@2.0.0', modules: { cards: { handBase: 3 } } };
 
 test('new-game rule preferences persist author JSON and resolve after reload', () => {
   const storage = createMemoryStorage();
@@ -21,7 +21,7 @@ test('new-game rule preferences persist author JSON and resolve after reload', (
   assert.equal(JSON.parse(reloaded.newGameProfile).runtimeHash, undefined);
   assert.equal(readNewGameProfile(reloaded).hash, resolveGameProfile(author).hash);
   reloaded.newGameProfile = 'current';
-  assert.equal(readNewGameProfile(reloaded).id, 'current');
+  assert.equal(readNewGameProfile(reloaded).id, 'core', 'a stored retired choice falls back to the default');
   assert.equal(reloaded.importedGameProfile, text, 'the imported author survives choosing a built-in');
 });
 
@@ -33,14 +33,6 @@ test('invalid imported rules are rejected and stale preferences fall back safely
   assert.equal(readNewGameProfile({}, fallback), fallback);
 });
 
-test('a Rest-first author fails at resolve time once the Core bundle sets firstFloor', () => {
-  const restFirst = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { restFloors: [1, 6] } } };
-  assert.throws(() => resolveGameProfile(restFirst), e => e.path === '$/modules/routes/firstFloor' && /firstFloor/.test(e.message));
-  const fallback = resolveGameProfile('core');
-  assert.equal(readNewGameProfile({ newGameProfile: JSON.stringify(restFirst) }, fallback), fallback, 'a stored Rest-first author falls back instead of crashing New Game');
-  const explicit = { ...restFirst, modules: { routes: { restFloors: [1, 6], firstFloor: null } } };
-  assert.doesNotThrow(() => resolveGameProfile(explicit), 'the Rest-first route stays authorable by clearing firstFloor');
-});
 
 test('a stored snapshot with an old Rest-first preset is refused when loaded', () => {
   const core = dataClone(resolveGameProfile('core'));

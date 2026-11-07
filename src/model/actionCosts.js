@@ -1,7 +1,7 @@
 import { fixCoreEnabled } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceStaminaCost } from './stanceRules.js';
-// src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
+// src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a).
 //
 // Pure model. Player cards: the per-resource cost formula (cardCostBudget). Enemy moves: their own `sp`, else the stance
 // table (enemyMoveSpOf). Enemy SP pool: stat-driven (enemyPoolOf). registries.resolveCard calls applyActionCosts once
@@ -324,7 +324,7 @@ function withFundedRestores(effects, funded) {
 
 /**
  * The part of a card's price its own restores pay (owner, 2026-10-13): { stamina, mana }. The engine's one card
- * pricing (combat.js resolvedCardPlayCosts, coopCombat.js) charges the price less this, and the restore op gives back
+ * pricing (combat.js resolvedCardPlayCosts) charges the price less this, and the restore op gives back
  * its amount less its `funded` part, so a break-even restore card is castable at 0 of that pool and changes it by 0.
  */
 export function ownRestoreFunds(def) {

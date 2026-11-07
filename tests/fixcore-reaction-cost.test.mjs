@@ -1,15 +1,12 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard as playCoopCard, endTurn as endCoopTurn } from '../src/engine/coopCombat.js';
-import { applyStatus } from '../src/engine/statuses.js';
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
-import { live, registries, baseRegistries, profile } from './helpers/fixcore-combat-rules.mjs';
+import { live, registries, baseRegistries } from './helpers/fixcore-combat-rules.mjs';
 
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const ctx = live(), enemy = ctx.enemies[0];
@@ -35,12 +32,14 @@ test('matching stance cannot reduce a multi-hit hound lunge below two SP', () =>
   const run = createRunState({ registries: baseRegistries, classId: 'reaver', seed: 511 });
   const ctx = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['blightHound'] });
   const enemy = ctx.enemies[0];
+  // Dispatch first: every player action re-checks the plan (SPEC 4.6b), so the unaffordable lunge is forced in after it
+  // and this test still exercises the act-time refusal that backs that check up.
+  dispatch(ctx, { type: 'setReactions', enabled: false });
   enemy.intent = { ...enemy.intent, moveId: 'lunge' };
   enemy.plannedMoves = [];
   enemy.combatStance = { camp: 'physical', maneuver: 'smash', range: 'melee' };
   Object.assign(enemy, { basePrecisionBonus: 1000, maxStamina: 1, stamina: 1 });
   ctx.player.block = 100;
-  dispatch(ctx, { type: 'setReactions', enabled: false });
   primeAccuracyRolls(ctx, { count: 3 });
   const start = ctx.eventLog.length;
   dispatch(ctx, { type: 'endTurn' });
@@ -65,7 +64,9 @@ test('Martial Adept discounts matching nonspell SP on both turns, with a zero fl
   assert.equal(cost({ ...reaction, staminaCost: 1 }), 0);
   assert.equal(cost({ ...reaction, staminaCost: 0 }), 0);
   assert.equal(cost({ ...reaction, manaCost: 2 }), 2, 'MP cost does not disable the conditional SP discount');
-  ctx.player.combatStance.maneuver = 'defend'; assert.equal(cost(reaction), 3);
+  // Owner 2026-11-01: Defend stance discounts every defensive card, so a Counter reaction from Defend stance takes the cut.
+  ctx.player.combatStance.maneuver = 'defend'; assert.equal(cost(reaction), 2);
+  ctx.player.combatStance.maneuver = 'attack'; assert.equal(cost(reaction), 3);
   delete ctx.player.combatStance; assert.equal(cost(reaction), 3);
 });
 
@@ -96,18 +97,3 @@ test('an actual enemy-turn matching Counter remains affordable and pays the disc
   assert.ok(!result.events.some(row => row.type === 'staminaSpent' && row.amount > 0));
 });
 
-test('co-op pays authored own-turn SP and expires only the acting owner Precision', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10,
-    maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1,
-    deck: [{ cardId: 'core.counter', instanceId: `${id}-counter` }] });
-  const ctx = createCoopCombat({ registries, rng: createRng(511), gameProfile: profile, combatExpansionVersion: 2,
-    players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] });
-  const a = ctx.players.get('a').entity, b = ctx.players.get('b').entity;
-  a.stamina = 1; b.stamina = 1;
-  playCoopCard(ctx, 'a', 'a-counter', 'a');
-  assert.equal(a.stamina, 0);
-  applyStatus(ctx, b, 'precision', 3, b);
-  endCoopTurn(ctx, 'a');
-  assert.equal(a.statuses.precision, undefined);
-  assert.equal(b.statuses.precision.stacks, 3);
-});

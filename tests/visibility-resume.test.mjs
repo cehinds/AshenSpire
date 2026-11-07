@@ -432,7 +432,7 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
   'src/ui/alternativeArt.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source or display-quality change, not the page lifecycle: updates only existing decorative scene image hrefs through alternativeArtUrl(); reads no run/combat state and dispatches no gameplay action; scene teardown removes this listener and disconnects its observer; covered by the mounted alternative-scene cycle above"]],
-  'src/main.js': ["'resize'", "'load'", "'resize'", ["'visibilitychange'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], ["'pagehide'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
+  'src/main.js': ["'resize'", "'load'", "'resize'", ["'visibilitychange'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], ["'pagehide'", "flushes the queued combat entry checkpoint (main.js flushPendingEntryCheckpointSafely): writes the entry snapshot that enterCombat would otherwise have written synchronously, with the frozen entry RNG counters, and only while that run and fight are still current and have no entry snapshot; it changes no run/combat state and dispatches no gameplay action (tests/pending-entry-checkpoint.test.mjs)"], '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
@@ -443,8 +443,8 @@ const KNOWN = {
   'src/ui/components/combatTools.js': ["'resize'"],
   'src/ui/components/combatRangeAction.js': [["'resize'", 'Schedules only attachment geometry; mount cleanup removes this same listener, disconnects observers and cancels its pending frame without run/combat mutation']],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
-  'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],
+  'src/ui/components/equipCompareModal.js': ["'keydown'"],
   'src/ui/components/flask.js': ["'keydown'", "'click'"],
   'src/ui/components/handInspectionOverlay.js': [
     ["'pointerup'", 'releases only the local pointer/reveal bookkeeping and defers visual card positioning until the native click settles; no combat action or run mutation (tests/hand-upcast-visibility.test.mjs)'],
@@ -466,7 +466,6 @@ const KNOWN = {
   'src/ui/components/iconTray.js': ["'pointerdown'"],
   'src/ui/components/intro.js': ["'keydown'"],
   'src/ui/components/layeredEnvironment.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source change: rewrites only mounted decorative layer backgroundImage URLs through layeredArtUrl(); reads no run or combat state, dispatches no gameplay action, and disposal removes the listener; covered by the mounted-overlay test above"]],
-  'src/ui/components/localMapCamera.js': ["'pointerup'"],
   'src/ui/components/mapDetail.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired when the built-in art source changes (an Art quality switch), not the page cycle: forgets the map layer's failed detail tiles and requests the visible set again through assetUrl() only"]],
   'src/ui/components/modalShell.js': ["'keydown'"],
   'src/ui/components/overlay.js': ["'ashenspire:quicknav-mode-change'", "'keydown'"],
@@ -490,7 +489,6 @@ const KNOWN = {
   'src/ui/input.js': ["'keydown'", "'keydown'", "'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/kit/categoryNav.js': ["'keydown'"],
   'src/ui/screens/combat.js': ["'keydown'", ["'pointerdown'", "auto combat's pause on player input (document level so the body-mounted reaction modal counts): sets a one-second pause stamp and moves no run or combat state; removed at combat teardown"], ["'keydown'", "the same auto-combat pause on a key press: sets the pause stamp only; removed at combat teardown"], '.__combat', '.__combatRunForShot', '.__renderCombatForShot', ['ART_REDRAW_EVENT', "the constant 'ashen:art-redraw' (src/ui/highResArt.js), sent by main.js once the built-in art arrives after a failed load (a Retry, step 5) and no dialog is open, not the page cycle: forgets the cached sprite figures and calls render() from the combat's own state; it reads run and combat state and moves none"], ['OVERLAY_CLOSED_EVENT', "the constant 'ashenspire:overlay-closed' (src/ui/components/veil.js), sent by closeOverlay when Menu > Settings (or any overlay) closes, not the page cycle: repaints the combat footer's Auto switch from current settings via renderCombatTools; it moves no run or combat state; removed at combat teardown or when the screen is gone"], ['SETTINGS_SETTLED_EVENT', "the constant 'ashenspire:settings-settled' (src/ui/components/veil.js), sent by persistSettingsChange when a settings save settles (saved or rolled back), not the page cycle: repaints the combat footer's Auto switch from current settings via renderCombatTools; it moves no run or combat state; removed at combat teardown or when the screen is gone"]],
-  'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
   'src/ui/screens/deckEditor.js': ["'keydown'"],
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
@@ -502,7 +500,6 @@ const KNOWN = {
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
   'src/ui/screens/combatTest.js': ['.title'],
-  'src/ui/previews/itemCards.js': ['.title'],
   'src/ui/previews/tooltipReviewScene.js': ['.__tooltipReviewRun'],
 };
 

@@ -6,6 +6,7 @@ import { predictionCategory, broadIntentLabel } from './enemyIntentKnowledge.js'
 import { enemyKnowledge } from '../content/enemyKnowledge.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { schoolResistanceMultiplier } from './combatRatings.js';
+import { weaknessTraitRows } from './enemyWeaknessRules.js';
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, char => char.toUpperCase());
 
 export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null,
@@ -27,8 +28,10 @@ export function learnedEnemyMoveCards(def, stage, { registries = null, combatMat
   return enemyMoveCards(catalog, { registries, combatMatchupRules, combatExpansionVersion, stanceRules });
 }
 
+// `weaknesses` (optional): the live enemy's own list. A fight passes it so a non-Core fight, whose enemies carry none, shows none (SPEC 5.3);
+// the bestiary omits it and reads the definition's.
 export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment, ratingsRules = null,
-  combatExpansionVersion = 1, stanceRules = null } = {}) {
+  combatExpansionVersion = 1, stanceRules = null, ...extra } = {}) {
   const progress = knowledgeProgress(record, target);
   const stage = progress.stage;
   const defenses = equipmentRules.enemies?.[def.id];
@@ -49,6 +52,7 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
       ...Object.entries(defenses?.resist || {}).map(([type, amount]) => ({ label: `${words(type)} resistance`, value: `${amount}%` })),
     ].filter(Boolean) : null,
     traits: stage >= 2 ? [
+      ...weaknessTraitRows(Object.hasOwn(extra, 'weaknesses') ? extra.weaknesses : def.weaknesses),
       ...(def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }),
       ...Object.entries(defenses?.traits || {}).filter(([, value]) => value === true || (value && typeof value === 'object')).map(([name, value]) => ({ name: words(name), detail: value === true ? '' : Object.entries(value).map(([type, amount]) => `${words(type)}: ${amount}%`).join(', ') })),
     ] : null,

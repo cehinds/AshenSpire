@@ -58,7 +58,7 @@
 ## Review and verification
 
 - Independent reviewer `sigil_review` approved source through `77a847ae6b` for PR #1729. Findings were verified and corrected: historical Power lifecycle help; narrow-card title clearance under UI zoom; full upgraded effects and family limits; readable conditions, targets, discard choices, nonlethal payments and charge timing; unequal live hit sequences; Concealed duration and canonical reveal rules.
-- The focused identity, equipment, rank, presentation, solo/co-op hit-preview and status-reach checks cover the changed contracts. The complete hosted core suite and branch promotion checks are recorded on the PR.
+- The focused identity, equipment, rank, presentation, hit-preview and status-reach checks cover the changed contracts. The complete hosted core suite and branch promotion checks are recorded on the PR.
 - The reusable [component catalog](component-catalog.html) and its [model/renderer inventory](COMPONENT-CATALOG.md) include the sigil band and adaptive fitter.
 
 ## Alternative integration evidence

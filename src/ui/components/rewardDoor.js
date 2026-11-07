@@ -29,3 +29,17 @@ export function mountRewardDoor(app, { owner, eyebrow = '', title, body, foot, a
   app.appendChild(veil);
   return modal;
 }
+
+/**
+ * replaceRewardFoot(app, owner, foot) → true when the open door of `owner` took the new footer.
+ * Only the footer node is swapped (the footer drops hidden buttons when built), so the door,
+ * its body, the option cards, keyboard focus and scroll position all stay as they are.
+ */
+export function replaceRewardFoot(app, owner, foot) {
+  const open = app.querySelector('.reward-veil .reward-door');
+  if (!open || open.rewardDoorOwner !== owner) return false;
+  const old = [...open.children].find((child) => child.tagName === 'FOOTER');
+  if (!old) return false;
+  old.replaceWith(foot);
+  return true;
+}

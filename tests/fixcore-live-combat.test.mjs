@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
 import { dispatch,previewCard } from '../src/engine/combat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { applyAttackDamage,executeRunEffects,gainBlock } from '../src/engine/actions.js';
@@ -35,11 +35,19 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.deepEqual(combat.player.ratings,ratings.totals);assert.equal(combat.piles.hand.length,run.drawPerTurn);
  const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  const hit=attackHitPreview(combat,target,combat.player,carrier);
- assert.equal(hit.evasion,1+combat.player.attributes.dexterity+gear.totals.evasion); // DEX and gear remain at zero stacks
+ assert.equal(hit.evasion,8+combat.player.attributes.dexterity+gear.totals.evasion); // Rule: Evasion = 8 + DEX + gear + 2 per Evade stack (owner, 2026-10-31) // DEX and gear remain at zero stacks
  combat.player.statuses.evade={stacks:2};
- assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+combat.player.attributes.dexterity+gear.totals.evasion+2*(1+combat.player.attributes.dexterity));
+ assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,8+combat.player.attributes.dexterity+gear.totals.evasion+2*2);
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
+ // The DC is itemised for the combat log (perceptionRolled): its parts sum to the DC.
+ assert.equal(read.perception.dcParts.reduce((sum,part)=>sum+part.value,0),read.perception.dc);
+});
+test('a live Core 2 combat logs each perception read as perceptionRolled (roll + WIS vs the itemised DC)',()=>{
+ const {combat}=live('starseer');
+ const rolled=combat.eventLog.filter(event=>event.type==='perceptionRolled');
+ assert.ok(rolled.length>0,'the opening reads were announced');
+ for(const event of rolled){assert.equal(event.total,event.roll+event.wisdom);assert.equal(event.dcParts.reduce((sum,part)=>sum+part.value,0),event.dc);assert.equal(event.passed,event.total>=event.dc);}
 });
 test('actual card dispatch matches selected target receipt and card face after equipped AR, Block and Poise',()=>{
  const {combat,target}=live();target.block=3;
@@ -48,23 +56,26 @@ test('actual card dispatch matches selected target receipt and card face after e
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- assert.equal(preview.totalDamage,preview.damageReceipt.totalDamage);
+ // Owner, 2026-11-03: the quote is the raw hit (before Block 3 and Poise); the receipt's totalDamage is the resolved HP loss.
+ assert.ok(preview.totalDamage>preview.damageReceipt.totalDamage,'the raw quote is not cut by Block or Poise');
  const hp=target.hp;dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
- assert.equal(hp-combat.enemies[0].hp,preview.totalDamage);
+ assert.equal(hp-combat.enemies[0].hp,preview.damageReceipt.totalDamage);
  const receipt=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt;
  assert.equal(receipt.totalDamage,preview.damageReceipt.totalDamage);
  assert.ok(receipt.hits[0].sources.some(row=>row.id.startsWith('ar:')));
 });
-test('mixed multihit receipt spends Block Barrier Ward and Poise sequentially and previews without RNG',()=>{
- const {combat,target}=live();Object.assign(target,{block:10,barrier:2,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
+test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG',()=>{
+ const {combat,target}=live();Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- assert.deepEqual(preview.hitDamages,[6,19,25]);assert.equal(preview.totalDamage,50);// hit 2 meets 1 Poise (capped); the break then leaves Vulnerable x1.25
+ // Owner, 2026-11-03: hitDamages is the raw hit; the resolved HP loss per hit is the receipt's hpLoss.
+ assert.deepEqual(preview.hitDamages,[20,20,25]);assert.equal(preview.totalDamage,65);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3
+ assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);// hit 2 meets 1 Poise (capped)
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.hitDamages);assert.equal(500-target.hp,50);
- assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[10,2,2,0],[0,0,0,1],[0,0,0,0]]);
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),preview.hitDamages);assert.equal(500-target.hp,50);
+ assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
 });
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
  const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};
@@ -180,27 +191,6 @@ test('unversioned shipped Evade gains migrate purely on restore; custom and vers
  }
  const intentional={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:1,evadeStackDex:1}}]};
  assert.equal(evadeStackGain(combat,combat.player,intentional),1+combat.player.attributes.dexterity,'card override stays intentional');
-});
-test('card face prints the live Precision entry grant on the shipped Core strike and sweep, and nothing under a legacy profile',async()=>{
- const {cardFaceLines}=await import('../src/model/cardFaceText.js');
- const {precisionStatMix}=await import('../src/engine/stanceHit.js');
- const {combat,target}=live();
- const entry=lines=>(lines||[]).map(line=>line.html.replace(/<[^>]+>/g,'')).find(text=>text.startsWith('Entry: '));
- for(const id of ['core.strike','core.sweep']) {
-  const def=reg.cards.get(id);assert.ok(def,id);
-  assert.ok(!def.defenseRulesVersion&&!def.minCombatExpansionVersion,id+' is the shipped definition, no per-card version field');
-  assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/,id);
- }
- const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
- const preview=previewCard(combat,card.instanceId,target.id);
- assert.equal(preview.entryPrecision,1+precisionStatMix(combat,combat.player));
- assert.match(entry(cardFaceLines(reg.cards.get('core.strike'),preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
- const legacy=resolveGameProfile('current');
- const legacyReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,legacy)),legacy);
- for(const id of ['core.strike','core.sweep']) {
-  // The legacy profile has no Core cards, so show the shipped Core definition against the legacy registries.
-  assert.equal(entry(cardFaceLines(reg.cards.get(id),null,legacyReg)),undefined,id+' under a legacy profile shows no Entry line');
- }
 });
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {

@@ -5,7 +5,7 @@
 // tool deliberately says nothing about their visual placement.
 
 // DOOR. Real input enters two ways: the model/engine modules are IMPORTED and
-// driven (createRunState → save/load → combat → co-op → session resume), and
+// driven (createRunState → save/load → combat), and
 // the runtime sources are read by readFileSync for the fallback clause. The
 // MUTANT lines at the foot test the predicates on hand-typed strings — the
 // regex, not the road. `--selftest` plants each known-bad INTO A COPY of the
@@ -20,8 +20,6 @@ import {
 } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
-import { createSession, restoreSession } from './session.mjs';
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -63,7 +61,6 @@ const R = createRegistries(contentBundle);
 const source = (path) => fs.readFileSync(path, 'utf8');
 const sources = {
   combat: source('src/engine/combat.js'),
-  coop: source('src/engine/coopCombat.js'),
   state: source('src/model/state.js'),
 };
 let pass = 0;
@@ -128,29 +125,7 @@ check('solo combat refuses an unstamped caller',
   throws(() => createCombat({ registries: R, rng: createRng(7), player: { ...player, energyMax: undefined }, enemyIds: [R.enemies.ids()[0]] }))
   && throws(() => createCombat({ registries: R, rng: createRng(7), player: { ...player, drawPerTurn: undefined }, enemyIds: [R.enemies.ids()[0]] })));
 
-const coop = createCoopCombat({ registries: R, rng: createRng(8), players: [{ id: 'p1', ...player }], enemyIds: [R.enemies.ids()[0]] });
-const coopPlayer = coop.players.get('p1').entity;
-check('co-op combat consumes each seat persisted Energy and Draw stamp',
-  coopPlayer.energyMax === stamped.energyMax && coopPlayer.drawPerTurn === stamped.drawPerTurn);
-check('co-op combat refuses an unstamped seat',
-  throws(() => createCoopCombat({ registries: R, rng: createRng(8), players: [{ id: 'p1', ...player, energyMax: undefined }], enemyIds: [R.enemies.ids()[0]] }))
-  && throws(() => createCoopCombat({ registries: R, rng: createRng(8), players: [{ id: 'p1', ...player, drawPerTurn: undefined }], enemyIds: [R.enemies.ids()[0]] })));
-
-const session = createSession({ registries: R, seedString: 'STAMP' });
-session.addMember({ id: 'p1', name: 'Wren', classId: 'starseer' });
-session.start();
-const beforeMember = session.session.members.get('p1').run;
-const restored = restoreSession(R, clone(session.serialize()));
-const afterMember = restored.session.members.get('p1').run;
-check('host session resume preserves Energy and Draw stamp',
-  afterMember.energyMax === beforeMember.energyMax && afterMember.drawPerTurn === beforeMember.drawPerTurn
-  && JSON.stringify(afterMember.derivedStatRuleSnapshot) === JSON.stringify(beforeMember.derivedStatRuleSnapshot));
-const party = restored.snapshot().party[0];
-check('co-op snapshot transports host-owned Energy, Draw, and rules',
-  party.energyMax === afterMember.energyMax && party.drawPerTurn === afterMember.drawPerTurn
-  && JSON.stringify(party.derivedStatRuleSnapshot) === JSON.stringify(afterMember.derivedStatRuleSnapshot));
-
-const runtimeSources = `${sources.combat}\n${sources.coop}\n${sources.state}`;
+const runtimeSources = `${sources.combat}\n${sources.state}`;
 check('runtime has no fallback Energy 3 or Draw 5',
   !/(?:energyMax|bal\.energy)[^\n]{0,100}(?:\?|:|\|\|)[^\n]{0,50}\b3\b/.test(runtimeSources)
   && !/(?:drawPerTurn|bal\.draw)[^\n]{0,100}(?:\?|:|\|\|)[^\n]{0,50}\b5\b/.test(runtimeSources));

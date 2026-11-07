@@ -11,6 +11,7 @@ import {
   configuredContentBundle,
   presentationConfig,
   parseAdvancedConfigFile,
+  RETIRED_LEGACY_GROUPS_WARNING,
   normalizeAdvancedSettings,
   bringProfileForward,
   bringRunSnapshotForward,
@@ -29,15 +30,16 @@ test('expanded defense snapshots preserve custom settings through the content va
 });
 
 test('settings files round trip and leave unrelated settings untouched', () => {
-  const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };
-  const current = { 'gameConfig.presentation.rowBScale': 2 };
+  const source = { 'gameConfig.presentation.settingsWidthPercent': 90, 'gameConfig.presentation.settingsHeightPercent': 80 };
+  const current = { 'gameConfig.presentation.settingsWidthPercent': 70 };
   assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(source), contentBundle, current), source);
-  assert.deepEqual(current, { 'gameConfig.presentation.rowBScale': 2 });
+  assert.deepEqual(current, { 'gameConfig.presentation.settingsWidthPercent': 70 });
 });
 
 test('settings import refuses malformed, oversized, unknown and invalid values atomically', () => {
   for (const text of ['{', '{}', ' '.repeat(1024 * 1024 + 1),
-    advancedConfigExport({ 'gameConfig.presentation.rowAScale': 90 }),
+    advancedConfigExport({ 'gameConfig.presentation.settingsWidthPercent': 900 }),
+    // The battlefield rows were retired (owner, 2026-11-05): their keys are unknown to the strict door.
     advancedConfigExport({ 'gameConfig.presentation.gridShape': 'triangle' }),
     advancedConfigExport({ 'gameConfig.presentation.playerGridColor': 'red' }),
     advancedConfigExport({ 'gameConfig.unknown': true }),
@@ -62,9 +64,8 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
     }
   }
   assert(rows.some((row) => row.key === 'gameConfig.progression.xpMultiplier'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
-  assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.settingsWidthPercent'));
+  assert(!rows.some((row) => /presentation\.(playerSpriteScale|playerSpawnColumn|enemySpawnColumn|formation)/.test(row.key)), 'no battlefield row is inventoried');
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
@@ -127,57 +128,26 @@ test('snapshot and export contain only versioned game-config overrides in determ
   assert.deepEqual(runtimeOverrides, snapshot.overrides);
 });
 
-test('presentation config clamps numbers and refuses unknown rows', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.playerSpriteScale': 8,
-    'gameConfig.presentation.enemySpawnRow': 'A',
-    'gameConfig.presentation.playerSpawnRow': 'sideways',
-    'gameConfig.presentation.playerSpawnColumn': '2',
-    'gameConfig.presentation.enemySpawnColumn': '9',
-  });
-  assert.equal(config.playerSpriteScale, 2);
-  assert.equal(config.enemySpawnRow, 'A');
-  assert.equal(config.playerSpawnRow, 'F');
-  assert.equal(config.playerSpawnColumn, '2');
-  assert.equal(config.enemySpawnColumn, '6');
+// Owner, 2026-11-05: the battlefield keys are retired, so a stored value is ignored; only the panel
+// size and the grid key are live and clamp as before.
+test('presentation config ignores retired battlefield keys and clamps the live ones', () => {
+  const stored = {
+    'gameConfig.presentation.playerSpriteScale': 1.5, 'gameConfig.presentation.enemySpawnRow': 'A',
+    'gameConfig.presentation.playerSpawnColumn': '2', 'gameConfig.presentation.rowAScale': 2,
+    'gameConfig.presentation.gridShape': 'square', 'gameConfig.presentation.playerGridColor': '#00ff88',
+    'gameConfig.presentation.settingsWidthPercent': 500, 'gameConfig.presentation.showFormationGrid': true,
+  };
+  const config = presentationConfig(stored);
+  const base = presentationConfig({});
+  for (const key of ['playerSpriteScale', 'enemySpawnRow', 'playerSpawnColumn', 'rowAScale', 'gridShape', 'playerGridColor']) assert.equal(config[key], base[key], key);
+  assert.ok(config.settingsWidthPercent <= 100 && config.settingsWidthPercent >= 1);
+  assert.equal(config.showFormationGrid, true);
 });
 
 test('formation defaults clamp to the bottom row and opposite outer columns', () => {
   const config = presentationConfig({});
   assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'F1');
   assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'F6');
-});
-
-test('formation appearance validates scales, colors, shapes and offsets', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.rowAScale': 50,
-    'gameConfig.presentation.rowBScale': -1,
-    'gameConfig.presentation.frontOffsetX': 500,
-    'gameConfig.presentation.gridShape': 'triangle',
-    'gameConfig.presentation.playerGridColor': '#00ff88',
-    'gameConfig.presentation.enemyGridColor': 'url(invalid)',
-  });
-  assert.equal(config.rowAScale, 3);
-  assert.equal(config.rowBScale, .25);
-  assert.equal(config.frontOffsetX, 150);
-  assert.equal(config.gridShape, 'wide-rhombus');
-  assert.equal(config.playerGridColor, '#00ff88');
-  // An invalid color falls back to the stock default, never passes through.
-  assert.equal(config.enemyGridColor, presentationConfig({}).enemyGridColor);
-  assert.match(config.enemyGridColor, /^#[0-9a-f]{6}$/i);
-});
-
-test('legacy row and column names migrate to the six-cell formation grid', () => {
-  const config = presentationConfig({
-    'gameConfig.presentation.playerSpawnRow': 'front',
-    'gameConfig.presentation.enemySpawnRow': 'front',
-    'gameConfig.presentation.playerSpawnColumn': 'right',
-    'gameConfig.presentation.enemySpawnColumn': 'left',
-  });
-  assert.deepEqual({
-    player: `${config.playerSpawnRow}${config.playerSpawnColumn}`,
-    enemy: `${config.enemySpawnRow}${config.enemySpawnColumn}`,
-  }, { player: 'A2', enemy: 'C3' });
 });
 
 test('a renamed balance path keeps its stored override, and the new key wins when both are stored', () => {
@@ -199,7 +169,6 @@ test('percent rows are bounded to 100 and the town cap to at least 1, as validat
     const row = rows.get(`gameConfig.balance.${path}`);
     assert.deepEqual([row.min, row.max, row.integer], [0, 100, true], `${path} is a whole percent`);
   }
-  assert.equal(rows.get('gameConfig.balance.atlas.townsPerActMax').min, 1, 'a route must hold its hub');
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.balance.rest.hpPartialPct': 135 }), contentBundle),
     'a percent past 100 is refused at import');
 });
@@ -253,6 +222,22 @@ test('an export naming a retired stat tier imports, skipping only that entry', (
   assert.match(warnings[0], /direct attribute weights/);
 });
 
+// The multiplayer mode and its three balance numbers were removed. A file
+// exported while they existed still imports: only those entries are skipped.
+test('an export naming a removed co-op balance number imports, skipping only that entry', () => {
+  const file = JSON.parse(advancedConfigExport({ 'gameConfig.derivedStatRules.rules.hp.constitution': 5 }));
+  Object.assign(file.overrides, {
+    'gameConfig.balance.coop.headcountHpFactor': 0.9,
+    'gameConfig.balance.coop.mendHealPct': 50,
+    'gameConfig.balance.coop.reviveHp': 3,
+  });
+  const warnings = [];
+  const imported = parseAdvancedConfigFile(JSON.stringify(file), contentBundle, {}, [], warnings);
+  assert.deepEqual(imported, { 'gameConfig.derivedStatRules.rules.hp.constitution': 5 });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /Co-op settings were removed/);
+});
+
 // Codex (#1253): only the six real stat ids are retired. A misspelt id is a
 // typo, and a typo must still refuse the whole file rather than be skipped.
 test('a misspelt stat id under a retired tier key is refused, not skipped', () => {
@@ -289,7 +274,7 @@ test('every generated balance row carries its own description', () => {
     // A LIVE ROW SAYS WHEN IT TAKES EFFECT; an inert one must not, because
     // "Applies to a new run" under "nothing reads it" is the sentence
     // contradicting itself in its own last clause.
-    const live = row.note.endsWith('Applies to a new run.') || row.note.endsWith('Applies immediately to future XP gains and level costs in the current run.');
+    const live = row.note.endsWith('Applies to a new run.');
     const declaredInert = /not yet read|nothing reads it|retired flag/.test(row.note);
     assert.ok(live !== declaredInert,
       `${row.searchPath} must either say when it takes effect or say nothing reads it, and not both: ${row.note}`);
@@ -377,19 +362,11 @@ test('the Advanced panel keeps a generated row\'s own description', async () => 
   const { compactAdvancedRow } = await import('../src/ui/screens/settings.js');
   const rows = advancedConfigRows(contentBundle).filter((row) => row.generatedBalance);
   for (const row of rows.slice(0, 40)) {
-    const drawn = compactAdvancedRow(row, 'Rewards', 'Combat rewards');
+    const drawn = compactAdvancedRow(row, 'Interface', 'Appearance');
     assert.equal(drawn.note, row.note, `${row.searchPath} lost its description on the way to the panel`);
     assert.match(drawn.label, / · |^[a-z]/i, `${row.searchPath} should be labelled by its path`);
     assert.ok(!drawn.label.includes('gameConfig.balance.'), 'the key prefix is not part of the label');
   }
-
-  // The class-table branch beside it still compacts, so this test cannot pass
-  // by the rewrite having been removed altogether.
-  const classRow = advancedConfigRows(contentBundle)
-    .find((row) => row.classTopic && row.floorNote);
-  const compacted = compactAdvancedRow(classRow, 'Progression', classRow.classTopic);
-  assert.equal(compacted.note, classRow.floorNote);
-  assert.ok(!compacted.label.includes(' — '), 'the class topic already names the class');
 });
 
 // A SENTENCE STAYS WITH ITS NUMBER. The notes moved into content/balance.js so
@@ -624,19 +601,19 @@ test('the shared opening-hand base and attribute have no row and move no class',
   const { statRow } = await import('../src/model/statRows.js');
   const keys = advancedConfigRows(contentBundle).map((row) => row.key);
   assert.ok(!keys.includes(OPEN_BASE) && !keys.includes(OPEN_STAT), 'neither key has a row');
-  // Ruleset 7: the shared pair is DROPPED, never converted onto the
-  // opening-hand row (#1318) — only the limit beside it converts.
+  // The shared pair is DROPPED, never converted onto the opening-hand row
+  // (#1318); so is the limit beside it (retired stat keys are dropped, not converted).
   const shared = { [OPEN_BASE]: 9, [OPEN_STAT]: 'constitution', 'gameConfig.handRules.starting.maximum': 10 };
   const converted = normalizeAdvancedSettings({ ...shared }, contentBundle);
   assert.ok(Object.keys(converted).every((key) => !key.startsWith('gameConfig.handRules.')), JSON.stringify(converted));
   assert.notEqual(converted['gameConfig.derivedStatRules.rules.openingHand.base'], 9, 'the shared base is not carried onto the row');
   assert.ok(!converted['gameConfig.derivedStatRules.rules.openingHand.constitution'], 'nor the shared attribute');
-  assert.equal(converted['gameConfig.derivedStatRules.rules.openingHand.max'], 10, 'the limit is kept');
+  assert.deepEqual(converted, {}, 'the limit is dropped, not converted onto the row');
   const registries = createRegistries(configuredContentBundle(contentBundle, converted));
-  for (const [classId, [base, stat]] of Object.entries(OPENING)) {
+  for (const classId of Object.keys(OPENING)) {
+    const authored = contentBundle.derivedStatRules.rules.openingHand.byClass[classId];
     const row = statRow(registries, { class: classId }, 'openingHand');
-    assert.equal(row.base, base, `${classId} opens on its own base`);
-    assert.equal(row[stat], 0.5, `${classId} grows with its own attribute`);
+    assert.equal(row.base, authored.base, `${classId} keeps its authored base`);
     assert.ok(!row.constitution, `${classId} does not read the shared attribute`);
   }
   assert.equal(statRow(registries, null, 'openingHand').base, contentBundle.derivedStatRules.rules.openingHand.base,
@@ -648,8 +625,8 @@ test('a stored profile carrying the shared opening hand drops it, warns once whe
   const saved = [];
   const warnings = [];
   const settings = bringProfileForward(restored, contentBundle, (meta) => saved.push(structuredClone(meta)), warnings);
-  // The per-class row is kept — as the opening-hand row's own key (ruleset 7).
-  assert.equal(settings['gameConfig.derivedStatRules.rules.openingHand.byClass.rogue.base'], 5, 'the per-class row is kept');
+  // The retired per-class dial is dropped too, never converted onto the row.
+  assert.deepEqual(settings, {}, 'nothing is converted');
   assert.ok(!Object.hasOwn(settings, OPEN_BASE) && !Object.hasOwn(settings, OPEN_STAT));
   assert.deepEqual(saved, [restored]);
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
@@ -683,9 +660,8 @@ test('a profile holding only the settings.-prefixed shared opening hand or cap o
     const settings = bringProfileForward(profile, contentBundle, () => { saves += 1; }, warnings);
     assert.equal(settings, profile.settings, 'rewritten in place');
     assert.ok(!Object.hasOwn(profile.settings, key), `${key} is deleted from the profile`);
-    // The tuned turn draw beside it converts onto the Draw / turn row (ruleset 7).
-    assert.ok(Object.keys(profile.settings).every((k) => !k.startsWith('gameConfig.handRules.') && !k.startsWith('settings.')), JSON.stringify(profile.settings));
-    assert.ok(Object.keys(profile.settings).some((k) => k.startsWith('gameConfig.derivedStatRules.rules.draw.')));
+    // The retired turn-draw dial beside it is dropped, never converted onto the Draw / turn row.
+    assert.deepEqual(profile.settings, {});
     assert.equal(saves, 1, `${key} is saved once`);
     const opening = warnings.filter((line) => /^Opening hand/.test(line));
     assert.equal(opening.length, 1);
@@ -738,9 +714,9 @@ test('a v1 file carrying the shared opening hand imports without it, with a warn
   const warnings = [];
   const changes = parseAdvancedConfigFile(v1File({ [OPEN_BASE]: 5, [`settings.${OPEN_STAT}`]: 'strength', 'gameConfig.handRules.startingByClass.herald.base': 3 }),
     contentBundle, {}, advancedConfigRows(contentBundle), warnings);
-  // The rest of the file lands — #1294's per-class row as the opening-hand row's own key.
-  assert.equal(changes['gameConfig.derivedStatRules.rules.openingHand.byClass.herald.base'], 3, 'the rest of the file lands');
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.handRules.')));
+  // The file lands; #1294's per-class dial is dropped with a warning, not converted.
+  assert.deepEqual(changes, {}, 'nothing is converted onto the opening-hand row');
+  assert.ok(warnings.some((line) => /hand rules' dials .* are retired/.test(line)));
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
   assert.equal(opening.length, 1);
   assert.match(opening[0], /each class opens on its own/);
@@ -770,58 +746,30 @@ test('a file written on the old, higher defaults still imports', () => {
     'gameConfig.classes.herald.startingFlaskAllocation.mana': 1,
   };
   // Ruleset 7 retired `balance.handMax` (every fight reads the handSize stat
-  // row), so it is converted away — said once — and everything else imports.
+  // row), so it is dropped — said once — and everything else imports.
   const warnings = [];
   const { 'gameConfig.balance.handMax': _retired, ...kept } = old;
   assert.deepEqual(parseAdvancedConfigFile(v1File(old), contentBundle, {}, [], warnings), kept);
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /fallback hand capacity was retired/);
+  assert.match(warnings[0], /fallback hand capacity are retired/);
   // And a larger tuning of the curves than either build shipped.
   const larger = { 'gameConfig.balance.level.xp.base': 1000, 'gameConfig.balance.skill.class.xp.base': 1000, 'gameConfig.balance.skill.xp.base': 1000 };
   assert.deepEqual(parseAdvancedConfigFile(v1File(larger), contentBundle), larger);
 });
 
-// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294) ----------------
+// ---- THE OWNER'S OWN EXPORT MUST COME BACK (review of #1294; cleanup row 3e) --
 // tests/fixtures/owner-config-0.7.1.json is the file the owner exported from
-// 0.7.1. Retiring the shared opening base/stat rows took them out of the
-// screen's ROWS, and with them the `settings.`-prefixed mirror each export
-// writes, so this exact file refused: "Unknown setting:
-// settings.gameConfig.handRules.starting.base. Nothing was imported." It is
-// imported here through the REAL rows the screen hands the import door.
+// 0.7.1. It is mostly keys of the legacy Advanced groups, which Core 2 no longer
+// has rows for; imported through the screen's own rows it must still land, with
+// those keys skipped under one named warning, and what Core 2 still reads kept.
 test("the owner's exported 0.7.1 configuration imports through the screen's own rows", async () => {
   const { settingsImportRows } = await import('../src/ui/screens/settings.js');
-  const { scaledCards } = await import('../src/model/handRules.js');
-  const { statRow } = await import('../src/model/statRows.js');
-  const { createRegistries } = await import('../src/model/registries.js');
   const text = readFileSync(new URL('./fixtures/owner-config-0.7.1.json', import.meta.url), 'utf8');
   const warnings = [];
-  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings);
-  assert.ok(Object.keys(changes).length > 70, 'everything else in the file lands');
-  // Its rating keys are all at their old shipped numbers, so they pin nothing:
-  // Poise reads the ruleset-7 row (review, #1296).
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('gameConfig.derivedStatRules.rules.poise.')), 'the retired Poise weights are not pinned');
-  assert.equal(changes['gameConfig.handRules.drawMode'], 'fixed');
-  // Ruleset 7: the hand groups, the fallback hand size and the rating formula
-  // are stat rows; their keys (and their `settings.` mirrors) convert or drop.
-  assert.ok(Object.keys(changes).every((key) => !/handRules\.(starting|turn|capacity)|balance\.handMax|combatRatings\.ratings/.test(key)), 'no retired key is brought back');
-  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.')), 'mirrors land on their own keys');
-  // One opening-hand warning: the retired 3–15 limits. Its shared base is the
-  // stock 4, never a customisation, so it is dropped without a word.
-  const opening = warnings.filter((line) => /^Opening hand/.test(line));
-  assert.equal(opening.length, 1);
-  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current opening-hand limits apply/);
-  assert.doesNotMatch(opening[0], /shared base/);
-  // "start with 4-6 cards": the imported configuration opens every class there.
-  const registries = createRegistries(configuredContentBundle(contentBundle, changes));
-  const allOnes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 };
-  for (const classId of Object.keys(contentBundle.attributeRules.presets.lean)) {
-    const row = statRow(registries, { class: classId }, 'openingHand');
-    const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
-    for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
-      const cards = scaledCards(row, attributes);
-      assert.ok(cards >= row.min && cards <= row.max, `${classId} opens on ${cards}`);
-    }
-  }
+  const changes = parseAdvancedConfigFile(text, contentBundle, {}, settingsImportRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING), 'the skipped groups are named');
+  assert.ok(Object.keys(changes).every((key) => !/^(settings\.)?gameConfig\.(?!prologue\.|presentation\.)/.test(key)), 'no retired key is brought back');
+  assert.ok(Object.keys(changes).every((key) => !key.startsWith('settings.gameConfig.')), 'mirrors of retired keys are skipped too');
 });
 
 test('a retired row keeps both spellings importable: inert skipped, live mirror read as its row', () => {
@@ -842,7 +790,6 @@ test('a retired row keeps both spellings importable: inert skipped, live mirror 
 test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 applies', () => {
   const MAX = 'gameConfig.handRules.starting.maximum';
   const MIN = 'gameConfig.handRules.starting.minimum';
-  const ROW = 'gameConfig.derivedStatRules.rules.openingHand.';
   const profile = { settings: { [MAX]: 15, [MIN]: 3 } };
   const saved = [];
   const warnings = [];
@@ -851,25 +798,19 @@ test('a stored opening-hand cap of 15 (the retired default) is dropped so 4–6 
   assert.deepEqual(settings, {});
   assert.equal(saved.length, 1, 'written back');
   assert.match(warnings.join(' '), /3–15/);
-  // Only the retired values go: a chosen cap stays, and a lone floor of 3 is a
-  // choice — each converted onto the opening-hand row (ruleset 7).
+  // A chosen cap and a lone floor are retired dials too: dropped with a warning, never converted.
   const chosen = { [MAX]: 5, [MIN]: 3 };
-  normalizeAdvancedSettings(chosen, contentBundle);
-  assert.equal(chosen[`${ROW}max`], 5);
-  assert.equal(chosen[`${ROW}min`], 3);
-  assert.ok(!Object.hasOwn(chosen, MAX) && !Object.hasOwn(chosen, MIN));
-  const capOnly = { [MAX]: 15, [MIN]: 5 };
-  normalizeAdvancedSettings(capOnly, contentBundle);
-  assert.equal(capOnly[`${ROW}min`], 5);
-  assert.equal(capOnly[`${ROW}max`], 6, 'the retired cap of 15 is not carried into the row');
-  // The import door drops it too, in either spelling.
-  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3 } });
+  const chosenWarnings = [];
+  normalizeAdvancedSettings(chosen, contentBundle, chosenWarnings);
+  assert.deepEqual(chosen, {});
+  assert.match(chosenWarnings.join(' '), /hand rules' dials/);
+  // The import door drops them too, in either spelling, and nothing is converted.
+  const file = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 15, [`settings.${MAX}`]: 15, [MAX.replace('maximum', 'pointsPerCard')]: 3, [MAX.replace('maximum', 'minimum')]: 5 } });
   const importWarnings = [];
-  const imported = parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings);
-  assert.equal(imported[`${ROW}max`], 6);
-  assert.equal(imported[`${ROW}byClass.reaver.strength`], 1 / 3, 'a tuned points-per-card converts exactly, as its weight');
+  assert.deepEqual(parseAdvancedConfigFile(file, contentBundle, {}, [], importWarnings), {});
   assert.match(importWarnings.join(' '), /old limit of 15 cards was left out/);
-  assert.equal(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle)[`${ROW}max`], 5);
+  assert.match(importWarnings.join(' '), /hand rules' dials/);
+  assert.deepEqual(parseAdvancedConfigFile(JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', overrides: { [MAX]: 5 } }), contentBundle), {});
 });
 
 // THE SKILL-LEVEL CARD UPGRADE IS RETIRED (SPEC §13.4o): `balance.skill.upgradeAt`

@@ -1,5 +1,3 @@
-import { COOP_TESTS_ENABLED } from './feature-scopes.js';
-const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 // Enemy elemental resist (design elements-and-tag-mechanics §3): a percent map
 // beside `weak`, applied as ceil(total * (1 + weak/100) * (1 - resist/100)) - flat
 // on every v2 damage path. Preview equals the hit, solo equals co-op.
@@ -8,7 +6,6 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard, previewCoopCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems } from '../src/model/combatExpansionRules.js';
 import { expandedEnemyProjection, typedDefenseAmount } from '../src/engine/combatExpansionEquipment.js';
@@ -36,33 +33,29 @@ function calm(enemy) {
   if (enemy.persistentWard) enemy.persistentWard.value = enemy.persistentWard.max = 0;
 }
 
-function hit(resist, coop) {
+function hit(resist) {
   const combatExpansionRules = rulesWith(resist);
-  const combat = coop
-    ? createCoopCombat({ registries, rng: createRng(801), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'], combatExpansionRules })
-    : createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, combatExpansionRules, enemyIds: ['wanderingSoldier'], player });
+  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, combatExpansionRules, enemyIds: ['wanderingSoldier'], player });
   const enemy = combat.enemies[0]; calm(enemy);
-  const id = coop ? combat.players.get('a').piles.hand[0].instanceId : 'pebble';
-  const preview = coop ? previewCoopCard(combat, 'a', id, enemy.id) : previewCard(combat, id, enemy.id);
+  const id = 'pebble';
+  const preview = previewCard(combat, id, enemy.id);
   const before = enemy.hp;
   primeAccuracyRolls(combat, { die: 20 });
-  if (coop) playCard(combat, 'a', id, enemy.id); else dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
+  dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
   const event = combat.eventLog.find(row => row.type === 'damageDealt' && row.targetId === enemy.id);
   return { dealt: before - enemy.hp, shown: preview.values.find(row => row.op === 'damage').totalDamage, type: event?.damageType };
 }
 
-test('a 50 resist halves (ceil) that type, leaves other types whole, and preview equals the hit solo and co-op', () => {
+test('a 50 resist halves (ceil) that type, leaves other types whole, and preview equals the hit', () => {
   const base = hit(null, false);
   assert.ok(base.dealt > 0 && base.type, 'baseline hit lands');
   assert.equal(base.shown, base.dealt);
   const stable = { cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' }[base.type] || base.type;
-  for (const coop of COOP_MODES) {
-    const resisted = hit({ [stable]: 50 }, coop);
-    assert.equal(resisted.dealt, Math.ceil(base.dealt * 0.5), `${coop ? 'co-op' : 'solo'} halves ${stable}`);
-    assert.equal(resisted.shown, resisted.dealt, `${coop ? 'co-op' : 'solo'} preview equals the hit`);
-    const other = hit({ [stable === 'fire' ? 'frost' : 'fire']: 50 }, coop);
-    assert.equal(other.dealt, base.dealt, 'resist to another type changes nothing');
-  }
+  const resisted = hit({ [stable]: 50 });
+  assert.equal(resisted.dealt, Math.ceil(base.dealt * 0.5), `solo halves ${stable}`);
+  assert.equal(resisted.shown, resisted.dealt, `solo preview equals the hit`);
+  const other = hit({ [stable === 'fire' ? 'frost' : 'fire']: 50 });
+  assert.equal(other.dealt, base.dealt, 'resist to another type changes nothing');
 });
 
 test('the typed-defense line multiplies weak and resist before flat, and caps resist at 75', () => {

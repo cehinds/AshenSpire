@@ -60,9 +60,9 @@ export function cardRewardSchedule(balance) {
  *   → { offerCard, cardMissed, levelCards }
  *
  * THE ONE DOOR the card reward schedule is read through (SPEC §15.1): solo
- * (main.js onCombatEnd, through engine/encounters.js rollCombatCardOffer),
- * co-op (tools/session.mjs) and the simulator (tools/runsim.mjs) all ask it,
- * so the three agree on which card rows a won fight earns.
+ * (main.js onCombatEnd, through engine/encounters.js rollCombatCardOffer)
+ * and the simulator (tools/runsim.mjs) both ask it, so the two agree on which
+ * card rows a won fight earns.
  *   offerCard  — the plain card row is offered. Not when a skill or class
  *                draft is waiting (`draftWaiting`: it takes the row's seat,
  *                §13.4e/g), not when `afterCombat[pool]` is off, and not when

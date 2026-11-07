@@ -1,7 +1,8 @@
 import { tagSymbolSvg } from './cardTagSymbols.js';
-import { combatHealthModel } from '../models/CombatHealthModel.js';
+import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
 import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { acBadgeText } from '../models/acBadge.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
@@ -9,9 +10,13 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 // Poise has a gold numeric badge and retains the HP trim, tooltip and aria-label.
 /** The badge tooltip's HTML; the Evade badge shows the holder's own Evade text when given, else the generic line. */
 export function badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp = null }) {
-  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
+  // The +N overflow badge lists the hidden badges, each as "label value" (the same text its own aria-label would carry).
+  if (badge.kind === 'overflow') return `<div class="tt-title">${esc(badge.label)}</div>${badge.names.map(esc).join('<br>')}`;
+  return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
 }
-export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null } = {}) {
+// The kinds a persistent row holds a node for, in the order the model lists them.
+const BADGE_KINDS = Object.freeze(['shield', 'poise', 'evade', 'ward', 'precision', 'counter', 'reflect']);
+export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null, persistent = false } = {}) {
   if (!hp) return null;
   const model = combatHealthModel(values);
   const row = document.createElement('div');
@@ -30,6 +35,16 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   // The fill's colour: the highest layer still standing (see healthGuardTone). Poise trims the bar in gold while it lasts.
   hp.dataset.guard = model.guard;
   hp.dataset.poised = String(model.poised);
+  // Ward status: a purple bar over the HP bar shows current Poise on the HP scale (SPEC 4.1a).
+  hp.dataset.wardActive = String(model.wardActive);
+  if (model.poiseOverlayPct > 0 && track) {
+    const overlay = document.createElement('span');
+    overlay.className = 'combat-health-poise-overlay';
+    overlay.dataset.poiseOverlay = String(model.poise);
+    overlay.style.width = `${model.poiseOverlayPct}%`;
+    overlay.setAttribute('aria-hidden', 'true');
+    track.append(overlay);
+  }
   const healthValue = hp.querySelector('.m-value');
   if (healthValue) {
     // Narrow phone lanes show current HP; the full fraction remains the
@@ -41,20 +56,30 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     hp.tabIndex = 0;
     attachTooltip(hp, () => `<div class="tt-title">${esc(model.poiseLabel)}</div>${esc(poiseHelp)}`);
   }
-  for (const badge of model.badges) {
+  const { shown, overflow } = visibleBadges(model.badges);
+  // Owner (2026-11-06): a HUD row (`persistent`) carries one node for every badge kind, in a fixed order, and a kind with
+  // nothing to show is a hidden `placeholder`. A badge appearing or going then writes an attribute and a number; it adds or removes no node.
+  const slots = persistent ? [...BADGE_KINDS.map(kind => shown.find(badge => badge.kind === kind) || { kind, label: '', value: 0, placeholder: true }),
+    overflow || { kind: 'overflow', label: '', value: '', names: [], text: '', placeholder: true }] : (overflow ? [...shown, overflow] : shown);
+  // The player's Block (owner 2026-11-02) takes the square slot left of the bar, where AC used to sit; enemies (no `values.ac`) keep it in the stack.
+  let blockSquare = null;
+  for (const badge of slots) {
     const node = document.createElement('span');
-    node.className = `combat-health-badge combat-health-${badge.kind}${badge.barrier > 0 ? ' combat-health-ward-barrier' : ''}`;
-    if (badge.barrier > 0) node.dataset.barrier = String(badge.barrier);
+    node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
+    if (badge.ward) node.dataset.ward = String(badge.wardStacks);
     node.dataset.defenseKind = badge.kind;
-    node.setAttribute('aria-label', `${badge.label} ${badge.value}`);
+    // Only an empty persistent slot is hidden. (`badge.hidden` on the +N overflow is its list of summarized badges.)
+    if (badge.placeholder) node.hidden = true;
+    node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : `${badge.label} ${badge.value}`);
+    if (badge.help) node.title = badge.help; // native hover help for the stack badges, same text as the tooltip
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
     value.textContent = String(badge.value);
-    if (badge.kind === 'evade' || badge.kind === 'precision') {
+    if (['evade', 'precision', 'counter', 'reflect'].includes(badge.kind)) {
       const icon = document.createElement('span');
       icon.className = `combat-health-${badge.kind}-icon`;
       icon.setAttribute('aria-hidden', 'true');
-      const mark = tagSymbolSvg(`effect:${badge.kind}`);
+      const mark = tagSymbolSvg(`effect:${badge.glyph || badge.kind}`);
       if (mark) icon.append(mark);
       node.append(icon);
     }
@@ -64,8 +89,39 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       node.tabIndex = 0;
       attachTooltip(node, () => badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp }));
     }
-    row.append(node);
+    if (values?.ac && badge.kind === 'shield') {
+      node.classList.add('combat-health-block-slot');
+      blockSquare = node;
+    } else row.append(node);
   }
+  // The player's AC (owner 2026-11-01, swapped with Block 2026-11-02): the first badge of the badge row, with the small "AC" caption just before it.
+  // `values.ac` is { value, evade, base } from acFor; enemies never carry it.
+  if (values?.ac) {
+    const text = acBadgeText(values.ac);
+    const square = document.createElement('span');
+    square.className = 'combat-health-badge combat-health-ac';
+    square.dataset.defenseKind = 'ac';
+    square.dataset.ac = String(values.ac.value);
+    square.setAttribute('aria-label', [text.title, ...text.lines].map(line => line.replace(/\.$/, '')).join('. ') + '.');
+    const number = document.createElement('span');
+    number.className = 'combat-health-badge-value';
+    number.textContent = String(values.ac.value);
+    square.append(number);
+    if (tooltips) {
+      square.tabIndex = 0;
+      attachTooltip(square, () => `<div class="tt-title">${esc(text.title)}</div>${text.lines.map(esc).join('<br>')}`);
+    }
+    // The caption is decoration, not a badge: no data-defense-kind, so badge readers (and the HUD QA) never mistake it for one.
+    const caption = document.createElement('span');
+    caption.className = 'combat-health-badge combat-health-ac-caption';
+    caption.dataset.acCaption = '';
+    caption.setAttribute('aria-hidden', 'true');
+    caption.textContent = 'AC';
+    row.insertBefore(square, row.firstChild);
+    row.insertBefore(caption, square);
+  }
+  // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
+  if (blockSquare) row.append(blockSquare);
   row.append(hp);
   return row;
 }

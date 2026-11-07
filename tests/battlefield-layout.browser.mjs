@@ -160,7 +160,7 @@ try {
       await p.close();
     }
   }
-  for (const profile of ["core", "current"]) {
+  for (const profile of ["core"]) {
     for (const width of profile === "current" ? [1440, 390] : [1440]) {
       const p = await b.newPage({
         viewport: { width, height: width === 390 ? 844 : 900 },
@@ -173,7 +173,7 @@ try {
       const kit =
         profile === "current" ? "&shotKit=1&shotMainHand=straightSword" : "";
       await p.goto(
-        `${base}${entry}?shot=combat&shotEnemyCount=7&gameProfile=${profile}${kit}`,
+        `${base}${entry}?shot=combat&shotEnemyCount=3&gameProfile=${profile}${kit}`,
         { waitUntil: "domcontentloaded" },
       );
       await p.locator(".combatant.enemy").first().waitFor();
@@ -185,25 +185,21 @@ try {
         cells: window.__combat.enemies.map((e) => e.formationCell),
         policy: window.__combat.formationPolicy,
       }));
-      assert.equal(state.count, 7);
-      assert.equal(
-        state.bands.includes("C"),
-        profile === "current",
-        "only enabled profile uses visual C band",
-      );
+      assert.equal(state.count, 3, 'a combat holds at most 3 enemies (owner, 2026-11-03)');
       await p.mouse.move(0, 0);
       await p.screenshot({
-        path: resolve(output, `${profile}-seven-${width}.png`),
+        path: resolve(output, `${profile}-three-${width}.png`),
       });
       if (profile === "current") {
-        const actor = p.locator('.combatant.enemy[data-visual-band="C"]');
+        const actor = p.locator('.combatant.enemy[data-eid="e3"]');
         const clickArt = async () => {
           const r = await actor.locator(".sprite").boundingBox();
           await p.mouse.click(r.x + r.width / 2, r.y + r.height / 2);
         };
         await clickArt();
         assert.equal(await actor.getAttribute("aria-pressed"), "true");
-        await actor.locator(".nm-inspect").click();
+        // The enemy name text is gone (its intent took the slot, owner 2026-11-06): the read opens from the panel's Inspect control.
+        await p.locator('.target-hud-inspect-info:visible, .combatant.enemy[data-eid="e3"] .combatant-info:visible').last().click();
         await p.locator(".combatant-inspector-body").waitFor();
         await p.keyboard.press("Escape");
         const before = await p.evaluate(() =>
@@ -222,33 +218,33 @@ try {
           document.querySelector('.hand .card.selected')?.dataset.cardId === 'strike',
         );
         await p.waitForFunction(() => {
-          const actor = document.querySelector('.combatant.enemy[data-visual-band="C"]');
+          const actor = document.querySelector('.combatant.enemy[data-eid="e3"]');
           const art = actor?.querySelector('.sprite')?.getBoundingClientRect();
           return art && document.elementFromPoint(art.x + art.width / 2, art.y + art.height / 2)
             ?.closest('[data-eid]')?.dataset.eid === actor.dataset.eid;
         });
         await clickArt();
         await p.waitForFunction(
-          (hp) => window.__combat.enemies.find((e) => e.id === "e7").hp < hp,
-          before.find((e) => e.id === "e7").hp,
+          (hp) => window.__combat.enemies.find((e) => e.id === "e3").hp < hp,
+          before.find((e) => e.id === "e3").hp,
         );
         const after = await p.evaluate(() =>
           window.__combat.enemies.map((e) => ({ id: e.id, hp: e.hp })),
         );
         assert.ok(
-          after.find((e) => e.id === "e7").hp <
-            before.find((e) => e.id === "e7").hp,
-          "real attack hits C actor",
+          after.find((e) => e.id === "e3").hp <
+            before.find((e) => e.id === "e3").hp,
+          "real attack hits the third actor",
         );
         assert.deepEqual(
-          after.filter((e) => e.id !== "e7"),
-          before.filter((e) => e.id !== "e7"),
+          after.filter((e) => e.id !== "e3"),
+          before.filter((e) => e.id !== "e3"),
           "other actors unchanged",
         );
       }
       assert.deepEqual(errors, []);
-      console.log(`${profile} seven ${width} passed`);
-      metrics.push({ profile, width, seven: state });
+      console.log(`${profile} three ${width} passed`);
+      metrics.push({ profile, width, three: state });
       await p.close();
     }
   }

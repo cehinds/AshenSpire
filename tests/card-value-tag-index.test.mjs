@@ -8,7 +8,7 @@ import * as model from '../src/model/attackCardDamage.js';
 // Recorded from the unindexed Dev model at 04adc68513b3f13f2b5c28702edce4ec513202a1
 // plus the reviewed fixed-upgrade base-resource-budget correction, against integrated Core/default and base-card content, not the indexed model.
 // The fixture records the exact model and content SHA256 used for provenance.
-// Regenerate after content changes with node tools/card-value-index-oracle.mjs.
+// Regenerate after content changes with node tools/card-value-index-oracle.mjs (re-pinned for the authored card `contest` field, SPEC §17 Contests).
 // Each hash covers the serialized card definitions/damage configuration/problem list.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-tag-index-baseline.json', import.meta.url)));
 for (const [name, bundle] of cardValueIndexCases()) {

@@ -68,7 +68,7 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   if (loopback && /\/unknown\/(?:\d+|latest)(?:\/|$)/.test(path)) return 'unknown';
   if (loopback) return 'dev';
   // A private-network host is a workstation serving the dev preview to a
-  // phone on the same Wi-Fi (tools/serve-preview.mjs): released builds are
+  // phone on the same Wi-Fi: released builds are
   // only ever served from the Pages site or opened as files.
   if (/^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[a-z0-9-]+\.local)$/i.test(host)) return 'dev';
   if (protocol === 'file:') return 'unknown';

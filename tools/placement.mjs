@@ -128,7 +128,7 @@
 //     are a third hand-rolled site. Neither is measured here and neither is
 //     converted — `unknown`, named rather than implied.
 //   · AND THE FLASK MENU HAS A MOUNT SITE THIS TOOL CANNOT REACH. flask.js is
-//     mounted from combat.js, map.js and coop.js. `?shot=combat` is what P5
+//     mounted from combat.js and map.js. `?shot=combat` is what P5
 //     drives; the MAP surface is not in P5 — `unknown` for THIS tool.
 //     THE `unknown` UNDER IT IS RESOLVED, 2026-08-17, AND THE ANSWER IS THE
 //     OPPOSITE OF WHAT THE OLD WORDING IMPLIED. This line read "`?shot=map`
@@ -141,20 +141,17 @@
 //     surface is measured by tools/flaskbox.mjs, which uses that door and prints
 //     it. A NAMED `unknown` ON AN EMPTY SCREEN IS STILL A GUESS ABOUT WHY IT IS
 //     EMPTY, and this one was read as a missing feature for a night.
-//     Co-op was measured by hand
-//     (`?shot=coop`, last slot, both shapes: under, on screen, left-aligned) and
-//     is not in P5, because a by-hand receipt is not coverage.
 //   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.
 //     Every other attachTooltip caller passes `clear: el.parentElement` too and
 //     none is sampled HERE. It is no longer unknown: 160 tooltip-bearing controls
-//     over EIGHT ?shot= surfaces (customize, combat, map, compendium, coop, shop,
+//     over EIGHT ?shot= surfaces (customize, combat, map, compendium, a retired board, shop,
 //     profile, event) at both shapes, 8c34bc0 against d705b66, same synthesized
 //     door as P3. 158 matched by key — 84 placements moved, 74 unchanged, ZERO
 //     regressions (not one control where the sibling count or the worst sibling
 //     coverage rose); worst coverage IMPROVED on 79 and went from >=99.9% to
 //     exactly 0 on TWENTY-ONE, including the settings tab strip (`.set-tabs`,
 //     5 siblings at 100% — a Law 3 surface), `.cp-grid` (96.3%), `.disc-faces`
-//     (6 siblings at 100%), `.mh-actions` and `.coop-flasks`. The 2 unmatched
+//     (6 siblings at 100%), `.mh-actions` and a retired board's flask row. The 2 unmatched
 //     rows each side are the same hovered map node, whose own rect differs by
 //     ~2 px under its hover scale. That sweep is a scratch probe, not a shipped
 //     check: P3 stays the hand because the hand is where the corpus can plant,

@@ -111,7 +111,6 @@ Starstone combo engine (SPEC §5.1 identity) · Herald: blood economy powers (SP
 - **harbingerOfBlight** — Harbinger of Blight power: every Blight you spread mends you a little — gated to the owner's own applications via `eventSourceIsOwner` (the target is the enemy, not the owner, so `eventTargetIsOwner` would never fire here).
 - **bloodUnction** — Blood Unction flask: this turn, attacks apply +2 Bleed per hit (same hook shape as Gorefire Stance; expires at turn end).
 - **ironVow** — Iron Vow power: pain hardens into guard — same `hpLost` + `eventTargetIsOwner` shape as Stigmata/Zealotry, but pays out Block instead of a heal/lash.
-- **glassCannon** — Custom Climb "Glass Cannon" modifier — applied to the player at combat start (both directions at once). Pure data over existing modifier keys.
 - **magicVulnerable** — registered break payload for Arcane Exposure. The engine applies this only to explicit magic-school HP packets, never tags or buildup.
 - **stanceShifted** — fight-long marker for the Oath rule (`oathKept`): set when its owner enters a stance, it never decays, so Oath stays broken for the fight.
 - **silenced** — Psychic family (design elements-and-tag-mechanics §2.1). Expanded combat (owner, 2026-10-13): +1 SP per stack on spell-camp cards, and immunity to Force, each Force hit or effect spending a stack. The `spellDamageDealtMult` modifier is read by legacy combat only. `decay.duration` 2 is PROVISIONAL.
@@ -161,7 +160,7 @@ export they compile to: `heraldCards.json`, `reaverCards.json`, `rogueCards.json
 `armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`. `tools/content-build.mjs` compiles each
 to `src/content/generated/cards/<name>.js`, and the old `src/content/cards/{herald,reaver,starseer,armaments,
 colorless,corrupted}.js` are shims that re-export it (the pools were unfrozen before and still are).
-`coop.js` stays JS: it holds builder functions, which JSON cannot carry. `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
+`coop.js` is retained as inert data (the retired co-op cards). `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
 notes that lived as comments in the old JS files (JSON has no comments); keep a note under the card id when
 you change one. The shared constants the old files declared (`one = { f: 'add', args: [1] }`, and in the
 Starseer file `CHARGED` and `GAIN_CHARGE`) are written out inline in every row that used them; the values are
@@ -565,17 +564,6 @@ The map-generation knobs of src/content/mapconfig.js (SPEC §6). `mapActShape.js
     is rolled are its weight over the total — so this number is a slider end,
     not a percentage. The screen prints the derived share beside each one.
 
-## Custom Climb modifiers (content/source/customMods.json)
-
-File header (was the comment block at the top of src/content/customMods.js): a tailored take on Slay the Spire 2's custom mode. `customMods.json` holds four keys, which src/content/customMods.js re-exports as `DIFFICULTY_MODS`, `CHAOS_MODS`, `DECK_MODES` and `ASCENSION_ORDER`; each mod row is `{ id, label, desc }`. Tuning magnitudes live in `balanceCustomMods.json` and `balanceEndless.json`, not here.
-
-- **`difficultyMods`** — harder rules. The Ascension ladder just enables the first N of `ascensionOrder`, so "Ascension 4" is the four hardest-first rules, and every rule is also individually toggleable.
-- **`chaosMods`** — flavourful run-warping toggles, independent of difficulty.
-- **`deckModes`** — how your starting deck is built.
-- **`ascensionOrder`** — Ascension enables the first N difficulty rules (hardest impact first). `MAX_ASCENSION` is its length, computed in JS.
-- The orchestrator (main.js) reads `run.custom.mods[id]` at the relevant hook; nothing here is engine-specific.
-- **Deleted union.** `ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood in the module with no reader in src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted rather than documented: nothing re-typed it, so there is nothing to collapse into, and the day a screen needs both groups it can spell the spread itself.
-
 ## Seats (content/source/seats.json)
 
 File header (was the comment block at the top of src/content/seats.js): THE SEATS (SPEC §13.1). A seat is a region with its content: enemies, encounters, boss pool and combat scenery. An act is a seat at a tier: `run.actNumber` is the tier, `run.seatOrder[tier - 1]` the seat. `seats.json` has two keys: `seats` (src/content/seats.js freezes the array as `SEATS`, rows stay unfrozen) and `causewayRegionId` (`CAUSEWAY_REGION_ID`).
@@ -910,7 +898,7 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     src/content/derivedStats.js — shipping authority for derived-stat rules.
 
     The content registry validates this table, and run creation snapshots its
-    resolved rules so saves, sessions, and co-op keep the same derived values.
+    resolved rules so saves and sessions keep the same derived values.
 
     RULESET 6 — ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21).
 
@@ -1000,7 +988,7 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     ---- D26: how each row READS, authored beside the row it describes -------
 
     WHY IT IS A SIBLING OF `rules` AND NOT A FIELD ON EACH RULE. A rule row is
-    SNAPSHOTTED into every save and every co-op handshake (createDerivedStat-
+    SNAPSHOTTED into every save (createDerivedStat-
     RuleSnapshot): putting a label and a sentence in there would write prose
     into save bytes and make a copy-edit a save-compatibility question. So
     presentation sits outside the snapshot and inside the same FILE — one
@@ -1562,7 +1550,7 @@ _No comments were written beside these numbers in the old balance.js._
   
   Enemy bounds and act/floor target bands are authored by #238. The pure
   resolver in model/levels.js accepts those rows without activating them in
-  encounter creation, saves, co-op, or the UI.
+  encounter creation, saves, or the UI.
 - **`levels.enemyScaling`** — Inert #238 content. The pure level planner consumes these coefficients
   only when a later activation story supplies a resolved enemy level.
   Every row states its rounding and hard result caps; hits, statuses,
@@ -1604,13 +1592,6 @@ _No comments were written beside these numbers in the old balance.js._
   per act while the map it describes does, and nothing said so.
   M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
 
-### balanceCoop.json — coop
-
-- **`coop`** — ---- Forsaken Together (co-op) ------------------------------------------
-- **`coop.headcountHpFactor`** — enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
-- **`coop.mendHealPct`** — Mend at a shrine heals an ally this % of their max HP
-- **`coop.reviveHp`** — downed-but-not-dead members revive next floor at this HP (StS2)
-
 ### balanceEndless.json — endless
 
 - **`endless`** — ---- Endless Spire + Custom Climb rule magnitudes ------------------------
@@ -1645,15 +1626,6 @@ _No comments were written beside these numbers in the old balance.js._
   real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
   Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
   order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
-
-### balanceCustomMods.json — customMods
-
-- **`customMods.toughElitesHpMult`** — Tough Elites: elites & bosses ×HP
-- **`customMods.bigBossesHpMult`** — Dread Bosses: act bosses ×HP
-- **`customMods.hoarderCinders`** — Hoarder: bonus starting cinders
-- **`customMods.expensiveShopsMult`** — Greedy Merchants: ×shop price
-- **`customMods.hoarderShopMult`** — Hoarder: ×shop price
-- **`customMods.lessHealingMult`** — Scarce Embers: ×healing (shrine rest + between-act)
 
 ### balanceCosts.json — costs
 
@@ -2020,7 +1992,7 @@ _No comments were written beside these numbers in the old balance.js._
   The shared solo HUD uses this share of the room left after its action
   cells. The old 40vw cap typed a viewport answer before those controls
   had taken their space; 82% keeps a deliberate gutter without making a
-  second breakpoint. Co-op still consumes maxViewportPct below.
+  second breakpoint.
 - **`ui.hudPresentation`** — Shared HUD presentation tokens. These are screen-pixel intentions;
   main.js projects them through --ui-zoom so Map and Combat consume the
   same answer. Component backgrounds are transparent by current design,

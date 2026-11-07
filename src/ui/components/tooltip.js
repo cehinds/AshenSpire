@@ -415,22 +415,32 @@ function adoptTitle(el) {
   el.removeAttribute('title');
 }
 
+const INSPECTOR = '.card-inspection-modal, .card-inspection-layout';
 /**
- * A tooltip trigger inside a hand card (keyword, tag symbol, inspection tag, any detail on the face)
- * explains only once that card is selected or in inspect mode (owner, 2026-10-31); until then the
- * card's own tap selects it and the trigger stays quiet. The card's own tooltip and triggers anywhere
- * else (inspector, rewards, shop, deck view) are not held back.
+ * Card tooltips explain only while the card inspector is open (owner, 2026-11-02, replacing the
+ * 2026-10-31 "selected or inspected" gate). A tooltip trigger on a card face (keyword, tag symbol,
+ * inspection tag, any detail) or the card itself is held back on every other card surface (hand,
+ * rewards, shop, deck view, upgrade previews): hover, focus, selection and long-press open nothing,
+ * and the card's own tap selects or plays as normal. Non-card elements are never held back.
  */
 function heldBackInCard(el) {
-  const card = el?.closest?.('.hand .card');
-  return !!card && card !== el && !card.matches('.selected, .inspection-selected');
+  return !!el?.closest?.('.card') && !el.closest(INSPECTOR);
+}
+
+/**
+ * oneClickContext(el) — inside the (i) inspection modal every keyword, tag and face part explains on ONE
+ * click. Everywhere else a card's triggers are held back (heldBackInCard) and other details keep
+ * tap-to-select, tap-again-to-explain.
+ */
+function oneClickContext(el) {
+  return !!el?.closest?.(INSPECTOR);
 }
 
 const HELD_TRIGGERS = '.tooltip-keyword, .card-tag-symbol, .inspection-tag';
 /**
  * syncHeldTriggers(root) — triggers held back inside an unselected hand card leave the tab order
  * (tabindex -1, so DOM focus and Enter never reach a control that does nothing); they get tabindex 0
- * back once the card is selected or inspected.
+ * back inside the card inspector.
  */
 export function syncHeldTriggers(root) {
   for (const el of root.querySelectorAll(HELD_TRIGGERS)) {
@@ -464,12 +474,13 @@ export function attachTooltip(el, contentFn, {
 } = {}) {
   adoptTitle(el);
   el.dataset.tipAttached = 'true';
+  // The content function lives in a hook, so a HUD node kept across a rebuild (domWrite.morph) shows its newest text.
+  (el.__hooks ||= {}).tip = contentFn;
   const show = () => {
     pending = null;
     if (!el.isConnected || heldBackInCard(el) || el.closest('[inert], [data-page-locked], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
-    const information = el.querySelector('.card-info-button');
-    const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
-    return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
+    const avoid = clear || el.parentElement;
+    return showFn ? showFn() : showWith((el.__hooks?.tip || contentFn)(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
   const queue = (delay, origin = 'transient') => {
     if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
@@ -505,7 +516,9 @@ export function attachTooltip(el, contentFn, {
   });
   const focus = ev => { if (ev.target === el) queue(focusDelayMs ?? tooltipSettings.focus); };
   el.addEventListener('gpfocus', focus);
-  el.addEventListener('focus', ev => { if (el.matches(':focus-visible')) focus(ev); });
+  // A programmatic refocus (a list returning after a confirm) sets data-quiet-focus: no tip for that focus; real focus still tips.
+  el.addEventListener('focus', ev => { if (el.dataset.quietFocus) return; if (el.matches(':focus-visible')) focus(ev); });
+  el.addEventListener('blur', () => { delete el.dataset.quietFocus; });
   const blur = ev => {
     if (ev.target !== el) return;
     cancelOpen(el);
@@ -540,6 +553,11 @@ export function attachTooltip(el, contentFn, {
   // keep their click for what the click does; keyboard Enter/Space on a
   // tap-to-explain detail still answers at once — a key press is deliberate.
   const explainOnSecondTap = ev => {
+    // Selected or inspected card, or the inspection modal: one click explains.
+    if (oneClickContext(el)) {
+      if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
+      selectControl(el, 'explicit'); ev.stopPropagation(); cancelOpen(); show(); return;
+    }
     // The first press still travels: a status pip inside an enemy is also how
     // that enemy is targeted, and the selection survives the screen's board
     // click now that hideTooltip keeps it. The second press is the
@@ -568,7 +586,7 @@ export function attachTooltip(el, contentFn, {
     });
   }
   if (expand) {
-    const open = () => { hideTooltip(); expander?.(contentFn(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
+    const open = () => { hideTooltip(); expander?.((el.__hooks?.tip || contentFn)(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
     if (!isControl()) el.addEventListener('click', (ev) => {
       ev.preventDefault();
       if (selectedControl === el) { open(); return; }
@@ -671,6 +689,13 @@ function wireTitles() {
     if (ev.type === 'pointerover' && ev.pointerType !== 'touch') el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: ev.pointerType || 'mouse', clientX: ev.clientX, clientY: ev.clientY }));
     if (ev.type === 'focusin') el.dispatchEvent(new Event('gpfocus'));
   };
+  // Every card surface (rewards, shop, deck, upgrade previews) drops its held triggers from the tab order, not just the hand.
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    let queued = false;
+    new MutationObserver(() => { if (queued) return; queued = true; queueMicrotask(() => { queued = false; syncHeldTriggers(document.body); }); })
+      .observe(document.body, { childList: true, subtree: true });
+    syncHeldTriggers(document.body);
+  }
   document.addEventListener('pointerover', adopt, true);
   document.addEventListener('focusin', adopt, true);
   const explain = ev => {
@@ -693,7 +718,7 @@ function wireTitles() {
     // Outside the panels the same two-tap rule holds: a click selects the
     // term, the next click explains it; a key press explains at once.
     // A tag symbol explains on one press (touch, mouse or Enter); other inspection terms keep the two-tap rule.
-    const oneTap = term.classList.contains('card-tag-symbol');
+    const oneTap = term.classList.contains('card-tag-symbol') || oneClickContext(term);
     if (ev.type === 'click' && !oneTap && selectedControl !== term) {
       if (selectedControl) { clearControlSelection(); hideTooltip(); }
       selectControl(term, 'explicit');
@@ -717,6 +742,8 @@ function wireTitles() {
     return null;
   };
   document.addEventListener('pointerdown', ev => {
+    const pressed = ev.target?.closest?.('.hand .card');
+    if (pressed) pressed.dataset.pressedSelected = pressed.matches('.selected, .inspection-selected') ? '1' : '0';
     // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection,
     // and it does not reach the hand, whose press handling would re-render the lane under the finger.
     if (symbolUnderLane(ev)) ev.stopPropagation();

@@ -120,12 +120,6 @@ const SCENARIOS = [
     const { openHandDiscard } = await import('/src/ui/components/handDiscard.js');
     openHandDiscard(registries, { minimum: 1, maximum: 2, cards: run.deck.slice(0, 3) }, () => {}, null);
     return '.hand-discard-confirm';`],
-  ['custom-run-begin-bad-seed', `
-    const { mountCustomRun } = await import('/src/ui/screens/customRun.js');
-    mountCustomRun(app, { registries, defaultSeedString: 'ASH-1', onBack() {}, onStart() {} });
-    const seed = app.querySelector('#cr-seed');
-    seed.value = 'ASH!'; seed.dispatchEvent(new Event('input', { bubbles: true }));
-    return '#cr-start';`],
   ['deck-editor-done', `
     const { mountDeckEditor } = await import('/src/ui/screens/deckEditor.js');
     const editor = mountDeckEditor(document.body, { registries, run, settings: { deckMinSize: run.deck.length + 3 } });

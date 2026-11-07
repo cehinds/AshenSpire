@@ -20,7 +20,6 @@ import { mountGameProfileRest } from '../components/gameProfileRest.js';
 
 import { restRecoveryBonus } from '../../model/recoveryRules.js';
 import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
-import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
@@ -95,30 +94,26 @@ function partnerName(registries, kind) {
 }
 
 /**
- * The place's own title row when one is authored, else its rest service type's
- * (an atlas point resolved by its own tagging row is still an inn), else the
- * Shrine's.
+ * The place's own title row when one is authored, else the Shrine's.
  */
 function locationTitle(locationId) {
-  for (const id of [locationId, locationServiceTypeId(locationId)]) {
-    if (has(`location.${id}.title`)) return t(`location.${id}.title`);
-  }
+  if (has(`location.${locationId}.title`)) return t(`location.${locationId}.title`);
   return t('rest.title');
 }
 
-export function mountRest(app, { gameProfileRest = null, registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
+export function mountRest(app, { gameProfileRest = null, registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, deckEditor = null, revisit = null, onConsumed = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   if (gameProfileRest) return mountGameProfileRest(app, { ...gameProfileRest, registries, run, meta, hud, remount: () => mountRest(app, { gameProfileRest, registries, run, meta, hud, onDone }) });
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, revisit, onConsumed, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, deckEditor, revisit, onConsumed, ...extra,
   });
   // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
   // — the location's rules mounted, `arrived` already emitted — and hands it
   // in; a screen mounted without one (a fixture, an older caller) stands at
   // the classic Shrine. What Rest restores is read off the same rules the
   // button fires, on a clone, so the line and the result cannot disagree.
-  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus(meta?.settings) });
+  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus() });
   const relicNoRest = !!stay.restDenied;
   const preview = relicNoRest ? null : previewRest(stay);
   const heal = preview ? preview.heal : 0;
@@ -152,11 +147,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
   const extractOpen = !!extract && extract.available && !spentHere;
   const installOpen = !!install && install.available && !spentHere;
-  // THE QUEST BOARD (plan phase 10b) is a service the place's tags offer
-  // (`questBoard`); the door hands in its counts and the way to it, since the
-  // board is the atlas town's and this screen knows no atlas. Reading it takes
-  // nothing and ends nothing: the board returns here.
-  const board = stay.services.questBoard && questBoard ? questBoard : null;
   // THE DECK EDITOR (SPEC §14.1) under Rest sites only: a service the place's
   // tags offer (`deckEdit`) and the door hands in the way to it only when the
   // setting says so (DeckEditorModel.deckEditorDoors). It ends nothing: the
@@ -317,13 +307,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
             <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
           </div>
         </div>` : ''}
-        ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
-          <div class="glyph">${engravedIconHtml('quest')}</div>
-          <div class="cp-body">
-            <h3>${esc(t('questBoard.open'))}</h3>
-            <p>${esc(t('questBoard.open.summary', { ready: board.ready, open: board.open }))}</p>
-          </div>
-        </div>` : ''}
         ${deckDoor ? `<div class="class-pick" id="deck-opt" role="button" tabindex="0">
           <div class="glyph">${engravedIconHtml('skill')}</div>
           <div class="cp-body">
@@ -365,7 +348,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // The names are read off the mounted cards, so a choice keeps one title.
   consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
   const recovery = el('section', { class: 'rest-recovery', 'aria-label': t('rest.recovery.heading') });
-  recovery.append(el('h3', { class: 'as-eyebrow', text: t('rest.recovery.heading') }));
   for (const [icon, label, before, after] of [
     ['health', 'HP', run.hp, noRest ? run.hp : Math.min(run.maxHp, run.hp + heal)],
     ['mana', 'Mana', run.mana, noRest ? run.mana : manaAfter],
@@ -392,15 +374,6 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   ]) {
     const element = app.querySelector(selector);
     if (element) markUiComponent(element, UI.shrineOptionCard, variant);
-  }
-  const boardOption = board ? app.querySelector('#board-opt') : null;
-  if (boardOption) {
-    boardOption.addEventListener('click', () => board.onOpen());
-    boardOption.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      board.onOpen();
-    });
   }
   const deckOption = deckDoor ? app.querySelector('#deck-opt') : null;
   if (deckOption) {
@@ -613,7 +586,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
     };
     const openSmith = (receipts = []) => {
       let selectedItemRef = null;
-      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true });
+      const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selectedItemRef, { multiUse, repeatUpgrades: true, autoSelect: false });
       const modal = mountSmithUpgradeModal(app, model(), {
         registries,
         meta,

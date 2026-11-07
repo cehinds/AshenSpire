@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
@@ -10,7 +9,6 @@ import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import {abilityDraftId,pendingAbilityDraftLevels,abilityDraftClaimProblems} from '../src/model/abilityDraftReceipts.js';
 import {mergeProgressionRewards,unclaimedProgressionRewards} from '../src/model/deferredProgression.js';
 import {createRng} from '../src/engine/rng.js';
-import {createSession,restoreSession} from '../tools/session.mjs';
 import {rollSkillDraftIds} from '../src/engine/encounters.js';
 import {rollGuaranteedSkillDraftIds} from '../src/engine/sourceRewardBonuses.js';
 
@@ -82,21 +80,4 @@ test('pre-ledger saves recover exact taken checkpoint identities and keep legacy
   assert.deepEqual(pendingAbilityDraftLevels(older,skillId),[2,3]);
   const legacy=fixture().run;delete legacy.progressionRulesVersion;
   assert.equal(spendSkillDraft(legacy,skillId),true);assert.equal(legacy.skills[skillId].pendingDrafts,2);assert.equal(legacy.abilityDraftClaims,undefined);
-});
-test('co-op host claims exact offers once across reload and its reconnect catch-up queue', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
-  const {run,reg,rng}=fixture(),rows=rollPendingAbilityOffers(reg,rng,run,{skillId});
-  const S=createSession({registries:root,seedString:'CLAIMS'});for(const id of ['a','b'])S.addMember({id,name:id,classId:'reaver',classMastery:{}});S.start();
-  const a=S.session.members.get('a'),b=structuredClone(S.session.members.get('b').run);Object.assign(a.run,run);
-  S.session.scene={kind:'reward',offers:{a:{cardIds:[],skillDrafts:structuredClone(rows)}},chosen:{}};
-  const third=rows[2];assert.equal(S.chooseAbilityDraft('a',third.offerId,third.choiceIds[0]).ok,true);
-  assert.equal(S.chooseAbilityDraft('a',third.offerId,third.choiceIds[0]).ok,false);
-  assert.deepEqual(S.session.members.get('b').run,b);assert.equal(a.run.deck.filter(card=>card.abilityOfferId===third.offerId).length,1);
-  const saved=S.serialize(),restored=restoreSession(root,saved);assert.equal(restored.refusedMembers().length,0,JSON.stringify(restored.refusedMembers()));
-  assert.equal(restored.chooseAbilityDraft('a',third.offerId,third.choiceIds[0]).ok,false);
-  restored.setConnected('a',true);
-  const member=restored.session.members.get('a');member.catchup=[{type:'reward',offer:{cardIds:[],skillDrafts:[rows[0]]}}];
-  assert.equal(restored.chooseAbilityDraft('a',rows[0].offerId,rows[0].choiceIds[0],{catchup:true}).ok,true);
-  assert.equal(member.catchup.length,1);assert.deepEqual(member.catchup[0].offer.skillDrafts,[]);
-  assert.equal(restored.chooseAbilityDraft('a',rows[0].offerId,rows[0].choiceIds[0],{catchup:true}).ok,false);
-  assert.equal(member.run.skills[skillId].pendingDrafts,1);assert.deepEqual(restored.serialize().rng,saved.rng);
 });

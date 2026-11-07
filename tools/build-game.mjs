@@ -196,7 +196,10 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // Every card effect op (cards, enemy cards, effect variants) is a catalog op: the engine throws
   // 'Unknown opcode' on play otherwise (src/engine/actions.js).
   {
-    const catalog = loadOps().ops;
+    // Host-adapter ops the engine implements (src/engine/actions.js) but the locked runtime catalog (engine/runtime/ops.json,
+    // save-compat hashed) does not list: Reflect stacks, owner 2026-10-31.
+    const HOST_OPS = { applyReflect: { params: { target: { type: 'entityRef', required: false }, amount: { type: 'value', required: true } } } };
+    const catalog = { ...loadOps().ops, ...HOST_OPS };
     const walk = (v, where) => {
       if (Array.isArray(v)) return v.forEach((x, i) => walk(x, `${where}[${i}]`));
       if (!v || typeof v !== 'object') return;

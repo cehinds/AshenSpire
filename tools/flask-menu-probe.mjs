@@ -21,13 +21,7 @@
 //                the mini's count one lower). After that remount the setting
 //                still holds — Drink is still offered — and a second Drink
 //                saves and empties the flask, whose Drink is then refused with
-//                the empty reason. Then `?shot=atlas`: the world atlas is a
-//                map screen with no Potions control, so turning the setting on
-//                there must leave it mounted with the destination the player
-//                selected. It judges THAT the run is saved, not which
-//                call saved it: dropping only the onChange's own onSave leaves
-//                the run saved (observed: the remounted map commits through
-//                onSave too), so that edit is not a known-bad here.
+//                the empty reason.
 //   dispatch     the real Potions control (components/runPotions.js) mounted in
 //                the page on a real run (real registries, a Crimson Flask and
 //                two Blight Coatings carried) with the setting ON. Every row of
@@ -72,10 +66,9 @@
 // It serves the SOURCE tree (no build, no LFS).
 //
 // BOUNDARY. It proves what the three surfaces OFFER and what a choice on the
-// map DOES. It does not drive co-op's flask intent or the host's refusal (the
-// contract's co-op half and tools/coop-hud-top.mjs do), nor combat's confirm
-// beyond the one Azure drink it needs to reach an empty flask (every other Use
-// it taps there is cancelled at the question).
+// map DOES. It does not drive combat's confirm beyond the one Azure drink it
+// needs to reach an empty flask (every other Use it taps there is cancelled at
+// the question).
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -120,22 +113,6 @@ if (process.argv.includes('--selftest')) {
         replace: '',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the reopened tray names the destination as it did before the redraw/,
-      },
-      {
-        name: 'a legacy dungeon drops the selected node when "Use flasks outside combat" changes',
-        file: 'src/main.js',
-        find: '  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });',
-        replace: '  if (run.legacyDungeon) return showLegacyDungeon();',
-        args: ['--only', 'persistence'],
-        expectRed: /FAIL persistence: legacy dungeon, the selected node, its tray open and named as before, survives/,
-      },
-      {
-        name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
-        file: 'src/main.js',
-        find: "const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');",
-        replace: 'const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed);',
-        args: ['--only', 'persistence'],
-        expectRed: /FAIL persistence: atlas, turning the setting on keeps the atlas and its selected destination/,
       },
       {
         name: 'the map stops remounting after a Potions action',
@@ -403,7 +380,7 @@ async function openPage(cdp, base, query, { fetchOverride = null, ready: readySe
   };
   // These fixtures exercise legacy charge flasks and their Settings control.
   // Configured profiles own their recovery rules and hide that legacy row.
-  await cdp.send('Page.navigate', { url: `${base}index.html?gameProfile=current&${query}` }, sessionId);
+  await cdp.send('Page.navigate', { url: `${base}index.html?gameProfile=core&${query}` }, sessionId);
   const ready = readySelector || (query.includes('shot=combat') ? '.combat-potions' : '.run-potions-btn');
   let mounted = false;
   for (let t = 0; t < 90 && !mounted; t++) { await wait(400); mounted = await ev(`!!document.querySelector('${ready}')`).catch(() => false); }
@@ -456,16 +433,16 @@ const TOGGLE_SETTING = (opener) => `(async () => {
   document.querySelector('${opener}').click();
   const tab = await __fm.until(() => document.querySelector('.qn-row[data-tab="settings"]'));
   if (tab) tab.click(); else if (!document.querySelector('.ov-tab')) return 'no Settings door';
-  // No search box any more (owner, 2026-10-26): open Advanced, then the section
-  // that files the row, and find it by its data-key.
+  // No search box any more (owner, 2026-10-26): open Advanced, then Interface →
+  // Map & HUD (where the row is filed), and find it by its data-key.
   const advanced = await __fm.until(() => document.querySelector('.set-tab[data-member="Advanced"]'));
   if (!advanced) return 'no Settings Advanced tab';
   advanced.click();
-  const section = await __fm.until(() => document.querySelector('.set-subtab[data-advanced-group="Rewards"]'));
-  if (!section) return 'no Settings Rewards section';
+  const section = await __fm.until(() => document.querySelector('.set-subtab[data-advanced-group="Interface"]'));
+  if (!section) return 'no Settings Interface section';
   section.click();
-  const topic = await __fm.until(() => [...document.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(t => t.dataset.topic === 'Flasks'));
-  if (!topic) return 'no Settings Flasks topic';
+  const topic = await __fm.until(() => [...document.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(t => t.dataset.topic === 'Map & HUD'));
+  if (!topic) return 'no Settings Map & HUD topic';
   topic.click();
   const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
   if (!toggle) return 'the "Use flasks outside combat" row did not appear';
@@ -555,49 +532,6 @@ async function persistenceProbe(cdp, base, check) {
     await ev(`__fm.closeModal('run-potion-menu')`);
     check('persistence: no page error', page.errors.length === 0, page.errors.join(' | '));
   } finally { await page.close(); }
-
-  // A LEGACY DUNGEON is another mountMap surface with a Potions control
-  // (showMap → showLegacyDungeon → mountLegacyDungeon): the same change keeps
-  // its selected node, tray open and named as before (#1474 review).
-  const dungeon = await openPage(cdp, base, `shot=map&shotDungeon=BS&${settingsQuery(false)}`);
-  try {
-    const before = await dungeon.ev(SELECT_AND_READ);
-    check('persistence: legacy dungeon, a reachable node is selected and its tray opens',
-      !before.why && before.open && before.selected === before.id && before.tray.length > 0, JSON.stringify(before));
-    const toggled = await dungeon.ev(TOGGLE_SETTING('#open-menu'));
-    check('persistence: legacy dungeon, the setting turns on through Menu → Settings', toggled === '', toggled);
-    const after = await dungeon.ev(READ_SELECTION);
-    const drink = await dungeon.ev(`(async () => { const l = await __fm.mapList(); await __fm.closeModal('run-potion-menu'); return l && l['charge:hp']; })()`);
-    check('persistence: legacy dungeon, the setting reaches its Potions list (Drink offered)', drink?.enabled === true, JSON.stringify(drink));
-    check('persistence: legacy dungeon, the selected node, its tray open and named as before, survives the setting\'s redraw',
-      after.open && after.selected === before.id && JSON.stringify(after.tray) === JSON.stringify(before.tray),
-      JSON.stringify({ before, after }));
-    check('persistence: legacy dungeon, no page error', dungeon.errors.length === 0, dungeon.errors.join(' | '));
-  } finally { await dungeon.close(); }
-
-  // THE WORLD ATLAS is a `.mapscreen` too, with no Potions control. Turning the
-  // setting on there must not remount it: the atlas keeps the player's selected
-  // destination only in the mounted screen (#1474 review).
-  const atlas = await openPage(cdp, base, `shot=atlas&${settingsQuery(false)}`, { ready: '.world-atlas-screen' });
-  try {
-    const picked = await atlas.ev(`(async () => {
-      const current = document.querySelector('.atlas-node.current')?.dataset.atlasNode;
-      const road = [...document.querySelectorAll('.atlas-road-list [data-atlas-node]')].find((b) => b.dataset.atlasNode !== current);
-      if (!road) return { why: 'the atlas offers no road to select' };
-      road.click();
-      await __fm.sleep(200);
-      window.__fmAtlas = document.querySelector('.world-atlas-screen');
-      return { id: road.dataset.atlasNode, current, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode };
-    })()`);
-    check('persistence: atlas, a road other than the current place can be selected',
-      !picked.why && picked.pressed === picked.id && picked.id !== picked.current, JSON.stringify(picked));
-    const toggled = await atlas.ev(TOGGLE_SETTING('[data-atlas-menu]'));
-    check('persistence: atlas, the setting turns on through its Menu → Settings', toggled === '', toggled);
-    const kept = await atlas.ev(`({ same: !!window.__fmAtlas?.isConnected, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode })`);
-    check('persistence: atlas, turning the setting on keeps the atlas and its selected destination (no remount)',
-      kept.same && kept.pressed === picked.id, JSON.stringify({ ...kept, want: picked.id }));
-    check('persistence: atlas, no page error', atlas.errors.length === 0, atlas.errors.join(' | '));
-  } finally { await atlas.close(); }
 }
 
 // ---------------------------------------------------------------------------

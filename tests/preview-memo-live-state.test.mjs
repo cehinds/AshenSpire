@@ -25,7 +25,8 @@ const idOf = (combat, cardId) => combat.piles.hand.find(c => c.cardId === cardId
 test('a hand quote follows the fight: player status, target status, spent stamina, aimed target', () => {
   const combat = fight();
   const memo = createPreviewMemo({ combat, preview: previewCard, dispatch });
-  const strike = idOf(combat, 'core.strike'), special = idOf(combat, 'core.reaverSpecial'), defend = idOf(combat, 'core.defend');
+  // The Reaver opens with the greatsword's art (Sundering Hew) in the class special's slot (#2474).
+  const strike = idOf(combat, 'core.strike'), special = idOf(combat, 'greatswordSunderingHew'), defend = idOf(combat, 'core.defend');
   const quote = (id, target) => memo.previewCard(combat, id, target);
   const damage = (target) => quote(strike, target).values[0].value;
   const agrees = () => {

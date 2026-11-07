@@ -3,7 +3,7 @@ import { ashenBlightFeatChoices, ashenBlightFeat } from '../../content/ashenBlig
 import { openModal, button, el } from '../kit/index.js';
 import { esc } from './tooltip.js';
 
-export function ashenBlightBarHtml(owner, { compact = false, cooperative = false } = {}) {
+export function ashenBlightBarHtml(owner, { compact = false } = {}) {
   if (owner?.combatExpansionVersion !== 2) return '';
   const state = owner.ashenBlight;
   const value = state?.value || 0;
@@ -16,9 +16,7 @@ export function ashenBlightBarHtml(owner, { compact = false, cooperative = false
     const feat = ashenBlightFeat(row.threshold, row.path);
     return feat ? `${feat.stage}: ${feat.name}. ${[...feat.buffs, ...feat.drawbacks].join(' ')}` : '';
   }).filter(Boolean).join('\n');
-  const help = cooperative
-    ? 'Corrupted plays permanently add Ashen Blight. At 100: 90% chance of permanent character elimination. Survivors face 5% elimination risk at each later combat. The party continues while another character lives.'
-    : 'Corrupted plays permanently add Ashen Blight. At 100: 90% chance of losing the run. Survivors face 5% death risk at each later combat.';
+  const help = 'Corrupted plays permanently add Ashen Blight. At 100: 90% chance of losing the run. Survivors face 5% death risk at each later combat.';
   return `<section class="ashen-blight${compact ? ' ashen-blight-compact' : ''}" aria-label="Ashen Blight" title="${esc([help, detail].filter(Boolean).join('\n'))}">
     <div class="ashen-blight-heading"><span>Ashen Blight · ${esc(stage)}</span><strong>${value}/100</strong></div>
     <div class="ashen-blight-track" role="meter" aria-label="Run corruption" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}" aria-valuetext="${value} of 100, ${esc(stage)}" style="--blight-value:${value}%">

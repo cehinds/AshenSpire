@@ -132,10 +132,10 @@ if (process.argv.includes('--selftest')) {
         expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
       },
       {
-        name: 'an extra card text button returns beside Information',
+        name: 'an extra card text button returns on the card face',
         file: 'src/ui/components/cardInspection.js',
-        find: 'card.append(info);',
-        replace: 'card.append(info, Object.assign(document.createElement("button"), { className: "card-more-button", textContent: "›" }));',
+        find: "card.setAttribute('aria-keyshortcuts', 'I');",
+        replace: "card.append(Object.assign(document.createElement('button'), { className: 'card-more-button', textContent: '›' }));",
         expectRed: /extra card text control returned/,
       },
       {
@@ -148,8 +148,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
         file: 'src/ui/components/battlefieldStage.js',
-        find: "      frame.style.zIndex = '';",
-        replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
+        find: "      setStyle(frame, 'zIndex', '');",
+        replace: "      setStyle(frame, 'zIndex', String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0)));",
         // The red names the covering element by what the hit-test finds. The
         // plant's authored alternatives were neighbouring artwork (.enemy-pose-
         // stage, .enemy-expansion-bob, ...). On the current tree, at 390x650, the
@@ -477,10 +477,10 @@ const SCREENS = [
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
   // reachable-or-not as any room's.
-  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
+  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.upgrade-desk, #smith-opt')`,
     setup: `(() => {
-      if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
-      if (!document.querySelector('.smith-candidate-region')) throw new Error('screenreach: Smith option did not open its candidate dialog');
+      if (!document.querySelector('.upgrade-desk')) document.querySelector('#smith-opt')?.click();
+      if (!document.querySelector('.upgrade-desk')) throw new Error('screenreach: Smith option did not open its candidate dialog');
       return true;
     })()`,
     overlay: 'the Smith is a modal over the Shrine; the Shrine\'s band and cards under its veil are covered on purpose' },
@@ -742,7 +742,7 @@ const PROBE = `(() => {
     // Information is the owner's one card-details control. Detect the removed
     // extra button through the rendered page, including a reintroduced box.
     if (document.querySelector('.card-more-button'))
-      visual.push('extra card text control returned; use Information');
+      visual.push('extra card text control returned; use the card face');
   }
   if (window.__settingsListenerBalance) {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);

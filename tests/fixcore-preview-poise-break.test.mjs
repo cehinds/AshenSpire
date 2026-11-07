@@ -20,7 +20,7 @@ function fight(poise) {
   const run = createRunState({ registries: reg, classId: 'starseer', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 } });
+  Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: Math.max(20, poise) }, attributes: { dexterity: 0 } });
   delete enemy.combatStance; delete enemy.combatCounter;
   combat.player.energy = 9; combat.player.mana = 9;
   applyStatus(combat, combat.player, 'starstoneCharge', 1);
@@ -32,26 +32,33 @@ const damageRows = (combat, id, enemy) => previewCard(combat, id, enemy.id).valu
 function previewAndPlay(poise) {
   const f = fight(poise);
   primeAccuracyRolls(f.combat);
-  const shown = damageRows(f.combat, f.id, f.enemy).map(v => v.hitDamages);
+  const rows = damageRows(f.combat, f.id, f.enemy);
+  // Owner, 2026-11-03: hitDamages is the raw hit; the receipt's hpLoss is what live must deal.
+  const shown = rows.map(v => v.damageReceipt.hits.map(hit => hit.hpLoss));
+  const shownRaw = rows.map(v => v.hitDamages);
   const poiseBefore = f.enemy.persistentPoise.value;
   assert.equal(f.enemy.persistentPoise.value, poiseBefore, 'preview leaves the real Poise alone');
   assert.equal(f.enemy.combatStance, undefined, 'preview leaves the real stance alone');
   dispatch(f.combat, { type: 'playCard', cardInstanceId: f.id, targetId: f.enemy.id });
-  const dealt = f.combat.eventLog.filter(row => row.type === 'damageDealt' && row.targetId === f.enemy.id).map(row => row.hpLoss);
-  return { shown, dealt, enemy: f.enemy };
+  const landed = f.combat.eventLog.filter(row => row.type === 'damageDealt' && row.targetId === f.enemy.id);
+  const dealt = landed.map(row => row.hpLoss);
+  return { shown, shownRaw, dealt, incoming: landed.map(row => row.damageReceipt.hits[0].incoming), enemy: f.enemy };
 }
 
 test('Poise broken by a mid-card Poise payload: later hits preview with the Staggered Vulnerable, as live', () => {
   const r = previewAndPlay(10);
   assert.equal(r.enemy.combatStance?.maneuver, 'staggered', 'live play broke Poise');
-  assert.deepEqual(r.shown.flat(), r.dealt, 'preview equals live hit for hit');
+  assert.deepEqual(r.shown.flat(), r.dealt, 'preview HP loss equals live hit for hit');
+  assert.deepEqual(r.shownRaw.flat(), r.incoming, 'and the raw quote equals the live full hit, Staggered Vulnerable included');
   assert.equal(r.dealt.length, 2);
   assert.ok(r.dealt[1] > 5, 'the second hit carries the Staggered Vulnerable (x1.25), not the unbroken 5');
 });
+// Magic spends Poise 1:1 before Block (owner, 2026-10-31), so the pool that survives Astral Cleave's spell hits is larger than under the old 25% absorb.
 test('Poise that survives the payload: preview unchanged and equal to live', () => {
-  const r = previewAndPlay(20);
+  const r = previewAndPlay(60);
   assert.notEqual(r.enemy.combatStance?.maneuver, 'staggered');
   assert.deepEqual(r.shown.flat(), r.dealt);
+  assert.deepEqual(r.shownRaw.flat(), r.incoming);
 });
 test('Current profile: no Core Poise pool, so the preview drain does nothing', () => {
   const ctx = { turn: 1 }, enemy = { id: 'e', kind: 'enemy', alive: true, hp: 10, statuses: {}, persistentPoise: { value: 3, max: 3 } };

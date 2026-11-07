@@ -7,10 +7,9 @@ import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
-import { recoveryRulesProblems } from './recoveryRules.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
-import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems } from './combatTacticsRules.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems, stackCountProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
 import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
 import { combatReactionProblems, combatRangeProblems } from './combatReactionState.js';
@@ -27,6 +26,30 @@ import { coreTagsProblems } from './classTree.js';
 import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derivedStats.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
+
+/**
+ * Owner 2026-11-01: "All the evade stance cards were acting as defend cards so just migrate them all as defend cards".
+ * There is no Evade stance. A saved combatStance or concurrentStances row with maneuver 'evade' loads as Defend; a
+ * hybrid (counterStance: true) loads as Counter, which carries the same offensive rating and Counter behaviour. The
+ * retired counterStance flag is dropped. Mutates the snapshot in memory; returns true when anything changed.
+ */
+export function bringStancesForward(snapshot) {
+  let changed = false;
+  // A hybrid saved before the counterStance flag (2026-10-14) has no flag; its armed combatCounter is the detectable mark.
+  let armedCounter = false;
+  const row = (stance) => {
+    if (!record(stance)) return;
+    if (stance.maneuver === 'evade') { stance.maneuver = stance.counterStance === true || armedCounter ? 'counter' : 'defend'; changed = true; }
+    if ('counterStance' in stance) { delete stance.counterStance; changed = true; }
+  };
+  for (const entity of [snapshot?.player, ...(Array.isArray(snapshot?.enemies) ? snapshot.enemies : [])]) {
+    if (!record(entity)) continue;
+    armedCounter = record(entity.combatCounter);
+    row(entity.combatStance);
+    if (Array.isArray(entity.concurrentStances)) entity.concurrentStances.forEach(row);
+  }
+  return changed;
+}
 
 const PHASES = Object.freeze(['player', 'enemy', 'ended']);
 const RESULTS = Object.freeze([null, 'victory', 'defeat']);
@@ -51,6 +74,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
   if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
+  problems.push(...stackCountProblems(entity, path));
   if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
   if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
   if (entity.proposalIntentRevealedUntilByOwner !== undefined && (!record(entity.proposalIntentRevealedUntilByOwner)
@@ -71,7 +95,7 @@ function entityProblems(entity, path, { player = false } = {}) {
     }
   }
   for(const key of ['cardUsesCombat','instanceUsesCombat','typePlays']) if(record(entity.abilityRiders?.[key]) && Object.values(entity.abilityRiders[key]).some(v=>!Number.isSafeInteger(v) || v<0)) problems.push(`${path}.abilityRiders.${key} must contain nonnegative counts`);
-  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','evade','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
+  if(entity.concurrentStances!==undefined && (!Array.isArray(entity.concurrentStances) || entity.concurrentStances.length>7 || entity.concurrentStances.some(row=>!record(row) || !['attack','smash','defend','sweep','counter','casting','prepared','neutral'].includes(row.maneuver) || !['physical','spell'].includes(row.camp)))) problems.push(`${path}.concurrentStances invalid`);
   if (!nonEmptyString(entity.id)) problems.push(`${path}.id must be a non-empty string`);
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
@@ -122,6 +146,7 @@ function cardProblems(card, path) {
   if (card.rank !== undefined && !(Number.isInteger(card.rank) && card.rank >= 1)) problems.push(`${path}.rank must be a whole number of at least 1`);
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   if (card.passiveBlock !== undefined && !(Number.isInteger(card.passiveBlock) && card.passiveBlock >= 1 && card.passiveBlock <= MAX_SKILL_BONUS)) problems.push(`${path}.passiveBlock must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
+  if (card.playsEver !== undefined && !(Number.isInteger(card.playsEver) && card.playsEver >= 0)) problems.push(`${path}.playsEver must be a non-negative whole number`);
   return problems;
 }
 
@@ -160,19 +185,6 @@ export function combatSnapshotProblems(snapshot) {
     const order = record(snapshot.orderedDraw) ? snapshot.orderedDraw.order : undefined;
     if (!Array.isArray(order) || order.some((id) => typeof id !== 'string' || !id) || new Set(order).size !== order.length) {
       problems.push('orderedDraw.order must be an array of unique card instance ids');
-    }
-  }
-  // Settings → Advanced → Recovery: absent on a fight built at the defaults.
-  if (snapshot.recovery !== undefined) {
-    const state = snapshot.recovery;
-    if (!record(state)) problems.push('recovery must be an object');
-    else {
-      problems.push(...recoveryRulesProblems(state.rules));
-      if (!record(state.idle) || ['hp', 'stamina', 'mana'].some((pool) => !Number.isInteger(state.idle[pool]) || state.idle[pool] < 0)) problems.push('recovery.idle must hold a whole-number streak per pool');
-      // The cursor is where the next turn end starts reading the log: past the
-      // log's end, every spend and loss before it would read as an idle turn.
-      const logLength = Array.isArray(snapshot.eventLog) ? snapshot.eventLog.length : 0;
-      if (!Number.isInteger(state.logIndex) || state.logIndex < 0 || state.logIndex > logLength) problems.push('recovery.logIndex must be a whole number within the saved event log');
     }
   }
   if (snapshot.ratingsRules !== undefined) {

@@ -84,7 +84,10 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   next.dataset.prologueAction = 'continue';
   pause.dataset.prologueAction = 'pause';
   skip.dataset.prologueAction = 'skip';
-  const controls = el('div',{class:'prologue-controls'},[pause,skip,next]);
+  // Pause and Skip share one slot so Continue can stand alone in the middle
+  // of the band, whatever the counter beside it measures (owner, 2026-11-02).
+  const aux = el('div',{class:'prologue-controls-aux'},[pause,skip]);
+  const controls = el('div',{class:'prologue-controls'},[aux,next]);
   const caption = el('div',{class:'prologue-caption'},[title,speaker,dialogue,location]);
   // THE BUTTONS BELONG TO THE FRAME. They used to live inside the caption, so a
   // wireframe that floats the words into the middle of the picture floated
@@ -96,6 +99,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   if (inText) caption.append(progress,controls);
   root.append(stage,caption); if (!inText) root.append(bar);
   root.classList.toggle('prologue-controls-text',inText);
+  bar.classList.toggle('prologue-bar-centered',!inText && !['left','right'].includes(p.controlsAlign));
   root.classList.add(`prologue-controls-${['compact','normal','large'].includes(p.controlsSize) ? p.controlsSize : 'normal'}`);
   root.style.setProperty('--prologue-controls-align',{left:'flex-start',right:'flex-end'}[p.controlsAlign] || 'center');
   pause.hidden = p.showPause === false;
@@ -540,7 +544,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     // Only pause if there is a way back: with Pause hidden, nothing else clears
     // it, and the opening would sit paused for the rest of the run.
     settingsButton.onclick = () => { if (!paused && !pause.hidden) togglePause(); onSettings(); };
-    controls.insertBefore(settingsButton,skip);
+    aux.insertBefore(settingsButton,skip);
   }
   if (!forceLayout) portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);

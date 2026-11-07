@@ -1,5 +1,7 @@
+import { persistedEventLog } from '../model/runStorage.js';
 import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
+import { clampStackCounts } from '../model/combatTacticsRules.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
@@ -23,8 +25,9 @@ import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
-import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
+import { refillWeaknesses } from './weaknesses.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
@@ -52,6 +55,21 @@ function carryRelicGateKeys(entries) {
 
 const snapshotProfilesValidated = new WeakSet();
 
+/**
+ * THE EVENT LOG IS PERSISTED WITHOUT THE EVALUATION CONTEXT EACH EVENT CARRIED.
+ *
+ * `emitEvent` stamps every event raised inside a card play with `abilityBefore`
+ * (the per-turn counters) and `abilityEntities` (a structuredClone of the
+ * player and every enemy) so triggers scanned DURING that event can read the
+ * pre-play state. That context is read only while the event is being scanned
+ * (triggers.js, abilityRiders.js) and never again from the log, but at 5-9 KB
+ * an event it made a long boss fight's save grow ~100 KB a turn (3.6 MB at turn
+ * 40) and the browser's 5 MB quota refuse the autosave. A committed snapshot has
+ * no event mid-scan (an in-flight choice resumes from the ability queue, not
+ * the log), so the two fields are dropped from the rows written. The live
+ * `combat.eventLog` is not touched; every other field of every row, and so the
+ * combat log a resumed fight shows, is unchanged.
+ */
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
@@ -72,11 +90,6 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
-    // SPEC §4.11: the Combat Rounds Preview's whole round record (rules, queues, momentum, charges).
-    // Absent with the preview off, so an off-mode save has no new key.
-    ...(combat.combatRounds ? { combatRounds: combat.combatRounds } : {}),
-    // SPEC §4.11: the normal fight's momentum toggles and state. Absent when both toggles are off.
-    ...(combat.normalPreview ? { normalPreview: combat.normalPreview } : {}),
     ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
       ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
@@ -91,7 +104,6 @@ export function serializeCombatSnapshot(combat) {
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
-    ...(combat.recovery ? { recovery: combat.recovery } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -130,7 +142,7 @@ export function serializeCombatSnapshot(combat) {
       ...(hasCardChoice(combat) ? { ...(combat.pendingAbilityDiscard ? {pendingAbilityDiscard:combat.pendingAbilityDiscard} : {pendingCardChoice:combat.pendingCardChoice}), pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     } : {}),
-    eventLog: combat.eventLog,
+    eventLog: persistedEventLog(combat.eventLog),
     triggerState: [...combat.triggerState.entries()],
     idCounter: combat._idCounter,
     emitDepth: combat._emitDepth,
@@ -189,6 +201,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
+  bringStancesForward(saved);
+  // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
+  for (const entity of [saved.player, ...(saved.enemies || [])]) clampStackCounts(entity);
   if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
@@ -208,8 +223,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
-    ...(saved.combatRounds ? { combatRounds: saved.combatRounds } : {}),
-    ...(saved.normalPreview ? { normalPreview: saved.normalPreview } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
@@ -222,8 +235,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     // Absent on a snapshot written before Play in deck order: that fight shuffles.
     orderedDraw: saved.orderedDraw || null,
-    // Absent on a fight built at the default recovery settings.
-    ...(saved.recovery ? { recovery: saved.recovery } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
@@ -251,6 +262,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // Absent on a fight saved before ruleset 7, whose rows read no level.
     ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
     player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
+    // A fight saved before enemy weaknesses: its enemies take their definition's (SPEC 5.3).
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
@@ -339,7 +351,12 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     }).value);
   }
   // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
-  for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
+  refillWeaknesses(combat, combat.enemies, registries);
+  for (const entity of [combat.player, ...(combat.enemies || [])]) {
+    backfillPersistentPoise(combat, entity);
+    // A snapshot from before Barrier became a status holds the numeric pool: it was a one-turn layer, so it is dropped (SPEC 4.1a).
+    if (entity && 'barrier' in entity) delete entity.barrier;
+  }
   const formationErrors = formationOccupancyProblems(combat);
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   return combat;
@@ -383,9 +400,6 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }
-  // A fight a service event started (the market's quest event, SPEC §14.3)
-  // keeps saying so, or a reload would resume it as the journey node's fight.
-  const serviceEvent = run.combatEntered?.serviceEvent === true && run.combatEntered.encounterId === encounterId;
-  run.combatEntered = { nodeId, encounterId, ...(serviceEvent ? { serviceEvent: true } : {}), snapshot };
+  run.combatEntered = { nodeId, encounterId, snapshot };
   return snapshot;
 }

@@ -3,7 +3,6 @@ import { layeredEnvironmentHtml } from './layeredEnvironment.js';
 import { illustratedBackgroundHtml } from './illustratedBackground.js';
 import { alternativeBackdropHtml, alternativeCardFadeHtml } from '../alternativeArt.js';
 import { mapFogDefs } from './mapFog.js';
-import { dungeonScene } from '../../model/legacyDungeon.js';
 import { assetUrl } from '../assetmap.js';
 import { combatEnvironment } from '../../model/environmentArt.js';
 import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
@@ -27,8 +26,6 @@ export function combatBackdropHtml(run, previewSceneId = null) {
     const layered = alternativeBackdropHtml(previewSceneId);
     if (layered) return layered;
   }
-  const legacy = !previewSceneId && dungeonScene(run);
-  if (legacy) return alternativeBackdropHtml(legacy.id) || illustratedBackgroundHtml({region:legacy.region,scene:legacy.id,viewBox:[0,0,1536,1024],layers:[{id:'floor',href:legacy.floor,width:1536,height:1024},{id:'background',href:legacy.background,width:1536,height:1024}]}) + alternativeCardFadeHtml();
   const environment = combatEnvironment(run);
   const liveLayered = !previewSceneId && layeredCombatScene(run, environment);
   if (liveLayered) return layeredEnvironmentHtml(liveLayered);

@@ -42,8 +42,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the destructive action receives initial focus',
         file: 'src/ui/components/confirmationModal.js',
-        find: '    if (!closed) cancelButton.focus({ preventScroll: true });',
-        replace: '    if (!closed) confirmButton.focus({ preventScroll: true }); // confirmation-modal selftest plant',
+        find: '    (picked || cancelButton).focus({ preventScroll: true });',
+        replace: '    confirmButton.focus({ preventScroll: true }); // confirmation-modal selftest plant',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE)-SAFE-FOCUS/,
       },
       {
@@ -227,7 +227,6 @@ try {
   ]);
   const expectedInfrastructure404Urls = new Set([
     `http://127.0.0.1:${served.port}/favicon.ico`,
-    `http://127.0.0.1:${served.port}/api/lan/info`,
   ]);
   const isExactConsole404For = (entry, urls) => /^error: Failed to load resource: the server responded with a status of 404(?: \([^)]+\))? /.test(entry)
     && [...urls].some((url) => entry.endsWith(` ${url}`));
@@ -580,7 +579,6 @@ try {
       && !isExpectedLoadSaveSfx404(entry)
       && !isExactConsole404For(entry, expectedInfrastructure404Urls));
     const unexpectedNetwork = diagnostics.network.filter((entry) => !/\/favicon\.ico(?:\s|$)/.test(entry)
-      && !/\/api\/lan\/info(?:\s|$)/.test(entry)
       && !isExpectedLoadSaveSfx404(entry));
     check(unexpectedConsole.length === 0 && unexpectedNetwork.length === 0,
       `CONFIRMATION-${label}-DIAGNOSTICS`, `captured console warnings/errors ${diagnostics.console.length}`

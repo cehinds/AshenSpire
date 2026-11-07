@@ -155,28 +155,6 @@ for (const [name, press] of Object.entries(PRESSES)) {
     assert.equal(backs, 1);
   });
 
-  test(`${name}: the quest board's Leave (back to the place) runs exactly once`, async () => {
-    resetDom();
-    const { contentBundle } = await import('../src/content/index.js');
-    const { createRegistries } = await import('../src/model/registries.js');
-    const { createRunState } = await import('../src/model/state.js');
-    const { mountQuestBoard } = await import('../src/ui/screens/questBoard.js');
-    const registries = createRegistries(contentBundle);
-    const { ATLAS, generateJourney } = await import('../src/model/worldAtlas.js');
-    const run = createRunState({ seed: 123, classId: 'reaver', registries });
-    run.journey = generateJourney('BOARD0');
-    const row = ATLAS.data.node_quests[0];
-    const point = ATLAS.data.local_map_nodes.find((p) => p.nodeId === row.nodeId);
-    const ownerNodeId = point ? ATLAS.localMaps[point.mapId].ownerNodeId : row.nodeId;
-    app().innerHTML = '<div class="quest-board-screen"></div>';
-    let leaves = 0;
-    let opened = 0;
-    mountQuestBoard(app(), { registries, run, meta: {}, ownerNodeId, onOpen: () => { opened += 1; }, onDone: () => { leaves += 1; } });
-    await press();
-    assert.equal(leaves, 1);
-    assert.equal(opened, 0);
-  });
-
   test(`${name}: a dialog over a screen closes, and the screen's Back does not run`, async () => {
     resetDom();
     const { mountHistory } = await import('../src/ui/screens/history.js');
@@ -238,24 +216,15 @@ for (const [name, press] of Object.entries(PRESSES)) {
   // registered AFTER input.js's rule, and calls preventDefault. One press
   // closes the menu only. This is the REAL mountFlaskActionMenu; pad B used to
   // back out as well, because its synthesized key was not cancelable.
-  test(`${name}: the flask menu over the quest board takes the press alone`, async () => {
+  test(`${name}: the flask menu over a screen takes the press alone`, async () => {
     resetDom();
     const { mountFlaskActionMenu } = await import('../src/ui/components/flask.js');
     const { contentBundle } = await import('../src/content/index.js');
     const { createRegistries } = await import('../src/model/registries.js');
-    const { createRunState } = await import('../src/model/state.js');
-    const { ATLAS, generateJourney } = await import('../src/model/worldAtlas.js');
-    const { mountQuestBoard } = await import('../src/ui/screens/questBoard.js');
-    const registries = createRegistries(contentBundle);
-    const run = createRunState({ seed: 123, classId: 'reaver', registries });
-    run.journey = generateJourney('BOARD0');
-    const row = ATLAS.data.node_quests[0];
-    const point = ATLAS.data.local_map_nodes.find((p) => p.nodeId === row.nodeId);
-    const ownerNodeId = point ? ATLAS.localMaps[point.mapId].ownerNodeId : row.nodeId;
-    app().innerHTML = '<div class="quest-board-screen"></div>';
+    const { mountHistory } = await import('../src/ui/screens/history.js');
     let leaves = 0;
     let menuCancels = 0;
-    mountQuestBoard(app(), { registries, run, meta: {}, ownerNodeId, onOpen: () => {}, onDone: () => { leaves += 1; } });
+    mountHistory(app(), { meta: { results: [] }, onBack: () => { leaves += 1; } });
     const anchor = dom.document.createElement('button');
     dom.document.body.appendChild(anchor);
     const menu = mountFlaskActionMenu(anchor, {
@@ -267,7 +236,7 @@ for (const [name, press] of Object.entries(PRESSES)) {
     assert.ok(menu, 'the menu mounted');
     await press();
     assert.equal(menuCancels, 1, 'the menu closed once');
-    assert.equal(leaves, 0, 'the quest board stayed');
+    assert.equal(leaves, 0, 'the screen stayed');
   });
 
   // A hold-to-confirm dropped by Escape (a dialogue response held with pad A
@@ -355,12 +324,12 @@ for (const [name, press] of Object.entries(PRESSES)) {
     const { contentBundle } = await import('../src/content/index.js');
     const { createRegistries } = await import('../src/model/registries.js');
     const { createRunState } = await import('../src/model/state.js');
-    const { generateJourney, journeyGraph } = await import('../src/model/worldAtlas.js');
+    const { buildActMap } = await import('../src/engine/actmap.js');
+    const { createRng } = await import('../src/engine/rng.js');
     const { mountMap, releaseMapScreen } = await import('../src/ui/screens/map.js');
     const registries = createRegistries(contentBundle);
     const run = createRunState({ seed: 123, classId: 'reaver', registries });
-    run.journey = generateJourney('BOARD0');
-    run.mapGraph = journeyGraph(run.journey);
+    run.mapGraph = buildActMap(registries, createRng(123), run.seatOrder[0], 1);
     mountMap(app(), { registries, run, meta: { settings: {} }, onPick: () => {} });
     try {
       const back = app().querySelector('#map-back');
@@ -448,12 +417,9 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   const marked = {
     'src/ui/screens/history.js': '#hx-back',
     'src/ui/screens/compendium.js': '#cp-back',
-    'src/ui/screens/customRun.js': '#cr-back',
     'src/ui/screens/customize.js': '#cz-back',
-    'src/ui/screens/lobby.js': '#lb-back',
     'src/ui/screens/dialogue.js': '#dialogue-back',
     'src/ui/screens/reward.js': '#reward-back',
-    'src/ui/screens/questBoard.js': '#quest-board-leave',
     'src/ui/screens/map.js': '#map-back',
   };
   for (const [file, id] of Object.entries(marked)) {

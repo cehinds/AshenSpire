@@ -1,6 +1,6 @@
 {
   "id": "handCard",
-  "description": "One card in the hand. Reads src/ui/components/hand.js, src/ui/models/CombatCardView.js, PlayedCombatCard.js and src/ui/cardDragEnd.js.",
+  "description": "One card in the hand. Reads src/ui/components/hand.js, PlayedCombatCard.js and src/ui/cardDragEnd.js.",
   "layout": {
     "ref": "content/config/ui/components/card.json",
     "path": "sizing.levels"

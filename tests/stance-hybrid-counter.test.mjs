@@ -20,8 +20,10 @@ for (const id of ['quickstep', 'dodgeRoll', 'evasiveGuard']) {
   assert.deepEqual(stanceEntryBonuses(carrier), { precision: 1, evade: 1, block: 3, barrier: 0 }, id);
   ctx.queue = [];
   setCombatStance(ctx, entity, carrier);
-  assert.equal(entity.combatStance.maneuver, 'evade');
-  assert.equal(entity.combatStance.counterStance, true);
+  // Owner 2026-11-01: Evade is a tag, never a stance. A Counter card with an evade profile plays in Counter stance
+  // and still grants its Evade stacks on entry.
+  assert.equal(entity.combatStance.maneuver, 'counter');
+  assert.equal(entity.combatStance.counterStance, undefined);
   assert.equal(stanceRatingBonus(ctx, entity, 'ar'), 1);
   assert.equal(stanceRatingBonus(ctx, entity, 'pr'), 0);
   assert.equal(stanceRatingBonus(ctx, entity, 'dr'), 3);
@@ -37,13 +39,14 @@ for (const id of ['quickstep', 'dodgeRoll', 'evasiveGuard']) {
   assert.equal(stanceRatingBonus(ctx, loaded, 'ar'), 1);
   assert.deepEqual(combatExpansionEntityProblems(loaded), []);
   const pureEvade = { combatProfile: { camp: 'physical', maneuver: 'defend', evade: { charges: 1 }, range: 'melee' } };
-  assert.equal(sameStance(entity, pureEvade), true, 'identity remains maneuver plus camp');
+  assert.equal(sameStance(entity, pureEvade), false, 'a Defend-stance Evade card is not an exact match for Counter stance');
+  assert.equal(stanceOf(pureEvade).maneuver, 'defend', 'a defend-maneuver Evade card is a Defend-stance card');
   setCombatStance(ctx, entity, pureEvade);
-  assert.equal(ctx.queue.length, entryCount, 'pure Evade metadata refresh grants no extra entry');
-  assert.equal(entity.combatStance.counterStance, undefined, 'pure Evade removes Counter provenance');
-  assert.equal(stanceRatingBonus(ctx, entity, 'ar'), 0, 'pure Evade cannot inherit Counter offense');
+  assert.equal(entity.combatStance.maneuver, 'defend');
+  assert.equal(stanceRatingBonus(ctx, entity, 'ar'), 0, 'Defend stance cannot inherit Counter offense');
   assert.equal(stanceRatingBonus(ctx, entity, 'dr'), 3);
   assert.equal(stanceEntryBonuses(pureEvade).precision, 0);
+  assert.equal(stanceEntryBonuses(pureEvade).evade, 1, 'the Evade tag still grants its stacks in Defend stance');
 }
 const magic = { combatProfile: { camp: 'spell', maneuver: 'counter', school: 'frost', range: 'melee', evade: { charges: 1 } } };
 const mage = { id: 'mage', alive: true, statuses: {} };
@@ -58,6 +61,8 @@ const count = ctx.queue.length;
 setCombatStance(ctx, mage, magic);
 assert.equal(ctx.queue.length, count);
 assert.equal(stanceRatingBonus(ctx, JSON.parse(JSON.stringify(mage)), 'pr'), 1);
-assert.ok(combatExpansionEntityProblems({ combatStance: { maneuver: 'evade', camp: 'physical', range: 'melee', counterStance: 'true' } })
+assert.ok(combatExpansionEntityProblems({ combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee', counterStance: true } })
   .some(problem => problem.includes('counterStance')));
+assert.ok(combatExpansionEntityProblems({ combatStance: { maneuver: 'evade', camp: 'physical', range: 'melee' } })
+  .some(problem => problem.includes('maneuver')), 'Evade is not a stance');
 console.log('hybrid Counter stance assertions passed');

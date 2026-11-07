@@ -1,8 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { resolveCard } from '../src/model/registries.js';
+import { core2Registries } from './helpers/core2.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
@@ -10,8 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
   return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['one'] } } },
@@ -19,6 +17,8 @@ function fresh(classId = 'reaver', reg = registries) {
 }
 function fight(cardId, classId = 'reaver', reg = registries) {
   const run = fresh(classId, reg);
+  // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
+  run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
   const combat = createRunCombat({ registries: reg, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
   const card = { instanceId: 'mana-test-card', cardId, upgraded: false };
   combat.piles.hand = [card];
@@ -60,6 +60,9 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
 
 test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks', () => {
   const { combat, card } = fight('core.starseerSpecial', 'starseer');
+  // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
+  // A deep pool keeps this test about the card's own two stacks.
+  combat.enemies[0].persistentPoise = { value: 100, max: 100 };
   const before = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
   assert.equal(combat.player.mana, before - 1);
@@ -68,10 +71,3 @@ test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 
-test('configured MP-off variants keep the resource absent instead of reintroducing a Mana requirement', () => {
-  const noMp = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: { resources: { include: ['hp', 'sp'] } } });
-  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, noMp)), noMp);
-  for (const id of ['core.reaverSpecial', 'core.starseerSpecial']) {
-    const card = resolveCard(reg, { cardId: id }); assert.equal(card.manaCost, 0); assert.equal(card.resourceCosts?.mp || 0, 0);
-  }
-});

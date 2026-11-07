@@ -6,7 +6,6 @@ import { engravedIconHtml } from '../src/ui/components/engravedIcon.js';
 // reported as skipped placeholders.
 
 import { contentBundle } from '../src/content/index.js';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRegistries, resolveCard, relicPropertyRules } from '../src/model/registries.js';
@@ -44,8 +43,7 @@ import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
-import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
-import { generateJourney } from '../src/model/worldAtlas.js';
+import { locationTags, resolveLocationId, restDeniedBy } from '../src/model/locations.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -58,15 +56,12 @@ import {
   resolveUnknownNode,
   rollArmamentDrop,
 } from '../src/engine/encounters.js';
-import {
-  endlessActInfo, activeMods, isCustomRun, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP,
-} from '../src/content/customMods.js';
-import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
+import { isCustomRun } from '../src/model/customRun.js';
 import { playerPoiseThresholdReceipt, statProjection } from '../src/model/statProjection.js';
 import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, baselineAttributeAllocation, classAttributePreset, allocationTotal, defaultCreationModeId, creationModeHasPoints, creationMode } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules, derivedStatIdsFor } from '../src/model/derivedStats.js';
-import { LEGACY_HAND_MAX } from '../src/model/statRows.js';
+import { FALLBACK_HAND_MAX } from '../src/model/statRows.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
@@ -93,7 +88,6 @@ import { swapRunClass, peakClassLevel } from '../src/model/classSwap.js';
 import { bornClassOf } from '../src/model/startingKits.js';
 import { classAvailable, classUnlockRow } from '../src/model/unlocks.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
-import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
@@ -137,6 +131,7 @@ import { settingOn, resolveTapSize, resolveLevelUpValue, settingsRow, categoryHa
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
 import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { withWeaponRack } from './withWeaponRack.mjs';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -203,14 +198,14 @@ function testBundle() {
   // withKindRows: every fixture card and enemy states its kind, as shipped
   // content must (model/tree.js) — the engine reads a card's kind tag, never
   // its `type`, so a fixture without the row would be no kind at all.
-  return withKindRows({
+  return withKindRows(withWeaponRack({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     // Fixture cards pin their own costs: they opt out of the cost formula (costRule 'fixed', SPEC §4.3a).
     cards: [...contentBundle.cards, ...TEST_CARDS.map((card) => ({ costRule: 'fixed', ...card }))],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-  });
+  }));
 }
 
 const REG = createRegistries(testBundle());
@@ -235,7 +230,7 @@ function legacyKitFixture(bundle) {
     return copy;
   }) } };
 }
-const legacyBundle = legacyKitFixture(contentBundle);
+const legacyBundle = legacyKitFixture(withWeaponRack(contentBundle));
 const legacyTestBundle = () => legacyKitFixture(testBundle());
 const LEGACY_REG = createRegistries(legacyTestBundle());
 
@@ -298,7 +293,7 @@ function attributeTerms(row, attributes) {
 
 // `handMax` pins the hand cap for a fixture whose mechanic needs room past the
 // fallback cap; omitted, the fallback. These fixtures hand createCombat no hand
-// rules, so the cap is LEGACY_HAND_MAX (5, model/statRows.js) — `balance.handMax`
+// rules, so the cap is FALLBACK_HAND_MAX (5, model/statRows.js) — `balance.handMax`
 // was retired in ruleset 7 and a copy of it on the registries is read by
 // nothing. The pin is therefore set on the fight itself, after the opening
 // draw (five cards, inside either cap): with no hand rules nothing recomputes
@@ -366,8 +361,7 @@ function logOf(combat, type) {
 
 export async function runTests({ artManifest = null, assetExists = null, legacyRunSave = null, preE6RunSave = null } = {}) {
   const results = [];
-  const test = (name, fn, { coop = false } = {}) => {
-    if (coop && !COOP_TESTS_ENABLED) return skip(name, COOP_TEST_SKIP_REASON);
+  const test = (name, fn) => {
     try {
       const out = fn();
       // An async test body would resolve AFTER this returns, so every throw
@@ -458,14 +452,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // ---- 5. Hand limit overflow → discard ---------------------------------------
   test('5. draws past the hand cap go to discard (handFull)', () => {
     // The cap is the fallback a fight handed no hand rules reads
-    // (LEGACY_HAND_MAX, model/statRows.js: 5 — the value `balance.handMax`
+    // (FALLBACK_HAND_MAX, model/statRows.js: 5 — the value `balance.handMax`
     // shipped with until ruleset 7 retired it for the handSize row), read
     // rather than restated; the deck still holds more than any cap tBigDraw
     // can fill, so the overflow is real at either value.
     const c = makeCombat({ deck: ['tBigDraw', ...Array(11).fill('strike')] });
     playFromHand(c, 'tBigDraw');
-    eq(c.handMax, LEGACY_HAND_MAX, 'a fight with no hand rules reads the legacy fallback cap');
-    eq(c.piles.hand.length, LEGACY_HAND_MAX, `hand capped at the fallback ${LEGACY_HAND_MAX}`);
+    eq(c.handMax, FALLBACK_HAND_MAX, 'a fight with no hand rules reads the legacy fallback cap');
+    eq(c.piles.hand.length, FALLBACK_HAND_MAX, `hand capped at the fallback ${FALLBACK_HAND_MAX}`);
     assert(logOf(c, 'cardDiscarded').some((e) => e.reason === 'handFull'), 'handFull discard emitted');
   });
 
@@ -809,7 +803,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // Owner, 2026-10-12 (#4, clarified): Blight applied by the Necrotic damage
   // rider is its own row (necroticBlight, decay 'none'); every other Crimson
   // Blight — an enemy's on the player included — keeps its 3-turn duration.
-  test('8b. enemy Crimson Blight on the player expires after 3 turns; a v1 Necrotic hit applies Crimson Blight; a v2 Necrotic hit applies Necrotic Blight that outlasts 6 turns; Holy cleanses it; solo == co-op', () => {
+  test('8b. enemy Crimson Blight on the player expires after 3 turns; a v1 Necrotic hit applies Crimson Blight; a v2 Necrotic hit applies Necrotic Blight that outlasts 6 turns; Holy cleanses it', () => {
     // Court Marionette's blowdart puts plain Crimson Blight on the player.
     const marionette = REG.enemies.get('courtMarionette');
     eq(marionette.moves.blowdart.effects[0].status, 'crimsonBlight', 'Court Marionette still applies the bounded row');
@@ -855,25 +849,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(S.getStacks(h.player, 'necroticBlight'), 1, 'Holy hit cleansed one Necrotic Blight stack');
     playFromHand(h, 'sacredHarvest', 'e1');
     assert(!h.player.statuses.necroticBlight, 'a second Holy hit cleansed the last stack');
-
-    if (COOP_TESTS_ENABLED) {
-      // Co-op runs the same v2 rider: one seat, same cards, same enemy state.
-      const coop = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee),
-        players: [{ id: 'p1', ...seat(necroDeck, { combatExpansionVersion: 2 }) }], enemyIds: ['tGiant'] });
-      const solo = v2(necroDeck);
-      playFromHand(solo, 'cullTheWeak', 'e1');
-      playFromHand(solo, 'cullTheWeak', 'e1');
-      for (let i = 0; i < 2; i++) {
-        const coopCard = coop.players.get('p1').piles.hand.find((card) => card.cardId === 'cullTheWeak');
-        playCoopCard(coop, 'p1', coopCard.instanceId, 'e1');
-      }
-      const ce1 = coop.enemies.find((e) => e.id === 'e1');
-      eq(coop.combatExpansionVersion, 2, 'co-op fight runs v2');
-      eq(S.getStacks(ce1, 'necroticBlight'), S.getStacks(getEntity(solo, 'e1'), 'necroticBlight'), 'co-op Necrotic Blight == solo');
-      assert(S.getStacks(ce1, 'necroticBlight') >= 1, 'co-op admitted it');
-      eq(ce1.hp, getEntity(solo, 'e1').hp, 'co-op enemy HP == solo');
-    }
-
   });
 
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----
@@ -1568,7 +1543,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // 7-card deck (tCharge is Innate → both in the opening hand) so the
     // ownerTurnStart bonus draw has cards left to actually draw. The hand cap
     // is pinned past the five-card turn draw: at the fallback cap of 5
-    // (LEGACY_HAND_MAX) the sixth card is a handFull discard, and the hook
+    // (FALLBACK_HAND_MAX) the sixth card is a handFull discard, and the hook
     // would be measured by the cap rather than by the draw it asked for.
     const c = makeCombat({ deck: ['tCharge', 'tCharge', 'strike', 'strike', 'strike', 'strike', 'strike'], handMax: 10 });
     playFromHand(c, 'tCharge'); // 3
@@ -1752,24 +1727,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
     eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
 
-    if (COOP_TESTS_ENABLED) {
-      const coopMagic = createCoopCombat({
-        registries: REG, rng: createRng(0xc002),
-        players: [
-          { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
-            energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
-            relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
-          { id: 'p2', classId: 'reaver', maxHp: 96, hp: 96, maxMana: 2, mana: 2, energyMax: 3, drawPerTurn: 5,
-            deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `rm${i}`, cardId: 'strike', upgraded: false })), relicIds: [] },
-        ],
-        enemyIds: ['tGiant'],
-      });
-      eq(coopMagic.players.get('p1').entity.mana, soloStartMana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
-      const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
-      const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
-      eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
-        'co-op live magic damage uses the same host-stamped +2');
-    }
+
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
@@ -2011,38 +1969,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(f.result === 'victory' || f.result === 'defeat', `final boss fight concluded (${f.result})`);
   });
 
-  // ---- 22. Endless Spire (Custom Climb chaos rule) --------------------------
-  test('22. Endless Spire: act loop math, per-cycle scaling, mod wiring', () => {
-    // Acts 1-3 are the first pass (loop 0); 4-6 replay acts 1-3 as cycle 2; etc.
-    for (const [act, want] of [[1, [1, 0]], [3, [3, 0]], [4, [1, 1]], [6, [3, 1]], [7, [1, 2]], [12, [3, 3]]]) {
-      const { contentAct, loop } = endlessActInfo(act);
-      eq(contentAct, want[0], `act ${act} content act`);
-      eq(loop, want[1], `act ${act} loop count`);
-    }
-    // Every looped content act must resolve to real content (no unknown-act throw).
-    for (let act = 4; act <= 12; act++) {
-      const ca = endlessActInfo(act).contentAct;
-      assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
-      assert(rollEncounter(REG, createRng(act), { pool: 'boss', seat: ['weald', 'marches', 'reach'][ca - 1] }), `boss encounter rolls for looped act ${act}`);
-    }
-    // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
-    const base = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['blightHound'],
-    });
-    const loop2 = createCombat({
-      registries: REG, rng: createRng(7), player: { classId: 'reaver', maxHp: 84, hp: 84, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x2', cardId: 'strike', upgraded: false }] },
-      enemyIds: ['blightHound'],
-      hpMult: 1 + ENDLESS_HP_PER_LOOP * 2,
-      enemyStatuses: [{ status: 'strength', stacks: ENDLESS_STR_PER_LOOP * 2 }],
-    });
-    eq(getEntity(loop2, 'e1').maxHp, Math.round(getEntity(base, 'e1').maxHp * 1.7), 'loop-2 enemy HP = base ×1.7');
-    eq(S.getStacks(getEntity(loop2, 'e1'), 'strength'), 2, 'loop-2 enemy has +2 Strength');
-    // The chaos toggle flags the run as custom (kept out of win-rate telemetry).
-    assert(activeMods({ mods: { endless: true } }).endless, 'endless resolves as an active mod');
-    assert(isCustomRun({ mods: { endless: true } }), 'endless runs are flagged custom');
-  });
-
   // ---- 23. 'ally' target (co-op cards, solo-valid) ---------------------------
   test('Card targets reject the wrong side before spending resources', () => {
     const c = makeCombat({ deck: ['strike', 'defend', 'rallyingBanner'], enemies: ['tDummy', 'tDummy'] });
@@ -2071,34 +1997,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(!cls.cardPool.includes('rallyingBanner'), `no class pool contains a co-op card (${cls.id})`);
     }
   });
-
-  // ---- 24. co-op: once/limitPerTurn gates are per-seat, not party-wide -------
-  test('24. a once-per-combat relic held by two co-op players fires for each', () => {
-    // Goldleaf Charm: { on:'playerTurnStart', once:true, block 4 to owner }.
-    // Co-op runs every seat through ONE ctx and all player entities share the id
-    // 'player', so before per-seat scoping the first seat's fire consumed the
-    // gate and the second seat silently got nothing.
-    const deck = (tag) => Array.from({ length: 5 }, (_, i) => ({ instanceId: `${tag}${i}`, cardId: 'strike', upgraded: false }));
-    const C = createCoopCombat({
-      registries: REG,
-      rng: createRng(11),
-      players: [
-        { id: 'p1', classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: deck('a'), relicIds: ['goldleafCharm'], flasks: [] },
-        { id: 'p2', classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: deck('b'), relicIds: ['goldleafCharm'], flasks: [] },
-      ],
-      enemyIds: ['blightHound'],
-    });
-    eq(C.players.get('p1').entity.block, 4, 'seat 1 got its own Goldleaf Charm block');
-    eq(C.players.get('p2').entity.block, 4, 'seat 2 got its own Goldleaf Charm block (gate is per-seat)');
-
-    // The gate still holds WITHIN a seat: the relic must not re-fire next turn.
-    const before = C.players.get('p1').entity.block;
-    C.emit('playerTurnStart', { turn: C.turn, playerId: 'p1' });
-    eq(C.players.get('p1').entity.block, before, "once:true still gates repeat fires for the same seat");
-
-    // Enemy-owned gates stay shared (enemies are one set, not per-seat).
-    assert(C.enemies.length === 1, 'shared enemy set is unaffected by seat scoping');
-  }, { coop: true });
 
   // ---- 25. authored content (CSV -> generated modules) ----------------------
   test('25. outfits + unlocks compile and cross-reference correctly', () => {
@@ -2764,7 +2662,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     reserved.tags.push({ id: 'item:venomous', domain: 'card', label: 'Venomous', color: '#888', glyph: '*', blurb: '' });
     const reservedSaid = tagContentProblems(reserved, kw).map((r) => `${r.path}: ${r.message}`).join(' | ');
     assert(/reserved for the itemType domain/.test(reservedSaid),
-      `a card-domain '${'item:'}' id is refused by name — said ${JSON.stringify(reservedSaid.slice(0, 180))}`);
+      `a card-domain 'item:' id is refused by name — said ${JSON.stringify(reservedSaid.slice(0, 180))}`);
   });
 
   // ---- 26m. the ninth round: the budget counts every card that lands ------
@@ -3612,7 +3510,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       : piece));
     b.tagging.push({ family: 'card', scope: '', objectId: 'crimsonCleave', tagId: 'extractable' });
     b.scripts = contentBundle.scripts;
-    const reg = createRegistries(b);
+    const reg = createRegistries(withWeaponRack(b));
     const run = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed: 23, classId: 'reaver', registries: reg });
     const sword = 'armament/straightSword';
     const artKey = mountKeyOf.weaponArt('straightSword', 'crimsonCleave');
@@ -4881,8 +4779,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
     eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
       'a fresh profile owns its starting set and four attribute-gated shared sets');
-    const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set');
+    const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh, profileWardrobe: true });
+    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set (profile wardrobe)');
+    // Owner, 2026-11-05: in a run the profile wardrobe is not the inventory.
+    const inRun = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
+    eq(armourPool.filter((p) => inRun.has(p)).length, 5, 'a profile unlock does not make a set owned inside a run');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -6051,9 +5952,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // BOUNDARY. This is the vocabulary and the sentence. It does NOT prove the
     // note renders, that BEGIN THE CLIMB refuses, that the refusal lets go
-    // again, or that anything at all happens on the co-op wire — those are
-    // tools/seedrefuses.mjs (rendered, three screens) and tools/lan.mjs's own
-    // boundary check. It is also silent on `ß`, which upper-cases to `SS` and
+    // again — that is tools/seedrefuses.mjs (rendered, two screens). It is also silent on `ß`, which upper-cases to `SS` and
     // is therefore accepted as two S's exactly as it always has been.
   });
 
@@ -6389,17 +6288,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     let threw = null;
     try { buildActMap(reg, createRng(1), 'weald', 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
-    assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
-    assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');
-
-    // IT SURVIVES A SAVE. The shape rides on `run.custom`, so a resumed short
-    // run stays short and act 2 is generated at the shape act 1 was — the claim
-    // buildActMap's header makes, asserted rather than assumed.
-    const saved = createRunState({ seed: 1, classId: 'reaver', registries: reg });
-    saved.custom = { ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 6, columns: 4 } };
-    const revived = JSON.parse(serializeRun(saved));
-    eq(JSON.stringify(revived.custom.mapShape), JSON.stringify({ floors: 6, columns: 4 }),
-      'the run shape round-trips through the save');
+    assert(isCustomRun({ deckMode: 'sealed' }), 'a dealt-deck run is kept out of win-rate stats');
+    assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and a standard one is not');
+    assert(isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard', mapShape: { floors: 7 } }), 'a save from the retired Custom Climb with a map shape still counts as custom');
+    assert(isCustomRun({ ascension: 2, mods: {}, deckMode: 'standard' }), '…as does one with ascension');
+    assert(isCustomRun({ ascension: 0, mods: { hoarder: true }, deckMode: 'standard' }), '…or a mod');
 
     // BOUNDARY. This is the generator and the resolver. It proves NOTHING about
     // the screen: that the panel opens, that the sliders reach 44 device px,
@@ -6512,13 +6405,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (2026-10-03) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '53/3/4', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,260,340,440,580,750,980,1280,1660,2170', 'default XP steps start at 200 and grow ×1.303 (SPEC §13.4o)');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '200,300,450,680,1010,1520,2280,3420,5130,7690', 'default XP steps start at 200 and grow ×1.5 (SPEC §13.4o)');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 100160, '100,160 XP reaches level 20, the cap, on the default curve');
+    eq(Array.from({ length: 19 }, (_, i) => xpToNextLevel(REG, i + 1)).reduce((sum, step) => sum + step, 0), 886350, '886,350 XP reaches level 20, the cap, on the default curve');
     const rogue = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 4 + nothing from INT 1.
@@ -6527,7 +6420,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
     eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.rating.id}/${rogueAttack.profileReceipt.rating.value}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/3/ar/2/5', 'Rogue dagger Strike is stamped from source AR (DEX 3 × 0.75 feeds AR since 2026-09-24)');
-    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/7/10', 'Rogue buckler Defend is stamped from source DR (DEX 3 × 0.75 where 0.5 stood, 2026-09-24)');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.rating.id}/${rogueGuard.profileReceipt.rating.value}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/3/dr/8/11', 'Rogue buckler Defend is stamped from the live DR row (the bare test registries read it since the frozen ruleset-6 formula was deleted; the configured registries the game uses gave 8/11 before too)');
     const star = createRunState({ combatExpansionVersion: 1, seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 3, 'the approved Starseer preset keeps the INT 3 its own staff asks for on the lean span');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
@@ -7356,7 +7249,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
-      'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed',
+      'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
       'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
@@ -8824,19 +8717,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const preview = previewCard(c, c.piles.hand[0] ? c.piles.hand[0].instanceId : playable.instanceId, target.id);
     assert(preview, 'a preview still answers');
 
-    if (COOP_TESTS_ENABLED) {
-      // Co-op builds its own snapshot and its own cardPlayed: the same dual grip
-      // carries the same derived tag there.
-      const coopRun = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
-      coopRun.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, coopRun);
-      const coop = createCoopCombat({ registries: REG, rng: createRng(0x3c3c), players: [{ id: 'p1', classId: 'rogue', attributes: coopRun.attributes, maxHp: 60, hp: 60, maxMana: 2, mana: 2, maxStamina: 2, stamina: 2, energyMax: coopRun.energyMax, drawPerTurn: coopRun.drawPerTurn, deck: coopRun.deck, loadout: coopRun.loadout, relicIds: [] }], enemyIds: ['fellWarden'] });
-      const coopHand = coop.players.get('p1').piles.hand;
-      const coopCard = coopHand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && (def.manaCost || 0) === 0 && def.cost <= 3; });
-      assert(coopCard, 'the co-op hand holds a playable card');
-      const coopPlayed = playCoopCard(coop, 'p1', coopCard.instanceId).events.find((e) => e.type === 'cardPlayed');
-      assert(coopPlayed && (coopPlayed.derivedTags || []).join('|') === 'equipment.dualWield', `the co-op event carries the grip's tag — got ${JSON.stringify(coopPlayed && coopPlayed.derivedTags)}`);
-      assert(!(coopPlayed.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
-    }
+
 
     // The predicate reads the card's AUTHORED tags ∪ the derived tags, on the
     // action card and on the event alike — never the resolved attack tags a
@@ -9012,24 +8893,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (The bundle validates the derived propertyRules, which content-build joins from nodeEffects.)
     const ghostGate = validateContent({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => r.tag === 'siphon' ? JSON.parse(JSON.stringify(r).replace(/item:magic-focus/g, 'focus')) : r) });
     assert(!ghostGate.ok && said(ghostGate).some((e) => /Unknown skill track 'focus'/.test(e)), 'a gate on a name no track has is refused by name');
-    if (COOP_TESTS_ENABLED) {
-      // Co-op: a guard one seat casts on another is the caster's work, and a
-      // seat's gates read that seat's own ledger, not the active one's.
-      const seatA = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
-      const seatB = createRunState({ seed: 0x4a4b, classId: 'rogue', registries: REG });
-      const party = createCoopCombat({ registries: REG, rng: createRng(0x4a4a), players: [
-        { id: 'A', classId: 'reaver', attributes: seatA.attributes, skills: { 'item:blade': { xp: 0, level: 5, pendingDrafts: 0 } }, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: seatA.energyMax, drawPerTurn: seatA.drawPerTurn, deck: seatA.deck, loadout: seatA.loadout, relicIds: [] },
-        { id: 'B', classId: 'rogue', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
-      ], enemyIds: ['fellWarden'] });
-      const entB = party.players.get('B').entity;
-      const caster = party.playerKey, ally = caster === 'A' ? 'B' : 'A';
-      gainBlock(party, party.players.get(ally).entity, 4, { instanceId: 'kit:roundShield:guard', grantedBy: 'roundShield' });
-      eq(party.skillXp[caster] && party.skillXp[caster].xp['item:shield'], rows.perHit, "the active seat's shield is paid for the guard it cast on its ally");
-      assert(!party.skillXp[ally], 'the ally guarded is paid nothing');
-      eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 5 }, { owner: party.players.get('A').entity }), true, "a seat's gate reads its own ledger");
-      eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
-    }
-
   });
 
   test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, and a level no longer upgrades the deck (plan phase 4b, §13.4o)', () => {
@@ -9166,16 +9029,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Mounts are never saved: a restored fight re-derives the class mount.
     const back = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))) });
     assert(back.propertyMounts[triggerOwnerKey(back, back.player)]['class:reaver'], 'a restored fight mounts the class card again');
-    if (COOP_TESTS_ENABLED) {
-      // Co-op: each seat mounts its own class card.
-      const seatB = createRunState({ seed: 0x5a5b, classId: 'starseer', registries: REG });
-      const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
-        { id: 'A', classId: 'reaver', attributes: fresh.attributes, skills: {}, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] },
-        { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
-      ], enemyIds: ['fellWarden'] });
-      assert(party.propertyMounts.A['class:reaver'] && party.propertyMounts.B['class:starseer'], 'each seat carries its own class card');
-      assert(party.propertyMounts.B['class:starseer'].scopeTags.includes('item:magic-focus'));
-    }
+
 
     // THE KIT RELICS FIRE THROUGH THE MOUNT PATH.
     // Ashen Grip: the first stance entered each turn refunds Stamina; Brace holds and, on leaving, hits harder.
@@ -9210,26 +9064,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
     eq(c3b.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
-    if (COOP_TESTS_ENABLED) {
-      // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
-      // seal on the ally, and A's seal stays whole.
-      const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
-      const hB = createRunState({ seed: 0x5a5d, classId: 'herald', registries: REG });
-      const heals = createCoopCombat({ registries: REG, rng: createRng(3), players: [
-        { id: 'A', classId: 'herald', attributes: hA.attributes, skills: {}, maxHp: 60, hp: 30, maxMana: 2, mana: 2, energyMax: hA.energyMax, drawPerTurn: hA.drawPerTurn, deck: hA.deck, loadout: hA.loadout, relicIds: ['waxenSeal'] },
-        { id: 'B', classId: 'herald', attributes: hB.attributes, skills: {}, maxHp: 60, hp: 30, maxMana: 2, mana: 2, energyMax: hB.energyMax, drawPerTurn: hB.drawPerTurn, deck: hB.deck, loadout: hB.loadout, relicIds: ['waxenSeal'] },
-      ], enemyIds: ['fellWarden'] });
-      const entA = heals.players.get('A').entity, entB2 = heals.players.get('B').entity;
-      // The gates say whose seal fired: the mount scan keys a property's once
-      // by the seat that owns the carrier (the effect itself queues for the
-      // co-op loop to resolve, which this direct heal does not run).
-      const fires = (seat) => (heals.triggerState.get(`property:${seat}:relic:waxenSeal:0`) || { fires: 0 }).fires;
-      applyHeal(heals, entB2, 5);
-      eq(fires('B'), 1, "B's seal answered B's heal"); eq(fires('A'), 0, "A's did not fire for B's heal");
-      eq(logOf(heals, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 1);
-      applyHeal(heals, entA, 5);
-      eq(fires('A'), 1, "A's seal answers A's own heal, still whole"); eq(fires('B'), 1, "and B's once is spent");
-    }
+
 
     // Lodestar Shard: extra Mana at combat start.
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
@@ -9345,15 +9180,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
     const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
     eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,ironFooting', 'a restored fight mounts the pick again');
-    if (COOP_TESTS_ENABLED) {
-      const seatB = createRunState({ seed: 0x5b5c, classId: 'starseer', registries: REG });
-      const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
-        { id: 'A', classId: 'reaver', attributes: run.attributes, skills: {}, coreTags: ['bloodTempo'], maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: [] },
-        { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, coreTags: [], maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
-      ], enemyIds: ['fellWarden'] });
-      eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,bloodTempo', "each seat's picks are its own");
-      eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored,oathKept');
-    }
+
 
     // THE CARD READS ITS PICKS: the subclass lends its name and glyph.
     eq(classCard(REG, 'reaver', ['ironFooting']).presentation.name, 'Reaver', 'a lower pick leaves the name');
@@ -9665,7 +9492,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     leaveLocation(restored);
 
     // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
-    // stream seeded from the run instead of throwing (the atlas inspection).
+    // stream seeded from the run instead of throwing.
     // The runtime reads a tag's rule off `propertyRules` (content-build's
     // balance-resolved row), so a test that changes a rule changes that row.
     const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
@@ -9716,11 +9543,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
 
     // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
-    // shrine and the chapel — and leaves the town's bed and the camp open.
+    // shrine — and leaves the town's bed and the camp open.
     const wyrmRun = fresh();
     wyrmRun.relics.push('wyrmHeart');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
-    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
     eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
     const wyrmShrine = visitTo(wyrmRun, 'shrine');
@@ -9753,10 +9579,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
     leaveLocation(composing);
 
-    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
-    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
-    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
-    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
     const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
     eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
 
@@ -9770,25 +9592,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     restAt(late);
     eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
 
-    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
-    // a cap the map cannot meet is refused by name.
-    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
-    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
-
     // THE REFUSALS: an unknown location id, a restoreMana with neither or
     // both selectors, a bad rest mode, a restDenied naming no carried tag.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
     const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
-    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
-    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/inn/.test(e)), 'an atlas node id is no longer a location');
     const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
     assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
     assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
-    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
-    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
-    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
     const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
     assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');

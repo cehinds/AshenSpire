@@ -9,7 +9,6 @@ import { webpDimensions } from '../tools/mobileart-policy.mjs';
 import { alternativePlayerId, alternativeBackdropHtml } from '../src/ui/alternativeArt.js';
 import { ARMOUR } from '../src/content/equipment.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
-import { LEGACY_SCENES } from '../src/model/legacyDungeon.js';
 import { combatBackdropHtml } from '../src/ui/components/environmentArt.js';
 import { contentBundle } from '../src/content/index.js';
 
@@ -54,7 +53,10 @@ test('enemy, companion and speaker IDs match the canonical content roster', () =
 });
 
 test('authored settings retain four layers while option C renders three without foreground framing', () => {
-  const ids = [...ENVIRONMENTS.flatMap(r => r.scenes), ...LEGACY_SCENES].map(s => s.id).sort();
+  // The catalog still carries the 12 retired legacy-dungeon plates (BS/HM/FC-ENV-nn); the art cleanup removes them.
+  const retired = Object.keys(catalog.scenes).filter(id => /^(BS|HM|FC)-ENV-\d+$/.test(id));
+  assert.equal(retired.length, 12);
+  const ids = [...ENVIRONMENTS.flatMap(r => r.scenes).map(s => s.id), ...retired].sort();
   assert.deepEqual(Object.keys(catalog.scenes).sort(), ids);
   assert.equal(ids.length, 32);
   assert.equal(Object.keys(catalog.sceneLayers).length, 69);
@@ -84,13 +86,6 @@ test('authored settings retain four layers while option C renders three without 
   }
   assert.equal(alternativeBackdropHtml('not-a-scene'), null);
   assert.throws(() => combatBackdropHtml({}, 'not-a-scene'), /Unknown combat preview/);
-});
-
-test('saved dungeon location selects its own layered scene', () => {
-  for (const scene of LEGACY_SCENES) {
-    const html = combatBackdropHtml({ legacyDungeon: { id: scene.region, current: scene.nodeStart } });
-    assert(html.includes(`data-scene="${scene.id}"`), scene.id);
-  }
 });
 
 test('phone first paint references only phone scene exports before fitting', () => {

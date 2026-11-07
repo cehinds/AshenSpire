@@ -11,7 +11,8 @@ const locks = ['sleep', 'paralysis', 'dazed'];
 export const combatExpansionCombos = [
   row('dreamHarvest', 'Dream Harvest', 1, 'skill', spell('illusion'),
     [{ op: 'draw', amount: 1, if: has('sleep', 'allEnemies'), oncePerTurn: 'dream-harvest' }],
-    'While an enemy is asleep, draw {draw} card. Once per turn; does not wake it.'),
+    'While an enemy is asleep, draw {draw} card. Once per turn; does not wake it.',
+    { faceTemplate: ['Enemy asleep: draw {draw}.', 'Once per turn.'] }),
   row('lucidRecovery', 'Lucid Recovery', 2, 'skill', spell('illusion'),
     [{ op: 'removeStatus', target: 'self', status: 'sleep', amount: 1 },
       { op: 'gainBarrier', target: 'self', amount: 2, if: { ...has('sleep'), snapshot: 'beforePlay' } }],
@@ -38,9 +39,9 @@ export const combatExpansionCombos = [
       evade: { charges: 1, bonus: 0, advantage: true, whileStatus: 'prone' } }),
   row('emberCovenant', 'Ember Covenant', 1, 'power', spell('fire'), [],
     'Your first Corrupted card each turn grants 3 Barrier. Blight still accumulates.',
-    { keywords: ['exhaust'], comboHook: { on: 'ashenBlightPaid', oncePerTurn: 'ember-covenant', effects: [{ op: 'gainBarrier', target: 'self', amount: 3 }] } }),
+    { keywords: ['exhaust'], faceTemplate: ['First Corrupted card: 3 Barrier.', 'Once per turn.'], comboHook: { on: 'ashenBlightPaid', oncePerTurn: 'ember-covenant', effects: [{ op: 'gainBarrier', target: 'self', amount: 3 }] } }),
   row('shatterOpportunity', 'Shatter Opportunity', 1, 'power', spell('frost'), [],
     'Once per turn, thawing or shattering an enemy draws 1 card and Retains 1 card.',
-    { keywords: ['exhaust'], comboHook: { on: 'statusRemoved', statuses: ['frozen', 'chilled'], reasons: ['thawed', 'shattered'], targetKind: 'enemy',
+    { keywords: ['exhaust'], faceTemplate: ['Shatter: draw 1, Retain 1.', 'Once per turn.'], comboHook: { on: 'statusRemoved', statuses: ['frozen', 'chilled'], reasons: ['thawed', 'shattered'], targetKind: 'enemy',
       oncePerTurn: 'shatter-opportunity', effects: [{ op: 'draw', amount: 1 }, { op: 'retain', amount: 1 }] } }),
 ];

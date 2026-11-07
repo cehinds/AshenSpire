@@ -129,12 +129,11 @@ export function attunedSigilProblems(run) {
  *   legendary only  run.attunedSigils, combatEntered.snapshot.attunedSigils,
  *                   pendingReward.rewards.sigilId
  *   never legendary run.sigilSlots, combatEntered.snapshot.sigilSlots,
- *                   shopStock.sigils, journey.serviceStates[*].stock.sigils
+ *                   shopStock.sigils
  *   either          run.sigils (the inventory)
  * and the attuned list fits the run's own attuneMax and is what a fight in
- * progress carries. A position added later is assigned a class here. Both
- * restore doors read it: engine/save.js loadRun and tools/session.mjs's
- * member restore.
+ * progress carries. A position added later is assigned a class here. The
+ * restore door reads it: engine/save.js loadRun.
  */
 export function sigilRarityProblems(registries, run) {
   const problems = [];
@@ -145,7 +144,7 @@ export function sigilRarityProblems(registries, run) {
   const max = runAttuneMax(registries, run);
   if (attuned.length > max) problems.push(`attunedSigils holds ${attuned.length}, more than the run's attuneMax of ${max}`);
   // NEVER LEGENDARY: every slot list (the run's and a fight's) and every
-  // market sigil shelf (the open visit's and each atlas point's saved stock).
+  // market sigil shelf (the open visit's).
   const snapshot = run.combatEntered && run.combatEntered.snapshot;
   const slotLists = [['sigilSlots', run.sigilSlots], ['combatEntered.snapshot.sigilSlots', snapshot && snapshot.sigilSlots]];
   for (const [path, record] of slotLists) {
@@ -155,8 +154,7 @@ export function sigilRarityProblems(registries, run) {
       }
     }
   }
-  const shelves = [['shopStock.sigils', run.shopStock],
-    ...Object.entries((run.journey && object(run.journey.serviceStates)) ? run.journey.serviceStates : {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock.sigils`, state && state.stock])];
+  const shelves = [['shopStock.sigils', run.shopStock]];
   for (const [path, stock] of shelves) {
     for (const offer of stock && Array.isArray(stock.sigils) ? stock.sigils : []) {
       if (offer && isLegendary(registries, offer.id)) problems.push(`${path} offers '${offer.id}', a legendary sigil, which is never shop stock`);

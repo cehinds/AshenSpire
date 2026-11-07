@@ -1,15 +1,16 @@
 import * as Lineage from './combatRangeLineage.js';
 import { createRng } from './rng.js';
+import { contestKindOf } from './contest.js';
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
 import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
-import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
+import { core2MultiHitRulesEnabled, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
-import { combatProfileFor } from '../model/combatCardProfile.js';
+import { combatProfileFor, defaultRangeFor } from '../model/combatCardProfile.js';
 import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
@@ -64,14 +65,18 @@ function committedRangeSource(ctx,source,carrier,effect,profile) {
   }
   return resolved;
 }
+const fartherRange = (a, b) => rangeBand(b ?? a) > rangeBand(a) ? b : a;
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   ctx=rangeSourceContext(ctx,source);
   const profile=rangeSourceProfile(carrier,effect);
   const resolved=committedRangeSource(ctx,source,carrier,effect,profile);
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
-  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
-  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weapon,
+  // A weapon contact reaches as far as the weapon or the card, whichever is farther (CONTENT-NOTES: a card takes the
+  // largest range it carries); the reach precision bonus stays with the weapon's own range (weaponCoverage).
+  const weaponCoverage = weapon ? resolved.weaponRange ?? resolved.range ?? piece?.range ?? 'melee' : null;
+  const coverage = weapon ? fartherRange(weaponCoverage, profile.range) : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || defaultRangeFor(profile);
+  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weaponCoverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
@@ -80,10 +85,12 @@ const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','ward
 export function quoteRangeActions(ctx, source, actions, { route = 'advance', context = ctx._rangeContext, preview = false } = {}) {
   if (!ctx.rangeState) return null;
   const contacts = [];
+  // An insight contest card plans no range row: it never advances, never misses for distance (SPEC §17 Contests).
+  const contestCard = contestKindOf(actions[0]?.card, ctx);
   if (preview) actions = actions.map(action => ({...action,meta:{...action.meta}}));
   const planningCtx = preview ? { ...ctx, rng: createRng(ctx.rng.seed,ctx.rng.getCounters()) } : ctx;
   for (const [index, action] of actions.entries()) {
-    if (!hostileOps.has(action.effect.op)) continue;
+    if (!hostileOps.has(action.effect.op) || contestCard) continue;
     const eff = action.effect;
     const repeats = Math.max(0, Math.floor(evaluate(eff.repeat ?? 1, Actions.formulaCtxFor(ctx, action, action.target))));
     const hits = eff.op === 'damage' ? Math.max(0, Math.floor(evaluate(eff.hits ?? 1, Actions.formulaCtxFor(ctx, action, action.target)))) : 1;
@@ -96,7 +103,7 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
       for (const target of targets) if (target.alive && source.kind !== target.kind) {
         const contact = rangeSourceContact(ctx, source, target, action.card, eff, `${index}:${r}:${h}:${actorRangeKey(ctx, target)}`);
         contacts.push(contact);
-        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, propertyTags: contact.throwCapable ? ['throw'] : [] } };
+        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, weaponRange: contact.weaponCoverage ?? undefined, propertyTags: contact.throwCapable ? ['throw'] : [] } };
       }
     }
     action.meta = { ...action.meta, rangeTargetBatches: batches };
@@ -146,6 +153,22 @@ export function assertRangeCardEnabled(ctx, def) {
   if (ctx.rangeState && !ctx.rangeState.policy.enabled && pureEngagementMovement(def)) throw Foundation.playRefusal('Range mechanics are disabled', 'range-disabled');
 }
 
+// A paid implicit Advance persists a closer band without an explicit movement action. Playback and the formation
+// strips follow `combatEngagementMoved`, so the committed step-in is announced on the same receipt (reason 'advance'),
+// before the attack that paid for it resolves. One receipt per pair whose band actually decreased.
+function emitCommittedAdvance(ctx, source, before, after) {
+  if (!ctx.emit || !before || !after) return;
+  const sourceKey = actorRangeKey(ctx, source);
+  for (const [pair, band] of Object.entries(after.engagements)) {
+    const was = before.engagements[pair];
+    if (!(band < was)) continue;
+    const other = JSON.parse(pair).find(key => key !== sourceKey);
+    if (!other || !JSON.parse(pair).includes(sourceKey)) continue;
+    const entity = [...(ctx.enemies || []), ...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : []), ctx.player].find(row => row && actorRangeKey(ctx, row) === other);
+    if (entity) ctx.emit('combatEngagementMoved', { sourceId: source.id, targetId: entity.id, bands: band - was, reason: 'advance' });
+  }
+}
+
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
   const authorization = carrier.rangeReturnAuthorization;
@@ -158,7 +181,12 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   const available = source.kind === 'enemy' ? source.fixCoreStaminaRemaining ?? source.stamina ?? source.maxStamina ?? 0 : source.energy;
   if (!carrier.rangePlan && !prepaidReturn && available < extra) throw Foundation.playRefusal('Not enough Stamina to Advance', 'cost', { resource: 'stamina', need: extra, have: available });
   if (!carrier.rangePlan && !prepaidReturn && extra > 0) {
-    if (source.kind === 'enemy') { source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining; }
+    if (source.kind === 'enemy') {
+      source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining;
+      // SPEC §4.6b C: an Advance an enemy pays reacting in the player's turn is owed from its next turn, like the
+      // reaction's own SP (enemyReactions.js); the next-turn refill would otherwise make it free. Enemy-phase moves owe nothing.
+      if (ctx.phase === 'player' && carrier.combatReaction && core2ActionPolicyEnabled(ctx)) source.pendingStaminaLoss = (source.pendingStaminaLoss || 0) + extra;
+    }
     else {
       source.energy -= extra;
       source.counters.staminaSpentThisTurn = (source.counters.staminaSpentThisTurn || 0) + extra;
@@ -169,7 +197,11 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   // Committing the movement is separate from charging it: a plan prepaid at preparation (a charged enemy attack) has no
   // root yet and commits here, once, at resolution; an accepted plan carries its rootId and is never committed again.
   const unpaidPlan = !carrier.rangePlan, prepaidPlanPending = !!carrier.rangePlan && !carrier.rangePlan.rootId;
-  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
+  if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
+    const before = ctx.rangeState;
+    ctx.rangeState = advancedEngagementState(before, plan);
+    emitCommittedAdvance(ctx, source, before, ctx.rangeState);
+  }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};
@@ -298,7 +330,7 @@ export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
     // Freeze source identity only. Stance acceptance and other root metadata
     // are established after this pre-hook boundary and must stay current.
     return {usedArmamentId:resolved?.sourceType==='unarmed'?null:resolved?.itemId || null,
-      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
+      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,...(row.weapon&&row.weaponCoverage?{weaponRange:row.weaponCoverage}:{}),propertyTags:row.throwCapable?['throw']:[]}};
   };
   const snapshots = new Map((def.effects || []).filter(effect=>effect.op==='damage').map(effect=>[effect,capture(effect)]));
   if (!snapshots.size && carrier.combatProfile?.maneuver === 'counter') snapshots.set(null,capture(null));

@@ -52,7 +52,7 @@ const actor=(id,art,x,y,idle)=>{
     style:{removeProperty:key=>delete properties[key],setProperty:(key,value)=>{properties[key]=value;}},properties,x,y},
     sprite:{art,getBoundingClientRect:()=>({...art,width:art.right-art.left,height:art.bottom-art.top})}};
 };
-const runStage=placed=>runInNewContext(stageSource.slice(stageStart,stageEnd),{placed,targetHud:false,zoom:1,refresh:()=>{},
+const runStage=placed=>runInNewContext(stageSource.slice(stageStart,stageEnd),{placed,targetHud:false,zoom:1,refresh:()=>{},scheduleArt:()=>{},
   fieldRect:{left:0,top:0,width:844,height:190},
   getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),
   currentSpriteArtBounds:sprite=>sprite.art,
@@ -64,7 +64,7 @@ test('stage repairs one idle core over a selected neighbour even without a core/
   const placed=[actor('e1',{left:342,right:392,top:138,bottom:164},367,176,false),
     actor('e3',{left:361,right:373,top:138,bottom:151},337,164,true)];
   const before=placed.map(actor=>structuredClone(actor.sprite.art));
-  runInNewContext(source.slice(start,end),{placed,targetHud:false,zoom:1,refresh:()=>{},
+  runInNewContext(source.slice(start,end),{placed,targetHud:false,zoom:1,refresh:()=>{},scheduleArt:()=>{},
     fieldRect:{left:0,top:0,width:844,height:190},
     getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),
     currentSpriteArtBounds:sprite=>sprite.art,
@@ -137,7 +137,7 @@ test('selected visible footer packing reserves foreign fighter artwork', () => {
   const start=stageSource.indexOf('    const packTargets = () =>');
   const end=stageSource.indexOf('    // A fallen frame',start);
   const targets=runInNewContext(stageSource.slice(start,end)+'\npackTargets();',{
-    placed,boxes,refresh:()=>{},footerSize:44,
+    placed,boxes,refresh:()=>{},scheduleArt:()=>{},footerSize:44,
     fieldRect:{left:0,top:0,width:390,height:190},
     combat:{dataset:{},getBoundingClientRect:()=>({bottom:190})},
     readFooterObstacles:()=>[],currentSpriteArtBounds:sprite=>sprite.art,

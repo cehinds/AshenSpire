@@ -1,11 +1,9 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat, endTurn } from '../src/engine/coopCombat.js';
 import { gainBlock, applyAttackDamage } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -53,11 +51,3 @@ test('provenance survives save/restore and clears on turn reset; old saves stay 
   assert(combatSnapshotProblems(saved).some(p => p.includes('wardBlock')));
 });
 
-test('co-op resets each seat and enemy Ward with their Block', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const c = createCoopCombat({ registries, rng: createRng(5), players: [player('p1'), player('p2')], enemyIds: ['wanderingSoldier'] });
-  for (const seat of c.players.values()) gainBlock(c, seat.entity, 100, magic);
-  gainBlock(c, c.enemies[0], 8, magic);
-  endTurn(c, 'p1'); endTurn(c, 'p2');
-  for (const seat of c.players.values()) assert.deepEqual(blockPresentation(seat.entity), { defense: 0, ward: 0 });
-  assert.equal(c.enemies[0].wardBlock, 0);
-});

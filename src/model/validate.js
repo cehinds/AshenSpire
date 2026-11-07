@@ -1,4 +1,5 @@
 import { fixCoreModuleParameters } from './fixCoreMechanics.js';
+import { MAX_ENEMIES_PER_COMBAT } from './combatLimits.js';
 import { compileBindings } from './mechanicsKernel.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
@@ -19,6 +20,7 @@ import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { handRulesDefaults } from '../content/handRules.js';
 import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
 import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
+import { weaknessProblems } from './enemyWeaknessRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -88,7 +90,7 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
 export const TOKENIZABLE_OPS = Object.freeze([
-  'gainBarrier', 'buildup',
+  'gainBarrier', 'buildup', 'applyReflect',
   'discard', 'removeStatus', 'grantCardCharge',
   'damage',
   'block',
@@ -172,7 +174,6 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'questChains', // { [questId]: { steps, completes } }
   'eventSpeakers', // { [eventId]: speakerId }
   'speakers', // content/source/speakers.csv
-  'atlasQuests', // worldAtlas.json quests rows, for their speakerId
 ]);
 
 /**
@@ -434,7 +435,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   //   'is not a step of this chain'      a completes ref outside the chain
   //   'a Leave choice may not complete a quest'
   //   'names no speaker'                 a chain step without eventSpeakers
-  //   'unknown speaker'                  an event or atlas quest naming no row
+  //   'unknown speaker'                  an event naming no row
   //   'unknown portrait key'             a speaker whose art does not ship
   {
     const eventList = Array.isArray(b.events) ? b.events : [];
@@ -460,10 +461,6 @@ function collectContentProblems(bundle, errors = [], options = {}) {
       if (!eventsDoorOpen && !eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
       if (!speakerIds.has(speakerId)) err(`eventSpeakers.${eventId}`, `unknown speaker '${speakerId}'`);
     }
-    (Array.isArray(b.atlasQuests) ? b.atlasQuests : []).forEach((quest, index) => {
-      if (!quest) return;
-      if (!speakerIds.has(quest.speakerId)) err(`atlasQuests.${quest.questId || index}.speakerId`, `unknown speaker '${quest.speakerId}'`);
-    });
     const chains = b.questChains;
     if (chains !== undefined) {
       if (!chains || typeof chains !== 'object' || Array.isArray(chains)) {
@@ -581,6 +578,11 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     if (card && card.manaCost != null && Number.isInteger(card.manaCost) && card.manaCost < 0) {
       err(`cards.${card.id || '?'}.manaCost`, 'must be >= 0');
     }
+    // Cantrips cost no Mana (owner, 2026-11-01, SPEC card upgrades): a card tagged rank.cantrip, base or authored upgrade.
+    if (card && [...(card.tags || []), ...(card.cardTags || [])].includes('rank.cantrip')) {
+      if (Number.isInteger(card.manaCost) && card.manaCost > 0) err(`cards.${card.id || '?'}.manaCost`, 'a cantrip costs no Mana');
+      if (card.upgrade && Number.isInteger(card.upgrade.manaCost) && card.upgrade.manaCost > 0) err(`cards.${card.id || '?'}.upgrade.manaCost`, 'a cantrip costs no Mana');
+    }
     if (card && card.staminaCost != null && Number.isInteger(card.staminaCost) && card.staminaCost < 0) {
       err(`cards.${card.id || '?'}.staminaCost`, 'must be >= 0');
     }
@@ -619,9 +621,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   // What a rest restores (plan phase 7): the location rules read these rows
   // through their variable bindings, the door reads the mode. A retune that
   // names an unknown mode or a percent off the scale is refused by name.
-  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
-  // journey door reads balance.atlas at run start, so a bundle without them
-  // would pass here and throw there.
+  // The block is REQUIRED: the location rules bind to balance.rest, so a bundle
+  // without it would pass here and throw there.
   if (b.balance) {
     const rest = b.balance.rest;
     if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
@@ -640,23 +641,15 @@ function collectContentProblems(bundle, errors = [], options = {}) {
       }
     }
   }
-  if (b.balance) {
-    const atlas = b.balance.atlas;
-    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
-    else {
-      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
-      // Positive: every seeded route stops at its hub city, so a cap of 0
-      // would refuse every journey at run start rather than here.
-      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
-    }
-  }
   // Plan phase 8: the Mana cost floor, the player stagger's payload and the
   // player poise coefficient — each required, each number refused by name.
   if (b.balance) {
     const mana = b.balance.mana;
     if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.mana', 'must be an object { minActionCost, minStaminaCost } — the card cost rule reads it (plan phase 8)');
     else {
-      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      for (const key of Object.keys(mana)) if (!['minActionCost', 'minStaminaCost', 'focusManaDiscount', 'focusItemType'].includes(key)) err(`balance.mana.${key}`, 'Unknown field');
+      if (!(Number.isInteger(mana.focusManaDiscount) && mana.focusManaDiscount >= 0)) err('balance.mana.focusManaDiscount', `must be a non-negative integer, got ${JSON.stringify(mana.focusManaDiscount)}`);
+      if (typeof mana.focusItemType !== 'string' || !mana.focusItemType) err('balance.mana.focusItemType', 'must be an item-type tag id');
       for (const key of ['minActionCost', 'minStaminaCost']) {
         if (!(Number.isInteger(mana[key]) && mana[key] >= 0)) err(`balance.mana.${key}`, `must be a non-negative integer, got ${JSON.stringify(mana[key])}`);
       }
@@ -862,7 +855,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
-      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'flatEvery', 'attributeEvery', 'featEvery', 'linkedAttributes', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'rankMax', 'rankUpBonusScale', 'flatEvery', 'attributeEvery', 'featEvery', 'linkedAttributes', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
       // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
       if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
       // The draft rows (plan phase 4b), each present and refused by name.
@@ -884,6 +877,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
           }
         }
       }
+      // The rank-up bonus's multiplier (owner, 2026-11-01): optional, 1 to 10 (a bonus is never smaller than an upgrade).
+      if (skill.rankUpBonusScale !== undefined && !(Number.isFinite(skill.rankUpBonusScale) && skill.rankUpBonusScale >= 1 && skill.rankUpBonusScale <= 10)) err('balance.skill.rankUpBonusScale', `must be a number from 1 to 10, got ${JSON.stringify(skill.rankUpBonusScale)}`);
       // A save refuses a rank above state.js MAX_CARD_RANK (99), so no setting may roll one.
       if (Number.isInteger(skill.rankMax) && skill.rankMax > 99) err('balance.skill.rankMax', `must be at most 99, got ${skill.rankMax}`);
       if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {
@@ -1413,6 +1408,7 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     } else if (cfg && cfg.mode === 'immune') {
       for (const field of Object.keys(cfg)) if (field !== 'mode') err(`${base}.arcaneExposure.${field}`, `immune policy may not author '${field}'`);
     }
+    if (enemy && enemy.weaknesses !== undefined) for (const problem of weaknessProblems(enemy.weaknesses)) err(`${base}.weaknesses`, problem);
     for (const [school, percent] of Object.entries((enemy && enemy.damageResistanceBySchool) || {})) {
       if (!DAMAGE_SCHOOLS.includes(school)) err(`${base}.damageResistanceBySchool.${school}`, `unknown damage school '${school}'`);
       if (!Number.isFinite(percent) || percent < 0 || percent > 100) err(`${base}.damageResistanceBySchool.${school}`, 'must be a finite percent from 0 to 100');
@@ -1555,6 +1551,10 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   }
   for (const encounter of Array.isArray(b.encounters) ? b.encounters : []) {
     if (!encounter) continue;
+    // Owner (2026-11-03): "Limit to just 3 enemies max" (SPEC §4, Encounters).
+    if (Array.isArray(encounter.enemies) && encounter.enemies.length > MAX_ENEMIES_PER_COMBAT) {
+      err(`encounters.${encounter.id || '?'}.enemies`, `lists ${encounter.enemies.length} enemies; a combat holds at most ${MAX_ENEMIES_PER_COMBAT} (owner, 2026-11-03)`);
+    }
     for (const field of ['floorBand', 'targetBand']) {
       if (encounter[field] == null) continue;
       for (const problem of levelBandProblems(encounter[field], `encounters.${encounter.id || '?'}.${field}`)) {
@@ -1990,6 +1990,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
       err(`${path}.class`, `class '${card.class}' is neither a class id nor 'colorless'`);
     }
     validateCardTemplates(card, path, err);
+    validateCardRamp(card, path, err);
+    validateCardContest(card, path, err);
     if (card.burden) {
       for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
     }
@@ -2537,7 +2539,7 @@ export function validateEffects(effects, path, vctx) {
     // tests/warriors-vow.test.mjs pins the throw).
     if (eff.op === 'enterStance') {
       const named = eff.stance !== undefined || eff.maneuver!==undefined;
-      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting','evade'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
+      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
       const chosen = eff.choose !== undefined;
       if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
       else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
@@ -2749,7 +2751,7 @@ export function validatePredicate(pred, path, vctx) {
       if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
       break;
     case 'inStance':
-      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared','evade'].includes(pred.stance)) {
+      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared'].includes(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
       }
       break;
@@ -2906,10 +2908,48 @@ function checkWardOffTemplate(card, path, err) {
   }
 }
 
+// A card's `faceTemplate` (SPEC card face rules): one to three lines of at most five words, tokens bound like textTemplate's,
+// without the "every number is stated" rule (the face is a summary; Information carries the rest).
+function checkFaceTemplate(card, path, err) {
+  const sets = [[`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects(card)]];
+  if (card.upgrade?.effects) sets.push([`${path}.faceTemplate`, card.faceTemplate, cardTokenEffects({ effects: card.upgrade.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const profile of card.gradeProfiles || []) sets.push([`${path}.gradeProfiles.faceTemplate`, profile.faceTemplate ?? card.faceTemplate, cardTokenEffects({ effects: profile.effects, onTurnEndInHand: card.onTurnEndInHand })]);
+  for (const [at, lines, effects] of sets) {
+    if (lines === undefined) continue;
+    if (!Array.isArray(lines) || lines.length < 1 || lines.length > 3) { err(at, 'must be one to three short lines'); continue; }
+    const bound = new Set(computeTokenBindings(effects).map((bd) => bd.token));
+    for (const line of lines) {
+      if (typeof line !== 'string') { err(at, 'lines must be strings'); continue; }
+      if (line.replace(/\{[^}]*\}/g, 'N').split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length > 5) err(at, `'${line}' is longer than five words`);
+      for (const token of extractTemplateTokens(line)) if (!bound.has(token)) err(at, `Face token '{${token}}' does not bind to any effect value`);
+    }
+  }
+}
+
+// A card's `ramp` (SPEC §4.3): per is a whole number 1..3; the stat must name an effect the card (or its upgrade) has.
+function validateCardRamp(card, path, err) {
+  for (const [at, ramp, effects] of [[`${path}.ramp`, card.ramp, card.effects], [`${path}.upgrade.ramp`, card.upgrade?.ramp, card.upgrade?.effects ?? card.effects]]) {
+    if (!ramp) continue;
+    if (!Number.isInteger(ramp.per) || ramp.per < 1 || ramp.per > 3) err(`${at}.per`, 'must be a whole number from 1 to 3');
+    const hit = (Array.isArray(effects) ? effects : []).find(effect => effect && effect.op === ramp.stat);
+    if (!hit) err(`${at}.stat`, `no '${ramp.stat}' effect to ramp`);
+    else if (!Number.isFinite(hit.amount)) err(`${at}.stat`, `the '${ramp.stat}' effect's amount must be a plain number to ramp`);
+    else if (hit.hits !== undefined && hit.hits !== 1) err(`${at}.stat`, `the '${ramp.stat}' effect hits more than once; a ramp grows a single-hit effect only`);
+  }
+}
+
+// A card's `contest` (SPEC §17 Contests): which attribute pair rolls it; the constants are data (mechanics.contest).
+function validateCardContest(card, path, err) {
+  for (const [at, value] of [[`${path}.contest`, card.contest], [`${path}.upgrade.contest`, card.upgrade?.contest]]) {
+    if (value !== undefined && !['mental', 'physical'].includes(value)) err(at, "must be 'mental' or 'physical'");
+  }
+}
+
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   checkWardOffTemplate(card, path, err);
+  checkFaceTemplate(card, path, err);
   if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;

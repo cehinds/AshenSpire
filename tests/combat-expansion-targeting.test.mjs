@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -8,14 +7,17 @@ import { cardTargetPlan, assertCardTarget } from '../src/model/cardTargets.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat, runCombatPlayer } from '../src/engine/runCombat.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, previewCoopCard, playCard } from '../src/engine/coopCombat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-import { combatCardView } from '../src/ui/models/CombatCardView.js';
-import { createSession } from '../tools/session.mjs';
-import { initialClassTreeChoices } from '../src/model/classTree.js';
-import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 
 const registries = createRegistries(contentBundle);
+// The wire card's host preview for the selected upcast tier, or the tier resolved locally when that preview is absent.
+function combatCardView(context, instance, upcastTier) {
+  const baseTier = instance.combatPreview?.resolvedDefinition?.upcast?.baseTier ?? 0;
+  const preview = upcastTier == null || upcastTier === baseTier
+    ? instance.combatPreview : instance.upcastPreviews?.[upcastTier];
+  return { ...(preview?.resolvedDefinition || resolveCombatCard(context, instance, { upcastTier })),
+    combatPreview: preview };
+}
 function equippedRun(version) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver', combatExpansionVersion: version });
   const card = run.deck.find(card => card.cardId === 'shieldBash' && card.grantedBy === 'roundShield');
@@ -24,7 +26,7 @@ function equippedRun(version) {
   return { run, card };
 }
 const unchanged = combat => JSON.stringify({ player: combat.player, piles: combat.piles,
-  seats: combat.players && [...combat.players], enemies: combat.enemies, events: combat.eventLog,
+  enemies: combat.enemies, events: combat.eventLog,
   counters: combat.rng.getCounters(), queue: combat.queue });
 
 for (const version of [1, 2]) test(`equipped Shield Bash solo target projection actually plays under version ${version}`, () => {
@@ -85,74 +87,5 @@ test('selected upcast tier changes the same target plan committed by the engine'
   assert.equal(combat.player.energy, before - 3);
   assert.equal(combat.player.mana, mana - 3);
   assert.equal(combat.player.block, 5);
-  // Preserve the solo assertions above while omitting only the embedded co-op leg.
-  if (COOP_TESTS_ENABLED) {
-    const coop = createCoopCombat({ registries: local, rng: createRng(14), combatExpansionVersion: 2,
-      players: [{ id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
-        maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
-        deck: [instance], orderedDraw: true }], enemyIds: ['wanderingSoldier'] });
-    const coopPreview = previewCoopCard(coop, 'a', id);
-    assert.equal(coopPreview.resolvedDefinition.upcast.baseTier, 2, 'co-op omitted tier uses authored base');
-    const beforeCoop = unchanged(coop);
-    assert.throws(() => previewCoopCard(coop, 'a', id, undefined, 0), /Upcast ranks/);
-    assert.throws(() => playCard(coop, 'a', id, 'a', undefined, 0), /Upcast ranks/);
-    assert.equal(unchanged(coop), beforeCoop, 'explicit invalid tier 0 is refused atomically');
-    assert.doesNotThrow(() => playCard(coop, 'a', id, 'a'), 'omitted tier plays its base rather than an invalid 0');
-    assert.equal(coop.players.get('a').entity.block, 2);
-    const host = createSession({ registries: local, seedString: 'TIERBASE2' });
-    const member = host.addMember({ id: 'a', name: 'A', classId: 'reaver' });
-    member.run.deck.unshift(instance);
-    host.start();
-    while (member.run.classMasteryState.initialTreeTiers.length) host.chooseMasteryNode('a',
-      initialClassTreeChoices(registriesForClassMastery(local, member.run), member.run)[0]);
-    assert.equal(host.chooseNode('a', host.session.reachableIds[0]).ok, true);
-    const owner = host.live.combat.players.get('a');
-    for (const pile of ['hand', 'draw', 'discard', 'exhaust']) owner.piles[pile] = owner.piles[pile].filter(card => card.instanceId !== id);
-    owner.piles.hand.unshift(instance);
-    const refused = host.combatPlay('a', id, 'a', undefined, 0);
-    assert.equal(refused.ok, false);
-    assert.match(refused.error, /Upcast ranks/);
-    const accepted = host.combatPlay('a', id, 'a');
-    assert.equal(accepted.ok, true, accepted.error);
-    assert.ok(host.live.combat.players.get('a').entity.block >= 2, 'network omission reaches the authored base unchanged');
-  }
 });
 
-test('co-op equipment art targeting follows its owner version rather than the previously active seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const rows = [1, 2].map((version, index) => {
-    const { run, card } = equippedRun(version);
-    return { id: index ? 'expanded' : 'legacy', run, card };
-  });
-  const combat = createCoopCombat({ registries, rng: createRng(11), enemyIds: ['wanderingSoldier'],
-    breakMeterVersion: 2, combatExpansionVersion: 2,
-    players: rows.map(({ id, run }) => ({ ...runCombatPlayer(run), id, combatExpansionVersion: run.combatExpansionVersion, orderedDraw: true })) });
-  for (const { id, run, card } of rows) {
-    const seat = combat.players.get(id);
-    assert.ok(seat.piles.hand.some(row => row.instanceId === card.instanceId));
-    const before = unchanged(combat);
-    const preview = previewCoopCard(combat, id, card.instanceId);
-    const context = { ...combat, player: seat.entity, combatExpansionVersion: seat.entity.combatExpansionVersion };
-    const definition = combatCardView(context, { ...card, combatPreview: preview });
-    assert.deepEqual(combatCardView(context, card).effects, definition.effects,
-      'the client fallback uses this owner version when no host preview is present');
-    const plan = cardTargetPlan(definition, id, combat.enemies,
-      [...combat.players.values()].map(row => ({ ...row.entity, id: row.id, connected: row.connected })));
-    const target = run.combatExpansionVersion === 2 ? id : combat.enemies[0].id;
-    const wrongTarget = run.combatExpansionVersion === 2 ? combat.enemies[0].id : id;
-    assert.deepEqual(plan, { mode: run.combatExpansionVersion === 2 ? 'friendly' : 'enemy', legalIds: [target] });
-    assert.equal(unchanged(combat), before, 'owner-specific client projection does not rebind the live active seat');
-    assert.throws(() => playCard(combat, id, card.instanceId, wrongTarget), /Invalid .*target/);
-    assert.equal(unchanged(combat), before, 'rejected owner target is atomic');
-    const hp = combat.enemies[0].hp, block = seat.entity.block;
-    const { events } = playCard(combat, id, card.instanceId, assertCardTarget(plan, target));
-    assert.ok(events.some(event => event.type === 'cardPlayed' && event.playerId === id));
-    const actual = combat.players.get(id);
-    if (run.combatExpansionVersion === 2) {
-      assert.equal(combat.enemies[0].hp, hp);
-      assert.ok(actual.entity.block > block);
-      assert.equal(actual.entity.combatCounter.version, 2);
-      assert.equal(actual.entity.combatCounter.charges, 1);
-      assert.equal(combat.players.get('legacy').entity.combatCounter?.version === 2, false);
-    } else assert.ok(combat.enemies[0].hp < hp);
-  }
-});

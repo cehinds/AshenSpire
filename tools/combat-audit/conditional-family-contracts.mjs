@@ -14,7 +14,7 @@ const representatives = [
 ];
 const stacks = (entity, id) => entity.statuses[id]?.stacks || 0;
 function capture(c, target) {
-  return { player: { hp: c.player.hp, block: c.player.block, barrier: c.player.barrier,
+  return { player: { hp: c.player.hp, block: c.player.block, barrier: c.player.statuses.barrier?.stacks || 0, // Barrier is a status (SPEC 4.1a)
     ward: c.player.persistentWard.value, poise: c.player.persistentPoise.value,
     statuses: structuredClone(c.player.statuses), stanceId: c.player.stanceId,
     combatStance: structuredClone(c.player.combatStance || null) },
@@ -64,7 +64,8 @@ function expectedTotals(api, c, representative, definition, target, before) {
         amount += Math.max(1, Math.floor(amount * pct));
         add('counterstrike', { effectIndex: index, base: effect.amount, pct, amount });
       }
-      if (representative.camp === 'spell') {
+      if (effect.op === 'gainBarrier') { expected.barrier += amount; add('selected-protection', { effectIndex: index, amount, barrier: amount }); } // Barrier stacks, one per point (SPEC 4.1a)
+      else if (representative.camp === 'spell') {
         const wardShare = spellDefenseRules.schools[representative.school] ?? spellDefenseRules.defaultWardShare;
         const block = Math.round(amount * (1 - wardShare)), barrier = amount - block;
         expected.block += block; expected.barrier += barrier;

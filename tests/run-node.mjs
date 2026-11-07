@@ -1,7 +1,7 @@
 // tests/run-node.mjs — Node test runner: `node tests/run-node.mjs`
 // Prints one line per test; exits 1 on any failure.
 //
-// No flags run the active-feature corpus; disabled co-op stays parked by config. CI may schedule the same work as:
+// No flags run the whole corpus. CI may schedule the same work as:
 //   --no-selftests --no-discovered   engine and tool verdicts
 //   --discovered-only --shard i/n   deterministic shards of discovered tests
 //   --no-slow | --slow-only          with --discovered-only: leave out, or run
@@ -10,9 +10,8 @@
 // Selftests that write mutants must run in a separate checkout from tree gates.
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { runTests } from './engine.test.js';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, discoveryFeatureFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 let options;
 try {
@@ -140,9 +139,7 @@ if (DISCOVER) {
   walk(root);
   found.sort();
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
-  const eligible = discoveryFeatureFiles(found.filter(file => !NOT_SPAWNED.has(file)), { coopEnabled: COOP_TESTS_ENABLED });
-  const parkedCount = found.filter(file => !NOT_SPAWNED.has(file)).length - eligible.length;
-  if (!COOP_TESTS_ENABLED) console.log(`SKIP ${parkedCount} dedicated co-op files: ${COOP_TEST_SKIP_REASON}`);
+  const eligible = found.filter(file => !NOT_SPAWNED.has(file));
   let files;
   try {
     files = discoveryShardFiles(discoverySpeedFiles(eligible, options.slow), options.shard);
@@ -453,7 +450,7 @@ if (DISCOVER) {
   //
   // The defect: fillTemplate() emits the marks a player reads to see what an
   // upgrade changes, and its output is drawn in TWO containers — the card face
-  // and the Smith/coop preview inside #tooltip. Every rule styling them was
+  // and the Smith preview inside #tooltip. Every rule styling them was
   // keyed to `.card`, so the preview drew a number it had just computed as
   // CHANGED in the same colour and weight as the prose beside it. Constantine:
   // "I've never seen the upgrade preview before."

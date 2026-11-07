@@ -3,6 +3,7 @@
 // one); an attack sums every rule matching its tags (rollCrit), so each rule's tag set is scored against all rules
 // and the best is shown.
 import { critChance } from '../../engine/actions.js';
+import { effectiveD20Percent } from '../../engine/d20Chance.js';
 
 export function combatStatRows({ statuses, critRules, attributes, kind, evade, attackTagSets }, text) {
   // Foundation fights keep dodge charges on entity.evade, not in statuses; the status stacks win when present.
@@ -16,6 +17,6 @@ export function combatStatRows({ statuses, critRules, attributes, kind, evade, a
   return [
     { label: text('combat.stat.precision'), tipId: 'precision', always: true, value: statuses?.precision?.stacks || 0 },
     { label: text('combat.stat.evasion'), tipId: 'evasion', always: true, value: evasion },
-    ...(kind === 'player' ? [{ label: text('combat.stat.critChance'), tipId: 'critChance', always: true, value: `${Math.round(best * 100)}%` }] : []),
+    ...(kind === 'player' ? [{ label: text('combat.stat.critChance'), tipId: 'critChance', always: true, value: `${effectiveD20Percent(best * 100)}%` }] : []),
   ];
 }

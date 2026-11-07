@@ -7,6 +7,7 @@ import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t } from '../strings.js';
 import { coreSmithingPreviewRows } from '../../model/smithingCore.js';
+import { orderSmithCandidates, defaultSmithSelection } from './smithCandidateOrder.js';
 
 const freeze = (value) => Object.freeze(value);
 
@@ -35,6 +36,7 @@ function groupedAffected(cards) {
       name: card.name.replace(/\+$/, ''),
       role: card.role,
       reference: card.reference,
+      cardReference: card.cardReference,
       rating: card.rating,
       changes,
       values: rawChanges,
@@ -74,8 +76,13 @@ function genericAffected(candidate) {
   })));
 }
 
-export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false, repeatUpgrades = false } = {}) {
-  const items = plan.candidates.map((candidate) => {
+export function smithSelectionModel(registries, plan, selectedItemRef = null, { multiUse = false, repeatUpgrades = false, autoSelect = true } = {}) {
+  // Hidden items are dropped, Blacksmith-gated ones sink to the bottom, and an
+  // empty choice falls to the first upgradeable item. The upgrade list opens with
+  // nothing chosen (`autoSelect: false`): a tap on a row is the choice and opens its modal.
+  const ordered = orderSmithCandidates(plan.candidates);
+  selectedItemRef = selectedItemRef ?? (autoSelect ? defaultSmithSelection(ordered) : null);
+  const items = ordered.map((candidate) => {
     const itemKind = candidate.itemKind || 'armament';
     const itemId = candidate.itemId || candidate.armamentId;
     const itemRef = candidate.itemRef || `armament/${itemId}`;
@@ -122,6 +129,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       stones: candidate.stones,
       shortfall: candidate.shortfall,
       affordable: candidate.affordable,
+      needsBlacksmith: candidate.capped === true,
       affectedCount: candidate.affectedCards.length,
       // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
       affectedRows: itemKind === 'armament' && !candidate.core
@@ -155,11 +163,13 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
         + (plan.refined > 0 ? ` · ${t('smith.purse.refined', { amount: plan.refined, plural: plan.refined === 1 ? '' : 's' })}` : ''),
       candidates: freeze(items),
       selected,
-      canConfirm: Boolean(selected?.affordable),
-      blockedReasons: freeze(selected && !selected.affordable
+      canConfirm: Boolean(selected?.affordable && !selected.needsBlacksmith),
+      blockedReasons: freeze(selected?.needsBlacksmith
+        ? [t('gameProfile.rest.needsBlacksmith', { tier: selected.nextLevel })]
+        : selected && !selected.affordable
         ? [`Need ${selected.shortfall} more Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`]
         : []),
-      backLabel: t('smith.back.shrine'),
+      backLabel: t('common.backTo', { place: t('common.place.shrine') }),
       confirmLabel: !selected
         ? 'Select an item'
         : selected.affordable

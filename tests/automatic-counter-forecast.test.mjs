@@ -46,9 +46,12 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   const combat = fixture({ spent }), enemy = combat.enemies[0];
   const before = JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() });
   const forecast = captureEnemyIntent(combat, enemy);
+  // Owner, 2026-11-03: the forecast is the raw hit (20 each), whatever the Counter stance and its Block do; the real HP loss
+  // (what the Counter owner-cycle budget changes) is checked against the damageDealt events below.
   const expected = spent ? [15, 15, 15] : [12, 15, 15];
-  assert.deepEqual(Array.from(forecast.hitDamages), expected);
-  assert.equal(forecast.totalDamage, spent ? 45 : 42);
+  assert.deepEqual(Array.from(forecast.hitDamages), [20, 20, 20]);
+  assert.equal(forecast.totalDamage, 60);
+  assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');
   assert.equal(JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() }), before);
   assert.deepEqual(captureEnemyIntent(combat, enemy), forecast);
   primeAccuracyRolls(combat, { count: 3 });
@@ -58,5 +61,5 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   const events = combat.eventLog.slice(start);
   assert.deepEqual(Array.from(events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id), e => e.hpLoss), expected);
   assert.equal(events.filter(e => e.type === 'combatCounterTriggered').length, spent ? 0 : 1);
-  assert.equal(combat.player.hp, 100 - forecast.totalDamage);
+  assert.equal(combat.player.hp, 100 - forecast.hpLoss);
 });

@@ -1,5 +1,4 @@
 import test from 'node:test';
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -10,7 +9,6 @@ import { classSkillFeats } from '../src/content/classSkillFeats.js';
 import { classMasteryProblems } from '../src/model/classMasteryContent.js';
 import { syncFeatProperties, propertyMountsOf } from '../src/engine/properties.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
@@ -133,11 +131,6 @@ test('combat snapshot restores selected carriers and spent gates without replay'
  const before=restored.queue.length;triggers.emitEvent(restored,event.type,event);assert.equal(restored.queue.length,before);
 });
 
-test('co-op mounts each seat selection under its own identity', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
- const c=createCoopCombat({registries:reg,rng:createRng(19),players:[{...player([id('coal-on-steel')]),id:'a'},{...player([id('brace-and-bite')]),id:'b'}],enemyIds:['wanderingSoldier']});
- const a=propertyMountsOf(c,c.players.get('a').entity),b=propertyMountsOf(c,c.players.get('b').entity);assert.ok(a['feat:'+id('coal-on-steel')]);assert.ok(!a['feat:'+id('brace-and-bite')]);assert.ok(b['feat:'+id('brace-and-bite')]);
-});
-
 // The enemy's planned follow-ups (its 3-SP pool, SPEC §4.6a) are cleared with its intent, so no blow eats the Block.
 test('Memory of Winter retains at most four Block on a real turn, with highest allowance',()=>{
  const c=fight([id('memory-of-winter')]);c.player.block=10;c.enemies[0].intent=null;c.enemies[0].plannedMoves=[];dispatch(c,{type:'endTurn'});assert.equal(c.player.block,4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,c.player)),4);
@@ -208,7 +201,3 @@ test('Bearer of Burdens restores Mana for a newly enemy-applied debuff, not a fr
  c.turn++;delete c.player.statuses.frail;apply('frail');assert.equal(c.player.mana,5);
 });
 
-test('Cold Memory retention is independent in co-op seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
- const c=createCoopCombat({registries:reg,rng:createRng(24),players:[{...player([id('memory-of-winter')]),id:'a'},{...player([]),id:'b'}],enemyIds:['wanderingSoldier']});
- const a=c.players.get('a').entity,b=c.players.get('b').entity;assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,a)),4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,b)),0);
-});

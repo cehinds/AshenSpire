@@ -29,7 +29,7 @@ export function progressionStats(registries, run, settings = {}) {
       formula: `Maximum cards held: ${handReceipts.capacity.value}` },
     { ...resources.find(row => row.id === 'draw'), faceLabel: 'Draw' }];
   const attributes = attributeCardModels(registries, run.attributes, {
-    projection, equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles, hand,
+    projection, equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles, hand, gainContext: { run, settings },
   });
   // Compare against the same formula with this attribute at zero. This also
   // respects retired pooled rounding, configured gain, and shared caps.

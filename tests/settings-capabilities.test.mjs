@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { settingsRows, generalGroups, visibleAdvancedGroups, categoryHtml, settingsSearchHits } from '../src/ui/screens/settings.js';
+import { advancedSubgroups } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../src/ui/models/SettingsCapabilitiesModel.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { resolveMapMode, mapKnowledge } from '../src/model/map/mapknowledge.js';
@@ -11,11 +12,13 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { readFileSync } from 'node:fs';
-const rows=settingsRows(), core=resolveGameProfile('core'), current=resolveGameProfile('current');
+const rows=settingsRows(), core=resolveGameProfile('core');
 const available=(key,profile)=>settingsRowAvailable(rows.find(row=>row.key===key),profile);
 test('Core hides legacy-only mechanics in groups, topics and search while retaining real controls',()=>{
   const groups=visibleAdvancedGroups(true,core).map(group=>group.id);
   for(const group of ['Progression','Combat','Stats','Recovery','Rewards','Shops','Equipment','World']) assert(!groups.includes(group),group);
+  assert(available('useRestorativeFlasksOutsideCombat', core), 'the flask setting the map points to stays reachable on Core');
+  assert(groups.includes('Interface'), 'Interface stays visible on Core');
   assert(groups.includes('Opening'), 'Core opening settings are live');
   assert(groups.includes('Deck'),'ordered draw still applies to configured fights');
   for(const key of ['viewPreset','uiScale','fullscreen','musicEnabled','sfxVolume','textSize','tapFloor','reducedMotion','screenShake','playInDeckOrder']) assert(available(key,core),key);
@@ -28,32 +31,23 @@ test('Core hides legacy-only mechanics in groups, topics and search while retain
   const profileHtml=categoryHtml('General',{settingsGeneralCategory:'Game rules'},null,null,null,null,'',false,core);
   assert(profileHtml.includes('data-game-profile-settings'));
 });
-test('Current retains all existing valid sections and rank/map preferences',()=>{
-  assert.deepEqual(visibleAdvancedGroups(true,current).map(group=>group.id),visibleAdvancedGroups(true).map(group=>group.id));
-  assert(available('askToUpcastAfterTarget',current));assert(available('mapMode',current));
-  assert(settingsSearchHits('skill',true,{}, {profile:current}).length>0);
-  for(const cat of ['Audio','Accessibility']) assert.deepEqual([...generalGroups(cat,core).values()].flat(),[...generalGroups(cat,current).values()].flat());
-});
 test('disabled configured resources/equipment/routes remove their dependent options',()=>{
-  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{resources:false,equipment:false,routes:false,cards:false}});
+  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{resources:false,equipment:false,routes:false,cards:false}});
   for(const key of ['manaRing','armamentsPresentation','armamentsPhonePlacement','mapZoom','shrinePathGlow','playInDeckOrder']) assert(!available(key,profile),key);
   assert(available('viewPreset',profile));assert(available('musicEnabled',profile));
   const display=categoryHtml('General',{settingsGeneralCategory:'Display','settingsGeneralTopic.Display':'Map'},null,null,null,null,'',false,profile);
   assert(!display.includes('data-key="mapZoom"'));assert(display.includes('data-key="viewPreset"'));
 });
-test('Core and Current both author fog, and stored eligible choices remain explicit (owner, 2026-10-19)',()=>{
-  const bundle=JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/current/bundle.json',import.meta.url),'utf8'));
-  assert.equal(bundle.modules.routes.settings.mapMode,'fog');assert.equal(core.modules.routes.mapMode,'fog');
-  assert.equal(resolveMapMode({}, {gameProfile:core}),'fog');assert.equal(resolveMapMode({}, {gameProfile:current}),'fog');
+test('Core authors fog, and stored eligible choices remain explicit (owner, 2026-10-19)',()=>{
+  assert.equal(core.modules.routes.mapMode,'fog');
+  assert.equal(resolveMapMode({}, {gameProfile:core}),'fog');
   assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:core}),'fog');
-  assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:current}),'path');
-  assert.equal(resolveMapMode({settings:{mapMode:'invalid'}},{gameProfile:current}),'fog');
   // The legacy adapter reads its authored fallback rather than a second UI constant.
   const changed={gameProfile:{modules:{routes:{mode:'legacy',mapMode:'path'}}}};
   assert.equal(resolveMapMode({},changed),'path');
 });
-test('clean real Core and Current maps both start partially hidden under fog',()=>{
-  for(const profile of [core,current]) {
+test('a clean real Core map starts partially hidden under fog',()=>{
+  for(const profile of [core]) {
     const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
     const run=createRunState({seed:3,classId:'reaver',registries});
     run.mapGraph=buildActMap(registries,createRng(3),run.seatOrder[0],1);
@@ -65,11 +59,11 @@ test('clean real Core and Current maps both start partially hidden under fog',()
 });
 
 test('active run capabilities win over a future new-game choice',()=>{
-  const context={active:()=>core,read:()=>current};
+  const future=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{routes:false}});
+  const context={active:()=>core,read:()=>future};
   assert.equal(activeSettingsProfile(context),core);
   assert(!available('askToUpcastAfterTarget',activeSettingsProfile(context)));
-  assert.equal(activeSettingsProfile({read:()=>current}),current);
-  assert(available('askToUpcastAfterTarget',activeSettingsProfile({read:()=>current})));
+  assert.equal(activeSettingsProfile({read:()=>future}),future);
 });
 
 test('both standalone and in-run overlay settings receive the active profile context',()=>{
@@ -78,4 +72,11 @@ test('both standalone and in-run overlay settings receive the active profile con
   assert.match(main,/openOverlay\(\{\s+gameProfile: \{ read: \(\) => selectedGameProfile, active: \(\) => run\?\.gameProfile \|\| selectedGameProfile \}/);
   assert.match(overlay,/settings: ctx.settings,\s+gameProfile: ctx.gameProfile,/);
   assert.match(overlay,/onQuitWithoutSave, gameProfile,/);
+});
+test('the flask setting is filed under Interface > Map & HUD, not Rewards',()=>{
+  const key='useRestorativeFlasksOutsideCombat';
+  const map=advancedSubgroups(settingsRows(),'Interface').find(g=>g.id==='Map & HUD');
+  assert(map,'Map & HUD subgroup exists');
+  assert(map.rows.some(r=>r.key===key),'Map & HUD holds the flask setting');
+  assert(!advancedSubgroups(settingsRows(),'Rewards').some(g=>g.rows.some(r=>r.key===key)),'Rewards no longer holds it');
 });

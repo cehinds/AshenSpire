@@ -1,6 +1,7 @@
 // Chance calculations are pure; only resolveAvoidance owns a committed draw.
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Statuses from './statuses.js';
+import { rollD20Check } from './d20Chance.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 export function chanceMode({ advantage = false, disadvantage = false } = {}) {
@@ -20,8 +21,7 @@ export function rollChanceDie(rng, die, flags = {}, stream = 'combatAvoidance') 
   const mode = chanceMode(flags);
   const dice = [draw()];
   if (mode !== 'normal') dice.push(draw());
-  const favorableHigh = die !== 100;
-  const keepHigh = mode === 'normal' || ((mode === 'advantage') === favorableHigh);
+  const keepHigh = mode !== 'disadvantage';
   return { dice, roll: keepHigh ? Math.max(...dice) : Math.min(...dice), mode };
 }
 
@@ -67,6 +67,7 @@ export function distancePreview(ctx, entity, incomingProfile) {
     && !trait(incomingProfile, 'closing') && !trait(incomingProfile, 'adequateReach')
     && !trait(incomingProfile, 'unavoidable');
   const base = position === 'ranged' ? cfg.rangedChance : position === 'reach' ? cfg.reachChance : 0;
+  // The authored base stays in the preview and event payloads; the receipt shows the 5% step the d20 rolls (rollD20Check rounds too).
   const baseChance = eligible ? Math.max(0, Math.min(cfg.maximumBaseChance, base + finite(entity.distanceAvoidanceBonus))) : 0;
   const flags = { advantage: entity?.distanceAdvantage, disadvantage: entity?.distanceDisadvantage };
   return { eligible: eligible && baseChance > 0, baseChance, chance: effectiveChance(baseChance, flags), flags };
@@ -98,8 +99,9 @@ export function resolveAvoidance(ctx, source, target, profile, incomingDamage, o
     outcome.prevention = preview.prevention;
   }
   if (incomingDamage > 0 && !outcome.avoided && preview.distance.eligible) {
-    const roll = rollChanceDie(ctx.rng, 100, preview.distance.flags);
-    outcome.distance = { ...roll, chance: preview.distance.baseChance, success: roll.roll <= preview.distance.baseChance };
+    // Rolled as a d20 (owner, 2026-11-01): avoided on d20 >= 21 - round(chance% / 5); advantage keeps the higher die.
+    const roll = rollD20Check(ctx.rng, 'combatAvoidance', preview.distance.baseChance, preview.distance.flags);
+    outcome.distance = { dice: roll.rolls, roll: roll.roll, mode: roll.mode, chance: preview.distance.baseChance, target: roll.target, success: roll.success };
     outcome.avoided = outcome.distance.success;
   }
   if (incomingDamage > 0 && !outcome.avoided && preview.evade.eligible) {

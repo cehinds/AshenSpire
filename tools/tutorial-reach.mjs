@@ -16,7 +16,7 @@
 // finishes and persists the tutorial.
 //
 // Zero dependencies: CDP over Node's built-in WebSocket, tools/serve.mjs
-// in-process (same pattern as tools/coop-shoot.mjs).
+// in-process.
 //
 //   node tools/tutorial-reach.mjs
 //   node tools/tutorial-reach.mjs --root
@@ -207,7 +207,7 @@ let passedCount = 0;
 const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); else passedCount += 1; };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ---- minimal CDP client over Node's global WebSocket (per tools/coop-shoot.mjs)
+// ---- minimal CDP client over Node's global WebSocket
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
   let nextId = 1;
@@ -1179,7 +1179,7 @@ async function main() {
   console.log(`${passedCount} passed, ${fails.length} failed`);
   console.log(`  boundary: real Chromium headless against the ${rootArtifact ? 'root standalone artifact' : 'source server'} at deviceScaleFactor 1, UI size = Auto, text size M,`);
   console.log('  English strings, one class (reaver/SHOWCASE), solo play. Not checked: text size');
-  console.log('  L/XL, the fixed UI-size overrides S..XL, touch or gamepad input, co-op boards,');
+  console.log('  L/XL, the fixed UI-size overrides S..XL, touch or gamepad input,');
   console.log('  or any browser but Chromium. Silence from this tool is not coverage of those.');
   if (fails.length) process.exit(1);
 }

@@ -50,6 +50,10 @@ export const COMBAT_OPCODES = Object.freeze([
   // Refills Poise (the Poise twin of gainWard's restore); never a guard.
   'restorePoise',
   'gainBarrier',
+  // Counter / Reflect stack counts on the combat entity (owner 2026-10-31): gainCounterStacks is the Counter card's own
+  // rider (amount defaults to the owner's Block); applyReflect is authored.
+  'gainCounterStacks',
+  'applyReflect',
   'buildup',
   'wardDamage',
   'completeCombatAction',
@@ -125,7 +129,7 @@ export const EVENTS = Object.freeze([
   'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
-  'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
+  'evadeGained', 'attackEvaded', 'counterStacksChanged', 'reflectStacksChanged', 'reflectTriggered', 'impactDealt', 'manaRecovered',
   // A skill feat's critical hit landed (SPEC §13.4o).
   'critHit',
   'combatStart',
@@ -142,6 +146,10 @@ export const EVENTS = Object.freeze([
   'combatReactionUnavailable', 'combatGuardBroken',
   'proposalHitAvoided',
   'enemyBurdenAdded','enemyBurdenDrawn','enemyBurdenBlocked','intentRevealed',
+  // SPEC §17 Contests: an insight contest (d20 + attributes + rank vs Poise + attributes + level) passed or failed.
+  'contestPassed','contestFailed',
+  // SPEC combat log (owner, 2026-10-31): the rolls that were silent now say total vs DC.
+  'critRolled', 'perceptionRolled', 'statusChanceRolled',
   'cardModified',
   'cardMoved',
   'cardDrawn',
@@ -167,6 +175,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
+  'weaknessTriggered',
+  'manaLost',
   // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
   // statuses } — what balance.stagger.player took from them.
   'playerStaggered',
@@ -548,6 +559,8 @@ export const EFFECT_SPECS = Object.freeze({
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },
+  gainCounterStacks: { allowed: [], required: [], refs: {} },
+  applyReflect: { allowed: [], required: ['amount'], refs: {} },
   wardDamage: { allowed: [], required: ['amount'], refs: {} },
   completeCombatAction: { allowed: [], required: [], refs: {} },
   buildup: { allowed: ['status', 'camp', 'recoveryProfile', 'traits', 'chance', 'advantage', 'disadvantage'], required: ['status', 'amount'], refs: { status: 'statuses' } },
@@ -758,6 +771,7 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 
 // Optional authored behavior attachments. The shared compiler validates tag
 // registration, attachment eligibility and parameter schemas at the boot door.
+const rampNode = obj({ scope: en('combat', 'run'), stat: en('damage', 'block'), per: int });
 const mechanicAttachmentFields = {
   mechanicTags: opt(arr(str)),
   mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
@@ -831,6 +845,8 @@ export const SCHEMAS = Object.freeze({
     minCombatExpansionVersion: opt(int),
     // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
     costRule: opt(str),
+    // Ramp (SPEC §4.3): the card's damage or block grows with its uses; `scope` 'combat' counts plays this fight, 'run' adds plays across the whole run.
+    ramp: opt(rampNode),
     corrupted: opt(bool),
     ashenBlightCost: opt(int),
     counterCoverage: opt(any),
@@ -845,6 +861,8 @@ export const SCHEMAS = Object.freeze({
     comboHook: opt(any),
     schoolEffect: opt(str),
     breakPoiseBonus: opt(num),
+    // Insight contest (SPEC §17): 'mental' (INT + WIS) or 'physical' (DEX + CON); replaces the hit roll and range for this card's enemy effects.
+    contest: opt(str),
     range: opt(str),
     defenseRange: opt(str),
     targeting: opt(str),
@@ -873,7 +891,7 @@ export const SCHEMAS = Object.freeze({
     costGrowth: opt(obj({stamina:opt(num),mana:opt(num),perUse:opt(num),max:opt(num)})),
     effectVariants: opt(arr(obj({if:{k:'predicate'},effects,textTemplate:opt(str)}))),
     targetLimit: opt({k:'formulaOrNum'}),
-    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), traits: opt(any) }))),
+    gradeProfiles: opt(arr(obj({ rank: int, actionCost: int, manaCost: int, effects, textTemplate: opt(str), faceTemplate: opt(arr(str)), traits: opt(any) }))),
     weightClassPriced: opt(bool),
     type: en(...CARD_TYPES),
     attack: opt(any),
@@ -886,6 +904,8 @@ export const SCHEMAS = Object.freeze({
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
     textTemplate: str,
+    // The glance face's authored summary: at most two short lines (five words each), same {tokens} as textTemplate. The face shows it in place of the Inspect cue when the computed face cannot be said in five-word clauses (SPEC card face rules).
+    faceTemplate: opt(arr(str)),
     // Core 2 with Ward off: the rules text when this card's Ward damage reads as Poise damage; {poiseDamage} is all of its Poise (model/wardOffCardText.js).
     wardOffTextTemplate: opt(str),
     upgrade: opt(
@@ -897,6 +917,8 @@ export const SCHEMAS = Object.freeze({
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
+        ramp: opt(rampNode),
+        contest: opt(str),
       })
     ),
     icon: opt(str),
@@ -960,6 +982,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    sharedWord: opt(bool), // the status name doubles as a card-text word (e.g. Ward pool, Barrier grant): face projection must not read the word as this status (SPEC 4.1a)
     fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
@@ -1100,6 +1123,11 @@ export const SCHEMAS = Object.freeze({
     damageResistanceBySchool: opt(obj(Object.fromEntries(
       DAMAGE_SCHOOLS.map((school) => [school, opt(num)])
     ))),
+    // Weaknesses (owner, 2026-10-31): [{ to, effect, amount? }], validated by model/enemyWeaknessRules.js in validate.js.
+    weaknesses: opt(arr(obj({ to: str, effect: str, amount: opt(num) }))),
+    // Element (owner, 2026-10-31, SPEC 4.7): an earth enemy opens with Bedrock; own-element moves get x1.25. startStatuses seed at spawn (Core).
+    element: opt(str),
+    startStatuses: opt(arr(obj({ status: str, stacks: num }))),
     script: opt(ref('scripts')),
   }),
 

@@ -1,4 +1,3 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { contentBundle as expandedBundle } from '../src/content/index.js';
@@ -23,7 +22,6 @@ import { equipClassCard } from '../src/model/classLibrary.js';
 import { creationEquipmentSectionViews, creationHandChoices } from '../src/model/characterCreation.js';
 import { completeQuest } from '../src/engine/quests.js';
 import { completedRunMeta, commitRunFinish } from '../src/model/runCompletion.js';
-import { createSession, restoreSession } from '../tools/session.mjs';
 import { executeRunEffects } from '../src/engine/actions.js';
 
 const source = createRegistries(configuredContentBundle(contentBundle));
@@ -158,36 +156,6 @@ test('quest pay is once per completion and terminal result retries are atomic', 
     assert.equal(retry.meta.results.length, 1);
     assert.equal(retry.meta.progress.runs, 1);
   }
-});
-
-test('co-op seats keep their own entitlements, initial tree and nonbanking state through restore', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
-  const S = createSession({ registries: source, seedString: 'GOLDBOUGH' });
-  const fresh = freshMeta();
-  const veteran = freshMeta();
-  veteran.classMastery.reaver = { level: 5, xp: masterySpentXp(source, 5), unlockedRows: source.classMastery.filter(row => row.classId === 'reaver').map(masteryRowId) };
-  S.addMember({ id: 'a', classId: 'reaver', classMastery: fresh.classMastery });
-  S.addMember({ id: 'b', classId: 'reaver', classMastery: veteran.classMastery });
-  S.start();
-  assert.equal(S.chooseNode('a', S.session.reachableIds[0]).ok, false);
-  for (const m of S.connectedMembers()) {
-    const reg = registriesForClassMastery(source, m.run);
-    while (m.run.classMasteryState.initialTreeTiers.length) assert.equal(S.chooseMasteryNode(m.id, initialClassTreeChoices(reg, m.run)[0]).ok, true);
-  }
-  const A = S.session.members.get('a'), B = S.session.members.get('b');
-  assert.equal(A.run.coreTags.length, 1);
-  assert.equal(B.run.coreTags.length, 3);
-  assert.ok(registriesForClassMastery(source, B.run).classes.get('reaver').cardPool.length > registriesForClassMastery(source, A.run).classes.get('reaver').cardPool.length);
-  const view = S.snapshot().party.find(m => m.id === 'b');
-  assert.equal(view.classMasteryState.version, 1);
-  assert.equal(view.skills['class:reaver'].level, 5);
-  const restored = restoreSession(source, S.serialize());
-  assert.equal(restored.session.members.get('b').run.classMasteryState.bankable, false);
-  const saves = createSaveManager(createMemoryStorage());
-  assert.equal(saves.bankClassMastery(B.run, source).changed, false);
-  // Replay a final quest exchange at its frozen position through the actual catch-up door.
-  A.catchup.push({ type: 'event', eventId: 'namelessRest', open: [0], act: 1, floor: 0, mapNodeId: null });
-  assert.equal(S.resolveCatchup('a', 0, { choiceIndex: 0 }).ok, true);
-  assert.equal(A.run.classMasteryState.earnedXp.reaver, 10);
 });
 
 test('fight pay replaces old class awards and claimed unlocks join live pools immediately', () => {

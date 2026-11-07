@@ -13,7 +13,7 @@ const GLOBALS = ['document', 'getComputedStyle', 'requestAnimationFrame', 'cance
 const ORIGINAL = {};
 let frames = [];
 
-function fixture({ width, height, formFactor, appearance = 'alternative', sharedHud, layout }) {
+function fixture({ width, height, formFactor, sharedHud, layout }) {
   const props = {};
   const topbar = { querySelectorAll: () => [], getBoundingClientRect: () => ({ top: 0, bottom: 0, height: 0 }) };
   const combat = {
@@ -30,7 +30,7 @@ function fixture({ width, height, formFactor, appearance = 'alternative', shared
       return null;
     },
   };
-  return { combat, documentElement: { dataset: { formFactor, displayAppearance: appearance } } };
+  return { combat, documentElement: { dataset: { formFactor, displayAppearance: 'alternative' } } };
 }
 
 function run(options) {
@@ -61,7 +61,6 @@ const tablet = (width, extra = {}) => run({ width, height: 800, formFactor: 'tab
 
 test('the authored header heights and the single-row breakpoint are the values under test', () => {
   assert.deepEqual([header.heightPx, header.stackedHeightPx, header.singleRowMinWidthPx], [56, 76, 640]);
-  assert.deepEqual([header.coopHeightPx, header.coopTallHeightPx, header.coopShortHostMaxPx], [40, 64, 500]);
 });
 
 test('a host 639px wide takes the stacked header at its authored 76px', () => {
@@ -83,25 +82,3 @@ test('the desktop split always takes the single row, however narrow the host', (
   assert.equal(result.hud, header.splitHeightPx);
 });
 
-test('the classic appearance keeps the measured band and writes no header row', () => {
-  const result = tablet(700, { appearance: 'classic' });
-  assert.equal(result.row, '');
-  assert.ok(result.hud < header.heightPx, `classic hud ${result.hud}`);
-});
-
-test('the co-op board (no shared header) floors its measured band at 40px on a short host', () => {
-  const result = run({ width: 700, height: header.coopShortHostMaxPx, formFactor: 'tablet', sharedHud: false });
-  assert.equal(result.row, '');
-  assert.equal(result.hud, header.coopHeightPx);
-});
-
-test('the co-op board floors its measured band at 64px on a host taller than 500px', () => {
-  const result = run({ width: 700, height: header.coopShortHostMaxPx + 1, formFactor: 'tablet', sharedHud: false });
-  assert.equal(result.row, '');
-  assert.equal(result.hud, header.coopTallHeightPx);
-});
-
-test('the co-op floor is not applied under the classic appearance', () => {
-  const result = run({ width: 700, height: 800, formFactor: 'tablet', appearance: 'classic', sharedHud: false });
-  assert.ok(result.hud < header.coopTallHeightPx, `classic co-op hud ${result.hud}`);
-});

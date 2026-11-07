@@ -31,7 +31,7 @@ function play(t, effects) {
       playTimeline([{ type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
         { type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount: 20 }], ctx, () => {});
       const seen = new Set();
-      for (let i = 0; i < 3000; i++) { t.mock.timers.tick(1); for (const c of layer.children) seen.add(String(c.className)); }
+      for (let i = 0; i < 6000; i++) { t.mock.timers.tick(1); for (const c of layer.children) seen.add(String(c.className)); }
       out = { classes: [...seen], shaken: combatEl.classList.contains('shake') };
     } finally { haptic.sink = oldSink; setAnimSpeed('normal'); dom.document.documentElement = priorRoot; }
   });

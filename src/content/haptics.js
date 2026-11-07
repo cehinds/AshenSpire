@@ -10,19 +10,15 @@
 // because an unasked buzz is worse than none.
 //
 // Who plays them:
-//   cardPlay    — a card actually played: combat.js's playCard (solo), and
-//                 co-op's authoritative cardPlayed receipt for a local seat.
+//   cardPlay    — a card actually played: combat.js's playCard.
 //   damageTaken — the player loses HP, attack or not (Guilt, Herald, Gorefire,
 //                 Venom's hpLost too): ui/fx.js playBeatCues, once per beat.
 //   turnStart   — the player's turn begins: ui/fx.js playBeatCues.
 //   bigHit      — the player's hit takes an enemy down by 20% of its max HP or
-//                 more: ui/fx.js playBeatHaptics, once per beat (a co-op seat
-//                 feels its own hits only).
+//                 more: ui/fx.js playBeatHaptics, once per beat.
 //   poiseBreak  — an enemy's Poise breaks and its stagger starts: ui/fx.js
-//                 playBeatHaptics, on the engine's poiseBroken receipt (solo
-//                 only; the receipt names no seat, so co-op leaves it still).
-//   victory     — the run is won: ui/screens/gameover.js mountGameOver (solo),
-//                 ui/screens/coop.js renderComplete (co-op, once per complete scene).
+//                 playBeatHaptics, on the engine's poiseBroken receipt.
+//   victory     — the run is won: ui/screens/gameover.js mountGameOver.
 //
 // Retuning a buzz, or giving another moment one, is an edit to this table and
 // one call site. The setting that turns all of them off is `haptics` in
@@ -38,7 +34,7 @@ export const HAPTIC_PATTERNS = Object.freeze({
   victory: Object.freeze([20, 40, 20, 40, 80]), // the run is won
 });
 
-// Cues asked for in one tick (an instant replay, a co-op receipt batch) are
+// Cues asked for in one tick (an instant replay) are
 // played as ONE pattern, in order, HAPTIC_BATCH_GAP_MS apart: a second
 // navigator.vibrate call aborts the first (W3C Vibration, "perform
 // vibration"), so separate calls would truncate each other. The batch stops

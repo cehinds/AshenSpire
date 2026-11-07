@@ -1,11 +1,7 @@
-import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import {test} from 'node:test';import assert from 'node:assert/strict';import {combatEffectFor as effect, combatEffectPlan, combatEffectTags, combatEffectTargetIds} from '../src/model/combatEffects.js';
 test('ranged identity, not mana or class, selects projectiles',()=>{const hit={op:'damage',target:'enemy'};assert.equal(effect({type:'attack',manaCost:2,effects:[hit]},'starseer').projectile,false);assert.equal(effect({type:'attack',manaCost:1,tags:['starstone','ranged'],effects:[hit]}).kind,'starbolt');assert.equal(effect({type:'attack',tags:['blade','starstone'],effects:[hit]}).projectile,false);});
 test('guards and Powers use local effects and heals wait for actual receipts',()=>{assert.deepEqual(effect({type:'skill',tags:['guard']}),{kind:'physicalGuard',projectile:false});assert.equal(effect({type:'power'},'reaver').kind,'focusMotes');assert.equal(effect({type:'skill',manaCost:1,tags:['heal'],effects:[{op:'heal',target:'self'}]}).kind,'cleanse');});
-import {createRegistries} from '../src/model/registries.js';import {contentBundle} from '../src/content/index.js';import {createSession} from '../tools/session.mjs';
-// Historical host receipts start after character setup; other content tests remain modern.
-import {legacyContentBundle} from './helpers/legacy-progression-content.mjs';
-test('co-op stance receipt identifies the actor for its visual effect', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);const p=host.live.combat.players.get('p2');p.piles.hand.push({instanceId:'stance-fx',cardId:'enterBulwark',upgraded:false});p.entity.energy=20;p.entity.stamina=99;const r=host.combatPlay('p2','stance-fx');assert.ok(r.ok,r.error);const receipt=host.snapshot().scene.events.find(e=>e.type==='stanceEntered');assert.equal(receipt.playerId,'p2');assert.equal(receipt.stance,'bulwark');});
+import {createRegistries} from '../src/model/registries.js';import {contentBundle} from '../src/content/index.js';// Historical host receipts start after character setup; other content tests remain modern.
 import { COMBAT_EFFECT_ART } from '../src/content/combatEffectArt.js';
 import { combatEffectPresentation } from '../src/content/combatEffectPresentation.js';
 import { combatEffectForEvent } from '../src/model/combatEffectEvents.js';
@@ -50,20 +46,6 @@ test('actual status receipts own afflictions and resisted attempts do not burst'
  assert.equal(combatEffectForEvent({type:'stanceEntered',stance:'gorefire'}).kind,'berserkStance');
  assert.equal(combatEffectForEvent({type:'enemyStaggered',targetId:'e1'}).kind,'staggerBreak');
  for(const e of [{type:'procResisted',status:'frost',targetId:'e1'},{type:'statusApplied',status:'venom',stacks:0,targetId:'e1'},{type:'hpLost',cause:'proc:bleed',amount:10,targetId:'e1'}])assert.equal(combatEffectForEvent(e),null);
-});
-
-test('co-op digest preserves the fields needed to render status and stagger receipts', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
- const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'FX77'});
- host.addMember({id:'p1',name:'p1',classId:'reaver'});host.start();host.chooseNode('p1',host.session.mapGraph.startIds[0]);
- host.snapshot();
- const added=[{type:'statusApplied',targetId:'p1',status:'venom',stacks:2,total:2},{type:'procBurst',targetId:'p1',status:'frost'},{type:'enemyStaggered',targetId:'e1'}];
- host.live.combat.eventLog.push(...added);
- const player=host.live.combat.players.get('p1');player.entity.energy=99;player.entity.stamina=99;
- player.piles.hand.push({instanceId:'publish-status-fx',cardId:'defend',upgraded:false});
- assert.ok(host.combatPlay('p1','publish-status-fx').ok);
- const events=host.snapshot().scene.events;
- for(const wanted of added){const found=events.find(e=>e.type===wanted.type);assert.ok(found);for(const [key,value]of Object.entries(wanted))assert.equal(found[key],value);assert.ok(combatEffectForEvent(found));}
- const seq=host.snapshot().scene.receiptSeq;assert.equal(host.snapshot().scene.receiptSeq,seq);
 });
 
 test('subtle utility effects stay smaller and dimmer than combat releases',()=>{

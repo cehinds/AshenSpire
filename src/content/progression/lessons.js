@@ -9,7 +9,7 @@ import { reaverCards } from '../cards/reaver.js';
 import { starseerCards } from '../cards/starseer.js';
 import { rogueCards } from '../cards/rogue.js';
 import { heraldCards } from '../cards/herald.js';
-import { recipeText } from './cardRecipeText.js';
+import { recipeText, recipeFace } from './cardRecipeText.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardExposure } from '../generated/cardExposure.js';
 import { progressionGradeRules } from '../generated/progressionGradeRules.js';
@@ -27,7 +27,7 @@ function lessonGrade(recipe, rank) {
   // letting a stronger effect silently buy another resource tax.
   if (options.grades) {
     const grade = structuredClone(options.grades[rank]);
-    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(id)),
+    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(id)), faceTemplate: recipeFace(grade.effects, combatProfileFor(id)),
       traits: { costRule: 'fixed',
         ...(original.effects.some(e => e.op === 'damage') ? { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } : {}),
       },
@@ -58,7 +58,7 @@ function lessonGrade(recipe, rank) {
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
   const fixedCost=options.fixedGradeCosts?.[rank];
-  return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)),
+  return { rank, actionCost: fixedCost?.actionCost ?? (rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0))), manaCost: fixedCost?.manaCost ?? rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)), faceTemplate: options.face ?? recipeFace(effects, combatProfileFor(id)),
     ...(original.effects.some(e => e.op === 'damage') ? { traits: { ...(fixedCost ? {costRule:'fixed'} : {}),damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }
@@ -73,7 +73,7 @@ export const abilityCardUpdates = recipes.map(recipe => {
       ...legacyCarriers.get(id),
       ...(original.upgrade ? { upgrade: structuredClone(original.upgrade) } : {}),
     },
-    cost: base.actionCost, manaCost: base.manaCost, effects: base.effects, textTemplate: base.textTemplate,
+    cost: base.actionCost, manaCost: base.manaCost, effects: base.effects, textTemplate: base.textTemplate, ...(base.faceTemplate ? { faceTemplate: base.faceTemplate } : {}),
     ...base.traits,
     // A rank recipe replaces the old upgrade recipe; never layer its old
     // free-resource effects back on top of a resolved ability grade.

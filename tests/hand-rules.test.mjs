@@ -187,32 +187,6 @@ test('saved rules reject malformed formulas, and old snapshots retain legacy beh
   assert.equal(legacy.piles.discard.length, 3);
 });
 
-// A fight saved before ruleset 7 carries the retired single-stat groups
-// (`starting`, `turn`, `capacity`) and no rows. It resumes and counts exactly
-// as it did — and LEGACY_ROWS above state those same numbers, so the two
-// fights stay in step.
-test('a fight saved with the retired hand groups still counts exactly', () => {
-  const c = fight();
-  const saved = serializeCombatSnapshot(c);
-  const { rows, ...options } = saved.handRules;
-  saved.handRules = {
-    ...options,
-    starting: { base: 3, statEnabled: true, stat: 'intelligence', baseline: 10, pointsPerCard: 10, minimum: 0, maximum: 10 },
-    turn: { base: 2, statEnabled: false, stat: 'intelligence', baseline: 10, pointsPerCard: 10, minimum: 0, maximum: 10 },
-    capacity: { base: 10, statEnabled: false, stat: 'intelligence', baseline: 10, pointsPerCard: 10, minimum: 1, maximum: 30 },
-  };
-  const legacy = restoreCombatSnapshot({ registries, rng: createRng(8), snapshot: saved });
-  for (const intelligence of [0, 9, 10, 19, 20, 30, 99]) {
-    assert.equal(scaledCards(handRow(legacy.handRules, 'openingHand'), { intelligence }), Math.min(10, 3 + Math.floor(Math.max(0, intelligence - 10) / 10)));
-    assert.equal(scaledCards(handRow(legacy.handRules, 'openingHand'), { intelligence }), scaledCards(rows.openingHand, { intelligence }));
-  }
-  const current = restoreCombatSnapshot({ registries, rng: createRng(8), snapshot: serializeCombatSnapshot(c) });
-  dispatch(legacy, { type: 'endTurn' });
-  dispatch(current, { type: 'endTurn' });
-  assert.equal(legacy.piles.hand.length, 10);
-  assert.deepEqual(legacy.piles, current.piles);
-});
-
 test('settings present each hand-rule subsection once, in the order a turn reads them', () => {
   // The Starting hand subsection holds only the Opening hand stat row since
   // ruleset 7; these are the behaviour options' own subsections.
@@ -227,12 +201,10 @@ test('settings present each hand-rule subsection once, in the order a turn reads
 // read through its exact adapter.
 test('the hand receipt is the arithmetic scaledCards does', () => {
   const row = { base: 3, intelligence: 0.3, min: 1, max: 5 };
-  const group = { base: 3, statEnabled: true, stat: 'intelligence', baseline: 4, pointsPerCard: 3, minimum: 1, maximum: 5 };
   for (const intelligence of [0, 4, 7, 10, 40]) {
     const receipt = statRowValue(row, { attributes: { intelligence } });
     assert.equal(receipt.value, scaledCards(row, { intelligence }));
     assert.equal(receipt.terms.intelligence, Math.floor(intelligence * 0.3 + 1e-9));
-    assert.equal(scaledCards(group, { intelligence }), Math.min(5, Math.max(1, 3 + Math.floor(Math.max(0, intelligence - 4) / 3))));
   }
 });
 

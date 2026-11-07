@@ -4,9 +4,8 @@ import { uiConfig } from '../src/config/generated/ui.js';
 import { desktopFooterEnabled, desktopFooterLayout, desktopHandLayout } from '../src/ui/models/DesktopCombatFooter.js';
 
 test('approved footer follows the chosen wide preset and alternative appearance only', () => {
-  for (const formFactor of ['desktop', 'widescreen']) assert.equal(desktopFooterEnabled({formFactor,appearance:'alternative',layout:'formation'}),true);
-  for (const formFactor of ['mobile', 'tablet']) assert.equal(desktopFooterEnabled({formFactor,appearance:'alternative',layout:'formation'}),false);
-  assert.equal(desktopFooterEnabled({formFactor:'desktop',appearance:'classic',layout:'formation'}),false);
+  for (const formFactor of ['desktop', 'widescreen']) assert.equal(desktopFooterEnabled({formFactor,layout:'formation'}),true);
+  for (const formFactor of ['mobile', 'tablet']) assert.equal(desktopFooterEnabled({formFactor,layout:'formation'}),false);
 });
 for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`desktop ${width}: fixed footer, smaller proportional cards, and variable fan`, () => {
   const footer=desktopFooterLayout({width:width/zoom,height:height/zoom,zoom});
@@ -17,9 +16,10 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
   assert.ok(Math.abs((end.y+end.h)*zoom-(height-uiConfig.scenes.w4a.sizing.desktopFooter.bottomInsetPx*footer.unit*zoom))<.001);
   for(const count of [1,3,5,7,10]){
     const hand=desktopHandLayout({width:width/zoom,height:footer.handHeight,count,zoom});
-    // Owner (2026-10-31): desktop cards net 20% smaller than the measured ~121px (before), so the cap is 97 viewport px
-    // (first asked 30% smaller, 85px; then "about 10% larger, so net 20% smaller").
-    assert.ok(hand.cardWidth*zoom>=96.9 && hand.cardWidth*zoom<=97.1, "desktop cards sit at the 97px cap (0.8 x the measured ~121px of dev b506bf55)");
+    // Owner (2026-10-31): desktop cards net 20% smaller than the measured ~121px (before), so the cap was 97 viewport px
+    // (first asked 30% smaller, 85px; then "about 10% larger, so net 20% smaller"). Owner (2026-11-01): another 10% larger, 106.7px.
+    // Owner (2026-11-02): desktop and laptop cards 20% larger again, so the cap is 128.04 viewport px (1.2 x 106.7).
+    assert.ok(hand.cardWidth*zoom>=127.9 && hand.cardWidth*zoom<=128.2, "desktop cards sit at the 128.04px cap (1.2 x the previous 106.7px)");
     assert.ok(Math.abs(hand.cardWidth/hand.cardHeight-2/3)<1e-9);
     assert.ok(hand.cards[0].x>=0);
     assert.ok(hand.cards.at(-1).x+hand.cardWidth<=width/zoom);

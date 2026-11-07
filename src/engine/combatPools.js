@@ -1,4 +1,4 @@
-import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum, barrierPoiseBonus } from '../model/combatRatings.js';
 
 // The rating-driven pools (Ward and Poise). A small module of its own so that
 // both actions.js and the status and rating paths can sync a pool without an
@@ -38,9 +38,18 @@ export function syncWardMaximum(ctx, entity) {
 export function syncPoiseMaximum(ctx, entity) {
   const poise = entity?.persistentPoise;
   if (!poise || !entity.ratings || ctx.combatExpansionVersion !== 2) return;
-  const max = persistentPoiseMaximum(ctx, entity);
-  if (max === poise.max) return;
-  resizePool(poise, max);
-  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: 'rating', ...seatOf(ctx, entity) });
+  // Barrier (SPEC 4.1a): each stack is +5 maximum AND +5 current Poise. A stack lost takes its +5 maximum and the
+  // current value is clamped to the new maximum. The rating part keeps resizePool's missing-amount rule.
+  const bonus = barrierPoiseBonus(ctx, entity), held = poise.barrierBonus || 0;
+  const ratingMax = persistentPoiseMaximum(ctx, entity);
+  if (ratingMax + held === poise.max && bonus === held) return;
+  if (ratingMax + held !== poise.max) resizePool(poise, ratingMax + held);
+  const delta = bonus - held;
+  if (delta !== 0) {
+    poise.max += delta;
+    poise.value = delta > 0 ? poise.value + delta : Math.min(poise.value, poise.max);
+    if (delta > 0) delete poise.missing; // a refilled pool is no longer empty (combatStatusState: missing only while value is 0)
+    if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus;
+  }
+  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: delta ? 'barrier' : 'rating', ...seatOf(ctx, entity) });
 }
-

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { setData } from '../src/ui/domWrite.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, previewCard, previewCardHit } from '../src/engine/combat.js';
@@ -43,7 +44,7 @@ function fixture(document) {
   const context = {
     combat, registries, combatEl, enemyFrames, document, CSS: { escape: value => value },
     selected: 'spark-1', selfArm: null, selectedFlask: null, lastTargetId: combat.enemies[0].id,
-    heldTurnHand: null, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
+    heldTurnHand: null, playQueue: [], inputBusy: () => false, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
     resolveCombatCard, previewCard, previewCardHit, cardTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
     rangeHitLabel, upcastOptions, upcastChoicePlan, esc: value => String(value),
@@ -81,8 +82,9 @@ for (const cached of [false, true]) test(`selection places current odds exactly 
   f.context.syncCardSelection();
   assert.equal(f.oddsCount(), 1);
   assert.ok(f.calls.indexOf('stance') < f.calls.indexOf('odds'));
-  assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
-  assert.equal(f.hand.querySelectorAll('.card-hit-chance').length, 2);
+  assert.equal(f.hand.querySelectorAll('.card-hit-chances, .card-hit-chance').length, 0, 'no odds box on the card face');
+  assert.equal(f.hand.querySelectorAll('.card-hit-chances, .card-hit-chance').length, 0, 'no odds box on the card face');
+  assert.equal([...f.enemyFrames.values()].filter(e => e.box.querySelector(':scope > .combat-hit-chance')).length, 2, 'each enemy keeps its own badge');
   assert.equal(JSON.stringify({ combat: f.combat.player, piles: f.combat.piles, rng: f.combat.rng.getCounters() }), before);
 }));
 
@@ -90,7 +92,7 @@ test('standalone hand repaint refreshes odds after enemy change and target focus
   const f = fixture(document); f.context.renderHand(); assert.equal(f.oddsCount(), 1);
   f.combat.enemies[0].alive = false;
   f.context.renderHand(); assert.equal(f.oddsCount(), 2);
-  assert.equal(f.hand.querySelectorAll('.card-hit-chance').length, 1, 'dead target badge is removed');
+  assert.equal([...f.enemyFrames.values()].filter(e => e.box.querySelector(':scope > .combat-hit-chance')).length, 1, 'dead target badge is removed');
   const target = f.combat.enemies[1]; target.block = 8;
   f.context.previewAimedTarget({ target: f.enemyFrames.get(target.id).box });
   assert.equal(f.context.lastTargetId, target.id);
@@ -105,7 +107,7 @@ test('range route selection rebuilds the hand and places final odds once', () =>
   assert.equal(f.context.rangeRoutesByCard.get('spark-1'), 'throw');
   assert.equal(f.oddsCount(), before + 1);
   assert.equal(f.context.upcastPreviewRefresh, false);
-  assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
+  assert.equal(f.hand.querySelectorAll('.card-hit-chances, .card-hit-chance').length, 0, 'no odds box on the card face');
 }));
 
 test('inline upcast change keeps selection and publishes the new paid tier once', () => withKitDom(({ document, Event }) => {
@@ -119,7 +121,7 @@ test('inline upcast change keeps selection and publishes the new paid tier once'
   const rank = Number(picker.value), latest = f.quotes.at(-1).quote;
   assert.deepEqual(latest, previewCard(f.combat, 'spark-1', f.context.lastTargetId, rank));
   assert.ok(latest.manaCost > oldQuote.manaCost, 'rank change reaches the live engine quote');
-  assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
+  assert.equal(f.hand.querySelectorAll('.card-hit-chances, .card-hit-chance').length, 0, 'no odds box on the card face');
 }));
 
 
@@ -131,7 +133,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
   const field = document.createElement('div'); field.className = 'field'; c.combatEl.append(field);
   Object.assign(c, {
     paintedAppearance: 'test', displayAppearance: () => 'test', selectedCombatantId: null,
-    formationOccupancy: () => [], renderPlayer() {},
+    setData, formationOccupancy: () => [], renderPlayer() {},
     renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
     syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
     combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,
@@ -155,7 +157,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
     assert.equal(face.staminaCost, expected.staminaCost);
     assert.deepEqual(f.quotes.at(-1).quote, previewCard(c.combat, 'spark-1', c.lastTargetId));
     assert.equal(f.rendered.at(-1)[0].affordable, mana >= f.rendered.at(-1)[0].preview.manaCost);
-    assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
+    assert.equal(f.hand.querySelectorAll('.card-hit-chances, .card-hit-chance').length, 0, 'no odds box on the card face');
     for (const enemy of c.combat.enemies) {
       const hit = previewCardHit(c.combat, c.selected, enemy.id, undefined, { observerId: 'player', rangeRoute: 'advance' });
       assert.equal(f.enemyFrames.get(enemy.id).box.querySelector('.combat-hit-chance')?.textContent, rangeHitLabel(hit, { targetId: enemy.id }));
@@ -167,7 +169,7 @@ test('full board render publishes one fresh quote after hand costs and HP change
   const before = f.oddsCount(); c.renderFull();
   assert.equal(f.oddsCount(), before + 1);
   assert.equal(f.enemyFrames.get(c.combat.enemies[0].id).box.querySelector('.combat-hit-chance'), null, 'the final pass removes the defeated target odds');
-  assert.equal(f.hand.querySelectorAll('.card-hit-chance').length, 1);
+  assert.equal(f.hand.querySelectorAll('.card-hit-chance').length, 0);
   c.renderEnemies = options => assert.equal(options.refreshTargets, true, 'an isolated stage keeps immediate target refresh by default');
   c.renderCombatantStage();
 }));
@@ -177,7 +179,7 @@ test('standalone enemy render refreshes immediately unless its caller owns the f
   const calls = [], context = {
     combat: { enemies: [] }, enemyFrames: new Map(), selected: null, selectedFlask: null,
     $: () => ({}), targetLayer: () => ({ eligibleIds: [] }),
-    syncHitChances: () => calls.push('odds'), applyTargetLayer: () => calls.push('targets'),
+    syncHitChances: () => calls.push('odds'), applyTargetLayer: () => calls.push('targets'), syncWeaknessDiscovery: () => {},
   };
   runInNewContext(source.slice(start, end + 4) + '\nglobalThis.renderEnemies = renderEnemies;', context);
   context.renderEnemies(); assert.deepEqual(calls, ['odds', 'targets']);

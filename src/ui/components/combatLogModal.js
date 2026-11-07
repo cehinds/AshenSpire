@@ -7,6 +7,7 @@
 // draws entries with the same renderer, so the two cannot disagree.
 
 import { damageReceiptLines } from './damageReceipt.js';
+import { rollReceiptLines } from './rollReceipt.js';
 import { el, button } from '../kit/index.js';
 import { openModal } from './modalShell.js';
 import { t, tFull } from '../strings.js';
@@ -56,6 +57,8 @@ export function renderCombatLogEntries(container, entries, { detailed = false, p
     if (detailed) {
       const lines = damageReceiptLines(entry.damageReceipt);
       if (lines.length) item.append(el('div', { class: 'combat-log-calculation', text: lines.join('\n') }));
+      const rolled = rollReceiptLines(entry.rollReceipt);
+      if (rolled.length) item.append(el('div', { class: 'combat-log-calculation combat-log-roll', text: rolled.join('\n') }));
     }
     items.append(item);
   }
