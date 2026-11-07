@@ -557,13 +557,14 @@ Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`: `{
 
 ### 3.9 Action queue
 
-Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
-
-Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Triggers react to events; they never mutate directly.
+Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager).
+- Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions.
+- The queue drains fully before control returns to the UI.
+- **Nothing mutates HP/block/piles/statuses except an executed action.** Triggers react to events; they never mutate directly.
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. The core events are (not exhaustive; `EVENTS` is):
+Events are emitted by executed actions. The closed list is `EVENTS` in `src/model/schemas.js`; payloads are in `docs/ENGINE-API.md`. An event marked † is specified ahead of its implementation and joins `EVENTS` when it lands. `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. Core events (not exhaustive):
 
 ```
 combatStart, combatEnd(victory)
@@ -583,140 +584,95 @@ combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
 
 ### 3.11 Seeded RNG
 
-- `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
-- **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue`, `enemyReaction`, `combatRounds`, `combatContest` (the d20 of an insight contest, §17 Contests; appended last, and a run that never plays a contest card writes no key for it) (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` gets one shuffle call at run creation, for the seat order (§13), which makes n−1 counter steps on that stream; it exists so that order can be seeded without moving a single draw on any other stream.
-- Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
+- `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered on the class-select screen.
+- **Named streams** are each derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*. The closed set is `STREAM_NAMES` (`src/engine/rng.js`); an unknown name throws:
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue`, `enemyReaction`, `combatRounds`, `combatContest`.
+  - `seats` gets one shuffle call at run creation for the seat order (§13): n−1 counter steps on that stream, so the order is seeded without moving any draw on another stream.
+  - `combatContest` is the d20 of an insight contest (§17 Contests); appended last, and a run that never plays a contest card writes no key for it.
+- StS-faithful consequences: re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
 
-**Two schemas, one home each — this is the contract, and the values are not restated here.**
-`RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
-`src/engine/save.js`. Neither number is restated as a current value anywhere else, and a second copy of
-either is a defect; the dated bumps below are history.
+Two schemas, one home each; values are not restated here: `RUN_SCHEMA_VERSION` in `src/model/state.js`, `META_SCHEMA_VERSION` in `src/engine/save.js`. A second copy of either number is a defect.
 
-**The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
-persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
-`validateRunShape()` checking it — so the save contract is a table, not whatever
-`createRunState` happens to set, and this spec points at it rather than carrying a copy that
-drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
-id only (§3.3).
+#### The run
 
-- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
-  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
-  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
-  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
-  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. The saved event log keeps every row
-  but not the per-event `abilityBefore`/`abilityEntities` evaluation context (entity clones read only while that event is
-  scanned), which kept a 40-turn fight's save under the browser quota; the live log keeps it. A live event buffer, or an
-  action queue that no pending reaction or ability discard holds, is not a committed
-  boundary and refuses the save. Older `combatEntered`
-  records without a snapshot remain compatible and restart the encounter deterministically.
-- An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
-  with a dangling id → the save is **refused and archived**, never silently repaired. A run
-  saved before equipment existed is the one healed case: it gets a fresh loadout and a
-  re-stamped deck rather than being thrown away.
-- A `schemaVersion` **newer** than this build is refused and **preserved**, as the profile is
-  (property 1 below): runStatus `newer`, nothing archived, the bytes left in their slot, so
-  opening an old build cannot eat a run a newer one wrote. Every older schema, v1 to the
-  current one, loads and migrates forward; `tests/save-migration.test.mjs` proves it over one
-  real save per version (`tests/fixtures/run-save-schema-versions.json`).
-- **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
-  stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
-  adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
-  id. Adding those definitions alone does not justify a run- or profile-schema bump.
-- A run already carrying `attributeMode`, attributes, a flask capacity ledger, level receipts,
-  equipment-profile rules or a `derivedStatRuleSnapshot` keeps those persisted facts. New
-  default presets, formulas, flask allocations and level prices are read at new-run creation;
-  they do not rewrite an in-progress run on load. Existing definition ids may still receive
-  ordinary live content tuning under the content-version rule above.
-- If implementation discovers genuinely new persisted state, the field is optional for older
-  saves and deterministically migrated (or receives an explicit schema migration) before any
-  current save is written. A missing new field may never make an otherwise valid current save
-  archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
-- **Run schemaVersion 20** (2026-10-02, #1479): a Sealed or Draft run carries
-  `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE` in `model/cardRemoval.js`), the mark that
-  its starting deck is held to the attack slots it was dealt, not the ones its equipment
-  composes. A Standard run never carries it. A pool save from schema 19 or older has no
-  mark: the load door heals its quota down to the dealt slots once, marks it, and notes the
-  heal. A schema-20 pool save without the mark is refused by name. The bump is what makes a
-  schema-19 build refuse and preserve a schema-20 pool save (runStatus `newer`) instead of
-  dealing the equipment's own cards back into the dealt deck.
-- **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
-  `base` (born), `grown` (possession door), `granted` (moment door) — and
-  `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`
-  (§5.5.2). A v2 save is admitted and **attributed once** at the load door
-  (`initializeRunFlaskCharges`), by a stated rule, never silently: chain growth always
-  wrote `grown`, so the surplus base and chain cannot account for is attributed to the
-  untracked moment door (`granted`); `base` is witnessed by the current authored
-  `balance.flaskCapacity`, clamped so the attribution can invent no charge.
+Key `sote_run_v1`; **three slots, one run each** (`SLOTS`, `save.js`).
+- The persisted field list is **declared as data**: `RUN_SHAPE` in `model/state.js`, checked by `validateRunShape()`. It is a floor, not a whitelist: unlisted keys pass through untouched. Instances by id only (§3.3).
+- **When saved:** after **every** committed player choice (node chosen, reward taken).
+  - Entering combat first writes a deterministic `combatEntered` recovery checkpoint.
+  - **Save Game** or **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all piles, enemies and intents, statuses, triggers, equipment state, event log. Loading restores it without replaying combat start, draws or enemy rolls.
+  - The saved event log keeps every row but not the per-event `abilityBefore`/`abilityEntities` evaluation context (entity clones read only while that event is scanned); the live log keeps it. This keeps a 40-turn fight's save under the browser quota.
+  - A live event buffer, or an action queue not held by a pending reaction or ability discard, is not a committed boundary and refuses the save.
+  - Older `combatEntered` records without a snapshot stay compatible and restart the encounter deterministically.
+- **Refused and archived, never silently repaired:** an unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch with a dangling id.
+  - The one healed case: a run saved before equipment existed gets a fresh loadout and a re-stamped deck.
+- **Newer `schemaVersion` than this build:** refused and **preserved** (runStatus `newer`; nothing archived; bytes left in their slot), as the profile is (property 1 below). Every older schema, v1 to current, loads and migrates forward (`tests/save-migration.test.mjs`, one real save per version in `tests/fixtures/run-save-schema-versions.json`).
+- **Save-safe additions:**
+  - A run already carrying `attributeMode`, attributes, a flask capacity ledger, level receipts, equipment-profile rules or a `derivedStatRuleSnapshot` keeps those persisted facts. New default presets, formulas, flask allocations and level prices apply at new-run creation and never rewrite an in-progress run on load. Existing definition ids may still receive ordinary live content tuning (content-version rule above).
+  - New persisted state must be optional for older saves and deterministically migrated (or get an explicit schema migration) before any current save is written. A missing new field may never make an otherwise valid current save archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
+  - New content (e.g. a creation mode, class, card, relic, kit, outfit, asset) gets a new stable id and never renames or deletes an existing one; adding definitions alone does not justify a run- or profile-schema bump. `standard` and `pointbuy` creation modes keep their validation rules.
+- **Pool-deck mark:** a Sealed or Draft run carries `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE` in `model/cardRemoval.js`): its starting deck is held to the attack slots it was dealt, not the ones its equipment composes. A Standard run never carries it.
+  - A pool save from schema 19 or older has no mark: the load door heals its quota down to the dealt slots once, marks it and notes the heal. A schema-20 pool save without the mark is refused by name.
+  - Run schemaVersion 20 introduced the mark, so a schema-19 build refuses and preserves (runStatus `newer`) a schema-20 pool save.
+- **Flask capacity ledger** (run schemaVersion 3): `flaskCharges` carries `base` (born), `grown` (possession door), `granted` (moment door); `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted` (§5.5.2).
+  - A v2 save is admitted and **attributed once** at the load door (`initializeRunFlaskCharges`) by a stated rule: the surplus that base and chain cannot account for goes to `granted`; `base` is witnessed by the authored `balance.flaskCapacity`, clamped so the attribution invents no charge.
 
-**The profile** — key `sote_meta_v1`: settings, unlocks, durable progress, found armaments,
-and the last 20 run results. **It is the one artifact a player cannot re-earn**, so it carries
-five durability properties (#66/#67), each of which is a claim a command can falsify:
+#### The profile
 
-1. **Versioned both ways.** An older `schemaVersion` migrates or refuses **by name**; a
-   **newer** one refuses and **preserves** — the case a stamp alone cannot catch, and the one
-   that silently destroys a profile when a player opens an old build after a new one.
-2. **A verified write, then a mirror.** `sote_meta_backup_v1` is rotated **only after the
-   primary is read back cleanly** — a mirror of bytes never proved readable is not a backup.
-   A write that fails read-back restores the primary from the last known good.
-3. **Archives are keyed and appended, never overwritten** — `sote_run_archived` is the index
-   for both kinds, entries keyed by kind, slot and time. **Runs** age out and are capped;
-   **profiles are never deleted, never aged out, and never evicted by run pressure**, and a
-   profile archive **never removes the primary** (the bytes are the evidence). If profiles
-   alone ever fill the drawer, the oldest is **moved to its own salvage key with a recorded
-   notice** — not silently dropped — so the browser's storage quota is the only real ceiling
-   and it is named rather than hidden.
-4. **Never silently empty.** A failed load is a **named, visible state** (`profileStatus()`,
-   surfaced by `ui/screens/profileNotice.js`), never a fresh profile wearing the same
-   filename. While in that state the profile is **quarantined**: the next ordinary settings
-   write cannot overwrite the original bytes, which are the evidence of every other failure.
-5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `restoreProfile(id)` are reachable by the player from **Profile on the title screen**
-   (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
-   primary — which archives the outgoing one and clears the quarantine. An archive nothing can
-   open is a promise, not a feature.
+Key `sote_meta_v1`: settings, unlocks, durable progress, found armaments, the last 20 run results. It is the one artifact a player cannot re-earn, so it has five durability properties, each falsifiable by a command:
 
-*Falsify the set:* `node tests/run-node.mjs` (the profile-durability cases: no profile, corrupt
-profile, older version, **newer** version, two archives in a row) — and the drawer's own
-notices (`drawerNotices()`) are how the screen reports what it had to do to itself.
+1. **Versioned both ways.** An older `schemaVersion` migrates or refuses **by name**; a **newer** one refuses and **preserves** (the case a stamp alone cannot catch).
+2. **A verified write, then a mirror.** `sote_meta_backup_v1` is rotated **only after the primary is read back cleanly**. A write that fails read-back restores the primary from the last known good.
+3. **Archives are keyed and appended, never overwritten.** `sote_run_archived` indexes both kinds, entries keyed by kind, slot and time.
+   - Runs age out and are capped.
+   - Profiles are never deleted, aged out or evicted by run pressure; a profile archive never removes the primary.
+   - If profiles alone fill the drawer, the oldest moves to its own salvage key with a recorded notice (not silently dropped), so the browser quota is the only ceiling and it is named.
+4. **Never silently empty.** A failed load is a **named, visible state** (`profileStatus()`, surfaced by `ui/screens/profileNotice.js`), never a fresh profile wearing the same filename. In that state the profile is **quarantined**: the next ordinary settings write cannot overwrite the original bytes.
+5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` / `restoreProfile(id)` are reachable from **Profile on the title screen** (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive to primary (which archives the outgoing one and clears the quarantine).
+
+Falsify the set: `node tests/run-node.mjs` (profile-durability cases: no profile, corrupt profile, older version, **newer** version, two archives in a row). `drawerNotices()` reports what the drawer had to do to itself.
 
 ### 3.13 Card text templating
 
-Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by occurrence ordinal: the first is bare, the second is `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
+- Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."`
+- Tokens bind to opcode values by op/status name, disambiguated by occurrence ordinal (first is bare, second is `{damage.2}`).
+- The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2): a Strike in hand shows 9 with +3 Strength and shows it struck through to 6 when Weak.
+- Validation (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
 
 ### 3.14 Content validation
 
-`model/validate.js` runs at every boot (`src/main.js:182`) and from the test page. It checks, across ALL registries:
+`model/validate.js` runs at every boot (`src/main.js`) and from the test page, across ALL registries:
 
 1. Every content object conforms to its schema (fields, types, enums).
 2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
-3. Every opcode, formula op, event name, and predicate used anywhere is in the closed sets of §3.4–§3.6.
+3. Every opcode, formula op, event name and predicate used is in the closed sets of §3.4–§3.6.
 4. Every text-template token binds (§3.13).
 5. `scripts.js` budget report: script-using content is listed; the count must stay <5% of total content objects.
-6. Value-range and pairing rules that a field-wise check cannot see — a floor anchor outside
-   its act's rollable band, a proc row whose `burstMin` exceeds its `burstMax`, a music bed
-   that is quiet by accident rather than by the declared silence word (§7.4) — each failing
-   **naming the entry**, per Law 1 clause 5.
-7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
-   a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
-   `{ "balance": "path" }` names a real balance number; and any family may carry a
-   `property` tag. Each refusal names its row (`tests/engine.test.js` test 80).
+6. Value-range and pairing rules a field-wise check cannot see, each failing **naming the entry** (Law 1 clause 5): a floor anchor outside its act's rollable band; a proc row whose `burstMin` exceeds its `burstMax`; a music bed that is quiet by accident rather than by the declared silence word (§7.4).
+7. Property rules (§3.3 PropertyRule), each refusal naming its row (`tests/engine.test.js` test 80):
+   - every `property` tag has exactly one rule; a rule's tag is a property tag;
+   - `requires`/`excludes` name property tags; `requires` has no cycle;
+   - a sidecar `{ "balance": "path" }` names a real balance number;
+   - any family may carry a `property` tag.
 
-**Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
-failures *downstream of itself*, so the standing check is over observable outcome, in the
-repo's existing observed-red idiom:
+**Content smoke (Law 1 clause 6)** is the standing check over observable outcome, in the observed-red idiom:
 
 ```
 node tools/content-build.mjs --selftest    # the known-bad corpus: every case fails for its named reason
 node tools/content-build.mjs --mutate      # reinstate each defect N ways; each must be caught
 ```
 
-Both edges, in clause 6's own words: **one entry added by table + asset alone appears and
-plays; one deliberately broken entry fails with its id printed.** A corpus nobody has watched
-go red is `unknown`, not green.
+- Both edges: one entry added by table + asset alone appears and plays; one deliberately broken entry fails with its id printed.
+- A corpus nobody has watched go red is `unknown`, not green.
+
+#### Notes and history
+
+- Rules live in data and the closed primitive sets (§3.4–§3.7); engine code never special-cases an entity.
+- Run and profile schema versions live in `src/model/state.js` and `src/engine/save.js`, never in this document.
+- The file tree is a layer contract (§3.2); print the real tree by command.
+
+Full history: [docs/spec-history/03-architecture.md](docs/spec-history/03-architecture.md).
 
 ---
 

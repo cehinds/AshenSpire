@@ -27,3 +27,19 @@ The previous edition of this section was a hand-maintained inventory that had dr
 - Smithing services priced in Smithing Stones, "free by the owner's word".
 - Dodge Roll for everyone: owner 2026-09-24, widening the 2026-09-02 empty-hand rule.
 - Complete armament kits: #904, 0.6.0.115 (proved in `tests/framework.test.mjs`).
+
+## 3.10 Event bus
+
+- The † marker convention (event specified ahead of implementation) is kept in SPEC.
+
+## 3.12 Save format
+
+- Run schemaVersion 20: 2026-10-02, #1479 (pool-deck mark).
+- Run schemaVersion 3: 2026-08-14 (flask capacity ledger).
+- Profile durability properties: #66/#67.
+- The "tuning/Rogue addition is additive and save-safe" note: the new creation mode (Rogue) got a new stable id; generalized in SPEC as the "new content gets a new stable id" rule.
+- `main.js` boot validation call was cited as `src/main.js:182`; now cited by file only.
+
+## 3.14 Content validation
+
+- Law 1 clause 6 content smoke: built and runnable (#64).
