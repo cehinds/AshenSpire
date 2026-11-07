@@ -96,5 +96,6 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Asked: 2026-11-07 — "just keep the poise visible at all times but make it have the height of the health bar. also, I'd liek the health bar with the badges to be a fixed width instead of dynamically changing."
 - Means: Poise bar is always shown (no hiding, no badge shifting), the same height as the HP bar, under it (layout with #5 Block left of the bar, #6 badges under). The HP bar plus its badge row has one fixed width on every combatant instead of resizing with content.
 - Update 2026-11-07 — "have poise bar and hp be the same width, and stays fixed even if there is no block also I want the block icon to be larger to fit the height of the hp, poise, and status effect badges rows": HP and Poise bars share one width, fixed whether or not Block is present (Block's slot is reserved when Block is 0). The Block icon grows to span the full height of the HP, Poise and badge rows stacked (placed left of the bars, #5).
-- Questions: one fixed width for all combatants, or player wider than enemies? (asked in chat)
+- Answer 2026-11-07: "it applies to every one" — one fixed width for every combatant, player and enemies.
+- Questions: none
 - Link: —
