@@ -22,10 +22,9 @@ export function floaterWordShown(kind) {
   return null;
 }
 
-/** True when a glyph word (fx.js spawnFx text: 'Cast', 'Guard', 'Stun') may draw: only the allowlisted words, so none of those do. */
+// Glyph words that fx.js spawnFx draws outside the callout path (the Cast, Guard and Stun flares): only allowlisted words show.
 export function floaterGlyphShown(word) {
-  if (!policyOn) return true;
-  return FLOATER_WORDS_SHOWN.includes(String(word ?? ''));
+  return !policyOn || FLOATER_WORDS_SHOWN.includes(word);
 }
 
 // The number classes fx.js passes to floatNum:
