@@ -2750,26 +2750,36 @@ Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progr
 
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 
-The Blighted Valkyrie (`a3_bossRotValkyrie`) is **not** in any seat's boss pool. She is the boss of the **tier-3 act, whatever seat it is**: `buildActMap` at tier 3 draws the seat's pool as usual **and** appends the Valkyrie's encounter as one more destination, so the final act always offers her beside the seat's own bosses and `restBeforeElite`/pre-boss-rest rules apply to her terminal like any other. Her encounter row carries `seat: null` — the one row the schema admits `null` for, by name, so the rule is visible in the data and a second null is a validation error. Which terminal ends the run is the player's route, as §12.4 already states.
+The Blighted Valkyrie (`a3_bossRotValkyrie`) is the boss of the tier-3 act, whatever seat it is.
 
-*Falsify:* `node -e "..."` building tier-3 maps for each of the three seats first → every graph's `bossIds` includes the Valkyrie's node and at least one node from the seat's own pool; building a tier-1 or tier-2 map → none includes her.
+- She is in no seat's boss pool. `buildActMap` at tier 3 draws the seat's pool as usual and appends her encounter as one more destination, so the final act offers her beside the seat's own bosses; `restBeforeElite`/pre-boss-rest rules apply to her terminal.
+- Her encounter row carries `seat: null`, the one row the schema admits `null` for; a second null is a validation error.
+- Which terminal ends the run is the player's route (§12.4).
+
+*Falsify:* tier-3 maps for each of the three seats: every graph's `bossIds` includes her node and at least one node from the seat's own pool; tier-1 and tier-2 maps never include her.
 
 ### 13.6 What does not change — the byte-identity claims
 
 For every seed and every save written before this section:
 
-1. **Every act map is byte-identical** to the one the same seed generated before, for the same content act, because geometry is per tier (`mapConfigs[tier]` = today's `mapConfigs[act]`), unknown weights are per tier, and no draw on `map`, `events`, `enemyHP`, `shuffle` or any other pre-existing stream is added, removed or reordered. The only new draw is on the new `seats` stream.
-2. **A migrated save climbs the seats in the order it always did** and fights the boss its graph already names.
-3. **A fight in a seat at its baseline tier rolls the same HP** it rolled before (§13.3 multiplier is 1). Boss fights are the stated exception since #1284: `balance.bossTiers` scales a boss by the tier it is met at, baseline or not (§13.3).
-4. **World Journey is untouched**: it never called `rollEncounter` or `buildActMap` (`journeyEncounter`, `journeyGraph`), and it keeps `drowned-coast`.
+1. Every act map is byte-identical for the same content act: geometry is per tier (`mapConfigs[tier]` = old `mapConfigs[act]`), unknown weights are per tier, and no draw on `map`, `events`, `enemyHP`, `shuffle` or any pre-existing stream is added, removed or reordered. The only new draw is on the `seats` stream.
+2. A migrated save climbs the seats in its old order and fights the boss its graph already names.
+3. A fight in a seat at its baseline tier rolls the same HP (§13.3 multiplier 1). Boss fights are the exception: `balance.bossTiers` scales a boss by the tier it is met at (§13.3).
+4. World Journey is untouched: it never called `rollEncounter` or `buildActMap` (`journeyEncounter`, `journeyGraph`) and keeps `drowned-coast`.
 
-What does change for a **new** run on an existing seed: which seat the run opens in. That is the feature, and it is the one thing this section is allowed to change about a seed's replay. `tools/runsim.mjs` and `tests/branchingBosses.test.mjs` pin claims 1–3; `tests/world-atlas.test.mjs` pins 4.
+- The one allowed change on an existing seed: which seat a new run opens in.
+- Pinned by `tools/runsim.mjs` and `tests/branchingBosses.test.mjs` (claims 1-3) and `tests/world-atlas.test.mjs` (claim 4).
 
 ### 13.7 Version and delivery
 
-- This section: **Version: no bump** (a SPEC change ships nothing).
-- The delivering PR is the first of the `0.7` line and **proposes `0.7.1`** (`contentBundle.version`, `src/content/index.js`): a new run-order system live for players with its save-schema migration is a MINOR under `docs/versioning.md` rule 2, and the third component is the first candidate of that line. The owner's release cut is what makes it `0.7.0`.
-- Delivered as one feature PR into `dev` after this section merges, with: `content/seats.js`; encounter files re-homed; schema and validation; `engine/encounters.js`, `engine/actmap.js`, `main.js`, `tools/runsim.mjs` callers; `model/state.js` v6 and migration; `model/environmentArt.js`; Custom Run pin; HUD/map labels; `balance.seatTiers` with BALANCE.md numbers; tests named above plus `tests/seats.test.mjs`; a CHANGELOG receipt.
+- **Version: no bump** for this section (a SPEC change ships nothing).
+- The delivering feature PR proposes `0.7.1` (`contentBundle.version`, `src/content/index.js`): a new run-order system with a save-schema migration is a MINOR (`docs/versioning.md` rule 2). It carries `content/seats.js`, `engine/encounters.js`, `engine/actmap.js`, `model/state.js` v6 and migration, `balance.seatTiers` and `tests/seats.test.mjs`.
+
+#### Notes and history
+
+- Release numbering is automatic (CLAUDE.md, docs/versioning.md).
+
+Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progression.md).
 
 ## World Journey: authored atlas and seeded routes
 

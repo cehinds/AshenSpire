@@ -141,3 +141,12 @@ This amendment takes precedence over the class rotation in §13.4q, the ability-
 *Falsify once built:* module installation adds its cards/relics/armor to the appropriate generated level lists without a manual list change; all 80 class levels follow the overlapping schedules; all 240 profiles charge the shared action pool once; INT 0/5/10/20 produce 0/25/50/100 percent bonus chance with legal higher-grade bounds and stable saved offers; every Spellcraft level grants one card; class-level skill XP is paid once; locked gear cannot appear through another offer path; class respec preserves levels, budgets, spent grants, original INT outcomes and current resources, and an optional fee is atomic; on a mixed XP award all bars fill in Class/Character/descending-skill order at equal normalized velocity, no button appears early, then all blue level buttons appear before Continue turns green; claiming repeatedly animates held surplus quickly and never invents rows for skills that gained no XP.
 
 
+
+## SPEC §13.7 (delivery detail) (original text, archived 2026-11-07)
+
+#### 13.7 Version and delivery
+
+- This section: **Version: no bump** (a SPEC change ships nothing).
+- The delivering PR is the first of the `0.7` line and **proposes `0.7.1`** (`contentBundle.version`, `src/content/index.js`): a new run-order system live for players with its save-schema migration is a MINOR under `docs/versioning.md` rule 2, and the third component is the first candidate of that line. The owner's release cut is what makes it `0.7.0`.
+- Delivered as one feature PR into `dev` after this section merges, with: `content/seats.js`; encounter files re-homed; schema and validation; `engine/encounters.js`, `engine/actmap.js`, `main.js`, `tools/runsim.mjs` callers; `model/state.js` v6 and migration; `model/environmentArt.js`; Custom Run pin; HUD/map labels; `balance.seatTiers` with BALANCE.md numbers; tests named above plus `tests/seats.test.mjs`; a CHANGELOG receipt.
+
