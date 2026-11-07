@@ -2225,7 +2225,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
-      if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
+      if (bar.id === 'poise' && bar.max > 0 && bar.cur >= bar.max * 0.75) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
         if (el) el.classList.add('pulse', 'full');
       }
