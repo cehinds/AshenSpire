@@ -231,19 +231,23 @@ and archived with a named reason only when one does not (`engine/save.js`).
 
 `.github/workflows/version-advance.yml` runs on a push to `release` (candidate
 +1, tail to 0: 0.7.2.93 → 0.7.3.0) or to `main` (MINOR +1, candidate and tail to
-0: 0.7.3.x → 0.8.0.0). It runs `tools/version-advance.mjs`, which rewrites only
+0: 0.7.3.x → 0.8.0.0) or, since 2026-11-07, `test` (a **build** bump: the triple stays and the
+ordinal rises by one, 0.7.4.30 → 0.7.4.31, nothing reset). It runs `tools/version-advance.mjs`, which rewrites only
 the `version:` literal and the `// version-advance:` marker beside it in
 `src/content/index.js` (plus the `SERIES` constant in `tools/release-series.mjs`
 on a minor bump), then writes the box through `bumpOrdinal`, which restarts the
-ordinal at 0. It commits to `dev` as `version-advance: <triple> after
-<release|main> <source sha> [version-advance]`, with a trailer
+ordinal at 0 (a build bump calls `bumpOrdinal(root, { force: true })`, which adds 1 even when
+the tree's digest did not move and never resets while the release string is unchanged; the
+default call never forces). It commits to `dev` as `version-advance: <triple> after
+<release|main|test> <source sha> [version-advance]`, with a trailer
 `Version-Advance-Event: <id> <timestamp>`. A session never hand-edits the triple
-for these two events. MAJOR stays a hand edit.
+for these three events. `build-stamp.yml` skips the commit by author and the
+`[version-advance]` subject, whichever branch it names. MAJOR stays a hand edit.
 
 ### Version advance: the cursor model
 
 The cuts come from the repository activity feed, not from workflow run history:
-`GET /repos/{repo}/activity?ref=refs/heads/release` (and `main`) lists every
+`GET /repos/{repo}/activity?ref=refs/heads/release` (and `main`, `test`) lists every
 update of those refs whether or not a workflow ran for it. `tools/version-advance.mjs --plan`:
 
 - **Cursor.** The newest `Version-Advance-Event` recorded on `dev`, ordered by
@@ -253,12 +257,17 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
   run after merge replays that one cut and takes dev from 0.7.2 to 0.7.3. Copies of
   one event in the feed (same ref, before, after and timestamp, different ids) are
   one cut, under the lowest id.
-- **Plan.** Every later event on `release` or `main` of type `push`,
+- **Plan.** Every later event on `release`, `main` or `test` of type `push`,
   `force_push`, `pr_merge`, `merge_queue_merge` or `branch_creation`
   (`branch_deletion` is dropped), oldest first. Release then main gives 0.8.0 from 0.7.2;
-  main then release gives 0.8.1. The workflow applies them in that order, each as one
+  main then release gives 0.8.1; a `test` event between them adds only a build bump and changes
+  neither result. The workflow applies them in that order, each as one
   commit, skipping any whose event id `dev` already records, so a re-run or a race
   never bumps twice.
+- **`test` events** count only after `TEST_SINCE` in the tool (`2026-11-08T00:00:00Z`): the cursor
+  alone would replay every `test` push since the last release or main record the day this merged.
+  Set it to the merge time of the change that enabled build bumps. A re-delivered `test` push is
+  the same event id (or a copy under the lowest id), so it records once and never bumps twice.
 - **Bot-only events** (every commit in the event's own before..after is a
   github-actions[bot] commit) write no record; they are re-checked on each run from that
   event's own range, so nothing ages out. The range is read with `git log`, else after
