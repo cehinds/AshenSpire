@@ -1,6 +1,7 @@
 {
   "id": "cost.stamina",
   "tag": "cost.stamina",
+  "authored": true,
   "version": "1.0.0",
   "family": "cost",
   "label": "Stamina",
@@ -21,6 +22,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/combat.js",
-    "symbol": "doSwapArmament"
+    "symbol": "resolvedCardPlayCosts"
   }
 }
