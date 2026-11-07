@@ -231,7 +231,7 @@ Entity types, each with a schema in `schemas.js`:
 
 ### 3.4 Effect DSL (opcodes)
 
-An effect is an array of opcode objects; playing a card, triggering a relic, or resolving an event choice enqueues them onto the action queue (§3.9).
+An effect is an array of opcode objects. Playing a card, triggering a relic or resolving an event choice enqueues them on the action queue (§3.9).
 
 ```js
 // Gorefire Slash: "Deal 5 damage. Apply 3 Bleed."
@@ -247,17 +247,23 @@ effects: [
 ]
 ```
 
-**Opcode list** (closed set; extending it is an engine PR):
+**Opcodes** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Engine-internal: `completeCombatAction`, which `executeAction` runs to close an expanded combat action (`src/engine/actions.js`, `completeExpandedAction`). Content should not author it; validation still accepts it (it is in `COMBAT_OPCODES`, `src/model/schemas.js`), and an authored one does nothing because it carries no `expansionGroup`.
-- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (renamed from `addRunes`; the old id is not accepted), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- **Combat:** `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`.
+  - `gainPoise` / `gainWard`: `amount` plus the card's Block rating bonus (DR on a physical skill, PR on a magical card), held as the target's Poise or Ward guard. The guard absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block. Emits `meterGuardGained`.
+  - `dodgeRoll`: player only; no fields. The die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`. Rolls on stream `misc`; success lands the guard as Block through the block door. Emits `dodgeRolled`.
+  - Engine-internal `completeCombatAction`: `executeAction` runs it to close an expanded combat action (`src/engine/actions.js`, `completeExpandedAction`). Content must not author it; validation accepts it (it is in `COMBAT_OPCODES`, `src/model/schemas.js`) and an authored one does nothing (no `expansionGroup`).
+- **Run-level** (events, shops, rewards reuse the same DSL): `addCinders`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
-Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
+Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (an `enemy` target on a card requires UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate it, `repeat: n` for multi-hit.
 
-`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc` or the legacy `meter`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
+**`removeStatus { status, amount? }`**
+- No `amount`: remove the whole status and its application history.
+- `amount: number | Formula`: evaluate per target, clamp nonnegative, remove that many stacks (or that much build-up from a status with `proc` or legacy `meter`). Preserve remaining magnitude/applications; remove the status when magnitude reaches zero.
+- An absent status is a no-op. `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack, not every Weak application.
+- Removal receipts report the quantity actually removed.
 
-**Card rating values are cost-derived.** Before card definitions enter the
-registries, primary values are recalculated as:
+**Card rating values are cost-derived.** Before card definitions enter the registries, primary values are recalculated:
 
 ```
 floor(global × (AP × action + MP × mana + SP × stamina)
@@ -265,31 +271,17 @@ floor(global × (AP × action + MP × mana + SP × stamina)
 + ratingCardBonus[card]
 ```
 
-The result cannot fall below zero. `X`-cost attacks use one Action in the
-per-hit formula and retain one repeated hit per Action actually spent. Physical
-Attack damage uses the AR card-value formula; damage and Block
-on magic-tagged cards use PR (Potency Rating); physical Block uses DR. Physical
-and magical Attack impact use the Poise and Ward formulas respectively, except
-that a physical hit carrying its source weapon keeps that weapon's weight
-category (§13.4). An explicit `poiseDamage` effect uses the matching formula,
-and a card that authors one carries its impact there: it gets no second
-per-hit value, and its hit keeps the category default. A card a basic-card
-profile moves across the physical/magical line (a staff's Strike, Defend or
-technique, or a card a staff's weapon package deals) is projected on both
-sides, and resolves through the formulas of the school it resolves in.
-Existing conditional and formula-valued effects remain bonus values; only the
-primary/base component is replaced. A face whose only amount is a formula
-(Last Stand's missing HP) keeps it exactly as authored and has no bonus row:
-a base in front of it would be a second effect, and every per-effect addition
-would land twice. The signed card-specific bonus is added after flooring. Each rating owns
-configurable global, AP, MP, SP, status-reduction, per-status, and per-card
-values under `balance.damage`. They are available in Advanced → Combat. A run
-snapshots those settings, so the same configuration and inputs always produce
-the same values.
+- The result cannot fall below zero. The signed card-specific bonus is added after flooring.
+- `X`-cost attacks use one Action in the per-hit formula and retain one repeated hit per Action actually spent.
+- Physical Attack damage uses the AR card-value formula; damage and Block on magic-tagged cards use PR (Potency Rating); physical Block uses DR.
+- Physical and magical Attack impact use the Poise and Ward formulas respectively, except that a physical hit carrying its source weapon keeps that weapon's weight category (§13.4). An explicit `poiseDamage` effect uses the matching formula; a card that authors one carries its impact there, gets no second per-hit value, and its hit keeps the category default.
+- A card a basic-card profile moves across the physical/magical line (a staff's Strike, Defend or technique, or a card a staff's weapon package deals) is projected on both sides and resolves through the formulas of the school it resolves in.
+- Existing conditional and formula-valued effects remain bonus values; only the primary/base component is replaced. A face whose only amount is a formula (Last Stand's missing HP) keeps it exactly as authored and has no bonus row (a base in front of it would be a second effect, and every per-effect addition would land twice).
+- Each rating owns configurable global, AP, MP, SP, status-reduction, per-status and per-card values under `balance.damage` (Advanced → Combat). A run snapshots those settings, so the same configuration and inputs always produce the same values.
 
 ### 3.5 Formulas — structured objects, not strings
 
-Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing — formulas are validatable data:
+Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing; formulas are validatable data.
 
 ```js
 { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 }   // Bleed burst
@@ -299,50 +291,47 @@ Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. 
 { f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
 ```
 
-Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `metric {metric, of, per?}` (a combat counter times `per`; `sameCardPlays` reads how many times this card has been played this combat, before the current play, so a first play reads 0), `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}` (Counterstrike: `base + max(floor(base × pct), 1)` for a positive base; [combat-card-traits-contract.md](docs/combat-card-traits-contract.md)). Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
+Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `metric {metric, of, per?}`, `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}`.
+- `metric`: a combat counter times `per`; `sameCardPlays` reads how many times this card has been played this combat, before the current play (a first play reads 0).
+- `traitBonus` (Counterstrike): `base + max(floor(base × pct), 1)` for a positive base; [combat-card-traits-contract.md](docs/combat-card-traits-contract.md).
+- Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
 
-**Approved configurable character defaults.** These are the shipped defaults, not engine
-constants. Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus
-fold is authored in content data; Settings/debug overrides layer over that data rather than
-adding a second formula in UI or engine code. The run snapshots the resolved formula rules at
-birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
+#### Derived character stats
 
-**One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
-character has — HP, Mana, Stamina, the opening hand, the per-turn draw, the hand size,
-AR, DR, PR, Ward and Poise — is ONE row of `src/content/derivedStats.js`, in one shape:
+The values below are shipped defaults, not engine constants.
+- Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus fold is authored in content data. Settings/debug overrides layer over that data; no second formula lives in UI or engine code.
+- The run snapshots the resolved formula rules at birth: later tuning applies to new runs and never re-stats an in-progress save.
+- "Configurable" never means parsing formula strings or letting a screen recompute them: the structured formula table is the one authority, uses the shared floor rule, and is validated and snapshotted through the existing model door.
+
+**One row, one formula, one editor** (derived-stat ruleset 7). Every stat — HP, Mana, Stamina, opening hand, per-turn draw, hand size, AR, DR, PR, Ward, Poise — is ONE row of `src/content/derivedStats.js`:
 
 `{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
 
-and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
+priced by ONE function, `statRowValue` (`model/derivedStats.js`):
 
 `value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
 
-Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
-attribute reaches 8. Two optional fields serve the hand rows (§4.1): `attributeBaseline`
-counts only the points above it (each term is floor(max(0, attribute − attributeBaseline) ×
-weight)), which restates the retired hand groups exactly, and `byClass.<class>` (the opening
-hand alone) gives a class its own base and weights over the row's bounds.
-**Rounding is per attribute: the owner chose it** (owner decision, 2026-09-24, answering
-"Per attribute (keep)"); rounding the total was declined, so Mana is 4, not 6, at every
-attribute 5. Mana's INT weight is 0.125 per the owner's sum-to-1 formula
-(`.5 w + 0.25 c + 0.125 str + 0.125 int = 1`).
-Equipment, relics and statuses are external addends on top (armour
-`poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
-owner's current defaults (2026-10-06): STR adds 1 AR, DEX adds 1 DR,
-CON adds 1 HP and 1 Poise, WIS adds 1 Ward, and INT adds 1 PR per point.
-These main bonuses use one attribute each to make character creation readable.
-Mana and Stamina retain their separate configurable weights; existing saves
-keep their snapshotted rules.
+- Rounding is per attribute, not on the total (owner decision).
+  - Each term is floored on its own: a weight of 0.125 adds nothing until that attribute reaches 8.
+  - Mana is 4, not 6, at every attribute 5. Mana's INT weight is 0.125 per the owner's sum-to-1 formula (`.5 w + 0.25 c + 0.125 str + 0.125 int = 1`).
+- Hand rows (§4.1) have two optional fields:
+  - `attributeBaseline`: counts only points above it, each term floor(max(0, attribute − attributeBaseline) × weight).
+  - `byClass.<class>` (opening hand alone): gives a class its own base and weights over the row's bounds.
+- External addends on top: armour `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses (equipment, relics, statuses).
+- Main-bonus defaults, one attribute each, per point:
+  - STR +1 AR; DEX +1 DR; CON +1 HP and +1 Poise; WIS +1 Ward; INT +1 PR.
+  - Mana and Stamina keep their separate configurable weights.
+  - Existing saves keep their snapshotted rules.
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
+| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Stock pools incl. starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs and refills each turn. The HUD calls it Actions. |
-| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`), and combat reads Stamina (`src/content/derivedStats.js`). Historical: DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27), the first extra Action at DEX 4. |
-| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs, refills each turn. HUD name: Actions. First extra Action at DEX 4. |
+| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`); combat reads Stamina (`src/content/derivedStats.js`). |
+| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; per-class overrides configurable. |
 | Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | INT scales it like Draw: only points above 4 count (`attributeBaseline`), so +1 per five INT above 4. Independently configurable. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | Only INT points above 4 count (`attributeBaseline`): +1 per five INT above 4. Independently configurable. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
@@ -351,36 +340,18 @@ keep their snapshotted rules.
 
 | Output | Source | Meaning |
 |---|---|---|
-| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | The data-owned base value used by the basic guard/defense profile. |
-| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | The data-owned base value used by the basic physical strike profile. |
-| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | The data-owned base value used by the basic magic profile. |
+| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | Base value of the basic guard/defense profile. |
+| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | Base value of the basic physical strike profile. |
+| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | Base value of the basic magic profile. |
 
-**Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
-one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
-baseline, pointsPerCard, minimum, maximum }`) and `balance.handMax`. `validateContent` refuses
-each by name if it returns (`balance.handMax`, `balance.combatRatings.multiplier`,
-`handRules.starting|turn|capacity`), as it refuses `balance.poise.playerPerConstitution`. Their
-settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`,
-`balance.handMax`, and the per-item `combatRatings.bonuses.*`) are **dropped, never converted**,
-on import and on profile load/restore, with one warning per family
-(`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
-Unmarked pre-ruleset-7 settings are no longer detected: the `statRowsVersion` marker is gone, so
-any `derivedStatRules.rules.draw.*` or `.poise.*` key is read with its current meaning.
+**Retired homes** (ruleset 7). `validateContent` refuses each by name if it returns: `balance.handMax`, `balance.combatRatings.multiplier`, `handRules.starting|turn|capacity`, `balance.poise.playerPerConstitution`.
+- Their settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`, `balance.handMax`, per-item `combatRatings.bonuses.*`) are **dropped, never converted**, on import and on profile load/restore, with one warning per family (`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
 
-**Pre-ruleset-7 runs are refused, not priced.** The shipping game refuses any run without a pinned
-Core 2 profile at load (`engine/save.js` `retiredProfileReason`): the bytes stay in the slot and
-are never migrated, so no frozen ruleset-6 pricing exists. A run snapshot older than ruleset 7
-that does load (tools and tests with no game profile) reads the rating and hand rows its
-snapshot lacks from the live table (`model/statRows.js` `statRow`).
-
-The defaults above are independently configurable rows. “Configurable” never means parsing
-formula strings or letting a screen recompute them: the structured formula table remains the
-one authority, uses the shared floor rule, and is validated/snapshotted through the existing
-model door.
+**Pre-ruleset-7 runs are refused, not priced.** The shipping game refuses any run without a pinned Core 2 profile at load (`engine/save.js` `retiredProfileReason`); the bytes stay in the slot and are never migrated. A run snapshot older than ruleset 7 that does load (tools and tests with no game profile) reads the rating and hand rows it lacks from the live table (`model/statRows.js` `statRow`).
 
 ### 3.6 Trigger DSL and predicates
 
-Relics, powers, statuses, stances, mounted properties, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
+Relics, powers, statuses, stances, mounted properties and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start.
 
 ```js
 // Fell Omen Brand: "Whenever an enemy Staggers, draw 2."
@@ -396,9 +367,31 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'cardTagIs', tag }` (the contextual card's `tags` ∪ the snapshot's `derivedTags`, or the event's `cardTags` ∪ `derivedTags`; §13.4c), `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'hpDamagePositive' }` / `{ p: 'healPositive' }` (a `healed` event that healed something — `applyHeal` emits one with amount 0 at full HP) / `{ p: 'manaPositive' }` (a `manaRestored` event that restored something — `restoreMana` emits one with amount 0 at full Mana) / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), `{ p: 'skillLevelAtLeast', skill, level }` / `{ p: 'classLevelAtLeast', level }` (progression gates; they read the skill and class ledger of plan phase 4 and are **false until that ledger exists**, so a branch gated on them is inert), and `all / any / not` combinators.
+**Predicates** (closed set, combinable with `all / any / not`):
 
-**Property mounts — the one path a property reaches combat** (`src/engine/properties.js`). A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`; `mountProperties` resolves its property tags to their rules (keeping a rule only when its `requires` are on the same carrier and its `excludes` are not) and records them at `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`; `unmountProperties` deletes it. **A source key mounts once:** mounting one already mounted throws by name, so a re-equip can never fire a trigger twice. Today's carriers are the equipped armaments and armour: `createCombat` mounts the loadout's worn pieces before any event, and both equipment doors (`swapArmament`, and `changeEquipment` after `equipPiece`) re-sync — the outgoing piece's properties leave with it, the incoming piece's arrive. Mounts are **never saved**: `restoreCombatSnapshot` re-derives them from the restored loadout. `scanTriggers` walks mounted rules as its fourth source, beside relics, stances and statuses, under the gate key `property:<owner>:<sourceKey>:<i>` (source keys sorted, so a restored fight fires in the live order; the key is stable across unequip and re-equip, so a `once` gate is not reset by swapping). Shipped: both sceptres carry **`siphon`** — when the holder's own hit causes an `arcaneBreak` (*`arcaneStagger` in §13.4p's scope*), restore `balance.exposure.siphonRefund` Mana (`siphonRefundMastered` once the focus track `item:magic-focus` reaches `siphonMasteryLevel` — a `skillLevelAtLeast` gate on the ledger of plan phase 4a, §13.4d). The **`overcharge`** rule (buildup per hit × `balance.exposure.overchargeBuildupMult`, via the `exposureBuildupMult` passive) rides the Blight Rod and the Gorefire Brand; **`staggerBreak`** (the plain staves) and **`resonance`** (the Goldbough Branch) are §13.4k's (plan phase 8).
+| Predicate | Meaning |
+|---|---|
+| `{ p: 'inStance', stance }` | owner is in the stance |
+| `{ p: 'hasStatus', of, status, atLeast? }` | |
+| `{ p: 'hasBlock', of }` | |
+| `{ p: 'hpBelowPct', of, pct }` | |
+| `{ p: 'firstCardThisTurn' }` · `{ p: 'firstAttackThisCombat' }` | |
+| `{ p: 'cardTypeIs', type }` | |
+| `{ p: 'cardTagIs', tag }` | the contextual card's `tags` ∪ the snapshot's `derivedTags`, or the event's `cardTags` ∪ `derivedTags` (§13.4c) |
+| `{ p: 'everyNthCardThisCombat', n }` | |
+| `{ p: 'random', pct }` | uses a named stream |
+| `{ p: 'eventIsAttack' }` · `{ p: 'hpDamagePositive' }` · `{ p: 'eventSourceIsOwner' }` · `{ p: 'eventTargetIsOwner' }` · `{ p: 'eventStatusIs', status }` | gate a trigger on its firing event's payload (e.g. a stance reacting only to the owner's own attack hits; a relic reacting to Bleed meter fills) |
+| `{ p: 'healPositive' }` | a `healed` event that healed something (`applyHeal` emits one with amount 0 at full HP) |
+| `{ p: 'manaPositive' }` | a `manaRestored` event that restored something (`restoreMana` emits one with amount 0 at full Mana) |
+| `{ p: 'skillLevelAtLeast', skill, level }` · `{ p: 'classLevelAtLeast', level }` | progression gates; read the skill and class ledger of plan phase 4 and are **false until that ledger exists**, so a branch gated on them is inert |
+
+**Property mounts — the one path a property reaches combat** (`src/engine/properties.js`).
+- A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`. `mountProperties` resolves its property tags to rules (keeping a rule only when its `requires` are on the same carrier and its `excludes` are not) and records them at `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`. `unmountProperties` deletes it.
+- **A source key mounts once:** mounting one already mounted throws by name, so a re-equip can never fire a trigger twice.
+- Carriers today: equipped armaments and armour. `createCombat` mounts the loadout's worn pieces before any event; both equipment doors (`swapArmament`, and `changeEquipment` after `equipPiece`) re-sync: the outgoing piece's properties leave, the incoming piece's arrive.
+- Mounts are **never saved**: `restoreCombatSnapshot` re-derives them from the restored loadout.
+- `scanTriggers` walks mounted rules as its fourth source (beside relics, stances, statuses) under the gate key `property:<owner>:<sourceKey>:<i>`. Source keys are sorted, so a restored fight fires in the live order; the key is stable across unequip and re-equip, so a `once` gate is not reset by swapping.
+- Shipped: both sceptres carry **`siphon`** — when the holder's own hit causes an `arcaneBreak` (*`arcaneStagger` in §13.4p's scope*), restore `balance.exposure.siphonRefund` Mana (`siphonRefundMastered` once the focus track `item:magic-focus` reaches `siphonMasteryLevel`, a `skillLevelAtLeast` gate on the ledger of plan phase 4a, §13.4d). **`overcharge`** (buildup per hit × `balance.exposure.overchargeBuildupMult`, via the `exposureBuildupMult` passive) rides the Blight Rod and the Gorefire Brand. **`staggerBreak`** (plain staves) and **`resonance`** (Goldbough Branch) are §13.4k's (plan phase 8).
 
 ### 3.7 Status model — statuses are content, not code
 
@@ -415,7 +408,7 @@ Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStat
   hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
 ```
 
-The Elden Ring layer, fully as data — no engine special cases:
+The Elden Ring layer, fully as data:
 
 ```js
 bleed: {
@@ -436,9 +429,9 @@ frost:      { stackMode: 'add', decay: 'none',
     effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
 ```
 
-Poise/Stagger uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. A full meter applies the `staggered` status (skipped turn, ×1.5 damage taken). After a break the threshold grows by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). The ratings-meter variant (a break applying no status, growth by `breaks.thresholdGrowth` in `applyRatingImpact`) is retired with the ratings meter (#2633); Core fights ship `dealPoiseDamage` only. Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
-
-**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
+- **Poise/Stagger** uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. A full meter applies the `staggered` status (skipped turn, ×1.5 damage taken). After a break the threshold grows by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). Core fights ship `dealPoiseDamage` only.
+- **Stances** (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+- **Engine-primitive exceptions:** card-zone/turn semantics that can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
