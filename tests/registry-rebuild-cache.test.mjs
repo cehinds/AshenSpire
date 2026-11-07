@@ -13,7 +13,7 @@ const end = main.indexOf('\n}\n\n// Dev screenshot hook', start) + 2;
 assert.ok(start >= 0 && end > start, 'production rebuild function is present');
 const production = main.slice(start, end);
 function fixture({ warm = true, authored = { amount: 5 } } = {}) {
-  const calls = { validate: 0, mastery: 0, warnings: [], reported: [], options: [] };
+  const calls = { validate: 0, warnings: [], reported: [], options: [] };
   const contentBundle = authored;
   const deps = {
     createContentValidationCache, contentBundle,
@@ -24,7 +24,6 @@ function fixture({ warm = true, authored = { amount: 5 } } = {}) {
     advancedConfigStructuralProblems: (bundle, configuration) => configuration.structural ? ['invalid structure'] : [],
     createRegistries: bundle => ({ rows: structuredClone(bundle), mutable: new Map(), classes: { all: () => [] } }),
     bindGameProfileRegistries: (registry, profile) => ({ ...registry, profile }),
-    registriesForClassMastery: (registry, run) => { calls.mastery++; return { ...registry, mastery: run?.mastery ?? 0 }; },
     configureTooltipGlossary: () => {}, setClassGlyphs: () => {},
     reportContentValidationFailure: errors => calls.reported.push(errors),
     console: { warn: (...args) => calls.warnings.push(args) }
@@ -32,47 +31,47 @@ function fixture({ warm = true, authored = { amount: 5 } } = {}) {
   const create = new Function(...Object.keys(deps), `let registryGameProfile; let registries; ${production}; return rebuildRegistries;`);
   const rebuild = create(...Object.values(deps));
   if (warm) { // spend one build so each test starts from a warm cache
-    rebuild({ warm: true }, null, { id: 'warm', mode: 'legacy' });
-    for (const key of ['validate', 'mastery']) calls[key] = 0;
+    rebuild({ warm: true }, { id: 'warm', mode: 'legacy' });
+    calls.validate = 0;
     calls.warnings.length = calls.reported.length = calls.options.length = 0;
   }
   return { rebuild, calls };
 }
 
-test('actual rebuild reuses validation and registries for an unchanged profile and settings, and recomputes mastery', () => {
+test('actual rebuild reuses validation and registries for an unchanged profile and settings, ', () => {
   const { rebuild, calls } = fixture(), profile = { id: 'current', mode: 'legacy', hash: 'sha256:a', lock: { runtime: 'a' } };
-  const first = rebuild({ amount: 7 }, { mastery: 1 }, profile);
-  const second = rebuild({ amount: 7 }, { mastery: 2 }, structuredClone(profile));
-  assert.equal(calls.validate, 1); assert.equal(calls.mastery, 2);
-  assert.equal(second.rows.amount, 7); assert.equal(second.mastery, 2); assert.equal(first.mastery, 1);
+  const first = rebuild({ amount: 7 }, profile);
+  const second = rebuild({ amount: 7 }, structuredClone(profile));
+  assert.equal(calls.validate, 1);
+  assert.equal(second.rows.amount, 7);
   assert.equal(second.mutable, first.mutable, 'the unchanged build is reused, not rebuilt');
-  rebuild({ amount: 8 }, null, profile); assert.equal(calls.validate, 2);
-  const changed = rebuild({ amount: 8 }, null, { ...profile, hash: 'sha256:b', lock: { runtime: 'b' } });
+  rebuild({ amount: 8 }, profile); assert.equal(calls.validate, 2);
+  const changed = rebuild({ amount: 8 }, { ...profile, hash: 'sha256:b', lock: { runtime: 'b' } });
   assert.equal(calls.validate, 3); assert.notEqual(changed.mutable, second.mutable);
 });
 
 test('a settings change that alters nothing in the key still rebuilds when any setting differs', () => {
   const { rebuild } = fixture(), profile = { id: 'current', mode: 'legacy' };
-  const a = rebuild({ amount: 7, other: 1 }, null, profile);
-  assert.notEqual(rebuild({ amount: 7, other: 2 }, null, profile).mutable, a.mutable);
-  assert.notEqual(rebuild({ amount: 7, other: 2 }, null, { id: 'other', mode: 'legacy' }).mutable, a.mutable);
+  const a = rebuild({ amount: 7, other: 1 }, profile);
+  assert.notEqual(rebuild({ amount: 7, other: 2 }, profile).mutable, a.mutable);
+  assert.notEqual(rebuild({ amount: 7, other: 2 }, { id: 'other', mode: 'legacy' }).mutable, a.mutable);
 });
 
 test('the first build of a configured profile validates synchronously, reports and refuses invalid content', () => {
   const { rebuild, calls } = fixture({ warm: false });
   const profile = { id: 'core', mode: 'configured', invalid: true };
-  assert.throws(() => rebuild({}, null, profile), /Invalid game profile core/);
+  assert.throws(() => rebuild({}, profile), /Invalid game profile core/);
   assert.equal(calls.validate, 1);
-  assert.deepEqual(calls.options, [undefined], 'boot validates whole, class mastery included');
+  assert.deepEqual(calls.options, [undefined], 'boot validates whole');
   assert.equal(calls.reported.length, 1); assert.equal(calls.reported[0][0].path, 'amount');
   const ok = fixture({ warm: false });
-  ok.rebuild({}, null, { id: 'core', mode: 'configured' });
+  ok.rebuild({}, { id: 'core', mode: 'configured' });
   assert.equal(ok.calls.validate, 1); assert.equal(ok.calls.reported.length, 0);
 });
 
 test('the first build of saved legacy settings validates whole, so a failure still falls back', () => {
   const { rebuild, calls } = fixture({ warm: false });
-  const fallback = rebuild({ invalid: true }, null, { id: 'current', mode: 'legacy' });
+  const fallback = rebuild({ invalid: true }, { id: 'current', mode: 'legacy' });
   assert.equal(fallback.rows.invalid, undefined);
   assert.deepEqual(calls.options, [undefined, undefined], 'the settings build, then the authored fallback, validate whole');
   assert.equal(calls.reported.length, 0, 'valid authored content raises no banner: the settings were at fault');
@@ -80,7 +79,7 @@ test('the first build of saved legacy settings validates whole, so a failure sti
 
 test('a legacy fallback onto broken authored content raises the content banner', () => {
   const { rebuild, calls } = fixture({ warm: false, authored: { amount: 5, invalid: true } });
-  rebuild({}, null, { id: 'current', mode: 'legacy' });
+  rebuild({}, { id: 'current', mode: 'legacy' });
   assert.equal(calls.reported.length, 1, 'the authored bundle failed, not the settings: say so loudly');
   assert.equal(calls.reported[0][0].path, 'amount');
 });
@@ -88,12 +87,12 @@ test('a legacy fallback onto broken authored content raises the content banner',
 test('actual invalid legacy configurations keep loud defaults fallback on each attempt', () => {
   const { rebuild, calls } = fixture(), profile = { id: 'current', mode: 'legacy' };
   for (let attempt = 0; attempt < 2; attempt++) {
-    const fallback = rebuild({ invalid: true }, null, profile);
+    const fallback = rebuild({ invalid: true }, profile);
     assert.equal(fallback.rows.amount, 5); assert.equal(fallback.rows.invalid, undefined);
   }
   assert.equal(calls.validate, 4, 'each attempt validates the settings and the authored fallback'); assert.equal(calls.warnings.length, 2);
   assert.match(calls.warnings[0].join(' '), /configuration unchanged/i);
-  rebuild({ structural: true }, null, profile);
+  rebuild({ structural: true }, profile);
   assert.equal(calls.warnings.length, 3);
 });
 
@@ -101,22 +100,22 @@ test('actual invalid configured profiles still throw loudly and are revalidated'
   const { rebuild, calls } = fixture();
   const profile = { id: 'core', mode: 'configured', invalid: true };
   for (let attempt = 0; attempt < 2; attempt++) {
-    assert.throws(() => rebuild({}, null, profile), /Invalid game profile core: amount: invalid amount/);
+    assert.throws(() => rebuild({}, profile), /Invalid game profile core: amount: invalid amount/);
   }
   assert.equal(calls.validate, 2); assert.equal(calls.warnings.length, 2);
 });
 
 test('a configured profile keys its cache on the profile hash and opening/presentation settings, not the whole settings object', () => {
   const { rebuild, calls } = fixture(), profile = { id: 'core', mode: 'configured', hash: 'sha256:core' };
-  const first = rebuild({ 'gameConfig.balance.xp.kill.normal': 1, volume: 3, 'gameConfig.prologue.sceneCount': 2 }, null, profile);
+  const first = rebuild({ 'gameConfig.balance.xp.kill.normal': 1, volume: 3, 'gameConfig.prologue.sceneCount': 2 }, profile);
   assert.equal(calls.validate, 1);
-  const unrelated = rebuild({ 'gameConfig.balance.xp.kill.normal': 99, volume: 9, 'gameConfig.prologue.sceneCount': 2 }, null, structuredClone(profile));
+  const unrelated = rebuild({ 'gameConfig.balance.xp.kill.normal': 99, volume: 9, 'gameConfig.prologue.sceneCount': 2 }, structuredClone(profile));
   assert.equal(unrelated.mutable, first.mutable, 'a legacy key or an unrelated setting does not rebuild a configured profile');
   assert.equal(calls.validate, 1);
-  const snapshot = rebuild({ schemaVersion: 1, overrides: { 'gameConfig.prologue.sceneCount': 2 } }, null, profile);
+  const snapshot = rebuild({ schemaVersion: 1, overrides: { 'gameConfig.prologue.sceneCount': 2 } }, profile);
   assert.equal(snapshot.mutable, first.mutable, 'a run snapshot with the same opening settings hits the same build');
-  assert.notEqual(rebuild({ 'gameConfig.prologue.sceneCount': 3 }, null, profile).mutable, first.mutable, 'an opening setting rebuilds');
+  assert.notEqual(rebuild({ 'gameConfig.prologue.sceneCount': 3 }, profile).mutable, first.mutable, 'an opening setting rebuilds');
   assert.equal(calls.validate, 2);
-  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, null, profile).mutable, first.mutable, 'a presentation setting rebuilds');
-  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, null, { ...profile, hash: 'sha256:other' }).mutable, first.mutable, 'a different profile hash rebuilds');
+  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, profile).mutable, first.mutable, 'a presentation setting rebuilds');
+  assert.notEqual(rebuild({ 'gameConfig.presentation.showFormationGrid': true }, { ...profile, hash: 'sha256:other' }).mutable, first.mutable, 'a different profile hash rebuilds');
 });
