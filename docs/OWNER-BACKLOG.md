@@ -23,16 +23,23 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Questions: none
 - Link: —
 
-## #4 All statuses as badges like Automatic Sweep
+## #4 All statuses as badges in one row with Precision
 - Status: pending
-- Asked: 2026-11-07 — "Id like all status's to be batches like automatic sweeP" (screenshot: Automatic Sweep shows as a small round badge with a count left of the HP bar; a clock/speed-lines status badge elsewhere is circled with an arrow pointing at the Sweep badge)
-- Means: Every status effect on a combatant renders as the same small round icon badge with a stack count, in the same row as Automatic Sweep, instead of differing styles/places.
-- Questions: "batches" read as "badges"; circled clock status read as the one not matching today.
+- Asked: 2026-11-07 — "Id like all status's to be batches like automatic sweeP"; clarified: "no: I mean in the same row as precision and status effects since those buffs are status effects just buff status effects"
+- Means: Every status effect on a combatant, buffs included (e.g. the clock/speed-lines one), renders as the same small round count badge in one shared row with Precision (the crosshair badge), not scattered in different styles/places. ("Automatic Sweep" in the first ask was Precision.)
+- Questions: none
 - Link: —
 
 ## #5 Enemy Block to the left of the health bar
 - Status: pending
 - Asked: 2026-11-07 — "move the block to the left of the health bar for enemies" (screenshot: Block shield "7" sits below-left of the bar, under its left end; red box marks the spot at the bar's left end)
 - Means: On enemy mini HUDs, the Block badge moves from under the bar to directly left of the HP bar, in line with it. Player HUD and the rest of the layout (#2) stay.
+- Questions: none
+- Link: —
+
+## #6 Status row under the health bar
+- Status: pending
+- Asked: 2026-11-07 — "also, I want the precisiuon to be under the health" (screenshot: red box directly under the HP bar)
+- Means: The Precision + status badge row (#4) sits directly under the HP bar, instead of left of it/below-left. Pairs with #5 (enemy Block left of the bar).
 - Questions: none
 - Link: —
