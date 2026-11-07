@@ -46,3 +46,12 @@ Archive of dates, rationale, provenance and superseded designs moved out of SPEC
 
 ## 4.6 / 4.9 removals
 - The old Advanced → Combat toggles, Momentum and the Combat Rounds Preview were removed in cleanup 3i-A.
+
+## 4.7 Tagged combat cards and readable enemy stances
+- Intent concealment: "Design assumption resolving the incomplete user sentence 'base 70% chance to be': 70% chance to conceal the exact selected action, not 70% hit chance."
+- Weaknesses in Core: the paragraph appeared twice in SPEC; the second copy ended "The combat log, a `weaknessTriggered` event, the 'Weak!' callout, the inspector's traits, the bestiary and two HUD chips show them", which predates the Discovery rule (owner 2026-11-01) that keeps undiscovered weaknesses hidden and the title-screen bestiary empty.
+- "Out of scope for this contract" and the future-expansion pointer: moved here as rationale; the links remain in SPEC.
+
+## 4.8 / 4.9 / 4.10
+- Owner authorized the complete revised combat expansion for implementation on 2026-10-07. "This specification precedes the implementation" (card traits). Enemy-knowledge contract: "lands before its runtime implementation".
+- 4.10: owner's 2026-10-08 reaction-contract revision. The reaction system has shipped.
