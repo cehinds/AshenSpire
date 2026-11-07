@@ -111,5 +111,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Owner 2026-11-07: no preference on placement or on whether per-PR review stops; asked for my recommendation.
 - Recommendation (awaiting owner ok): `dev` → `review` → `test` → `release` → `main`. The review branch gates promotion so bad code never reaches the long suites; keep per-PR review into `dev` for now (no rule removed), and re-evaluate once the review branch proves out.
 - Clarified 2026-11-07 — "its a claude code session": the review branch is owned by a dedicated Claude Code session (not a person or CI job). That session reviews what lands on the branch and passes it on; it is read-only on code except for the merge/promotion step, like `ashen-reviewer`.
-- Questions: accept the recommendation? (asked in chat)
+- Owner decision 2026-11-07 — "feature -> dev -> review -> test (version bump)-> release (version bump) -> main (version bump), if review has issues then it becomes review > chore/* > dev > review > test > release > main": pipeline is feature/* → dev → review → test → release → main, with a version bump at each of test, release and main. If review finds issues, the fix goes review → chore/* → dev → back through review, then on to test. Replaces the recommendation above.
+- Note: today the automatic bump happens only at `test`→`release` (3rd number +1, build ordinal reset) and `release`→`main` (2nd number +1); there is no bump at `test` (CLAUDE.md, docs/versioning.md, version-advance.yml).
+- Questions: which number does the new `test` bump raise? (asked in chat)
 - Link: —
