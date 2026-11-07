@@ -2123,25 +2123,23 @@ export function preflightCardHp(ctx, def, source, target, meta) {
 // Run-level opcodes (events, shops, rewards reuse the same DSL — SPEC §3.4)
 // ---------------------------------------------------------------------------
 
-function runRunOpcode(ctx, action, eff) {
-  const run = ctx.run;
-  if (!run) {
-    throw new Error(`Run-level opcode '${eff.op}' requires a run context (use executeRunEffects)`);
-  }
-  switch (eff.op) {
-    case 'addCinders': {
+export const RUN_OPCODE_HANDLERS = Object.freeze({
+    addCinders: (ctx, action, eff) => {
+      const run = ctx.run;
       const n = evalNum(ctx, action, eff.amount, 0);
       run.cinders = Math.max(0, run.cinders + n);
       ctx.emit('cindersChanged', { amount: n, total: run.cinders });
-      break;
-    }
-    case 'addCardToDeck': {
+      return;
+    },
+    addCardToDeck: (ctx, action, eff) => {
+      const run = ctx.run;
       ctx.registries.cards.get(eff.card); // throws on dangling id
       run.deck.push({ instanceId: ctx.nextInstanceId(), cardId: eff.card, upgraded: false });
       recordCollectedCards(run);
-      break;
-    }
-    case 'removeCardFromDeck': {
+      return;
+    },
+    removeCardFromDeck: (ctx, action, eff) => {
+      const run = ctx.run;
       // Run-owned basics retire their slot; item grants remain equipment-owned.
       let idx = -1;
       if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && canRemoveDeckCard(c));
@@ -2150,9 +2148,10 @@ function runRunOpcode(ctx, action, eff) {
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
       if (idx >= 0) removeDeckCard(run, run.deck[idx].instanceId);
-      break;
-    }
-    case 'upgradeCard': {
+      return;
+    },
+    upgradeCard: (ctx, action, eff) => {
+      const run = ctx.run;
       const plan = smithingPlan(ctx.registries, run);
       // Since the item-upgrade redesign the plan also offers non-armament
       // items (no armamentId, no affectedCards); a card upgrade can only ride
@@ -2188,7 +2187,7 @@ function runRunOpcode(ctx, action, eff) {
           : !card.upgraded && ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade))
         .map((card) => ({ kind: 'card', card }));
       const candidates = [...armaments, ...ordinary];
-      if (candidates.length === 0) break;
+      if (candidates.length === 0) return;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
       if (chosen.kind === 'armament') {
         // A configured (Core) run only commits equipment upgrades inside a Smith service; this reward is one.
@@ -2200,16 +2199,17 @@ function runRunOpcode(ctx, action, eff) {
       } else {
         chosen.card.upgraded = true;
       }
-      break;
-    }
-    case 'addRelic': {
+      return;
+    },
+    addRelic: (ctx, action, eff) => {
+      const run = ctx.run;
       let relicId = eff.id || null;
       if (!relicId && eff.random) {
         // Quest-pool relics are never "a random relic" — they are the named
         // reward of the choice that grants them (RELIC_POOLS, model/schemas.js).
         const pool = ctx.registries.relics.ids()
           .filter((id) => !run.relics.includes(id) && relicInRewardPool(ctx.registries.relics.get(id)));
-        if (pool.length === 0) break;
+        if (pool.length === 0) return;
         relicId = ctx.rng.pick('relicRewards', pool);
       }
       if (relicId && !run.relics.includes(relicId)) {
@@ -2217,23 +2217,25 @@ function runRunOpcode(ctx, action, eff) {
         run.relics.push(relicId);
         syncFlaskGrowth(ctx.registries, run); // growth chain: a relic source binds the moment it is held
       }
-      break;
-    }
-    case 'addFlask': {
+      return;
+    },
+    addFlask: (ctx, action, eff) => {
+      const run = ctx.run;
       let flaskId = eff.id || null;
       if (!flaskId && eff.random) {
         const pool = ctx.registries.flasks.ids();
-        if (pool.length === 0) break;
+        if (pool.length === 0) return;
         flaskId = ctx.rng.pick('flaskRewards', pool);
       }
       if (flaskId) {
         acquireFlask(ctx.registries, run, flaskId);
       }
-      break;
-    }
-    case 'addFlaskCapacity': {
+      return;
+    },
+    addFlaskCapacity: (ctx, action, eff) => {
+      const run = ctx.run;
       const kind = eff.kind;
-      if (!run.flaskCharges || !['hp', 'mana'].includes(kind) || !Number.isInteger(eff.amount) || eff.amount <= 0) break;
+      if (!run.flaskCharges || !['hp', 'mana'].includes(kind) || !Number.isInteger(eff.amount) || eff.amount <= 0) return;
       run.flaskCharges.capacity += eff.amount;
       run.flaskCharges[kind] += eff.amount;
       run.flaskCharges[`${kind}Current`] += eff.amount;
@@ -2244,9 +2246,10 @@ function runRunOpcode(ctx, action, eff) {
       // not recorded: under pool (D19) the grant's kind is spent the moment it
       // lands above, and the live split stays freely reallocatable at a grace.
       run.flaskCharges.granted += eff.amount;
-      break;
-    }
-    case 'loseMaxHpPct': {
+      return;
+    },
+    loseMaxHpPct: (ctx, action, eff) => {
+      const run = ctx.run;
       const pct = evalNum(ctx, action, eff.pct, 0);
       if (!Number.isInteger(run.maxHpAdjustment)) {
         throw new Error('loseMaxHpPct requires the run maxHpAdjustment ledger');
@@ -2255,33 +2258,43 @@ function runRunOpcode(ctx, action, eff) {
       run.maxHp = Math.max(1, Math.floor(run.maxHp * (1 - pct / 100)));
       run.maxHpAdjustment += run.maxHp - before;
       run.hp = Math.min(run.hp, run.maxHp);
-      break;
-    }
-    case 'startCombat': {
+      return;
+    },
+    startCombat: (ctx, action, eff) => {
+      const run = ctx.run;
       ctx.registries.encounters.get(eff.encounterId); // throws on dangling id
       run.combatEntered = eff.encounterId;
-      break;
-    }
-    case 'swapClass': {
+      return;
+    },
+    swapClass: (ctx, action, eff) => {
+      const run = ctx.run;
       // Plan phase 5c: the core card is replaced (model/classSwap.js). A
       // random swap rolls on the 'misc' stream among every other class.
       const others = ctx.registries.classes.ids().filter((id) => id !== run.class);
       const classId = eff.random ? (others.length ? ctx.rng.pick('misc', others) : run.class) : eff.classId;
       swapRunClass(ctx.registries, run, classId);
-      break;
-    }
-    case 'refillFlasks': {
+      return;
+    },
+    refillFlasks: (ctx, action, eff) => {
+      const run = ctx.run;
       // Plan phase 7: the grace refill is the `restFlasks` location rule's
       // effect on `arrived`. A top-up by construction (engine/encounters.js),
       // so a re-entry grants nothing twice; the receipt rides the context for
       // the screen's refill line.
       ctx.receipts = ctx.receipts || {};
       ctx.receipts.refill = applyGraceRefill(ctx.registries, run, ctx.refillOpts || {});
-      break;
-    }
-    default:
-      throw new Error(`Run opcode '${eff.op}' has no implementation`);
+      return;
+    },
+});
+
+function runRunOpcode(ctx, action, eff) {
+  const run = ctx.run;
+  if (!run) {
+    throw new Error(`Run-level opcode '${eff.op}' requires a run context (use executeRunEffects)`);
   }
+  const handler = RUN_OPCODE_HANDLERS[eff.op];
+  if (!handler) throw new Error(`Run opcode '${eff.op}' has no implementation`);
+  handler(ctx, action, eff);
 }
 
 /**
