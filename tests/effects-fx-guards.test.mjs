@@ -106,7 +106,7 @@ test('idle motion off stops resting swaps but lets every action pose through', a
 test('with Effects off the figure hit keyframes keep the recoil and drop the red tint', async () => {
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
-  const frames = name => { const m = css.match(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)); return (m && (m[1] || m[2])) || ''; };
+  const frames = name => { const m = css.match(new RegExp(`@keyframes ${name} \\{\\n([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)); return (m && (m[1] || m[2])) || ''; };
   const names = new Map();
   for (const m of css.matchAll(/(:root\[data-effects='off'\][^{]*\.sprite\.hitflash[^{]*>\s*:first-child)\s*\{\s*animation-name:\s*([\w-]+)/g)) names.set(m[1], m[2]);
   assert.equal(names.size, 5, 'generic, enemy, player and both heavy variants are overridden');

@@ -2,7 +2,6 @@ import { tagSymbolSvg } from './cardTagSymbols.js';
 import { combatHealthModel, visibleBadges } from '../models/CombatHealthModel.js';
 import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { acBadgeText } from '../models/acBadge.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
@@ -15,7 +14,8 @@ export function badgeTipHtml(badge, { blockHelp, poiseHelp, wardHelp, evadeHelp 
   return `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.help ? badge.help : badge.kind === 'evade' ? (evadeHelp || 'Active Evasion stacks. Each stack contributes to the attack roll defense.') : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`;
 }
 // The kinds a persistent row holds a node for, in the order the model lists them.
-const BADGE_KINDS = Object.freeze(['shield', 'poise', 'evade', 'ward', 'precision', 'counter', 'reflect']);
+// Owner 2026-11-07: Poise and AC are hidden on the combat HUDs (the inspect panel still lists them).
+const BADGE_KINDS = Object.freeze(['shield', 'evade', 'ward', 'precision', 'counter', 'reflect']);
 export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward'), poiseHelp = tFull('combat.protection.poise'), evadeHelp = null, persistent = false } = {}) {
   if (!hp) return null;
   const model = combatHealthModel(values);
@@ -32,36 +32,23 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   hp.classList.add('combat-health-meter');
   hp.dataset.protected = String(model.protected);
   hp.dataset.warded = String(model.warded);
-  // The fill's colour: the highest layer still standing (see healthGuardTone). Poise trims the bar in gold while it lasts.
+  // The fill's colour: the highest layer still standing (see healthGuardTone). No Poise trim or overlay on the HUD (owner 2026-11-07).
   hp.dataset.guard = model.guard;
-  hp.dataset.poised = String(model.poised);
-  // Ward status: a purple bar over the HP bar shows current Poise on the HP scale (SPEC 4.1a).
+  hp.dataset.poised = 'false';
   hp.dataset.wardActive = String(model.wardActive);
-  if (model.poiseOverlayPct > 0 && track) {
-    const overlay = document.createElement('span');
-    overlay.className = 'combat-health-poise-overlay';
-    overlay.dataset.poiseOverlay = String(model.poise);
-    overlay.style.width = `${model.poiseOverlayPct}%`;
-    overlay.setAttribute('aria-hidden', 'true');
-    track.append(overlay);
-  }
   const healthValue = hp.querySelector('.m-value');
   if (healthValue) {
     // Narrow phone lanes show current HP; the full fraction remains the
     // accessible label, tooltip, and wide-layout text.
     healthValue.dataset.currentHp = healthValue.textContent.split('/')[0].trim();
-    healthValue.setAttribute('aria-label', model.poiseLabel ? `${healthValue.textContent}. ${model.poiseLabel}` : healthValue.textContent);
+    healthValue.setAttribute('aria-label', healthValue.textContent);
   }
-  if (tooltips && model.poised) {
-    hp.tabIndex = 0;
-    attachTooltip(hp, () => `<div class="tt-title">${esc(model.poiseLabel)}</div>${esc(poiseHelp)}`);
-  }
-  const { shown, overflow } = visibleBadges(model.badges);
+  const { shown, overflow } = visibleBadges(model.badges.filter(badge => badge.kind !== 'poise'));
   // Owner (2026-11-06): a HUD row (`persistent`) carries one node for every badge kind, in a fixed order, and a kind with
   // nothing to show is a hidden `placeholder`. A badge appearing or going then writes an attribute and a number; it adds or removes no node.
   const slots = persistent ? [...BADGE_KINDS.map(kind => shown.find(badge => badge.kind === kind) || { kind, label: '', value: 0, placeholder: true }),
     overflow || { kind: 'overflow', label: '', value: '', names: [], text: '', placeholder: true }] : (overflow ? [...shown, overflow] : shown);
-  // The player's Block (owner 2026-11-02) takes the square slot left of the bar, where AC used to sit; enemies (no `values.ac`) keep it in the stack.
+  // The player's Block (owner 2026-11-02) takes the square slot left of the bar (AC is no longer drawn, owner 2026-11-07); enemies (no `values.ac`) keep it in the stack.
   let blockSquare = null;
   for (const badge of slots) {
     const node = document.createElement('span');
@@ -93,32 +80,6 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       node.classList.add('combat-health-block-slot');
       blockSquare = node;
     } else row.append(node);
-  }
-  // The player's AC (owner 2026-11-01, swapped with Block 2026-11-02): the first badge of the badge row, with the small "AC" caption just before it.
-  // `values.ac` is { value, evade, base } from acFor; enemies never carry it.
-  if (values?.ac) {
-    const text = acBadgeText(values.ac);
-    const square = document.createElement('span');
-    square.className = 'combat-health-badge combat-health-ac';
-    square.dataset.defenseKind = 'ac';
-    square.dataset.ac = String(values.ac.value);
-    square.setAttribute('aria-label', [text.title, ...text.lines].map(line => line.replace(/\.$/, '')).join('. ') + '.');
-    const number = document.createElement('span');
-    number.className = 'combat-health-badge-value';
-    number.textContent = String(values.ac.value);
-    square.append(number);
-    if (tooltips) {
-      square.tabIndex = 0;
-      attachTooltip(square, () => `<div class="tt-title">${esc(text.title)}</div>${text.lines.map(esc).join('<br>')}`);
-    }
-    // The caption is decoration, not a badge: no data-defense-kind, so badge readers (and the HUD QA) never mistake it for one.
-    const caption = document.createElement('span');
-    caption.className = 'combat-health-badge combat-health-ac-caption';
-    caption.dataset.acCaption = '';
-    caption.setAttribute('aria-hidden', 'true');
-    caption.textContent = 'AC';
-    row.insertBefore(square, row.firstChild);
-    row.insertBefore(caption, square);
   }
   // A sibling just before the meter, which stays a direct child of the row so its row-scoped styling still applies.
   if (blockSquare) row.append(blockSquare);

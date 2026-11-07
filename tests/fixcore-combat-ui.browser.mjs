@@ -66,7 +66,7 @@ try {
       kind: node.dataset.defenseKind, value: node.querySelector('.combat-health-badge-value').textContent,
       width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height,
     })));
-    assert.deepEqual(pips.map(({ kind, value }) => [kind, value]), [['evade', '2'], ['poise', '12'], ['ward', '8'], ['shield', '3']]);
+    assert.deepEqual(pips.map(({ kind, value }) => [kind, value]), [['evade', '2'], ['ward', '8'], ['shield', '3']]);
     for (const pip of pips) assert.ok(Math.abs(pip.width - pip.height) < 1, `${pip.kind} keeps its aspect`);
     assert.equal(await panel.locator('[data-res="poise"]').count(), 0, 'pressure is not shown as remaining Poise');
     const textFit = await card.locator('[data-card-binding="rules"]').evaluate(node => ({

@@ -9,6 +9,8 @@ import { floaterLifeMs, floaterStaggerMs, setCombatPacing } from '../src/ui/anim
 import { FLOATER_STACK } from '../src/ui/floaterStack.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 
 const GAP = FLOATER_STACK.floaterLineGapPx;
 // A layer and anchors with fixed boxes; every element measures 40 x 20. `spawns` records each floater as it joins the layer.

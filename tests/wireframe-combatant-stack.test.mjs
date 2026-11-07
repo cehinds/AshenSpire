@@ -57,3 +57,11 @@ test('icon tray never wraps: excess collapses into a final +N tile', () => {
   const tiny = planIconTray({ count: 2, width: 4, rem });
   assert.deepEqual([tiny.shown, tiny.hidden], [0, 2]);
 });
+
+test('without Poise (hidden on the HUD) four buildups all stay bars; counting it would demote the last to a pip', () => {
+  const hidden = planCombatantStack({ resources: ['hp'], buildups: ['bleed', 'frost', 'insanity', 'blight'] });
+  assert.deepEqual(hidden.rows, ['hp', 'bleed', 'frost', 'insanity', 'blight']);
+  assert.deepEqual(hidden.promoted, []);
+  const counted = planCombatantStack({ resources: ['hp', 'poise'], buildups: ['bleed', 'frost', 'insanity', 'blight'] });
+  assert.deepEqual(counted.promoted, ['insanity', 'blight']);
+});
