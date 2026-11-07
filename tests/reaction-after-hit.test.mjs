@@ -120,3 +120,13 @@ test("the legacy 'impact' order does not swing the enemy a second time for the r
     assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1, 'one enemy swing');
   }, { beatOrder: 'impact' });
 });
+
+test('a failed avoidance check (avoided:false) announces nothing, so the damage still gets its Hit word', t => {
+  const events = [...reaction, move, { type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: false },
+    { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5, blocked: 0 }, { type: 'enemyMoveEnded', sourceId: 'e1' }];
+  drive(t, events, timeline => {
+    const hit = when(timeline, 'word:hit'), dmg = timeline.find(r => /^float:.5$/.test(r.what))?.at;
+    assert.ok(hit != null && dmg != null, JSON.stringify(timeline));
+    assert.ok(hit < dmg, 'the Hit word plays before the damage');
+  });
+});

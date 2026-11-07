@@ -1086,7 +1086,8 @@ export function groupBeats(events) {
 // already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
 const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
   || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
-const RESULT_TYPES = new Set(['attackHit', 'attackMissed', 'attackEvaded', 'combatAvoidanceResolved']);
+// A receipt that announces an outcome (onResult says Hit or Miss for it); combatAvoidanceResolved announces one only when avoided.
+const announces = event => ['attackHit', 'attackMissed', 'attackEvaded'].includes(event.type) || event.type === 'combatAvoidanceResolved' && event.avoided === true;
 const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');
 function reactionAfterResult(beats) {
   const out = [];
@@ -1096,7 +1097,7 @@ function reactionAfterResult(beats) {
     let j = i;
     while (beats[j + 1] && reactionCardBeat(beats[j + 1])) j++;
     const attack = beats[j + 1];
-    const at = attack && attack.prepared && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(e => RESULT_TYPES.has(e.type)) : -1;
+    const at = attack && attack.prepared && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(announces) : -1;
     if (at < 0) { out.push(...beats.slice(i, j + 1)); i = j; continue; }
     const result = attack.events.slice(0, at + 1), rest = attack.events.slice(at + 1);
     const lead = (attack.lead || []).filter(e => result.includes(e));
@@ -1308,7 +1309,7 @@ export function playTimeline(events, ctx, done) {
       }
       // The first hit's Hit/Miss word already played ahead of the reaction beat (reactionAfterResult); a group with its
       // own accuracy receipt (a later hit of a multi-hit attack) still says its word.
-      if (beat.resultSaid && !beat.events.some(event => RESULT_TYPES.has(event.type))) return;
+      if (beat.resultSaid && !beat.events.some(announces)) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
