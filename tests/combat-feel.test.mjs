@@ -182,7 +182,7 @@ function drive(t, fn, { maxHp } = {}) {
     const ctx = { layer, combatEl, anchorFor: (id) => id === 'enemy' ? actor : target,
       animateActor: () => ({ impactMs: 100, totalMs: 800,
         hold: (ms) => holds.push(['actor', ms, Date.now()]), cancel() {} }),
-      onFlush: () => flushes++, onBeatApplied() {}, ...(maxHp ? { maxHpFor: () => maxHp } : {}) };
+      onFlush: () => flushes++, onBeatApplied() {}, ...(maxHp ? { maxHpFor: (id) => id === 'player' ? maxHp : 1000 } : {}) };
     const events = (amounts, opener) => [opener || { type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
       ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount }))];
     const start = (amounts, opener) => playTimeline(events(amounts, opener), ctx, () => completed++);
@@ -250,6 +250,20 @@ test('skipping after the first multi-hit number does not replay its damage hapti
     assert.equal(stats().flushes, 1);
   });
 });
+
+for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
+  test(`with the target max HP 100 known, a ${amount} HP hit holds ${ms} ms and shakes ${px}`, (t) => {
+    drive(t, ({ start, tick, holds, combatEl }) => {
+      const shakes = [];
+      const setProperty = combatEl.style.setProperty.bind(combatEl.style);
+      combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
+      start([amount]); tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+      assert.deepEqual(holds.map(([who, hold]) => [who, hold]), [['actor', ms]], 'the attacker holds at contact, by the target max HP share');
+      for (let i = 0; i < 400; i++) tick(20);
+      assert.deepEqual(shakes, [px]);
+    }, { maxHp: 100 });
+  });
+}
 
 test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
