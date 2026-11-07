@@ -277,7 +277,14 @@ if (!entrySrc) fail('no <script type="module" src="..."> entry found in index.ht
 // Match a side-effect import first so the multi-line `from` form cannot swallow
 // it together with a later named import.
 const IMPORT_RE =
-  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!\s*\()(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+
+// A dynamic import the bundler can follow: `import('<relative literal>')`, one
+// string-literal argument. The target is bundled like any module but its factory
+// is NOT run at boot; the call becomes a Promise over the loader's require(), so
+// a dev-only module costs nothing until the code path that asks for it runs.
+// Every other `import(` form (template, variable, non-relative) is refused.
+const DYNAMIC_IMPORT_RE = /(?<![.$\w])import\s*\(\s*(['"])([^'"\\\n]*)\1\s*\)/g;
 
 function resolveSpecifier(fromAbs, spec) {
   if (!spec.startsWith('.')) {
@@ -293,7 +300,7 @@ function resolveSpecifier(fromAbs, spec) {
   return abs;
 }
 
-// Discover the set of dependency specifiers in a module source.
+// Discover the dependency specifiers in a module source: { static, dynamic }.
 function findImportSpecifiers(src, fromAbs) {
   const specs = [];
   IMPORT_RE.lastIndex = 0;
@@ -302,11 +309,15 @@ function findImportSpecifiers(src, fromAbs) {
     const spec = m[1] !== undefined ? m[1] : m[2];
     specs.push(spec);
   }
-  // Guard against dynamic import() slipping through — should already be absent.
-  if (/\bimport\s*\(/.test(src)) {
-    fail('dynamic import() found in ' + idOf(fromAbs) + ' — not supported by this bundler');
+  const dynamic = [];
+  DYNAMIC_IMPORT_RE.lastIndex = 0;
+  while ((m = DYNAMIC_IMPORT_RE.exec(src)) !== null) dynamic.push(m[2]);
+  // Anything still an `import(` once the literal form is removed cannot be
+  // followed at build time (template, variable, concatenation).
+  if (/\bimport\s*\(/.test(src.replace(DYNAMIC_IMPORT_RE, ''))) {
+    fail('dynamic import() found in ' + idOf(fromAbs) + " — only import('./relative/literal.js') is supported by this bundler");
   }
-  return specs;
+  return { static: specs, dynamic };
 }
 
 const entryAbs = resolve(ROOT, entrySrc);
@@ -324,8 +335,10 @@ function visit(absPath) {
   // matching) behave identically regardless of the file's line endings.
   const src = readText(absPath);
   sources.set(id, src);
-  const specs = findImportSpecifiers(src, absPath);
-  const deps = specs.map((s) => resolveSpecifier(absPath, s));
+  const found = findImportSpecifiers(src, absPath);
+  // Dynamic targets join the walk (they are bundled); the factory of a
+  // dynamic-only module still runs only on first use, never at boot.
+  const deps = [...found.static, ...found.dynamic].map((s) => resolveSpecifier(absPath, s));
   depsById.set(id, deps.map(idOf));
   order.push(id);
   for (const d of deps) visit(d);
@@ -826,6 +839,10 @@ function transformModule(id, src, absPath) {
   // matching whole import statements with the same anchored regex used for
   // discovery, and replacing each with its require() form.
   let out = src.replace(IMPORT_RE, (stmt) => rewriteImport(stmt, absPath));
+  // import('./x.js') -> Promise.resolve().then(() => require("src/x.js")): the
+  // same exports object a static `import * as N` gets, factory run on first call.
+  out = out.replace(DYNAMIC_IMPORT_RE, (_w, _q, spec) =>
+    `Promise.resolve().then(() => require(${JSON.stringify(idOf(resolveSpecifier(absPath, spec)))}))`);
 
   // Now process exports, line by line, anchored at line start. Normalize CRLF
   // to LF so anchored per-line regexes (which use `$`, and `.` that excludes
