@@ -24,28 +24,28 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: —
 
 ## #4 All statuses as badges in one row with Precision
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "Id like all status's to be batches like automatic sweeP"; clarified: "no: I mean in the same row as precision and status effects since those buffs are status effects just buff status effects"
 - Means: Every status effect on a combatant, buffs included (e.g. the clock/speed-lines one), renders as the same small round count badge in one shared row with Precision (the crosshair badge), not scattered in different styles/places. ("Automatic Sweep" in the first ask was Precision.)
 - Questions: none
 - Link: —
 
 ## #5 Enemy Block to the left of the health bar
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "move the block to the left of the health bar for enemies" (screenshot: Block shield "7" sits below-left of the bar, under its left end; red box marks the spot at the bar's left end)
 - Means: On enemy mini HUDs, the Block badge moves from under the bar to directly left of the HP bar, in line with it. Player HUD and the rest of the layout (#2) stay.
 - Questions: none
 - Link: —
 
 ## #6 Status row under the health bar
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "also, I want the precisiuon to be under the health" (screenshot: red box directly under the HP bar)
 - Means: The Precision + status badge row (#4) sits directly under the HP bar, instead of left of it/below-left. Pairs with #5 (enemy Block left of the bar).
 - Questions: none
 - Link: —
 
 ## #7 Magic damage becomes plain damage; spells default to Reach
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "I'd like to change magic damage to just deal damage but are reach spells by default, with the school having it's unique status effect."
 - Means: Drop "magic" as a separate damage type: spell damage is just damage. Spells have Reach (ranged) by default. Each spell school gets its own unique status effect instead.
 - Answers 2026-11-07: school statuses — "check what's already in the code base" (existing damage riders in SPEC.md are the starting point: Fire→Burn, Lightning→Weak/Sap (+Shocked), Force→strip Ward, Holy→cleanse, Poison→Venom, Psychic→Confused, Earth→Slowed, Necrotic→Necrotic Blight; Frost/Alteration have none listed). Existing magic-damage resists/bonuses become normal damage ones.
@@ -54,7 +54,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answers 2026-11-07 (Frost/Alteration): Frost applies Chilled, and Chilled escalates to Frozen (as in Divinity: Original Sin 2 environmental statuses); a Damp target's Chilled advances to Frozen automatically. Alteration acts like D&D abjuration and transmutation: protective/warding and transforming effects, not a damage-rider status.
 
 ## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "I'd also like for enemies to roll for saving against status effects. On the card show the Difficulty Class which will not be set to 10 + int + wis + spell rank + other for example most cantrips will probably be: 10 + 1 + 1 + 0; so DC 12. the target will need to roll a 1d20 + resistance type. for now I want 3 resistance types: will, fortitutde, reflex. will: wis + int; fortitutde: con + poise; reflex: dex + evasion. the other category will probably come from other tags associated with the card, and the card's spell school. I also want that if the character is already suffering from a status effect, they roll with disadvantage. can you improve this, as well as make suggestions as to which spell school should target which resistance. I also want there to be martial status effects too with DCs and resistance type"
 - Means: Status-applying cards show a DC and the target rolls 1d20 + a save (Will / Fortitude / Reflex) against it; fail = status applies. Spell DC = 10 + caster INT + WIS + card rank + other (card tags/school). Martial status cards get a DC and save type too. Target already holding a status rolls at disadvantage. (Note: SPEC §Damp already has a "shock contest" with advantage; the new save system must reconcile with it.)
 - Proposed refinements (for owner approval):
@@ -77,7 +77,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: —
 
 ## #9 Enemy levels 1-5 with the player's stat budget
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "the problem is that enemies levels are way too high and need to be reduced to 1 throuh 5 level with reasonable stats per level. if a player starts with 8 points (1 in each stat, and 3 other points applied in other stats, the enemies shoudl follow that rule too"
 - Means: Rescale all enemy levels to 1-5. Enemy stats follow the player's budget: 1 in each of 5 stats + 3 free points at level 1 (8 total), growing by the player's per-level rule, so saves/DCs (#8) stay sane.
 - Answers 2026-11-07: points per level = same as the player's rule; enemies carry the player's stat list.
@@ -92,7 +92,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: —
 
 ## #11 Poise bar always visible, fixed-width HUD
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "just keep the poise visible at all times but make it have the height of the health bar. also, I'd liek the health bar with the badges to be a fixed width instead of dynamically changing."
 - Means: Poise bar is always shown (no hiding, no badge shifting), the same height as the HP bar, under it (layout with #5 Block left of the bar, #6 badges under). The HP bar plus its badge row has one fixed width on every combatant instead of resizing with content.
 - Update 2026-11-07 — "have poise bar and hp be the same width, and stays fixed even if there is no block also I want the block icon to be larger to fit the height of the hp, poise, and status effect badges rows": HP and Poise bars share one width, fixed whether or not Block is present (Block's slot is reserved when Block is 0). The Block icon grows to span the full height of the HP, Poise and badge rows stacked (placed left of the bars, #5).
@@ -105,7 +105,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Update 2026-11-07 — "keep intent left justified with health bar": the intent row stays left-aligned to the HP bar's left edge (not the Block icon's), above the bars.
 
 ## #12 Code review branch in the release pipeline
-- Status: pending
+- Status: requested
 - Asked: 2026-11-07 — "there should be a code review branch, move the dev code review as a sub branch to the merge develop to release branch"
 - Means: Add a dedicated code-review branch to the branch model, and move the code review that happens at `dev` to be a sub-step on the path that merges `dev` toward `release` (today: feature/* → dev → test → release → main; review is per PR into dev).
 - Owner 2026-11-07: no preference on placement or on whether per-PR review stops; asked for my recommendation.
