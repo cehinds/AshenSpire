@@ -874,18 +874,22 @@ The sequence below is the baseline; saved stat rows and hand options override it
 
 Ward and Barrier are stacked statuses (`ward`, `barrier`), not pools. The old numeric Barrier pool (`entity.barrier`, the `barrierGained` event, the `barrierMitigated` receipt line) no longer exists.
 
-| Status | Rule |
-|---|---|
-| **Ward** (`ward`) | Each stack decays by 1 at the start of its holder's turn (the same decay hook as every per-turn status). While Ward is above 0, ALL incoming damage, physical and magical, goes to Poise first (100% of it), the overflow beyond Poise spills to Block, and what is left reaches HP. Applies to every damage path: single and multi-hit attacks, reactions and counter returns, enemy attacks on the player. Pierce still lets its fraction of what Block soaked through to HP. `loseHp` and damage over time ignore all of it. The damage receipt and combat log show the Poise, Block and HP split. While Ward is active the Poise badge is purple and a purple bar over the HP bar shows current Poise in HP points on the HP scale (10 Poise on a 50 HP bar covers 20%). |
-| **Barrier** (`barrier`) | Each stack gives +5 maximum Poise and +5 current Poise (`barrier.poisePerStack`, data). Loses 1 stack per turn at the same hook as Ward; each stack lost removes its +5 maximum Poise, and current Poise is clamped to the new maximum. |
-
+- **Ward** (`ward`)
+  - Each stack decays by 1 at the start of its holder's turn (the same decay hook as every per-turn status).
+  - While Ward is above 0, ALL incoming damage, physical and magical, goes to Poise first (100% of it); the overflow beyond Poise spills to Block; what is left reaches HP.
+  - Applies to every damage path: single and multi-hit attacks, reactions and counter returns, enemy attacks on the player. Pierce still lets its fraction of what Block soaked through to HP. `loseHp` and damage over time ignore all of it.
+  - The damage receipt and combat log show the Poise, Block and HP split.
+  - While Ward is active the Poise badge is purple and a purple bar over the HP bar shows current Poise in HP points on the HP scale (10 Poise on a 50 HP bar covers 20%).
+- **Barrier** (`barrier`)
+  - Each stack gives +5 maximum Poise and +5 current Poise (`barrier.poisePerStack`, data).
+  - Loses 1 stack per turn at the same hook as Ward; each stack lost removes its +5 maximum Poise, and current Poise is clamped to the new maximum.
 - The `gainBarrier` opcode stays as a card's protection grant: every point is one Barrier stack. The same holds for stance-entry `protection.barrier`, enemy `barrier` grants and Ward overflow past a full pool. Barrier stacks also come from `applyStatus` of `barrier`.
 - **Mote Shield** (`core.moteShield`) gains Ward 1 and Barrier 1 (Barrier 2 and Ward 2 upgraded).
 - Saves: an old save or combat snapshot holding the numeric `barrier` loads and the number is dropped.
 
 ### 4.2 Damage math (order is contractual)
 
-*(Core 2 amendment, owner 2026-10-31: in the configured Core path, with Ward off, the magic part of a hit meets Poise first and then Block; this legacy order is unchanged. See §17 and `docs/FIXCORE-DECISIONS.md` D17.)*
+Order of the damage pipeline, block handling and the health-row display. Preview uses the same engine function as the hit.
 
 For an attack dealing `base` damage:
 
@@ -895,7 +899,7 @@ dmg = dmg + card rating bonus                    // ratings (§13.4l) run first
 dmg = dmg + school damage add                    // player cards with a damage school
 dmg = dmg + attacker.Strength                    // may go below base
 dmg = dmg * (attacker has Weak      ? 0.75 : 1)
-dmg = dmg * (defender has Vulnerable? 1.25 : 1)   // owner D16, 2026-10-18
+dmg = dmg * (defender has Vulnerable? 1.25 : 1)   // owner D16
 dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
 dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
 dmg = dmg * (school resistance, then school vulnerability)
@@ -903,41 +907,52 @@ dmg = floor(dmg) + ceil(dmg × (tagged − 1))      // tag-scoped vulnerability,
 if dmg < 0 → 0
 ```
 
-The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
-the `staggered` status's `damageTakenMult`, and it applies only under legacy
-ratings; with ratings on (the default), a break applies no status (see §4.4).
+- The tactical matchup multipliers (§4.7) run after the floor.
+- Staggered's ×1.5 is the `staggered` status's `damageTakenMult` and applies only under legacy ratings; with ratings on (the default) a break applies no status (§4.4).
+- Core 2 (owner, 2026-10-31; §17, `docs/FIXCORE-DECISIONS.md` D17): in the configured Core path with Ward off, the magic part of a hit meets Poise first, then Block; the legacy order above is unchanged.
+- Multipliers and adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.
+- Multi-hit attacks compute per hit. Damage consumes Block first; the remainder hits HP.
+- `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength / Weak / Vulnerable / Stagger *and Block*.
+- Block from a card = `base + Dexterity`, `× 0.75` if Frail, floored.
+- Card preview numbers in the UI come from the same function (`previewCard(combat, cardInstanceId, targetId)`, which calls `computeAttackDamage`); no duplicated math in the UI (§3.13).
 
-(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
-
-The combat health row shows ordinary Block as a blue shield beside HP. While
-that shield is positive, HP is blue; breaking it restores the normal red (or
-colorblind-safe health color). Block granted by a magical card is recorded as
-optional `wardBlock` provenance within the same Block total and shown as a
-purple Arcane Ward badge left of the shield, with a gold HP outline. Ordinary
-Block is spent first for display; Ward is clamped to the remaining Block after
-hits, caps and turn resets. Both badges sum to Block and absorb the same attack
-damage as before; Ward rating and its buildup meter are separate *(in §13.4p's scope there is no Ward meter)*. Old saves
-without provenance show ordinary Block. Missing badges give their space to HP,
-with a stable row edge and a readable minimum width for low-HP enemies. The HP
-fraction always remains current HP / maximum HP. Solo playback and
-snapshots carry the provenance with their damage and guard receipts.
-Narrow health lanes display current HP alone to prevent number collisions;
-the complete current/maximum value remains in the accessible label and tooltip.
-
-**Card preview numbers in the UI are computed by the same engine function** (`previewCard(combat, cardInstanceId, targetId)`, which calls `computeAttackDamage`); no duplicated math in the UI (§3.13).
+**Health row display**
+- Ordinary Block shows as a blue shield beside HP; while it is positive HP is blue, and breaking it restores the normal red (or colorblind-safe health color).
+- Block granted by a magical card is recorded as optional `wardBlock` provenance within the same Block total, shown as a purple Arcane Ward badge left of the shield with a gold HP outline. Ordinary Block is spent first for display; Ward is clamped to the remaining Block after hits, caps and turn resets. Both badges sum to Block and absorb the same damage. Ward rating and its buildup meter are separate (no Ward meter in §13.4p's scope).
+- Old saves without provenance show ordinary Block. Missing badges give their space to HP, with a stable row edge and a readable minimum width for low-HP enemies. The HP fraction is always current HP / maximum HP. Solo playback and snapshots carry the provenance with their damage and guard receipts.
+- Narrow health lanes show current HP alone; the full current/maximum stays in the accessible label and tooltip.
 
 ### 4.3 Card rules
 
-- Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
-- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all Stamina; effect scales via `{f:'energySpent'}`).
-- Upgrades: every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards retain a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that authored upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the same armament changes together.
-- Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone on Legacy and Current. **Owner ruling, 2026-10-28 (Core): armaments can be leveled up 3 times.** A Core armament, armor piece or shield reaches tier 3; the steps are +1, +1, +2 (effective bonus 1, 2, 4 after tiers 1, 2, 3), config `equipment.upgradeBonuses.tierBonusSteps` = `[1,1,2]`, and promoting to tier 1, 2, 3 costs 1, 2, 3 Smithing Stones (`tierStoneCosts` = `[1,2,3]`). **Owner ask, 2026-10-31 (Core): who can reach which tier.** A rest-site Smith reaches tier 2 at most (`shops.blacksmith.restSmithMaxTier`, 2; a rest row past it reads "Needs a Blacksmith"); a Blacksmith reaches the ladder's top, tier 3. A Blacksmith takes `stoneDiscount` (1) Smithing Stone off every price in this paragraph and in §13.4s, never below 0, so its tiers 1, 2, 3 cost 0, 1, 2 stones; it also charges cinders (§14.4). A weapon adds the effective bonus times `weaponARPerTier` AR; armor and shield stat points follow the effective bonus (`armorBudget.perRank` per bonus point). Relics keep their authored cap. Core rank resolves at `rank + effective bonus`, never the raw tier. Existing tier-1 saves stay valid. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
-- Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
-- **Zero-cost cards and ramp** (owner, 2026-10-31). A card that costs 0 SP and 0 MP sets `costRule: 'fixed'` (§4.3a), so it keeps its authored cost and numbers. The same-stance SP bonus (the discount of §4.3a) does not apply to it: a base of 0 is never discounted or repriced. The matching-stance effectiveness multiplier and the rating bonus still apply. A zero-cost card is not a cantrip and not a Basic: it is authored uncommon or rare, carries no `rank.cantrip` tag, and deals very low damage or gives low Block. Its upgrades may raise that number, or add a **ramp**.
-  - `ramp` is an authored field on a card, and is allowed inside its `upgrade` block: `{ scope: 'combat' | 'run', stat: 'damage' | 'block', per: 1..3 }`. It grows the first `damage` (or `block`) effect, whose amount must be a plain number, by `per` for each earlier play of this card. Ramp lands last, after rank, upgrade and Smithing growth, so those still add to the plain base. It resolves in both card builders (`resolveCard` and the game-profile `projectGameCard`) through `model/cardRamp.js`; the amount the engine evaluates is `{ f: 'add', args: [base, { f: 'metric', metric: 'sameCardPlays', of: 'self', per }] }`.
-  - **Momentum** (`ramp.momentum`, scope `combat`): +`per` for each earlier play of this card this combat. **Honed** (`ramp.honed`, scope `run`): the same, plus `per` for every play of this deck copy in earlier fights, so it keeps growing between fights; it is usually paired with Exhaust. A card whose base or upgraded form has a `ramp` is given the matching tag when it is resolved, so an upgrade that adds a ramp adds the tag.
-  - The run-wide count is the deck instance's `playsEver` (a whole number from 0; absent is 0). It is added from the fight's per-copy use counter when a fight ends (`src/main.js` onCombatEnd and `tools/runsim.mjs`, via `model/playsEver.js`) and is stamped back onto the fight's copies when a fight opens or is restored. Every card accumulates it; only Honed cards read it. `sameCardPlays` is keyed by card id, so two copies of one ramp card in a fight share the combat count.
-  - Core cards: Flick (3 damage; upgrade adds a combat damage ramp), Pebble Throw (2; 4), Brace (2 Block; upgrade adds a combat Block ramp), Quick Guard (3 Block; 5), Whetstone Nick (rare, 2 damage, Exhaust, run damage ramp from the start; 3), Tempered Edge (rare, 1 damage, Exhaust; upgrade adds a run damage ramp of 2).
+- **Types:** Attack, Skill, Power, Curse, Status. Powers are removed from play when played (not exhausted; they don't hit the exhaust pile). Curses and Statuses are unplayable unless stated.
+- **Keywords** (exact StS semantics; engine primitives per §3.7):
+
+| Keyword | Meaning |
+|---|---|
+| Exhaust | Removed for the combat after play |
+| Ethereal | Exhausts if in hand at end of turn |
+| Innate | Starts on top of the draw pile |
+| Retain | Not discarded at end of turn |
+| Unplayable | Cannot be played |
+| X-cost | Consumes all Stamina; effect scales via `{f:'energySpent'}` |
+
+- **Upgrades:** every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords; a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards keep a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the armament changes together.
+- **Draw:** empty draw pile + draw needed → the discard pile is shuffled (stream `shuffle`) into draw first.
+
+**Smithing.** A run owns `smithingStones`, an `armamentLevels` map and idempotent reward claims.
+- Shipped tier cap is 1 (Legacy and Current): tier 1 costs 1 Smithing Stone.
+- **Core (owner, 2026-10-28):** armaments, armor pieces and shields level up 3 times. Steps +1, +1, +2 (effective bonus 1, 2, 4 after tiers 1, 2, 3; `equipment.upgradeBonuses.tierBonusSteps` = `[1,1,2]`); tiers 1, 2, 3 cost 1, 2, 3 Stones (`tierStoneCosts` = `[1,2,3]`).
+- **Who reaches which tier (owner, 2026-10-31):** a rest-site Smith reaches tier 2 at most (`shops.blacksmith.restSmithMaxTier`, 2; a rest row past it reads "Needs a Blacksmith"); a Blacksmith reaches tier 3. A Blacksmith takes `stoneDiscount` (1) Stone off every price here and in §13.4s, never below 0 (tiers 1, 2, 3 cost 0, 1, 2) and also charges cinders (§14.4).
+- A weapon adds effective bonus × `weaponARPerTier` AR; armor and shield stat points follow the effective bonus (`armorBudget.perRank` per bonus point). Relics keep their authored cap. Core rank resolves at `rank + effective bonus`, never the raw tier. Existing tier-1 saves stay valid.
+- Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the source armament tier without granting Stones.
+
+**Zero-cost cards and ramp** (owner, 2026-10-31)
+- A card costing 0 SP and 0 MP sets `costRule: 'fixed'` (§4.3a) and keeps its authored cost and numbers. The same-stance SP bonus (§4.3a discount) never applies to it (a base of 0 is never discounted or repriced); the matching-stance effectiveness multiplier and the rating bonus still apply.
+- It is not a cantrip and not a Basic: authored uncommon or rare, no `rank.cantrip` tag, very low damage or low Block. Upgrades may raise that number or add a **ramp**.
+- `ramp` is an authored card field, allowed inside `upgrade`: `{ scope: 'combat' | 'run', stat: 'damage' | 'block', per: 1..3 }`. It grows the first `damage` (or `block`) effect (amount must be a plain number) by `per` for each earlier play of the card. Ramp lands last, after rank, upgrade and Smithing growth. It resolves in both card builders (`resolveCard`, game-profile `projectGameCard`) through `model/cardRamp.js`; the evaluated amount is `{ f: 'add', args: [base, { f: 'metric', metric: 'sameCardPlays', of: 'self', per }] }`.
+- **Momentum** (`ramp.momentum`, scope `combat`): +`per` for each earlier play this combat. **Honed** (`ramp.honed`, scope `run`): the same, plus `per` for every play of this deck copy in earlier fights; usually paired with Exhaust. A card whose base or upgraded form has a `ramp` gets the matching tag when resolved.
+- Run-wide count = the deck instance's `playsEver` (whole number from 0; absent is 0). Added from the fight's per-copy use counter at fight end (`src/main.js` onCombatEnd and `tools/runsim.mjs`, via `model/playsEver.js`), stamped back onto the fight's copies when a fight opens or is restored. Every card accumulates it; only Honed cards read it. `sameCardPlays` is keyed by card id, so two copies of one ramp card share the combat count.
+- Core ramp cards (base → upgrade): Flick (3 damage → adds combat damage ramp), Pebble Throw (2 → 4), Brace (2 Block → adds combat Block ramp), Quick Guard (3 Block → 5), Whetstone Nick (rare, 2 damage, Exhaust, run damage ramp from the start → 3), Tempered Edge (rare, 1 damage, Exhaust → adds run damage ramp of 2).
 
 ### 4.3a Action costs (owner decisions, 2026-10-12)
 
