@@ -717,6 +717,7 @@ export function findings(r) {
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
       || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
+        || r.startupGate.includes(`component: UI.${id.replace(/-(\w)/g, (_, c) => c.toUpperCase())}`)
         || r.startupGate.includes(`data-component="\${UI.${id.replace(/-(\w)/g, (_, c) => c.toUpperCase())}}"`))
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)

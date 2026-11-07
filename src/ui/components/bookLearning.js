@@ -6,6 +6,7 @@ import { t } from '../strings.js';
 import { renderBookArt } from './bookArt.js';
 import { bookLessonCard } from '../../model/bookLearning.js';
 import { learnedClassIds } from '../../model/classLibraryState.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 let activeClose = null;
 
@@ -15,7 +16,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   let choice = plan.def?.learnClass ? plan.lessons[0] : null;
   let release = null;
   const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: 'book-learning' } });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: UI.bookLearning } });
   const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
   activeClose = close;
   const head = modalHead({ title: t('book.read.title', { name: plan.def?.name || id }), titleId: 'book-learning-title', onClose: close });
@@ -93,7 +94,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
 function showClassBookReceipt({ registries, def, receipt }) {
   activeClose?.();
   const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: 'book-receipt' } });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: UI.bookReceipt } });
   let release;
   const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
   activeClose = close;

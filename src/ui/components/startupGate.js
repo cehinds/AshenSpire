@@ -27,14 +27,14 @@ function familyForPointer(event) {
 
 /** The lockup, as markup: the TitleMenu's name · subtitle · ornament · foot. */
 function lockupHtml(properties, accessibility) {
-  const rule = ornament({ class: 'startup-rule', dataset: { component: 'startup-divider' } });
-  return html(el('div', { class: 'as-titlemenu startup-mark', dataset: { component: 'startup-mark' } }, [
+  const rule = ornament({ class: 'startup-rule', dataset: { component: UI.startupDivider } });
+  return html(el('div', { class: 'as-titlemenu startup-mark', dataset: { component: UI.startupMark } }, [
     properties.overline ? eyebrow(properties.overline, { class: 'startup-overline' }) : null,
-    el('h1', { class: 'tm-name startup-wordmark', dataset: { component: 'startup-wordmark' }, text: properties.wordmark }),
-    properties.subtitle ? el('p', { class: 'tm-sub startup-subtitle', dataset: { component: 'startup-subtitle' }, text: properties.subtitle }) : null,
+    el('h1', { class: 'tm-name startup-wordmark', dataset: { component: UI.startupWordmark }, text: properties.wordmark }),
+    properties.subtitle ? el('p', { class: 'tm-sub startup-subtitle', dataset: { component: UI.startupSubtitle }, text: properties.subtitle }) : null,
     rule,
     el('p', {
-      class: 'tm-foot startup-prompt', dataset: { component: 'startup-prompt' },
+      class: 'tm-foot startup-prompt', dataset: { component: UI.startupPrompt },
       'aria-live': accessibility.promptLive, text: properties.prompts[properties.inputFamily],
     }),
   ]));

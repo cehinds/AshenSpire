@@ -68,7 +68,7 @@ export function mountEquipCompareModal(host, {
   ]);
   const changed = rows.filter((row) => row.verdict !== 'same');
   const unchanged = rows.filter((row) => row.verdict === 'same');
-  const list = el('div', { class: 'equip-compare-rows', dataset: { component: 'armoury.equipCompareRows' } }, [
+  const list = el('div', { class: 'equip-compare-rows', dataset: { component: UI.armouryEquipCompareRows } }, [
     eyebrow(t('armoury.compare.title')),
     ...changed.map(compareRowNode),
     ...unchanged.map(compareRowNode),

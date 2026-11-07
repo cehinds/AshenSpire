@@ -388,7 +388,7 @@ function buildArmoury(L, ui) {
   for (const { slot, positions } of positionsBySlot) {
     slots.appendChild(ui.positionGroup(slot, positions));
   }
-  const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: 'list' } });
+  const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: UI.armouryArmamentsCard, armamentView: 'list' } });
   const compact = ui.layout.equipment.compactList;
   equipment.style.setProperty('--armament-thumb-width', compact.thumbnailWidthPx);
   equipment.style.setProperty('--armament-phone-thumb-width', compact.phoneThumbnailWidthPx);
@@ -1304,7 +1304,7 @@ export function mountEquipment(host, {
     if (position.state === 'locked') {
       return el('article', {
         class: 'armoury-position-card armament-vacant-row is-locked',
-        dataset: { component: 'armoury.lockedPositionCard', slotPosition: `${slot.id}:${position.index}` },
+        dataset: { component: UI.armouryLockedPositionCard, slotPosition: `${slot.id}:${position.index}` },
       }, [
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
@@ -1317,7 +1317,7 @@ export function mountEquipment(host, {
     if (position.state === 'empty') {
       const card = el('article', {
         class: `armoury-position-card armament-vacant-row is-empty${selected ? ' is-selected' : ''}${isInspected(slot, position) ? ' is-inspected' : ''}`,
-        dataset: { component: 'armoury.emptyPositionCard', slotPosition: `${slot.id}:${position.index}` },
+        dataset: { component: UI.armouryEmptyPositionCard, slotPosition: `${slot.id}:${position.index}` },
       }, [
         el('div', { class: 'armament-compact-heading' }, [
           el('span', { class: 'armament-position-code', text: `${position.code} —`, title: position.label }),
@@ -1331,7 +1331,7 @@ export function mountEquipment(host, {
 
     const card = el('article', {
       class: `armoury-position-card armament-compact-row is-occupied${position.active ? ' is-active' : ''}${selected ? ' is-selected' : ''}${isInspected(slot, position) ? ' is-inspected' : ''}`,
-      dataset: { component: 'armoury.equipmentPositionCard', slotPosition: `${slot.id}:${position.index}`, positionState: position.action },
+      dataset: { component: UI.armouryEquipmentPositionCard, slotPosition: `${slot.id}:${position.index}`, positionState: position.action },
     });
     const thumbnail = el('div', { class: 'armament-card-thumbnail', 'aria-hidden': 'true' },
       renderEquipmentCard(registries, position.summary.item, { interactive: false, inspection: false, level: 'inspect', surface: 'armoury' }).card);
@@ -1364,7 +1364,7 @@ export function mountEquipment(host, {
     const compared = inventoryComparison({
       candidate: comparison, target: { kind: target.kind, slotLabel: `${target.slot.label} · ${target.setIndex + 1}` }, occupantName, roleLabels,
     });
-    const facts = el('section', { class: 'armoury-selection-facts', dataset: { component: 'armoury.selectionFacts' } });
+    const facts = el('section', { class: 'armoury-selection-facts', dataset: { component: UI.armourySelectionFacts } });
     if (compared) {
       const { relation } = compared;
       facts.append(
@@ -1423,7 +1423,7 @@ export function mountEquipment(host, {
     const owned = (run.sigils || []).filter((id) => registries.sigils.has(id) && registries.sigils.get(id).rarity === 'legendary');
     if (!owned.length) return null;
     const attuned = attunedSigilIds(run);
-    const section = el('section', { class: 'armoury-sigils', dataset: { component: 'armoury.sigilsPanel' } });
+    const section = el('section', { class: 'armoury-sigils', dataset: { component: UI.armourySigilsPanel } });
     section.append(
       titleS(t('armoury.sigils.title')),
       statusText(t('armoury.sigils.count', { n: attuned.length, max: attuneMaxOf(registries) }), { class: 'armoury-sigils-count' }),
@@ -1462,7 +1462,7 @@ export function mountEquipment(host, {
     const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
     const shown = pickerShowAll ? all : all.filter((r) => r.fits);
     const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
-    const root = el('div', { class: 'equip-picker', dataset: { component: 'armoury.equipPickerTable' } });
+    const root = el('div', { class: 'equip-picker', dataset: { component: UI.armouryEquipPickerTable } });
     const filter = button({
       label: pickerShowAll ? t('armoury.picker.fitsOnly') : t('armoury.picker.showAll'),
       className: 'equip-picker-filter',
@@ -1570,8 +1570,8 @@ export function mountEquipment(host, {
     // W1n: the items on one side, the selected item's detail on the other. The
     // disclosure keeps its faces in the collection and puts its reveal in the
     // detail column; before a selection that column carries the instruction.
-    const collection = el('div', { class: 'armoury-item-collection', dataset: { component: 'armoury.itemCollection' } });
-    const detail = el('div', { class: 'armoury-item-detail', dataset: { component: 'armoury.itemDetail' }, 'aria-live': 'polite' });
+    const collection = el('div', { class: 'armoury-item-collection', dataset: { component: UI.armouryItemCollection } });
+    const detail = el('div', { class: 'armoury-item-detail', dataset: { component: UI.armouryItemDetail }, 'aria-live': 'polite' });
     const prompt = prose(t('armoury.detail.prompt'), { class: 'armoury-detail-prompt' });
     detail.appendChild(prompt);
     box.append(collection, detail);
@@ -1939,7 +1939,7 @@ export function mountEquipment(host, {
     const relicNames = (run.relics || []).map((id) => registries.relics.get(id)?.name || id);
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
-    const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
+    const box = el('div', { class: 'armoury-stats-summary', dataset: { component: UI.armouryStatsSummary } }, [
       detailCard({ eyebrow: t('progression.tab.character'), name: runClassIdentity(registries, run).name, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group(t('progression.attributes'), projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
@@ -2033,7 +2033,7 @@ export function mountEquipment(host, {
       ariaLabel: progress.sense,
       attrs: {
         class: `character-level-meter${progress.points ? ' has-points' : ''}`,
-        dataset: { component: 'armoury.levelProgress', level: String(progress.level), capped: progress.capped ? 'true' : 'false' },
+        dataset: { component: UI.armouryLevelProgress, level: String(progress.level), capped: progress.capped ? 'true' : 'false' },
       },
     });
     attachTooltip(node, () => `<div class="tt-title">${esc(progress.label)}</div><p>${esc(progress.sense)}</p>`);
@@ -2139,7 +2139,7 @@ export function mountEquipment(host, {
       return card;
     }
 
-    const powers = el('section', { class: 'character-power-cards', dataset: { component: 'armoury.combatPowerGroup' } });
+    const powers = el('section', { class: 'character-power-cards', dataset: { component: UI.armouryCombatPowerGroup } });
     const powerEntries = characterPowerEntries();
     mountDisclosure(powers, powerEntries, { moreLabel: 'more powers', layout: 'column' });
     box.appendChild(informationCard({
@@ -2201,7 +2201,7 @@ export function mountEquipment(host, {
       console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
         + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
     }
-    const skills = el('section', { class: 'character-skills', dataset: { component: 'armoury.skillProgressGroup' } }, [
+    const skills = el('section', { class: 'character-skills', dataset: { component: UI.armourySkillProgressGroup } }, [
       meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
     ]);
     const progression = button({ label: t('progression.skill'), className: 'character-skill-progression', attrs: { 'aria-haspopup': 'dialog' } });
@@ -2368,7 +2368,7 @@ export function mountEquipment(host, {
         return item;
       })
       : [kitItem({ glyph: 'skill', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
-    const detail = el('section', { class: 'armoury-armament-details', dataset: { component: 'armoury.armamentDetailPane' } }, [
+    const detail = el('section', { class: 'armoury-armament-details', dataset: { component: UI.armouryArmamentDetailPane } }, [
       flavour(item.blurb || 'No lore text authored.', { class: 'armoury-armament-lore' }),
       ...facts,
       smithingReceipt ? el('div', { class: 'as-statrow flat armoury-smithing-receipt' }, [
