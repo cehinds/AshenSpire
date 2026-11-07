@@ -27,7 +27,6 @@ import '../src/engine/runCombat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
 function smithRun(registries, { stones = 3, cinders = 2000, seed = 31 } = {}) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-economy' });
@@ -62,7 +61,7 @@ test('rank-up: a stale quote is refused and spends nothing', () => {
   assert.deepEqual([run.smithingStones, run.cinders, card.rank], before);
 });
 
-test('rank-up: refuses without cinders or without a stone, and in a Legacy run', () => {
+test('rank-up: refuses without cinders or or without a stone', () => {
   const poor = smithRun(coreOut, { cinders: 119 });
   const refused = rankUpPlan(coreOut, poor, strike(poor).instanceId);
   assert.equal(refused.ok, false);
@@ -71,9 +70,6 @@ test('rank-up: refuses without cinders or without a stone, and in a Legacy run',
   assert.equal(poor.cinders, 119);
   const dry = smithRun(coreOut, { stones: 0 });
   assert.match(rankUpPlan(coreOut, dry, strike(dry).instanceId).reason, /Smithing Stone/);
-  const legacy = smithRun(legacyOut);
-  assert.equal(rankUpPlan(legacyOut, legacy, legacy.deck[0].instanceId).ok, false);
-  assert.deepEqual(rankUpCards(legacyOut, legacy), []);
 });
 
 test('rank-up: the rank ceiling refuses; the card list excludes equipment-bound cards', () => {

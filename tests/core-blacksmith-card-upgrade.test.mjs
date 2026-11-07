@@ -19,7 +19,6 @@ import '../src/engine/runCombat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
 function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
@@ -88,15 +87,7 @@ test('Core Blacksmith: the idle line is the card one when nothing can be upgrade
   assert.match(serviceIdleReason('upgradeArt', run), /card/i);
 });
 
-test('Legacy Blacksmith upgradeArt is unchanged: only a loose weapon art with an authored upgrade', () => {
-  const run = smithRun(legacyOut, 5);
-  const plain = run.deck[0];
-  const plan = upgradeArtPlan(legacyOut, run, plain.instanceId);
-  assert.equal(plan.ok, false);
-  assert.equal(plan.cardQuote, undefined);
-});
-
-test('about 25% of Core shop nodes are a Blacksmith, decided per node and the same every time; Legacy never', () => {
+test('about 25% of Core shop nodes are a Blacksmith, decided per node and the same every time', () => {
   const run = createRunState({ seed: 91, classId: 'reaver', registries: coreOut, runId: 'shop-kind' });
   assert.equal(configuredShopBlacksmithChance(run), 25);
   let hits = 0;
@@ -107,9 +98,6 @@ test('about 25% of Core shop nodes are a Blacksmith, decided per node and the sa
     if (a) hits++;
   }
   assert.ok(hits / N > 0.21 && hits / N < 0.29, `share ${hits / N}`);
-  const legacy = createRunState({ seed: 91, classId: 'reaver', registries: legacyOut, runId: 'shop-kind-l' });
-  assert.equal(configuredShopBlacksmithChance(legacy), 0);
-  assert.equal(configuredShopIsBlacksmith(legacy, '1:node-1'), false);
 });
 
 test('configuredShopKind (the call showShop makes): a saved merchandise offer stays a shop, an open Blacksmith stays one', async () => {
@@ -151,9 +139,6 @@ test('a Core Blacksmith offers no extract or install service, and the commits re
   assert.equal(inst.ok, false);
   assert.throws(() => commitBlacksmithInstall(coreOut, run, inst));
   assert.deepEqual([JSON.stringify(run.deck), JSON.stringify(run.sideboard), JSON.stringify(run.itemMounts || null)], [deck, sideboard, mounts]);
-  // Legacy keeps both services.
-  const legacy = smithRun(legacyOut, 3);
-  assert.ok(shopStockOfferings(legacy.shopStock).includes('extractArt'));
 });
 
 test('Core Blacksmith: a sideboard card plans and commits an upgrade, and a sideboard-only candidate counts', () => {

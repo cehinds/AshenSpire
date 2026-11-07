@@ -1,4 +1,3 @@
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 // SPEC §14.2, §14.6 step 4 — the shop-kind framework.
 //
 // docs/FINISH.md §14 "Shop kinds and the guaranteed minimum" is this file's
@@ -14,32 +13,18 @@ import { NOTE } from '../src/content/balance.js';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, advancedConfigSnapshot, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile, advancedConfigProblems } from '../src/model/advancedConfig.js';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
-import { buildShopStock } from '../src/engine/encounters.js';
-import { smithServicesAt } from '../src/model/cardExtraction.js';
 import { createRunState, RUN_SCHEMA_VERSION, migrateRunSchema, validateRunShape } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
-import {
-  SHOP_KINDS, SHOP_KIND_SCREENS, LEGACY_MARKET_OFFERINGS, MARKET_SHELVES,
-  shopConfigRows, shopSettingsProblems, shopStockKind, shopStockOfferings, bringShopStockForward,
-} from '../src/model/shopKinds.js';
-import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock } from '../src/engine/shopKinds.js';
-import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
+import { SHOP_KINDS, SHOP_KIND_SCREENS, LEGACY_MARKET_OFFERINGS, shopConfigRows, shopSettingsProblems, shopStockKind, shopStockOfferings } from '../src/model/shopKinds.js';
 import { t } from '../src/ui/strings.js';
-import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { shopStockProblems } from '../src/model/shopKinds.js';
 
 const REG = createRegistries(contentBundle);
 const PREFIX = 'gameConfig.shops.';
-const SEEDS = Array.from({ length: 200 }, (_, i) => i + 1);
 const rowsByKey = () => new Map(advancedConfigRows(contentBundle).map((row) => [row.key, row]));
 const configured = (settings) => configuredContentBundle(contentBundle, settings);
-const registriesWith = (settings) => createRegistries(configured(settings));
 const offeringsOf = (kind) => shippedShops[kind].offerings;
-
-// Every chance of every kind set to 0, through the Settings rows.
-const allChancesZero = () => Object.fromEntries(SHOP_KINDS.flatMap((kind) => offeringsOf(kind)
-  .map((row) => [`${PREFIX}${kind}.${row.id}.chance`, 0])));
 
 // A copy of the shipped table that keeps each [NOTE] (structuredClone drops a Symbol key).
 function cloneWithNotes(value) {
@@ -55,33 +40,18 @@ const bundleWithShops = (edit) => {
   edit(table);
   return { ...contentBundle, shops: table };
 };
+// A saved market stock written by hand: the classic merchant that built these is gone, but a save of its shape is still validated.
+const marketStockFixture = (run, { remove = true } = {}) => ({
+  kind: 'market',
+  offerings: ['cards', 'relics', 'flasks', 'armaments', ...(remove ? ['remove'] : [])],
+  cards: [{ id: contentBundle.cards[0].id, cost: 50 }], relics: [], flasks: [], armaments: [], weaponArts: [],
+  ...(remove ? { removeCost: 75 } : {}),
+});
 const errorsAt = (bundle, prefix) => validateContent(bundle).errors.filter((error) => error.path.startsWith(prefix));
 
 // ---------------------------------------------------------------------------
 // The FINISH §14 clauses
 // ---------------------------------------------------------------------------
-
-test('FINISH: every kind rolls at least guaranteedMinimum offerings over 200 seeds with every chance 0 (chance-0 offerings fill the guarantee)', () => {
-  const registries = registriesWith(allChancesZero());
-  for (const kind of SHOP_KINDS) {
-    const def = registries.shops[kind];
-    assert.ok(def.guaranteedMinimum >= 2, `${kind} guarantees at least 2`);
-    for (const seed of SEEDS) {
-      const rng = createRng(seed);
-      const ids = rollShopOfferings(def, rng);
-      assert.ok(ids.length >= def.guaranteedMinimum, `${kind} seed ${seed}: ${ids.length} < ${def.guaranteedMinimum}`);
-      // Chance 0 never comes up by the roll, so exactly the guarantee is laid out,
-      // and neither 0 nor the guarantee draws a value.
-      assert.equal(ids.length, def.guaranteedMinimum, `${kind} seed ${seed}`);
-      assert.equal(rng.getCounters().shopOffers, 0, 'chance 0 rolls nothing');
-    }
-  }
-  // A real market visit under those settings still opens with the guarantee's shelves.
-  const run = createRunState({ seed: 11, classId: 'reaver', registries });
-  const stock = buildMarketStock(registries, createRng(11), run);
-  assert.equal(stock.kind, 'market');
-  assert.equal(stock.offerings.length, registries.shops.market.guaranteedMinimum);
-});
 
 test('FINISH: a guaranteedMinimum of 1 is refused by name, in content and in Settings', () => {
   for (const kind of SHOP_KINDS) {
@@ -101,22 +71,6 @@ test('FINISH: a guaranteedMinimum of 1 is refused by name, in content and in Set
   assert.match(sentence, /\b1\b/);
   assert.match(sentence, /\b2\b/);
   assert.deepEqual(shopSettingsProblems(contentBundle, { [key]: 2 }), []);
-});
-
-test('FINISH: raising an offering\'s weight in Settings changes which one the guarantee adds', () => {
-  const zero = allChancesZero();
-  const def = registriesWith(zero).shops.market;
-  const before = rollShopOfferings(def, createRng(1));
-  // The shipped weights put cards (60) and remove (50) first.
-  assert.deepEqual(before, ['cards', 'remove']);
-  const light = offeringsOf('market').find((row) => !before.includes(row.id)).id;
-  const raised = registriesWith({ ...zero, [`${PREFIX}market.${light}.weight`]: 999 }).shops.market;
-  const after = rollShopOfferings(raised, createRng(1));
-  assert.ok(after.includes(light), `${light} is added once it is the heaviest`);
-  assert.notDeepEqual(after, before);
-  // Laid out in written order, whatever order the guarantee added them in.
-  const order = offeringsOf('market').map((row) => row.id);
-  assert.deepEqual(after, [...after].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
 });
 
 test('FINISH: every numeric offering leaf has a generated gameConfig.shops.* row frozen per run', () => {
@@ -175,48 +129,6 @@ test('FINISH: a numeric offering leaf without a [NOTE] is refused by name', () =
   const added = bundleWithShops((table) => { table.market.offerings[0].restockFee = 5; });
   assert.equal(errorsAt(added, 'shops.market.cards.restockFee').length, 1);
   assert.deepEqual(validateContent(contentBundle).errors, [], 'the shipped table is clean');
-});
-
-test('FINISH: a disabled offering never appears, and disabling below the minimum is refused by name', () => {
-  // Disabled at chance 100: never rolled. (Relics, since cards and flasks are
-  // the two offerings the shipped minimum of 2 needs on: SPEC §14.2.)
-  const off = registriesWith({ [`${PREFIX}market.relics.enabled`]: false });
-  assert.equal(off.shops.market.offerings.find((row) => row.id === 'relics').enabled, false, 'the setting applied');
-  for (const seed of SEEDS.slice(0, 50)) assert.ok(!rollShopOfferings(off.shops.market, createRng(seed)).includes('relics'));
-  // Disabled while the guarantee is short: never added either, though it is the heaviest.
-  const zeroOff = registriesWith({ ...allChancesZero(), [`${PREFIX}market.relics.weight`]: 1000, [`${PREFIX}market.relics.enabled`]: false });
-  for (const seed of SEEDS) {
-    const ids = rollShopOfferings(zeroOff.shops.market, createRng(seed));
-    assert.ok(!ids.includes('relics'), `seed ${seed}`);
-    assert.equal(ids.length, 2);
-  }
-  // Its shelf is empty on the visit, and the screen has no rail item for it.
-  const run = createRunState({ seed: 3, classId: 'reaver', registries: off });
-  const stock = buildMarketStock(off, createRng(3), run);
-  assert.deepEqual(stock.relics, []);
-  assert.ok(!stock.offerings.includes('relics'));
-  assert.ok(!shopCategories({ offered: new Set(stock.offerings), services: true }).includes('relics'));
-
-  // Disabling below the minimum: five of six off leaves one, under a minimum of 2.
-  const market = offeringsOf('market').map((row) => row.id);
-  const disabled = Object.fromEntries(market.slice(1).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
-  const problems = shopSettingsProblems(contentBundle, disabled);
-  assert.equal(problems.length, 1);
-  const sentence = t(problems[0].id, problems[0].tokens);
-  assert.match(sentence, /Market/);
-  for (const id of market.slice(1)) assert.ok(problems[0].keys.includes(`${PREFIX}market.${id}.enabled`), `${id} is addressed`);
-  assert.match(sentence, /\b1\b/);
-  assert.match(sentence, /\b2\b/);
-  // The same table in content is refused by name.
-  const errors = errorsAt(bundleWithShops((table) => { for (const row of table.market.offerings.slice(1)) row.enabled = false; }), 'shops.market');
-  assert.equal(errors.length, 1);
-  assert.match(errors[0].msg, /relics/);
-  assert.match(errors[0].msg, /guaranteedMinimum/);
-  // All but two off, both of them offerings that can never come up empty
-  // (not `conditional`, SPEC §14.2): allowed.
-  const keep = ['cards', 'flasks'];
-  const fine = Object.fromEntries(market.filter((id) => !keep.includes(id)).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
-  assert.deepEqual(shopSettingsProblems(contentBundle, fine), []);
 });
 
 test('FINISH: a pre-§14 run.shopStock loads as market unchanged', () => {
@@ -286,36 +198,6 @@ test('shopOffers retains its appended index after later stream additions', () =>
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);
 });
 
-test('a chance between 0 and 100 rolls once per enabled offering, in written order, on shopOffers only', () => {
-  const registries = registriesWith({ [`${PREFIX}market.relics.chance`]: 50, [`${PREFIX}market.flasks.chance`]: 50 });
-  // The two set to 50 here, plus every shipped offering whose own chance is
-  // between 0 and 100 (the §14.3 additions).
-  const between = registries.shops.market.offerings.filter((row) => row.enabled && row.chance > 0 && row.chance < 100).length;
-  assert.ok(between >= 2);
-  let withRelics = 0;
-  for (const seed of SEEDS) {
-    const rng = createRng(seed);
-    const ids = rollShopOfferings(registries.shops.market, rng);
-    const { shopOffers, ...rest } = rng.getCounters();
-    assert.equal(shopOffers, between, 'one draw for each offering whose chance is between 0 and 100');
-    assert.ok(Object.values(rest).every((count) => count === 0), 'no other stream is drawn');
-    if (ids.includes('relics')) withRelics += 1;
-  }
-  assert.ok(withRelics > 60 && withRelics < 140, `a 50% offering came up ${withRelics}/200 times`);
-});
-
-test('the market keeps rolling every shelf on the shop stream, so a shelf left off moves no other shelf', () => {
-  const off = registriesWith({ [`${PREFIX}market.cards.chance`]: 0, [`${PREFIX}market.cards.weight`]: 0 });
-  for (const seed of [1, 2, 3]) {
-    const run = createRunState({ seed, classId: 'reaver', registries: REG });
-    const plain = buildShopStock(REG, createRng(seed), run);
-    const stock = buildMarketStock(off, createRng(seed), run);
-    assert.deepEqual(stock.cards, []);
-    for (const shelf of MARKET_SHELVES.filter((key) => key !== 'cards')) assert.deepEqual(stock[shelf], plain[shelf], `${shelf} on seed ${seed}`);
-    assert.ok(!stock.offerings.includes('cards'));
-  }
-});
-
 test('every new percentage has a 0–100 domain, and the refund percent its 50–75 clamp', () => {
   const rows = [...rowsByKey().values()].filter((row) => row.key.startsWith(PREFIX));
   const chances = rows.filter((row) => row.key.endsWith('.chance'));
@@ -342,7 +224,7 @@ test('stock.kind rides schema 14: the bump, the RUN_SHAPE row and the captured c
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   assert.equal(JSON.parse(corpus.versions['14'].bytes).schemaVersion, 14);
   const run = createRunState({ seed: 9, classId: 'reaver', registries: REG });
-  run.shopStock = buildMerchantStock(REG, createRng(9), run);
+  run.shopStock = marketStockFixture(run);
   assert.deepEqual(validateRunShape(run), []);
   const bad = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), kind: 7 } };
   assert.ok(validateRunShape(bad).some((problem) => /shopStock\.kind/.test(problem)));
@@ -369,7 +251,7 @@ test('a configuration import that leaves a kind below its minimum is refused who
 
 test('a saved stock naming an offering its kind has not got is refused by name (Codex, on #1371)', () => {
   const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-  run.shopStock = buildMerchantStock(REG, createRng(4), run);
+  run.shopStock = marketStockFixture(run);
   assert.deepEqual(validateRunShape(run), []);
   const bogus = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: ['bogus'] } };
   assert.ok(validateRunShape(bogus).some((problem) => /shopStock\.offerings names 'bogus'/.test(problem)));
@@ -418,7 +300,7 @@ test('a saved stock is shape-checked (the Shops rows retired in 3e)', async () =
 
 test('a schema-14 stock must name its kind and offerings; only an older save gets the market fallback (Codex, on #1371)', () => {
   const run = createRunState({ seed: 8, classId: 'reaver', registries: REG });
-  run.shopStock = buildMarketStock(registriesWith({ [`${PREFIX}market.remove.enabled`]: false }), createRng(8), run);
+  run.shopStock = marketStockFixture(run, { remove: false });
   assert.ok(!run.shopStock.offerings.includes('remove'));
   const { offerings: _gone, ...noOfferings } = run.shopStock;
   const { kind: _kindGone, ...noKind } = run.shopStock;
@@ -440,7 +322,7 @@ test('a schema-14 stock must name its kind and offerings; only an older save get
 // now met by a kind this build does not have at all.
 test('a saved stock of a kind this build does not have is refused by name and archived, never opened (Codex, on #1371)', () => {
   const run = createRunState({ seed: 10, classId: 'reaver', registries: REG });
-  run.shopStock = buildMarketStock(REG, createRng(10), run);
+  run.shopStock = marketStockFixture(run);
   const master = { ...structuredClone(run.shopStock), kind: 'bazaar', offerings: ['training'] };
   assert.ok(validateRunShape({ ...run, shopStock: master }).some((problem) => /shopStock\.kind must be one of market, blacksmith, master, got "bazaar"/.test(problem)));
   const storage = createMemoryStorage();

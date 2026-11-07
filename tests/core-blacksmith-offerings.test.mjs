@@ -23,7 +23,6 @@ import '../src/engine/runCombat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
 function smithRun(registries) {
   const run = createRunState({ seed: 41, classId: 'reaver', registries, runId: 'bs-core-offers' });
@@ -41,11 +40,6 @@ test('Core Blacksmith stock offers the five Core offerings and no Smithing Stone
   assert.equal(run.shopStock.armaments.length, 6);
   assert.ok(run.shopStock.weaponArts.length >= 1);
   assert.equal(run.shopStock.smithStones, undefined);
-});
-
-test('Legacy Blacksmith stock is unchanged: every service is still offered', () => {
-  const run = smithRun(legacyOut);
-  for (const id of BLACKSMITH_SERVICES) assert.ok(run.shopStock.offerings.includes(id), id);
 });
 
 test('Core withholds every legacy service, even when an old saved stock lists it', () => {
