@@ -302,24 +302,39 @@ function verifyGearContent(content, settings) {
   }
 }
 // Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
-// card/gear/relic references, decks outside the configured bounds, attribute totals outside the
-// tier budget, and any deck card the enemy's own pools can never pay for.
+// card/gear/relic references, decks outside the configured bounds, attribute totals off the level budget
+// (SPEC §17), and any deck card the enemy's own pools can never pay for.
 const ENEMY_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 // Same shape as the player's derived-stat rows (src/content/derivedStats.js): base, plus each
 // attribute's contribution and the level term, each floored on its own (owner 2026-10-17:
 // HP, SP and MP from attributes and level via statRules).
 // Pass enemyItemBonuses() as `bonus` to include gear and relics.
 // Enemy attributes (owner 2026-10-17): points the row sets in `attributes` are kept; the rest of the
-// tier budget is split by `attributePriority` (rank weights from `priorityWeights`), respecting caps.
+// level budget is split by `attributePriority` (rank weights from `priorityWeights`), respecting caps.
 // `variance` moves up to N points between the top `among` priorities, seeded, so copies differ.
 function enemyAttributeWeights(row, settings) {
   const fill = settings.attributeFill, order = row.attributePriority || fill.defaultPriority, ranks = row.priorityWeights || fill.priorityWeights;
   return Object.fromEntries(order.map((id, i) => [id, ranks[i] ?? 0]));
 }
+// Owner 2026-11-07 (SPEC §17, Enemy levels and stat budget): an enemy's attribute budget is the Core player's
+// starting budget plus `attributePointsPerLevel` for each level after the first. Both are read from config.
+// An authored `attributePoints` still wins. Without a player rule the tier's own budget applies.
+export function enemyAttributeBudget(row, settings, level = enemyLevel(row, settings)) {
+  if (Number.isSafeInteger(row.attributePoints)) return row.attributePoints;
+  const player = settings.tagRules?.['character.player']?.attributeBudget;
+  if (!player) return characterRule(row, settings).attributeBudget[1];
+  const perLevel = Number.isFinite(settings.attributePointsPerLevel) ? settings.attributePointsPerLevel : 1;
+  return player[1] + perLevel * (Math.max(1, level) - 1);
+}
+// The lowest each own attribute may be: the larger of the configured floor and the authored points.
+function enemyAttributeMinimums(row, settings) {
+  const floor = settings.attributeFill?.floor ?? 0;
+  return Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, Math.max(floor, row.attributes?.[id] || 0)]));
+}
 export function resolveEnemyAttributes(row, settings, seed = null) {
   const fill = settings.attributeFill, tier = characterRule(row, settings);
-  const budget = Number.isSafeInteger(row.attributePoints) ? row.attributePoints : tier.attributeBudget[1];
-  const set = Object.fromEntries(ENEMY_ATTRIBUTES.map(id => [id, row.attributes?.[id] || 0]));
+  const budget = enemyAttributeBudget(row, settings);
+  const set = enemyAttributeMinimums(row, settings);
   const out = { ...set }, caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   let weights = enemyAttributeWeights(row, settings), left = budget - Object.values(set).reduce((a, b) => a + b, 0);
   for (let guard = 0; left > 0 && guard < 10; guard++) {
@@ -344,7 +359,7 @@ export function resolveEnemyAttributes(row, settings, seed = null) {
 // Every attribute spread variance can produce (for validation): the base plus each single-point move.
 export function enemyAttributeOutcomes(row, settings) {
   const fill = settings.attributeFill, v = { points: 0, among: 2, ...(settings.variance || {}), ...(row.variance || {}) }, base = resolveEnemyAttributes(row, settings);
-  const outcomes = [base];
+  const outcomes = [base], minimum = enemyAttributeMinimums(row, settings);
   if (!settings.variance || !v.points || !characterRule(row, settings).variance) return outcomes;
   const order = (row.attributePriority || fill.defaultPriority).slice(0, v.among), caps = { ...fill.caps, ...(row.attributeCaps || {}) };
   // Track unique spreads only: many move orders reach the same spread, and expanding duplicates grows
@@ -354,7 +369,7 @@ export function enemyAttributeOutcomes(row, settings) {
   for (let step = 0; step < v.points && frontier.length; step++) {
     const next = [];
     for (const a of frontier) for (const from of order) for (const to of order) {
-      if (from === to || a[from] <= (row.attributes?.[from] || 0) || (caps[to] !== undefined && a[to] >= caps[to])) continue;
+      if (from === to || a[from] <= minimum[from] || (caps[to] !== undefined && a[to] >= caps[to])) continue;
       const moved = { ...a, [from]: a[from] - 1, [to]: a[to] + 1 }, key = canonicalGameJSON(moved);
       if (!seen.has(key)) { seen.add(key); next.push(moved); outcomes.push(moved); }
     }
@@ -411,7 +426,7 @@ export function enemyItemBonuses(row, content = {}, gearSettings = null) {
   return bonus;
 }
 // Authored `attributeOffset` (owner, 2026-10-25): added to each enemy attribute AFTER gear and relic bonuses, floored at 0.
-// Validation keeps checking the own points against the tier budget before the offset.
+// Validation keeps checking the own points against the level budget before the offset.
 // Players have no tier and are never offset.
 export function enemyAttributeTotal(row, settings, id, own, bonus = null) {
   const offset = row?.tier ? settings.attributeOffset?.[id] || 0 : 0;
@@ -498,6 +513,7 @@ export function characterSettings(modules) {
   return { ...(modules.enemies || {}), ...(modules.characters || {}),
     healRules: modules['heal-rules'] || null, stagger: modules.stagger || null, visibility: modules['enemy-visibility'] || null,
     equipment: modules['enemy-relics']?.equipment || null, variance: modules['attribute-variance'] || null,
+    attributePointsPerLevel: modules.progression?.attributePointsPerLevel ?? 1,
     deckEditing: modules['deck-training'] || null, cardPoolRules: modules['card-pools'] || null, rewardRanks: modules['reward-ranks'] || null };
 }
 // characters.json (owner 2026-10-17): players and enemies in one shape; tags decide which block applies.
@@ -602,8 +618,9 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     if (!settings.include.includes(row.tier)) fail(`${at}/tier`, 'unknown or excluded tier');
     if (row.attributes !== undefined && (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0))) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
     for (const id of row.attributePriority || []) if (!ENEMY_ATTRIBUTES.includes(id)) fail(`${at}/attributePriority`, `unknown attribute '${id}'`);
-    const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0);
-    if (total < tier.attributeBudget[0] || total > tier.attributeBudget[1]) fail(`${at}/attributes`, `total ${total} outside ${row.tier} budget`);
+    const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0), budget = enemyAttributeBudget(row, settings);
+    const minTotal = Object.values(enemyAttributeMinimums(row, settings)).reduce((a, b) => a + b, 0);
+    if (total !== Math.max(budget, minTotal)) fail(`${at}/attributes`, `total ${total} outside level ${enemyLevel(row, settings)} budget ${budget}`);
     if (!Array.isArray(row.defaultDeck)) fail(`${at}/defaultDeck`, 'expected defaultDeck array');
     for (const list of ['defaultGear', 'defaultRelics']) {
       const entries = row[list] || [];
