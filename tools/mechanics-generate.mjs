@@ -72,7 +72,7 @@ function findReader(patterns) {
       for (let j = i; j >= 0 && !symbol; j--) {
         const m = lines[j].match(/^(?:export\s+)?(?:async\s+)?function\s+\*?\s*(\w+)/) || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/)
           // A frozen dispatch table (actions.js OPCODE_HANDLERS) owns the handlers written inside it.
-          || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*Object\.freeze\(\{/);
+          || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*Object\.freeze\(\{\s*$/);
         if (m) symbol = m[1];
       }
       return { file, ...(symbol ? { symbol } : {}) };
