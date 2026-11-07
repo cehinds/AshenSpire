@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -717,8 +718,12 @@ export function findings(r) {
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
       || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
-        || r.startupGate.includes(`component: UI.${id.replace(/-(\w)/g, (_, c) => c.toUpperCase())}`)
-        || r.startupGate.includes(`data-component="\${UI.${id.replace(/-(\w)/g, (_, c) => c.toUpperCase())}}"`))
+        || (() => {
+          // A constant spelling counts only if the registry still maps it to this exact id.
+          const key = id.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+          return UI_COMPONENTS[key] === id
+            && (r.startupGate.includes(`component: UI.${key}`) || r.startupGate.includes(`data-component="\${UI.${key}}"`));
+        })())
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
