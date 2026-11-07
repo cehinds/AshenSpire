@@ -520,16 +520,9 @@ function inferEquipmentPools(run, ctx) {
   return { hpEquipmentBonus, equipmentDeficitsAbsent };
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
-  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
-  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
-
-  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
-
+/** Phase: the permanent max-HP residual, inferred once for saves that predate it. */
+function inferMaxHpAdjustment(run, ctx, hpEquipmentBonus) {
+  const { effectiveAttributes, classDef, restoredExisting } = ctx;
   // Schema v3 and older had no explanation for permanent max-HP reductions.
   // Infer the exact residual once from the old authoritative rule plus current
   // equipment. This preserves event curses instead of healing them away when
@@ -553,6 +546,19 @@ export function initializeRunDerivedStats(run, registries, {
   if (!Number.isInteger(run.maxHpAdjustment)) {
     throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
   }
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
+
+  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
 
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
     const restored = restoredExisting;
