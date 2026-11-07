@@ -15,7 +15,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Same statement grammar as tools/bundle.mjs IMPORT_RE.
 const IMPORT_RE =
-  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!\s*\()([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+
+// import('./literal.js'): not part of boot-time evaluation (see tools/bundle.mjs).
+const DYNAMIC_IMPORT_RE = /(?<![.$\w])import\s*\(\s*(['"])([^'"\\\n]*)\1\s*\)/g;
 
 const idOf = (abs) => relative(ROOT, abs).split(/[\\/]/).join('/');
 
@@ -23,6 +26,7 @@ function parseImports(id) {
   const abs = resolve(ROOT, id);
   const src = readFileSync(abs, 'utf8').replace(/\r\n?/g, '\n');
   const out = [];
+  out.dynamic = [];
   IMPORT_RE.lastIndex = 0;
   let m;
   while ((m = IMPORT_RE.exec(src)) !== null) {
@@ -35,6 +39,10 @@ function parseImports(id) {
       : [];
     const line = src.slice(0, m.index).split('\n').length;
     out.push({ target, names, line });
+  }
+  DYNAMIC_IMPORT_RE.lastIndex = 0;
+  while ((m = DYNAMIC_IMPORT_RE.exec(src)) !== null) {
+    out.dynamic.push(idOf(resolve(dirname(abs), m[2])));
   }
   return out;
 }
@@ -64,6 +72,21 @@ export function findCycleHazards(entry = 'src/main.js') {
     state.set(id, 'done');
   }
   load(entry);
+  // A dynamic edge adds no evaluation order: its target runs later, on demand,
+  // after boot, so it is analysed as a second root over the already-loaded set
+  // (a dynamic edge never makes a boot-time cycle, but the target's own static
+  // imports can still form one among modules only it reaches).
+  const seen = new Set();
+  for (const queue = [...state.keys()]; queue.length;) {
+    const id = queue.shift();
+    if (!existsSync(resolve(ROOT, id))) continue;
+    for (const t of imports(id).dynamic) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      load(t);
+      queue.push(...state.keys());
+    }
+  }
   return hazards;
 }
 
