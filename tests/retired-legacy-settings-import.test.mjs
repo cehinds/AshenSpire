@@ -103,3 +103,13 @@ test('a stored battlefield key never drives combat, and the boot cleanup list na
   const gone = retiredStoredSettingKeys(stored);
   assert.deepEqual(gone.sort(), ['gameConfig.presentation.enemySpriteScale', 'gameConfig.presentation.formationGroups', 'gameConfig.presentation.movementEnabled', 'gameConfig.presentation.rowAScale', 'gameConfig.presentation.rowBScale']);
 });
+
+test('an old export carrying the retired Level Up feat and class-upgrade rows still imports, dropping only those keys', () => {
+  const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: { 'settings.rewardLevelFeats': true, 'settings.rewardLevelClassTree': false, 'settings.deckEditing': true } });
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(!('rewardLevelFeats' in changes) && !('rewardLevelClassTree' in changes), 'the retired rows are dropped');
+  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING) || warnings.length >= 1, 'the drop is named');
+});

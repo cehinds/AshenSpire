@@ -52,7 +52,6 @@ import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/cla
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
 import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
-import { normalizeMasteryProfile, masteryProfileProblems, mergeMasteryProfiles, bankMasteryProfile } from '../model/classMasteryProfile.js';
 import { emptyEnemyKnowledge, enemyKnowledgeProblems, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
 
 export const RUN_KEY = 'sote_run_v1';
@@ -545,7 +544,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     }
     const v = meta.schemaVersion;
     if (v === META_SCHEMA_VERSION) {
-      const problems = [...masteryProfileProblems(meta), ...enemyKnowledgeProblems(meta.enemyKnowledge)];
+      const problems = enemyKnowledgeProblems(meta.enemyKnowledge);
       return problems.length ? { json, meta, error: problems.join('; '), kind: 'corrupt' } : { json, meta };
     }
     if (typeof v === 'number' && v > META_SCHEMA_VERSION) {
@@ -554,10 +553,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     // Older: migrate here when a migration exists; until one does, refuse BY
     // NAME rather than guessing at a shape nobody wrote.
     const migrated = migrateMeta(meta, v);
-    if (migrated) {
-      const problems = masteryProfileProblems(migrated);
-      return problems.length ? { json, meta, error: problems.join('; '), kind: 'corrupt' } : { json, meta: migrated, migratedFrom: v };
-    }
+    if (migrated) return { json, meta: migrated, migratedFrom: v };
     return { json, meta, error: `profile schemaVersion ${v} is older than this build (${META_SCHEMA_VERSION}) and has no migration`, kind: 'older' };
   }
 
@@ -567,7 +563,7 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
     if (fromVersion === 3) return { ...meta, schemaVersion: META_SCHEMA_VERSION, enemyKnowledge: emptyEnemyKnowledge() };
     if (fromVersion === undefined || fromVersion === 0 || fromVersion === 1 || fromVersion === 2) {
       return {
-        ...normalizeMasteryProfile({ ...meta, classMastery: {}, classMasteryReceipts: {} }, null, { veteran: (meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0 }),
+        ...meta,
         ...(meta.progress ? { progress: { ...meta.progress, maxClassLevel: 0 } } : {}),
         schemaVersion: META_SCHEMA_VERSION,
         discoveredArmaments: [...new Set(meta.discoveredArmaments || meta.found || [])],
@@ -579,16 +575,21 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
   }
 
   function freshMeta() {
-    return normalizeMasteryProfile({ schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], enemyKnowledge: emptyEnemyKnowledge() });
+    return { schemaVersion: META_SCHEMA_VERSION, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], enemyKnowledge: emptyEnemyKnowledge() };
   }
 
   // The actual write, shared by saveMeta (updates the live profile) and
   // replacePrimaryWith (swaps in a different one). Verify-then-rotate lives here
   // so both paths get it.
+  // Keys the profile no longer writes (SPEC §13.4q, 2026-11-07). An old profile
+  // still loads with them; the write drops them so they never come back.
+  const RETIRED_META_KEYS = ['classMastery', 'classMasteryReceipts'];
+
   function saveMetaInternal(meta) {
     if (readOnlyProfile) return { ok: false, reason: 'Profile writes require the shared storage owner' };
-    const canonical = normalizeMasteryProfile({ ...meta, enemyKnowledge: meta.enemyKnowledge || emptyEnemyKnowledge() }, null, { veteran: !meta.classMastery && ((meta.results?.length || 0) > 0 || (meta.progress?.runs || 0) > 0) });
-    const problems = [...masteryProfileProblems(canonical), ...enemyKnowledgeProblems(canonical.enemyKnowledge)];
+    const canonical = { ...meta, enemyKnowledge: meta.enemyKnowledge || emptyEnemyKnowledge() };
+    for (const key of RETIRED_META_KEYS) delete canonical[key];
+    const problems = enemyKnowledgeProblems(canonical.enemyKnowledge);
     if (problems.length) return { ok: false, reason: problems.join('; ') };
     const json = JSON.stringify({ ...canonical, schemaVersion: META_SCHEMA_VERSION });
     storage.setItem(META_KEY, json);
@@ -1575,25 +1576,10 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
       }
       const current = this.loadMeta();
       if (quarantined) return { ok: false, reason: 'profile is quarantined; refusing a stale write' };
-      const problems = meta.classMastery ? masteryProfileProblems(normalizeMasteryProfile(meta)) : [];
-      if (problems.length) return { ok: false, reason: problems.join('; ') };
       if (knowledgeRecovery && enemyKnowledgeProblems(knowledgeRecovery).length) return { ok: false, reason: 'Enemy knowledge recovery requires a valid retained ledger' };
       const foundation = knowledgeRecovery ? mergeEnemyKnowledge(current.enemyKnowledge || emptyEnemyKnowledge(), knowledgeRecovery) : current.enemyKnowledge || emptyEnemyKnowledge();
       const knowledge = mergeEnemyKnowledge(meta.enemyKnowledge || emptyEnemyKnowledge(), foundation);
-      return saveMetaInternal({ ...mergeMasteryProfiles(meta, current), enemyKnowledge: knowledge });
-    },
-    /** Bank one run's cumulative XP against the freshest durable receipt. */
-    bankClassMastery(run, registries) {
-      const current = this.loadMeta();
-      if (quarantined) return { ok: false, meta: current, reason: 'profile is quarantined; mastery was not banked' };
-      try {
-        const bank = bankMasteryProfile(current, run, registries);
-        if (!bank.changed) return { ok: true, meta: current, changed: false };
-        const result = saveMetaInternal(bank.meta);
-        return { ...result, meta: result.ok ? bank.meta : current, changed: result.ok };
-      } catch (error) {
-        return { ok: false, meta: current, reason: error.message };
-      }
+      return saveMetaInternal({ ...meta, enemyKnowledge: knowledge });
     },
     /** Append a run result (victory, floor, seed, class, …), capped at 20. */
     recordResult(result) {

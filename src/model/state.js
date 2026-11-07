@@ -9,7 +9,6 @@ import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, game
 import { startingAbilityRefs } from './startingAbilities.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
-import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot, coreAdvancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
@@ -820,7 +819,6 @@ export const RUN_SHAPE = [
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
-  { key: 'classMasteryState', type: 'object', optional: true },
   { key: 'pendingFinish', type: 'object', optional: true },
   { key: 'quickStart', type: 'boolean', optional: true },
   // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
@@ -1145,7 +1143,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
-  if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
   if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   problems.push(...enemyKnowledgeRunProblems(run));

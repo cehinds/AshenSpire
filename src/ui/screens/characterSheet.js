@@ -249,9 +249,9 @@ function skillsPane(registries, run, sheet, state) {
  * → the modal shell. `offers` names which character-level rewards the
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
-export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null, onRespec = null } = {}) {
+export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null } = {}) {
   const configured = run.gameProfile?.foundation?.mode === 'configured';
-  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
+  if (configured) { tab = 'character'; onRewards = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   let bodyHost = null;
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
@@ -262,7 +262,6 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     bodyHost.dataset.tab = state.tab;
   };
   state.show = (nextTab, nextTrack = state.track) => { state.tab = nextTab; state.track = nextTrack; render(); };
-  const respecAction=onRespec?button({label:t('classRespec.title'),weight:'primary'}):null;
   const back = button({ label: t('common.back') });
   back.addEventListener('click', () => state.close());
   const shell = openModal({
@@ -283,9 +282,7 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     bodyClassName: 'character-sheet-body',
     ...(opener ? { opener } : {}),
     onClose,
-    ...(respecAction ? {primary:respecAction} : {}),
   });
-  respecAction?.addEventListener('click',()=>{shell.close();onRespec();});
   state.close = shell.close;
   markUiComponent(shell.panel, UI.characterSheet);
   render();

@@ -22,7 +22,7 @@ function elementStartingCards(registries, run, config, settings) {
 export function startingAbilityPlan(registries, run, settings = {}) {
   const config = registries.characterCreation.classes[run.class]?.startingAbility;
   if (!config) return null;
-  const source = registries.masterySource || registries;
+  const source = registries;
   const ids = abilityOfferPool(registries, run, config.skillId, config.rank).filter(id =>
     (run.deck || []).filter(inst => inst.cardId === id).length < deckCopyLimit(registries, id, settings, run.class));
   const choices = [...new Map(ids.map(id => {
