@@ -548,18 +548,9 @@ function inferMaxHpAdjustment(run, ctx, hpEquipmentBonus) {
   }
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
-  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
-  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
-
-  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
-
-  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
-
+/** Phase: persisted pools checked against the run's own derived-stat snapshot. */
+function validateDerivedSnapshot(run, ctx, hpEquipmentBonus) {
+  const { effectiveAttributes, blightStaminaPenalty, existingIsCurrent, restoredExisting, classDef } = ctx;
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
     const restored = restoredExisting;
     const expectedByKey = [
@@ -607,6 +598,21 @@ export function initializeRunDerivedStats(run, registries, {
       }
     }
   }
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
+
+  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
+
+  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
   if (existingIsCurrent && run.derivedStatRuleSnapshot
     && run.maxHp !== undefined && run.hp !== undefined
     && run.maxMana !== undefined && run.mana !== undefined
