@@ -50,3 +50,17 @@ test('new-run snapshots stamp the version', () => {
   assert.equal(advancedConfigSnapshot().breakMeterVersion, 1);
 });
 
+
+test('a version-1 break-meter stamp restores and saves again without the retired ratings rules', () => {
+  // A save written under version 1 carried ratingsRules; the restore no longer does,
+  // so the stamp alone must be legal (Codex regression on #2633).
+  const saved = serializeCombatSnapshot(fight({ stamp: 1 }));
+  assert.equal(saved.ratingsRules, undefined);
+  saved.breakMeterVersion = 1;
+  // Version 1 retired these fields (the validator refuses them under the stamp), so a real v1 save lacks them.
+  for (const entity of [saved.player, ...saved.enemies]) for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) delete entity[field];
+  const restored = restoreCombatSnapshot({ registries: createRegistries(contentBundle), rng: createRng(7), snapshot: saved });
+  const again = serializeCombatSnapshot(restored);
+  assert.equal(again.breakMeterVersion, 1);
+  assert.deepEqual(combatSnapshotProblems(again), []);
+});
