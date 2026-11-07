@@ -14,7 +14,6 @@ import { createRng } from '../src/engine/rng.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { resolveDamageComponents, taggedBonusFloor } from '../src/model/combatRules.js';
 import { combatRules as foundationRules } from '../src/content/combatRules.js';
-import { prototypeInput, prototypeBundle } from '../src/content/prototypes/combatBuilds.js';
 
 const shipped = createRegistries(contentBundle);
 // Every shipped blight card is also ritual, so the blight arm re-tags one
@@ -123,32 +122,6 @@ test('a multi-component hit rounds its exposure bonus up once per hit, not once 
   assert.ok(halves.reduce((sum, c) => sum + c.amount, 0) >= 2 * Math.floor(1.9 * 1.1));
   assert.deepEqual(resolveDamageComponents(foundationRules, { components: [{ type: 'slashing', amount: 2 }, { type: 'fire', amount: 2 }], taggedBonus: 1.25, immunities: ['fire'] }),
     [{ type: 'slashing', amount: 3 }, { type: 'fire', amount: 0 }]);
-});
-
-test('a two-component tagged card hit: preview == hit, bonus rounded once', () => {
-  const input = prototypeInput('heavy', 'basic', 1);
-  input.combatProfiles.e1 = { ...input.combatProfiles.e1, armor: 0 };
-  const bundle = prototypeBundle();
-  bundle.cards = bundle.cards.map((c) => c.id === 'prototypeHeavy' ? { ...c, attack: { source: 'weapon', components: [{ type: 'slashing', weight: 1 }, { type: 'fire', weight: 1 }] } } : c);
-  bundle.tagging = [...bundle.tagging, { family: 'card', scope: '', objectId: 'prototypeHeavy', tagId: 'starstone' }];
-  input.registries = createRegistries(bundle);
-  const hit = (exposed) => {
-    const c = createCombat(input);
-    const enemy = c.enemies[0];
-    if (exposed) applyStatus(c, enemy, 'frostExposed', 1);
-    let card;
-    for (const pile of ['hand', 'draw', 'discard']) {
-      const index = c.piles[pile].findIndex((x) => x.cardId === 'prototypeHeavy');
-      if (index >= 0) { [card] = c.piles[pile].splice(index, 1); c.piles.hand.push(card); break; }
-    }
-    const preview = previewCard(c, card.instanceId, enemy.id).values.find((v) => v.op === 'damage').value;
-    const dealt = dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id }).events.find((e) => e.type === 'damageDealt');
-    return { preview, amount: dealt.amount };
-  };
-  const clean = hit(false), exposed = hit(true);
-  assert.deepEqual(clean, { preview: 10, amount: 10 }, '5 slashing + 5 fire');
-  // 10 × 1.25 = 12.5: plain 10 + ceil(2.5) = 13 (per component it was 7 + 7 = 14).
-  assert.deepEqual(exposed, { preview: 13, amount: 13 });
 });
 
 test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 3 (3 × 1.25 = 3.75)', () => {

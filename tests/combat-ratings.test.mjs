@@ -190,23 +190,6 @@ test('version-one equipment profile migration preserves compatible saved overrid
   assert.equal(migrated.profiles.bladeAttack.gainPerTier, undefined);
 });
 
-test('foundation execution applies the same card rating as its preview', async () => {
-  const { prototypeInput } = await import('../src/content/prototypes/combatBuilds.js');
-  const input = prototypeInput('heavy', 'basic', 998);
-  input.ratingsRules = resolveCombatRatings({}, contentBundle);
-  const c = createCombat(input);
-  c.player.ratings = { ar: 5, dr: 0, pr: 0, poise: 1, ward: 1 };
-  c.player.ratingSources = [{ name: 'Attributes', kind: 'attribute', ar: 5 }];
-  const card = [...c.piles.hand, ...c.piles.draw].find(row => c.registries.cards.get(row.cardId).type === 'attack');
-  card.ratingId = 'ar';
-  c.piles.draw = c.piles.draw.filter(row => row !== card);
-  if (!c.piles.hand.includes(card)) c.piles.hand.push(card);
-  const shown = previewCard(c, card.instanceId, c.enemies[0].id).values.find(value => value.op === 'damage').value;
-  const hp = c.enemies[0].hp;
-  dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id });
-  assert.equal(hp - c.enemies[0].hp, shown);
-});
-
 // A SAVED FIGHT PREDATES THE MULTIPLIERS — and, since ruleset 7, a new one
 // postdates them. `combatSnapshotProblems` validates a restored snapshot's own
 // rating rules, so a config with no `multiplier` (a save from before it

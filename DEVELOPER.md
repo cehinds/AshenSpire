@@ -392,7 +392,6 @@ in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
-The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
 Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
@@ -408,10 +407,6 @@ compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
-`node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
-and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
-three-build policy through the actual combat engine. Ordinary runs do not select
-this ruleset yet. See the workshop's remaining content-expansion gate.
 
 Boss destinations are assigned when an act map is created. `bossIds` lists the
 terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
