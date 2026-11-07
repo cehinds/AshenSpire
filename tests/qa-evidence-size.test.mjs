@@ -53,7 +53,7 @@ export const isEvidenceFile = (path) => isEvidenceJson(path) || isEvidenceImage(
 export const ALLOWED = new Map([
   ['tools/card-art/cutout-manifest.json', 'approved card-art compositions; tests/layered-card-art.test.mjs and the layered-art generator read it'],
   ['tools/hud-component-studio/projects/character-creation/component-manifest.json', 'the component library catalog; tools/hud-component-studio/library.js loads it'],
-  ['tools/hud-component-studio/projects/character-creation/scene.json', 'the seed scene the Studio opens (qa/smoke.mjs, qa/verify.mjs read it)'],
+  ['tools/hud-component-studio/projects/character-creation/scene.json', 'the character-creation scene; library.js (through the manifest scene records), render.mjs and layer-icons.py read it'],
   ['tools/hud-component-studio/projects/character-creation/scene-mobile.json', 'the mobile scene the Studio library loads'],
   ['tools/hud-component-studio/projects/character-creation/scene-mobile-noncaster.json', 'the mobile non-caster scene the Studio library loads'],
   ['tools/hud-component-studio/projects/character-creation/source-desktop.json', 'the preserved desktop seed build-components.py regenerates the package from'],

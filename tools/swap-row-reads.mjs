@@ -1330,7 +1330,7 @@ function copyTree(dir) {
     // tool bug rather than a full disk. Nothing under docs/ is served to the
     // page; assets/, content/, styles/ and src/ still are.
     filter: (src) => !/(^|\/)(\.git|node_modules|dist|build|docs)(\/|$)/.test(src.replace(ROOT, ''))
-      && !src.replace(ROOT, '').startsWith('/scratch'),
+      && !/^\/(scratch|tools\/results)(\/|$)/.test(src.replace(ROOT, '')),
   });
   const csv = join(dir, 'content', 'source', 'weapons.csv');
   writeFileSync(csv, readFileSync(csv, 'utf8').replace(/\n*$/, '\n') + TALISMAN + '\n' + MAUL + '\n');
