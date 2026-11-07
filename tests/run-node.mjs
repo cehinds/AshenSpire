@@ -10,6 +10,8 @@
 // Selftests that write mutants must run in a separate checkout from tree gates.
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { runTests } from './engine.test.js';
 import { loadRunNodeFixtures } from './helpers/run-node-fixtures.mjs';
 import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
@@ -121,959 +123,372 @@ if (DISCOVER) {
   if (ok) zoomPassed++;
   else zoomExtra++;
 }
-{
-  const { execFileSync } = await import('node:child_process');
-  const { fileURLToPath } = await import('node:url');
-  const cwd = fileURLToPath(new URL('..', import.meta.url));
-  const run = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/zoomunits.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-  // One reader for both lines: quote the tool's own terminated RESULT sentence.
-  // `grab` is gone — it defaulted to '?' on a miss, so renaming a word in either
-  // tool output printed a question mark inside a PASS (Bjorn's finding 1, same
-  // class as the drift that started this). A verdict the harness cannot read in
-  // full is a FAIL that says so, in both tests, through the same three lines.
-  const quote = (out) => {
-    const m = out.match(/^RESULT: (.*)$/m);
-    if (!m) return { text: null, why: 'NO RESULT LINE — the harness could not read the tool' };
-    if (!/\.$/.test(m[1])) return { text: null, why: `TRUNCATED RESULT — "${m[1]}" does not end the sentence, so the verdict wrapped and the harness read half of it` };
-    return { text: m[1], why: null };
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'zoomunits')) {
-    const self = run(['--selftest']);
-    const selfV = quote(self.out);
-    console.log(
-      `${self.code === 0 && selfV.text ? 'PASS' : 'FAIL'}  36. the zoom-unit check still catches its own known-bad corpus` +
-        ` — ${selfV.text || `zoomunits --selftest (exit ${self.code}): ${selfV.why}`}`
-    );
-    if (self.code !== 0 || !selfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const tree = run([]);
-    // The detail is the tool's OWN RESULT line, quoted — not numbers scraped out of
-    // it and recomposed here. Recomposing is a second home for the verdict, and it
-    // drifted the day admissibility became a fourth failure condition the three
-    // regexes did not know about: the suite printed FAIL beside a name that read
-    // "0 new, 0 vanished". Quoting has no regex to widen, so a clause added to
-    // RESULT reaches this line without anyone remembering to. And a run with NO
-    // RESULT line is itself a failure: the harness could not read the tool, which
-    // is not the same as the tool having nothing to say.
-    // (Bjorn's ruling, 2026-07-28, over my proposal to add a fourth number — his
-    // test is "did something become deletable?"; under this the whole `grab` helper did.)
-    // A verdict is one whole terminated sentence on one line. Without the `.` test a
-    // RESULT that ever wraps is quoted up to the wrap and PASSES on half a sentence —
-    // the `?` defect in a new dress. Bjorn ruled the first wording, then wrapped the
-    // line himself and watched it print `PASS … 9 carried, 0 new,`; this is his
-    // corrected version, taken from his log rather than from a relay of it.
-    const treeV = quote(tree.out);
-    console.log(
-      `${tree.code === 0 && treeV.text ? 'PASS' : 'FAIL'}  37. the carried set of unconverted px writes is exactly as recorded` +
-        ` — ${treeV.text || `zoomunits (exit ${tree.code}): ${treeV.why}`}` +
-        ` (\`node tools/zoomunits.mjs\` for the ledger, \`--raw\` for the bare red)`
-    );
-    if (tree.code !== 0 || !treeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 38 — the BOUND, the arithmetic half only (EldenSpire#15, Marina's Rule 2).
-  //
-  // This is deliberately a small test with a loud boundary. Bounding cannot be
-  // verified without layout, so no test in this file can ever discharge Rule 2 —
-  // tools/zoomplace.mjs does that, in a browser, and nothing runs it automatically
-  // yet (`#16`). What IS testable here is that clampBox never returns a box
-  // outside the container it was given, including the cases a caller gets wrong:
-  // a box bigger than the view, a negative input, keep larger than the box.
-  //
-  // The known-bad is the third case. Before the fix, tooltip.js clamped correctly
-  // and rendered off-screen anyway, because it clamped in one space and wrote in
-  // another — so a test that only fed clampBox sane numbers would have been green
-  // against the actual defect. It cannot see that defect either. It says so.
-  if (CORE) {
-    const { clampBox } = await import('../src/ui/fx.js');
-    const view = { width: 1000, height: 800 };
-    const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
-    // No `incl. …` summary of what these cover: the case NAMES below are that
-    // description and they are single-homed. The clause that used to sit in the PASS
-    // line was a second copy with nothing holding it to the array, and it drifted —
-    // delete the last case and it still claimed "a finite keep on BOTH far edges"
-    // beside "6/6 cases". Measured or absent; a coverage claim no one maintains is
-    // worse than none, because it reads as a guarantee. The failure path already
-    // names the cases that broke.
-    const cases = [
-      ['a box already inside is not moved', () => {
-        const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
-        return r.left === 100 && r.top === 100;
-      }],
-      ['a box off the right/bottom is pulled back inside', () => {
-        const r = clampBox({ left: 1400, top: 1400, width: 200, height: 100 }, view);
-        return inside(r, 200, 100, 4);
-      }],
-      ['a box off the left/top is pushed back inside', () => {
-        const r = clampBox({ left: -900, top: -900, width: 200, height: 100 }, view);
-        return inside(r, 200, 100, 4);
-      }],
-      ['a box larger than the view pins to the low edge, never slides off the far one', () => {
-        const r = clampBox({ left: -5000, top: 5000, width: 4000, height: 3000 }, view);
-        return r.left === 4 && r.top === 4;
-      }],
-      ['keep:40 lets a pointer-tracked box overhang, but never vanish', () => {
-        const r = clampBox({ left: -5000, top: -5000, width: 200, height: 100 }, view, { keep: 40 });
-        return r.left + 200 >= 44 && r.top + 100 >= 44 && r.left < 4 && r.top < 4;
-      }],
-      ['keep larger than the box degrades to the whole box, not to a negative bound', () => {
-        const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
-        return inside(r, 20, 20, 4);
-      }],
-      // The far edge of the SAME rule, because `lo` and `hi` are different
-      // expressions and the keep:40 case above exercises only `lo`. Its known-bad:
-      // mutate `hi = span - pad - k` to `span - pad - size` and all six cases above
-      // stay green while a pointer-tracked box loses its overhang (956 -> 796).
-      // A finite `keep` on the high edge is the one branch nothing else watches —
-      // no browser run reaches it — so this line is its only witness, and until now
-      // it was a one-sided one.
-      ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
-        const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
-        return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
-            && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
-      }],
-    ];
-    const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
-    console.log(
-      `${bad.length ? 'FAIL' : 'PASS'}  38. clampBox keeps a box inside its named container` +
-        ` — ${bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases.`}` +
-        ` (arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)`
-    );
-    if (bad.length) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 39/40 — every navigable surface declared in data has a handler (#78).
-  //
-  // Two lines for the same reason 36/37 are two: 39 is the CHECK'S OWN
-  // integrity — it plants every breakage an author could make by hand and must
-  // see all of them. Its failure is the check's fault. 40 is the state of src/.
-  // Its failure is the code's.
-  //
-  // NO COUNT IN THIS COMMENT, deliberately. It said "five" while the corpus held
-  // seven, and it would say seven now that it holds eleven — a number typed
-  // beside the list that owns it, which is the defect this whole card is about.
-  // The tool's own RESULT line carries the count and 39 quotes it whole.
-  //
-  // Here rather than in engine.test.js, and that is deliberate: this joins two
-  // lists that live in the UI layer, and engine.test.js is engine and content
-  // invariants with numbered names that two files cannot both hand out (see the
-  // note above 36). The verdict is the tool's own RESULT line, quoted whole —
-  // Bjorn's ruling, and the reason is that a recomposed verdict is a second copy
-  // of it.
-  const runSurf = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/surfaces.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'surfaces')) {
-    const surfSelf = runSurf(['--selftest']);
-    const surfSelfV = quote(surfSelf.out);
-    console.log(
-      `${surfSelf.code === 0 && surfSelfV.text ? 'PASS' : 'FAIL'}  39. the surface check still catches its own known-bad corpus` +
-        ` — ${surfSelfV.text || `surfaces --selftest (exit ${surfSelf.code}): ${surfSelfV.why}`}`
-    );
-    if (surfSelf.code !== 0 || !surfSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const surfTree = runSurf([]);
-    const surfTreeV = quote(surfTree.out);
-    console.log(
-      `${surfTree.code === 0 && surfTreeV.text ? 'PASS' : 'FAIL'}  40. every declared navigable surface has a handler` +
-        ` — ${surfTreeV.text || `surfaces (exit ${surfTree.code}): ${surfTreeV.why}`}` +
-        ` (\`node tools/surfaces.mjs\` for the sets, \`--selftest\` for the reds)`
-    );
-    if (surfTree.code !== 0 || !surfTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 41/42 — the screen census (Marina's ruling, 2026-08-07).
-  //
-  // WHY IT IS RUN HERE AND NOT BY A PERSON. `release-shots.mjs` did not start
-  // for a whole day. Four gates missed it, and the reason is one sentence:
-  // every one of them ran this suite, and that file is in nobody's suite — its
-  // first run would have been at upload, by whoever was tired. A census that
-  // reports the project's state to Constantine goes into exactly that category
-  // the moment it exists, so it is wired in on the day it is written rather
-  // than on the day it is missed.
-  //
-  // It CAN be, and that is the whole difference — no browser, no bundle, no
-  // port. It is a join between the screens directory, the import graph and the
-  // instrument sources. release-shots needs a built artifact and a browser and
-  // therefore still needs Bjorn's answer; this is not that answer and does not
-  // pretend to be one.
-  //
-  // Two lines for the same reason 36/37 and 39/40 are two: 41 is the CENSUS'S
-  // OWN integrity — its whole known-bad corpus, including the both-edges plant
-  // where a fully watched tree must stop alarming. Its failure is the check's
-  // fault. 42 is the state of src/.
-  //
-  // THIS COMMENT USED TO SAY "42's failure is the code's" AND THAT WAS NOT TRUE.
-  // Vira measured it while gating this pair: a census that cannot read one of
-  // its homes, and the per-row `unreadable` floor, both land on 42 — so the slot
-  // labelled for a defect in the game was also catching defects in the check.
-  // The exit codes now carry as much of the split as they honestly can, and this
-  // is what they actually implement:
-  //
-  //   42 red, exit 2 — the census could not be taken. A home stopped being
-  //                    readable. THE CHECK'S FAULT, or the tree's, never the
-  //                    game's; no counts are printed at all.
-  //   42 red, exit 1 — a finding. Usually the game's (a screen nothing in src/
-  //                    imports), sometimes still the census's (a module it can
-  //                    derive no way to recognise). THE FINDING LINE NAMES ITS
-  //                    OWNER, and that is the part a reader must use.
-  //
-  // The residue is deliberate and stated rather than smoothed: one exit code
-  // cannot carry a distinction the findings list makes per row.
-  //
-  // NO PLANT COUNT HERE. This comment said "seven plants" and the corpus is now
-  // larger; a count typed beside a list that lives in another file is the same
-  // second-home defect this pair exists to catch, and it went stale the first
-  // time the corpus grew. The tool's own RESULT line prints the count.
-  //
-  // NO COUNT IN THIS COMMENT, deliberately — the tool's RESULT line carries
-  // every number with the ref it was counted at, and 42 quotes it whole. A
-  // number typed beside the thing that owns it is what the census exists to
-  // kill, and the top of commons/release-floor.md is why we know that.
-  //
-  // AND 42 PASSES WHILE SCREENS SIT UNWATCHED, on purpose. The exit code is
-  // the health of the DERIVATION — a home that stopped being readable, a screen
-  // nothing can mount. How many screens nobody watches is the state of the
-  // project, and whether that is fit to ship is Sten's judgement against his
-  // datum, not this suite's. The number is printed on every run so it cannot
-  // hide; nothing here grades it.
-  const runCensus = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/screen-census.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'screen-census')) {
-    const censSelf = runCensus(['--selftest']);
-    const censSelfV = quote(censSelf.out);
-    console.log(
-      `${censSelf.code === 0 && censSelfV.text ? 'PASS' : 'FAIL'}  41. the screen census still catches its own known-bad corpus` +
-        ` — ${censSelfV.text || `screen-census --selftest (exit ${censSelf.code}): ${censSelfV.why}`}`
-    );
-    if (censSelf.code !== 0 || !censSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const censTree = runCensus(['--raw']);
-    const censTreeV = quote(censTree.out);
-    console.log(
-      `${censTree.code === 0 && censTreeV.text ? 'PASS' : 'FAIL'}  42. every screen in the tree is mountable, and the census can still read it` +
-        ` — ${censTreeV.text || `screen-census (exit ${censTree.code}): ${censTreeV.why}`}` +
-        ` (\`node tools/screen-census.mjs\` for the checklist itself)`
-    );
-    if (censTree.code !== 0 || !censTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 43–44 — CARD TEXT MARKS HAVE ONE HOME (Sunna). Same two-line shape as 36/37
-  // and 41/42, and for the same reason: 43 is the check's own integrity, 44 is
-  // the tree's state, and conflating them makes a broken check look like a clean
-  // stylesheet.
-  //
-  // The defect: fillTemplate() emits the marks a player reads to see what an
-  // upgrade changes, and its output is drawn in TWO containers — the card face
-  // and the Smith preview inside #tooltip. Every rule styling them was
-  // keyed to `.card`, so the preview drew a number it had just computed as
-  // CHANGED in the same colour and weight as the prose beside it. Constantine:
-  // "I've never seen the upgrade preview before."
-  //
-  // Five rules were re-keyed at 60935d9. A sixth did not follow, because it
-  // carried a hardcoded hex and the selector was the only place that hex could
-  // live — every rule keyed to a TOKEN came through for free. That is why this
-  // is a check and not a note: one rule surviving a re-key is an instance, a
-  // rule that CAN survive one is a class.
-  const runMark = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/markhome.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'markhome')) {
-    const markSelf = runMark(['--selftest']);
-    const markSelfV = quote(markSelf.out);
-    console.log(
-      `${markSelf.code === 0 && markSelfV.text ? 'PASS' : 'FAIL'}  43. the card-text mark check still catches its own known-bad corpus` +
-        ` — ${markSelfV.text || `markhome --selftest (exit ${markSelf.code}): ${markSelfV.why}`}`
-    );
-    if (markSelf.code !== 0 || !markSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const markTree = runMark(['--raw']);
-    const markTreeV = quote(markTree.out);
-    console.log(
-      `${markTree.code === 0 && markTreeV.text ? 'PASS' : 'FAIL'}  44. every card-text mark rule reaches both places card text is drawn` +
-        ` — ${markTreeV.text || `markhome (exit ${markTree.code}): ${markTreeV.why}`}` +
-        ` (\`node tools/markhome.mjs\` for the ledger)`
-    );
-    if (markTree.code !== 0 || !markTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 45–46 — EVERY NAMED IMPORT RESOLVES TO A REAL EXPORT.
-  //
-  // #88 renamed an export and left tools/release-shots.mjs standing. That tool
-  // is the canonical release capture set and the release floor cited it as
-  // green; it exited 1 before a browser launched. NOT A FAILED CHECK — A FAILED
-  // LOAD, and the first thing that would have noticed was a person, at delivery
-  // time. This suite's own BOUNDARY block below names release-shots as the half
-  // covering what these tests cannot, and had never LOADED it once.
-  //
-  // Eleven instruments here are started by a human typing. linkcheck links every
-  // module graph under src/, tools/ and tests/ WITHOUT EVALUATING ONE LINE — a
-  // missing named export is an instantiation error, raised during linking — so
-  // the whole class is caught for the price of no browser and no port.
-  //
-  // TWO LINES FOR THE SAME REASON 36/37, 39/40, 41/42 AND 43/44 ARE TWO: 45 is
-  // the check's own integrity against its planted corpus, 46 is the state of the
-  // tree. A tool that cannot go red is `unknown`, not green, whatever it prints.
-  //
-  // NO PLANT COUNT IN THIS COMMENT. The corpus lives in linkcheck.mjs and its
-  // RESULT line carries the count; a number typed beside a list that lives in
-  // another file is the second copy this suite exists to kill (see 41–42, which
-  // deleted its own "seven plants" for the same reason).
-  //
-  // 45 HAS THREE RESULTS, NOT TWO, and the third is why it can be trusted:
-  // caught / MISSED / UNPLANTABLE. UNTESTABLE covers the denominator — a tree
-  // already carrying a broken import cannot score a corpus. UNPLANTABLE covers
-  // the numerator — a plant whose edit did not land measures nothing, and a
-  // silent no-op must never be reported as a catch or as a miss.
-  const runLink = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/linkcheck.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'linkcheck')) {
-    const linkSelf = runLink(['--selftest']);
-    const linkSelfV = quote(linkSelf.out);
-    console.log(
-      `${linkSelf.code === 0 && linkSelfV.text ? 'PASS' : 'FAIL'}  45. the link check still catches its own known-bad corpus` +
-        ` — ${linkSelfV.text || `linkcheck --selftest (exit ${linkSelf.code}): ${linkSelfV.why}`}`
-    );
-    if (linkSelf.code !== 0 || !linkSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const linkTree = runLink(['--raw']);
-    const linkTreeV = quote(linkTree.out);
-    console.log(
-      `${linkTree.code === 0 && linkTreeV.text ? 'PASS' : 'FAIL'}  46. every named import in the tree resolves to a real export` +
-        ` — ${linkTreeV.text || `linkcheck (exit ${linkTree.code}): ${linkTreeV.why}`}` +
-        ` (\`node tools/linkcheck.mjs\` names the file and the error)`
-    );
-    if (linkTree.code !== 0 || !linkTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // ---- 50/51. CAN A PLAYER EVER MEET THIS STATUS? (Rune, 2026-08-08) -------
-  //
-  // Law 1 clause 1 says a status is a row. Nothing checked that a row was ever
-  // APPLIED, and two complete threshold-proc rows shipped that no player could
-  // reach: `frost` (threshold 10, burst, Frost-Exposed, resist row, its own SFX
-  // row) and `insanity` (threshold 14, guaranteed Stagger). Zero appliers, both.
-  // Bleed had 25. THE CARD NAMED FROST NOVA APPLIED `weak` AND `vulnerable`.
-  //
-  // Everything downstream was green because everything downstream tested the
-  // ROW: the engine procs them (7b, 7c, 7e, 7g), the validator rules on every
-  // knob (7f), the SFX resolver answers them (35d). Not one of those checks
-  // could tell a row with a door from a row without one — and 35d in
-  // particular is the near miss: it walks `statuses.filter(s => s.proc)` and
-  // proves each has a burst sound. The same population, one question earlier.
-  //
-  // TWO LINES, for the same reason 45/46 are two: 50 is the check's own
-  // integrity against its planted corpus (including the two plants that must
-  // go GREEN), 51 is the state of the tree. No plant count typed here — the
-  // corpus lives in statusreach.mjs and its RESULT line carries the number.
-  const runReach = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/statusreach.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  // ---- 50-51: the grace refill (Constantine, 2026-08-08) -------------------
-  //
-  // TWO LINES FOR THE SAME REASON 45/46 ARE TWO: 50 is the check's own
-  // integrity against its planted corpus, 51 is the state of the shipped table.
-  // A refusal nobody has watched fail is `unknown`, not green.
-  //
-  // AND THE PLANTS ENTER BY THE DOOR THE REAL INPUT USES — a deep copy of the
-  // real contentBundle handed to the real validateContent, and registries built
-  // by createRegistries driving the real applyGraceRefill. The tool's header
-  // says which door each plant uses; this comment does not restate the corpus,
-  // and the count lives in its RESULT line, not here.
-  const runGrace = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/gracerefill.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  // 52/53 — every exported closed set has a reader (Marina's ask, out of the
-  // PASSIVE_KEYS finding). Numbered after the current engine and status-reach
-  // checks so this merged suite has one number line.
-  const runSets = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/closedsets.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'statusreach')) {
-    const reachSelf = runReach(['--selftest']);
-    const reachSelfV = quote(reachSelf.out);
-    console.log(
-      // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
-      // "PASS  50." in every run: a reader grepping a run for "50." got two
-      // answers, and a reviewer told "50 is red" could not tell which half of the
-      // suite to open. Both numbers were allocated in good faith in different
-      // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
-      // intruder is this one. Moved to 29 — the ONE gap in the sequence
-      // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
-      // only number immune to what two in-flight PRs may allocate.
-      // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
-      // run-node's own numbering is no longer visually contiguous. A display label
-      // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
-      // checked, not assumed: the only tool that matches on "FAIL  <x>" is
-      // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
-      // ("P2 two losses produce TWO archives"), not one of these numbers.
-      `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
-        ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
-    );
-    if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const reachTree = runReach([]);
-    const reachTreeV = quote(reachTree.out);
-    console.log(
-      `${reachTree.code === 0 && reachTreeV.text ? 'PASS' : 'FAIL'}  51. every shipped status has something that applies it` +
-        ` — ${reachTreeV.text || `statusreach (exit ${reachTree.code}): ${reachTreeV.why}`}` +
-        ` (\`node tools/statusreach.mjs\` names the row and the route)`
-    );
-    if (reachTree.code !== 0 || !reachTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'closedsets')) {
-    const setsSelf = runSets(['--selftest']);
-    const setsSelfV = quote(setsSelf.out);
-    console.log(
-      `${setsSelf.code === 0 && setsSelfV.text ? 'PASS' : 'FAIL'}  52. the closed-set check still catches its own known-bad corpus` +
-        ` — ${setsSelfV.text || `closedsets --selftest (exit ${setsSelf.code}): ${setsSelfV.why}`}`
-    );
-    if (setsSelf.code !== 0 || !setsSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const setsTree = runSets([]);
-    const setsTreeV = quote(setsTree.out);
-    console.log(
-      `${setsTree.code === 0 && setsTreeV.text ? 'PASS' : 'FAIL'}  53. every exported closed set is read by something` +
-        ` — ${setsTreeV.text || `closedsets (exit ${setsTree.code}): ${setsTreeV.why}`}` +
-        ` (\`node tools/closedsets.mjs\` for the table, \`--selftest\` for the reds)`
-    );
-    if (setsTree.code !== 0 || !setsTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'gracerefill')) {
-    const graceSelf = runGrace(['--selftest']);
-    const graceSelfV = quote(graceSelf.out);
-    console.log(
-      `${graceSelf.code === 0 && graceSelfV.text ? 'PASS' : 'FAIL'}  54. the grace-refill refusals still catch their own known-bad corpus` +
-        ` — ${graceSelfV.text || `gracerefill --selftest (exit ${graceSelf.code}): ${graceSelfV.why}`}`
-    );
-    if (graceSelf.code !== 0 || !graceSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const graceTree = runGrace([]);
-    const graceTreeV = quote(graceTree.out);
-    console.log(
-      `${graceTree.code === 0 && graceTreeV.text ? 'PASS' : 'FAIL'}  55. a grace pours what balance.graceRefill says it pours` +
-        ` — ${graceTreeV.text || `gracerefill (exit ${graceTree.code}): ${graceTreeV.why}`}` +
-        ` (\`node tools/gracerefill.mjs\` names each row and what it resolves to)`
-    );
-    if (graceTree.code !== 0 || !graceTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 56/57 — the relic-modifier vocabulary is ONE vocabulary (Sten, after #178
-  // gave relics the power to grant a resource). This is the other half of
-  // 52/53's stated hole: closedsets asks whether a closed set has a READER and
-  // says out loud that it cannot see a second, hand-typed COPY. onevocab asks
-  // exactly that, for exactly one vocabulary, and drives the boot, resolve,
-  // creation and load doors so the two spellings disagree out loud if they ever
-  // drift. Its A6(a) also pins the max-HP addend list BY NAME at the three
-  // source sites that compose it: the value half of that check stayed green on
-  // a fourth addend that added zero, so the terms are now read as terms.
-  const runVocab = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/onevocab.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'onevocab')) {
-    const vocabSelf = runVocab(['--selftest']);
-    const vocabSelfV = quote(vocabSelf.out);
-    console.log(
-      `${vocabSelf.code === 0 && vocabSelfV.text ? 'PASS' : 'FAIL'}  56. the one-vocabulary check still catches its own known-bad corpus` +
-        ` — ${vocabSelfV.text || `onevocab --selftest (exit ${vocabSelf.code}): ${vocabSelfV.why}`}`
-    );
-    if (vocabSelf.code !== 0 || !vocabSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const vocabTree = runVocab([]);
-    const vocabTreeV = quote(vocabTree.out);
-    console.log(
-      `${vocabTree.code === 0 && vocabTreeV.text ? 'PASS' : 'FAIL'}  57. the relic-modifier vocabulary has one home and one derivation path` +
-        ` — ${vocabTreeV.text || `onevocab (exit ${vocabTree.code}): ${vocabTreeV.why}`}` +
-        ` (\`node tools/onevocab.mjs\` names the copy and the door that disagreed)`
-    );
-    if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
-  //
-  // Same two-line shape as every pair above, and here for a measured reason.
-  //
-  // #295: `tools/hintstrip.mjs` was red for four days while PR #224 passed
-  // exact-head review, because the instrument that contradicted it was in no
-  // list any gate walks. The gate command set in this house is derived BY HAND
-  // (SOP 14 §5a), and on 2026-08-21 two experienced hands derived it wrongly in
-  // opposite directions inside one hour — a grep cannot tell `run:` from `echo`.
-  //
-  // ⚠ AND THE HALF THAT PUT IT IN *THIS* FILE RATHER THAN THE WORKFLOW, WHICH IS
-  // VIRA'S FINDING. Wiring an instrument into `ci.yml` is not enough. I claimed
-  // hintstrip's two steps were a redundant pair, having planted `|| true` on the
-  // first and watched the job stay red. The selftest's clean edge IS the first
-  // step re-run, so the job stayed red because THE SAME CHECK FAILED TWICE — and
-  // the day the tree goes green, `|| true` on that step silences the gate with
-  // no signal at all. The redundancy evaporates at exactly the moment it would
-  // matter, because a green tree is the only state in which a regression can be
-  // introduced. `gatelist --selftest` plants that `|| true` and requires G4 red,
-  // and THIS suite runs on a green tree, at every gate, with no dispatch.
-  //
-  // IT BELONGS HERE AND NOT IN ci.yml: it opens no browser, needs no port and no
-  // build — it reads the declared lists and parses them. This file's BOUNDARY
-  // block below is therefore still true, and 59 is the first check in this suite
-  // that is about the GATE rather than about the game.
-  //
-  // NUMBERED 67/68, AND IT TOOK ME FOUR TRIES, WHICH IS THE POINT AND IS NOW
-  // ALSO THE ANSWER. My first wiring used 58/59 and printed "58." and "59."
-  // TWICE in one run — engine.test.js owns those (nearestShrine, the shrine
-  // glow). I moved to 60/61 and COLLIDED AGAIN, for the same reason. I then took
-  // 62/63, which dev had explicitly reserved for this PR in the note beside
-  // 64/65 — and on the replay onto 456b8ea IT COLLIDED A THIRD TIME, because
-  // engine.test.js had meanwhile grown a 62 of its own. A reservation written in
-  // one file is not a reservation; it is a request the other file never read.
-  //
-  // THE HAZARD I CALLED "STRUCTURAL AND STILL OPEN" IS NOW CLOSED, AND NOT BY
-  // ME. tools/testnumbers.mjs (64/65, dev) is the check I said was owed and did
-  // not build. It is what caught this third collision — I did not notice it, the
-  // gate did — and 67 is DERIVED FROM ITS OUTPUT ("the next free number is 67"),
-  // not read off a file by hand and not remembered. That is the whole argument
-  // for wiring an instrument into a list: the two tries above cost a reviewer's
-  // attention, and this one cost nothing.
-  // Two lines for the same reason every pair since 36/37 is two: 62 is the
-  // check's own integrity against its planted corpus — its failure is the
-  // check's fault. 63 is the state of the lists. NO PLANT COUNT AND NO TOOL
-  // COUNT IN THIS COMMENT: both live in gatelist.mjs and its RESULT line carries
-  // them, and a number typed beside the list that owns it is the exact defect
-  // this pair exists to catch.
-  const runGate = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/gatelist.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  // 64/65 — NO TWO TESTS WEAR THE SAME NUMBER.
-  //
-  // The hazard is named in this file already, above test 36: "two files, no git
-  // conflict, and a suite that would have printed 35. twice — the collision a
-  // merge cannot see." It was a warning with no check behind it, and dev printed
-  // "PASS  50." twice until the commit above. A warning a hand must remember is
-  // weaker than one a tool enforces, and this one had been forgotten by the hand
-  // that wrote a check while reading it.
-  //
-  // NUMBERED 64/65, NOT 62/63, AND THE GAP IS DELIBERATE: PR #301 holds 62/63 in
-  // flight for the gate-list pair. Allocating disjoint ranges across two open
-  // PRs is this check's own subject, applied to itself — and a gap costs
-  // nothing while a collision costs a reader.
-  //
-  // ⚠ AND THE RESERVATION DID NOT HOLD — #301, on replay. engine.test.js grew a
-  // 62 of its own in the meantime, so the pair this note held open was taken by
-  // the file the note could not talk to. The gate-list pair is 67/68 below. The
-  // paragraph above is kept exactly as written because it is the evidence: a
-  // range reserved in prose, in one of the two homes, is not reserved. THIS
-  // CHECK is what caught it.
-  //
-  // 64 is the check's own integrity against its planted corpus (five plants, one
-  // of which must go GREEN); 65 is the state of the two test files. No plant
-  // count and no label count in this comment — both live in the tool and its
-  // RESULT line carries them.
-  const runNums = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/testnumbers.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'gatelist')) {
-    const gateSelf = runGate(['--selftest']);
-    const gateSelfV = quote(gateSelf.out);
-    console.log(
-      `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
-        ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
-    );
-    if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const gateTree = runGate([]);
-    const gateTreeV = quote(gateTree.out);
-    console.log(
-      `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
-        ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
-        ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
-    );
-    if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'testnumbers')) {
-    const numsSelf = runNums(['--selftest']);
-    const numsSelfV = quote(numsSelf.out);
-    console.log(
-      `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
-        ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
-    );
-    if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 69 — THE PROBE CORPUS'S OWN DERIVATIONS. Bjorn, 2026-08-22. `tools/watched.mjs`
-  // is one of the 131 tools `gatelist` counts as executed by no declared gate
-  // list, so its floors reached no automated run at all — and the floor added
-  // today is the one that catches a probe still citing code that has moved.
-  // Wiring it here is the whole point: a floor nobody runs is the defect it was
-  // built to catch, one level up. `--check-reads` needs no browser, no ledger and
-  // no bundle, which is why this door and not the full audit is the one CI can
-  // afford to hold.
-  const runReads = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/watched.mjs', '--check-reads', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
-    }
-  };
-  if (CORE) {
-    const reads = runReads([]);
-    const readsV = quote(reads.out);
-    console.log(
-      `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
-        ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
-        ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
-    );
-    if (reads.code !== 0 || !readsV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const numsTree = runNums([]);
-    const numsTreeV = quote(numsTree.out);
-    console.log(
-      `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
-        ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
-        ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
-    );
-    if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 73/74 — module URL/filesystem path conversions use node:url (#13).
-  // 73 proves the two required known-bads through the real scanner and runs
-  // both from a working directory containing spaces. 74 scans tools/ + tests/.
-  // These numbers follow the suite's own 64/65 uniqueness gate and the 67/68
-  // gate-list pair; tools/testnumbers.mjs is the authority that verifies them.
-  const runUrlPath = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'urlpath-conversions')) {
-    const urlPathSelf = runUrlPath(['--selftest']);
-    const urlPathSelfV = quote(urlPathSelf.out);
-    console.log(
-      `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
-        ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
-    );
-    if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const urlPathTree = runUrlPath([]);
-    const urlPathTreeV = quote(urlPathTree.out);
-    console.log(
-      `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
-        ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
-        ` (\`node tools/urlpath-conversions.mjs\` names each site)`
-    );
-    if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 77/78 — fixed attack-slot composition. The first line proves the old
-  // right-hand-only lookup is still discriminating; the second runs the full
-  // 0/1/2 weapon, persistence, mutation, and live-pile matrix.
-  const runWeaponPackages = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/weapon-card-packages.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'weapon-card-packages')) {
-    const weaponSelf = runWeaponPackages(['--selftest']);
-    const weaponSelfV = quote(weaponSelf.out);
-    console.log(
-      `${weaponSelf.code === 0 && weaponSelfV.text ? 'PASS' : 'FAIL'}  77. the weapon-package check catches the right-hand-only lookup` +
-        ` — ${weaponSelfV.text || `weapon-card-packages --selftest (exit ${weaponSelf.code}): ${weaponSelfV.why}`}`
-    );
-    if (weaponSelf.code !== 0 || !weaponSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const weaponTree = runWeaponPackages([]);
-    const weaponTreeV = quote(weaponTree.out);
-    console.log(
-      `${weaponTree.code === 0 && weaponTreeV.text ? 'PASS' : 'FAIL'}  78. equipped weapons deterministically rebind the fixed authored attack slots` +
-        ` — ${weaponTreeV.text || `weapon-card-packages (exit ${weaponTree.code}): ${weaponTreeV.why}`}`
-    );
-    if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 94/95 — reusable UI component contracts (tools/ui-components.mjs, #1316).
-  // C5 and C12 sat red on dev because nothing ran this tool. 94 is the check's
-  // own integrity against its planted corpus; 95 is the tree's state (the
-  // same verdict tests/ui-component-catalogs.test.mjs asserts, quoted here in
-  // the suite's ledger).
-  const runUiComponents = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/ui-components.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'ui-components')) {
-    const uiSelf = runUiComponents(['--selftest']);
-    const uiSelfV = quote(uiSelf.out);
-    console.log(
-      `${uiSelf.code === 0 && uiSelfV.text ? 'PASS' : 'FAIL'}  94. the UI component check still catches its own known-bad corpus` +
-        ` — ${uiSelfV.text || `ui-components --selftest (exit ${uiSelf.code}): ${uiSelfV.why}`}`
-    );
-    if (uiSelf.code !== 0 || !uiSelfV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  if (CORE) {
-    const uiTree = runUiComponents([]);
-    const uiTreeV = quote(uiTree.out);
-    console.log(
-      `${uiTree.code === 0 && uiTreeV.text ? 'PASS' : 'FAIL'}  95. every reusable UI component contract holds` +
-        ` — ${uiTreeV.text || `ui-components (exit ${uiTree.code}): ${uiTreeV.why}`}` +
-        ` (\`node tools/ui-components.mjs\` names each broken contract)`
-    );
-    if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
-    else zoomPassed++;
-  }
-
-  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
-  // It sat red on dev because nothing ran it, and it had stopped following
-  // the map's live flask menu (components/runPotions.js, e1ff8c9f4). 96 is
-  // its planted corpus; 97 is the tree. Its verdict is its own "N passed, M failed" line.
-  const runFlaskActions = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'flask-action-contract')) {
-    const flaskSelf = runFlaskActions(['--selftest']);
-    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
-    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
-    console.log(
-      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
-        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
-    );
-    if (flaskSelfOk) zoomPassed++;
-    else zoomExtra++;
-  }
-
-  // The enclosing block is unconditional, so the tree verdict carries its own
-  // CORE gate like rung 95: the --selftests-only lane must not run it.
-  if (CORE) {
-    const flaskTree = runFlaskActions([]);
-    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
-    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
-    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
-    console.log(
-      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
-        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
-        `${flaskFails ? ` (${flaskFails})` : ''}` +
-        ` (\`node tools/flask-action-contract.mjs\` names each check)`
-    );
-    if (flaskTreeOk) zoomPassed++;
-    else zoomExtra++;
-  }
-
-  // 98/99 — the copy ratchet (tools/uistrings.mjs, DEVELOPER.md "the
-  // ratchet"). It sat red on dev from 2026-09-17 to 2026-10-02 because
-  // nothing ran it: 24 files drifted from tools/uistrings-baseline.json, about
-  // 230 sentences landing in code instead of content/source/uiStrings.csv.
-  // 98 is the check's planted corpus; 99 is the tree against the baseline.
-  const runUiStrings = (args) => {
-    try {
-      return { out: execFileSync(process.execPath, ['tools/uistrings.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
-    } catch (error) {
-      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
-    }
-  };
-  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'uistrings')) {
-    const copySelf = runUiStrings(['--selftest']);
-    const copySelfV = copySelf.out.match(/^uistrings --selftest: (?:OK|RED)[^\n]*/m)?.[0] || '';
-    const copySelfOk = copySelf.code === 0 && /: OK — /.test(copySelfV);
-    console.log(
-      `${copySelfOk ? 'PASS' : 'FAIL'}  98. the copy ratchet still catches its own known-bad corpus` +
-        ` — ${copySelfV || `uistrings --selftest (exit ${copySelf.code}) printed no verdict`}`
-    );
-    if (copySelfOk) zoomPassed++;
-    else zoomExtra++;
-  }
-
-  if (CORE) {
-    const copyTree = runUiStrings(['--check']);
-    const copyTreeV = copyTree.out.match(/^uistrings: (?:OK|RED)[^\n]*/m)?.[0] || '';
-    const copyTreeOk = copyTree.code === 0 && /^uistrings: OK — /.test(copyTreeV);
-    const copyRows = [...copyTree.out.matchAll(/^ {2}((?:GREW|SHRANK|NOT A REPO KEY)[^\n]*)$/gm)].map((m) => m[1]).join('; ');
-    console.log(
-      `${copyTreeOk ? 'PASS' : 'FAIL'}  99. no file holds more or fewer hardcoded sentences than the copy baseline records` +
-        ` — ${copyTreeV || `uistrings --check (exit ${copyTree.code}) printed no verdict`}` +
-        `${copyRows ? ` (${copyRows})` : ''}` +
-        ` (\`node tools/uistrings.mjs --check\` names each file)`
-    );
-    if (copyTreeOk) zoomPassed++;
-    else zoomExtra++;
-  }
-}
-
-// 76 — destructive quit/load confirmation without a native browser prompt.
-// This is a DOM behavior test with a deliberately tiny host: it exercises the
-// shared component's event contract, while source reads prove both controller
-// paths use it and the underlying overlay yields Escape to the top veil. It
-// does not render pixels or claim responsive geometry; that remains browser QA.
-if (CORE) {
-  const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
-  const confirmation = await runConfirmationModalContract();
-  console.log(
-    `${confirmation.ok ? 'PASS' : 'FAIL'}  76. quit and load use one reversible themed confirmation behavior` +
-      ` — ${confirmation.detail}`
-  );
-  if (confirmation.ok) zoomPassed++;
-  else zoomExtra++;
-}
-
-// 79 — the shipped pose frames and their generated table agree.
+// ---- THE GATE TABLE --------------------------------------------------------
+// Every numbered check below is ONE ROW: { label, lane, group, name, hint, run }.
+// `label` is the printed number and stays a cross-file unique id: tools/testnumbers.mjs
+// (65) reads `label: '<n>'` here and `test('<n>. …')` in engine.test.js and fails on
+// a collision, so a row's label is allocated against both files, never by hand here
+// alone. Rows print in table order; a gap (29 sits between 46 and 51) is a number
+// that was moved, not a row that is missing.
 //
-// Two ways this goes wrong silently. The table (src/content/poseSprites.js) is
-// generated from art/poses by tools/pose-ship.mjs; rerunning it for a different
-// pose set, or committing one side without the other, leaves rows naming files
-// that are not there — the figure then loads nothing for a pose and holds the
-// last frame. And registration lives entirely in these numbers: a frame whose
-// floor line is not below its crop top would place the figure off its feet.
-if (CORE) {
-  // Each frame is an art-manifest.json id (step 12), not a file in a tree here.
-  const { manifestIds } = await import('../tools/art-source.mjs');
-  const shipped = manifestIds();
-  const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
-  const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
-  const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
-  const bad = [];
-  for (const c of classes) {
-    for (const t of tints) {
-      for (const pose of POSE_STRIP) {
-        const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
-        if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
-        if (!shipped.has(POSE_DIR + row.f)) bad.push(`${c}/${pose}/${t}: ${row.f} missing from art-manifest.json`);
-        if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
-        if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
-          bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
+// lane 'selftest' rows run only under SELFTESTS and only when `group` is the
+// requested --selftest-group (tests/run-node-lanes.mjs); lane 'tree' rows run
+// under CORE. `run()` returns { ok, detail }; the loop prints
+// `PASS|FAIL  <label>. <name> — <detail> <hint>` and counts it.
+//
+// `hint` is printed prose, kept in its own field so tools/gatelist.mjs (G1) still
+// reads it as executed output: a hint that names `node tools/x.mjs` must be
+// backed by an invocation of that tool in this file's execFileSync argv arrays,
+// which are the runner functions just below.
+//
+// Pair shape, for the reason each pair exists: the selftest row is the CHECK'S OWN
+// integrity against its planted corpus (its failure is the check's fault); the
+// tree row is the state of the repository. Neither quotes a recomposed verdict:
+// the detail is the tool's own terminated RESULT sentence (`quote`), because a
+// second copy of a verdict drifts, and a verdict the harness cannot read in full
+// is a FAIL that says so. No plant counts or tool counts are typed in comments
+// here; each tool's RESULT line carries its own.
+const ROOT_DIR = fileURLToPath(new URL('..', import.meta.url));
+const PIPED = ['ignore', 'pipe', 'pipe'];
+const capture = (call) => {
+  try {
+    return { out: call(), code: 0 };
+  } catch (e) {
+    return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+  }
+};
+const execOpts = { cwd: ROOT_DIR, encoding: 'utf8' };
+const pipedOpts = { ...execOpts, stdio: PIPED };
+// One runner per tool; the literal path stays inside the execFileSync argv array
+// because that is what tools/gatelist.mjs counts as an invocation.
+const runZoom = (args) => capture(() => execFileSync(process.execPath, ['tools/zoomunits.mjs', ...args], execOpts));
+const runSurf = (args) => capture(() => execFileSync(process.execPath, ['tools/surfaces.mjs', ...args], execOpts));
+const runCensus = (args) => capture(() => execFileSync(process.execPath, ['tools/screen-census.mjs', ...args], execOpts));
+const runMark = (args) => capture(() => execFileSync(process.execPath, ['tools/markhome.mjs', ...args], execOpts));
+const runLink = (args) => capture(() => execFileSync(process.execPath, ['tools/linkcheck.mjs', ...args], execOpts));
+const runReach = (args) => capture(() => execFileSync(process.execPath, ['tools/statusreach.mjs', ...args], execOpts));
+const runGrace = (args) => capture(() => execFileSync(process.execPath, ['tools/gracerefill.mjs', ...args], execOpts));
+const runSets = (args) => capture(() => execFileSync(process.execPath, ['tools/closedsets.mjs', ...args], execOpts));
+const runVocab = (args) => capture(() => execFileSync(process.execPath, ['tools/onevocab.mjs', ...args], execOpts));
+const runGate = (args) => capture(() => execFileSync(process.execPath, ['tools/gatelist.mjs', ...args], execOpts));
+const runNums = (args) => capture(() => execFileSync(process.execPath, ['tools/testnumbers.mjs', ...args], execOpts));
+const runReads = (args) => capture(() => execFileSync(process.execPath, ['tools/watched.mjs', '--check-reads', ...args], execOpts));
+const runUrlPath = (args) => capture(() => execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], execOpts));
+const runWeaponPackages = (args) => capture(() => execFileSync(process.execPath, ['tools/weapon-card-packages.mjs', ...args], execOpts));
+const runUiComponents = (args) => capture(() => execFileSync(process.execPath, ['tools/ui-components.mjs', ...args], execOpts));
+const runFlaskActions = (args) => capture(() => execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], pipedOpts));
+const runUiStrings = (args) => capture(() => execFileSync(process.execPath, ['tools/uistrings.mjs', ...args], pipedOpts));
+
+// One reader for every quoted verdict: the tool's own terminated RESULT sentence.
+// A run with NO RESULT line, or one that wraps mid-sentence, is a FAIL that says
+// so — quoting half a sentence would PASS on it.
+const quote = (out) => {
+  const m = out.match(/^RESULT: (.*)$/m);
+  if (!m) return { text: null, why: 'NO RESULT LINE — the harness could not read the tool' };
+  if (!/\.$/.test(m[1])) return { text: null, why: `TRUNCATED RESULT — "${m[1]}" does not end the sentence, so the verdict wrapped and the harness read half of it` };
+  return { text: m[1], why: null };
+};
+// A row whose verdict is the tool's RESULT line: `what` names the invocation in a failure.
+const quoted = (result, what) => {
+  const v = quote(result.out);
+  return { ok: result.code === 0 && !!v.text, detail: v.text || `${what} (exit ${result.code}): ${v.why}` };
+};
+
+const GATES = [
+  { label: '36', lane: 'selftest', group: 'zoomunits',
+    name: 'the zoom-unit check still catches its own known-bad corpus',
+    run: () => quoted(runZoom(['--selftest']), 'zoomunits --selftest') },
+  { label: '37', lane: 'tree',
+    name: 'the carried set of unconverted px writes is exactly as recorded',
+    hint: '(`node tools/zoomunits.mjs` for the ledger, `--raw` for the bare red)',
+    run: () => quoted(runZoom([]), 'zoomunits') },
+  // 38 — the BOUND, arithmetic half only (Marina's Rule 2): clampBox never returns
+  // a box outside the container it was given. Bounding cannot be verified without
+  // layout; tools/zoomplace.mjs does that in a browser. The known-bad is the third
+  // case (a box bigger than the view); the check cannot see a clamp computed in
+  // one space and written in another, and says so in its hint.
+  { label: '38', lane: 'tree',
+    name: 'clampBox keeps a box inside its named container',
+    hint: '(arithmetic only — the space it is computed in is what #15 was, and no unit test can see that)',
+    run: async () => {
+      const { clampBox } = await import('../src/ui/fx.js');
+      const view = { width: 1000, height: 800 };
+      const inside = (b, w, h, pad) => b.left >= pad - 0.001 && b.top >= pad - 0.001 && b.left + w <= view.width - pad + 0.001 && b.top + h <= view.height - pad + 0.001;
+      // No coverage summary of these cases in prose: the names below are that
+      // description, single-homed.
+      const cases = [
+        ['a box already inside is not moved', () => {
+          const r = clampBox({ left: 100, top: 100, width: 200, height: 100 }, view);
+          return r.left === 100 && r.top === 100;
+        }],
+        ['a box off the right/bottom is pulled back inside', () => {
+          const r = clampBox({ left: 1400, top: 1400, width: 200, height: 100 }, view);
+          return inside(r, 200, 100, 4);
+        }],
+        ['a box off the left/top is pushed back inside', () => {
+          const r = clampBox({ left: -900, top: -900, width: 200, height: 100 }, view);
+          return inside(r, 200, 100, 4);
+        }],
+        ['a box larger than the view pins to the low edge, never slides off the far one', () => {
+          const r = clampBox({ left: -5000, top: 5000, width: 4000, height: 3000 }, view);
+          return r.left === 4 && r.top === 4;
+        }],
+        ['keep:40 lets a pointer-tracked box overhang, but never vanish', () => {
+          const r = clampBox({ left: -5000, top: -5000, width: 200, height: 100 }, view, { keep: 40 });
+          return r.left + 200 >= 44 && r.top + 100 >= 44 && r.left < 4 && r.top < 4;
+        }],
+        ['keep larger than the box degrades to the whole box, not to a negative bound', () => {
+          const r = clampBox({ left: 9999, top: 9999, width: 20, height: 20 }, view, { keep: 500 });
+          return inside(r, 20, 20, 4);
+        }],
+        // The far edge of the SAME rule: `lo` and `hi` are different expressions and
+        // the keep:40 case above exercises only `lo`. Mutating `hi = span - pad - k`
+        // to `span - pad - size` leaves the six cases above green while a
+        // pointer-tracked box loses its overhang (956 -> 796).
+        ['keep:40 overhangs the RIGHT/BOTTOM edge too, not just the left/top', () => {
+          const r = clampBox({ left: 9999, top: 9999, width: 200, height: 100 }, view, { keep: 40 });
+          return r.left + 200 > view.width - 4 && r.top + 100 > view.height - 4
+              && r.left <= view.width - 4 - 40 + 0.001 && r.top <= view.height - 4 - 40 + 0.001;
+        }],
+      ];
+      const bad = cases.filter(([, fn]) => !fn()).map(([n]) => n);
+      return { ok: !bad.length, detail: bad.length ? `failed: ${bad.join('; ')}` : `${cases.length}/${cases.length} cases.` };
+    } },
+  // 39/40 — every navigable surface declared in data has a handler (#78). A join
+  // between two lists in the UI layer, so it lives here rather than in
+  // engine.test.js (whose numbered names two files cannot both hand out).
+  { label: '39', lane: 'selftest', group: 'surfaces',
+    name: 'the surface check still catches its own known-bad corpus',
+    run: () => quoted(runSurf(['--selftest']), 'surfaces --selftest') },
+  { label: '40', lane: 'tree',
+    name: 'every declared navigable surface has a handler',
+    hint: '(`node tools/surfaces.mjs` for the sets, `--selftest` for the reds)',
+    run: () => quoted(runSurf([]), 'surfaces') },
+  // 41/42 — the screen census (Marina's ruling, 2026-08-07). Wired in because a
+  // census nobody runs is the defect it reports: it needs no browser, bundle or
+  // port. 41 is its own integrity; 42 red with exit 2 means the census could not
+  // be taken (the check's or the tree's fault, never the game's), exit 1 is a
+  // finding and its line names the owner. 42 PASSES while screens sit unwatched,
+  // on purpose: how many are unwatched is the project's state, printed every run
+  // and graded by nobody here.
+  { label: '41', lane: 'selftest', group: 'screen-census',
+    name: 'the screen census still catches its own known-bad corpus',
+    run: () => quoted(runCensus(['--selftest']), 'screen-census --selftest') },
+  { label: '42', lane: 'tree',
+    name: 'every screen in the tree is mountable, and the census can still read it',
+    hint: '(`node tools/screen-census.mjs` for the checklist itself)',
+    run: () => quoted(runCensus(['--raw']), 'screen-census') },
+  // 43/44 — card text marks have one home (Sunna): fillTemplate() output is drawn
+  // in two containers (the card face and the Smith preview in #tooltip), and a
+  // rule keyed to `.card` only left the preview's changed number unstyled.
+  { label: '43', lane: 'selftest', group: 'markhome',
+    name: 'the card-text mark check still catches its own known-bad corpus',
+    run: () => quoted(runMark(['--selftest']), 'markhome --selftest') },
+  { label: '44', lane: 'tree',
+    name: 'every card-text mark rule reaches both places card text is drawn',
+    hint: '(`node tools/markhome.mjs` for the ledger)',
+    run: () => quoted(runMark(['--raw']), 'markhome') },
+  // 45/46 — every named import resolves to a real export. linkcheck links every
+  // module graph without evaluating a line, so a renamed export that leaves a
+  // hand-started tool standing is caught for the price of no browser. 45 has
+  // three results (caught / MISSED / UNPLANTABLE) so a plant whose edit did not
+  // land is never reported as a catch or a miss.
+  { label: '45', lane: 'selftest', group: 'linkcheck',
+    name: 'the link check still catches its own known-bad corpus',
+    run: () => quoted(runLink(['--selftest']), 'linkcheck --selftest') },
+  { label: '46', lane: 'tree',
+    name: 'every named import in the tree resolves to a real export',
+    hint: '(`node tools/linkcheck.mjs` names the file and the error)',
+    run: () => quoted(runLink(['--raw']), 'linkcheck') },
+  // 29/51 — can a player ever meet this status? (Rune, 2026-08-08.) Two complete
+  // threshold-proc rows shipped with no applier; every downstream check tested
+  // the ROW, none could tell a row with a door from one without. 29 was "50."
+  // and collided with engine.test.js's own 50: it moved to the one gap in the
+  // sequence (tools/testnumbers.mjs --raw), so this table reads 46, 29, 51.
+  { label: '29', lane: 'selftest', group: 'statusreach',
+    name: 'the status-reach check still catches its own known-bad corpus',
+    run: () => quoted(runReach(['--selftest']), 'statusreach --selftest') },
+  { label: '51', lane: 'tree',
+    name: 'every shipped status has something that applies it',
+    hint: '(`node tools/statusreach.mjs` names the row and the route)',
+    run: () => quoted(runReach([]), 'statusreach') },
+  // 52/53 — every exported closed set has a reader (Marina's ask).
+  { label: '52', lane: 'selftest', group: 'closedsets',
+    name: 'the closed-set check still catches its own known-bad corpus',
+    run: () => quoted(runSets(['--selftest']), 'closedsets --selftest') },
+  { label: '53', lane: 'tree',
+    name: 'every exported closed set is read by something',
+    hint: '(`node tools/closedsets.mjs` for the table, `--selftest` for the reds)',
+    run: () => quoted(runSets([]), 'closedsets') },
+  // 54/55 — the grace refill (Constantine, 2026-08-08). The plants enter by the
+  // door the real input uses: a deep copy of the real contentBundle handed to
+  // the real validateContent, registries built by createRegistries.
+  { label: '54', lane: 'selftest', group: 'gracerefill',
+    name: 'the grace-refill refusals still catch their own known-bad corpus',
+    run: () => quoted(runGrace(['--selftest']), 'gracerefill --selftest') },
+  { label: '55', lane: 'tree',
+    name: 'a grace pours what balance.graceRefill says it pours',
+    hint: '(`node tools/gracerefill.mjs` names each row and what it resolves to)',
+    run: () => quoted(runGrace([]), 'gracerefill') },
+  // 56/57 — the relic-modifier vocabulary is ONE vocabulary (Sten). The other
+  // half of 52/53's stated hole: closedsets asks whether a set has a reader,
+  // onevocab asks whether one vocabulary has a second hand-typed copy.
+  { label: '56', lane: 'selftest', group: 'onevocab',
+    name: 'the one-vocabulary check still catches its own known-bad corpus',
+    run: () => quoted(runVocab(['--selftest']), 'onevocab --selftest') },
+  { label: '57', lane: 'tree',
+    name: 'the relic-modifier vocabulary has one home and one derivation path',
+    hint: '(`node tools/onevocab.mjs` names the copy and the door that disagreed)',
+    run: () => quoted(runVocab([]), 'onevocab') },
+  // 67/68 — does a gate run its instruments, and does it listen? (#295.) It lives
+  // here and not in the workflow because a `|| true` on a redundant step silences
+  // the gate the day the tree goes green, and this suite runs at every gate.
+  // 67 was derived from testnumbers' own "next free number" output after three
+  // collisions with engine.test.js; a reservation written in one file is not one.
+  { label: '67', lane: 'selftest', group: 'gatelist',
+    name: 'the gate-list check still catches its own known-bad corpus',
+    run: () => quoted(runGate(['--selftest']), 'gatelist --selftest') },
+  { label: '68', lane: 'tree',
+    name: "every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed",
+    hint: '(`node tools/gatelist.mjs --raw` for the census, `--since <ref>` for what a ref ADDED)',
+    run: () => quoted(runGate([]), 'gatelist') },
+  // 64/65 — no two tests wear the same number; 64 is the check's own corpus and
+  // 65 the state of the two declared test sources. Numbered 64/65 with a gap left
+  // for in-flight PRs; the gap did not hold, which is what the check exists for.
+  { label: '64', lane: 'selftest', group: 'testnumbers',
+    name: 'the test-number check still catches its own known-bad corpus',
+    run: () => quoted(runNums(['--selftest']), 'testnumbers --selftest') },
+  // 69 — the probe corpus's own derivations (Bjorn, 2026-08-22): tools/watched.mjs
+  // `--check-reads` needs no browser, ledger or bundle, so CI can afford it.
+  { label: '69', lane: 'tree',
+    name: 'every watched-probe still reads a file that exists and an anchor still in it',
+    hint: '(`node tools/watched.mjs --check-reads` for the derived file:line of every anchor)',
+    run: () => quoted(runReads([]), 'watched --check-reads') },
+  { label: '65', lane: 'tree',
+    name: 'no two tests in this suite wear the same number',
+    hint: '(`node tools/testnumbers.mjs --raw` for every label and where it is declared)',
+    run: () => quoted(runNums([]), 'testnumbers') },
+  // 73/74 — module URL/filesystem path conversions use node:url (#13). 73 proves
+  // the two required known-bads through the real scanner from a spaced working
+  // directory; 74 scans tools/ and tests/.
+  { label: '73', lane: 'selftest', group: 'urlpath-conversions',
+    name: 'the URL/path check catches both known-bads from a spaced working directory',
+    run: () => quoted(runUrlPath(['--selftest']), 'urlpath-conversions --selftest') },
+  { label: '74', lane: 'tree',
+    name: 'module URL/filesystem path conversions use the platform API',
+    hint: '(`node tools/urlpath-conversions.mjs` names each site)',
+    run: () => quoted(runUrlPath([]), 'urlpath-conversions') },
+  // 77/78 — fixed attack-slot composition: the first proves the old right-hand-only
+  // lookup is still discriminating, the second runs the full 0/1/2 weapon matrix.
+  { label: '77', lane: 'selftest', group: 'weapon-card-packages',
+    name: 'the weapon-package check catches the right-hand-only lookup',
+    run: () => quoted(runWeaponPackages(['--selftest']), 'weapon-card-packages --selftest') },
+  { label: '78', lane: 'tree',
+    name: 'equipped weapons deterministically rebind the fixed authored attack slots',
+    run: () => quoted(runWeaponPackages([]), 'weapon-card-packages') },
+  // 94/95 — reusable UI component contracts (#1316). C5 and C12 sat red on dev
+  // because nothing ran the tool.
+  { label: '94', lane: 'selftest', group: 'ui-components',
+    name: 'the UI component check still catches its own known-bad corpus',
+    run: () => quoted(runUiComponents(['--selftest']), 'ui-components --selftest') },
+  { label: '95', lane: 'tree',
+    name: 'every reusable UI component contract holds',
+    hint: '(`node tools/ui-components.mjs` names each broken contract)',
+    run: () => quoted(runUiComponents([]), 'ui-components') },
+  // 96/97 — the flask action contract. Its verdict is its own SELFTEST line and
+  // "N passed, M failed" line, not a RESULT sentence.
+  { label: '96', lane: 'selftest', group: 'flask-action-contract',
+    name: 'the flask action contract still catches its own known-bad corpus',
+    run: () => {
+      const r = runFlaskActions(['--selftest']);
+      const verdict = r.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+      return { ok: r.code === 0 && /^SELFTEST GREEN/.test(verdict), detail: verdict || `flask-action-contract --selftest (exit ${r.code}) printed no SELFTEST verdict` };
+    } },
+  { label: '97', lane: 'tree',
+    name: "combat and the map's Potions control share one flask action contract",
+    hint: '(`node tools/flask-action-contract.mjs` names each check)',
+    run: () => {
+      const r = runFlaskActions([]);
+      const v = r.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+      const fails = [...r.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+      return {
+        ok: r.code === 0 && !!v && v[2] === '0' && Number(v[1]) > 0,
+        detail: `${v ? v[0] : `flask-action-contract (exit ${r.code}) printed no verdict`}${fails ? ` (${fails})` : ''}`,
+      };
+    } },
+  // 98/99 — the copy ratchet (tools/uistrings.mjs). It sat red on dev from
+  // 2026-09-17 to 2026-10-02 because nothing ran it.
+  { label: '98', lane: 'selftest', group: 'uistrings',
+    name: 'the copy ratchet still catches its own known-bad corpus',
+    run: () => {
+      const r = runUiStrings(['--selftest']);
+      const verdict = r.out.match(/^uistrings --selftest: (?:OK|RED)[^\n]*/m)?.[0] || '';
+      return { ok: r.code === 0 && /: OK — /.test(verdict), detail: verdict || `uistrings --selftest (exit ${r.code}) printed no verdict` };
+    } },
+  { label: '99', lane: 'tree',
+    name: 'no file holds more or fewer hardcoded sentences than the copy baseline records',
+    hint: '(`node tools/uistrings.mjs --check` names each file)',
+    run: () => {
+      const r = runUiStrings(['--check']);
+      const verdict = r.out.match(/^uistrings: (?:OK|RED)[^\n]*/m)?.[0] || '';
+      const rows = [...r.out.matchAll(/^ {2}((?:GREW|SHRANK|NOT A REPO KEY)[^\n]*)$/gm)].map((m) => m[1]).join('; ');
+      return { ok: r.code === 0 && /^uistrings: OK — /.test(verdict), detail: `${verdict || `uistrings --check (exit ${r.code}) printed no verdict`}${rows ? ` (${rows})` : ''}` };
+    } },
+  // 76 — destructive quit/load confirmation without a native browser prompt. A DOM
+  // behavior test with a deliberately tiny host: it exercises the shared
+  // component's event contract and reads both controller call sites; it does not
+  // render pixels or claim responsive geometry (browser QA).
+  { label: '76', lane: 'tree',
+    name: 'quit and load use one reversible themed confirmation behavior',
+    run: async () => {
+      const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
+      const confirmation = await runConfirmationModalContract();
+      return { ok: confirmation.ok, detail: confirmation.detail };
+    } },
+  // 79 — the shipped pose frames and their generated table agree. The table
+  // (src/content/poseSprites.js) is generated from art/poses by tools/pose-ship.mjs;
+  // committing one side without the other leaves rows naming files that are not
+  // there, and registration lives in these numbers (a floor line not below its
+  // crop top would place the figure off its feet).
+  { label: '79', lane: 'tree',
+    name: 'every shipped pose frame has a file and registers on its floor',
+    hint: '(tools/pose-ship.mjs regenerates both sides; this check reads them, it does not run it)',
+    run: async () => {
+      // Each frame is an art-manifest.json id (step 12), not a file in a tree here.
+      const { manifestIds } = await import('../tools/art-source.mjs');
+      const shipped = manifestIds();
+      const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
+      const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
+      const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
+      const bad = [];
+      for (const c of classes) {
+        for (const t of tints) {
+          for (const pose of POSE_STRIP) {
+            const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
+            if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
+            if (!shipped.has(POSE_DIR + row.f)) bad.push(`${c}/${pose}/${t}: ${row.f} missing from art-manifest.json`);
+            if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
+            if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
+              bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
+            }
+          }
         }
       }
-    }
-  }
-  const want = classes.length * tints.length * POSE_STRIP.length;
-  console.log(
-    `${bad.length ? 'FAIL' : 'PASS'}  79. every shipped pose frame has a file and registers on its floor` +
-      ` — ${bad.length ? `${bad.length} bad: ${bad.slice(0, 3).join('; ')}` : `${want}/${want} frames over ${classes.length} classes x ${tints.length} tints x ${POSE_STRIP.length} poses.`}` +
-      ' (tools/pose-ship.mjs regenerates both sides; this check reads them, it does not run it)'
-  );
-  if (bad.length) zoomExtra++;
-  else zoomPassed++;
+      const want = classes.length * tints.length * POSE_STRIP.length;
+      return {
+        ok: !bad.length,
+        detail: bad.length ? `${bad.length} bad: ${bad.slice(0, 3).join('; ')}` : `${want}/${want} frames over ${classes.length} classes x ${tints.length} tints x ${POSE_STRIP.length} poses.`,
+      };
+    } },
+];
+
+for (const gate of GATES) {
+  const inLane = gate.lane === 'selftest' ? SELFTESTS && selftestInGroup(options.selftestGroup, gate.group) : CORE;
+  if (!inLane) continue;
+  const { ok, detail } = await gate.run();
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${gate.label}. ${gate.name} — ${detail}${gate.hint ? ` ${gate.hint}` : ''}`);
+  if (ok) zoomPassed++;
+  else zoomExtra++;
 }
 
 // The combat-foundation suites themselves are discovered above; this is the

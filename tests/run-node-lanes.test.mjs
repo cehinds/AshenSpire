@@ -76,10 +76,17 @@ test('every SLOW_DISCOVERED entry names a discovered test file with a reason', (
 });
 
 test('every existing selftest site participates in the exhaustive link/other partition', () => {
-  const guards = [...RUNNER.matchAll(/if \(SELFTESTS && selftestInGroup\(options\.selftestGroup, '([^']+)'\)\)/g)].map(match => match[1]);
+  // Selftest sites are table rows (`lane: 'selftest', group: '<tool>'`, run by the
+  // one loop that applies selftestInGroup to the row's group) plus the lanes
+  // that still guard themselves with an explicit `if (SELFTESTS && ...)`.
+  const guarded = [...RUNNER.matchAll(/if \(SELFTESTS && selftestInGroup\(options\.selftestGroup, '([^']+)'\)\)/g)].map(match => match[1]);
+  const rows = [...RUNNER.matchAll(/lane: 'selftest', group: '([^']+)'/g)].map(match => match[1]);
+  const guards = [...rows, ...guarded];
   assert.equal(guards.length, 18, 'all original selftest call sites are routed');
   assert.equal(new Set(guards).size, guards.length);
-  assert.equal((RUNNER.match(/if \(SELFTESTS\b/g) || []).length, guards.length, 'no ungrouped call site');
+  assert.equal((RUNNER.match(/if \(SELFTESTS\b/g) || []).length, guarded.length, 'no ungrouped call site');
+  assert.equal((RUNNER.match(/lane: 'selftest'/g) || []).length, rows.length, 'every selftest row names its group');
+  assert.match(RUNNER, /gate\.lane === 'selftest' \? SELFTESTS && selftestInGroup\(options\.selftestGroup, gate\.group\) : CORE/, 'the table loop applies the group to every selftest row');
   const link = guards.filter(tool => selftestInGroup('link', tool));
   const other = guards.filter(tool => selftestInGroup('other', tool));
   assert.deepEqual(link, ['linkcheck']);
