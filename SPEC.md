@@ -809,113 +809,79 @@ go red is `unknown`, not green.
 
 ## 4. Combat rules (Slay-the-Spire-faithful)
 
-**Reward-card cost tuning (2026-09-19).** Resource costs remain explicit card
-data: a Stamina cost, paid from the one turn pool (Actions is how the HUD shows
-it; `energy` is a retired alias of `stamina`), and an optional Mana cost; rarity
-does not roll a cost at play time.
-Across the union of class reward pools, Common/Uncommon/Rare cards target
-30/50/70 percent with a Stamina cost, including 15/30/50 percent with both
-Stamina and Mana, rounded to whole cards. Starter and equipment-only cards
-are outside that census. Class-specific reward rarity weights may override
-the default encounter weights; Chaos Rewards and skill rarity unlocks retain
-precedence. See [the balance receipt](docs/card-resource-balance.md) for counts,
-scope and verification.
+Governs turns, cards, damage, statuses, stances, enemy intents and SP, tagged combat, and reactions. Costs and pools below apply to every fight.
 
-**Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
-at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
-the old rule, but it has no effect on the Stamina a fight opens with: every player turn start refills Stamina to its
-maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP
-carries from one fight to the next, and only rests, flasks and effects
-restore it. **Mana refills when a fight ends (2026-10-31, owner; supersedes
-plan A2 for Mana):** `runCombatEnd` write
-Mana back through `manaAtCombatEnd` (`mechanics.mana.combatEndRefill: "full"`;
-`"carry"` restores the 2026-09-24 rule), victory or defeat, and clear the Mana
-equipment deficit, so every fight opens on full Mana; HP still carries. The
-Stamina refill also clears the Stamina deficit an equipment swap
-carried, so the next swap cannot take the refilled points back. Rules text:
-[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
+**Card resource costs.** Costs are explicit card data: a Stamina cost (one turn pool; the HUD calls it Actions; `energy` is a retired alias of `stamina`) and an optional Mana cost. Rarity does not roll a cost at play time.
+- Reward census, across the union of class reward pools: Common / Uncommon / Rare cards target 30 / 50 / 70 percent with a Stamina cost, including 15 / 30 / 50 percent with both Stamina and Mana, rounded to whole cards. Starter and equipment-only cards are outside it. Counts and verification: [balance receipt](docs/card-resource-balance.md).
+- Class-specific reward rarity weights may override the default encounter weights; Chaos Rewards and skill rarity unlocks keep precedence.
 
-**Recovery (2026-09-27, owner; cleanup 3i-A).** After a won fight and at every Rest, HP, Stamina and Mana
-restore the authored percent of the maximum in `content/recoveryRules.js` (`model/recoveryRules.js`): **after a won
-fight** (applied after the fight's pools are written back) and **at every Rest** (on top of the place's own tags,
-§13.4j, included in the Rest preview). Both default to 0, because a fight's end refills Mana (§4.1) and the turn-start
-refill in §4.1 already restores Stamina. There are no Settings rows for them any more: the in-combat rules (per turn,
-after unused turns, every N rounds) and the Advanced → Recovery tab were removed with the Combat Rounds Preview, and a
-stored legacy `recovery.*` key changes nothing. A fight carries no recovery state. The prototype foundation ruleset that kept its own
-recovery rules is removed too (#2633).
+**Pools between fights** (rules text: [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5).
+
+| Pool | Rule |
+|---|---|
+| Stamina | Every fight opens at maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` has no effect on the Stamina a fight opens with). Every player turn start refills to maximum less any Stagger loss (`src/engine/combat.js`). A restored fight keeps its saved Stamina. The refill also clears the Stamina deficit an equipment swap carried. |
+| Mana | Refills when a fight ends, victory or defeat: `runCombatEnd` writes Mana back through `manaAtCombatEnd` (`mechanics.mana.combatEndRefill: "full"`; `"carry"` restores carry-over Mana) and clears the Mana equipment deficit, so every fight opens on full Mana. |
+| HP | Carries between fights; only rests, flasks and effects restore it. |
+
+**Recovery.** After a won fight (applied after the fight's pools are written back) and at every Rest (on top of the place's own tags, §13.4j; included in the Rest preview), HP, Stamina and Mana restore the authored percent of maximum in `content/recoveryRules.js` (`model/recoveryRules.js`). Both default to 0, since a fight's end refills Mana (§4.1) and the turn-start refill restores Stamina (§4.1). There are no Settings rows for recovery, a stored legacy `recovery.*` key changes nothing, and a fight carries no recovery state.
 
 ### 4.1 Turn loop
 
-**Configurable hand rules (2026-09-19; counts are stat rows since ruleset 7):** A fight counts
-cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`), **Draw / turn**
-(`draw`) and **Hand size** (`handSize`) — priced by the one row formula and snapshotted with the
-run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
-beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
-discard limit, replacement draws, overflow, reshuffle, shuffleHand and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size.
+A turn is: refresh and draw, player acts, turn-end cleanup, enemy turn. Hand size, draw counts and cleanup are stat rows plus hand options, snapshotted per run.
 
-**Default (owner, 2026-10-03): draw the full turn amount, retaining tagged cards,
-up to an absolute hand limit set by the Hand size row.** The opening and turn draw rows start at
-4 and use the existing Draw scaling: +1 per five Intelligence above 4, capped
-at 10 by default. The Hand size row starts at 7 and grows with Intelligence like Draw (+1 per
-five points above 4), capped at 20. All three rows remain configurable, including per-class
-opening overrides. New runs snapshot those rows; existing runs keep theirs.
+**Hand rows** (stat rows since ruleset 7; §3.5; priced by the one row formula; snapshotted with the run; edited in Advanced → Stats → Draw & hand like any stat):
 
-At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
-lifecycle rules, and shuffle ordinary unplayed cards directly into the draw
-pile (`shuffleHand: true`). Played cards and forced or chosen discards go to the
-discard pile and return with its next reshuffle. When the draw pile holds fewer
-cards than the next turn's draw, the whole discard pile joins the returned
-cards in that one shuffle (in deck order under Play in deck order), so a held
-hand never starves the discard of its reshuffle. The cards already in the
-draw pile stay on top in their order; the shuffled returned cards and discard
-go beneath them, so a short draw pile is drawn before anything reshuffled.
-Retain does not change a
-played card's destination. The authored Herald and Starseer pools give Retain to
-selected healing, ward, setup and costly spells, including their upgrades.
-At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
-two retained cards plus a draw of four produces six cards; five retained
-cards draw only two under the default limit of seven. A full hand draws
-nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
-When the cards kept at turn end already fill the hand, the turn-end discard
-prompt offers to discard any number of them before the next draw.
+| Row | Id | Default | Scaling | Cap |
+|---|---|---|---|---|
+| Opening hand | `openingHand` | 4 (per-class overrides allowed) | +1 per five Intelligence above 4 | 10 |
+| Draw / turn | `draw` | 4 | +1 per five Intelligence above 4 | 10 |
+| Hand size | `handSize` | 7 | +1 per five Intelligence above 4 | 20 |
 
-Every combat uses the same refresh rule and the player's own piles and rows.
-The explicit Play in deck order option returns the unplayed cards to the
-bottom in deck order without consuming shuffle RNG. `retain: true` still
-keeps all ordinary unplayed cards; with `retain: false`, disabling `shuffleHand`
-restores discard cleanup, and `drawMode: 'fill'` remains available. Forced overflow discards
-remain discards even with shuffle enabled. A saved fight without shuffleHand
-keeps its prior discard behaviour; rule snapshots and the run's RNG counters
-preserve deterministic resume. Pre-ruleset-7 hand-group adapters remain intact.
+- The opening hand is also bounded by Hand size. All rows are configurable. New runs snapshot the rows; existing runs keep theirs.
+- Hand options, which are not stat rows (`content/handRules.js`): retain, optional discard prompt, discard limit, replacement draws, overflow, reshuffle, `shuffleHand`, draw mode.
 
-Optional discards are selected when ending a turn; cancel leaves the turn
-untouched. Turn-end effects resolve before eligible selected cards move to
-discard and normal cleanup runs. Ethereal/explicit lifecycle rules still apply.
-Optional replacement draws add to the next fixed draw, capped by capacity.
-Overflow either preserves existing cards or requires selection of excess cards
-at turn end. Draw effects stop at capacity without consuming the draw pile;
-reshuffling can be disabled. Rules and pending replacement draws survive saves.
-Settings changes apply next combat. Existing saved fights retain
-their snapshotted rules. The numbered legacy sequence below is an illustrative
-baseline; saved stat rows and hand options override its draw and cleanup defaults.
+**Default rule (owner, 2026-10-03): draw the full turn amount, retaining tagged cards, up to the absolute Hand size limit.**
+
+*Turn-end cleanup*
+- Keep `Retain` cards; resolve `Ethereal` and other explicit lifecycle rules; shuffle ordinary unplayed cards directly into the draw pile (`shuffleHand: true`).
+- Played cards and forced or chosen discards go to the discard pile and return at its next reshuffle. Retain does not change a played card's destination.
+- If the draw pile holds fewer cards than the next turn's draw, the whole discard pile joins the returned cards in that one shuffle (deck order under Play in deck order). Cards already in the draw pile stay on top in order; the shuffled returned cards and discard go beneath, so a short draw pile is drawn before anything reshuffled.
+- The authored Herald and Starseer pools give Retain to selected healing, ward, setup and costly spells, upgrades included.
+
+*Next draw* = `min(Draw / turn, max(0, Hand size − retained count))`. Two retained cards plus a draw of 4 gives 6 cards; five retained cards draw only 2 at the default limit of 7. A full hand draws nothing and consumes no draw-pile cards. A depleted deck supplies fewer. When the kept cards already fill the hand, the turn-end discard prompt offers to discard any number of them before the next draw.
+
+*Options and edge cases*
+- Every combat uses the same refresh rule and the player's own piles and rows.
+- Play in deck order returns unplayed cards to the bottom in deck order without consuming shuffle RNG.
+- `retain: true` keeps all ordinary unplayed cards. With `retain: false`, disabling `shuffleHand` restores discard cleanup. `drawMode: 'fill'` remains available.
+- Forced overflow discards remain discards even with shuffle enabled.
+- Optional discards are selected when ending a turn; cancel leaves the turn untouched. Turn-end effects resolve before eligible selected cards move to discard and normal cleanup runs; Ethereal and lifecycle rules still apply.
+- Optional replacement draws add to the next fixed draw, capped by capacity. Overflow either preserves existing cards or requires selecting the excess at turn end. Draw effects stop at capacity without consuming the draw pile. Reshuffling can be disabled.
+- Rules and pending replacement draws survive saves. A saved fight without `shuffleHand` keeps its prior discard behaviour; rule snapshots and the run's RNG counters preserve deterministic resume. Pre-ruleset-7 hand-group adapters remain intact.
+- Settings changes apply next combat; saved fights keep their snapshotted rules.
+
+The sequence below is the baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
 2. **Player turn start:** lose all block (unless modified), set Stamina to its maximum (Stamina row, less any Stagger loss), draw the Draw / turn row (the Opening hand row on turn 1), `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5) — with the default hand rules a draw stops at that size without consuming the draw pile; only a fight without hand rules sends excess drawn cards to discard with a "hand full" toast (StS behavior).
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5): with the default hand rules a draw stops at that size without consuming the draw pile; only a fight without hand rules sends excess drawn cards to discard with a "hand full" toast (StS behavior).
 4. **Player turn end:** `playerTurnEnd` triggers; return unplayed cards except `Retain` cards (by default they shuffle into the draw pile, `shuffleHand: true`; the legacy baseline discards them); `Ethereal` cards in hand exhaust instead. Unspent Stamina is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
 
-### 4.1a Ward and Barrier statuses (owner, 2026-11-01)
+### 4.1a Ward and Barrier statuses
 
-Ward and Barrier are stacked statuses (`ward`, `barrier`), not pools. They replace the old numeric Barrier absorption pool (`entity.barrier`, the `barrierGained` event and the `barrierMitigated` receipt line), which no longer exists. The `gainBarrier` opcode stays as a card's protection grant; every point of it is now one Barrier stack (owner, 2026-11-01). The same holds for stance-entry `protection.barrier`, enemy `barrier` grants and Ward overflow past a full pool: one Barrier stack per old point. Barrier stacks also come from `applyStatus` of `barrier`.
+Ward and Barrier are stacked statuses (`ward`, `barrier`), not pools. The old numeric Barrier pool (`entity.barrier`, the `barrierGained` event, the `barrierMitigated` receipt line) no longer exists.
 
-- **Ward.** Each stack decays by 1 at the start of its holder's turn (the same decay hook as every per-turn status; no second loop). While the holder has Ward above 0, ALL incoming damage, physical and magical alike, goes to Poise first (100% of it), the overflow beyond Poise spills to Block, and what is left reaches HP. Ward routing applies to every damage path (single and multi-hit attacks, reactions and counter returns, enemy attacks on the player). Pierce still lets its fraction of what Block soaked through to HP. `loseHp` and damage over time ignore all of it, as before. The damage receipt and combat log show how much went to Poise, Block and HP. While Ward is active the Poise badge is purple and a purple bar over the HP bar shows current Poise in HP points on the HP scale (10 Poise on a 50 HP bar covers 20%).
-- **Barrier.** Each stack gives +5 maximum Poise and +5 current Poise (`barrier.poisePerStack`, data). It loses 1 stack per turn, at the same hook as Ward, and each stack lost removes its +5 maximum Poise; current Poise is clamped to the new maximum.
-- **Mote Shield** (`core.moteShield`) gains Ward and Barrier: Ward 1 and Barrier 1 (Barrier 2 and Ward 2 upgraded).
-- **Saves.** An old save or combat snapshot holding the numeric `barrier` loads, and the number is dropped: it was a one-turn overflow layer, so nothing carries into the new rules.
+| Status | Rule |
+|---|---|
+| **Ward** (`ward`) | Each stack decays by 1 at the start of its holder's turn (the same decay hook as every per-turn status). While Ward is above 0, ALL incoming damage, physical and magical, goes to Poise first (100% of it), the overflow beyond Poise spills to Block, and what is left reaches HP. Applies to every damage path: single and multi-hit attacks, reactions and counter returns, enemy attacks on the player. Pierce still lets its fraction of what Block soaked through to HP. `loseHp` and damage over time ignore all of it. The damage receipt and combat log show the Poise, Block and HP split. While Ward is active the Poise badge is purple and a purple bar over the HP bar shows current Poise in HP points on the HP scale (10 Poise on a 50 HP bar covers 20%). |
+| **Barrier** (`barrier`) | Each stack gives +5 maximum Poise and +5 current Poise (`barrier.poisePerStack`, data). Loses 1 stack per turn at the same hook as Ward; each stack lost removes its +5 maximum Poise, and current Poise is clamped to the new maximum. |
+
+- The `gainBarrier` opcode stays as a card's protection grant: every point is one Barrier stack. The same holds for stance-entry `protection.barrier`, enemy `barrier` grants and Ward overflow past a full pool. Barrier stacks also come from `applyStatus` of `barrier`.
+- **Mote Shield** (`core.moteShield`) gains Ward 1 and Barrier 1 (Barrier 2 and Ward 2 upgraded).
+- Saves: an old save or combat snapshot holding the numeric `barrier` loads and the number is dropped.
 
 ### 4.2 Damage math (order is contractual)
 
