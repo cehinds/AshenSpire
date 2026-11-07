@@ -44,7 +44,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `alternative-stances-build.py` | Normalize held stances, preserve provenance, and export portable Workshop/Pose Studio projects. | other src/content/alternativeStances.js |
 | `alternative-starseer-animation-build.py` | Rebuild this class study through the shared export pipeline. | (none) |
 | `alternative-sync.py` | Prepare a real dev merge, retaining the alternative's presentation boundary. | wf alternative-sync; tests test_alternative_sync.py; docs docs/ALTERNATIVE-SYNC.md |
-| `alternative_animation_family.py` | Shared transparent-frame and portable-project export for alternative studies. | (none) |
+| `alternative_animation_family.py` | Shared transparent-frame and portable-project export for alternative studies. | tools alternative-herald-animation-build.py, alternative-rogue-animation-build.py, alternative-starseer-animation-build.py (Python import) |
 | `armoury-arrival-figure.mjs` | Armoury tab reachability and visible character/card geometry in a real browser. | wf ci; tools gatelist, watched-probes.json, watched; other docs/architecture-handoff/wireframe-gallery.html, src/ui/screens/equipment.js |
 | `armoury-picked-up.mjs` | armoury-picked-up — the Armoury tells the truth about what you are | tools plantsites-baseline.json |
 | `art-authoring.mjs` | art-authoring — the authoring tools that still live here, and why | tools card-effect-art-build, card-effect-art-check, card-effect-layers-check +14; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +1 |
@@ -52,7 +52,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `art-intake.mjs` | art-intake — which files in a pull request belong to the art | wf art-migrate; tests art-intake; docs CONTRIBUTING.md |
 | `art-manifest.mjs` | art-manifest — the data-driven art manifest: one entry per asset id, | wf art-migrate; tests art-manifest, asset-pack, fetch-art; tools art-intake, asset-pack, buildversion +2; docs CONTRIBUTING.md, DEVELOPER.md, docs/ART-REPO-PLAN.md +3; other art-manifest.json, editor/server.mjs |
 | `art-source.mjs` | art-source — where a tool reads the art packs' files. | wf action, ci +4; tests art-source, book-art, bow-animation +18; tools art-authoring, asset-pack, buildversion +22; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md; other docs/design/class-armor-rear-2026-10-06/sources/shared-armor.test.snapshot.mjs, docs/design/combat-depth-2026-10-05/build-library.py +6 |
-| `art_authoring.py` | Mutable AI-Art authoring roots; never write verified runtime caches. | tools player-hurt-registration.py |
+| `art_authoring.py` | Mutable AI-Art authoring roots; never write verified runtime caches. | tools alternative-animation-build.py, alternative-art-build.py, alternative-stances-build.py +7 (Python import) |
 | `artifact-provenance.mjs` | artifact-provenance — WHICH TREE DID THIS MEASUREMENT ACTUALLY SEE? | tools actionreach, ai-disclosure, axisfit +22 |
 | `asks-ledger.mjs` | Keep the durable owner-ask mirror deterministic and make GitHub drift loud. | docs docs/framework-migration-checklist.md |
 | `asset-catalog.mjs` | asset-catalog - the asset catalog (engine/contracts/asset-catalog.schema.json). | tests asset-catalog, maps-json; tools build-game; other games/ashenspire/assets/catalog.summary.json |
@@ -132,7 +132,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `derived-runtime-authority.mjs` | Runtime authority contract for Energy and Draw. The run's versioned derived | tools class-loadouts, cross-class-equipment, plantsites-baseline.json |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
 | `derivedstats.mjs` | derivedstats — executable contract for the inert derived-stat table. | other docs/architecture-handoff/pre-existing-changes.txt |
-| `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | (none) |
+| `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
 | `dialogue-context-fit.mjs` | dialogue-context-fit — the W4c context band holds its responses. | tools dialogue-hud-fit |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `disabled-reason.mjs` | disabled-reason — "A disabled Next button shows its reason as | tests disabled-reason; docs docs/COMPONENT-CATALOG.md, docs/FINISH.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv +1 |
