@@ -2133,8 +2133,6 @@ function showCharacterSheet(opener, options = {}) {
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      feats: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelFeats'),
-      classTree: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelClassTree'),
       levelCards: settingOn(settings, 'rewardLevelCards'),
       pointsPerLevel: resolveLevelUpValue(settings),
     },

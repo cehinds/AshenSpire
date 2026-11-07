@@ -70,19 +70,6 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
   return true;
 }
 
-export function initialClassTreeChoices(registries, run) {
-  const tier = run?.classMasteryState?.initialTreeTiers?.[0];
-  if (!tier) return [];
-  const candidates = new Set(classDraftPool(registries, run.class, run.coreTags, skillLevel(run, classSkillId(run.class))));
-  return classTreeRows(registries, run.class).filter(row => row.tier === tier && candidates.has(row.nodeId)).map(row => row.nodeId);
-}
-
-export function pickInitialClassTreeNode(registries, run, nodeId) {
-  if (!initialClassTreeChoices(registries, run).includes(nodeId) || !pickClassNode(registries, run, nodeId)) return false;
-  run.classMasteryState.initialTreeTiers.shift();
-  return true;
-}
-
 /**
  * awardClassXp(registries, run, { victory, pool }) → the award, or null: the
  * class track's pay for a fight, made by the RUN'S OWNER (main.js,

@@ -185,6 +185,7 @@ const RETIRED_LEGACY_ROW_KEYS = new Set([
   'rewardBattleArmaments', 'rewardBattleCards', 'rewardBattleCinders', 'rewardBattleClassDrafts',
   'rewardBattleFlasks', 'rewardBattleRelics', 'rewardBattleSkillDrafts',
   'rewardTreasureArmaments', 'rewardTreasureRelics',
+  'rewardLevelFeats', 'rewardLevelClassTree',
 ]);
 const RETIRED_LEGACY_ROWS_WARNING = 'Settings for the removed legacy reward and shop menus were left out. Everything else was kept.';
 

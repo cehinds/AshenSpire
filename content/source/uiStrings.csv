@@ -890,8 +890,6 @@ settings.row.victoryXpCharacterWeight,,Character XP time share,Relative share of
 settings.row.victoryXpClassWeight,,Class XP time share,Relative share of the total animation time.,
 settings.row.victoryXpSkillWeight,,Skill XP time share,"Relative share, split between the skills shown.",
 settings.row.rewardLevelStatPoints,,Level Up · Stat points,Grant stat points when an earned character level is claimed.,
-settings.row.rewardLevelFeats,,Level Up · Feats,Offer permanent passive feats when a character level is claimed.,
-settings.row.rewardLevelClassTree,,Level Up · Class upgrades,Include eligible class-tree upgrades alongside feats in the character-level choices.,
 settings.row.rewardLevelCards,,Level Up · Bonus card,Offer a card on a claimed level when the card reward schedule also allows it.,
 settings.row.shrinePathGlow,,Shrine path glow,Light the path to the nearest shrine on the act map.,
 settings.row.walkedFade,,Walked nodes,"How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.",
