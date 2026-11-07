@@ -2475,3 +2475,13 @@ _No comments were written beside these numbers in the old balance.js._
 _No comments were written beside these numbers in the old balance.js._
 
 - **`gearRequirements`** — not in the JSON: `balance.js` puts the shared `progression/gear.js` table second, after `version`, and writes the `gearRequirements.<i>.level` sentences (computed from each row) right after the `version` note.
+
+## enemyBodyLandmarks.json
+
+The old `src/content/enemyBodyLandmarks.js` header, kept here because JSON has no comments.
+The data has no generator; it is hand-reviewed, so edit `content/source/enemyBodyLandmarks.json`
+directly and re-run `node tools/content-build.mjs`.
+
+- Semantic head/body and authored floor landmarks in source raster pixels.
+- Per-pose visual estimates reviewed on source-raster grids; no alpha/idle fallback.
+- Head anchors exclude weapons, smoke, halos, puppet bars and decorative crests.
