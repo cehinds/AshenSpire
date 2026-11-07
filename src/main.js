@@ -1310,7 +1310,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
+function beginPreparedRun({ classId, seedString, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, slot = 1, skipOpening = false, quickStart = false, gameProfile = selectedGameProfile, deckEdit = null }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1398,7 +1398,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // game-over screen can offer Run again with the same choices after any
   // reload. The STARTING attributes, not the levelled ones; the game profile
   // is already run.gameProfile. A run saved before this field has no Run again.
-  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, ...(deckEdit ? { deckEdit } : {}) });
+  run.beginChoices = structuredClone({ classId, customization, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, ...(deckEdit ? { deckEdit } : {}) });
   run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
@@ -1417,12 +1417,6 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // nothing any later stream rolls. createRunState gave the default order; this
   // is the one line that makes a new run open wherever the light never reached.
   run.seatOrder = drawSeatOrder(registries, rng, { firstSeat: run.custom.firstSeat || null });
-
-  // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = !isConfiguredRun(run) && (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
-  if (keepsake && keepsake.effects.length) {
-    executeRunEffects({ run, registries, rng }, keepsake.effects);
-  }
 
   // Sealed and Draft start from a dealt deck rather than the composed one.
   const deckMode = run.custom.deckMode || 'standard';

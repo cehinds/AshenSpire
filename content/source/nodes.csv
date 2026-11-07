@@ -320,7 +320,6 @@ internal.upgraded,internal,upgraded,,,DEBUG,11,,,
 classification.class,classification,class,,,INTERNAL,30,,,"What a class is. Every object in the class collection carries this, and nothing outside it may."
 classification.relic,classification,relic,,,INTERNAL,30,,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may."
 classification.flask,classification,flask,,,INTERNAL,30,,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may."
-classification.keepsake,classification,keepsake,,,INTERNAL,30,,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may."
 classification.event,classification,event,,,INTERNAL,30,,,"What a event is. Every object in the event collection carries this, and nothing outside it may."
 classification.encounter,classification,encounter,,,INTERNAL,30,,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may."
 classification.enemy,classification,enemy,,,INTERNAL,30,,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may."

@@ -290,11 +290,7 @@ export function createRegistries(contentBundle) {
   registries.eventSpeakers = deepFreeze({ ...(bundle.eventSpeakers || {}) });
   registries.speakers = makeRegistry('speaker', bundle.speakers || []);
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
-  // Keepsakes are tagged like everything else; they just live one level down.
   const creation = { ...(bundle.characterCreation || {}) };
-  if (stamped.has('characterCreation.keepsakes')) {
-    creation.keepsakes = stamped.get('characterCreation.keepsakes');
-  }
   registries.characterCreation = deepFreeze(creation);
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
