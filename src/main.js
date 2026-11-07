@@ -16,7 +16,6 @@ import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
-import { queueInitialProgression } from './model/initialProgression.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
@@ -2556,7 +2555,6 @@ function showMap(opts) {
     app.append(screen); return;
   }
   if (!isConfiguredRun(run) && run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
-  if (!isConfiguredRun(run)) queueInitialProgression(registries,rng,run,{meta:saves.loadMeta(),onPersist:persist});
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId
@@ -3590,7 +3588,7 @@ if (shotState) {
       relics: row.relics,
       sigils: row.sigils,
       consumables: row.consumables,
-      pendingReward: row.gameProfilePendingReward || row.pendingReward || null,
+      pendingReward: row.gameProfilePendingReward || null,
       offers: row.gameProfileRewardOffers || null,
     }) : null;
     return { live: snapshot(run), saved: snapshot(saves.loadRun(registries, activeSlot)) };
@@ -3630,9 +3628,7 @@ if (shotState) {
       savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
     };
   };
-  // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
-  // proves WHEN an armament becomes owned (meta.found) and stored (the run's
-  // loadout) around the reward menu, and a shot boot runs on MEMORY storage
+  // THE SPOILS, read-only, same species again — a shot boot runs on MEMORY storage
   // (pickStorage above), so no localStorage read can witness those writes —
   // holdconfirm's own sentence applies: "it committed" is a claim about
   // storage state, not about which screen is mounted. This reads the manager's
@@ -3655,8 +3651,8 @@ if (shotState) {
     savedDeck: [...((saved || {}).deck || [])].map((card) => card.cardId),
     smithingStones: run?.smithingStones ?? null,
     savedSmithingStones: saved?.smithingStones ?? null,
-    pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
-    savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
+    pendingReward: run?.gameProfilePendingReward ? structuredClone(run.gameProfilePendingReward) : null,
+    savedPendingReward: saved?.gameProfilePendingReward ? structuredClone(saved.gameProfilePendingReward) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))

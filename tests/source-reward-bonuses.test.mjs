@@ -8,7 +8,7 @@ import { createRunState, serializeRun, deserializeRun, validateRunShape } from '
 import { createRng } from '../src/engine/rng.js';
 import { rollSourceRewardBonuses, appendSourceRewardBonuses, rollGuaranteedSkillDraftIds, runSourceRewardOffer } from '../src/engine/sourceRewardBonuses.js';
 import { rollCombatCardOffer } from '../src/engine/encounters.js';
-import { pendingRewardCheckpoint, configuredRewardOffer } from '../src/model/rewardSourcePolicy.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { formationSpawn } from '../src/model/formationLayout.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { bankSkillXp, claimBankedSkillLevel, xpToNext, skillTracks } from '../src/model/skills.js';
@@ -95,8 +95,5 @@ test('bonus offers retain distinct keys and survive saving alongside character r
   assert.deepEqual(validateRunShape(run), []);
   assert.deepEqual(deserializeRun(serializeRun(run)).pendingReward, run.pendingReward);
   assert.deepEqual(offer.levelChoices.map(row => row.ordinal), [0, 1, 2, 3]);
-  const filtered = configuredRewardOffer(offer, 'normal', key => key !== 'rewardLevelCards');
-  assert.equal(filtered.levelCards.length, 2, 'class techniques are independent of character-level cards');
-  assert.equal(filtered.classDrafts.length, 1, 'tree upgrade remains available');
 });
 

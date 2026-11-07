@@ -62,7 +62,7 @@ test('a sync profile carrying retired legacy keys loads with the warning', () =>
 test('live non-gameConfig settings round-trip through a sync profile with no retired warning', () => {
   const rows = settingsRows();
   const keys = rows.map((row) => row.key);
-  const settings = { victoryReceiptSeconds: 5, rewardBattleCards: false, deckEditing: true, levelUpValue: 4 };
+  const settings = { victoryReceiptSeconds: 5, rewardLevelCards: true, deckEditing: true, levelUpValue: 4 };
   const text = profileText(settings, keys);
   const result = profileChanges(text, contentBundle, settings, rows, keys);
   for (const [key, value] of Object.entries(settings)) assert.equal(result.changes[key], value, `${key} is kept`);

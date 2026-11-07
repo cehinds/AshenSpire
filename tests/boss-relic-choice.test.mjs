@@ -12,7 +12,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { relicInRewardPool } from '../src/model/schemas.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
-import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
@@ -69,16 +69,6 @@ test('rollRelicReward is unchanged for elite drops and still returns one id or n
   const one = rollRelicReward(REG, createRng(3), [], { rarities: ['boss'] });
   assert.ok(BOSS_POOL.includes(one));
   assert.equal(rollRelicReward(REG, createRng(3), BOSS_POOL, { rarities: ['boss'] }), null, 'null when the pool is empty');
-});
-
-test('configuredRewardOffer strips relicChoices when battle relics are off', () => {
-  const offer = { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'], cinders: 10 };
-  const off = configuredRewardOffer(offer, 'boss', (key) => key !== 'rewardBattleRelics');
-  assert.equal(off.relicChoices, undefined);
-  assert.equal(off.cinders, 10);
-  assert.equal(offer.relicChoices.length, 3, 'the rolled offer is not mutated');
-  const on = configuredRewardOffer(offer, 'boss', () => true);
-  assert.deepEqual(on.relicChoices, offer.relicChoices);
 });
 
 test('a 3-choice boss relic offer is one relic row with relicIds and choice true', () => {

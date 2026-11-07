@@ -7,7 +7,6 @@ import {openRunClassMastery,registriesForClassMastery} from '../src/model/classM
 import {spendSkillDraft,rankUpCandidates,raiseCardRank} from '../src/model/skills.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import {abilityDraftId,pendingAbilityDraftLevels,abilityDraftClaimProblems} from '../src/model/abilityDraftReceipts.js';
-import {mergeProgressionRewards,unclaimedProgressionRewards} from '../src/model/deferredProgression.js';
 import {createRng} from '../src/engine/rng.js';
 import {rollSkillDraftIds} from '../src/engine/encounters.js';
 import {rollGuaranteedSkillDraftIds} from '../src/engine/sourceRewardBonuses.js';
@@ -22,22 +21,6 @@ function fixture(){
   Object.assign(run.skills[skillId],{level:3,pendingDrafts:3});
   return {run,reg,rng:createRng(3)};
 }
-test('out-of-order claims survive reward merging and save/reload without replay or RNG changes',()=>{
-  const {run,reg,rng}=fixture(),rows=rollPendingAbilityOffers(reg,rng,run,{skillId}),third=rows[2];
-  assert.equal(rows.length,3);const checkpoint={rewards:{skillDrafts:rows},states:{}};
-  assert.equal(spendSkillDraft(run,skillId,third.offerId,third.choiceIds[0]),true);checkpoint.states['skillDraft:'+third.offerId]='taken';
-  assert.equal(run.skills[skillId].level,3);assert.equal(run.skills[skillId].pendingDrafts,2);
-  const counters=rng.getCounters(),saved=serializeRun(run),restored=deserializeRun(saved);
-  const incoming=rollPendingAbilityOffers(reg,rng,restored,{skillId});
-  assert.deepEqual(incoming.map(row=>row.level),[1,2]);assert.deepEqual(rng.getCounters(),counters);
-  const merged=mergeProgressionRewards(unclaimedProgressionRewards(checkpoint),{skillDrafts:incoming},restored);
-  assert.deepEqual(merged.skillDrafts.map(row=>row.offerId),rows.slice(0,2).map(row=>row.offerId));
-  assert.equal(spendSkillDraft(restored,skillId,third.offerId,third.choiceIds[0]),false);
-  assert.deepEqual(mergeProgressionRewards({skillDrafts:rows},{skillDrafts:rows},restored).skillDrafts.map(row=>row.level),[1,2]);
-  for(const row of incoming)assert.equal(spendSkillDraft(restored,skillId,row.offerId,row.choiceIds[0]),true);
-  assert.deepEqual(rollPendingAbilityOffers(reg,rng,restored,{skillId}),[]);assert.equal(restored.skills[skillId].pendingDrafts,0);
-  assert.deepEqual(validateRunShape(restored),[]);assert.equal(Object.keys(restored.abilityDraftClaims[skillId]).length,3);
-});
 test('weapon rank-ups exclude authored ability grades and reject a direct no-op raise without consuming the queue',()=>{
   const {run,reg}=fixture();run.skills['item:blade']={level:3,xp:0,pendingDrafts:0,pendingRankUps:1};
   const original=reg.cards.get('quickstep'),definition={...original,tags:['blade']};

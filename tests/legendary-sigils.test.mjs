@@ -33,7 +33,7 @@ import {
   attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems,
 } from '../src/model/sigils.js';
 import { sigilPurchasePlan } from '../src/model/marketAdditions.js';
-import { pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
