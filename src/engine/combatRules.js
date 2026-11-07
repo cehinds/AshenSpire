@@ -29,6 +29,8 @@ export function playRefusal(message, reason, extra = {}) {
   return Object.assign(new Error(message), { playRefusal: { reason, ...extra } });
 }
 
+const SHARED_RULE_KEYS = ['combatExpansionRules', 'combatMatchupRules', 'combatIntentRules', 'handRules'];
+
 /** Clone one graph, preserving references between players, piles and seats.
  *
  * `detached` is for a candidate that is read and thrown away (a preview, a
@@ -50,7 +52,13 @@ export function candidateState(ctx, { detached = false } = {}) {
   // falls back if another data field aliases it (or one of its descendants).
   const sharedProfile = shareableGameProfile(data);
   if (sharedProfile) delete data.gameProfile;
-  const candidate = { ...structuredClone(data), ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // Rule tables frozen once at createCombat are immutable, so a candidate
+  // shares them by reference; a restored/legacy unfrozen table still clones.
+  const sharedRules = {};
+  for (const key of SHARED_RULE_KEYS) {
+    if (data[key] && typeof data[key] === 'object' && Object.isFrozen(data[key])) { sharedRules[key] = data[key]; delete data[key]; }
+  }
+  const candidate = { ...structuredClone(data), ...sharedRules, ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
