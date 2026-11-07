@@ -237,7 +237,7 @@ for (const sample of normalCases) test(`normal ${sample.kind} inspection survive
     const run = sample.legacy ? createRunState({ seed: 21, classId: 'reaver', registries: source }) : normalRun();
     if (sample.legacy) {
       run.skills['item:blade'] = { level: 2, xp: 0, pendingDrafts: 0, pendingRankUps: 1 };
-      run.deck = [{ instanceId: 'inspect-rend', cardId: 'rend', upgraded: false }];
+      run.deck = [{ instanceId: 'inspect-rend', cardId: 'gorefireSlash', upgraded: false }];
     } else if (sample.kind === 'skillDraft') run.skills['item:blade'] = { level: 1, xp: 0, pendingDrafts: 1 };
     const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
     const checkpoint = { states: {} };
