@@ -2143,7 +2143,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard && floaterGlyphShown('Guard')) spawnFx(ctx.layer, anchor, 'fx-spark', 320, 'Guard');
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Guard') ? 'Guard' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
