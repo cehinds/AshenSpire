@@ -113,5 +113,6 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Clarified 2026-11-07 — "its a claude code session": the review branch is owned by a dedicated Claude Code session (not a person or CI job). That session reviews what lands on the branch and passes it on; it is read-only on code except for the merge/promotion step, like `ashen-reviewer`.
 - Owner decision 2026-11-07 — "feature -> dev -> review -> test (version bump)-> release (version bump) -> main (version bump), if review has issues then it becomes review > chore/* > dev > review > test > release > main": pipeline is feature/* → dev → review → test → release → main, with a version bump at each of test, release and main. If review finds issues, the fix goes review → chore/* → dev → back through review, then on to test. Replaces the recommendation above.
 - Note: today the automatic bump happens only at `test`→`release` (3rd number +1, build ordinal reset) and `release`→`main` (2nd number +1); there is no bump at `test` (CLAUDE.md, docs/versioning.md, version-advance.yml).
-- Questions: which number does the new `test` bump raise? (asked in chat)
+- Answer 2026-11-07: "Same as today + test" — `release` still raises the 3rd number (4th reset to 0) and `main` the 2nd (3rd and 4th reset to 0); the new `test` bump raises the 4th number (build ordinal +1), resetting nothing.
+- Questions: none
 - Link: —
