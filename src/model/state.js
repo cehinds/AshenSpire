@@ -1654,7 +1654,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     // can explain is refused BY NAME — that red is the machine form of the
     // two-doors warning that used to live only in prose (SPEC §5.5.2): a
     // "cleanup" that re-derives capacity from the chain alone now fails the
-    // first save it touches instead of silently deleting every keepsake charge.
+    // first save it touches instead of silently deleting every granted charge.
     // Pre-ledger saves (v1/v2) carry no base/granted; they are admitted only
     // through the migration door (preLedger), where initializeRunFlaskCharges
     // attributes them once, by the stated rule, before the run is ever re-saved.
@@ -1712,8 +1712,8 @@ export function initializeRunFlaskCharges(run, registries) {
   }
   // ═══ THE ONE-TIME ATTRIBUTION — pre-ledger saves (v1/v2), stated, not
   // silent. A v2 save stores capacity with no ledger: chain growth always
-  // wrote `grown`, but the moment door (op addFlaskCapacity — keepsakes,
-  // event effects) recorded nothing. The rule, in full:
+  // wrote `grown`, but the moment door (op addFlaskCapacity — event
+  // effects) recorded nothing. The rule, in full:
   //   base    = the current authored balance.flaskCapacity, clamped to
   //             capacity − grownTotal — the best witness available for what
   //             the vessel was born holding, never allowed to invent charges.
@@ -1722,7 +1722,7 @@ export function initializeRunFlaskCharges(run, registries) {
   //             moment door, because the moment door was the untracked one.
   // Honest defaults of the clamp: a balance retuned UP since the save yields
   // base = capacity − grownTotal and granted 0 (the save keeps its capacity,
-  // nothing is invented); a keepsake surplus lands in granted, which is where
+  // nothing is invented); a granted surplus lands in granted, which is where
   // it came from. Runs once per save, before the run can be re-serialized;
   // from then on validateRunShape enforces capacity === base + grown + granted.
   {

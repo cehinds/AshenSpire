@@ -42,8 +42,8 @@
 //
 // TWO DOORS INTO A BIGGER MAXIMUM, deliberately, one per shape of cause:
 //   the MOMENT door     — the `addFlaskCapacity` run opcode: a one-shot grant
-//                         from something that HAPPENS (a keepsake at run
-//                         start, a quest event's chosen effect). Stored.
+//                         from something that HAPPENS (a quest
+//                         event's chosen effect). Stored.
 //   the POSSESSION door — this chain: growth that tracks something you HAVE
 //                         (a relic carried, a talisman worn, one day a seed).
 //                         Derived, so losing the source loses the growth.

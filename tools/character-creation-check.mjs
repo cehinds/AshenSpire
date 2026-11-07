@@ -162,8 +162,8 @@ async function exercise(width, height, screenshotName) {
   await wait(250);
 
   const rail = await evaluate(`[...document.querySelectorAll('.cz-tab')].map(e=>e.id)`);
-  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-attributes', 'cz-tab-keepsake', 'cz-tab-equipment', 'cz-tab-feats', 'cz-tab-spells', 'cz-tab-review']),
-    `${at}: the authored rail lists Class, Attributes, Keepsake, Equipment, Feats, Spells and Review (${JSON.stringify(rail)})`);
+  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-attributes', 'cz-tab-equipment', 'cz-tab-feats', 'cz-tab-spells', 'cz-tab-review']),
+    `${at}: the authored rail lists Class, Attributes, Equipment, Feats, Spells and Review (${JSON.stringify(rail)})`);
   const offered = await evaluate(`[...document.querySelectorAll('#cz-classes .cz-class')].map(e=>e.dataset.class)`);
   assert(CLASSES.every((id) => offered.includes(id)), `${at}: every class is offered (${JSON.stringify(offered)})`);
 
@@ -229,7 +229,7 @@ async function exercise(width, height, screenshotName) {
     for (let i = 0; i < left; i += 1) await click(`.cc-stat-overlay .se-step[data-stat-id="constitution"][data-stat-action="increase"]`);
     await click('.cc-stat-overlay .modal-foot .as-btn.primary');
     await until(`!document.querySelector('.cc-stat-overlay')`, `${classId}: the Assign points dialog closes on Continue`);
-    // Confirming the allocation advances to the separate Keepsake page.
+    // Confirming the allocation advances to the next page.
     // Return through the real footer before reading the committed stat cards.
     if (!(await evaluate(`!!document.querySelector('#cz-primary-stats .cc-attribute-card')`))) await click('#cz-back');
     await until(`!!document.querySelector('#cz-primary-stats .cc-attribute-card')`, `${classId}: committed Attributes return`);

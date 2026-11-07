@@ -9,7 +9,6 @@
   },
   "quickStart": {
     "classId": "reaver",
-    "keepsakeId": "oldCinder",
     "attributeMode": "lean",
     "skipOpening": true
   },
@@ -49,35 +48,5 @@
       "equipSlotIds": [],
       "relicIds": ["goldFigurine", "goldenSprout"]
     }
-  },
-  "keepsakes": [
-    {
-      "id": "none",
-      "name": "Nothing",
-      "icon": "skill",
-      "desc": "Walk alone. The climb is enough.",
-      "effects": []
-    },
-    {
-      "id": "oldCinder",
-      "name": "Old Cinder",
-      "icon": "relic",
-      "desc": "Begin the climb with 50 cinders.",
-      "effects": [{ "op": "addCinders", "amount": 50 }]
-    },
-    {
-      "id": "travelersFlask",
-      "name": "Traveler's Flask",
-      "icon": "flask-health",
-      "desc": "Begin with one additional Crimson charge.",
-      "effects": [{ "op": "addFlaskCapacity", "kind": "hp", "amount": 1 }]
-    },
-    {
-      "id": "whetstoneMemory",
-      "name": "Whetstone Memory",
-      "icon": "weight",
-      "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
-      "effects": [{ "op": "upgradeCard", "card": "strike" }]
-    }
-  ]
+  }
 }

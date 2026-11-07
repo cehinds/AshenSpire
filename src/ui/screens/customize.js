@@ -19,7 +19,7 @@ import { paintedPresentation } from '../paintedOutfits.js';
 // ladder and never leaves the glass. Every section is a Pane; the class
 // chooser is a Split (preview pane, handle, OptionCards in a list or a grid);
 // the character's name and seed are Row·setting fields; modes and sprite
-// styles are Segmented; sigils and tints are Swatches; keepsakes, relics and
+// styles are Segmented; sigils and tints are Swatches; relics and
 // classes are OptionCards; primary stats are the D26 fold faces carrying kit
 // Rows; and the point-buy is the md door through the one door-opener. The
 // hooks the instruments read (`.screen.customize`, `.cz-scroll`, `.cz-actions`,
@@ -54,7 +54,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, characterSigilPreview, keepsakeChoiceButton, viewModeToggle,
+  tintChoiceButton, sigilChoiceButton, characterSigilPreview, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
@@ -148,7 +148,6 @@ export function mountCustomize(app, {
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: DEFAULT_SPRITE_STYLE,
-    keepsakeId: defaults.keepsakeId,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
@@ -212,7 +211,6 @@ export function mountCustomize(app, {
       el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
     ]),
   ]);
-  const keepsakeGroup = el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' }));
   const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
     nameRow,
     el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
@@ -253,7 +251,6 @@ export function mountCustomize(app, {
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
     ]),
-    keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, keepsakeGroup),
     feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, el('div', { id: 'cz-feat-browser-host' })),
     spells: el('section', { id: 'cz-spells-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-spells-heading' }),
@@ -550,11 +547,10 @@ export function mountCustomize(app, {
   // foot and the section can never disagree about what is missing.
   function classProblem() { return state.classChosen && eligibleClass(state.classId) ? null : t('creation.reason.class'); }
   function modeProblem() { return state.attributeMode ? null : t('creation.reason.statMode'); }
-  function keepsakeProblem() { return state.keepsakeId ? null : t('creation.reason.keepsake'); }
   function armourProblem() { return state.startingArmourId ? null : t('creation.reason.armour'); }
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
-  function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
+  function characterProblem() { return statsStepProblem(); }
   function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
   function equipmentProblem() { return armourProblem() || handsProblem() || (startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'combatManeuvers' ? abilitiesProblem() : null); }
   function spellsProblem() { return startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'item:magic-focus' ? abilitiesProblem() : null; }
@@ -772,7 +768,7 @@ export function mountCustomize(app, {
     // allocation was committed the editor was unreachable, so a player who
     // reached the Equipment step and was told "Ash Staff needs intelligence 8
     // — you have 3" had no path back to the stats short of changing class
-    // (which discards keepsake, armour, hands and relic) or leaving creation
+    // (which discards armour, hands and relic) or leaving creation
     // (review, #1217). This button is that path, and it is a revision: the
     // committed numbers are on the steppers and Cancel puts them back.
     const editPoints = el('button', {
@@ -803,10 +799,11 @@ export function mountCustomize(app, {
     });
   }
 
-  /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
-  function advanceToKeepsake({ focus = true } = {}) {
-    if (!catalog) activate('keepsake');
-    if (focus) queueMicrotask(() => focusElement($('#cz-keepsakes .cz-keepsake')));
+  /** Stats settled: fold Primary Stats, open the next step, put the cursor there. */
+  function advanceAfterStats({ focus = true } = {}) {
+    if (catalog) return;
+    if (focus) advanceFrom('attributes');
+    else if (categories.includes('attributes')) { const to = creationStep(categories, 'attributes', 1); if (to) activate(to); }
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
@@ -936,7 +933,7 @@ export function mountCustomize(app, {
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
           renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-          advanceToKeepsake({ focus: restore });
+          advanceAfterStats({ focus: restore });
           return;
         }
         // CANCEL UNDOES THE WAY IN. Creation offers one mode since the
@@ -973,7 +970,7 @@ export function mountCustomize(app, {
     pointBuy = door;
     // Green at 0 points with a legal spread. Weapon requirements are the hand
     // step's question, asked there (handProblem) and at Begin (flowProblem).
-    refreshDone = refusesWhen(allocation.done, allocationProblem, 'Apply these stats and choose a keepsake');
+    refreshDone = refusesWhen(allocation.done, allocationProblem, 'Apply these stats');
     allocation.done.addEventListener('click', () => {
       if (allocationProblem()) return;
       door.outcome = 'done';
@@ -1056,9 +1053,6 @@ export function mountCustomize(app, {
     })));
     $('#cz-glyphs').replaceChildren(...PORTRAIT_GLYPHS.map((glyph) => sigilChoiceButton(glyph, glyph === state.glyph, () => {
       state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
-    })));
-    $('#cz-keepsakes').replaceChildren(...registries.characterCreation.keepsakes.map((keepsake) => keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-      state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); updateStartRefusal();
     })));
   }
 
@@ -1663,7 +1657,6 @@ export function mountCustomize(app, {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
-    { key: 'keepsake', label: t('creation.section.keepsake'), node: panels.keepsake, value: () => selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN },
     { key: 'feats', label: t('creation.section.feats'), node: panels.feats, value: () => t('creation.feats.none') },
     { key: 'spells', label: t('creation.section.spells'), node: panels.spells, value: () => state.startingAbilityIds.map(id => registries.cards.get(id).name).join(' / ') || UNCHOSEN },
     { key: 'review', label: t('creation.section.review'), node: panels.review, value: () => seedInput.value.trim() || '—' },
@@ -1702,16 +1695,8 @@ export function mountCustomize(app, {
     });
     const disclosureHost = el('div', { class: 'cc-character-fold cc-catalog-specimen cz-disc' });
     const disclosureStat = el('div', { class: 'cc-character-picker' }, primaryStatCard(specimenAttributes[0]));
-    const disclosureKeepsake = options([], { class: 'cc-character-picker cz-keepsakes' });
-    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
-    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
-      keepsake, keepsake.id === disclosureKeepsakeId,
-      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
-    )));
-    drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
       { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.primary'), value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
-      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: t('creation.section.keepsake'), value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
@@ -1830,9 +1815,6 @@ export function mountCustomize(app, {
       { key: 'sigil-choice', label: 'Sigil choice', node: choiceSpecimen(
         'as-swatches cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
       ) },
-      { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
-        'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
-      ) },
       { key: 'equipment-choice-card', label: 'Equipment choice card (grid view)', node: armourSpecimen },
       { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
@@ -1893,7 +1875,6 @@ export function mountCustomize(app, {
       seatFace('primary', statBox.querySelector('.cc-mode-select'));
       return null; // seatFace seats the cursor itself
     },
-    keepsake: () => $('#cz-keepsakes .cz-keepsake'),
     spells: () => $('#cz-spell-choices .cc-ability-choose'),
     equipment: () => {
       openEquipmentSection(equipmentSectionViews[0]?.id);
@@ -1904,7 +1885,7 @@ export function mountCustomize(app, {
   // back otherwise; Next refuses with the current category's unmet step and
   // lands the cursor on the next question; Begin takes over on Review.
   const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
-  const stageProblems = { class: classProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
+  const stageProblems = { class: classProblem, attributes: statsStepProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
   refreshCreationNavigation = () => {
@@ -2011,10 +1992,10 @@ export function mountCustomize(app, {
     activate(categories[0]);
   }
   const primaryContinue = $('.cc-primary-continue');
-  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
+  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the next step.'));
   primaryContinue.addEventListener('click', () => {
     if (statsStepProblem()) return;
-    advanceToKeepsake();
+    advanceAfterStats();
   });
 
   nameInput.addEventListener('input', () => { state.name = nameInput.value.trim() || 'Forsaken'; refreshFaces(); });
@@ -2028,8 +2009,7 @@ export function mountCustomize(app, {
   const beginProblem = () => seed.problem() || (gated ? flowProblem() : statsProblem());
   const refreshStart = refusesWhen(start, beginProblem, () => {
     const cls = registries.classes.get(state.classId);
-    const keepsake = registries.characterCreation.keepsakes.find((row) => row.id === state.keepsakeId);
-    return `Begin as <b>${esc(cls.name)}</b>${keepsake ? ` with <b>${esc(keepsake.name)}</b>` : ''}.`;
+    return `Begin as <b>${esc(cls.name)}</b>.`;
   });
   updateStartRefusal = () => { refreshStart(); refreshGates(); };
   attachTooltip(back, () => {
@@ -2054,7 +2034,6 @@ export function mountCustomize(app, {
       classId: state.classId,
       seedString: seedInput.value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
-      keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
       startingHands: { ...state.startingHands },
       startingAbilityIds: [...state.startingAbilityIds],

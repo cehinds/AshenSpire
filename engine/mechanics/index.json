@@ -114,13 +114,6 @@
       "modules": []
     },
     {
-      "id": "classification.keepsake",
-      "tag": "classification.keepsake",
-      "family": "classification",
-      "portability": "data",
-      "modules": []
-    },
-    {
       "id": "classification.power",
       "tag": "classification.power",
       "family": "classification",

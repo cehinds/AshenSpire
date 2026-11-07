@@ -67,7 +67,6 @@ import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING, tagsFor, tagIdsFor, cardsWithTag, tagIdsOf, objectTagIds, tagsInDomain, domainsFor } from '../src/content/tags.js';
 import { SFX_RECIPES, resolveRecipe } from '../src/content/sfx.js';
 import { weapons } from '../src/content/generated/weapons.js';
-import { KEEPSAKES } from '../src/content/keepsakes.js';
 import {
   validateEquipment, equipPiece, stampDeck, runMods, loadoutTags, addToStorage, carriedIds,
   figureSpec, fitsSlot, slotHand, pieceHand,
@@ -1659,28 +1658,33 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
   });
 
-  // ---- 19. Keepsakes (character creation boons) -------------------------------------------
-  test('19. keepsakes: effect lists validate and apply as run effects', () => {
-    // Every keepsake's effects must pass the same closed-set validation as events.
-    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
+  // ---- 19. Run effects (the removed keepsake boons, kept as plain effect lists) ---------------
+  test('19. run effects: cinder, flask-capacity and smithing effect lists validate and apply', () => {
+    const BOONS = [
+      { id: 'oldCinder', name: 'Old Cinder', effects: [{ op: 'addCinders', amount: 50 }] },
+      { id: 'travelersFlask', name: "Traveler's Flask", effects: [{ op: 'addFlaskCapacity', kind: 'hp', amount: 1 }] },
+      { id: 'whetstoneMemory', name: 'Whetstone Memory', effects: [{ op: 'upgradeCard', card: 'strike' }] },
+    ];
+    // Every effect list must pass the same closed-set validation as events.
+    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...BOONS.map((k) => ({
       id: `ks_${k.id}`, name: k.name, text: 'probe',
       choices: [{ label: 'x', effects: k.effects, resultText: 'x' }],
     }))] });
     const v = validateContent(probe);
-    assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
+    assert(v.ok, `effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
     // Measured from the run's own opening purse and flask ledger: a run no
     // longer opens at zero cinders or four charges (startingCinders 20,
-    // flaskCapacity 3 since 2026-09-24), and the keepsake is what ADDS.
+    // flaskCapacity 3 since 2026-09-24), and the effect is what ADDS.
     const rn = createRunState({ seed: 11, classId: 'reaver', registries: REG });
     const openingCinders = rn.cinders;
     const openingFlask = { ...rn.flaskCharges };
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders - openingCinders, 50, 'Old Cinder grants 50 cinders');
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'travelersFlask').effects);
     eq(rn.flaskCharges.capacity, openingFlask.capacity + 1, "Traveler's Flask raises fixed charge capacity");
     eq(rn.flaskCharges.hp, openingFlask.hp + 1, "Traveler's Flask allocates the added charge to Crimson");
-    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
+    executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, BOONS.find((k) => k.id === 'whetstoneMemory').effects);
     eq(rn.itemUpgradeLevels['armament/straightSword'], 1, 'Whetstone Memory promotes the sourced Straight Sword package');
     assert(rn.deck.filter((c) => c.cardId === 'strike' && c.sourceArmamentId === 'straightSword').every((c) => c.smithingLevel === 1 && !c.upgraded),
       'Whetstone Memory upgrades every sourced Strike through equipment authority, not per-copy flags');
@@ -7834,11 +7838,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `a duplicate ${role} role is rejected before rendering singleton equipment disclosures`);
     }
 
-    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakes.characterCreation.keepsakes = {};
-    const keepsakeValidation = validateContent(malformedKeepsakes);
+    const retiredKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    retiredKeepsakes.characterCreation.keepsakes = [];
+    const keepsakeValidation = validateContent(retiredKeepsakes);
     assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'a non-array keepsake roster reports its JSON path instead of throwing');
+      'a keepsake roster is retired: authoring one reports its JSON path as an unknown field');
 
     const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     malformedClass.characterCreation.classes.reaver = null;
@@ -7853,13 +7857,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
         `a non-array ${field} roster reports its JSON path instead of throwing`);
     }
-
-    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
-    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
-    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
-    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
-    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
-      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
 
     for (const [label, mutate] of [
       ['class', (bundle) => { bundle.classes[0] = null; }],

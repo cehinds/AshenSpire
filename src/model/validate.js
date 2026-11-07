@@ -1340,11 +1340,6 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     const split = problem.indexOf(':');
     err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
   }
-  const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
-  for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
-    if (!keepsake || typeof keepsake !== 'object' || Array.isArray(keepsake) || !Array.isArray(keepsake.effects)) continue;
-    validateEffects(keepsake.effects, `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
-  }
 
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {

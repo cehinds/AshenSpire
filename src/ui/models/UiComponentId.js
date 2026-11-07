@@ -168,7 +168,6 @@ export const UI_COMPONENTS = Object.freeze({
   spriteChoice: 'sprite-choice',
   tintChoice: 'tint-choice',
   sigilChoice: 'sigil-choice',
-  keepsakeChoice: 'keepsake-choice',
   equipmentChoiceCard: 'equipment-choice-card',
   relicChoiceCard: 'relic-choice-card',
 });

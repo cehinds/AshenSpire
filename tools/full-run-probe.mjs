@@ -276,7 +276,7 @@ async function newGameFromTitle(label) {
   const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
   await press('#cz-classes .cz-class');
   await press('#cz-next');
-  // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+  // The staged flow (Class -> Attributes -> Equipment -> Feats ->
   // Spells for casters -> Review): each stage is the `.cz-railed` panel's
   // data-creation-stage, and Next (#cz-next) leaves it.
   const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
@@ -293,9 +293,6 @@ async function newGameFromTitle(label) {
     // Standard's mode id is `lean` (see map-camera-persistence.mjs).
     const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
     if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-    await press('#cz-next');
-    await until(onStage('keepsake'), 'the Keepsake stage');
-    await press('#cz-keepsakes [data-keepsake-id]');
     await press('#cz-next');
     await until(onStage('equipment'), 'the Equipment stage');
     await openFace('armour');

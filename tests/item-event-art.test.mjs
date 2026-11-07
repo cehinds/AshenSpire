@@ -6,8 +6,6 @@ import { contentBundle } from '../src/content/index.js';
 import { questChains } from '../src/content/events.js';
 import { eventArtAsset } from '../src/content/eventArt.js';
 import { speakerPortraitAsset } from '../src/content/speakerArt.js';
-import { KEEPSAKES } from '../src/content/keepsakes.js';
-import { keepsakeArtAsset } from '../src/content/keepsakeArt.js';
 
 function shipped(path) {
   assert.ok(path, 'registered path');
@@ -32,11 +30,4 @@ test('every one-off event has a high release record and verified light vignette'
 test('the Road Warden portrait ships independently of enemy poses', () => {
   shipped(speakerPortraitAsset('roadWarden'));
   assert.equal(speakerPortraitAsset('unknown'), null);
-});
-
-test('three keepsakes reuse shipped item art and Nothing remains empty', () => {
-  for (const keepsake of KEEPSAKES) {
-    if (keepsake.id === 'none') assert.equal(keepsakeArtAsset(keepsake), null);
-    else shipped(keepsakeArtAsset(keepsake));
-  }
 });

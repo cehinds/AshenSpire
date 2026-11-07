@@ -13,7 +13,7 @@ import {
 import { linkCreationCatalogFolios } from './creationCatalogLinks.js';
 
 const STEP_ROWS = [
-  'class', 'attributes', 'keepsake', 'equipment', 'feats', 'spells', 'review',
+  'class', 'attributes', 'equipment', 'feats', 'spells', 'review',
 ].map(id => ({ id, label: t(`creation.category.${id}`) }));
 
 function featBrowser(groups) {

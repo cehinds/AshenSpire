@@ -29,7 +29,7 @@ function creationSlotFields(cfg) {
 export function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'quickStart', 'equipmentSections', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'quickStart', 'equipmentSections', 'classes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
   const modeIds = new Set(rows(source, 'creationModes').filter((row) => row && typeof row.id === 'string').map((row) => row.id));
@@ -171,25 +171,7 @@ export function characterCreationProblems(source) {
     if (cls && !configuredRelicIds.includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);
-  const keepsakes = cfg.keepsakes;
-  problems.push(...quickStartProblems(cfg.quickStart, { classIds, modeIds, keepsakes }));
-  if (!Array.isArray(keepsakes) || keepsakes.length < 2) problems.push('characterCreation.keepsakes: must contain at least two choices');
-  const seen = new Set();
-  for (const row of Array.isArray(keepsakes) ? keepsakes : []) {
-    const path = `characterCreation.keepsakes.${(row && row.id) || '?'}`;
-    // `tags` is MATERIALISED, not authored: model/registries.js stamps it from
-    // tagging.csv, so it is present when this reads registries and absent when
-    // it reads the raw bundle. Both are legal; authoring one is not, and
-    // model/tags.js refuses that at the boot door.
-    // `kindIds` and `propertyTags` are stamped beside `tags` (registries.js
-    // stampTags): what the keepsake IS, and what it confers if it ever does.
-    for (const key of Object.keys(row || {})) if (!['id', 'name', 'icon', 'desc', 'effects', 'tags', 'kindIds', 'propertyTags'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
-    if (!row || typeof row.id !== 'string' || !row.id) problems.push(`${path}.id: must be non-empty`);
-    else if (seen.has(row.id)) problems.push(`${path}.id: duplicate keepsake id`);
-    else seen.add(row.id);
-    for (const key of ['name', 'icon', 'desc']) if (!row || typeof row[key] !== 'string' || !row[key]) problems.push(`${path}.${key}: must be non-empty`);
-    if (!row || !Array.isArray(row.effects)) problems.push(`${path}.effects: must be an array`);
-  }
+  problems.push(...quickStartProblems(cfg.quickStart, { classIds, modeIds }));
   return problems;
 }
 
@@ -198,16 +180,14 @@ export function characterCreationProblems(source) {
 // without walking the whole character workspace. Every default is data here
 // (content/source/characterCreation.json `quickStart`); armour, hands and relic
 // are the class's own baseline (model/state.js), as a climb with none chosen.
-const QUICK_START_FIELDS = Object.freeze(['classId', 'keepsakeId', 'attributeMode', 'skipOpening']);
+const QUICK_START_FIELDS = Object.freeze(['classId', 'attributeMode', 'skipOpening']);
 
-function quickStartProblems(row, { classIds, modeIds, keepsakes }) {
+function quickStartProblems(row, { classIds, modeIds }) {
   const path = 'characterCreation.quickStart';
   if (!row || typeof row !== 'object' || Array.isArray(row)) return [`${path}: must be an object`];
   const problems = [];
   for (const key of Object.keys(row)) if (!QUICK_START_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
   if (typeof row.classId !== 'string' || !classIds.has(row.classId)) problems.push(`${path}.classId: unknown class '${row.classId}'`);
-  const keepsakeIds = new Set((Array.isArray(keepsakes) ? keepsakes : []).filter((k) => k && typeof k.id === 'string').map((k) => k.id));
-  if (typeof row.keepsakeId !== 'string' || !keepsakeIds.has(row.keepsakeId)) problems.push(`${path}.keepsakeId: unknown keepsake '${row.keepsakeId}'`);
   if (typeof row.attributeMode !== 'string' || !modeIds.has(row.attributeMode)) problems.push(`${path}.attributeMode: unknown creation mode '${row.attributeMode}'`);
   if (typeof row.skipOpening !== 'boolean') problems.push(`${path}.skipOpening: must be boolean`);
   return problems;
@@ -215,7 +195,7 @@ function quickStartProblems(row, { classIds, modeIds, keepsakes }) {
 
 /**
  * quickStartRunConfig(registries) → the `newRun` config the Title's Quick start
- * begins: the authored class, keepsake and stat mode, the class's starting relic,
+ * begins: the authored class and stat mode, the class's starting relic,
  * and `skipOpening`. The seed and slot are the caller's (a fresh random seed,
  * the first empty slot). Throws by name when the authored row does not resolve.
  */
@@ -226,7 +206,6 @@ export function quickStartRunConfig(registries) {
   if (!cls) throw new Error(`characterCreation.quickStart.classId: unknown class '${row.classId}'`);
   return {
     classId: cls.id,
-    keepsakeId: row.keepsakeId,
     attributeMode: row.attributeMode,
     startingRelicId: cls.startingRelic,
     skipOpening: row.skipOpening === true,

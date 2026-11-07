@@ -9,11 +9,11 @@ import {creationCategories,creationFlowCategories,creationHasSpells,creationAbil
 const registries=createRegistries(contentBundle);
 const birth=classId=>createRunState({registries,classId,seed:42});
 test('creation follows authored pages and omits only Spells for noncasting class metadata',()=>{
- assert.deepEqual([...creationCategories()],['class','attributes','keepsake','equipment','feats','spells','review']);
+ assert.deepEqual([...creationCategories()],['class','attributes','equipment','feats','spells','review']);
  for(const cls of registries.classes.all()){
   const expected=cls.tags.includes('item:magic-focus')||registries.characterCreation.classes[cls.id].startingAbility?.skillId==='item:magic-focus';
   assert.equal(creationHasSpells(registries,cls.id),expected);
-  const flow=creationFlowCategories(registries,cls.id);assert.equal(flow.includes('spells'),expected);assert.equal(flow.length,expected?7:6);
+  const flow=creationFlowCategories(registries,cls.id);assert.equal(flow.includes('spells'),expected);assert.equal(flow.length,expected?6:5);
   assert.equal(creationFooterPlan({categories:flow,current:'equipment'}).next,'feats');
   assert.equal(creationFooterPlan({categories:flow,current:'feats'}).next,expected?'spells':'review');
  }

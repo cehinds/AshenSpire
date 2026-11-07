@@ -577,13 +577,13 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
       await press('[data-title-action="review-new"]');
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
-      // Creation is a staged flow — Class, Attributes, Keepsake, Equipment,
+      // Creation is a staged flow — Class, Attributes, Equipment,
       // Feats, Spells (casters), Review (see tools/quick-start-inputs.mjs) —
       // gated step by step (781da54a): Begin refuses until a class, a stat
-      // mode, a keepsake and starting armour are chosen. Each stage is the
+      // mode and starting armour are chosen. Each stage is the
       // `.cz-railed` panel's data-creation-stage, and Next (#cz-next) leaves
       // it. Walk the steps a player walks: the first class, Next, Standard
-      // stats on the Attributes stage, Next, the first keepsake, Next, the
+      // stats on the Attributes stage, Next, the
       // first armour. A fold is opened before tapping inside it, and OPEN
       // MEANS OPEN, NOT TOGGLE: each fold is a <details>, so a press on an
       // open face would close it.
@@ -609,9 +609,6 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         // "Standard"); a value the select does not offer leaves it unanswered.
         const mode = await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'lean'; select.dispatchEvent(new Event('change', { bubbles: true })); return select.value; })()`);
         if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-        await press('#cz-next');
-        await waitFor('the Keepsake stage (flush case)', onStage('keepsake'));
-        await press('#cz-keepsakes [data-keepsake-id]');
         await press('#cz-next');
         await waitFor('the Equipment stage (flush case)', onStage('equipment'));
         await openFace('armour');

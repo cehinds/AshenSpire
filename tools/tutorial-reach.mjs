@@ -569,7 +569,7 @@ async function main() {
   // `.slot-new` on a title that answered at once and found `#cz-start` one press
   // later. The game grew a startup gate (a timed reveal), a slot picker with a
   // decision door, and a stepped character workspace whose Begin refuses until
-  // a class, a stat mode, a keepsake and starting armour are chosen — so the
+  // a class, a stat mode and starting armour are chosen — so the
   // first-run case died on "timeout: the title screen" and checked nothing.
   // The route below is the one tools/map-camera-persistence.mjs walks (same
   // selectors, same order), driven here with real clicks at real coordinates.
@@ -586,7 +586,7 @@ async function main() {
     await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
     await clickSel('[data-title-action="review-new"]', 'Start in this slot');
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
-    // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+    // The staged flow (Class -> Attributes -> Equipment -> Feats ->
     // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
     // data-creation-stage; Next (#cz-next) is the one real click that leaves a
     // stage, and each stage is waited for by that attribute.
@@ -607,9 +607,6 @@ async function main() {
       await openFace('primary');
       const mode = await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
       if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-      await clickSel('#cz-next', 'Next (to Keepsake)');
-      await until(onStage('keepsake'), 'the Keepsake stage');
-      await clickSel('#cz-keepsakes [data-keepsake-id]', 'the first keepsake');
       await clickSel('#cz-next', 'Next (to Equipment)');
       await until(onStage('equipment'), 'the Equipment stage');
       await openFace('armour');

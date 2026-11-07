@@ -414,8 +414,7 @@ custom art does not require a second card implementation.
 
 [Open the production component specimens](../index.html?shot=components).
 Each labeled folio has a direct `#folio-<component-id>` link, including
-[Class choice cards](../index.html?shot=components#folio-class-choice-card) and
-[Keepsake cards](../index.html?shot=components#folio-keepsake-choice).
+[Class choice cards](../index.html?shot=components#folio-class-choice-card).
 The interactive reference catalog's detail drawer links to the same specimens.
 
 | Component ID | Model / input | Renderer | Reuse |
@@ -428,7 +427,7 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `creation-part-body` | ordinary live content nodes | `creationPageParts.creationPanel` + `creationChoiceTile` | Panel and tile bodies + catalog |
 | `creation-choice-art` | art node supplied by owner | `creationPageParts.creationChoiceTile` | Choice artwork, separate from text + catalog |
 | `creation-choice-copy` | title and description | `creationPageParts.creationChoiceTile` | Choice live text + catalog |
-| `creation-step-navigation` | ordered steps, current ID, callback | `creationPageParts.createCreationStepNavigation` + `kit.categoryNav` | Class → Attributes → Keepsake → Equipment → Feats → optional Spells → Review; desktop rail and phone selector + catalog |
+| `creation-step-navigation` | ordered steps, current ID, callback | `creationPageParts.createCreationStepNavigation` + `kit.categoryNav` | Class → Attributes → Equipment → Feats → optional Spells → Review; desktop rail and phone selector + catalog |
 | `creation-feat-browser` | `CreationFeatBrowserModel.creationFeatBrowserGroups`, inspected ID, allowance | `creationPageParts.createCreationFeatBrowser` | Character, selected-class and skill groups; existing progression levels supply requirement/lock metadata. Locked feats remain inspectable. Inspection changes no run state and allowance 0 grants no birth feat |
 | `creation-feat-tile` | canonical feat row, track current/required levels, inspected state | `creationPageParts.createCreationFeatBrowser` + `creationChoiceTile` | Native feat inspection button with level requirement and lock badge + catalog |
 | `creation-feat-detail` | inspected canonical name, description and progression requirement | `creationPageParts.createCreationFeatBrowser` + `creationPanel` | Feat detail and lock status + catalog |
@@ -450,7 +449,6 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
-| `keepsake-choice` | keepsake row + selected state + recoverable art fallback | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
 | `equipment-choice-card` | equipment row or Empty Hand + selected/preview state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
 | `relic-choice-card` | relic row + selected state | `creationCards.relicChoiceButton` | Starting Equipment + catalog |
 
@@ -460,8 +458,7 @@ class-preview-pane
 
 character-disclosure
 ├─ mode-choice + primary-stat-card × N + resource-strip
-├─ sprite-choice + sigil-choice + tint-choice
-└─ keepsake-choice
+└─ sprite-choice + sigil-choice + tint-choice
 
 stat-allocation-row (invisible composition parent)
 ├─ primary-stat-card + current value + decrement/increment controls

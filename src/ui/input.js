@@ -56,7 +56,6 @@ const FOCUS_SELECTOR = [
   '.slot-new',
   '.class-pick:not(.locked)', // character creation + custom-run class picks
   '.cz-opt',
-  '.cz-keepsake',
   '.cr-class',
   '.mod-chip',
   'input[type="range"]',

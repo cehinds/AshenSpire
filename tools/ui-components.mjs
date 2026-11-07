@@ -50,7 +50,7 @@ const REQUIRED_IDS = Object.freeze([
   'selection-section-face', 'primary-stat-card', 'resource-strip', 'mode-choice',
   'stat-allocation-row', 'shrine-option-card', 'smith-upgrade-modal',
   'smith-candidate-card', 'smith-upgrade-preview',
-  'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+  'sprite-choice', 'tint-choice', 'sigil-choice',
   'equipment-choice-card', 'relic-choice-card',
 ]);
 
@@ -876,19 +876,19 @@ export function findings(r) {
     'primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
     'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
     'modeChoiceButton', 'spriteChoiceButton', 'tintChoiceButton', 'sigilChoiceButton',
-    'keepsakeChoiceButton', 'relicChoiceButton',
+    'relicChoiceButton',
   ];
   const creationIds = [
     'character-disclosure', 'class-preview-pane', 'class-resource-grid', 'class-choice-card',
     'view-mode-toggle', 'boolean-setting-toggle', 'selection-section-face', 'primary-stat-card',
     'stat-allocation-row', 'shrine-option-card', 'resource-strip', 'mode-choice',
-    'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+    'sprite-choice', 'tint-choice', 'sigil-choice',
     'equipment-choice-card', 'relic-choice-card',
   ];
   if (!creationExports.every((name) => r.creationCards.includes(`export function ${name}`))
       || !['primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
         'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
-        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice', 'keepsakeChoice',
+        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice',
         'relicChoiceCard'].every((name) => r.creationCards.includes(`UI.${name}`))
       || !/UI\.characterDisclosure/.test(r.customize)
       || !/UI\.equipmentChoiceCard/.test(r.customize)
