@@ -1,7 +1,6 @@
 // SOUND AND HAPTIC follow the number (SPEC §7.4, sequential beat order; Codex
 // on #1849): a hit's sound and the damage buzz fire reactionMs after the
 // reaction starts, with the float; the contact keeps only its spark and slash.
-// 'impact' keeps them at the contact.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
