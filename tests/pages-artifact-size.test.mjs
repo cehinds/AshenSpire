@@ -15,9 +15,9 @@ test('only a primary channel keeps the offline file, and only for its newest bui
   }
 });
 
-test('retention is per channel: main 3, release 10, dev 3, test 3, others 3', () => {
-  assert.deepEqual(RETENTION, { main: 3, release: 10, dev: 3, test: 3 });
-  for (const [branch, n] of [['main', 3], ['release', 10], ['dev', 3], ['test', 3], ['alternative/dev', 3], ['alternative/art/test', 3]]) {
+test('retention is per channel: main 3, release 5, dev 3, test 3, others 3', () => {
+  assert.deepEqual(RETENTION, { main: 3, release: 5, dev: 3, test: 3 });
+  for (const [branch, n] of [['main', 3], ['release', 5], ['dev', 3], ['test', 3], ['alternative/dev', 3], ['alternative/art/test', 3]]) {
     assert.equal(keepFor(branch), n, branch);
   }
 });

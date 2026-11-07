@@ -68,11 +68,11 @@ const BRANCHES = flag('--branches', ['dev', 'test', 'release', 'main', ...altern
 // dispatch typo must not turn one run into hundreds of them.
 const KEEP_MAX = 25;
 // PER-CHANNEL RETENTION (owner, 2026-11-06): how many builds each channel lists. main,
-// dev and test keep 3, release keeps 10; every other channel (alternative/*) keeps
-// DEFAULT_KEEP. Only the newest build of a primary channel carries the offline file
-// (downloadKept), so release's older builds are Play-only. `--keep N` (the workflow's
+// dev and test keep 3, release keeps 5 (owner changed release from 10 to 5 on
+// 2026-11-07); every other channel (alternative/*) keeps DEFAULT_KEEP. Only the
+// newest build of a primary channel carries the offline file (downloadKept), so release's older builds are Play-only. `--keep N` (the workflow's
 // optional `keep` input) overrides every channel for one run; absent, this table rules.
-export const RETENTION = { main: 3, release: 10, dev: 3, test: 3 };
+export const RETENTION = { main: 3, release: 5, dev: 3, test: 3 };
 export const DEFAULT_KEEP = 3;
 export const keepFor = (branch, override = null) => Math.min(KEEP_MAX, Math.max(1, override ?? RETENTION[branch] ?? DEFAULT_KEEP));
 // A run's rebuild budget (run 42186410401 ran out of disk). Applies only to builds
