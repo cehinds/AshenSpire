@@ -306,7 +306,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 - [ ] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2)
 - [ ] Tools reachability test: fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
-- [ ] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5)
+- [x] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). Images under the docs evidence dirs are not gated yet: 61 tracked PNGs there exceed 256 KiB (`docs/art-evidence/2026-09-0x/`, `docs/qa/releases/`) and need a docs cleanup first.
 - [ ] Test that every `data-component` id is in `UiComponentId` (Low)
 - [ ] Unused-export lint (M5)
 - [ ] Test that `tools/README.md` lists every tool (Low)
@@ -328,7 +328,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
 - [ ] Attic or delete the 115 orphan tools (H5)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
-- [ ] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5)
+- [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
 - [ ] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10)
 - [ ] Stop loading `combat-test.css` and `combat-rounds-preview.css` for players (M9)
 
