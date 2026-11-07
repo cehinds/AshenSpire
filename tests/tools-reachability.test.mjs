@@ -138,7 +138,11 @@ export function isTool(path) {
 function isToolSub(path) {
   return /^tools\/[^/]+\/.+/.test(path) && !path.startsWith('tools/attic/') && TEXT_EXT.test(path);
 }
+// This file names every orphan in KNOWN_ORPHANS, so it must not count as a root.
+const SELF = 'tests/tools-reachability.test.mjs';
+
 export function isRoot(path) {
+  if (path === SELF) return false;
   if (path === 'package.json' || path === 'run.sh' || path === 'run.bat') return true;
   return (path.startsWith('.github/') || path.startsWith('tests/')) && TEXT_EXT.test(path);
 }
@@ -249,6 +253,14 @@ test('tools/attic, docs, src and tools/README.md are not roots and not subjects'
     'tools/d.mjs': '',
   });
   assert.deepEqual(orphanTools(files, read), ['tools/a.mjs', 'tools/b.mjs', 'tools/c.mjs', 'tools/d.mjs']);
+});
+
+test('this test file is not a root, so KNOWN_ORPHANS cannot reach its own entries', () => {
+  const { files, read } = fixture({
+    'tests/tools-reachability.test.mjs': "'tools/o.mjs',",
+    'tools/o.mjs': '',
+  });
+  assert.deepEqual(orphanTools(files, read), ['tools/o.mjs']);
 });
 
 test('workflows and composite actions are roots', () => {
