@@ -8,9 +8,15 @@ export const FLOATER_WORDS_SHOWN = Object.freeze(['hit', 'evadeFailed', 'missed'
 // Dodged and Evaded are misses, so they draw as the Missed word.
 const MISS_KINDS = Object.freeze(['dodged', 'evaded']);
 
+// On by default. Tests of the floater column's mechanics (spawn order, stagger, lift, cap) switch it off so they can
+// exercise every kind of floater; nothing in the game calls this.
+let policyOn = true;
+export function setFloaterPolicyEnabled(on) { policyOn = on !== false; }
+
 /** The callout kind to draw for `kind`, or null when the word is hidden (status:*, action:*, breaks, contests, ...). */
 export function floaterWordShown(kind) {
   const k = String(kind ?? '');
+  if (!policyOn) return k;
   if (FLOATER_WORDS_SHOWN.includes(k)) return k;
   if (MISS_KINDS.includes(k)) return 'missed';
   return null;
@@ -23,5 +29,6 @@ export function floaterWordShown(kind) {
 //           'pierce small', 'immune small'
 /** True only for HP damage numbers and Defeated: a class string whose first token is `dmg`. */
 export function floaterNumberShown(cls) {
+  if (!policyOn) return true;
   return String(cls ?? '').trim().split(/\s+/)[0] === 'dmg';
 }
