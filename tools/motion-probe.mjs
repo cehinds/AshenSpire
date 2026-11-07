@@ -208,7 +208,7 @@ if (argv.includes('--selftest')) {
       }, {
         name: 'the class canvas ignores reduced motion',
         edits: [
-          { file: 'src/ui/fx.js', find: '  if (!speed || reduced) {', replace: '  if (!speed) {' },
+          { file: 'src/ui/fx.js', find: '  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });', replace: '  const enemyTiming = actionPacing({ reduced: false, enemy: true });' },
           { file: 'src/ui/alternativeCardStage.js',
             find: "import { reducedMotionRequested } from './motion.js';",
             replace: 'const reducedMotionRequested = () => false;' },
