@@ -51,7 +51,6 @@ import { weaknessDiscoveryProblems } from './weaknessDiscovery.js';
 import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
-import { featById } from './feats.js';
 import { combatSnapshotProblems, bringStancesForward } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
@@ -267,7 +266,6 @@ export function createRunState({
     classRewardLevels: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
-    feats: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -812,6 +810,7 @@ export const RUN_SHAPE = [
   // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
   // with no picks at the migration door.
   { key: 'coreTags', type: 'array' },
+  // Retired (boons/feats are gone): an old save may still carry `feats`; it loads, nothing reads it.
   { key: 'feats', type: 'array', optional: true },
   // Plan phase 5c: the item types in hand as each boss fell, for the
   // bossWithGroup unlock; optional, written at the boss door.
@@ -1150,9 +1149,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   problems.push(...weaknessDiscoveryProblems(run.weaknessDiscovery));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
-  if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
-    if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
-  });
   problems.push(...sigilInventoryProblems(run), ...attunedSigilProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
   for (const zone of ['deck', 'sideboard', 'collection']) {
     if (Array.isArray(run[zone])) run[zone].forEach((card, i) => { if (card && typeof card === 'object') problems.push(...upgradeStepsProblems(card, `${zone}[${i}]`)); });
