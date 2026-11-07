@@ -43,34 +43,40 @@ try {
         ward:p.persistentWard.value, poise:p.persistentPoise.value, pressure:p.poiseMeter.value,
         evasionStacks:p.statuses.evade.stacks };
     }, fixture);
-    await page.locator('.combatant.player .sprite').first().click();
-    await page.locator('.combatant.player.target-hud-selected').waitFor();
-    await page.locator('.target-hud-detail[data-role="player"] .target-hud-panel').waitFor();
+    // Owner 2026-11-07: the player shows only the overhead mini HUD, never a selected panel, so nothing is clicked.
+    const rackRow = '.combatant.player .target-hud-overhead-meters .combat-health-row';
+    await page.locator(rackRow).first().waitFor({ timeout: 60000 });
+    await page.locator(rackRow + ' .combat-health-meter .m-value').first().waitFor({ state: 'visible', timeout: 60000 });
     await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
-    await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(async panel => {
+    await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(async rack => {
       let previous = '', stable = 0;
       for (let frame = 0; frame < 180 && stable < 8; frame++) {
         await new Promise(requestAnimationFrame);
-        const rect = panel.getBoundingClientRect();
+        const rect = rack.getBoundingClientRect();
         const current = [rect.x, rect.y, rect.width, rect.height].map(n => n.toFixed(2)).join(',');
         stable = current === previous ? stable + 1 : 0;
         previous = current;
       }
-      if (stable < 8) throw new Error('selected player panel did not settle');
+      if (stable < 8) throw new Error('player overhead HUD did not settle');
     });
-    const geometry = await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(panel => {
+    const geometry = await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(rack => {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
-      const detail = panel.querySelector('.target-hud-panel');
-      const hp = panel.querySelector('.combat-health-meter .m-value');
-      const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
-      const hpRow = panel.querySelector('.combat-health-row');
+      const frame = rack.closest('.combatant.player');
+      const meters = rack.querySelector(':scope > .meters');
+      const hp = rack.querySelector('.combat-health-meter .m-value');
+      const text = [...rack.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
+      const hpRow = rack.querySelector('.combat-health-row');
       const badges = [...hpRow.querySelectorAll('[data-defense-kind]:not([hidden])')].map(node => {
         const value = node.querySelector('.combat-health-badge-value');
         return { kind:node.dataset.defenseKind, value:value.textContent, label:node.getAttribute('aria-label'),
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
       });
-      return { panel:box(detail), hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
-        resourceKinds:[...panel.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
+      // The visible artwork: the battlefield publishes its ground line and visible height in screen px; the sprite box is a cross-check.
+      const groundY = Number(frame.dataset.groundY), visibleHeight = Number(frame.dataset.spriteVisibleHeight);
+      const sprite = frame.querySelector('.sprite');
+      const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
+      return { panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+        resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
         order:[...hpRow.children].filter(e => !e.hidden).map(e=>e.dataset.defenseKind || e.dataset.res).filter(Boolean), viewport:{width:innerWidth,height:innerHeight} };
