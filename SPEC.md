@@ -2677,124 +2677,53 @@ What does change for a **new** run on an existing seed: which seat the run opens
 
 ## World Journey: authored atlas and seeded routes
 
-A run mode beside Classic Climb (which keeps its progression): an authored square world map of five biomes; the seed picks a connected route.
+Run mode beside Classic Climb: authored square five-biome map; seed picks a connected route. Geography and landmarks are authored.
 
-### Route generation
-- Geography and landmark positions are authored.
-- Node budget:
-  - Initial content revision: 200 candidate nodes; profile targets 20 active.
-  - Local points do not use the world budget.
-- Three ordered anchors per journey: starting city, major city, final legacy dungeon.
-  - Profiles pin IDs or filter candidates; only selected anchors are guaranteed.
-  - Other landmarks and regions vary; visiting every region is optional.
-- Main route and alternatives have separate configurable limits.
-  - Alternatives reconnect toward the final dungeon.
-  - Cross-region junctions are authored edges.
-- Impossible profiles are rejected with an actionable reason; never silently drop anchors, ignore exclusions or change the budget.
-- Deterministic by seed, profile version and content revision.
-  - Saved manifests keep chosen node/edge IDs, encounter outcomes and content revision; resume never regenerates.
-  - A revision mismatch must be explained, not silently regenerated.
-
-### Nodes and travel
-- Stable node IDs. Inspecting never travels.
-  - Travel needs a currently available connection plus authored conditions.
-- Completion, discovery, service claims and quest state belong to the run, not content tables.
-- Terrain starts as indistinct parchment, revealed around discovered nodes.
-  - Undiscovered nodes expose no names, local maps, services or boss identities.
-- Inactive content is unavailable for the run.
-  - Completed encounters cannot be farmed.
-  - Eligible services keep stock and one-time claims.
-
-### Location dialog
-- Major landmarks are separate illustrated overlays, enlarged on hover and keyboard focus.
-  - Selecting one opens one dialog: interior map plus detail pane for the selected fixed local point.
-  - The pane follows the map on narrow screens.
-- Sites are fixed; availability may vary but sites never move.
-  - Cities: service and quest sites.
-  - Dungeons: entrance, junction, objective, boss sites.
-- Travel/Enter and service actions are explicit, separate from inspection, and only explicitly implemented ones exist.
-  - The dialog never rerolls the route or grants travel permission itself.
-- Escape closes and restores focus. Touch needs no hover.
-- Region, location and node bindings select combat scenery.
-
-### Encounters and victory
-- Resolution: node encounter, then node enemy-pool override, then region default.
-- A final dungeon needs an explicit boss encounter, never a random ordinary enemy.
-- Encounters reference the enemy registry by enemy ID. Service/quest handlers use validated named operations.
-- Gate conditions reference obtainable objectives; mandatory routes stay solvable.
-- The final selected dungeon boss ends World Journey in victory; no second procedural act.
-
-### Content tables
-- Third normal form.
-  - Maps, regions, nodes, placements, edges, assets, enemies, encounters, pools, services, quests, profiles have stable primary keys.
-  - Many-to-many uses junction tables.
-- Local region IDs derive via the owning world location; node rows copy no map or region labels.
-  - Handler bindings belong to service types, not placements.
-- CSV and JSON imports use the database's relational contract.
-  - They atomically reject duplicate keys, invalid references, unsupported rules.
-- Runtime indexes, joined view models and immutable run manifests are derived read models, not authoring sources.
-  - A content revision identifies the exact rules a run used.
+- Initial revision: 200 candidate nodes, 20 active targeted; local points use no budget.
+- Ordered anchors: starting city, major city, final legacy dungeon; profiles pin IDs or filter candidates, only selected anchors guaranteed. Other landmarks and regions vary; visiting all is optional.
+- Main route and alternatives have separate configurable limits. Alternatives reconnect toward final dungeon; cross-region junctions are authored edges. Impossible profiles are rejected with an actionable reason, never by silently dropping anchors, ignoring exclusions or changing the budget.
+- Deterministic by seed, profile version, content revision. Saved manifests keep node/edge IDs, encounter outcomes, content revision; resume never regenerates; a revision mismatch must be explained.
+- Stable node IDs. Inspecting never travels; travel needs an available connection plus authored conditions. Completion, discovery, service claims and quest state belong to the run, not content.
+- Terrain starts as parchment, revealed around discovered nodes; undiscovered nodes expose no names, local maps, services or bosses. Completed encounters cannot be farmed; eligible services keep stock and one-time claims.
+- Major landmarks are illustrated overlays, enlarged on hover/focus; selecting one opens one dialog: interior map plus detail pane (below map on narrow screens) for the selected fixed local point.
+- Fixed sites (availability may vary). Cities: service, quest. Dungeons: entrance, junction, objective, boss.
+- Travel/Enter and service actions are explicit and separate from inspection; only implemented actions exist. The dialog never rerolls the route or grants travel. Escape closes and restores focus. Touch needs no hover. Region/location/node bindings select combat scenery.
+- Encounter resolution: node encounter, then node enemy-pool override, then region default. A final dungeon needs an explicit boss encounter, never a random ordinary enemy. Encounters reference the enemy registry by ID; service/quest handlers use validated named operations. Gates reference obtainable objectives; mandatory routes stay solvable. Final selected dungeon boss ends World Journey in victory; no second act.
+- Third normal form: maps, regions, nodes, placements, edges, assets, enemies, encounters, pools, services, quests, profiles have stable primary keys; many-to-many uses junction tables.
+- Local region IDs derive via the owning world location; node rows copy no map/region labels; handler bindings belong to service types, not placements. CSV/JSON imports use the database's relational contract and atomically reject duplicate keys, invalid references, unsupported rules.
+- Runtime indexes, joined view models and immutable run manifests are derived read models, not sources. A content revision identifies a run's exact rules.
 
 ### Shared armor sets
-Four `sharedSet` outfits are in every class's Armoury after creation: one identical authored row per wearer class, on the class-scoped armor save keys. Empty unlock means owned. `sharedSet` excludes them from starting-armour selection and the exactly-one-baseline rule; existing starting outfits and saves stay valid. Equip needs the stat at 3.
+Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs stat 3.
 
-| Outfit | Stat | Bonus (`outfits.csv`, existing modifiers) |
-|---|---|---|
-| Wayfarer Plate | STR | +2 Defend Block, +4 max HP |
-| Nightweave | INT | +1 class-power Potency, +1 max Mana |
-| Rite Vestments | WIS | +1 Defend Block, +6 max HP |
-| Gutter Leathers | DEX | +1 Strike Damage, +1 max Stamina |
+Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
 
 - Tags stay in `tagging.csv`; `inventoryArtKey` picks the item illustration.
-- `sharedOutfitArt.js` picks a distinct painted sprite collection per class/outfit combination.
-  - 16 combinations, including readiness and defeat.
-  - `artClassId` plus `artKey` is the classic composited-rig fallback.
-- The card review page shows all four wearers per outfit with selectable combat poses.
+- `sharedOutfitArt.js` picks a sprite collection per class/outfit combination (16, incl. readiness, defeat); `artClassId` plus `artKey` is the classic-rig fallback.
+- Card review page shows all four wearers per outfit, with selectable combat poses.
 
 #### Notes and history
-- Bonuses are initial values, not balance-tested.
-
 Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
 
 # Legacy dungeon integration
 
-The Thorn Matriarch, Glass Regent and Furnace Saint boss entrances open their authored legacy dungeon before combat.
-- Each has 24 connected locations, two entrance roads, node lore, four paired floor/background scene plates.
-- Travel follows authored edges and requires resolving the current location. Conversations use the shared dialogue view.
-- Hostile choices enter ordinary combat and its reward/checkpoint flow.
-  - Choices and rewards cannot be repeated by revisiting.
-- Escape: roll 1-100 on the saved events RNG stream vs clamp(40 + 3 x (Dexterity - 10), 10, 85).
-  - Success retreats unresolved; failure commits combat.
-- Boss victory clears fog and enables leaving, which performs the original boss location's progression.
-- Optional `run.legacyDungeon` stores:
-  - version, dungeon/parent identifiers, current/previous nodes;
-  - visited/resolved sets, cleared state, pending choice.
-  - Saves without it keep original behavior.
-- A saved combat inside a dungeon resumes the dungeon encounter, also in World Journey.
-- Draw order: floor, background, actors, interface.
+The Thorn Matriarch, Glass Regent and Furnace Saint boss entrances open their authored legacy dungeon before combat: 24 connected locations, two entrance roads, node lore, four paired floor/background scene plates.
+- Travel follows authored edges and requires resolving current location. Conversations use the shared dialogue view; hostile choices enter ordinary combat and its reward/checkpoint flow. Choices/rewards cannot repeat.
+- Escape: 1-100 roll on the saved events RNG stream vs clamp(40 + 3 x (Dexterity - 10), 10, 85). Success retreats unresolved; failure commits combat. Boss victory clears fog and enables leaving, which performs the original boss location's progression.
+- Optional `run.legacyDungeon`: version, dungeon/parent IDs, current/previous nodes, visited/resolved sets, cleared state, pending choice. Saves without it keep original behavior.
+- Saved dungeon combat resumes the dungeon encounter, also in World Journey. Draw order: floor, background, actors, interface.
 
 #### Notes and history
-- Saves lacking `run.legacyDungeon` behave as before.
-
 Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
 
 ## New-game opening presentation
 
-Solo new games may show a configurable prologue after creation and starting draft, after map generation, before map mounting.
-- Five shipped scenes plus four empty editor slots that stay off (`PROLOGUE_DEFAULTS.scenes`, `src/model/prologue.js`).
-  - Text and presentation overrides are in the existing advanced configuration snapshot/export.
+Solo new games may show a configurable prologue after creation, starting draft and map generation, before map mounting. Five shipped scenes plus four empty editor slots that stay off (`PROLOGUE_DEFAULTS.scenes`, `src/model/prologue.js`); text and presentation overrides are in the advanced configuration snapshot/export.
 - Optional `run.prologue` = `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` - 1,reason?:'completed'|'skipped'}`.
-- Pending saves resume at the saved scene boundary.
-  - Absent or completed state never replays. Preview writes no state.
-- `settings.prologueSeen` is a profile playback preference, never gameplay RNG.
-- Skip and Set forth each complete the presentation exactly once, without selecting or resolving a node.
-- Default five-second transition and per-scene holds are independent.
-  - Final arrival waits for the player.
-  - Settings and hidden pages suspend playback.
+- Pending saves resume at saved scene; absent or completed state never replays; preview writes none. `settings.prologueSeen` is a profile playback preference, not gameplay RNG.
+- Skip and Set forth each complete it exactly once, without selecting or resolving a node. Default five-second transition and per-scene holds are independent; final arrival waits for the player; Settings and hidden pages suspend playback.
 
 #### Notes and history
-- `run.prologue` is absent on old saves.
-
 Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
 
 ## Configurable stat pools, ratings, Poise and Ward
