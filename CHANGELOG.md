@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **Reaction order and player panel** ([#2624](https://github.com/cehinds/AshenSpire/pull/2624), `0.7.3.224`). An enemy attack now shows the Hit or Miss word before your chosen reaction's animation, then the damage; on desktop the player panel stands beside your figure instead of in the right margin.
+- **Reaction order and player panel** ([#2624](https://github.com/cehinds/AshenSpire/pull/2624), `0.7.3.226`). An enemy attack now shows the Hit or Miss word before your chosen reaction's animation, then the damage; on desktop the player panel stands beside your figure instead of in the right margin.
 - **Release keeps 5 builds** ([#2623](https://github.com/cehinds/AshenSpire/pull/2623), `0.7.3.224`). The Pages site lists the 5 newest release builds instead of 10, shrinking the deploy.
 - **Combat order, enemy SP loop and Reach** ([#2620](https://github.com/cehinds/AshenSpire/pull/2620), `0.7.3.222`). Combat plays in the owner's order (cost, intent word, stance, animation, hit/miss, reaction, damage), Reach cards and most spells no longer charge a band-1 Advance (touches, grasps and spell blades stay Melee), floaters and attack animations default to 750 ms with separate enemy pacing settings, and enemies pay and lose SP visibly in their turn.
 
