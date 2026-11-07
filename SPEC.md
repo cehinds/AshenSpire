@@ -1677,23 +1677,30 @@ Ids are stable semantic names, not screen-specific markup.
 
 #### Startup Gate and Title components
 
-- `startup-gate` is a boot-scoped presentation component, not a Title variant. Its immutable model supplies wordmark copy, input-family prompts, deterministic decorative-particle records, accessibility metadata and the named reveal behavior. Its renderer owns layout and temporary event binding, consumes the one first-input owner supplied by the composition root, and uses the shared build-stamp renderer. It never imports simulation state, persists dismissal, or mounts Title controls behind itself. The mark's phone backing is transparent; content stays centered and opaque.
-- Load and New reuse one `title-menu-modal`, composed from `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`, `title-save-slot-list`, `title-modal-actions`. Each `title-save-slot` supplies `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when occupied; the actions supply `title-modal-back-control` and `title-modal-continue-control`.
-- The DOM-free `saveSlotSelectionModel` projects Load and New from the same immutable slot records and Behavior Models; selected styling, `aria-pressed`, selected-focus restoration target, primary-action availability and the load/create command payload all resolve to one slot. Save data and callbacks stay screen inputs.
-- Every modal close control paints a square at 75% of its shared icon-button box while keeping the full authored tap target for pointer, touch, keyboard and controller.
+- `startup-gate` is a boot-scoped component, not a Title variant. Its immutable model supplies wordmark copy, input-family prompts, deterministic particle records, accessibility metadata and the named reveal behavior.
+  - Its renderer owns layout and temporary event binding, consumes the one first-input owner from the composition root, and uses the shared build-stamp renderer.
+  - It never imports simulation state, persists dismissal, or mounts Title controls behind itself. The mark's phone backing is transparent; content stays centered and opaque.
+- Load and New share one `title-menu-modal`: `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`, `title-save-slot-list`, `title-modal-actions`.
+  - Each `title-save-slot` supplies `title-save-slot-copy`, `title-save-slot-state`, and `title-save-slot-delete` only when occupied; the actions supply `title-modal-back-control` and `title-modal-continue-control`.
+  - The DOM-free `saveSlotSelectionModel` projects Load and New from the same slot records and Behavior Models; selected styling, `aria-pressed`, focus restoration target, primary-action availability and command payload resolve to one slot. Save data and callbacks stay screen inputs.
+  - Every modal close control paints a square at 75% of its shared icon-button box, keeping the full authored tap target.
 
 #### Character Creation components
 
 - Ids: `character-disclosure`, `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`, `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`, `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `equipment-choice-card`, `relic-choice-card`. `class-preview-pane` composes `class-resource-grid`; `character-disclosure` composes the stat and appearance choices.
-- Hand selectors include an Empty Hand card for the unequipped state.
-- The focused choice drives the detail panel and a compact two-column grid of its starting combat cards (quantities from the current loadout). Choosing updates cards in place; the focused card lifts and enlarges over 180 ms (less movement on phones; none with reduced motion). Only the focused candidate exposes Choose/Selected and Information controls.
-- Layout: two columns of equipment choices beside the details and combat-card preview, Continue bottom-right; phones stack these areas. Title strips fit their text. Continue names the next equipment section. Automatic advancement is optional, default off.
-- Flavor is one line with an ellipsis on overflow; the complete text stays available through inspection. In card and equipment inspection, lore is one identity line (the flavor text's first paragraph); when more follows, that line ellipsizes and is a control opening the lore modal over the inspection with the whole text. Its typeface, size, spacing and slant are settings under Advanced → Text & lore.
-- These are presentation rules; starting-deck composition and unarmed fallback mechanics are unchanged.
-- A new character defaults to the Animated sprite style; an explicit style stored on an existing character is preserved.
-- `primary-stat-card` is one attribute model and disclosure renderer across Character Creation, Shrine point assignment and the Armoury. Folded face: short label, one-line summary, current value. Reveal and focus/hover tooltip: authored description plus benefits derived from stat rules and equipment gates. Art and copy arrive through content/asset inputs; screens own mutable selection state and callbacks.
-- In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the attribute face, current value, decrement/increment controls and a reveal spanning the whole row (not the face column width). Opening or reopening Assign Points is a refund boundary: every authored attribute returns to the mode baseline before the modal opens, making the full bonus pool available.
-- Shared setting rows keep one equal positive inset on all four sides; a surface does not remove individual sides.
+- Presentation only; starting-deck composition and unarmed fallback mechanics are unchanged. Hand selectors include an Empty Hand card.
+- The focused choice drives the detail panel and a compact two-column grid of its starting combat cards (quantities from the current loadout).
+  - Choosing updates cards in place; the focused card lifts and enlarges over 180 ms (less movement on phones, none with reduced motion).
+  - Only the focused candidate exposes Choose/Selected and Information.
+- Layout: two columns of equipment choices beside details and card preview, Continue bottom-right; phones stack. Title strips fit their text. Continue names the next section. Automatic advancement is optional, default off.
+- Flavor is one ellipsized line; full text via inspection. In card and equipment inspection, lore is one identity line (flavor's first paragraph); when more follows it ellipsizes and is a control opening the lore modal with the whole text. Typeface, size, spacing and slant: Advanced → Text & lore.
+- A new character defaults to the Animated sprite style; an existing character's explicit style is kept.
+- `primary-stat-card` is one attribute model and disclosure renderer for Character Creation, Shrine point assignment and the Armoury.
+  - Folded face: short label, one-line summary, current value. Reveal and focus/hover tooltip: authored description plus benefits from stat rules and equipment gates.
+  - Art and copy come from content/asset inputs; screens own selection state and callbacks.
+- `stat-allocation-row` is the invisible composition parent for the attribute face, value, decrement/increment controls and a reveal spanning the whole row.
+  - Opening or reopening Assign Points is a refund boundary: every attribute returns to the mode baseline first, making the full bonus pool available.
+- Setting rows keep one equal positive inset on all four sides.
 
 #### Shrine components
 
