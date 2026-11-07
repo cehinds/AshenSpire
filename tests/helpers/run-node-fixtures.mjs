@@ -15,7 +15,7 @@ function readFixture(rel, missing) {
   try {
     return readFileSync(resolve(ROOT, rel), 'utf8');
   } catch {
-    console.warn(missing);
+    if (missing) console.warn(missing);
     return null;
   }
 }
@@ -25,11 +25,12 @@ function readFixture(rel, missing) {
 export async function loadRunNodeFixtures() {
   // The art manifest is written by tools/equipment-blender.py and records the
   // fields the renderer ACTUALLY read.
-  const manifestMissing = '  (no art manifest — test 33 will skip; run tools/equipment-blender.py)';
-  const manifestText = readFixture('asset-data/equipment/manifest.json', manifestMissing);
+  // A missing or unparsable manifest returns null; tests/run-node.mjs prints the
+  // warning, which names the tool (tools/gatelist.mjs reads run-node's text).
+  const manifestText = readFixture('asset-data/equipment/manifest.json', null);
   let artManifest = null;
   if (manifestText !== null) {
-    try { artManifest = JSON.parse(manifestText); } catch { console.warn(manifestMissing); }
+    try { artManifest = JSON.parse(manifestText); } catch { /* reported by the caller */ }
   }
 
   // Test 49 asks whether a path the game CONSTRUCTS resolves to a real file.
