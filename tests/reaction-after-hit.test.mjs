@@ -101,3 +101,15 @@ test('a dodged first hit, then two landed hits: Miss, reaction animation, DODGED
     assert.deepEqual(seq.slice(3), ['word:hit', 'float:-5', 'word:hit', 'float:-6'], JSON.stringify(seq));
   });
 });
+test('a reaction that cancels the attacker leaves the next enemy move whole, after the reaction', t => {
+  // No contactPrepared on the next move: it is not the attack the prompt offered, so nothing is split.
+  const next = { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'stab', kind: 'attack' };
+  const events = [...reaction, next, ...hitOf(7)];
+  const beats = groupBeats(events);
+  assert.ok(!beats.some(beat => beat.resultSaid || beat.carried), 'no split');
+  assert.equal(beats.findIndex(beat => beat.actorId === 'player') < beats.findIndex(beat => beat.actorId === 'e1'), true);
+  drive(t, events, timeline => {
+    assert.ok(when(timeline, 'anim:player') < when(timeline, 'anim:e1'), 'the reaction plays first, then the second move plays whole (own swing)');
+    assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1);
+  });
+});

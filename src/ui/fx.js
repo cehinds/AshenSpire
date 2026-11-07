@@ -1096,7 +1096,7 @@ function reactionAfterResult(beats) {
     let j = i;
     while (beats[j + 1] && reactionCardBeat(beats[j + 1])) j++;
     const attack = beats[j + 1];
-    const at = attack && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(e => RESULT_TYPES.has(e.type)) : -1;
+    const at = attack && attack.prepared && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(e => RESULT_TYPES.has(e.type)) : -1;
     if (at < 0) { out.push(...beats.slice(i, j + 1)); i = j; continue; }
     const result = attack.events.slice(0, at + 1), rest = attack.events.slice(at + 1);
     const lead = (attack.lead || []).filter(e => result.includes(e));
