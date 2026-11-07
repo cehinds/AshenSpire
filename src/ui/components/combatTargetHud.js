@@ -163,26 +163,6 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
   const desired = () => targetHudDesiredIds({ entries: entries.values(), eligible, focused, hover, focusWithin });
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
-  // The inspect door without a panel (owner 2026-11-07: the selected HUD is gone): a double click, a double tap or a half-second
-  // hold on a figure that is not a target at that moment opens the inspect panel. A series that began as a target press never does.
-  const figureAt = event => { const frame = event.target.closest?.('.combatant:not(.dead)'); return frame && entries.has(frame.dataset.eid) ? frame : null; };
-  let figureSeries = null, figureHold = null;
-  const clearFigureHold = () => { clearTimeout(figureHold); figureHold = null; };
-  listen(field, 'pointerdown', event => {
-    clearFigureHold();
-    const frame = figureAt(event); if (!frame || !event.isPrimary || event.button !== 0) return;
-    const id = frame.dataset.eid, wasTarget = !!onActivate && eligible.includes(id);
-    if (!figureSeries || figureSeries.id !== id || performance.now() - figureSeries.time > 500) figureSeries = { id, time: performance.now(), wasTarget };
-    else figureSeries.wasTarget ||= wasTarget;
-    if (!wasTarget && canInspect()) figureHold = setTimeout(() => { figureHold = null; figureSeries = null; if (canInspect()) inspect(id, frame); }, 500);
-  }, true);
-  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) listen(field, type, clearFigureHold, true);
-  listen(field, 'pointermove', event => { if (figureHold && (event.movementX || event.movementY) && Math.hypot(event.movementX, event.movementY) > 8) clearFigureHold(); }, true);
-  listen(field, 'dblclick', event => {
-    const frame = figureAt(event), series = figureSeries; figureSeries = null; clearFigureHold();
-    if (!frame || !series || series.id !== frame.dataset.eid || series.wasTarget || !canInspect()) return;
-    inspect(frame.dataset.eid, frame);
-  });
   function gate() {
     const next = targetHudEnabled({ formFactor: document.documentElement.dataset.formFactor,
       layout: combat.dataset.layout || 'formation' }, config);
