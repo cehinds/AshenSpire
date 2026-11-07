@@ -70,3 +70,16 @@ test('the report leads with the request and lists PASS/FAIL', () => {
   assert.match(md, /^# QA sandbox report\n\n## Request\n\n> REQ/);
   assert.match(md, /PASS ok/); assert.match(md, /FAIL FAILURE PRESENT/); assert.match(md, /Result: FAIL/);
 });
+
+test('the shipped example spec is valid', async () => {
+  const { readFileSync } = await import('node:fs');
+  const ex = JSON.parse(readFileSync(new URL('../docs/qa/acceptance.example.json', import.meta.url), 'utf8'));
+  assert.deepEqual(validateSpec(ex), []);
+});
+
+test('consoleErrors ignores listed noise', () => {
+  const c = { kind: 'consoleErrors', max: 0, ignore: ['navigator\\.vibrate'] };
+  assert.equal(evaluateCheck(c, { errors: ['Blocked call to navigator.vibrate'] }).holds, true);
+  assert.equal(evaluateCheck(c, { errors: ['Blocked call to navigator.vibrate', 'TypeError: x'] }).holds, false);
+  assert.match(validateCheck({ kind: 'consoleErrors', label: 'l', ignore: 'x' }, 'c').join(), /ignore must be/);
+});

@@ -50,7 +50,10 @@ export function validateCheck(check, where) {
     case 'within': need('selector', 'container'); break;
     case 'noOverlap': need('a', 'b'); break;
     case 'style': need('selector', 'prop'); if (typeof check.equals !== 'string') errs.push(`${where}: style needs equals`); break;
-    case 'consoleErrors': if (check.max != null && !Number.isFinite(check.max)) errs.push(`${where}: max must be a number`); break;
+    case 'consoleErrors':
+      if (check.max != null && !Number.isFinite(check.max)) errs.push(`${where}: max must be a number`);
+      if (check.ignore != null && !(Array.isArray(check.ignore) && check.ignore.every(isStr))) errs.push(`${where}: ignore must be an array of regex strings`);
+      break;
   }
   return errs;
 }
@@ -127,8 +130,11 @@ export function evaluateCheck(check, facts) {
     }
     case 'style': return { holds: facts.value === check.equals, detail: `${check.prop} = ${JSON.stringify(facts.value)}` };
     case 'consoleErrors': {
-      const n = (facts.errors || []).length, max = check.max ?? 0;
-      return { holds: n <= max, detail: n ? `${n} error(s): ${facts.errors[0].slice(0, 80)}` : 'none' };
+      // `ignore`: regex strings for known browser-policy noise (e.g. a blocked navigator.vibrate) that is not a page fault
+      const skip = (check.ignore || []).map((r) => new RegExp(r));
+      const errs = (facts.errors || []).filter((e) => !skip.some((r) => r.test(e)));
+      const max = check.max ?? 0;
+      return { holds: errs.length <= max, detail: errs.length ? `${errs.length} error(s): ${errs[0].slice(0, 80)}` : 'none' };
     }
     default: return { holds: false, detail: `unknown kind ${check.kind}` };
   }
