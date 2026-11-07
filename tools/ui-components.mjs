@@ -716,7 +716,8 @@ export function findings(r) {
       // (src/ui/kit/index.js `el`), which spells the same attribute as
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
+        || r.startupGate.includes(`data-component="\${UI.${id.replace(/-(\w)/g, (_, c) => c.toUpperCase())}}"`))
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))

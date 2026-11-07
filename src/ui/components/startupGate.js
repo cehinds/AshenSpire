@@ -10,6 +10,7 @@
 
 import { buildStampHtml } from './buildstamp.js';
 import { esc } from './tooltip.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { el, html, eyebrow, ornament } from '../kit/index.js';
 
 function isActivation(input) {
@@ -53,17 +54,17 @@ export function mountStartupGate(app, {
 
   const { properties, accessibility } = model;
   const particleHtml = properties.particles.map((particle) => (
-    `<span class="startup-ash" data-component="startup-ash-particle" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
+    `<span class="startup-ash" data-component="${UI.startupAshParticle}" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
   )).join('');
 
   app.innerHTML = `
-    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
+    <section class="screen startup-gate" data-component="${UI.startupGate}" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="tower-scene" aria-hidden="true">
         <div class="tower-exterior"><div class="tower-city-unlit"></div><div class="tower-city-lit"></div></div>
         <div class="tower-hall"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
       </div>
-      <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
+      <div class="startup-ash-field" data-component="${UI.startupAshField}" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}
       ${buildStampHtml('startup')}
     </section>`;

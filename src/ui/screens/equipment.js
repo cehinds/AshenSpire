@@ -607,7 +607,7 @@ function inventoryReveal(registries, row, {
   let startComparisonPreview = null;
   let endComparisonPreview = null;
   if (comparison) {
-    el.dataset.component = 'armoury.comparisonTooltipAnchor';
+    el.dataset.component = UI.armouryComparisonTooltipAnchor;
     el.tabIndex = 0;
     const actionVerb = action?.textContent?.trim() || 'equip this item';
     const actionInstruction = cardOwnsAction
