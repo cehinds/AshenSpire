@@ -329,15 +329,6 @@ export function addPurchasedCardToDeck(registries, run, instanceId, settings = {
   const moved = addPurchasedCardToDeckDraft(registries, draft, instanceId, settings);
   Object.assign(run, draft); return moved;
 }
-/** movePurchasedCardToLibrary(...) → true when moved. Deck to library for exactly that instance (a Master art lands in the deck);
- *  a card not in the deck throws code 'notCard' and the run is untouched; no other card moves. */
-export function movePurchasedCardToLibrary(registries, run, instanceId) {
-  if (!(run.deck || []).some(card => card?.instanceId === instanceId)) throw deckAddProblem('notCard', 'That card is not in your deck');
-  const draft = structuredClone(run);
-  if (!moveToSideboard(registries, draft, instanceId)) throw deckAddProblem('limit', 'This card cannot leave the deck right now');
-  syncZones(draft);
-  Object.assign(run, draft); return true;
-}
 export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');

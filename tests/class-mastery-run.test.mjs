@@ -15,7 +15,6 @@ import { masteryRowId } from '../src/model/classMastery.js';
 import { awardClassXp, initialClassTreeChoices, pickInitialClassTreeNode } from '../src/model/classTree.js';
 import { claimBankedSkillLevel, skillFeatOptions, takeSkillFeat, xpToNext } from '../src/model/skills.js';
 import { swapRunClass } from '../src/model/classSwap.js';
-import { trainingPlan, redistributePlan } from '../src/model/master.js';
 import { bookLessons } from '../src/model/bookLearning.js';
 import { skillBookReadPlan, commitSkillBookRead, consumableText } from '../src/model/consumables.js';
 import { equipClassCard } from '../src/model/classLibrary.js';
@@ -205,8 +204,6 @@ test('swap uses the new class mastery and no back-dated reward queue', () => {
   swapRunClass(reg, run, 'herald');
   assert.deepEqual(run.skills['class:herald'], { xp: 12, level: 5, pendingDrafts: 0 });
   assert.equal(run.classRewardLevels.herald, 5);
-  assert.equal(trainingPlan(reg, run, 'class:herald').ok, false);
-  assert.equal(redistributePlan(reg, run, 'class:herald', 1).ok, false);
 });
 
 test('books and sealed/draft content use complete tables and malformed mastery saves are refused', () => {

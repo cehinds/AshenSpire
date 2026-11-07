@@ -44,5 +44,5 @@ sprite policy. High-resolution assets, animation sequences, timing and
 display rules are unchanged by that alignment.
 
 Browser evidence is in `docs/preview/book-library/`. Validation tools:
-`tools/book-art-browser.mjs`, `tools/book-library-built-browser.mjs`,
+`tools/book-art-browser.mjs`, `tools/attic/book-library-built-browser.mjs`,
 `tools/book-learning-browser.mjs`, and `tests/book-art.test.mjs`.

@@ -54,19 +54,6 @@ for (const path of ['src/ui/components/hand.js', 'src/ui/screens/reward.js', 'sr
   ok(/actionOwnsTouch/.test(read(path)), `${path} keeps actionOwnsTouch (no selecting beat to spend)`);
 }
 
-// ---- the merchant's burn grew the green button the others already had -------
-const shop = read('src/ui/screens/shop.js');
-ok(/shop-burn-confirm/.test(shop), 'the burn grid has a confirm button');
-ok(/cardinspectionselect/.test(shop), 'it is lit by the shared selection event, not a second idea of selection');
-ok(/burnConfirm\.dataset\.burnState/.test(shop), 'its state is readable by an instrument');
-ok(/t\('shop\.burn\.idle'\)/.test(shop) && /t\('shop\.burn\.ready'/.test(shop),
-  'its copy is a row in uiStrings.csv, not a literal');
-
-const strings = read('content/source/uiStrings.csv');
-for (const id of ['shop.burn.idle', 'shop.burn.ready']) {
-  ok(strings.includes(`\n${id},`), `${id} is authored`);
-}
-
 console.log(`PASS ${checks}/${checks}; every card owes two beats and the selection grids keep the first`);
 
 // A REPAINT MAY DESTROY ONLY WHAT IT DREW.

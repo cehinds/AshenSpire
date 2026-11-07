@@ -70,7 +70,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| What shops sell and how often | `shops.json` | Prices and stock sizes are in `balanceShop.json`. Core's shop offers are the pack's `shops.json`. |
+| What shops sell and how often | `shops.json` | Prices and stock sizes are in `balanceShop.json`. Core's shop offers are the pack's `shops.json`; of the engine's `shops.json`, only the `blacksmith` table is read in play (the market and master tables were retired with the legacy shops). |
 | Consumable books and tokens | `consumableBooks.json`, `consumableTokens.json` | Class skill books are also made from `classes.json`. |
 | Flasks (potions) | `flasks.json` | Seven rows. |
 | Relics | `relics.json` | The relic's combat effect is a separate rule: a row in `nodes.csv`, `nodeEffects.json` and `tagging.csv` that shares the relic's id. |

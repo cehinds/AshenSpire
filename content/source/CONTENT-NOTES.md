@@ -354,6 +354,8 @@ File header: src/content/encounters/reach.js — The Cinder Reach encounter pool
 
 ## Shops (content/source/shops.json)
 
+**Legacy removed (2026-11-07).** The classic merchant, the market, the wise master and the legacy blacksmith services were removed from the engine (SPEC §14.2 to §14.5): only Core ships. Core reads the `blacksmith` table (its allow-listed offerings, `CORE_BLACKSMITH_OFFERINGS`) and the shop validation; the `market`, `master`, `masters` and `kindWeights` data below is kept only so existing validation and Settings rows resolve, and nothing in play reads it. The bullets on the market, its additions, the master and the kind roll describe that retained data, not live behaviour.
+
 File header (was the comment block at the top of src/content/shops.js): the three shop kinds and what each one offers (SPEC §14.2). `shops.json` is the single export `shops`; `kindWeights`, `market`, `blacksmith`, `master` and `masters` keep their old shape.
 
 - **`$note`** — every `[NOTE]` block of the old module is the string key `"$note"` in the JSON, same value shape; content-build wraps the export in `withNotes(...)` (src/content/noteKeys.js), which turns each back into the `Symbol.for('ashenspire.balance.note')` key. The notes are the sentences Settings → Advanced → Shops shows. validateContent refuses a numeric leaf without one, by name. Generic offering notes (`enabled`, `chance`, `weight`) and the shared conditional/stockKey sentences were copied into each offering's `$note` in full when the `offering()` helper was inlined.

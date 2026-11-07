@@ -11,11 +11,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
-import {
-  BLACKSMITH_SERVICES, CORE_BLACKSMITH_OFFERINGS, blacksmithWithholds, blacksmithOffers,
-  refinePlan, commitRefine, sigilSlotPlan, commitSigilSlot, sigilInstallPlan, stackCopyPlan, commitStackCopy,
-  blacksmithExtractPlan, blacksmithInstallPlan, blacksmithUpgradePlan,
-} from '../src/model/blacksmith.js';
+import { BLACKSMITH_SERVICES, CORE_BLACKSMITH_OFFERINGS, blacksmithWithholds, blacksmithOffers, blacksmithUpgradePlan } from '../src/model/blacksmith.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
 import '../src/engine/runCombat.js';
@@ -23,7 +19,6 @@ import '../src/engine/runCombat.js';
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 
 function smithRun(registries) {
   const run = createRunState({ seed: 41, classId: 'reaver', registries, runId: 'bs-core-offers' });
@@ -43,37 +38,20 @@ test('Core Blacksmith stock offers the five Core offerings and no Smithing Stone
   assert.equal(run.shopStock.smithStones, undefined);
 });
 
-test('Legacy Blacksmith stock is unchanged: every service is still offered', () => {
-  const run = smithRun(legacyOut);
-  for (const id of BLACKSMITH_SERVICES) assert.ok(run.shopStock.offerings.includes(id), id);
-});
+// What a legacy Blacksmith used to lay out; the code that sold them is gone, an old saved stock may still name them.
+const RETIRED_OFFERINGS = ['refineStones', 'sigilSlots', 'sigils', 'extractArt', 'installArt', 'stackCopy', 'smithStones'];
 
-test('Core withholds every legacy service, even when an old saved stock lists it', () => {
+test('Core withholds every retired offering, even when an old saved stock lists it', () => {
   const run = smithRun(coreOut);
-  run.shopStock.offerings = [...BLACKSMITH_SERVICES, ...CORE_BLACKSMITH_OFFERINGS, 'smithStones'];
-  for (const id of BLACKSMITH_SERVICES) assert.equal(blacksmithWithholds(run, id), !CORE_BLACKSMITH_OFFERINGS.includes(id), id);
+  run.shopStock.offerings = [...RETIRED_OFFERINGS, ...CORE_BLACKSMITH_OFFERINGS];
+  for (const id of RETIRED_OFFERINGS) { assert.equal(blacksmithWithholds(run, id), true, id); assert.equal(blacksmithOffers(run, id), false, id); }
   assert.equal(blacksmithWithholds(run, 'armaments'), false, 'the tiered rack is a Core offering');
-  assert.equal(blacksmithWithholds(run, 'smithStones'), true);
   for (const id of CORE_BLACKSMITH_OFFERINGS) assert.equal(blacksmithOffers(run, id), true, id);
-  for (const id of BLACKSMITH_SERVICES.filter((s) => !CORE_BLACKSMITH_OFFERINGS.includes(s))) assert.equal(blacksmithOffers(run, id), false, id);
+  for (const id of BLACKSMITH_SERVICES) assert.equal(blacksmithWithholds(run, id), false, id);
 });
 
-test('Core withheld services refuse to plan and to commit', () => {
+test('Core Blacksmith upgrade has no refined purse', () => {
   const run = smithRun(coreOut);
-  run.shopStock.offerings = [...BLACKSMITH_SERVICES];
-  run.sigils = [];
-  const refine = refinePlan(coreOut, run);
-  assert.equal(refine.ok, false);
-  assert.throws(() => commitRefine(coreOut, run, refine), /not offering/);
-  const cut = sigilSlotPlan(coreOut, run, 'armament/greatsword');
-  assert.equal(cut.ok, false);
-  assert.throws(() => commitSigilSlot(coreOut, run, cut), /not offering/);
-  assert.equal(sigilInstallPlan(coreOut, run, 'armament/greatsword', 0, 'x').ok, false);
-  const stack = stackCopyPlan(coreOut, run, 'core.strike');
-  assert.equal(stack.ok, false);
-  assert.throws(() => commitStackCopy(coreOut, run, stack), /not offering/);
-  assert.equal(blacksmithExtractPlan(coreOut, run, 'armament/greatsword', 'x').ok, false);
-  assert.equal(blacksmithInstallPlan(coreOut, run, 'armament/greatsword', 'x', 'y').ok, false);
   assert.equal(blacksmithUpgradePlan(coreOut, run, 'armament/greatsword', { purse: 'refined' }).ok, false);
   assert.equal(blacksmithUpgradePlan(coreOut, run, 'armament/greatsword').ok, true);
 });
@@ -81,7 +59,7 @@ test('Core withheld services refuse to plan and to commit', () => {
 test('Core Blacksmith screen draws only the Core services, even for an old saved stock, and no raw ids', () => {
   const run = smithRun(coreOut);
   run.sigils = [];
-  run.shopStock.offerings = [...BLACKSMITH_SERVICES, 'armaments', 'smithStones', 'weaponArts', 'rankUp'];
+  run.shopStock.offerings = [...RETIRED_OFFERINGS, ...BLACKSMITH_SERVICES, 'armaments', 'weaponArts'];
   run.shopStock.smithStones = { price: 10, left: 3 };
   withKitDom((dom) => {
     const app = dom.document.createElement('main');
