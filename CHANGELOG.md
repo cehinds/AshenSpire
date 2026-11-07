@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Selected HUD removed** ([#2654](https://github.com/cehinds/AshenSpire/pull/2654), `0.7.4.24`). Selecting or targeting a combatant no longer opens the larger HUD panel; every combatant keeps its mini HUD, and double-click, double-tap or hold opens the inspect panel.
 - **Legacy class mastery removed** ([#2651](https://github.com/cehinds/AshenSpire/pull/2651), `0.7.4.22`). Removed the legacy class mastery run and profile, class respec and the Level Up feats and class-upgrade settings; Core plays the same.
 - **Behind the scenes: the automatic version bump counts each release once, and dev is back on 0.7.4** ([#2650](https://github.com/cehinds/AshenSpire/pull/2650), `0.7.4.20`). This is a tooling-only change, and nothing you play changes. This morning's release cut bumped the version twice because the bump tool only noticed its own newest record; it now reads them all, and the owner reset the working version from 0.7.5 to 0.7.4, so the next release cut ships as 0.7.4 and the version after it is 0.7.5.
 - **Legacy shops removed** ([#2648](https://github.com/cehinds/AshenSpire/pull/2648), `0.7.4.18`). Removed the legacy merchant, market, wise master and legacy Blacksmith services; Core's shop and Blacksmith are unchanged.

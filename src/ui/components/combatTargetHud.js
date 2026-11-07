@@ -264,8 +264,6 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const color = entry?.auraColor || '#e4cd59';
       setData(frame, 'matchup', matchup); setData(frame, 'matchupActive', active); setVar(frame, '--combat-matchup-color', color);
       const toggle = (name, on) => { if (frame.classList.contains(name) !== on) frame.classList.toggle(name, on); };
-      toggle('target-hud-selected', next.has(id));
-      toggle('target-hud-focused', id === focused || id === hover);
       toggle('target-hud-candidate', eligible.includes(id));
     }
     if (created) placedKey = null;
