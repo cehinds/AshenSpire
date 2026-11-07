@@ -1357,7 +1357,11 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   if (shotCombatVersion !== null && !['1', '2'].includes(shotCombatVersion)) {
     throw new Error('shotCombatVersion must be 1 or 2');
   }
-  const combatExpansionVersion = legacyArcaneShot || shotCombatVersion === '1' ? 1 : 2;
+  // The legacy shotCombatVersion / shotKnowledgeVersion / shotReactionVersion
+  // overrides shape only a legacy profile's run; Core 2 owns its combat rules
+  // (createRunState and createCombat), so they never reach a configured run.
+  const configuredProfile = isConfiguredRun(gameProfile);
+  const combatExpansionVersion = !configuredProfile && (legacyArcaneShot || shotCombatVersion === '1') ? 1 : 2;
   const shotKnowledgeVersion = shotState === 'combat' ? shotParams.get('shotKnowledgeVersion') : null;
   if (shotKnowledgeVersion !== null && !['0', '1'].includes(shotKnowledgeVersion)) {
     throw new Error('shotKnowledgeVersion must be 0 or 1');
@@ -1376,12 +1380,15 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
-  if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
+  // Core 2 keeps breakMeterVersion 2 (its run is expanded whatever the shot asks).
+  if (legacyArcaneShot && !configuredProfile) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot, null, gameProfile);
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
+    gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion,
+    enemyKnowledgeVersion: configuredProfile ? undefined : enemyKnowledgeVersion,
+    reactionRulesVersion: configuredProfile ? undefined : reactionRulesVersion,
   });
   // Core 2 creation: the deck edited on the review step (a beginDeckEdit snapshot) replaces the starting deck piles.
   if (deckEdit && isConfiguredRun(run)) cancelDeckEdit(run, deckEdit);

@@ -1,6 +1,7 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
 import { upgradeStepsProblems } from './cardUpgrade.js';
 import { compactRun, expandStoredRun } from './runStorage.js';
 import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
@@ -174,6 +175,16 @@ export function createRunState({
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const profileSubject = { gameProfile };
   const configured = isConfiguredRun(profileSubject);
+  // A configured profile (Core 2) fights expanded combat with the profile's own
+  // reaction rules whatever the caller asked — engine/combat.js createCombat
+  // forces the same — so the run and every checkpoint its fights write agree.
+  // A run born v1 against a v2 fight failed validation at the load door and
+  // was archived (tools/slot-load-door.mjs, 2026-11-07).
+  if (configured) {
+    combatExpansionVersion = 2;
+    const reactions = configuredModule(profileSubject, 'reactions');
+    reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
+  }
   if (configured) enemyKnowledgeVersion = null;
   if (!gameProfileClassAvailable(profileSubject, profileMeta, classId)) throw new Error(`Class '${classId}' is locked in this profile`);
   const fixedAttributes = gameModule(profileSubject, 'class-selection')?.mode === 'configured' ? gameProfileAttributes(profileSubject, classId) : null;
