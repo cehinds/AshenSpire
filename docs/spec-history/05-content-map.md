@@ -36,3 +36,14 @@ Archive of rationale, dates and superseded values moved out of SPEC.md by the co
 - "Every event is a real trade-off, StS-style."
 - Quest chains heading: "(E12, #257)"; completion heading: "(plan phase 10a, proposal §7.5)".
 
+### From §6 Map generation
+
+- Floor anchors, measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (4.00 → 0.00 nodes per act, 24 seeds); `noEliteOrShrineBefore: 6` (the single gate the two anchors replaced) gated 36 % of a 15-floor act and 56 % of a 10-floor one; `15: 'shrine'` never fired at any shipped act length because floor 15 is not rollable.
+- `restBeforeElite`: E13, Constantine asked for a rest "so eletes, maybe shop, and definitely before a boss"; before-a-boss the top-floor Shrine always kept, before-elites nothing did (124 of 180 maps over the canonical seed stream carried an Elite with no Shrine below it; 0 of 180 now). A single `noEliteOrShrineBefore` opened rests and Elites on the same floor, so a rest could never sit below the first Elite. Enforcing only where the generator relaxes was not enough: 10 of 40 maps broke the promise via a fixed Elite rank. It moved the shortest act from 4 floors to 7.
+- `minElites` "was called `minReachableElites` and never measured reachability"; numbers not restated because "three homes carried three different samples within a day of each other".
+- Unknown weights: "It was `balance.unknownNode`, a flat global that could not vary per act".
+- Node counts: "the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed". A tool that generates one map and reports a number has said nothing.
+- Core preview route "(owner, 2026-10-18)". Core branched map "(owner, 2026-10-25)"; `maxBranches` Core cap 3 "(owner, 2026-10-27)".
+- Owner quotes, 2026-10-27: "I noticed that the map seems to re[group] at rest points, it should be branching trees without rejoining. so one starting point, but 1-3 separate branches", then "it can remerge but not consistently". Sub-branches: "Refull potions between acts, each branching path should also branch but join into one boss. So 3 main branches each with a boss but those sub branches can branches too", clarified as: main branch count stays 1-3.
+- Measured over 200 seeds x 3 acts: 71.6% of branches open with one node (all two-lane branches, half of three-lane ones), 1.26 fork edges and 3.8 distinct paths per branch, remerge 17.7% of eligible gaps.
+- Rewards: card choice count "(owner, 2026-11-05)"; merchant prices "(the old rune prices ×3)".

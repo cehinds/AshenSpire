@@ -1623,32 +1623,126 @@ Governs event rolls on Unknown nodes, the M2 launch events, event data shape, qu
 
 ## 6. Map generation
 
-Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
+Governs act-map generation (`engine/mapgen.js`; every constant comes from `content/mapconfig.js`), the Core branched act map, and post-combat rewards and merchant prices. Faithful to StS's published algorithm, simplified where invisible to the player.
 
-- Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
-- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (shipped `entries: 1` puts every path in one entrance column; the first 2 paths start at distinct columns only when `entries` is unset); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
-- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
+### Grid and paths
 
-  | anchor | resolves to |
-  |---|---|
-  | `{ at: 'first' }` | floor 1 |
-  | `{ at: 'last' }` | the last rollable floor (`floors`-1) |
-  | `{ at: 'floor', index: n }` | `n` — **an error** if outside 1..`floors`-1 |
-  | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
+- Per act: a **`floors` × `columns`** grid (shipped 12 × 7).
+  - The top floor is always a single Shrine row and the Boss sits above it, typed before any rule runs.
+  - Floors a rule can reach are **1..`floors`-1**: the **rollable band**, the denominator for every fraction below.
+- Generate **6 paths** bottom-to-top.
+  - Each starts at a random column on floor 1. Shipped `entries: 1` puts every path in one entrance column; the first 2 paths start at distinct columns only when `entries` is unset.
+  - Each step moves to column −1/0/+1 on the next floor. Edges may merge but must not cross (swap targets when a crossing would occur).
 
-  `resolveFloorPlan()` is the **only** place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution, so they cannot disagree about what a rule meant. An anchor that will not resolve is a **boot error naming the entry** (Law 1 clause 5) and `mapgen` throws rather than generating an unauthored map.
-- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Shrine before `noShrineBefore` (`{ at: 'fraction', of: 0.27 }` → floor 3), no Elite before `noEliteBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
-- **`restBeforeElite`: a map that holds an Elite holds a Shrine on some EARLIER floor.** E13 — Constantine asked for a rest "so eletes, maybe shop, and definitely before a boss"; before-a-boss the top-floor Shrine always kept, before-elites nothing did (**124 of 180 maps over the canonical seed stream carried an Elite with no Shrine below it**; 0 of 180 now). It is why the gate is TWO anchors and not one: a single `noEliteOrShrineBefore` opened rests and Elites on the same floor, so a rest could never sit below the first Elite, and the schema now REJECTS that key rather than reading it as both. Kept the way the counts are kept — the roll is barred, and a final step on **every** exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot. Enforcing it only where the generator relaxes was not enough: a **fixed Elite rank** bypasses every gate (`typeOnce` assigns fixed ranks before any rule runs) and can satisfy `minElites` on its own, so the relax path never ran — 10 of 40 maps broke the promise that way. Two arrangements are boot errors instead, because the generator cannot fix them for itself: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all. A **fixed Shrine** below the Elite gate is itself the rest and needs no floor held free. Two things it does not claim: it is a fact about the GRAPH, not a path — a walker may still route past the rest to an Elite, and `tools/mapplan.mjs` measures how often rather than this line promising otherwise — and it moved the shortest act these rules describe from 4 floors to 7, which narrows the debug run-shape cap.
-- **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
-- **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
-- **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
-- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Sealstone Key** relic, `?` nodes render their resolved type.
-- **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
+### Floor anchors
+
+Every floor a rule names is an ANCHOR, never an index (an absolute floor number changes meaning when `floors` changes).
+
+- The closed set of anchor kinds lives in `model/floorplan.js`; a new kind is an engine change (Law 1).
+
+| Anchor | Resolves to |
+|---|---|
+| `{ at: 'first' }` | floor 1 |
+| `{ at: 'last' }` | the last rollable floor (`floors`-1) |
+| `{ at: 'floor', index: n }` | `n`; an error if outside 1..`floors`-1 |
+| `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
+
+- `resolveFloorPlan()` is the only place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution.
+- An anchor that will not resolve is a boot error naming the entry (Law 1 clause 5), and `mapgen` throws rather than generating an unauthored map.
+
+### Node typing
+
+- Fixed ranks: Monster at `{ at: 'first' }`; Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape).
+- Remaining nodes are rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster.
+- Constraints:
+
+| Constraint | Anchor | Shipped floor |
+|---|---|---|
+| No Shrine before `noShrineBefore` | `{ at: 'fraction', of: 0.27 }` | 3 |
+| No Elite before `noEliteBefore` | `{ at: 'fraction', of: 0.43 }` | 5 |
+| No Shrine on `noShrineOn` | `{ at: 'last' }` | 11 |
+
+  - No two identical non-Monster types adjacent along an edge.
+  - **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act.** If violated, regenerate typing (map RNG stream, bounded retries), then relax the weakest constraint.
+- **`restBeforeElite`:** a map that holds an Elite holds a Shrine on some EARLIER floor.
+  - The gate is TWO anchors (`noShrineBefore`, `noEliteBefore`); the schema REJECTS the single `noEliteOrShrineBefore` key.
+  - The roll is barred, and a final step on every exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot.
+  - Fixed ranks bypass every gate (`typeOnce` assigns them before any rule runs), so the check runs on every exit path, not only where the generator relaxes.
+  - Two arrangements are boot errors: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all.
+  - A fixed Shrine below the Elite gate is itself the rest and needs no floor held free.
+  - It is a fact about the GRAPH, not a path: a walker may still route past the rest to an Elite. `tools/mapplan.mjs` measures how often.
+  - The shortest act these rules describe is 7 floors; this narrows the debug run-shape cap.
+- **`minElites` counts nodes in the graph; it is not a reachability promise.**
+  - A fraction of starts can reach no Elite at the shipped shape, and the fraction grows as the act shortens.
+  - `node tools/mapplan.mjs` measures and prints it on every run; nothing gates on it, and making the generator honour it is an open design call.
+- What a `?` node resolves to is `mapConfigs[act].unknownWeights` (per act, beside the geometry; §5.6).
+
+### Claims about generated maps
+
+- Any claim about generated maps is a distribution, never a seed. Node-count mean and range are not restated in this spec; `tools/mapplan.mjs` prints them at the current shape.
+- Stops per run is exactly **`floors` + 1** at every shape measured (a formula).
+- `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
+
+### Player view and camera
+
+- The player sees the full act map; only nodes connected by an edge from the current node are clickable.
+  - With the **Sealstone Key** relic, `?` nodes render their resolved type.
+- **Map camera.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch and pen.
+  - **Settings → Advanced → Interface → Two-axis map dragging** is on by default; off restores vertical-only travel and keeps the horizontal camera centred.
+  - Zoom reset recentres the current decision in either mode; the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
-- The Core preview route (configured routes module) opens on a fight: `firstFloor: fight`, rests on floors 3 and 6, the whole map visible (owner, 2026-10-18); the legacy fixed-Monster rule above is the Current profile's.
-- **Core branched act map (owner, 2026-10-25; `buildGameProfileActMap`, `routes.maxBranches`).** The configured Core route has nine pre-boss depths with rests on depths 3, 6 and 9. Depth 1 is ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest when authored so) whose edges reach the first lane(s) of every branch, so the player picks a branch straight after it; with `routes.startNodeRefills` (default true) it carries `refill: true`, and entering it restores HP to max and refills both flask pools (a graph without the field does nothing new). The branch count is `b = rng.int('map', 1, min(maxBranches, distinct bosses))`, so it grows with the boss pool up to `maxBranches`, which Core caps at 3 (owner, 2026-10-27; the engine allows at most 5); the bosses are the first `b` of a seeded shuffle of the pool, hence distinct. From depth 2 each branch is its own subgraph inside up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5, so the board is at most `2 * branchColumns` columns wide), a tree with a rest node of its own in every lane that exists on a rest depth, at least one elite in every lane that exists at or past `minimumThreatFloor` on a non-rest depth (the guarantee is per lane, not per path: a remerge edge can carry a path past a lane's elite; a lane with no such depth has none), and its own boss `boss_k`. Edges after depth 1 never leave a branch, so the rests before each boss are that branch's own. **Branching trees, no forced rejoin (owner, 2026-10-27):** the owner said "I noticed that the map seems to re[group] at rest points, it should be branching trees without rejoining. so one starting point, but 1-3 separate branches", then "it can remerge but not consistently". So `maxBranches` is 3 in Core and a rest depth never forces a merge (every lane that exists has its own rest). **Sub-branches (owner, 2026-10-27):** "Refull potions between acts, each branching path should also branch but join into one boss. So 3 main branches each with a boss but those sub branches can branches too", clarified as: the main branch count stays 1-3 (never forced to 3). So each main branch is a tree, not parallel lanes: it opens narrow at depth 2 with ONE node, or TWO when it has three lanes (a 50% `map` draw), then forks outward over the next depths, each boundary node drawing `FORK_PERCENT` (40%) per depth to grow a new neighbouring lane, forced so the branch is full by depth `prebossNodes - 3` (depth 6 in Core); over the last two depths a three-lane branch may narrow once (25%, an outer lane's node joins its neighbour), never below two lanes, so once a branch has widened it never collapses back to one path (before its first fork the trunk may be a single path, rest depths included); a one-lane branch (b of 4-5) stays a single path. Every path ends at the branch's boss. On top of the tree, per branch and per gap between two in-branch depths one `map` draw (18%) may add ONE remerge edge between neighbouring lanes that exist on both depths, so a node forks and its neighbour gains a second parent; that is rare, seeded, and a branch never remerges into every rest depth. Measured over 200 seeds x 3 acts: 71.6% of branches open with one node (all two-lane branches, half of three-lane ones), 1.26 fork edges and 3.8 distinct paths per branch, remerge 17.7% of eligible gaps. A lane's nodes, ids and columns stay `n{depth}_{branchIndex * L + lane}` and `branch * L + lane`, so a lane that does not exist at a depth has no node there. `bossId` is `boss_0`, `bossIds` lists every branch's boss, `shrineIds` lists every pre-boss rest of every branch (one per lane that exists on that depth; `shrineId` is the first), and each node carries `branch` (null on shared depth 1). The first boss beaten ends the act. A profile without `maxBranches` keeps the single-trunk map and a stored graph is never regenerated, so older saves load as they were. Falsified by `tests/game-profile-map.test.mjs` (distinct bosses, narrow openings, outward forks, rests per existing lane, no collapse at rests, rare remerges over 200 seeds, per-lane elite, branch-local edges, reachability, identical replays) and `tests/core-rest-sites.test.mjs`.
+- The Core preview route (configured routes module) opens on a fight: `firstFloor: fight`, rests on floors 3 and 6, the whole map visible. The fixed-Monster rule above is the Current profile's.
 
-Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 to 5 (a random count per combat door, `rewards.combatOfferCount` {min 3, max 5}, rolled on `cardRewards`; chests and level cards keep 3) (owner, 2026-11-05) at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic. A solo boss victory offers up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`src/main.js`, `rollRelicChoices` on the `relicRewards` stream; one left gives a single `relicId`) and the player picks one; auto-collect picks one at random from the unowned options, and with auto-collect off an unpicked choice is left behind. Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
+### Core branched act map
+
+`buildGameProfileActMap`, `routes.maxBranches`. A profile without `maxBranches` keeps the single-trunk map; a stored graph is never regenerated, so older saves load as they were.
+
+- **Shape.** Nine pre-boss depths, rests on depths 3, 6 and 9.
+  - Depth 1 is ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest when authored so); its edges reach the first lane(s) of every branch.
+  - With `routes.startNodeRefills` (default true) it carries `refill: true`: entering it restores HP to max and refills both flask pools.
+- **Branch count** `b = rng.int('map', 1, min(maxBranches, distinct bosses))`.
+  - Core caps `maxBranches` at 3 (the engine allows at most 5). The main branch count is 1–3, never forced to 3.
+  - Bosses are the first `b` of a seeded shuffle of the pool, hence distinct. The first boss beaten ends the act.
+- **Lanes.** From depth 2 each branch is its own subgraph inside up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes.
+  - L is 3, 3, 2, 1, 1 for b = 1..5; the board is at most `2 * branchColumns` columns wide.
+  - Edges after depth 1 never leave a branch, so the rests before each boss are that branch's own.
+- **Branching trees, no forced rejoin.** A rest depth never forces a merge.
+  - Every lane that exists on a rest depth has its own rest node.
+  - At least one elite in every lane that exists at or past `minimumThreatFloor` on a non-rest depth. The guarantee is per lane, not per path (a remerge edge can carry a path past a lane's elite); a lane with no such depth has none.
+- **Sub-branches.** Each main branch is a tree, not parallel lanes.
+  - It opens narrow at depth 2 with ONE node, or TWO when it has three lanes (a 50% `map` draw).
+  - It then forks outward: each boundary node draws `FORK_PERCENT` (40%) per depth to grow a new neighbouring lane, forced so the branch is full by depth `prebossNodes - 3` (depth 6 in Core).
+  - Over the last two depths a three-lane branch may narrow once (25%, an outer lane's node joins its neighbour), never below two lanes. Once widened, a branch never collapses back to one path (before its first fork the trunk may be a single path, rest depths included).
+  - A one-lane branch (b of 4–5) stays a single path. Every path ends at the branch's boss.
+- **Remerge.** Per branch and per gap between two in-branch depths, one `map` draw (18%) may add ONE remerge edge between neighbouring lanes that exist on both depths, so a node forks and its neighbour gains a second parent.
+  - Rare and seeded; a branch never remerges into every rest depth.
+- **Ids.** A lane's nodes, ids and columns are `n{depth}_{branchIndex * L + lane}` and `branch * L + lane`; a lane that does not exist at a depth has no node there.
+  - `bossId` is `boss_0`; `bossIds` lists every branch's boss (`boss_k`).
+  - `shrineIds` lists every pre-boss rest of every branch (one per lane that exists on that depth); `shrineId` is the first.
+  - Each node carries `branch` (null on shared depth 1).
+- Falsified by `tests/game-profile-map.test.mjs` (distinct bosses, narrow openings, outward forks, rests per existing lane, no collapse at rests, rare remerges over 200 seeds, per-lane elite, branch-local edges, reachability, identical replays) and `tests/core-rest-sites.test.mjs`.
+
+### Rewards after combat and merchant prices
+
+- Cinders: Monster 45–75, Elite 105–150, Boss 225–270.
+- Card reward at the §15.1 schedule.
+  - Shipped: 10% chance per won fight (`balance.rewards.cardRewards.chancePct`).
+  - Choose 1 of 3 to 5: a random count per combat door (`rewards.combatOfferCount` {min 3, max 5}, rolled on `cardRewards`); chests and level cards keep 3.
+  - Default rarity odds: common 60% / uncommon 35% / rare 5%; Elite 45/40/15. A class's own reward weights may override.
+- Flask roll (§5.5). Elites additionally drop a relic.
+- Solo boss victory: offers up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`src/main.js`, `rollRelicChoices` on the `relicRewards` stream; one left gives a single `relicId`); the player picks one.
+  - Auto-collect picks one at random from the unowned options.
+  - With auto-collect off, an unpicked choice is left behind.
+- Merchant prices, in cinders: cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase).
+- All numbers: `balance.js`.
+
+#### Notes and history
+
+- Anchors, not floor indexes, exist because absolute floors silently change meaning when `floors` changes; the generator, validator and `tools/mapplan.mjs` share one resolution.
+- Map figures (node counts, elite reachability) are measured by `tools/mapplan.mjs`, never restated here.
+- Core route owner rulings: branching trees without forced rejoin; sub-branches; `maxBranches` 3.
+
+Full history: [docs/spec-history/05-content-map.md](docs/spec-history/05-content-map.md).
 
 ---
 
