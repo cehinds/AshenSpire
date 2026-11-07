@@ -1362,7 +1362,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
   if (combat.combatExpansionVersion === 2) {
-    Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
+    if (!configuredCombat(combat)) Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
     if (poolAfter.drawPerTurn !== undefined) {
       // Core's equipment attributes already priced the delta above. The legacy
@@ -1482,7 +1482,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   }).value);
 
   if (combat.combatExpansionVersion === 2) {
-    Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
+    if (!configuredCombat(combat)) Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
     if (poolAfter.drawPerTurn !== undefined) {
       // Core's equipment attributes already priced the delta above. The legacy
