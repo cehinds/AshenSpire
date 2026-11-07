@@ -1093,6 +1093,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
+        ac: acFor(combat, entity),
         skillLabel: 'Active skills & stance',
         abilities,
         skills: abilities,
@@ -1951,7 +1952,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // WCF2 ordered active stack (models/CombatantStackModel.js): HP, other
     // resources, buildup by fill, stance, icons; at most five rows. Buildup
     // that does not fit joins the icon row as a ring pip.
-    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id);
+    // Poise is hidden on the HUD (owner 2026-11-07); the inspect panel keeps it. It is never drawn, so it must not take a stack row.
+    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id).filter((id) => id !== 'poise');
     if (entity.kind === 'enemy' && arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents)) resources.push('arcaneExposure');
     const icons = Object.entries(v.statuses || {}).filter(([sid, inst]) => {
       const def = registries.statuses.get(sid);
@@ -2170,7 +2172,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const procPlan = entity.kind === 'enemy' ? procDisplayPlan(entity) : null;
     const stackHidden = new Set(procPlan ? procPlan.hidden : []);
     const expanded = combat.combatExpansionVersion === 2;
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp'));
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => bar.id !== 'poise' && !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp')); // Poise is hidden on the HUD (owner 2026-11-07); the inspect panel keeps it.
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),

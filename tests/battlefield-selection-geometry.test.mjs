@@ -71,7 +71,7 @@ test('glyph-only detailed selection coalesces overhead placement; inspection and
   const releaseStart = source.indexOf('  const release = () => {', end);
   const releaseEnd = source.indexOf('\n  detachObserver.observe', releaseStart);
   const noop = () => {}, observer = { disconnect: noop };
-  Object.assign(scope, { releaseBackdrop: noop, releaseLayeredEnvironment: noop, frameRequest: 0, trackingRequest: 0,
+  Object.assign(scope, { releaseBackdrop: noop, releaseLayeredEnvironment: noop, frameRequest: 0, trackingRequest: 0, rackRequest: 0, rackObserver: observer,
     resizeObserver: observer, layoutObserver: observer, poseObserver: observer, reducedMedia: null, reducedSettingObserver: observer,
     reconcileReducedMotion: noop, window: { removeEventListener: noop }, document: {}, fontsLoaded: noop,
     detachObserver: observer, releaseActiveStage: null });

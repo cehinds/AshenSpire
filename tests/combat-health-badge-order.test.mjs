@@ -15,28 +15,28 @@ test('the model orders badges Block, Poise, Evade, Ward, Precision, Counter, Ref
 });
 
 test('three badges all show, with no overflow badge', () => withKitDom(() => {
-  const values = { defense: 5, poise: 3, evasion: 2 };
+  const values = { defense: 5, evasion: 2, ward: 4 };
   assert.equal(visibleBadges(combatHealthModel(values).badges).overflow, null);
   const row = combatHealthRow(hp(), values, { tooltips: false });
-  assert.deepEqual(kinds(row), ['shield', 'poise', 'evade']);
+  assert.deepEqual(kinds(row), ['shield', 'evade', 'ward']);
   assert.equal(row.querySelector('.combat-health-overflow'), null);
 }));
 
 test('five badges show the first two plus a +3 overflow badge, and the model keeps all five', () => withKitDom(() => {
-  const values = { defense: 5, poise: 3, evasion: 2, ward: 4, precision: 3 };
+  const values = { defense: 5, evasion: 2, ward: 4, precision: 3, counterStacks: 2 };
   assert.equal(combatHealthModel(values).badges.length, 5);
   const split = visibleBadges(combatHealthModel(values).badges);
-  assert.deepEqual(split.shown.map(b => b.kind), ['shield', 'poise']);
+  assert.deepEqual(split.shown.map(b => b.kind), ['shield', 'evade']);
   assert.equal(split.overflow.label, '+3');
   const row = combatHealthRow(hp(), values, { tooltips: false });
-  assert.deepEqual(kinds(row), ['shield', 'poise', 'overflow']);
+  assert.deepEqual(kinds(row), ['shield', 'evade', 'overflow']);
   const node = row.querySelector('.combat-health-badge.combat-health-overflow');
   assert.equal(node.dataset.defenseKind, 'overflow');
   assert.equal(node.querySelector('.combat-health-badge-value').textContent, '+3');
 }));
 
 test('the overflow aria-label and tooltip list the hidden badges as "label value"', () => withKitDom(() => {
-  const values = { defense: 5, poise: 3, evasion: 2, ward: 4, precision: 3 };
+  const values = { defense: 5, evasion: 2, ward: 4, precision: 3, counterStacks: 2 };
   const badges = combatHealthModel(values).badges;
   const row = combatHealthRow(hp(), values, { tooltips: false });
   const aria = row.querySelector('.combat-health-overflow').getAttribute('aria-label');
@@ -84,37 +84,41 @@ test('AC is the hit preview\'s Evasion for the player, follows Evade stacks, and
   assert.ok(more.value > ac.value && more.evade > 0, 'Evade stacks raise AC');
 });
 
-test('the player row draws the AC badge with the number; an enemy row does not; the tooltip text carries title, rule and parts', () => withKitDom(() => {
+test('the player row draws no AC badge or caption (owner 2026-11-07), and the model still carries AC for the inspect panel', () => withKitDom(() => {
   const combat = fixture();
   const ac = acFor(combat, combat.player);
   const row = combatHealthRow(hp(), { defense: 2, ac }, { tooltips: false });
-  const node = row.querySelector('.combat-health-ac');
-  assert.equal(node.querySelector('.combat-health-badge-value').textContent, String(ac.value));
-  assert.equal(row.firstChild.dataset.acCaption, '', 'the AC caption heads the badge row');
-  assert.equal(row.firstChild.nextSibling, node, 'the AC badge is first in the badge row, right after its caption');
-  assert.match(node.getAttribute('aria-label'), new RegExp(`AC ${ac.value} \\(Evasion\\)\\. Enemies hit when d20 \\+ their Precision ≥ ${ac.value}\\.`));
-  assert.equal(row.querySelector('.combat-health-ac-caption').textContent, 'AC');
-  const enemyRow = combatHealthRow(hp(), { defense: 2, ac: acFor(combat, combat.enemies[0]) }, { tooltips: false });
-  assert.equal(enemyRow.querySelector('.combat-health-ac'), null);
+  assert.equal(row.querySelector('.combat-health-ac'), null);
+  assert.equal(row.querySelector('.combat-health-ac-caption'), null);
+  assert.equal(row.querySelector('[data-defense-kind="ac"]'), null);
+  assert.ok(Number.isFinite(ac.value), 'acFor is unchanged');
+}));
+
+test('no Poise badge, overlay, trim or tooltip on the HP row, even warded (owner 2026-11-07)', () => withKitDom(() => {
+  const row = combatHealthRow(hp(), { defense: 2, poise: 7, poiseMax: 10, maxHp: 20, wardStacks: 2 }, { tooltips: true, persistent: true });
+  assert.equal(row.querySelector('[data-defense-kind="poise"]'), null);
+  assert.equal(row.querySelector('.combat-health-poise-overlay'), null);
+  assert.equal(row.querySelector('.combat-health-meter').dataset.poised, 'false');
+  assert.doesNotMatch(row.querySelector('.combat-health-meter .m-value').getAttribute('aria-label'), /Poise/);
 }));
 
 test('the player Block takes the square slot before the bar; with no Block the slot is absent; enemies keep Block in the stack', () => withKitDom(() => {
   const combat = fixture();
   const ac = acFor(combat, combat.player);
-  const row = combatHealthRow(hp(), { defense: 7, poise: 3, evasion: 2, ac }, { tooltips: false });
+  const row = combatHealthRow(hp(), { defense: 7, evasion: 2, ac }, { tooltips: false });
   const block = row.querySelector('.combat-health-block-slot');
   assert.equal(block.dataset.defenseKind, 'shield');
   assert.equal(block.querySelector('.combat-health-badge-value').textContent, '7');
   assert.match(block.getAttribute('aria-label'), /Block 7/);
   assert.equal(block.nextSibling, [...row.children].find(c => c.classList.contains('combat-health-meter')), 'Block sits right before the bar, a sibling');
-  assert.deepEqual([...row.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['caption', 'ac', 'poise', 'evade', 'shield', 'hp']);
-  const none = combatHealthRow(hp(), { defense: 0, poise: 3, ac }, { tooltips: false });
+  assert.deepEqual([...row.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['evade', 'shield', 'hp']);
+  const none = combatHealthRow(hp(), { defense: 0, evasion: 2, ac }, { tooltips: false });
   assert.equal(none.querySelector('.combat-health-block-slot'), null);
   assert.equal(none.querySelector('[data-defense-kind="shield"]'), null);
-  assert.deepEqual([...none.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['caption', 'ac', 'poise', 'hp'], 'zero Block: caption and AC still lead the badge row, the bar follows alone');
+  assert.deepEqual([...none.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['evade', 'hp'], 'zero Block: no square slot, the bar follows the badges');
   const enemy = combatHealthRow(hp(), { defense: 7, poise: 3 }, { tooltips: false });
   assert.equal(enemy.querySelector('.combat-health-block-slot'), null);
-  assert.deepEqual(kinds(enemy), ['shield', 'poise']);
+  assert.deepEqual(kinds(enemy), ['shield']);
 }));
 
 test('outside FixCore there is no AC badge (the hit roll is not a fixed DC there)', () => {

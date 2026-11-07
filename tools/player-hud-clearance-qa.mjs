@@ -1,23 +1,25 @@
 #!/usr/bin/env node
 // Geometry and screenshots from the real screenshot route and mountCombat.
+// Measures the player's overhead mini HUD (owner, 2026-11-07: no selected panel; Poise and AC are not drawn): its HP row, defense
+// badges and the clearance between the rack's bottom edge and the top of the player's visible artwork (SPEC: fixed 10 px gap).
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const playwright = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const chromium = playwright.chromium || playwright.default.chromium;
 const out = resolve(process.env.HUD_QA_OUT || 'outputs/player-hud');
 mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with deterministic remaining protection and Evasion stacks. Not a recorded playthrough.', views: [], failures: [] };
+const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with fixed Block, Evasion, Ward and Precision values, measured on the overhead mini HUD of the player (no selected panel; Poise and AC are not drawn). Not a recorded playthrough.', views: [], failures: [] };
 const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tablet',820,1180],['small',320,740]];
 // Expected values are independent fixture facts, not the UI protection model.
-// Pressure deliberately differs from remaining Poise so the old bar cannot pass.
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
-    // Owner 2026-11-01: order Block, Poise, Evade, Ward, Precision; three slots, so the first two show and `+3` lists the rest.
-    expected:[['ac',null],['poise','4'],['overflow','+3'],['shield','12']], hidden:['Evade 2','Arcane Ward 5','Precision 3'], ac:true },
+    // Three slots in the model order Block, Evade, Ward, Precision (no Poise or AC): Evade and the +2 show in the row, Block takes the square slot beside the bar; the first two show and `+2` lists the rest.
+    expected:[['evade','2'],['overflow','+2'],['shield','12']], hidden:['Arcane Ward 5','Precision 3'], ac:false },
   // The legacy (`current`) Ward case was dropped with the retired profile (owner, 2026-11-04: Core 2 only).
 ];
 try {
@@ -34,43 +36,47 @@ try {
       const { fixCoreEnabled } = await import('/src/model/fixCoreMechanics.js');
       p.block = 12; p.wardBlock = fixture.wardBlock; p.barrier = fixture.barrier;
       p.persistentWard = { value: 5, max: 5 };
-      p.persistentPoise = { value: 4, max: 20 };
-      p.poiseMeter = { value: 17, max: 31 };
       p.statuses = { ...p.statuses, evade: { stacks: 2 }, precision: { stacks: 3 } };
       window.__renderCombatForShot();
       return { fixCore:fixCoreEnabled(combat), version:combat.combatExpansionVersion,
         hp:`${p.hp}/${p.maxHp}`, block:p.block, wardBlock:p.wardBlock, barrier:p.barrier,
-        ward:p.persistentWard.value, poise:p.persistentPoise.value, pressure:p.poiseMeter.value,
+        ward:p.persistentWard.value,
         evasionStacks:p.statuses.evade.stacks };
     }, fixture);
-    await page.locator('.combatant.player .sprite').first().click();
-    await page.locator('.combatant.player.target-hud-selected').waitFor();
-    await page.locator('.target-hud-detail[data-role="player"] .target-hud-panel').waitFor();
+    // Owner 2026-11-07: the player shows only the overhead mini HUD, never a selected panel, so nothing is clicked.
+    const rackRow = '.combatant.player .target-hud-overhead-meters .combat-health-row';
+    await page.locator(rackRow).first().waitFor({ timeout: 60000 });
+    await page.locator(rackRow + ' .combat-health-meter .m-value').first().waitFor({ state: 'visible', timeout: 60000 });
     await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
-    await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(async panel => {
+    await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(async rack => {
       let previous = '', stable = 0;
       for (let frame = 0; frame < 180 && stable < 8; frame++) {
         await new Promise(requestAnimationFrame);
-        const rect = panel.getBoundingClientRect();
+        const rect = rack.getBoundingClientRect();
         const current = [rect.x, rect.y, rect.width, rect.height].map(n => n.toFixed(2)).join(',');
         stable = current === previous ? stable + 1 : 0;
         previous = current;
       }
-      if (stable < 8) throw new Error('selected player panel did not settle');
+      if (stable < 8) throw new Error('player overhead HUD did not settle');
     });
-    const geometry = await page.locator('.target-hud-detail[data-role="player"]').first().evaluate(panel => {
+    const geometry = await page.locator('.combatant.player .target-hud-overhead-meters').first().evaluate(rack => {
       const box = e => { const r=e.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; };
-      const detail = panel.querySelector('.target-hud-panel');
-      const hp = panel.querySelector('.combat-health-meter .m-value');
-      const text = [...panel.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
-      const hpRow = panel.querySelector('.combat-health-row');
+      const frame = rack.closest('.combatant.player');
+      const meters = rack.querySelector(':scope > .meters');
+      const hp = rack.querySelector('.combat-health-meter .m-value');
+      const text = [...rack.querySelectorAll('[data-meter-row="resource"] :is(.m-label,.m-value)')].filter(e => e !== hp && e.getBoundingClientRect().width);
+      const hpRow = rack.querySelector('.combat-health-row');
       const badges = [...hpRow.querySelectorAll('[data-defense-kind]:not([hidden])')].map(node => {
         const value = node.querySelector('.combat-health-badge-value');
         return { kind:node.dataset.defenseKind, value:value.textContent, label:node.getAttribute('aria-label'),
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
       });
-      return { panel:box(detail), hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
-        resourceKinds:[...panel.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
+      // The visible artwork: the battlefield publishes its ground line and visible height in screen px; the sprite box is a cross-check.
+      const groundY = Number(frame.dataset.groundY), visibleHeight = Number(frame.dataset.spriteVisibleHeight);
+      const sprite = frame.querySelector('.sprite');
+      const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
+      return { panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+        resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
         order:[...hpRow.children].filter(e => !e.hidden).map(e=>e.dataset.defenseKind || e.dataset.res).filter(Boolean), viewport:{width:innerWidth,height:innerHeight} };
@@ -82,28 +88,29 @@ try {
       assert.equal(facts.fixCore, fixture.fixCore, name+': the authored ruleset is active');
       assert.equal(facts.version, 2, name+': expanded protection is active');
       assert.equal(geometry.hpText.replace(/\s/g,''), facts.hp, name+': HP remains its exact health fraction');
-      // The AC square shows its own number (the engine's Evasion DC), so only its presence and label are fixture facts here.
-      const seen = geometry.badges.map(({kind,value})=>[kind, kind === 'ac' ? null : value]);
-      assert.deepEqual(seen, fixture.expected, name+': Block, remaining Poise and the +N overflow, in the owner order');
+      const seen = geometry.badges.map(({kind,value})=>[kind, value]);
+      assert.deepEqual(seen, fixture.expected, name+': Block, Evade and the +N overflow, in the owner order');
       const overflow = geometry.badges.find(badge=>badge.kind==='overflow');
-      assert.equal(overflow.label, fixture.hidden.join(', '), name+': the overflow lists exact Evasion stacks, Ward and Precision');
-      assert.equal(geometry.hasAc, fixture.ac, name+': the player AC badge is present exactly under the FixCore ruleset');
-      if (fixture.ac) assert.match(geometry.badges.find(badge=>badge.kind==='ac').label, /^AC \d+ \(Evasion\)\. Enemies hit when d20 \+ their Precision ≥ \d+\./, name+': AC label');
-      assert.equal(geometry.acCaptions, fixture.ac ? 1 : 0, name+': the AC caption accompanies the AC badge');
+      assert.equal(overflow.label, fixture.hidden.join(', '), name+': the overflow lists exact Ward and Precision');
+      assert.equal(geometry.hasAc, fixture.ac, name+': the player AC badge is not drawn');
+      assert.equal(geometry.acCaptions, 0, name+': no AC caption is drawn');
       assert.deepEqual(geometry.resourceKinds.filter(kind=>kind!=='hp'), [], name+': no extra pressure/resource bar replaces a defense badge');
       for (const badge of geometry.badges) {
-        assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'evade', ac:'ac' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);
-        assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': selected '+badge.kind+' value is visible');
+        assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'ward' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);
+        assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': '+badge.kind+' value is visible');
         assert.ok(Math.abs(badge.box.width-badge.box.height) < 1, name+': '+badge.kind+' retains its square aspect');
-        assert.ok(badge.box.left >= geometry.panel.left && badge.box.right <= geometry.panel.right && badge.box.top >= geometry.panel.top && badge.box.bottom <= geometry.panel.bottom, name+': '+badge.kind+' fits panel');
+        assert.ok(badge.box.left >= geometry.panel.left && badge.box.right <= geometry.panel.right && badge.box.top >= geometry.panel.top && badge.box.bottom <= geometry.panel.bottom, name+': '+badge.kind+' fits the overhead HUD');
       }
       const text = [...geometry.text, ...geometry.badges.map(badge=>({text:badge.label,box:badge.valueBox}))];
       for (const t of text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
-      assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
-      assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
+      assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits the overhead HUD');
+      assert.ok(geometry.rack.left >= 0 && geometry.rack.right <= width && geometry.rack.top >= 0 && geometry.rack.bottom <= height, name+': overhead HUD fits viewport');
+      // SPEC: the mini HUD sits above the visible artwork with a fixed 10 screen-pixel bottom-to-art-top gap.
+      assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
+      assert.ok(geometry.art.top - geometry.rack.bottom >= 10 - 0.5, name+': overhead HUD bottom sits at least 10px above the art top (gap '+(geometry.art.top - geometry.rack.bottom).toFixed(2)+')');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
-      assert.deepEqual(geometry.order, fixture.ac ? ['ac','poise','overflow','shield','hp'] : ['shield','poise','overflow','hp'], name+': defense order');
+      assert.deepEqual(geometry.order, ['evade','overflow','shield','hp'], name+': defense order');
       assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
