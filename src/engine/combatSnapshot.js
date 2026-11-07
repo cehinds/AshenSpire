@@ -90,11 +90,6 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
-    // SPEC §4.11: the Combat Rounds Preview's whole round record (rules, queues, momentum, charges).
-    // Absent with the preview off, so an off-mode save has no new key.
-    ...(combat.combatRounds ? { combatRounds: combat.combatRounds } : {}),
-    // SPEC §4.11: the normal fight's momentum toggles and state. Absent when both toggles are off.
-    ...(combat.normalPreview ? { normalPreview: combat.normalPreview } : {}),
     ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
       ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
@@ -109,7 +104,6 @@ export function serializeCombatSnapshot(combat) {
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
-    ...(combat.recovery ? { recovery: combat.recovery } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -229,8 +223,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
-    ...(saved.combatRounds ? { combatRounds: saved.combatRounds } : {}),
-    ...(saved.normalPreview ? { normalPreview: saved.normalPreview } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
@@ -243,8 +235,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     // Absent on a snapshot written before Play in deck order: that fight shuffles.
     orderedDraw: saved.orderedDraw || null,
-    // Absent on a fight built at the default recovery settings.
-    ...(saved.recovery ? { recovery: saved.recovery } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),

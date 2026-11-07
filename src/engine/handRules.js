@@ -70,10 +70,7 @@ export function endTurnCardFate(ctx, card) {
 export function discardChoicePlan(ctx) {
   if (configuredCombat(ctx)) return { cards: [], minimum: 0, maximum: 0, prompt: false };
   if (!ctx.handRules) return { cards: [], minimum: 0, maximum: 0, prompt: false };
-  // A card queued on the Combat Rounds Preview (SPEC §4.11) leaves the hand in the round's commit, which
-  // runs before the live turn-end hand rules. It is therefore not kept and not owed a discard here.
-  const queued = new Set((ctx.combatRounds?.playerQueue ?? []).map(record => record.instanceId));
-  const cards = ctx.piles.hand.filter(card => !queued.has(card.instanceId) && endTurnCardFate(ctx, card) === 'keep');
+  const cards = ctx.piles.hand.filter(card => endTurnCardFate(ctx, card) === 'keep');
   const capacity = scaledCards(handRow(ctx.handRules, 'handSize'), ctx.attributes, ctx.characterLevel);
   const minimum = ctx.handRules.overflow === 'discard' ? Math.max(0, cards.length - capacity) : 0;
   const optional = ctx.handRules.retain && ctx.handRules.promptDiscard;

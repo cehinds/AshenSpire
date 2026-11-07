@@ -77,7 +77,6 @@ test('a tap on a playable card plays it only when its target is unambiguous (own
   assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
   assert.doesNotMatch(wire, /lastConfirmTap|performance\.now\(\)/, 'no timing window: the tap after the selecting tap carries no timestamp');
   assert.match(wire, /if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}\s*(?:\/\/[^\n]*\n\s*)*play\(\);\s*\};/, 'with one-tap off the first tap selects and the NEXT tap on the selected card plays, however long after (owner 14:15)');
-  assert.match(wire, /const tap = \(\) => \{\s*\/\/[^\n]*\n\s*if \(isRoundQueued\(inst\.instanceId\)\) \{ unqueueCard\(inst\.instanceId\); return; \}/, 'a queued card still unqueues first');
   assert.match(read('../src/ui/screens/settings.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
 });
 

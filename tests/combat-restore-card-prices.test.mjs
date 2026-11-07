@@ -6,7 +6,6 @@ import { playingCardModel } from '../src/model/playingCard.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
-import { COMBAT_ROUNDS_KEY, combatRoundsFor } from '../src/model/combatRounds.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
 
@@ -16,9 +15,7 @@ const staminaRestore = { id: 'funded-stamina-fixture', name: 'Funded Stamina', t
   tags: ['camp:physical', 'maneuver:defend'],
   effects: [{ op: 'gainEnergy', target: 'self', amount: 2, funded: 2 }],
   textTemplate: 'Gain {gainEnergy} Stamina.' };
-const queuedManaCard = { ...staminaRestore, id: 'queued-mana-fixture', cost: 1, manaCost: 2,
-  effects: [{ op: 'block', target: 'self', amount: 1 }], textTemplate: 'Gain {block} Block.' };
-const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, staminaRestore, queuedManaCard] });
+const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, staminaRestore] });
 
 function fixture(cardId, { version, discount = 0 }) {
   const ref = { cardId, instanceId: 'restore' };
@@ -36,26 +33,6 @@ function fixture(cardId, { version, discount = 0 }) {
   const play = () => dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId });
   return { combat, owner, ref, preview, play };
 }
-
-test('Combat Rounds restore badges respect discounts held by other queued cards', () => {
-  const combat = createCombat({ registries, rng: createRng(11), combatExpansionVersion: 2,
-    combatRounds: combatRoundsFor({ [COMBAT_ROUNDS_KEY]: true }), enemyIds: ['wanderingSoldier'],
-    player: { classId: 'starseer', hp: 80, maxHp: 80, mana: 2, maxMana: 10,
-      stamina: 10, maxStamina: 10, energyMax: 10, drawPerTurn: 2, orderedDraw: true,
-      deck: [{ cardId: queuedManaCard.id, instanceId: 'held' }, { cardId: 'attune', instanceId: 'restore' }] } });
-  const ref = { cardId: 'attune', instanceId: 'restore' };
-  grantAbilityCharge(combat.player, { key: 'held-discount', manaDiscount: 1 });
-  const manaBadge = () => playingCardModel(registries, ref, { preview: previewCard(combat, 'restore') }).costs.mana;
-  assert.equal(manaBadge(), 0, 'a free discount lowers the full price');
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'held' });
-  assert.deepEqual(combat.combatRounds.playerQueue[0].claims, ['held-discount']);
-  assert.equal(manaBadge(), 1, 'Attune cannot borrow another queued card’s held discount');
-  assert.equal(cardPlayCosts(combat, 'restore').mana, 1, 'the reserved discount cannot reduce upfront Mana payment');
-  dispatch(combat, { type: 'unqueueCard', cardInstanceId: 'held' });
-  assert.equal(manaBadge(), 0, 'unqueuing releases the discount');
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'restore' });
-  assert.equal(manaBadge(), 0, 'a card retains its own queued discount');
-});
 
 for (const version of [1, 2]) {
   for (const cardId of ['attune', 'emberCommunion']) for (const discount of [0, 1, 3]) {

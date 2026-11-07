@@ -32,7 +32,7 @@ ok(/discardBeatRender\(\)/.test(flushPath) && /\brender\(\)/.test(flushPath), 'a
 const finish = between('const finishPlayback = () => {', 'showPendingDiscard();');
 ok(/discardBeatRender\(\)/.test(finish) && /\bfinishRender\(\)/.test(finish) && !/\brender\(\)/.test(finish),
   'a finished playback ends with the incremental finishRender, not the full render');
-const finishRender = between('  function finishRender() {', "  // The Combat Rounds Preview's additions");
+const finishRender = between('  function finishRender() {', "  // The follow-up symbols and the stance outline (SPEC §4.9, §4.6a).");
 ok(/globalThis\.__perfCount\?\.\('finishRender'\)/.test(finishRender), 'finishRender reports itself to the perf counters');
 ok(/if \(moved\) \{[^}]*flushGeometry\(\)[^}]*battlefieldStage\.refresh\(\)/.test(finishRender),
   'the tools measure and the battlefield fit are conditional on something having moved');

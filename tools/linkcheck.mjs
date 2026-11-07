@@ -85,9 +85,9 @@ const PARSED = { n: 0 };
 // The walk IS the denominator. Exclusions are named with reasons, because an
 // omission is not an answer.
 const ROOTS = ['src', 'engine', 'tools', 'tests'];
-// Docs modules that tests import (tests/combat-rounds-round.test.mjs reads the
-// alternative-combat-rounds timeline). They are not walked as denominator, but
-// the self-test copy must carry them or the baseline links red with ENOENT.
+// Docs files that tests read (tests/hit-tables.test.mjs reads the
+// alternative-combat-rounds CSVs). They are not walked as denominator, but
+// the self-test copy must carry them or the baseline fails with ENOENT.
 const COPIED_EXTRA = ['docs/alternative-combat-rounds'];
 const SKIP_DIRS = new Set([
   'node_modules',   // none in this tree, and not ours to link

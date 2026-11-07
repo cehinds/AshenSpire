@@ -48,8 +48,7 @@ export function counterBaseEvasion(ctx, entity) {
   const armour = pieces.find(piece => piece.kind === 'armor');
   const equippedRules = ctx.combatExpansionRules?.equipment || combatExpansionEquipment;
   const armourRule = armour && (equippedRules.armour?.[`${entity.classId}:${armour.id}`] || equippedRules.sharedArmour?.[armour.id]);
-  const tables = ctx.combatRounds?.rules?.tables?.evasionArmor;
-  const armor = tables ? new Map(Object.entries(tables)) : armorDefaults;
+  const armor = armorDefaults;
   const explicit = entity?.evasionArmor || armour?.evasionArmor;
   const materialTag = (armour?.tags || []).find(tag => tag.startsWith('material:'))?.slice(9);
   const material = materialTag && [...armor.keys()].find(key => key.toLowerCase() === materialTag.toLowerCase());

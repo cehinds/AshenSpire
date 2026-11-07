@@ -30,7 +30,6 @@ export function setReactionsEnabled(ctx, entity, enabled) {
 }
 
 // A Counter (a card whose resolved maneuver is counter) answers an attack its coverage reaches (SPEC §4.10).
-// Shared by the live offer and the Combat Rounds Preview's offer (SPEC §4.11), so both answer the same attacks.
 export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
   const tags = def.cardTags || def.tags || [];
   if (!tags.includes('maneuver:counter')) return false;
@@ -279,9 +278,6 @@ export function beforeReactionAction(ctx, action, hooks) {
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth) return false;
   if (action.source?.kind !== 'enemy') return !group.begun && action.source?.kind === 'player' && beforePlayerRoot(ctx, group, hooks);
-  // Combat Rounds (SPEC §4.11): an enemy move resolving a timeline entry had its reaction point in the round prompt,
-  // answered or not, so the live window never opens for it (one prompt per attack).
-  if (group.roundSettled) return false;
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (ctx.reactionRules?.contactPolicy === 'perHit' && !group.contactTelegraphed
     && action.source.alive && !haltReason(ctx, action.source)

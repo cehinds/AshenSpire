@@ -1,8 +1,8 @@
 // Silenced raises SP prices (owner, 2026-10-13, expanded combat; #1896's spellCostSurcharge): each Silenced stack adds
 // 1 SP to a spell-camp action of the entity that carries it. A player's spell card pays it through the one card pricing
 // (resolvedCardPlayCosts); an enemy's spell move pays it through the move price its SP pool reads (moveSp →
-// enemyMoveSpOf), in normal combat's plan and in the rounds-mode queue alike (SPEC §4.6a, §4.11). A physical move and a
-// legacy (version 1) fight pay nothing extra.
+// enemyMoveSpOf), in the plan it commits (SPEC §4.6a). A physical move and a legacy (version 1) fight pay nothing
+// extra. (Formerly combat-rounds-silenced-sp.test.mjs; the rounds-mode cases went with the system, cleanup 3i-A.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -13,7 +13,6 @@ import { createRng } from '../src/engine/rng.js';
 import { cardPlayCosts, dispatch } from '../src/engine/combat.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { enemyMoveSpOf } from '../src/model/actionCosts.js';
-import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
 // The Grave Wisp's moves are both spell-camp; the fixture gives it a fixed pool of 4 so the plan's length shows the price.
@@ -22,9 +21,8 @@ const registries = createRegistries({ ...contentBundle, enemies: contentBundle.e
 const wispDef = registries.enemies.get(WISP);
 const silence = (entity, stacks) => { entity.statuses = { ...(entity.statuses || {}), silenced: { stacks, duration: 9 } }; };
 
-function fight({ rounds = false, classId = 'reaver', enemyIds = [WISP] } = {}) {
-  const settings = rounds ? { [COMBAT_ROUNDS_KEY]: true } : {};
-  const run = createRunState({ seed: 5, classId, registries, profileMeta: { settings } });
+function fight({ classId = 'reaver', enemyIds = [WISP] } = {}) {
+  const run = createRunState({ seed: 5, classId, registries });
   return createRunCombat({ registries, rng: createRng(5), run, enemyIds, settings: {} });
 }
 
@@ -57,7 +55,6 @@ test('normal combat: a Silenced enemy plans its spell moves at the surcharged pr
   for (const [stacks, length] of [[0, 3], [1, 1], [2, 1]]) {
     const c = fight();
     assert.equal(c.combatExpansionVersion, 2, 'fixture: a new run is expanded');
-    assert.equal('combatRounds' in c, false, 'fixture: rounds mode is off');
     const enemy = c.enemies[0];
     if (stacks) silence(enemy, stacks);
     enemy.plannedMoves = [];
@@ -84,37 +81,22 @@ test('normal combat: the live weighted pick reads the surcharged price for what 
   assert.deepEqual(followUps(1), [], 'one stack: no follow-up fits beside a 3-SP head');
 });
 
-test('rounds mode: a Silenced enemy queues its spell moves at the surcharged price', () => {
-  for (const [stacks, length] of [[0, 3], [1, 1], [2, 1]]) {
-    const c = fight({ rounds: true });
-    assert.ok(c.combatRounds, 'fixture: rounds mode is on');
-    const enemy = c.enemies[0];
-    if (stacks) silence(enemy, stacks);
-    const queues = Rounds.buildEnemyQueues(c, { pick: () => 'drain', held: () => false });
-    const queue = queues[enemy.id];
-    assert.equal(queue.length, length, `${stacks} stacks`);
-    for (const [index, entry] of queue.entries()) assert.equal(entry.sp, (index ? 1 : 2) + stacks, 'the first move enters casting; later moves receive its same-stance discount');
-  }
-});
-
-test('a player spell card costs 1 more SP per Silenced stack, in normal combat and when queued in rounds mode', () => {
-  for (const rounds of [false, true]) {
-    for (const stacks of [0, 1, 2]) {
-      const c = fight({ rounds, classId: 'starseer', enemyIds: ['wanderingSoldier'] });
-      const p = c.player;
-      p.energy = p.stamina = 10;
-      p.mana = 10;
-      c.piles.hand.push({ instanceId: 'spell', cardId: 'mindSpike', upgraded: false });
-      c.piles.hand.push({ instanceId: 'strike', cardId: 'strike', upgraded: false });
-      const base = cardPlayCosts(c, 'spell').stamina;
-      const strike = cardPlayCosts(c, 'strike').stamina;
-      if (stacks) silence(p, stacks);
-      const priced = cardPlayCosts(c, 'spell');
-      assert.equal(priced.stamina, base + stacks, `${rounds ? 'rounds' : 'normal'}, ${stacks} stacks: the shown price`);
-      assert.equal(cardPlayCosts(c, 'strike').stamina, strike, 'a physical card pays no surcharge');
-      const before = p.energy;
-      dispatch(c, { type: 'playCard', cardInstanceId: 'spell', targetId: c.enemies[0].id });
-      assert.equal(before - p.energy, base + stacks, `${rounds ? 'rounds: queued' : 'normal: played'} at the surcharged SP`);
-    }
+test('a player spell card costs 1 more SP per Silenced stack', () => {
+  for (const stacks of [0, 1, 2]) {
+    const c = fight({ classId: 'starseer', enemyIds: ['wanderingSoldier'] });
+    const p = c.player;
+    p.energy = p.stamina = 10;
+    p.mana = 10;
+    c.piles.hand.push({ instanceId: 'spell', cardId: 'mindSpike', upgraded: false });
+    c.piles.hand.push({ instanceId: 'strike', cardId: 'strike', upgraded: false });
+    const base = cardPlayCosts(c, 'spell').stamina;
+    const strike = cardPlayCosts(c, 'strike').stamina;
+    if (stacks) silence(p, stacks);
+    const priced = cardPlayCosts(c, 'spell');
+    assert.equal(priced.stamina, base + stacks, `${stacks} stacks: the shown price`);
+    assert.equal(cardPlayCosts(c, 'strike').stamina, strike, 'a physical card pays no surcharge');
+    const before = p.energy;
+    dispatch(c, { type: 'playCard', cardInstanceId: 'spell', targetId: c.enemies[0].id });
+    assert.equal(before - p.energy, base + stacks, `played at the surcharged SP`);
   }
 });
