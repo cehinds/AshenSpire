@@ -32,6 +32,12 @@ import {
   equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands,
   cardEquipmentCompatibility,
 } from './loadout/requirements.js';
+import {
+  fromDropPool, ownership, OWNERSHIP_GATES, addToStorage, carriedIds,
+} from './loadout/ownership.js';
+import {
+  SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState,
+} from './loadout/slotLadder.js';
 
 // src/model/loadout.js — what you carry, and what it does to your cards.
 // (Being split into src/model/loadout/*.js; the remainder is below.)
@@ -454,250 +460,6 @@ function validateEquipmentBalance(pieces, eqBal, problems) {
       problems.push(`${at}: cost must be a whole number ≥ 0 — got ${JSON.stringify(r.cost)}`);
     }
   }
-}
-
-//
-// Constantine: *"as for weapons, I should only see an inventory of the weapons
-// I've collected for that character's profile. so, if I only have my starting
-// weapon and a scimitar, I should only see those options."*
-//
-// The armoury was a CATALOGUE PRETENDING TO BE AN INVENTORY: the right-hand
-// picker opened 17 chips with 16 of them locked, and the only act available on
-// turn one was "Bare". The fix is not a better lock icon. It is that a thing you
-// do not have is not an option.
-//
-// THE COLLAPSE, which is why this lives here and not in the screen. "May I have
-// this?" was answered THREE TIMES, all three inside one function in a UI file,
-// with three different renderings:
-//
-//   unlock + meta.unlocked           → a locked chip with the unlock's hint
-//   unlock + reveal:'hidden'         → dropped from the list
-//   drops.requireFound + meta.found  → a locked chip with a sentence hardcoded
-//                                      in the screen
-//
-// One fact — is this piece mine — written three ways, none of them where the
-// MUTATION lives. So the picker was the only thing enforcing it, and it enforced
-// it by not attaching a click handler. Measured at 77a02b9, before this change:
-//
-//     equipPiece(R, createLoadout(R,'reaver'), 'rightHand', 0, 'greatsword')
-//     → true, on a profile that has never found a greatsword.
-//
-// A gate only a view holds is not a gate — the same sentence already written
-// above equipPiece, about the same function, for a different check. Filtering
-// the chip out WITHOUT this would have made ownership LESS enforced while
-// looking stricter, because absence would be the only guard left. That is the
-// direction my seat is meant to fail in and it is named rather than discovered.
-//
-// TWO ROUTES, AND THEY ARE NOT A TEST ON `kind`. A piece is yours because you
-// EARNED it (a condition — `unlock`) or because you FOUND it (a pickup —
-// `drops.requireFound`). Which route applies is a fact about where the piece
-// comes from: only pieces the drop table can produce can be found, and the drop
-// table draws from armaments. The screen used to ask `piece.kind !== 'armor'`
-// directly, which is an `if` on a content value below the content layer (Law 1
-// clause 3) that happens to be correct today because every one of the 16
-// armaments has `unlock: ''` and every armour row has one. A coincidence of the
-// data, not a rule — so it is written here as the pool question it actually is.
-
-/** Can this piece turn up as a drop? Only the drop pool answers to requireFound. */
-export function fromDropPool(piece) {
-  return !!piece && piece.kind !== 'armor';
-}
-
-// TWO QUESTIONS, ONE LADDER OF IFS — added when the Compendium arrived (#90
-// sibling). `has()` answers *is this piece yours*; a screen that draws what is
-// NOT yours needs a second thing — *which of the two routes withheld it* — so
-// it can say why without guessing. Freja's `pieceReveal` derived that route a
-// second time, off `piece.kind` and a caller-built `available` set, and the
-// second derivation agreed with this one only by coincidence of today's data.
-//
-// So the route is returned FROM HERE, by the same `if` ladder that decides the
-// boolean. `has` is `why(piece) === null` and cannot disagree with it — not
-// "checked to agree", unable to differ. A third route tomorrow is one branch in
-// one function, and OWNERSHIP_GATES below is what makes the screens notice it.
-//
-// The set is CLOSED and DECLARED, and the test asserts every member of it has a
-// sentence in LOCK_COPY — the same declared-and-handled join #88 uses. A route
-// with no words is the "graceful" empty tooltip my card warns about.
-
-/** Why a piece is not yours. Closed; every member needs a sentence in LOCK_COPY. */
-export const OWNERSHIP_GATES = Object.freeze(['unearned', 'unfound']);
-
-/**
- * ownership(registries, { meta, loadout }) → { has(piece), why(piece) }
- *
- * IN A RUN, AN ARMOUR SET IS OWNED BY THE RUN, NOT BY THE PROFILE (owner,
- * 2026-11-05; SPEC §14.2/§14.3). A set with an `unlock` is owned when it is the
- * creation grant, in `loadout.boughtArmour`, or already worn in `loadout.sets`
- * (saves from before this rule keep what they wear). `meta.unlocked` does NOT
- * make it owned there: the profile wardrobe must not fill a fresh run's
- * inventory. `profileWardrobe: true` is the one explicit way to ask the
- * wardrobe question instead ("is this set unlocked on the profile?"), for the
- * Compendium, which has no run. Hand armaments and relics are unchanged.
- *
- * The one predicate. A PIECE, not an id: armour ids repeat across classes
- * ("`id` is unique per class, not globally"), so an id set would say the Reaver
- * owns the Starseer's habit.
- */
-export function ownership(registries, { meta = {}, loadout = null, profileWardrobe = false } = {}) {
-  const cfg = ((registries || {}).balance || {}).equipment || {};
-  const drops = cfg.drops || {};
-  const unlocked = new Set(meta.unlocked || []);
-  // `persistence` decides what counts as found: what this run picked up, what
-  // the profile has ever held, or both (the default — a climb that ends badly
-  // still widens the wardrobe).
-  const found = new Set([
-    ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
-    ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
-  ]);
-  const creationArmourGrant = loadout && loadout.creationArmourGrant;
-  // A THIRD ROUTE, AND IT IS THE RUN'S (SPEC §14.3): an armour set bought at
-  // a market is this run's own, whatever the profile has earned. Recorded on
-  // the loadout beside the creation grant, as `{ classId, id }` because armour
-  // ids repeat across classes.
-  const boughtArmour = loadout && Array.isArray(loadout.boughtArmour) ? loadout.boughtArmour : [];
-  // A missing piece resolves to 'unearned' rather than to a fourth value: there
-  // is no row to read a hint from, and 'unearned' is the route whose sentence is
-  // generic. 'unfound' would promise the player it turns up in treasure, which
-  // is a lie about a piece that does not exist. `has(null)` stays false either
-  // way, which is the behaviour every caller already had.
-  // A FEW BASIC WEAPONS FOR ALL (A7). Constantine: *"everything else is profile
-  // specific but maybe a few basic weapons become available for all."*
-  //
-  // IT ANSWERS THE FOUND GATE AND ONLY THAT, which is why it is inside the
-  // `requireFound` branch rather than a fourth `if` at the top. A piece is not
-  // yours for two independent reasons — earned (`unlock`) and found (the drop
-  // pool) — and a tag that short-circuited BOTH would make one word able to
-  // unlock content, which is not what "basic" means and not what he asked for.
-  // The two gates compose; a row wearing both is refused by name at validation,
-  // so this order is not a tiebreak, it is the absence of a tie.
-  const basicTag = cfg.basicTag;
-  const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
-  const wornIds = new Set(carriedIds(loadout));
-  const why = (piece) => {
-    if (!piece) return 'unearned';
-    if (creationArmourGrant
-      && creationArmourGrant.classId === piece.classId
-      && creationArmourGrant.id === piece.id) return null;
-    if (boughtArmour.some((row) => row && row.classId === piece.classId && row.id === piece.id)) return null;
-    if (piece.unlock !== '' && piece.unlock != null) {
-      if (piece.kind === 'armor' && !profileWardrobe) {
-        return loadout && wornIds.has(piece.id) ? null : 'unearned';
-      }
-      return unlocked.has(piece.unlock) ? null : 'unearned';
-    }
-    if (fromDropPool(piece) && drops.requireFound) {
-      return isBasic(piece) || found.has(piece.id) ? null : 'unfound';
-    }
-    return null;
-  };
-  return {
-    why,
-    has(piece) { return !!piece && why(piece) === null; },
-  };
-}
-
-//
-// Constantine: *"starts with slots locked (but only shows the next locked
-// thing). so for weapon slots, it may start with just 1 with the second one
-// shows a locked icon, but the third one doesn't show until the second is
-// unlocked."*
-//
-// THE OBVIOUS FORM IS A THREE-VALUED FIELD PER CELL AND IT IS #78 AGAIN. A
-// closed set of `open|next|hidden` written on each cell is a closed set PER
-// CELL, so the vocabulary is the PRODUCT over cells — and that product is full
-// of things nobody built: a ladder with two locked steps, a hidden cell BEFORE
-// an open one, a slot with no open cell at all. Marina's property, house-wide:
-// A CLOSED SET MUST STAY CLOSED UNDER WHATEVER FACTORISATION REPLACES IT.
-//
-// SO THE STATES ARE A DERIVATION, NOT A VOCABULARY. There is exactly one number
-// — how many sets of this slot are open — and the three states are arithmetic
-// on it against the cell's index. Out-of-order and two-locked are not invalid,
-// they are UNREPRESENTABLE, which is the stronger thing and the same move as
-// #91's `subject` pointer. Nothing here is authored per cell, so there is
-// nothing for an author to write and therefore nothing to fall out of the set.
-//
-// AND THE NUMBER IS NOT A NEW SAVE KEY EITHER. A rung is something you EARN, and
-// this game already has one home for earned things: `meta.unlocked`, filled by
-// evaluateUnlocks from unlocks.csv. A rung is a ROW there — `kind` is already a
-// column, and **the EARNING path never reads it**: `evaluateUnlocks` tests
-// `condition` against progress and returns ids, so a new `kind` value is earned
-// with no engine change at all (Law 0 clause 2). What is new is the CONSUMER,
-// and that is this file: one word, one act, schema-free.
-//
-// *(Corrected by Vira at gate: the first draft of this comment said "nothing in
-// the tree branches on its value", and `slotRungs` two screens down branches on
-// it in the same commit that shipped the sentence. It was true of the earning
-// path and false of the tree, and the difference is the whole claim — so it now
-// says which path it is talking about.)*
-//
-//     id,kind,ref,name,condition,param,reveal,hint
-//     rack2,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.
-//
-// A "TURN ONE" LADDER THAT NOTHING CAN CLIMB WOULD BE A REFUSAL WITH NO REASON.
-// The next cell is shown only when a rung exists that would open it — so a slot
-// with no rungs authored shows its open cells and stops, and refuses(){} is
-// never asked to mark a control whose reason is the empty string. The reason a
-// locked cell gives IS that rung's own `hint`, which is content. No sentence
-// about locks is written in this file or in the screen.
-
-/** The unlocks.csv `kind` that opens a set slot. One string, one home. */
-export const SLOT_RUNG_KIND = 'slot';
-
-/** The rungs of one slot's ladder, in authored order. Rung N opens set N+1. */
-export function slotRungs(registries, slotId) {
-  return ((registries || {}).unlocks || [])
-    .filter((u) => u && u.kind === SLOT_RUNG_KIND && u.ref === slotId);
-}
-
-/**
- * openedSets(registries, slot, { meta, loadout }) → how many sets are USABLE.
- *
- * One open always: a slot you cannot use at all is not a slot, it is an absence,
- * and `sets` already says the slot exists.
- *
- * THE LEGACY FLOOR IS THE EDGE THAT WILL ACTUALLY BITE, and it is the state my
- * change INVENTS. Every loadout written before today has `sets` full-width and
- * all of it reachable, so a save can hold a weapon in set 3 with zero rungs
- * earned. Without this line that weapon is in a cell the player cannot see,
- * still counted by carriedIds, still stamping their deck — a piece stranded
- * behind a lock that did not exist when they put it there. So the loadout's own
- * contents raise the floor: what you are already holding is by definition open.
- */
-export function openedSets(registries, slot, { meta = {}, loadout = null } = {}) {
-  const cap = Math.max(1, Number(slot && slot.sets) || 1);
-  const earned = new Set((meta && meta.unlocked) || []);
-  let opened = 1;
-  for (const u of slotRungs(registries, slot.id)) if (earned.has(u.id)) opened += 1;
-  const ids = ((loadout && loadout.sets) || {})[slot.id] || [];
-  for (let i = 0; i < ids.length; i += 1) if (ids[i]) opened = Math.max(opened, i + 1);
-  return Math.min(cap, opened);
-}
-
-/**
- * visibleSets(...) → how many cells the slot DRAWS: the open ones, plus the one
- * step ahead when there is a rung left to earn. Exactly one lookahead, because
- * it is `+1` and not a range.
- */
-export function visibleSets(registries, slot, ctx = {}) {
-  const cap = Math.max(1, Number(slot && slot.sets) || 1);
-  const opened = openedSets(registries, slot, ctx);
-  const ceiling = Math.min(cap, 1 + slotRungs(registries, slot.id).length);
-  return opened < ceiling ? opened + 1 : opened;
-}
-
-/** The rung that would open cell `index`, or null if nothing can. */
-export function rungFor(registries, slot, index) {
-  return slotRungs(registries, slot.id)[index - 1] || null;
-}
-
-/**
- * setCellState(index, opened, visible) → 'open' | 'next' | 'hidden'.
- * Total, ordered, and derived — the whole closed set, in three comparisons.
- */
-export function setCellState(index, opened, visible) {
-  if (index < opened) return 'open';
-  if (index < visible) return 'next';
-  return 'hidden';
 }
 
 
@@ -3390,34 +3152,6 @@ export function cycleSet(registries, loadout, slotId, index, ctx) {
 }
 
 /**
- * addToStorage(loadout, itemId, cap) → true when it went in.
- *
- * Where a found armament lands. Storage is what you are carrying but not
- * holding. During combat, moving an item from storage into a position must route
- * through the priced `changeEquipment` engine intent.
- * A duplicate is refused rather than stacking — you either have a Katana or
- * you don't.
- */
-export function addToStorage(loadout, itemId, cap = 8) {
-  if (!loadout || !itemId) return false;
-  loadout.storage = loadout.storage || [];
-  if (loadout.storage.includes(itemId)) return false;
-  if (loadout.storage.length >= cap) return false;
-  loadout.storage.push(itemId);
-  return true;
-}
-
-/** Every armament this run has access to: carried, plus whatever is slotted. */
-export function carriedIds(loadout) {
-  if (!loadout) return [];
-  const out = [...(loadout.storage || [])];
-  for (const ids of Object.values(loadout.sets || {})) {
-    for (const id of ids) if (id && !out.includes(id)) out.push(id);
-  }
-  return out;
-}
-
-/**
  * Normalize saves written while one owned armament could occupy several hand
  * sets. Keep an active occurrence when one exists (slot order breaks ties),
  * clear the others, and remove an equipped survivor from shared Inventory.
@@ -3661,4 +3395,15 @@ export {
   startingHandsRequirementFailure,
   previewCompatibleHands,
   cardEquipmentCompatibility,
+  fromDropPool,
+  OWNERSHIP_GATES,
+  ownership,
+  addToStorage,
+  carriedIds,
+  SLOT_RUNG_KIND,
+  slotRungs,
+  openedSets,
+  visibleSets,
+  rungFor,
+  setCellState,
 };
