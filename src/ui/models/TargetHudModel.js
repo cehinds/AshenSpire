@@ -36,12 +36,11 @@ export function playerHudPlacement({ anchor, width, height, gap, bounds }) {
 // same IDs does not restart dwell; a switch is one delay, never exit+enter.
 // Owner 2026-11-07: "Disable select HUD and just do mini HUD ... Bring back the player's health bar and disable the mini select HUD."
 // The player's figure carries only its overhead mini HUD (HP bar + intent), like an enemy before it is selected; it is never
-// pinned and never gets a selected panel. Enemies keep mini-until-selected. (Supersedes the 2026-11-05 always-selected rule.)
+// pinned and never gets a selected panel; since 2026-11-07 neither does any enemy. (Supersedes the 2026-11-05 always-selected rule.)
 export const targetHudPinnedIds = () => [];
-export function targetHudDesiredIds({ entries: all, eligible = [], focused = null, hover = null, focusWithin = null }) {
-  const entries = [...all], known = new Set(entries.filter(entry => entry.role !== 'player').map(entry => entry.id));
-  return [...new Set([...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
-}
+// Owner 2026-11-07: "the current hud is fine, just remove the selected hud." No selected target-HUD panel opens for any
+// combatant (selected, hovered, focused or targeted); every combatant keeps only its overhead mini HUD.
+export function targetHudDesiredIds() { return []; }
 // Nothing is pinned any more, so no frame is "pinned only"; kept for callers.
 export const targetHudPinnedOnly = () => false;
 // The floor tint marks a target being acted on or read.

@@ -13,16 +13,14 @@ test('the player is never pinned and never gets a selected panel', () => {
   assert.ok(!targetHudDesiredIds({ entries, eligible: ['player'], focused: 'player', hover: 'player', focusWithin: 'player' }).includes('player'));
 });
 
-test('enemies show a panel only when eligible, focused, hovered or focused-within', () => {
-  assert.deepEqual(targetHudDesiredIds({ entries, eligible: ['e1'] }), ['e1']);
-  assert.deepEqual(targetHudDesiredIds({ entries, eligible: ['player', 'e1'], focused: 'e2' }), ['e1', 'e2']);
-  assert.deepEqual(targetHudDesiredIds({ entries, hover: 'e1', focusWithin: 'e2' }), ['e1', 'e2']);
-  assert.deepEqual(targetHudDesiredIds({ entries, eligible: ['gone'] }), []);
+test('no selected panel opens for any combatant (owner 2026-11-07)', () => {
+  for (const input of [{ eligible: ['e1'] }, { eligible: ['player', 'e1'], focused: 'e2' }, { hover: 'e1', focusWithin: 'e2' }, { eligible: ['gone'] }])
+    assert.deepEqual(targetHudDesiredIds({ entries, ...input }), []);
 });
 
 test('the rules accept a one-shot iterator (Map.values) as the mount passes it', () => {
   const map = new Map(entries.map(entry => [entry.id, entry]));
-  assert.deepEqual(targetHudDesiredIds({ entries: map.values(), eligible: ['e1'] }), ['e1']);
+  assert.deepEqual(targetHudDesiredIds({ entries: map.values(), eligible: ['e1'] }), []);
   assert.deepEqual(targetHudTintIds({ entries: map.values(), shown: ['e2'], focused: 'e2' }), ['e2']);
 });
 
