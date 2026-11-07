@@ -1853,103 +1853,93 @@ Advanced Settings is the player-facing editor for the game's authored configurat
 
 ### 7.3 Input
 
-- **Card selection and information stay separate from play.** Preserve the current
-  focused card, selection glow, revealed information button and legal-target
-  highlights. Information opens details without playing. Existing tap, hold,
-  keyboard, controller and direct-target drag confirmation remain available.
-  By default a tap on a card selects it and never plays it; play needs a second
-  tap on the card or a target pick (owner, 2026-10-18 14:15 and 14:32). The
-  "Tap a card to play it" Settings switch, off by default, restores one-tap play
-  when the target is unambiguous (self and all-enemy cards; one living enemy).
-  The hold selects without playing (inspect, Upcast, target choice).
-  A hand card has one select colour, the targeting colour (`--selection-color`): armed,
-  held, keyboard-focused and inspected cards all wear it, and there is no yellow (gold)
-  select state on the hand (owner, 2026-10-31).
-- **End Turn.** A single press when no card in hand is playable; otherwise the
-  configured second beat (owner, 2026-10-18).
-- **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
-  playable hand card can play on release without reaching a combatant. A profile
-  setting enables it (default on); Card flick distance accepts 32–160 CSS pixels
-  (default 64), with synchronized slider, numeric entry, reset and a harmless
-  practice area. This distance is net upward displacement in viewport CSS pixels,
-  independent of artwork/UI scale and of the existing 12-pixel drag-start slop.
-  Flick recognition also requires upward-dominant movement and at least 300 CSS
-  pixels/second recent upward velocity, authored separately from the player setting.
-  Touch, mouse, trackpad dragging and pen use the same recognizer and settings;
-  the practice area accepts exactly the same inputs as combat. Existing saved
-  `touchFlickPlay` and `touchFlickDistance` values retain their meaning.
-  The preview selects the nearest legal target to the pointer; release uses that
-  same resolver and revalidates playability. Self cards select the player and
-  all-enemy cards select their legal group. Equal-distance ties are deterministic.
-  Returning below threshold, downward release, an information-button gesture,
-  pointer cancellation, capture loss, blur or a blocking modal cannot flick-play.
-  No qualifying gesture can commit twice. Disabling flicks preserves direct drops.
-- **Card rewards:** one touch, mouse, pen, or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; refused or throwing saves restore the pending card choice and allow retry.
-- Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
-- **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
-  ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
-  `controls-key-rebind-control` from Press… to Key with focus intact, performs
-  no binding mutation, and suppresses the same event before the covered menu can
-  close. With no capture armed, Escape retains its ordinary one-layer Back
-  behavior. A later re-arm accepts a free key; occupied-key conflict resolution
-  is a separate policy and is not implied by this contract. The containing
-  `controls-rebind-capture` is the stable Controls component surface.
-- Ordinary interactive elements expose their concise tooltip after one second
-  of continuous hover (the `tooltipDelay` setting; `1s` by default): statuses
-  (name, current math), intents (exact damage after modifiers), relics, flasks,
-  and map nodes. Leaving early cancels opening. Every new target and nested
-  keyword waits the full delay. Keep the tooltip visible over its owner or
-  panel; dismiss 500 ms after leaving both, cancelling dismissal on re-entry.
-  Touch does not synthesize hover. A click or tap on a detail that is not itself
-  a control selects it (a visible highlight) and opens nothing; a second click
-  or tap on the same detail explains it at once. The selection ends on a press
-  elsewhere, Escape, or the detail leaving the screen. Keyboard and gamepad
-  focus explains after 500 ms regardless of the hover delay, and Enter or
-  Space on a selectable detail explains at once. Cards carry no hover or tap
-  tooltip: selecting a card reveals its Information button, and that opens the
-  card inspection (with nested keyword tooltips). Card tooltips open only inside
-  the card inspection (owner, 2026-11-05: "Restrict card tooltips to just the
-  inspect modal"); on every other surface (combat hand, selected or not, reward,
-  shop, deck and upgrade card faces) a tag symbol, keyword or underlined number
-  is plain decoration: no tooltip, no pointer or focus, and a tap anywhere on the
-  card is the card's own action. Card inspections show
-  complete effect text and decision-relevant values or requirements. General classifications appear as explained tags beneath the
-  card; keywords disclose definitions. Do not repeat artwork descriptions,
-  generic instructions, flavor explanations, or identical effect text.
-  Deliberate reading surfaces may require a validated sustained hold instead;
-  the Armoury equipment-comparison tooltip uses
-  `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open
-  from hover or focus alone.
+Card selection and play, End Turn, flick, rewards, controls capture and tooltips. Full playability with mouse only; keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
+
+- **Card selection and information stay separate from play.** The focused card, selection glow, revealed Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
+  - By default a tap selects and never plays; play needs a second tap on the card or a target pick (owner, 2026-10-18).
+  - The "Tap a card to play it" Settings switch (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
+  - Hold selects without playing (inspect, Upcast, target choice).
+  - A hand card has one select colour, the targeting colour (`--selection-color`): armed, held, keyboard-focused and inspected cards all wear it; no yellow (gold) select state on the hand.
+- **End Turn.** A single press when no card in hand is playable; otherwise the configured second beat.
+- **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a playable hand card plays on release without reaching a combatant.
+  - Profile setting enables it (default on). Distance accepts 32–160 CSS px (default 64), with synchronized slider, numeric entry, reset and a harmless practice area that accepts exactly the combat inputs.
+  - Distance is net upward displacement in viewport CSS px, independent of artwork/UI scale and of the 12 px drag-start slop.
+  - Recognition also needs upward-dominant movement and ≥300 CSS px/s recent upward velocity, authored separately from the setting.
+  - Touch, mouse, trackpad and pen share one recognizer and settings. Saved `touchFlickPlay` and `touchFlickDistance` keep their meaning.
+  - Preview selects the nearest legal target to the pointer; release uses the same resolver and revalidates playability. Self cards select the player; all-enemy cards select their legal group. Equal-distance ties are deterministic.
+  - Returning below threshold, downward release, an information-button gesture, pointer cancellation, capture loss, blur or a blocking modal cannot flick-play. No gesture commits twice. Disabling flicks preserves direct drops.
+- **Card rewards.** One touch, mouse, pen or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; a refused or throwing save restores the pending choice and allows retry.
+- **Tooltips.** Ordinary interactive elements (statuses with current math, intents with exact post-modifier damage, relics, flasks, map nodes) show a concise tooltip after 1 s of continuous hover (`tooltipDelay`, default `1s`).
+  - Leaving early cancels opening; every new target and nested keyword waits the full delay. The tooltip stays visible over its owner or panel; it dismisses 500 ms after leaving both, and re-entry cancels dismissal.
+  - Touch does not synthesize hover. A click/tap on a non-control detail selects it (visible highlight) and opens nothing; a second click/tap on the same detail explains it at once. Selection ends on a press elsewhere, Escape, or the detail leaving the screen.
+  - Keyboard and gamepad focus explains after 500 ms regardless of hover delay; Enter or Space on a selectable detail explains at once.
+  - Cards carry no hover or tap tooltip: selecting a card reveals its Information button, which opens card inspection (with nested keyword tooltips). Card tooltips open only inside card inspection; on every other surface (combat hand, reward, shop, deck, upgrade card faces) tag symbols, keywords and underlined numbers are plain decoration (no tooltip, pointer or focus) and a tap anywhere on the card is the card's own action.
+  - Card inspections show complete effect text and decision-relevant values/requirements; general classifications appear as explained tags beneath the card; keywords disclose definitions. No repeated artwork descriptions, generic instructions, flavor explanations or identical effect text.
+  - Deliberate reading surfaces may require a validated sustained hold: the Armoury equipment-comparison tooltip uses `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
 
-- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the share of the target's max HP it cost (after Block): 1 px under 2%, 2 px from 2%, 4 px from 8%, 7 px from 20%, 10 px from 35%, never over 10 px (owner, 2026-10-18, Fix A; the 2026-10-05 rule was 1-4 px by absolute HP and is the fallback when the max HP is unknown); and a **hit-stop**: 60 ms on a hit of 6 HP or more, 120 ms on any hit of 35% of max HP or more (data rows; 0 turns it off), during which the attacker's impact frame and the target's recoil hold before the swing recovers. Damage numbers size by share of max HP (`pct20` from 20%, `pct35` from 35%, `crit` from 25 HP), phones keep the shake, and big hits (≥20%) fire the `bigHit` haptic (owner, 2026-10-18, adopting #2097). Under the sequential beat order below, the hit-stop holds the attacker's impact frame alone; the target stays in its rest pose until its reaction starts. The hit-stop pauses only those two figures' animation, and a click skips it with the rest. **Beat order** (owner, 2026-10-11, presentation `beatOrder`, default `sequential`): an attack beat plays the attacker's stance, its attack clip and its return to stance first; then the target's reaction starts (hurt pose and flash, shake, evade, block or Stagger wobble); `reactionMs` after it starts (a data row, default 180 ms at Normal), the damage/guard/heal numbers fire with their sound and haptic, and then the HP, Poise and Block bars update. The numbers wait only for that `reactionMs`, never for a long fixed effect: the heavy hit flash and the Stagger wobble keep running underneath them. The contact spark and the attacker's hit-stop stay at the impact frame. `beatOrder: impact` keeps the earlier order, where the reaction, number, sound and haptic fire at impact. Counter return beats keep the impact order. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep the hit-stop rows, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`). **Action pacing** (owner, 2026-10-18, D11: "a noticeable (1 second by default) pause between what a character is doing, their animation, the result (hit or miss or blocked, or countered) then sprite reaction, then damage, then reset, then start loop with next on the stack" and "give me the option to edit the speed"; auto combat: "speed up the game to a configurable rate, default to 1.5"): every action plays as action word → animation → result → sprite reaction → damage and bars → reset → next action, with one gap at each step. The gap is the **Pause between steps** setting (default 1000 ms, 250–2000 ms; Instant and Reduced motion make it 0), and **Auto combat speed** divides it while auto combat runs (default ×1.5). This supersedes the `reactionMs` delay, the ≤400 ms/≤750 ms click budgets, the ≤80 ms queue interval and the ≤300 ms effect bound above; a click still skips to end-state.
-- Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
-- Defeat screen: dark fade, gold serif text, then stats card. Its title reads "Defeat" and its aria-label "You perished". Victory's title reads "Victory" and its aria-label "Ember restored" (`src/ui/screens/gameover.js:58-65`). (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
-- Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
+Hit feedback, beat order, pacing, defeat/victory screens, sound.
 
-  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today the tracks are build output: `music/*.mp3` and `music/manifest.json` are gitignored (`.gitignore`), and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load falls back to the synth for that id (`src/ui/audio.js:152-154`). `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+**Hit feedback**
+- Floating damage/heal/block numbers; brief target flash on hit.
+- Screen shake on every hit that costs its target HP, scaled by the share of target max HP lost (after Block): 1 px under 2%, 2 px from 2%, 4 px from 8%, 7 px from 20%, 10 px from 35%; never over 10 px. When max HP is unknown, fall back to 1–4 px by absolute HP. Phones keep the shake.
+- Hit-stop: 60 ms on a hit of 6 HP or more, 120 ms on a hit of 35% of max HP or more (data rows; 0 turns it off). The attacker's impact frame and the target's recoil hold before the swing recovers; it pauses only those two figures' animation, and a click skips it.
+- Damage numbers size by share of max HP: `pct20` from 20%, `pct35` from 35%, `crit` from 25 HP. Big hits (≥20%) fire the `bigHit` haptic.
+- Bleed burst and Stagger get distinct, slightly bigger effects.
+
+**Beat order** (presentation `beatOrder`, default `sequential`)
+- An attack beat plays the attacker's stance, attack clip and return to stance; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
+- `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers wait only for `reactionMs`, never for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
+- The contact spark and the attacker's hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
+- `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
+- Budgets (superseded by Action pacing below): click-to-impact ≤400 ms at Normal; first number on a plain single hit ≤750 ms after the click; queued events ≤80 ms apart (a multi-hit attack lengthens that hit's step, not the interval).
+
+**Animation settings**
+- Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops the shake alone; Reduce flashes suppresses flashes (`src/ui/fx.js`).
+- No animation blocks input; a click always skips to end-state.
+- At default speed most effects run ≤300 ms, but some are hardcoded longer (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms). The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never those fixed durations.
+
+**Action pacing** (owner, D11)
+- Every action plays as action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, with one gap at each step.
+- The gap is the **Pause between steps** setting: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0.
+- **Auto combat speed** divides the gap while auto combat runs (default ×1.5).
+- This supersedes the `reactionMs` delay, the ≤400/≤750 ms click budgets, the ≤80 ms queue interval and the ≤300 ms effect bound above. A click still skips to end-state.
+
+**Defeat and Victory** (`src/ui/screens/gameover.js:58-65`)
+- Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished".
+- Victory: title "Victory", aria-label "Ember restored".
+
+**Sound** is shipped and procedural.
+- `sfx.js` is the hook bus: every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …). `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
+- Content lives in two files, one home each: `src/content/music.js` (scales, per-context beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
+- A recipe is a list of layers in the closed two-word vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id. Retuning a sound is a table edit, never an engine edit.
+- Ids are composed; `resolveRecipe` (`content/sfx.js`) is one pure function: exact id → the family row (segment before the first `_`) → `default`. E.g. `procBurst_bleed` plays its own row; a proc with no row falls to `procBurst`; anything unknown plays the required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row named for the segment before the underscore: no engine change, no registration list.
+- Volumes/mute are settings; the score ships audible (music default non-zero).
+- A context's bed value is a bed object or the exact word `'silence'` (`MUSIC_SILENCE_WORD`, `src/model/schemas.js`). `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, zero gain, wrong or miscased word); an unknown context at runtime warns naming itself and plays nothing.
+- Only the rendered tracks ship as audio files (listed in a music manifest). Each is written as notes in a score module (`music/score/<id>.mjs`) and rendered offline by `tools/score/render.mjs`. `music/*.mp3` and `music/manifest.json` are gitignored build output; per EXTERNAL-ASSETS-PLAN steps 9–13 the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and scores and render tool live there under `art/music/`.
+- Override paths fail differently:
+  - A music folder with `manifest.json` replaces a context's procedural bed; a missing/unplayable track falls back to the synth bed. The folder is the Settings folder, or (setting blank, page served over http(s)) the shipped tracks, read through the common pack's index in the web edition and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`). A `file://` page cannot fetch them and keeps the synth.
+  - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; `audio.js` `sfx()` short-circuits on a manifest entry, and a failed sample load falls back to the synth for that id (`src/ui/audio.js:152-154`).
+  - `MUSIC_MANIFEST` is still imported and never read: a dormant slot, not a path.
 
 ### 7.5 Visual style
 
-- **Palette: semantic tokens in `base.css`, and there are THREE of them, not one** — the
-  default dark set, a **high-contrast** variant, and `body.cb-safe`, a colourblind-safe
-  remap on Okabe-Ito hues (danger→vermillion, heal→bluish-green, frost→sky, blight→orange).
-  Map structure has its own token, `--map-structure`, so roads and rings can be re-levelled
-  without touching text colour. **The hex values are not restated here** — a colour restated
-  in prose is a copy nothing syncs, and any variant would make it wrong in two directions
-  at once. Read them: `grep -nE "^\s*--" styles/base.css`. The gate that says they *pass* is
-  `node tools/contrast-audit.mjs`, which carries targets for both palettes.
-- Cards: DOM elements (not canvas) — rounded rect, rarity-coloured frame, cost orb top-left,
-  type banner. Type presentation (geometry + banner colour per card type) is data:
-  `balance.ui.cardTypes`.
-- **Fonts — TO BUILD.** Cinzel (display) / Inter (body) are named in `font-family` **with
-  system fallbacks (Georgia / system-ui)**, and the interface copies do not ship yet;
-  `CREDITS.md` is the authoritative home and says so. They will load at runtime as pack
-  files, like every other asset, through the pack loader (EXTERNAL-ASSETS-PLAN step 3b; owner,
-  2026-09-27, which replaces the question of bundling them). Wiring the interface faces
-  themselves is not yet a plan step: step 3b moves only the existing "AS Lore" faces. The
-  system fallbacks stay, for a page whose fonts do not load. Falsify: `grep -n "not bundled" CREDITS.md`.
+Palette tokens, card rendering, fonts.
+
+- **Palette:** semantic tokens in `base.css`; three sets: the default dark set, a **high-contrast** variant, and `body.cb-safe`, a colourblind-safe remap on Okabe-Ito hues (danger→vermillion, heal→bluish-green, frost→sky, blight→orange).
+  - Map structure has its own token, `--map-structure`, so roads and rings re-level without touching text colour.
+  - Hex values are not restated here: `grep -nE "^\s*--" styles/base.css`. The gate that they pass is `node tools/contrast-audit.mjs` (targets for both palettes).
+- **Cards:** DOM elements (not canvas): rounded rect, rarity-coloured frame, cost orb top-left, type banner. Type presentation (geometry + banner colour per card type) is data: `balance.ui.cardTypes`.
+- **Fonts (to build):** Cinzel (display) / Inter (body) are named in `font-family` with system fallbacks (Georgia / system-ui); the interface copies do not ship yet (`CREDITS.md` is authoritative). They will load at runtime as pack files through the pack loader (EXTERNAL-ASSETS-PLAN step 3b, which moves only the existing "AS Lore" faces). The fallbacks stay for a page whose fonts do not load.
+
+#### Notes and history
+
+- Tools parse this section: every public component id must stay backticked (`tools/ui-components.mjs`, C10); the relic rail sits in `inventory-belt` beneath Vitals; minimum touch target is 44 px.
+- Advanced Settings tabs and the perspective-grid combat layout are the only shipping forms; classic layout, the Battlefield tab and the formation editor are gone.
+- Action pacing (§7.4) supersedes the older click-budget timings.
+
+Full history: [docs/spec-history/07-ui.md](docs/spec-history/07-ui.md).
 
 ---
 
