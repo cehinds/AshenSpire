@@ -1093,6 +1093,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ...combatStatRows(v, entity, 'player'),
           { label: t('combat.protection.block'), value: v.block || 0 },
         ], 'player', entity),
+        ac: acFor(combat, entity),
         skillLabel: 'Active skills & stance',
         abilities,
         skills: abilities,
