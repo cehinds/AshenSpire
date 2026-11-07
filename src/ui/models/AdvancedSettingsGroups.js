@@ -28,7 +28,8 @@ function topic(row, section) {
   if (section === 'Wireframes') return 'Window';
   if (section === 'Export') return 'Configuration file';
   if (section === 'Interface') {
-    if (/map|walked/.test(key)) return 'Map & HUD';
+    // useRestorativeFlasksOutsideCombat: the map's Potions control and the HUD read it.
+    if (/map|walked|FlasksOutsideCombat/.test(key)) return 'Map & HUD';
     if (/holdConfirm|rewardCollect|controlHints/.test(key)) return 'Controls';
     return 'Appearance';
   }
