@@ -304,7 +304,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 1. Guards
 
-- [ ] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2)
+- [x] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
 - [x] Tools reachability test ([#2669](https://github.com/cehinds/AshenSpire/pull/2669)): fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
 - [ ] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5)
 - [ ] Test that every `data-component` id is in `UiComponentId` (Low)
@@ -315,7 +315,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 - [ ] Move `src/engine/d20Chance.js`, `rng.js`, `combatRounds/stance.js` under `src/model/`, old paths re-export (H1)
 - [ ] Move the pure validators and parsers (`validateZoneEffect`, `enemyBurdenProblems`, resolver parsers, `counterstrikeAmount`) into model; pass engine functions into `attributePointPreview` as parameters (H1)
-- [ ] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low)
+- [x] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
 - [ ] Delete the unused `src/framework/index.js` barrel and its stale header (H2)
 - [ ] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2)
 - [ ] Move content projections (`combatExpansionCards.js`, `traitProjection.js`, `equipment.js` functions) into `src/model` (M6)
