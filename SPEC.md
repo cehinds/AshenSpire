@@ -31,7 +31,6 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 4.11 | Combat Rounds Preview | **planned** | Engine port done (P1: `src/engine/combatRounds/`, not wired into combat yet); [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md) phases P2–P6 (engine port, rules and setting, solo, saves, UI). Owner decisions are recorded in §4.11 (Resolved, 2026-10-11). |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 57, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
@@ -837,22 +836,14 @@ Stamina refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
 [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
 
-**Recovery settings (2026-09-27, owner).** Settings → Advanced → Recovery (a
-debug section) gives HP, Stamina and Mana one row each of five triggers, any
-combination on at once, each adding what it restores
-(`content/recoveryRules.js`, `model/recoveryRules.js`): **per turn** (points or
-a percent of the maximum, rounded down, at the end of the player's turn),
-gated by **only after unused turns** (the pool's streak of rounds with no
-Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
-and **only every N rounds**; **after a won fight** (percent of the maximum,
-applied after the fight's pools are written back; Mana's row is hidden and inert while a fight's end refills Mana); and **at every Rest**
-(percent of the maximum on top of the place's own tags, §13.4j, included in the
-Rest preview). The defaults are the rules above — Stamina gets no idle recovery (the turn-start
-refill in §4.1 already restores it, so `mechanics.stamina.idleRecoveryPerTurn` is
-not applied), and nothing else recovers — and a fight built at the defaults carries no recovery state, so its
-behaviour and its save are unchanged. A fight built under changed rules
-snapshots them with the idle streaks (`combat.recovery`); a restored fight keeps
-them. The foundation ruleset keeps its own recovery rules.
+**Recovery (2026-09-27, owner; cleanup 3i-A).** After a won fight and at every Rest, HP, Stamina and Mana
+restore the authored percent of the maximum in `content/recoveryRules.js` (`model/recoveryRules.js`): **after a won
+fight** (applied after the fight's pools are written back) and **at every Rest** (on top of the place's own tags,
+§13.4j, included in the Rest preview). Both default to 0, because a fight's end refills Mana (§4.1) and the turn-start
+refill in §4.1 already restores Stamina. There are no Settings rows for them any more: the in-combat rules (per turn,
+after unused turns, every N rounds) and the Advanced → Recovery tab were removed with the Combat Rounds Preview, and a
+stored legacy `recovery.*` key changes nothing. A fight carries no recovery state. The foundation ruleset keeps its own
+recovery rules.
 
 ### 4.1 Turn loop
 
@@ -917,8 +908,6 @@ baseline; saved stat rows and hand options override its draw and cleanup default
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
-
-When the Combat Rounds Preview is on, see §4.11.
 
 ### 4.1a Ward and Barrier statuses (owner, 2026-11-01)
 
@@ -987,7 +976,7 @@ the complete current/maximum value remains in the accessible label and tooltip.
 
 ### 4.3a Action costs (owner decisions, 2026-10-12)
 
-**Always on.** Action costs apply in every fight, with the combat rounds preview off or on, solo play. The tunables are `content/actionCosts.js`; the rules are `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card and rank, after the upgrade and before the equipment and status mods. Every weight, with its reason and the calibration, is in [docs/alternative-combat-rounds/COST-WEIGHTS.md](docs/alternative-combat-rounds/COST-WEIGHTS.md); a test fails when that file and the config disagree.
+**Always on.** Action costs apply in every fight, solo play. The tunables are `content/actionCosts.js`; the rules are `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card and rank, after the upgrade and before the equipment and status mods. Every weight, with its reason and the calibration, is in [docs/alternative-combat-rounds/COST-WEIGHTS.md](docs/alternative-combat-rounds/COST-WEIGHTS.md); a test fails when that file and the config disagree.
 
 - **The formula (owner's shape; Mana-side rank, Ethereal and stacks added by the owner, 2026-10-12; restores break even, 2026-10-13).** Each resource is priced on its own side:
   - S_sp = `damageWeight` × physical damage steps + `rankWeight` × rank + Σ SP-side tag weights + range weight + `castingEffortWeight` (a cast card) + SP-side statuses × stacks + drawback weights (negative).
@@ -1109,15 +1098,13 @@ Enemy definition shape (content file):
 }
 ```
 
-When the Combat Rounds Preview is on, see §4.11.
-
 ### 4.6b Enemy intent commitment (owner, 2026-11-02)
 
 Owner report: "Intent does not consistently show what the enemy is going to do and often changes their choice. Also, if the enemy would lose sp reacting then the other actions they have queued should be removed."
 
 - **A. Commitment.** The intent shown during the player's turn is what the enemy does. In Core 2 normal combat the plan rolled at the start of the player's turn (the intent plus its planned follow-ups, §4.6a) is the committed plan; the enemy does not re-roll or re-plan between showing the intent and acting. The only exception is a shown move that has become impossible: its target is gone, it is out of range with no way to close, or it is unaffordable. Then the intent changes visibly, as soon as it becomes impossible and during the player's turn, so the intent always matches what will happen. An enemy never swaps or refuses a shown move silently at act time. Where the shown move needs an Advance it cannot afford and the enemy has an affordable range-closing move of its own, that closing move replaces it in the plan at that moment.
 - **B. SP lost before acting.** When an enemy loses SP before it acts (a Poise break or weakness takes SP, §4.6a), its queued plan is recomputed against the SP it will have: the actions it can no longer afford leave the plan, the earliest affordable ones stay in order, and the displayed intent updates at once to the trimmed plan. If none is affordable the intent shows `?` (no move) for the turn. Trimming picks nothing new and draws no `enemyAI` roll; dropped moves also leave `movesHistory`, so `maxConsecutive` reads what will play.
-- **C. Reaction SP carries over (owner, 2026-11-02: "YES - reaction SP carries over: the SP an enemy spends reacting during the player's turn comes out of its next turn, and queued moves it can no longer afford are dropped and shown").** In Core 2, the SP an enemy pays for a reaction pushed during the player's turn is added to its `pendingStaminaLoss` as it is paid, so the refill at its next turn start (max minus pending loss) is smaller by that amount. It is owed once: the stamina spent now only gates further reactions this turn, because the refill replaces it. The plan is then trimmed as in B. The Advance surcharge of that reaction (§4.6a) is owed the same way, added when it is charged. A reaction or Advance in the enemy phase draws on that turn's own pool and carries nothing. Rounds mode (§4.11) is out of scope: it resolves enemy actions on its own timeline and has no player-turn enemy reaction window.
+- **C. Reaction SP carries over (owner, 2026-11-02: "YES - reaction SP carries over: the SP an enemy spends reacting during the player's turn comes out of its next turn, and queued moves it can no longer afford are dropped and shown").** In Core 2, the SP an enemy pays for a reaction pushed during the player's turn is added to its `pendingStaminaLoss` as it is paid, so the refill at its next turn start (max minus pending loss) is smaller by that amount. It is owed once: the stamina spent now only gates further reactions this turn, because the refill replaces it. The plan is then trimmed as in B. The Advance surcharge of that reaction (§4.6a) is owed the same way, added when it is charged. A reaction or Advance in the enemy phase draws on that turn's own pool and carries nothing.
 - The check runs after every player action. A saved fight carries no extra state for it (the plan is `intent` plus `plannedMoves`), so a fight saved without a plan loads as before and is left alone.
 
 ### 4.6a Enemy SP pool (owner decisions, 2026-10-12)
@@ -1127,10 +1114,9 @@ Owner report: "Intent does not consistently show what the enemy is going to do a
 - **Core 2 uses the live affordable SP budget.** The pool is the enemy's actual Core 2 Stamina budget and available SP at the same turn-refill/pending-loss boundary used by execution, not the legacy `ENEMY_SP_ROW` estimate. Planning and projection quote which moves fit without spending or reserving SP. A quote includes any `Advance` SP surcharge; a scripted opener or first move whose full quote does not fit cannot be committed. At the beginning of each move's execution, revalidate its quoted cost against current SP (which may have changed since planning), then pay only if it still fits; this also prevents overdraw when SP changes between planning and execution. If no move can be committed, the enemy has no move this turn. There is no unaffordable-first-move fallback in Core 2; other profiles keep their existing minimum-one fallback. Ordinary affordable root actions may still chain while SP remains; there is no boss one-action cap.
 - **Core 2 combat policy versioning.** Each newly created Core 2 fight, including a later fight in an existing run, stores `core2ActionRulesVersion: 1` and uses the budget and prices above. An already-active saved fight without this field finishes under its previously accepted prices and queues; do not reprice pending quotes, charge old preparation retroactively, or add a second payment. A missing version on an active fight means the previous policy for that fight.
 - **Core 2 queue spending and reaction receipts.** SP is paid once when an enemy move starts executing, before its effects or preparatory benefits; a charging move pays at the start of charge preparation. The committed-move receipt travels with its queue entry through resolution and save/resume, so resolution cannot charge it again. An enemy reaction pays its quoted SP when enqueued, before effects; an unaffordable reaction is refused. Its receipt likewise prevents double payment, and paid SP is not refunded if that committed reaction later fizzles. A charging (delayed) move ends the enemy's turn, and planned follow-ups do not play after it. A staggered enemy plays none of its plan that turn. The current/legacy scope remains unchanged.
-- **Normal combat.** At the start of the player's turn each enemy plans the actions that fit its live SP budget. The first planned move is the intent. In the enemy phase the committed moves play in plan order, each one revealed as it plays. The intent box shows the first move as the main intent. In Core 2, every committed follow-up is projected as a smaller symbol using the existing per-slot concealment rule, regardless of the legacy multi-action preview toggle (§4.11); in other profiles the toggle retains its current visibility behavior. An unrevealed move shows `?` until it plays or is cancelled, and its fate is never shown before its own event (owner, 2026-10-18: "if a character attacks, and still has sp have the remaining actions be ? if the character fails the perception check"). The intent's damage number sits to the left of the stance icon at about twice its former size, and the hit-% badge is centered on the target's sprite in white text with a black outline at about twice its former size (owner, 2026-10-18: "move teh damage to the left of the stance icon and the damage about 2 times larger than before; and have the percent's to hit cetnered on their sprite with a black outline and white font color and about 2x larger").
+- **Normal combat.** At the start of the player's turn each enemy plans the actions that fit its live SP budget. The first planned move is the intent. In the enemy phase the committed moves play in plan order, each one revealed as it plays. The intent box shows the first move as the main intent. In Core 2, every committed follow-up is projected as a smaller symbol using the existing per-slot concealment rule, in other profiles no follow-up is drawn. An unrevealed move shows `?` until it plays or is cancelled, and its fate is never shown before its own event (owner, 2026-10-18: "if a character attacks, and still has sp have the remaining actions be ? if the character fails the perception check"). The intent's damage number sits to the left of the stance icon at about twice its former size, and the hit-% badge is centered on the target's sprite in white text with a black outline at about twice its former size (owner, 2026-10-18: "move teh damage to the left of the stance icon and the damage about 2 times larger than before; and have the percent's to hit cetnered on their sprite with a black outline and white font color and about 2x larger").
 - **The plan is saved** with the fight, so a save taken mid-turn restores the same intent and follow-ups.
-- **Rounds mode** (§4.11) uses the same Core 2 budget, move prices, multi-hit minimum and commit-time payment receipts. Current/legacy behavior remains unchanged.
-- **Silenced** (owner, 2026-10-13, expanded combat): a spell-camp move costs one more SP per Silenced stack on the enemy, as a player's spell card does (`spellCostSurcharge`, `model/combatCardProfile.js`). The pick's affordability and the SP the plan or queue spends both read the surcharged price, in normal combat and in rounds mode.
+- **Silenced** (owner, 2026-10-13, expanded combat): a spell-camp move costs one more SP per Silenced stack on the enemy, as a player's spell card does (`spellCostSurcharge`, `model/combatCardProfile.js`). The pick's affordability and the SP the plan spends both read the surcharged price.
 - **Enemy schema.** An enemy may carry `attributes` (whole numbers by attribute id), `equipmentSp` (a whole number) and `blighted` (true); a move may carry `sp` (a whole number, 0 or more).
 - **Shipped tier-1 bosses (owner target: greedy-bot wins of 10–25% for every class; SP 3–4 from stats).** The listed move costs are the authored/base prices: the Fell Warden has SP 3 (Strength 9, Dexterity 4, Constitution 4, Wisdom 3, Intelligence 3) and moves Cane Strike 1, Hammer Toss 1, Held Blade 1, Twin Daggers 3; the Bell Keeper SP 4 (10/4/4/5/3) with every move at 1; the Thorn Matriarch SP 4 (6/4/3/5/5) with Root Crown 1, Thorn Needles 1, Entwining Roots 2. Core 2 applies its multi-hit minimum and live budget to these base values. The band is not met for every class: the class spread at the Bell Keeper and the Thorn Matriarch (Herald highest, Rogue lowest) is wider than 15 points, and boss SP moves every class together. The owner accepted these boss numbers for now (2026-10-13): no further class levers, and the bosses stay as tuned.
 - **Tier-1 normals and elites (owner, 2026-10-13: "should be harder about 50 to 75 normies, 25 to 50 elites, 10 to 25 for bosses").** The target is a greedy-bot win rate of 50–75% per class at every tier-1 normal encounter and 25–50% at the elite. It is tuned through enemy data only: stats (SP within the minion 1–2 and elite 2–3 bands, HP, move damage), equipment and move SP. Every tier-1 minion now has SP 2. Where it falls short: the Lone Soldier stays near 100%, because the Wandering Soldier is shared with the Twin Patrol, which falls far below 50% at any Soldier strong enough to threaten alone. Some cells miss by the class spread, which is wider than the band (the Twin Patrol: Starseer and Herald about 45%, Reaver and Rogue about 75%). The Wyrm Aspirant's spread (Herald about 60%, Rogue under 10%) is wider than its 25-point band. `docs/BALANCE.md` §5 has the measured table.
@@ -1219,8 +1205,6 @@ All tactical numbers remain authored/configurable; their defaults above establis
 
 **Out of scope for this contract:** new automatic school matchup loops, new feats/relics, school-specific deck-manipulation primitives and persistent Ashen Blight corruption. [Ashen Blight proposal](docs/ashen-blight-proposal.md) remains proposed until its own state/save/preview contract and implementation land. Ordinary Exhaust and Crimson Blight must not acquire persistent corruption as a side effect of tagging existing cards.
 
-When the Combat Rounds Preview is on, see §4.11.
-
 ---
 
 ### 4.8 Martial and Spell expansion (version 2)
@@ -1260,7 +1244,9 @@ precedes the implementation.
 
 Read Intent's explicit reveal is an insight contest (d20 + INT + WIS + rank vs the target's current Poise + WIS + level, ties pass), not a hit roll and not range-gated: §17 Contests.
 
-**Intent box follow-ups** (owner decision, 2026-10-12). When the multi-action preview is on (Advanced → Combat, §4.11), an enemy's intent box shows its planned follow-up actions after the current one, as smaller symbols in the same box. The first 1 + Perception follow-ups show their icon when today's intent read is exact; the rest, and every follow-up while the read is hidden, show `?`. The read is the one §4.9 already rolls for the enemy; Perception adds no roll. With the toggle off, the box shows no follow-ups.
+**Intent box follow-ups** (owner decision, 2026-10-12). In a Core 2 fight an enemy's intent box shows its planned follow-up actions after the current one, as smaller symbols in the same box. The first 1 + Perception follow-ups show their icon when today's intent read is exact; the rest, and every follow-up while the read is hidden, show `?`. The read is the one §4.9 already rolls for the enemy; Perception adds no roll. Other profiles show no follow-ups. (The old Advanced → Combat toggles, Momentum and the Combat Rounds Preview were removed in cleanup 3i-A.)
+
+**Always on, in every fight** (owner decision, 2026-10-12; `styles/combat-visuals.css`). The blue selection and playable outline (`--selection-color` is blue on the combat screen), so green only means advantage; a soft dark drop-shadow on each intent glyph and on each character sprite; and the thin target outline, a dark shadow hugging the sprite then a coloured 1px ring, drawn while a card is aimed at an enemy: stance alone, green when the card's stance beats the enemy's revealed stance (attack beats smash and sweep, +1), red when it loses, none when neutral or unrevealed (`stance-advantage.csv`, `content/combatRounds.js`).
 
 [docs/enemy-knowledge-contract.md](docs/enemy-knowledge-contract.md) defines the
 separately versioned extension to §4.8: three saved visibility outcomes, a 30%
@@ -1304,8 +1290,6 @@ disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
 
-When the Combat Rounds Preview is on, see §4.11.
-
 **Reaction stack (reaction rules version 2).** New expanded runs snapshot
 reaction rules version 2. A seat may then answer one incoming root with several
 Reaction cards: each choice is pushed without payment and the seat is offered
@@ -1321,84 +1305,6 @@ refused. Its payment receipt stays with the entry through resolution and
 save/resume, preventing a second charge. If a committed enemy reaction later
 fizzles, its paid SP is not refunded. Player-side reaction stack payment timing
 is unchanged.
-
-### 4.11 Combat Rounds Preview
-
-**Contract status: planned.** An opt-in preview that runs real fights on the speed-ordered rounds specified in [docs/alternative-combat-rounds/DESIGN.md](docs/alternative-combat-rounds/DESIGN.md), with the owner's decisions in [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md). Formulas stay in DESIGN.md and are not restated here. Until its phases ship, combat follows §4.1 to §4.10 unchanged.
-
-**Setting**
-
-- Advanced → Combat holds three independent opt-in rows, all **off by default** (owner decision, 2026-10-12): *Combat rounds preview* (the rounds mode, its own key, unchanged), *Momentum*, and *Multi-action preview*. They are shown on dev and test builds only, because the Combat group is not in `RELEASE_ADVANCED_GROUP_IDS` and a release build never draws it.
-- Each row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
-- The preview covers solo play (see *Normal combat* below).
-- With all three off, no preview field is written: a fight carries no `combatRounds` or `normalPreview`. The action costs (§4.3a) and the enemy SP pool (§4.6a) are always on (owner decision, 2026-10-12), so with the toggles off a fight, its save and its RNG rolls change from the 2026-10-11 rules. A save taken mid-turn also carries each enemy's planned moves.
-
-**Momentum and follow-ups in rounds mode**
-
-- Momentum follows its own toggle. With Momentum off, the rounds engine runs with momentum frozen at 0: every enemy is at 0 at each round start, no momentum is kept and no overflow flag is set. With it on, the rules below apply as written.
-- The multi-action toggle controls legacy follow-up symbols only. In Core 2, committed follow-ups are always projected with the existing per-slot concealment rule (§4.6a), even when the toggle is off; in other profiles the toggle retains its current behavior.
-
-**Normal combat (rounds mode off)**
-
-- *Momentum* (owner decision, 2026-10-12) keeps a value per enemy, −3..+3, by the rounds rules: each enemy's value moves one step toward 0 when the player's turn starts (a turn is a round). Each exchange credits its winner once: a landed attack to the player, an enemy hit that lands to the enemy, an attack fully blocked or evaded to the defender, and a counter that fires to its owner. The gain is 1 (normal cards have no `momentumGain`) plus the stance bonus from `stance-advantage.csv`. The summed deltas settle once, at the end of the enemy phase, are clamped to −3..+3, and a raw total past the cap sets the overflow flag.
-- Normal combat has no speed order and no hit roll, so momentum has **no mechanical effect** here: it is tracked and shown, and nothing else reads it. Two rounds rules are not mapped and change nothing: the ±3 counter stagger (normal Counters carry no stagger tag) and the poise double (normal combat models no poise damage to double).
-- The turn banner shows the targeted enemy's momentum tab (`++` for +2/+3, `+-` for ±1, `--` for −2/−3, none at 0), from its stored value, already decayed for the turn.
-- *Multi-action preview* (owner decision, 2026-10-12): each enemy plans its moves ahead with the same weighted pick, from the `enemyAI` stream, filling a plan to the live affordable SP budget (§4.6a), with each move's quoted cost. The head of the plan is the intent played this roll; the rest are its planned follow-ups. The plan is the moves the enemy plays, in that order. A staggered or held enemy keeps its plan. The intent box shows the follow-ups as §4.9 describes. In Core 2, every committed follow-up is projected using the existing per-slot concealment rule regardless of this legacy toggle; the toggle does not alter SP spending.
-
-**Always on, in every fight** (owner decision, 2026-10-12; `styles/combat-visuals.css`)
-
-- The blue selection and playable outline (`--selection-color` is blue on the combat screen), so green only means advantage.
-- A soft dark drop-shadow on each intent glyph and on each character sprite.
-- The thin target outline: a dark shadow first, hugging the sprite, then the coloured 1px ring outermost, with no glow or halo. The colour is drawn while a card is aimed at an enemy. With rounds mode off it is stance alone: green when the card's stance beats the enemy's revealed stance, red when it loses, none when neutral or unrevealed. With rounds mode on it also uses speed (see *Screen* in `docs/alternative-combat-rounds/PREVIEW-PLAN.md`).
-- With every toggle off, the outline and these visuals are the only writes: no element is added to the combat screen. Core 2 follow-up intent projections (§4.6a) remain visible using the existing per-slot concealment elements even when the legacy multi-action toggle is off.
-
-**Live rules that stay**
-
-- The hand is the live hand: draw, hand size, Retain, Ethereal, reshuffle and the `handRules` settings of §4.1 apply unchanged.
-- Resources are live. Stamina is SP and Mana is MP.
-- A landed card or enemy move runs its live effects: damage (§4.2), statuses (§4.4), draws, relics and triggers. The timeline decides order and whether an action lands; it does not compute effects.
-- Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
-- A reaction from hand uses the reaction choice of §4.10 (Back, Play).
-
-**Queue and End Turn**
-
-- Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
-- Enemies queue cards and moves from their own SP pool (§4.6a): the stamina row on their stats, 3 with none. In Core 2, planning, projection, and commitment use the live affordable budget after pending SP loss and already committed costs, including any `Advance` surcharge; an unaffordable opener or follow-up cannot commit, and there is no minimum-one fallback. Other profiles keep their current fallback. A move costs its own `sp`, else its stance's table price (§4.6a), and 1 SP when its stance is not priced or the move names no stance; Core 2's multi-hit minimum and commit-time receipts are in §4.6a. Root actions in a multi-action turn are not given a 2 SP minimum.
-- End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
-
-**Order and hits**
-
-- Initiative is base, plus momentum, plus a d4. Each combatant rolls its own d4 once per round, in combatant order (the player first, then the others in key order), and that roll is used for all of its actions that round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls. Its counter is saved only when it is non-zero and reads as 0 when missing, so a run with the preview off saves exactly as before.
-- Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
-- A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
-
-**Momentum**
-
-- Momentum is kept per enemy, between −3 and +3, and decays as DESIGN.md states.
-- A success at the cap sets an overflow flag. The side's next landed hit carries doubled poise damage, and the flag clears when that hit spends it.
-
-**Perception**
-
-- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count show as `?` symbols in that enemy's intent box, at their place in its play order (owner, 2026-10-11).
-- A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
-- The intent box shows the enemy's current action at today's size and its follow-up actions as smaller symbols. There is no separate initiative track or queue strip (owner, 2026-10-11).
-
-**Resolved (owner, 2026-10-11)**
-
-- A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
-- Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
-- A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
-
-**Resolved (owner, 2026-10-13)**
-
-- Normal-combat momentum stays display only: it is tracked and shown, and has no mechanical effect.
-- Block (player and enemy) lasts one round in the preview: both reset at the start of the round commit.
-- Hidden enemy actions beyond the read show one `?` per action in the enemy's intent box (see Perception).
-
-**Provisional (pending owner)**
-
-- attack beats smash and sweep (+1), so a plain attack can reach a green outline (owner, 2026-10-12).
-- A queued Counter is never aimed at a foe in the preview (its target plan is the player's own, in both fight versions), so it answers the next attack its live coverage reaches, from any enemy, and is then spent. This replaces "from its target" above until the owner decides (provisional, pending owner confirmation). A Counter that does not cover an attack neither answers it nor earns its momentum or stagger. A Counter whose attack misses is spent. A Counter not spent in the round is cleared at round end, as the timeline clears it.
 
 ## 5. Content specification
 
@@ -2007,7 +1913,7 @@ resolver consume that same descriptor; UI code must not retype a default, range,
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
 row.
 
-The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, ~~Battlefield~~ (removed, owner 2026-11-05), Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Stats, Rewards, Shops, Deck, Equipment, World, Interface, Text, ~~Battlefield~~ (removed, owner 2026-11-05), Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
 What the tabs hold, by area:
 
