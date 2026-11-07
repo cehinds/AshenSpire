@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **Legacy class mastery removed** ([#2651](https://github.com/cehinds/AshenSpire/pull/2651), `0.7.4.20`). Removed the legacy class mastery run and profile, class respec and the Level Up feats and class-upgrade settings; Core plays the same.
+- **Legacy class mastery removed** ([#2651](https://github.com/cehinds/AshenSpire/pull/2651), `0.7.4.22`). Removed the legacy class mastery run and profile, class respec and the Level Up feats and class-upgrade settings; Core plays the same.
 - **Behind the scenes: the automatic version bump counts each release once, and dev is back on 0.7.4** ([#2650](https://github.com/cehinds/AshenSpire/pull/2650), `0.7.4.20`). This is a tooling-only change, and nothing you play changes. This morning's release cut bumped the version twice because the bump tool only noticed its own newest record; it now reads them all, and the owner reset the working version from 0.7.5 to 0.7.4, so the next release cut ships as 0.7.4 and the version after it is 0.7.5.
 - **Legacy shops removed** ([#2648](https://github.com/cehinds/AshenSpire/pull/2648), `0.7.4.18`). Removed the legacy merchant, market, wise master and legacy Blacksmith services; Core's shop and Blacksmith are unchanged.
 - **Legacy reward menu removed** ([#2646](https://github.com/cehinds/AshenSpire/pull/2646), `0.7.4.16`). Removed the legacy (non-Core) reward menu and the code only it reached; Core rewards, the Victory receipt and card rank-ups are unchanged.
