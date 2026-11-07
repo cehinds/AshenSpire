@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Legacy reward menu removed** ([#2646](https://github.com/cehinds/AshenSpire/pull/2646), `0.7.5.12`). Removed the legacy (non-Core) reward menu and the code only it reached; Core rewards, the Victory receipt and card rank-ups are unchanged.
 - **Manual level-up branch removed** ([#2642](https://github.com/cehinds/AshenSpire/pull/2642), `0.7.5.12`). Combat end no longer carries the unused manual level-up branch or the old character-progression door; Core plays the same.
 - **Keepsakes removed** ([#2637](https://github.com/cehinds/AshenSpire/pull/2637), `0.7.5.10`). Removed keepsakes, the unused creation boon system, from content, character creation, tags and tooling; Core plays the same.
 - **Behind the scenes: three release checks read the current screens again** ([#2638](https://github.com/cehinds/AshenSpire/pull/2638), `0.7.5.8`). This is a tooling-only change, and nothing you play changes. Three of the release-time checks had been reading screens the game no longer draws: the motion check looked for the old player art, the Armoury check clicked view tabs the Armoury no longer has, and one hint-strip self-check pushed the cards so far down that it tripped a different rule than the one it meant to prove. Each now reads the screen as it is, so a real regression in those places turns the release red again.
