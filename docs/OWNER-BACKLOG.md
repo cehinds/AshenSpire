@@ -48,7 +48,8 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Status: pending
 - Asked: 2026-11-07 — "I'd like to change magic damage to just deal damage but are reach spells by default, with the school having it's unique status effect."
 - Means: Drop "magic" as a separate damage type: spell damage is just damage. Spells have Reach (ranged) by default. Each spell school gets its own unique status effect instead.
-- Questions: Which unique status per school (names/effects)? Do existing magic-damage resists/bonuses just become normal damage ones?
+- Answers 2026-11-07: school statuses — "check what's already in the code base" (existing damage riders in SPEC.md are the starting point: Fire→Burn, Lightning→Weak/Sap (+Shocked), Force→strip Ward, Holy→cleanse, Poison→Venom, Psychic→Confused, Earth→Slowed, Necrotic→Necrotic Blight; Frost/Alteration have none listed). Existing magic-damage resists/bonuses become normal damage ones.
+- Questions: none
 - Link: —
 
 ## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
@@ -70,12 +71,14 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
   - Stats: use the stat values as-is (stats are already modifiers, small numbers). Problem to fix: enemy levels are far too high (see #9).
   - Damp: no caster advantage; the *target* rolls its save at disadvantage while Damp (replaces the Damp "shock contest" idea).
   - Save not required on every card: some cards just deal damage. Spell attack/hit = 10 + max(INT, WIS); damage = base damage + max(INT, WIS) + 1d4 × rank. Status DC (new formula, supersedes the earlier one) = 10 + max(INT, WIS) + rank + level.
-- Questions: "level" in the DC = caster (player) level? Does Damp's disadvantage apply to every save or only Reflex?
+- Answers 2026-11-07: "level" = spell caster class level. Damp's disadvantage = Reflex saves against cards with the lightning tag only.
+- Questions: none
 - Link: —
 
 ## #9 Enemy levels 1-5 with the player's stat budget
 - Status: pending
 - Asked: 2026-11-07 — "the problem is that enemies levels are way too high and need to be reduced to 1 throuh 5 level with reasonable stats per level. if a player starts with 8 points (1 in each stat, and 3 other points applied in other stats, the enemies shoudl follow that rule too"
 - Means: Rescale all enemy levels to 1-5. Enemy stats follow the player's budget: 1 in each of 5 stats + 3 free points at level 1 (8 total), growing by the player's per-level rule, so saves/DCs (#8) stay sane.
-- Questions: How many stat points per level above 1? Which 5 stats (INT, WIS, CON, DEX, STR?)
+- Answers 2026-11-07: points per level = same as the player's rule; enemies carry the player's stat list.
+- Questions: none
 - Link: —
