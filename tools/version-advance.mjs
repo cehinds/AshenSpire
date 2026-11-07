@@ -93,8 +93,10 @@ export function cmpEvents(a, b) {
 export function parseRecords(messages) {
   const out = [];
   for (const m of messages) {
-    const subject = SUBJECT.exec(m);
-    const trailer = TRAILER.exec(m);
+    // `git log --format=%B%x1e` split on \x1e leaves "\n" before every message after the first.
+    const text = m.replace(/^\s+/, '');
+    const subject = SUBJECT.exec(text);
+    const trailer = TRAILER.exec(text);
     if (subject && trailer) out.push({ id: trailer[1], timestamp: trailer[2], branch: subject[1] });
   }
   return out;
