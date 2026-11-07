@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Capture six production card surfaces before and after opening their real inspector.
-// Deterministic QA state is used for deck, reward, store and level-card production surfaces.
+// Deterministic QA state is used for deck, store and combat production surfaces.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -33,7 +33,7 @@ const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
   viewport: { width: 1440, height: 1000 },
-  fixtureBoundary: 'Character creation uses the application screenshot route; deck editor, reward card choices and level-card options use production screen modules with deterministic Starseer state; combat uses the application combat route with deterministic hand pose. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.',
+  fixtureBoundary: 'Character creation uses the application screenshot route; deck editor uses a production screen module with deterministic Starseer state; combat uses the application combat route with deterministic hand pose. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.',
   views: {},
   failures: [],
   browserErrors: errors,
@@ -166,34 +166,6 @@ try {
 
   });
 
-  await attempt('rewards', async () => {
-    await standardView('rewards', '/?shot=reward&shotClass=starseer', '.reward-menu, .reward-door, .reward-screen', {
-      prepare: async () => {
-        // Mount the real reward screen with authored card instances so the QA
-        // surface always includes a changed defensive card, independent of RNG.
-        await page.evaluate(async () => {
-          const { contentBundle } = await import('/src/content/index.js');
-          const { createRegistries } = await import('/src/model/registries.js');
-          const { createRunState } = await import('/src/model/state.js');
-          const { createRng } = await import('/src/engine/rng.js');
-          const { mountRewards } = await import('/src/ui/screens/reward.js');
-          const registries = createRegistries(contentBundle);
-          const run = createRunState({ seed: 7814, classId: 'starseer', registries });
-          const rewards = { title: 'WARD CARD QA', cardIds: ['frostCounter', 'forceCounter'] };
-          document.body.replaceChildren();
-          mountRewards(document.body, {
-            registries, run, rewards, rng: createRng(7814),
-            saves: { loadMeta: () => ({ settings: {} }) },
-            onCollectArmament() {}, onPersist() {}, onDone() {},
-          });
-        });
-        await page.locator('.reward-kind[data-kind="card"]').waitFor({ state: 'visible', timeout: 15000 });
-        await page.locator('.reward-kind[data-kind="card"]').click();
-        await page.locator('.reward-row .reward-choice-face.card:has-text("Frost Counter")').waitFor({ state: 'visible', timeout: 15000 });
-      },
-      cardSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")', compactSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")',
-    });
-  });
   await attempt('store', async () => {
     await standardView('store', '/?shot=shop&shotClass=starseer', '.shop, .shop-workspace, #shop-relics', {
     prepare: async () => {
@@ -228,53 +200,6 @@ try {
     compactSelector: '#remove-grid .card:has-text("Frost Counter")',
     strategy: 'keyboard',
   });
-  });
-
-  await attempt('level-options', async () => {
-    // Real production level-up screen. The QA offer deliberately contains two
-    // level choices so the normal Level up control opens its chooser.
-    await page.goto(base + '/?shot=reward', { waitUntil: 'domcontentloaded' });
-    await page.locator('.reward-menu, .reward-door, .reward-screen').first().waitFor({ state: 'visible', timeout: 60000 });
-    await page.evaluate(async () => {
-      const { contentBundle } = await import('/src/content/index.js');
-      const { createRegistries } = await import('/src/model/registries.js');
-      const { createRunState } = await import('/src/model/state.js');
-      const { claimBankedLevel } = await import('/src/model/levelup.js');
-      const { mountRewards } = await import('/src/ui/screens/reward.js');
-      const { mergeProgressionRewards } = await import('/src/model/deferredProgression.js');
-      const { pendingRewardCheckpoint } = await import('/src/model/rewardSourcePolicy.js');
-      const registries = createRegistries(contentBundle);
-      const run = createRunState({ seed: 7814, classId: 'starseer', registries });
-      run.level = { level: 1, xp: 555, unspentPoints: 0 };
-      run.skills = {};
-      const offer = mergeProgressionRewards({}, {
-        title: 'LEVEL OPTIONS QA',
-        xpGains: { level: 555, tracks: {} },
-        levelCards: [{ ordinal: 0, requiredLevel: 2, cardIds: ['frostCounter', 'forceCounter'] }],
-      }, run);
-      const checkpoint = pendingRewardCheckpoint(offer, { source: 'elite', after: 'map' });
-      checkpoint.expanded = true;
-      document.body.replaceChildren();
-      mountRewards(document.body, { registries, run, rewards: offer, checkpoint,
-        saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0, levelUpRefillPauseMs: 0 } }) },
-        onClaimLevel: () => claimBankedLevel(registries, run), onPersist: () => {}, onDone: () => {},
-      });
-      window.__wardLevelQa = { registries, run, offer };
-    });
-    await page.locator('.reward-level-up').waitFor({ state: 'visible', timeout: 20000 });
-    await wait(300);
-    await page.locator('.reward-level-up').click();
-    const levelRow = page.locator('.reward-level-rewards .reward-kind[data-key="levelCard:0"]');
-    await levelRow.waitFor({ state: 'visible', timeout: 10000 });
-    await wait(300);
-    await levelRow.click();
-    await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
-    const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-row .reward-choice-face.card') });
-    const levelInspection = await inspector('.reward-row .reward-choice-face.card');
-    const levelAfter = await capture('level-options', 'inspection', levelInspection);
-    const levelDetails = await captureDetails('level-options');
-    report.views['level-options'] = { before: levelBefore, after: levelAfter, details: levelDetails };
-
   });
 
   await attempt('combat', async () => {

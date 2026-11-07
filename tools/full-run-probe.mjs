@@ -36,7 +36,7 @@
 //              dungeon, whose rooms are walked the same way to its boss. Fights after
 //              the first are resolved through the debug handle
 //              `window.__combat` (the enemies' hp set to 0, then End Turn
-//              held — the same handle tools/reward-collect-drive.mjs uses):
+//              held — the same handle the combat audit uses):
 //              the first fight already proved play, and the walk proves the
 //              doors between floors.
 //   BOSS       the boss fight, known by its splash (intro.js; counted by a
