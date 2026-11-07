@@ -43,3 +43,11 @@ The previous edition of this section was a hand-maintained inventory that had dr
 ## 3.14 Content validation
 
 - Law 1 clause 6 content smoke: built and runnable (#64).
+
+## Second concision pass (2026-11-07)
+
+Moved/cut from SPEC §3 on the owner's request:
+- §3.7 shipped status examples (data in `src/content/statuses.js`): `bleed` `{ stackMode 'add', decay 'none', proc { threshold 7, burstPercent 15, burstMin 8, burstMax 35, poiseDamage 3, resistance { status 'bleedResist', tags ['beast','humanoid'] } } }`; `crimsonBlight` `{ add, decay { duration 3 }, hook ownerTurnStart → loseHp by own stacks }`; `weak` `{ add, perTurnEnd, damageDealtMult 0.75 }`; `vulnerable` `{ add, perTurnEnd, damageTakenMult 1.25 }`; `frost` `{ add, decay 'none', proc { threshold 10, burstPercent 8, burstMin 4, burstMax 20 }, effects leave target Weak and Frost-Exposed }`.
+- Code examples for effects (Gorefire Slash, Last Stand), formulas (Bleed burst, Last Stand, War Surgeon, X-cost, add), triggers (Fell Omen Brand, Watchful Omen phase 2 at 50% HP: Frail 1, Weak 1, Strength 2 on self, unlocks `twinDaggers`).
+- Round Shield (Shield Bash) and Buckler (Riposte) Art values were never stated in the spec; shown as "—".
+- Old-format migration notes for runs refused at load (pre-ruleset-7, non-Core) have no separate text in §3.12; the only §3.5 statement kept is that such runs are refused. Run-schema migrations still reachable by loadable saves (pool-deck mark, flask ledger) remain in §3.12.
