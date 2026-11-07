@@ -11,6 +11,7 @@
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
 import { runTests } from './engine.test.js';
+import { loadRunNodeFixtures } from './helpers/run-node-fixtures.mjs';
 import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 let options;
@@ -24,64 +25,10 @@ const CORE = options.core;
 const SELFTESTS = options.selftests;
 const DISCOVER = options.discovered;
 
-// The art manifest is written by tools/equipment-blender.py and records the
-// fields the renderer ACTUALLY read. Loaded here rather than inside the test so
-// the harness can stay synchronous (see the promise guard in runTests).
-let artManifest = null;
-try {
-  const { readFileSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  artManifest = JSON.parse(readFileSync(resolve(root, 'asset-data/equipment/manifest.json'), 'utf8'));
-} catch (e) {
-  console.warn('  (no art manifest — test 33 will skip; run tools/equipment-blender.py)');
-}
-
-// THE FILESYSTEM, HANDED IN RATHER THAN IMPORTED — same reason as the manifest
-// above: engine.test.js also runs in tests/index.html, where there is no `fs`,
-// and an import of `node:fs` in that file would take the browser harness down
-// entirely. Test 49 asks this whether a path the game CONSTRUCTS resolves to a
-// real file; in the browser it is null and the test skips loudly. Since step
-// 12 (docs/EXTERNAL-ASSETS-PLAN.md) "real" means an id art-manifest.json
-// lists — what the pinned packs carry — not a file in a tree here, which
-// leaves the repository at step 13.
-let assetExists = null;
-try {
-  const { manifestIds } = await import('../tools/art-source.mjs');
-  const shipped = manifestIds();
-  assetExists = (rel) => shipped.has(rel);
-} catch {
-  console.warn('  (no filesystem — test 49 will skip)');
-}
-
-// The three-day-window save fixture (test 50c): real bytes saveRun wrote at
-// dev = acb8ffe, when the HP attribute was still spelled 'constitution'.
-// Handed in like the manifest above so the browser harness stays fs-free.
-let legacyRunSave = null;
-try {
-  const { readFileSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  legacyRunSave = readFileSync(resolve(root, 'tests/fixtures/run-save-constitution-acb8ffe.json'), 'utf8');
-} catch {
-  console.warn('  (no legacy run-save fixture — test 50c will skip)');
-}
-
-// The pre-E6 run-save fixture (test 50e): real bytes saveRun wrote at
-// dev = 5597166, the commit before HP became 50 + floor(CON/5) + tagged
-// bonuses. Handed in like the two above so the browser harness stays fs-free.
-let preE6RunSave = null;
-try {
-  const { readFileSync } = await import('node:fs');
-  const { resolve, dirname } = await import('node:path');
-  const { fileURLToPath } = await import('node:url');
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  preE6RunSave = readFileSync(resolve(root, 'tests/fixtures/run-save-hp-5597166.json'), 'utf8');
-} catch {
-  console.warn('  (no pre-E6 run-save fixture — test 50e will skip)');
-}
+// The fixtures runTests() is handed (art manifest, asset lookup, two legacy
+// run-save files) are loaded here, not inside engine.test.js, so the browser
+// harness stays fs-free; tests/helpers/run-node-fixtures.mjs says why.
+const { artManifest, assetExists, legacyRunSave, preE6RunSave } = await loadRunNodeFixtures();
 
 const { passed, failed, results } = CORE
   ? await runTests({ artManifest, assetExists, legacyRunSave, preE6RunSave })
