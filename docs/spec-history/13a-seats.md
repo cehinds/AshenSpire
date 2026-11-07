@@ -56,3 +56,15 @@ Archive of history, rationale and provenance moved out of SPEC.md §13.1–13.4n
 
 ## §13.4h (plan phase 5c)
 - The boss-reward door the plan named is not shipped: "a reward row is a kind of its own (§13.4e's shape), and the owner placed it post-1.0 (2026-09-27)."
+
+## §13.4i (plan phase 6)
+- **Removed in part (owner, 2026-11-07, P4b).** Banked-level claim (`bankLevelXp` `src/model/levelup.js:156`, `claimBankedLevel` `:170`, `pendingLevelCount`) and general feats (`feats.json`, `run.feats`, XP multipliers, `vitalRenewal`) deleted. The old §13.4i text still described XP being banked by `bankLevelXp` and claimed by `claimBankedLevel` on the Level up press; no reader remains in src/. `awardLevelXp` was `levelup.js:304`; QA fixture call `src/main.js:4137`.
+- **Guided level rewards (owner, 2026-10-03; superseded IN PART by §13.4o, 2026-10-04):** Accessibility → "Pause XP for level-up rewards" (`guidedLevelUp`, default on) banked earned character and skill XP, paused at each level, opened its reward chooser with Back and resumed surplus XP after the choice; Back stopped automatic prompting for the current reward screen; Continue could leave without advancing levels. Auto-claim and pausing went with §13.4o; "turning the guide off follows the existing manual-level preference". `guidedLevelUp` has no reader in src/.
+- Per-level term values as shipped then: HP +5, Mana +1 and Stamina +1 every five levels past the first, Hand +1 every ten; ruleset 6 restated it as a decimal `perLevel`, and §3.5's 2026-09-24 defaults give HP 2 per level.
+- Curve receipt before 2026-09-24: 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 and 2,030 to level 11.
+- "His level-value dial (`levelUpValue`)"; character XP for quests post-1.0.
+
+## §13.4j (plan phase 7)
+- `shrineHealMult` renamed `restHealMult`; `shrineNoRest` (no filter) renamed `restDenied`. `shrineHealPct`/`balance.shrine.healPct` and `shrineHealAmount` are gone. `restMana`'s `toFloorPct` and `missingMana` were new at phase 7; `refillFlasks` a new opcode. The single-floor rule a percentage rest replaced.
+- Inn `questBoard` service added in phase 10b.
+- **Town budget (deleted as obsolete):** `generateJourney(seed, profileId, atlas, { townsPerActMax })` counted `city` nodes per difficulty act and rolled again over the cap; `main.js` passed `balance.atlas.townsPerActMax` (1). Every shipped city was act 1 and a route held one hub, so it changed no seeded route. `townsPerActMax` has no reader in src/ or content/.
