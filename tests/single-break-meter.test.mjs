@@ -64,3 +64,15 @@ test('a version-1 break-meter stamp restores and saves again without the retired
   assert.equal(again.breakMeterVersion, 1);
   assert.deepEqual(combatSnapshotProblems(again), []);
 });
+
+test('a restored version-1 fight routes Ward guard to Poise and saves again', () => {
+  // Codex P2 on #2633: with ratings gone the stamp alone must keep the single meter.
+  const saved = serializeCombatSnapshot(fight({ stamp: 1 }));
+  saved.breakMeterVersion = 1;
+  for (const entity of [saved.player, ...saved.enemies]) for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) delete entity[field];
+  const c = restoreCombatSnapshot({ registries: createRegistries(contentBundle), rng: createRng(7), snapshot: saved });
+  executeAction(c, { source: c.player, owner: c.player, card: {}, effect: { op: 'gainWard', target: 'self', amount: 5 }, targetId: c.player.id, meta: {} });
+  assert.equal(c.player.wardGuard, undefined);
+  assert.ok(c.player.poiseGuard > 0);
+  assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(c)), []);
+});

@@ -51,6 +51,7 @@ import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import * as Triggers from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
+import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
@@ -304,7 +305,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
     ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) });
   if (hpLoss > 0) {
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
-    if (!carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
+    if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
@@ -999,6 +1000,7 @@ export function computeMeterGuardGain(ctx, entity, base, card = null) {
  */
 export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   if (!entity.alive) return 0;
+  if (usesSingleBreakMeter(ctx) && meter === 'ward') meter = 'poise';
   const amt = computeMeterGuardGain(ctx, entity, base, card);
   const key = meter + 'Guard';
   if (amt > 0) entity[key] = (entity[key] || 0) + amt;
