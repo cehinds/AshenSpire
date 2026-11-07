@@ -543,10 +543,16 @@ try {
     await ev('window.__combat.__slotLoadProbe = true');
     await openLoadSlot(1);
     await confirmIfAsked();
-    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the restored expanded entry');
+    // The new fight, whatever phase it mounts in: a missing entry checkpoint
+    // lets the first ordinary action write a mid-turn snapshot, and a reload
+    // of that lands in the enemy turn. The exact-snapshot comparison below is
+    // the witness of that defect; waiting for the player phase first would
+    // hide it behind a timeout.
+    await until(`!!window.__combat && !window.__combat.__slotLoadProbe && !!document.querySelector('.end-turn')`, 'the restored expanded entry');
     const restoredEntry = await snapshotWithRng();
     check(entryPose.turn === 1 && restoredEntry === entry, 'SLOT-LOAD-EXPANDED-ENTRY',
       restoredEntry === entry ? 'ordinary unsaved combat restores the exact opening snapshot, RNG seed and counters' : 'ordinary combat replaced or changed its opening checkpoint');
+    await until(`window.__combat.phase === 'player'`, 'the restored expanded entry on its player turn');
     // Loading installs the new combat before the confirmation input shield
     // finishes closing. Wait for its actual removal before the next action.
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'the restored entry input shield to close');
