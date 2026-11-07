@@ -89,3 +89,14 @@ test('a subject that lists effects as abilities does not repeat them in current 
   assert.deepEqual(byId.abilities.rows.map((r) => r.label), ['Gorefire']);
   assert.throws(() => projectCombatantInspector({}), /named subject/);
 });
+
+test('the Defense summary lists the player AC (value, Evade and base) when the subject carries one', () => {
+  const ac = { value: 14, evade: 2, base: 12 };
+  const rows = projectCombatantInspector({ ...enemy, ac }).sections[0].rows;
+  const row = rows.find((r) => r.label === t('combat.protection.ac'));
+  assert.equal(rows.indexOf(row), rows.findIndex((r) => r.label === 'Defense') + 1);
+  assert.equal(row.value, '14');
+  assert.ok(row.detail.includes(t('combat.protection.acEvade', { value: 2 })));
+  assert.ok(row.detail.includes(t('combat.protection.acBase', { value: 12 })));
+  assert.ok(!projectCombatantInspector(enemy).sections[0].rows.some((r) => r.label === t('combat.protection.ac')), 'no AC row without ac');
+});

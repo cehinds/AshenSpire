@@ -36,7 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
-import { floaterWordShown, floaterNumberShown } from './models/FloaterPolicyModel.js';
+import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
@@ -1658,7 +1658,7 @@ function playLegacyTimeline(events, ctx, done) {
       : visualEvents.map((e) => visualFor(e, beat.kind, receiptVisuals));
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
-    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
+    if (actorEl && beat.kind !== 'attack' && beat.events.length && floaterGlyphShown('Cast')) {
       safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, 'Cast'));
     }
     const windup = actorAnimation
@@ -2143,7 +2143,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, 'Guard');
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Guard') ? 'Guard' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -2318,7 +2318,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, 'Stun');
+          if (floaterGlyphShown('Stun')) spawnFx(ctx.layer, anchor, 'fx-glyph', 450, 'Stun');
           shake(ctx.combatEl);
         },
       };

@@ -22,6 +22,11 @@ export function floaterWordShown(kind) {
   return null;
 }
 
+// Glyph words that fx.js spawnFx draws outside the callout path (the Cast, Guard and Stun flares): only allowlisted words show.
+export function floaterGlyphShown(word) {
+  return !policyOn || FLOATER_WORDS_SHOWN.includes(word);
+}
+
 // The number classes fx.js passes to floatNum:
 //   shown : 'dmg', 'dmg small|heavy|crit|pct20|pct35' (dmgClass; HP damage), 'dmg heavy' (Defeated)
 //   hidden: 'blk' (block gain), 'blk small' (cost, guard, RESISTED), 'blk <tier>' (guardHitFloatParts fullHit),
