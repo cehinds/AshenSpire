@@ -92,7 +92,8 @@ so the fix is a relocation plus re-export, not a redesign.
   sites another.
 - Fix: give both a row and a rank in ARCHITECTURE-MAP.md (kernel below model; framework
   beside model, no ui imports), delete the dead barrel and the stale header, and cover both
-  in the same dependency test as H1. Step 4a of the plan is the natural home.
+  in the same dependency test as H1, and remove the `bindings.mjs` back-edge. Step 4a of the
+  plan is the natural home.
 
 **H3. God functions.** All have section banners or obvious seams already.
 - `src/ui/screens/combat.js:206-4475` `mountCombat`: 54 top-level state cells. Seams:
@@ -110,6 +111,7 @@ so the fix is a relocation plus re-export, not a redesign.
   1650. Replace with an `OPCODE_HANDLERS` map.
 - `src/model/state.js:990-1670` `validateRunShape` 682 lines; `:423-690` `initializeRunDerivedStats`
   268 lines; `src/engine/combat.js:2583-3024` `previewCard` 443; `:161-517` `createCombat` 357.
+  Split each into phase helpers.
 - `src/model/loadout.js` (3,958 lines, 89 exports, 64 importers): banners at 54, 122, 742,
   885, 1177, 1447, 2045, 2892, 3072, 3174, 3347, 3402 mark a clean `loadout/*.js` split
   behind an `index.js` barrel so importers do not move. (Plan #13.)
@@ -125,7 +127,9 @@ it a shape.)
   `treasureSmithingReward`, `combatMods`. Not testable headless.
 - `registries` is rebuilt at nine sites (505, 1382, 1581, 1897, 1912, 1957, 2097, 2495) from
   two different settings sources.
-- 1,456 of 4,894 lines (30 %) are narrative comments with issue history.
+- 1,456 of 4,894 lines (30 %) are narrative comments with issue history; move the history to docs.
+- `main.js:2620-2632` builds an activity-launcher screen inline with `style.cssText`; it belongs
+  in `src/ui/screens/`.
 - Extraction seams, each one PR: (a) `src/dev/shotStates.js` with a `{ state: fn }` table;
   (b) `src/engine/rewardRolls.js`, pure in `(registries, run, rng, settings)`;
   (c) `src/ui/displaySettings.js` (`layoutForCap` … `applyDisplaySettings`, 517-590);
@@ -167,8 +171,9 @@ the cache check; compute the key first. The `resolveCache` key includes `playsEv
 `src/ui` (13 in `screens/combat.js`). `ui/models/acBadge.js:8` re-implements the engine's
 floor rule. `screens/combat.js:2066-2077` branches on version, computes
 `ratingDamageMultiplier` and builds English sentences inline. Plan step 3i/3j deletes the
-legacy branch; what remains should be one policy object chosen in `createCombat`, and the
-badge value should come from the engine.
+legacy branch; what remains should be one policy object chosen in `createCombat`, the
+badge value should come from the engine, and the bar help text should come from a model
+(`CombatBarHelpModel`) that returns string keys and arguments.
 
 **M3. Views mutate domain state.** `screens/settings.js:2846-2880` writes `settings[key]`
 (23 such writes in the file), calls `onChange`, and rolls back by hand. Send a patch and let
@@ -185,7 +190,7 @@ interaction model and make the classes write-only.
   `record` ×7; `finite` ×5; identical hostile-op Set in `combatEngagement.js:80` and
   `combatRangeLineage.js:11`. One `model/guards.js`, `HOSTILE_OPS` in `schemas.js`.
 - "copy the fight's plain data" ×3: `combat.js:2440` `isData`, `combatRules.js:280`,
-  `combatRounds/timeline.js:982`.
+  `combatRounds/timeline.js:982`. One `snapshotCombat` helper.
 - `sandbox()` ×6 and `mkdtempSync` ×39 across tools; 124 tools embed their own `--selftest`
   mutant harness (`holdconfirm.mjs:211-378`). One `tools/lib/mutants.mjs` and sidecar
   `*.selftest.mjs`.
@@ -242,7 +247,8 @@ documented number collision (99-106) and the root-import block copied three time
 - `src/engine/combat.js` has 82 import statements including 9 namespace imports named `A`, `F`,
   `R`, `S`; name them.
 - `screens/settings.js:274-850` holds a 577-line `ROWS` table and string-built row HTML with
-  unescaped `${r.label}`; move `ROWS` to a model and render with kit builders.
+  unescaped `${r.label}`; move `ROWS` to a model and render with kit builders. The Undo label
+  at `settings.js:2853` is a literal inside an `innerHTML` template; route it through strings.
 - `data-component` ids bypass the registry at `equipCompareModal.js:53`,
   `equipment.js:610`, and as string literals at `artLoadNotice.js:24,26`,
   `bootArtStatus.js:17`, `startupGate.js:56-66`; add a test over `UiComponentId`.
@@ -342,7 +348,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `main.js` → `src/ui/bootArt.js` (H4)
 - [ ] `main.js` → `src/ui/rewardFlow.js` (H4)
 - [ ] `main.js`: one `setRegistries()` that refreshes the debug handles (H4)
-- [ ] `main.js`: move narrative comments to docs (Low)
+- [ ] `main.js`: move narrative comments to docs; activity-launcher screen (`main.js:2620-2632`) → `src/ui/screens/` (H4)
 - [ ] `mountCombat` → `createX({ getState, dispatch, host })` modules: card input, beat playback, enemies, preview, armoury (H3)
 - [ ] `mountEquipment` → `components/armoury*` fed by models (H3)
 - [ ] `collectContentProblems` → one validator per bundle section (H3)
@@ -355,15 +361,15 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 6. Hygiene
 
-- [ ] Freeze rules once in `createCombat`; stop `structuredClone` per preview; `resolveCard` computes its cache key first; cap `resolveCache` (M1)
+- [ ] Freeze rules once in `createCombat`; stop `structuredClone` per preview; `knowledgeView` sharing default in `PreviewMemoModel`; `resolveCard` computes its cache key first; cap `resolveCache` (M1)
 - [ ] One `esc` in `ui/html.js`; `model/guards.js` for `deepFreeze`/`record`/`finite`; `HOSTILE_OPS` in `schemas.js`; one `snapshotCombat` helper (M4)
 - [ ] `tools/browser.mjs` exports `connectCdp`; migrate the ~96 copies (H5)
-- [ ] `tools/lib/cli.mjs` over `parseArgs`; `tools/lib/mutants.mjs` with sidecar `*.selftest.mjs` (M4)
+- [ ] `tools/lib/cli.mjs` over `parseArgs`; `tools/lib/mutants.mjs` with sidecar `*.selftest.mjs`; one shared `sandbox()` for the `mkdtempSync` tools (M4)
 - [ ] `package.json`: `"type": "module"` and a `test:pr` script (M10)
 - [ ] `ci.yml`: one `prepare` composite; rename `sync-alternatives.yml`/`alternative-sync.yml` by direction (M10, Low)
 - [ ] `tests/run-node.mjs`: data table of gates, one fixture loader (M10)
 - [ ] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low)
-- [ ] `src/ui/models/` → `models/`, `projections/`, `controllers/`; merge single-caller stubs (M8)
+- [ ] `src/ui/models/` → `models/`, `projections/`, `controllers/`; merge single-caller stubs; stop `CombatIntentProjectionModel` and `CombatRangeRankModel` mutating their input (M8)
 - [ ] CSS: split `kit.css` by section, fold tiny override files, one token mechanism, `style-lint --write-baseline` (M9)
 - [ ] `settings.js`: `ROWS` to a model, rows via kit builders, Undo label via strings (Low)
 - [ ] Import-time global listeners behind explicit `installX()` (Low)
