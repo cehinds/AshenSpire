@@ -2186,7 +2186,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const procPlan = entity.kind === 'enemy' ? procDisplayPlan(entity) : null;
     const stackHidden = new Set(procPlan ? procPlan.hidden : []);
     const expanded = combat.combatExpansionVersion === 2;
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp'));
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => bar.id !== 'poise' && !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp')); // Poise is hidden on the HUD (owner 2026-11-07); the inspect panel keeps it.
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),

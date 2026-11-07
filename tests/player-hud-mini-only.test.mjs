@@ -34,3 +34,9 @@ test('nothing hides the player overhead mini HUD', () => {
   const js = readFileSync(new URL('../src/ui/components/combatTargetHud.js', import.meta.url), 'utf8');
   assert.doesNotMatch(js, /hudPinned/);
 });
+
+test('the HUD meter plan drops the poise row; the inspect panel still lists Poise', () => {
+  const js = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(js, /bar\.id !== 'poise' && !stackHidden\.has\(bar\.id\)/, 'meterInputs filters poise out of the plan');
+  assert.match(js, /label: 'Poise', value: v\.poiseMeter/, 'combatantSubject resources keep Poise');
+});
