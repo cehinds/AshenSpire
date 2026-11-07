@@ -1844,29 +1844,29 @@ Advanced Settings is the player-facing editor for authored configuration (not a 
 
 ### 7.3 Input
 
-Card selection and play, End Turn, flick, rewards, controls capture and tooltips. Full playability with mouse only; keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
+Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card, E end turn.
 
-- **Card selection and information stay separate from play.** The focused card, selection glow, revealed Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
-  - By default a tap selects and never plays; play needs a second tap on the card or a target pick.
-  - The "Tap a card to play it" Settings switch (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
+- **Selection and information are separate from play.** The focused card, selection glow, Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
+  - A tap selects and never plays; play needs a second tap on the card or a target pick.
+  - The "Tap a card to play it" setting (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
   - Hold selects without playing (inspect, Upcast, target choice).
-  - A hand card has one select colour, the targeting colour (`--selection-color`): armed, held, keyboard-focused and inspected cards all wear it; no yellow (gold) select state on the hand.
-- **End Turn.** A single press when no card in hand is playable; otherwise the configured second beat.
+  - One select colour, the targeting colour (`--selection-color`), for armed, held, keyboard-focused and inspected cards; no gold select state on the hand.
+- **End Turn:** a single press when no card in hand is playable; otherwise the configured second beat.
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a playable hand card plays on release without reaching a combatant.
-  - Profile setting enables it (default on). Distance accepts 32–160 CSS px (default 64), with synchronized slider, numeric entry, reset and a harmless practice area that accepts exactly the combat inputs.
-  - Distance is net upward displacement in viewport CSS px, independent of artwork/UI scale and of the 12 px drag-start slop.
-  - Recognition also needs upward-dominant movement and ≥300 CSS px/s recent upward velocity, authored separately from the setting.
-  - Touch, mouse, trackpad and pen share one recognizer and settings. Saved `touchFlickPlay` and `touchFlickDistance` keep their meaning.
-  - Preview selects the nearest legal target to the pointer; release uses the same resolver and revalidates playability. Self cards select the player; all-enemy cards select their legal group. Equal-distance ties are deterministic.
-  - Returning below threshold, downward release, an information-button gesture, pointer cancellation, capture loss, blur or a blocking modal cannot flick-play. No gesture commits twice. Disabling flicks preserves direct drops.
+  - Profile setting, default on. Distance 32–160 CSS px (default 64) with synchronized slider, numeric entry, reset and a practice area accepting exactly the combat inputs. Saved `touchFlickPlay` and `touchFlickDistance` keep their meaning.
+  - Distance is net upward displacement in viewport CSS px, independent of art/UI scale and of the 12 px drag-start slop. Also required: upward-dominant movement and ≥300 CSS px/s recent upward velocity (authored separately).
+  - Touch, mouse, trackpad and pen share one recognizer and settings.
+  - Preview selects the nearest legal target; release uses the same resolver and revalidates playability. Self cards select the player; all-enemy cards their legal group. Distance ties are deterministic.
+  - Below-threshold return, downward release, information-button gesture, pointer cancellation, capture loss, blur or a blocking modal cannot flick-play; no gesture commits twice. Disabling flicks keeps direct drops.
 - **Card rewards.** One touch, mouse, pen or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; a refused or throwing save restores the pending choice and allows retry.
-- **Tooltips.** Ordinary interactive elements (statuses with current math, intents with exact post-modifier damage, relics, flasks, map nodes) show a concise tooltip after 1 s of continuous hover (`tooltipDelay`, default `1s`).
-  - Leaving early cancels opening; every new target and nested keyword waits the full delay. The tooltip stays visible over its owner or panel; it dismisses 500 ms after leaving both, and re-entry cancels dismissal.
-  - Touch does not synthesize hover. A click/tap on a non-control detail selects it (visible highlight) and opens nothing; a second click/tap on the same detail explains it at once. Selection ends on a press elsewhere, Escape, or the detail leaving the screen.
-  - Keyboard and gamepad focus explains after 500 ms regardless of hover delay; Enter or Space on a selectable detail explains at once.
-  - Cards carry no hover or tap tooltip: selecting a card reveals its Information button, which opens card inspection (with nested keyword tooltips). Card tooltips open only inside card inspection; on every other surface (combat hand, reward, shop, deck, upgrade card faces) tag symbols, keywords and underlined numbers are plain decoration (no tooltip, pointer or focus) and a tap anywhere on the card is the card's own action.
-  - Card inspections show complete effect text and decision-relevant values/requirements; general classifications appear as explained tags beneath the card; keywords disclose definitions. No repeated artwork descriptions, generic instructions, flavor explanations or identical effect text.
-  - Deliberate reading surfaces may require a validated sustained hold: the Armoury equipment-comparison tooltip uses `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open from hover or focus alone.
+- **Controls capture** is under Menu components.
+- **Tooltips.** Statuses (current math), intents (exact post-modifier damage), relics, flasks and map nodes show a concise tooltip after 1 s of continuous hover (`tooltipDelay`, default `1s`).
+  - Leaving early cancels; each new target and nested keyword waits the full delay. It stays visible over its owner or panel and dismisses 500 ms after leaving both; re-entry cancels dismissal.
+  - Touch does not synthesize hover. A click/tap on a non-control detail selects it (highlight) and opens nothing; a second click/tap on it explains at once. Selection ends on a press elsewhere, Escape, or the detail leaving.
+  - Keyboard/gamepad focus explains after 500 ms regardless of hover delay; Enter or Space on a selectable detail explains at once.
+  - Cards have no hover or tap tooltip: selecting reveals Information, which opens card inspection (nested keyword tooltips). Card tooltips open only there; on every other surface (hand, reward, shop, deck, upgrade faces) tag symbols, keywords and underlined numbers are plain decoration and a tap anywhere is the card's own action.
+  - Inspections show complete effect text and decision-relevant values/requirements, classifications as explained tags beneath the card, keywords as definitions; no repeated art descriptions, generic instructions, flavor explanations or identical effect text.
+  - Deliberate reading surfaces may require a validated hold: the Armoury equipment-comparison tooltip uses `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and never opens from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
 
