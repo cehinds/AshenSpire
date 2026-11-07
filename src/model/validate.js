@@ -83,6 +83,7 @@ import {
 import { normalizeSmithingRules } from './smithingRules.js';
 import { normalizeCardMountRules } from './cardMounts.js';
 import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
+import { describe, isPlainObject } from './validate/shared.js';
 import {
   relicModifierTokenBindings,
   TOKENIZABLE_OPS as TOKENIZABLE_OPS_,
@@ -2287,24 +2288,6 @@ function walkSchema(value, node, path, vctx) {
       err(path, `Internal: unknown schema kind '${node.k}'`);
   }
 }
-
-function describe(v) {
-  if (v === null) return 'null';
-  if (v === undefined) return 'undefined'; // JSON.stringify(undefined) is undefined — 'undefined undefined' otherwise
-  if (Array.isArray(v)) return 'array';
-  // NaN and ±Infinity JSON.stringify to "null", so without this branch a NaN
-  // red printed the riddle "Expected number, got number null" (Vira, #46).
-  if (typeof v === 'number' && !Number.isFinite(v)) return `number ${String(v)}`;
-  return typeof v === 'object' ? 'object' : `${typeof v} ${JSON.stringify(v)}`;
-}
-
-function isPlainObject(v) {
-  return v !== null && typeof v === 'object' && !Array.isArray(v);
-}
-
-// ---------------------------------------------------------------------------
-// Effects / triggers / predicates / formulas (closed-set checks)
-// ---------------------------------------------------------------------------
 
 const COMMON_EFFECT_FIELDS = ['op', 'target', 'amount', 'if', 'repeat', 'oncePerTurn'];
 
