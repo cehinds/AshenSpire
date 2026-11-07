@@ -21,3 +21,7 @@ Archive of material moved out of SPEC.md §12. Not rules.
 - HUD (owner, 2026-11-07, from a phone screenshot): "disable select hud and just do mini hud; hide poise and AC; show only attack damage, hit, miss, blocked, countered and defeated; cards fill the max width in mobile; bring back the player's health bar". Replaced the 2026-11-05 always-selected player panel. Then: "the current hud is fine, just remove the selected hud".
 - Card face summaries (owner, 2026-11-01): "inspect full effect shouldn't be there all the time".
 - Player animation rules were approved by the owner after the Reaver/Starseer animation study.
+
+## Second tightening pass
+- Standard listing cards: 280px track was "20% smaller than 350px".
+- Section 12 header: "Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in SPEC-RECONCILE stage 3."

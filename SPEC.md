@@ -2234,120 +2234,150 @@ Two things this list once excluded have since shipped and are no longer non-goal
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-Contract for Dodge, trader armaments, combat HUD, branching destinations and roster, and shared presentation. Shipped per item (status, artifact, boundary, falsifying command: [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3). Changing a requirement is a spec change.
+Shipped per item ([docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3); changing a requirement is a spec change.
 
-- Open: the 1.0 elite target in §12.4 (row P6) and the Power resting stance in §12.5 (row P8b).
+- Open: 1.0 elite target in §12.4 (row P6); Power resting stance in §12.5 (row P8b).
 - Named verification boundary: rows P1 and P8.
 
 ### 12.1 Dodge and action feedback
 
-- **Dodge Roll card** (owner, 2026-10-05) does not roll. (Under §13.4p the Ward guard is retired: it grants Block and a Poise guard.) Evasive Guard alone carries the roll. It grants 3 Block, 3 Poise and 3 Ward, each plus the DR bonus a physical skill's Block reads (`cardRatingBonus`). Block also takes Dexterity and Frail as every Block does; the guards do not.
-  - Poise and Ward are guards (`gainPoise` / `gainWard`, §3.4): they absorb physical or magical impact before the Poise or Ward meter fills, and expire with Block at the start of the player's next turn.
-  - No upgrade. Keeps the live Weight Class action and stamina costs (`weightClassPriced: true`); compound cards keep their authored cost rules.
-- **`dodgeRoll` opcode** (unchanged): roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class against the framework difficulty; on success grant the framework's temporary guard through ordinary Block. Dodge is not guaranteed avoidance, invulnerability, or cancellation of an enemy's next attack.
-- **No dodge-result widget** (owner, 2026-10-05): no "Dodge succeeded / failed" receipt, float, result dialog or live announcement for a `dodgeRolled` event. A success shows through its Block gain and the dodge visual; `dodgeRolled` stays in the event log.
-- Previews, disabled reasons, tooltips and playback match the engine; no second damage rule. Verify: Light/Medium/Heavy costs, sufficient/insufficient resources, success/failure, repeated plays, Block/status interactions.
+- **Dodge Roll card** (owner, 2026-10-05) does not roll. (Under §13.4p the Ward guard is retired: it grants Block and a Poise guard.) Evasive Guard alone carries the roll.
+  - Grants 3 Block, 3 Poise, 3 Ward, each plus the DR bonus a physical skill's Block reads (`cardRatingBonus`). Block also takes Dexterity and Frail; the guards do not.
+  - Poise and Ward are guards (`gainPoise` / `gainWard`, §3.4): absorb physical or magical impact before the Poise or Ward meter fills; expire with Block at the player's next turn start.
+  - No upgrade. Keeps live Weight Class action and stamina costs (`weightClassPriced: true`); compound cards keep their authored cost rules.
+- **`dodgeRoll` opcode** (unchanged): roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class to the framework difficulty; on success grant the framework's temporary guard through ordinary Block.
+  - Not guaranteed avoidance, invulnerability, or cancellation of the enemy's next attack.
+- **No dodge-result widget** (owner, 2026-10-05): no receipt, float, dialog or live announcement for `dodgeRolled`. Success shows as Block gain plus the dodge visual; the event stays in the log.
+- Previews, disabled reasons, tooltips and playback match the engine; no second damage rule.
+  - Verify costs by weight, resource sufficiency, success/failure, repeated plays, Block/status interactions.
 
 ### 12.2 Trader armaments, weapon arts, and transactions
 
-Traders sell armaments and weapon arts; the combat HUD only exposes owned, available arts. No buying in combat without an explicit mechanics amendment.
+Traders sell armaments and weapon arts; the combat HUD only exposes owned, available arts (no buying in combat without a mechanics amendment).
 
-- **Stock:** data-priced armaments and eligible weapon-art cards. Rolled deterministically once per visit and persisted; reload never rerolls shelves or restores sold stock. Prices and sale fractions are balance data, not screen literals.
-- **Buying an armament:** enters the run inventory and discovery path only after successful collection. Reject: already carried or equipped, full inventory, insufficient cinders, stale stock.
-- **Weapon arts:** use the loose-card and compatible item-mount model. No parallel unlock inventory, no automatic install, no bypass of extraction/seating rules. The combat HUD uses existing card identity, availability, targeting and payment rules; opening a preview is not a play; a card outside its playable state cannot be activated from the HUD.
-- **Selling:** only stored, unequipped armaments; an equipped item explains it must be unequipped first; a sale never silently changes an equipment set. Permanent profile discovery survives a sale.
-  - Smithing tiers and installed mount records stay bound to the armament identity in the run ledger: not deleted, not converted to loose cards, no usable cards while unowned. Reacquiring the identity restores its package through existing reconciliation.
-  - The sale preview discloses tier, attached cards and value before commitment.
-  - No duplicated upgrades, mounts, cards or ownership, and no profitable immediate buy/sell loop.
-- **Transaction:** validate current stock, ownership, capacity and funds at commitment, then apply the whole change once. Refusal leaves cinders, stock, inventory, card mounts and discovery unchanged.
-- **Migration:** an older shop save without the new shelves loads them as empty for that open visit; migration consumes no randomness and rerolls no stock.
-- Verify: repeated/stale activation, full inventory, equipped duplicates, upgraded/mounted armaments, save/reload, reacquisition.
+- **Stock:** data-priced armaments and eligible weapon-art cards, rolled deterministically once per visit and persisted.
+  - Reload never rerolls or restores sold stock. Prices/sale fractions are balance data.
+- **Buying an armament:** enters inventory and discovery only after successful collection.
+  - Reject: already carried/equipped, full inventory, insufficient cinders, stale stock.
+- **Weapon arts** use the loose-card and compatible item-mount model: no parallel unlock inventory, no auto-install, no bypass of extraction/seating rules.
+  - HUD uses existing card identity, availability, targeting, payment rules; previews are not plays; unplayable cards cannot be activated.
+- **Selling:** stored, unequipped armaments only; an equipped item explains it must be unequipped first. Never silently changes an equipment set. Profile discovery survives.
+  - Smithing tiers and mount records stay bound to the armament identity in the run ledger: not deleted, not converted to loose cards, no usable cards while unowned; reacquiring restores them via existing reconciliation.
+  - Preview discloses tier, attached cards and value before commitment.
+  - No duplicated upgrades, mounts, cards or ownership; no profitable immediate buy/sell loop.
+- **Transaction:** validate stock, ownership, capacity and funds at commitment, apply once. Refusal leaves cinders, stock, inventory, mounts and discovery unchanged.
+- **Migration:** older shop saves without the new shelves load them empty for that open visit; no randomness consumed, no reroll.
+- Verify repeated/stale activation, full inventory, equipped duplicates, upgraded/mounted armaments, save/reload, reacquisition.
 
 ### 12.3 Combat HUD, piles, and potions
 
-- **Piles:** one entry showing both counts opens a shared modal with separately labelled Discard and Exhausted views. Presentation only: zones, exhaustion and reshuffle eligibility unchanged. Keep keyboard/touch access, focus return, empty states, draw-pile order concealment.
-- **Potions:** the collection entry sits in the far-right bottom combat HUD slot. Its menu lists health charges, mana charges, stamina potions and other carried utility potions through the existing action plan.
-  - Selection and inspection are inert; only an explicit enabled Use action spends a charge or starts targeting. Cancelling spends nothing.
-  - Show quantity, effect, resource capacity and the reason an action is unavailable.
-  - Health/mana refillable charges and utility-potion inventory stay separate state domains with existing capacities and refill rules. Stamina potions never become a third refillable pool; inventory is never silently expanded.
-  - Keep existing resource shortcuts; a newly opened modal must not consume a potion with its opening key.
-- Verify: zero quantities, full resources under existing use rules, targeted-potion cancellation, action playback, turn restrictions, save/resume.
+- **Piles:** one entry showing both counts opens a shared modal with Discard and Exhausted views. Presentation only: zones, exhaustion, reshuffle eligibility unchanged.
+  - Keep keyboard/touch access, focus return, empty states, draw-order concealment.
+- **Potions:** collection entry in the far-right bottom HUD slot; its menu lists health charges, mana charges, stamina potions and other utility potions via the existing action plan.
+  - Selection and inspection are inert; only an enabled Use spends a charge or starts targeting; cancelling spends nothing.
+  - Show quantity, effect, capacity, unavailability reason.
+  - Health/mana refillable charges and utility-potion inventory stay separate domains with existing capacities and refill rules. Stamina potions never become a third refill pool; inventory never silently expands.
+  - Keep resource shortcuts; the opening key must not consume a potion.
+- Verify zero quantities, full resources, targeted-potion cancellation, playback, turn restrictions, save/resume.
 
 ### 12.4 Branching destinations and roster
 
-New maps have multiple terminal boss destinations per act; the roster targets 20 regular enemies and 10 bosses.
-
-- **Destinations:** distinct legal routes through locations, fights, events, rewards and traders. Node identity fixes its authored destination and boss encounter; no single global boss substitutes. Completing the chosen terminal advances or completes the run once under existing act rules; the player need not clear every terminal.
+- **Destinations:** new maps have multiple terminal boss destinations per act, with distinct legal routes through locations, fights, events, rewards and traders.
+  - Node identity fixes its destination and boss encounter; no single global boss.
+  - Completing the chosen terminal advances/completes the run once under existing act rules; not every terminal need be cleared.
   - Every offered path reaches a valid destination: no unintended dead ends, unreachable rewards or repeatable completion rewards. Every terminal route keeps an accessible pre-boss rest.
-  - Persist generated topology, destination identity and encounter selection.
-  - Legacy saves keep their topology and boss behavior: an unentered legacy boss node with no stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw. Loading never regenerates a map, moves the player, consumes RNG draws or reinterprets an in-progress encounter; combat snapshots are unchanged.
-  - Validate connectivity, pre-boss rest access and deterministic reloads over a seed corpus, and play through distinct terminal routes.
-- **Roster targets:**
+  - Persist topology, destination identity and encounter selection.
+- **Legacy saves** keep topology and boss behavior.
+  - An unentered legacy boss node with no stored boss identity maps explicitly to the original boss for that act; no RNG draw.
+  - Loading never regenerates a map, moves the player, draws RNG or reinterprets an in-progress encounter; combat snapshots unchanged.
+  - Validate connectivity, pre-boss rest, deterministic reloads over a seed corpus; play distinct terminal routes.
+- **Roster targets** (elites do not count toward the other two):
 
-| Class | 1.0 target |
+| Class | Target |
 |---|---|
-| Unique regular enemies | 20 |
-| Unique bosses | 10 |
-| Elites (counted separately) | 1 to 5 per seat, averaging 3 (±0.5); owner ruling D4; still open (`docs/FINISH.md`) |
+| Regular enemies | 20 unique |
+| Bosses | 10 unique |
+| Elites | 1 to 5 per seat, averaging 3 (±0.5); owner ruling D4; open (`docs/FINISH.md`) |
 
-  - Existing qualifying enemies may count; recolors and numerical variants alone do not.
-  - Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite and appropriate animations. Each boss also has a signature encounter mechanic (phases optional).
-- **Movesets** are a limited authoring/presentation extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits and delayed-action state. No plan cursor is shipped (issues #239/#241 are proposed); ordered plans need their own verified mechanics change. No parallel move picker; no intent reroll when rendering a card or loading a save.
-- **Coverage:** every counted entry is reachable through normal progression, spread across suitable locations and difficulty. Keep a roster checklist (identity, location, encounter, moveset, sprite, animations, rewards, verification). Test every moveset and boss encounter, including Dodge, status, potion, weapon-art, victory/defeat and save/resume interactions. Prove shared foundations with two regular enemies and one boss before expanding the roster.
+  - Existing qualifying enemies count; recolors and numerical variants alone do not.
+  - Each: stable ID, distinct identity/tactical role, authored card moveset, readable intents and counterplay, sprite, animations. Bosses add a signature encounter mechanic (phases optional).
+- **Movesets** extend the existing seeded weighted move selector (authoring/presentation only).
+  - Preserve repeat history, current intent, phase transitions, repeat limits, delayed-action state.
+  - No plan cursor is shipped (#239/#241 proposed); ordered plans need their own verified change.
+  - No parallel move picker; no intent reroll on card render or save load.
+- **Coverage:** every counted entry reachable through normal progression, spread across locations and difficulty.
+  - Keep a roster checklist (identity, location, encounter, moveset, sprite, animations, rewards, verification).
+  - Test every moveset and boss with Dodge, status, potion, weapon-art, victory/defeat, save/resume.
+  - Prove foundations with two regular enemies and one boss first.
 
 ### 12.5 Shared presentation and animation rules
 
-Shared components and animation precedence; the engine stays authoritative.
-
-- **Shared components:** armament/card faces, enemy frames, related modals, tabs, counts, costs and tooltips. Uniform layout keeps card categories and enemy silhouettes. Folded character-information cards share one full-width header geometry; one opens at a time, siblings close without duplicate toggle work, and focus/reveal keep the selected header visible without scroll jumps.
-- **Player animations** (owner-approved after the Reaver/Starseer study), three groups:
+- **Shared components** for armament/card faces, enemy frames, modals, tabs, counts, costs, tooltips; card categories and enemy silhouettes stay distinct.
+  - Folded character-information cards: one full-width header geometry; one open at a time, siblings close without duplicate toggle work, focus/reveal keep the header visible without scroll jumps.
+- **Player animations** (owner-approved):
 
 | Card | Animation |
 |---|---|
 | Attack-type | attack |
 | Power | three silhouette-glow phases over combat idle |
 | Skill with guard/block tag | defend |
-| Other skill | cast, using combat idle |
-| Shield Bash, shield-profile or shield-tagged attack (physical shield equipped) | shield bash |
-| Shield-tagged defensive card, `shieldGuard` equipment profile | shield guard; parry if a Parrying Dagger is equipped |
+| Other skill | cast over combat idle |
+| Shield Bash, shield-profile/shield-tagged attack (physical shield equipped) | shield bash |
+| Shield-tagged defensive card, `shieldGuard` profile | shield guard; parry with a Parrying Dagger |
 
-  - Guard skills and Powers replace the visual resting stance until that character's next turn begins. Temporary attacks, casts and hit reactions return to the resting stance; skipping and reduced motion give the same result.
-  - During every action frame, paid stamina, mana and HP use green, blue and red silhouette auras (combined payments keep each color). Guarded resting stances use a faded blue outline.
-  - Keep this visual state separate from mechanical stances and outside rebuilt DOM nodes.
-- **Enemy animation precedence:** explicit actor-and-action override, then the first matching tag in the ordered table, then authored intent, then neutral fallback. A multi-tag card or enemy move selects one primary animation deterministically; extra effect cues may accompany it without replaying the action. Families: slash, thrust, strike, projectile, spell, guard, dodge, with character-specific sprites where authored. Missing assets fall back safely without blocking resolution.
-- **Motion:** animate draw, selection, targeting, play, resolution, discard, exhaust, attack, hit and defeat as appropriate. Resting fighters hold their authored pose with no continuous idle bob in every rendering style and performance mode (owner, 2026-10-21); keep action/reaction clips and visible status/aura feedback.
-  - Skipping, interrupting or disabling animations never alters state or strands input.
-  - Reduced motion replaces travel/shake/repeated motion with brief static or opacity feedback that keeps outcome information.
-  - Provide non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard and touch behavior. Validate timing, event-handler cleanup and multi-enemy performance in real browser playtests.
+  - Guard skills and Powers replace the visual resting stance until that character's next turn begins; attacks, casts, hit reactions return to rest. Skipping and reduced motion give the same result.
+  - Every action frame: paid stamina, mana, HP use green, blue, red silhouette auras (combined payments keep each). Guarded resting stances: faded blue outline.
+  - Visual state is separate from mechanical stances and lives outside rebuilt DOM nodes.
+- **Enemy animation precedence:** explicit actor-and-action override, first matching tag in the ordered table, authored intent, neutral fallback.
+  - Multi-tag cards/moves pick one primary animation deterministically; extra cues may accompany without replaying it.
+  - Families: slash, thrust, strike, projectile, spell, guard, dodge; character sprites where authored. Missing assets fall back safely.
+- **Motion:** animate draw, selection, targeting, play, resolution, discard, exhaust, attack, hit, defeat.
+  - Resting fighters hold their authored pose, no idle bob, in every rendering style and performance mode (owner, 2026-10-21); keep action/reaction clips and status/aura feedback.
+  - Skipping, interrupting or disabling animation never alters state or strands input.
+  - Reduced motion: brief static/opacity feedback instead of travel/shake/repeat; outcome info kept.
+  - Non-color cues, focus-visible controls, viewport-contained tooltips, mouse/keyboard/touch on desktop and phone. Validate timing, handler cleanup, multi-enemy performance in browser playtests.
 
 ### Approved poker equipment cards (#784)
 
-- **Equipment card:** one 350 by 490 canvas scaling uniformly at 5:7. Painted armament art is keyed by item id; armor uses its painted menu pose. `equipmentCardModel` reads canonical base facts, tags, requirements and modifier vocabulary.
-  - Live comparison, upgrades and Equip/Move/Unequip stay separate existing receipts/actions.
-  - Inspection gives hover and keyboard explanations plus a full-text disclosure for touch and long content. An overfull region directs the reader to details instead of clipping.
-  - Player Poise is live (§13.4k): the receipt surfaces render is the meter's max.
-- **Equipment inspection component** renders every registered weapon, shield and staff, with search, type filter and enlarged inspection. Merchant offers and buy/sell inspection use it too; prices, smithing tiers, mounted cards and transaction rules stay live receipts outside the base-value card (#799).
-- **Item cards:** weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track in a responsive grid, no last-row stretching. Hold progress overlays the face; hold duration and commit/cancel rules are unchanged. Potion and relic cards show authored effects, with full-text inspection.
-- **Combat hand:** solo hand card width 150–180 viewport pixels at 5:7; on desktop and widescreen capped at 97 viewport pixels at 2:3 (`uiConfig.scenes.w4a.sizing.desktopFooter.cardMaxViewportPx`, `handGapPx`, `desktopHeader.splitHeightPx`).
-  - Owner 2026-10-31: End Turn, Reaction and Auto at 0.7 of former size; desktop cards at 0.8; Reaction and Auto on widescreen too; lowest hand card 10 px above End Turn; top HUD band 44.8 px.
-  - More cards overlap or scroll rather than shrink. Combatants expand within their cells and stand close to the hand without overlapping its cards or the HUD. Three enemies fit without horizontal scroll; four or more may scroll. Short-height combat may scroll vertically. Inspection never plays a card.
-- **HUD and floaters, every form factor** (owner, 2026-11-07):
-  - Every combatant, the player included, carries only the overhead mini HUD (HP bar and action intent), never a selected panel (`ui/models/TargetHudModel.js`). A double click, double tap or hold on a figure that is not a target opens the inspect panel.
-  - Poise and AC are not drawn on combat HUDs (no Poise meter row, badge or HP-bar overlay, no AC badge); the inspect panel still lists them.
-  - Floaters are an allowlist (`ui/models/FloaterPolicyModel.js`): attack damage numbers (HP an attack deals; HP lost to an effect or proc tick draws none), Hit (and Hit — Evade Failed), Missed (a dodge or evade reads as Missed), Blocked, Countered, Defeated. Not drawn: cost, Block, heal, Poise, Ward, Barrier and pierce numbers; status and buff words; break, stagger, critical, resisted, immune, range and contest words. Sounds and haptics play as before; the combat log is unchanged.
-  - On a phone the hand's cards fill its full width, spaced evenly up to one card width apart (`ui/models/HandLayout.js responsiveHandLayout`); the by-count overlap (five overlapping, more compressing) applies to other form factors only.
-- **Card face rules** (owner, 2026-10-31): a glance face shrinks its rules text first, down to the 11 on-screen-pixel floor, and shows it if it then fits in one or two lines; text needing three or more lines at the floor (or a clause the face cannot carry) shows the Inspect cue instead. A one-line rule always shows. The (i) Inspect badge over the selected hand card is centred on it.
-- **Card face summaries** (owner, 2026-11-01): the Inspect cue is a last resort. A card whose computed face cannot be said in five-word clauses authors an optional `faceTemplate`: one to three short lines, at most five words each, same `{token}` bindings as `textTemplate` (numbers stay live), naming its main effect ("Gain 3 Foresight.", "Return 1 exhausted card."). A `[v2:...]` span in a line shows only under the expanded combat rules.
-  - The face shows those lines instead of the Inspect cue, after any downside the computed face reserved (Exhaust, a payment); full details stay in Information.
+- **Equipment card:** one 350 by 490 canvas, uniform 5:7 scaling. Armament art keyed by item id; armor uses its painted menu pose. `equipmentCardModel` reads base facts, tags, requirements, modifier vocabulary.
+  - Comparison, upgrades, Equip/Move/Unequip stay separate existing receipts/actions.
+  - Inspection: hover/keyboard explanations plus full-text disclosure for touch/long content; overfull regions point to details, not clip.
+  - Player Poise is live (§13.4k): surfaces render the meter's max.
+- **Inspection component** renders every registered weapon, shield and staff with search, type filter, enlarged view; merchant offers and buy/sell inspection use it. Prices, smithing tiers, mounted cards, transaction rules stay live receipts outside the base-value card (#799).
+- **Item cards:** weapon, potion, relic faces share a 5:7 canvas; listing cards use a 280px track in a responsive grid, no last-row stretching.
+  - Hold progress overlays the face; hold duration and commit/cancel unchanged. Potion/relic cards show authored effects with full-text inspection.
+- **Combat hand:** solo card width 150–180 viewport px at 5:7; desktop/widescreen capped at 97 px at 2:3 (`uiConfig.scenes.w4a.sizing.desktopFooter.cardMaxViewportPx`, `handGapPx`, `desktopHeader.splitHeightPx`).
+  - End Turn, Reaction, Auto at 0.7 of former size (Reaction and Auto on widescreen too); desktop cards 0.8; lowest hand card 10 px above End Turn; top HUD band 44.8 px (owner, 2026-10-31).
+  - More cards overlap or scroll, never shrink. Combatants fill their cells, close to the hand, not overlapping cards or HUD.
+  - Three enemies fit without horizontal scroll; four or more may scroll; short heights may scroll vertically. Inspection never plays a card.
+- **HUD and floaters, all form factors** (owner, 2026-11-07):
+  - Every combatant, player included, shows only the overhead mini HUD (HP bar, action intent), never a selected panel (`ui/models/TargetHudModel.js`). Double click, double tap or hold on a non-target figure opens the inspect panel.
+  - Poise and AC are not drawn on combat HUDs (no meter row, badge, HP-bar overlay, AC badge); the inspect panel still lists them.
+  - Floaters are an allowlist (`ui/models/FloaterPolicyModel.js`):
+    - Drawn: attack damage numbers (HP an attack deals; HP lost to an effect or proc tick draws none), Hit (and Hit — Evade Failed), Missed (dodge or evade reads as Missed), Blocked, Countered, Defeated.
+    - Not drawn: cost, Block, heal, Poise, Ward, Barrier, pierce numbers; status/buff words; break, stagger, critical, resisted, immune, range, contest words.
+    - Sounds and haptics play as before; combat log unchanged.
+  - Phone: hand cards fill its full width, spaced evenly up to one card width apart (`ui/models/HandLayout.js responsiveHandLayout`); by-count overlap (five overlap, more compress) applies to other form factors only.
+- **Card face rules** (owner, 2026-10-31): glance face shrinks rules text first, to the 11 on-screen-pixel floor.
+  - One or two lines at the floor: show it. A one-line rule always shows.
+  - Three or more lines at the floor (or an uncarriable clause): show the Inspect cue instead.
+  - The (i) Inspect badge over the selected hand card is centred on it.
+- **Card face summaries** (owner, 2026-11-01): the Inspect cue is a last resort. A card whose computed face cannot be said in five-word clauses authors an optional `faceTemplate`.
+  - One to three lines, at most five words each, same `{token}` bindings as `textTemplate` (numbers stay live), naming the main effect ("Gain 3 Foresight.", "Return 1 exhausted card."). A `[v2:...]` span shows only under the expanded combat rules.
+  - Shown instead of the Inspect cue, after any downside the computed face reserved (Exhaust, a payment); details stay in Information.
   - Ability cards may carry it per grade (`gradeProfiles[].faceTemplate`). No registry card shows the cue on its face in normal play (`tests/card-face-summaries.test.mjs`).
-- **Mobile combat art:** at widths up to 640px figures render at 90% of fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents keep their layout and size.
-- **Card actions:** selecting a card reveals a circular Information button centered above it, replacing hold-to-zoom inspection for the solo hand. The information modal shows the card beside readable details and a green Play card action, or a disabled gray one with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels; targeted cards enter the existing targeting flow.
-- **Target preview:** a selected card previews legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes keep transparent backgrounds so glow follows the artwork.
+- **Mobile combat art:** at widths up to 640px figures render at 90% of fitted size (157.5px reference minimum, not 175px). Neighbor enemy art may overlap slightly; names, meters, intents keep layout and size.
+- **Card actions:** selecting a card reveals a circular Information button centered above it (replaces hold-to-zoom for the solo hand).
+  - Modal: card beside details, green Play card action or disabled gray one with a visible reason.
+  - Stationary hold shows shared progress and uses the card on completion; early release cancels; targeted cards enter existing targeting.
+- **Target preview:** selected cards preview legal targets without committing.
+  - Pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow.
+  - Selection changes and Escape clear stale highlights. Raster silhouettes keep transparent backgrounds so glow follows the artwork.
 
 #### Notes and history
 
-- Section 12 items are shipped except P6 (elite target) and P8b (Power resting stance); see docs/SPEC-RECONCILE.md.
-- The player-panel and selected-enemy-panel HUDs were removed 2026-11-07 in favour of mini HUDs only.
+- Shipped except P6 (elite target) and P8b (Power resting stance); see docs/SPEC-RECONCILE.md.
+- Player-panel and selected-enemy-panel HUDs were removed 2026-11-07; mini HUDs only.
 
 Full history: [docs/spec-history/12-expansion.md](docs/spec-history/12-expansion.md).
 
