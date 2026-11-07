@@ -173,11 +173,17 @@ if (process.argv.includes('--selftest')) {
       },
       {
         // Shift the grid footer into the fitted cards; the old drop token no
-        // longer positions this row under formation.
+        // longer positions this row under formation. 20px, not 100px: at
+        // -100px the hand-hit-lane is drawn over END TURN and the 390 row
+        // measures ZERO controls, so H3 fires (with H2) and H1 has no chip to
+        // overlap and stays silent, which made this plant red for the wrong
+        // reason. 20px lifts the row so cards lie ON END TURN while it is
+        // still measurable, so H1 is the red (H2 also fires, as any rise
+        // touches the battlefield).
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-100px) !important; }",
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-20px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
