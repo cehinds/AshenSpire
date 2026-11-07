@@ -21,7 +21,7 @@ const LEGACY = {
 };
 
 test('the authored defaults restore nothing after a fight or at a Rest, and a fight builds no recovery state', () => {
-  assert.equal(recoveryRules.defaults.stamina.perTurn, mechanics.stamina.idleRecoveryPerTurn);
+  for (const pool of ['hp', 'stamina', 'mana']) assert.deepEqual(recoveryRules.defaults[pool], { afterCombat: 0, atRest: 0 }, pool);
   const run = createRunState({ seed: 7, classId: 'reaver', registries });
   const combat = createRunCombat({ registries, rng: createRng(7), run, enemyIds: ['wanderingSoldier'], settings: LEGACY });
   assert.equal(combat.recovery, undefined);
