@@ -192,7 +192,7 @@ body.hi-contrast {
   --line-soft: #85714f;
   --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */
 }
-body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
+body.hi-contrast .set-note, body.hi-contrast .card .ctext { color: #cdbf9e; }
 
 /* Accessibility: Text size is set on the root element (main.js
    applyDisplaySettings → html font-size %) and owns readable text metrics only.

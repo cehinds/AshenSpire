@@ -2395,8 +2395,8 @@ export function useRunChargeFlask({ run, registries, rng, kind }) {
   // The combat path does this in combat.js; a flask drunk on the map is the
   // same flask and the relic makes the same promise, so it scales here too.
   // The multiplier is applied at THIS call site rather than inside
-  // executeRunEffects, because that function also runs event choices and
-  // keepsakes, which flaskPowerMult has nothing to do with.
+  // executeRunEffects, because that function also runs event choices,
+  // which flaskPowerMult has nothing to do with.
   const amountMult = passiveMult(registries, run.relics || [], 'flaskPowerMult');
   const result = executeRunEffects(
     { run, registries, rng },

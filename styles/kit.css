@@ -357,7 +357,6 @@ button.modal-close { position: relative; padding: 0; background: transparent; bo
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
 /* Original class symbols follow the existing 2.25rem font inside its 3rem slot. */
 .as-option .og > .engraved-glyph { width:1em; height:1em; }
-.cz-keepsake .og img { display: block; width: 3rem; height: 3rem; object-fit: contain; }
 .as-option .relic-art { width: 3rem; height: 3rem; }
 .tray-icon > .relic-art { width: 100%; height: 100%; }
 .as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -4350,7 +4349,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 /* TWO WAYS ON CAN BE STICKY AT ONCE, AND THEY MUST NOT SHARE THE BAND.
    The character stage holds both: the nested `Continue` that closes Primary
-   Stats and opens the Keepsake, and the stage's own `Continue to equipment`.
+   Stats and opens the next step, and the stage's own `Continue to equipment`.
    MEASURED at 390x844 with Primary Stats open, both rested at exactly
    top 693 / bottom 748 — the same 55px band, the same z-index — so the stage
    row, later in the DOM, painted over the nested one. What a player saw at the
