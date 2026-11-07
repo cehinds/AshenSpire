@@ -116,3 +116,4 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answer 2026-11-07: "Same as today + test" — `release` still raises the 3rd number (4th reset to 0) and `main` the 2nd (3rd and 4th reset to 0); the new `test` bump raises the 4th number (build ordinal +1), resetting nothing.
 - Questions: none
 - Link: —
+- Answer 2026-11-07: reuse the existing pinned "Dev code review" session (session_01YN4Tdzu86M9f2RnGK78rX6) as the review-branch owner; no new session.
