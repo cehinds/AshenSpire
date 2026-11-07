@@ -17,8 +17,6 @@ import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // Headless: no document/window/localStorage/timers.
 
 import { handRulesDefaults } from '../content/handRules.js';
-import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
-import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
 import { weaknessProblems } from './enemyWeaknessRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
@@ -55,7 +53,6 @@ import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
-import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -103,6 +100,7 @@ import { deckRulesTableProblems as deckRulesTableProblems_ } from './validate/de
 export const deckRulesTableProblems = deckRulesTableProblems_;
 import { validateSigils } from './validate/sigilRows.js';
 import { KNOWN_BUNDLE_KEYS } from './validate/bundleKeys.js';
+import { rootProblems } from './validate/root.js';
 
 /**
  * The template-token grammar, in ONE place. `{block}`, `{bleed}`, `{damage.2}`.
@@ -160,33 +158,9 @@ export function validateContent(bundle, options = {}) {
 function collectContentProblems(bundle, errors = [], options = {}) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
-  if (b.classMasteryVersion !== undefined && b.classMasteryVersion !== 1) err('classMasteryVersion', 'must be 1 when present');
-  if (b.breakMeterVersion !== undefined && ![1, 2].includes(b.breakMeterVersion)) err('breakMeterVersion', 'must be 1 or 2 when present');
-
-  // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
-  // bundle carrying no events section at all is a BUILD fault, not a content
-  // fault. The cross-reference rules below read the shipped event list, and an
-  // absent section read as "zero shipped events" makes every event-referencing
-  // row look wrong — a flood of false refusals that never names the one thing
-  // actually missing, and that steals the door from its owner. So when the door
-  // is open we skip the cross-references ONLY: every shape rule below still
-  // runs, and an events section that SHIPS is cross-referenced exactly as before.
-  const eventsDoorOpen = b.events == null;
-
-  for (const problem of b.balance?.combatMatchups !== undefined ? combatMatchupRulesProblems(b.balance.combatMatchups, 'balance.combatMatchups') : []) err('balance.combatMatchups', problem);
-  for (const problem of b.balance?.combatIntent !== undefined ? combatIntentRulesProblems(b.balance.combatIntent, 'balance.combatIntent') : []) err('balance.combatIntent', problem);
-  for (const problem of enemyKnowledgeRuleProblems({ version: 1, ...b.balance?.enemyKnowledge },
-    new Set((Array.isArray(b.enemies) ? b.enemies : []).map(row => row?.id).filter(id => typeof id === 'string')))) err('balance.enemyKnowledge', problem);
-  const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
-  if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
-    err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
-  } else {
-    for (const [school, multiplier] of Object.entries(schoolBuildup)) {
-      if (!DAMAGE_SCHOOLS.includes(school)) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, `unknown damage school '${school}'`);
-      if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
-    }
-  }
-  for (const problem of attackCardDamageConfigProblems(b)) err(problem.path, problem.msg);
+  const ctx = {};
+  rootProblems(b, err, ctx);
+  const { eventsDoorOpen } = ctx; // inline reads
 
   // Quest steps (E12): an event-level history gate must name a shipped event,
   // carry a well-formed requirement (model/quests.js is the one grammar), and
