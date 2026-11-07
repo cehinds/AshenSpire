@@ -25,3 +25,8 @@ Archive of material moved out of SPEC.md §12. Not rules.
 ## Second tightening pass
 - Standard listing cards: 280px track was "20% smaller than 350px".
 - Section 12 header: "Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in SPEC-RECONCILE stage 3."
+
+## Notes moved from SPEC
+- Open items: elite target (SPEC-RECONCILE row P6) and Power resting stance (row P8b).
+- The player-panel and selected-enemy-panel HUDs were removed 2026-11-07 in favour of mini HUDs only.
+- Owner dates stripped from rule text: Dodge Roll and no dodge widget 2026-10-05; no idle bob 2026-10-21; hand sizing, card face rules 2026-10-31; card face summaries 2026-11-01; HUD and floaters 2026-11-07.
