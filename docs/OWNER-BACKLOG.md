@@ -102,3 +102,4 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Layout confirmed 2026-11-07 ("ok but don't strech it out"): Block icon (tall, left) | HP bar / Poise bar / badge row stacked, HP number right of the HP bar. Keep it compact: fixed width roughly today's bar width, thin rows, no stretching of the HUD (Block icon scales to the stack height, not the other way round). Covers #4, #5, #6, #11.
 
 - Update 2026-11-07 — "keep the number inside the shield too": the Block value stays printed inside the (now larger) Block shield icon.
+- Update 2026-11-07 — "keep intent left justified with health bar": the intent row stays left-aligned to the HP bar's left edge (not the Block icon's), above the bars.
