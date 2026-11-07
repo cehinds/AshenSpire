@@ -22,3 +22,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Remove those four branches from the repo. The managing session's GitHub access was refused; the owner deletes them at github.com/cehinds/AshenSpire/branches.
 - Questions: none
 - Link: —
+
+## #4 All statuses as badges like Automatic Sweep
+- Status: pending
+- Asked: 2026-11-07 — "Id like all status's to be batches like automatic sweeP" (screenshot: Automatic Sweep shows as a small round badge with a count left of the HP bar; a clock/speed-lines status badge elsewhere is circled with an arrow pointing at the Sweep badge)
+- Means: Every status effect on a combatant renders as the same small round icon badge with a stack count, in the same row as Automatic Sweep, instead of differing styles/places.
+- Questions: "batches" read as "badges"; circled clock status read as the one not matching today.
+- Link: —
