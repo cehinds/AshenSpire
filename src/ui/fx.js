@@ -36,6 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
+import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
@@ -397,6 +398,11 @@ export function combatReadoutLayer(layer, create = true) {
  * There are no side lanes and no jitter, so a caller passes no placement.
  */
 export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null, immediate: forceImmediate = false } = {}) {
+  // Floater policy (owner, 2026-11-07): only HP damage and Defeated show. A hidden number's sound still plays.
+  if (!floaterNumberShown(cls)) {
+    if (typeof onSpawn === 'function') { try { onSpawn(); } catch { /* a sound must not stop the beat */ } }
+    return null;
+  }
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
   const el = document.createElement('div');
@@ -685,7 +691,7 @@ const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
  */
 export function stackPriority(kind = '') {
   if (String(kind).startsWith('status:')) return 6;
-  if (kind === 'evaded') return 5;
+  if (kind === 'evaded' || kind === 'missed') return 5; // a dodge or evade draws as Missed (floater policy, 2026-11-07)
   if (kind === 'immune') return 4;
   if (kind === 'blocked') return 2;
   if (kind === 'resisted' || kind === 'wardResisted') return 1;
@@ -694,6 +700,9 @@ export function stackPriority(kind = '') {
 
 /** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
 export function callout(layer, anchor, forId, kind) {
+  // Floater policy (owner, 2026-11-07): Dodged and Evaded draw as Missed; every other hidden word spawns nothing.
+  kind = floaterWordShown(kind);
+  if (kind == null) return null;
   const isStatus = kind.startsWith('status:');
   const statusId = isStatus ? kind.slice('status:'.length) : null;
   const def = kind.startsWith('action:') ? { word: kind.slice(7), tone: 'white' } : isStatus
@@ -705,7 +714,9 @@ export function callout(layer, anchor, forId, kind) {
 // Buff gains use the same column and cleanup as outcome words. Each
 // committed gain stays visible even when two receipts have the same amount.
 function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
-  if (!layer || !anchor || !def || forId == null) return null;
+  // Floater policy (owner, 2026-11-07): every word, the buff-gain popups included, passes the same allowlist.
+  kind = floaterWordShown(kind);
+  if (kind == null || !layer || !anchor || !def || forId == null) return null;
   layer = combatReadoutLayer(layer);
   const rec = stackFor(layer, anchor);
   const same = (item) => item.kind === kind && item.forId === String(forId);
@@ -1647,7 +1658,7 @@ function playLegacyTimeline(events, ctx, done) {
       : visualEvents.map((e) => visualFor(e, beat.kind, receiptVisuals));
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
-    if (actorEl && beat.kind !== 'attack' && beat.events.length) {
+    if (actorEl && beat.kind !== 'attack' && beat.events.length && floaterGlyphShown('Cast')) {
       safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, 'Cast'));
     }
     const windup = actorAnimation
@@ -2132,7 +2143,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, 'Guard');
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Guard') ? 'Guard' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -2307,7 +2318,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, 'Stun');
+          if (floaterGlyphShown('Stun')) spawnFx(ctx.layer, anchor, 'fx-glyph', 450, 'Stun');
           shake(ctx.combatEl);
         },
       };

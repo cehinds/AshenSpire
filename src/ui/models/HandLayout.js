@@ -125,7 +125,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
 // The tool-row reserve every other form factor keeps below the fan.
 export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { spread: .55, angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
+  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
   tablet: { spread: .64, angle: 4, arc: .045, dock: .96, widthFraction: .168, minPx: 120, maxPx: 150 },
   desktop: { spread: .68, angle: 4, arc: .045, dock: .96 },
   widescreen: { spread: .68, angle: 4, arc: .045, dock: .96 },
@@ -142,9 +142,11 @@ export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
   const angle = style.angle * Math.PI / 180;
   const edge = (Math.cos(angle) * cardWidth + Math.sin(angle) * cardHeight - cardWidth) / 2;
   const side = Math.max(2 / zoom, edge + 2 / zoom);
-  // Five overlap; fewer spread further and larger hands compress to fit.
-  const preferred = cardWidth * Math.min(.94, style.spread * Math.sqrt(5 / Math.max(1, count)));
-  const step = count > 1 ? Math.max(0, Math.min(preferred, (width - cardWidth - side * 2) / (count - 1))) : 0;
+  // Owner 2026-11-07: a phone's cards fill the full width. The step is the full-width step, capped at one card width
+  // (no gaps); the other form factors keep five overlapping, fewer spreading further and larger hands compressing.
+  const fill = (width - cardWidth - side * 2) / Math.max(1, count - 1);
+  const preferred = style.spread ? cardWidth * Math.min(.94, style.spread * Math.sqrt(5 / Math.max(1, count))) : cardWidth;
+  const step = count > 1 ? Math.max(0, input.formFactor === 'mobile' ? Math.min(cardWidth, fill) : Math.min(preferred, fill)) : 0;
   const span = count ? cardWidth + (count - 1) * step : 0;
   const start = (width - span) / 2, middle = (count - 1) / 2;
   const arc = cardHeight * style.arc;

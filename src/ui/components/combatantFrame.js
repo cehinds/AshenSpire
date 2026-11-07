@@ -74,7 +74,8 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
   const card = frame.querySelector('.combatant-card');
   const spriteHost = [...card.children].find(node => node.classList.contains('sprite'));
   const widget = isPlayer ? [...leadingHost.children].find(node => node.classList.contains('combatant-mini-hud')) : card;
-  const statusHost = !isPlayer ? leadingHost : widget;
+  // The player has no selected panel, so its status tray lives in its overhead rack (under the HP row) while the rack exists.
+  const statusHost = !isPlayer ? leadingHost : (rack || widget);
   const isStatuses = (node) => node.classList?.contains('statuses');
   const isAction = (node) => node.classList?.contains('player-action-intent');
   const isIntent = (node) => node.classList?.contains('intent');
@@ -110,6 +111,7 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     const list = statuses ? [].concat(statuses).filter(Boolean) : [];
     let anchor;
     if (statusHost === leadingHost) anchor = find(leadingHost, isAction);
+    else if (statusHost === rack) anchor = null;
     else {
       const holder = find(widget, isMeters) || find(widget, isName);
       anchor = holder ? holder.nextSibling : (isPlayer ? widget.firstChild : spriteHost.nextSibling);
@@ -119,6 +121,7 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     if (live.includes(anchor)) anchor = live.at(-1).nextSibling;
     const changed = reconcileList(statusHost, live, list, anchor);
     swaps += changed;
+    if (statusHost === rack) markRackStatuses(rack);
     // A tray whose icons were added, removed or replaced must not fit from its old items.
     if (changed) live.forEach((tray, index) => { if (tray.isConnected !== false && list[index]) refreshIconTray(tray, list[index]); });
   }
@@ -279,6 +282,8 @@ export function combatantFrame({
 // The contextual desktop HUD keeps only HP beside the overhead intent. Move
 // the shared live meter nodes, including their tooltips, instead of cloning a
 // second health display or changing the sprite's frame geometry.
+// The player's tray in its rack is styled like a selected panel's `.target-hud-statuses`.
+const markRackStatuses = rack => { for (const tray of rack.querySelectorAll(':scope > .statuses')) tray.classList.add('target-hud-statuses'); };
 export function setCombatantTargetHud(frame, enabled) {
   const leading = frame.querySelector('.combatant-leading');
   const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
@@ -286,16 +291,20 @@ export function setCombatantTargetHud(frame, enabled) {
   if (enabled) {
     if (rack) {
       for (const intent of leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) rack.prepend(intent);
+      if (frame.classList.contains('player')) { rack.append(...leading.querySelectorAll('.combatant-mini-hud > .statuses')); markRackStatuses(rack); }
       return;
     }
     const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
     if (!meters) return;
     for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
     const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
-    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters); frame.append(host);
+    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters);
+    if (frame.classList.contains('player')) host.append(...leading.querySelectorAll('.combatant-mini-hud > .statuses'));
+    frame.append(host); markRackStatuses(host);
   } else if (rack) {
     const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
     for (const intent of rack.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) leading.append(intent);
+    for (const tray of rack.querySelectorAll(':scope > .statuses')) tray.classList.remove('target-hud-statuses');
     if (parent) parent.append(...rack.childNodes);
     rack.remove();
   }

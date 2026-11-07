@@ -11,6 +11,8 @@ import { quickAccessPanelHtml } from '../src/ui/components/hudmeta.js';
 import { quickMenuPanelModel } from '../src/ui/models/MenuModels.js';
 import { quickAccessPanelModel } from '../src/ui/models/QuickAccessPanelModel.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests floater sequencing for every kind; the allowlist is tests/floater-policy.test.mjs
 
 function run(t, clickTarget) {
   t.mock.timers.enable({ apis: ['setTimeout'] });
