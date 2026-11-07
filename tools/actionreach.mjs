@@ -172,7 +172,7 @@ const SCREENS = [
     // swatches also wrap, and a lone small square does not read as "chosen" the
     // way a lone card does, so they are deliberately out of scope rather than
     // forgotten. Widening this list is a design call, not a tuning one.
-    optionSets: ['#cz-classes .class-pick', '#cz-keepsakes .cz-keepsake'],
+    optionSets: ['#cz-classes .class-pick'],
   },
 ];
 
@@ -255,7 +255,7 @@ const probe = (sc) => `(() => {
   // EldenSpire#31's property, re-asserted: zero pixels on screen horizontally
   // in a document that cannot scroll sideways is ABSENT, not clipped.
   let off = 0, offEg = '';
-  for (const e of root.querySelectorAll('button,input,.cz-opt,.class-pick,.cz-keepsake,.choice,.opt')) {
+  for (const e of root.querySelectorAll('button,input,.cz-opt,.class-pick,.choice,.opt')) {
     const r = e.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) continue;
     if (r.right <= 0 || r.left >= innerWidth) {

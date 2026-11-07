@@ -70,7 +70,7 @@
 //              (armamentStock > 0 and an armamentCost row for its rarity).
 //     C-inject op 'addCard' / 'addCardToDeck' inside a REACHED card (base or
 //              upgrade — transitive), a reached enemy, an available choice of a
-//              reached event, or a creation keepsake. This is how curses and
+//              reached event. This is how curses and
 //              status cards are reached: through their injector, never free.
 //
 //   RELICS
@@ -82,7 +82,7 @@
 //     R-class  in a played class's creation relicIds (resolveCreationRelic) or
 //              its kitRelic (model/state.js).
 //     R-event  op 'addRelic' with an `id`, in an available choice of a reached
-//              event or a keepsake; or op 'addRelic' random, which draws ANY
+//              event; or op 'addRelic' random, which draws ANY
 //              reward-pool relic regardless of rarity (engine/actions.js).
 //
 // ---------------------------------------------------------------------------
@@ -244,19 +244,16 @@ export function contentReach(bundle, opts = {}) {
   const shop = bal.shop || {};
   const merchant = cap.merchant;
   const creation = (bundle.characterCreation || {}).classes || {};
-  const keepsakes = (bundle.characterCreation || {}).keepsakes || [];
 
   // ---- F3: an injector in a set no route models --------------------------------
-  // Modelled homes: cards, enemies, events, characterCreation.keepsakes. The
+  // Modelled homes: cards, enemies, events. The
   // tagging/node tables are vocabulary and carry no ops; everything else is
   // scanned so a new door reads loudly instead of as absence.
   for (const [key, value] of Object.entries(bundle)) {
     if (['cards', 'enemies', 'enemyMoves', 'events'].includes(key)) continue;
-    const scanned = key === 'characterCreation'
-      ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'keepsakes'))
-      // Saved-run compatibility repeats original card definitions. Its cards
-      // use the same reached identity below; other legacy homes still fire F3.
-      : key === 'legacyProgression'
+    // Saved-run compatibility repeats original card definitions. Its cards
+    // use the same reached identity below; other legacy homes still fire F3.
+    const scanned = key === 'legacyProgression'
         ? Object.fromEntries(Object.entries(value || {}).filter(([k]) => k !== 'cards'))
       : value;
     for (const op of opsIn(scanned, INJECTOR_OPS)) {
@@ -373,11 +370,6 @@ export function contentReach(bundle, opts = {}) {
     for (const c of pop.cards) {
       if (c.class === 'colorless' && DROP_RARITIES.includes(c.rarity) && !arts.has(c.id)) note('cards', c.id, 'C-shop colorless shelf');
     }
-  }
-
-  // Keepsakes: chosen at creation, so their ops are always available.
-  for (const k of keepsakes) {
-    for (const op of opsIn(k && k.effects, INJECTOR_OPS)) creditOp(op, `keepsake ${k.id}`);
   }
 
   // Relics that do not depend on the fixpoint.

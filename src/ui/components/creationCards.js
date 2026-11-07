@@ -3,12 +3,12 @@
 // specimen is the production component rather than a look-alike maintained
 // beside it.
 //
-// EVERY PIECE IS A KIT PIECE. A class is an OptionCard, a keepsake and a relic
+// EVERY PIECE IS A KIT PIECE. A class and a relic
 // are OptionCards, a sprite style or a creation mode is one button of a
 // Segmented, a sigil or a tint is a Swatch, the derived resources are a
 // StatStrip of Chips, the class preview is a Pane, and a primary stat is the
 // D26 fold face carrying a kit Row (LabelStack + StatusText). The class names
-// the tools read (`class-pick`, `cz-opt`, `cz-keepsake`, `cc-primary-stat`,
+// the tools read (`class-pick`, `cz-opt`, `cc-primary-stat`,
 // `cc-class-resource`, `cc-switch`, `data-view-mode`…) ride on the kit
 // elements as hooks and draw nothing of their own.
 
@@ -17,9 +17,6 @@ import { t } from '../strings.js';
 import { relicIcon } from '../assets.js';
 import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIcon } from './engravedIcon.js';
-import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
-import { assetUrl } from '../assetmap.js';
-import { swapOnError } from '../artFallback.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
@@ -349,21 +346,6 @@ export function characterSigilPreview(glyph) {
 export function sigilChoiceButton(glyph, selected, onChoose) {
   const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${uiIconText(glyph)}`, dataset: { sigil: glyph } }, engravedIcon(glyph) || uiIconText(glyph));
   return markUiComponent(pressable(button, selected, onChoose), UI.sigilChoice);
-}
-
-/** A keepsake: an OptionCard. */
-export function keepsakeChoiceButton(keepsake, selected, onChoose) {
-  const artPath = keepsakeArtAsset(keepsake);
-  const img = artPath ? el('img', { src: assetUrl(artPath), alt: '', width: '48', height: '48' }) : null;
-  if (img) swapOnError(img, () => engravedIcon(keepsake.icon || 'relic') || el('span', { text: 'Relic' }));
-  const art = img ? el('span', { class: 'og relic-art', 'aria-hidden': 'true' }, img) : null;
-  const button = optionCard({
-    glyph: keepsake.icon, art, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
-    className: `cz-keepsake${selected ? ' chosen' : ''}`,
-    attrs: { dataset: { keepsakeId: keepsake.id }, 'aria-label': `${keepsake.name}. ${keepsake.desc}` },
-  });
-  if (onChoose) button.addEventListener('click', onChoose);
-  return markUiComponent(button, UI.keepsakeChoice);
 }
 
 /** A starting relic: an OptionCard. */

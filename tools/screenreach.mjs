@@ -516,7 +516,7 @@ const PROBE = `(() => {
   // seed field and a class card) were none of the two it looked at. A sweep
   // that opens a screen and inspects 8% of it is the '0 checks passed' shape
   // wearing a screen name.
-  const sel = 'button,[role=button],input,.pile,.map-node,.card,.choice,.opt,.zbtn,.topbar-btn,.cz-opt,.class-pick,.cz-keepsake';
+  const sel = 'button,[role=button],input,.pile,.map-node,.card,.choice,.opt,.zbtn,.topbar-btn,.cz-opt,.class-pick';
   const name = (e) => {
     if (!e) return 'null';
     const t = (e.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 22);

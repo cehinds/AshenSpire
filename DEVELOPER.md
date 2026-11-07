@@ -1401,7 +1401,7 @@ itself; read them there.
 ### Character-creation component catalog
 
 Open `?shot=components` on a served checkout to see the Class, Attributes,
-Keepsake, Equipment, Feats, Spells, and Review sections as interactive reference specimens.
+Equipment, Feats, Spells, and Review sections as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`

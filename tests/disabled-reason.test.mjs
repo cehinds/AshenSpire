@@ -55,13 +55,13 @@ test('refusesWhen: the tooltip reason is also visible text, and follows the cont
   const { refusesWhen } = await import('../src/ui/components/refusal.js');
   const { button } = await import('../src/ui/kit/index.js');
   withKitDom((dom) => {
-    let problem = 'Choose a keepsake.';
+    let problem = 'Choose a class.';
     const start = button({ label: 'Begin', weight: 'primary' });
     dom.document.body.replaceChildren(start);
     const refresh = refusesWhen(start, () => problem, 'Begin.');
     const note = noteOf(start);
     assert.ok(shows(note), 'a refusing control shows its reason');
-    assert.equal(note.textContent, 'Choose a keepsake.');
+    assert.equal(note.textContent, 'Choose a class.');
     start.hidden = true; refresh();
     assert.equal(note.hidden, true, 'a hidden control shows no reason');
     start.hidden = false; problem = null; refresh();

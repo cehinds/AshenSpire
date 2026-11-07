@@ -1483,10 +1483,6 @@ flask,,flaskOfStone,classification.flask
 flask,,blightCoating,classification.flask
 flask,,bloodUnction,classification.flask
 flask,,wondrousDraught,classification.flask
-keepsake,,none,classification.keepsake
-keepsake,,oldCinder,classification.keepsake
-keepsake,,travelersFlask,classification.keepsake
-keepsake,,whetstoneMemory,classification.keepsake
 event,,goldboughAvatar,classification.event
 event,,abandonedCart,classification.event
 event,,weepingPilgrim,classification.event

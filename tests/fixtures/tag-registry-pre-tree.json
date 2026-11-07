@@ -1182,10 +1182,6 @@
    "domain": "item"
   },
   {
-   "family": "keepsake",
-   "domain": "item"
-  },
-  {
    "family": "event",
    "domain": "run"
   },
