@@ -1,8 +1,8 @@
 // Dev-only `?shot=` pose ladder, moved out of src/main.js (review H4 seam (a)).
 //
-// Every state a capture instrument can pose lives here, and this module is loaded
-// by a dynamic import only when `?shot=` is set (src/main.js), so a normal boot
-// neither fetches nor parses it. `createShotStates(ctx)` returns a plain
+// Every state a capture instrument can pose lives here. main.js imports it
+// statically for now (tools/bundle.mjs does not bundle `import()` yet), and builds
+// the table only when `?shot=` is set. `createShotStates(ctx)` returns a plain
 // `{ [state]: fn }` table; showFirstScreen() calls the entry for the state asked
 // and falls through to the ordinary first screen when there is none.
 //

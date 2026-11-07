@@ -2987,7 +2987,7 @@ if (shotState) {
 function showFirstScreen() {
   // The posed `?shot=` states live in src/dev/shotStates.js. The table is built
   // here, on each call, so the ctx getters see the bindings as they stand now.
-  const shotStates = createShotStates({
+  const shotStates = shotState ? createShotStates({
     saves, shotParams, bootStorage, app,
     newRun, showMap, enterCombat, startFight, showEvent, persist, showRest, showShop,
     beginGameProfileReward, poseFxShowcase, showTitle, showHistory, showProfile,
@@ -2996,8 +2996,8 @@ function showFirstScreen() {
     setActiveMeta: (value) => { activeMeta = value; },
     setActiveSettings: (value) => { activeSettings = value; },
     setShotPoiseMaxOverride: (value) => { shotPoiseMaxOverride = value; },
-  });
-  const pose = shotState && Object.hasOwn(shotStates, shotState) ? shotStates[shotState] : null;
+  }) : null;
+  const pose = shotStates && Object.hasOwn(shotStates, shotState) ? shotStates[shotState] : null;
   if (pose) {
     pose();
     return;
