@@ -1094,8 +1094,8 @@ function checkKnowledgeSnapshot(run, problems, snapshot, path) {
   if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
+/** Phase: the pinned profile, defeat notice and expanded-combat rule fields. */
+function checkProfileAndCombatRules(run, problems) {
   if (run.gameProfile) {
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
@@ -1127,6 +1127,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!Number.isSafeInteger(pools[field]) || pools[field] < (field === 'maxHp' ? 1 : 0)) problems.push(`ashenBlightBasePools.${field} must be a valid unboosted maximum`);
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;
     if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
