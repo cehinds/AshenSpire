@@ -211,16 +211,6 @@
       "handler": "src/ui/screens/reward.js#mountRewards",
       "description": "Claim the chosen reward offer."
     },
-    "reward.claimLevel": {
-      "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards.onClaimLevel",
-      "description": "Claim the level-up reward."
-    },
-    "reward.claimSkill": {
-      "kind": "app",
-      "handler": "src/ui/screens/reward.js#mountRewards.onClaimSkill",
-      "description": "Claim the skill reward."
-    },
     "reward.done": {
       "kind": "app",
       "handler": "src/ui/screens/reward.js#mountRewards.onDone",

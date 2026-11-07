@@ -342,7 +342,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
     const advanceAct = () => { throw Error('Defeat cannot advance act'); };
     const gameProfileRewardOffers = () => { throw Error('Defeat cannot roll rewards'); };
     const mountGameProfileLevelUp = (_app, model) => notices.push(model);
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}
     return { settle: () => onCombatEnd('defeat', combat, { pool: 'normal' }), resume: showGameProfileReward,
       emptyDefeat: () => beginGameProfileReward({ after: 'defeat', noticeOnly: true }) };
@@ -612,7 +612,7 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const deckDoors = () => ({});
     const mountGameProfileOffers = (_app, model) => offers.push(model);
     const transactReward = () => {}, deckEditBounds = () => ({ max: 30 });
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}
     return { settle: () => onCombatEnd('victory', combat, { pool: 'normal', enemies: ['wanderingSoldier'] }), resume: showGameProfileReward };
   `)(deps, run, combat, reg, saves, receipts, offers);

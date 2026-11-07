@@ -296,21 +296,9 @@ const SCREENS = [
   // of assertions, and this tool went RED the moment the state joined the
   // derived denominator unphotographed (Saga's review of #290, comment
   // 5364846139 — the refusal was correct, same as `event` at 52e0bc1).
-  // Both edges, because the menu's whole subject is derivation from the offer:
-  //   full   every kind present — five rows in REWARD_KIND_ORDER. The landmark
-  //          is the LAST row in that order (relic): the menu renders in
-  //          sequence, so the last kind standing proves the derivation walked
-  //          the whole offer, where any earlier row would go green on a menu
-  //          that stopped short.
-  //   empty  no kinds — the zero edge, where a derivation quietly draws
-  //          furniture for absent rewards. The landmark is Continue, the one
-  //          control the card's contract keeps ALWAYS pressable; zero-row
-  //          proof is a count and lives in the driven walkthrough, not in a
-  //          presence landmark.
-  { name: 'reward', query: '?shot=reward', landmark: '.reward-kind[data-kind="relic"]', state: 'reward' },
-  { name: 'reward-empty', query: '?shot=reward&shotReward=empty', landmark: '#reward-continue' },
-  // draft: a skill draft in the card row's seat (plan phase 4b).
-  { name: 'reward-draft', query: '?shot=reward&shotReward=draft', landmark: '.reward-kind[data-kind="skillDraft"]' },
+  // Core's configured reward door, mounted through the production offer/save/renderer callbacks (the legacy
+  // ?shotReward=full|empty|draft poses went with the legacy reward door). The landmark is the door itself.
+  { name: 'reward', query: '?shot=reward', landmark: '.reward-door', state: 'reward' },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',

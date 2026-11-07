@@ -9,7 +9,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { awardSkillXp, xpToNext, rankUpCandidates, raiseCardRank, skillsProblems, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
-import { mergeProgressionRewards, unclaimedProgressionRewards } from '../src/model/deferredProgression.js';
 
 const registries = createRegistries(contentBundle);
 const BLADE = 'item:blade';
@@ -58,18 +57,6 @@ test('a rank-up raises an ordinary owned card of the schools, never past the tra
   assert.equal(run.deck.find((c) => c.instanceId === 'own-rend').rank, 3);
   assert.equal(raiseCardRank(registries, run, BLADE, 'own-rend'), null, 'an empty ledger raises nothing');
   assert.deepEqual(validateRunShape(run).filter((p) => /rank/i.test(p)), []);
-});
-
-test('rank-ups are keyed rows that survive a deferral without multiplying', () => {
-  const run = bladeRun(3);
-  const offer = { skillRankUps: [{ skillId: BLADE, level: 3, claimOrdinal: 0 }, { skillId: BLADE, level: 3, claimOrdinal: 0 }] };
-  const rows = rewardPlan(offer).rows.filter((row) => row.kind === 'skillRankUp');
-  assert.deepEqual(rows.map((row) => row.key), [`skillRankUp:${BLADE}:0`, `skillRankUp:${BLADE}:1`]);
-  assert.ok(rows.every((row) => row.choice));
-  const deferred = unclaimedProgressionRewards({ rewards: mergeProgressionRewards({}, offer, run), states: { [`skillRankUp:${BLADE}:0`]: 'taken' } });
-  assert.equal(deferred.skillRankUps.length, 1);
-  const next = mergeProgressionRewards(deferred, offer, run);
-  assert.equal(next.skillRankUps.length, 2, 'the saved rank-up reserves one fresh one; the other is new');
 });
 
 test('a pending rank-up offer and its pick are checked on load', () => {

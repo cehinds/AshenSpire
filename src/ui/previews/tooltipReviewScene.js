@@ -16,11 +16,7 @@ export async function mountTooltipReview(scene) {
   const run = createRunState({ seed: 671, classId: 'reaver', registries: r });
   window.__tooltipReviewRun = run;
   const meta = { settings: { holdConfirm: 'off' }, found: r.equipment.armaments.map(i => i.id) };
-  if (scene === 'potion') {
-    const { mountRewards } = await import('../screens/reward.js');
-    const potion = r.flasks.all().find(d => d.name === 'Blood Unction');
-    mountRewards(app, { registries:r, run, rewards:{cinders:0, cardChoices:[], flaskId:potion.id}, onDone(){} });
-  } else if (scene === 'equipment') {
+  if (scene === 'equipment') {
     const { mountEquipment } = await import('../screens/equipment.js');
     mountEquipment(app, { registries:r, run, meta, inCombat:false, onClose(){}, onEquipmentChanged(){} });
   } else if (scene === 'smith') {

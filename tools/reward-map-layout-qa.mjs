@@ -42,9 +42,9 @@ try {
       const run = { class: 'herald', cinders: 70, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: { level: 1, xp: 34, unspentPoints: 0 }, skills: {
         'class:herald': { level: 0, xp: 10 }, 'item:magic-focus': { level: 1, xp: 7, pendingDrafts: 1 }, 'combatManeuvers': { level: 1, xp: 26, pendingDrafts: 1 },
       } };
-      const rewards = { title: 'VICTORY', cinders: 56, flaskId: 'flaskOfFerocity', skillDrafts: [
-        { skillId: 'item:magic-focus', level: 1, cardIds: ['spark', 'spark', 'spark'] },
-        { skillId: 'combatManeuvers', level: 1, cardIds: ['strike', 'strike', 'strike'] },
+      const rewards = { title: 'VICTORY', skillRankUps: [
+        { skillId: 'item:magic-focus', level: 1, claimOrdinal: 0 },
+        { skillId: 'combatManeuvers', level: 1, claimOrdinal: 0 },
       ], xpGains: { level: 34, tracks: { 'class:herald': 10, 'item:magic-focus': 7, combatManeuvers: 26 } } };
       mountRewards(document.querySelector('#app'), { registries, run, rewards, checkpoint: { rewards, expanded: true }, saves: { loadMeta: () => ({ settings: { optionDecision: { rewardContinue: 'instant' } } }) }, onDone() {} });
     });

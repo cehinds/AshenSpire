@@ -3125,6 +3125,8 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
 
+**Removed (Unity-port cleanup P2b): the legacy reward door.** Only Core 2 ships, and non-Core runs and saves are refused at load, so the legacy post-fight and treasure reward menu is gone: `main.js beginPendingReward`/`mountPendingReward`, the `roll*` offer family, `rollDrop`/`collectArmament`, the sigil and Smithing Stone treasure offers, `reward.js`'s legacy rows (class milestone/draft, skill draft, level choice, flask, armament, relic, sigil, card rows, the per-level Level up claims) and the `rewardBattle*`/`rewardTreasure*` Advanced settings. Core rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` now draws only the Victory receipt and the card rank-up chooser. Old saves that carry `run.pendingReward` or `run.deferredProgression` still load and validate (they are refused anyway unless Core), but nothing writes them. Where a rule below describes that door, it is historical.
+
 **Status: built** (2026-10-02: step 1, this section, landed in #1348; §15.1, the card reward schedule, in #1351; §15.2, the levelling preview and per-fight cap, in #1349; §15.3, crafting drops, in #1352; step 5, legendary sigils (§15.4), in #1455, to the shapes pinned below in #1439). The owner asked for several things:
 - a choice of when card rewards come: after battle, on level-up, both or neither;
 - a percent chance for a card reward to drop;
@@ -3249,7 +3251,7 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
   - Under **rarity at every door**, the load door also refuses, by name, a fight in progress (`combatEntered.snapshot`) whose `attunedSigils` (an absent field reads as `[]`) is not the same list as `run.attunedSigils`: attunement cannot change mid-fight, so a mismatch is a hand edit. The save is archived the way every other malformed snapshot reference is.
   - A snapshot written without the field restores with `[]` and mounts none.
 - **The drop.** The offer field is `rewards.sigilId`: a sigil id, or absent for none.
-  - The menu kind is `sigil`, after `relic` in `REWARD_KIND_ORDER`. Its row key is `sigil`, and its state is `pendingReward.states.sigil`.
+  - *(Removed with the legacy reward door.)* The menu kind is `sigil`, after `relic` in `REWARD_KIND_ORDER`. Its row key is `sigil`, and its state is `pendingReward.states.sigil`.
   - Taking the row appends the id to `run.sigils`, unattuned. Taking an id the run already owns adds nothing.
   - The load door refuses, by name, a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary (**rarity at every door**).
   - **The pool is legendary sigils only.** It holds the legendaries the run does not own, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`, in authored order.

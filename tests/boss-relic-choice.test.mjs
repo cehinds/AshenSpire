@@ -12,7 +12,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { relicInRewardPool } from '../src/model/schemas.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
-import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
@@ -69,16 +69,6 @@ test('rollRelicReward is unchanged for elite drops and still returns one id or n
   const one = rollRelicReward(REG, createRng(3), [], { rarities: ['boss'] });
   assert.ok(BOSS_POOL.includes(one));
   assert.equal(rollRelicReward(REG, createRng(3), BOSS_POOL, { rarities: ['boss'] }), null, 'null when the pool is empty');
-});
-
-test('configuredRewardOffer strips relicChoices when battle relics are off', () => {
-  const offer = { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'], cinders: 10 };
-  const off = configuredRewardOffer(offer, 'boss', (key) => key !== 'rewardBattleRelics');
-  assert.equal(off.relicChoices, undefined);
-  assert.equal(off.cinders, 10);
-  assert.equal(offer.relicChoices.length, 3, 'the rolled offer is not mutated');
-  const on = configuredRewardOffer(offer, 'boss', () => true);
-  assert.deepEqual(on.relicChoices, offer.relicChoices);
 });
 
 test('a 3-choice boss relic offer is one relic row with relicIds and choice true', () => {
@@ -193,49 +183,6 @@ function mountBossReward(dom, { relicChoices, run, checkpoint = pendingRewardChe
 const pickButtons = (app) => app.querySelectorAll('.reward-row .reward-pick').filter((el) => el.tagName === 'BUTTON');
 const CHOICES = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
 
-test('the boss relic choice opens a chooser with one tile per offered relic', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    assert.deepEqual(pickButtons(app).map((el) => el.dataset.pickId), CHOICES, 'three relic options, in offer order');
-    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'nothing picked, nothing to confirm');
-  });
-});
-
-test('confirming one boss relic adds exactly that relic and checkpoints the pick', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    pickButtons(app)[1].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(run.relics, [], 'review does not grant the relic');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(run.relics, ['wardenHorn'], 'exactly the picked relic is held');
-    assert.equal(checkpoint.chosenRelicId, 'wardenHorn', 'the pick is checkpointed');
-    assert.equal(checkpoint.states.relic, 'taken');
-  });
-});
-
-test('a boss relic pick the run already holds lands nothing', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = ['wardenHorn'];
-    const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    pickButtons(app)[1].click();
-    app.querySelector('#reward-card-confirm').click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(run.relics, ['wardenHorn'], 'no second copy');
-    assert.equal(checkpoint.states.relic, undefined, 'the row is not Taken');
-    assert.equal(checkpoint.chosenRelicId, null);
-  });
-});
-
 test('Continue is pressable with an unpicked boss relic choice, as with a card choice', () => {
   withKitDom((dom) => {
     const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
@@ -257,91 +204,3 @@ test('the run-state validator refuses a Taken relic choice with no chosen relic'
   assert.deepEqual(pendingProblems(run), [], 'a skipped choice needs no pick');
 });
 
-test('the relic chooser lays out three option columns, each a card face above its button', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    const columns = app.querySelectorAll('.reward-row .reward-choice-option');
-    assert.equal(columns.length, 3, 'three columns');
-    assert.deepEqual(columns.map((c) => c.dataset.pickId), CHOICES);
-    for (const column of columns) {
-      assert.equal(column.querySelectorAll('.equipment-poker-card').length, 1, 'one card face per column');
-      assert.equal(column.querySelectorAll('button.reward-pick').length, 1, 'one choice button per column');
-      assert.equal(column.querySelectorAll('.equipment-poker-inspection').length, 0, 'no inspection section');
-    }
-  });
-});
-
-test('clicking a relic card face selects it, lighting only that card face and button', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    const column = app.querySelectorAll('.reward-choice-option')[1];
-    column.querySelector('.equipment-poker-card').click();
-    assert.equal(app.querySelector('#reward-card-confirm').disabled, false, 'a face click enables Confirm');
-    const columns = app.querySelectorAll('.reward-choice-option');
-    columns.forEach((c, i) => {
-      const chosen = i === 1;
-      assert.equal(c.querySelector('.equipment-poker-card').classList.contains('is-chosen'), chosen, `face ${i}`);
-      const button = c.querySelector('button.reward-pick');
-      assert.equal(button.classList.contains('is-chosen'), chosen, `button ${i}`);
-      assert.equal(button.getAttribute('aria-checked'), String(chosen), `aria-checked ${i}`);
-    });
-  });
-});
-
-test('clicking a relic button moves the green trim from one face and button to another', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    pickButtons(app)[0].click();
-    pickButtons(app)[2].click();
-    const columns = app.querySelectorAll('.reward-choice-option');
-    assert.equal(columns[0].querySelector('.equipment-poker-card').classList.contains('is-chosen'), false);
-    assert.equal(columns[2].querySelector('.equipment-poker-card').classList.contains('is-chosen'), true);
-    assert.equal(columns[0].querySelector('button.reward-pick').classList.contains('is-chosen'), false);
-    assert.equal(columns[2].querySelector('button.reward-pick').classList.contains('is-chosen'), true);
-  });
-});
-
-test('Continue with auto-collect ON never takes an owned relic from the boss choice', () => {
-  withKitDom((dom) => {
-    dom.document.documentElement ??= dom.document.body;
-    const app = dom.document.createElement('main');
-    dom.document.body.replaceChildren(app);
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = ['crownOfStitches'];  // the first option: the unseeded auto pick lands on it
-    const checkpoint = pendingRewardCheckpoint({ relicChoices: CHOICES }, { source: 'boss', after: 'advanceAct' });
-    mountRewards(app, {
-      registries: REG, run, onDone() {}, checkpoint, onPersist: () => true,
-      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0, rewardCollect: 'auto' } }), saveMeta() {} },
-      rewards: { relicChoices: CHOICES },
-    });
-    app.querySelector('#reward-continue').click();
-    assert.equal(run.relics.filter((id) => id === 'crownOfStitches').length, 1, 'the owned relic is kept, not doubled');
-    assert.equal(run.relics.length, 2, 'exactly one unowned option was taken');
-    assert.ok(['wardenHorn', 'ashOfRemembrance'].includes(run.relics[1]), `took an unowned option: ${run.relics[1]}`);
-  });
-});
-
-test('the chooser disables an option the run already owns and leaves the others pickable', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = ['wardenHorn'];
-    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    const buttons = pickButtons(app);
-    const owned = buttons.find((el) => el.dataset.pickId === 'wardenHorn');
-    assert.equal(owned.hasAttribute('disabled'), true, 'the owned option is disabled');
-    assert.equal(owned.closest('.reward-choice-option').classList.contains('is-owned'), true, 'its column is marked owned');
-    owned.click();
-    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'a click on the owned option selects nothing');
-    buttons.filter((el) => el !== owned).forEach((el) => assert.equal(el.hasAttribute('disabled'), false, `${el.dataset.pickId} stays pickable`));
-  });
-});

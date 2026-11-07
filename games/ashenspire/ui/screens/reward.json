@@ -37,8 +37,6 @@
   "events": {
     "claim": "reward.claim",
     "skip": "reward.skip",
-    "claimLevel": "reward.claimLevel",
-    "claimSkill": "reward.claimSkill",
     "allocateStat": "reward.allocateStat",
     "done": "reward.done"
   },
