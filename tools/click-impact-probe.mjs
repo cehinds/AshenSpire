@@ -5,12 +5,15 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // independently checked four 500 ms waits, the active authored half-rate clip,
 // and hit-stop derived from this action's committed receipts. Every sample must
 // retain intent (with its cost) → action (then the stance) → sprite → contact → reaction → damage → HUD → resolution.
-// Missing or shortened waits, missing readouts and missing samples fail.
+// Missing or shortened waits, missing HP damage readouts and missing samples fail.
 //
-// The Core entry matchup can put a melee card outside the enemy's spell range.
-// One real hostile action is still required and its committed miss is reported
-// without inventing a number. Numeric samples also include immediate protection
-// cards; later hostile candidates must have a positive public preview chance.
+// Numeric readouts are HP damage numbers only (owner's 2026-11-07 floater policy):
+// Block, heal, Poise, Ward, Barrier and pierce numbers no longer draw. Protection and
+// meter-only plays are contact samples without a number and owe none; a beat that dealt
+// HP damage owes one. The Core entry matchup can put a melee card outside the enemy's
+// spell range: one real hostile action is still required and its committed miss is
+// reported without inventing a number. While numbers are short, a hostile card with a
+// positive public preview chance is preferred, since only HP damage yields a number.
 // Optional enemy-turn reactions are declined through their visible Back button.
 // No engine action, settings change, injected state or synthetic click is used.
 //
@@ -222,15 +225,14 @@ async function main() {
     }
 
     // The page's own clock: pointer releases and visible damage/protection.
-    // Dedicated Poise/Ward payloads can update a bar without a damage float.
+    // Only HP damage floats (`dmg`) count; the Poise/Ward meters are not drawn.
     await evalIn(`(async () => {
       const { stageFor } = await import('/src/ui/services/PoseAnimator.js');
       const { actionPacing } = await import('/src/ui/animationPace.js');
       const { fixCoreEnabled } = await import('/src/model/fixCoreMechanics.js');
       const { ACTION_PACING } = await import('/src/model/autoCombatPolicy.js');
       window.__impactTiming = { ...actionPacing(), playbackRate: ACTION_PACING.spritePlaybackRate, fixCore: fixCoreEnabled(window.__combat) };
-      const meters = () => JSON.stringify([...document.querySelectorAll('.combatant [data-res=poise], .combatant [data-res=ward]')].map(e => [e.closest('[data-eid]')?.dataset.eid, e.dataset.res, e.dataset.cur, e.dataset.max]));
-      window.__impact = { ups: [], floats: [], contacts: [], floatOwners: [], contactOwners: [], clips: [], meterState: meters(), measureMeters: false };
+      window.__impact = { ups: [], floats: [], contacts: [], floatOwners: [], contactOwners: [], clips: [] };
       const trace = [];
       trace.push = (...rows) => {
         const length = Array.prototype.push.apply(trace, rows);
@@ -252,12 +254,9 @@ async function main() {
           window.__impact.contacts.push(t); window.__impact.contactOwners.push(owner('contact'));
         }
         for (const m of list) for (const n of m.addedNodes || []) {
-          if (n.nodeType === 1 && n.classList.contains('float-num') && /\\b(dmg|blk|poise|ward|barrier)\\b/.test(n.className)) float();
+          if (n.nodeType === 1 && n.classList.contains('float-num') && /\\bdmg\\b/.test(n.className)) float();
         }
-        const nextMeters = meters();
-        if (window.__impact.measureMeters && nextMeters !== window.__impact.meterState) float();
-        window.__impact.meterState = nextMeters;
-      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-cur', 'data-max', 'data-contact'] });
+      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-contact'] });
       return true;
     })()`);
 
@@ -281,23 +280,27 @@ async function main() {
         const combat = window.__combat;
         const hand = [...document.querySelectorAll('.hand .card')];
         hand.forEach((c) => delete c.dataset.ciCard);
-        const pick = hand.find(c => {
+        const hostileOf = def => immediateCardEffects(def).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+        const damaging = def => immediateCardEffects(def).some(effect => effect.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+        const eligible = c => {
           if (c.classList.contains('unaffordable')) return false;
           const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
           if (!inst) return false;
           const def = resolveCombatCard(combat, inst);
           if (!hasImmediateCombatImpact(def)) return false;
-          const hostile = immediateCardEffects(def).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target));
+          const hostile = hostileOf(def);
           // Prove a real hostile action once, including a legitimate range
           // miss. Later samples need a possible hit or immediate protection.
           return !hostile || ${hostileProofs === 0} || combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0);
-        });
+        };
+        // Only HP damage draws a number now: while numbers are short, prefer a card that can deal it.
+        const canDamage = c => { const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId); return !!inst && damaging(resolveCombatCard(combat, inst)) && combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0); };
+        const pick = (${numbers.length < PLAYS} && hand.find(c => eligible(c) && canDamage(c))) || hand.find(eligible);
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
         return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
           maneuver: pick.dataset.combatManeuver,
-          hostile: immediateCardEffects(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))).some(effect => ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op) && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(effect.target)),
-          meterImpact: immediateCardEffects(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))).some(effect => ['poiseDamage', 'wardDamage'].includes(effect.op)) };
+          hostile: hostileOf(resolveCombatCard(combat, combat.piles.hand.find(card => card.instanceId === pick.dataset.instanceId))) };
       })()`);
       lastPicked = picked;
       if (args.includes('--debug')) console.log('    picked', JSON.stringify(picked));
@@ -330,7 +333,7 @@ async function main() {
         continue;
       }
       const before = await played();
-      const mark = await evalIn(`(() => { window.__impact.measureMeters = ${!!picked.meterImpact}; window.__impact.logIndex = window.__combat.eventLog.length; return performance.now(); })()`);
+      const mark = await evalIn(`(() => { window.__impact.logIndex = window.__combat.eventLog.length; return performance.now(); })()`);
       // Park the pointer off the hand so a hover lift or tooltip from the last
       // play does not cover the next card.
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 700, y: 120 }, S);
@@ -357,8 +360,10 @@ async function main() {
         const { hitStopMsFor } = await import('/src/content/combatFeel.js');
         const { groupBeats, guardHitFloatParts } = await import('/src/ui/fx.js');
         const beat = groupBeats(window.__combat.eventLog.slice(window.__impact.logIndex)).find(beat => beat.events.some(e => e.type === 'cardPlayed' && e.cardInstanceId === ${JSON.stringify(picked.instanceId)}));
-        const holdMs = (beat?.events || []).filter(e => e.type === 'damageDealt').reduce((sum, e) => sum + hitStopMsFor(guardHitFloatParts(e).residual, (e.targetId === 'player' ? window.__combat.player : window.__combat.enemies.find(enemy => enemy.id === e.targetId))?.maxHp || 0) * window.__impactTiming.scale, 0);
-        return { up, contact: c, number: f ?? null, receipts: (beat?.events || []).map(({ type }) => ({ type })), timing: window.__impactTiming, holdMs,
+        const maxHpOf = e => (e.targetId === 'player' ? window.__combat.player : window.__combat.enemies.find(enemy => enemy.id === e.targetId))?.maxHp || 0;
+        const holdMs = (beat?.events || []).filter(e => e.type === 'damageDealt').reduce((sum, e) => sum + hitStopMsFor(guardHitFloatParts(e).residual, maxHpOf(e)) * window.__impactTiming.scale, 0);
+        const hpDamage = (beat?.events || []).some(e => e.type === 'damageDealt' && guardHitFloatParts(e).residual > 0);
+        return { up, contact: c, number: f ?? null, hpDamage, receipts: (beat?.events || []).map(({ type }) => ({ type })), timing: window.__impactTiming, holdMs,
           clip: window.__impact.clips.find(clip => clip.at > ${mark}),
           stages };
       })()`);
@@ -367,7 +372,7 @@ async function main() {
         samples.push(sample.contactOverhead);
         if (sample.number != null) numbers.push(sample.numberOverhead);
         if (picked.hostile) hostileProofs++;
-        console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (committed miss)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
+        console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (no HP damage)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
       } else if (args.includes('--debug')) console.log('    unmeasured', JSON.stringify(await evalIn(`({ floats: window.__impact.floats.filter(t => t > ${mark}), contacts: window.__impact.contacts.filter(t => t > ${mark}), clips: window.__impact.clips.filter(c => c.at > ${mark}), stages: window.__fx.trace.filter(([at]) => at > ${mark}) })`)));
     }
     await cdp.send('Target.closeTarget', { targetId }).catch(() => null);
@@ -377,7 +382,7 @@ async function main() {
 
   try {
     const { exitCode } = await judgeRounds(measure, { rounds: ROUNDS, budgetMs: BUDGET_MS, numberBudgetMs: NUMBER_BUDGET_MS });
-    console.log('  boundary: real Chromium headless, 1440x900, default Normal Core2; raw latency reported, declared waits/clip/receipt holds excluded only from 400/750 ms overhead gates. Mouse clicks only; hostile stage proof and numeric protection/HP readouts required.');
+    console.log('  boundary: real Chromium headless, 1440x900, default Normal Core2; raw latency reported, declared waits/clip/receipt holds excluded only from 400/750 ms overhead gates. Mouse clicks only; hostile stage proof and HP damage readouts required (protection plays are contact samples without a number).');
     console.log('  Not checked: touch input, slow or fast pacing, phone layouts, or classes other than the Quick start one.');
     process.exitCode = exitCode;
   } catch (e) {
