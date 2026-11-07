@@ -1333,7 +1333,7 @@ Governs the `tuned` creation mode and class presets, the XP and level curves, st
 
 - A fresh run starts at displayed level 1; the level is EARNED (§13.4i). Fights pay XP (`balance.xp`: a won fight, and each kill by the door's pool).
 - The curve reads `balance.level.xp`. Base, scaler, rounding and the linear/exponential toggle are configurable.
-  - Exponential (default; any table without `linear: true`): `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
+  - Exponential (default, `linear: false`; any table without `linear: true`): `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
   - Linear (`linear: true`): `xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100, `multScaler` 1.3, steps cost 100, 230, 360, 490 XP.
 - Each track's maximum level costs about 100,000 XP (§13.4o):
 
@@ -1477,14 +1477,11 @@ Relic behavior uses the trigger DSL (§3.6), the same declarative form as powers
 
 ### 5.5 Flasks (potions)
 
-Governs the Crimson/Azure charge pool, utility potions, the grace refill and how the pool's maximum grows.
-
 - Crimson/Azure charges share one pool of capacity 3 (`balance.flaskCapacity`).
-  - Capacity is one freely reallocatable pool (§5.5.1).
   - Utility potions are separate inventory entries sized by `balance.flaskSlots`; raising one limit never silently raises the other.
   - Utility potions come from combats, shops and events. Crimson/Azure charges refill at every grace (§5.5.1).
 - Crimson and Azure show in the same potion tray as utility potions but are permanent charge vessels.
-  - Always present, never drop, consume no utility-potion slot.
+  - Always present, never dropped, no utility-potion slot.
   - A persisted Gameplay setting (off by default) may allow using them between combats; an out-of-combat use applies the same authored healing or Mana effect and spends one charge, as in combat.
 - **Act change.** In a configured run `advanceAct()` refills both the Crimson and Azure pools to their allocation at every act change, whatever `routes.startNodeRefills` says.
   - That flag still governs the start node's own entry refill, which also restores HP.
@@ -1512,7 +1509,7 @@ The grace is the Shrine of Emberlight; the game has no separate `grace` node typ
 
 - **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like one that comes to rest.
 - **Data driven.** Capacity, each class's starting split and the set of reallocatable charge kinds are content rows.
-  - Screens read those rows; no screen owns a copied 3, 2/1 or 1/2.
+  - No screen owns a copied 3, 2/1 or 1/2.
 - **A fill, not a grant.** A grace fills the currently allocated HP and Mana vessels up to their maxima.
   - Re-mounting the shrine is idempotent and never grows capacity.
 - **Free allocation.** At a grace the player may redistribute all 3 capacity between HP and Mana at no cinder, action or item cost.
@@ -1521,12 +1518,12 @@ The grace is the Shrine of Emberlight; the game has no separate `grace` node typ
   - Utility potions are untouched.
 - **Class openings.** Reaver, Herald and Rogue start `2 HP / 1 Mana`; Starseer starts `1 HP / 2 Mana`.
   - These are presets over the same pool, not class caps.
-- **Debug settings.** Debug controls edit the same capacity/allocation data domain and show its lawful range; they author no independent ladder or refill count.
+- **Debug settings** edit the same capacity/allocation data and show its lawful range; no independent ladder or refill count.
 - **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`):
   - unknown/duplicate kind; malformed capacity or allocation; negative/fractional count;
   - a split that does not sum to capacity; dangling or wrong-kind override;
   - any refill that would silently alter utility inventory.
-- **Balance boundary.** The old no-Mana simulation is stale. The merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
+- **Balance boundary.** The old no-Mana simulation is stale; the preview is for watching and mechanical validation. A Mana-aware A/B balance run remains a release gate.
 
 #### 5.5.2 The growth chain — how the maximum grows
 
@@ -1541,9 +1538,9 @@ One chain of data rows and one truth function (`model/flaskgrowth.js`). `balance
   - An event granting through both is a boot refusal.
 - **Capacity accounts for itself** (machine-enforced since run schema v3).
   - `flaskCharges.capacity` is one stored number fed by both doors.
-  - Ledger lines: the chain in `grown` (per kind, reversible); the moment door in `granted` (a total, permanent: under pool the grant's kind is spent the moment it lands, so only the sum is history).
+  - Ledgers: the chain in `grown` (per kind, reversible); the moment door in `granted` (a permanent total; under pool only the sum is history).
   - `validateRunShape` refuses, by name, any save where `capacity ≠ base + grown.hp + grown.mana + granted`.
-  - Corpus: `node tools/flaskgrowth.mjs --selftest` (both doors, observed red first). Migration attribution for pre-ledger saves: §3.12.
+  - Corpus: `node tools/flaskgrowth.mjs --selftest`. Pre-ledger save migration: §3.12.
 - **Declared ahead of content.**
   - `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet; the moment door is the live mechanism).
   - Any `flaskSeed` row refuses at boot (no seed item vocabulary; the word is reserved).
@@ -1555,11 +1552,9 @@ One chain of data rows and one truth function (`model/flaskgrowth.js`). `balance
 - **C1 seam (decided): POOL.** Capacity is one freely reallocatable pool; its approved new-run default is 4. (Contradiction kept: §5.5 above and §5.5.1 set shared capacity 3.)
   - The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth` alone.
   - **Overflow rule (load-bearing):** reallocate a grown charge away, then lose the source: removal takes from the row's kind first and overflows to the other, currents bounded. Gated in the corpus, both edges.
-- **Live rows** ship under D19 ("future unlocks for larger total amount").
-  - Rows and numbers live in `balance.flaskGrowth` alone; read them there or run `node tools/flaskgrowth.mjs`. This spec does not restate them.
-  - PROVISIONAL: the M3 balance pass owns the weights.
-  - The relic tooltip sentence is derived from its row (`flaskGrowthClause`), so a retune retunes the tooltip.
-  - Law 0's falsifier is proven both ways in the corpus: a fictional relic + row grows the maximum with zero code, and the live plant re-derives its expectations from the shipped table.
+- **Live rows** (D19) live in `balance.flaskGrowth` alone (read there or run `node tools/flaskgrowth.mjs`); not restated here. PROVISIONAL: the M3 balance pass owns the weights.
+  - The relic tooltip is derived from its row (`flaskGrowthClause`).
+  - Law 0 falsifier, both ways in the corpus: a fictional relic + row grows the maximum with zero code; the live plant re-derives its expectations from the shipped table.
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
@@ -1619,11 +1614,19 @@ Governs event rolls on Unknown nodes, the M2 launch events, event data shape, qu
 - Validation refuses by name: a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest.
 - One-off events keep the Event screen.
 
+#### Notes and history
+
+- XP curves per track are in §5.1; older curves and awards are archived, not rules.
+- Flask growth rows live in `balance.flaskGrowth`; the spec does not restate them.
+- Quest chains and dialogue are sidecar data over the closed event schema.
+
+Full history: [docs/spec-history/05-content-map.md](docs/spec-history/05-content-map.md).
+
 ---
 
 ## 6. Map generation
 
-Governs act-map generation (`engine/mapgen.js`; every constant comes from `content/mapconfig.js`), the Core branched act map, and post-combat rewards and merchant prices. Faithful to StS's published algorithm, simplified where invisible to the player.
+StS-faithful act-map generation (`engine/mapgen.js`; every constant from `content/mapconfig.js`), the Core branched map, post-combat rewards and merchant prices.
 
 ### Grid and paths
 
@@ -1636,9 +1639,7 @@ Governs act-map generation (`engine/mapgen.js`; every constant comes from `conte
 
 ### Floor anchors
 
-Every floor a rule names is an ANCHOR, never an index (an absolute floor number changes meaning when `floors` changes).
-
-- The closed set of anchor kinds lives in `model/floorplan.js`; a new kind is an engine change (Law 1).
+Every floor a rule names is an ANCHOR, never an index. The closed set of kinds lives in `model/floorplan.js`; a new kind is an engine change (Law 1).
 
 | Anchor | Resolves to |
 |---|---|
@@ -1647,8 +1648,8 @@ Every floor a rule names is an ANCHOR, never an index (an absolute floor number 
 | `{ at: 'floor', index: n }` | `n`; an error if outside 1..`floors`-1 |
 | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
 
-- `resolveFloorPlan()` is the only place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution.
-- An anchor that will not resolve is a boot error naming the entry (Law 1 clause 5), and `mapgen` throws rather than generating an unauthored map.
+- `resolveFloorPlan()` is the only place an anchor becomes a floor; the generator, boot validator and `tools/mapplan.mjs` all read it.
+- An unresolvable anchor is a boot error naming the entry (Law 1 clause 5); `mapgen` throws rather than generate an unauthored map.
 
 ### Node typing
 
@@ -1665,23 +1666,21 @@ Every floor a rule names is an ANCHOR, never an index (an absolute floor number 
   - No two identical non-Monster types adjacent along an edge.
   - **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act.** If violated, regenerate typing (map RNG stream, bounded retries), then relax the weakest constraint.
 - **`restBeforeElite`:** a map that holds an Elite holds a Shrine on some EARLIER floor.
-  - The gate is TWO anchors (`noShrineBefore`, `noEliteBefore`); the schema REJECTS the single `noEliteOrShrineBefore` key.
-  - The roll is barred, and a final step on every exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot.
-  - Fixed ranks bypass every gate (`typeOnce` assigns them before any rule runs), so the check runs on every exit path, not only where the generator relaxes.
-  - Two arrangements are boot errors: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all.
-  - A fixed Shrine below the Elite gate is itself the rest and needs no floor held free.
-  - It is a fact about the GRAPH, not a path: a walker may still route past the rest to an Elite. `tools/mapplan.mjs` measures how often.
-  - The shortest act these rules describe is 7 floors; this narrows the debug run-shape cap.
+  - Two anchors gate it (`noShrineBefore`, `noEliteBefore`); the schema REJECTS the single `noEliteOrShrineBefore` key.
+  - The roll is barred; a final step on every exit path (fixed ranks bypass every gate, `typeOnce`) opens a rest, on a floor `resolveFloorPlan` certified at boot, when the graph holds an Elite without one.
+  - Boot errors: a fixed Elite with no floor beneath it able to hold a rest; an act whose gates and fixed ranks leave no rest floor.
+  - A fixed Shrine below the Elite gate is itself the rest.
+  - A fact about the GRAPH, not a path: a walker may route past the rest (`tools/mapplan.mjs` measures how often).
+  - Shortest act these rules describe: 7 floors (narrows the debug run-shape cap).
 - **`minElites` counts nodes in the graph; it is not a reachability promise.**
-  - A fraction of starts can reach no Elite at the shipped shape, and the fraction grows as the act shortens.
-  - `node tools/mapplan.mjs` measures and prints it on every run; nothing gates on it, and making the generator honour it is an open design call.
+  - Some starts reach no Elite at the shipped shape, more as the act shortens.
+  - `node tools/mapplan.mjs` prints the fraction; nothing gates on it; honouring it is an open design call.
 - What a `?` node resolves to is `mapConfigs[act].unknownWeights` (per act, beside the geometry; §5.6).
 
 ### Claims about generated maps
 
-- Any claim about generated maps is a distribution, never a seed. Node-count mean and range are not restated in this spec; `tools/mapplan.mjs` prints them at the current shape.
-- Stops per run is exactly **`floors` + 1** at every shape measured (a formula).
-- `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
+- Any claim about generated maps is a distribution, never a seed; node-count mean and range are not restated here (`tools/mapplan.mjs` prints mean and range per figure, and refuses to report if its seeds did not vary).
+- Stops per run is exactly **`floors` + 1** at every shape measured.
 
 ### Player view and camera
 
@@ -1738,9 +1737,8 @@ Every floor a rule names is an ANCHOR, never an index (an absolute floor number 
 
 #### Notes and history
 
-- Anchors, not floor indexes, exist because absolute floors silently change meaning when `floors` changes; the generator, validator and `tools/mapplan.mjs` share one resolution.
-- Map figures (node counts, elite reachability) are measured by `tools/mapplan.mjs`, never restated here.
-- Core route owner rulings: branching trees without forced rejoin; sub-branches; `maxBranches` 3.
+- Map figures (node counts, elite reachability) come from `tools/mapplan.mjs`, never restated here.
+- Core route: branching trees without forced rejoin, sub-branches, `maxBranches` 3 (owner rulings).
 
 Full history: [docs/spec-history/05-content-map.md](docs/spec-history/05-content-map.md).
 
