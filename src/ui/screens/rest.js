@@ -113,7 +113,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
   // in; a screen mounted without one (a fixture, an older caller) stands at
   // the classic Shrine. What Rest restores is read off the same rules the
   // button fires, on a clone, so the line and the result cannot disagree.
-  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus(meta?.settings) });
+  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus() });
   const relicNoRest = !!stay.restDenied;
   const preview = relicNoRest ? null : previewRest(stay);
   const heal = preview ? preview.heal : 0;

@@ -87,8 +87,6 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax,
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { orderedDrawPile } from '../model/deckRules.js';
-import { recoveryRulesProblems, turnRecovery } from '../model/recoveryRules.js';
-import { RECOVERY_POOLS } from '../content/recoveryRules.js';
 export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
@@ -117,47 +115,6 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
-const RECOVERY_MAX = { hp: 'maxHp', stamina: 'maxStamina', mana: 'maxMana' };
-// What "using" a pool means for the idle count: spending Stamina or Mana on a
-// card, losing HP to anything.
-const RECOVERY_USE = { hp: 'hpLost', stamina: 'staminaSpent', mana: 'manaSpent' };
-
-function newRecoveryState(rules) {
-  const problems = recoveryRulesProblems(rules);
-  if (problems.length) throw new Error(problems.join('; '));
-  return { rules: structuredClone(rules), idle: { hp: 0, stamina: 0, mana: 0 }, logIndex: 0 };
-}
-
-/**
- * Settings → Advanced → Recovery, at the end of the player's turn. A pool is
- * "used" by any spend (Stamina, Mana) or loss (HP) logged since the last
- * check — the whole round, the enemies' turn included — and its idle streak
- * counts the turns in a row it was not. Each pool then restores what its row
- * gives this round (model/recoveryRules.js turnRecovery).
- */
-function recoverAtTurnEnd(combat) {
-  const p = combat.player;
-  const state = combat.recovery;
-  const used = { hp: false, stamina: false, mana: false };
-  for (let i = state.logIndex; i < combat.eventLog.length; i++) {
-    const event = combat.eventLog[i];
-    for (const pool of RECOVERY_POOLS) {
-      if (event.type === RECOVERY_USE[pool] && (event.amount || 0) > 0
-        && (pool !== 'hp' || event.targetId === p.id)) used[pool] = true;
-    }
-  }
-  for (const pool of RECOVERY_POOLS.filter((id) => id !== 'stamina')) {
-    state.idle[pool] = used[pool] ? 0 : state.idle[pool] + 1;
-    const max = p[RECOVERY_MAX[pool]];
-    const amount = turnRecovery({ rules: state.rules, pool, round: combat.turn, idleStreak: state.idle[pool], current: p[pool], max });
-    if (amount > 0) {
-      p[pool] += amount;
-      combat.emit(pool === 'hp' ? 'healed' : `${pool}Recovered`, { targetId: p.id, amount, reason: 'recovery' });
-    }
-  }
-  state.logIndex = combat.eventLog.length;
-}
-
 export function createCombat({
   registries, rng, player, enemyIds: requestedEnemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
@@ -171,10 +128,6 @@ export function createCombat({
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
   swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, breakMeterVersion = null,
-  // Settings → Advanced → Recovery (model/recoveryRules.js recoveryRulesFor):
-  // null — every recovery setting at its default — keeps the idle-Stamina rule
-  // below and writes no recovery state into the fight or its save.
-  recoveryRules = null,
   knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
@@ -196,7 +149,7 @@ export function createCombat({
     const reactions = configuredModule({ gameProfile }, 'reactions');
     reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
     ratingsRules = null;
-    ruleset = null; combatRounds = null; normalPreview = null; recoveryRules = null;
+    ruleset = null; combatRounds = null; normalPreview = null;
   }
   // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
   const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
@@ -241,7 +194,6 @@ export function createCombat({
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
-    ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     ...(combatRounds ? { combatRounds: { rules: structuredClone(combatRounds), momentum: {}, poiseDouble: {}, charges: {} } } : {}),
     ...(normalPreview ? { normalPreview: { momentum: normalPreview.momentum === true, multiAction: normalPreview.multiAction === true,
       state: { momentum: {}, poiseDouble: {}, pending: {} } } } : {}),
@@ -691,8 +643,7 @@ function endPlayerTurn(combat, discardIds = []) {
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
-  // Persistent pools use idle recovery; Stamina refills at turn start.
-  if (combat.recovery && !combat.foundation) recoverAtTurnEnd(combat);
+  // Stamina refills at turn start.
   p.counters.staminaSpentThisTurn = 0;
 
   // …then refresh ordinary cards, keeping Retain; Ethereal cards exhaust. The

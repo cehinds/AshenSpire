@@ -26,7 +26,6 @@ import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
 import { combatRoundsFor, normalPreviewFor } from '../model/combatRounds.js';
-import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { isPoolDeckMode } from '../model/cardRemoval.js';
@@ -159,9 +158,6 @@ export function createRunCombat({
     handRules: runHandRules(registries, run, settings),
     // Play in deck order (SPEC §14.1): read here, once, like the other rules.
     orderedDraw: playInDeckOrder(settings),
-    // Settings → Advanced → Recovery, read once here and snapshotted: null at
-    // the defaults (model/recoveryRules.js).
-    recoveryRules: recoveryRulesFor(settings),
     // Combat Rounds Preview (SPEC §4.11): read from the run's FROZEN overrides,
     // never the live settings, so a run keeps the preview it was born with.
     // null (off) leaves the fight without a combatRounds field. A Core 2 run

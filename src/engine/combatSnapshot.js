@@ -109,7 +109,6 @@ export function serializeCombatSnapshot(combat) {
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
-    ...(combat.recovery ? { recovery: combat.recovery } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
