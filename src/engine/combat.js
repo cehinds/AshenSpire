@@ -126,7 +126,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, breakMeterVersion = null,
+  swapCostRule = null, handRules = null, breakMeterVersion = null,
   knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
@@ -140,7 +140,6 @@ export function createCombat({
     combatExpansionVersion = 2;
     const reactions = configuredModule({ gameProfile }, 'reactions');
     reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
-    ruleset = null;
   }
   // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
   const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
@@ -184,7 +183,6 @@ export function createCombat({
     combatIntentRules: structuredClone(registries.balance?.combatIntent || combatIntent),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
-    foundation: F.createFoundation(ruleset, combatProfiles, registries),
     ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     equipmentProfileRuleSnapshot,

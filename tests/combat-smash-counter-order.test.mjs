@@ -4,9 +4,8 @@ import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { combatRules } from '../src/content/combatRules.js';
 
-function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0, foundation = false } = {}) {
+function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0 } = {}) {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing',
     ...(wardOnly ? { delivery: 'projectile' } : {}) };
   const registries = createRegistries({ ...legacyContentBundle,
@@ -18,10 +17,7 @@ function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0, foun
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] };
-  const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'],
-    ...(foundation ? { ruleset: combatRules, combatProfiles: { player: { sources: { mainHand: {
-      id: 'sword', sourceType: 'weapon', family: 'blade', weight: 1, grip: 'oneHand',
-      damageType: 'slashing', tags: [], buildup: [] } } } } } : {}) };
+  const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'] };
   const c = createCombat({ ...options, player });
   const actor = () => c.player;
   const enemy = c.enemies[0];
@@ -76,13 +72,4 @@ test('Poise guard absorbs Smash break bonus without inventing a stagger or losin
   assert.equal(enemy.poiseGuard, 0); assert.equal(enemy.poiseMeter.value, 0);
   assert.equal(actor().hp, 186);
   assert.equal(c.eventLog.filter(event => event.type === 'enemyStaggered').length, 0);
-});
-
-test('foundation protected Poise prevents same-hit Smash interruption and preserves normal Counter', () => {
-  const { c, enemy, actor, play } = fight({ foundation: true });
-  enemy.impactProtectedUntil = c.turn;
-  play();
-  assert.equal(actor().hp, 186);
-  assert.equal(c.eventLog.filter(event => event.type === 'enemyStaggered').length, 0);
-  assert.equal(c.eventLog.filter(event => event.type === 'combatCounterTriggered').length, 1);
 });

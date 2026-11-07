@@ -7,7 +7,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
 import { effectCarrier } from '../src/engine/combatExpansionActions.js';
-import { foundationSource, foundationCarrier } from '../src/engine/combatRules.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
@@ -140,15 +139,6 @@ test('a prepared Guard Counter replies with the equipped weapon type', () => {
   }
 });
 
-test('the rules-foundation source applies the same Blood Tithe restriction', () => {
-  for (const [label, weapon] of Object.entries(WEAPONS)) {
-    const { c } = fight('bloodTithe', weapon, 1, { ruleset: combatRules });
-    const def = regs.cards.get('bloodTithe');
-    assert.equal(foundationSource(c, c.player, { tags: def.tags, attack: def.attack }).damageType, EXPECTED.bloodTithe[label], label);
-    assert.equal(foundationSource(c, c.player, { tags: regs.cards.get('strike').tags }).damageType, WEAPON_TYPED[label], `strike ${label}`);
-  }
-});
-
 test('a mixed-damage profile keeps its weighted parts, labelled by the heaviest (first on a tie)', () => {
   const profile = (components) => combatProfileFor({ tags: ['camp:physical'], attack: { components } });
   const heavy = profile([{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }]);
@@ -184,15 +174,6 @@ for (const version of [1, 2]) test(`v${version}: Blood Tithe deals its weapon ha
   const bleed = (version === 2 ? applyCombatExpansionMartial(regs.cards.get('bloodTithe')) : regs.cards.get('bloodTithe')).effects
     .filter(row => row.status === 'bleed').map(row => [row.op, row.stacks ?? row.amount]);
   assert.deepEqual(bleed, [version === 2 ? ['buildup', 8] : ['applyStatus', 2]]);
-});
-
-test('the rules foundation splits Blood Tithe into the weapon half and Necrotic', () => {
-  for (const [label, [weapon, part]] of Object.entries(TITHE)) {
-    const { c } = fight('bloodTithe', weapon, 1, { ruleset: combatRules });
-    const def = regs.cards.get('bloodTithe');
-    const carrier = foundationCarrier(c, c.player, { tags: def.tags, attack: def.attack });
-    assert.deepEqual(carrier.attack.components, [{ type: part, weight: 50 }, { type: 'decay', weight: 50 }], label);
-  }
 });
 
 test('a weapon part can sit beside fixed components: exactly one part follows the weapon', () => {

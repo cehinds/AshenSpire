@@ -3,7 +3,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { combatRules } from '../src/content/combatRules.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createCombat, dispatch, cardChoicePlan } from '../src/engine/combat.js';
@@ -14,7 +13,6 @@ function fight(profileId) {
   const gameProfile = resolveGameProfile(profileId);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
   return createCombat({ registries, rng: createRng(311), gameProfile,
-    ...(profileId === 'current' ? { ruleset: combatRules } : {}),
     ...(profileId === 'current' ? { combatExpansionVersion: 2, reactionRulesVersion: 1 } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 80, maxHp: 80, mana: 5, maxMana: 5,
       stamina: 5, maxStamina: 5, energyMax: 5, drawPerTurn: 5, attributes: {}, relicIds: [],

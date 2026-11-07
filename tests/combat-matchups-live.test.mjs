@@ -6,7 +6,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
-import { combatRules } from '../src/content/combatRules.js';
 import { staggerPlayer } from '../src/engine/actions.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 
@@ -183,19 +182,6 @@ for (const hasBlock of [false, true]) {
   });
 }
 
-test('foundation Counter snapshots its source before payment and preserves it for deferred reply', () => {
-  const c = createCombat({ registries: basicRegistry, rng: createRng(50), player: player('riposte'),
-    enemyIds: ['wanderingSoldier'], ruleset: combatRules,
-    combatProfiles: { player: { sources: { mainHand: { id: 'prepared-sword', sourceType: 'weapon',
-      family: 'blade', weight: 2, grip: 'oneHand', damageType: 'slashing', tags: [], buildup: [] } } } } });
-  dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(c.player.combatCounter.carrier.resolvedSource.id, 'prepared-sword');
-  c.foundation.profiles.player.sources.mainHand.id = 'later-weapon';
-  dispatch(c, { type: 'endTurn' });
-  const reply = c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
-  assert.equal(reply.sourceInstanceId, 'prepared-sword');
-});
-
 test('player stagger also cancels prepared Counter while preserving existing defense pools', () => {
   const c = solo('riposte');
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
@@ -301,9 +287,8 @@ test('Deathblow shares one Slashing rider across its separately queued damage ef
     tagging: [...legacyContentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
       { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
   });
-  for (const foundation of [false, true]) {
-    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
-      ...(foundation ? { ruleset: combatRules } : {}) };
+  for (const foundation of [false]) {
+    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], };
     const c = createCombat({ ...options, player: player('deathblow') });
     const enemy = c.enemies[0]; enemy.hp = enemy.maxHp = 200;
     applyStatus(c, enemy, 'bleed', 1); applyStatus(c, enemy, 'venom', 1);
@@ -320,11 +305,10 @@ test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets n
         { op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }],
     } : card),
   });
-  for (const foundation of [false, true]) {
+  for (const foundation of [false]) {
     const inputs = player('rimeThrust'); inputs.drawPerTurn = 2;
     inputs.deck.push({ instanceId: 'card2', cardId: 'rimeThrust' });
-    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'],
-      ...(foundation ? { ruleset: combatRules } : {}) };
+    const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'], };
     const c = createCombat({ ...options, player: inputs });
     for (const enemy of c.enemies) { enemy.hp = enemy.maxHp = 200; enemy.block = 100; }
     for (const instanceId of ['card1', 'card2']) {
@@ -351,9 +335,8 @@ test('enemy move damage payloads share a rider budget per seat, including chargi
         && row.objectId === 'slash' && row.tagId.startsWith('damage:'))),
       { family: 'enemyMove', scope: 'wanderingSoldier', objectId: 'slash', tagId: `damage:${type}` }],
     });
-    for (const foundation of [false, true]) {
-      const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
-        ...(foundation ? { ruleset: combatRules } : {}) };
+    for (const foundation of [false]) {
+      const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], };
       const c = createCombat({ ...options, player: player('strike') });
       const targets = [c.player];
       if (type === 'piercing') for (const target of targets) target.block = 100;

@@ -12,16 +12,15 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { applyStatus, advanceStatusClock, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { syncPoiseMaximum } from '../src/engine/combatPools.js';
-import { combatRules as combatRulesBundle } from '../src/content/combatRules.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
 // magicShare (optional) stamps the pebble's own share: 1 makes the Ward tests below a magic hit, as they were written.
-function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined, ...options } = {}) {
+function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, magicShare = undefined, ...options } = {}) {
   const registries = createRegistries({ ...contentBundle, statuses, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
     // costRule 'fixed': the fixture pins its own free card (SPEC action costs, 2026-10-12).
     ? { ...card, effects, cost: 0, costRule: 'fixed', manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
-  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}), ...options,
+  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...options,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
@@ -315,26 +314,6 @@ test('a Ward bonus stack that decays at turn end lowers the Ward maximum at once
   decayAtTurnEnd(combat, enemy);
   assert.equal(enemy.statuses.weak.stacks, 1);
   assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the decayed stack lowers the maximum without a later sync');
-});
-
-test('one expiring timed application lowers a Ward bonus maximum at once', () => {
-  // Two applications from different sources: one expires on its own clock while the other survives.
-  const timed = { id: 'timedWard', name: 'Timed Ward', icon: '◎', stackMode: 'add', decay: 'none',
-    stacking: { mode: 'independent', cap: 99, duration: 3, clock: 'ownerTurnEnd' } };
-  const { combat, enemy, player } = fixture([{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }],
-    { statuses: [...contentBundle.statuses, timed], ruleset: combatRulesBundle });
-  const other = { id: 'otherSource', kind: 'player', alive: true };
-  combat.ratingsRules = { bonuses: { 'status:timedWard': { ward: 2 } } };
-  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
-  applyStatus(combat, enemy, 'timedWard', 1, player);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 });
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  applyStatus(combat, enemy, 'timedWard', 1, other);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 7, value: 7 }, 'two applications add 4 to the pool');
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  advanceStatusClock(combat, enemy, 'ownerTurnEnd');
-  assert.equal(enemy.statuses.timedWard.stacks, 1, 'the first application has expired; the second survives');
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the expired application lowers the maximum without a later sync');
 });
 
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {
