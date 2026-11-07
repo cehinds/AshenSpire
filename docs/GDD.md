@@ -433,6 +433,8 @@ Armaments use read-only first-tap disclosure and hold, explicit compatible desti
 
 ### 12.1 Reward menu
 
+*The legacy reward menu was removed (Unity-port cleanup P2b); Core's rewards are the configured door (`gameProfileRewards`), and `reward.js` draws only the Victory receipt and the card rank-up chooser. The bullets below describe the door's shared principles.*
+
 - Cinders, cards, flasks, armaments, and relics appear as inspectable rows or cards.
 - Nothing is applied until selected or resolved by the configured collection policy.
 - Back leaves uncollected rewards unchanged.
