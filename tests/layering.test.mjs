@@ -73,7 +73,6 @@ const KNOWN_INVERSIONS = [
   'src/framework/statusSemantics.js -> src/engine/combatStatusControl.js',
   'src/framework/statusSemantics.js -> src/engine/statuses.js',
   // H1: d20Chance/rng/stance/cardZones/enemyBurdens/elementRules/combatCardTraitMath move to src/model
-  'src/model/actionCosts.js -> src/engine/combatRounds/stance.js',
   'src/model/attributePointPreview.js -> src/engine/gameProfileCombat.js',
   'src/model/attributePointPreview.js -> src/engine/stanceHit.js',
   'src/model/combatSnapshot.js -> src/engine/cardZones.js',
