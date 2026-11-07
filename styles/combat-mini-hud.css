@@ -16,7 +16,7 @@
   --mh-badge: calc(17.6px / var(--ui-zoom, 1));
   --mh-gap: calc(3px / var(--ui-zoom, 1));
   --mh-shield-w: calc(var(--mh-badge) * 1.15);
-  --mh-value-w: calc(var(--mh-bar-h) * 4.4);
+  --mh-value-w: calc(var(--mh-bar-h) * 5);
   --mh-w: calc(var(--mh-shield-w) + var(--mh-gap) * 2 + var(--mh-bar-w) + var(--mh-value-w));
   /* Centred where the lane-wide rack was, at the fixed width. */
   left: calc(var(--combat-mini-hud-left, 0px) + (var(--combat-mini-hud-width, var(--mh-w)) - var(--mh-w)) / 2) !important;
@@ -60,7 +60,7 @@
   display: block; padding: 0 0 0 var(--mh-gap); background: transparent; justify-content: flex-start; pointer-events: none;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter .m-value.m-value {
-  font-size: max(calc(9px / var(--ui-zoom, 1)), calc(var(--mh-bar-h) * 1.3)); line-height: 1; white-space: nowrap;
+  font-size: max(calc(9px / var(--ui-zoom, 1)), calc(var(--mh-bar-h) * 1.3)) !important; line-height: 1; white-space: nowrap; padding-inline: calc(2px / var(--ui-zoom, 1));
 }
 
 /* Poise: a plain bar, the HP bar's width and height, no number. It is an empty trough at 0/0. */
