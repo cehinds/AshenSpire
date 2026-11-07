@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds, targetHudPinnedOnly } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
@@ -267,7 +267,6 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       setData(frame, 'matchup', matchup); setData(frame, 'matchupActive', active); setVar(frame, '--combat-matchup-color', color);
       const toggle = (name, on) => { if (frame.classList.contains(name) !== on) frame.classList.toggle(name, on); };
       toggle('target-hud-selected', next.has(id));
-      setData(frame, 'hudPinned', targetHudPinnedOnly({ entries: entries.values(), id, eligible, focused, hover, focusWithin }));
       toggle('target-hud-focused', id === focused || id === hover);
       toggle('target-hud-candidate', eligible.includes(id));
     }
