@@ -19,7 +19,7 @@ export const MOVE_SP = 1;
 // Guard for zero-cost moves, which would otherwise never run the SP pool out.
 const QUEUE_MAX = 16;
 
-// A move's SP (SPEC §4.11, owner 2026-10-12): its own `sp` when it names one, else the action-cost table price of its
+// A move's SP (SPEC §4.6a, owner 2026-10-12): its own `sp` when it names one, else the action-cost table price of its
 // stance (model/actionCosts.js), else MOVE_SP. Given the paying `enemy` and its expanded (v2) `combat`, a spell-camp
 // move costs one more SP per Silenced stack, as a player's spell card does (owner, 2026-10-13).
 export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
@@ -124,7 +124,7 @@ export function commitEnemySp(combat, enemy, moveId, required) {
 // `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 1.
 export const enemyPool = (def) => enemyPoolOf(def);
 
-// Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it (SPEC §4.6, §4.11). The queue
+// Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it (SPEC §4.6). The queue
 // ends when the pool is empty or nothing affordable is left. An enemy with an empty queue always plays one move: when
 // nothing fits the pool, the first pick is offered no limit (Infinity). A queue that already holds moves keeps them,
 // and the SP they spend counts against the pool.

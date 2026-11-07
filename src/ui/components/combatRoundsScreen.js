@@ -56,7 +56,7 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, m
   }
 }
 
-// The follow-up symbols of each enemy's intent box, in play order after the current action (SPEC §4.9, §4.11).
+// The follow-up symbols of each enemy's intent box, in play order after the current action (SPEC §4.9).
 function decorateFollowUps(rows, perception = 0) {
   for (const row of rows) {
     const { intentEl } = row;
