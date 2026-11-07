@@ -396,7 +396,7 @@ export function combatReadoutLayer(layer, create = true) {
  * comes (a damage number's turn is at once). `onSpawn` runs when it joins the layer, so its sound plays with it.
  * There are no side lanes and no jitter, so a caller passes no placement.
  */
-export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null } = {}) {
+export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null, immediate: forceImmediate = false } = {}) {
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
   const el = document.createElement('div');
@@ -413,7 +413,7 @@ export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null } = {}
   // The number outlives its animation by a beat, as it always has.
   // A damage number never waits behind the column (its bars follow in the same beat, so it must paint first); it
   // spawns at once at the bottom and the other floaters stagger after it. `onSpawn` is the floater's own sound.
-  const immediate = /\b(dmg|burst)\b/.test(cls);
+  const immediate = forceImmediate || /\b(dmg|burst)\b/.test(cls);
   enqueueFloater({ layer, anchor, el, kind: 'number', lifeMs: life + 60, immediate, onSpawn });
   return el;
 }
@@ -494,12 +494,12 @@ function stackFor(layer, anchor) {
       now: () => Date.now(),
       setTimer: (fn, ms) => setTimeout(fn, ms),
       clearTimer: (handle) => clearTimeout(handle),
-      staggerMs: () => floaterStaggerMs(),
+      staggerMs: () => floaterStaggerMs({ enemy: isEnemyAnchor(anchor) }),
       maxVisible: (item) => maxVisibleFor(rec, item),
       alive: (item) => floaterHostAlive(item),
       maxQueued: FLOATER_STACK.floaterMaxQueued,
       fadeMs: FLOATER_EARLY_MS + 20,
-      staggerMinMs: () => floaterStaggerMinMs(),
+      staggerMinMs: () => floaterStaggerMinMs({ enemy: isEnemyAnchor(anchor) }),
       show: (item, entry) => showFloater(rec, item, entry),
       fadeEarly: (entry) => fadeFloaterEarly(entry),
       layout: (entries) => liftFloaters(rec, entries),
@@ -516,6 +516,8 @@ function stackFor(layer, anchor) {
   set.add(rec.stack);
   return rec;
 }
+// Floaters over an enemy use the enemy's own interval setting (settings enemyFloaterIntervalMs).
+const isEnemyAnchor = anchor => Boolean(anchor?.closest?.('.enemy-row'));
 function enqueueFloater(item) {
   // Whether the combatant was in the document when this floater queued: one that was and has left is gone. (An
   // anchor that was never attached, as in a headless harness, is never gone.)
@@ -644,6 +646,8 @@ export const CALLOUT_KINDS = {
   contestPassed: { string: 'combat.callout.contestPassed', tone: 'white' },
   contestFailed: { string: 'combat.callout.contestFailed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  // Owner 2026-11-06: an enemy that cannot pay its next move's SP says so, then skips it.
+  outOfSp: { string: 'combat.callout.outOfSp', tone: 'white' },
   dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
@@ -716,7 +720,8 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   const ms = calloutLifeMs();
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Through enqueueFloater, so a word gets the same host tracking as a number (a rebuilt figure retargets it).
-  enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true });
+  // The intent word is the beat's marker (cost first, word, then the stance one gap later): it never waits behind the cost floater.
+  enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true, immediate: kind.startsWith('action:') });
   return el;
 }
 const liveCallouts = (layer, forId) => [...(layer.children || [])]
@@ -1036,6 +1041,15 @@ export function groupBeats(events) {
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
+      // The SP check failed: a beat of its own (the OUT OF SP word), the move is skipped.
+      case 'enemyMoveUnavailable':
+        startActor(e.sourceId, 'reveal', e);
+        break;
+      // The enemy pays its move's SP: a loose run, so it rides the move's beat as `lead` (cost first, as for a card).
+      case 'enemyStaminaSpent':
+        push();
+        cur = { actorId: null, banner: null, kind: null, events: [e] };
+        break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
         cur.prepared = e.contactPrepared === true;
@@ -1124,14 +1138,20 @@ export function stanceState(stage) {
 export function playTimeline(events, ctx, done) {
   if ((ctx.beatOrder || getBeatOrder()) === 'impact') return playLegacyTimeline(events, ctx, done);
   const timing = actionPacing({ reduced: reducedMotionRequested() });
+  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });
   const beats = groupBeats(events);
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
   const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
   const runParts = (beat, key) => {
-    for (const event of beat.events) if (!terminal(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
+    // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
+    for (const event of beat.events) if (!terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
   };
+  // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
+  // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
+  const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
@@ -1149,6 +1169,14 @@ export function playTimeline(events, ctx, done) {
     const options = { maxHpFor: ctx.maxHpFor, stinger, turnBuzz };
     if (sounds) playBeatCues(original.events, options);
     else playBeatHaptics(original.events, options);
+  };
+  const sayAction = beat => {
+    const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+    const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
+    const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
+      || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
+      || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
+    callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
   };
   let handle, skippedPointer = false;
   const skip = event => {
@@ -1174,22 +1202,34 @@ export function playTimeline(events, ctx, done) {
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
-      // Owner 2026-11-05: a stance this beat enters is drawn here, before the action word and the action animation.
-      const entered = stanceLeadEvent(beat);
-      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
+      // Owner 2026-11-06: the cost the card pays comes first (visual, floater, resource HUD), then the intent word.
+      if (costOf(beat).length) {
+        for (const event of costOf(beat)) {
+          visualSafe(() => parts.get(event)?.contact?.(ctx));
+          const label = COST_LABEL[event.type];
+          // On Core 2 energy is aliased to stamina (model/turnStamina.js) and a play emits both receipts for ONE payment:
+          // show that payment once, as SP. Distinct costs (SP and MP, say) all show.
+          const aliased = event.type === 'energySpent' && costOf(beat).some(row => row.type === 'staminaSpent' && row.amount === event.amount);
+          if (label && !aliased && event.amount > 0 && timing.scale !== 0) visualSafe(() => floatNum(ctx.layer, ctx.anchorFor(beat.actorId), `\u2212${event.amount} ${label}`, 'blk small', undefined, { immediate: true }));
+        }
+        visualSafe(() => ctx.onLeadApplied?.({ ...beat, events: costOf(beat) }));
+        traceBeat('cost', beat.actorId);
+      }
       ctx.onIntent?.(beat);
+      if (!beat.prepared && beat.actorId && !beat.banner && beat.kind !== 'reveal') sayAction(beat);
     },
     onAction: beat => {
-      if (beat.prepared) return;
-      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
-      const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
-      const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
-        || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
-        || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
-      callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
+      // Owner 2026-11-06: the stance a card enters follows the intent word by one gap, before the action animation.
+      const entered = stanceLeadEvent(beat);
+      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
-    maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
-    onSprite: (beat, speed) => {
+    // The reservation covers the slower of the player's and the enemy's animation settings.
+    maxSpriteMs: speed => {
+      const one = s => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(s) : Number(ctx.maxActorAnimationMs) || s.lungeMs;
+      return Math.max(one(speed), one(enemyTiming.spriteSpeed));
+    },
+    onSprite: (beat, playerSpeed) => {
+      const speed = isEnemyAnchor(ctx.anchorFor(beat.actorId)) ? enemyTiming.spriteSpeed : playerSpeed;
       if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
@@ -1255,23 +1295,28 @@ export function playTimeline(events, ctx, done) {
     },
     onNumbers: beat => {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
-      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
-      else for (const event of beat.events) {
-        if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-          || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
-          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
-          continue;
+      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
+      else {
+        // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
+        for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
+        for (const event of beat.events) {
+          if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+            || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
+            visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+            continue;
+          }
+          if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
+          visualSafe(() => parts.get(event)?.callout?.(ctx));
         }
-        if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
-        visualSafe(() => parts.get(event)?.callout?.(ctx));
+        for (const event of beat.events) if (event.type !== 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
       }
-      runParts(beat, 'numbers');
       cue(beat);
     },
     onApply: beat => {
       const moves = beat.events.filter(e => e.type === 'combatEngagementMoved');
       if (moves.length) visualSafe(() => ctx.onEngagementMoved?.(moves));
-      ctx.onBeatApplied?.(beat);
+      // The cost events were applied to the HUD in onIntent (ctx.onLeadApplied); apply the rest here, once each.
+      ctx.onBeatApplied?.(costOf(beat).length && typeof ctx.onLeadApplied === 'function' ? { ...beat, events: beat.events.filter(e => !costOf(beat).includes(e)) } : beat);
     },
     onResolution: beat => {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
@@ -1950,6 +1995,7 @@ export function statusPopupFor(e = {}) {
  */
 export function calloutForEvent(e = {}) {
   let kind = null;
+  if (e.type === 'enemyMoveUnavailable') return e.resource === 'sp' && e.sourceId != null ? { kind: 'outOfSp', targetId: e.sourceId } : null;
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {

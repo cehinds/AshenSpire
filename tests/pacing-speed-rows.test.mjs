@@ -44,7 +44,7 @@ test('auto combat ×1.5 vs ×2 changes the timing while auto combat is on', () =
 
 test('the Mobile fast preset writes the two visible values the timing reads', () => {
   const changes = combatPacingChanges('combatPacingPreset', 'mobile-fast');
-  assert.deepEqual(changes, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 });
+  assert.deepEqual(changes, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 275 });
   setAnimSpeed('normal');
   setCombatPacing({ combatSpeed: 1 });
   const custom = actionPacing();

@@ -104,13 +104,20 @@ const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'd
   || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0)
   || (def.defenseRulesVersion === 2 && def.counterPayload?.poise > 0);
 
+/** The one default range (owner, 2026-11-06: most spells are Reach unless specifically Melee): an explicit `range`
+ * wins; else a spell-camp card, a projectile or a Ranged maneuver is Reach; everything else is Melee. The card face
+ * (combatCardRange) and the Advance math (rangeSourceContact) both read it, so they cannot disagree. */
+export function defaultRangeFor(profile = {}) {
+  return profile.range || (profile.camp === 'spell' || profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
+}
+
 /** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. `maxRange` is the
  * fight's cap (owner, 2026-11-05): a range past it reads as the cap. */
 export function combatCardRange(def = {}, maxRange = undefined) {
   const profile = combatProfileFor(def);
   const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
   if (!attacking || !dealsDamage(def)) return null;
-  const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
+  const range = defaultRangeFor(profile);
   return RANGES.includes(range) ? displayRange(range, maxRange) : null;
 }
 

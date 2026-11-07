@@ -33,7 +33,7 @@ function scene(document, { combat = false } = {}) {
   return { fx, a: anchor(100), b: anchor(300), spawns, anchor };
 }
 // The mocked clock jumps to the end of a tick before its timers run, so a long wait is taken in 1 ms steps: a 5 ms step
-// rounds each timer up to the grid, and a chain of stagger gaps (208 ms) drifts past the spawn times the tests assert.
+// rounds each timer up to the grid, and a chain of stagger gaps (938 ms) drifts past the spawn times the tests assert.
 const advance = (t, ms) => { for (let left = ms; left > 0; left -= 1) t.mock.timers.tick(1); };
 const lift = (node) => parseFloat(node.props['--float-lift'] ?? '0');
 const setup = (t, fn) => {
@@ -46,7 +46,7 @@ const setup = (t, fn) => {
 
 test('floaters over one combatant spawn one stagger apart, in order, never two at once', (t) => setup(t, ({ fx, a, spawns }) => {
   const stagger = floaterStaggerMs();
-  assert.equal(stagger, 208, 'the default stagger at Combat speed x1');
+  assert.equal(stagger, 938, 'the stagger at Combat speed x1 (750 ms at the shipped default x1.25)');
   const nodes = [['-11', 'heal'], ['+5', 'blk'], ['+2', 'heal'], ['BURN', 'heal']].map(([text, cls]) => floatNum(fx, a, text, cls));
   assert.deepEqual(spawns.map((s) => s.node.textContent), ['-11'], 'only the first is in the layer yet');
   advance(t, stagger * 3);
@@ -63,14 +63,14 @@ test('floaters of two combatants spawn independently', (t) => setup(t, ({ fx, a,
 
 test('one column: the same x for every floater, earlier ones lifted a line plus the gap each, y strictly decreasing', (t) => setup(t, ({ fx, a, spawns }) => {
   const step = 20 + GAP;
-  ['-11', '+5', '+2', '-7'].forEach((text, i) => floatNum(fx, a, text, ['heal crit', 'blk small', 'heal', 'heal'][i]));
-  advance(t, floaterStaggerMs() * 3);
+  ['-11', '+5', '+2'].forEach((text, i) => floatNum(fx, a, text, ['heal crit', 'blk small', 'heal'][i]));
+  advance(t, floaterStaggerMs() * 2);
   flushMeasureJobs();
   const nodes = spawns.map((s) => s.node);
   assert.equal(new Set(nodes.map((n) => n.style.left)).size, 1, 'no side lanes and no jitter: one x');
   assert.equal(nodes[0].style.left, '140px', 'centred on the combatant (100 + 80 / 2)');
-  assert.deepEqual(nodes.map((n) => n.dataset.floatSlot), ['3', '2', '1', '0']);
-  assert.deepEqual(nodes.map(lift), [3 * step, 2 * step, step, 0]);
+  assert.deepEqual(nodes.map((n) => n.dataset.floatSlot), ['2', '1', '0']);
+  assert.deepEqual(nodes.map(lift), [2 * step, step, 0]);
   const y = nodes.map((n) => parseFloat(n.style.top) - lift(n));
   assert.ok(y.every((v, i) => i === 0 || v < y[i - 1] === false), 'newer floaters sit lower');
   assert.ok(y.every((v, i) => i === 0 || v > y[i - 1]), 'y strictly increases from the oldest (top) to the newest');
@@ -87,22 +87,21 @@ test('the column only moves up: an expired floater leaves the newer ones where t
   assert.equal(lift(second), 0);
 }));
 
-test('the cap: a fifth floater makes the oldest fade early, and every queued floater still spawns', (t) => setup(t, ({ fx, a, spawns }) => {
+test('the cap: a damage number past the cap makes the oldest fade early, and every floater still spawns', (t) => setup(t, ({ fx, a, spawns }) => {
   const cap = FLOATER_STACK.floaterMaxVisible;
-  assert.equal(cap, 4);
-  const nodes = [1, 2, 3, 4, 5].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
-  advance(t, floaterStaggerMs() * 4);
-  assert.equal(spawns.length, 5, 'all queued floaters spawn, none dropped');
-  assert.ok(nodes[0].className.includes('float-early'), 'the oldest fades early when the fifth spawns');
+  assert.equal(cap, 3);
+  // Damage numbers spawn at once (never wait behind the column), so a burst reaches the cap even at the 750 ms interval.
+  const nodes = [1, 2, 3, 4].map((n) => floatNum(fx, a, `-${n}`, 'dmg'));
+  assert.equal(spawns.length, 4, 'all spawn, none dropped');
+  assert.ok(nodes[0].className.includes('float-early'), 'the oldest fades early when the fourth spawns');
   assert.ok(!nodes[1].className.includes('float-early'));
   assert.ok(fx.children.filter((n) => !n.className.includes('float-early')).length <= cap, 'never more than the cap showing');
   advance(t, 250);
   assert.ok(!fx.children.includes(nodes[0]), 'the early-fading one is gone');
-  const sixth = floatNum(fx, a, '+6', 'blk');
-  advance(t, floaterStaggerMs());
-  assert.equal(spawns.length, 6);
+  const fifth = floatNum(fx, a, '-5', 'dmg');
+  assert.equal(spawns.length, 5);
   assert.ok(nodes[1].className.includes('float-early'));
-  assert.ok(sixth);
+  assert.ok(fifth);
 }));
 
 test('Reduced motion: still sequenced and stacked (the CSS makes it fade only, with no glide)', (t) => setup(t, ({ fx, a, spawns }, document) => {
@@ -118,23 +117,26 @@ test('Reduced motion: still sequenced and stacked (the CSS makes it fade only, w
 }));
 
 test('stagger scales with the Combat speed the way the lifetime does, and shortens on Instant', (t) => setup(t, ({ fx, a, spawns }) => {
-  const ratio = (life) => life / 1650;
-  assert.equal(floaterStaggerMs(), Math.round(208 * ratio(floaterLifeMs())));
+  const ratio = (life) => life / 1920; // the life at the default x1.25 speed
+  assert.equal(floaterStaggerMs(), Math.round(750 * ratio(floaterLifeMs())));
+  setCombatPacing({ combatSpeed: 1.25 });
+  assert.equal(floaterStaggerMs(), 750, 'the owner\'s 750 ms at the shipped default speed');
+  setCombatPacing({ combatSpeed: 1 });
   setCombatPacing({ combatSpeed: 2 });
-  assert.equal(floaterLifeMs(), 825);
-  assert.equal(floaterStaggerMs(), 104, 'half the life, half the stagger');
+  assert.equal(floaterLifeMs(), 1200);
+  assert.equal(floaterStaggerMs(), 469, 'half the life, half the stagger');
   setCombatPacing({ combatSpeed: 8 });
   assert.equal(floaterLifeMs(), 400, 'the life floors at 400 ms');
-  assert.equal(floaterStaggerMs(), Math.round(208 * 400 / 1650), 'and the stagger floors with it');
+  assert.equal(floaterStaggerMs(), Math.round(750 * 400 / 1920), 'and the stagger floors with it');
   setCombatPacing({ combatSpeed: 1 });
   setAnimSpeed('instant');
   assert.equal(floaterLifeMs(), 480);
-  assert.equal(floaterStaggerMs(), Math.round(208 * 480 / 1650));
+  assert.equal(floaterStaggerMs(), Math.round(750 * 480 / 1920));
   setAnimSpeed('normal');
   setCombatPacing({ combatSpeed: 2 });
   floatNum(fx, a, '-1', 'heal'); floatNum(fx, a, '-2', 'heal');
-  advance(t, 104);
-  assert.deepEqual(spawns.map((s) => s.at), [0, 104]);
+  advance(t, 469);
+  assert.deepEqual(spawns.map((s) => s.at), [0, 469]);
 }));
 
 test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, a, spawns }) => {
@@ -145,7 +147,7 @@ test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, 
   advance(t, floaterStaggerMs());
   flushMeasureJobs();
   assert.deepEqual(spawns.map((s) => s.node), [word, num]);
-  assert.deepEqual(spawns.map((s) => s.at), [0, 208]);
+  assert.deepEqual(spawns.map((s) => s.at), [0, floaterStaggerMs()]);
   assert.equal(word.dataset.calloutFor, 'e1');
   assert.equal(lift(word), 20 + GAP, 'the word is a slot above the number that followed it');
   assert.equal(num.style.left, word.style.left, 'same x');
@@ -194,13 +196,13 @@ test('with no room above the HUD the column starts on the figure and rises over 
   const hud = document.createElement('div'); hud.box = { left: 100, top: 40, width: 80, height: 20 };
   a.closest = () => ({ querySelectorAll: () => [hud] });
   a.contains = () => false;
-  const nodes = [1, 2, 3, 4].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
-  advance(t, floaterStaggerMs() * 3);
+  const nodes = [1, 2, 3].map((n) => floatNum(fx, a, `+${n}`, 'blk'));
+  advance(t, floaterStaggerMs() * 2);
   flushMeasureJobs();
   assert.equal(nodes[0].style.top, '230px', 'a quarter of the way down the figure (200 + 120 x 0.25), the old damage spot');
-  assert.equal(spawns.length, 4);
+  assert.equal(spawns.length, 3);
   assert.ok(nodes.every((n) => !n.className.includes('float-early')), 'there is room for the whole cap above the figure');
-  assert.deepEqual(nodes.map(lift), [3 * 26, 2 * 26, 26, 0]);
+  assert.deepEqual(nodes.map(lift), [2 * 26, 26, 0]);
 }));
 
 test('little room above the figure caps the column, never below two on the figure, and drops none', (t) => setup(t, ({ fx, a, spawns }, document) => {

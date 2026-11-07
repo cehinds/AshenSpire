@@ -7,12 +7,12 @@
     "floaterEdgeMarginPx": 8,
     "floaterPopPeak": 1.3,
     "floaterCalloutPeak": 1.06,
-    "floaterMaxVisible": 4,
+    "floaterMaxVisible": 3,
     "floaterMaxQueued": 3
   },
   "motion": {
-    "floaterStaggerMs": 208,
+    "floaterStaggerMs": 750,
     "floaterShiftMs": 220,
-    "floaterStaggerMinMs": 59
+    "floaterStaggerMinMs": 250
   }
 }

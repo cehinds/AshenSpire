@@ -294,3 +294,14 @@ test('a screen remounted during the second follow-up\'s reaction pairs its slots
   const later = followUpPlan({ queue: [{ moveId: 'guard' }, { moveId: 'slash' }], def, offset: 1 });
   assert.deepEqual(advanceFollowUps(later, [{ read: true }, { read: false }, { read: true }]).map((s) => s.kind + (s.icon ?? '')), ['unknown', 'actionattack']);
 });
+
+test('an enemyPlanTrimmed shrinks the stored plan: later moves can never bring a cancelled intent back', async () => {
+  const { followUpPlan, advanceFollowUps, trimFollowUps } = await import('../src/ui/models/IntentFollowUpModel.js');
+  const plan = followUpPlan({ queue: [{ moveId: 'a' }, { moveId: 'b' }, { moveId: 'c' }] });
+  assert.equal(advanceFollowUps(plan, []).length, 3, 'the head played; three follow-ups remain');
+  assert.equal(trimFollowUps(plan, 2, []).length, 1, 'trimmed from 3 to 1');
+  assert.deepEqual(plan.ids, ['a']);
+  assert.equal(plan.total, 1);
+  assert.equal(advanceFollowUps(plan, []).length, 0, 'the next move started: the row shrinks, it never grows back to 2');
+  assert.equal(advanceFollowUps(plan, []).length, 0);
+});

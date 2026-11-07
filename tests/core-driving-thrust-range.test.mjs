@@ -38,8 +38,11 @@ test('Driving Thrust at band 1 with 1 SP left plays for its own price and closes
   assert.ok(combat.enemies[0].hp < combat.enemies[0].maxHp);
 });
 
-test('a card with trailing movement still pays the implicit Advance for its hit (Gale Push is unchanged)', () => {
-  const combat = setup('core.galePush', 2);
+test('a card with trailing movement still pays the implicit Advance for its hit (Gale Push, now a Reach spell, from band 2)', () => {
+  // Owner 2026-11-06: an untagged spell is Reach, so Gale Push covers band 1 for free and pays one Advance from band 2.
+  const near = previewCard(setup('core.galePush', 2), 'qa', 'e1');
+  assert.equal(near.range.routes.find(r => r.id === 'advance').advanceSp, 0, 'band 1 is inside Reach');
+  const combat = setup('core.galePush', 2, 2);
   const pv = previewCard(combat, 'qa', 'e1');
   assert.equal(pv.range.routes.find(r => r.id === 'advance').advanceSp, 1);
 });

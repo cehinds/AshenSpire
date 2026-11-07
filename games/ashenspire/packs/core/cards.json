@@ -3137,7 +3137,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:fire",
-      "rank.cantrip"
+      "rank.cantrip",
+      "range:melee"
     ],
     "textTemplate": "Deal {damage} damage. Gain {precision} Precision.",
     "upgrade": {
@@ -3302,7 +3303,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:frost",
-      "rank.cantrip"
+      "rank.cantrip",
+      "range:melee"
     ],
     "textTemplate": "Deal {damage} damage. Apply {frost} Frost. Apply {vulnerable} Vulnerable.",
     "upgrade": {
@@ -3857,7 +3859,8 @@
       "maneuver:casting",
       "classification.attack",
       "school:lightning",
-      "rank.cantrip"
+      "rank.cantrip",
+      "range:melee"
     ],
     "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
     "upgrade": {

@@ -5,21 +5,21 @@ import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../src/model/autoCombatPolic
 
 // Waits are authored at x1 and divided by the shipped combat speed, as the policy and actionPacing() do.
 const SCALE = 1 / AUTOMATION_DEFAULTS.combatSpeed;
-const GAP = ACTION_PACING.stageGapMs * SCALE, LUNGE = ACTION_PACING.animationStepDurationMs * SCALE;
-const SPRITE = 10 + GAP, RESULT = SPRITE + 390 + 60 + GAP, DAMAGE = RESULT + 2 * GAP;
+const GAP = ACTION_PACING.stageGapMs * SCALE, LUNGE = ACTION_PACING.animationStepDefaultMs * SCALE;
+const SPRITE = 10 + 2 * GAP, RESULT = SPRITE + 390 + 60 + GAP, DAMAGE = RESULT + 2 * GAP;
 const fixture = () => ({ up: 0, contact: SPRITE + 200, number: DAMAGE,
-  timing: { intentMs: 0, wordMs: GAP, afterSpriteMs: GAP, resultMs: GAP, reactionMs: GAP, damageMs: GAP, resetMs: GAP, scale: SCALE, playbackRate: 0.5, spriteSpeed: { lungeMs: LUNGE }, fixCore: true },
+  timing: { intentMs: GAP, wordMs: GAP, afterSpriteMs: GAP, resultMs: GAP, reactionMs: GAP, damageMs: GAP, resetMs: GAP, scale: SCALE, playbackRate: 0.5, spriteSpeed: { lungeMs: LUNGE }, fixCore: true },
   clip: { impactMs: 195, totalMs: 390, activeMs: 390 }, holdMs: 60,
-  stages: ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'].map((name, i) => [[10, 10, SPRITE, SPRITE + 195, RESULT, RESULT + GAP, DAMAGE, DAMAGE, DAMAGE + GAP][i], name, 'player']),
+  stages: ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'].map((name, i) => [[10, 10 + GAP, SPRITE, SPRITE + 195, RESULT, RESULT + GAP, DAMAGE, DAMAGE, DAMAGE + GAP][i], name, 'player']),
 });
 
 test('raw latency retains the authored waits, half-rate clip and receipt hold; only overhead is gated', () => {
   assert.deepEqual(orderedImpactSample(fixture()), { contact: Math.round(SPRITE + 200), number: Math.round(DAMAGE),
-    expectedContact: GAP + 195, expectedNumber: 4 * GAP + 390 + 60, contactOverhead: 15, numberOverhead: 10 });
+    expectedContact: 2 * GAP + 195, expectedNumber: 5 * GAP + 390 + 60, contactOverhead: 15, numberOverhead: 10 });
 });
 
 test('default settings cannot silently shorten the declared waits or speed the sprite', () => {
-  for (const [key, value] of [['intentMs', GAP], ['wordMs', GAP - 1], ['afterSpriteMs', 0], ['resultMs', 0], ['reactionMs', 180], ['damageMs', GAP - 1], ['resetMs', 0], ['playbackRate', 1], ['scale', 0.5]]) {
+  for (const [key, value] of [['intentMs', 0], ['wordMs', GAP - 1], ['afterSpriteMs', 0], ['resultMs', 0], ['reactionMs', 180], ['damageMs', GAP - 1], ['resetMs', 0], ['playbackRate', 1], ['scale', 0.5]]) {
     const sample = fixture(); sample.timing[key] = value;
     assert.throws(() => orderedImpactSample(sample), /default Normal|must remain|must be/);
   }
@@ -68,4 +68,21 @@ test('one missed hit cannot excuse missing numbers from another hit or protectio
     sample.receipts = [{ type: 'attackMissed' }, { type }];
     assert.throws(() => orderedImpactSample(sample), /without a wholly missed action/);
   }
+});
+
+test('the cost and stance markers sit in the owner order and never replace a stage', () => {
+  const withMarkers = fixture();
+  withMarkers.stages.splice(1, 0, [10, 'cost', 'player']);
+  withMarkers.stages.splice(3, 0, [10 + GAP, 'stance-change', 'player']);
+  assert.doesNotThrow(() => orderedImpactSample(withMarkers));
+  const lateCost = fixture();
+  lateCost.stages.splice(3, 0, [SPRITE, 'cost', 'player']);
+  assert.throws(() => orderedImpactSample(lateCost), /cost must be paid with the intent/);
+  const earlyStance = fixture();
+  earlyStance.stages.splice(1, 0, [5, 'stance-change', 'player']);
+  assert.throws(() => orderedImpactSample(earlyStance), /stance change must follow the action/);
+  const reordered = fixture();
+  reordered.stages.splice(1, 0, [10, 'cost', 'player']);
+  [reordered.stages[3], reordered.stages[4]] = [reordered.stages[4], reordered.stages[3]];
+  assert.throws(() => orderedImpactSample(reordered), /reordered stages/);
 });

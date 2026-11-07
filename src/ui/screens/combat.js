@@ -14,7 +14,7 @@ import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
+import { advanceFollowUps, createFollowMemo, followUpPlan, trimFollowUps } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
@@ -1340,6 +1340,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           row(id, advanceFollowUps(disp?.followPlans?.[id] ?? followMemo.planFor(id), combat.followTrace?.[id]));
           break;
         }
+        case 'enemyPlanTrimmed': {
+          // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
+          // The underlying plan (ids and total) shrinks too, so a later enemyMoveStarted cannot rebuild a cancelled intent.
+          const plan = disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId);
+          if (plan) row(e.sourceId, trimFollowUps(plan, e.dropped?.length || 0, combat.followTrace?.[e.sourceId]));
+          else {
+            const now = followMemo.row(e.sourceId, true) ?? disp?.ents[e.sourceId]?.followUps ?? [];
+            row(e.sourceId, now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))));
+          }
+          break;
+        }
         case 'enemyStaggered':
           // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
           if (followMemo.row(e.targetId, true)?.length) row(e.targetId, []);
@@ -1452,6 +1463,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'energyGained':
           if (disp.ents.player) disp.ents.player.energy = Math.min(disp.ents.player.energyMax, disp.ents.player.energy + e.amount);
+          break;
+        case 'enemyStaminaSpent':
+          // The enemy's SP meter follows the payment (shown from fixCoreStaminaRemaining ?? stamina, see the SP row).
+          if (t === undefined && disp.ents[e.sourceId]) { disp.ents[e.sourceId].fixCoreStaminaRemaining = e.remaining; disp.ents[e.sourceId].stamina = e.remaining; }
+          break;
+        case 'staminaSpent':
+          if (disp.ents.player && Number.isFinite(disp.ents.player.stamina)) disp.ents.player.stamina = Math.max(0, disp.ents.player.stamina - e.amount);
           break;
         case 'manaSpent':
           if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
@@ -3598,10 +3616,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const kind = chosen ? reactionKind(chosen) : null;
     const owner = combat.pendingReaction.ownerId;
     disp = takeSnapshot();
+    // A reaction offered during the enemy's turn resumes that turn: the dispatch may finish it (the engine is already in
+    // the player's phase) while its remaining beats (hit, reaction, damage) still have to play as the enemy's, so the
+    // ribbon and the input locks must keep saying Enemy Turn until that playback ends.
+    const enemyTurnReaction = combat.phase === 'enemy' || !!combat.reactionCursor;
     try {
       const out = dispatch(combat, { type: 'chooseReaction', ...intent });
       if (kind) recordManualReaction(run, owner || ownSeat(), kind);
-      enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
+      enemyPlayback = enemyTurnReaction || combat.phase === 'enemy' || !!combat.reactionCursor;
       setBusy(true); afterDispatch(out.events);
     } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
@@ -3757,6 +3779,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (!disp?.rangeRanks) return;
           for (const e of events) applyRangeRankEvent(disp.rangeRanks, e);
           renderCombatantStage({ fit: true, refreshTargets: false });
+        },
+        // Owner 2026-11-06: the cost a card paid reaches the resource read-outs first (fx.js onIntent), ahead of the action word.
+        onLeadApplied: (beat) => {
+          applyBeatToDisp(beat);
+          renderTopbar();
+          renderCombatantStage({ fit: false, refreshTargets: false });
         },
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
