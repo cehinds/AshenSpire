@@ -312,6 +312,11 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // even when zero attacks were recognized keeps the authored count fail closed.
   WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
   stampDeck(registries, {
+    // The profile rides along so a configured (Core 2) fight's piles are left
+    // exactly as saved — the legacy carrier stamp (damageSchool,
+    // exposureBuildupPerHit) is for legacy profiles — and a restored fight
+    // serializes as it was saved (SPEC 3.12).
+    gameProfile: run.gameProfile,
     class: classId,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
