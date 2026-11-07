@@ -51,7 +51,7 @@ prefix; its callers are the union.
 | `balance-runs-check.mjs` | THE RECORDED REPORT'S CONFIGURATION, CHECKED AGAINST CONTENT. | tests balance-runs-check; tools balance; docs DEVELOPER.md |
 | `balance.mjs` | balance — headless balance analysis (SPEC §9 M3). | tests balance-doc, balance-runs-check, card-cost-fastpath +3; tools balance-intent, balance-runs-check; docs DEVELOPER.md, docs/BALANCE.md, docs/FINISH.md +2; other src/engine/runCombat.js, src/model/encounterTier.js |
 | `base-cards.mjs` | JSON is the authoring source; this projection supports import-only/file:// builds. | tests base-card-pack-source, base-card-pack, engine-export; tools content-build, engine-export, game-config; docs DEVELOPER.md, docs/ai/json-game-modules/CONTINUE.md, games/ashenspire/packs/base-cards/guide.md; other src/content/generated/baseCards.js, workbench/core/files.mjs |
-| `book-art-browser.mjs`, `book-learning-browser.mjs`, `book-library-built-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
+| `book-art-browser.mjs`, `book-learning-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
 | `book-art-export-preview.mjs` | Transparent composition exports from the same renderer used by the game. | docs docs/preview/book-library/layers/painted/README.md |
 | `browser.mjs` | browser — THE ONE HOME FOR "START A BROWSER AND TAKE ITS PROFILE | wf ci; tests battlefield-layout.browser, browser-launch-floor, browser-serve +12; tools about-changelog, actends, actionreach +148; docs DEVELOPER.md, docs/BOOK-ART.md, docs/BOOK-LIBRARY.md +14; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, pose-studio/stances/update-stances/sequence-review/check-player.mjs +3 |
 | `build-game.mjs` | build-game - compiles every authored JSON layer into one serialized, deterministic artifact | tests build-game; tools ui-validate; docs CHANGELOG.md, docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md, engine/export/README.md +1; other .gitignore, games/ashenspire/build.summary.json +2 |
@@ -310,9 +310,9 @@ prefix; its callers are the union.
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (63 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (64 files)
 
-These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 64 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line |
 | --- | --- |
@@ -324,6 +324,7 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `art-runtime-check.mjs` | Capture real event, speaker, and combat-card screens after their art loads. |
 | `attribute-phase1-boundary.mjs` | Attribute integration boundary after the approved derived/equipment slices. |
 | `bjclauses.mjs` | bjclauses — re-derive Constantine's eight D17 map clauses against |
+| `book-library-built-browser.mjs` | (no header comment) |
 | `bow-animation-config.mjs` | Rebuild the bow presentation bindings from the authored unarmed outfit sets. |
 | `card-effect-layers-check.mjs` | (no header comment) |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
