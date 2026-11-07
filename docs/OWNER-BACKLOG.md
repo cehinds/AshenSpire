@@ -82,3 +82,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answers 2026-11-07: points per level = same as the player's rule; enemies carry the player's stat list.
 - Questions: none
 - Link: —
+
+## #10 Keep Poise (decision)
+- Status: done
+- Asked: 2026-11-07 — "ok, lets keep poise"
+- Means: No change. Poise stays as the single break meter, behind Ward/Barrier and the Fortitude save (CON + Poise, #8). No Ward/Barrier merge requested.
+- Questions: none
+- Link: —
