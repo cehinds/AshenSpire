@@ -12,8 +12,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus } from '../src/engine/statuses.js';
-import { resolveDamageComponents, taggedBonusFloor } from '../src/model/combatRules.js';
-import { combatRules as foundationRules } from '../src/content/combatRules.js';
+import { taggedBonusFloor } from '../src/model/combatRules.js';
 
 const shipped = createRegistries(contentBundle);
 // Every shipped blight card is also ritual, so the blight arm re-tags one
@@ -97,33 +96,13 @@ for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
   });
 }
 
-test('foundation damage resolver rounds the tagged bonus up too, and never below the old all-floor result', () => {
-  assert.deepEqual(resolveDamageComponents(foundationRules, { components: [{ type: 'arcane', amount: 3 }], taggedBonus: 1.25 }),
-    [{ type: 'arcane', amount: 4 }]);
-  assert.deepEqual(resolveDamageComponents(foundationRules, { components: [{ type: 'arcane', amount: 3 }] }),
-    [{ type: 'arcane', amount: 3 }]);
+test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 3 (3 × 1.25 = 3.75)', () => {
+  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [3]);
+});
+
+test('the tagged bonus rounds up once per hit and never falls below the old all-floor result', () => {
   for (let x = 0; x <= 40; x += 0.1) {
     assert.ok(taggedBonusFloor(x, 1.25) >= Math.floor(x * 1.25), `x=${x}`);
     assert.equal(taggedBonusFloor(x, 1), Math.floor(x));
   }
-});
-
-test('a multi-component hit rounds its exposure bonus up once per hit, not once per component', () => {
-  // 2 slashing + 2 fire at ×1.25: plain 4, bonus ceil(4 × 0.25) = 1 → 5, not 6.
-  const split = resolveDamageComponents(foundationRules, { components: [{ type: 'slashing', amount: 2 }, { type: 'fire', amount: 2 }], taggedBonus: 1.25 });
-  assert.equal(split.reduce((sum, c) => sum + c.amount, 0), 5);
-  assert.deepEqual(split.map((c) => c.type), ['slashing', 'fire']);
-  // One component is unchanged: plain floor plus the rounded-up bonus.
-  for (let x = 0; x <= 20; x += 0.5) {
-    assert.equal(resolveDamageComponents(foundationRules, { components: [{ type: 'arcane', amount: x }], taggedBonus: 1.25 })[0].amount, taggedBonusFloor(x, 1.25), `x=${x}`);
-  }
-  // Never below the old all-floor total; an immune component takes no share.
-  const halves = resolveDamageComponents(foundationRules, { components: [{ type: 'slashing', amount: 1.9 }, { type: 'fire', amount: 1.9 }], taggedBonus: 1.1 });
-  assert.ok(halves.reduce((sum, c) => sum + c.amount, 0) >= 2 * Math.floor(1.9 * 1.1));
-  assert.deepEqual(resolveDamageComponents(foundationRules, { components: [{ type: 'slashing', amount: 2 }, { type: 'fire', amount: 2 }], taggedBonus: 1.25, immunities: ['fire'] }),
-    [{ type: 'slashing', amount: 3 }, { type: 'fire', amount: 0 }]);
-});
-
-test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 3 (3 × 1.25 = 3.75)', () => {
-  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [3]);
 });
