@@ -716,7 +716,7 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
-  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+  const { existingIsCurrent } = ctx;
 
   const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
 
