@@ -815,8 +815,12 @@ export function today(now = new Date()) {
  * a reset is only legitimate if the release moved, and a reader that cannot see
  * WHICH release the number was counted under cannot tell a reset from a
  * hand-edit that lowered it. Row H asks exactly that question.
+ *
+ * `opts.force` (version-advance.yml, a push to `test`, owner 2026-11-07) skips the digest-equality
+ * early return so the ordinal rises by one although the tree did not change; the rest is unchanged
+ * (same release: recorded + 1, no reset). The default never forces.
  */
-export function bumpOrdinal(root = REPO_ROOT) {
+export function bumpOrdinal(root = REPO_ROOT, opts = {}) {
   const digest = sourceDigest(root).digest;
   const rec = readOrdinal(root);
   // THE DATE IS WRITTEN IN THIS ACT AND NOWHERE ELSE, under the same condition,
@@ -824,7 +828,7 @@ export function bumpOrdinal(root = REPO_ROOT) {
   // digest has not moved this returns the RECORDED date rather than today's —
   // that is what keeps a rebuild of an unchanged tree byte-identical, and it is
   // also the truth: the artifact was built on the day it was built.
-  if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
+  if (rec.digest === digest && !opts.force) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
 
   const rel = release(root);
   // A release the recorded number was NOT counted under restarts the count.

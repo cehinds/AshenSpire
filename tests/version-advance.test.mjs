@@ -309,3 +309,83 @@ test('simulation: recorded events are always an ordered prefix of the non-bot ev
     assert.deepEqual(dev.triple, expected, `seed ${seed}`);
   }
 });
+
+// ---- the `test` branch: a BUILD event (owner, 2026-11-07) ---------------------------------------
+import { TEST_SINCE, eventBranch, kindOfBranch } from '../tools/version-advance.mjs';
+import { VERSION_ADVANCE_SUBJECT } from '../tools/build-stamp.mjs';
+
+const tev = (id, before, after, ts, type = 'push') => ev(id, 'test', before, after, type, ts);
+const T1 = '2026-11-09T00:00:01Z';
+
+test('build: the triple is unchanged and test maps to kind build', () => {
+  assert.deepEqual(nextTriple([0, 7, 4], 'build'), [0, 7, 4]);
+  assert.equal(eventBranch({ ref: 'refs/heads/test' }), 'test');
+  assert.equal(kindOfBranch('test'), 'build');
+  assert.equal(kindOfBranch('release'), 'candidate');
+  assert.equal(kindOfBranch('main'), 'minor');
+  assert.equal(advanceSource(SRC, 'build').text, SRC);
+});
+
+test('build: records round-trip, and build-stamp still recognises the subject', () => {
+  const sha = 'd'.repeat(40);
+  const m = advanceMessage('0.7.4', 'test', sha, { id: '55', timestamp: T1 });
+  assert.equal(m.split('\n')[0], `version-advance: 0.7.4 after test ${sha} [version-advance]`);
+  assert.match(m.split('\n')[0], VERSION_ADVANCE_SUBJECT);
+  assert.deepEqual(latestRecord(parseRecords([m])), { id: '55', timestamp: T1, branch: 'test' });
+  assert.equal(recordsEvent([m], 55), true);
+  assert.equal(recordsEvent([m], 56), false);
+});
+
+test('planCuts: a test push is a build cut; pre-TEST_SINCE and bot-only test pushes are not', () => {
+  assert.equal(TEST_SINCE, '2026-11-08T00:00:00Z');
+  const events = [tev(1, 'a', 'b', '2026-11-05T00:00:00Z'), tev(2, 'b', 'c', T1), tev(3, 'c', 'bot', '2026-11-09T00:00:02Z'), tev(4, 'c', 'd', '2026-11-09T00:00:03Z', 'branch_deletion')];
+  const cuts = planCuts(events, null, (e) => e.after === 'bot');
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['2', 'test']]);
+  // A re-delivered copy of the same push, or a cursor on it, never bumps twice.
+  assert.equal(planCuts([...events, { ...events[1], id: 9 }], null, (e) => e.after === 'bot').filter((c) => c.branch === 'test').length, 1);
+  assert.deepEqual(planCuts(events, { id: '2', timestamp: T1 }, (e) => e.after === 'bot'), []);
+});
+
+test('planCuts: release and main ordering is right with a test event between them', () => {
+  const day = (n) => `2026-11-1${n}T00:00:00Z`;
+  const fold = (cuts) => cuts.reduce((t, c) => nextTriple(t, kindOfBranch(c.branch)), [0, 7, 4]).join('.');
+  const events = [ev(1, 'release', 'a', 'b', 'push', day(0)), tev(2, 'x', 'y', day(1)), ev(3, 'main', 'b', 'c', 'push', day(2)), tev(4, 'y', 'z', day(3))];
+  const cuts = planCuts(events, null, noBots);
+  assert.deepEqual(cuts.map((c) => c.branch), ['release', 'test', 'main', 'test']);
+  assert.equal(fold(cuts), '0.8.0');
+  // main then release, a test event between: 0.8.1.
+  const swapped = [ev(1, 'main', 'a', 'b', 'push', day(0)), tev(2, 'x', 'y', day(1)), ev(3, 'release', 'b', 'c', 'push', day(2))];
+  assert.equal(fold(planCuts(swapped, null, noBots)), '0.8.1');
+});
+
+test('planRun: a test event is paged from the test ref and applied once; a re-run after its record plans nothing', async () => {
+  const e = tev(70, 'b', 'c', T1);
+  const cuts = await planRun({ fetchPage: feedOf([e]), messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['70', 'test']]);
+  const again = await planRun({ fetchPage: feedOf([e]), messages: [advanceMessage('0.7.4', 'test', 'c'.repeat(7), e)], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(again, []);
+});
+
+test('CLI: --kind build leaves the triple alone; --message accepts test', () => {
+  const run = (...args) => spawnSync(process.execPath, [join(ROOT, 'tools/version-advance.mjs'), ...args], { encoding: 'utf8' });
+  const cur = parseTriple(readFileSync(join(ROOT, VERSION_FILE), 'utf8')).join('.');
+  assert.equal(run('--kind', 'build').stdout.trim(), cur);
+  assert.equal(run('--message', cur, 'test', 'e'.repeat(40), '8', T1).status, 0);
+});
+
+test('bumpOrdinal: force adds 1 on an unchanged tree without resetting; the default never forces', async () => {
+  const { bumpOrdinal, readOrdinal } = await import('../tools/buildversion.mjs');
+  const file = join(ROOT, 'buildordinal.json');
+  const saved = readFileSync(file, 'utf8');
+  try {
+    bumpOrdinal(ROOT); // settle: digest now matches the tree
+    const base = readOrdinal(ROOT);
+    const calm = bumpOrdinal(ROOT);
+    assert.equal(calm.bumped, false);
+    assert.equal(readOrdinal(ROOT).ordinal, base.ordinal, 'the default does not move an unchanged tree');
+    const forced = bumpOrdinal(ROOT, { force: true });
+    assert.equal(forced.bumped, true);
+    assert.equal(forced.ordinal, base.ordinal + 1);
+    assert.equal(readOrdinal(ROOT).release, base.release, 'same release: no reset');
+  } finally { writeFileSync(file, saved, 'utf8'); }
+});
