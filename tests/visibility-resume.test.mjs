@@ -499,7 +499,6 @@ const KNOWN = {
   'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists'], ['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired by the Art quality setting, not the page cycle: repaints the prologue character canvas from assetUrl() only"]],
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
-  'src/ui/screens/combatTest.js': ['.title'],
   'src/ui/previews/tooltipReviewScene.js': ['.__tooltipReviewRun'],
 };
 

@@ -70,7 +70,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 | (`handMax` — retired in derived-stat ruleset 7) | the hand limit is the `handSize` stat row (`src/content/derivedStats.js`, SPEC §3.5, §4.1) in every fight; `combat.handMax` holds its value. A fight created without hand rules (an old headless fixture) keeps the retired fallback of 5; overflow draws go to discard |
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
-| `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
+| `poise.playerImpactPerHit` (2) | the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |
 | `derivedStatRules.rules.poise` | the player's poise max per point of Constitution, beside body armour and relic `poiseThresholdAdd` (SPEC §13.4k, §13.4l). Retired from `balance.poise` in plan phase 9; a copy there is refused by name |
 | `stagger.player` | `{ actionLoss, statuses: { <statusId>: stacks } }` — what a player Stagger takes: actions off the next turn and the statuses applied |
 | `mana.minActionCost` / `minStaminaCost` (1 / 1) | a card that costs Mana costs at least these (validation) |

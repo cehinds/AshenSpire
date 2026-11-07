@@ -72,7 +72,7 @@ export function backfillPersistentPoise(ctx, entity) {
  * the payload without emitting, so a caller can emit after its damageDealt.
  */
 export function breakPersistentWard(ctx, entity, meta = {}) {
-  const cost = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
+  const cost = 1;
   const staminaLoss = entity.kind === 'player' ? cost : 0;
   if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
   // An enemy's break is TENTATIVELY interrupting; emitBreak settles the flag from what the stagger does.

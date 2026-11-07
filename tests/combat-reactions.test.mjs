@@ -7,7 +7,7 @@ import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatRules } from '../src/content/combatRules.js';
-import { createFoundation } from '../src/engine/combatRules.js';
+
 import { armCombatCounter, counterCoverageMatches } from '../src/engine/combatMatchups.js';
 import { botControlAction } from '../tools/simbot.mjs';
 import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight.js';
@@ -137,27 +137,6 @@ test('historical combat without carried reaction rules keeps immediate hand clea
   assert.equal(combat.turn, 2);
 });
 
-test('disabled optional prompts survive reload without disabling an armed Counter', () => {
-  const { combat, registries } = fixture({ enemyCount: 1 });
-  combat.foundation = createFoundation(combatRules);
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
-  const serial = combat.foundation.actionSerial, counters = combat.rng.getCounters(), events = combat.eventLog.length;
-  dispatch(combat, { type: 'setReactions', enabled: false });
-  assert.equal(combat.foundation.actionSerial, serial);
-  assert.deepEqual(combat.rng.getCounters(), counters);
-  assert.equal(combat.eventLog.length, events);
-  const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, counters),
-    snapshot: JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))) });
-  for (const state of [combat, restored]) {
-    const out = dispatch(state, { type: 'endTurn' });
-    assert.equal(state.player.reactionsEnabled, false);
-    assert.equal(state.pendingReaction, undefined);
-    assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
-    assert.equal(state.turn, 2);
-  }
-  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))), JSON.parse(JSON.stringify(serializeCombatSnapshot(restored))));
-});
-
 test('preference changes reject malformed and paused commands atomically', () => {
   const { combat } = fixture();
   for (const enabled of ['false', null, 0]) {
@@ -244,98 +223,6 @@ test('paid Counter reply to an automatic return terminates the chain', () => {
   assert.equal(combat.pendingReaction, undefined);
   assert.equal(combat.queue.length, 0);
   assert.equal(combat.pendingExpansionActions, 0);
-});
-
-test('nested paid Sweep discard resumes a player-phase Counter return exactly after reload', () => {
-  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'sweepingBlow'
-    ? { ...card, effects: [{ op: 'discard', choose: true, amount: 1 }, ...card.effects] } : card) });
-  const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
-    stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 3, combatExpansionVersion: 2,
-    deck: [{ cardId: 'guardCounter', instanceId: 'filler', upgraded: false },
-      { cardId: 'strike', instanceId: 'strike', upgraded: false }, { cardId: 'sweepingBlow', instanceId: 'sweep', upgraded: false }] };
-  const combat = createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
-  landedContacts(combat);
-  combat.foundation = createFoundation(combatRules);
-  const owner = combat.player;
-  owner.block = 100;
-  const enemy = combat.enemies[0]; enemy.block = 100;
-  enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-  enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
-  armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-    tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
-    combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'strike', targetId: enemy.id });
-  const optionId = combat.pendingReaction.options.find(option => option.cardId === 'sweepingBlow').id;
-  answer(combat, optionId);
-  assert.ok(combat.reactionResume); assert.ok(combat.pendingAbilityDiscard); assert.equal(combat.reactionCursor, undefined);
-  for (const mutate of [context => { context.actionSerial = -1; }, context => { context.eventCount = -1; },
-    context => { context.rolls = { invalid: 1 }; }, context => { context.counts = { invalid: -1 }; }]) {
-    const original = structuredClone(combat.reactionResume.foundation);
-    mutate(combat.reactionResume.foundation);
-    assert.throws(() => serializeCombatSnapshot(combat), /reaction foundation context/);
-    combat.reactionResume.foundation = original;
-  }
-  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
-  const rng = createRng(701, combat.rng.getCounters());
-  const restored = restoreCombatSnapshot({ registries, rng, snapshot });
-  const settle = state => dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['filler'] });
-  assert.deepEqual(JSON.parse(JSON.stringify(settle(combat))), JSON.parse(JSON.stringify(settle(restored))));
-  const saved = state => serializeCombatSnapshot(state);
-  assert.deepEqual(JSON.parse(JSON.stringify(saved(combat))), JSON.parse(JSON.stringify(saved(restored))));
-  assert.deepEqual(combat.rng.getCounters(), restored.rng.getCounters());
-  assert.equal(combat.queue.length, 0); assert.equal(combat.pendingExpansionActions, 0);
-  for (const key of ['pendingReaction', 'reactionResume', 'pendingAbilityDiscard', 'pendingAbilityPlay']) assert.equal(combat[key], undefined);
-  assert.equal(combat.phase, 'player');
-});
-
-test('terminal reaction victory and defeat retire continuation before durable commit in both engines', () => {
-  for (const result of ['victory', 'defeat']) {
-    const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-      ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 100, hits: 1, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
-    const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
-      stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
-      deck: [{ cardId: 'guardCounter', instanceId: 'terminal-counter', upgraded: false }] };
-    const combat = createCombat({ registries, rng: createRng(17), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
-    combat.foundation = createFoundation(combatRules);
-    // Seed 17 rolls a natural 20 on the first Counter Accuracy check. The
-    // real seeded stream survives transactional clones and exact restoration.
-    const owner = combat.player;
-    owner.block = result === 'victory' ? 10000 : 0;
-    if (result === 'defeat') owner.hp = 1;
-    else combat.enemies[0].hp = 1;
-    const save = state => serializeCombatSnapshot(state);
-    let refused = false, terminalSave = null;
-    combat.beforeCombatCommit = candidate => {
-      const snapshot = save(candidate);
-      if (refused) throw new Error('Terminal save refused');
-      if (candidate.result) terminalSave = JSON.parse(JSON.stringify(snapshot));
-    };
-    dispatch(combat, { type: 'endTurn' });
-    assert.ok(combat.pendingReaction);
-    const before = JSON.parse(JSON.stringify(save(combat))), counters = combat.rng.getCounters();
-    const intent = { offerId: combat.pendingReaction.id,
-      optionId: result === 'victory' ? combat.pendingReaction.options.find(option => option.cardId === 'guardCounter' && !option.play.upcastTier).id : null };
-    const answerTerminal = () => dispatch(combat, { type: 'chooseReaction', ...intent });
-    refused = true;
-    assert.throws(answerTerminal, /Terminal save refused/);
-    assert.deepEqual(JSON.parse(JSON.stringify(save(combat))), before);
-    assert.deepEqual(combat.rng.getCounters(), counters);
-    refused = false; answerTerminal();
-    assert.equal(combat.phase, 'ended', JSON.stringify({ result, hp: owner.hp,
-      enemyHp: combat.enemies[0].hp, events: combat.eventLog.slice(-24) })); assert.equal(combat.result, result);
-    assert.ok(terminalSave, 'the durable callback can serialize the terminal candidate before adoption');
-    for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) assert.equal(combat[field], undefined);
-    assert.equal(combat.queue.length, 0); assert.equal(combat.pendingExpansionActions, 0);
-    assert.equal(combat.eventLog.filter(event => event.type === 'combatEnd').length, 1);
-    assert.equal(combat.eventLog.filter(event => event.type === 'enemyActorTurnStarted').length, 1);
-    assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, result === 'victory' ? 1 : 0);
-    const restoredRng = createRng(17, combat.rng.getCounters());
-    const restored = restoreCombatSnapshot({ registries, rng: restoredRng, snapshot: terminalSave });
-    const comparable = state => save(state);
-    assert.deepEqual(JSON.parse(JSON.stringify(comparable(restored))), JSON.parse(JSON.stringify(comparable(combat))));
-    assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
-  }
 });
 
 test('a terminal Blight play saves ended combat under the new reaction rules', () => {

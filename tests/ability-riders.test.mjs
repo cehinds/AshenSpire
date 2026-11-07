@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
+import { applyStatus, removeStatus, getStacks } from '../src/engine/statuses.js';
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '../src/engine/abilityRiders.js';
 import { computeTokenBindings, validateEffects } from '../src/model/validate.js';
@@ -124,17 +124,6 @@ test('preparing property charges affect every first-effect hit and preview witho
   assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), saved);
   const hp = combat.enemies[0].hp; play(combat); assert.equal(combat.enemies[0].hp, hp - 11);
   assert.equal(combat.player.abilityRiders.cardPlaysCombat, 1);
-});
-
-test('partial strongest status consumption cannot resurrect the consumed magnitude on expiry', () => {
-  const combat = fixture([]); const target = combat.player;
-  combat.foundation = {};
-  combat.emit = (type, payload) => combat.eventLog.push({ type, ...payload });
-  const original = combat.registries.statuses;
-  combat.registries = { ...combat.registries, statuses: { ...original, get: id => id === 'weak' ? { ...original.get(id), stacking: { mode: 'strongest', cap: 99, duration: 3 } } : original.get(id) } };
-  target.statuses.weak = { stacks: 5, applications: [{ sourceId: 'a', value: 5, expires: 1 }, { sourceId: 'b', value: 4, expires: 3 }] };
-  removeStatus(combat, target, 'weak', { amount: 2, reason: 'consumed' }); assert.equal(getStacks(target, 'weak'), 3);
-  advanceStatusClock(combat, target, 'ownerTurnEnd'); assert.equal(getStacks(target, 'weak'), 3);
 });
 
 test('buildup charges retain independent status filters and augment only the first matching effect', () => {

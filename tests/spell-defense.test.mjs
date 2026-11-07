@@ -7,7 +7,6 @@ import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { gainBarrier, gainBlock, computeBlockGain, computeMeterGuardGain, computeSpellDefenseGain } from '../src/engine/actions.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
@@ -96,7 +95,7 @@ test('expanded block opcode faces and allied gains use defense shares; legacy fa
 
 function ratedFixture(dr, pr, cardId = 'frostCounter', reactionRulesVersion = 2) {
   const combat = createCombat({ registries, rng: createRng(5),
-    ratingsRules: resolveCombatRatings({}, contentBundle),
+    
     combatExpansionVersion: 2, reactionRulesVersion, enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20,
@@ -109,65 +108,3 @@ function ratedFixture(dr, pr, cardId = 'frostCounter', reactionRulesVersion = 2)
   combat.player.persistentWard = { max: 30, value: 0 };
   return combat;
 }
-
-test('live DR scales Block and PR scales Ward in the block guard; the gainBarrier stacks are not scaled by either', () => {
-  for (const [cardId, school, baseBlock, baseWard] of [
-    ['fireCounter', 'fire', 2, 3], ['frostCounter', 'frost', 3, 2],
-    ['forceCounter', 'force', 4, 1], ['alterationCounter', 'alteration', 4, 1],
-  ]) for (const [dr, pr] of [[3, 0], [0, 3], [3, 3]]) {
-    const combat = ratedFixture(dr, pr, cardId), player = combat.player;
-    const card = { ...guard(school), cardId, damageSchool: 'magic' };
-    const total = 5 + dr + pr, expected = { block: baseBlock + dr, ward: baseWard + pr };
-    assert.equal(computeBlockGain(combat, player, 5, card), total);
-    assert.deepEqual(computeSpellDefenseGain(combat, player, 5, card), expected);
-    assert.equal(gainBlock(combat, player, 5, card), total);
-    assert.deepEqual({ block: player.block, ward: player.persistentWard.value + (player.statuses.barrier?.stacks || 0) }, expected);
-    // The gainBarrier opcode: stacks equal the printed amount, whatever DR and PR are (SPEC 4.1a).
-    const stacked = ratedFixture(dr, pr, cardId), holder = stacked.player;
-    assert.equal(gainBarrier(stacked, holder, 5, card), 5);
-    assert.equal(holder.statuses.barrier.stacks, 5); assert.equal(holder.block, 0);
-  }
-  for (const [cardId] of [['fireCounter'], ['frostCounter']]) for (const version of [1, 2]) {
-    const combat = ratedFixture(3, 3, cardId, version), player = combat.player;
-    const before = JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog });
-    const preview = previewCard(combat, 'rated-defense');
-    const protection = preview.values.find(value => value.op === 'gainBarrier');
-    assert.equal(protection.value, version === 2 ? 7 : 5, 'Counterstrike scales the printed 5 to 7; ratings do not');
-    assert.equal(protection.defenseSplit, undefined);
-    assert.equal(JSON.stringify({ model: serializeCombatSnapshot(combat), rng: combat.rng.getCounters(), events: combat.eventLog }), before,
-      'preview changes no stance, pools, preparation, queue or RNG');
-    const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'rated-defense', targetId: player.id });
-    const own = out.events.filter(event => event.cardInstanceId === 'rated-defense' && !event.triggeredBy);
-    assert.equal(own.filter(event => event.type === 'barrierGained').reduce((sum, event) => sum + event.amount, 0), protection.value,
-      'paid support adds the previewed Barrier stacks');
-    assert.equal(out.events.filter(event => event.type === 'combatCounterArmed').length, 1);
-  }
-});
-
-test('combined spell defense rating caps once and preserves source equipment filtering', () => {
-  const combat = ratedFixture(3, 3), player = combat.player;
-  const card = { ...guard('frost'), cardId: 'frostCounter', damageSchool: 'magic', ratingCap: 9 };
-  assert.equal(computeBlockGain(combat, player, 5, card), 9, 'DR + PR share one cap');
-  assert.deepEqual(computeSpellDefenseGain(combat, player, 5, card), { block: 5, ward: 4 });
-  assert.equal(computeBlockGain(combat, player, 10, card), 10, 'a cap never removes the authored base');
-  player.ratingSources = [
-    { kind: 'attribute', dr: 1, pr: 1 },
-    { kind: 'equipment', sourceId: 'focus-a', dr: 20, pr: 20, effectiveRatings: { dr: 2, pr: 3 } },
-    { kind: 'equipment', sourceId: 'focus-b', dr: 50, pr: 50 },
-  ];
-  assert.equal(computeBlockGain(combat, player, 5,
-    { ...card, ratingCap: undefined, sourceArmamentId: 'focus-a', equipmentRole: 'guard' }), 12);
-  assert.equal(computeBlockGain(combat, player, 5,
-    { ...card, ratingCap: undefined, equipmentRole: 'guard' }), 7, 'unbound equipment guard excludes all equipment rows');
-});
-
-test('physical defense, evasion, legacy spell defense and meter guards retain their existing rating', () => {
-  const combat = ratedFixture(3, 7), player = combat.player;
-  const spell = { ...guard('frost'), cardId: 'frostCounter', damageSchool: 'magic' };
-  const physical = { ...spell, damageSchool: 'physical', combatProfile: { camp: 'physical', maneuver: 'defend' } };
-  assert.equal(computeBlockGain(combat, player, 5, physical), 8);
-  assert.equal(computeBlockGain(combat, player, 5, { ...spell, evade: { charges: 1 } }), 12);
-  assert.equal(computeMeterGuardGain(combat, player, 5, spell), 12, 'meter guard still reads PR alone');
-  combat.combatExpansionVersion = 1;
-  assert.equal(computeBlockGain(combat, player, 5, spell), 12);
-});

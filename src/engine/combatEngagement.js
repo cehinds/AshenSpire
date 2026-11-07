@@ -49,9 +49,8 @@ function rangeSourceProfile(carrier,effect) {
   return { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
 }
 function committedRangeSource(ctx,source,carrier,effect,profile) {
-  // Impact-only callers can supply a protection rule fragment without a legacy
-  // foundation source table. Core still resolves its real configured armament.
-  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation?.profiles ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
+  // Core resolves its real configured armament.
+  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || null;
   if (!resolved && source.kind !== 'enemy') {
     const attack = attackDescriptor({ ...carrier, attack: effect.attack || carrier.attack });
     const kind = attack.source || (profile.camp === 'spell' ? 'spell' : 'weapon');

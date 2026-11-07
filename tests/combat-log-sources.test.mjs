@@ -7,7 +7,6 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 
 const registries = createRegistries(contentBundle);
@@ -133,36 +132,6 @@ test('breaks, Ward refills and deaths name what caused them', () => {
     'Forsaken restored 3 Ward (2 → 5) from Crystal Barrier.',
     "Wandering Soldier was defeated by Forsaken's Strike.",
   ]);
-});
-
-test('one Bashing Blow logs each stagger-meter impact with its own cause, and a relic names itself', () => {
-  const c = createCombat({ registries, rng: createRng(998), combatExpansionVersion: 2, ratingsRules: resolveCombatRatings({}, contentBundle),
-    player: { id: 'p1', classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, maxStamina: 5, energyMax: 5, drawPerTurn: 3,
-      relicIds: ['forsakenMedallion'], attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
-      deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'bashingBlow', upgraded: false })) },
-    enemyIds: ['valkyrieShade'] });
-  // This source-attribution test exercises a landed hit with real seeded draws.
-  c.player.accuracy = 100; c.enemies[0].evasion = 0;
-  // Valkyrie can telegraph from range; this fixture tests contact attribution.
-  if (c.enemies[0].combatStance) c.enemies[0].combatStance.range = 'melee';
-  dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: c.enemies[0].id });
-  const impacts = c.eventLog.filter(event => event.type === 'ratingImpact');
-  assert.deepEqual(impacts.map(event => event.cause), ['hit', 'rider:blunt', 'poiseDamage', 'trait:impact', 'relic:forsakenMedallion']);
-  const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text).filter(text => text.includes('stagger meter'));
-  const relic = registries.relics.get('forsakenMedallion').name;
-  // Bashing Blow is a smash, so its Poise damage is the cost formula's, not the authored 4 (SPEC §4.3a; owner 2026-10-13:
-  // "All smashes deal poise damage"): the 2-SP scale applies to its authored Poise.
-  // The +3 fallback applies only when no Poise was authored. Impact repeats that amount.
-  const poise = resolveCard(registries, { cardId: 'bashingBlow', upgraded: false }).effects.find(e => e.op === 'poiseDamage').amount;
-  assert.ok(poise > 4, 'fixture: the 2-SP scale increases the authored 4');
-  assert.deepEqual(lines.map(text => text.replace(/ \(\d+\/\d+(, broke)?\)\.$/, '')), [
-    "Valkyrie Shade's stagger meter took 1 from the hit (Forsaken's Bashing Blow)",
-    "Valkyrie Shade's stagger meter took 2 from Blunt (Forsaken's Bashing Blow)",
-    `Valkyrie Shade's stagger meter took ${poise} from Poise damage (Forsaken's Bashing Blow)`,
-    `Valkyrie Shade's stagger meter took ${poise} from Impact (Forsaken's Bashing Blow)`,
-    `Valkyrie Shade's stagger meter took 4 from Forsaken's ${relic}`,
-  ]);
-  for (const text of lines) assert.match(text, /\(\d+\/\d+(, broke)?\)\.$/, 'each line ends with the meter after it');
 });
 
 test('engine events carry their cause: an enemy move stamps moveId, a status tick stamps triggeredBy', () => {

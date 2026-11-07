@@ -10,7 +10,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, cardPlayCosts, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { applyStatus, removeStatus, advanceStatusClock, getStacks } from '../src/engine/statuses.js';
+import { applyStatus, removeStatus, getStacks } from '../src/engine/statuses.js';
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { grantAbilityCharge, beginAbilityTurn, matchingAbilityCharges } from '../src/engine/abilityRiders.js';
 import { computeTokenBindings, validateEffects, validatePredicate } from '../src/model/validate.js';

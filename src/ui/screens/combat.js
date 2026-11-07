@@ -32,7 +32,7 @@ import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
-import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
+import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
@@ -70,7 +70,6 @@ import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.j
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
-import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
@@ -1077,7 +1076,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function combatantSubject(role, entity) {
     const v = dv(entity);
     if (role === 'player') {
-      const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade }, Boolean(combat.foundation));
+      const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade });
       return {
         role: 'player',
         name: (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase(),
@@ -1108,7 +1107,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules, weaknesses: knownWeaknesses(entity) }) : null;
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, weaknesses: knownWeaknesses(entity) }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -2082,22 +2081,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (['block', 'hp'].includes(bar.id)) return esc(helpText(bar.id));
       if (['precision', 'evasion', 'critChance'].includes(bar.id)) return esc(tFull(`combat.stat.${bar.id}`));
       if (bar.id === 'poiseGuard' || bar.id === 'wardGuard') return esc(tFull(`combat.protection.${bar.id}`));
-      if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id) + (combat.foundation ? helpText('recovery', { amount: combat.foundation.rules.recovery[`${bar.id}PerTurn`] }) : ''));
-      if (combat.ratingsRules) {
-        const descriptions = { ar: 'Added to physical attack-card damage.', dr: 'Added to physical defensive-skill Block.', pr: 'Added to magical card damage, Block and healing, including power effects.' };
-        if (descriptions[bar.id]) return esc(descriptions[bar.id]);
-        if (bar.id === 'poise' || bar.id === 'ward') {
-          const magical = bar.id === 'ward';
-          const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
-          // Pools only in expanded combat (owner decision, 2026-10-12): the rating cut is gone, so no percent is stated.
-          const percent = entity && combat.combatExpansionVersion !== 2 ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
-          if (combat.breakMeterVersion === 1) return esc(tFull('combat.poise.shared', {
-            resistance: percent === null ? '' : ` by ${percent}%`,
-            effect: kind === 'player' ? tFull('combat.poise.actionLoss', { amount: loss }) : tFull('combat.poise.enemyLoss'),
-          }));
-          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} less Stamina next turn` : tFull('combat.poise.enemyLoss')}.`);
-        }
-      }
+      if (['mana', 'stamina'].includes(bar.id)) return esc(helpText(bar.id));
       if (bar.id !== 'poise') return '';
       if (kind === 'player') {
         return esc(helpText('playerPoise'));
@@ -2282,7 +2266,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function bindAbilityBadge(chip, entity, abilityId) {
-    const ability = () => activeCombatAbilities(registries, entity, Boolean(combat.foundation)).find(row => row.id === abilityId);
+    const ability = () => activeCombatAbilities(registries, entity).find(row => row.id === abilityId);
     chip.classList.add('combat-ability-badge');
     chip.tabIndex = 0;
     chip.setAttribute('role', 'button');
@@ -2370,8 +2354,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const def = registries.companions.get(id);
       companionRows.push({ id, def, fightsLeft: ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1 });
     }
-    const evadeChip = !!(combat.foundation && p.evade > 0);
-    const abilityName = (id) => activeCombatAbilities(registries, p, Boolean(combat.foundation)).find(row => row.id === id)?.name;
+    const abilityName = (id) => activeCombatAbilities(registries, p).find(row => row.id === id)?.name;
     const playerName = combatantName('player', p);
     const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
@@ -2384,8 +2367,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       meters: JSON.stringify([meterIn.key, settings]),
       statuses: JSON.stringify([statusIn, settings]),
       chips: JSON.stringify([stanceDef && [p.stanceId, stanceDef.name, stanceDef.icon, abilityName(p.stanceId)],
-        companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]),
-        evadeChip && [p.evade, abilityName('evade')], settings]),
+        companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]), settings]),
     };
     const build = {
       classNames,
@@ -2416,11 +2398,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           chip.setAttribute('title', def.blurb);
           const art = alternativeCompanionIcon(id);
           if (art) chip.prepend(art);
-          chips.push(chip);
-        }
-        if (evadeChip) {
-          const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
-          bindAbilityBadge(chip, p, 'evade');
           chips.push(chip);
         }
         return chips;
@@ -2847,7 +2824,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
     if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
-    try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
     return '';
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }

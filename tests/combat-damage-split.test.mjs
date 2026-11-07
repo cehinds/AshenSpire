@@ -9,7 +9,7 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock, computeAttackDamage } from '../src/engine/actions.js';
-import { resolveCombatRatings, magicShareOf, splitDamageTypesOf, attackImpact } from '../src/model/combatRatings.js';
+import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/model/combatRatings.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { objectTagIds } from '../src/content/tags.js';
@@ -147,19 +147,6 @@ test('a spell-camp card with slashing damage hits Block and then Poise, and neve
   assert.equal(d.wardAbsorbed, undefined);
   assert.equal(r.enemy.persistentWard.value, 3, 'Ward untouched');
   assert.equal(r.preview, r.committed, 'preview equals committed');
-});
-
-test('a physical-camp card whose damage type shares 1 is all magic: Block soaks it first, then Ward', () => {
-  const slashAsMagic = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
-  const r = strike(slashAsMagic, 5, { ward: 3, block: 5, damageTypeShares: { slashing: 1 } });
-  const [d] = r.damage;
-  assert.equal(d.magicAmount, 5, 'all magic');
-  assert.equal(d.physicalAmount, 0);
-  assert.equal(d.blocked, 5, 'Block soaks the magic part (owner, 2026-10-25)');
-  assert.equal(r.enemy.block, 0, 'Block is spent');
-  assert.equal(d.wardAbsorbed ?? 0, 0, 'nothing is left for Ward');
-  assert.equal(r.committed, 0, 'no HP lost');
-  assert.equal(r.preview, r.committed);
 });
 
 test('a default spell defend splits 5 into Ward 3 and Block 2 regardless of damage magicShare', () => {
@@ -378,22 +365,6 @@ test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating i
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
-// The mirror: a fully magic hit meets Ward and Barrier only. Block and Poise, and their rating
-// impact, never see it, even on a physical-looking carrier whose magic share is 1.
-test('a fully magic hit on a physical-looking carrier meets Block, skips Poise and fills the Ward meter', () => {
-  const magicOnly = { tags: ['camp:physical', 'damage:slashing'], magicShare: 1, skipRatingBonus: true,
-    combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
-  const r = strike(magicOnly, 5, { ward: 10, block: 3, poise: 5, damageTypeShares: {} });
-  const d = hitOf(r);
-  assert.equal(d.magicAmount, 5);
-  assert.equal(d.physicalAmount, 0);
-  assert.equal(r.enemy.block, 0, 'Block soaks 3 of the magic');
-  assert.equal(r.enemy.persistentPoise.value, 5, 'Poise is untouched');
-  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'poise').length, 0, 'no Poise rating impact');
-  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward').length, 1, 'the Ward meter takes the impact');
-  assert.equal(r.preview, r.committed, 'preview equals committed');
-});
-
 test('entwiningRoots (alteration, blunt) is all physical', () => {
   const r = strike(enemyMoveCarrier('thornMatriarch', 'entwiningRoots'), 6, { ward: 10 });
   assert.equal(hitOf(r).magicAmount, 0);
@@ -557,14 +528,6 @@ test('a +4 rating bonus on a technique adds to its physical part', () => {
   assert.equal(d.magicAmount, 3, 'the 10 keeps its 0.3 magic part');
   assert.equal(d.physicalAmount, 11, 'the +4 Attack joins the 7 physical');
   assert.equal(r.preview, r.committed, 'preview equals committed');
-});
-
-// An enemy's physical hit adds 1 to the player's Poise-break meter (owner decision, 2026-10-12): the
-// rating impact default for an enemy physical hit with no card or weapon value is 1, not 2.
-test('an enemy physical hit with no card or weapon impact adds 1 to the Poise meter', () => {
-  const ctx = { registries: createRegistries(contentBundle), ratingsRules: resolveCombatRatings({}, contentBundle) };
-  assert.equal(ctx.ratingsRules.impact.enemyPhysical, 1, 'the default rating impact of an enemy physical hit');
-  assert.equal(attackImpact(ctx, { kind: 'enemy' }, {}, false), 1, 'the impact the Poise meter takes');
 });
 
 // Pools only (owner decision, 2026-10-12): Poise protects as a pool. A physical hit takes no rating cut;

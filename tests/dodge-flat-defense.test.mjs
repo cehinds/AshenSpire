@@ -8,11 +8,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dealPoiseDamage } from '../src/engine/actions.js';
-import { applyRatingImpact } from '../src/engine/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { isPureDodge } from '../src/framework/importer.js';
@@ -24,7 +22,6 @@ const registries = createRegistries(contentBundle);
 function fight({ ratings = false } = {}) {
   return createCombat({
     registries, rng: createRng(0xd0d6e),
-    ...(ratings ? { ratingsRules: resolveCombatRatings({}, contentBundle) } : {}),
     player: {
       classId: 'reaver', maxHp: 100, hp: 100, mana: 0, maxMana: 0, maxStamina: 9, stamina: 9, energyMax: 9, drawPerTurn: 5,
       // Every attribute 10: DR = 0.5 STR + 0.75 DEX + 0.25 CON + 0.35 WIS + 0.15 INT,
@@ -79,30 +76,6 @@ test('with no DR bonus the Dodge Roll grants exactly 3 Block, 3 Poise and 3 Ward
   assert.equal(combatEffectForEvent({ type: 'meterGuardGained', meter: 'poise', amount: 3, targetId: p.id }), null, 'a guard from any other card is not a dodge');
   play(combat);
   assert.deepEqual([p.block, p.poiseGuard, p.wardGuard], [6, 6, 6], 'a second play stacks, like Block');
-});
-
-test('with DR the Dodge Roll grants 3 + DR of each, and the guards absorb impact before the meter fills', () => {
-  const combat = fight({ ratings: true });
-  const p = combat.player;
-  const dr = p.ratings.dr;
-  assert.equal(dr, 10, 'DEX 10 gives DR 10 at +1 per point');
-  const { preview } = play(combat);
-  assert.deepEqual([p.block, p.poiseGuard, p.wardGuard], [3 + dr, 3 + dr, 3 + dr]);
-  assert.deepEqual([preview.tokens.block, preview.tokens.gainPoise, preview.tokens.gainWard], [3 + dr, 3 + dr, 3 + dr]);
-
-  const seen = [];
-  const emit = combat.emit;
-  combat.emit = (type, payload) => { if (type === 'ratingImpact') seen.push(payload); return emit(type, payload); };
-  const poiseBefore = p.poiseMeter.value;
-  applyRatingImpact(combat, combat.enemies[0], p, { damageSchool: 'physical' }, 3 + dr + 2);
-  assert.equal(p.poiseGuard, 0, 'the Poise guard is spent first');
-  assert.equal(p.poiseMeter.value, poiseBefore + 2, 'only the overflow reaches the Poise meter');
-  const wardBefore = p.wardMeter.value;
-  applyRatingImpact(combat, combat.enemies[0], p, { damageSchool: 'magic' }, 4);
-  assert.equal(p.wardGuard, 3 + dr - 4, 'the Ward guard takes magical impact');
-  assert.equal(p.wardMeter.value, wardBefore, 'a fully guarded hit does not fill the Ward meter');
-  assert.deepEqual(seen.map((e) => [e.meter, e.amount, e.guarded]), [['poise', 2, 3 + dr], ['ward', 0, 4]]);
-  combat.emit = emit;
 });
 
 test('without ratings the Poise guard still absorbs poise damage', () => {
