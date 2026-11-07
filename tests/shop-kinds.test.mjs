@@ -272,55 +272,6 @@ test('FINISH: every kind\'s screen is registered, so the blacksmith and master w
   assert.equal(opened.shops.kindWeights.master, 50);
 });
 
-test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 fixed seeds', () => {
-  const fixture = JSON.parse(readFileSync(new URL('./fixtures/shop-shelves-pre-kinds.json', import.meta.url), 'utf8'));
-  const seeds = Object.keys(fixture.shelves);
-  assert.equal(seeds.length, 50);
-  // The fixture holds the card pools of its capture. Cards authored since
-  // (skill-draft depth) join the reward pools and so the card shelf; replaying
-  // at the capture's pools keeps this a test of the shop code, not the content.
-  const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
-    'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
-    'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
-    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion',
-    'aspDart', 'viperStrike', 'septicBlade', 'lethalDose', 'mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare',
-    'stoneSling', 'rockfall', 'stoneskin', 'entomb']);
-  // The immutable pre-master catalog still has the original card definitions;
-  // the exclusions above restore this earlier shelf capture's class pools.
-  // Freeze colorless candidates too, since shops draw those outside cardPool.
-  const capturedCards = JSON.parse(readFileSync(new URL('./fixtures/shop-card-catalog-pre-master.json', import.meta.url), 'utf8')).cards;
-  const capturedIds = new Set(capturedCards.map(card => card.id));
-  const CAPTURE_REG = createRegistries({ ...legacyContentBundle, cards: capturedCards,
-    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => capturedIds.has(id) && !addedSinceCapture.has(id)) })) });
-  for (const n of seeds) {
-    const before = fixture.shelves[n];
-    const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG, combatExpansionVersion: 1 });
-    const rng = createRng(before.runSeed, { shop: before.shopCounterAtEntry });
-    // main.js's merchant case, in its order: the stock, then the smith's roll.
-    const stock = buildMerchantStock(CAPTURE_REG, rng, run);
-    stock.smith = smithServicesAt(CAPTURE_REG, 'merchant', rng);
-    const { kind, offerings } = stock;
-    assert.equal(kind, 'market');
-    // Every shelf that existed before shop kinds is out on every visit. The
-    // market additions of §14.3 (step 5) may join them by their own chances.
-    assert.deepEqual(offerings.filter((id) => LEGACY_MARKET_OFFERINGS.includes(id)), [...LEGACY_MARKET_OFFERINGS]);
-    for (const id of offerings) assert.ok(LEGACY_MARKET_OFFERINGS.includes(id) || MARKET_ADDITIONS.includes(id), `seed ${n}: ${id}`);
-    // The captured shelves, byte for byte, in their captured key order; any
-    // other key is an addition's own stock.
-    const shelvesNow = Object.fromEntries(Object.keys(before.stock).map((key) => [key, stock[key]]));
-    assert.equal(JSON.stringify(shelvesNow), JSON.stringify(before.stock), `seed ${n}: the shelves, byte for byte`);
-    for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
-    // Nothing new is drawn on any existing stream. Only the additions' own
-    // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
-    // Sigils and intent visibility were appended after the fixture; shops use neither.
-    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, enemyIntentClue: _clue, enemyReaction: _reaction, ...counters } = rng.getCounters();
-    assert.deepEqual([_avoidance, _recovery, _pressure, _blight, _clue, _reaction], [0, 0, 0, 0, 0, 0]);
-    assert.equal(_sigils, 0);
-    assert.equal(_intentReads, 0);
-    assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
-  }
-});
-
 // ---------------------------------------------------------------------------
 // The rest of §14.2 that step 4 builds
 // ---------------------------------------------------------------------------
@@ -351,27 +302,6 @@ test('a chance between 0 and 100 rolls once per enabled offering, in written ord
     if (ids.includes('relics')) withRelics += 1;
   }
   assert.ok(withRelics > 60 && withRelics < 140, `a 50% offering came up ${withRelics}/200 times`);
-});
-
-test('a merchant rolls its kind from kindWeights on shopOffers, and only when more than one kind can come up', () => {
-  const rng = createRng(5);
-  assert.equal(rollShopKind(REG.shops, rng), 'market');
-  assert.equal(rng.getCounters().shopOffers, 0, 'one rollable kind draws nothing');
-  const mixed = { ...REG.shops, kindWeights: { market: 50, blacksmith: 50, master: 0 } };
-  const seen = new Set();
-  for (const seed of SEEDS) {
-    const r = createRng(seed);
-    seen.add(rollShopKind(mixed, r));
-    assert.equal(r.getCounters().shopOffers, 1);
-  }
-  assert.deepEqual([...seen].sort(), ['blacksmith', 'market']);
-  // Each kind opens its own visit, never a market under the wrong sign: the
-  // blacksmith (step 6) and the master (step 7) are both registered.
-  const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
-  const forced = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 0, master: 1 } } };
-  assert.equal(buildMerchantStock(forced, createRng(5), run).kind, 'master');
-  const smithy = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 1, master: 0 } } };
-  assert.equal(buildMerchantStock(smithy, createRng(5), run).kind, 'blacksmith');
 });
 
 test('the market keeps rolling every shelf on the shop stream, so a shelf left off moves no other shelf', () => {

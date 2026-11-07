@@ -594,25 +594,6 @@ test('a bought armour set this build does not know archives the save by name, li
 // Review of #1374 (should-fix and nits), and Codex's third round
 // ---------------------------------------------------------------------------
 
-test('a classic merchant scales every price by priceMult, and main.js opens it through the one door (review, #1374)', () => {
-  const run = createRunState({ seed: 8, classId: 'reaver', registries: OUT });
-  const plain = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 1);
-  const dear = applyShopPriceMult(buildMarketStock(OUT, createRng(8), run, { meta: {}, innInTown: true }), 2);
-  assert.ok(plain.offerings.includes('innRest'), 'a town with an inn always offers the rest');
-  assert.equal(dear.innRest.price, plain.innRest.price * 2);
-  assert.equal(dear.smithStones.price, plain.smithStones.price * 2);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `${kind}[${i}]`));
-  assert.equal(dear.removeCost, plain.removeCost * 2);
-  const merchant = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 2 });
-  const merchantPlain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 1 });
-  assert.equal(merchant.smithStones.price, merchantPlain.smithStones.price * 2);
-  // main.js opens both doors through it. Custom Climb's shop price mod is gone (cleanup 3f), so no run multiplier is passed.
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'/);
-  assert.doesNotMatch(main, /shopPriceMult/);
-  assert.doesNotMatch(main, /buildMarketStock\(registries, rng, run, \{ meta: saves\.loadMeta\(\), innInTown/);
-});
-
 test('armour is sold for this run only: the profile unlock is untouched, and a new run does not own the set (coordinator ruling, #1374)', () => {
   const meta = { unlocked: [] };
   const { run } = marketRun(OUT, { meta });

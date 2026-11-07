@@ -52,8 +52,8 @@ test('the host offers equip through the Armoury and keeps inventory as the dismi
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /\['weapons', 'armor'\]\.includes\(receipt\?\.kind\)\) return offerShopEquip/);
   assert.match(main, /showArmoury\(\{ equipItemId: id \}, showShop\)/);
-  assert.equal((main.match(/onArmamentPurchased: shopArmamentBought/g) || []).length, 4);
-  assert.equal((main.match(/onCardPurchased: offerShopCardDestination/g) || []).length, 2);
+  assert.equal((main.match(/onArmamentPurchased: shopArmamentBought/g) || []).length, 1);
+  assert.equal((main.match(/onCardPurchased: offerShopCardDestination/g) || []).length, 1);
   const smith = readFileSync(new URL('../src/ui/screens/blacksmith.js', import.meta.url), 'utf8');
   assert.match(smith, /onCardPurchased\?*\.?\(\{[^}]*instanceId: receipt\.instanceId/);
   const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');
@@ -81,24 +81,6 @@ test('movePurchasedCardToLibrary moves exactly a bought weapon art from the deck
   const before = JSON.stringify(run);
   assert.throws(() => movePurchasedCardToLibrary(reg, run, id), { code: 'notCard' });
   assert.equal(JSON.stringify(run), before);
-});
-
-test('the Master art choice setting is off by default and names its row', async () => {
-  const { settingOn, settingsRow } = await import('../src/ui/screens/settings.js');
-  assert.equal(settingOn({}, 'masterArtChoice'), false);
-  assert.equal(settingOn({ masterArtChoice: true }, 'masterArtChoice'), true);
-  assert.equal(settingsRow('masterArtChoice').label, 'Ask where Master weapon arts go');
-});
-
-test('the Master offers the destination choice only under the masterArtChoice setting, and dismissing keeps the deck', () => {
-  const master = readFileSync(new URL('../src/ui/screens/master.js', import.meta.url), 'utf8');
-  assert.match(master, /if \(settingOn\(\(meta \|\| \{\}\)\.settings, 'masterArtChoice'\) && receipt\.instance\) onArtPurchased\(receipt\)/);
-  assert.equal((master.match(/onArtPurchased\(/g) || []).length, 1, 'one call site, behind the setting');
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.equal((main.match(/onArtPurchased: offerMasterArtDestination/g) || []).length, 1);
-  assert.match(main, /onDismiss: \(\) => \{\},\s*onLibrary: \(\) => \{ movePurchasedCardToLibrary\(registries, run, instanceId\)/);
-  const modal = readFileSync(new URL('../src/ui/components/shopBuyChoice.js', import.meta.url), 'utf8');
-  assert.match(modal, /\(onDismiss \|\| onSecondary\)\?\.\(\)/);
 });
 
 test('a reward\'s Equip opens the Armoury with the offered item, so a slot choice equips it directly', () => {

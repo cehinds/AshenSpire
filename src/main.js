@@ -2,7 +2,7 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal, movePurchasedCardToLibrary } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -91,11 +91,9 @@ import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
 import { configuredShopKind } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
-import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
+import { buildBlacksmithStock, blacksmithVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
-import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
-import { commitQuestEvent } from './model/marketAdditions.js';
 import { MAX_ENEMIES_PER_COMBAT } from './model/combatLimits.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { CAMP_LOCATION } from './model/locations.js';
@@ -115,7 +113,7 @@ import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
-import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
+import { mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
@@ -2626,26 +2624,8 @@ function enterNode(nodeId) {
       // small rest and no services. A shrine node is the Shrine.
       return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
-      if (isConfiguredRun(run)) {
-        if (!gameModule(run, 'shops')) { persist(); return showMap(); }
-        run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
-      }
-      // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
-      // shipped weights make every one a market with every shelf out, drawing
-      // nothing new, so a seed's shelves are what they always were.
-      // Greedy Merchants and Hoarder scale every price it lays out, the
-      // market additions included (SPEC §14.3).
-      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant' });
-      // Does a smith travel with him? Rolled once here, on the smith's own
-      // stream (balance.smithing.services.offeredAt.merchant), and kept with
-      // the stock so leaving and re-entering the screen does not roll again.
-      // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
-      // no add-on is rolled for it.
-      // Nor for one that turned out to be a wise master (SPEC §14.5).
-      if (stock.kind !== 'blacksmith' && stock.kind !== 'master') stock.smith = smithServicesAt(registries, 'merchant', rng);
-      run.shopStock = stock;
-      persist();
-      return showShop();
+      if (!gameModule(run, 'shops')) { persist(); return showMap(); }
+      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
     }
     case 'treasure': {
       return beginGameProfileReward({ source: 'treasure', after: 'map' });
@@ -3338,17 +3318,6 @@ function offerShopCardDestination(receipt) {
     onDeck: () => { addPurchasedCardToDeck(registries, run, receipt.instanceId, settings); persist(); showShop(); },
   });
 }
-// The Master's art is already in the deck; Add to deck keeps it there, Add to library (dismissing keeps the deck) moves
-// exactly that instance. Only reached when the masterArtChoice setting is on.
-function offerMasterArtDestination(receipt) {
-  const instanceId = receipt?.instance?.instanceId;
-  if (!instanceId) return;
-  openShopCardChoice({
-    name: registries.cards.get(receipt.id)?.name || receipt.id,
-    onDeck: () => {}, onDismiss: () => {},
-    onLibrary: () => { movePurchasedCardToLibrary(registries, run, instanceId); persist(); showShop(); },
-  });
-}
 function shopArmamentBought(id) { recordCollectedArmament(id, 'shop'); offerShopEquip(id); }
 function offerShopEquip(id) {
   if (isConfiguredRun(run) && !gameModule(run, 'equipment')) return;
@@ -3357,91 +3326,27 @@ function offerShopEquip(id) {
 }
 
 function showShop() {
-  if (isConfiguredRun(run)) {
-    if (!gameModule(run, 'shops')) return showMap();
-    const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
-    run.gameProfileOpenShop = shopId;
-    // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
-    // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
-    if (configuredShopKind(run, shopId) === 'blacksmith') {
-      if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
-      persist(); audio.music('shop');
-      return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-        onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
-        onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
-    }
-    const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
-    audio.music('shop');
-    return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onTake: (index, quote) => {
-        const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
-        offerShopCardDestination(receipt);
-      },
-      onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
-      onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
+  if (!gameModule(run, 'shops')) return showMap();
+  const shopId = run.gameProfileOpenShop || `${run.actNumber}:${run.mapNodeId}`;
+  run.gameProfileOpenShop = shopId;
+  // Core (owner ruling 2026-10-28): a share of shop nodes is a Blacksmith, decided from the run seed and the node.
+  // The kind rides run.shopStock, so a reload and the ?shot=blacksmith door reach the same screen.
+  if (configuredShopKind(run, shopId) === 'blacksmith') {
+    if (shopStockKind(run.shopStock) !== 'blacksmith') run.shopStock = blacksmithVisitStock(registries, rng, run, { });
+    persist(); audio.music('shop');
+    return mountBlacksmith(app, { registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
+      onChanged: () => persist(), onArmamentPurchased: shopArmamentBought, onCardPurchased: offerShopCardDestination,
+      onLeave: () => { run.shopStock = null; delete run.gameProfileOpenShop; persist(); showMap(); } });
   }
+  const offer = gameProfileShopStock(registries, run, rng, { shopId }); persist();
   audio.music('shop');
-  // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
-  // resumes it after a reload, since the kind rides the stock.
-  // So is a wise master's (SPEC §14.5), by the same door.
-  if (shopStockKind(run.shopStock) === 'master') {
-    return mountMaster(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-      // A lesson's cards are rolled on the run's own `shopOffers` stream, at
-      // the reward door's odds (equal under Chaos Rewards).
-      rng,
-      onChanged: () => persist(),
-      onArmamentPurchased: shopArmamentBought,
-      onArtPurchased: offerMasterArtDestination,
-      onLeave: () => {
-        run.shopStock = null;
-        persist();
-        showMap();
-      },
-    });
-  }
-  if (shopStockKind(run.shopStock) === 'blacksmith') {
-    return mountBlacksmith(app, {
-      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop),
-      onChanged: () => persist(),
-      onArmamentPurchased: shopArmamentBought,
-      onCardPurchased: offerShopCardDestination,
-      onLeave: () => {
-        run.shopStock = null;
-        persist();
-        showMap();
-      },
-    });
-  }
-  mountShop(app, {
-    registries,
-    run,
-    hud: roomHud(showShop),
-    meta: saves.loadMeta(),
-    onChanged: () => persist(),
-    onArmamentPurchased: shopArmamentBought,
-    // A full rest bought at the market (SPEC §14.3): the inn's own visit on
-    // the run's streams, with the same heal scale and refill counts the Rest
-    // screen's visit is given (showRest).
-    restAtInn: (quote) => {
-      const healMult = 1;
-      const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
-      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus() });
+  return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
+    onTake: (index, quote) => {
+      const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
+      offerShopCardDestination(receipt);
     },
-    // The market's quest event (SPEC §14.3): paid and marked seen, then the
-    // visit closes exactly as Leave closes it, and the event door opens once.
-    enterQuestEvent: (quote) => {
-      const { eventId } = commitQuestEvent(registries, run, quote);
-      run.shopStock = null;
-      persist();
-      return showEvent(eventId);
-    },
-    onLeave: () => {
-      run.shopStock = null;
-      persist();
-      showMap();
-    },
-  });
+    onSell: quote => { commitGameProfileShopSale(registries, run, shopId, quote); persist(); showShop(); },
+    onLeave: () => { delete run.gameProfileOpenShop; persist(); showMap(); } });
 }
 
 function showEvent(eventId) {
@@ -3682,7 +3587,7 @@ if (shotState) {
 // already drawn on placeholders. A single file and the source tree pin
 // nothing, and this calls showFirstScreen() at once.
 function showFirstScreen() {
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3998,81 +3903,22 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // the modal opens on an offer, not a refusal.
     if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
     showRest(shotState === 'smith' ? 'smith' : null);
-  } else if (shotState === 'shop') {
-    if (isConfiguredRun(run)) {
-      if (!gameModule(run, 'shops')) throw new Error('Configured shop screenshot requires shops to be enabled');
-      const nodes = Object.values(run.mapGraph.nodes);
-      const node = nodes.find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
-      run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = screenshotRoutePath(run.mapGraph, node.id);
-      run.cinders = 999;
-      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
-      persist(); showShop(); return;
+  } else if (shotState === 'shop' || shotState === 'blacksmith') {
+    // Core's configured shop door: the node is posed as a shop node and showShop opens the Shop, or the Blacksmith for
+    // `?shot=blacksmith` (the stock rides run.shopStock). The legacy market/master poses went with the legacy shops.
+    if (!gameModule(run, 'shops')) throw new Error('Configured shop screenshot requires shops to be enabled');
+    const nodes = Object.values(run.mapGraph.nodes);
+    const node = nodes.find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
+    run.mapNodeId = node.id; run.floor = node.floor;
+    run.path = screenshotRoutePath(run.mapGraph, node.id);
+    run.cinders = shotState === 'blacksmith' ? 2000 : 999;
+    run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
+    if (shotState === 'blacksmith') {
+      run.smithingStones = 12;
+      run.loadout.storage.push('katana');
+      run.shopStock = buildBlacksmithStock(registries, rng, run);
     }
-    // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
-    // `?shot=rest`). The merchant is one of the screens no instrument this repo
-    // owns can open, which is why "burn a card out of the deck for good, one
-    // tap, no confirm" sat in shipped code with nobody's number against it —
-    // the same reason the Shrine's Smith grid overflowed a phone unseen.
-    //
-    // POSED WITH A DECK WORTH REMOVING FROM and a purse that can pay: the
-    // remove grid only renders at `cinders >= removeCost && deck.length > 1`,
-    // so a fresh run (0 cinders) mounts the screen with the one control this
-    // state exists to reach ABSENT — a green on nothing, which is the
-    // wrong-place empty SOP 2 calls malformed.
-    run.floor = 8;
-    run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
-    run.cinders = 999;
-    // AND ONE FLASK IN THE POSE (E2 / #247), same discipline as ?shot=combat's
-    // two: the SELL bar's shelf is the player's own goods, and a fresh run
-    // owns nothing the merchant prices (the starter relic is deliberately
-    // unpriced) — so without this line the one control `shopSell` arms is
-    // ABSENT on the only screen the census can open, and "not wired" and
-    // "nothing to sell" read identically. One flask, authored id, no rng.
-    run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
-    if (new URLSearchParams(location.search).has('shotLibrary')) {
-      const books = registries.consumables.all().filter((row) => row.kind === 'skillBook');
-      run.consumables = Object.fromEntries(books.map((book) => [book.id, 1]));
-      run.shopStock.offerings = ['skillBooks'];
-      run.shopStock.skillBooks = books.map((book) => ({ id: book.id, cost: book.cost }));
-    }
-    showShop();
-  } else if (shotState === 'blacksmith') {
-    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the
-    // smith's visit, posed so each service has something to act on — a purse
-    // of stones and cinders, a carried katana (an art to lift out and an
-    // armament to cut a slot into) and a sigil to set. Which offerings are
-    // out is the harness's own settings door (?shotSettings, Advanced → Shops).
-    run.cinders = 2000;
-    run.smithingStones = 12;
-    if (isConfiguredRun(run)) {
-      // A Core run reaches the Blacksmith through the configured shop door: pose the node as `?shot=shop` does, and
-      // showShop opens the Blacksmith because the stock rides run.shopStock.
-      if (!gameModule(run, 'shops')) throw new Error('Configured blacksmith screenshot requires shops to be enabled');
-      const node = Object.values(run.mapGraph.nodes).find(row => row.actualType === 'shop' || row.resolved?.kind === 'merchant') || run.mapGraph.nodes[run.mapGraph.startIds[0]];
-      run.mapNodeId = node.id; run.floor = node.floor;
-      run.path = screenshotRoutePath(run.mapGraph, node.id);
-      run.gameProfileOpenShop = `${run.actNumber}:${node.id}`;
-    }
-    run.loadout.storage.push('katana');
-    run.sigils = [registries.sigils.all()[0].id];
-    run.shopStock = buildBlacksmithStock(registries, rng, run);
-    showShop();
-  } else if (shotState === 'master') {
-    // THE WISE MASTER (SPEC §14.5), a reach state beside `?shot=blacksmith`:
-    // a master visit posed so each service has something to act on — a
-    // purse of cinders, a skill book to sell, and the first two tracks of the
-    // master the visit picks at level 2 (a respec to make). Which offerings
-    // are out is the harness's own settings door (?shotSettings, Advanced →
-    // Shops).
-    run.cinders = 2000;
-    run.consumables = { [registries.consumables.all().find((def) => def.kind === 'skillBook').id]: 1 };
-    run.shopStock = buildMasterStock(registries, rng, run);
-    for (const skillId of registries.shops.masters.find((row) => row.id === run.shopStock.masterId).skills.slice(0, 2)) {
-      run.skills = { ...run.skills, [skillId]: { xp: 0, level: 2, pendingDrafts: 0 } };
-    }
-    showShop();
+    persist(); showShop(); return;
   } else if (shotState === 'reward') {
     // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
     // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
