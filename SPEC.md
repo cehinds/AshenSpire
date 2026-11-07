@@ -1877,31 +1877,26 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 
 ### 7.4 Feedback & animation rules
 
-Hit feedback, beat order, pacing, defeat/victory screens, sound.
-
 **Hit feedback**
-- Floating damage/heal/block numbers; brief target flash on hit.
-- Screen shake on every hit that costs its target HP, scaled by the share of target max HP lost (after Block): 1 px under 2%, 2 px from 2%, 4 px from 8%, 7 px from 20%, 10 px from 35%; never over 10 px. When max HP is unknown, fall back to 1–4 px by absolute HP. Phones keep the shake.
-- Hit-stop: 60 ms on a hit of 6 HP or more, 120 ms on a hit of 35% of max HP or more (data rows; 0 turns it off). The attacker's impact frame and the target's recoil hold before the swing recovers; it pauses only those two figures' animation, and a click skips it.
-- Damage numbers size by share of max HP: `pct20` from 20%, `pct35` from 35%, `crit` from 25 HP. Big hits (≥20%) fire the `bigHit` haptic.
-- Bleed burst and Stagger get distinct, slightly bigger effects.
+- Floating damage/heal/block numbers; brief target flash on hit; Bleed burst and Stagger get distinct, slightly bigger effects.
+- Screen shake on every hit that costs HP, by share of target max HP lost (after Block): 1 px under 2%, 2 px from 2%, 4 px from 8%, 7 px from 20%, 10 px from 35%; never over 10 px. Unknown max HP: 1–4 px by absolute HP. Phones keep the shake.
+- Hit-stop: 60 ms on a hit of 6 HP or more, 120 ms on a hit of 35% of max HP or more (data rows; 0 disables). The attacker's impact frame and the target's recoil hold; only those two figures pause, and a click skips it.
+- Damage numbers size by share of max HP: `pct20` from 20%, `pct35` from 35%, `crit` from 25 HP. Hits ≥20% fire the `bigHit` haptic.
 
-**Beat order** (presentation `beatOrder`, default `sequential`)
-- An attack beat plays the attacker's stance, attack clip and return to stance; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
-- `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers wait only for `reactionMs`, never for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
-- The contact spark and the attacker's hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
+**Beat order** (`beatOrder`, default `sequential`)
+- The attacker's stance, attack clip and return play first; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
+- `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers never wait for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
+- The contact spark and attacker hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
 - `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
 
 **Animation settings**
-- Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops the shake alone; Reduce flashes suppresses flashes (`src/ui/fx.js`).
+- Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops only the shake; Reduce flashes suppresses flashes (`src/ui/fx.js`).
 - No animation blocks input; a click always skips to end-state.
-- Some effects have fixed durations (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms). The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never those fixed durations.
+- Fixed effect durations: heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms. The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never these.
 
 **Action pacing**
-- Every action plays as action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, with one gap at each step.
-- The gap is the **Pause between steps** setting: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0.
-- **Auto combat speed** divides the gap while auto combat runs (default ×1.5).
-- A click still skips to end-state.
+- Every action plays as action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, with one gap per step.
+- The gap is **Pause between steps**: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0. **Auto combat speed** divides it during auto combat (default ×1.5).
 
 **Defeat and Victory** (`src/ui/screens/gameover.js:58-65`)
 - Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished".
