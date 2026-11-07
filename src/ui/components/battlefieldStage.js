@@ -340,12 +340,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (field.isConnected) centerTargetOverheads();
     });
   });
-  function watchRackSize(rack) {
+  centerTargetOverheads.watchRack = rack => {
     if (watchedRacks.has(rack)) return;
     rackObserver.observe(rack);
     // The initial observation fires once; it re-places once, which is harmless and settles the first measure.
     watchedRacks.add(rack);
-  }
+  };
   function centerTargetOverheads() {
     const zoom = uiZoom();
     const key = [field.dataset?.layoutEpoch, zoom, field.querySelectorAll('.combatant').length, field.clientWidth, field.clientHeight].join('|');
@@ -372,8 +372,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
           groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight,
           // SPEC: the player's rack keeps a fixed 10 screen-pixel gap above the art; enemies keep the configured gap.
-          gap: frame.classList.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx, zoom }) });
-        watchRackSize(rack);
+          gap: frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx, zoom }) });
+        centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
       // legacy overhead here would make the controls jump between beats.
