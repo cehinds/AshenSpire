@@ -183,11 +183,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         // Fitted cards use --hand-card-y, not the old transform fan. Push their
-        // actual top positions down onto the action row.
+        // actual top positions down onto the action row. 30px, not 100px: at
+        // +100px the cards cover every control, so the row measures ZERO
+        // controls (H3/H6 fire, H1 has no chip to overlap and stays silent),
+        // which made this plant red for the wrong reason. 30px lands cards ON
+        // END TURN while it is still measurable, so H1 is the red.
         name: 'the fitted cards hang down over the action row',
         edits: [{
           file: 'styles/kit.css',
-          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 100px) !important; }",
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 30px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
