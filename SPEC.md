@@ -2772,36 +2772,137 @@ five-second default transition and per-scene holds are independent; final
 arrival waits for the player. Settings and hidden pages suspend playback.
 ## Configurable stat pools, ratings, Poise and Ward
 
-New runs snapshot the rating rules. Existing configuration snapshots without ratingsVersion 1 keep legacy combat arithmetic. New Settings values apply at new-run creation, not retroactively to a saved character. New combat snapshots persist ratings, both impact meters *(only Poise in §13.4p's scope)*, break growth and fractional status-resistance remainders.
+Ratings (AR, DR, PR, Poise, Ward) turn attributes and gear into damage, mitigation, impact meters and status resistance. Starting pools, formulas and caps are Settings.
 
-Advanced → Progression → Starting stats exposes, for each creation mode a player can pick (Standard and Assign points, each row labelled with its mode): the starting value every attribute opens at, the points available to assign on top of it, the total a character carries, the lowest a stat may be set to, the highest it may be raised to at creation, and whether points may be taken back off a stat. Setting the starting value decides the total (baseline × attributes + points available); leaving it alone lets the total drive and derives the baseline from it. Advanced → Progression → Equipment requirements exposes one row per authored item/attribute minimum plus one multiplier for the whole table; those minima are the floor under the total, because a class must still be able to hold the kit it starts in. Whole-number allocations, floors, ceilings and class presets scale to the chosen total, and the scaling stops there: no creation mode carries a conversion scale and no formula is normalized back to an authored unit scale. Every formula reads the attribute the character sheet shows, so a smaller pool buys smaller ratings, pools and hand sizes, and moving them is a retune of the coefficients rather than a factor behind them. Each HP and resource formula's base, per-attribute weights and growth per level are separately configurable under Advanced → Stats. Stat-driven hand sizes read the same unscaled attribute.
+### Snapshots and scope
+- New runs snapshot the rating rules; snapshots without `ratingsVersion` 1 keep legacy combat arithmetic.
+- New Settings values apply at new-run creation, not to a saved character.
+- New combat snapshots persist ratings, both impact meters *(only Poise in §13.4p's scope)*, break growth and fractional status-resistance remainders.
+- The shipped solo combat path adopts these rules. The foundation/combat-workshop path keeps its existing rules until supplied a compatible rating context.
 
-Advanced → Stats owns the HP, Mana, Stamina, Draw and Poise conversions, the hand rules, and the AR, DR, PR, Poise and Ward formulas, each item's own ratings, relic bonuses, status bonuses and resistance weights, diminishing-return constants and caps, impact categories, attack overrides and break penalties. Every rating is `base + floor(global multiplier × rating multiplier × Σ floor(weight × attribute))`: each attribute's contribution is floored on its own, and the product of the two multipliers and that sum is floored again so a fractional multiplier still yields a whole rating, so a weight is the rate that attribute converts at and a 0.25 weight yields nothing until the attribute reaches 4. Default formulas are ruleset 7 (`src/content/derivedStats.js:101-107`), each a floored term of its own: AR = STR; DR = DEX; PR = INT; Ward = 1 + WIS; Poise = 1 + CON. The owner's 2026-09-24 weights are the frozen formula for runs born before ruleset 7 (`src/model/statRows.js:37-44`): AR = 0.75 STR + 0.5 DEX + 0.25 CON + 0.25 WIS + 0.25 INT; DR = 0.5 STR + 0.75 DEX + 0.25 CON + 0.35 WIS + 0.15 INT; PR = 0.25 DEX + 0.5 CON + 0.5 WIS + 0.75 INT; Poise = 1 + 1 CON + 0.5 STR + 0.2 WIS + 0.1 INT; Ward = 1 + 0.2 DEX + 0.3 CON + 1 WIS + 0.5 INT (before: AR=floor(STR/2), DR=floor(DEX/2), PR=floor(INT/2)+floor(WIS/2), Poise=1+CON+floor(STR/2), Ward=1+WIS+floor(INT/2)) — Poise and Ward open at a base of 1 because a vessel of nothing is not a vessel. Every formula exposes a base, attribute weights and a multiplier; a single global multiplier scales all five. Both multipliers default to 1. Equipped weapons and armour, relics, mounted properties and active status bonuses contribute additively. Physical weapon Attack Rating contributes AR; magical weapon Attack Rating contributes PR; item Defense Rating contributes DR (body armour's own DR is the optional `defenseRating` column of `outfits.csv`, blank as 0 — the Reaver's starting Wayfarer Plate authors 1 — and is not printed on the armour card); body-armour Poise contributes Poise. Every item's ratings are configurable as the item's OWN VALUES, not as bonuses on top of them: the settings row opens on the authored number and whatever stands there is the item's rating on the item card, in the Armoury and in combat, with attributes, relics, mounted properties and status bonuses added to it. A configured rating is written back to the column it came from (a weapon's Attack Rating by its attack profile's school, an item's Defense Rating, body armour's Poise threshold, which is also its weight); a rating no item column can hold — Ward, an armament's Poise, the off-school Attack Rating, and every rating body armour carries but its Poise — is carried by the run's rating rules and reaches combat without appearing on the card. Item ratings apply only while the ratings system is enabled, because body armour's Poise threshold is also its weight. Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
+### Starting stats and scaling
+- **Advanced → Progression → Starting stats**, one row per creation mode (Standard, Assign points): starting value of every attribute; points to assign; total; lowest a stat may be set; highest at creation; whether points may be taken back.
+- Setting the starting value decides the total (baseline × attributes + points). Leaving it lets the total drive and derives the baseline.
+- **Advanced → Progression → Equipment requirements**: one row per authored item/attribute minimum, plus one table multiplier. The minima are the floor under the total (a class must hold its starting kit).
+- Allocations, floors, ceilings and class presets scale to the chosen total, and scaling stops there: no conversion scale, no formula normalized back to an authored unit scale.
+- Formulas and stat-driven hand sizes read the unscaled attribute the sheet shows, so a smaller pool buys smaller ratings, pools and hands; retune coefficients, never add a factor.
+- **Advanced → Stats** owns: each HP and resource formula's base, attribute weights and growth per level; HP, Mana, Stamina, Draw and Poise conversions; hand rules; the five rating formulas; item ratings; relic and status bonuses; resistance weights; diminishing-return constants and caps; impact categories; attack overrides; break penalties.
 
-Card damage is base plus AR for physical attacks or PR for magical attacks. Physical defensive skill Block receives DR; magical Block and healing receive PR. Magical power hooks retain their originating card so their damage, Block and healing receive PR. Resource generation, buff duration, card draw and action costs do not receive PR. Profile-level attribute scaling is disabled for these new runs to avoid adding the same attribute bonus twice. Existing authored card-specific modifiers remain applicable.
+### Rating formula
+`rating = base + floor(global multiplier × rating multiplier × Σ floor(weight × attribute))`. Each attribute term is floored alone, then the product again (a 0.25 weight yields nothing until the attribute reaches 4). Each formula exposes base, weights and multiplier; one global multiplier scales all five; both default 1. Each ruleset-7 formula is a floored term of its own.
 
-After additive bonuses, percentage modifiers apply. Physical damage is reduced by Poise/(Poise+K); magical damage by Ward/(Ward+K). K defaults to 100, with a configurable 80% maximum reduction. Resistance uses the rating, not accumulated impact. Enemy Poise and Ward are independently configurable and default to the enemy’s authored Poise threshold (Core values halved, owner 2026-10-19). K is an absolute rating threshold: a lower starting pool lowers the ratings that meet it, and K is retuned rather than scaled.
+| Rating | Default, ruleset 7 (`src/content/derivedStats.js:101-107`) | Frozen for runs born before ruleset 7 (`src/model/statRows.js:37-44`) |
+|---|---|---|
+| AR | STR | 0.75 STR + 0.5 DEX + 0.25 CON + 0.25 WIS + 0.25 INT |
+| DR | DEX | 0.5 STR + 0.75 DEX + 0.25 CON + 0.35 WIS + 0.15 INT |
+| PR | INT | 0.25 DEX + 0.5 CON + 0.5 WIS + 0.75 INT |
+| Poise | 1 + CON | 1 + 1 CON + 0.5 STR + 0.2 WIS + 0.1 INT |
+| Ward | 1 + WIS | 1 + 0.2 DEX + 0.3 CON + 1 WIS + 0.5 INT |
 
-An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. *(Superseded in §13.4p's scope: both fill Poise, and Ward is a rating only.)* A physical hit that carries its source weapon (the Strike and package cards a weapon deals) is as heavy as the weapon: weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Any other card hit, weapon arts included, uses the card's own Poise or Ward value (§3.4). An attack that carries no card value keeps the defaults: magic 1, unarmed physical 1, untyped enemy physical 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
+**Sources** add together: equipped weapons and armour, relics, mounted properties, active status bonuses.
+- Physical weapon Attack Rating → AR; magical weapon Attack Rating → PR; item Defense Rating → DR; body-armour Poise → Poise.
+- Body armour's own DR is the optional `defenseRating` column of `outfits.csv` (blank = 0; the Reaver's starting Wayfarer Plate authors 1), not printed on the armour card.
+- Item ratings are the item's OWN VALUES, not bonuses: the settings row opens on the authored number, which is the rating on the card, in the Armoury and in combat; attributes, relics, mounted properties and status bonuses add to it.
+- A configured rating is written back to its source column: weapon Attack Rating (by its attack profile's school), item Defense Rating, body armour's Poise threshold (also its weight). A rating no column can hold (Ward, an armament's Poise, off-school Attack Rating, every body-armour rating but Poise) lives in the run's rating rules and reaches combat without appearing on the card.
+- Item ratings apply only while the ratings system is enabled (body armour's Poise threshold is also its weight).
+- Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
 
-*(In §13.4p's scope: one Poise guard, one break, no Disruption, and a magical Stagger is Staggered like any other, with no `magicVulnerable`.)* A Poise or Ward guard (the Dodge Roll's, §12.1) is spent on impact before the matching meter fills, as Block is spent before HP, and clears at the start of its owner's turn. Poise break is Stagger; Ward break is Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move. Every enemy break, Poise or Ward, also runs `balance.poise.onFill` (the `staggered` status, so every Staggered-gated rider such as Executioner fires), once per impact however many thresholds it crosses (owner, 2026-10-12: "on poise break yes"; "any break but vulnerable to any damage type"). The meter keeps overflow and grows its threshold by 25%, rounded upward. Breaks do not additionally apply Weak or Vulnerable under the new rules. Meter recovery defaults to 0 and is configurable per player turn.
+### Card damage
+- Card damage = base + AR (physical) or PR (magical).
+- Physical defensive-skill Block gets DR; magical Block and healing get PR. Magical power hooks keep their originating card, so their damage, Block and healing get PR.
+- Resource generation, buff duration, card draw and action costs get no PR.
+- Profile-level attribute scaling is off for these runs (no double bonus). Authored card-specific modifiers still apply.
 
-Status resistance reduces hostile buildup or incoming stacks, not duration or proc severity: effective rating = Poise*physicalWeight + Ward*magicalWeight. Applied amount = base*K/(K+effective rating), subject to the resistance cap. Fractional applications carry forward per target/status rather than making repeated small applications immune. Default profiles: Bleed and Venom 100% Poise; Insanity and Madness 100% Ward; Frost and Crimson Blight 50/50; Burn 25% Poise and 75% Ward. Other effects are unresisted until configured. Both weights may be positive and need not sum to one. Self-applied beneficial effects are unaffected.
+### Mitigation
+After additive bonuses, percentage modifiers apply.
+- Physical damage reduced by Poise/(Poise+K); magical by Ward/(Ward+K). Uses the rating, not accumulated impact.
+- K defaults to 100; maximum reduction configurable, default 80%. K is an absolute rating threshold: retune it, never scale it, when the starting pool changes.
+- Enemy Poise and Ward are independently configurable, defaulting to the enemy's authored Poise threshold (Core values halved, owner 2026-10-19).
 
-The shipped solo combat path adopts these rules. The independent foundation/combat-workshop path retains their existing rules until explicitly supplied a compatible rating context.
+### Impact and breaks
+An attack that deals HP damage also deals impact: physical fills Poise, magical fills Ward. *(Superseded in §13.4p's scope: both fill Poise; Ward is a rating only.)*
 
-### 13.4s Core card upgrades: free by rank, a stone past that, ten at most (owner ruling, 2026-10-28)
+| Hit | Impact |
+|---|---|
+| Physical hit carrying its source weapon (Strike and package cards) | Weapon weight: ≤3 → 1, ≤6 → 2, ≤8 → 3, above 8 → 4 |
+| Any other card hit, weapon arts included | The card's own Poise or Ward value (§3.4) |
+| No card value | Magic 1; unarmed physical 1; untyped enemy physical 2 |
 
-**Owner ruling, 2026-10-28. Core only; Legacy and Current keep the single authored upgrade.** The decided design and its build order are `docs/ai/tasks/CARD-UPGRADES-2026-10-28.md`.
+- Configurable: weapon thresholds, per-enemy physical impact, per-enemy-move typing, per-card overrides. -1 inherits the category value; 0 disables impact.
+- Fully blocked attacks cause no impact. Authored poise-damage effects remain additional physical impact.
+- *(In §13.4p's scope: one Poise guard, one break, no Disruption; a magical Stagger is Staggered like any other, no `magicVulnerable`.)* A Poise or Ward guard (the Dodge Roll's, §12.1) is spent on impact before its meter fills, as Block before HP, and clears at the start of its owner's turn.
+- Poise break = Stagger; Ward break = Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move.
+- Every enemy break also runs `balance.poise.onFill` (the `staggered` status, so Staggered-gated riders such as Executioner fire), once per impact however many thresholds it crosses (owner, 2026-10-12).
+- The meter keeps overflow; its threshold grows 25%, rounded up. Breaks apply no extra Weak or Vulnerable. Meter recovery defaults to 0, configurable per player turn.
 
-- **Ranks are on in Core** (`progression.cardRanks`, §13.4o): a rank adds 1 to a card's primary number per step past 1.
-- **Free upgrades.** An upgrade's number n starts at 1 and is free while n is at most the card's free allowance F. F is the instance's rank (default 1, at most 10), except that a Basic card or a cantrip gets F = 1. For upgrades, Basic means a common card that is not a spell, and a cantrip is a card tagged `rank.cantrip`; uncommon, rare and starter cards are not Basic. This is not the Martial Adept Basic rule.
-- **Cost and cap.** Each upgrade past F costs 1 Smithing Stone. **At a Blacksmith (owner ask, 2026-10-31)** every upgrade, within the free allowance or past it, costs `blacksmith.prices.cardUpgrade` (40) cinders and no Smithing Stone (the 1 stone less the Blacksmith's stone discount, never below 0); a rest site is unchanged. A Blacksmith can also raise a card's rank (§14.4 `rankUp`). A card takes at most 10 upgrades. A card with no eligible step left is fully upgraded; both refusals read "Fully upgraded" and cannot be bought again.
-- **What an upgrade does.** Step 1 is the card's authored upgrade when it has one; otherwise, and for every later step, a seeded procedural step: +damage, +block, +status stacks, an added status, -1 cost, or +hits. Each is capped (a status never past its cap, damage or block gain never past +100% of the base, cost never below 1, cost and hits once per card) and never touches a conditional or HP-loss effect. Power, status and curse cards take only a cost step. Retain is not offered, because Core does not honour it at end of turn. The roll is `mulberry32(hash(run.seed, instanceId, stepIndex))`, so a preview equals the commit; the step is stored on the card (`upgradeSteps`) and never re-derived. The name is `Name+` for one upgrade and `Name+N` for N.
-- **Where.** At a rest site, one card upgrade per visit, alongside the other services (it does not close them). At the Blacksmith, any owned card (deck or sideboard; owner, 2026-10-31: the upgrade picker shows every upgradable owned card, and deck cards are marked "In deck"), with no limit per visit while the player can pay. As an event reward, one free step (still capped at 10). In every case the picker shows the cost (Free, or 1 Smithing Stone) and the card before and after, from the same step the commit applies.
+### Status resistance
+Reduces hostile buildup or incoming stacks, not duration or proc severity. Self-applied beneficial effects are unaffected; other effects are unresisted until configured.
+- Effective rating = Poise × physicalWeight + Ward × magicalWeight (positive, need not sum to 1). Applied = base × K/(K + effective rating), subject to the resistance cap.
+- Fractional applications carry forward per target/status.
+
+| Status | Poise / Ward weight |
+|---|---|
+| Bleed, Venom | 100% / 0 |
+| Insanity, Madness | 0 / 100% |
+| Frost, Crimson Blight | 50% / 50% |
+| Burn | 25% / 75% |
+
+### 13.4s Core card upgrades: free by rank, a stone past that, ten at most
+
+Core only (Legacy and Current keep the single authored upgrade). Design and build order: `docs/ai/tasks/CARD-UPGRADES-2026-10-28.md`. Ranks are on in Core (`progression.cardRanks`, §13.4o): a rank adds 1 to a card's primary number per step past 1.
+
+- **Free allowance F.** Upgrade number n starts at 1 and is free while n ≤ F.
+  - F = the instance's rank (default 1, at most 10); a Basic card or a cantrip gets F = 1.
+  - For upgrades, Basic = a common card that is not a spell; cantrip = a card tagged `rank.cantrip`. Uncommon, rare and starter cards are not Basic. This is not the Martial Adept Basic rule.
+- **Cost and cap.**
+  - Each upgrade past F costs 1 Smithing Stone. A card takes at most 10 upgrades.
+  - At a Blacksmith every upgrade, free or not, costs `blacksmith.prices.cardUpgrade` (40) cinders and no Smithing Stone (the 1 stone less the Blacksmith's stone discount, never below 0). A rest site is unchanged. A Blacksmith can also raise a card's rank (§14.4 `rankUp`).
+  - A card with no eligible step left is fully upgraded: both refusals read "Fully upgraded" and cannot be bought again.
+- **What a step does.**
+  - Step 1 is the card's authored upgrade if it has one; otherwise, and for every later step, a seeded procedural step.
+  - Caps: a status never past its cap; damage or block gain never past +100% of base; cost never below 1; cost and hits once per card. Never touches a conditional or HP-loss effect.
+  - Power, status and curse cards take only a cost step. Retain is not offered (Core does not honour it at end of turn).
+  - Roll = `mulberry32(hash(run.seed, instanceId, stepIndex))`, so preview equals commit. The step is stored on the card (`upgradeSteps`), never re-derived. Name: `Name+` for one upgrade, `Name+N` for N.
+- **Where.**
+  - Rest site: one card upgrade per visit, alongside the other services (it does not close them).
+  - Blacksmith: any owned card (deck or sideboard; deck cards marked "In deck"), no limit per visit while the player can pay.
+  - Event reward: one free step (still capped at 10).
+  - Every picker shows the cost (Free, or 1 Smithing Stone) and the card before and after, from the same step the commit applies.
 - **Blacksmith reach.** 25% of Core shop nodes are a Blacksmith instead of the merchandise shop (`shops.blacksmithChance`), decided once per node from the run seed.
-- **The option list (owner ask, 2026-10-31).** Every step after the authored one is drawn from: +damage, +block, +status stacks, an added status, -1 SP or MP, +hits, and these identity steps, each with its weight (the older kinds keep theirs: dmg 30, blk 25, stk 20, cost 10, addStatus 8, hits 5): **poise** (12) +max(1, ceil 20%) on the first plain `poiseDamage` effect, only on a card that has one, never past +100% of the base; **range** (6) melee to reach, reach to ranged, replacing the card's `range:` tag, on a card that attacks; **targeting** (6) a card's first plain damage effect moves between one enemy and all enemies, with its `targeting:` tag swapped: single to area cuts the amount by 25% (rounded up, at least 1), area to single adds 25% (rounded up, never past +100% of the base); never on a Sweep, once per card; **stance** (5) the `maneuver:` tag of a physical attack changes among attack, smash and ranged (smash only on a card that pays 2 SP or more), once per card, never a Sweep, Defend or Counter; **school** (4) a spell's `school:` tag is set to another of the combat school list (frost, fire, lightning, force, alteration, illusion, divine, decay, earth), once per card; **element** (6) a physical attack's damage school becomes magic, arcane, holy or fire (a magical property), once per card; **rank down** (3) adds `rank.cantrip`, so the copy counts as a cantrip (Basic: free allowance 1) from then on, once per card, only on a card that is not already Basic. A cantrip or Basic costs no Mana, printed or upgrade-made (owner, 2026-11-01; `core.mendingTouch` now prints 0 MP, and the validator refuses a `rank.cantrip` card with Mana): a rank-down step sets the copy's Mana cost to 0 wherever the card resolves (saved copies included), the preview reads e.g. Mana 2 → 0, and no -1 Mana (`cost`) step is offered on a cantrip, a Basic or a copy that became one; a card paying 0 Stamina is not offered rank down, since a 0/0 cantrip is forbidden. A step that changes nothing is never offered. The vocabulary is the one `combatCardProfile.js` reads; saves and combat snapshots validate the new `poise` and `tag` step kinds like the rest.
-- **The choice (owner ask, 2026-10-31).** At a Blacksmith the player picks one of several rolled options instead of taking one random result: **2 options for a Basic card, 3 for a ranked (not Basic) card**; a rest-site upgrade, an event's free upgrade and co-op keep the single roll. The options are distinct (never the same kind twice) and come from the same per-step seeded stream, the first being exactly the single roll, so a preview equals the commit. A card's first upgrade still offers its authored upgrade (one option), plus one rolled alternative at a Blacksmith. A quote lists its options; the commit re-plans the same list and refuses a step that is not on it. The dialog shows the options' after-faces side by side (stacked on a phone) with the picked one highlighted.
+- **Step options and weights.** Every step after the authored one draws from the table. A step that changes nothing is never offered. The vocabulary is the one `combatCardProfile.js` reads; saves and combat snapshots validate the `poise` and `tag` step kinds like the rest.
+
+| Kind | Weight | Effect |
+|---|---|---|
+| dmg | 30 | +damage |
+| blk | 25 | +block |
+| stk | 20 | +status stacks |
+| cost | 10 | -1 SP or MP |
+| addStatus | 8 | an added status |
+| hits | 5 | +hits |
+| poise | 12 | +max(1, ceil 20%) on the first plain `poiseDamage` effect; only on a card that has one; never past +100% of base |
+| range | 6 | melee → reach, reach → ranged, replacing the `range:` tag; on a card that attacks |
+| targeting | 6 | first plain damage effect moves between one enemy and all enemies, `targeting:` tag swapped; single → area cuts the amount 25% (round up, min 1), area → single adds 25% (round up, never past +100% of base); never on a Sweep; once per card |
+| stance | 5 | a physical attack's `maneuver:` tag changes among attack, smash, ranged (smash only on a card paying 2 SP or more); once per card; never a Sweep, Defend or Counter |
+| school | 4 | a spell's `school:` tag set to another of frost, fire, lightning, force, alteration, illusion, divine, decay, earth; once per card |
+| element | 6 | a physical attack's damage school becomes magic, arcane, holy or fire (a magical property); once per card |
+| rank down | 3 | adds `rank.cantrip` (copy counts as a cantrip, Basic, F = 1, from then on); once per card; only on a card not already Basic |
+
+- **Cantrip and Basic Mana.** A cantrip or Basic costs no Mana, printed or upgrade-made (`core.mendingTouch` prints 0 MP; the validator refuses a `rank.cantrip` card with Mana).
+  - Rank down sets the copy's Mana cost to 0 wherever the card resolves (saved copies included); the preview reads e.g. Mana 2 → 0.
+  - No -1 Mana (`cost`) step is offered on a cantrip, a Basic or a copy that became one.
+  - A card paying 0 Stamina is not offered rank down (a 0/0 cantrip is forbidden).
+- **The choice (Blacksmith only).** The player picks one of several rolled options: 2 for a Basic card, 3 for a ranked (not Basic) card. Rest-site upgrades and event free upgrades keep the single roll.
+  - Options are distinct kinds from the same per-step seeded stream; the first is exactly the single roll, so preview equals commit.
+  - A card's first upgrade still offers its authored upgrade (one option), plus one rolled alternative at a Blacksmith.
+  - A quote lists its options; the commit re-plans the same list and refuses a step not on it.
+  - The dialog shows the after-faces side by side (stacked on a phone), the picked one highlighted.
+
+#### Notes and history
+- Runs born before ruleset 7 keep the frozen formulas in the rating table.
+- In §13.4p's scope Ward is a rating only (no Ward meter).
+- Core card upgrades (§13.4s) are Core only; Legacy and Current keep the single authored upgrade.
+
+Full history: [docs/spec-history/14-statpools-shops.md](docs/spec-history/14-statpools-shops.md).
 
 ## 14. The deck editor and the three shops (owner brief, 2026-09-26)
 
