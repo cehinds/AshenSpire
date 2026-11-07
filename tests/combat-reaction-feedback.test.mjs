@@ -221,7 +221,7 @@ test('v2: a lethal Smash still reports Guard broken without applying break Poise
 
 test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or synchronous', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50), ruleset: combatRules,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -238,7 +238,7 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
 
 test('v1: a lethal Smash still reports Guard broken without applying break Poise to the dead target', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50), ruleset: combatRules,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -255,7 +255,7 @@ test('v1: a lethal Smash still reports Guard broken without applying break Poise
 
 test('v1: a Smash with a zero break bonus still reports the Guard break, with no Poise claim', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50), ruleset: combatRules,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -288,7 +288,7 @@ test('v2: a lethal Smash that breaks Guard still emits combatGuardBroken once, w
 
 test('v1: a lethal Smash that breaks Guard emits combatGuardBroken once and queues no bonus Poise', () => {
   const registries = createRegistries(contentBundle);
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50), ruleset: combatRules,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20,
       energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });
   const enemy = c.enemies[0];
@@ -312,7 +312,7 @@ test('v1: a Smash into an armed Counter breaks Guard through the synchronous doo
     cards: legacyContentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
     enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
-  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
+  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'],
     player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });
   const enemy = c.enemies[0];

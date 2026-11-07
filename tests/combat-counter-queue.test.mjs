@@ -17,7 +17,7 @@ function fight(effects) {
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'strike1', cardId: 'strike' }], relicIds: [] };
-  const options = { registries, rng: createRng(340), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null };
+  const options = { registries, rng: createRng(340), enemyIds: ['gildedKnight', 'wanderingSoldier'] };
   const c = createCombat({ ...options, player });
   const actor = c.player;
   actor.poiseMeter = { value: 0, max: 100 };
@@ -77,7 +77,7 @@ test('a freshly prepared live Counter works after an earlier player stagger', ()
     enemyMoves: contentBundle.enemyMoves.map(move => move.enemyId === 'wanderingSoldier' && move.id === 'slash'
       ? { ...move, damage: 4 } : move),
   });
-  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null,
+  const c = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'riposte1', cardId: 'riposte' }], relicIds: [] } });
   staggerPlayer(c, c.player);

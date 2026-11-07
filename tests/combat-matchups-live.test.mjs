@@ -7,7 +7,6 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 import { combatRules } from '../src/content/combatRules.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { staggerPlayer } from '../src/engine/actions.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 
@@ -197,30 +196,6 @@ test('foundation Counter snapshots its source before payment and preserves it fo
   assert.equal(reply.sourceInstanceId, 'prepared-sword');
 });
 
-test('Sweep or Piercing Poise break cancels enemy Counter before follow-up Attack', () => {
-  for (const cardId of ['cleavingBlow', 'rimeThrust']) {
-    const inputs = player(cardId);
-    inputs.attributes = { strength: 0, dexterity: 0, constitution: 0, wisdom: 0, intelligence: 0, charisma: 0 };
-    inputs.drawPerTurn = 2;
-    inputs.deck.push({ instanceId: 'followup', cardId: 'strike' });
-    const rated = cardId === 'rimeThrust';
-    const ratingsRules = rated ? resolveCombatRatings({}, contentBundle) : null;
-    // Piercing card gains authored impact through the shared configurable row.
-    if (ratingsRules) ratingsRules.attackImpact.rimeThrust = 1;
-    const c = createCombat({ registries: counterRegistry, rng: createRng(50), player: inputs,
-      enemyIds: ['gildedKnight'], ratingsRules });
-    const enemy = c.enemies[0];
-    enemy.poiseMeter.value = enemy.poiseMeter.max - (rated ? 1 : 3);
-    dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
-    assert.equal(enemy.intent.kind, 'staggered', cardId + ' interrupts preparation');
-    assert.equal(enemy.combatCounter, undefined, cardId + ' clears armed reaction');
-    const hp = c.player.hp;
-    dispatch(c, { type: 'playCard', cardInstanceId: 'followup', targetId: enemy.id });
-    assert.equal(c.player.hp, hp);
-    assert.equal(counterEvents(c).length, 0);
-  }
-});
-
 test('player stagger also cancels prepared Counter while preserving existing defense pools', () => {
   const c = solo('riposte');
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
@@ -328,7 +303,7 @@ test('Deathblow shares one Slashing rider across its separately queued damage ef
   });
   for (const foundation of [false, true]) {
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
-      ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+      ...(foundation ? { ruleset: combatRules } : {}) };
     const c = createCombat({ ...options, player: player('deathblow') });
     const enemy = c.enemies[0]; enemy.hp = enemy.maxHp = 200;
     applyStatus(c, enemy, 'bleed', 1); applyStatus(c, enemy, 'venom', 1);
@@ -349,7 +324,7 @@ test('multi-effect, multi-hit AoE Piercing shares per-target budget and resets n
     const inputs = player('rimeThrust'); inputs.drawPerTurn = 2;
     inputs.deck.push({ instanceId: 'card2', cardId: 'rimeThrust' });
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier', 'wanderingSoldier'],
-      ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+      ...(foundation ? { ruleset: combatRules } : {}) };
     const c = createCombat({ ...options, player: inputs });
     for (const enemy of c.enemies) { enemy.hp = enemy.maxHp = 200; enemy.block = 100; }
     for (const instanceId of ['card1', 'card2']) {
@@ -378,7 +353,7 @@ test('enemy move damage payloads share a rider budget per seat, including chargi
     });
     for (const foundation of [false, true]) {
       const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
-        ...(foundation ? { ruleset: combatRules } : {}), ratingsRules: null };
+        ...(foundation ? { ruleset: combatRules } : {}) };
       const c = createCombat({ ...options, player: player('strike') });
       const targets = [c.player];
       if (type === 'piercing') for (const target of targets) target.block = 100;

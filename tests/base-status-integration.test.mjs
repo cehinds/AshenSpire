@@ -23,7 +23,7 @@ function fight(profileId = 'current', expanded = false, { intentRoll = null } = 
     return stream === 'enemyIntentVisibility' ? intentRoll : value;
   };
   const combat = createCombat({ registries, rng, gameProfile,
-    ...(profileId === 'current' ? { ruleset: combatRules } : {}), ratingsRules: null,
+    ...(profileId === 'current' ? { ruleset: combatRules } : {}),
     ...(expanded ? { combatExpansionVersion: 2, reactionRulesVersion: 1 } : {}),
     enemyIds: ['wanderingSoldier', 'wanderingSoldier'], player: { classId: 'reaver',
       hp: 200, maxHp: 200, mana: 20, maxMana: 20, stamina: 20, maxStamina: 20,

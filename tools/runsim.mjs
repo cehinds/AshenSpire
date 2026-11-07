@@ -16,8 +16,8 @@ import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
 // Run: node tools/runsim.mjs [runsPerClass=30] [--incoming] [--level-stat=<attr>]
-//   --single-break-meter: use the configured ratings and version-1 run stamp
-//   from SPEC §13.4p; assert that each measured fight uses the shared meter.
+//   --single-break-meter: use the configured Advanced settings (the combat
+//   ratings meter rules themselves are retired; fights run the configured Core path).
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
 //   default order. Off by default so the win-rate corpus keeps comparing the
 //   same climbs it always measured (§13.6); on, it measures every order — the
@@ -352,9 +352,6 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyStatuses: cm.enemyStatuses || [],
   });
   stampCombatPlaysEver(run, combat);
-  if (SINGLE_BREAK && (combat.breakMeterVersion !== 1 || !combat.ratingsRules || combat.player.wardMeter || combat.enemies.some(e => e.wardMeter || e.arcaneExposure))) {
-    throw new Error('single-break-meter fleet reached a fight outside its stamped rules');
-  }
   if (DIGEST) decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a

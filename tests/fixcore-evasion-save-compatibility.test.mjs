@@ -106,7 +106,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-05: retiring the glassCannon status edits engine/mechanics/index.json (the mechanics-runtime artifact), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-05: the Reach cap (range.maxRange in fixCoreMechanics.json, src/model/combatEngagement.js) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-07: the combat-rounds removal repoints four mechanic manifests (legacy.file), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:965682a58b40bf7289b03d5ca54789f45b08c55bc1e8db5619e3894a742a80a7');
+  assert.equal(profile.lock.runtimeHash, 'sha256:05977e492f74b543357e606b8e3cf7a0dd8984bc746a4dda123c976c851f660b');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

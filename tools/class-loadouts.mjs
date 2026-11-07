@@ -8,7 +8,6 @@ import { validateEquipment, stampDeck, startingDeckPlan } from '../src/model/loa
 import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { validateContent } from '../src/model/validate.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
 
 // DOOR. The real input is the content bundle and the model/engine modules,
@@ -185,7 +184,6 @@ check(standardReceipt?.base === 2 && standardReceipt.rating?.id === 'pr'
 const C = createCombat({
   registries: R,
   rng: createRng(71),
-  ratingsRules: resolveCombatRatings({}, contentBundle),
   player: {
     classId: 'starseer', attributes: starseer.attributes, maxHp: starseer.maxHp, hp: starseer.hp,
     maxMana: starseer.maxMana, mana: starseer.mana, maxStamina: starseer.maxStamina, stamina: starseer.stamina,

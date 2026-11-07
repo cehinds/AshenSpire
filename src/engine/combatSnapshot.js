@@ -22,7 +22,6 @@ import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
-import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot, bringStancesForward } from '../model/combatSnapshot.js';
@@ -100,7 +99,6 @@ export function serializeCombatSnapshot(combat) {
       ...(combat.enemyReactionRolls ? { enemyReactionRolls: combat.enemyReactionRolls } : {}),
       ...(combat.reactionRootPlay ? { reactionRootPlay: combat.reactionRootPlay } : {}),
       ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
-    ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
@@ -223,7 +221,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
-    ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
     // saved by an earlier build holds the creation-scale divisor its ratings
@@ -340,9 +337,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —
   // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
-  if (combat.ratingsRules) {
-    refreshCombatRatings(combat);
-  } else if (!configuredCombat(combat) && combat.player && combat.loadout) {
+  if (!configuredCombat(combat) && combat.player && combat.loadout) {
     stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,

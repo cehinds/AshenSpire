@@ -5,7 +5,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { combatRules } from '../src/content/combatRules.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 
 function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0, foundation = false } = {}) {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing',
@@ -19,7 +18,7 @@ function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0, foun
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] };
-  const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
+  const options = { registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'],
     ...(foundation ? { ruleset: combatRules, combatProfiles: { player: { sources: { mainHand: {
       id: 'sword', sourceType: 'weapon', family: 'blade', weight: 1, grip: 'oneHand',
       damageType: 'slashing', tags: [], buildup: [] } } } } } : {}) };
@@ -86,19 +85,4 @@ test('foundation protected Poise prevents same-hit Smash interruption and preser
   assert.equal(actor().hp, 186);
   assert.equal(c.eventLog.filter(event => event.type === 'enemyStaggered').length, 0);
   assert.equal(c.eventLog.filter(event => event.type === 'combatCounterTriggered').length, 1);
-});
-
-test('rating and single-meter breaks also interrupt the same-hit Smash reply', () => {
-  for (const breakMeterVersion of [0, 1]) {
-    const { c, enemy, actor, play } = fight();
-    c.ratingsRules = resolveCombatRatings({}, legacyContentBundle);
-    c.breakMeterVersion = breakMeterVersion;
-    actor().ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 100 };
-    play();
-    assert.equal(actor().hp, 200);
-    assert.equal(actor().poiseMeter.value, 0);
-    assert.equal(enemy.combatCounter, undefined);
-    assert(c.eventLog.some(event => event.type === 'ratingImpact' && event.targetId === enemy.id && event.breaks === 1));
-    assert.equal(c.eventLog.filter(event => event.type === 'combatCounterTriggered').length, 0);
-  }
 });

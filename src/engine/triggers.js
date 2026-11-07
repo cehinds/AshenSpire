@@ -312,12 +312,10 @@ function maybeFire(ctx, key, trigger, owner, event, origin = null, rangeCarrier 
   if (!Foundation.foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
-  const ratingCard = ctx.ratingsRules && key.startsWith('status:')
-    ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   const actions=[];
   for (const [effectIndex,eff] of (trigger.do || []).entries()) {
-    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard,rangeCarrier);
-    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : ratingCard ? { card: ratingCard } : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,null,rangeCarrier);
+    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   for(const action of RangeLineage.acceptIndependentTrigger(ctx,owner,actions,key))ctx.enqueue(action);
   return true;

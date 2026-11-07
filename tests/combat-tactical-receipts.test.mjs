@@ -11,7 +11,7 @@ import { armCombatCounter } from '../src/engine/combatMatchups.js';
 const registries = createRegistries(contentBundle);
 const components = [{ type: 'slashing', weight: 3 }, { type: 'fire', weight: 2 }];
 function fight(profiles = {}) {
-  const c = createCombat({ registries, rng: createRng(50), ratingsRules: null, ruleset: combatRules,
+  const c = createCombat({ registries, rng: createRng(50), ruleset: combatRules,
     combatProfiles: profiles, enemyIds: ['wanderingSoldier'], player: { classId: 'reaver',
       hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'card1', cardId: 'strike' }], relicIds: [] } });

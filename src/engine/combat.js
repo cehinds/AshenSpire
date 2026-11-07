@@ -64,7 +64,7 @@ import * as R from './abilityRiders.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
-import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
+import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -126,7 +126,7 @@ export function createCombat({
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null, breakMeterVersion = null,
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, breakMeterVersion = null,
   knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
@@ -140,7 +140,6 @@ export function createCombat({
     combatExpansionVersion = 2;
     const reactions = configuredModule({ gameProfile }, 'reactions');
     reactionRulesVersion = reactions && reactions.chainLimit > 0 ? 2 : null;
-    ratingsRules = null;
     ruleset = null;
   }
   // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
@@ -183,8 +182,7 @@ export function createCombat({
       allocatedAttributes: structuredClone(player.allocatedAttributes || player.attributes || {}) } : {}),
     combatMatchupRules: structuredClone(registries.balance?.combatMatchups || combatMatchups),
     combatIntentRules: structuredClone(registries.balance?.combatIntent || combatIntent),
-    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
-    ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
@@ -350,14 +348,6 @@ export function createCombat({
   initializeCombatRange(combat, rangePolicy);
   if (knowledge) initializeCombatKnowledge(combat, knowledge);
   else if (fixCoreEnabled(combat)) initializeCombatKnowledge(combat, { rules: snapshotEnemyKnowledgeRules(registries) });
-  if (combat.ratingsRules) {
-    refreshCombatRatings(combat);
-    for (const enemy of combat.enemies) {
-      const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
-      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
-      for (const id of combat.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
-    }
-  }
   if (configuredCombat(combat)) {
     combat.player.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: poiseMax, ...(player.ratings || {}) };
     combat.player.attributes = { ...(player.attributes || {}) };
@@ -559,7 +549,6 @@ function startPlayerTurn(combat) {
   }
   combat.equipmentPoolDeficits.stamina = p.energyMax - p.energy;
   p.pendingActionLoss = 0;
-  recoverRatingMeters(combat, p);
 
   // Draw.
   A.drawCards(combat, Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0)));
@@ -1172,7 +1161,6 @@ export function dispatch(combat, intent) {
         combat.drawPerTurn = combat.player.drawPerTurn;
         if (combat.handRules) combat.handMax = scaledCards(handRow(combat.handRules, 'handSize'), combat.attributes, combat.characterLevel);
         refreshExpandedLoadout(combat, combat.player);
-        refreshCombatRatings(combat);
         break;
       }
       case 'chooseCards':
@@ -1367,7 +1355,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
     loadout: combat.loadout, relics: p.relicIds || [], class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
@@ -1376,7 +1364,6 @@ function doSwapArmament(combat, { slotId, setIndex }) {
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
-  refreshCombatRatings(combat);
   if (combat.combatExpansionVersion === 2) {
     Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
@@ -1487,7 +1474,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
     stampDeck(combat.registries, run, pile);
   }
-  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
     loadout: combat.loadout,
     relics: p.relicIds || [],
     class: p.classId,
@@ -1497,7 +1484,6 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
-  refreshCombatRatings(combat);
   if (combat.combatExpansionVersion === 2) {
     Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
@@ -2518,10 +2504,9 @@ export function previewIntent(combat, enemyInstanceId) {
     out.counterPoiseDamage = counter?.payload?.poise ?? counter?.poiseDamage ?? 0;
   }
   if (intent.damage != null) {
-    const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
     const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId], intent.moveId, combat);
     const effect = move?.effects?.find(e => e.op === 'damage');
-    const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId, combat), damageSchool: damageSchool && damageSchool !== 'auto' ? damageSchool : effect?.damageSchool || move?.damageSchool };
+    const carrier = { ...enemyMoveCarrier(enemy, move || {}, intent.moveId, combat), damageSchool: effect?.damageSchool || move?.damageSchool };
     Object.assign(out, previewDamageHits(combat, enemy, combat.player, intent.damage, carrier.tags, carrier,
       intent.hits != null ? intent.hits : 1, IntentProjection.enemyIntentDamageState(combat, enemy, carrier, intent.damage)));
   }

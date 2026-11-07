@@ -7,7 +7,6 @@ import { playingCardDefinition, playingCardModel } from '../src/model/playingCar
 import { cardPlainText, cardDetailHtml } from '../src/ui/components/card.js';
 import { createCombat, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 
 const rules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
 const plain = html => String(html).replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -39,7 +38,7 @@ export function wardToBlockCardText() {
   const liveExamples = [];
   for (const cardId of ['fireCounter', 'frostCounter', 'forceCounter', 'crystalBarrier']) {
     const ctx = createCombat({ registries, rng: createRng(5), ...rules,
-      ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+      enemyIds: ['wanderingSoldier'],
       player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 30, mana: 30,
         maxStamina: 30, stamina: 30, energyMax: 30, drawPerTurn: 1,
         deck: [{ cardId, instanceId: 'text-example', ...(registries.cards.get(cardId).gradeProfiles ? { abilityRank: 1 } : {}) }] } });

@@ -309,7 +309,6 @@ export function candidateState(ctx, { detached = false } = {}) {
     const fields = ['player', 'piles', 'playerKey', 'registries', 'attributes', 'allocatedAttributes', 'combatExpansionVersion',
       'loadout', 'itemUpgradeLevels', 'skills', 'attributeMode', 'orderedDraw', 'handRules', 'handMax', 'classId', 'characterLevel', 'derivedStatRuleSnapshot'];
     const previous = Object.fromEntries(fields.map(key => [key, candidate[key]]));
-    const previousRatings = candidate.ratingsRules?.ratings;
     Object.assign(candidate, { player: seat.entity, piles: seat.piles, playerKey: seat.id,
       registries: candidate.registriesForPlayer?.(seat.id) || candidate.registries,
       attributes: effectiveAshenBlightAttributes(seat.entity, seat.allocatedAttributes || seat.attributes),
@@ -317,9 +316,8 @@ export function candidateState(ctx, { detached = false } = {}) {
       loadout: seat.loadout, itemUpgradeLevels: seat.itemUpgradeLevels, skills: seat.skills || {}, attributeMode: seat.attributeMode || null,
       orderedDraw: seat.orderedDraw || null, handRules: seat.handRules, handMax: seat.handMax,
       classId: seat.entity.classId, characterLevel: seat.level, derivedStatRuleSnapshot: seat.derivedStatRuleSnapshot });
-    if (seat.ratingRows && candidate.ratingsRules) candidate.ratingsRules.ratings = seat.ratingRows;
     try { return Actions.drawCards(candidate, amount); }
-    finally { Object.assign(candidate, previous); if (candidate.ratingsRules) candidate.ratingsRules.ratings = previousRatings; }
+    finally { Object.assign(candidate, previous); }
   };
   return candidate;
 }

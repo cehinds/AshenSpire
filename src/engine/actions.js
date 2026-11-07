@@ -50,7 +50,6 @@ import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
-import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import * as Triggers from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
@@ -63,7 +62,7 @@ import { coreAffectedCards } from '../model/smithingCore.js';
 import { gameProfileServiceActive, withGameProfileService } from '../model/gameProfileRun.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { ratingValue, isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
+import { ratingValue, isMagicalAttack, ratingDamageMultiplier, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
   canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -321,12 +320,8 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   if (blockBefore > 0 && !(target.block > 0)) ctx.emit('blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
     ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) });
   if (hpLoss > 0) {
-    if (ctx.ratingsRules && !carrier?.combatReaction) {
-      const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
-      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1, cause: 'hit' });
-    }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
-    if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
+    if (!carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target, { targetStatusesBefore, sourceId: source?.id, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   Matchups.completeMatchupHit(ctx, source, target, carrier, tactical, { blocked, hpLoss,
@@ -519,7 +514,7 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 // non-damage things (Ward-first Barrier gains, mana, tags).
 // The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
-  return magicShareOf(profile, ctx.ratingsRules);
+  return magicShareOf(profile);
 }
 
 // The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
@@ -772,7 +767,7 @@ function breakPoise(ctx, source, target) {
     // `interrupted` only asks emitBreak to run the stagger; under Core it reports no interrupt (see prepareBreakInterrupt).
     return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, poiseBreak: true, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
   }
-  const cost = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
+  const cost = 1;
   // An enemy is interrupted by interruptForBreak, after the hit's log, and has no Stamina to lose; a player pays here.
   const loss = target.kind === 'player' ? cost : 0;
   if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
@@ -900,7 +895,6 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     else ctx.emit(type, payload);
   }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
-  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier, null, { cause: 'hit' });
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {
@@ -1033,7 +1027,6 @@ export function computeMeterGuardGain(ctx, entity, base, card = null) {
  */
 export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   if (!entity.alive) return 0;
-  if (usesSingleBreakMeter(ctx) && meter === 'ward') meter = 'poise';
   const amt = computeMeterGuardGain(ctx, entity, base, card);
   const key = meter + 'Guard';
   if (amt > 0) entity[key] = (entity[key] || 0) + amt;
@@ -1253,8 +1246,7 @@ export function staggerEnemy(ctx, enemy, options = {}) {
  * Insanity break is the same Stagger a full meter is. Meter growth stays with
  * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Combat
  * ratings change nothing here (owner, 2026-10-12): every enemy break is a full
- * Stagger with onFill, and the rating meter's own breaks
- * (combatRatings.applyRatingImpact), Poise or Ward, run the same onFill.
+ * Stagger with onFill.
  */
 /**
  * growPoiseMeter(ctx, entity) — after a full Poise fill, the meter's max grows
@@ -1277,7 +1269,12 @@ export function growPoiseMeter(ctx, entity) {
 
 export function breakEnemy(ctx, enemy) {
   if (!staggerEnemy(ctx, enemy)) return false;
-  Ratings.enqueueStaggerOnFill(ctx, enemy);
+  // Outside Core 2 (FixCore owns the versioned riders there) the break still
+  // runs balance.poise.onFill; the sim's unconfigured fights depend on it.
+  if (!fixCoreEnabled(ctx)) {
+    const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+    for (const eff of cfg.onFill || []) ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+  }
   return true;
 }
 
@@ -1317,7 +1314,6 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false,
     if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount);
     return;
   }
-  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
@@ -1722,10 +1718,6 @@ function runOpcode(ctx, action, eff) {
                 && (!effect.if || Triggers.evalPredicate(ctx, effect.if, { ...action, target: t })))
               .map(effect => effect.status);
           }
-          if (ctx.ratingsRules && action.source?.kind === 'enemy') {
-            const attackType = ctx.ratingsRules.enemyAttackType?.[`${action.source.enemyId}:${action.meta?.moveId || action.source.intent?.moveId}`];
-            if (attackType && attackType !== 'auto') carrier.damageSchool = attackType;
-          }
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
           const hpBefore = t.hp;
           // A skill feat's critical hit (SPEC §13.4o), rolled per hit and target.
@@ -1739,7 +1731,7 @@ function runOpcode(ctx, action, eff) {
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
           // below replaces it wherever a ruleset is handed in.
-          if (!configuredCombat(ctx) && !ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+          if (!configuredCombat(ctx) && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
@@ -1889,9 +1881,6 @@ function runOpcode(ctx, action, eff) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
           if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, { accepted: stacks });
           if (eff.status === 'grounded') Control.groundStatusPressure(ctx, t);
-        }
-        if (ctx.ratingsRules && t.id === action.source?.id && action.card && isMagicalAttack(ctx, action.card) && t.statuses[eff.status]) {
-          t.statuses[eff.status].ratingCard = structuredClone(action.card);
         }
       }
       break;
@@ -2099,11 +2088,7 @@ function runOpcode(ctx, action, eff) {
           : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
-        if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          // An explicit return Poise payload owns the Poise lane even on a spell Counter.
-          const impactCarrier = action.card?.counterReturnAttack ? { damageSchool: 'physical' } : action.card;
-          Ratings.applyRatingImpact(ctx, action.source, t, impactCarrier, amount, { triggerHit: false, cardId: action.card?.cardId });
-        } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
+        dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
@@ -2127,12 +2112,6 @@ function runOpcode(ctx, action, eff) {
       // threshold is the only scale there is.
       const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        if (usesSingleBreakMeter(ctx)) {
-          const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
-          const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
-          Ratings.applyRatingImpact(ctx, null, t, { damageSchool: school }, amount, { triggerHit: false });
-          continue;
-        }
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined

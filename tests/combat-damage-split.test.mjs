@@ -149,19 +149,6 @@ test('a spell-camp card with slashing damage hits Block and then Poise, and neve
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
-test('a physical-camp card whose damage type shares 1 is all magic: Block soaks it first, then Ward', () => {
-  const slashAsMagic = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
-  const r = strike(slashAsMagic, 5, { ward: 3, block: 5, damageTypeShares: { slashing: 1 } });
-  const [d] = r.damage;
-  assert.equal(d.magicAmount, 5, 'all magic');
-  assert.equal(d.physicalAmount, 0);
-  assert.equal(d.blocked, 5, 'Block soaks the magic part (owner, 2026-10-25)');
-  assert.equal(r.enemy.block, 0, 'Block is spent');
-  assert.equal(d.wardAbsorbed ?? 0, 0, 'nothing is left for Ward');
-  assert.equal(r.committed, 0, 'no HP lost');
-  assert.equal(r.preview, r.committed);
-});
-
 test('a default spell defend splits 5 into Ward 3 and Block 2 regardless of damage magicShare', () => {
   const guard = { tags: ['camp:spell', 'maneuver:defend'], skipRatingBonus: true, magicShare: 0.4, physicalDamageType: 'blunt',
     combatProfile: { camp: 'spell', maneuver: 'defend', damageType: 'arcane', reach: 'near', targeting: 'single' } };
@@ -375,22 +362,6 @@ test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating i
   assert.equal(r.enemy.persistentWard.value, 3, 'Ward stays 3');
   const wardImpacts = r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward');
   assert.equal(wardImpacts.length, 0, 'no Ward rating impact on a physical hit');
-  assert.equal(r.preview, r.committed, 'preview equals committed');
-});
-
-// The mirror: a fully magic hit meets Ward and Barrier only. Block and Poise, and their rating
-// impact, never see it, even on a physical-looking carrier whose magic share is 1.
-test('a fully magic hit on a physical-looking carrier meets Block, skips Poise and fills the Ward meter', () => {
-  const magicOnly = { tags: ['camp:physical', 'damage:slashing'], magicShare: 1, skipRatingBonus: true,
-    combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
-  const r = strike(magicOnly, 5, { ward: 10, block: 3, poise: 5, damageTypeShares: {} });
-  const d = hitOf(r);
-  assert.equal(d.magicAmount, 5);
-  assert.equal(d.physicalAmount, 0);
-  assert.equal(r.enemy.block, 0, 'Block soaks 3 of the magic');
-  assert.equal(r.enemy.persistentPoise.value, 5, 'Poise is untouched');
-  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'poise').length, 0, 'no Poise rating impact');
-  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward').length, 1, 'the Ward meter takes the impact');
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 

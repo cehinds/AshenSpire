@@ -62,7 +62,7 @@ export function refreshExpandedLoadout(ctx, entity, { refreshPoise = true } = {}
     };
     DeckComposition.stampDeck(ctx.registries, run, cards, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   }
-  if (refreshPoise && !ctx.ratingsRules) State.stampPlayerPoiseMax(entity, StatProjection.playerPoiseThresholdReceipt(ctx.registries, {
+  if (refreshPoise) State.stampPlayerPoiseMax(entity, StatProjection.playerPoiseThresholdReceipt(ctx.registries, {
     loadout: ctx.loadout, relics: entity.relicIds || [], class: entity.classId,
     itemUpgradeLevels: ctx.itemUpgradeLevels || {}, attributes: entity.attributes || ctx.attributes,
     derivedStatRuleSnapshot: ctx.derivedStatRuleSnapshot || null,

@@ -24,7 +24,7 @@ function fight({ amount, vulnerable = false, stance = false, poise = false }) {
       ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount, hits: 1 }], textTemplate: 'Deal {damage} damage.' } : card) });
   const actor = { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'flurry', cardId: CARD }], relicIds: [] };
-  const combat = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null,
+  const combat = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],
     combatExpansionVersion: 2, player: actor });
   combat.fixCoreRules = structuredClone(fixCoreRules(combat));
   combat.fixCoreRules.stance.effectivenessMultiplier = 1.25; // the owner's Core 2 value

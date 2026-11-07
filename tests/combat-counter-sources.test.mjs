@@ -24,7 +24,7 @@ function fight(cardId) {
   const player = { classId: cardId === 'nockAndWait' ? 'rogue' : 'reaver', hp: 200, maxHp: 200,
     energyMax: 10, drawPerTurn: 1, deck: [{ instanceId: 'counter1', cardId }], relicIds: [] };
   const actorId = 'player';
-  const options = { registries, rng: createRng(50), enemyIds: [enemyId], ruleset: combatRules, ratingsRules: null,
+  const options = { registries, rng: createRng(50), enemyIds: [enemyId], ruleset: combatRules,
     combatProfiles: { [actorId]: { sources: { mainHand: prepared } },
       e1: { resistances: { slashing: 0.5 }, immunities: ['fire'] } } };
   const c = createCombat({ ...options, player });
