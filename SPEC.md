@@ -1785,7 +1785,7 @@ The views project one loadout:
   - A character exceeding a reference lengthens only to the layout cap; gameplay state is never clamped.
 
 **Combat zones**
-- **Enemy row (upper right 60%):** at most 3 enemies (owner, 2026-11-03; see the Enemy cap rule under the Encounter schema).
+- **Enemy row (upper right 60%):** at most 3 enemies (see the Enemy cap rule under the Encounter schema).
   - Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** and status icon row, and **intent icon + number above the head**.
   - Proc bars: up to two active proc statuses (e.g. Bleed, Frost), each with its status's own glyph and `tint`, only when >0 (`src/ui/screens/combat.js`).
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
@@ -1853,7 +1853,7 @@ Advanced Settings is the player-facing editor for the game's authored configurat
 Card selection and play, End Turn, flick, rewards, controls capture and tooltips. Full playability with mouse only; keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
 
 - **Card selection and information stay separate from play.** The focused card, selection glow, revealed Information button and legal-target highlights are preserved; Information opens details without playing; tap, hold, keyboard, controller and direct-target drag confirmation remain.
-  - By default a tap selects and never plays; play needs a second tap on the card or a target pick (owner, 2026-10-18).
+  - By default a tap selects and never plays; play needs a second tap on the card or a target pick.
   - The "Tap a card to play it" Settings switch (default off) restores one-tap play when the target is unambiguous (self and all-enemy cards; one living enemy).
   - Hold selects without playing (inspect, Upcast, target choice).
   - A hand card has one select colour, the targeting colour (`--selection-color`): armed, held, keyboard-focused and inspected cards all wear it; no yellow (gold) select state on the hand.
@@ -1890,18 +1890,17 @@ Hit feedback, beat order, pacing, defeat/victory screens, sound.
 - `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers wait only for `reactionMs`, never for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
 - The contact spark and the attacker's hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
 - `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
-- Budgets (superseded by Action pacing below): click-to-impact ≤400 ms at Normal; first number on a plain single hit ≤750 ms after the click; queued events ≤80 ms apart (a multi-hit attack lengthens that hit's step, not the interval).
 
 **Animation settings**
 - Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops the shake alone; Reduce flashes suppresses flashes (`src/ui/fx.js`).
 - No animation blocks input; a click always skips to end-state.
-- At default speed most effects run ≤300 ms, but some are hardcoded longer (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms). The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never those fixed durations.
+- Some effects have fixed durations (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms). The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never those fixed durations.
 
-**Action pacing** (owner, D11)
+**Action pacing**
 - Every action plays as action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, with one gap at each step.
 - The gap is the **Pause between steps** setting: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0.
 - **Auto combat speed** divides the gap while auto combat runs (default ×1.5).
-- This supersedes the `reactionMs` delay, the ≤400/≤750 ms click budgets, the ≤80 ms queue interval and the ≤300 ms effect bound above. A click still skips to end-state.
+- A click still skips to end-state.
 
 **Defeat and Victory** (`src/ui/screens/gameover.js:58-65`)
 - Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished".
@@ -1934,7 +1933,6 @@ Palette tokens, card rendering, fonts.
 
 - Tools parse this section: every public component id must stay backticked (`tools/ui-components.mjs`, C10); the relic rail sits in `inventory-belt` beneath Vitals; minimum touch target is 44 px.
 - Advanced Settings tabs and the perspective-grid combat layout are the only shipping forms; classic layout, the Battlefield tab and the formation editor are gone.
-- Action pacing (§7.4) supersedes the older click-budget timings.
 
 Full history: [docs/spec-history/07-ui.md](docs/spec-history/07-ui.md).
 
