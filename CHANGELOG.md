@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **Combat order, enemy SP loop and Reach** ([#2620](https://github.com/cehinds/AshenSpire/pull/2620), `0.7.3.220`). Combat plays in the owner's order (cost, intent word, stance, animation, hit/miss, reaction, damage), Reach cards and most spells no longer charge a band-1 Advance (touches, grasps and spell blades stay Melee), floaters and attack animations default to 750 ms with separate enemy pacing settings, and enemies pay and lose SP visibly in their turn.
+- **Combat order, enemy SP loop and Reach** ([#2620](https://github.com/cehinds/AshenSpire/pull/2620), `0.7.3.222`). Combat plays in the owner's order (cost, intent word, stance, animation, hit/miss, reaction, damage), Reach cards and most spells no longer charge a band-1 Advance (touches, grasps and spell blades stay Melee), floaters and attack animations default to 750 ms with separate enemy pacing settings, and enemies pay and lose SP visibly in their turn.
 
 ## 2026-11-06
 
