@@ -1297,7 +1297,7 @@ export function playTimeline(events, ctx, done) {
         group.push(event); if (event.type === 'damageDealt') hadHit = true;
       }
       if (group.length) groups.push({ ...beat, events: group });
-      return groups;
+      return groups.length ? groups : [beat]; // an empty rest beat (reactionAfterResult) still says its carried DODGED
     },
     // Accuracy is known before the target reacts; the defense/effect outcome
     // belongs after that animation, with the numeric result.

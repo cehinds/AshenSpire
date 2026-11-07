@@ -130,3 +130,15 @@ test('a failed avoidance check (avoided:false) announces nothing, so the damage 
     assert.ok(hit < dmg, 'the Hit word plays before the damage');
   });
 });
+
+test('a dodge with nothing after the accuracy receipt still says DODGED after the reaction animation, with no warnings', t => {
+  const warns = [];
+  t.mock.method(console, 'warn', (...args) => warns.push(args.join(' ')));
+  const miss = { type: 'attackMissed', sourceId: 'e1', targetId: 'player', missReason: 'accuracy', evadeActive: true };
+  drive(t, [...reaction, move, miss], timeline => {
+    const m = when(timeline, 'word:missed'), a = when(timeline, 'anim:player'), d = when(timeline, 'word:dodged');
+    assert.ok(m != null && a != null && d != null, JSON.stringify(timeline));
+    assert.ok(m < a && a < d, `missed ${m} < animation ${a} < dodged ${d}`);
+    assert.deepEqual(warns, []);
+  });
+});
