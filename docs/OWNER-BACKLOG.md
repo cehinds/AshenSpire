@@ -103,3 +103,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 
 - Update 2026-11-07 — "keep the number inside the shield too": the Block value stays printed inside the (now larger) Block shield icon.
 - Update 2026-11-07 — "keep intent left justified with health bar": the intent row stays left-aligned to the HP bar's left edge (not the Block icon's), above the bars.
+
+## #12 Code review branch in the release pipeline
+- Status: pending
+- Asked: 2026-11-07 — "there should be a code review branch, move the dev code review as a sub branch to the merge develop to release branch"
+- Means: Add a dedicated code-review branch to the branch model, and move the code review that happens at `dev` to be a sub-step on the path that merges `dev` toward `release` (today: feature/* → dev → test → release → main; review is per PR into dev).
+- Questions: see chat (where the review branch sits; who reviews).
+- Link: —
