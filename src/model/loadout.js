@@ -1,5 +1,4 @@
 import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
-import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './tokens.js';
@@ -14,313 +13,32 @@ import { startingKitProblems, armourIsStartingEligible } from './startingKits.js
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
-// Recording only — `note` is a no-op unless a run door is open, so the
-// stampDeck calls that fire all climb long cost nothing.
 import { note } from './healLedger.js';
-import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
+import { resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
 import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 import { stampSkillBonuses } from './skills.js';
 import { applyAbilityGrade } from './abilityGrades.js';
+import { parseMod, modEffectLines, modEffectLine } from './loadout/modStrings.js';
+import {
+  HANDS, EQUIPMENT_ROLES, armamentIntrinsicStatProblems, slotHand, pieceHand, fitsSlot,
+  ARMAMENT_INTRINSIC_STAT_FIELDS,
+} from './loadout/hands.js';
+import {
+  CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, EQUIPMENT_POOL_CURRENT,
+  moveEquipmentPool,
+} from './loadout/applyVocab.js';
+import {
+  equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands,
+  cardEquipmentCompatibility,
+} from './loadout/requirements.js';
+
+// src/model/loadout.js — what you carry, and what it does to your cards.
+// (Being split into src/model/loadout/*.js; the remainder is below.)
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
 const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit', 'magicShare']);
-// src/model/loadout.js — what you carry, and what it does to your cards.
-//
-// The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
-// engine doesn't already have. So a piece never ships an effect: it ships
-// NUMBERS aimed at the cards you already start with. A dagger doesn't give you
-// a dagger card — it turns Strike into 3 damage twice. A greatsword turns the
-// same Strike into one heavy, expensive swing. The deck size never changes,
-// and the engine never learns the word "dagger".
-//
-// Three tables do all the deciding, none of them in this file:
-//   equipSlots.csv    what slots exist, how many sets each carries, swap rules
-//   equipMods.csv     which fields a mod may name and how each one applies
-//   equipTargets.csv  which card each mod prefix rewrites, per class
-//
-// Everything here is headless and pure: no document, no timers, no randomness.
-//
-// HANDS — one fact, one home (Law 0 clause 4). Which hand a piece is IN is the
-// SLOT's fact: the player put it there. The piece's own `hand` column says only
-// which hand it MAY be held in — eligibility, never location. Those are two
-// different facts and they used to be read out of one field, which is how two
-// weapons could go in and one come out (Bjorn, 2026-08-07). slotHand() is the
-// only answer to "which hand is this", pieceHand() the only answer to "which
-// hand may this go in", and fitsSlot() is the only gate between them.
-
-// ---------------------------------------------------------------------------
-// Mod strings
-// ---------------------------------------------------------------------------
-
-/**
- * parseMod('strike.damage=+4') → { prefix, field, mode: 'add'|'set', value }
- * Returns null on anything malformed; validateEquipment() reports those.
- */
-export function parseMod(str) {
-  const m = /^([A-Za-z]\w*)\.([A-Za-z]\w*)=([+-]?)(\d+(?:\.\d+)?)$/.exec(String(str).trim());
-  if (!m) return null;
-  const [, prefix, field, sign, num] = m;
-  return {
-    prefix,
-    field,
-    mode: sign ? 'add' : 'set',
-    value: sign === '-' ? -Number(num) : Number(num),
-  };
-}
-
-/**
- * modEffectLines(registries, piece) → the piece's mods, written the way a
- * player reads them: `strike.damage=+4` → `Strike Damage +4`.
- *
- * THIS EXISTS BECAUSE THE ANSWER WAS ALREADY IN TWO PLACES AND THE THIRD SITE
- * PRINTED THE RAW ROW. Measured 2026-09-03 on ?shot=reward: the Victory screen
- * showed a player `Greatsword — strike.damage=+4, strike.cost=+1,
- * strike.poise=+3` — engine keys, on the screen where a reward is chosen. The
- * two existing renderers were `pieceEffects` (model/creationBrief.js, via
- * parseMod) and `modSummary` (ui/screens/compendium.js, via its own regex),
- * and they disagreed in two ways worth naming because this function had to
- * pick one of each:
- *
- *   THE PREFIX. creationBrief dropped it ("Damage +4"); compendium kept it
- *   ("Strike Damage +4"). KEPT — the prefix names WHICH CARD the mod rewrites,
- *   and a weapon that changes two cards reads as two identical lines without
- *   it.
- *
- *   AN UNKNOWN FIELD. creationBrief printed the raw row; compendium DROPPED the
- *   line. RAW — and the reasoning is creationBrief's, quoted because it is
- *   right: "A visible oddity is a bug report; a dropped line is a screen that
- *   quietly under-describes a weapon." An unregistered field is already a hard
- *   content failure (content/source/equipMods.csv), so reaching that branch
- *   means the tables disagree and a player should see something.
- *
- * `set` mode reads `= 3` rather than a bare `3`, so "Cost = 0" cannot be
- * misread as "Cost 0 added".
- */
-export function modEffectLines(registries, piece) {
-  const fields = (registries?.equipment || {}).modFields || {};
-  return (piece?.mods || []).map((raw) => modEffectLine(fields, raw));
-}
-
-/** One mod string, rendered. Split out so a caller holding only the vocabulary
- *  (compendium walks a table, not a registry) reaches the same sentence. */
-export function modEffectLine(fields, raw) {
-  const mod = parseMod(raw);
-  const spec = mod && (fields || {})[mod.field];
-  if (!spec) return String(raw);
-  const where = !mod.prefix || mod.prefix === 'self'
-    ? ''
-    : `${mod.prefix[0].toUpperCase()}${mod.prefix.slice(1)} `;
-  const amount = mod.mode === 'add'
-    ? `${mod.value >= 0 ? '+' : ''}${mod.value}`
-    : `= ${mod.value}`;
-  return `${where}${spec.label} ${amount}`;
-}
-
-// ---------------------------------------------------------------------------
-// Hands
-// ---------------------------------------------------------------------------
-
-/** The closed set. A third hand is a new word — engine, one act (Law 1 c1). */
-export const HANDS = Object.freeze(['left', 'right']);
-export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
-export const ARMAMENT_INTRINSIC_STAT_FIELDS = Object.freeze([
-  'attackRating',
-  'defenseRating',
-  'weight',
-  'weaponArtManaCost',
-  'uniqueSkillStaminaCost',
-]);
-
-/**
- * Validate presentation-only armament facts without folding them into card or
- * combat math. Every field is explicit: absence is never interpreted as zero.
- */
-export function armamentIntrinsicStatProblems(piece) {
-  const id = piece && piece.id || '?';
-  const problems = [];
-  for (const field of ARMAMENT_INTRINSIC_STAT_FIELDS) {
-    const value = piece && piece[field];
-    if (!Number.isInteger(value) || value < 0) {
-      problems.push(`${id}: ${field} must be an explicit non-negative integer`);
-    }
-  }
-  if (Number.isInteger(piece?.weight) && piece.weight !== piece.poiseThreshold) {
-    problems.push(`${id}: weight ${piece.weight} must equal authored poiseThreshold ${piece.poiseThreshold}`);
-  }
-  const isStaffTechnique = (piece?.itemTypeTags || []).includes('item:magic-focus')
-    && piece?.techniqueProfile === 'staffTechnique';
-  const hasWeaponArts = (piece?.weaponCardPackage?.weaponArtDefaults || []).length > 0;
-  const minimumManaCost = hasWeaponArts || isStaffTechnique ? cardManaPolicy.minimumMana : 0;
-  if (piece?.weaponArtManaCost < minimumManaCost) {
-    problems.push(`${id}: weaponArtManaCost must be at least ${minimumManaCost} for its authored weapon arts`);
-  }
-  if (piece?.uniqueSkillStaminaCost !== 0) {
-    problems.push(`${id}: uniqueSkillStaminaCost must remain 0 until an explicit unique-skill consumer exists`);
-  }
-  return problems;
-}
-// ---------------------------------------------------------------------------
-// The two `apply` vocabularies — one per mod scope (Viki, A8)
-// ---------------------------------------------------------------------------
-//
-// equipMods.csv's header has always called `apply` a closed set and NOTHING HAS
-// EVER CHECKED IT. `validateEquipment` checks the field name, the scope and the
-// status; a row reading `apply=swapcost` or `apply=maxhp` passes every one of
-// those, is collected by neither `cardMods` nor `runMods`, and does nothing —
-// silently, forever. That is a legal-looking entry with a wrong-but-reasonable
-// result, which is the failure Law 0 clause 5 names as the dangerous one.
-//
-// So the vocabulary lives beside its consumers, and each list is the set of
-// values the function two hundred lines below actually branches on. A new
-// `apply` is a WORD, not a row: it means teaching a consumer something, and the
-// validator goes red until one has been taught (Law 0 clause 2).
-export const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale', 'status']);
-export const EQUIPMENT_POOL_FIELDS = Object.freeze(['maxHp', 'maxMana', 'maxStamina']);
-export const RUN_MOD_APPLIES = Object.freeze([...EQUIPMENT_POOL_FIELDS, 'startStatus', 'swapCost']);
-const EQUIPMENT_POOL_CURRENT = Object.freeze({ maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' });
-
-/** Move one maximum while retaining deficit that may exceed the smaller vessel. */
-export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = undefined) {
-  const currentField = EQUIPMENT_POOL_CURRENT[maxField];
-  if (!currentField || !Number.isFinite(holder[maxField]) || !Number.isFinite(holder[currentField])) {
-    throw new Error(`moveEquipmentPool requires finite ${maxField}/${currentField}`);
-  }
-  const oldMax = holder[maxField];
-  const surplus = currentField === 'stamina' ? Math.max(0, holder[currentField] - oldMax) : 0;
-  const observedDeficit = Math.max(0, oldMax - holder[currentField]);
-  const priorDeficit = Number.isInteger(carriedDeficit) && carriedDeficit >= 0 ? carriedDeficit : observedDeficit;
-  // A hidden deficit can be larger than a temporarily shrunken vessel. Account
-  // for spending/healing since the prior equipment move before resizing again.
-  const representedDeficit = Math.min(priorDeficit, oldMax);
-  const deficit = Math.max(0, priorDeficit + observedDeficit - representedDeficit);
-  holder[maxField] = nextMax;
-  holder[currentField] = Math.max(0, nextMax - deficit) + surplus;
-  return deficit;
-}
-
-/**
- * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
- *
- * The one home. `null` is not "unknown", it is "this slot is not a hand":
- * armour is worn and a talisman is carried, so neither is held in one and
- * neither is drawn in one. equipSlots.csv `hand` is the only input, on purpose
- * — the id used to be sniffed for the substring 'left', which meant renaming
- * the slot moved the sprite and said nothing.
- */
-export function slotHand(slot) {
-  const h = slot && slot.hand;
-  return HANDS.includes(h) ? h : null;
-}
-
-/**
- * pieceHand(piece) → 'left' | 'right' | null — WHERE A PIECE MAY GO.
- *
- * Eligibility, and only eligibility. `either` and a piece with no `hand` at all
- * (every armour set) are unconstrained, and read as null.
- */
-export function pieceHand(piece) {
-  const h = piece && piece.hand;
-  return HANDS.includes(h) ? h : null;
-}
-
-/**
- * fitsSlot(slot, piece) → boolean — may this piece go in this slot?
- *
- * Two gates, both of them data: the slot's `kinds` and the piece's `hand`. The
- * only predicate in the tree that answers this, so the picker cannot offer what
- * equipPiece() refuses — offering a piece and then silently not taking it is
- * the exact shape of a player saying "the slot won't accept it".
- */
-export function fitsSlot(slot, piece) {
-  if (!slot || !piece) return false;
-  if (!(slot.kinds || []).includes(piece.kind)) return false;
-  const may = pieceHand(piece);
-  return may === null || may === slotHand(slot);
-}
-
-/** Resolve explicit item attribute minima. Missing attributes fail closed. */
-export function equipmentRequirementReceipt(registries, piece, attributes = {}, { itemUpgradeLevels = {}, armamentLevels = {} } = {}) {
-  if (!piece || typeof piece !== 'object') throw new Error('equipment requirement receipt needs a piece');
-  const authored = (piece.requirements && piece.requirements.attributes) || {};
-  const requirements = [];
-  const failures = [];
-  // EACH HALF OF THE WARDROBE UNDER ITS OWN REF. Upgrade levels are keyed
-  // `armament/<id>` for weapons and `armor/<classId>/<id>` for outfits
-  // (itemUpgradeChanges.csv, loadout's own equippedPieces), and this read
-  // used the weapon form for both, so an outfit sharing an id with a weapon
-  // read THAT weapon's smithing level. No armour tier can lower a minimum
-  // today — itemUpgradeTagMatchesKind admits only equipmentPoise deltas for
-  // armour — so the armour ref finds no requirement rows; it is the right
-  // key for the day that vocabulary is widened, not a live reduction
-  // (review, #1217 and #1255).
-  const itemRef = piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
-  const namespaced = itemUpgradeLevels?.[itemRef];
-  const level = Number.isInteger(namespaced) ? namespaced
-    : piece.kind !== 'armor' && Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
-  for (const [attributeId, required] of Object.entries(authored)) {
-    if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
-    if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
-    const delta = cumulativeRequirementDelta(registries, itemRef, attributeId, level);
-    const effectiveRequired = Math.max(0, required + delta);
-    const actual = attributes && attributes[attributeId];
-    const row = { attributeId, baseRequired: required, reduction: -delta, required: effectiveRequired, actual: Number.isFinite(actual) ? actual : null };
-    requirements.push(row);
-    if (!Number.isFinite(actual) || actual < effectiveRequired) failures.push(row);
-  }
-  return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
-}
-
-/** First selected-hand requirement failure, shared by every creation mode. */
-export function startingHandsRequirementFailure(registries, hands = {}, attributes = {}) {
-  for (const pieceId of Object.values(hands).filter(Boolean)) {
-    const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
-    if (!piece) throw new Error(`unknown starting armament '${pieceId}'`);
-    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
-    if (!receipt.ok) return { piece, failure: receipt.failures[0] };
-  }
-  return null;
-}
-
-/**
- * A total hand snapshot for character-creation stat previews. The player's
- * actual choices stay untouched so the refusal can name an incompatible item;
- * only pieces the preview run cannot legally equip are omitted from the
- * temporary loadout used to derive its displayed stats.
- */
-export function previewCompatibleHands(registries, hands = {}, attributes = {}) {
-  const next = {
-    leftHand: hands.leftHand || null,
-    rightHand: hands.rightHand || null,
-  };
-  for (const hand of ['leftHand', 'rightHand']) {
-    const id = next[hand];
-    if (!id) continue;
-    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
-    if (piece && !equipmentRequirementReceipt(registries, piece, attributes).ok) next[hand] = null;
-  }
-  return next;
-}
-
-/** Resolve whether a card fits an equipped weapon without class-id branches. */
-export function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {}) {
-  const card = registries.cards.get(cardId);
-  const equipment = registries.equipment || {};
-  const piece = (equipment.armaments || []).find((row) => row.id === pieceId);
-  if (!piece) throw new Error(`Unknown armament '${pieceId}' for card compatibility`);
-  const exactRows = (equipment.cardEquipmentExceptions || []).filter((row) => row.cardId === cardId);
-  if (exactRows.length) return { ok: exactRows.some((row) => row.weaponId === pieceId), reason: 'exactWeapon', cardId, pieceId };
-  if (card.class === classId) return { ok: true, reason: 'class', cardId, pieceId };
-  const tagging = (equipment.cardTagging || []).find((row) => row.cardId === cardId);
-  const cardTags = (tagging && tagging.tags) || [];
-  // Source/damage categories describe execution, not permission to inherit a
-  // different class's card. Preserve the existing card-school compatibility.
-  const schoolTags = new Set((registries.tags || []).filter((tag) => tag.domain === 'card').map((tag) => tag.id));
-  const sharedTags = cardTags.filter((tag) => schoolTags.has(tag) && (piece.tags || []).includes(tag));
-  if (sharedTags.length) return { ok: true, reason: 'tag', sharedTags, cardId, pieceId };
-  return { ok: false, reason: 'noMatch', sharedTags: [], cardId, pieceId };
-}
 
 /**
  * validateEquipment(registries) → [] when sound, else human-readable problems.
@@ -738,9 +456,6 @@ function validateEquipmentBalance(pieces, eqBal, problems) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// WHAT IS YOURS — one predicate, one home (EldenSpire#90)
-// ---------------------------------------------------------------------------
 //
 // Constantine: *"as for weapons, I should only see an inventory of the weapons
 // I've collected for that character's profile. so, if I only have my starting
@@ -881,9 +596,6 @@ export function ownership(registries, { meta = {}, loadout = null, profileWardro
   };
 }
 
-// ---------------------------------------------------------------------------
-// THE SLOT LADDER — three states, and NOT a three-valued field (EldenSpire#90)
-// ---------------------------------------------------------------------------
 //
 // Constantine: *"starts with slots locked (but only shows the next locked
 // thing). so for weapon slots, it may start with just 1 with the second one
@@ -988,9 +700,6 @@ export function setCellState(index, opened, visible) {
   return 'hidden';
 }
 
-// ---------------------------------------------------------------------------
-// Loadout shape
-// ---------------------------------------------------------------------------
 
 /**
  * createLoadout(registries, classId) → a fresh loadout.
@@ -1173,9 +882,6 @@ export function equipmentKitReceipt(registries, loadout, classId, attributes, eq
   return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot, run) }));
 }
 
-// ---------------------------------------------------------------------------
-// Weapon card packages
-// ---------------------------------------------------------------------------
 
 const WEAPON_CARD_PACKAGE_COMPATIBILITY = 'attack-v1';
 
@@ -1443,9 +1149,6 @@ export const WeaponDeckCompositionService = Object.freeze({
   applyEquippedWeaponCardPlan,
 });
 
-// ---------------------------------------------------------------------------
-// Composed starting deck
-// ---------------------------------------------------------------------------
 
 /**
  * The composed-deck half of validateEquipment.
@@ -2041,9 +1744,6 @@ export function orderStartingDeck(registries, run) {
   return run.deck;
 }
 
-// ---------------------------------------------------------------------------
-// Card ownership
-// ---------------------------------------------------------------------------
 //
 // EVERY CARD IN THE DECK HAS AN OWNER: the run, or one item. Run-owned cards
 // are the run's for good — base strikes and defends (an item only re-skins
@@ -2888,9 +2588,6 @@ function emitEquipmentChanged(ctx, reason, before, after) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Collecting mods
-// ---------------------------------------------------------------------------
 
 /**
  * cardMods(registries, loadout, classId) → Map(cardId → ['damage=+4', ...]).
@@ -3068,9 +2765,6 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   };
 }
 
-// ---------------------------------------------------------------------------
-// Applying mods to a card
-// ---------------------------------------------------------------------------
 
 function firstIndexOfOp(effects, op) {
   return effects.findIndex((e) => e && e.op === op);
@@ -3170,9 +2864,6 @@ export function applyCardMods(def, mods, opts = {}) {
   return { ...def, cost, effects, textTemplate, equipMods: mods };
 }
 
-// ---------------------------------------------------------------------------
-// Stamping the deck
-// ---------------------------------------------------------------------------
 
 /**
  * stampDeck(registries, run, cards) → number of instances re-stamped.
@@ -3343,9 +3034,6 @@ export function stampDeck(registries, run, cards, {
   return n;
 }
 
-// ---------------------------------------------------------------------------
-// Swapping
-// ---------------------------------------------------------------------------
 
 /**
  * canSwap(registries, slotId, { inCombat }) → { ok, word, reason }.
@@ -3398,9 +3086,6 @@ export function canSwap(registries, slotId, { inCombat = false } = {}) {
   return { ok: true, word: '', reason: '' };
 }
 
-// ---------------------------------------------------------------------------
-// WHAT A SWAP COSTS — one chain, three rules, all of it data (Viki, A8)
-// ---------------------------------------------------------------------------
 //
 // `canSwap` above says WHETHER. This says HOW MUCH, and the comment on
 // `cycleSet` below already named it as the next act: *"the PRICE.
@@ -3956,3 +3641,24 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   emitEquipmentChanged(ctx, reason, before, loadout);
   return true;
 }
+
+export {
+  parseMod,
+  modEffectLines,
+  modEffectLine,
+  HANDS,
+  EQUIPMENT_ROLES,
+  ARMAMENT_INTRINSIC_STAT_FIELDS,
+  armamentIntrinsicStatProblems,
+  slotHand,
+  pieceHand,
+  fitsSlot,
+  CARD_MOD_APPLIES,
+  EQUIPMENT_POOL_FIELDS,
+  RUN_MOD_APPLIES,
+  moveEquipmentPool,
+  equipmentRequirementReceipt,
+  startingHandsRequirementFailure,
+  previewCompatibleHands,
+  cardEquipmentCompatibility,
+};
