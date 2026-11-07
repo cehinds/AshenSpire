@@ -26,10 +26,10 @@ export function enemyHudPlacement({ centerX, bottom, width, height, bounds }) {
     top: Math.max(bounds.top, bottom - height) };
 }
 
-/** playerHudPlacement: immediately right of the body at its top, clamped to `bounds`; it never moves above, down or around. */
+/** playerHudPlacement: a gap right of the figure, vertically centred on its body (owner 2026-11-07), clamped to `bounds`. */
 export function playerHudPlacement({ anchor, width, height, gap, bounds }) {
   return { left: clamp(anchor.left + anchor.width + gap, bounds.left, bounds.left + bounds.width - width),
-    top: clamp(anchor.top, bounds.top, bounds.top + bounds.height - height) };
+    top: clamp(anchor.top + anchor.height / 2 - height / 2, bounds.top, bounds.top + bounds.height - height) };
 }
 
 // One stable-target clock, including leave grace. Updating content for the
@@ -86,14 +86,4 @@ export function targetBodyHudPlacement({ body, frame, groupHeight = 61, intentHe
   return { miniTop: (head - frame.top - gap - groupHeight) / zoom,
     selectedTop: (head - frame.top - gap - intentHeight) / zoom,
     center: ((body.left + body.right) / 2 - frame.left) / zoom };
-}
-
-/** The desktop player panel's slot in the board's right margin: `right` is the board's right edge, `edge` the visible right
- *  edge less the gap. The panel takes the margin's width up to `max`; where the margin is narrower than `min` it would have to
- *  cover the board's last column, so the answer is null and the panel keeps its beside-the-figure place (playerHudPlacement). */
-export function playerMarginPlacement({ right, edge, gap, top, min = 180, max = 420 }) {
-  const room = edge - (right + gap);
-  if (!Number.isFinite(room) || room < min) return null;
-  const width = Math.min(max, room);
-  return { width, left: right + gap, top };
 }
