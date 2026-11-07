@@ -374,18 +374,23 @@ test('CLI: --kind build leaves the triple alone; --message accepts test', () => 
 });
 
 test('bumpOrdinal: force adds 1 on an unchanged tree without resetting; the default never forces', async () => {
-  const { bumpOrdinal, readOrdinal } = await import('../tools/buildversion.mjs');
-  const file = join(ROOT, 'buildordinal.json');
-  const saved = readFileSync(file, 'utf8');
+  const { bumpOrdinal, readOrdinal, BUILD_IDENTITY_FILES, RELEASE_HOME } = await import('../tools/buildversion.mjs');
+  // A temp root holding only what sourceDigest/release read; the repo's buildordinal.json is never touched.
+  const root = mkdtempSync(join(tmpdir(), 'va-ord-'));
   try {
-    bumpOrdinal(ROOT); // settle: digest now matches the tree
-    const base = readOrdinal(ROOT);
-    const calm = bumpOrdinal(ROOT);
+    for (const f of [...BUILD_IDENTITY_FILES, RELEASE_HOME]) {
+      mkdirSync(dirname(join(root, f)), { recursive: true });
+      cpSync(join(ROOT, f), join(root, f), { recursive: true });
+    }
+    writeFileSync(join(root, 'buildordinal.json'), '{}\n', 'utf8');
+    bumpOrdinal(root); // settle: digest now matches the tree
+    const base = readOrdinal(root);
+    const calm = bumpOrdinal(root);
     assert.equal(calm.bumped, false);
-    assert.equal(readOrdinal(ROOT).ordinal, base.ordinal, 'the default does not move an unchanged tree');
-    const forced = bumpOrdinal(ROOT, { force: true });
+    assert.equal(readOrdinal(root).ordinal, base.ordinal, 'the default does not move an unchanged tree');
+    const forced = bumpOrdinal(root, { force: true });
     assert.equal(forced.bumped, true);
     assert.equal(forced.ordinal, base.ordinal + 1);
-    assert.equal(readOrdinal(ROOT).release, base.release, 'same release: no reset');
-  } finally { writeFileSync(file, saved, 'utf8'); }
+    assert.equal(readOrdinal(root).release, base.release, 'same release: no reset');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
