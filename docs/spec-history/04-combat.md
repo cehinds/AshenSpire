@@ -35,3 +35,14 @@ Archive of dates, rationale, provenance and superseded designs moved out of SPEC
 - Crimson Blight was "Scarlet Rot" pre-scrub; Venom was renamed from Poisoned by the TagRefactor.
 - Frostbite row: "CUT — describes nothing." Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`.
 - Poise/Stagger: the ratings-meter variant of the break rule is retired (#2633). Madness: "Risk/reward, mostly enemy-inflicted." Insanity vs Madness: "two words, two mechanics, on purpose."
+
+## 4.6b Enemy intent commitment
+- Owner report: "Intent does not consistently show what the enemy is going to do and often changes their choice. Also, if the enemy would lose sp reacting then the other actions they have queued should be removed."
+- C owner quote (2026-11-02): "YES - reaction SP carries over: the SP an enemy spends reacting during the player's turn comes out of its next turn, and queued moves it can no longer afford are dropped and shown".
+
+## 4.6a Enemy SP pool
+- Quotes: "enemies are essentially characters with cards, at about 2 SP" (2026-10-13); "blight lowers INT, WIS and DEX and raises STR and CON" (2026-10-13); "if a character attacks, and still has sp have the remaining actions be ? if the character fails the perception check" (2026-10-18); "move teh damage to the left of the stance icon and the damage about 2 times larger than before; and have the percent's to hit cetnered on their sprite with a black outline and white font color and about 2x larger" (2026-10-18); "should be harder about 50 to 75 normies, 25 to 50 elites, 10 to 25 for bosses" (2026-10-13).
+- Boss band: the class spread at the Bell Keeper and Thorn Matriarch is wider than 15 points, and boss SP moves every class together; accepted by the owner 2026-10-13.
+
+## 4.6 / 4.9 removals
+- The old Advanced → Combat toggles, Momentum and the Combat Rounds Preview were removed in cleanup 3i-A.
