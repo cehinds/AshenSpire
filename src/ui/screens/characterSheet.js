@@ -7,10 +7,9 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { characterSheetModel, characterSheetRegistries, DEFAULT_LEVEL_OFFERS, EVERY_LEVEL_GRANTS } from '../models/CharacterSheetModel.js';
 import { levelProgress, skillProgressRows } from '../../model/progression.js';
 import { attributesCard, characterStatsButton, progressionTip } from '../components/progressionCards.js';
-import { skillInspection, ownedFeatInspections } from '../models/ProgressionInspectionModel.js';
+import { skillInspection } from '../models/ProgressionInspectionModel.js';
 import { renderCard } from '../components/card.js';
 import { hideTooltip } from '../components/tooltip.js';
-import { pendingLevelCount } from '../../model/levelup.js';
 import { deferredProgressionCount, deferredOtherClassRewardCount } from '../../model/deferredProgression.js';
 import { t } from '../strings.js';
 
@@ -82,7 +81,7 @@ function characterPane(registries, run, sheet, state) {
     el('summary', { text: t('progression.levels') }), ladder(sheet.character.rows, t('progression.characterLevels')),
   ]);
   progressionTip(levelDetails.querySelector('summary'), 'Show every level and its rewards');
-  const rewards = pendingLevelCount(registries, run) + deferredProgressionCount(run);
+  const rewards = deferredProgressionCount(run);
   const otherClassRewards = deferredOtherClassRewardCount(run);
   const claim = state.onRewards ? button({ label: rewards ? `Level rewards · ${rewards} waiting` : t('progression.rewards') }) : null;
   claim?.addEventListener('click', () => { state.close(); state.onRewards(); });
@@ -94,7 +93,6 @@ function characterPane(registries, run, sheet, state) {
     prose(t(isConfiguredRun(run) ? 'characterSheet.character.cadenceConfigured' : 'characterSheet.character.cadence', { max: sheet.character.maxLevel }), { class: 'cs-cadence' }),
     attributesCard({ registries, run, settings: state.settings, onChange: state.onChange ? () => { state.onChange(); state.show('character'); state.host.querySelector('.progression-points')?.focus({ preventScroll: true }); } : null }),
     characterStatsButton({ registries, run, settings: state.settings }),
-    featButtons(registries, run, ownedFeatInspections(registries, run)),
     levelDetails, claim,
     otherClassRewards ? prose(`${otherClassRewards} saved rewards await their original class. Equip that class to claim them.`) : null,
   ]);
@@ -108,50 +106,6 @@ function tagList(registries, tags) {
     progressionTip(tag, node?.description || node?.sense || id);
     return tag;
   }) : [statusText(t('progression.noTags'))]);
-}
-
-export function openFeatInspection({ registries, feat, opener }) {
-  let shell;
-  const back = button({ label: t('common.back') });
-  back.addEventListener('click', () => shell.close());
-  shell = openModal({ size: 'md', title: feat.name, eyebrow: t('progression.feat'), opener, showMenuButton: false,
-    className: 'progression-inspection', secondary: [back], onClose: hideTooltip, body: el('div', { class: 'as-stack' }, [
-      prose(feat.description), statusText(feat.owned ? t('progression.feat.acquired') + (feat.owned > 1 ? ` ×${feat.owned}` : '') : `Unlocks at skill level ${feat.minLevel || 1}`),
-      titleS(t('progression.tags')), tagList(registries, feat.tags),
-    ]) });
-  return shell;
-}
-
-function featButtons(registries, run, feats) {
-  return el('section', { class: 'progression-feats', 'aria-label': t('progression.feats') }, [
-    el('div', { class: 'progression-feats-heading' }, [titleS(t('progression.feats')),
-      el('span', { class: 'progression-feat-count', text: String(feats.length) })]),
-    feats.length ? el('div', { class: 'progression-feat-list' }, feats.map(feat => {
-      const status = feat.owned ? t('progression.feat.acquired') + (feat.owned > 1 ? ` ×${feat.owned}` : '')
-        : t('progression.feat.unlock', { n: feat.minLevel || 1 });
-      const node = el('button', { type: 'button', class: 'as-option progression-feat-card',
-        'aria-haspopup': 'dialog', 'aria-label': t('deckEditor.inspectNamed', { name: feat.name }),
-        dataset: { feat: feat.id, featOwned: String(!!feat.owned) } }, [
-        el('span', { class: 'progression-feat-topline' }, [
-          el('strong', { class: 'progression-feat-name', text: feat.name }),
-          el('span', { class: 'progression-feat-state', text: status }),
-        ]),
-        el('span', { class: 'progression-feat-effect', text: feat.description }),
-        el('span', { class: 'progression-feat-footer' }, [
-          el('span', { class: 'progression-feat-tags' }, feat.tags.map(id => {
-            const tag = registries.nodes.find(node => node.id === id);
-            return el('span', { class: 'progression-feat-tag', text: tag?.label || tag?.name || id });
-          })),
-          el('span', { class: 'progression-feat-open', 'aria-hidden': 'true', text: '›' }),
-        ]),
-      ]);
-      progressionTip(node, t('deckEditor.inspectNamed', { name: feat.name }));
-      node.addEventListener('click', () => openFeatInspection({ registries, feat, opener: node }));
-      return node;
-    })) : el('div', { class: 'progression-feat-empty' }, [
-      statusText(t('progression.noFeats')), prose(t('progression.feat.emptyHint')),
-    ]),
-  ]);
 }
 
 export function openSkillInspection({ registries, run, track, opener }) {
@@ -171,7 +125,7 @@ export function openSkillInspection({ registries, run, track, opener }) {
       prose(model.requiresEquipment ? t('progression.cards.equip') : t('progression.cards.note')),
       model.cards.length ? cards : statusText(t('progression.emptyCards')),
       titleS(t('progression.tags')), tagList(registries, model.tags),
-      titleS(t('progression.bonuses')), prose(cadenceLine(registries, track)), featButtons(registries, run, model.feats),
+      titleS(t('progression.bonuses')), prose(cadenceLine(registries, track)),
       titleS(t('progression.tree')), trackPane(registries, run, track),
     ]) });
   return shell;
@@ -219,7 +173,6 @@ export function cadenceLine(registries, track) {
   }
   parts.push(t('characterSheet.cadence.draft'));
   if (first('rankUp') != null) parts.push(t('characterSheet.cadence.rankUp', { from: first('rankUp') }));
-  if (first('feat') != null) parts.push(t('characterSheet.cadence.feat', { n: s.featEvery }));
   if (first('attribute') != null) parts.push(t('characterSheet.cadence.attribute', { n: s.attributeEvery }));
   if (first('flat') != null) parts.push(t('characterSheet.cadence.flat', { n: s.flatEvery }));
   return parts.join(' ');

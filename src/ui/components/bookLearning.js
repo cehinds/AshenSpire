@@ -3,8 +3,7 @@ import { el, button } from '../kit/index.js';
 import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
-import { renderBookArt, bookSymbolUrl } from './bookArt.js';
-import { featById } from '../../model/feats.js';
+import { renderBookArt } from './bookArt.js';
 import { bookLessonCard } from '../../model/bookLearning.js';
 import { learnedClassIds } from '../../model/classLibraryState.js';
 
@@ -43,7 +42,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   };
   const draw = () => {
     summary.textContent = plan.def?.learnClass
-      ? t(plan.xp === 0 ? 'book.read.masteryClassSummary' : 'book.read.classSummary', { xp: plan.xp, card: plan.def.combatCardChance || 0, feat: plan.def.featChance || 0 })
+      ? t(plan.xp === 0 ? 'book.read.masteryClassSummary' : 'book.read.classSummary', { xp: plan.xp, card: plan.def.combatCardChance || 0 })
       : t(plan.xp === 0 ? 'book.read.masterySummary' : 'book.read.summary', { xp: plan.xp });
     choices.replaceChildren();
     const query = search.value.trim().toLowerCase();
@@ -108,12 +107,7 @@ function showClassBookReceipt({ registries, def, receipt }) {
     body.append(renderCard(registries, { cardId: receipt.bonuses.card.id, upgraded: false }, { inspectReadOnly: true }));
     if (receipt.bonuses.card.destination === 'sideboard') body.append(el('p', { text: t('book.read.sideboard') }));
   }
-  if (receipt.bonuses.feat) body.append(
-    el('img', { src: bookSymbolUrl('feat'), alt: '', width: 72, height: 72 }),
-    el('p', { text: t('book.read.featAwarded', { name: receipt.bonuses.feat.name }) }),
-    el('p', { text: featById(receipt.bonuses.feat.id).description }),
-  );
-  if (!receipt.bonuses.card && !receipt.bonuses.feat) body.append(el('p', { text: t('book.read.noBonus') }));
+  if (!receipt.bonuses.card) body.append(el('p', { text: t('book.read.noBonus') }));
   const done = button({ label: t('book.read.done') }); done.addEventListener('click', close);
   panel.append(modalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, modalFooter({ primary: done }));
   veil.append(panel); document.body.append(veil);

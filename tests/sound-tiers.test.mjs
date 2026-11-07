@@ -109,7 +109,7 @@ test('every one of those fx events maps to a distinct recipe that is not the def
 import { readFileSync } from 'node:fs';
 import { playEventCues, animateEvents } from '../src/ui/fx.js';
 // Replay the historical host loadouts; this retains current combat/sound rules.
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -141,7 +141,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
   assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
   assert.match(src('src/main.js'), /opening: !savedSnapshot && !bossIntro,/, 'enterCombat marks only a newly created fight as an opening (a boss splash defers it)');
   // What that call hears for a real fresh solo fight's setup log.
-  const reg = createRegistries(legacyContentBundle);
+  const reg = createRegistries(contentBundle);
   const run = createRunState({ registries: reg, seed: 1, classId: 'reaver' });
   const combat = createRunCombat({ registries: reg, rng: createRng(1), run, enemyIds: ['wanderingSoldier'] });
   const cues = played(() => playEventCues(combat.eventLog));

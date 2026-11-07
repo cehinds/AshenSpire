@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -9,10 +8,10 @@ import { executeAction, staggerPlayer } from '../src/engine/actions.js';
 import { getStacks } from '../src/engine/statuses.js';
 
 function fight(effects) {
-  const registries = createRegistries({ ...legacyContentBundle,
-    cards: legacyContentBundle.cards.map(card => card.id === 'strike' ? { ...card, effects } : card),
-    enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
-    enemyMoves: legacyContentBundle.enemyMoves.map(move => move.enemyId === 'gildedKnight' && move.id === 'parry'
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'strike' ? { ...card, effects } : card),
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
+    enemyMoves: contentBundle.enemyMoves.map(move => move.enemyId === 'gildedKnight' && move.id === 'parry'
       ? { ...move, counterPoiseDamage: 4 } : move),
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,

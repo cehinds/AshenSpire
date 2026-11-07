@@ -25,7 +25,6 @@ import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 import { bookTracks, bookLessons } from './bookLearning.js';
 import { learnClassCard, learnedClassIds } from './classLibraryState.js';
 import { classBookBonuses } from './bookBonusRewards.js';
-import { chooseFeat } from './feats.js';
 import { unusedInstanceId } from './cardInstanceIdentity.js';
 import { deckCopyLimit } from './deckCopyLimit.js';
 
@@ -105,7 +104,7 @@ export function skillBookReadPlan(registries, run, id, { inCombat = false, skill
   if (!reason && !lessons.length) reason = say('book.refuse.empty');
   if (!reason && choice && !lessons.some((row) => row.kind === choice.kind && row.id === choice.id)) reason = say('book.refuse.choice');
   const xp = def?.xp || 0;
-  return { ok: !reason, reason, id, def, xp, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
+  return { ok: !reason, reason, id, def, xp, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0], revision: run.bookReadRevision || 0 };
 }
 
 /** One validated lesson plus XP, then one fewer book. Returns both rewards. */
@@ -133,7 +132,6 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
     (run[target] ||= []).push({ instanceId: unusedInstanceId(run, 'book', id), cardId: id, upgraded: false });
     bonuses.card.destination = target;
   }
-  if (bonuses.feat) chooseFeat(run, bonuses.feat.id);
   adjustCount(run.consumables, plan.id, -1);
   run.bookReadRevision = plan.revision + 1;
   return { ...receipt, learned: { ...plan.choice }, classLearned, bonuses, destination: plan.choice.kind === 'card' ? destination : 'classLibrary' };
@@ -205,7 +203,7 @@ export function tickCompanions(run) {
 // ---------------------------------------------------------------------------
 
 const CONSUMABLE_FIELDS = Object.freeze({
-  skillBook: ['id', 'kind', 'name', 'blurb', 'masteryBlurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance', 'featChance'],
+  skillBook: ['id', 'kind', 'name', 'blurb', 'masteryBlurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance'],
   revive: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'hpPct'],
 });
 const COMPANION_FIELDS = Object.freeze(['id', 'name', 'blurb', 'cost', 'combats']);
@@ -243,7 +241,7 @@ export function consumableTableProblems(rows, bundle, err) {
     }
     if (row.kind === 'skillBook') {
       wholeAtLeast(row, 'xp', 1, at, err);
-      for (const key of ['combatCardChance', 'featChance']) if (row[key] !== undefined) {
+      for (const key of ['combatCardChance']) if (row[key] !== undefined) {
         wholeAtLeast(row, key, 0, at, err, 100);
         if (!row.learnClass) err(`${at}.${key}`, 'bonus chances are only authored on class books');
       }
@@ -299,7 +297,7 @@ export function companionTableProblems(rows, bundle, err) {
 const ITEM_COLLECTIONS = Object.freeze(['consumables', 'companions']);
 const words = (value) => String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
 // hpPct is a percent; every other item number is a whole count or price.
-const domainFor = (key, value) => (['combatCardChance', 'featChance'].includes(key)
+const domainFor = (key, value) => (key === 'combatCardChance'
   ? { integer: true, step: 1, min: 0, max: 100 }
   : key === 'hpPct'
   ? { integer: true, step: 1, min: 1, max: 100 }

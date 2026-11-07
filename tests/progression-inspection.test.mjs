@@ -4,14 +4,13 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
-import { progressionStats, skillInspection, featInspection, ownedFeatInspections } from '../src/ui/models/ProgressionInspectionModel.js';
+import { progressionStats, skillInspection } from '../src/ui/models/ProgressionInspectionModel.js';
 import { statRow } from '../src/model/statRows.js';
 import { statRowValue } from '../src/model/derivedStats.js';
 import { abilityOfferPool } from '../src/model/abilityOffers.js';
 import { abilityRankAt } from '../src/model/abilityGrades.js';
 import { getFeatDescription } from '../src/model/classSkillFeatDescription.js';
 import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const registries = createRegistries(contentBundle);
 const fresh = () => createRunState({ seed: 4242, classId: 'reaver', registries });
@@ -48,19 +47,6 @@ test('skill associations follow held item schools and the class reward pool', ()
   assert.equal(empty.requiresEquipment, true);
   assert.deepEqual(empty.cards, []);
   assert.deepEqual(empty.tags, []);
-});
-
-test('feat inspections expose authored tags and preserve repeated general feat stacks', () => {
-  const run = fresh();
-  run.feats = ['fieldStudy', 'fieldStudy'];
-  run.skillFeats = ['bladeCritical'];
-  const feats = ownedFeatInspections(registries, run);
-  assert.equal(feats.length, 2);
-  assert.equal(feats.find(feat => feat.id === 'fieldStudy').owned, 2);
-  assert.deepEqual(featInspection(registries, run, 'fieldStudy').tags, []);
-  assert.deepEqual(featInspection(registries, run, 'bladeCritical').tags, ['blade']);
-  assert.deepEqual(featInspection(registries, run, 'shieldBraced').tags, ['guard']);
-  assert.equal(featInspection(registries, run, 'missing'), null);
 });
 
 const masteryRun = (classId, source = registries) => {

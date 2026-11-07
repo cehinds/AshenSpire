@@ -71,7 +71,6 @@ import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
-import { classMasteryProblems } from './classMasteryContent.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
@@ -354,9 +353,6 @@ export function extractTemplateTokens(template) {
  * last problem in the list rather than an exception at the boot banner. Specific
  * rules still come first and still say the useful thing; this is the floor under
  * them, not a substitute for them.
- *
- * `options.deferred` names passes the caller will run itself later
- * (`['classMastery']`); the default runs everything.
  */
 export function validateContent(bundle, options = {}) {
   // The accumulator is created HERE and handed in, so a throw partway through
@@ -2169,11 +2165,6 @@ function collectContentProblems(bundle, errors = [], options = {}) {
     users: scriptUsers,
   };
 
-  // The cross-table mastery planner needs structurally valid dependencies.
-  // Keep their existing field-addressed refusals before asking it to plan.
-  // `options.deferred: ['classMastery']` leaves this slow pass to the caller
-  // (boot runs it after the title is up); every other caller runs it here.
-  if (!errors.length && !options.deferred?.includes('classMastery')) for (const problem of classMasteryProblems(b)) err('classMastery', problem);
   return { ok: errors.length === 0, errors, scriptReport };
 }
 

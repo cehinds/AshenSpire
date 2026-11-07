@@ -68,12 +68,11 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, skillKindOf, stampSkillBonuses } from './model/skills.js';
-import { featMultiplier, featStacks } from './model/feats.js';
+import { pendingRankUpRows, coreCardRanks, stampSkillBonuses } from './model/skills.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, xpToNext as levelXpToNext } from './model/levelup.js';
+import { allocateAttributePoint, awardLevelXp, combatXpReceipt, xpToNext as levelXpToNext } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
@@ -2977,18 +2976,16 @@ async function onCombatEnd(result, combat, enc) {
   const skillProgression = configuredSkillProgression(run);
   const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
-    const kind = skillKindOf(registries, skillId);
-    const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
-    trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
+    trackReceipt[skillId] = Math.floor(amount);
   }
   const configuredAwards = skillProgression ? settleConfiguredSkillProgression(registries, run, combat, {
-    receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: featMultiplier(run, 'classXp'),
+    receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: 1,
   }) : null;
   const trackAwards = configuredAwards?.trackAwards || (!configuredProgression
     ? applySkillXp(registries, run, trackReceipt) : []);
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, multiplier: featMultiplier(run, 'classXp') }));
+  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, multiplier: 1 }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
     run,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
@@ -2997,7 +2994,7 @@ async function onCombatEnd(result, combat, enc) {
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
-    characterMultiplier: featMultiplier(run, 'characterXp') * (configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1),
+    characterMultiplier: configuredCharacterLevels(run) ? configuredCharacterXpMultiplier(run) : 1,
   });
   const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
   const levelAward = awardLevelXp(registries, run, levelXp, {
@@ -3022,7 +3019,6 @@ async function onCombatEnd(result, combat, enc) {
   // A won fight restores its authored after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
   applyAfterCombatRecovery(run);
-  if (result === 'victory') run.hp = Math.min(run.maxHp, run.hp + 5 * featStacks(run, 'vitalRenewal'));
 
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
@@ -3811,8 +3807,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
         const points = Number(rawPoints);
         if (!Number.isInteger(points) || ![0, 1].includes(points)) throw new Error('?shotRestPoints: expected exactly 0 or 1');
         if (points === 1) {
-          bankLevelXp(registries, run, levelXpToNext(registries, run.level.level));
-          claimBankedLevel(registries, run, { pointsPerLevel: 1 });
+          awardLevelXp(registries, run, levelXpToNext(registries, run.level.level), {
+            pointsPerLevel: gameModule(run, 'progression')?.attributePointsPerLevel || 0, grantStats: !!gameModule(run, 'stats') });
         }
       }
       if (shotParams.get('shotRestState') === 'wounded') {

@@ -136,7 +136,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Gauntlet test | `balanceGauntlet.json` | |
 | Towns per act | `balanceAtlas.json` | |
 | The act map's shape: floors, columns, paths, room-type odds | `mapActShape.json`, `mapShapeLimits.json` | `legacyActBosses.json` only migrates old saves; don't edit it. |
-| Character-level and skill feats | `feats.json`, `classSkillFeats.json`, `skillFeats.json` | |
+| Class and skill feats (retired) | `classSkillFeats.json`, `skillFeats.json` (no runtime reader grants them; the general `feats.json` is gone) | |
 | How much enemy intent you see | `combatIntent.json` | |
 | Counter and smash multipliers, damage and tag riders | `combatMatchups.json`, `combatExpansionMatchups.json` | |
 | Survey quest lore | `surveyQuestLore.json` | |

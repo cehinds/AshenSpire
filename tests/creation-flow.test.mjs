@@ -36,6 +36,6 @@ test('ability selections retain legal distinct families, cap count and clear sta
 });
 test('birth and Quick Start retain existing zero-feat and omitted-ability contracts',()=>{
  const quick=quickStartRunConfig(registries);assert.equal(Object.hasOwn(quick,'startingAbilityIds'),false);assert.equal(Object.hasOwn(quick,'startingFeatIds'),false);
- const run=createRunState({registries,seed:42,...quick});assert.deepEqual(run.feats,[]);assert.equal(run.level.level,1);
- for(const cls of registries.classes.all())assert.deepEqual(birth(cls.id).feats,[]);
+ const run=createRunState({registries,seed:42,...quick});assert.equal(run.feats,undefined);assert.equal(run.level.level,1);
+ for(const cls of registries.classes.all())assert.equal(birth(cls.id).feats,undefined);
 });

@@ -12,7 +12,7 @@ import { dealPoiseDamage } from '../src/engine/actions.js';
 import { runCombatPlayer } from '../src/engine/runCombat.js';
 import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
 import { previewCard } from '../src/engine/combat.js';
-import { skillTracks, awardSkillXp, bankSkillXp, claimBankedSkillLevel } from '../src/model/skills.js';
+import { skillTracks, awardSkillXp } from '../src/model/skills.js';
 import { skillProgressRows, staleSkillTracks } from '../src/model/progression.js';
 import { characterSheetModel } from '../src/ui/models/CharacterSheetModel.js';
 import { combatEnemyKnowledgeProblems } from '../src/model/enemyKnowledgeCombat.js';
@@ -158,8 +158,6 @@ test('Perception is visible only on opted-in runs and cannot be manually trained
   assert.ok(track.rows.every(row => row.grants.length === 0));
   const before = structuredClone(run.skills);
   assert.throws(() => awardSkillXp(registries, run, 'perception', 100));
-  assert.throws(() => bankSkillXp(registries, run, 'perception', 100));
-  assert.equal(claimBankedSkillLevel(registries, run, 'perception'), null);
   assert.deepEqual(run.skills, before);
   const legacy = createRunState({ registries, seed: 11, classId: 'reaver', enemyKnowledgeVersion: null });
   assert.equal(skillProgressRows(registries, legacy, { includeUntouched: true }).some(track => track.id === 'perception'), false);
