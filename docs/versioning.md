@@ -270,6 +270,12 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
 - **Permissions.** The activity API needs only `contents: read`; the job already has
   `contents: write` for the push to `dev` and `actions: write` for the preview dispatch.
 
+**Note, 2026-11-07.** That day's run replayed the 10-31 release cut (feed event 48504741615)
+because `parseRecords` never recognised a record below HEAD: the `%B%x1e` split leaves a leading
+newline on every later message and `SUBJECT` is anchored. Dev went 0.7.3 -> 0.7.4 -> 0.7.5 for
+one cut. The parser now strips leading whitespace, and the owner reset dev from 0.7.5 to 0.7.4 by
+hand that day, keeping the build ordinal (18). Branch `fix/VersionAdvanceReplay`.
+
 ## Mechanics of a hand bump (MAJOR only now; one PR, one commit sequence)
 
 1. Edit `contentBundle.version` in `src/content/index.js` — the only edit.
