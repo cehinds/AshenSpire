@@ -14,6 +14,8 @@
   --hud-details-value-size: initial;
   --hud-details-label-color: initial;
   --hud-details-min-width: initial;
+  --hud-mini-bar-width: initial;
+  --hud-mini-bar-height: initial;
   --hud-tools-bg: transparent;
   --hud-header-hp-max-width: none;
   --hud-tools-span: field;
@@ -32,6 +34,8 @@
   --hud-player-panel-border: #66b8ff;
   --hud-details-font: 'Cinzel', Georgia, 'Times New Roman', serif;
   --hud-details-label-color: #d6af68;
+  --hud-mini-bar-width: 80px;
+  --hud-mini-bar-height: 8px;
   --hud-tools-bg: #0c0b08a0;
 }
 :root[data-form-factor='tablet'] {
@@ -43,6 +47,8 @@
   --hud-player-panel-border: #66b8ff;
   --hud-details-font: 'Cinzel', Georgia, 'Times New Roman', serif;
   --hud-details-label-color: #d6af68;
+  --hud-mini-bar-width: 150px;
+  --hud-mini-bar-height: 10px;
   --hud-tools-bg: #0c0b08a0;
   --hud-header-hp-max-width: 60%;
 }
@@ -55,6 +61,8 @@
   --hud-player-panel-border: #66b8ff;
   --hud-details-font: 'Cinzel', Georgia, 'Times New Roman', serif;
   --hud-details-label-color: #d6af68;
+  --hud-mini-bar-width: 150px;
+  --hud-mini-bar-height: 10px;
   --hud-tools-bg: #0c0b08a0;
   --hud-header-hp-max-width: 48%;
   --hud-tools-span: hand;
@@ -68,6 +76,8 @@
   --hud-player-panel-border: #66b8ff;
   --hud-details-font: 'Cinzel', Georgia, 'Times New Roman', serif;
   --hud-details-label-color: #d6af68;
+  --hud-mini-bar-width: 150px;
+  --hud-mini-bar-height: 10px;
   --hud-tools-bg: #0c0b08a0;
   --hud-header-hp-max-width: 48%;
   --hud-tools-span: hand;
