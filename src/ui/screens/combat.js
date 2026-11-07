@@ -1952,7 +1952,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // WCF2 ordered active stack (models/CombatantStackModel.js): HP, other
     // resources, buildup by fill, stance, icons; at most five rows. Buildup
     // that does not fit joins the icon row as a ring pip.
-    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id);
+    // Poise is hidden on the HUD (owner 2026-11-07); the inspect panel keeps it. It is never drawn, so it must not take a stack row.
+    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id).filter((id) => id !== 'poise');
     if (entity.kind === 'enemy' && arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents)) resources.push('arcaneExposure');
     const icons = Object.entries(v.statuses || {}).filter(([sid, inst]) => {
       const def = registries.statuses.get(sid);
