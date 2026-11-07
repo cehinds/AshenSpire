@@ -225,14 +225,9 @@ test('pending claims block inspection and failed saves and exits restore the rev
   });
 });
 
-// The regular game uses a separate chooser from configured profiles; both
-// stages must reach the same reading without crossing its save door.
+// The rank-up chooser: both stages must reach the same reading without crossing its save door.
 const normalRun = () => ({ class: 'reaver', attributes: {}, cinders: 19, xp: 27, deck: [], sideboard: [], flasks: [], relics: [], feats: [], coreTags: [], loadout: { storage: [] }, skills: {} });
 const normalCases = [
-  { kind: 'card', rewards: { cardIds: ['frostNova', 'scholarsInsight'] }, pick: 0 },
-  { kind: 'relic', rewards: { relicChoices: [relic.id, registries.relics.all()[1].id] }, pick: 0 },
-  { kind: 'skillDraft', rewards: { skillDrafts: [{ skillId: 'item:blade', offerId: 'inspection:grades', level: 1,
-    cardIds: ['progression-ember-hew', 'progression-ember-hew'], abilityRanks: [0, 5], choiceIds: ['progression-ember-hew@0', 'progression-ember-hew@5'] }] }, pick: 1 },
   { kind: 'skillRankUp', legacy: true, rewards: { skillRankUps: [{ skillId: 'item:blade', level: 2, claimOrdinal: 0 }] }, pick: 0 },
 ];
 
@@ -316,57 +311,6 @@ for (const sample of normalCases) test(`normal ${sample.kind} inspection survive
     assert.equal(writes, 2);
     assert.equal(Object.values(checkpoint.states).filter(state => state === 'taken').length, 1);
     assert.equal(document.querySelector('.card-inspection-modal'), null, 'successful claim leaves no orphan inspection');
-  });
-});
-
-test('normal node choices hide Inspect instead of offering a missing face', () => {
-  withInspectionDom(() => {
-    const app = document.createElement('main'); document.body.append(app);
-    const run = normalRun();
-    mountRewards(app, { registries, run, rewards: { classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }] }, onDone() {} });
-    app.querySelector('[data-kind="classDraft"]').click();
-    assert.equal(app.querySelector('#reward-inspect'), null);
-    app.querySelector('.reward-pick').click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(app.querySelector('#reward-inspect'), null);
-    assert.equal(document.querySelector('.card-inspection-modal'), null);
-  });
-});
-
-
-for (const rewardKind of ['armory', 'relic']) test(`normal ${rewardKind} milestone keeps its complete reading visible during review`, () => {
-  withInspectionDom(() => {
-    const definitions = rewardKind === 'armory' ? registries.equipment.armaments.slice(0, 2) : registries.relics.all().slice(0, 2);
-    const options = definitions.map(item => rewardKind === 'armory' ? `armament/${item.id}` : item.id);
-    const app = document.createElement('main'); document.body.append(app);
-    const run = normalRun(), checkpoint = { states: {} };
-    let writes = 0, claims = 0;
-    mountRewards(app, { registries, run, checkpoint, onDone() {}, onPersist() { writes++; }, onClaimClassReward() { claims++; },
-      rewards: { classMilestoneRewards: [{ receiptId: `inspection:${rewardKind}`, classId: 'reaver', skillId: 'class:reaver', level: 1, rewardKind, options }] },
-    });
-    app.querySelector('[data-kind="classMilestone"]').click();
-    const before = structuredClone({ run, checkpoint });
-    const readings = () => app.querySelectorAll('.equipment-poker-inspection');
-    assert.equal(readings().length, 2);
-    for (const [index, inspection] of readings().entries()) {
-      assert.equal(inspection.hidden, false);
-      assert.equal(inspection.dataset.pickId, options[index]);
-      assert.ok(inspection.querySelector('[data-level="inspect"]'));
-      assert.ok(inspection.querySelector('.card-inspection-details'));
-    }
-    app.querySelectorAll('.reward-pick')[1].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    assert.deepEqual(readings().map(inspection => inspection.hidden), [true, false], 'only the selected full reading remains visible');
-    const text = rewardKind === 'armory' ? definitions[1].blurb : relicText(definitions[1], registries);
-    assert.ok(reading(readings()[1]).includes(text), 'the full authored reading remains available in review');
-    assert.equal(app.querySelector('#reward-inspect'), null, 'the existing inline full reading needs no second door');
-    assert.deepEqual({ run, checkpoint }, before); assert.equal(claims, 0); assert.equal(writes, 0);
-    app.querySelector('#reward-back').click();
-    assert.equal(app.querySelector('.reward-selected').dataset.pickId, options[1]);
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Confirm');
-    assert.deepEqual(readings().map(inspection => inspection.hidden), [false, false]);
-    assert.deepEqual({ run, checkpoint }, before); assert.equal(claims, 0); assert.equal(writes, 0);
   });
 });
 

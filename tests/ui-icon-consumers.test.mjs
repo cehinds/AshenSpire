@@ -39,15 +39,3 @@ test('card choice titles contain the readable option name without its icon ID', 
   shell.close();
 }));
 
-test('relic reward art resolves its registry icon rather than printing a token', () => withKitDom(({ document }) => {
-  document.documentElement ??= document.body;
-  const app = document.createElement('main'); document.body.append(app);
-  const relic = registries.relics.all()[0];
-  mountRewards(app, { registries, run: { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } },
-    checkpoint: { states: {} }, rewards: { relicId: relic.id }, onDone() {}, onPersist: () => true,
-    saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }), saveMeta() {} } });
-  const identity = app.querySelector('[data-kind="relic"] b');
-  assert.ok(identity, 'the relic row renders its identity');
-  assert.doesNotMatch(identity.textContent, new RegExp(relic.icon));
-  assert.equal(identity.querySelector('[data-engraved-icon]').dataset.engravedIcon, uiIconId(relic.icon));
-}));

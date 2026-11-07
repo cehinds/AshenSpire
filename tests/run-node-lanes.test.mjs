@@ -101,7 +101,7 @@ function fixture(run) {
   copyFileSync(join(ROOT, 'tests/run-node.mjs'), join(dir, 'tests/run-node.mjs'));
   copyFileSync(join(ROOT, 'tests/run-node-lanes.mjs'), join(dir, 'tests/run-node-lanes.mjs'));
   writeFileSync(join(dir, 'tests/engine.test.js'), 'export function runTests(){throw new Error("ENGINE_LANE_MUST_NOT_RUN")}');
-  for (const file of ['confirmation-modal', 'reward-confirm', 'card-removal-flick']) {
+  for (const file of ['confirmation-modal', 'card-removal-flick']) {
     writeFileSync(join(dir, `tests/${file}.test.mjs`), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
   }
   writeFileSync(join(dir, 'tools/bundle.test.mjs'), 'throw new Error("EXCLUDED_TEST_MUST_NOT_RUN");');
@@ -154,10 +154,10 @@ test('discovery-only keeps failed assertions, syntax errors and stale exclusions
   assert.equal(result.status, 1, result.output);
   assert.match(result.output, /SyntaxError/);
   writeFileSync(probe, "import test from 'node:test'; test('clean',()=>{});");
-  rmSync(join(dir, 'tests/reward-confirm.test.mjs'));
+  rmSync(join(dir, 'tests/card-removal-flick.test.mjs'));
   result = invoke(dir, ['--discovered-only']);
   assert.equal(result.status, 1, result.output);
-  assert.match(result.output, /NOT_SPAWNED names tests\/reward-confirm\.test\.mjs/);
+  assert.match(result.output, /NOT_SPAWNED names tests\/card-removal-flick\.test\.mjs/);
 }));
 
 test('actual link group runs only the original link verdict, and unknown remains red', () => fixture(dir => {
@@ -243,7 +243,7 @@ test('Windows fast shards and isolated slow jobs cover the real discovered corpu
   assert.deepEqual(slow.slice().sort(), [...SLOW_DISCOVERED.keys()].sort(), 'matrix is the existing closed slow set, without duplicates');
   const skipped = new Set(['node_modules', 'dist', 'build', 'scratch']);
   const elsewhere = new Set([...RUNNER.slice(RUNNER.indexOf('const NOT_SPAWNED ='), RUNNER.indexOf('const found =')).matchAll(/\['([^']+\.test\.mjs)'/g)].map(match => match[1]));
-  assert.equal(elsewhere.size, 4, 'the census retains every runner exclusion');
+  assert.equal(elsewhere.size, 3, 'the census retains every runner exclusion');
   const files = [];
   const walk = dir => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {

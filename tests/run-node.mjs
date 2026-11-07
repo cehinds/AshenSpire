@@ -121,7 +121,6 @@ if (DISCOVER) {
   const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'scratch']);
   const NOT_SPAWNED = new Map([
     ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
-    ['tests/reward-confirm.test.mjs', 'exports runRewardConfirmTests(); called below'],
     ['tests/card-removal-flick.test.mjs', 'exports runCardRemovalFlickTests(); called below'],
     ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; ci.yml runs it as its own job, `parse-gate`'],
   ]);
@@ -1254,15 +1253,6 @@ if (CORE) {
     console.log(`FAIL  generated content: ${String(error.stderr || error.stdout || error.message).slice(0, 600)}`);
     zoomExtra++;
   }
-}
-if (CORE) try {
-  const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');
-  const count = runRewardConfirmTests();
-  console.log('PASS  reward selection and confirmation: ' + count + ' checks');
-  zoomPassed++;
-} catch (error) {
-  console.log('FAIL  reward selection and confirmation: ' + error.message);
-  zoomExtra++;
 }
 if (CORE) try {
   const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');

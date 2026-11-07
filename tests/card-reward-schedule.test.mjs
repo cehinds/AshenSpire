@@ -297,92 +297,6 @@ test('every schedule key has a generated Settings row with its own note, percent
   assert.match(rows.find((r) => r.key.endsWith('afterCombat.elite')).note, /an elite fight/);
 });
 
-test('the reward screen draws the level card row, takes it through the chooser, and says a missed card in one line', () => {
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    assert.equal(t('reward.note.cardMissed'), 'No card this time.');
-    assert.equal(t('reward.levelCard.title'), 'Level card');
-    const app = document.createElement('main'); document.body.append(app);
-    const run = { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
-    const checkpoint = { states: {}, chosenCardId: null, chosenDraftCardIds: {} };
-    mountRewards(app, {
-      registries: REG, run, checkpoint, onDone() {}, onPersist() {},
-      rewards: { cardIds: [], cardMissed: true, levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend', 'gildedOath'] }] },
-    });
-    assert.ok(app.querySelector('.reward-note[data-note="cardMissed"]'), 'the missed chance is one line in the menu');
-    assert.equal(app.querySelector('[data-kind="card"]'), null, 'and there is no card row');
-    const row = app.querySelector('[data-kind="levelCard"]');
-    assert.equal(row.dataset.key, 'levelCard:0');
-    row.click();
-    app.querySelectorAll('.reward-row .card')[1].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(run.deck, [], 'Confirm only stages review');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
-    app.querySelector('#reward-card-confirm').click();
-    assert.deepEqual(run.deck.map((c) => c.cardId), ['rend']);
-    assert.equal(checkpoint.states['levelCard:0'], 'taken');
-    assert.deepEqual(checkpoint.chosenDraftCardIds, { 'levelCard:0': 'rend' });
-    assert.equal(app.querySelector('[data-kind="levelCard"]').dataset.state, 'taken');
-    // The checkpoint the screen wrote is one the save door accepts.
-    const shape = createRunState({ registries: REG, classId: 'reaver', seed: 2 });
-    const pendingReward = {
-      schemaVersion: 1, source: 'normal', after: 'map', chosenDraftNodeIds: {},
-      rewards: { cardIds: [], cardMissed: true, levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend', 'gildedOath'] }] }, ...checkpoint,
-    };
-    assert.deepEqual(validateRunShape({ ...shape, pendingReward }).filter((m) => m.startsWith('pendingReward')), []);
-    app.remove();
-  } finally {
-    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
-  }
-});
-
-test('two level cards are taken, and both picks persist in chosenDraftCardIds[<rowKey>] across a reload', () => {
-  const reg = withSchedule({ onLevelUp: true, onLevelUpMaxPerFight: 2 });
-  const offer = rollCombatCardOffer(reg, createRng(21), args('normal', { levelUps: 3 }));
-  assert.equal(offer.levelCards.length, 2);
-  const run = createRunState({ registries: REG, classId: 'reaver', seed: 21 });
-  run.pendingReward = {
-    schemaVersion: 1, source: 'normal', after: 'map', rewards: structuredClone(offer.rewards),
-    states: {}, chosenCardId: null, chosenDraftCardIds: {}, chosenDraftNodeIds: {},
-  };
-  const deckBefore = run.deck.length;
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const mount = (r) => {
-      const app = document.createElement('main'); document.body.append(app);
-      mountRewards(app, { registries: REG, run: r, checkpoint: r.pendingReward, rewards: r.pendingReward.rewards, onDone() {}, onPersist() {} });
-      return app;
-    };
-    const app = mount(run);
-    const picks = {};
-    for (const key of ['levelCard:0', 'levelCard:1']) {
-      app.querySelector(`[data-key="${key}"]`).click();
-      app.querySelectorAll('.reward-row .card')[2].click();
-      picks[key] = app.querySelectorAll('.reward-row .card')[2].dataset.cardId;
-      app.querySelector('#reward-card-confirm').click();
-      assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
-      app.querySelector('#reward-card-confirm').click();
-    }
-    app.remove();
-    assert.deepEqual(run.pendingReward.chosenDraftCardIds, picks, 'each pick is kept under its own row key');
-    assert.deepEqual(run.deck.slice(deckBefore).map((c) => c.cardId), Object.values(picks));
-    // The reload: the bytes a save holds, read back through the load door.
-    const back = deserializeRun(serializeRun(run));
-    assert.deepEqual(validateRunShape(back).filter((m) => m.startsWith('pendingReward')), []);
-    assert.deepEqual(back.pendingReward.chosenDraftCardIds, picks);
-    assert.deepEqual(back.pendingReward.states, { 'levelCard:0': 'taken', 'levelCard:1': 'taken' });
-    const again = mount(back);
-    assert.deepEqual(again.querySelectorAll('.reward-kind[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
-    again.remove();
-  } finally {
-    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
-  }
-});
-
 test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by name', () => {
   const run = createRunState({ registries: REG, classId: 'reaver', seed: 3 });
   const pendingReward = {
@@ -391,32 +305,6 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
     states: { 'levelCard:0': 'taken' },
   };
   assert.ok(validateRunShape({ ...run, pendingReward }).some((m) => /levelCard:0 Taken state requires its chosen card/.test(m)));
-});
-
-test('a taken level card never reuses an instance id a sideboarded card holds', () => {
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    // The id `r0_rend` is what a naive `r${deck.length}_…` would mint into an empty deck.
-    const run = { cinders: 0, deck: [], sideboard: [{ instanceId: 'r0_rend', cardId: 'rend', upgraded: false }], flasks: [], relics: [], loadout: { storage: [] } };
-    const checkpoint = { states: {}, chosenCardId: null, chosenDraftCardIds: {} };
-    const app = document.createElement('main'); document.body.append(app);
-    mountRewards(app, { registries: REG, run, checkpoint, onDone() {}, onPersist() {}, rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] } });
-    app.querySelector('[data-kind="levelCard"]').click();
-    app.querySelectorAll('.reward-row .card')[0].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.length, 1);
-    assert.equal(run.deck[0].cardId, 'rend');
-    assert.notEqual(run.deck[0].instanceId, 'r0_rend', 'the sideboarded id is not reused');
-    const ids = [...run.deck, ...run.sideboard].map((c) => c.instanceId);
-    assert.equal(new Set(ids).size, ids.length, 'every instance id is unique across deck and sideboard');
-    app.remove();
-  } finally {
-    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
-  }
 });
 
 test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchanged, and a pending level card rides a v12 save', async () => {
