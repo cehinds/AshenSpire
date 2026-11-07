@@ -1,80 +1,47 @@
 // PLAYWRIGHT_MODULE=/path/to/playwright BASE_URL=http://localhost:4475/ node tests/target-hud.browser.mjs
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { serve } from '../tools/serve.mjs';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const server = process.env.BASE_URL ? null : await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
-const base = process.env.BASE_URL || server.url, entry = process.env.HUD_ENTRY || 'index.html', out = process.env.HUD_OUT || '/tmp/ashen-target-hud';
-mkdirSync(out, { recursive: true });
+const base = process.env.BASE_URL || server.url, entry = process.env.HUD_ENTRY || 'index.html';
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
-const results = [], errors = [];
-const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
-async function tapCard(page, id) {
-  const card = page.locator(`.hand .card[data-card-id="${id}"]`).first();
-  const r = await card.boundingBox();
-  await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2);
-  await page.waitForTimeout(50);
-  assert.equal(await card.getAttribute('aria-pressed'), 'true', `${id} becomes selected`);
-  await page.mouse.move(4, 4);
-}
+// Owner 2026-11-07: no selected target-HUD panel opens for any combatant; the overhead mini HUD stays.
+const shown = page => page.evaluate(() => [...document.querySelectorAll('.target-hud-selected, .target-hud-focused, .target-hud-detail.visible')].length);
+const miniOk = page => page.evaluate(() => [...document.querySelectorAll('.combatant.enemy:not(.dead)')].every(f => f.querySelector(':scope > .target-hud-overhead-meters .intent') && f.querySelector(':scope > .target-hud-overhead-meters .as-meter, :scope > .target-hud-overhead-meters [data-meter-row="hp"], :scope > .target-hud-overhead-meters .meters')));
 try {
-  for (const [width, height] of [[1440, 900], [1366, 768], [1920, 1080]]) {
+  for (const [width, height] of [[1440, 900], [1366, 768], [390, 844]]) {
     const page = await browser.newPage({ viewport: { width, height } });
+    const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}${entry}?shot=combat&gameProfile=core&shotEnemyCount=3&shotEnemyContext=status`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(300);
     assert.equal(await page.locator('.combat').getAttribute('data-target-hud'), 'true');
-    const played = await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length);
-    await tapCard(page, 'core.strike');
-    assert.equal(await page.locator('.combatant.target-hud-candidate').count(), 3);
+    const enemy = page.locator('.combatant.enemy .sprite').first();
+    await enemy.hover(); await page.waitForTimeout(700);
+    assert.equal(await shown(page), 0, `${width} hover opens no selected panel`);
+    assert.equal(await miniOk(page), true, 'mini HUDs stay');
+    await page.mouse.move(4, 4);
+    const card = page.locator('.hand .card[data-card-id="core.strike"]').first(), box = await card.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2); await page.waitForTimeout(300);
+    assert.ok(await page.locator('.combatant.target-hud-candidate').count() >= 1, 'targeting still marks candidates');
     await page.waitForTimeout(750);
-    const geometry = await page.evaluate(() => ({
-      panels: [...document.querySelectorAll('.target-hud-detail.visible:not(.leaving)')].map(node => ({ id: node.dataset.eid, ...node.getBoundingClientRect().toJSON() })),
-      sprites: [...document.querySelectorAll('.combatant .sprite')].map(node => node.getBoundingClientRect().toJSON()),
-      cards: [...document.querySelectorAll('.hand .card')].map(node => node.getBoundingClientRect().toJSON()),
-      played: window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length,
-      focused: [...document.querySelectorAll('.target-hud-focused')].map(node => node.dataset.eid),
-    }));
-    assert.equal(geometry.panels.length, 3); assert.equal(geometry.played, played, 'eligibility previews never play a card');
-    for (const a of geometry.panels) {
-      assert.ok(a.left >= 0 && a.top >= 0 && a.right <= width && a.bottom <= height);
-      for (const b of geometry.panels) if (a !== b) assert.equal(overlap(a, b), false, `${width} panel collision ${a.id}/${b.id}`);
-      for (const sprite of geometry.sprites) assert.equal(overlap(a, sprite), false, `${width} panel covers sprite artwork`);
-      for (const card of geometry.cards) assert.equal(overlap(a, card), false, `${width} panel covers a card`);
-    }
-    await page.screenshot({ path: resolve(out, `candidates-${width}.png`) });
-    await page.keyboard.press('Escape'); await page.waitForTimeout(700);
-    const enemy = page.locator('.combatant.enemy').first();
-    await enemy.locator('.sprite').hover(); await page.waitForTimeout(650);
-    const panel = page.locator(`.target-hud-detail[data-eid="${await enemy.getAttribute('data-eid')}"]`);
-    assert.equal(await panel.isVisible(), true);
-    const statuses = panel.locator('.status-icon');
-    if (await statuses.count()) {
-      await statuses.first().hover(); await page.waitForTimeout(600);
-      assert.equal(await panel.isVisible(), true, 'sprite-to-status corridor retains detail');
-      // Owner 2026-10-25: a tap anywhere on an unarmed panel, statuses included, inspects.
-      await statuses.first().click();
-      const inspector = page.locator('.combatant-inspector-body');
-      await inspector.waitFor({ state: 'visible' });
-      await page.keyboard.press('Escape');
-      await inspector.waitFor({ state: 'detached' });
-      assert.equal(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length), played);
-    }
-    await page.mouse.move(4, 4); await page.waitForTimeout(700);
-    await tapCard(page, 'core.counter'); await page.waitForTimeout(750);
-    assert.deepEqual(await page.locator('.combatant.target-hud-candidate').evaluateAll(nodes => nodes.map(node => node.dataset.eid)), ['player']);
-    assert.equal(await page.locator('.target-hud-detail.visible:not(.leaving)').count(), 1);
-    assert.equal(await page.locator('.target-hud-detail.visible:not(.leaving)').getAttribute('data-eid'), 'player');
-    results.push({ width, height, geometry }); await page.close();
+    assert.equal(await shown(page), 0, `${width} targeting opens no selected panel`);
+    assert.equal(await miniOk(page), true, 'mini HUDs stay while targeting');
+    const played = () => page.evaluate(() => window.__combat.eventLog.filter(e => e.type === 'cardPlayed').length);
+    const before = await played();
+    await enemy.click(); await page.waitForTimeout(700);
+    assert.equal(await played(), before + 1, 'clicking the enemy still plays the card');
+    await page.mouse.move(4, 4);
+    // Inspect is the existing Core door: a ~650 ms press-and-hold on the figure (combat.js wireCombatantContext).
+    const fb = await enemy.boundingBox();
+    await page.mouse.move(fb.x + fb.width / 2, fb.y + fb.height / 2); await page.mouse.down(); await page.waitForTimeout(650); await page.mouse.up();
+    await page.locator('.combatant-inspector-body').waitFor({ state: 'visible' });
+    assert.equal(await page.locator('.combatant-inspector-body').count(), 1, 'exactly one inspector modal opens');
+    await page.keyboard.press('Escape');
+    await page.locator('.combatant-inspector-body').waitFor({ state: 'detached' });
+    assert.deepEqual(errors, []);
+    await page.close();
   }
-  for (const [width, height] of [[390, 844], [1024, 768]]) {
-    const page = await browser.newPage({ viewport: { width, height } });
-    await page.goto(`${base}${entry}?shot=combat&gameProfile=core`, { waitUntil: 'networkidle' });
-    assert.equal(await page.locator('.combat').getAttribute('data-target-hud'), 'true');
-    assert.equal(await page.locator('.target-hud-layer').isVisible(), true); await page.close();
-  }
-  assert.deepEqual(errors, []);
-} finally { writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2)); await browser.close(); await new Promise(done => server ? server.server.close(done) : done()); }
-console.log(`Target HUD browser checks passed (${results.length} desktop sizes).`);
+  console.log('No selected target HUD at any size; mini HUDs stay.');
+} finally { await browser.close(); server?.server.close(); }

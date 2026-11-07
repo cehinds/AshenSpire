@@ -2,12 +2,10 @@
 import { feats } from '../../content/feats.js';
 import { skillTracks, skillLevel, trackSkillFeats } from '../../model/skills.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
-import { hasClassMastery, masteryProfileFor } from '../../model/classMasteryRun.js';
-import { masteryRowId } from '../../model/classMastery.js';
 import { t } from '../strings.js';
 
 export function creationFeatBrowserGroups(registries, run) {
-  const source = registries.masterySource || registries;
+  const source = registries;
   const classId = run.class;
   const classTrack = `class:${classId}`;
   const tracks = skillTracks(source);
@@ -28,9 +26,7 @@ export function creationFeatBrowserGroups(registries, run) {
     const gateLevel = gates.length ? Math.min(...gates.map(gate => gate.level)) : 0;
     // Mastery feat options use the authored gate instead of minLevel.
     const required = gates.length ? gateLevel : (feat.minLevel || 0);
-    const unlockedRows = masteryProfileFor(run).classMastery?.[classId]?.unlockedRows || [];
-    const unlocked = hasClassMastery(run) && gates.some(gate => unlockedRows.includes(masteryRowId(gate)));
-    return row(feat, 'class', classTrack, required, unlocked);
+    return row(feat, 'class', classTrack, required);
   });
   const every = source.balance.skill.featEvery;
   const skill = tracks.filter(track => track.kind !== 'class')

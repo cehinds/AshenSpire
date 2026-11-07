@@ -185,6 +185,7 @@ const RETIRED_LEGACY_ROW_KEYS = new Set([
   'rewardBattleArmaments', 'rewardBattleCards', 'rewardBattleCinders', 'rewardBattleClassDrafts',
   'rewardBattleFlasks', 'rewardBattleRelics', 'rewardBattleSkillDrafts',
   'rewardTreasureArmaments', 'rewardTreasureRelics',
+  'rewardLevelFeats', 'rewardLevelClassTree',
 ]);
 const RETIRED_LEGACY_ROWS_WARNING = 'Settings for the removed legacy reward and shop menus were left out. Everything else was kept.';
 
@@ -1179,9 +1180,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     }
     for (const key of ['impactPerXp', 'buildupPerXp']) {
       if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
-    }
-    for (const key of ['perWin', 'perElite', 'perBoss', 'perQuest']) {
-      if (Number.isFinite(configured.balance.classMastery?.pay?.[key])) configured.balance.classMastery.pay[key] = Math.max(0, Math.round(configured.balance.classMastery.pay[key] * xpMultiplier));
     }
     for (const key of ['perWin', 'bossKill', 'perQuest']) {
       if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));

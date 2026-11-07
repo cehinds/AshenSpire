@@ -1,8 +1,6 @@
 import { gameModule } from './gameProfile.js';
 import { skillTracks, skillBonusFor, skillMaxLevel, MAX_SKILL_BONUS } from './skills.js';
 import { resolveCard, primaryEffectIndex } from './registries.js';
-import { hasClassMastery, masteryUnlockName } from './classMasteryRun.js';
-import { masteryRowId } from './classMastery.js';
 
 // Configured runs keep the existing class/weapon-group ledgers and XP curves.
 // Equipment's procedural rank remains owned by Smithing tiers.
@@ -12,7 +10,7 @@ export function configuredSkillProgression(subject) {
 }
 
 /** Persist only actual level crossings, never a re-derived modal on reload. */
-export function skillLevelNotices(registries, awards, { usedArmaments = [], run, beforeState } = {}) {
+export function skillLevelNotices(registries, awards, { usedArmaments = [], run } = {}) {
   const tracks = skillTracks(registries);
   const crossings = awards.filter(award => award?.levelUps > 0);
   // Attribute simultaneous crossings in receipt order, without counting a
@@ -25,7 +23,7 @@ export function skillLevelNotices(registries, awards, { usedArmaments = [], run,
       .filter(piece => piece?.itemTypeTags?.includes(award.skillId)).map(piece => piece.name);
     const next = previous && { ...previous, skills: { ...previous.skills,
       [award.skillId]: { ...previous.skills[award.skillId], level: award.after } } };
-    const effects = next && { ...progressionEffects(registries, previous, next, award, beforeState, run),
+    const effects = next && { ...progressionEffects(registries, previous, next, award, run),
       maxLevel: track ? skillMaxLevel(registries, track.kind) : null };
     previous = next;
     return {
@@ -64,25 +62,11 @@ function cardChanges(registries, before, after) {
   return [...changes.values()];
 }
 
-function progressionEffects(registries, before, after, award, beforeState, settled) {
+function progressionEffects(registries, before, after, award, settled) {
   const changes = cardChanges(registries, before, after);
   const track = skillTracks(registries).find(row => row.id === award.skillId);
   let nextMilestone = null;
-  if (track?.kind === 'class' && hasClassMastery(after)) {
-    // A veteran may already own a threshold's unlocks. Only an actual profile
-    // transition proves something became available at this crossing.
-    if (!beforeState?.classMasteryState) return { version: 1, changes, unavailable: true };
-    const classId = award.skillId.slice(6);
-    const oldRows = new Set(beforeState.classMasteryState.profile?.classMastery?.[classId]?.unlockedRows || []);
-    const newRows = new Set(after.classMasteryState.profile?.classMastery?.[classId]?.unlockedRows || []);
-    const rows = (registries.classMastery || []).filter(row => row.classId === classId);
-    for (const row of rows) if (!oldRows.has(masteryRowId(row)) && newRows.has(masteryRowId(row))) {
-      changes.push({ kind: 'unlock', label: masteryUnlockName(registries, row), before: 'Locked', after: 'Available' });
-    }
-    const upcoming = rows.filter(row => row.level > award.after && !newRows.has(masteryRowId(row)));
-    const level = Math.min(...upcoming.map(row => row.level));
-    if (Number.isFinite(level)) nextMilestone = { level, labels: upcoming.filter(row => row.level === level).map(row => masteryUnlockName(registries, row)) };
-  } else if (['weapon', 'focus', 'dual'].includes(track?.kind)) {
+  if (['weapon', 'focus', 'dual'].includes(track?.kind)) {
     const every = registries.balance.skill.flatEvery;
     const level = Number.isInteger(every) && every > 0 ? (Math.floor(award.after / every) + 1) * every : null;
     const cap = skillMaxLevel(registries, track.kind);

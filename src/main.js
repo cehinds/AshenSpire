@@ -17,8 +17,6 @@ import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent,
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
-import { mountInitialClassMastery } from './ui/components/classMastery.js';
-import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
@@ -83,7 +81,6 @@ import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actma
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
-import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
@@ -127,8 +124,6 @@ import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoi
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { applyDisplayAppearance } from './ui/displayAppearance.js';
-import { mountClassRespec } from './ui/components/classRespec.js';
-import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
@@ -276,11 +271,11 @@ function sameRegistryProfile(a, b) {
   return a === b || (typeof a?.hash === 'string' && a.hash === b?.hash);
 }
 
-function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
+function rebuildRegistries(configuration = {}, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
   const buildKey = registryBuildKey(configuration, gameProfile);
   if (buildKey !== null && lastRegistryBuild && lastRegistryBuild.key === buildKey && sameRegistryProfile(lastRegistryBuild.profile, gameProfile)) {
-    registries = isConfiguredRun(gameProfile) ? lastRegistryBuild.registries : registriesForClassMastery(lastRegistryBuild.registries, masteryRun);
+    registries = lastRegistryBuild.registries;
     configureTooltipGlossary(registries);
     setClassGlyphs(registries.classes.all());
     return registries;
@@ -307,7 +302,6 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
   lastRegistryBuild = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
-  if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -479,7 +473,7 @@ if (!settingsChoicePending) {
 let settingsChoiceChecked = !!shotState;
 // Build (and validate) the profile a new game will play, the one showTitle
 // rebuilds with: a saved newGameProfile must not cost a second validation there.
-rebuildRegistries(activeSettings, null, selectedGameProfile);
+rebuildRegistries(activeSettings, selectedGameProfile);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that
@@ -1163,7 +1157,6 @@ let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback incr
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
-  if (!shotState) refreshRunClassMastery(run, saves.loadMeta(), registries);
   // The derived skill bonus is restamped at every save, so a level, a new card
   // or a swapped hand shows on the faces the next screen draws (SPEC §13.4o).
   stampSkillBonuses(registries, run);
@@ -1361,7 +1354,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
   // the old Exposure states; the pose must also carry their older rules.
   // Core 2 keeps breakMeterVersion 2 (its run is expanded whatever the shot asks).
   if (legacyArcaneShot && !configuredProfile) delete configSnapshot.breakMeterVersion;
-  rebuildRegistries(configSnapshot, null, gameProfile);
+  rebuildRegistries(configSnapshot, gameProfile);
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
@@ -1381,11 +1374,6 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
   run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
-  if (!shotState && !isConfiguredRun(run)) {
-    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
-    openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
-    registries = registriesForClassMastery(registries, run);
-  }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
   run.path = [];
   run.seenEvents = [];
@@ -1558,7 +1546,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   catch (error) { return refuseWith(error); }
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return saves.runStatus().reason?.startsWith('retired game mode') ? refuseRetired(saves.runStatus().reason) : refused();
-  try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile); }
+  try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, loadGameProfile); }
   catch (error) { return refuseWith(error); }
   loaded = saves.loadRun(registries, slot);
   if (!loaded) return refused();
@@ -1569,8 +1557,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   activeSlot = slot;
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = loaded;
-  if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
-  if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
@@ -1872,7 +1858,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     showStartupGate();
     return;
   }
-  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  rebuildRegistries(saves.loadMeta().settings || {}, selectedGameProfile);
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
@@ -2133,30 +2119,20 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
-      onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
-    onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
 // The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
 // Settings → Advanced → Rewards answers, the ones the level door reads.
-function showClassRespec(returnTo = () => showArmoury({ destination: 'character' }), opener) {
-  return resetClassTree(registries,run,{openRespec:()=>mountClassRespec({registries,run,meta:saves.loadMeta(),opener,
-    onApply:preview=>applyClassRespec(registries,run,preview,{saveCandidate:candidate=>saves.saveRun(candidate,rng,activeSlot)}),
-    onClose:returnTo})});
-}
 function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
   return openCharacterSheet({
     registries, run, opener, settings, onChange: persist,
-    onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec() : null,
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
-      feats: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelFeats'),
-      classTree: !isConfiguredRun(run) && settingOn(settings, 'rewardLevelClassTree'),
       levelCards: settingOn(settings, 'rewardLevelCards'),
       pointsPerLevel: resolveLevelUpValue(settings),
     },
@@ -2352,25 +2328,18 @@ async function finishRun(victory) {
   const owned = () => run === finishedRun && activeSlot === finishedSlot;
   const checkpoint = () => {
     if (!owned()) throw new Error('The active run changed while completion was pending.');
-    if (!shotState && !isConfiguredRun(finishedRun)) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
     stampSkillBonuses(finishedRegistries, finishedRun);
     saves.saveRun(finishedRun, finishedRng, finishedSlot);
   };
   const resultRecord = { ...runResult(victory), gameProfile: finishedRun.gameProfile, runId: finishedRun.runId };
   return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: finishedRun.runId || finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    finishId: finishedRun.runId || crypto.randomUUID(),
     checkpoint,
     bank: async () => {
       const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
       if (!knowledge.ok) throw new Error(`Enemy learning was not saved: ${knowledge.reason}`);
       checkpoint();
-      if (!hasClassMastery(finishedRun)) return;
-      const bank = await saves.bankClassMastery(finishedRun, finishedRegistries);
-      if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
-      adoptClassMasteryProfile(finishedRun, bank.meta);
-      checkpoint();
-      if (bank.warning && owned()) showSettingsNotice(bank.warning, 'profile');
     },
     complete: (pending) => saves.withProfile ? saves.withProfile(writer => {
       if (!owned()) throw new Error('The active run changed while completion was pending.');
@@ -2414,7 +2383,7 @@ async function showFinishedRun(victory) {
 }
 
 function showCustomize(slot = 1, catalog = false) {
-  rebuildRegistries(saves.loadMeta().settings || {}, null, selectedGameProfile);
+  rebuildRegistries(saves.loadMeta().settings || {}, selectedGameProfile);
   if (isConfiguredRun(selectedGameProfile) && !gameModule(selectedGameProfile, 'class-selection')) {
     const defaultClass = gameContent(selectedGameProfile, 'classes')[0];
     return startRunInSlot({ classId: defaultClass.id, seedString: randomSeedString(), gameProfile: selectedGameProfile }, slot);
@@ -2552,7 +2521,6 @@ function showMap(opts) {
     const menu = document.createElement('button'); menu.textContent = 'Menu'; menu.onclick = () => showOverlay(); screen.append(menu);
     app.append(screen); return;
   }
-  if (!isConfiguredRun(run) && run.classMasteryState?.initialTreeTiers?.length) return mountInitialClassMastery(app, { registries, run, onPersist: persist, onDone: () => showMap(opts), onBack: showTitle });
   // Quick start previews its first fight after the required tree choice.
   // Enter still confirms travel, and every other reachable route can be chosen.
   const suggested = run.quickStart && !run.mapNodeId
@@ -3007,7 +2975,6 @@ async function onCombatEnd(result, combat, enc) {
   // takes it now, win or loss, and climbs whatever the XP buys.
   const configuredProgression = isConfiguredRun(run);
   const skillProgression = configuredSkillProgression(run);
-  const skillStateBefore = skillProgression ? { classMasteryState: structuredClone(run.classMasteryState) } : null;
   const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
@@ -3023,7 +2990,7 @@ async function onCombatEnd(result, combat, enc) {
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, multiplier: featMultiplier(run, 'classXp') }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
-    run, beforeState: skillStateBefore,
+    run,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
   }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue

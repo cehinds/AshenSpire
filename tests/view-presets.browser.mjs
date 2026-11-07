@@ -86,7 +86,7 @@ try {
     await page.mouse.down();
     await page.waitForTimeout(700);
     await page.mouse.up();
-    } else await page.locator('.target-hud-inspect-info:visible, .combatant.enemy .combatant-info:visible').last().click(); // the name text is gone (owner 2026-11-06)
+    } else await page.keyboard.press('i'); // no selected panel or name text (owner 2026-11-07): `I` inspects the selected target
     await page.locator('.combatant-inspector-body').waitFor();
     await page.keyboard.press('Escape');
     await openCombatSettings(page);

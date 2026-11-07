@@ -161,7 +161,6 @@ export const UI_COMPONENTS = Object.freeze({
   // SPEC §14.1: the deck editor opened from the Armoury or an eligible Rest site.
   deckEditor: 'deck-editor',
   characterSheet: 'character-sheet',
-  classRespec: 'class-respec',
   shopSmithCard: 'shop-smith-card',
   resourceStrip: 'resource-strip',
   modeChoice: 'mode-choice',
