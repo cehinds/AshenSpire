@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Legacy shops removed** ([#2648](https://github.com/cehinds/AshenSpire/pull/2648), `0.7.5.18`). Removed the legacy merchant, market, wise master and legacy Blacksmith services; Core's shop and Blacksmith are unchanged.
 - **Legacy reward menu removed** ([#2646](https://github.com/cehinds/AshenSpire/pull/2646), `0.7.5.16`). Removed the legacy (non-Core) reward menu and the code only it reached; Core rewards, the Victory receipt and card rank-ups are unchanged.
 - **Behind the scenes: one more release check reads the current screen** ([#2644](https://github.com/cehinds/AshenSpire/pull/2644), `0.7.5.14`). This is a tooling-only change, and nothing you play changes. A second hint-strip self-check lifted the action row so far that it tripped two other rules instead of the one it meant to prove; it now lifts the row just enough to prove that one, so a real overlap there turns the release red again.
 - **Manual level-up branch removed** ([#2642](https://github.com/cehinds/AshenSpire/pull/2642), `0.7.5.12`). Combat end no longer carries the unused manual level-up branch or the old character-progression door; Core plays the same.

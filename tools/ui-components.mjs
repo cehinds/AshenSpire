@@ -589,11 +589,14 @@ export function findings(r) {
     && /hudShellHtml\(runHudViewModel\(\{/.test(text);
   const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
+  // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({…})`), not a template string.
+  const viaRunHudCall = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
+    && /runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // Both Rest service policies compose through the same room frame; require
   // the complete chain so a new bare profile screen cannot pass by importing it.
   const viaRestFrame = (text) => /import \{[^}]*\bmountRestFrame\b[^}]*\} from '(?:\.\.\/components\/|\.\/)restFrame\.js'/.test(text)
     && /mountRestFrame\(app, \{/.test(text);
-  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.restFrame, r.shop].every(viaRunHud)
+  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.restFrame].every(viaRunHud) || !viaRunHudCall(r.shop)
       || ![r.rest, r.configuredRest].every(viaRestFrame)
       || !/runHudHtml\(\{/.test(r.event) || !/wireRunHud\(app, \{/.test(r.event)) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');

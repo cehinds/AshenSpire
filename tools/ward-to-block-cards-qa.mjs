@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Capture six production card surfaces before and after opening their real inspector.
+// Capture five production card surfaces before and after opening their real inspector.
 // Deterministic QA state is used for deck, store and combat production surfaces.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -164,42 +164,6 @@ try {
     const deckDetails = await captureDetails('deck-editing', '.deck-editor-rules:visible, .deck-editor-rules .combat-rule-hint:visible');
     report.views['deck-editing'] = { before: deckCompact, after: deckAfter, details: deckDetails };
 
-  });
-
-  await attempt('store', async () => {
-    await standardView('store', '/?shot=shop&shotClass=starseer', '.shop, .shop-workspace, #shop-relics', {
-    prepare: async () => {
-      let remove = page.locator('#remove-opt');
-      if (!(await remove.isVisible().catch(() => false)) || await remove.evaluate(n => n.classList.contains('locked'))) {
-        await page.evaluate(async () => {
-          const { contentBundle } = await import('/src/content/index.js');
-          const { createRegistries } = await import('/src/model/registries.js');
-          const { createRunState, createCardInstance, createIdGen } = await import('/src/model/state.js');
-          const { createRng } = await import('/src/engine/rng.js');
-          const { buildShopStock } = await import('/src/engine/encounters.js');
-          const { mountShop } = await import('/src/ui/screens/shop.js');
-          const registries = createRegistries(contentBundle);
-          const run = createRunState({ seed: 7814, classId: 'starseer', registries });
-          run.cinders = 1000;
-          const gen = createIdGen('ward-shop');
-          run.deck.push(createCardInstance('frostCounter', false, gen), createCardInstance('forceCounter', false, gen));
-          run.shopStock = buildShopStock(registries, createRng(7814), run);
-          document.querySelector('#app').replaceChildren();
-          mountShop(document.querySelector('#app'), { registries, run, meta: { settings: {} }, onLeave() {}, onChanged() {} });
-        });
-        remove = page.locator('#remove-opt');
-      }
-      const servicesTab = page.locator('.shop-railitem[data-shop-category="services"]');
-      await servicesTab.waitFor({ state: 'visible', timeout: 10000 });
-      await servicesTab.click();
-      await remove.waitFor({ state: 'visible', timeout: 10000 });
-      await remove.click();
-      await page.locator('#remove-grid .card').filter({ hasText: 'Frost Counter' }).first().waitFor({ state: 'visible', timeout: 10000 });
-    },
-    cardSelector: '#remove-grid .card:has-text("Frost Counter")',
-    compactSelector: '#remove-grid .card:has-text("Frost Counter")',
-    strategy: 'keyboard',
-  });
   });
 
   await attempt('combat', async () => {

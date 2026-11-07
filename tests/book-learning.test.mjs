@@ -15,9 +15,6 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { validateContent } from '../src/model/validate.js';
-import { configuredContentBundle } from '../src/model/advancedConfig.js';
-import { buildMarketStock } from '../src/engine/shopKinds.js';
-import { consumablePurchasePlan } from '../src/model/marketAdditions.js';
 
 const reg = createRegistries(contentBundle);
 const fresh = () => createRunState({ seed: 221, classId: 'reaver', registries: reg });
@@ -34,24 +31,6 @@ test('book definitions validate, including canonical tags, universal and class b
     const bad = { ...contentBundle, consumables: contentBundle.consumables.map((row) => row.id === 'bladeManual' ? { ...row, ...patch } : row) };
     assert.equal(validateContent(bad).ok, false, JSON.stringify(patch));
   }
-});
-
-test('the expanded catalog reaches market stock including already-learned class books', () => {
-  const configured = createRegistries(configuredContentBundle(contentBundle, {
-    'gameConfig.shops.market.skillBooks.chance': 100,
-    'gameConfig.shops.market.skillBooks.stock': 20,
-  }));
-  const run = createRunState({ seed: 221, classId: 'reaver', registries: configured });
-  run.cinders = 9999;
-  run.shopStock = buildMarketStock(configured, createRng(221), run, { meta: {} });
-  const books = run.shopStock.skillBooks;
-  for (const id of ['spellbook', 'universalTome', 'starseerClassBook', 'rogueClassBook', 'heraldClassBook']) {
-    const item = books.find((row) => row.id === id);
-    assert.ok(item, id);
-    assert.equal(consumablePurchasePlan(configured, run, 'skillBooks', item).ok, true);
-  }
-  const own = books.find((row) => row.id === 'reaverClassBook');
-  assert.equal(consumablePurchasePlan(configured, run, 'skillBooks', own).ok, true);
 });
 
 test('reading grants exact XP plus an immediate tagged card before a skill level-up', () => {

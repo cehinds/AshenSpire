@@ -196,11 +196,6 @@
       "handler": "src/ui/screens/rest.js#mountRest",
       "description": "Rest at a camp to heal."
     },
-    "rest.inn": {
-      "kind": "app",
-      "handler": "src/ui/screens/shop.js#mountShop.restAtInn",
-      "description": "Buy a rest at the inn from the shop."
-    },
     "reward.allocateStat": {
       "kind": "app",
       "handler": "src/ui/screens/reward.js#mountRewards.onAllocateStat",
@@ -268,12 +263,12 @@
     },
     "shop.buy": {
       "kind": "app",
-      "handler": "src/ui/screens/shop.js#mountShop",
+      "handler": "src/ui/screens/shop.js#mountConfiguredShop.onTake",
       "description": "Buy a shop offer."
     },
     "shop.leave": {
       "kind": "app",
-      "handler": "src/ui/screens/shop.js#mountShop.onLeave",
+      "handler": "src/ui/screens/shop.js#mountConfiguredShop.onLeave",
       "description": "Leave the shop."
     },
     "smith.leave": {

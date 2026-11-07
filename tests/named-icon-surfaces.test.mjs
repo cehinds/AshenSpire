@@ -6,12 +6,9 @@ import { sigilChoiceButton, characterSigilPreview, classChoiceCard, classUnfold,
 import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
-import { mountShop } from '../src/ui/screens/shop.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { buildMarketStock } from '../src/engine/shopKinds.js';
-import { createRng } from '../src/engine/rng.js';
 const registries = createRegistries(contentBundle);
 const saves = { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }), saveMeta() {} };
 
@@ -60,21 +57,6 @@ test('game-over identity paints the sigil beside the name and the final deck use
   assert.ok(app.querySelector('.deck-strip .kg [data-engraved-icon]'));
   assert.equal(run.customization.glyph, 'sword');
 }));
-
-test('merchant smith services paint named icons inside real mounted service cards', () => withKitDom(({ document }) => {
-  document.documentElement ??= document.body;
-  const app = document.createElement('main'); document.body.append(app);
-  const run = createRunState({ registries, classId: 'reaver', seed: 21 });
-  run.cinders = 1000;
-  run.shopStock = buildMarketStock(registries, createRng(21), run, { meta: {} });
-  run.shopStock.smith = { offered: true, services: ['upgrade', 'extract', 'install'] };
-  mountShop(app, { registries, run, meta: { settings: {} }, onLeave() {}, onChanged() {} });
-  expectArt(app.querySelector('#shop-upgrade .glyph'), 'smith');
-  expectArt(app.querySelector('#shop-extract .glyph'), 'settings');
-  expectArt(app.querySelector('#shop-install .glyph'), 'smith');
-  assert.equal(app.querySelector('#shop-upgrade h3').textContent, 'Upgrade an Item');
-}));
-
 
 test('the mounted skill rank-up offer uses the named progression icon', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;

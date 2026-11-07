@@ -74,7 +74,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // category rail (FRONTEND-WIREFRAMES.md rule 11: no accordion as a menu
 // shell), so `.shop-bars` no longer exists and nothing wipes a shop host.
 // Its conditional SELL shelf is now absent from the template itself when the
-// toggle is off (shop.js), and tools/shopbars.mjs S6 checks that absence.
+// toggle is off (shop.js).
 const SCREENS = [
   { shot: 'customize', host: '.cz-fields', variants: [
     { name: 'default', settings: null },

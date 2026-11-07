@@ -446,34 +446,3 @@ export function allocateAttributePoint(registries, run, attributeId) {
   if (gameProfileServiceActive(run, 'levelUp')) return applyLevelUp(registries, run, attributeId);
   return withGameProfileService(run, 'levelUp', () => applyLevelUp(registries, run, attributeId));
 }
-
-/**
- * withdrawSkillAttributes(registries, run, skillId) → the attribute ids taken
- * back: every point the track's picks granted (owner ruling, 2026-10-05: a
- * respec withdraws them, FINISH D13a). The points leave the attributes and
- * `skillAttributePoints` together, so the load door's allocation check still
- * balances, and the pools are re-derived once. A save from before the record
- * existed has nothing to name and keeps its points.
- */
-export function withdrawSkillAttributes(registries, run, skillId) {
-  const granted = run.skillAttributeGrants && Array.isArray(run.skillAttributeGrants[skillId]) ? run.skillAttributeGrants[skillId] : [];
-  if (!granted.length) return [];
-  // Only a point actually taken off an attribute leaves the count, so a record
-  // naming an unknown id cannot unbalance the load door's allocation check.
-  let taken = 0;
-  for (const id of granted) if (Number.isFinite(run.attributes?.[id])) { run.attributes[id] -= 1; taken += 1; }
-  run.skillAttributePoints = Math.max(0, (run.skillAttributePoints || 0) - taken);
-  const rest = { ...run.skillAttributeGrants };
-  delete rest[skillId];
-  if (Object.keys(rest).length) run.skillAttributeGrants = rest; else delete run.skillAttributeGrants;
-  rederivePools(registries, run, `respec withdrew ${granted.length} ${skillId} point(s)`);
-  note(run, {
-    kind: 'write',
-    site: 'levelup.js:withdrawSkillAttributes',
-    field: 'attributes',
-    was: undefined,
-    now: granted,
-    why: `a respec of ${skillId} withdrew the attribute points its picks granted (${run.skillAttributePoints} skill points remain)`,
-  });
-  return granted;
-}

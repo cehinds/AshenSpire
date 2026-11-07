@@ -51,7 +51,7 @@ prefix; its callers are the union.
 | `balance-runs-check.mjs` | THE RECORDED REPORT'S CONFIGURATION, CHECKED AGAINST CONTENT. | tests balance-runs-check; tools balance; docs DEVELOPER.md |
 | `balance.mjs` | balance — headless balance analysis (SPEC §9 M3). | tests balance-doc, balance-runs-check, card-cost-fastpath +3; tools balance-intent, balance-runs-check; docs DEVELOPER.md, docs/BALANCE.md, docs/FINISH.md +2; other src/engine/runCombat.js, src/model/encounterTier.js |
 | `base-cards.mjs` | JSON is the authoring source; this projection supports import-only/file:// builds. | tests base-card-pack-source, base-card-pack, engine-export; tools content-build, engine-export, game-config; docs DEVELOPER.md, docs/ai/json-game-modules/CONTINUE.md, games/ashenspire/packs/base-cards/guide.md; other src/content/generated/baseCards.js, workbench/core/files.mjs |
-| `book-art-browser.mjs`, `book-learning-browser.mjs`, `book-library-built-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
+| `book-art-browser.mjs`, `book-learning-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
 | `book-art-export-preview.mjs` | Transparent composition exports from the same renderer used by the game. | docs docs/preview/book-library/layers/painted/README.md |
 | `browser.mjs` | browser — THE ONE HOME FOR "START A BROWSER AND TAKE ITS PROFILE | wf ci; tests battlefield-layout.browser, browser-launch-floor, browser-serve +12; tools about-changelog, actends, actionreach +148; docs DEVELOPER.md, docs/BOOK-ART.md, docs/BOOK-LIBRARY.md +14; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, pose-studio/stances/update-stances/sequence-review/check-player.mjs +3 |
 | `build-game.mjs` | build-game - compiles every authored JSON layer into one serialized, deterministic artifact | tests build-game; tools ui-validate; docs CHANGELOG.md, docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md, engine/export/README.md +1; other .gitignore, games/ashenspire/build.summary.json +2 |
@@ -254,7 +254,6 @@ prefix; its callers are the union.
 | `sfx-filename-convention.mjs` | Focused door for #47: SFX files bind by assets/sfx/<id>.ogg without a | tools art-source; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `sfx-gain-probe.mjs` | sfx-gain-probe — headless gain-target inspection for the SFX | tools sfx-filename-convention, sfx-loudness, webaudio-stub |
 | `sfx-loudness.mjs` | sfx-loudness — deterministic A-weighted loudness of every SFX | tools holdbeat; docs SPEC.md; other src/content/sfx.js |
-| `shopbars.mjs` | shopbars — THE MERCHANT IS A CATEGORY RAIL, AND EACH ITEM ANSWERS | tools foldsurvivors, plantsites-baseline.json |
 | `short-landscape-support.mjs` | short-landscape-support — #27's short-wide combat composition. | tools plantsites-baseline.json, uprightgate; other src/content/balance.js |
 | `shotReady.mjs` | shotReady — "is every combatant's artwork on screen yet?", asked | tests shot-ready; tools screenshot; docs docs/FINISH.md; other docs/preview/display-appearance-0.7.1.1163/capture.mjs |
 | `shotguard-probe.mjs` | shotguard-probe — prove, in a real browser, that a ?shot= boot cannot | wf ci; other src/main.js |
@@ -299,7 +298,7 @@ prefix; its callers are the union.
 | `verify-external.mjs` | verify-external — verify the DE-INLINED build: that the packs the | wf dev-preview; tools assetmime, bundle, external-play +2; docs DEVELOPER.md, dist/README.md, docs/ART-REPO-PLAN.md +2; other src/ui/assetPacks.js |
 | `verify-shipped.mjs` | verify-shipped — verify the file a PLAYER is handed, not the file the | wf ci, dev-preview; tests fixtures/verdict/vacuous_green; tools bundle, dirorder, gatelist +10; docs CHANGELOG.md, DEVELOPER.md, SPEC.md +15; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, editor/server.mjs +1 |
 | `ward-to-block-card-text.mjs` | (no header comment) | wf ward-to-block-cards |
-| `ward-to-block-cards-qa.mjs` | Capture six production card surfaces before and after opening their real inspector. | wf ward-to-block-cards |
+| `ward-to-block-cards-qa.mjs` | Capture five production card surfaces before and after opening their real inspector. | wf ward-to-block-cards |
 | `watched-selftest.mjs` | watched-selftest — the known-bad corpus for watched. | tools watched |
 | `watched.mjs` | watched — did anyone OPEN THE BUILD and SEE the control? | tests run-node; tools watched-probes.json, watched-selftest |
 | `weapon-card-packages.mjs` | (no header comment) | tests closedsets, run-node; tools closedsets; other src/engine/combatSnapshot.js, src/engine/save.js |
@@ -311,9 +310,9 @@ prefix; its callers are the union.
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (63 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (64 files)
 
-These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 64 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line |
 | --- | --- |
@@ -325,11 +324,11 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `art-runtime-check.mjs` | Capture real event, speaker, and combat-card screens after their art loads. |
 | `attribute-phase1-boundary.mjs` | Attribute integration boundary after the approved derived/equipment slices. |
 | `bjclauses.mjs` | bjclauses — re-derive Constantine's eight D17 map clauses against |
+| `book-library-built-browser.mjs` | (no header comment) |
 | `bow-animation-config.mjs` | Rebuild the bow presentation bindings from the authored unarmed outfit sets. |
 | `card-effect-layers-check.mjs` | (no header comment) |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
-| `card-removal-flick-qa.mjs` | Browser plugin unavailable: production screens exercised with Playwright. |
 | `card-use-qa.mjs` | Actual selected-card inspection and hold-to-use flows, desktop and touch. |
 | `class-book-browser.mjs` | (no header comment) |
 | `class-material-leaks.mjs` | class-material-leaks — catch cross-class material leaks statically. |

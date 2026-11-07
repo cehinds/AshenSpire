@@ -20,7 +20,6 @@ const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ash
 const OUT_ROWS = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`gameConfig.shops.blacksmith.${row.id}.chance`, 100]));
 const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBundle(applyGameProfileToContent(contentBundle, profile), OUT_ROWS)), profile);
 const coreReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const legacyOut = createRegistries(configuredContentBundle(contentBundle, OUT_ROWS));
 const WEAPON = 'armament/greatsword';
 
 function smithRun(registries, stones) {
@@ -77,15 +76,6 @@ test('Core merchant: an upgrade pays the plan price for tiers 1..3', () => {
   assert.equal(run.smithingStones, 0);
 });
 
-test('Legacy Blacksmith upgrade is unchanged: one tier for one stone', () => {
-  const run = smithRun(legacyOut, 5);
-  const ref = smithingPlan(legacyOut, run).candidates.find((row) => row.itemKind === 'armament').itemRef;
-  const receipt = upgrade(legacyOut, run, ref);
-  assert.equal(receipt.afterLevel, 1);
-  assert.equal(run.smithingStones, 4);
-  assert.equal(blacksmithUpgradePlan(legacyOut, run, ref).ok, false);
-});
-
 test('Core Blacksmith and merchant upgrades re-derive the pools like the rest Smith', () => {
   const armorRun = (registries, runId) => {
     const run = createRunState({ seed: 33, classId: 'reaver', registries, runId });
@@ -114,8 +104,3 @@ test('Core Blacksmith and merchant upgrades re-derive the pools like the rest Sm
   }
 });
 
-test('shop.js upgrades through commitMerchantSmithing, never commitSmithing directly', () => {
-  const source = readFileSync(new URL('../src/ui/screens/shop.js', import.meta.url), 'utf8');
-  assert.match(source, /commitMerchantSmithing\(registries, run, itemRef\)/);
-  assert.doesNotMatch(source, /\bcommitSmithing\(/);
-});
