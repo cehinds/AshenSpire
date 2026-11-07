@@ -38,7 +38,7 @@ function fixture({ warm = true, authored = { amount: 5 } } = {}) {
   return { rebuild, calls };
 }
 
-test('actual rebuild reuses validation and registries for an unchanged profile and settings, ', () => {
+test('actual rebuild reuses validation and registries for an unchanged profile and settings', () => {
   const { rebuild, calls } = fixture(), profile = { id: 'current', mode: 'legacy', hash: 'sha256:a', lock: { runtime: 'a' } };
   const first = rebuild({ amount: 7 }, profile);
   const second = rebuild({ amount: 7 }, structuredClone(profile));
