@@ -700,7 +700,7 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', equipItemId = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
   // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
-  onEditDeck = null, onProgression = null, onCharacterSheet = null, onClassRespec = null,
+  onEditDeck = null, onCharacterSheet = null, onClassRespec = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -2016,7 +2016,7 @@ export function mountEquipment(host, {
     onCharacterSheet?.(opener, tab, () => {
       draw();
       wrap.querySelector(tab === 'skills' ? '.character-skill-progression' : '.character-level-action')?.focus({ preventScroll: true });
-    }, onProgression && !inCombat ? () => { close(); onProgression(); } : null);
+    });
   }
 
   function characterLevelMeter() {
