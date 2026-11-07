@@ -89,7 +89,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 | --- | --- | --- |
 | The five attributes | `attributes.json` | Names and short names. |
 | Point-buy presets | `attributeRules.json` | |
-| Character creation screen, keepsakes | `characterCreation.json`, `creationModes.json` | Modes: starting points, minimum, maximum. |
+| Character creation screen | `characterCreation.json`, `creationModes.json` | Modes: starting points, minimum, maximum. |
 | What each stat turns into (HP, Actions, Draw...) | `derivedStatRules.json` | |
 | Action costs of cards and drawbacks | `actionCosts.json` | The cost table and its budget. |
 | Core combat rules: Poise, ward, counters, accuracy, perception, range, stances, statuses | `fixCoreMechanics.json` | |
