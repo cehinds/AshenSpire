@@ -254,7 +254,6 @@ prefix; its callers are the union.
 | `sfx-filename-convention.mjs` | Focused door for #47: SFX files bind by assets/sfx/<id>.ogg without a | tools art-source; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `sfx-gain-probe.mjs` | sfx-gain-probe — headless gain-target inspection for the SFX | tools sfx-filename-convention, sfx-loudness, webaudio-stub |
 | `sfx-loudness.mjs` | sfx-loudness — deterministic A-weighted loudness of every SFX | tools holdbeat; docs SPEC.md; other src/content/sfx.js |
-| `shopbars.mjs` | shopbars — THE MERCHANT IS A CATEGORY RAIL, AND EACH ITEM ANSWERS | tools foldsurvivors, plantsites-baseline.json |
 | `short-landscape-support.mjs` | short-landscape-support — #27's short-wide combat composition. | tools plantsites-baseline.json, uprightgate; other src/content/balance.js |
 | `shotReady.mjs` | shotReady — "is every combatant's artwork on screen yet?", asked | tests shot-ready; tools screenshot; docs docs/FINISH.md; other docs/preview/display-appearance-0.7.1.1163/capture.mjs |
 | `shotguard-probe.mjs` | shotguard-probe — prove, in a real browser, that a ?shot= boot cannot | wf ci; other src/main.js |
@@ -299,7 +298,7 @@ prefix; its callers are the union.
 | `verify-external.mjs` | verify-external — verify the DE-INLINED build: that the packs the | wf dev-preview; tools assetmime, bundle, external-play +2; docs DEVELOPER.md, dist/README.md, docs/ART-REPO-PLAN.md +2; other src/ui/assetPacks.js |
 | `verify-shipped.mjs` | verify-shipped — verify the file a PLAYER is handed, not the file the | wf ci, dev-preview; tests fixtures/verdict/vacuous_green; tools bundle, dirorder, gatelist +10; docs CHANGELOG.md, DEVELOPER.md, SPEC.md +15; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, editor/server.mjs +1 |
 | `ward-to-block-card-text.mjs` | (no header comment) | wf ward-to-block-cards |
-| `ward-to-block-cards-qa.mjs` | Capture six production card surfaces before and after opening their real inspector. | wf ward-to-block-cards |
+| `ward-to-block-cards-qa.mjs` | Capture five production card surfaces before and after opening their real inspector. | wf ward-to-block-cards |
 | `watched-selftest.mjs` | watched-selftest — the known-bad corpus for watched. | tools watched |
 | `watched.mjs` | watched — did anyone OPEN THE BUILD and SEE the control? | tests run-node; tools watched-probes.json, watched-selftest |
 | `weapon-card-packages.mjs` | (no header comment) | tests closedsets, run-node; tools closedsets; other src/engine/combatSnapshot.js, src/engine/save.js |
@@ -329,7 +328,6 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `card-effect-layers-check.mjs` | (no header comment) |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
-| `card-removal-flick-qa.mjs` | Browser plugin unavailable: production screens exercised with Playwright. |
 | `card-use-qa.mjs` | Actual selected-card inspection and hold-to-use flows, desktop and touch. |
 | `class-book-browser.mjs` | (no header comment) |
 | `class-material-leaks.mjs` | class-material-leaks — catch cross-class material leaks statically. |

@@ -59,7 +59,7 @@ jobs:
         id: text
         continue-on-error: true
         run: node tools/ward-to-block-card-text.mjs
-      - name: Capture six production views and inspections
+      - name: Capture five production views and inspections
         id: capture
         continue-on-error: true
         run: node tools/ward-to-block-cards-qa.mjs
