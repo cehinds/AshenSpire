@@ -442,8 +442,6 @@ const ROWS = [
   // settings bag reaches it.
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
     note: tFull('settings.row.creationAutoAdvance') },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: t('settings.row.useRestorativeFlasksOutsideCombat'),
-    note: tFull('settings.row.useRestorativeFlasksOutsideCombat') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
     choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: t('common.continue'), anywhere: 'Click anywhere', auto: 'Expand automatically' },
     label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
@@ -493,6 +491,12 @@ const ROWS = [
     note: tFull('settings.row.rewardTreasureArmaments') },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
     note: tFull('settings.row.shrinePathGlow') },
+  // The map's Potions control and the run HUD read this on every profile
+  // (components/runPotions.js, components/runHud.js) and the map's refusal points
+  // the player at Settings, so it lives with the Map & HUD preferences every build
+  // shows (Rewards is retired on Core 2 and hidden on release builds).
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useRestorativeFlasksOutsideCombat', def: true, label: t('settings.row.useRestorativeFlasksOutsideCombat'),
+    note: tFull('settings.row.useRestorativeFlasksOutsideCombat') },
   // How strongly the nodes already walked fade behind you — his clause, with
   // his number as the default and the customization he asked for as the row
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
