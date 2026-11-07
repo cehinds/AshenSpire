@@ -22,7 +22,7 @@ import { createRunState, createIdGen } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { skillTracks, spendSkillDraft, classSkillId } from '../src/model/skills.js';
-import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
+import { awardClassXp } from '../src/model/classTree.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext as xpToNextLevel } from '../src/model/levelup.js';
@@ -30,7 +30,7 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
-  rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollClassDraftIds, rollFlaskDrop,
+  rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollFlaskDrop,
   rollRelicReward,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
@@ -94,18 +94,9 @@ export function createRunLoop(REG, config) {
 
   function afterVictory(run, rng, pool) {
     run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-    // The class track, paid by the run's owner (plan phase 5b), and its draft,
-    // one per door as main.js offers it: the bot picks the first node offered.
+    // The class track, paid by the run's owner (plan phase 5b).
     awardClassXp(REG, run, { victory: true, pool });
-    let classDrafts = 0;
-    {
-      const row = run.skills && run.skills[classSkillId(run.class)];
-      if (row && row.pendingDrafts > 0) {
-        const ids = rollClassDraftIds(REG, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
-        if (ids.length && pickClassNode(REG, run, ids[0])) { spendSkillDraft(run, classSkillId(run.class)); classDrafts += 1; }
-      }
-    }
-    counters.classDraftsTaken += classDrafts;
+    const classDrafts = 0; // the class tree draft is retired; the printed counter stays at 0
     // The skill drafts, as main.js offers them (plan phase 4b): one per track
     // with a draft queued, capped per door, the bot taking the first card; a
     // draft on the table takes the card row's seat.

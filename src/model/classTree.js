@@ -1,73 +1,17 @@
-// src/model/classTree.js — the class tree (plan phase 5b, proposal §6.2).
-//
-// A node is a property tag a class may pick as it levels; picking one adds
-// it to `run.coreTags`, the class card's own tagging rows, and the class
-// carrier mounts its rule in every fight after (engine/properties.js
-// classCarrier). The tree is content/source/classTree.csv (class, node,
-// tier); a tier opens at the class level balance.skill.class.tierAt names;
-// a node's `requires` and `excludes` are its relation rows, read here as they
-// are read at mount (a REQUIRES on a node not yet picked keeps the node out
-// of the draft; a CONFLICTS_WITH with a picked node does too). Tier 3 nodes
-// exclude one another by content rule (validate.js), so the top pick is the
-// subclass, never a stack.
+// src/model/classTree.js — the class tree rows, the class XP award and the core
+// tag checks. The tree is content/source/classTree.csv (class, node, tier); a
+// node is a property tag held in `run.coreTags`. The draft that used to offer
+// nodes as a class levelled (classDraftPool, pickClassNode, tierOpensAt) is
+// retired: Core grants class power through the Core 2 level policy, and a
+// saved `coreTags` still loads and mounts.
 
-import { classSkillId, awardSkillXp, skillLevel } from './skills.js';
+import { classSkillId, awardSkillXp } from './skills.js';
 
 /** The tree rows of one class, in table order. */
 export function classTreeRows(registries, classId) {
   return (Array.isArray(registries && registries.classTree) ? registries.classTree : [])
     .filter((row) => row && row.classId === classId)
     .map((row) => ({ classId: row.classId, nodeId: row.nodeId, tier: Number(row.tier) }));
-}
-
-/** The class level tier `tier` (1-based) opens at, from balance.skill.class.tierAt. */
-export function tierOpensAt(registries, tier) {
-  const at = ((((registries || {}).balance || {}).skill || {}).class || {}).tierAt;
-  return Array.isArray(at) && Number.isInteger(at[tier - 1]) ? at[tier - 1] : Infinity;
-}
-
-function rule(registries, nodeId) {
-  const rules = registries && registries.propertyRules;
-  return rules && typeof rules.get === 'function' && rules.has(nodeId) ? rules.get(nodeId) : null;
-}
-
-/**
- * classDraftPool(registries, classId, coreTags, level) → the node ids a class
- * at `level` holding `coreTags` may draft, in table order: the tier open,
- * not yet picked, every REQUIRES picked, no CONFLICTS_WITH picked.
- */
-export function classDraftPool(registries, classId, coreTags = [], level = 0) {
-  const picked = new Set(coreTags || []);
-  // CONFLICTS_WITH is symmetric (nodeRelations.csv), but a rule's `excludes`
-  // is derived from the rows the node is the SOURCE of; the pool reads the
-  // relation both ways, so one subclass picked shuts the other whichever
-  // row named the pair.
-  const excludedByPicked = new Set([...picked].flatMap((id) => ((rule(registries, id) || {}).excludes) || []));
-  return classTreeRows(registries, classId)
-    .filter((row) => level >= tierOpensAt(registries, row.tier) && !picked.has(row.nodeId))
-    .filter((row) => {
-      const r = rule(registries, row.nodeId);
-      if (!r) return false;
-      if ((r.requires || []).some((t) => !picked.has(t))) return false;
-      if ((r.excludes || []).some((t) => picked.has(t))) return false;
-      if (excludedByPicked.has(row.nodeId)) return false;
-      return true;
-    })
-    .map((row) => row.nodeId);
-}
-
-/**
- * pickClassNode(registries, run, nodeId) → true when the node joined
- * `run.coreTags`; false (and no write) when the node is not draftable now —
- * the reward door's one write to the core zone's tags.
- */
-export function pickClassNode(registries, run, nodeId, { levelOverride = null } = {}) {
-  if (!run || !run.class || run.classUnequipped) return false;
-  const level = Number.isInteger(levelOverride) ? levelOverride : skillLevel(run, classSkillId(run.class));
-  if (!classDraftPool(registries, run.class, run.coreTags || [], level).includes(nodeId)) return false;
-  if (!Array.isArray(run.coreTags)) run.coreTags = [];
-  run.coreTags.push(nodeId);
-  return true;
 }
 
 /**
