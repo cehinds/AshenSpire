@@ -42,7 +42,7 @@ jobs:
         id: tests
         continue-on-error: true
         run: >-
-          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-protection.test.mjs tests/stance-evade-mode.test.mjs tests/stance-evade-matchup.test.mjs tests/stance-hybrid-counter.test.mjs tests/stance-hud.test.mjs tests/stance-hostile-spell.test.mjs tests/stance-round-pricing.test.mjs
+          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-protection.test.mjs tests/stance-evade-mode.test.mjs tests/stance-evade-matchup.test.mjs tests/stance-hybrid-counter.test.mjs tests/stance-hud.test.mjs tests/stance-hostile-spell.test.mjs
           tests/combat-callouts.test.mjs tests/selected-weapon-defense-receipts.test.mjs
           tests/combat-expansion-protection.test.mjs
           tests/spell-defense.test.mjs
@@ -54,7 +54,6 @@ jobs:
           tests/deck-editor.test.mjs tests/card-art-rendering.test.mjs tests/card-face-text.test.mjs
           tests/combat-expansion-martial.test.mjs tests/combat-impact-flux.test.mjs
           tests/enemy-knowledge-integration.test.mjs tests/combat-reactions.test.mjs
-          tests/combat-rounds-live.test.mjs
           tests/card-tag-explanation.test.mjs
       - name: Export exact compact and inspection card text
         id: text

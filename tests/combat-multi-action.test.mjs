@@ -1,6 +1,7 @@
-// Multi-action preview (SPEC §4.9, §4.11; owner decision 2026-10-12). In normal combat an enemy plans its next moves
-// with the same weighted pick, seeded from the enemyAI stream, so the plan is the moves it plays. The intent box
-// shows the current action and its follow-ups as smaller symbols. In rounds mode the follow-ups follow their toggle.
+// Multi-action preview (SPEC §4.9; owner decision 2026-10-12). An enemy plans its next moves with the same weighted
+// pick, seeded from the enemyAI stream, so the plan is the moves it plays. In a Core fight the intent box shows the
+// current action and its follow-ups as smaller symbols; the old per-run toggle went with the combat-rounds system
+// (cleanup 3i-A), so a legacy fight shows none.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -12,7 +13,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { controlRestrictions } from '../src/engine/combatStatusControl.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY, MULTI_ACTION_KEY } from '../src/model/combatRounds.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions, multiActionOn } from '../src/engine/normalPreview.js';
 import { decorateCombatRoundsScreen } from '../src/ui/components/combatRoundsScreen.js';
@@ -25,9 +26,18 @@ const registries = createRegistries({ ...contentBundle, enemies: contentBundle.e
 const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
-function fight(settings, { seed = SEED, enemyIds = [ENEMY] } = {}) {
-  const run = createRunState({ seed, classId: 'reaver', registries, profileMeta: { settings } });
+// A legacy (pre-Core) fight: no multi-action preview.
+function fight(_settings, { seed = SEED, enemyIds = [ENEMY] } = {}) {
+  const run = createRunState({ seed, classId: 'reaver', registries });
   return createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
+}
+// A Core fight: the multi-action preview is on. The Fell Warden's pool holds a follow-up (the soldier's holds one move).
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const coreContent = { ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY ? { ...e, attributes: POOL_STATS, equipmentSp: 0 } : e)) };
+const coreRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(coreContent, profile)), profile);
+function coreFight({ seed = SEED, enemyIds = ['fellWarden'] } = {}) {
+  const run = createRunState({ seed, classId: 'reaver', registries: coreRegistries });
+  return createRunCombat({ registries: coreRegistries, rng: createRng(seed), run, enemyIds, settings: {} });
 }
 // Ends the player's turn and answers any reaction pause the enemy phase raises (declined).
 function endTurn(c) {
@@ -47,7 +57,7 @@ test('the plan is picked to the SP pool: as many moves as one enemy SP pool hold
   assert.equal(more.length, 3, 'a pool of 3 holds three 1-SP moves (the replaced rule was a flat 2)');
 });
 
-test('with the toggle off, the pool still plans its moves (action costs are always on), but no follow-up symbol shows', () => {
+test('a legacy fight still plans its pool of moves (action costs are always on), but no follow-up symbol shows', () => {
   const c = fight({});
   assert.equal(multiActionOn(c), false);
   for (const enemy of c.enemies) {
@@ -61,7 +71,7 @@ test('with the toggle off, the pool still plans its moves (action costs are alwa
 test('the planned moves are the moves the enemy plays, in order, turn after turn', () => {
   // Owner 2026-10-12: an enemy spends its pool in its turn, so the head and every follow-up play in the enemy phase,
   // in plan order. Each turn's performed moves are the plan the enemy held when the turn began.
-  const c = fight({ [MULTI_ACTION_KEY]: true }, { seed: SEED });
+  const c = coreFight({ seed: SEED });
   const enemy = c.enemies[0];
   assert.ok(Array.isArray(enemy.plannedMoves) && enemy.plannedMoves.length >= 1, 'the first roll plans the follow-ups');
   let turns = 0;
@@ -83,7 +93,7 @@ test('the planned moves are the moves the enemy plays, in order, turn after turn
 });
 
 test('the planned moves are the weighted picks from the enemyAI stream, so the plan is what the enemy will do', () => {
-  const c = fight({ [MULTI_ACTION_KEY]: true });
+  const c = coreFight();
   const enemy = c.enemies[0];
   const first = enemy.intent.moveId;
   const plan = enemy.plannedMoves.map((p) => p.moveId);
@@ -91,7 +101,7 @@ test('the planned moves are the weighted picks from the enemyAI stream, so the p
 });
 
 test('the plan is shown as the enemy\'s actions: the head at full size, follow-ups as symbols, the beyond-count ones as ?', () => {
-  const c = fight({ [MULTI_ACTION_KEY]: true });
+  const c = coreFight();
   const enemy = c.enemies[0];
   const actions = enemyPlanActions(c, enemy);
   assert.equal(actions.length, 1 + enemy.plannedMoves.length, 'the current action and every planned follow-up');
@@ -103,7 +113,7 @@ test('the plan is shown as the enemy\'s actions: the head at full size, follow-u
 });
 
 test('a staggered enemy shows no plan; a dead enemy shows none either', () => {
-  const c = fight({ [MULTI_ACTION_KEY]: true });
+  const c = coreFight();
   const enemy = c.enemies[0];
   enemy.intent = { kind: 'staggered', moveId: null };
   assert.deepEqual(enemyPlanActions(c, enemy), []);
@@ -113,7 +123,7 @@ test('a staggered enemy shows no plan; a dead enemy shows none either', () => {
 });
 
 test('a save keeps the plan: the restored enemy plays the same next move', () => {
-  const c = fight({ [MULTI_ACTION_KEY]: true });
+  const c = coreFight();
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(c)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot: saved });
   assert.deepEqual(restored.enemies[0].plannedMoves, c.enemies[0].plannedMoves);
@@ -136,7 +146,7 @@ function fakeDom(combat) {
 }
 function decorate(combat) {
   const dom = fakeDom(combat);
-  decorateCombatRoundsScreen(dom.root, combat, { targetedId: combat.enemies[0].id });
+  decorateCombatRoundsScreen(dom.root, combat);
   return dom;
 }
 const followUpCount = (dom) => {
@@ -144,21 +154,11 @@ const followUpCount = (dom) => {
   return wrap ? wrap.children.length : 0;
 };
 
-test('the decorator draws the follow-ups of a normal fight whose multi-action toggle is on, and nothing when off', () => {
-  const on = fight({ [MULTI_ACTION_KEY]: true });
+test('the decorator draws the follow-ups of a Core fight, and nothing in a legacy fight', () => {
+  const on = coreFight();
   assert.equal(followUpCount(decorate(on)), on.enemies[0].plannedMoves.length);
   const off = fight({});
-  assert.equal(followUpCount(decorate(off)), 0, 'off: no follow-up symbols');
-});
-
-test('rounds mode: follow-ups follow the rounds toggle, not the rounds queue being there', () => {
-  const rounds = (multi) => fight({ [COMBAT_ROUNDS_KEY]: true, [MOMENTUM_KEY]: false, [MULTI_ACTION_KEY]: multi });
-  const withFollowUps = rounds(true);
-  const queueLength = withFollowUps.combatRounds.enemyQueues[withFollowUps.enemies[0].id].length;
-  assert.equal(followUpCount(decorate(withFollowUps)), queueLength - 1, 'toggle on: every rounds follow-up shows');
-  const without = rounds(false);
-  assert.equal(without.combatRounds.rules.followUps, false);
-  assert.equal(followUpCount(decorate(without)), 0, 'toggle off: the rounds queue is still there, but no follow-ups show');
+  assert.equal(followUpCount(decorate(off)), 0, 'legacy: no follow-up symbols');
 });
 
 // --- PR #1953 review: a stagger or Control lock that lands mid-turn ends the plan for that turn ---------------

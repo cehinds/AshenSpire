@@ -127,48 +127,10 @@ try {
     results.push({ width, height, fixture, pips, textFit, mana });
     await page.close();
   }
-  // The rounds preview is a separate supported legacy fixture. An idle plan
-  // must reach End Turn instead of stalling on its first queued card.
-  const autoPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  autoPage.on('pageerror', error => errors.push(error.message));
-  await autoPage.goto(`${base}index.html?shot=combat&gameProfile=core`, { waitUntil: 'networkidle' });
-  await autoPage.waitForFunction(() => !!window.__combat);
-  await autoPage.evaluate(async () => {
-    const [{contentBundle},{createRegistries},{createRunState},{createRng},{createRunCombat},{mountCombat},{COMBAT_ROUNDS_KEY}] = await Promise.all([
-      import('/src/content/index.js'),import('/src/model/registries.js'),import('/src/model/state.js'),
-      import('/src/engine/rng.js'),import('/src/engine/runCombat.js'),import('/src/ui/screens/combat.js'),import('/src/model/combatRounds.js'),
-    ]);
-    const registries = createRegistries(contentBundle);
-    const settings = { autoCombat:true, combatStepPause:250, combatSpeed:8, animSpeed:'instant' };
-    const run = createRunState({seed:5,classId:'reaver',registries,combatExpansionVersion:1,profileMeta:{settings:{[COMBAT_ROUNDS_KEY]:true}}});
-    run.stats = {damageDealt:0,damageTaken:0};
-    const combat = createRunCombat({registries,rng:createRng(5),run,enemyIds:['wanderingSoldier'],settings:{}});
-    if (!combat.combatRounds) throw new Error('Autoplay regression requires a planned rounds queue');
-    window.__autoRegression = {combat,settings,initialTurn:combat.turn,samples:[]};
-    Object.defineProperty(document, 'hidden', {configurable:true,value:true});
-    window.__autoRegression.timer = setInterval(() => {
-      window.__autoRegression.samples.push({turn:combat.turn,queue:(combat.combatRounds.playerQueue || []).map(card=>card.instanceId)});
-    },20);
-    mountCombat(document.getElementById('app'),{registries,run,combat,meta:{settings},readSettings:()=>settings,onEnd:()=>{}});
-  });
-  await autoPage.waitForTimeout(350);
-  assert.equal(await autoPage.evaluate(() => window.__autoRegression.combat.combatRounds.playerQueue.length),0,'hidden pages cannot automate combat');
-  await autoPage.evaluate(() => { delete document.hidden; });
-  await autoPage.waitForFunction(() => window.__autoRegression.combat.turn > window.__autoRegression.initialTurn || !!window.__autoRegression.combat.result, null, {timeout:15000});
-  const autoplay = await autoPage.evaluate(() => {
-    const state = window.__autoRegression;
-    state.settings.autoCombat = false; clearInterval(state.timer);
-    return {turn:state.combat.turn,initialTurn:state.initialTurn,result:state.combat.result,samples:state.samples};
-  });
-  assert.ok(autoplay.samples.some(sample=>sample.queue.length>0),'autoplay queued a legal planned card');
-  assert.ok(autoplay.turn>autoplay.initialTurn || autoplay.result,'autoplay completed the planned round');
-  assert.ok(autoplay.samples.every(sample=>new Set(sample.queue).size===sample.queue.length),'planned cards are not queued repeatedly');
-  results.push({autoplay});
-  await autoPage.close();
   assert.deepEqual(errors, []);
 } finally {
   writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2));
   await browser.close();
   if (server) await new Promise((resolve, reject) => server.server.close(error => error ? reject(error) : resolve()));
 }
-console.log('FixCore combat UI browser checks passed (4 viewports + planned-round autoplay).');
+console.log('FixCore combat UI browser checks passed (4 viewports).');
