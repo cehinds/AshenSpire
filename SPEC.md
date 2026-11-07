@@ -7,7 +7,7 @@ Single-player browser roguelike deckbuilder, mechanically faithful to Slay the S
   - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned) supersedes conflicting older prose in this specification and its combat contracts: revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.
     - Unrelated WardToBlock and reaction rules stay in force.
     - Implemented in a separate PR (CONTRIBUTING ground rule 1).
-  - [combat-clarity-2026-10-20](docs/design/combat-clarity-2026-10-20.md) supersedes conflicting earlier rules (in any document) for: Precision, reaction costs, per-hit Counters, combat feedback, progression presentation. Implementation tracked separately.
+  - [combat-clarity-2026-10-20](docs/design/combat-clarity-2026-10-20.md) supersedes conflicting earlier rules for: Precision, reaction costs, per-hit Counters, combat feedback, progression presentation. Implementation tracked separately.
 
 > **Known debt: vocabulary.** Largely pre-scrub names: runes/Vagabond/Astrologer/Prophet/Erdtree
 > = cinders/Reaver/Starseer/Herald/Goldbough as shipped.
