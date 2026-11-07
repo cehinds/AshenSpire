@@ -235,8 +235,6 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
     // Absent on a snapshot written before Play in deck order: that fight shuffles.
     orderedDraw: saved.orderedDraw || null,
-    // Absent on a fight built at the default recovery settings.
-    ...(saved.recovery ? { recovery: saved.recovery } : {}),
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
