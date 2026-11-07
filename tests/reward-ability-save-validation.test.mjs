@@ -7,7 +7,7 @@ import {openRunClassMastery,registriesForClassMastery} from '../src/model/classM
 import {bankSkillXp,claimBankedSkillLevel,xpToNext,spendSkillDraft} from '../src/model/skills.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import {rollClassMilestoneRewards,claimClassMilestoneReward,classMilestoneOptions} from '../src/model/classMilestoneOffers.js';
-import {pendingRewardCheckpoint} from '../src/model/rewardSourcePolicy.js';
+import {pendingRewardCheckpoint} from './helpers/pending-reward-checkpoint.mjs';
 import {createRng} from '../src/engine/rng.js';
 
 const root=createRegistries(contentBundle);

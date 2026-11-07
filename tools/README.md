@@ -236,7 +236,6 @@ prefix; its callers are the union.
 | `release-shots-selftest.mjs` | release-shots-selftest — the known-bad corpus for release-shots. | tools release-shots |
 | `release-shots.mjs` | release-shots — photograph the RELEASE BUILD, screen by screen, | wf ci; tests engine.test.js, run-node; tools axisfit, buildstamp-shot, contrast-audit +5; docs SPEC.md, docs/SPEC-RECONCILE.md, docs/preview/issue-185-5198e8a/README.md +3; other src/buildversion.js, src/main.js +2 |
 | `restore-settings-drive.mjs` | restore-settings-drive — Rune, 2026-08-07 (#68 D22). | tools plantsites-baseline.json |
-| `reward-collect-drive.mjs` | reward-collect-drive — Bjorn, 2026-08-21 (E11/#256, PR #290). | tools full-run-probe, plantsites-baseline.json; other src/main.js |
 | `reward-map-layout-qa.mjs` | Production reward/map mounts: column containment and touch response budget. | tools map-tap-latency |
 | `rogue-parity.mjs` | Rogue full-slice contract. Source/model only: no browser and no generated build. | tests content-validators; docs docs/ART-REPO-PLAN.md, docs/FINISH.md |
 | `runcreation.mjs` | runcreation — WHO WROTE THIS NUMBER, AND WHAT DID THEY OVERWRITE? | tools onevocab, plantsites-baseline.json, saveroundtrip; other src/engine/save.js, src/model/healLedger.js |
@@ -350,7 +349,6 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `inspect-one-click-browser.mjs` | Real-browser regression for one-press inspection (owner, 2026-10-13: a visible |
 | `layoutmode.mjs` | layoutmode — #39's focused browser witness. |
 | `level-semantics.mjs` | Focused pure-model gate for issue #237. |
-| `level-up-flow-qa.mjs` | Real Chromium interaction checks of production progression and Character UI. |
 | `map-pan-ownership.mjs` | Issue #40: with two-axis map dragging disabled, the browser owns touch/pen |
 | `map-route-probe.mjs` | Live map history layout and destination-inspection regression probe. |
 | `merchant-offers-browser.mjs` | Production merchant renderer and transactions, on a disposable preview visit. |
@@ -363,9 +361,7 @@ These 63 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `pointbuy-preview-check.mjs` | Run against a rebuilt preview server; Playwright must be available to Node. |
 | `presentation-matrix.mjs` | Final phone presentation contract: source/dist x Grace/creation/Armoury x 320/390. |
 | `reaver-attack-playtest.mjs` | Real-browser smoke for the painted Reaver sequence: play an actual Strike, |
-| `reward-confirm-qa.mjs` | (no header comment) |
 | `reward-new-badge-qa.mjs` | Browser gate for the reward-card status stack: NEW sits above the card and |
-| `reward-xp-sequence-qa.mjs` | Real-browser reward presentation probe using the production mount and styles. |
 | `sfx-authority-contract.mjs` | Issue #67: played ids and authored SFX rows are one two-way authority. |
 | `skill-book-shop-browser.mjs` | Real renderer, real purchase plan/commit, disposable visit (no user saves). |
 | `starting-abilities-qa.mjs` | (no header comment) |

@@ -97,7 +97,7 @@ function combatOutcomeFixture() {
     const persistOrWarn = () => { persist(); return true; };
     const victoryBeat = () => { beats++; return beat.promise; };
     const runCombatEnd = () => { settlements++; throw new Error('Unexpected stale combat settlement'); };
-    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     return { end: () => onCombatEnd('victory', xpCombat, { pool: 'normal' }),
       change: () => { run = { seed: 'B', combatPendingOutcome: { result: 'defeat' } }; activeSlot = 2; },
       facts: () => ({ beats, settlements, originalPending: !!original.combatPendingOutcome, currentPending: !!run.combatPendingOutcome }) };

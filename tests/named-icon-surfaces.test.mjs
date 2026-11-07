@@ -61,25 +61,6 @@ test('game-over identity paints the sigil beside the name and the final deck use
   assert.equal(run.customization.glyph, 'sword');
 }));
 
-test('reward menu rows and class-node choices render their tokens as actual icon DOM', () => withKitDom(({ document }) => {
-  document.documentElement ??= document.body;
-  const app = document.createElement('main'); document.body.append(app);
-  const run = createRunState({ registries, classId: 'reaver', seed: 21 });
-  mountRewards(app, { registries, run, checkpoint: { states: {} },
-    rewards: { cinders: 10, classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }] },
-    onDone() {}, onPersist: () => true, saves });
-  expectArt(app.querySelector('[data-kind="cinders"] .glyph'), 'cinders');
-  expectArt(app.querySelector('[data-kind="classDraft"] .glyph'), 'progression');
-  app.querySelector('[data-kind="classDraft"]').click();
-  for (const node of app.querySelectorAll('.reward-node')) {
-    const def = registries.nodes.find(row => row.id === node.dataset.nodeId);
-    const icon = uiIconId(def.glyph || 'progression');
-    if (icon) expectArt(node.querySelector('.glyph'), icon);
-    else assert.equal(readableText(node.querySelector('.glyph')), def.glyph);
-  }
-  assert.ok(app.querySelector('.reward-node h3').textContent);
-}));
-
 test('merchant smith services paint named icons inside real mounted service cards', () => withKitDom(({ document }) => {
   document.documentElement ??= document.body;
   const app = document.createElement('main'); document.body.append(app);
@@ -92,21 +73,6 @@ test('merchant smith services paint named icons inside real mounted service card
   expectArt(app.querySelector('#shop-extract .glyph'), 'settings');
   expectArt(app.querySelector('#shop-install .glyph'), 'smith');
   assert.equal(app.querySelector('#shop-upgrade h3').textContent, 'Upgrade an Item');
-}));
-
-test('skill attribute reward choices render the attribute marker instead of its icon token', () => withKitDom(({ document }) => {
-  document.documentElement ??= document.body;
-  const app = document.createElement('main'); document.body.append(app);
-  const run = createRunState({ registries, classId: 'reaver', seed: 21 });
-  run.skills['item:blade'] = { level: 1, xp: 0, pendingDrafts: 0 };
-  mountRewards(app, { registries, run, checkpoint: { states: {} },
-    rewards: { skillAttributes: [{ skillId: 'item:blade', ordinal: 0, attributeIds: ['strength', 'dexterity'] }] },
-    onDone() {}, onPersist: () => true, saves });
-  expectArt(app.querySelector('[data-kind="skillAttribute"] .glyph'), 'strength');
-  app.querySelector('[data-kind="skillAttribute"]').click();
-  const choices = app.querySelectorAll('.reward-node');
-  assert.equal(choices.length, 2);
-  for (const choice of choices) expectArt(choice.querySelector('.glyph'), 'strength');
 }));
 
 

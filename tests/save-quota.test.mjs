@@ -150,22 +150,15 @@ test('a full victory with a quota-throwing store still reaches the reward screen
     dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
   }
   assert.equal(combat.result, 'victory', 'the winning action applied despite the full store');
-  // The reward transition and the persist helpers, sliced from the shipped source.
-  const mounted = [];
+  // The persist helpers, sliced from the shipped source (the reward door's own persist is persistOrWarn).
   const context = {
-    ...h.context, run, rng, mounted,
+    ...h.context, run, rng,
     persist: () => save.saveRun(run, rng, 1),
-    configuredRewardOffer: rewards => rewards, mergeProgressionRewards: (_d, rewards) => rewards,
-    partitionProgressionRewards: rewards => ({ available: rewards, deferred: {} }),
-    pendingRewardCheckpoint: rewards => ({ rewards }),
-    mountPendingReward: () => { mounted.push('reward'); return 'mounted'; },
   };
-  runInNewContext(`${doorSource}\n${sliceBlock('function beginPendingReward', '// SPEC §15.4: a legendary sigil drop')}\nthis.beginPendingReward = beginPendingReward; this.persistOrWarn = persistOrWarn; this.persistContinuing = persistContinuing;`, context);
-  assert.equal(context.beginPendingReward({ title: 'VICTORY' }, { source: 'normal', after: 'map' }), 'mounted');
-  assert.deepEqual(mounted, ['reward'], 'the reward screen mounted');
+  runInNewContext(`${doorSource}\nthis.persistOrWarn = persistOrWarn; this.persistContinuing = persistContinuing;`, context);
+  assert.equal(context.persistOrWarn(), false);
   assert.ok(h.banners.length >= 1, 'the player was told that the save failed');
   assert.equal(context.persistContinuing(), undefined, 'reward doors read a return of false as a refusal; this never returns it');
-  assert.equal(context.persistOrWarn(), false);
 });
 
 test('an old-format save (no savedAt stamp) still loads, and a refused re-save leaves the slot readable', () => {

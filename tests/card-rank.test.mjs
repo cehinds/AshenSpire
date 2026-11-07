@@ -75,40 +75,6 @@ test('a draft rank runs 1 to the skill level, capped at rankMax, weighted toward
   assert.equal(rollDraftRank(registries, createRng(42), 7), rollDraftRank(registries, createRng(42), 7), 'a seeded run rolls the same rank');
 });
 
-test('a skill draft offers each card at its rolled rank, and the taken card keeps it', async () => {
-  const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/reward-dom.mjs');
-  const { bankSkillXp, claimBankedSkillLevel, xpToNext } = await import('../src/model/skills.js');
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const app = document.createElement('main'); document.body.append(app);
-    const run = createRunState({ seed: 9, classId: 'reaver', registries });
-    run.deck = [];
-    bankSkillXp(registries, run, 'item:blade', xpToNext(registries, 'weapon', 0));
-    mountRewards(app, { registries, run, onDone() {},
-      onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
-      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
-      rewards: { xpGains: { level: 0, tracks: { 'item:blade': 1 } },
-        skillDrafts: [{ skillId: 'item:blade', level: 1, claimOrdinal: 1, cardIds: ['rend', 'stomp'], ranks: [3, 1] }] },
-    });
-    app.querySelector('.reward-level-up[data-track="item:blade"]').click();
-    app.querySelector('.reward-kind[data-kind="skillDraft"]').click();
-    const faces = app.querySelectorAll('.reward-row .card');
-    assert.ok(faces[0].getAttribute('aria-label').startsWith(resolveCard(registries, { cardId: 'rend' }).name), 'the offered face names its card');
-    assert.ok(faces[0].getAttribute('aria-label').includes('rank 3'), 'the offered face shows its rank');
-    assert.ok(faces[0].getAttribute('aria-label').includes('Attack'), 'the offered face names its primary sigil');
-    faces[0].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.length, 0, 'Confirm reviews the ranked offer without granting it');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.at(-1).cardId, 'rend');
-    assert.equal(run.deck.at(-1).rank, 3, 'the deck card arrives at the rank it was offered at');
-  } finally { Object.assign(globalThis, saved); }
-});
-
 const amountAt = (cardId, rank, index) => resolveCard(registries, { cardId, rank }).effects[index];
 // An authored number as the face at `rank` prints it before the rank lands: scaled when that face costs 2 SP or more.
 const scaledAt = (cardId, rank, n) => (resolveCard(registries, { cardId, rank }).cost >= 2 ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);

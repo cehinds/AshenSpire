@@ -258,10 +258,6 @@
       "count": 1,
       "digest": "9c9183a3f5779e9d"
     },
-    "tools/reward-collect-drive.mjs": {
-      "count": 9,
-      "digest": "8d3c8713e7ec1aee"
-    },
     "tools/runcreation.mjs": {
       "count": 5,
       "digest": "3c4b36e60ac18c68"

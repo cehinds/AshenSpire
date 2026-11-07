@@ -8,7 +8,7 @@ import { createRunState, serializeRun, deserializeRun, validateRunShape } from '
 import { createRng } from '../src/engine/rng.js';
 import { rollSourceRewardBonuses, appendSourceRewardBonuses, rollGuaranteedSkillDraftIds, runSourceRewardOffer } from '../src/engine/sourceRewardBonuses.js';
 import { rollCombatCardOffer } from '../src/engine/encounters.js';
-import { pendingRewardCheckpoint, configuredRewardOffer } from '../src/model/rewardSourcePolicy.js';
+import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
 import { formationSpawn } from '../src/model/formationLayout.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { bankSkillXp, claimBankedSkillLevel, xpToNext, skillTracks } from '../src/model/skills.js';
@@ -95,56 +95,5 @@ test('bonus offers retain distinct keys and survive saving alongside character r
   assert.deepEqual(validateRunShape(run), []);
   assert.deepEqual(deserializeRun(serializeRun(run)).pendingReward, run.pendingReward);
   assert.deepEqual(offer.levelChoices.map(row => row.ordinal), [0, 1, 2, 3]);
-  const filtered = configuredRewardOffer(offer, 'normal', key => key !== 'rewardLevelCards');
-  assert.equal(filtered.levelCards.length, 2, 'class techniques are independent of character-level cards');
-  assert.equal(filtered.classDrafts.length, 1, 'tree upgrade remains available');
 });
 
-test('class bonuses wait for the class claim, then feat and technique can both be taken once', () => {
-  const dom = rewardDom();
-  const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
-  Object.assign(globalThis, dom);
-  try {
-    const reg = withChances({ combatFeatChancePct: 0, classCardChancePct: 100 });
-    const run = createRunState({ seed: 24, classId: 'reaver', registries: reg });
-    bankSkillXp(reg, run, 'class:reaver', xpToNext(reg, 'class', 0));
-    const rewards = { ...rollSourceRewardBonuses(reg, createRng(24), { ...args, bankedLevels: 1 }),
-      xpGains: { level: 0, tracks: { 'class:reaver': 100 } } };
-    const checkpoint = pendingRewardCheckpoint(rewards, { source: 'normal', after: 'map' });
-    checkpoint.expanded = true;
-    const app = document.createElement('main'); document.body.append(app);
-    const mount = () => mountRewards(app, { registries: reg, run, rewards, checkpoint, onDone() {},
-      onClaimSkill: id => claimBankedSkillLevel(reg, run, id),
-      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
-    });
-    mount();
-    assert.equal(app.querySelector('[data-kind="levelChoice"]'), null);
-    assert.equal(app.querySelector('[data-kind="levelCard"]'), null);
-    app.querySelector('.reward-level-up[data-track="class:reaver"]').click();
-    assert.equal(run.skills['class:reaver'].level, 1);
-    assert.equal(app.querySelector('#reward-card-confirm'), null, 'the claim opens no chooser on its own');
-    app.querySelector('.reward-level-offer[data-kind="levelChoice"]').click();
-    app.querySelectorAll('.reward-pick')[0].click();
-    const beforeReview = JSON.stringify(run);
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(JSON.stringify(run), beforeReview, 'Confirm stages review without granting a reward');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.feats.length, 1);
-    assert.equal(run.skills['class:reaver'].pendingDrafts, 1, 'feat does not spend the tree draft');
-    const count = run.deck.length;
-    app.querySelector('[data-kind="levelCard"]').click();
-    app.querySelectorAll('.reward-pick')[0].click();
-    const beforeCardReview = JSON.stringify(run);
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(JSON.stringify(run), beforeCardReview, 'card review cannot grant the technique');
-    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(run.deck.length, count + 1);
-    mount();
-    assert.equal(run.feats.length, 1);
-    assert.equal(run.deck.length, count + 1);
-    assert.equal(checkpoint.states['levelChoice:0'], 'taken');
-    assert.equal(checkpoint.states['levelCard:0'], 'taken');
-  } finally { Object.assign(globalThis, saved); }
-});

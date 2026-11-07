@@ -69,28 +69,3 @@ test('utility pickups remain inventory, old snapshots retain charge-inventory po
   assert.equal(acquireFlask(reg,run,mana).amount,2);
   assert.equal(run.flaskCharges.capacity,before.capacity+2,'JSON pickup tuning reaches the actual ledger');
 });
-test('reward screen rolls back a capacity pickup when saving fails, then permits one retry',()=>{
-  const dom={...rewardDom(),customElements:{get:()=>true},NodeFilter:{SHOW_TEXT:4,FILTER_SKIP:3,FILTER_ACCEPT:1}}, saved=Object.fromEntries(Object.keys(dom).map(key=>[key,globalThis[key]]));
-  Object.assign(globalThis,dom);
-  try {
-    document.documentElement=document.createElement('html');
-    document.createTreeWalker=()=>({nextNode:()=>null});
-    const element=Object.getPrototypeOf(document.createElement('div'));
-    element.insertAdjacentHTML=function(position,html){
-      assert.equal(position,'afterbegin');
-      const fragment=document.createElement('div');fragment.innerHTML=html;
-      for(const child of [...fragment.children])this.appendChild(child);
-    };
-    const run=fresh(), before=structuredClone(run.flaskCharges), checkpoint={states:{}};
-    let fail=true;
-    const app=document.createElement('main');document.body.append(app);
-    mountRewards(app,{registries:reg,run,rewards:{flaskId:hp},checkpoint,onDone(){},onPersist(){if(fail)throw new Error('disk full');}});
-    app.querySelector('[data-kind="flask"]').click();
-    const take=app.querySelector('#reward-detail-take');assert.ok(take);
-    assert.throws(()=>take.click(),/disk full/);
-    assert.deepEqual(run.flaskCharges,before);assert.deepEqual(checkpoint.states,{});
-    fail=false;take.click();
-    assert.equal(run.flaskCharges.capacity,before.capacity+1);assert.equal(checkpoint.states.flask,'taken');
-    take.click();assert.equal(run.flaskCharges.capacity,before.capacity+1);
-  } finally {for(const [key,value] of Object.entries(saved))if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
-});

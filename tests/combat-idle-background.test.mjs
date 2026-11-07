@@ -28,7 +28,7 @@ test('leaving the combat screen disarms End Turn, whose hold door listens on win
 test('the reward Continue door is disarmed before a repaint re-arms it and when the screen is left', () => {
   const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
   assert.match(reward, /disarmContinue\?\.\(\);\s*disarmContinue = beatArmer\(meta, registries\)\(cont, 'rewardContinue'/);
-  assert.match(reward, /onDone\(chosenCardId\);\s*disarmContinue\?\.\(\); disarmContinue = null;/);
+  assert.match(reward, /onDone\(\);\s*disarmContinue\?\.\(\); disarmContinue = null;/);
 });
 
 test('the hand pager re-syncs only when a veil is added or removed, not on every body mutation', () => {

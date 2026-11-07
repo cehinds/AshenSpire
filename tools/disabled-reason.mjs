@@ -100,13 +100,6 @@ const SCENARIOS = [
       dialogueState: { beat: Number.MAX_SAFE_INTEGER, generation: 0, resolved: false, choiceId: null, resultText: '' } });
     await new Promise((ok) => setTimeout(ok, 1500));
     return '#dialogue-continue';`],
-  ['reward-confirm', `
-    const { mountRewards } = await import('/src/ui/screens/reward.js');
-    const bare = { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
-    mountRewards(app, { registries, run: bare, checkpoint: { states: {}, chosenCardId: null },
-      rewards: { cardIds: ['frostNova', 'starstoneArc', 'scholarsInsight'] }, onDone() {}, onPersist() { return true; } });
-    app.querySelector('[data-kind="card"]').click();
-    return '#reward-card-confirm';`],
   ['title-continue', `
     const { mountTitle } = await import('/src/ui/screens/title.js');
     mountTitle(app, { slots: [{ slot: 1, summary: null }, { slot: 2, summary: null }, { slot: 3, summary: null }], meta: { settings: {} }, registries,
