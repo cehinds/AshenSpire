@@ -1799,130 +1799,57 @@ Load counts each equipped armament's authored `weight`; armour weighs its `poise
 
 #### 7.2.1 Advanced game configuration
 
-Advanced Settings is the player-facing editor for the game's authored configuration, not a
-second balance table. Every safe gameplay flag, numeric tuning value, authored default and
-presentation size that can change without replacing content identities or invalidating the
-engine is discoverable there. A setting descriptor names the source path, label, explanation,
-type, domain, shipped default, reset behavior and application timing. The editor and runtime
-resolver consume that same descriptor; UI code must not retype a default, range, enum or formula.
-Adding an eligible descriptor therefore adds its control without another hand-authored settings
-row.
+Advanced Settings is the player-facing editor for the game's authored configuration (not a second balance table). Every safe gameplay flag, numeric tuning value, authored default and presentation size that can change without replacing content identities is discoverable there.
 
-The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Stats, Rewards, Shops, Deck, Equipment, World, Interface, Text, ~~Battlefield~~ (removed, owner 2026-11-05), Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
+**Descriptors**
+- A setting descriptor names source path, label, explanation, type, domain, shipped default, reset behavior and application timing.
+- The editor and runtime resolver consume the same descriptor; UI code never retypes a default, range, enum or formula. Adding an eligible descriptor adds its control with no hand-authored row.
+- A generated row's domain is read off its shipped value, except where validation is stricter: a percent validation capped at 100 offers 0–100; a cap that must be positive starts at 1.
 
-What the tabs hold, by area:
+**Tabs** (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`), in order: Opening, Progression, Stats, Rewards, Shops, Deck, Equipment, World, Interface, Text, Wireframes, Export, Sync, Changelog, About.
+- A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`).
+- A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); other tabs appear in dev and test builds. Stored values are untouched either way.
 
-- **Progression:** starting level; experience gain multiplier; the XP curve
-  (`balance.level.xp`); optional maximum level; attribute points granted per level; and points
-  required for each derived-stat tier. The level-pace preview (§15.2) shows the configured
-  curve before a run starts. Class defaults sit under this tab.
-- **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
-  starting resource/flask allocation, and other schema-valid starting values. Class controls are
-  registry-derived, so adding a class cannot create an invisible default. Per-class values must
-  still satisfy the selected creation mode's bounds and total-allocation rules; invalid
-  combinations are explained and cannot be applied silently.
-- **Combat and actors:** ~~up to six rows and three columns per side,
-  with front/back meaning identified per side; formation spacing, player and
-  enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
-  data-owned combat presentation values that do not alter asset identity.~~
-  (Settings rows for these removed, owner 2026-11-05: the Battlefield tab, its formation editor and the stored keys are gone; Core draws its formation from the viewport model.)
-  Default spawns start on the lowest row in the outermost column of each team,
-  placing player and enemy starts farthest apart. Fill each row from outside toward
-  the centre, then move upward. For two columns and three rows, player rows read
-  `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
-  The default (alternative) perspective instead draws one uniform grid (owner, 2026-10-12):
-  three lanes, an enemy back rank and front rank, and one player rank nearest the camera,
-  with a band of open ground between the party and the enemies. (Owner, 2026-11-05: the open
-  ground is a gap of `teamGapRows` strip heights (default 0.6) with no tiles, and the party now has
-  a front strip, nearer the enemies, and a back strip; the front and back rows are to indicate melee
-  and reach, a mapping that follows separately. The extra enemy strip is drawn only when Core enables the extra row.) The grid is sheared: each
-  row slides right in proportion to its depth, so lanes run on a diagonal and every cell is
-  the same parallelogram. The top of the field is sky; the grid stands on the ground below it. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
-  fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
-  then the front rank, up to six; the party shares its rank and the player starts in the left
-  lane. More than six enemies widens the grid to more lanes
-  rather than stacking two bodies on one anchor. Gameplay cells keep their addresses: a column is depth (outer = back), a row
-  is a lane, and the player's front column is not a perspective destination. Pressing anywhere
-  in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
-  span, rank tops and heights, shear and foot fractions per phone, desktop and short strip are data
-  (`combatFormationModel.positioning.perspectiveGrid`). The Classic layout is deprecated and
-  removed (owner, 2026-11-03: "Classic layout can now be deprecated."): this perspective grid is the
-  only combat layout, the `classicAppearance` Settings row is gone, and a saved
-  `classicAppearance: true` is ignored, so an old profile loads as the grid. The columns-and-rows
-  grid described below survives only as the saved shape of the formation settings.
-  The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
-  Measurements remain responsive percentages; reference anchors at 1641×526 are checked
-  against the exports. Explicit saved group edits take precedence.
-  Formation settings offer group controls for the entire
-  battlefield, either team, individual columns, and named custom sets of positions. Dragging or
-  nudging translates every anchor in the group together. Offsets are stored as percentages of
-  battlefield width/height. Grid snapping defaults on with a 50 CSS px adjustable step; the group's
-  first anchor snaps to an intersection while all member spacing remains fixed. Snapping can be disabled.
-  Edge distances and nudge steps use CSS pixels. Characters and tiles
-  share the transformed anchors, and group translations stop at the battlefield edges. Custom
-  members retain their side, row and local column when the roster changes. Settings edits
-  require Apply layout. These are presentation edits, not tactical
-  movement, and do not spend actions or change combat range rules.
-  Groups may also target a row or one position and apply character size multipliers with feet
-  fixed to their anchors. Combat has no in-battle positioning control.
-- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
-  tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
-  geometry. Dependent constraints are enforced together (for example, resting < selected <
-  reading) and the editor identifies the value preventing an invalid change.
-- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers,
-  merchant and service pricing, map-generation tuning, and other global balance values whose
-  schema permits a runtime override.
-- **Rules and accessibility:** eligible boolean flags and closed-set modes used by gameplay or
-  presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
-  approachable homes and appear in Advanced only when needed as part of the complete searchable
-  inventory; both surfaces resolve through one descriptor and one persisted value.
+**What the areas hold**
+- **Progression:** starting level; experience gain multiplier; XP curve (`balance.level.xp`); optional maximum level; attribute points per level; points required per derived-stat tier. The level-pace preview (§15.2) shows the configured curve before a run. Class defaults sit under this tab.
+- **Class defaults:** each registered class exposes starting STR, DEX, CON, WIS, INT, starting resource/flask allocation and other schema-valid starting values.
+  - Controls are registry-derived, so a new class cannot create an invisible default.
+  - Values must satisfy the selected creation mode's bounds and total-allocation rules; invalid combinations are explained and cannot be applied silently.
+- **Combat formation:** the perspective grid is the only combat layout.
+  - One uniform grid: three lanes, an enemy back rank and front rank, one player rank nearest the camera, with open ground between party and enemies. Gap is `teamGapRows` strip heights (default 0.6), no tiles; the party has a front strip (nearer the enemies) and a back strip; the extra enemy strip is drawn only when Core enables the extra row.
+  - The grid is sheared: each row slides right in proportion to depth, so every cell is the same parallelogram. The top of the field is sky; the grid stands on ground below. A cell's shadow is its foot anchor, where the sprite's feet stand.
+  - Enemies fill the back rank first, spread across lanes (one in the middle, two on the outer lanes), then the front rank, up to six; the party shares its rank and the player starts in the left lane. More than six enemies widens the grid to more lanes rather than stacking two bodies on one anchor.
+  - Gameplay cells keep their addresses (column is depth, outer = back; row is a lane); the player's front column is not a perspective destination. Pressing anywhere in an occupied enemy cell acts on that enemy (select, or play the armed card or flask).
+  - Lane span, rank tops and heights, shear and foot fractions per phone, desktop and short strip are data (`combatFormationModel.positioning.perspectiveGrid`).
+  - A saved `classicAppearance: true` is ignored (the `classicAppearance` row is gone), so an old profile loads as the grid.
+  - Supplied 1×1 and 2×2 layouts use responsive percentages; reference anchors at 1641×526 are checked against the supplied exports. Explicit saved group edits (formation groups: offsets as percentages of battlefield width/height, optional grid snapping, default 50 CSS px step) take precedence. Combat has no in-battle positioning control.
+- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal, tray, HUD and window dimensions; UI scale/layout thresholds; other data-owned component geometry. Dependent constraints are enforced together (e.g. resting < selected < reading) and the editor identifies the value blocking an invalid change.
+- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers, merchant and service pricing, map-generation tuning, other global balance values whose schema permits a runtime override.
+- **Rules and accessibility:** eligible boolean flags and closed-set modes. Ordinary Display, Audio and Accessibility controls stay in their approachable homes and appear in Advanced only as part of the searchable inventory; both resolve through one descriptor and one persisted value.
 
-Search and section navigation remain available at every supported viewport and text size. Each
-row shows the shipped default, the currently resolved value, whether it affects the current run
-or only a new run, and a Reset action. A section can reset all its values after confirmation;
-the complete editor can reset all overrides after confirmation. Invalid legacy or manually
-edited stored values resolve to the authored default and are visibly reported instead of being
-accepted, discarded silently, or allowed to produce `NaN`/infinite state. A balance path a
-build renames keeps its stored override: the retired key is read as the current one wherever
-settings are read (the configured bundle, the snapshot, an imported file) and the current key
-wins when both are stored — today `balance.shrine.healPct` → `balance.rest.hpPartialPct`
-(§13.4j). A generated row's domain is read off its shipped value, except where validation is
-stricter: a percent validation caps at 100 offers 0–100, a cap that must be positive starts at 1.
+**Rows, reset and persistence**
+- Search and section navigation work at every supported viewport and text size.
+- Each row shows shipped default, current resolved value, whether it affects the current run or only a new run, and a Reset action. A section can reset all its values, and the whole editor can reset all overrides, each after confirmation.
+- Invalid legacy or hand-edited stored values resolve to the authored default and are visibly reported; never accepted silently, discarded silently, or allowed to produce `NaN`/infinite state.
+- A balance path a build renames keeps its stored override: the retired key is read as the current one wherever settings are read (configured bundle, snapshot, imported file), and the current key wins when both are stored. Today: `balance.shrine.healPct` → `balance.rest.hpPartialPct` (§13.4j).
+- Run-defining values are resolved and snapshotted when a run is created and never silently recalculate an in-progress run; a row affects the current run only where its descriptor declares live application safe.
+- Save validation accepts older runs without a snapshot by deriving the historical shipped defaults required by their version.
+- Profile settings store only overrides, so changing a shipped default stays meaningful and Reset never writes a stale copy.
 
-Run-defining values are resolved and snapshotted when a new run is created. They never silently
-recalculate an in-progress run; a row may affect the current run only where its descriptor
-explicitly declares live application safe. Save validation accepts older runs without a snapshot
-by deriving the historical shipped defaults required by their version. Profile settings store
-only overrides, so changing a shipped default remains meaningful and Reset never writes a stale
-copy of that default.
+**Portable export**
+- One Export configuration action, on debug pages only (`pageDebug()`, `src/ui/screens/settings.js`), serializes a versioned JSON document: schema/version marker, build/source information, explicit overrides and their resolved values.
+- It never includes run saves, profile progress, unlocks, history, user file paths, or quarantine/archive data.
+- Desktop with the File System Access API: browser Save As picker with a `.json` filename. Otherwise (unavailable, declined, mobile): normal browser download/share-capable fallback, stored locally without silently replacing an existing export.
+- Exporting changes no settings. The format is deterministic and round-trippable by a future import surface; Import is not specified here.
 
-**Portable export.** Advanced Settings has one Export configuration action, shown on debug pages only (`pageDebug()`, `src/ui/screens/settings.js`; owner, 2026-10-12), that serializes a
-versioned JSON document containing the schema/version marker, build/source information, explicit
-overrides and their resolved values. It never includes run saves, profile progress, unlocks,
-history, user file paths, or quarantine/archive data. Where the File System Access API is
-available on desktop, Export opens the browser's Save As picker with a `.json` filename; when it
-is unavailable or declined, including on mobile, it uses a normal browser download/share-capable
-file fallback that stores locally without replacing an existing export silently. Exporting makes
-no settings change. The format is deterministic and round-trippable by a future import surface,
-but this requirement does not invent Import before its validation and conflict policy are
-specified.
+**Settings door geometry**
+- The door uses the maximum safe visual viewport after the shared outer inset, not a fixed 90% height cap.
+- Header, navigation and footer stay fixed; the active content pane is the single vertical scroll owner. Ancestors and nested section lists create no second vertical scrollport.
+- On narrow screens navigation becomes a compact section chooser with the same destinations.
+- Browser zoom and UI scale may change rendered size, but opening Settings applies no private zoom.
+- The active row, focus target, scroll cue, footer actions and close control stay reachable at the required desktop, landscape and phone shapes, including Text XL and the mobile on-screen keyboard.
 
-**Settings door geometry.** The Settings door uses the maximum safe visual viewport after the
-shared outer inset instead of a fixed 90% height cap. Header, navigation and footer remain fixed;
-the active content pane is the single vertical scroll owner. Ancestors and nested section lists
-must not create a second vertical scrollport. On narrow screens the navigation becomes a compact
-section chooser while retaining the same destinations. Browser zoom and the game's UI-scale
-setting may change rendered size, but opening Settings never applies an additional private zoom.
-The active row, focus target, scroll cue, footer actions and close control remain reachable at
-the required desktop, landscape and phone shapes, including Text XL and the mobile on-screen
-keyboard.
-
-Delivery is one complete configuration feature rather than independently releasable slices.
-Implementation may be built subsection by subsection, but after each subsection the generated
-preview build is refreshed and desktop plus phone screenshots are recorded before work continues.
-The final change ships only when the complete eligible inventory, persistence/snapshot behavior,
-export fallback, single-scroll geometry, accessibility, and required repository checks pass
-together.
+**Delivery:** one complete feature. After each subsection the preview build is refreshed and desktop plus phone screenshots recorded; the change ships only when the complete eligible inventory, persistence/snapshot behavior, export fallback, single-scroll geometry, accessibility and required repository checks pass together.
 
 ### 7.3 Input
 
