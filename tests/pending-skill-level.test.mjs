@@ -4,7 +4,6 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { bankSkillXp, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext } from '../src/model/skills.js';
-import { chooseFeat, featMultiplier, featStacks } from '../src/model/feats.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -27,10 +26,7 @@ test('skill XP waits at each threshold and keeps excess XP after a claim', () =>
 test('a selected feat and pending skill claim survive the save door', () => {
   const run = createRunState({ seed: 0x7171, classId: 'reaver', registries });
   bankSkillXp(registries, run, 'item:blade', xpToNext(registries, 'weapon', 0));
-  assert.equal(chooseFeat(run, 'fieldStudy'), true);
-  assert.equal(chooseFeat(run, 'fieldStudy'), true);
-  assert.equal(featStacks(run, 'fieldStudy'), 2);
-  assert.equal(featMultiplier(run, 'characterXp'), 1.2);
+  run.feats = ['fieldStudy', 'fieldStudy']; // a retired save's feats still load
   run.pendingReward = {
     schemaVersion: 1, source: 'normal', after: 'map', expanded: true,
     rewards: { title: 'VICTORY', levelChoices: [{ ordinal: 0, options: [

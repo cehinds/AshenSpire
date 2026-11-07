@@ -85,7 +85,6 @@ export function initializeGameProfileRun(registries, run, { profileMeta = {} } =
   run.deck = ids.map((cardId, i) => ({ instanceId: `gp${i + 1}`, cardId, upgraded: false }));
   run.sideboard = [];
   run.equipmentAttackSlotCount = 0;
-  run.feats = [];
   run.skills = {};
   run.coreTags = [];
 }

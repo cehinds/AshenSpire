@@ -6,7 +6,6 @@ import { ratingsConfigFor, statRow } from '../../model/statRows.js';
 import { runHandRules, handSizeReceipts } from '../../model/handRules.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { skillSchools, trackSkillFeats, skillFeatById } from '../../model/skills.js';
-import { featById, featStacks } from '../../model/feats.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import { abilityKindForSkill, abilityRankAt, isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from '../../model/abilityGrades.js';
 import { abilityOfferPool } from '../../model/abilityOffers.js';
@@ -54,17 +53,15 @@ export function progressionStats(registries, run, settings = {}) {
 
 export function featInspection(registries, run, id) {
   registries = characterSheetRegistries(registries, run);
-  const general = Array.isArray(registries.feats) ? registries.feats.find(feat => feat.id === id)
-    : registries.feats?.has(id) ? registries.feats.get(id) : null;
-  const feat = general || featById(id) || skillFeatById(id, registries);
+  const feat = skillFeatById(id, registries);
   if (!feat) return null;
   const tags = [...new Set([...(feat.tags || []), ...(feat.propertyTags || []), ...(feat.crit?.tags || []), ...(feat.passive?.tags || [])])];
   return { ...feat, description: getFeatDescription(registries, feat), tags,
-    owned: featStacks(run, id) || (run.skillFeats || []).filter(owned => owned === id).length };
+    owned: (run.skillFeats || []).filter(owned => owned === id).length };
 }
 
 export function ownedFeatInspections(registries, run) {
-  return [...new Set([...(run.feats || []), ...(run.skillFeats || [])])]
+  return [...new Set(run.skillFeats || [])]
     .map(id => featInspection(registries, run, id)).filter(Boolean);
 }
 

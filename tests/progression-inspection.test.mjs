@@ -50,14 +50,12 @@ test('skill associations follow held item schools and the class reward pool', ()
   assert.deepEqual(empty.tags, []);
 });
 
-test('feat inspections expose authored tags and preserve repeated general feat stacks', () => {
+test('feat inspections expose authored tags', () => {
   const run = fresh();
-  run.feats = ['fieldStudy', 'fieldStudy'];
   run.skillFeats = ['bladeCritical'];
   const feats = ownedFeatInspections(registries, run);
-  assert.equal(feats.length, 2);
-  assert.equal(feats.find(feat => feat.id === 'fieldStudy').owned, 2);
-  assert.deepEqual(featInspection(registries, run, 'fieldStudy').tags, []);
+  assert.equal(feats.length, 1);
+  assert.equal(featInspection(registries, run, 'fieldStudy'), null, 'the general feats are retired');
   assert.deepEqual(featInspection(registries, run, 'bladeCritical').tags, ['blade']);
   assert.deepEqual(featInspection(registries, run, 'shieldBraced').tags, ['guard']);
   assert.equal(featInspection(registries, run, 'missing'), null);

@@ -1,5 +1,4 @@
 // Browse eligibility only. Meeting a level requirement never grants a feat.
-import { feats } from '../../content/feats.js';
 import { skillTracks, skillLevel, trackSkillFeats } from '../../model/skills.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import { t } from '../strings.js';
@@ -10,17 +9,13 @@ export function creationFeatBrowserGroups(registries, run) {
   const classTrack = `class:${classId}`;
   const tracks = skillTracks(source);
   const labels = new Map(tracks.map(track => [track.id, track.label]));
-  const characterLevel = run.level?.level || 1;
   const row = (feat, group, trackId, requiredLevel, unlocked = false) => {
-    const currentLevel = trackId === 'character' ? characterLevel : skillLevel(run, trackId);
+    const currentLevel = skillLevel(run, trackId);
     return { id: feat.id, name: feat.name,
       description: group === 'class' ? getFeatDescription(source, feat) : feat.description,
       group, trackId, trackLabel: trackId === 'character' ? t('progression.tab.character') : labels.get(trackId) || trackId,
       currentLevel, requiredLevel, unlockedByProfile: unlocked, locked: !unlocked && currentLevel < requiredLevel };
   };
-  // main.rollLevelChoices offers the general catalogue at each earned
-  // character level; birth is level 1, so its first level-up is level 2.
-  const character = feats.map(feat => row(feat, 'character', 'character', 2));
   const classRows = (source.classSkillFeats || []).filter(feat => feat.skillId === classTrack).map(feat => {
     const gates = (source.classMastery || []).filter(gate => gate.kind === 'feat' && gate.ref === feat.id && gate.classId === classId);
     const gateLevel = gates.length ? Math.min(...gates.map(gate => gate.level)) : 0;
@@ -39,5 +34,5 @@ export function creationFeatBrowserGroups(registries, run) {
       if (required === null) result.locked = true;
       return result;
     }));
-  return [{ id: 'character', rows: character }, { id: 'class', rows: classRows }, { id: 'skill', rows: skill }];
+  return [{ id: 'character', rows: [] }, { id: 'class', rows: classRows }, { id: 'skill', rows: skill }];
 }

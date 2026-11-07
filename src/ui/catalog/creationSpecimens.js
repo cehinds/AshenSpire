@@ -1,7 +1,7 @@
 // Additional folios in the existing ?shot=components production catalog.
 // Every specimen is built by the same renderer used by the creation screen.
 import { el, pane } from '../kit/index.js';
-import { feats } from '../../content/feats.js';
+import { classSkillFeats as feats } from '../../content/classSkillFeats.js';
 import { createRunState } from '../../model/state.js';
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { engravedIcon } from '../components/engravedIcon.js';
@@ -20,7 +20,7 @@ function featBrowser(groups) {
   const requirement = (row, available = false) => row.unlockedByProfile ? t('creation.feats.profileUnlocked')
     : row.requiredLevel == null ? t('creation.feats.noOffers', { track: row.trackLabel })
       : t(available ? 'creation.feats.availableRequirement' : 'creation.feats.lockedRequirement', { track: row.trackLabel, required: row.requiredLevel, current: row.currentLevel });
-  return createCreationFeatBrowser({ groups, selectedId: groups[0]?.rows[0]?.id, allowance: 0,
+  return createCreationFeatBrowser({ groups, selectedId: groups[1]?.rows[0]?.id, allowance: 0,
     labels: { eyebrow: t('creation.feats.eyebrow'), title: t('creation.feats.title'), description: t('creation.feats.description'),
       availability: t('creation.feats.availability'), detailLabel: t('creation.feats.detailLabel'),
       groups: Object.fromEntries(['character', 'class', 'skill'].map(id => [id, t(`creation.feats.group.${id}`)])),
@@ -70,7 +70,7 @@ export function mountCreationPartSpecimens({ host, registries }) {
     ['creation-choice-copy', 'Choice live text in its interactive tile', choiceSpecimen()],
     ['creation-step-navigation', 'Desktop steps and mobile current-step selector', navigation],
     ['creation-feat-browser', 'Canonical Character, Class and Skill feat groups with level requirements', featBrowser(groups)],
-    ['creation-feat-tile', 'One canonical feat tile, level requirement and detail', featBrowser([{ ...groups[0], rows: groups[0].rows.slice(0, 1) }])],
+    ['creation-feat-tile', 'One canonical feat tile, level requirement and detail', featBrowser([{ ...groups[1], rows: groups[1].rows.slice(0, 1) }])],
     ['creation-feat-detail', 'Canonical feat detail panel', detail],
     ['creation-feat-emblem', 'Canonical feat emblem', creationFeatEmblem(feats[0].id)],
   ];

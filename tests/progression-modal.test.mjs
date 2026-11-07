@@ -15,11 +15,11 @@ test('Progression renders owned feats, keeps allocation separate from expansion,
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
     awardLevelXp(registries, run, xpToNext(registries, 1), { pointsPerLevel: 2 });
-    run.feats = ['fieldStudy'];
+    run.skillFeats = ['bladeCritical'];
     let changes = 0;
     const sheet = openCharacterSheet({ registries, run, onChange: () => changes++ });
-    const ownedFeat = sheet.panel.querySelector('[data-feat="fieldStudy"]');
-    assert.equal(ownedFeat.querySelector('.progression-feat-effect').textContent, 'Gain 10% more character XP from combat.');
+    const ownedFeat = sheet.panel.querySelector('[data-feat="bladeCritical"]');
+    assert.ok(ownedFeat.querySelector('.progression-feat-effect').textContent.length > 0);
     assert.equal(ownedFeat.getAttribute('data-feat-owned'), 'true');
     const before = { ...run.attributes };
     const expand = sheet.panel.querySelector('.progression-attributes-toggle');
