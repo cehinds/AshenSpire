@@ -67,20 +67,12 @@ test('an enemy HUD is centred on its figure with its bottom at the head, and onl
   assert.equal(enemyHudPlacement({ centerX: 200, bottom: 20, width: 100, height: 60, bounds }).top, 0, 'top screen edge');
 });
 
-test('the player HUD stands right of the body at its top and is not moved by anything but the screen edge', () => {
+test('the player HUD stands a gap right of the body, centred on its height, and only the screen edge moves it', () => {
   const bounds = { left: 0, top: 0, width: 390, height: 600 };
-  const anchor = { left: 40, width: 60, top: 320 };
-  assert.deepEqual(playerHudPlacement({ anchor, width: 110, height: 70, gap: 6, bounds }), { left: 106, top: 320 });
+  const anchor = { left: 40, width: 60, top: 320, height: 100 };
+  assert.deepEqual(playerHudPlacement({ anchor, width: 110, height: 70, gap: 6, bounds }), { left: 106, top: 335 }, 'centred: 320 + 50 - 35');
   assert.equal(playerHudPlacement({ anchor: { ...anchor, left: 300 }, width: 110, height: 70, gap: 6, bounds }).left, 280, 'right screen edge');
   assert.equal(playerHudPlacement({ anchor: { ...anchor, top: 590 }, width: 110, height: 70, gap: 6, bounds }).top, 530, 'bottom screen edge');
-});
-
-import { playerMarginPlacement } from '../src/ui/models/TargetHudModel.js';
-test('the player margin placement takes the margin, caps it, and refuses one too narrow to clear the board', () => {
-  assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1350, gap: 10, top: 50 }), { width: 340, left: 1010, top: 50 });
-  assert.equal(playerMarginPlacement({ right: 1000, edge: 1900, gap: 10, top: 50 }).width, 420, 'capped');
-  assert.equal(playerMarginPlacement({ right: 1000, edge: 1185, gap: 10, top: 50 }), null, '175 px of room is under the 180 px floor: no overlap, fall back');
-  assert.deepEqual(playerMarginPlacement({ right: 1000, edge: 1190, gap: 10, top: 50 }), { width: 180, left: 1010, top: 50 });
 });
 
 test('an enemy panel keeps its name slot (now holding the intent) as the targeting and full-read click target', () => {

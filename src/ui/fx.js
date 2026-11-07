@@ -1076,7 +1076,37 @@ export function groupBeats(events) {
     }
   }
   push();
-  return beats;
+  return reactionAfterResult(beats);
+}
+
+// Owner 2026-11-07, an enemy attack the player can react to: the reaction prompt and its calculations come before
+// hit/miss, then the Hit/Miss word shows, then the reaction's animation, then the damage. The engine emits the chosen
+// reaction card's receipts first (cardPlayed ... cardResolved) and the attack's receipts after, so the presentation
+// splits the attack beat at its first accuracy receipt: [move + Hit/Miss word] [the reaction card's beats] [the rest,
+// already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
+const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+  || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
+// A receipt that announces an outcome (onResult says Hit or Miss for it); combatAvoidanceResolved announces one only when avoided.
+const announces = event => ['attackHit', 'attackMissed', 'attackEvaded'].includes(event.type) || event.type === 'combatAvoidanceResolved' && event.avoided === true;
+const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');
+function reactionAfterResult(beats) {
+  const out = [];
+  for (let i = 0; i < beats.length; i++) {
+    const first = beats[i];
+    if (!(reactionCardBeat(first) && first.events.some(e => e.type === 'combatReactionChosen'))) { out.push(first); continue; }
+    let j = i;
+    while (beats[j + 1] && reactionCardBeat(beats[j + 1])) j++;
+    const attack = beats[j + 1];
+    const at = attack && attack.prepared && attack.actorId && attack.actorId !== 'player' ? attack.events.findIndex(announces) : -1;
+    if (at < 0) { out.push(...beats.slice(i, j + 1)); i = j; continue; }
+    const result = attack.events.slice(0, at + 1), rest = attack.events.slice(at + 1);
+    const lead = (attack.lead || []).filter(e => result.includes(e));
+    const later = rest.length > 0 || result.some(isDodge);
+    out.push({ ...attack, events: result, ...(lead.length ? { lead } : { lead: undefined }), ...(later ? { dodgeLater: true } : {}) }, ...beats.slice(i, j + 1));
+    if (later) out.push({ actorId: attack.actorId, banner: null, kind: attack.kind, events: rest, prepared: true, resultSaid: true, carried: result });
+    i = j + 1;
+  }
+  return out;
 }
 
 /**
@@ -1143,6 +1173,7 @@ export function playTimeline(events, ctx, done) {
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
   const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
+  const dodgeSaid = new Set();
   const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
   const runParts = (beat, key) => {
     // Lead events (the cost the actor paid) already played in onIntent; their parts never run a second time.
@@ -1266,11 +1297,19 @@ export function playTimeline(events, ctx, done) {
         group.push(event); if (event.type === 'damageDealt') hadHit = true;
       }
       if (group.length) groups.push({ ...beat, events: group });
-      return groups;
+      return groups.length ? groups : [beat]; // an empty rest beat (reactionAfterResult) still says its carried DODGED
     },
     // Accuracy is known before the target reacts; the defense/effect outcome
     // belongs after that animation, with the numeric result.
     onResult: beat => {
+      // The carried first receipt's DODGED word follows the reaction animation, once, ahead of the next hit's word.
+      for (const event of beat.carried || []) if (isDodge(event) && !dodgeSaid.has(event)) {
+        dodgeSaid.add(event);
+        visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+      }
+      // The first hit's Hit/Miss word already played ahead of the reaction beat (reactionAfterResult); a group with its
+      // own accuracy receipt (a later hit of a multi-hit attack) still says its word.
+      if (beat.resultSaid && !beat.events.some(announces)) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
         const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
@@ -1300,9 +1339,8 @@ export function playTimeline(events, ctx, done) {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
         for (const event of beat.events) if (event.type === 'damageDealt' && !terminal(event) && !costOf(beat).includes(event)) visualSafe(() => parts.get(event)?.numbers?.(ctx));
         for (const event of beat.events) {
-          if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-            || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
-            visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+          if (isDodge(event)) {
+            if (!beat.dodgeLater) visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
             continue;
           }
           if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
@@ -1561,7 +1599,7 @@ function playLegacyTimeline(events, ctx, done) {
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
     let actorAnimation = null;
-    if (actorEl && ctx.animateActor) {
+    if (actorEl && ctx.animateActor && !beat.resultSaid) { // a rest beat (reactionAfterResult) never swings again
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
         traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
@@ -1576,7 +1614,7 @@ function playLegacyTimeline(events, ctx, done) {
       activeActorAnimation = actorAnimation;
     } else {
       actorAnimation = null;
-      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal') {
+      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal' && !beat.resultSaid) {
         const attacking = beat.kind === 'attack' || beat.kind === 'counter';
         safe(() => flash(actorEl, attacking ? 'act-attack' : 'act-move', speed.lungeMs));
         safe(() => playPoseOn(actorEl, attacking ? 'attack' : 'guard', speed.lungeMs));
