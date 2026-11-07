@@ -51,6 +51,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answers 2026-11-07: school statuses — "check what's already in the code base" (existing damage riders in SPEC.md are the starting point: Fire→Burn, Lightning→Weak/Sap (+Shocked), Force→strip Ward, Holy→cleanse, Poison→Venom, Psychic→Confused, Earth→Slowed, Necrotic→Necrotic Blight; Frost/Alteration have none listed). Existing magic-damage resists/bonuses become normal damage ones.
 - Questions: none
 - Link: —
+- Answers 2026-11-07 (Frost/Alteration): Frost applies Chilled, and Chilled escalates to Frozen (as in Divinity: Original Sin 2 environmental statuses); a Damp target's Chilled advances to Frozen automatically. Alteration acts like D&D abjuration and transmutation: protective/warding and transforming effects, not a damage-rider status.
 
 ## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
 - Status: pending
