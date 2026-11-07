@@ -2239,7 +2239,7 @@ Seams that exist so later features need no engine redesign.
 
 ## 11. Non-goals (v1)
 
-Not built:
+Non-goals:
 - Accounts, monetization, a mod loader, Steam-style achievements.
 - Localization (strings live in content files, so l10n is possible later).
 - Multiplayer (the game is single-player).
