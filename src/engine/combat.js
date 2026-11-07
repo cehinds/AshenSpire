@@ -39,7 +39,7 @@ import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './comb
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
-import { passiveMax } from '../model/registries.js';
+import { passiveMax, deepFreeze } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
@@ -1978,6 +1978,18 @@ export function getEntity(combat, id) {
   return findEntity(combat, id);
 }
 
+// Preview presentation metadata is a deep-frozen copy made once per source
+// rules object, so a preview costs no clone and a UI reader cannot alter combat.
+const frozenStatusRulesBySource = new WeakMap();
+function frozenStatusRules(source) {
+  let frozen = frozenStatusRulesBySource.get(source);
+  if (!frozen) {
+    frozen = Object.isFrozen(source) ? source : deepFreeze(structuredClone(source));
+    frozenStatusRulesBySource.set(source, frozen);
+  }
+  return frozen;
+}
+
 /**
  * previewCard(combat, cardInstanceId, targetId?) → resolved numbers for UI:
  * {
@@ -2397,7 +2409,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
-    combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
+    combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
     coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,
