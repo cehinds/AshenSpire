@@ -1477,64 +1477,24 @@ Relic behavior uses the trigger DSL (§3.6), the same declarative form as powers
 
 ### 5.5 Flasks (potions)
 
-The Crimson/Azure charge pool's shared capacity is 3 (`balance.flaskCapacity`; owner, 2026-09-24 — 4 before). Utility
-potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
-not silently increase the other. Utility potions are found from combats, shops and events,
-while Crimson/Azure charges refill at every grace (§5.5.1). **Act change (owner, 2026-10-27):** the owner said "Refull potions between acts", and "potions" means the HP and MP flasks. So in a configured run `advanceAct()` refills both Crimson and Azure pools to their allocation at every act change, whatever `routes.startNodeRefills` says (that flag still governs the start node's own entry refill, which also restores HP). A legacy/current-profile run never refilled its flasks between acts and still does not. Falsified by `tests/act-change-flask-refill.test.mjs`.
+Governs the Crimson/Azure charge pool, utility potions, the grace refill and how the pool's maximum grows.
 
-Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
-charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
-A persisted Gameplay setting may allow those restorative charges to be used between combats;
-it is off by default. An out-of-combat use applies the same authored healing or Mana effect and
-spends one charge, exactly as combat does.
+- Crimson/Azure charges share one pool of capacity 3 (`balance.flaskCapacity`).
+  - Capacity is one freely reallocatable pool (§5.5.1).
+  - Utility potions are separate inventory entries sized by `balance.flaskSlots`; raising one limit never silently raises the other.
+  - Utility potions come from combats, shops and events. Crimson/Azure charges refill at every grace (§5.5.1).
+- Crimson and Azure show in the same potion tray as utility potions but are permanent charge vessels.
+  - Always present, never drop, consume no utility-potion slot.
+  - A persisted Gameplay setting (off by default) may allow using them between combats; an out-of-combat use applies the same authored healing or Mana effect and spends one charge, as in combat.
+- **Act change.** In a configured run `advanceAct()` refills both the Crimson and Azure pools to their allocation at every act change, whatever `routes.startNodeRefills` says.
+  - That flag still governs the start node's own entry refill, which also restores HP.
+  - A legacy/current-profile run never refilled flasks between acts and still does not.
+  - Falsified by `tests/act-change-flask-refill.test.mjs`.
+- **Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`; `model/schemas.js`).
+  - Derived, not authored (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`.
+  - An explicit `kind:` overrides an ambiguous entry.
 
-**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
-
-#### 5.5.1 The grace refill
-
-The earlier “3 HP and 3 Mana” vessel reading is superseded by the approved shared pool (4, then 3 since 2026-09-24).
-It remains history, not a second implementable mode.
-
-**The grace is the Shrine of Emberlight** — this game has no separate `grace` node type and does not invent one.
-
-- **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like a run that comes to rest.
-- **Data driven.** Capacity, each class's starting split and the set of reallocatable charge
-  kinds are content rows. Screens read those rows; no screen owns a copied 3, 2/1 or 1/2.
-- **A fill, not a grant.** A grace fills the run's currently allocated HP and Mana vessels up
-  to their maxima. Re-mounting the shrine is idempotent and can never grow capacity.
-- **Free allocation.** At a grace the player may redistribute all 3 capacity between HP and
-  Mana at no cinder, action or item cost. Every split whose non-negative integers sum to 3 is
-  legal; reallocating is a committed run choice, and current charges are bounded by the new
-  per-kind maxima. Utility potions are untouched.
-- **Class openings.** Reaver, Herald and Rogue start `2 HP / 1 Mana`; Starseer starts `1 HP /
-  2 Mana` (owner, 2026-09-24; `3 / 1` and `2 / 2` on the pool of 4 before). These are presets over the same freely reallocatable pool, not class caps.
-- **Configurable in debug settings.** Debug controls edit the same capacity/allocation data
-  domain and show its lawful range; they do not author an independent ladder or refill count.
-- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus
-  `node tools/gracerefill.mjs --selftest`): unknown/duplicate kind, malformed capacity or
-  allocation, negative/fractional count, a split that does not sum to capacity, dangling or
-  wrong-kind override, and any refill that would silently alter utility inventory.
-- **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
-
-#### 5.5.2 The growth chain — how the maximum grows
-
-> Constantine, 2026-08-08 (D17 message 6): *"…those two are locked in with 3 charges, with upgrade options via relics or quest events or talismans or flask seeds to increase the amount of charges"*.
-
-**One chain, data rows, one truth function** (`model/flaskgrowth.js`). `balance.flaskGrowth` is a table of `{ source, id, kind, amount }` rows: holding the named source grows the named kind's maximum by `amount`. Sources are the closed set `FLASK_GROWTH_SOURCES` (`relic`, `questEvent`, `talisman`, `flaskSeed` — his four words, `model/schemas.js`); a fifth source is an engine act, never a row.
-
-- **Derived, so reversible.** `flaskCharges.grown` records what the chain currently contributes; `syncFlaskGrowth` reconciles at every door a source changes through (run birth, run load, the relic-gain sites, the equipment screen). Gaining a source grows the maximum; losing one shrinks it back, currents bounded.
-- **Two doors, one grant each.** The chain is the *possession* door. The `addFlaskCapacity` opcode remains the *moment* door (quest-event choice effects; keepsakes, its first caller, were removed with the keepsake cleanup). An event granting through both is a boot refusal — one grant may not land twice under two names.
-- **The capacity accounts for itself — machine-enforced since run schema v3.** `flaskCharges.capacity` is one stored number fed by both doors, and each door writes its ledger line: the chain in `grown` (per kind, reversible), the moment door in `granted` (a total, permanent — under pool the grant's kind is spent the moment it lands, so only the sum is history). `validateRunShape` refuses, by name, any save where `capacity ≠ base + grown.hp + grown.mana + granted` — so a "cleanup" that re-derives capacity from the chain alone, silently deleting every granted charge, goes red on the first save it touches instead of reading green while it wipes them. Corpus: `node tools/flaskgrowth.mjs --selftest` (both doors, observed red first); migration attribution for pre-ledger saves is stated at §3.12.
-- **Declared ahead of content, on purpose:** `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet — the moment door is the live mechanism); any `flaskSeed` row refuses at boot (no seed item vocabulary exists; the word is reserved, not invented). `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
-- **The optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored — the unlock ceiling is Constantine's number to author (D19's *"future unlocks for larger total amount"*), never invented here.
-- **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`): unknown source · non-charge kind · negative, zero or fractional amount · duplicate grant · dangling relic/event/talisman ref · the two-door collision · any seed row · cap malformed or exceeded.
-- **THE C1 SEAM — DECIDED: POOL.** Capacity is one freely reallocatable pool; its approved
-  new-run default is 4. The older 3-total and 3-each readings are superseded history, not
-  alternatives. The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth`
-  alone. **The overflow rule is load-bearing**: reallocate a grown charge away, then lose the
-  source—removal takes from the row's kind first and overflows to the other, currents bounded;
-  gated in the corpus, both edges, observed red first.
-- **Live rows ship under D19's parenthesis** (*"future unlocks for larger total amount"*). The rows and their numbers live in `balance.flaskGrowth` alone — read them there or run `node tools/flaskgrowth.mjs`; this spec deliberately does not restate them (a row copied into prose is a number nothing syncs). PROVISIONAL: the M3 balance pass owns the weights. The relic's tooltip sentence is **derived** from its row (`flaskGrowthClause`), so a retune retunes the tooltip. Law 0's falsifier is proven both ways in the corpus: fictional relic + row, zero code, the maximum grows; and the live plant re-derives its expectations from the shipped table itself.
+#### Flask effects
 
 | Flask | Effect |
 |---|---|
@@ -1545,6 +1505,61 @@ It remains history, not a second implementable mode.
 | Blight Coating | Apply 4 Crimson Blight to target. |
 | Blood Unction | Your attacks apply 2 extra Bleed per hit this turn. |
 | Wondrous Draught (rare) | Two random flask effects at once. |
+
+#### 5.5.1 The grace refill
+
+The grace is the Shrine of Emberlight; the game has no separate `grace` node type.
+
+- **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like one that comes to rest.
+- **Data driven.** Capacity, each class's starting split and the set of reallocatable charge kinds are content rows.
+  - Screens read those rows; no screen owns a copied 3, 2/1 or 1/2.
+- **A fill, not a grant.** A grace fills the currently allocated HP and Mana vessels up to their maxima.
+  - Re-mounting the shrine is idempotent and never grows capacity.
+- **Free allocation.** At a grace the player may redistribute all 3 capacity between HP and Mana at no cinder, action or item cost.
+  - Every split of non-negative integers summing to 3 is legal.
+  - Reallocating is a committed run choice; current charges are bounded by the new per-kind maxima.
+  - Utility potions are untouched.
+- **Class openings.** Reaver, Herald and Rogue start `2 HP / 1 Mana`; Starseer starts `1 HP / 2 Mana`.
+  - These are presets over the same pool, not class caps.
+- **Debug settings.** Debug controls edit the same capacity/allocation data domain and show its lawful range; they author no independent ladder or refill count.
+- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`):
+  - unknown/duplicate kind; malformed capacity or allocation; negative/fractional count;
+  - a split that does not sum to capacity; dangling or wrong-kind override;
+  - any refill that would silently alter utility inventory.
+- **Balance boundary.** The old no-Mana simulation is stale. The merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
+
+#### 5.5.2 The growth chain — how the maximum grows
+
+One chain of data rows and one truth function (`model/flaskgrowth.js`). `balance.flaskGrowth` is a table of `{ source, id, kind, amount }` rows: holding the named source grows the named kind's maximum by `amount`.
+
+- Sources are the closed set `FLASK_GROWTH_SOURCES` (`relic`, `questEvent`, `talisman`, `flaskSeed`; `model/schemas.js`).
+  - A fifth source is an engine act, never a row.
+- **Derived, so reversible.** `flaskCharges.grown` records what the chain currently contributes.
+  - `syncFlaskGrowth` reconciles at every door a source changes through: run birth, run load, the relic-gain sites, the equipment screen.
+  - Gaining a source grows the maximum; losing one shrinks it back, currents bounded.
+- **Two doors, one grant each.** The chain is the *possession* door; the `addFlaskCapacity` opcode is the *moment* door (quest-event choice effects).
+  - An event granting through both is a boot refusal.
+- **Capacity accounts for itself** (machine-enforced since run schema v3).
+  - `flaskCharges.capacity` is one stored number fed by both doors.
+  - Ledger lines: the chain in `grown` (per kind, reversible); the moment door in `granted` (a total, permanent: under pool the grant's kind is spent the moment it lands, so only the sum is history).
+  - `validateRunShape` refuses, by name, any save where `capacity ≠ base + grown.hp + grown.mana + granted`.
+  - Corpus: `node tools/flaskgrowth.mjs --selftest` (both doors, observed red first). Migration attribution for pre-ledger saves: §3.12.
+- **Declared ahead of content.**
+  - `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet; the moment door is the live mechanism).
+  - Any `flaskSeed` row refuses at boot (no seed item vocabulary; the word is reserved).
+  - `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
+- **Optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored; the unlock ceiling is the owner's number to author (D19).
+- **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`):
+  - unknown source; non-charge kind; negative, zero or fractional amount; duplicate grant;
+  - dangling relic/event/talisman ref; the two-door collision; any seed row; cap malformed or exceeded.
+- **C1 seam (decided): POOL.** Capacity is one freely reallocatable pool; its approved new-run default is 4. (Contradiction kept: §5.5 above and §5.5.1 set shared capacity 3.)
+  - The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth` alone.
+  - **Overflow rule (load-bearing):** reallocate a grown charge away, then lose the source: removal takes from the row's kind first and overflows to the other, currents bounded. Gated in the corpus, both edges.
+- **Live rows** ship under D19 ("future unlocks for larger total amount").
+  - Rows and numbers live in `balance.flaskGrowth` alone; read them there or run `node tools/flaskgrowth.mjs`. This spec does not restate them.
+  - PROVISIONAL: the M3 balance pass owns the weights.
+  - The relic tooltip sentence is derived from its row (`flaskGrowthClause`), so a retune retunes the tooltip.
+  - Law 0's falsifier is proven both ways in the corpus: a fictional relic + row grows the maximum with zero code, and the live plant re-derives its expectations from the shipped table.
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
