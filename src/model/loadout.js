@@ -7,8 +7,7 @@ import {
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
 import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
-import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
-import { ratingsConfigFor, ratingStatRows } from './statRows.js';
+import { ratingIds } from './ratingFormula.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -16,7 +15,6 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 import { note } from './healLedger.js';
 import { resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
-import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 import { stampSkillBonuses } from './skills.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 import { parseMod, modEffectLines, modEffectLine } from './loadout/modStrings.js';
@@ -38,13 +36,18 @@ import {
 import {
   SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState,
 } from './loadout/slotLadder.js';
+import {
+  createLoadout, profileById, createEquipmentProfileRuleSnapshot,
+  restoreEquipmentProfileRuleSnapshot,
+} from './loadout/shape.js';
+import {
+  equipmentKitPlan, roleAmountReceipt, equipmentKitReceipt, equipmentRoleSource,
+} from './loadout/kit.js';
+import { equippedIn, equippedPieces, figureSpec, loadoutTags } from './loadout/equipped.js';
 
 // src/model/loadout.js — what you carry, and what it does to your cards.
 // (Being split into src/model/loadout/*.js; the remainder is below.)
 
-const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
-const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
-const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit', 'magicShare']);
 
 /**
  * validateEquipment(registries) → [] when sound, else human-readable problems.
@@ -460,188 +463,6 @@ function validateEquipmentBalance(pieces, eqBal, problems) {
       problems.push(`${at}: cost must be a whole number ≥ 0 — got ${JSON.stringify(r.cost)}`);
     }
   }
-}
-
-
-/**
- * createLoadout(registries, classId) → a fresh loadout.
- *
- *   { sets: { slotId: [itemId|null × slot.sets] },
- *     active: { slotId: index },
- *     storage: [itemId] }
- *
- * Slots come from the table, so adding a row to equipSlots.csv adds a slot to
- * every new run with no change here. You start bare-handed in your class's one
- * unlocked armour set — the run is meant to arm you.
- */
-export function createLoadout(registries, classId, startingKit = null, startingArmour = null) {
-  const eq = registries.equipment || {};
-  const sets = {};
-  const active = {};
-  for (const slot of eq.slots || []) {
-    sets[slot.id] = new Array(Math.max(1, slot.sets)).fill(null);
-    active[slot.id] = 0;
-  }
-  // `startingArmour` is a RESOLVED row (model/startingKits.js
-  // resolveStartingArmour — class-checked, eligibility-checked), never a bare
-  // id: an id validated here would be a second decider for one question.
-  // Absent, the class's free set — byte-for-byte the old behaviour.
-  const starting = startingArmour
-    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '' && !o.sharedSet);
-  if (starting && sets.armor) sets.armor[0] = starting.id;
-  const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
-  for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
-    if (!pieceId) continue;
-    if (sets[slotId]) sets[slotId][0] = pieceId;
-  }
-  return {
-    sets,
-    active,
-    storage: [],
-    creationArmourGrant: starting ? { classId, id: starting.id } : null,
-  };
-}
-
-function profileById(registries, id) {
-  return ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === id) || null;
-}
-
-function profileRule(profile) {
-  return {
-    ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
-    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
-    compatibility: profile.compatibility,
-  };
-}
-
-function profileLayers(options = {}) {
-  return [options.modeModifiers, ...(Array.isArray(options.runModifiers) ? options.runModifiers : options.runModifiers ? [options.runModifiers] : []), options.explicitOverride];
-}
-
-/** Host-owned equipment scaling rows, resolved once and persisted with the run. */
-export function createEquipmentProfileRuleSnapshot(registries, options = {}) {
-  const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => [profile.id, profileRule(profile)]));
-  for (const layer of profileLayers(options)) {
-    if (!layer || layer.equipmentProfiles == null) continue;
-    if (!layer.equipmentProfiles || typeof layer.equipmentProfiles !== 'object' || Array.isArray(layer.equipmentProfiles)) throw new Error('equipmentProfiles override must be an object map');
-    for (const [id, patch] of Object.entries(layer.equipmentProfiles)) {
-      if (!profiles[id]) throw new Error(`equipmentProfiles.${id}: unknown profile`);
-      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error(`equipmentProfiles.${id}: patch must be an object`);
-      for (const key of Object.keys(patch)) if (!EQUIPMENT_PROFILE_PATCH_FIELDS.includes(key)) throw new Error(`equipmentProfiles.${id}.${key}: unknown field`);
-      Object.assign(profiles[id], patch);
-    }
-  }
-  const rarityBonuses = structuredClone(((registries.balance || {}).equipment || {}).rarityBonuses || {});
-  return restoreEquipmentProfileRuleSnapshot({ snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses }, registries);
-}
-
-/** Validate and clone a saved equipment scaling snapshot without live-data repair. */
-export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
-  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('equipment profile snapshot must be an object');
-  if (![1, EQUIPMENT_PROFILE_SNAPSHOT_VERSION].includes(snapshot.snapshotVersion)) throw new Error(`unknown equipment profile snapshotVersion ${snapshot.snapshotVersion}`);
-  if (!snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) throw new Error('equipment profile snapshot profiles must be an object map');
-  snapshot = structuredClone(snapshot);
-  if (snapshot.snapshotVersion === 1) {
-    const profiles = Object.fromEntries((registries.equipment.basicCardProfiles || []).map((profile) => {
-      const live = profileRule(profile);
-      const saved = snapshot.profiles[profile.id] || {};
-      const preserved = Object.fromEntries(
-        [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility']
-          .filter((key) => saved[key] !== undefined && key !== 'ratingId')
-          .map((key) => [key, saved[key]]),
-      );
-      return [profile.id, { ...live, ...preserved }];
-    }));
-    snapshot = { snapshotVersion: EQUIPMENT_PROFILE_SNAPSHOT_VERSION, profiles, rarityBonuses: snapshot.rarityBonuses };
-  }
-  const liveIds = new Set((registries.equipment.basicCardProfiles || []).map((profile) => profile.id));
-  for (const id of Object.keys(snapshot.profiles)) if (!liveIds.has(id)) throw new Error(`equipment profile snapshot has unknown '${id}'`);
-  for (const profile of registries.equipment.basicCardProfiles || []) {
-    const rule = snapshot.profiles[profile.id];
-    if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-    if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
-    if (!ratingIds.includes(rule.ratingId)) throw new Error(`${profile.id}.ratingId '${rule.ratingId}' is unknown`);
-    if (rule.cap != null && (!Number.isFinite(rule.cap) || rule.cap < 0)) throw new Error(`${profile.id}.cap must be null or finite non-negative`);
-    if (rule.compatibility !== `${profile.role}-v1`) throw new Error(`${profile.id}.compatibility '${rule.compatibility}' does not match ${profile.role}-v1`);
-    // Version-1 snapshots predate combat carriers. They adopt the live row
-    // exactly once during migration; every subsequent save owns the values.
-    if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
-    if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
-    // A blank magic share is the card's damage type default (null). Older snapshots adopt the live row once.
-    if (rule.magicShare === undefined) rule.magicShare = profile.magicShare === '' ? null : profile.magicShare;
-    if (rule.magicShare !== null && !(Number.isFinite(rule.magicShare) && rule.magicShare >= 0 && rule.magicShare <= 1)) throw new Error(`${profile.id}.magicShare must be null or 0..1`);
-    if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
-    if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
-    const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
-    for (const key of Object.keys(rule)) if (!legal.includes(key)) throw new Error(`${profile.id}.${key}: unknown equipment profile snapshot field`);
-  }
-  if (!snapshot.rarityBonuses || typeof snapshot.rarityBonuses !== 'object' || Array.isArray(snapshot.rarityBonuses)) throw new Error('equipment profile snapshot rarityBonuses must be an object');
-  for (const [rarity, bonuses] of Object.entries(snapshot.rarityBonuses)) {
-    if (!bonuses || typeof bonuses !== 'object' || Array.isArray(bonuses)) throw new Error(`rarityBonuses.${rarity} must be an object`);
-    for (const [role, value] of Object.entries(bonuses)) {
-      if (!EQUIPMENT_ROLES.includes(role)) throw new Error(`rarityBonuses.${rarity}.${role}: unknown role`);
-      if (!Number.isFinite(value)) throw new Error(`rarityBonuses.${rarity}.${role}: must be finite`);
-    }
-  }
-  return snapshot;
-}
-
-/** Resolve one equipment role from the data-owned ordered source table. */
-export function equipmentRoleSource(registries, loadout, classId, role) {
-  const eqBal = (registries.balance || {}).equipment || {};
-  const sources = (eqBal.roleSources || {})[role] || [];
-  for (const source of sources) {
-    const piece = equippedIn(registries, loadout, classId, source.slot);
-    if (!piece) continue;
-    if (source.kinds && !source.kinds.includes(piece.kind)) continue;
-    const profileId = piece[`${role}Profile`];
-    if (profileId) return { role, slotId: source.slot, piece, profile: profileById(registries, profileId) };
-  }
-  const profileId = (eqBal.unarmedProfiles || {})[role];
-  return { role, slotId: null, piece: null, profile: profileById(registries, profileId) };
-}
-
-/** One projection consumed by run creation, cards, Armoury, and creation UI. */
-export function equipmentKitPlan(registries, loadout, classId) {
-  return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
-}
-
-function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot, run = null) {
-  const profile = row.profile;
-  const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
-  if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-  const rarity = row.piece && row.piece.rarity;
-  const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  // THE RUN'S OWN RATING ROWS (ruleset 7, model/statRows.js): a card's rating
-  // is priced by the rows the run was born with, or the live table for a
-  // preview with no run behind it.
-  const ratingConfig = ratingsConfigFor(registries, run) || { ratings: ratingStatRows(registries, run) };
-  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, run?.level?.level);
-  rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
-  const uncappedEffectBase = rule.baseValue + rarityBonus;
-  const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
-  const raw = uncappedEffectBase + rating.value;
-  const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
-  if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
-  return {
-    role: row.role,
-    profileId: profile.id,
-    pieceId: row.piece && row.piece.id,
-    base: rule.baseValue,
-    rarity,
-    rarityBonus,
-    rating,
-    effectBase,
-    raw,
-    cap: rule.cap,
-    value,
-  };
-}
-
-/** Calculation receipts for card base + source-equipment rating + rarity. */
-export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot, run = null) {
-  const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
-  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot, run) }));
 }
 
 
@@ -2017,100 +1838,6 @@ export function reconcileGrantedCardsInCombat(registries, run, piles) {
   for (const d of desired) if (!present.has(d.instanceId)) piles.discard.push(d);
 }
 
-/** The piece in a slot's active set, or null. Armour resolves per class. */
-export function equippedIn(registries, loadout, classId, slotId) {
-  const ids = (loadout.sets || {})[slotId] || [];
-  const id = ids[(loadout.active || {})[slotId] || 0];
-  if (!id) return null;
-  const eq = registries.equipment || {};
-  const slot = (eq.slots || []).find((s) => s.id === slotId);
-  if (slot && slot.kinds.includes('armor')) {
-    return (eq.armour || []).find((o) => o.classId === classId && o.id === id) || null;
-  }
-  return (eq.armaments || []).find((a) => a.id === id) || null;
-}
-
-/** Every currently-worn piece, in slot order — the order mods apply in. */
-export function equippedPieces(registries, loadout, classId, { itemUpgradeLevels = {} } = {}) {
-  if (!loadout) return [];
-  const out = [];
-  for (const slot of (registries.equipment || {}).slots || []) {
-    const piece = equippedIn(registries, loadout, classId, slot.id);
-    if (piece && piece.kind === 'armor') {
-      const itemRef = `armor/${piece.classId}/${piece.id}`;
-      out.push(resolveUpgradedEquipment(registries, itemRef, itemUpgradeLevels[itemRef] || 0));
-    } else if (piece) out.push(piece);
-  }
-  return out;
-}
-
-/**
- * figureSpec(registries, loadout, classId) →
- *   { armourId, rightId, leftId, rightMirror, leftMirror }
- *
- * What the sprite layers should be, derived rather than stored. Slots declare
- * their own `kinds`, so this finds the armour slot by what it accepts instead
- * of hard-coding 'armor', and the hands by slotHand() — a renamed slot keeps
- * working, and a fourth hand would too.
- *
- * A piece is drawn in THE SLOT IT IS IN. It used to be drawn in the hand its
- * own row named, so a right-handed weapon put in the left hand was drawn in the
- * right — and two of them at once collapsed onto one layer, last writer
- * winning: two weapons equipped, one weapon on the figure, no error anywhere
- * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
- * that field gates equipping (fitsSlot), which is a different question.
- *
- * The current full-frame art is authored at the sword socket for every
- * non-shield and at the off-hand socket for shields. The figure itself is
- * mirrored for the viewer, so a slot swap needs a per-layer mirror flag too:
- * `rightMirror` / `leftMirror` move the art onto the socket the slot names.
- * Those flags disappear when the producer is re-rendered from slot-neutral art.
- */
-export function figureSpec(registries, loadout, classId) {
-  const slots = (registries.equipment || {}).slots || [];
-  const spec = {
-    armourId: 'default', rightId: null, leftId: null,
-    rightMirror: false, leftMirror: false,
-    // The three worn layers the slot split added (plan phase 3b). Art is keyed
-    // `<slot>_<id>` and a missing file draws nothing (assets.js equippedFigure),
-    // so a layer here is an id and never a promise that a picture exists.
-    headId: null, handsId: null, feetId: null,
-  };
-  if (!loadout) return spec;
-  // THE ZONES ARE WHAT IS DRAWN. The projection reads the same loadout the
-  // run saves (zones.js projectZones, registry-free), so the figure and the
-  // save cannot disagree about what is worn or held: body ← zones.worn.body,
-  // the three new layers ← zones.worn.head/hands/feet, the hands ← zones.hands.
-  const { zones } = projectZones({ class: classId, loadout, relics: [], deck: [] });
-  // The body layer is the RESOLVED armour row for this class, as it always
-  // was: a raw id the table does not know (a stale save, a co-op member's
-  // loadout that never crossed the load door) keeps the default body rather
-  // than asking for art that does not exist.
-  const body = zones.worn.body ? equippedIn(registries, loadout, classId, WORN_SLOT_IDS.body) : null;
-  if (body) spec.armourId = body.id;
-  spec.headId = zones.worn.head;
-  spec.handsId = zones.worn.hands;
-  spec.feetId = zones.worn.feet;
-  // The hands need the PIECE (art key, shield mirroring), so each hand zone
-  // resolves its slot's piece; the zone said which id, the table says how it
-  // is drawn.
-  for (const [zone, slotId] of Object.entries(HAND_SLOT_IDS)) {
-    if (!zones.hands[zone]) continue;
-    const slot = slots.find((s) => s.id === slotId);
-    const piece = slot ? equippedIn(registries, loadout, classId, slotId) : null;
-    if (!piece) continue;
-    const hand = slotHand(slot);
-    if (hand === 'right') {
-      spec.rightId = piece.artKey || piece.id;
-      spec.rightMirror = piece.kind === 'shield';
-    } else if (hand === 'left') {
-      spec.leftId = piece.artKey || piece.id;
-      spec.leftMirror = piece.kind !== 'shield';
-    }
-  }
-  return spec;
-}
-
 /**
  * GRIP (plan phase 3c, proposal §5). How the hands hold what they hold, READ
  * off the loadout and never stored: a grip is a function of the two hand
@@ -2299,15 +2026,6 @@ export function loadoutLeaveRefusal(registries, run, { enteredWith } = {}) {
   if (Number.isInteger(enteredWith) && enteredWith < floor) return '';
   const short = floor - held;
   return `Your deck holds ${held} card${held === 1 ? '' : 's'} and the floor is ${floor}. Equip something that carries ${short} more, or put back what you took off, before you leave.`;
-}
-
-/** Tags granted by what you're wearing (deduplicated, slot order). */
-export function loadoutTags(registries, loadout, classId) {
-  const seen = [];
-  for (const p of equippedPieces(registries, loadout, classId)) {
-    for (const t of p.tags || []) if (!seen.includes(t)) seen.push(t);
-  }
-  return seen;
 }
 
 /** A short string that changes whenever the worn set does — for cache keys. */
@@ -3406,4 +3124,14 @@ export {
   visibleSets,
   rungFor,
   setCellState,
+  createLoadout,
+  createEquipmentProfileRuleSnapshot,
+  restoreEquipmentProfileRuleSnapshot,
+  equippedIn,
+  equippedPieces,
+  figureSpec,
+  loadoutTags,
+  equipmentRoleSource,
+  equipmentKitPlan,
+  equipmentKitReceipt,
 };
