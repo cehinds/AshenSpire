@@ -2,7 +2,7 @@
 from pathlib import Path
 import json,copy,re,hashlib
 D=Path(__file__).resolve().parent
-pages=['class','attributes','keepsake','equipment','feats','spells','review']
+pages=['class','attributes','equipment','feats','spells','review']
 def load(f):return json.loads((D/f).read_text())
 def save(f,s):(D/f).write_text(json.dumps(s,indent=2)+'\n')
 def add(s,id,t,parent,x,y,w,h,**kw):
@@ -41,7 +41,7 @@ def reflow(seed,non=False):
   if p=='class':
    for i,c in enumerate(['reaver','starseer','rogue','herald']):
     card=B[c+'-class-card'];card.update(x=0,y=i*195);resize(card,354,179);B[c+'-art'].update(x=10,y=12,width=111,height=153);settext(c+'-name',135,24,202,24);settext(c+'-style',135,66,202,16);settext(c+'-role',135,139,202,16)
-   detail=B['class-summary'];detail.update(x=0,y=795);resize(detail,354,402);settext('class-selected-heading',22,22,310,27);settext('class-description',22,72,310,16);settext('class-stat-line',22,132,310,16);B['class-keepsake-art'].update(x=22,y=180,width=100,height=100);settext('class-keepsake',22,297,310,22);settext('class-next-hint',22,354,310,16);end=477+1197
+   detail=B['class-summary'];detail.update(x=0,y=795);resize(detail,354,250);settext('class-selected-heading',22,22,310,27);settext('class-description',22,72,310,16);settext('class-stat-line',22,132,310,16);settext('class-next-hint',22,180,310,16);end=477+795+250
   elif p=='attributes':
    # Name and mode controls belong to a distinct identity/form component on phone.
    field=B['attributes-name-field'];field.update(x=18,y=477,width=354)
@@ -55,8 +55,8 @@ def reflow(seed,non=False):
    for i,old in enumerate(['Might','Agility','Vitality','Intellect','Will']):
     row=B['attribute-'+old.lower()];row.update(x=14,y=70+i*75);resize(row,326,63);settext(old+'-label',14,19,242,18);settext(old+'-value',278,19,35,20)
    detail=B['attribute-impact'];detail.update(x=0,y=484);resize(detail,354,402);settext('attribute-impact-title',20,22,314,25);settext('attribute-impact-body',20,85,314,17);settext('attribute-concept-note',20,302,314,16);end=633+886
-  elif p in ['keepsake','equipment','feats']:
-   count=6 if p=='feats' else (4 if p=='keepsake' or non else 3)
+  elif p in ['equipment','feats']:
+   count=6 if p=='feats' else (4 if non else 3)
    for i in range(count):
     card=B[p+'-choice-'+str(i)];card.update(x=0,y=i*165);resize(card,354,150)
     art=B[p+'-choice-art-'+str(i)];art.update(x=12,y=17,width=112,height=112)
@@ -85,7 +85,7 @@ def reflow(seed,non=False):
    det=B['spells-details'];det.update(x=0,y=1580);resize(det,354,420);B['spells-detail-art'].update(x=83,y=18,width=188,height=210);settext('spells-detail-name',20,249,314,26);B['spells-detail-divider'].update(x=24,y=294,width=306,height=18);settext('spells-detail-description',20,334,314,17);end=510+2000
   elif p=='review':
    identity=B['review-identity'];identity.update(x=0,y=0);resize(identity,354,193);B['review-portrait'].update(x=12,y=13,width=116,height=163);settext('review-name',145,27,194,25);settext('review-class',145,75,194,19);settext('review-style',145,114,194,16)
-   labels=['attributes','keepsake','equipment','feats']+([] if non else['spells'])
+   labels=['attributes','equipment','feats']+([] if non else['spells'])
    for i,label in enumerate(labels):
     row=B['review-'+label];row.update(x=0,y=210+i*114);resize(row,354,100);settext('review-'+label+'-label',16,15,262,19);settext('review-'+label+'-value',16,50,262,16);settext('review-'+label+'-edit',296,32,48,16)
     add(s,'review-'+label+'-edit-target','rect',row['id'],288,20,52,48,fill='none',stroke='#786443',strokeWidth=1,z=.5)
@@ -137,7 +137,7 @@ def deepen(s):
   wrapper(s,'attribute-'+old.lower()+'-label-control',[old+'-label']);wrapper(s,'attribute-'+old.lower()+'-value-control',[old+'-value'])
  wrapper(s,'attributes-identity-form',['attributes-name-field','attributes-mode-tabs'],'Attributes / identity and mode form')
  wrapper(s,'attributes-impact-heading',['attribute-impact-title']);wrapper(s,'attributes-impact-body',['attribute-impact-body']);wrapper(s,'attributes-derived-stats',['attribute-concept-note'])
- for label in ['attributes','keepsake','equipment','feats','spells']:
+ for label in ['attributes','equipment','feats','spells']:
   wrapper(s,'review-'+label+'-heading',['review-'+label+'-label']);wrapper(s,'review-'+label+'-body',['review-'+label+'-value']);wrapper(s,'review-'+label+'-edit-control',['review-'+label+'-edit','review-'+label+'-edit-target'])
  for i in range(3):
   base='spell-card-'+str(i)
