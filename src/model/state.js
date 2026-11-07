@@ -600,27 +600,9 @@ function validateDerivedSnapshot(run, ctx, hpEquipmentBonus) {
   }
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
-  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
-  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
-
-  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
-
-  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
-
-  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
-  if (existingIsCurrent && run.derivedStatRuleSnapshot
-    && run.maxHp !== undefined && run.hp !== undefined
-    && run.maxMana !== undefined && run.mana !== undefined
-    && run.maxStamina !== undefined && run.stamina !== undefined
-    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    return run;
-  }
-
+/** Phase: the host derived-stat receipt (tier-size resolution folded into the relic modifier receipt). */
+function resolveDerivedReceipt(run, registries, ctx) {
+  const { effectiveAttributes, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef } = ctx;
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
   // THE HOST'S RESOLVED TIER SIZE, HANDED TO THE RECEIPT THAT HAS TO FOLD INTO
@@ -652,6 +634,31 @@ export function initializeRunDerivedStats(run, registries, {
       classDef,
       relicModifierReceipt,
     });
+  return receipt;
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
+
+  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
+
+  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    return run;
+  }
+
+  const receipt = resolveDerivedReceipt(run, registries, ctx);
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
   const mana = deriveStat(rules, 'mana', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
