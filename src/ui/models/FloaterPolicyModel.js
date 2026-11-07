@@ -22,6 +22,12 @@ export function floaterWordShown(kind) {
   return null;
 }
 
+/** True when a glyph word (fx.js spawnFx text: 'Cast', 'Guard', 'Stun') may draw: only the allowlisted words, so none of those do. */
+export function floaterGlyphShown(word) {
+  if (!policyOn) return true;
+  return FLOATER_WORDS_SHOWN.includes(String(word ?? ''));
+}
+
 // The number classes fx.js passes to floatNum:
 //   shown : 'dmg', 'dmg small|heavy|crit|pct20|pct35' (dmgClass; HP damage), 'dmg heavy' (Defeated)
 //   hidden: 'blk' (block gain), 'blk small' (cost, guard, RESISTED), 'blk <tier>' (guardHitFloatParts fullHit),

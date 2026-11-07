@@ -2,7 +2,7 @@
 // ui/models/FloaterPolicyModel.js is the allowlist; ui/fx.js gates callout() and floatNum() through it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FLOATER_WORDS_SHOWN, floaterWordShown, floaterNumberShown } from '../src/ui/models/FloaterPolicyModel.js';
+import { FLOATER_WORDS_SHOWN, floaterWordShown, floaterNumberShown, floaterGlyphShown, setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js';
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -82,4 +82,11 @@ test('buff-gain popups are hidden words too', async () => {
   const { floaterWordShown } = await import('../src/ui/models/FloaterPolicyModel.js');
   assert.equal(floaterWordShown('buff:precision'), null);
   assert.equal(floaterWordShown('buff:block'), null);
+});
+
+test('glyph words (Cast, Guard, Stun) are hidden; allowlisted words still show', () => {
+  for (const word of ['Cast', 'Guard', 'Stun']) assert.equal(floaterGlyphShown(word), false, word);
+  assert.equal(floaterGlyphShown('blocked'), true);
+  setFloaterPolicyEnabled(false);
+  try { assert.equal(floaterGlyphShown('Cast'), true); } finally { setFloaterPolicyEnabled(true); }
 });
