@@ -1609,7 +1609,11 @@ Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270)
 
 ## 7. UI/UX specification
 
+How screens flow, how the shared HUD and combat layout are composed from named components, how Advanced Settings, input, feedback and visual style behave. Component ids in backticks are contracts checked by `tools/ui-components.mjs`.
+
 ### 7.1 Screens & flow
+
+Screen graph, router, and the cold-boot gate.
 
 ```
 Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
@@ -1618,16 +1622,14 @@ Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed 
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each routed full-screen module exports a `mountX(app, opts)` function (`mountMap` in `src/ui/screens/map.js`), and a re-mount releases the previous mount's handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers instead (`openCharacterSheet` in `characterSheet.js`; the settings and profile-archive render/open APIs). **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
-
-Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
-Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
-stamp. Click/tap, Enter, Space, controller A/Cross, and controller Start/Menu are consumed by the
-gate and reveal Title exactly once; that physical press cannot activate a Title control. Prompt
-copy follows the most recent pointer, touch, keyboard, or controller family. Profile quarantine
-and recovery notices outrank the gate. After reveal, focus lands on Title's first available save
-slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
-keeps the same state and focus contract without meaningful animation.
+- Screen router in `main.js`. Each routed full-screen module exports `mountX(app, opts)` (`mountMap` in `src/ui/screens/map.js`); a re-mount releases the previous mount's handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers instead (`openCharacterSheet` in `characterSheet.js`; the settings and profile-archive render/open APIs).
+- A Shrine, camp, inn or chapel is a location: a property carrier whose tag set says what it restores (§13.4j). Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered (§5.5.1), because the Shrine carries `restFlasks`. The screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+- **Startup gate.** Cold boot mounts `startup-gate` before the Title DOM exists. It holds only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp.
+  - Click/tap, Enter, Space, controller A/Cross and controller Start/Menu are consumed by the gate and reveal Title exactly once; that physical press cannot activate a Title control.
+  - Prompt copy follows the most recent pointer, touch, keyboard or controller family.
+  - Profile quarantine and recovery notices outrank the gate.
+  - After reveal, focus lands on Title's first available save-slot action; every later return to Title in that boot bypasses the gate.
+  - Reduced motion keeps the same state and focus contract without meaningful animation.
 
 ### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
