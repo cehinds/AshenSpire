@@ -4,7 +4,6 @@ import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
-import { evaluate } from './formulas.js';
 import { cardIsMagical } from './attackCardDamage.js';
 import { attributeRatingReceipt, equipmentRatingBase, ratingAttributeIds, ratingIds } from './ratingFormula.js';
 import { STAT_ROW_KEY_PREFIX, STAT_ROW_NO_MAX } from './statRows.js';
@@ -809,37 +808,4 @@ export function barrierPoiseBonus(ctx, entity) {
 export function persistentPoiseMaximum(ctx, entity) {
   const share = ctx?.ratingsRules?.resistance?.poisePool;
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'poise') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.poisePool)));
-}
-
-export function attackImpact(ctx, source, carrier, magical = isMagicalAttack(ctx, carrier)) {
-  const config = ctx.ratingsRules;
-  if (!config) return 0;
-  const explicit = config.attackImpact?.[carrier?.cardId];
-  if (Number.isFinite(explicit) && explicit >= 0) return explicit;
-  // A PHYSICAL HIT A WEAPON LENDS IS AS HEAVY AS THE WEAPON (SPEC §13.4): the
-  // weight category, and the per-enemy override, come before any card value,
-  // or every weapon's Strike would land with the same cost-derived number and
-  // a dagger would stagger like a warhammer.
-  if (!magical) {
-    const enemyOverride = config.enemyImpact?.[source?.enemyId];
-    if (Number.isFinite(enemyOverride) && enemyOverride >= 0) return enemyOverride;
-    const item = ctx.registries.equipment.armaments.find(p => p.id === carrier?.sourceArmamentId);
-    if (item) {
-      const w = item.weight || 0, i = config.impact;
-      return w <= i.lightMaxWeight ? i.light : w <= i.mediumMaxWeight ? i.medium : w <= i.heavyMaxWeight ? i.heavy : i.colossal;
-    }
-  }
-  // Otherwise the card's own Poise or Ward value (SPEC §3.4) is its impact.
-  // The carrier holds the RESOLVED face's values — a staff's Strike carries
-  // Ward — and the registry def is the fallback for a carrier built without.
-  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
-  const ratingValues = carrier?.cardRatingValues
-    || (carrier?.upgraded ? def?.upgrade?.cardRatingValues : null)
-    || def?.cardRatingValues;
-  const calculated = ratingValues?.[magical ? 'ward' : 'poise'];
-  if (calculated !== undefined) {
-    return Math.max(0, evaluate(calculated, { energySpent: carrier?.energySpent || 0 }));
-  }
-  if (magical) return config.impact.magic;
-  return source?.kind === 'enemy' ? config.impact.enemyPhysical : config.impact.unarmed;
 }

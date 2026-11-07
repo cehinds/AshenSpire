@@ -166,22 +166,6 @@ test('DR and PR calculate physical and magical Block from card costs', () => {
   assert(!('vesperWard' in registries.balance.damage.defenseCards.cardBonuses));
 });
 
-test('Poise and Ward card values drive physical and magical impact', async () => {
-  const { attackImpact } = await import('../src/model/combatRatings.js');
-  const registries = createRegistries(contentBundle);
-  const ctx = { registries, ratingsRules: { attackImpact: {}, impact: {} } };
-  const physical = registries.cards.get('strike');
-  const magical = registries.cards.get('supernova');
-  assert.equal(
-    attackImpact(ctx, null, { cardId: physical.id, upgraded: false }),
-    physical.cardRatingValues.poise,
-  );
-  assert.equal(
-    attackImpact(ctx, null, { cardId: magical.id, upgraded: false, energySpent: 3 }),
-    evaluate(magical.cardRatingValues.ward, { energySpent: 3 }),
-  );
-});
-
 // UNTOUCHED DEFAULTS CHANGE NO CARD, ANYWHERE IN ITS EFFECTS (#1247 review).
 // The numeric-only check above could not see a whole NEW effect: a formula-
 // only face (Last Stand's missing HP, Blight Nova's Crimson Blight) used to
@@ -201,23 +185,6 @@ test('untouched defaults leave every card face’s effects exactly as authored',
   const damage = registries.balance.damage;
   assert.ok(!('lastStand' in damage.defenseCards.cardBonuses));
   assert.ok(!('blightNova' in damage.potencyCards.cardBonuses));
-});
-
-// A CARD THAT AUTHORS ITS OWN POISE DAMAGE CARRIES ITS IMPACT THERE (#1247
-// review). Its per-hit value used to be seeded from that same effect, so
-// Poise Breaker's 10 landed as 10 + 10. The hit keeps the category default.
-test('an explicit poiseDamage card does not add a second impact of the same size', async () => {
-  const { attackImpact } = await import('../src/model/combatRatings.js');
-  const registries = createRegistries(contentBundle);
-  const ctx = { registries, ratingsRules: { attackImpact: {}, impact: { unarmed: 1, magic: 1, enemyPhysical: 2 } } };
-  const explicit = contentBundle.cards.filter((card) => card.type === 'attack'
-    && (card.effects || []).some((effect) => effect.op === 'poiseDamage'));
-  assert.ok(explicit.some((card) => card.id === 'poiseBreaker'), 'Poise Breaker authors its own poise damage');
-  for (const card of explicit) {
-    const def = registries.cards.get(card.id);
-    assert.equal(def.cardRatingValues, undefined, `${card.id} carries no per-hit value`);
-    assert.equal(attackImpact(ctx, null, { cardId: card.id, damageSchool: 'physical' }), 1, `${card.id}: the unarmed default`);
-  }
 });
 
 // A PROFILE THAT CROSSES THE PHYSICAL/MAGICAL LINE RESOLVES THROUGH THE OTHER

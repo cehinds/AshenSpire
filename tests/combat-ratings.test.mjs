@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { resolveCombatRatings, attackImpact, ratingReceipt } from '../src/model/combatRatings.js';
+import { resolveCombatRatings, ratingReceipt } from '../src/model/combatRatings.js';
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, computeBlockGain, applyAttackDamage, executeAction, dealPoiseDamage } from '../src/engine/actions.js';
