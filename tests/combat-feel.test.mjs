@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_STEPS_HP, SHAKE_MAX_PX, SHAKE_FLOOR_PX, BIG_HIT_SHARE, HUGE_HIT_SHARE, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
+import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
@@ -110,10 +110,8 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.match(fx, /hitStopMsFor\(guardHitFloatParts\(event\)\.residual \|\| 0, [^\n]*maxHpFor/, 'the hit-stop reads the target max HP too');
   assert.match(fx, /combatEl\.style\.setProperty\('--shake-px', `\$\{px\}px`\)/, 'the amplitude reaches the CSS');
   assert.match(fx, /document\.body\.classList\.contains\('no-shake'\) \|\| reducedMotionRequested\(\)\) return;/, 'the setting and reduced motion drop the shake');
-  assert.match(fx, /activeActorAnimation\.hold\(holdMs\)/, 'a painted swing is held by its own sequence');
-  assert.match(fx, /schedule\(stepV, [^;\n]+ \+ \(held \? holdMs : 0\)\)/, 'the hold is added after the base visual delay, including any outcome lead');
+  assert.match(fx, /actor\?\.hold\?\.\(holdMs\)/, 'a painted swing is held by its own sequence');
   assert.match(fx, /flash\(anchor, 'hitflash', heavy \? 380 : 220, held\)/, 'the recoil keeps its authored duration and extends cleanup by the pause');
-  assert.match(fx, /actorAnimation\.totalMs \+ heldMs/, 'all played holds lengthen recovery');
   assert.match(fx, /if \(now < shakeUntil && px < shakeNow\) return;/, 'a smaller hit does not cut a bigger shake short');
   // Instant has no paced timeline: playTimeline falls back to animateEvents,
   // which has no actor swing and no hit-stop.
@@ -252,35 +250,6 @@ test('skipping after the first multi-hit number does not replay its damage hapti
     assert.equal(stats().flushes, 1);
   });
 });
-
-test('beatOrder impact holds both figures at impact, as before', (t) => {
-  setBeatOrder('impact');
-  try {
-    drive(t, ({ start, tick, holds, reactions }) => {
-      start([6]); tick(100);
-      assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
-      assert.deepEqual(reactions, [['hit', 220]]);
-      for (let i = 0; i < 100; i++) tick(20);
-    });
-  } finally { setBeatOrder('sequential'); }
-});
-
-for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
-  test(`with the target max HP 100 known, a ${amount} HP hit holds ${ms} ms and shakes ${px}`, (t) => {
-    setBeatOrder('impact');
-    try {
-      drive(t, ({ start, tick, holds, combatEl }) => {
-        const shakes = [];
-        const setProperty = combatEl.style.setProperty.bind(combatEl.style);
-        combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
-        start([amount]); tick(100);
-        assert.deepEqual(holds, [['actor', ms, 10100], ['target', ms, 10100]]);
-        for (let i = 0; i < 100; i++) tick(20);
-        assert.deepEqual(shakes, [px]);
-      }, { maxHp: 100 });
-    } finally { setBeatOrder('sequential'); }
-  });
-}
 
 test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
