@@ -142,7 +142,7 @@ on:
   workflow_dispatch:
     inputs:
       keep:
-        description: "override: newest builds per branch for EVERY channel (1..25); leave empty for the per-channel table in tools/pages-site.mjs (main 3, release 10, dev 3, test 3)"
+        description: "override: newest builds per branch for EVERY channel (1..25); leave empty for the per-channel table in tools/pages-site.mjs (main 3, release 5, dev 3, test 3)"
         default: ''
       publish:
         description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
@@ -492,7 +492,7 @@ jobs:
           KEEP_INPUT: ${{ inputs.keep || '' }}
         run: |
           # PER-CHANNEL RETENTION (owner, 2026-11-06): with no `keep` input the generator's
-          # RETENTION table rules (main 3, release 10, dev 3, test 3). A given input overrides all.
+          # RETENTION table rules (main 3, release 5, dev 3, test 3). A given input overrides all.
           keep_args=()
           keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3)
           if [ -n "$keep" ]; then
