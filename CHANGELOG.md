@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Keepsakes removed** ([#2637](https://github.com/cehinds/AshenSpire/pull/2637), `0.7.5.2`). Removed keepsakes, the unused creation boon system, from content, character creation, tags and tooling; Core plays the same.
 - **Unused combat rules removed** ([#2633](https://github.com/cehinds/AshenSpire/pull/2633), `0.7.5.2`). Removed the unused combat-test screen, the prototype combat rules and the ratings-meter rules; Core combat plays the same.
 - **Behind the scenes: the changelog check works on a fresh candidate** ([#2635](https://github.com/cehinds/AshenSpire/pull/2635), `0.7.5.2`). This is a tooling-only change, and nothing you play changes. The changelog's order self-test used to go red right after a release cut, when the build count restarts at zero; its practice corpus now always stands at least one build in.
 - **Saved Core fights load exactly, and the flask setting has a door** ([#2630](https://github.com/cehinds/AshenSpire/pull/2630), `0.7.3.232`). A Core climb now always fights with Core's own rules, so a fight's entry checkpoint and a mid-fight Save Game load back exactly as they were written (a run started through a legacy test shortcut used to fail to load and lose its slot), and a reloaded fight's cards carry the same fields they were saved with. The "Use flasks outside combat" setting now lives under Settings → Advanced → Interface → Map & HUD, which every build shows, so the map's prompt to turn it on leads somewhere.
