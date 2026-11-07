@@ -2,7 +2,7 @@
 // validation, check evaluation). No browser. Run: node --test tests/qa-sandbox.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateSpec, validateCheck, evaluateCheck, verdict, renderReport } from '../tools/qa-sandbox.mjs';
+import { validateSpec, validateCheck, evaluateCheck, verdict, renderReport, sceneUrl } from '../tools/qa-sandbox.mjs';
 
 const scene = (extra = {}) => ({ name: 's', url: '?shot=combat', success: [{ kind: 'visible', label: 'v', selector: '.x' }], ...extra });
 const spec = (extra = {}) => ({ request: 'make it so', viewports: [{ name: 'desktop', width: 1280, height: 800 }], scenes: [scene()], ...extra });
@@ -82,4 +82,28 @@ test('consoleErrors ignores listed noise', () => {
   assert.equal(evaluateCheck(c, { errors: ['Blocked call to navigator.vibrate'] }).holds, true);
   assert.equal(evaluateCheck(c, { errors: ['Blocked call to navigator.vibrate', 'TypeError: x'] }).holds, false);
   assert.match(validateCheck({ kind: 'consoleErrors', label: 'l', ignore: 'x' }, 'c').join(), /ignore must be/);
+});
+
+test('a missing element is a broken check in either group', () => {
+  for (const [check, facts] of [
+    [{ kind: 'noOverlap', a: '.a', b: '.b' }, { a: null, b: { x: 0, y: 0, width: 1, height: 1 } }],
+    [{ kind: 'within', selector: '.a', container: '.c' }, { box: null, container: null }],
+    [{ kind: 'style', selector: '.a', prop: 'color', equals: 'red' }, { value: null }],
+    [{ kind: 'text', selector: '.a', includes: 'x' }, { texts: [] }],
+  ]) {
+    for (const g of ['success', 'failure']) {
+      const v = verdict(g, evaluateCheck(check, facts));
+      assert.equal(v.pass, false, `${check.kind}/${g}`);
+      assert.match(v.detail, /check broken/);
+    }
+  }
+});
+
+test('count rejects non-numeric bounds', () => {
+  assert.ok(validateCheck({ kind: 'count', label: 'x', selector: '.a', min: 1, eq: '3' }, 'c').some((e) => /eq must be a number/.test(e)));
+});
+
+test('sceneUrl: query targets index.html, a path is served as is', () => {
+  assert.equal(sceneUrl('http://127.0.0.1:9', '?shot=combat'), 'http://127.0.0.1:9/index.html?shot=combat');
+  assert.equal(sceneUrl('http://127.0.0.1:9', '/tools/hud-component-studio/index.html'), 'http://127.0.0.1:9/tools/hud-component-studio/index.html');
 });

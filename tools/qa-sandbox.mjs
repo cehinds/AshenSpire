@@ -41,6 +41,7 @@ export function validateCheck(check, where) {
     case 'count':
       need('selector');
       if (!['min', 'max', 'eq'].some((k) => Number.isFinite(check[k]))) errs.push(`${where}: count needs min, max or eq`);
+      for (const k of ['min', 'max', 'eq']) if (check[k] != null && !Number.isFinite(check[k])) errs.push(`${where}: ${k} must be a number`);
       break;
     case 'text':
       need('selector');
@@ -113,22 +114,24 @@ export function evaluateCheck(check, facts) {
     }
     case 'text': {
       const texts = facts.texts || [];
-      if (!texts.length) return { holds: false, detail: 'not found' };
+      if (!texts.length) return { holds: false, missing: true, detail: `${check.selector} not found` };
       const ok = texts.some((t) => (check.includes != null ? t.includes(check.includes) : new RegExp(check.matches).test(t)));
       return { holds: ok, detail: `text ${JSON.stringify(texts[0].slice(0, 60))}` };
     }
     case 'within': {
-      if (!facts.box) return { holds: false, detail: `${check.selector} not found` };
-      if (!facts.container) return { holds: false, detail: `${check.container} not found` };
+      if (!facts.box) return { holds: false, missing: true, detail: `${check.selector} not found` };
+      if (!facts.container) return { holds: false, missing: true, detail: `${check.container} not found` };
       const ok = within(facts.box, facts.container);
       return { holds: ok, detail: ok ? 'inside' : `outside by box ${fmt(facts.box)} vs ${fmt(facts.container)}` };
     }
     case 'noOverlap': {
-      if (!facts.a || !facts.b) return { holds: false, detail: `${!facts.a ? check.a : check.b} not found` };
+      if (!facts.a || !facts.b) return { holds: false, missing: true, detail: `${!facts.a ? check.a : check.b} not found` };
       const hit = overlaps(facts.a, facts.b);
       return { holds: !hit, detail: hit ? `overlap ${fmt(facts.a)} / ${fmt(facts.b)}` : 'apart' };
     }
-    case 'style': return { holds: facts.value === check.equals, detail: `${check.prop} = ${JSON.stringify(facts.value)}` };
+    case 'style':
+      if (facts.value == null) return { holds: false, missing: true, detail: `${check.selector} not found` };
+      return { holds: facts.value === check.equals, detail: `${check.prop} = ${JSON.stringify(facts.value)}` };
     case 'consoleErrors': {
       // `ignore`: regex strings for known browser-policy noise (e.g. a blocked navigator.vibrate) that is not a page fault
       const skip = (check.ignore || []).map((r) => new RegExp(r));
@@ -146,6 +149,8 @@ const fmt = (b) => `[${Math.round(b.x)},${Math.round(b.y)} ${Math.round(b.width)
  * like") passes when it does NOT hold; one that holds is a FAIL.
  */
 export function verdict(group, evaluated) {
+  // a selector that matches nothing is a broken check, not a passing one, in either group
+  if (evaluated.missing) return { pass: false, detail: `check broken: ${evaluated.detail}` };
   const pass = group === 'success' ? evaluated.holds : !evaluated.holds;
   return { pass, detail: group === 'failure' ? (evaluated.holds ? `FAILURE PRESENT: ${evaluated.detail}` : `absent (${evaluated.detail})`) : evaluated.detail };
 }
@@ -181,7 +186,9 @@ async function collectFacts(page, check, consoleErrors) {
   return page.evaluate(({ check }) => {
     const vis = (el) => {
       const r = el.getBoundingClientRect(), s = getComputedStyle(el);
-      return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden' && +s.opacity > 0;
+      if (!(r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden')) return false;
+      for (let a = el; a && a.nodeType === 1; a = a.parentElement) if (+getComputedStyle(a).opacity === 0) return false;
+      return true;
     };
     const all = (sel) => [...document.querySelectorAll(sel)];
     const first = (sel) => all(sel).find(vis) || all(sel)[0] || null;
@@ -211,6 +218,11 @@ async function runActions(page, actions) {
   }
 }
 
+// '?shot=...' (or '') targets the game's index.html; a path ('/tools/x/index.html') is served as is.
+export function sceneUrl(baseUrl, url = '') {
+  return url.startsWith('/') ? new URL(url, baseUrl).href : `${baseUrl}/index.html${url}`;
+}
+
 async function runScene(browser, baseUrl, viewport, scene, shotPath) {
   const ctx = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1, hasTouch: viewport.width < 600 });
   const page = await ctx.newPage();
@@ -219,7 +231,7 @@ async function runScene(browser, baseUrl, viewport, scene, shotPath) {
   page.on('pageerror', (e) => consoleErrors.push(String(e.message || e)));
   let error = null;
   try {
-    await page.goto(`${baseUrl}/index.html${scene.url}`, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.goto(sceneUrl(baseUrl, scene.url), { waitUntil: 'networkidle', timeout: 60000 });
     if (scene.ready) await page.waitForSelector(scene.ready, { state: 'attached', timeout: 30000 });
     await page.waitForTimeout(scene.settleMs ?? 1200);
     await runActions(page, scene.actions);
@@ -277,9 +289,9 @@ export async function main(argv) {
       execFileSync('git', ['worktree', 'add', '--detach', worktree, opts.base], { cwd: ROOT, stdio: 'pipe' });
       // the art packs live in the untracked .art-cache; share it so the base tree draws the same art
       if (existsSync(join(ROOT, '.art-cache'))) symlinkSync(join(ROOT, '.art-cache'), join(worktree, '.art-cache'));
-      before = await serve({ root: worktree, port: 0, open: false, quiet: true });
+      before = await serve({ root: worktree, port: 0, open: false, quiet: true, host: '127.0.0.1' });
     }
-    after = await serve({ root: ROOT, port: 0, open: false, quiet: true });
+    after = await serve({ root: ROOT, port: 0, open: false, quiet: true, host: '127.0.0.1' });
     browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] });
     const urlOf = (s) => s.url.replace(/\/$/, '');
     const runs = [];

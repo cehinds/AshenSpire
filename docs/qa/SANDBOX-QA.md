@@ -10,11 +10,11 @@ opens your change in a real browser, compares it to the request and writes `repo
 - Writing the acceptance criteria from the request
   - Copy the owner's request word for word into `request`; it heads the report.
   - Success = the request's observable outcomes, one check each ("Block shield is left of the HP bar", "bars are the same width").
+  - Success also holds the "good state" guards, which pass when things are right: `noOverlap` (no overlap), `within` (no clipping), `consoleErrors` (no errors). Never put these under failure: there a good tree reads FAIL.
   - Failure = the likely regressions, each written as the bad state, so a failure check that holds is a FAIL:
-    - overlap (`noOverlap`) and clipping (`within`);
     - wrong state (`text`, `style`, `count`);
-    - old UI still present (`visible` on the old selector);
-    - console errors (`consoleErrors`, with `ignore` for known browser-policy noise).
+    - old UI still present (`visible` on the old selector).
+  - A `text`, `style`, `within` or `noOverlap` check whose selector matches nothing reports "check broken" and FAILs in either group, so a typo can't pass silently.
   - Run each scene at desktop 1280x800 and phone 390x844 at least.
   - Scenes reuse the `?shot=...` dev hooks (e.g. `?shot=combat&shotSeed=4`); `ready` is a selector to wait for, `actions` are `click`, `tap`, `hold {selector, ms}`, `key`, `wait {ms}`.
   - Check kinds: `visible`, `hidden`, `count {min,max,eq}`, `text {includes|matches}`, `within {selector, container}`, `noOverlap {a, b}`, `style {selector, prop, equals}`, `consoleErrors {max, ignore}`.
