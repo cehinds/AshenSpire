@@ -1,11 +1,11 @@
-// SOUND AND HAPTIC follow the number (SPEC §7.4, beatOrder 'sequential'; Codex
+// SOUND AND HAPTIC follow the number (SPEC §7.4, sequential beat order; Codex
 // on #1849): a hit's sound and the damage buzz fire reactionMs after the
 // reaction starts, with the float; the contact keeps only its spark and slash.
 // 'impact' keeps them at the contact.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { sfx } from '../src/ui/sfx.js';
 import { haptic } from '../src/ui/haptics.js';
@@ -17,7 +17,7 @@ pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the sh
 
 const IMPACT = 100, TOTAL = 300;
 
-function drive(t, events, beatOrder) {
+function drive(t, events) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());
@@ -41,13 +41,13 @@ function drive(t, events, beatOrder) {
         return append(node);
       };
       let completed = 0;
-      playTimeline(events, { layer, combatEl: el(), beatOrder, anchorFor: (id) => anchors[id] || null,
+      playTimeline(events, { layer, combatEl: el(), anchorFor: (id) => anchors[id] || null,
         animateActor: () => ({ impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} }),
         onBeatApplied() {}, onFlush() {} }, () => completed++);
       for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
       assert.equal(completed, 1);
     });
-  } finally { sfx.sink = oldSfx; haptic.sink = oldHaptic; setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  } finally { sfx.sink = oldSfx; haptic.sink = oldHaptic; setAnimSpeed('normal'); }
   return trace;
 }
 
@@ -57,7 +57,7 @@ const enemyHit = (amount, blocked = 0) => [{ type: 'enemyMoveStarted', sourceId:
 const isHitSound = (w) => /^sound:(hit_|playerHurt)/.test(w);
 
 test('sequential: the hit sound and the damage buzz fire with the number, not at contact', (t) => {
-  const trace = drive(t, enemyHit(6), 'sequential');
+  const trace = drive(t, enemyHit(6));
   const number = timeOf(trace, (w) => w === 'float:-6');
   assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the slash stays at the contact after the intent and action leads (500 ms each)');
   assert.equal(number, 1000 + TOTAL + 60 + 1500, 'the number follows accuracy and the target reaction, separated by 500ms gaps');
@@ -67,24 +67,18 @@ test('sequential: the hit sound and the damage buzz fire with the number, not at
 });
 
 test('sequential: a guarded hit\'s block sound comes with its number', (t) => {
-  const trace = drive(t, enemyHit(5, 5), 'sequential');
+  const trace = drive(t, enemyHit(5, 5));
   // Owner 2026-11-06: the damage numbers lead the numbers stage, so the block sound comes with its number and the BLOCKED word follows it.
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:5'));
   assert.ok(timeOf(trace, (w) => w === 'word:BLOCKED') > timeOf(trace, (w) => w === 'sound:block'), 'the word follows the numbers');
   assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the spark stays at the contact');
 });
 
-test('impact: the hit sound and the damage buzz stay at the contact', (t) => {
-  const trace = drive(t, enemyHit(6), 'impact');
-  assert.equal(timeOf(trace, isHitSound), IMPACT);
-  assert.equal(timeOf(trace, (w) => w === 'haptic:damageTaken'), IMPACT);
-});
-
 test('sequential: an attack card\'s heal and Block sounds come with their numbers', (t) => {
   const trace = drive(t, [{ type: 'cardPlayed', sourceId: 'player', cardId: 'x', cardType: 'attack' },
     { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
     { type: 'healed', targetId: 'player', amount: 3 },
-    { type: 'blockGained', targetId: 'player', amount: 5 }], 'sequential');
+    { type: 'blockGained', targetId: 'player', amount: 5 }]);
   assert.equal(timeOf(trace, (w) => w === 'sound:heal'), timeOf(trace, (w) => w === 'float:+3'), 'heal sound with its number');
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:+5'), 'block sound with its number');
 });

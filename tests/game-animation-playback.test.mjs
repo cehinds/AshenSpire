@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { createPaintedStage } from '../src/ui/paintedOutfits.js';
-import { actionPacing, getBeatOrder } from '../src/ui/animationPace.js';
+import { actionPacing } from '../src/ui/animationPace.js';
 import { figureAnimationsEnabled } from '../src/model/gameAnimationPolicy.js';
 import { reaverAttackTiming } from '../src/ui/reaverAttack.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
@@ -77,7 +77,7 @@ function timeline(t, enabled, { fallback = false, lethal = false, cancel = false
       ...(lethal ? [{ type: 'enemyDied', targetId: 'e1' }] : []),
     ];
     playTimeline(events, ctx, () => at('done'));
-    if (cancel) { if (getBeatOrder() === 'sequential') for (let i = 0; i < 1100; i++) t.mock.timers.tick(1); win.dispatchEvent({ type: 'pointerdown' }); win.dispatchEvent({ type: 'pointerup' }); }
+    if (cancel) { for (let i = 0; i < 1100; i++) t.mock.timers.tick(1); win.dispatchEvent({ type: 'pointerdown' }); win.dispatchEvent({ type: 'pointerup' }); }
     for (let i = 0; i < 20000 && !trace.some(row => row.what === 'done'); i++) t.mock.timers.tick(1);
     assert.equal(trace.filter(row => row.what === 'done').length, 1);
     if (!enabled) assert.equal(anchors.player.classList.contains('act-attack'), false);
@@ -86,12 +86,12 @@ function timeline(t, enabled, { fallback = false, lethal = false, cancel = false
   return trace;
 }
 
-for (const order of ['impact', 'sequential']) test(`on/off keeps contact, numbers and completion clocks under ${order} pacing`, t => {
+test('on/off keeps contact, numbers and completion clocks under sequential pacing', t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());
   try {
-    setAnimSpeed('normal'); setBeatOrder(order);
+    setAnimSpeed('normal');
     const start = Date.now(), on = timeline(t, true).map(row => ({ ...row, at: row.at - start }));
     const offStart = Date.now(), off = timeline(t, false).map(row => ({ ...row, at: row.at - offStart }));
     assert.ok(on.some(row => row.what === 'actor:smash'));
@@ -99,10 +99,10 @@ for (const order of ['impact', 'sequential']) test(`on/off keeps contact, number
     assert.ok(!off.some(row => /^(actor|target):/.test(row.what)), 'no authored figure clip runs');
     assert.deepEqual(off, on.filter(row => !/^(actor|target):/.test(row.what)));
     const pacing = actionPacing();
-    const spriteSpeed = order === 'sequential' ? pacing.spriteSpeed : ANIM_SPEEDS.normal;
-    const lead = order === 'sequential' ? pacing.intentMs + pacing.wordMs : 0;
+    const spriteSpeed = pacing.spriteSpeed;
+    const lead = pacing.intentMs + pacing.wordMs;
     assert.equal(off.find(row => row.what === 'contact').at, lead + selectedWeaponSequenceTiming(selectedWeaponSequence('smash'), spriteSpeed).impactMs);
-  } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  } finally { setAnimSpeed('normal'); }
 });
 
 test('disabled FX fallback cannot start CSS/action poses; defeated drawing remains and cancel completes', t => {
@@ -115,7 +115,7 @@ test('disabled FX fallback cannot start CSS/action poses; defeated drawing remai
     assert.ok(trace.some(row => row.what === 'target:defeated'));
     assert.ok(!trace.some(row => row.what.startsWith('actor:') || row.what === 'target:hit'));
     timeline(t, false, { cancel: true });
-  } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  } finally { setAnimSpeed('normal'); }
 });
 
 

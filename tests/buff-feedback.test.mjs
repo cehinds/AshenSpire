@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BUFF_STATUS_IDS, buffGainFor, buffPopupFor } from '../src/ui/buffFeedback.js';
-import { playTimeline, setAnimSpeed, setBeatOrder, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
@@ -41,7 +41,7 @@ function playback(t, fn) {
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom(dom => {
-    setAnimSpeed('normal'); setBeatOrder('sequential');
+    setAnimSpeed('normal');
     const run = (events, options = {}) => {
       const layer = dom.document.createElement('div'), shown = [], stages = [];
       const anchors = Object.fromEntries(['player', 'e1', 'ally'].map(id => [id, dom.document.createElement('div')]));
@@ -76,7 +76,7 @@ function playback(t, fn) {
       } };
     };
     try { fn({ dom, run }); }
-    finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
+    finally { setAnimSpeed('normal'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
 
@@ -160,25 +160,6 @@ test('buff callouts stay static under manual and operating-system reduced motion
     'manual reduced motion leaves buff words static and visible');
   assert.match(css, new RegExp(String.raw`@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.fx-callout\[data-callout-kind\^='buff:'\] ${properties}`),
     'OS reduced motion leaves buff words static and visible');
-});
-
-test('legacy impact playback keeps buff gains in its callout-only step and duration', t => {
-  playback(t, ({ run }) => {
-    const statusGains = ['precision', 'precision', 'regen', 'evade'].map(status => grant(status));
-    const events = [{ type: 'cardPlayed', cardType: 'skill', cardId: 'setup', targetId: 'player' }, ...statusGains];
-    const baselineStart = Date.now();
-    const baseline = run(events.map(event => event.type === 'statusApplied' ? { ...event, previousTotal: event.total } : event), { beatOrder: 'impact' });
-    const baselineDuration = baseline.finish() - baselineStart;
-    clearCallouts(baseline.layer);
-
-    const resultStart = Date.now();
-    const result = run(events, { beatOrder: 'impact' });
-    const duration = result.finish() - resultStart;
-    const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:'));
-    assert.equal(duration, baselineDuration, 'a positive gain adds no extra legacy impact steps');
-    assert.equal(buffs.length, statusGains.length);
-    assert.deepEqual(buffs.slice(1).map((row, i) => row.at - buffs[i].at), [1, 2, 3].map(() => floaterStaggerMs()), 'the gains appear one stagger apart in their existing beat');
-  });
 });
 
 test('missing status context safely omits gains while hostile words, heal and Block each keep one channel', t => {
