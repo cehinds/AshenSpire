@@ -64,5 +64,6 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
   - Card UI: "DC 12 · Will" next to the status; target panel shows its three saves.
   - Suggested school → save: frost → Fortitude (slow/chill); fire → Reflex (Burn, dodge the flame); lightning → Reflex (shock/stun); force → Fortitude (knock-back/stagger); earth → Fortitude (root/crush); decay → Fortitude (poison/wither); illusion → Will; divine → Will (fear/smite/sanctify); alteration → Will for mind-shape, Fortitude for body-shape (card-level override).
   - Martial: Smash/stagger/bleed/knockdown → Fortitude; Sweep/trip/net/entangle/disarm → Reflex; Intimidate/taunt/shout/feint → Will.
-- Questions: see chat (save-vs-half rule; stats as scores or modifiers).
+- Update 2026-11-07 — "per haps I should make the resistance be related to the card huh?": the save type (Will/Fortitude/Reflex) is authored per card, not fixed by school. School becomes only the default/suggested value (table above) when a card sets none.
+- Questions: negate vs halve on save; stats as scores or modifiers; replace Damp "shock contest"? (asked in chat)
 - Link: —
