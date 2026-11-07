@@ -50,3 +50,19 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Drop "magic" as a separate damage type: spell damage is just damage. Spells have Reach (ranged) by default. Each spell school gets its own unique status effect instead.
 - Questions: Which unique status per school (names/effects)? Do existing magic-damage resists/bonuses just become normal damage ones?
 - Link: —
+
+## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
+- Status: pending
+- Asked: 2026-11-07 — "I'd also like for enemies to roll for saving against status effects. On the card show the Difficulty Class which will not be set to 10 + int + wis + spell rank + other for example most cantrips will probably be: 10 + 1 + 1 + 0; so DC 12. the target will need to roll a 1d20 + resistance type. for now I want 3 resistance types: will, fortitutde, reflex. will: wis + int; fortitutde: con + poise; reflex: dex + evasion. the other category will probably come from other tags associated with the card, and the card's spell school. I also want that if the character is already suffering from a status effect, they roll with disadvantage. can you improve this, as well as make suggestions as to which spell school should target which resistance. I also want there to be martial status effects too with DCs and resistance type"
+- Means: Status-applying cards show a DC and the target rolls 1d20 + a save (Will / Fortitude / Reflex) against it; fail = status applies. Spell DC = 10 + caster INT + WIS + card rank + other (card tags/school). Martial status cards get a DC and save type too. Target already holding a status rolls at disadvantage. (Note: SPEC §Damp already has a "shock contest" with advantage; the new save system must reconcile with it.)
+- Proposed refinements (for owner approval):
+  - DC: keep your formula; use ability *modifiers* (not raw scores) if stats are scores; "other" = +1 for a tagged synergy, capped at +2. Martial DC = 10 + STR or DEX mod + weapon tier/card rank + other.
+  - Saves: Will = WIS+INT, Fortitude = CON+poise, Reflex = DEX+evasion (as asked). Nat 20 always saves, nat 1 always fails.
+  - Disadvantage: only if the target already has a *different* status of the same save type; stacking the same status uses the existing stack rules, no save needed to add stacks.
+  - Result tiers: fail = full status; save = no status (cantrips/small statuses) or half duration/stacks (bigger spells). Pick one rule per rank.
+  - Boss/elite tuning: enemies get Will/Fort/Reflex values in their data row; bosses get advantage vs their weakest-to-hit save or a flat +bonus.
+  - Card UI: "DC 12 · Will" next to the status; target panel shows its three saves.
+  - Suggested school → save: frost → Fortitude (slow/chill); fire → Reflex (Burn, dodge the flame); lightning → Reflex (shock/stun); force → Fortitude (knock-back/stagger); earth → Fortitude (root/crush); decay → Fortitude (poison/wither); illusion → Will; divine → Will (fear/smite/sanctify); alteration → Will for mind-shape, Fortitude for body-shape (card-level override).
+  - Martial: Smash/stagger/bleed/knockdown → Fortitude; Sweep/trip/net/entangle/disarm → Reflex; Intimidate/taunt/shout/feint → Will.
+- Questions: see chat (save-vs-half rule; stats as scores or modifiers).
+- Link: —
