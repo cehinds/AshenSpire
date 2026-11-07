@@ -71,7 +71,6 @@ function boot(options = {}) {
       created.push(result); return record('construct', result);
     },
     bindGameProfileRegistries(registry, profile) { return record('bind', { ...registry, gameProfile: profile }); },
-    registriesForClassMastery(registry, masteryRun) { return record('mastery', { ...registry, masteryRun }); },
     configureTooltipGlossary(registry) { assert(registry); glossaries.push(registry); record('glossary', registry); },
     setClassGlyphs(classes) { glyphs.push(classes); record('glyphs', classes); },
     createMemoryStorage: () => record('memory-storage', storage),
@@ -112,7 +111,7 @@ function presentationReady(r) {
   assert.equal(r.error, undefined);
   assert.equal(r.created.length, 1, 'one settings-selected initial construction');
   assert.equal(r.glossaries.length, 1); assert.equal(r.glyphs.length, 1);
-  assert.equal(r.glossaries[0], r.registries, 'final bound/mastery registry owns glossary');
+  assert.equal(r.glossaries[0], r.registries, 'final bound registry owns glossary');
   assert.deepEqual(r.glyphs[0], r.registries.classes.all());
   const names = r.events.map(event => event.name);
   for (const prior of ['migrate', 'settings-rows', 'validate'])
@@ -128,14 +127,13 @@ test('default configured boot builds once and registers final vocabulary/glyphs 
   assert.equal(r.registries.gameProfile.id, 'default');
   assert.equal(r.named('validate').length, 1);
   assert.equal(r.named('configure').length, 0, 'configured profiles bypass legacy settings projection');
-  assert.equal(r.named('mastery').length, 0);
 });
 
-test('legacy boot builds once from migrated settings plus promoted defaults, then applies mastery', () => {
+test('legacy boot builds once from migrated settings plus promoted defaults, ', () => {
   const r = boot({ search: '?gameProfile=legacy', settings: { retained: 7 }, migrated: { migrated: 8 }, promoted: { promoted: 9 } });
   presentationReady(r);
   assert.deepEqual(r.registries.bundle.settings, { retained: 7, migrated: 8, promoted: 9 });
-  assert.equal(r.named('structural').length, 1); assert.equal(r.named('mastery').length, 1);
+  assert.equal(r.named('structural').length, 1);
   assert.equal(r.registries.gameProfile.id, 'legacy');
 });
 
@@ -191,7 +189,7 @@ test('pending settings choice does not apply promoted defaults before the initia
 test('later identical rebuild keeps existing cache behavior and refreshes presentation ownership', () => {
   const r = boot(); presentationReady(r);
   const before = r.registries;
-  const again = r.rebuildRegistries(r.activeSettings, null, r.selectedGameProfile);
+  const again = r.rebuildRegistries(r.activeSettings, r.selectedGameProfile);
   assert.equal(again, before); assert.equal(r.created.length, 1); assert.equal(r.named('validate').length, 1);
   assert.equal(r.glossaries.at(-1), again); assert.deepEqual(r.glyphs.at(-1), again.classes.all());
 });

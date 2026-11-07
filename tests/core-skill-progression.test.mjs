@@ -11,7 +11,6 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext, skillBonusFor } from '../src/model/skills.js';
 import { resolveCard } from '../src/model/registries.js';
-import { openRunClassMastery, registriesForClassMastery, recordClassMasteryXp } from '../src/model/classMasteryRun.js';
 import { allocateAttributePoint } from '../src/model/levelup.js';
 import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
@@ -281,22 +280,6 @@ test('school milestones report resolved old/new card numbers, multilevel gains a
   assert.equal(multi.after, 10);
   assert.ok(effects.changes.some(change => change.label === 'Gorefire Slash · Damage' && change.before === 9 && change.after === 11));
   assert.equal(effects.nextMilestone, null, 'the level cap cannot promise a further bonus');
-});
-
-test('mastery summaries report only newly available authored unlocks and preserve veteran unlocks', () => {
-  const source = createRegistries(contentBundle);
-  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
-  openRunClassMastery(source, run, {}, { receiptId: 'effect-test' });
-  const scoped = registriesForClassMastery(source, run);
-  const beforeState = { classMasteryState: structuredClone(run.classMasteryState) };
-  const cost = xpToNext(scoped, 'class', 0);
-  recordClassMasteryXp(run, 'reaver', cost);
-  const award = awardSkillXp(scoped, run, 'class:reaver', cost, { queueRewards: false });
-  const changes = skillLevelNotices(scoped, [award], { run, beforeState })[0].effects.changes;
-  assert.ok(changes.length > 0);
-  assert.ok(changes.every(change => change.kind === 'unlock' && change.before === 'Locked' && change.after === 'Available'));
-  const veteran = { classMasteryState: structuredClone(run.classMasteryState) };
-  assert.deepEqual(skillLevelNotices(scoped, [award], { run, beforeState: veteran })[0].effects.changes, [], 'already unlocked rows are not newly awarded');
 });
 
 test('shared schools count simultaneous gains once and skip rounded multihit non-benefits', () => {

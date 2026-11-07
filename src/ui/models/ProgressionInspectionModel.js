@@ -84,7 +84,7 @@ export function skillInspection(registries, run, track) {
       : !expanded ? { legacyAbility: true } : {}) };
     return { ...resolveCard(registries, instance), ...(instance.legacyAbility ? {legacyAbility: true} : {}) };
   });
-  const feats = trackSkillFeats(track.id, !!run.classMasteryState, registries)
+  const feats = trackSkillFeats(track.id, false, registries)
     .map(feat => featInspection(registries, run, feat.id)).filter(Boolean);
   if (ability) tags = [...new Set(cards.flatMap(card => card.tags || []))];
   const tagIds = track.kind === 'class' ? [...new Set(cards.flatMap(card => card.tags || []))] : tags;

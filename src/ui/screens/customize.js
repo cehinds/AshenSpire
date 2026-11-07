@@ -1,7 +1,6 @@
 import { uiIconText } from '../../content/uiIcons.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
-import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
@@ -713,7 +712,7 @@ export function mountCustomize(app, {
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
           adept: activeAdeptTraining({ gameProfile, class: cls.id }),
-          visual: classGlyph(cls.id), mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
+          visual: classGlyph(cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
       }
@@ -1009,7 +1008,6 @@ export function mountCustomize(app, {
       selected: state.classChosen && cls.id === state.classId,
       expanded: !catalog && creationClassPreview() === 'unfold',
       visual: classGlyph(cls.id),
-      mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id),
       locked: !eligibleClass(cls.id),
       lockIcon: fixedCreation && profileClassUnlocks && !eligibleClass(cls.id),
       hint: eligibleClass(cls.id) ? null : profileClassUnlocks
