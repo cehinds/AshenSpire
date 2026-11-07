@@ -90,3 +90,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: No change. Poise stays as the single break meter, behind Ward/Barrier and the Fortitude save (CON + Poise, #8). No Ward/Barrier merge requested.
 - Questions: none
 - Link: —
+
+## #11 Poise bar always visible, fixed-width HUD
+- Status: pending
+- Asked: 2026-11-07 — "just keep the poise visible at all times but make it have the height of the health bar. also, I'd liek the health bar with the badges to be a fixed width instead of dynamically changing."
+- Means: Poise bar is always shown (no hiding, no badge shifting), the same height as the HP bar, under it (layout with #5 Block left of the bar, #6 badges under). The HP bar plus its badge row has one fixed width on every combatant instead of resizing with content.
+- Questions: Fixed width: same for all enemies, or player wider than enemies?
+- Link: —
