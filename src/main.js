@@ -2156,7 +2156,6 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onProgression: isConfiguredRun(run) ? null : () => showCharacterProgression(() => showArmoury({ destination: 'character' }, returnTo)),
     onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
       onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
     onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
@@ -3550,28 +3549,6 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       }
     },
   });
-}
-
-function showCharacterProgression(returnTo) {
-  if (isConfiguredRun(run)) return showCharacterSheet(null, { onClose: returnTo });
-  if (run.pendingReward) return mountPendingReward();
-  const settings = saves.loadMeta().settings || {};
-  const rewards = mergeProgressionRewards(run.deferredProgression, {
-    title: 'Level up & rewards', xpGains: { level: 0, tracks: {} },
-    skillDrafts: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('normal', true) : [],
-    skillRankUps: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps(true) : [],
-    skillAttributes: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(true) : [],
-    skillFeats: settingOn(settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(true) : [],
-    classDrafts: settingOn(settings, 'rewardBattleClassDrafts') ? rollClassDrafts(true) : [],
-    classMilestoneRewards: expandedProgression(run) ? rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,classSkillId(run.class)),meta:saves.loadMeta()}) : [],
-  }, run);
-  const { available, deferred } = partitionProgressionRewards(rewards, run);
-  run.pendingReward = pendingRewardCheckpoint(available, { source: 'character', after: 'map' });
-  run.pendingReward.expanded = true;
-  if (Object.keys(deferred).length) run.deferredProgression = deferred;
-  else delete run.deferredProgression;
-  persist();
-  return mountPendingReward(run.pendingReward, returnTo);
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
