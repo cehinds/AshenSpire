@@ -10,7 +10,6 @@ import { createRunState, serializeRun, deserializeRun, validateRunShape, initial
 import { awardSkillXp, bankSkillXp, claimBankedSkillLevel, activateAbilitySkill, pendingSkillLevelCount, xpToNext } from '../src/model/skills.js';
 import { classRewardBudget, pendingClassMilestones } from '../src/model/classMilestones.js';
 import { rollAbilityOffer, abilityOfferPool } from '../src/model/abilityOffers.js';
-import { rollClassMilestoneRewards, claimClassMilestoneReward } from '../src/model/classMilestoneOffers.js';
 import { createRng } from '../src/engine/rng.js';
 import { recordSkillXp, skillXpReceipt } from '../src/engine/skillXp.js';
 import { rewardPlan, resolveContinue, pickIds } from '../src/model/rewardplan.js';
@@ -80,24 +79,4 @@ test('authored grades resolve their exact resource costs and values without an u
   const priced=cardCostBudget(gradeFace(reg.cards.get('cometFragment'),4),{rank:4});
   assert.equal(card.cost,priced.sp);assert.equal(card.manaCost,priced.mp);
   assert.equal(card.effects[0].amount,priced.sp>=2?Math.round(8*1.8):8);assert.equal(card.textTemplate,'Grade 4');
-});
-
-test('an advanced default family keeps a rank-zero starter and a class attribute rederives the saved pools',()=>{
-  const starting=createRunState({registries:source,classId:'reaver',seed:4});
-  const id=starting.deck.find(inst=>!inst.equipmentRole)?.cardId || starting.deck[0].cardId;
-  const update={...source.cards.get(id),costRule:undefined,abilityKind:'maneuver',abilityRank:3,abilityFamily:id,cost:2,manaCost:3,
-    gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:rank?Math.min(rank,3):1,manaCost:rank,effects:[{op:'block',target:'self',amount:4+rank}]}))};
-  const bundle=composeProgressionContent(contentBundle,[{abilityCardUpdates:[update]}],{rules:contentBundle.balance.progression,unlocks:contentBundle.classMastery});
-  const root=createRegistries(bundle),run=createRunState({registries:root,classId:'reaver',seed:4});
-  assert.equal(root.cards.get(id).manaCost,3);
-  assert.ok(run.deck.some(inst=>inst.cardId===id));
-  const starterMana = cardManaCategory(root, root.cards.get(id)) ? cardManaPolicy.minimumMana : 0;
-  assert.ok(run.deck.filter(inst=>inst.cardId===id).every(inst=>inst.abilityRank===0 && resolveCard(root,inst).manaCost===starterMana), 'rank zero keeps the base Mana floor for weapon arts and spells');
-  
-  const reg=root;
-  for(let level=1;level<=5;level++) {fund(reg,run,xpToNext(reg,'class',level-1));claimBankedSkillLevel(reg,run,'class:reaver');}
-  const offer=rollClassMilestoneRewards(reg,createRng(1),run).find(row=>row.rewardKind==='attribute');
-  assert.equal(claimClassMilestoneReward(reg,run,offer.receiptId,'constitution'),true);
-  const restored=deserializeRun(serializeRun(run));
-  assert.doesNotThrow(()=>initializeRunDerivedStats(restored,reg,{preserveDeficits:true}));
 });

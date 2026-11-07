@@ -70,29 +70,6 @@ test('Skill and feat inspection render real card references and leave progressio
   });
 });
 
-test('Progression hub hands rewards and respec to their writers after closing and keeps Back functional', () => {
-  withModalDom(() => {
-    const run = createRunState({ seed: 4242, classId: 'reaver', registries });
-    const before = structuredClone(run), events = [];
-    const open = () => openCharacterSheet({ registries, run, settings: {},
-      onClose: () => events.push('closed'), onRewards: () => events.push('rewards'),
-      onRespec: () => events.push('respec'),
-    });
-    const clickLabel = (sheet, label) => {
-      const action = [...sheet.panel.querySelectorAll('button')].find(node => node.textContent === label);
-      assert.ok(action, `missing action ${label}`);
-      action.click();
-    };
-    clickLabel(open(), t('progression.rewards'));
-    assert.deepEqual(events, ['closed', 'rewards']);
-    clickLabel(open(), t('classRespec.title'));
-    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec']);
-    clickLabel(open(), t('common.back'));
-    assert.deepEqual(events, ['closed', 'rewards', 'closed', 'respec', 'closed']);
-    assert.deepEqual(run, before, 'opening and leaving the hub never claims or rebuilds progression');
-  });
-});
-
 test('configured progression opens Character directly without legacy reward or respec actions', () => {
   withModalDom(() => {
     const profile = resolveGameProfile('core');
@@ -100,13 +77,12 @@ test('configured progression opens Character directly without legacy reward or r
     const run = createRunState({ seed: 4242, classId: 'reaver', registries: coreRegistries });
     const before = structuredClone(run), events = [];
     const sheet = openCharacterSheet({ registries: coreRegistries, run, tab: 'skills',
-      onRewards: () => events.push('rewards'), onRespec: () => events.push('respec') });
+      onRewards: () => events.push('rewards') });
     assert.equal(sheet.panel.querySelector('.character-sheet-body').dataset.tab, 'character');
     const labels = [...sheet.panel.querySelectorAll('button')].map(node => node.textContent);
     assert.equal(labels.includes(t('progression.tab.skills')), false);
     assert.equal(labels.includes(t('progression.tab.class')), false);
     assert.equal(labels.includes(t('progression.rewards')), false);
-    assert.equal(labels.includes(t('classRespec.title')), false);
     assert.deepEqual(events, []);
     assert.deepEqual(run, before, 'opening the configured character page does not mutate progression');
     sheet.close();

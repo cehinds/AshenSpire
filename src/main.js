@@ -124,8 +124,6 @@ import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoi
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { applyDisplayAppearance } from './ui/displayAppearance.js';
-import { mountClassRespec } from './ui/components/classRespec.js';
-import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
@@ -2121,25 +2119,17 @@ function showArmoury(request = '', returnTo = showMap) {
     },
     onClose: returnTo,
     onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo, true) : null,
-    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards,
-      onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null }),
-    onClassRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec(() => showArmoury({ destination: 'character' }, returnTo)) : null,
+    onCharacterSheet: (opener, tab, onClose, onRewards) => showCharacterSheet(opener, { tab, onClose, onRewards }),
   });
 }
 
 // The Progression hub opens over the current screen. Which character-level rewards it lists are the player's own
 // Settings → Advanced → Rewards answers, the ones the level door reads.
-function showClassRespec(returnTo = () => showArmoury({ destination: 'character' }), opener) {
-  return resetClassTree(registries,run,{openRespec:()=>mountClassRespec({registries,run,meta:saves.loadMeta(),opener,
-    onApply:preview=>applyClassRespec(registries,run,preview,{saveCandidate:candidate=>saves.saveRun(candidate,rng,activeSlot)}),
-    onClose:returnTo})});
-}
 function showCharacterSheet(opener, options = {}) {
   if (!run) return null;
   const settings = saves.loadMeta().settings || {};
   return openCharacterSheet({
     registries, run, opener, settings, onChange: persist,
-    onRespec: classRespecAvailability(registries, run).ok ? () => showClassRespec() : null,
     ...options,
     offers: {
       statPoints: settingOn(settings, 'rewardLevelStatPoints'),
