@@ -553,6 +553,7 @@ export function receipt() {
     controls: read('src/ui/screens/controls.js'),
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
+    armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
     hudVisibility: read('styles/hud-visibility.css'),
@@ -911,7 +912,7 @@ export function findings(r) {
       || !/UI\.shrineOptionCard/.test(r.rest)
       || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
       || !/attributeCardModels\(registries, values,/.test(r.rest)
-      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
+      || !/attributeCardModels\(registries, run\.attributes/.test(r.armouryStatsModel)
       || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');

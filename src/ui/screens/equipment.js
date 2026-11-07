@@ -1,12 +1,12 @@
 import { engravedIcon } from '../components/engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
-import { logicalViewport, viewViewportBox } from '../viewViewport.js';
+import { logicalViewport } from '../viewViewport.js';
 import { characterSheetModel } from '../models/CharacterSheetModel.js';
 import { skillTrackButton } from './characterSheet.js';
-import { characterStatsButton, progressionTip } from '../components/progressionCards.js';
+import { progressionTip } from '../components/progressionCards.js';
 import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
-import { levelProgress, skillProgressRows, staleSkillTracks } from '../../model/progression.js';
+import { levelProgress } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection, equipmentDetails } from '../components/equipmentCard.js';
@@ -53,15 +53,11 @@ import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure, spritesAreEnabled } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
-import { reducedMotionRequested } from '../motion.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
-import { primaryStatCards } from '../components/creationCards.js';
-import { runHandRules } from '../../model/handRules.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
@@ -75,8 +71,8 @@ import {
   renderInventoryItemCard, renderInventoryDetailCard,
 } from '../components/armouryComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
+import { armouryStatsPanel } from '../components/armouryStatsPanel.js';
 import { traySizeService } from '../services/TraySizeService.js';
-import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
 import { consumableText } from '../../model/consumables.js';
@@ -96,7 +92,7 @@ import {
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker, meter, meters,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, meter,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -2060,163 +2056,10 @@ export function mountEquipment(host, {
   }
 
   function characterStatsPanel() {
-    const box = document.createElement('section');
-    box.className = 'armoury-character-stats';
-    const projection = statProjection(registries, run);
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const expanded = viewMode().character === 'expanded';
-    const informationCards = [];
-    const initiallyOpen = expanded ? 'attributesCard' : null;
-    let revealFrame = 0;
-
-    function revealInformationCard(card, head) {
-      cancelAnimationFrame(revealFrame);
-      revealFrame = requestAnimationFrame(() => {
-        if (!card.isConnected || !card.open) return;
-        // Focus must not scroll before closing the old card has settled layout.
-        if (document.activeElement !== head) head.focus({ preventScroll: true });
-        let top = viewViewportBox().top;
-        let bottom = viewViewportBox().bottom;
-        for (let parent = card.parentElement; parent; parent = parent.parentElement) {
-          if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
-          const rect = parent.getBoundingClientRect();
-          top = Math.max(top, rect.top);
-          bottom = Math.min(bottom, rect.bottom);
-        }
-        const rect = card.getBoundingClientRect();
-        if (bottom <= top || (rect.top >= top && rect.bottom <= bottom)) return;
-        // A tall card cannot fit: keep its header reachable, not its bottom.
-        const tall = rect.height > bottom - top;
-        if (tall && Math.abs(rect.top - top) <= 2) return;
-        const target = tall ? head : card;
-        const behavior = reducedMotionRequested() ? 'instant' : 'smooth';
-        try {
-          target.scrollIntoView({ block: tall ? 'start' : 'nearest', inline: 'nearest', behavior });
-        } catch {
-          target.scrollIntoView(tall);
-        }
-      });
-    }
-
-    // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
-    // Glyph, the label as Title·S, the one-line summary as StatusText), its
-    // body the group's faces.
-    function informationCard({ id, label, summary, body }) {
-      const head = el('summary', {}, row({
-        glyph: FOLD_GLYPH.collapsed,
-        labelNode: titleS(label, { tag: 'span', class: 'r-label character-info-label' }),
-        status: summary, tag: 'div', className: 'character-info-head',
-      }));
-      head.querySelector('.as-glyph').classList.add('caret');
-      const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = id === initiallyOpen;
-      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
-      const entry = { card, setOpen(open) {
-        card.open = open;
-        head.setAttribute('aria-expanded', String(open));
-      } };
-      informationCards.push(entry);
-      function activate(open) {
-        cancelAnimationFrame(revealFrame);
-        for (const peer of informationCards) {
-          if (peer === entry) peer.setOpen(open);
-          else if (open && peer.card.open) peer.setOpen(false);
-        }
-        if (open) revealInformationCard(card, head);
-      }
-      // Keyboard activation of a native summary also produces click. Update
-      // siblings and ARIA together, before the asynchronous toggle events.
-      head.addEventListener('click', (event) => {
-        event.preventDefault();
-        activate(!card.open);
-      });
-      card.addEventListener('toggle', (event) => {
-        if (event.target !== card) return;
-        // Ignore initial/handled/coalesced events; support external .open writes.
-        if (head.getAttribute('aria-expanded') !== String(card.open)) activate(card.open);
-      });
-      attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
-      return card;
-    }
-
-    const powers = el('section', { class: 'character-power-cards', dataset: { component: UI.armouryCombatPowerGroup } });
-    const powerEntries = characterPowerEntries();
-    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers', layout: 'column' });
-    box.appendChild(informationCard({
-      id: 'combatPowerCard',
-      label: layout.combatPower.groupLabel,
-      summary: powerEntries.map((entry) => `${entry.face.node?.querySelector('.combat-power-label')?.textContent || entry.face.label} ${entry.face.value}`).join(' · '),
-      body: powers,
-    }));
-
-    if (inCombat) {
-      const attributes = el('section', { class: 'character-attributes' });
-      const attributeHost = el('div');
-      const attributeRows = attributeCardModels(registries, run.attributes, {
-        projection,
-        equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-        // The hand a solo fight deals: mid-fight, that fight's own snapshot
-        // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
-        // holds no hand settings, Codex #1294); otherwise the next fight's,
-        // read from the run's rows and the profile the way engine/runCombat.js
-        // reads them (`runHandRules`).
-        hand: handRules || runHandRules(registries, run, meta.settings || {}),
-      });
-      for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
-      attributeHost.replaceChildren(...primaryStatCards(attributeRows));
-      attributes.appendChild(attributeHost);
-      box.appendChild(informationCard({
-        id: 'attributesCard',
-        label: t('progression.attributes'),
-        summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
-        body: attributes,
-      }));
-    } else {
-    box.append(characterStatsButton({ registries, run, settings: meta.settings || {} }));
-    }
-
-    const relics = el('section', { class: 'character-relics' });
-    const relicHost = el('div');
-    const entries = relicEntries();
-    for (const entry of entries) entry.face = { ...entry.face, compact: true };
-    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics', layout: 'column' });
-    else relicHost.appendChild(flavour('No relics equipped.', { class: 'ep-hint' }));
-    relics.appendChild(relicHost);
-    box.appendChild(informationCard({
-      id: 'relicsCard',
-      label: 'Relics',
-      summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
-      body: relics,
-    }));
-    // A run always has its own class ladder (skillProgressRows refuses a class
-    // the registry does not know, rather than returning a list without it), so
-    // there is no empty case to draw here and none is pretended.
-    const skillRows = run.gameProfile?.foundation?.mode === 'configured' ? [] : skillProgressRows(registries, run);
-    // A ledger row whose track the content no longer declares cannot become a
-    // bar — it has no label — but it may be holding drafts, so it is SAID
-    // rather than dropped, the way a saved view the table no longer declares
-    // is said above. One line, once per draw.
-    const stale = staleSkillTracks(registries, run);
-    if (stale.length) {
-      console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
-        + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
-    }
-    const skills = el('section', { class: 'character-skills', dataset: { component: UI.armourySkillProgressGroup } }, [
-      meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
-    ]);
-    const progression = button({ label: t('progression.skill'), className: 'character-skill-progression', attrs: { 'aria-haspopup': 'dialog' } });
-    progressionTip(progression, 'Open progression');
-    progression.addEventListener('click', () => openProgression(progression, 'skills'));
-    if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
-    const skillSection = el('section', { class: 'character-skill-section' }, run.gameProfile?.foundation?.mode === 'configured' ? [] : [progression, skills]);
-    box.querySelector('.combatPowerCard').after(skillSection);
-    box.appendChild(informationCard({
-      id: 'equipmentReceiptsCard',
-      label: 'Equipment cards',
-      summary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
-      body: equipmentReceiptPanel(surface),
-    }));
-    return box;
+    return armouryStatsPanel({
+      registries, run, meta, layout, inCombat, handRules, onCharacterSheet,
+      viewMode, characterPowerEntries, relicEntries, skillProgressMeter, equipmentReceiptPanel, openProgression,
+    });
   }
 
   /** The character's summary is a LabelStack: Eyebrow (the case is the stylesheet's), Title·S, Subtitle. */
