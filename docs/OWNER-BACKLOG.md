@@ -110,5 +110,6 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Add a dedicated code-review branch to the branch model, and move the code review that happens at `dev` to be a sub-step on the path that merges `dev` toward `release` (today: feature/* → dev → test → release → main; review is per PR into dev).
 - Owner 2026-11-07: no preference on placement or on whether per-PR review stops; asked for my recommendation.
 - Recommendation (awaiting owner ok): `dev` → `review` → `test` → `release` → `main`. The review branch gates promotion so bad code never reaches the long suites; keep per-PR review into `dev` for now (no rule removed), and re-evaluate once the review branch proves out.
+- Clarified 2026-11-07 — "its a claude code session": the review branch is owned by a dedicated Claude Code session (not a person or CI job). That session reviews what lands on the branch and passes it on; it is read-only on code except for the merge/promotion step, like `ashen-reviewer`.
 - Questions: accept the recommendation? (asked in chat)
 - Link: —
