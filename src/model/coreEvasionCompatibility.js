@@ -11,6 +11,7 @@
 // The 2026-11-01 retirement of the Evade stance (stances module include and sweep matchups lose 'evade') approves it again and adds the runtime before it (bc9c46...); a save from there keeps its own snapshotted rules, and a saved Evade stance row loads as Defend.
 // The 2026-11-05 removal of Custom Climb and the glassCannon status (engine/mechanics/index.json: status.glassCannon loses its statuses module) approves it again and adds the runtime before it (83a0c5...); a save from there keeps its own snapshotted rules.
 // The 2026-11-05 Reach cap (fixCoreMechanics.json range.maxRange "reach", owner ruling) approves it again and adds the runtime before it (2dcba5...); a save from there keeps its own policy with no cap and three bands.
+// The 2026-11-07 combat-rounds removal (cleanup 3i-A) repoints four mechanic manifests (engine/mechanics/*/mechanic.json legacy.file, hashed into the mechanics-runtime artifact) away from deleted files, which moves the runtime hash; it approves this edge again and adds the runtime before it (0fe8ce...). No rule changed: a save from there keeps its own snapshotted rules.
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
@@ -24,8 +25,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:bc9c46837da134c46cca9abf9f5edc65b5c8132ea88a02235b28e8eaabb85b02',
   'sha256:83a0c5760dc38cbe463b051e4cb1170e5127b3327d1b47f4750bda03b7993fa8',
   'sha256:2dcba5a61dd9744492242292686131de0ecf1c4ce2757f64c1abcf117297f954',
+  'sha256:0fe8ce6f870456545f67f209af3b2f17230fc43b0cc1f99932e6e4185df6d4e5',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:0fe8ce6f870456545f67f209af3b2f17230fc43b0cc1f99932e6e4185df6d4e5';
+const FIXED_EVASION_RUNTIME = 'sha256:b3c6a61e232308597b39a6d77757c473dd6d33b69fe3db848eabba1bc58421f6';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
