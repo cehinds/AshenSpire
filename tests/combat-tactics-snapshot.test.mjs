@@ -50,8 +50,13 @@ test('a fresh fight captures independent tactical tuning before its first intent
   const combat = fight();
   assert.deepEqual(combat.combatMatchupRules, structuredClone(registries.balance.combatMatchups));
   assert.deepEqual(combat.combatIntentRules, structuredClone(registries.balance.combatIntent));
-  combat.combatMatchupRules.counter.defaultDamage = 15;
-  combat.combatIntentRules.baseHiddenChance = 0;
+  // The fight copy is frozen, so it cannot alias or mutate the registries' tables.
+  assert.ok(Object.isFrozen(combat.combatMatchupRules) && Object.isFrozen(combat.combatMatchupRules.counter));
+  assert.ok(Object.isFrozen(combat.combatIntentRules));
+  assert.notEqual(combat.combatMatchupRules, registries.balance.combatMatchups);
+  assert.notEqual(combat.combatIntentRules, registries.balance.combatIntent);
+  assert.throws(() => { combat.combatMatchupRules.counter.defaultDamage = 15; }, TypeError);
+  assert.throws(() => { combat.combatIntentRules.baseHiddenChance = 0; }, TypeError);
   assert.equal(registries.balance.combatMatchups.counter.defaultDamage, 6);
   assert.equal(registries.balance.combatIntent.baseHiddenChance, 0.70);
 });
