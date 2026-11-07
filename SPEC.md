@@ -2973,180 +2973,297 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Crafting / dusting inside the editor | Hearthstone, LoR, Arena | **No** | Copies are earned in play and stacked at the blacksmith (§14.3); a second economy in the editor would duplicate it. |
 | Auto-fill "complete my deck" | Hearthstone, Arena | **No (v1)** | The deck starts from the run's real deck; nothing to fill. |
 
-## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
+## 15. Reward schedule, levelling pace, crafting drops and legendary sigils
 
-**Removed (Unity-port cleanup P2b): the legacy reward door.** Only Core 2 ships, and non-Core runs and saves are refused at load, so the legacy post-fight and treasure reward menu is gone: `main.js beginPendingReward`/`mountPendingReward`, the `roll*` offer family, `rollDrop`/`collectArmament`, the sigil and Smithing Stone treasure offers, `reward.js`'s legacy rows (class milestone/draft, skill draft, level choice, flask, armament, relic, sigil, card rows, the per-level Level up claims) and the `rewardBattle*`/`rewardTreasure*` Advanced settings. Core rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` now draws only the Victory receipt and the card rank-up chooser. Old saves that carry `run.pendingReward` or `run.deferredProgression` still load and validate (they are refused anyway unless Core), but nothing writes them. Where a rule below describes that door, it is historical.
+Governs when card rewards come and how often, the levelling curve and its preview and cap, armament, smithing-stone and refined-stone drops, and legendary sigils. Rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` draws only the Victory receipt and the card rank-up chooser.
 
-**Status: built** (2026-10-02: step 1, this section, landed in #1348; §15.1, the card reward schedule, in #1351; §15.2, the levelling preview and per-fight cap, in #1349; §15.3, crafting drops, in #1352; step 5, legendary sigils (§15.4), in #1455, to the shapes pinned below in #1439). The owner asked for several things:
-- a choice of when card rewards come: after battle, on level-up, both or neither;
-- a percent chance for a card reward to drop;
-- XP settings that show what they do ("I change them and I'm levelling up way too much");
-- more non-card rewards: armaments and equipment, smithing-stone drop chances, and legendary runes with unique properties built on the tag system.
-
-This section is that contract. The rules from §14's preamble apply here too:
-- Every number is a `balance.*` leaf with a `[NOTE]`, so it gets its `gameConfig.*` Settings row generated and is frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
-- Every shipped default reproduces today's behaviour, so an existing seed rolls exactly what it rolled before.
+Rules from §14's preamble apply:
+- Every number is a `balance.*` leaf with a `[NOTE]`, so its `gameConfig.*` Settings row is generated and frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
+- Shipped defaults reproduce earlier behaviour, so an existing seed rolls what it rolled before.
 - New run state is additive, with a schema bump and a captured corpus save per PR.
-- Every new **percentage chance** (`cardRewards.chancePct.*`, `equipment.drops.chance.normal`, `smithing.rewardChancePct.*`, `sigils.dropChancePct.*`) gets an explicit `BALANCE_DOMAINS` entry of 0–100 in `model/advancedConfig.js`, because `leafRows` otherwise derives the range from the shipped value (a 0 would cap at 20, a 100 would allow 1000). `maxLevelsPerFight` gets 0–20.
+- Every new percentage chance (`cardRewards.chancePct.*`, `equipment.drops.chance.normal`, `smithing.rewardChancePct.*`, `sigils.dropChancePct.*`) has an explicit 0-100 `BALANCE_DOMAINS` entry in `model/advancedConfig.js` (`leafRows` otherwise derives the range from the shipped value). `maxLevelsPerFight` gets 0-20.
 
-"Runes" are named **sigils** here for the reason §14.3 gives: "runes" is the old currency word.
+"Runes" are named **sigils** here (§14.3).
 
 ### 15.1 The card reward schedule
 
-These keys go in `balance.rewards.cardRewards`.
+Controls whether, when and how often a fight offers cards. Keys live in `balance.rewards.cardRewards`.
 
-| Key | Shipped default | Meaning |
+| Key | Default | Meaning |
 |---|---|---|
-| `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
-| `chancePct.normal` / `.elite` / `.boss` | `10` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
-| `onLevelUp` | `true` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
-| `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
+| `afterCombat.normal` / `.elite` / `.boss` | `true` | A won fight of that pool offers a card row. |
+| `chancePct.normal` / `.elite` / `.boss` | `10` | Chance 0-100 that an eligible fight offers the card row. 100 rolls nothing. |
+| `onLevelUp` | `true` | A fight that raised the character level (§13.4i) adds a **level card** row. |
+| `onLevelUpMaxPerFight` | `1` | Most level-card rows one fight adds, however many levels it gained. |
 
-- **Offer size.** It stays `rewards.cardChoices`, which already has a row. (Owner, 2026-11-05: the live Core 2 combat door lays out a random 3 to 5 choices, `combatOfferCount` in the core pack's `rewards.json`, rolled once on `cardRewards` when the offer is first made; `offerCount` (3) still sizes chests, level cards and the shop's fallback, and a settings `offerCount` other than `combatOfferCount.appliesAtOfferCount` overrides the range.) The Feral Eye relic still adds +1 at elites.
-- **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
-- **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card` and `levelChoice`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
-- **October 3 owner defaults** (to be replaced where §13.4o says so, once built). Solo combat rolls its card independently of skill/class drafts. Every non-class skill level queues a guaranteed card draft; when its schools have no eligible cards, it uses the class pool with the skill's rarity gate. Existing per-door draft limits still queue excess drafts. `balance.rewards.sourceBonuses` supplies independent chances: `combatFeatChancePct: 5`, `classFeatChancePct: 100`, `classCardChancePct: 25`. Each class level keeps its class-tree upgrade as well as the guaranteed feat and separate technique-card roll. Bonuses are checkpointed in `levelChoices`/`levelCards` with `source: combat|class`; class rows carry `skillId` and `claimOrdinal` and unlock only after their class level is claimed. `classRewardLevels` records already issued class-level bonuses, including levels claimed outside combat. Character-level reward switches do not remove class technique cards. This extension applies to the solo reward door.
-- **Consumers.** `main.js onCombatEnd` and `tools/simrun.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo play and the simulator share one rule.
-- **Stance coverage (Core profile, owner 2026-10-19).** Every card offer reserves `stanceCoverage.reservedSlots` (shipped 1) slot for a basic or cantrip card of a basic stance the character owns no card of (deck plus collection), drawn on `cardRewards`; once every stance is owned, or none has such a card, offers roll as before (`reward-ranks` module, `src/model/stanceCoverage.js`, `tests/stance-coverage-rewards.test.mjs`). Core 2 then picks each remaining card by weight (owner, 2026-10-24/25): tag weight (product of the card's matching `tagWeights`, else `default`; shipped casting 1, smash/counter/sweep 10, default 3) times `ownedCopyWeight` (shipped 0.2) to the power of the copies already owned (deck plus sideboard), drawn with one `rng.float` on the offer's stream; when every weight is equal the draw is the plain `rng.pick`. Core 2 relic picks use `eligibility.relics.weights` (Brimming Gourd 20, default 1). Every Core 2 shop offer rolls its own price once, with `rng.int('shop', min, max)` from `shops.priceTable` by kind and rarity (owner, 2026-10-25: a quarter of the first table, e.g. common card 34-41, rare relic 203-225 cinders), and keeps it in the saved stock; an older save falls back to the single stock `price`. Legacy rewards and the legacy merchant are unchanged.
-- **Core 2 reward mix, unowned bias and depth lean (owner, 2026-10-27).** The owner: "make the rewards 70% chance of cards, 20% potions, 10% weapons. and make it way less likely to get cards you already have, it should lean towards new cards every time. I feel like I get the same 5 cards usually." Combat `rewardGroups` (`packs/core/rewards.json`) are cards 66 plus weapon arts 4 (together 70), potions 18 plus the flask relic 2 (the potions share is 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among relics in combat, the Core 2 flask reward), weapons 10, and armor and every other relic retired from combat rewards ( elites and bosses roll the same table, since the configured Core run has no separate one, and the shop still fills its own shelves per category). Treasure chests are not combat: owner, 2026-10-27, "Chests keep relics." A treasure node rolls `source: 'treasure'` against `treasureRewardGroups` (cards and weapon arts 60, weapons, armor and relics 10, potions 30, the table chests used before the 70/20/10 change), so a chest still offers relics, armor and weapons (`tests/core-reward-mix.test.mjs`). A reward screen never offers a weapon art already owned (`eligibility.weaponArts.skipOwned`). (Owner, 2026-11-05: the weapon-art pool is the learnable arts of the carried weapons the player does not own, `skipOwned` applies to shops and the Blacksmith shelf as well, and an art stocked in the visited shop or shown on the open reward door is not offered by the other.) Root cause of "the same 5 cards": a tag weight of 10 on smash/counter/sweep over 3 for the rest, the owned-copy weight at only 0.2, one weapon art taking half the card group, and no memory of earlier screens. Card weights are now `ownedCopyWeight` 0.05 per owned copy, tag weights casting 1, smash/counter/sweep 2, default 1.5, and a card shown on one of the last `recentOfferWindow` (3) reward screens times `recentOfferWeight` (0.1; the screens are read from `run.gameProfileRewardOffers`, so no save field is added). The owner, later the same day: "try to favor cantrip or basic cards for the first few nodes and then more higher cards (mana cost cards) after node 3." `depthBias` multiplies the weight by map depth (`run.floor`, the node the reward comes from): depth 1-3 basic or cantrip cards x2.5 (basic = named by a `cardPools` entry outside `special`, cantrip = tagged `rank.cantrip`, as stance coverage reads them) and cards with `manaCost` > 0 x0.4; depth 4 and later mana cards x1.8 and rank 2+ cards x1.5. Core 1 pins all of these neutral (`tests/core-reward-mix.test.mjs`, `tests/reward-card-weights.test.mjs`).
-- **Skills, powers and variety (owner, 2026-11-05).** "Offer more skills and powers" and "the same cards are offered every run". `reward-ranks` gains `typeWeights` (attack 1, skill 2, power 2; a card's pick weight is multiplied by its type's entry, absent = 1, no guaranteed slot), so skills and powers are offered more often while `ownedCopyWeight` (0.05) still dominates. The sameness root cause was the reserved stance-coverage slot: it picked a missing stance uniformly and then a card, so a stance with few basics (sweep) put the same 2 to 3 cards in most first doors; it now weighs a stance by the sum of its cards' weights (every eligible card equally likely). Also softened: `maneuver:smash/counter/sweep` 2 to 1.5 and the early-depth `basicOrCantrip` multiplier 2.5 to 1.8. Measured over 50 first doors (Reaver): distinct cards 48 to 63, top card 28% to 22% of doors, top five 39% to 26% of card slots (`tests/reward-door-size-mix.test.mjs`).
-- **Elemental cantrip families (owner, 2026-11-01).** "also the spark cantrip, have similar cantrips for fire and frost and healing, and rot. look at the cantrip lists for dnd 5.5e and pf 1e. use those as references but the goal is to have cards for each." Each element has a family of 3-5 Core cantrips, adapted from the ROLE of a reference cantrip with original names and text. A family card is `colorless`, `rank.cantrip`, `camp:spell`, `source:spell`, 1 SP and 0 MP, carries one registered `school:` tag (`fire`, `frost`, `lightning`, `divine` for healing, `decay` for rot) that the weakness system reads, has an `upgrade` block, a face of 1-3 lines of at most 5 words with no tag effects written on it, and is offered as a Core reward like `core.frostNip`. Only existing ops and statuses are used: a role that needs a missing rule (a conditional bonus, a Block-piercing hit, no-heal, Burn resist) is approximated with the nearest existing effect. Families: Fire (`core.cinderDart`, `core.emberFlick`, `core.dazzleFlare`, `core.palmFlame`, `core.cinderWard`); Frost (`core.frostNip`, `core.rimeBite`, `core.brittleTouch`); Healing (`core.mendingTouch`, `core.steadyHands`, `core.guidingWhisper`, `core.hallowedWard`, `core.dawnFlame`); Rot (`core.venomSpray`, `core.graveToll`, `core.wearyingTouch`, `core.rendingHex`, `core.acidSplash`); Healing cantrips that heal are not unlimited-copy for the Magic Adept: `core.steadyHands` joins `core.mendingTouch` in the graduate rule's `excludeCards` (the 2026-10-28 ruling). Lightning (`core.jolt`, `core.shockingGrasp`, `core.stormLash`, authored with today's effects and `school:lightning`; they gain the Lightning tag behaviour when feature/ElementsLightning merges; Spark itself is built there).
-- **Owned potions (owner, 2026-10-31).** Changed: reward offers try to avoid what the character already holds. A potion already in the belt (`run.flasks`) is offered at `ownedPotionWeight` (`reward-ranks`, Core 0.05, Core 1 pinned to 1) to the power of the copies held, drawn with one `rng.float` on the offer's stream; it is a much lower chance, not a forced skip, and applies to combat rewards, chests and shops alike (`weightedPotionPick`, `tests/reward-potion-weights.test.mjs`). With nothing held the draw is the plain `rng.pick`, so existing seeds are unchanged. Owned cards (`ownedCopyWeight`, shipped 0.05) are weighted the same way in every offer, including shops and chests; owned weapons, relics and armour stay excluded outright.
-- **Offered cards (owner, 2026-10-31).** Changed: reward offers favour cards new to the run. The run keeps `run.rewardOfferHistory = { cards: { [cardId]: timesOffered } }`, bumped once for every card a combat reward, chest or shop offer presents when the offer is first created (offers are cached per offerId, so a reload never counts twice) and saved with the run (absent in an old save = empty). A card pick, including the reserved stance-coverage slot, is multiplied by `offeredCopyWeight^timesOffered` (`reward-ranks`, 0..1, Core 2 default 0.25, Core 1 pinned to 1), so a card shown and skipped comes back at a lower chance, never a forced skip; a card the player took stays governed by `ownedCopyWeight`. Shop card stock uses the same pick. With an empty history or the weight at 1 every weight is equal and the draw is the old uniform `rng.pick`, so a run's first offer on an existing seed is unchanged and later offers differ because the history weighs on them.
-- A saved `pendingReward` written before this section reads as "card row as rolled".
+- **Offer size** is `rewards.cardChoices`.
+  - Core 2 combat door: a random 3 to 5 choices (`combatOfferCount` in the core pack's `rewards.json`), rolled once on `cardRewards` when the offer is first made (owner, 2026-11-05).
+  - `offerCount` (3) sizes chests, level cards and the shop's fallback; a settings `offerCount` other than `combatOfferCount.appliesAtOfferCount` overrides the range.
+  - The Feral Eye relic adds +1 at elites.
+- **Chance rolls.** Use the stream **`rewardRolls`**, appended to the end of `STREAM_NAMES`. A failed roll leaves no card row; the menu says "No card this time."
+- **Level card row.**
+  - Cards come from the class reward pool at the door's rarity odds via `rollCardRewardIds` on `cardRewards`.
+  - `REWARD_KIND_ORDER` kind `levelCard`, after `card` and `levelChoice`; row key `levelCard:<ordinal>`; taken and skipped like the card offer.
+  - Each row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]` (not the single `chosenCardId`, which stays the `card` row's).
+  - `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name.
+- **October 3 owner defaults** (solo reward door; replaced where §13.4o says so).
+  - Solo combat rolls its card independently of skill/class drafts.
+  - Every non-class skill level queues a guaranteed card draft (class pool with the skill's rarity gate if its schools have no eligible cards); per-door draft limits still queue excess drafts.
+  - `balance.rewards.sourceBonuses` gives independent chances: `combatFeatChancePct` 5, `classFeatChancePct` 100, `classCardChancePct` 25.
+  - Each class level keeps its class-tree upgrade plus the guaranteed feat and a separate technique-card roll.
+  - Bonuses are checkpointed in `levelChoices`/`levelCards` with `source: combat|class`; class rows carry `skillId` and `claimOrdinal` and unlock only after their class level is claimed.
+  - `classRewardLevels` records issued class-level bonuses, including levels claimed outside combat.
+  - Character-level reward switches do not remove class technique cards.
+- **Consumers.** `main.js onCombatEnd` and `tools/simrun.mjs` read the schedule through `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`.
+
+#### Core 2 offer weighting
+
+| Rule | Value |
+|---|---|
+| Stance coverage (Core, owner 2026-10-19) | Each card offer reserves `stanceCoverage.reservedSlots` (1) slot for a basic or cantrip card of a basic stance the character owns no card of (deck plus collection), drawn on `cardRewards`. Once every stance is owned, or none has such a card, offers roll as before. A missing stance is weighed by the sum of its cards' weights, so every eligible card is equally likely. (`reward-ranks` module, `src/model/stanceCoverage.js`, `tests/stance-coverage-rewards.test.mjs`) |
+| Card pick weight | tag weight (product of the card's matching `tagWeights`, else `default`) x `ownedCopyWeight`^(copies owned, deck plus sideboard) x `offeredCopyWeight`^`timesOffered` x `typeWeights[type]` x recent-offer x depth bias. One `rng.float` on the offer's stream; when all weights are equal the draw is the plain `rng.pick`. |
+| `tagWeights` | casting 1, `maneuver:smash/counter/sweep` 1.5, default 1.5 |
+| `ownedCopyWeight` | 0.05 |
+| `offeredCopyWeight` | 0.25 (range 0..1; Core 1 pinned to 1) |
+| `typeWeights` | attack 1, skill 2, power 2 (absent = 1; no guaranteed slot) |
+| Recent offers | a card shown on one of the last `recentOfferWindow` (3) reward screens x `recentOfferWeight` 0.1; screens read from `run.gameProfileRewardOffers` (no save field) |
+| `depthBias` by `run.floor` (the reward's node) | depth 1-3: basic or cantrip cards x1.8 (basic = named by a `cardPools` entry outside `special`; cantrip = tagged `rank.cantrip`), cards with `manaCost` > 0 x0.4. Depth 4+: mana cards x1.8, rank 2+ cards x1.5. |
+| Relics | `eligibility.relics.weights` (Brimming Gourd 20, default 1) |
+| Potions | a potion already in the belt (`run.flasks`) is offered at `ownedPotionWeight` (Core 0.05; Core 1 pinned to 1)^(copies held), one `rng.float`; a lower chance, not a skip; applies to combat rewards, chests and shops (`weightedPotionPick`, `tests/reward-potion-weights.test.mjs`). With nothing held the draw is the plain `rng.pick`. |
+| Owned items | Owned cards weigh by `ownedCopyWeight` in every offer, shops and chests included; owned weapons, relics and armour are excluded outright. |
+| Offer history | `run.rewardOfferHistory = { cards: { [cardId]: timesOffered } }`, bumped once per card when a combat, chest or shop offer is first created (offers cache per offerId, so a reload never counts twice); saved with the run (absent = empty). A shown-and-skipped card returns at lower chance, never a forced skip; a taken card stays under `ownedCopyWeight`. Shop card stock uses the same pick. With empty history or weight 1 the draw is the old uniform `rng.pick`. |
+| Shop prices | Each Core 2 shop offer rolls its price once with `rng.int('shop', min, max)` from `shops.priceTable` by kind and rarity (e.g. common card 34-41, rare relic 203-225 cinders) and keeps it in the saved stock; an older save falls back to the single stock `price`. Legacy rewards and the legacy merchant are unchanged. |
+
+Core 1 pins all of these neutral (`tests/core-reward-mix.test.mjs`, `tests/reward-card-weights.test.mjs`, `tests/reward-door-size-mix.test.mjs`).
+
+#### Core 2 reward mix (owner, 2026-10-27)
+
+Combat `rewardGroups` (`packs/core/rewards.json`); elites and bosses roll the same table.
+
+| Group | Weight |
+|---|---|
+| Cards | 66 |
+| Weapon arts | 4 (cards + arts = 70) |
+| Potions | 18 |
+| Flask relic | 2 (potions share = 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among combat relics, the Core 2 flask reward) |
+| Weapons | 10 |
+| Armor and every other relic | retired from combat rewards (the shop fills its own shelves per category) |
+
+- **Treasure chests** roll `source: 'treasure'` against `treasureRewardGroups`: cards and weapon arts 60, weapons, armor and relics 10, potions 30. A chest still offers relics, armor and weapons (`tests/core-reward-mix.test.mjs`).
+- **Weapon arts.** A reward screen never offers an owned art (`eligibility.weaponArts.skipOwned`). The pool is the learnable arts of carried weapons the player does not own; `skipOwned` also applies to shops and the Blacksmith shelf; an art stocked in the visited shop or shown on the open reward door is not offered by the other (owner, 2026-11-05).
+
+#### Elemental cantrip families (owner, 2026-11-01)
+
+Each element has 3-5 Core cantrips. A family card is `colorless`, `rank.cantrip`, `camp:spell`, `source:spell`, 1 SP and 0 MP, carries one registered `school:` tag the weakness system reads, has an `upgrade` block, a face of 1-3 lines of at most 5 words with no tag effects written on it, and is offered as a Core reward like `core.frostNip`. Only existing ops and statuses are used; a role needing a missing rule is approximated with the nearest existing effect.
+
+| Element | `school:` tag | Cards |
+|---|---|---|
+| Fire | `fire` | `core.cinderDart`, `core.emberFlick`, `core.dazzleFlare`, `core.palmFlame`, `core.cinderWard` |
+| Frost | `frost` | `core.frostNip`, `core.rimeBite`, `core.brittleTouch` |
+| Healing | `divine` | `core.mendingTouch`, `core.steadyHands`, `core.guidingWhisper`, `core.hallowedWard`, `core.dawnFlame` |
+| Rot | `decay` | `core.venomSpray`, `core.graveToll`, `core.wearyingTouch`, `core.rendingHex`, `core.acidSplash` |
+| Lightning | `lightning` | `core.jolt`, `core.shockingGrasp`, `core.stormLash` (authored with today's effects; gain Lightning tag behaviour when feature/ElementsLightning merges, where Spark is built) |
+
+Healing cantrips that heal are not unlimited-copy for the Magic Adept: `core.steadyHands` joins `core.mendingTouch` in the graduate rule's `excludeCards` (2026-10-28 ruling).
 
 *Falsify:*
-- With `afterCombat.normal: false`, a normal win offers no card row, and an elite win still offers one.
-- With `chancePct.elite: 0`, an elite win never offers a card row. With 100, the `rewardRolls` counter does not move.
-- With `onLevelUp: true`, a fight that levels offers exactly one `levelCard` row, and a fight that doesn't offers none.
-- With `onLevelUpMaxPerFight: 2`, a fight that gains two levels offers `levelCard:0` and `levelCard:1`; taking both and reloading restores both picks.
-- With every key at its default, 50 fixed seeds offer byte-identical rewards to the ones before this section.
+- `afterCombat.normal: false`: a normal win offers no card row; an elite win still does.
+- `chancePct.elite: 0`: an elite win never offers one. At 100, the `rewardRolls` counter does not move.
+- `onLevelUp: true`: a fight that levels offers exactly one `levelCard` row; one that doesn't offers none.
+- `onLevelUpMaxPerFight: 2`: a two-level fight offers `levelCard:0` and `levelCard:1`; taking both and reloading restores both picks.
+- Every key at default: 50 fixed seeds offer byte-identical rewards to before this section.
 
 ### 15.2 Levelling pace you can see
 
-The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The current curve is the base-200 ×1.5 exponential (owner, 2026-11-05) curve of `balance.level.xp` (`src/content/balance.js`), set out in the §13.4o curve table (the October 1 linear curve came before it); the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
+Shows the configured levelling pace in Settings and optionally caps levels per fight. The curve is the base-200 x1.5 exponential `balance.level.xp` (`src/content/balance.js`), tabulated in §13.4o. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` rounds the multiplied awards into the configured registries). `levelUpValue` **replaces** `pointsPerLevel` as the points per level. This section changes no curve or award number; the owner retunes them in Settings.
 
-**Owner decision, named.** The September 24 base-5 curve explained the historical fast levelling. The October 1 curve contract supersedes those defaults. This preview feature itself changes no curve or award number; it shows the configured pace so either side can be retuned in Settings.
-
-- **Levelling preview.** Settings → Progression gains a **Levelling preview**, `ui/models/LevelPacePreviewModel.js`, drawn live from the configured registries in force (so `xpMultiplier` is counted once, where `configuredContentBundle` applies it) and `levelUpValue`. It shows:
-  - the XP to reach each of levels 2–20;
-  - "a normal fight (3 kills) gives N XP", the same for an elite and a boss, and **how many levels each is worth from level 1 and from level 10**;
+- **Levelling preview.** Settings -> Progression, `ui/models/LevelPacePreviewModel.js`, drawn live from the configured registries (`xpMultiplier` counted once, where `configuredContentBundle` applies it) and `levelUpValue`. It shows:
+  - XP to reach each of levels 2-20;
+  - "a normal fight (3 kills) gives N XP", and the same for an elite and a boss, with how many levels each is worth from level 1 and from level 10;
   - the stat points those levels grant.
 
-  The preview's numbers come from the one pure function `levelPace(configuredRegistries, { pointsPerLevel })` in `model/levelup.js`, which `awardLevelXp` also uses, so the preview can never disagree with play.
-- **A levelling cap.** It is `balance.level.maxLevelsPerFight`, shipped `0`, meaning no cap (a number, so it gets its generated Settings row). When above 0, one award never raises the level by more than this, and the XP past the cap is **discarded**: the level's `xp` is left at `xpToNext − 1` at most, so the reward screen's progress bar never shows XP above the step. Discarding is what makes the cap reduce levelling rather than only delay it. `validate.js`'s `balance.level` allowlist gains the key.
-- **Stale comments.** The out-of-date comments in `balance.js` about the old 100/120… curve are corrected to the live numbers.
-- **Numbers.** No balance number changes here. The owner tunes them through the preview.
+  Numbers come from `levelPace(configuredRegistries, { pointsPerLevel })` in `model/levelup.js`, which `awardLevelXp` also uses, so preview and play cannot disagree.
+- **Levelling cap.** `balance.level.maxLevelsPerFight`, default `0` = no cap (generated Settings row). Above 0, one award never raises the level by more than this and XP past the cap is **discarded**: `xp` is left at `xpToNext - 1` at most, so the progress bar never shows XP above the step. `validate.js`'s `balance.level` allowlist gains the key.
 
 *Falsify:*
-- The preview's "normal fight" line equals `combatLevelXp` on the configured registries for three normal kills, with `xpMultiplier: 2` included exactly once.
-- Its levels-gained figure equals what `awardLevelXp` actually awards from level 1.
-- With `maxLevelsPerFight: 1`, a boss kill from level 1 gains exactly one level and leaves `xp < xpToNext`. With 0, it gains 13.
+- The preview's "normal fight" line equals `combatLevelXp` on the configured registries for three normal kills, with `xpMultiplier: 2` counted exactly once.
+- Its levels-gained figure equals what `awardLevelXp` awards from level 1.
+- `maxLevelsPerFight: 1`: a boss kill from level 1 gains exactly one level and leaves `xp < xpToNext`. At 0 it gains 13.
 
 ### 15.3 Armament, equipment and crafting drops
 
-These are chances per reward pool, and the defaults reproduce today's drops.
-- **Armament drops.** `balance.equipment.drops.chance` gains `normal`, shipped `0`, beside today's treasure 60, elite 30 and boss 100, and `drops.rarityWeights` gains a `normal` row (a copy of `elite`'s), since a chance above 0 with no weights row would draw and return nothing. Drops still roll on the `armaments` stream through `rollArmamentDrop`; the shipped chance of 0 returns before any draw, so today's rewards are unchanged.
-- **Armour is out of scope, stated.** `rollArmamentDrop` draws from `equipment.armaments` (weapons, shields and staves, from weapons.csv). Armour comes from outfits.csv, has no run inventory to land in, and does not drop. An armour drop needs that inventory first and is a follow-up section, not this one.
-- **Smithing stone drop chance.** `balance.smithing.rewardChancePct` holds `{ normal, elite, boss, treasure }`, all shipped at `100`. A stone reward is paid when `rewardByPool[pool] > 0` and the chance passes, rolled on the existing `smith` stream; 100 rolls nothing. The caller passes the RNG into `grantSmithingReward`, so the model rolls nothing on its own. The claim is recorded in `smithingRewardClaims` whether the roll passes or fails, so a retried door never rolls again. Treasure calls `grantSmithingReward` **only when** `rewardByPool.treasure` or `refinedRewardByPool.treasure` is above 0. Both ship at 0, so treasure writes no claim and saves are unchanged until the owner raises one.
-- **Refined stones as a drop.** `balance.smithing.refinedRewardByPool` holds `{ normal: 0, elite: 0, boss: 0, treasure: 0 }` and pays `run.smithingStonesRefined` (the refined stone of §14.4) through the same door and the same chance. This is the crafting-material reward. Spending refined stones arrives with §14.4's blacksmith (`refine.value`); §15 adds no second value key and no spending. Until §14.4 lands they show in the inventory. The `smithingStone` reward row shows when either the stone or the refined amount is above 0, and names both.
+Chances per reward pool; defaults reproduce today's drops.
+
+| Drop | Key | Default | Rule |
+|---|---|---|---|
+| Armament | `balance.equipment.drops.chance` | `normal` 0, treasure 60, elite 30, boss 100 | `drops.rarityWeights` gains a `normal` row (copy of `elite`'s). Rolls on the `armaments` stream via `rollArmamentDrop`; a chance of 0 returns before any draw. |
+| Smithing stone | `balance.smithing.rewardChancePct` `{ normal, elite, boss, treasure }` | all `100` | Paid when `rewardByPool[pool] > 0` and the chance passes, on the `smith` stream; 100 rolls nothing. The caller passes the RNG into `grantSmithingReward`. The claim is recorded in `smithingRewardClaims` pass or fail, so a retried door never rolls again. Treasure calls `grantSmithingReward` only when `rewardByPool.treasure` or `refinedRewardByPool.treasure` is above 0 (both ship 0, so treasure writes no claim and saves are unchanged). |
+| Refined stone | `balance.smithing.refinedRewardByPool` `{ normal, elite, boss, treasure }` | all `0` | Pays `run.smithingStonesRefined` (§14.4) through the same door and chance. Spending arrives with §14.4's blacksmith (`refine.value`); §15 adds no second value key and no spending. The `smithingStone` reward row shows when the stone or refined amount is above 0 and names both. |
+
+- **Armour does not drop.** `rollArmamentDrop` draws from `equipment.armaments` (weapons, shields, staves from weapons.csv). Armour (outfits.csv) has no run inventory; an armour drop needs one first and is a follow-up.
 
 *Falsify:*
-- With defaults, a seed's armament and stone drops are unchanged.
-- With `drops.chance.normal: 100`, every normal win drops an armament while one remains unfound.
-- With `rewardChancePct.elite: 0`, an elite pays no stone. With 100, the `smith` counter does not move.
+- Defaults: a seed's armament and stone drops are unchanged.
+- `drops.chance.normal: 100`: every normal win drops an armament while one remains unfound.
+- `rewardChancePct.elite: 0`: an elite pays no stone. At 100, the `smith` counter does not move.
 - A refined stone reward pays and survives a reload.
 
 ### 15.4 Legendary sigils — unique properties through the tag system
 
-A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a property rule. No engine code is written per sigil.
-- **Rarities.** Sigils have their own closed vocabulary, `SIGIL_RARITIES = ['common', 'uncommon', 'rare', 'legendary']` in `model/schemas.js`. Relic rarities are unchanged, and `balance.js`'s note that the game has no legendary rarity is amended to "no legendary relic or card".
-- **This amends §14.3.** A sigil is authored either as §14.3's `{ id, name, rarity, blurb, cost }`, which works only while installed in a slot, or, for `legendary` only, as `{ id, name, rarity, blurb }`, which works only while attuned. A legendary's property is **not authored on the sigil**: `tagging.csv` is the one association table, so its `family = sigil` row is the only home of the tag, and `stampTags` derives the sigil's `propertyTags` from it as it does for every carrier. Since #1376 this holds for every sigil (§14.3): `validateContent` refuses any sigil with `triggers`/`modifiers` by name, and a non-legendary differs only in being slotted rather than attuned. A legendary has no `cost` and is **never shop stock**: §14.3's market `sigils` shelf, and any blacksmith sigil stock a later offering adds (§14.4 sells none), draw only non-legendary sigils, and the drop below is a legendary's only source.
+A **legendary sigil** is a §14.3 sigil at a new rarity whose effect is a property rule; no engine code is written per sigil. It works only while **attuned**, is never shop stock, and drops only from rewards.
+
+- **Rarities.** `SIGIL_RARITIES = ['common', 'uncommon', 'rare', 'legendary']` in `model/schemas.js`. Relic rarities are unchanged; `balance.js`'s note becomes "no legendary relic or card".
+- **Amends §14.3.**
+  - A sigil is authored as §14.3's `{ id, name, rarity, blurb, cost }` (works only while slotted) or, for `legendary` only, `{ id, name, rarity, blurb }` (works only while attuned).
+  - A sigil's property is not authored on it: `tagging.csv`'s `family = sigil` row is the one home of the tag and `stampTags` derives `propertyTags` from it. `validateContent` refuses any sigil with `triggers`/`modifiers` by name.
+  - A legendary has no `cost` and is never shop stock: §14.3's market `sigils` shelf and any blacksmith sigil stock draw only non-legendaries (§14.4 sells none).
 - **Content.**
-  - Each sigil's property node is a **leaf** in `content/source/nodes.csv` under a new `sigil` branch of `property`.
-  - Its `family = sigil` tagging row is in `tagging.csv`, with the family registered in `tagFamilies.csv` and `familyNodes.csv` gaining `sigil,property` and `sigil,classification`; `nodes.csv` gains the leaf `classification.sigil`, and every sigil carries exactly one `classification.sigil` tagging row (a collection-backed family's kind, `model/tree.js`).
-  - Its rule is in `nodeEffects.json`, with its variables declared in `nodeVariables.csv` and bound through `variableBindings.csv` to `balance.sigils.*`.
-  - `validateContent` refuses, by name, a sigil that derives no property tag, a legendary sigil that does not derive **exactly one**, or a sigil whose tag is not a leaf under `sigil` with a `nodeEffects` entry (the `sigil` branch node itself has no rule and is not a valid tag).
-  - The shipped set is at least three legendaries, each an `on`/`if` combination no relic uses, built from the existing `EVENTS`, so no new event or engine code is needed.
-- **Ownership.** It is `run.sigils: string[]`, §14.3's field, added at §14 step 5. An attuned sigil stays in `run.sigils`; `run.attunedSigils` names a subset of it.
-- **Attunement.** A legendary sigil works while it is **attuned**. The run attunes at most `balance.sigils.attuneMax` (shipped 1) at a time, chosen from the inventory out of combat. The player does this in the **Armoury's Sigils panel** (out of combat only, like every Armoury change that is not a mid-fight swap): each owned legendary shows **Attune** or **Unattune**, through the model pair `attuneSigil(registries, run, id)` / `unattuneSigil(run, id)` in `model/sigils.js`, which refuse by name an unowned or non-legendary id and an attune past `attuneMax` (the sentence is shown in place). `MOUNTABLE_KINDS` gains a `sigil` kind, and a new `syncSigilProperties` mounts each attuned sigil's property under `sigil:<id>` the way `syncRelicProperties` mounts relics. `attunedSigils` is carried into `createCombat` and combat snapshot restore. `run.attunedSigils: string[]` is saved and checked (each id owned, legendary, and within `attuneMax`). §14.4's slots hold non-legendary sigils. A legendary is attuned, never slotted.
-- **The drop.** It is a new reward kind, `sigil`, after `relic`, with chance `balance.sigils.dropChancePct` `{ normal: 0, elite: 0, boss: 0, treasure: 0 }`. It is shipped off; the owner turns it on in Settings. The roll is on a new stream, **`sigils`**, appended to the end of `STREAM_NAMES`. It never drops a sigil the run already owns, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`.
+  - Each sigil's property node is a leaf in `content/source/nodes.csv` under a new `sigil` branch of `property`.
+  - Its `family = sigil` row is in `tagging.csv`; the family is registered in `tagFamilies.csv`; `familyNodes.csv` gains `sigil,property` and `sigil,classification`; `nodes.csv` gains leaf `classification.sigil`; every sigil carries exactly one `classification.sigil` tagging row.
+  - Its rule is in `nodeEffects.json`, variables declared in `nodeVariables.csv` and bound by `variableBindings.csv` to `balance.sigils.*`.
+  - `validateContent` refuses, by name: a sigil that derives no property tag; a legendary that does not derive exactly one; a tag that is not a leaf under `sigil` with a `nodeEffects` entry (the `sigil` branch node has no rule and is not a valid tag).
+  - The shipped set is at least three legendaries, each an `on`/`if` combination no relic uses, built from existing `EVENTS`.
+- **Ownership.** `run.sigils: string[]` (§14.3). An attuned sigil stays in `run.sigils`; `run.attunedSigils` names a subset. §14.4's slots hold non-legendaries; a legendary is attuned, never slotted.
 
-**The shapes step 5 builds to** (2026-10-02, SPEC-only, before the feature PR per CONTRIBUTING ground rule 1).
+| Key | Meaning |
+|---|---|
+| `balance.sigils.attuneMax` (default 1) | Whole number from 0 (0 = nothing attunable). Most sigils attuned at once. |
+| `balance.sigils.dropChancePct.normal` / `.elite` / `.boss` / `.treasure` (default 0) | Whole numbers 0-100, each with an explicit 0-100 `BALANCE_DOMAINS` entry. Shipped off; the owner enables them in Settings. |
 
-- **Rarity at every door.** This one rule governs every persisted position that holds a sigil id. Each position belongs to exactly one of three classes, and the lists below are exhaustive.
-  - **Legendary only.** An id here must name a known legendary sigil. The positions are `run.attunedSigils`, a fight in progress's `combatEntered.snapshot.attunedSigils`, and a pending reward's `pendingReward.rewards.sigilId`.
-  - **Never legendary.** An id here must not name a legendary sigil. The positions are `run.sigilSlots`, a fight in progress's `combatEntered.snapshot.sigilSlots`, the market sigil shelf on `run.shopStock.sigils`, and the same shelf on an atlas point's `journey.serviceStates[pointId].stock.sigils`.
-  - **Either.** `run.sigils` is the inventory, so it holds both kinds: a legendary is carried there, attuned or not, and the non-legendaries wait there for a slot.
-  - `run.attunedSigils` holds no more than the run's `attuneMax`.
-  - The rule is checked at the door that restores a run: the `engine/save.js` load, which reads one model check, `sigilRarityProblems(registries, run)` in `model/sigils.js`, which checks both restricted classes.
-  - Each violation is refused by name. The load door archives the save as it does every other malformed reference.
-  - As defence in depth, `sigilPurchasePlan` also refuses a legendary by name, so no shelf a hand edit filled can sell one.
-  - A persisted sigil-id position added later must be assigned to one of these classes in the same PR that adds it.
-  - The bullets below cite this rule where they apply it.
-- **The field.** `run.attunedSigils: string[]` holds distinct ids, each also in `run.sigils`. `validateRunShape` is registry-free and refuses, by name: a value that is not a list, an id that is not a non-empty string, an id named twice, and an id that is not in `run.sigils`. Under **rarity at every door** (above), both restore doors refuse, by name, an attuned id that is not a legendary sigil, and a list longer than the run's `attuneMax`. They read that number from the run's frozen `advancedConfigSnapshot` override (`gameConfig.balance.sigils.attuneMax`), else from the bundle default, so the first load pass, which uses the authored registries, does not refuse a run whose Settings row was raised. An unknown attuned id is already refused through `unknownSigilId`, because the list is a subset of `run.sigils`. A legendary in `run.sigilSlots` is refused at the same doors (**rarity at every door**): §14.4's install already refuses one, so only a hand edit can put it there.
-- **Schema.** One bump, 18 → 19. `attunedSigils` is a required `RUN_SHAPE` row at 19. `migrateRunSchema` fills `[]` for a v18-or-older save and leaves `run.sigils` untouched. The step appends one captured schema-19 save to the corpus and edits no existing entry.
-- **The numbers.** `balance.sigils.attuneMax` is a whole number from 0, where 0 means nothing can be attuned. `balance.sigils.dropChancePct.normal|elite|boss|treasure` are whole numbers from 0 to 100, each with an explicit 0–100 `BALANCE_DOMAINS` entry. Every one carries a `[NOTE]`, so it gets a generated `gameConfig.balance.sigils.*` Settings row and is frozen per run. `validateContent` refuses any other value by name.
-- **The model pair.** `attuneSigil(registries, run, id)` and `unattuneSigil(run, id)` each return `{ ok, reason }` and change the run only when `ok`. Each `reason` is one sentence from `uiStrings.csv`.
-  - `attuneSigil` refuses an id the registries do not hold or `run.sigils` does not carry, a sigil that is not legendary, one already attuned, and an attune that would hold more than `attuneMax`.
+Each carries a `[NOTE]`, so it gets a generated `gameConfig.balance.sigils.*` row and is frozen per run. `validateContent` refuses any other value by name.
+
+#### Rarity at every door
+
+Every persisted position holding a sigil id is in exactly one class; the lists are exhaustive.
+
+| Class | Positions |
+|---|---|
+| Legendary only | `run.attunedSigils`; `combatEntered.snapshot.attunedSigils`; `pendingReward.rewards.sigilId` |
+| Never legendary | `run.sigilSlots`; `combatEntered.snapshot.sigilSlots`; `run.shopStock.sigils`; an atlas point's `journey.serviceStates[pointId].stock.sigils` |
+| Either | `run.sigils` (the inventory) |
+
+- `run.attunedSigils` holds no more than the run's `attuneMax`.
+- The `engine/save.js` load door checks both restricted classes via `sigilRarityProblems(registries, run)` in `model/sigils.js`. Each violation is refused by name and the save archived like any malformed reference.
+- `sigilPurchasePlan` also refuses a legendary by name.
+- A persisted sigil-id position added later must be assigned a class in the same PR.
+
+#### Attunement and the model pair
+
+- The player attunes in the **Armoury's Sigils panel**, out of combat only. `MOUNTABLE_KINDS` gains `sigil`; `syncSigilProperties` mounts each attuned sigil's property under `sigil:<id>` as `syncRelicProperties` does for relics.
+- `attuneSigil(registries, run, id)` and `unattuneSigil(run, id)` in `model/sigils.js` return `{ ok, reason }` (one sentence from `uiStrings.csv`) and change the run only when `ok`. Neither draws randomness nor needs an equipped armament.
+  - `attuneSigil` refuses: an id the registries do not hold or `run.sigils` does not carry; a non-legendary; one already attuned; an attune that would exceed `attuneMax`.
   - `unattuneSigil` refuses an id that is not attuned.
-  - Neither draws randomness, and neither needs an equipped armament: an attuned legendary is held by the run, not by a piece. Out of combat is the door's rule, so the Armoury panel shows no buttons in combat.
-- **Mounting.** `sigilCarrier(registries, id, ownerKey)` returns `{ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: propertyTags }` for a legendary sigil, or null for anything else.
-  - `syncSigilProperties(combat, entity, attunedSigils?)` mounts each carrier that is not yet mounted, the way `syncRelicProperties` does. Attunement never changes mid-fight, so it only adds.
-  - The mount carries no `heldBy`, so `syncLoadoutProperties` never unmounts it.
-  - A legendary is never slotted, so its `sigil:<id>` key never meets a slotted sigil's.
-- **The combat.** `combat.attunedSigils: string[]`.
-  - `createCombat` copies the player's `attunedSigils`, which `createRunCombat` takes from `run.attunedSigils`.
-  - The combat snapshot serializes the field. `combatSnapshotProblems` refuses a value that is not a list of distinct non-empty ids, and `combatSnapshotReferenceProblems` refuses, by name, an id the registries do not hold and an id that is not a legendary sigil.
-  - Under **rarity at every door**, the load door also refuses, by name, a fight in progress (`combatEntered.snapshot`) whose `attunedSigils` (an absent field reads as `[]`) is not the same list as `run.attunedSigils`: attunement cannot change mid-fight, so a mismatch is a hand edit. The save is archived the way every other malformed snapshot reference is.
-  - A snapshot written without the field restores with `[]` and mounts none.
-- **The drop.** The offer field is `rewards.sigilId`: a sigil id, or absent for none.
-  - *(Removed with the legacy reward door.)* The menu kind is `sigil`, after `relic` in `REWARD_KIND_ORDER`. Its row key is `sigil`, and its state is `pendingReward.states.sigil`.
-  - Taking the row appends the id to `run.sigils`, unattuned. Taking an id the run already owns adds nothing.
-  - The load door refuses, by name, a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary (**rarity at every door**).
-  - **The pool is legendary sigils only.** It holds the legendaries the run does not own, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`, in authored order.
-  - `rollSigilDrop` reads the chance for the door's pool. At a chance of 0 it returns none and draws nothing. With an empty pool it returns none and draws nothing. At 100 it makes no chance draw. Between those, it makes one `rng.chance('sigils', pct)`, and a miss returns none. Then it makes one `rng.pick('sigils', pool)`.
-  - It is rolled at a won normal or elite fight, at a boss whose reward menu opens (`main.js onCombatEnd`), and at a treasure room, both the map node and the legacy dungeon's treasure. The map-treasure door (`main.js enterNode`, `case 'treasure'`) checkpoints its offer through `beginPendingReward`, as the legacy dungeon's treasure door already does, so `resumeRun` remounts an unclaimed sigil row after a reload instead of losing it. On a World Journey the door completes its atlas point (`completeJourneyNode`) before it checkpoints, as the legacy dungeon resolves its node first, so claiming the rows never leaves the point open. The last boss of a run ends it with `finishRun(true)` before any reward is built, so it rolls no sigil, and that victory path is not reordered.
-  - With all four chances at the shipped 0, the `sigils` counter never moves. No other stream moves at any setting.
-- **The Armoury's Sigils panel.** A `.armoury-sigils` section in the Inventory view, below the item collection. It appears while the run owns a legendary sigil.
-  - It shows a count, "N / attuneMax attuned", and one row per owned legendary, in `run.sigils` order: its name, its blurb, its rule's sentence (`nodeTerms.csv`), and whether it is attuned.
-  - Out of combat, each row carries **Attune** or **Unattune**. A refusal is shown as text in the panel.
-  - In combat, the rows show and no button is drawn.
-  - Every button is at least 48 CSS px on a coarse pointer and at least 44 px otherwise.
+
+#### The field and schema
+
+- `run.attunedSigils: string[]`: distinct ids, each also in `run.sigils`. `validateRunShape` is registry-free and refuses by name: a non-list; an id that is not a non-empty string; a duplicate; an id not in `run.sigils`.
+- Both restore doors refuse by name an attuned id that is not legendary and a list longer than `attuneMax`, read from the run's frozen `advancedConfigSnapshot` override (`gameConfig.balance.sigils.attuneMax`), else the bundle default. An unknown id is refused through `unknownSigilId`. A legendary in `run.sigilSlots` is refused at the same doors (only a hand edit can put it there).
+- Schema 18 -> 19: `attunedSigils` is a required `RUN_SHAPE` row; `migrateRunSchema` fills `[]` for v18-or-older saves and leaves `run.sigils` untouched; one captured schema-19 save is appended to the corpus, no existing entry edited.
+
+#### Mounting and combat
+
+- `sigilCarrier(registries, id, ownerKey)` returns `{ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: propertyTags }` for a legendary, else null.
+- `syncSigilProperties(combat, entity, attunedSigils?)` mounts each unmounted carrier (attunement never changes mid-fight, so it only adds). The mount has no `heldBy`, so `syncLoadoutProperties` never unmounts it; a `sigil:<id>` key never meets a slotted sigil's.
+- `combat.attunedSigils: string[]`: `createCombat` copies it, `createRunCombat` takes it from `run.attunedSigils`; the snapshot serializes it. `combatSnapshotProblems` refuses a non-list or non-distinct or empty ids; `combatSnapshotReferenceProblems` refuses an unknown id and a non-legendary.
+- The load door refuses by name a fight in progress whose `attunedSigils` (absent = `[]`) differs from `run.attunedSigils`; the save is archived. A snapshot without the field restores with `[]` and mounts none.
+
+#### The drop
+
+- Offer field `rewards.sigilId` (a sigil id, or absent). Reward kind `sigil`, after `relic`; stream **`sigils`**, appended to the end of `STREAM_NAMES`.
+  - Taking the row appends the id to `run.sigils`, unattuned; taking an owned id adds nothing.
+  - The load door refuses a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary.
+- **Pool:** legendaries the run does not own (owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`), in authored order.
+- `rollSigilDrop` reads the door pool's chance:
+  - chance 0 or an empty pool: none, no draw;
+  - chance 100: no chance draw;
+  - otherwise one `rng.chance('sigils', pct)` (a miss returns none), then one `rng.pick('sigils', pool)`.
+- Rolled per pool: a won normal or elite fight, a boss whose reward menu opens, a treasure room. The run's last boss rolls none (`finishRun(true)` runs before any reward is built).
+- With all four chances 0, the `sigils` counter never moves; no other stream moves at any setting.
+
+#### The Armoury's Sigils panel
+
+`.armoury-sigils` in the Inventory view, below the item collection, shown while the run owns a legendary sigil.
+- Shows "N / attuneMax attuned" and one row per owned legendary, in `run.sigils` order: name, blurb, rule sentence (`nodeTerms.csv`), attuned state.
+- Out of combat each row has **Attune** or **Unattune**; a refusal shows as text in the panel. In combat rows show and no button is drawn.
+- Buttons are at least 48 CSS px on a coarse pointer, 44 px otherwise.
 
 *Falsify:*
 - A sigil with a tag that is not a property node is refused by name.
-- An attuned sigil's trigger fires in a fight, and an unattuned owned sigil's trigger does not.
+- An attuned sigil's trigger fires in a fight; an unattuned owned sigil's does not.
 - Attuning a second sigil while `attuneMax` is 1 is refused by name.
-- A DOM test opens the Armoury's Sigils panel, taps **Attune** on an owned legendary, sees it listed as attuned and in `run.attunedSigils`, taps **Unattune**, and sees it removed; the panel's buttons are absent in combat.
-- Market and blacksmith stock over 200 seeds never offers a legendary sigil.
-- With defaults, no sigil ever drops and no stream counter moves. With `dropChancePct.boss: 100`, a boss drops one unowned legendary sigil and never a duplicate.
-- A save at §14's last schema loads with `attunedSigils: []`, and its `sigils` untouched.
+- A DOM test opens the Sigils panel, taps **Attune** on an owned legendary, sees it listed and in `run.attunedSigils`, taps **Unattune**, sees it removed; buttons are absent in combat.
+- Market and blacksmith stock over 200 seeds never offers a legendary.
+- Defaults: no sigil drops and no stream counter moves. `dropChancePct.boss: 100`: a boss drops one unowned legendary, never a duplicate.
+- A save at §14's last schema loads with `attunedSigils: []` and `sigils` untouched.
 
 ### 15.5 Build order
 
-Each item is one PR into `dev`, written test-first, carrying a receipt (and no built HTML):
-1. **This SPEC section.**
-2. **The card reward schedule** (§15.1).
-3. **The levelling preview and cap** (§15.2).
-4. **Crafting drops** (§15.3). The refined-stone field is `smithingStonesRefined`, the name §14 migrates, and this PR adds it if §14.4 has not landed yet.
-5. **Legendary sigils** (§15.4). This one is after §14 step 5 (which adds `sigils` and `sigilSlots`), and adds only `attunedSigils`, one schema bump on top of §14's last schema at the time it lands.
+Each item was one PR into `dev`, test-first, with a receipt and no built HTML:
+1. This SPEC section.
+2. Card reward schedule (§15.1).
+3. Levelling preview and cap (§15.2).
+4. Crafting drops (§15.3); the refined-stone field is `smithingStonesRefined`, the name §14 migrates.
+5. Legendary sigils (§15.4), after §14 step 5 (which adds `sigils` and `sigilSlots`); adds only `attunedSigils`, one schema bump.
 
-## 16. Versioned JSON game profile (Feature/json-game-modules addendum, 2026-10-15)
+#### Notes and history
 
-This addendum describes the configured Ashen profile branch. It does not change the existing legacy game rules or silently reinterpret prior sections as JSON-backed behavior. The author entry is `games/ashenspire/game.json`; the `ashen.core@1.0.0` bundle selects a four-class run with cards, HP/SP/MP, fixed class loadouts, configured combat, routes, rests, shops and rewards. `games/ashenspire/presets/current.json` selects the original legacy behavior.
+- §15 is built; the legacy reward door is removed.
+- Core 2 offer weights, mix and cantrip families are dated owner rulings.
+- Legendary sigils ship with drops off (`dropChancePct` all 0).
 
-The small entry shape is `{ "formatVersion": 1, "core": "ashen.core@1.0.0", "modules": {} }`. A missing module included by the selected bundle inherits its selection and settings; a missing non-bundled module is off. `false` disables, `true` uses resolved bundle/default settings, and an object recursively overrides them; arrays replace the inherited array. Resolver schemas reject unknown properties, invalid IDs and unsupported configured modules or instances. Tags, cards and content references do not implicitly enable modules.
+Full history: [docs/spec-history/15-rewards-profile.md](docs/spec-history/15-rewards-profile.md).
 
-The configured core has Reaver, Starseer, Rogue and Herald with exactly six starting attribute points each. Reaver starts with STR 2; Starseer with INT 2; Rogue with DEX 2; Herald with WIS 2; every other attribute is 1. Each has a fixed loadout and ten-card starter: three Strike, three Defend, one Counter, one Smash, one Sweep and one weapon art from the starting weapon (owner 2026-11-01), replacing the class special. The shipped class lists are authored per class (`starterDeck.classDecks`) and stay at ten cards with the worn weapon's art and any gear-granted card counted: the Starseer keeps one class special and the Herald, who has none, authors one fewer Ethereal. The opening hand is 4 + INT. Only Reaver is initially selectable; each unique terminal full-run win or defeat unlocks Starseer, Rogue and Herald in order. The profile uses unified damage, Block then Poise, and the seven directed stance advantages recorded in `docs/ai/json-game-modules/CORE-SPEC.md`.
+## 16. Versioned JSON game profile
 
-Configured runs use deterministic three-act routes with nine pre-boss depths and, per act, one boss per branch (§6). A rest visit commits exactly one of Strategize, Smith or Level Up (Level Up remains a rest service, but spending earned attribute points is no longer rest-only: owner, 2026-10-27, §17); Strategize is the only manual deck-editing service. The chosen service restores full HP, SP, MP and both healing and MP flask pools. Equipment editing has an independent policy. Shop and reward content comes from the selected core pack.
+Describes the configured Ashen profile branch. It does not change legacy game rules or reinterpret earlier sections as JSON-backed. Author entry: `games/ashenspire/game.json`; the `ashen.core@1.0.0` bundle selects a four-class run with cards, HP/SP/MP, fixed class loadouts, configured combat, routes, rests, shops and rewards. `games/ashenspire/presets/current.json` selects the original legacy behavior.
 
-Each new run snapshots its resolved profile, runtime artifacts and hash. Save schema v25 preserves that pin; a profile/runtime mismatch refuses to load without overwriting the stored save. Editing game.json or rebuilding the current lock affects new runs and does not hot-unload or migrate an existing run. Any future save migration requires a separately tested, explicit atomic procedure.
+### Module resolution
 
-The JSON resolver, host adapter and author CLI are implemented in slices on the feature branch. Their export currently requires `ashen.legacy-adapter@1` and is not a portable rules VM or complete engine-neutral gameplay package. The legacy preset remains the compatibility path. Full browser acceptance is still in progress. Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON currently supplies values; they are not additional permanent product approvals.
+- Entry shape: `{ "formatVersion": 1, "core": "ashen.core@1.0.0", "modules": {} }`.
+- A missing module the bundle includes inherits its selection and settings; a missing non-bundled module is off.
+  - `false` disables; `true` uses resolved bundle/default settings.
+  - An object recursively overrides them; arrays replace the inherited array.
+- Resolver schemas reject unknown properties, invalid IDs and unsupported configured modules or instances. Tags, cards and content references do not implicitly enable modules.
 
-For current usage and checks, see `games/ashenspire/guide.md`; product rules and unresolved choices live in `docs/ai/json-game-modules/CORE-SPEC.md`. The implementation status and next acceptance work are tracked in `docs/ai/json-game-modules/README.md` and `CONTINUE.md`.
+### Classes and start
+
+| Class | Start | Selectable |
+|---|---|---|
+| Reaver | STR 2 | initially |
+| Starseer | INT 2 | after a unique terminal full-run win or defeat |
+| Rogue | DEX 2 | next unlock, in order |
+| Herald | WIS 2 | last unlock |
+
+- Each class has six starting attribute points; every other attribute is 1. Each has a fixed loadout and ten-card starter: three Strike, three Defend, one Counter, one Smash, one Sweep and one weapon art from the starting weapon (owner 2026-11-01), replacing the class special.
+- Class lists are authored per class (`starterDeck.classDecks`) and stay at ten cards with the worn weapon's art and any gear-granted card counted: the Starseer keeps one class special; the Herald, who has none, authors one fewer Ethereal.
+- Opening hand: 4 + INT.
+- Unified damage, Block then Poise, and the seven directed stance advantages in `docs/ai/json-game-modules/CORE-SPEC.md`.
+
+### Routes, rests and runs
+
+- Three deterministic acts, nine pre-boss depths, one boss per branch per act (§6).
+- A rest visit commits exactly one of Strategize, Smith or Level Up.
+  - Spending earned attribute points is no longer rest-only (owner 2026-10-27, §17).
+  - Strategize is the only manual deck-editing service.
+  - The chosen service restores full HP, SP, MP and both healing and MP flask pools.
+- Equipment editing has an independent policy. Shop and reward content comes from the selected core pack.
+- Each new run snapshots its resolved profile, runtime artifacts and hash.
+  - Save schema v25 preserves that pin; a profile/runtime mismatch refuses to load without overwriting the stored save.
+  - Editing game.json or rebuilding the current lock affects new runs only, with no hot-unload or migration of an existing run.
+  - Any future save migration needs a separately tested, explicit atomic procedure.
+
+### Status
+
+- The JSON resolver, host adapter and author CLI are implemented in slices on the feature branch. Export requires `ashen.legacy-adapter@1`; it is not a portable rules VM or complete engine-neutral gameplay package. The legacy preset stays the compatibility path. Full browser acceptance is in progress.
+- Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON supplies values.
+- Usage and checks: `games/ashenspire/guide.md`. Product rules and unresolved choices: `docs/ai/json-game-modules/CORE-SPEC.md`. Status and next acceptance work: `docs/ai/json-game-modules/README.md` and `CONTINUE.md`.
+
+#### Notes and history
+
+- The legacy preset remains the compatibility path.
+- Provisional core settings stay provisional.
+
+Full history: [docs/spec-history/15-rewards-profile.md](docs/spec-history/15-rewards-profile.md).
 
 ## 17. FixCore combat rules (new core rules version)
 
