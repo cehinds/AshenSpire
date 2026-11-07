@@ -141,9 +141,11 @@ its own two-command falsifier, stated in the module beside the sentence it defen
 
 ## 3. Architecture — data- and model-driven, procedural where it counts
 
+Four layers, one-way dependencies. The engine knows only a closed set of primitives (opcodes, formula ops, triggers, a generic status model); all game content and tuning is validated data. Randomness is seeded and saved.
+
 ### 3.1 Layers and design laws
 
-Four layers; dependencies point downward only:
+Dependencies point downward only:
 
 ```
 ┌─ UI        (src/ui)      renders model state; dispatches player intents
@@ -155,25 +157,16 @@ Four layers; dependencies point downward only:
 
 Design laws (contractual):
 
-1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
-2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
-3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
-4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
-5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads (`tests/engine.test.js`) also imports some UI presentation models and helpers, but never mounts a screen.
-6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
+1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests; unknown fields, bad enums and dangling id references fail loudly (§3.14).
+2. **No entity-specific engine code.** No `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives: effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), a generic status model (§3.7). All game behavior is content data composing them. Adding a card, relic, status, stance, enemy or event = adding data.
+3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls and enemy move selection are seeded algorithms (§3.8); every knob they consume lives in content data, never as a code constant.
+4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay). Every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage` or timers. Under `src/model/` only `offlineDownload.js` sets timers (request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads (`tests/engine.test.js`) also imports some UI presentation models and helpers but never mounts a screen.
+6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice is promoted to a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
 
-**This section states where a thing BELONGS. It does not list what exists** — that list has a
-home (the tree) and a command, and the previous edition of this section was a hand-maintained
-copy of it that had drifted to **52 files listed against 92 shipped, four of them dead paths**
-— the three pre-scrub class card files, renamed, and `floorplan.js` filed under `engine/`
-while it lives in `model/` (§6 cited the right path all along, so the spec disagreed with
-itself) — while `tools/`, `content/source/`, `build/` and `dist/` were absent entirely.
-**That count was measured at `267397a` and `src/` held 94 two commits later**, which is the
-point: an inventory is a cache, and even the sentence describing its rot has to name its own
-expiry or it becomes the next one. A restatement of the tree is a cache with no write event; it rots while nobody edits
-it. Print the real one:
+This section says where a thing BELONGS, not what exists. Print the real tree:
 
 ```
 find src tools content/source styles tests -type f | sort      # what exists
@@ -190,40 +183,51 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
 | `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) is headless and needs no DOM (it also asserts some UI presentation models and helpers); other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
-| `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
+| `build/` · `dist/` | Bundles emitted by `tools/bundle.mjs` and their shipped copies. Default: single-file bundles. The web edition is pack-shaped: `bundle.mjs --external-art` writes `build/web/` (game file, pinned pack indexes in `packs/`, object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light self-contained single file under `download/`. `node tools/verify-shipped.mjs` says whether they agree with source. |
 
-**The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
-`engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
-`content`; **`content` never imports `ui`.** It may import `model/` schemas and helpers (and the
-`config/` and `framework/` data modules). A content file that imports from `engine` is the
-defect this layering exists to catch.
+**Import rule:** imports point *inward*. `ui` may import `engine`, `model`, `content`; `engine` may import `model`, `content`; `model` may import `content`. **`content` never imports `ui`**; it may import `model/` schemas and helpers and the `config/` and `framework/` data modules. A content file importing from `engine` is the defect this layering exists to catch.
 
 ### 3.3 Domain model, registries, and state
 
-**Entity types** (each with a schema in `schemas.js`):
+Entity types, each with a schema in `schemas.js`:
 
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: every key of `PASSIVE_TYPES` (`src/model/schemas.js:317-348`), for example `runeGainMult`, `restDenied`, `swapCostDelta` and `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
-| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain node confers, keyed by the node. A VIEW: derived by `tools/content-build.mjs` from the tag tree (below) — the node row, its `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, its sentence in `nodeTerms.csv`, its effects in `nodeEffects.json` with every `{variable}` replaced by the balance path its `default` binding names — and joined in `src/content/propertyRules.js`, which resolves those paths at load. Its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property node. **Every family may carry a property node**; what the mount path can hold is the engine's narrower list (`engine/properties.js` `MOUNTABLE_KINDS`). Property nodes are stamped onto a holder's `propertyTags`, never its `tags` |
-| Tag tree | `content/source/nodes.csv` — `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`. THE one vocabulary: every tag any object carries is a node, and a node's parent is `parentId` and nothing else (an id's dotted spelling is an opaque key). Roots are domains; `domain` (the framework's enum word) and `aside` (a root whose tags never join a tag list — `presentation`, `classification`) are written on roots only. Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root — who may carry what), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role` — a node carries no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath` — what a variable reads, per scope; `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }` naming variables). Derived from it: the five tag tables, the property rules, and `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14) |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` |
+| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` |
+| Tag tree | `content/source/nodes.csv` (see below) |
 | Status | `id, name, icon, stackMode, decay, proc?, meter?, modifiers?, hooks?` (§3.7; `meter?` is the legacy build-up form) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
 | Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
-
-**Enemy cap** (owner, 2026-11-03: "Limit to just 3 enemies max"). A combat never has more than 3 enemies, in every layout. An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 ids only; no effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing while 3 enemies are alive. The cap lives in one place, `MAX_ENEMIES_PER_COMBAT` in `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
 | Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
 | MapConfig | per-act: `floors, columns, pathCount, typeWeights, floorRules` |
 | Balance | flat constants object (odds tables, prices…; stats are derivedStatRules rows) |
 
-- `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
-- **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
-- **Player intents are a closed set** (everything the UI may ask the combat engine to do; the solo dispatch switch in `src/engine/combat.js:850-915`): `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. Run-level actions are not intents: each screen calls its own function in `src/engine/`, for example `restAt(visit)` in `src/engine/locations.js:121`.
+**Relic passives** are a closed key set the run systems consult, with one home: `PASSIVE_TYPES` in `src/model/schemas.js` (every key, `:317-348`), from which the relic schema's `passives` node is built. Examples: `runeGainMult`, `restDenied`, `swapCostDelta`, `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j), the one passive whose value is not a number or flag. The readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does.
+
+**PropertyRule** = what one `property`-domain node confers, keyed by the node; exactly one rule per property node. It is a VIEW derived by `tools/content-build.mjs` from the tag tree: the node row, its `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, its sentence in `nodeTerms.csv`, its effects in `nodeEffects.json` with every `{variable}` replaced by the balance path its `default` binding names. Joined in `src/content/propertyRules.js`, which resolves those paths at load. Its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Every family may carry a property node; what the mount path can hold is the narrower `MOUNTABLE_KINDS` in `engine/properties.js`. Property nodes are stamped onto a holder's `propertyTags`, never its `tags`.
+
+**Tag tree** (`content/source/nodes.csv`: `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`) is THE one tag vocabulary:
+- Every tag any object carries is a node; a node's parent is `parentId` only (an id's dotted spelling is an opaque key).
+- Roots are domains. `domain` (the framework's enum word) and `aside` (a root whose tags never join a tag list: `presentation`, `classification`) are written on roots only.
+- Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`); `familyNodes.csv` (family × subtree root: who may carry what); `nodeTerms.csv` (`playerTermId, tooltipTermId, template`); `nodeVariables.csv` (`nodeId, variable, role`; a node carries no numbers); `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath`: what a variable reads, per scope; `instance › upgrade › class › default`); `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }` naming variables).
+- Derived from it: the five tag tables, the property rules, `src/framework/data/{properties,relations}.js`.
+- Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14).
+
+**Enemy cap** (owner: "Limit to just 3 enemies max"): a combat never has more than 3 enemies, in every layout.
+- An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 only.
+- No effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing while 3 are alive.
+- The cap lives in `MAX_ENEMIES_PER_COMBAT`, `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
+
+**Registries and state**
+- `registries.js` loads all content into typed, deep-frozen registries keyed by id. Cross-references are by id only; getters throw on unknown ids (validation catches these before runtime).
+- **Definitions vs instances:** `model/state.js` stores instances referencing definitions by id: a deck card is `{ instanceId, cardId, upgraded }`; an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions**, so saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
+- **Player intents are a closed set** (what the UI may ask the combat engine to do; solo dispatch switch `src/engine/combat.js:850-915`): `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. Run-level actions are not intents: each screen calls its own `src/engine/` function, e.g. `restAt(visit)` in `src/engine/locations.js:121`.
 
 ### 3.4 Effect DSL (opcodes)
 
