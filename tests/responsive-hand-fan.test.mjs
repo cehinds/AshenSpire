@@ -10,7 +10,10 @@ for (const [formFactor, width, height] of [['mobile',390,250],['tablet',820,300]
       assert.ok(plan.cards[0].x >= 0);
       assert.ok(plan.cards.at(-1).x + plan.cardWidth <= width);
       assert.ok(plan.cards[Math.floor(count/2)].y < plan.cards[0].y);
-      assert.ok(plan.step < plan.cardWidth, 'cards overlap');
+      // Owner 2026-11-07: a phone's cards fill the full width, spaced up to one card width apart (touching, never a
+      // gap); the other form factors keep their overlap.
+      if (formFactor === 'mobile') assert.ok(plan.step <= plan.cardWidth + 1e-9, 'no gaps between cards');
+      else assert.ok(plan.step < plan.cardWidth, 'cards overlap');
       assert.equal(plan.capacity, count, 'all cards remain in the same viewport');
       // The 66 px tool-row reserve holds on every handLayout path, desktop with the footer off included;
       // only the desktop footer plan (desktopHandLayout) docks the fan to the bottom, tested below.
