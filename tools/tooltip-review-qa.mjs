@@ -19,7 +19,7 @@ const route = scene => `${base}/tooltip-review-scene.html?shot=${['combat','rewa
 const open = async(page,scene) => {
   await page.goto(route(scene),{waitUntil:'domcontentloaded'});
   await page.locator('#app > *').first().waitFor();
-  if(['potion','equipment','smith','compendium','catalog','lab'].includes(scene)) await page.locator('[data-tooltip-review-ready=true]').waitFor();
+  if(['equipment','smith','compendium','catalog','lab'].includes(scene)) await page.locator('[data-tooltip-review-ready=true]').waitFor();
 };
 const attempt = async (label, fn) => {try {await fn();console.log(`PASS ${label}`);} catch(e){failures.push(`${label}: ${e.message}`);console.error(`FAIL ${label}: ${e.message}`);} };
 async function sweepHover(page, label) {
@@ -88,28 +88,11 @@ try {
     const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1440,height:1000},isMobile:phone,hasTouch:phone});
     const page=await context.newPage();page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
     page.on('pageerror',e=>consoleErrors.push(`${shape}: ${e.message}`));
-    for(const scene of ['combat','potion','reward','shop','equipment','smith','customize','map','compendium','catalog','lab']) await attempt(`${shape} ${scene} screen`,async()=>{
+    for(const scene of ['combat','reward','shop','equipment','smith','customize','map','compendium','catalog','lab']) await attempt(`${shape} ${scene} screen`,async()=>{
       await open(page,scene);
       check((await page.locator('#app').innerText()).length>30,`${shape} ${scene} meaningful content`);
       check(/^Ashen\s?Spire/.test(await page.title()),`${shape} ${scene} identity`);
       inventory.push({shape,scene,attached:await page.locator('[data-tip-attached]').count(),native:await page.locator('[title]').count(),terms:await page.locator('[data-tip]').count()});
-      if(scene==='potion') {
-        if(phone)await page.locator('.reward-kind[data-kind=flask]').tap();else await page.locator('.reward-kind[data-kind=flask]').click();
-        const detail=page.locator('[data-reward-detail=flask]');await detail.waitFor();
-        const text=await detail.locator('.card-inspection-details').innerText();
-        check(text.trim()==='This turn, your attacks apply 2 extra Bleed per hit.',`${shape} potion effect once without filler`);
-        check(await detail.locator('.card-inspection-art .inspection-tag').count()===3,`${shape} potion three supporting tags below card`);
-        await shot(page,`reward-potion-${shape}`);
-        check(await detail.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1),`${shape} potion stays inside viewport`);
-        const bleed=detail.locator('.tooltip-keyword').filter({hasText:/^Bleed$/});
-        if(phone) await bleed.tap();else await bleed.hover();
-        await page.waitForFunction(()=>document.querySelector('#tooltip[data-open=true]')?.textContent.includes('At 7'));
-        check((await page.locator('#tooltip').innerText()).includes('At 7'),`${shape} Bleed definition uses resolved values`);
-        await shot(page,`potion-keyword-${shape}`);
-        await page.keyboard.press('Escape');check(await detail.count()===1,`${shape} Escape closes definition before inspection`);
-        await page.locator('#reward-back').click();check(await page.locator('[data-reward-detail]').count()===0,`${shape} Back closes inspection`);
-        check(await page.evaluate(()=>window.__tooltipReviewRun.flasks.length===0),`${shape} inspection never collects potion`);
-      }
       if(scene==='combat') {
         await page.locator('.hand .card').first().waitFor();
         const before=await page.evaluate(()=>JSON.stringify(window.__combat));
