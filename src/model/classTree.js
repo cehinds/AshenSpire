@@ -11,7 +11,6 @@
 // exclude one another by content rule (validate.js), so the top pick is the
 // subclass, never a stack.
 
-import { hasClassMastery, recordClassMasteryXp } from './classMasteryRun.js';
 import { classSkillId, awardSkillXp, bankSkillXp, skillLevel } from './skills.js';
 
 /** The tree rows of one class, in table order. */
@@ -94,10 +93,8 @@ export function pickInitialClassTreeNode(registries, run, nodeId) {
 export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1, queueRewards = true } = {}) {
   if (!victory || !run || !run.class || run.classUnequipped) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
-  const pay = registries.balance.classMastery?.pay || {};
-  const base = hasClassMastery(run) ? (pool === 'boss' ? pay.perBoss : pool === 'elite' ? pay.perElite : pay.perWin) : (xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0);
+  const base = (xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0);
   const amount = Math.floor(base * multiplier);
-  recordClassMasteryXp(run, run.class, amount);
   if (!(amount > 0)) return null;
   return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount, { queueRewards });
 }

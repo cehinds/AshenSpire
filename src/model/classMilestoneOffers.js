@@ -7,7 +7,7 @@ import { equipmentRequirementReceipt, carriedIds } from './loadout.js';
 import { createCardInstance } from './state.js';
 
 export function classMilestoneOptions(registries, run, kind, level, meta = {}) {
-  const source = registries.masterySource || registries;
+  const source = registries;
   const open = (ref, kinds) => {
     const rows = (source.classMastery || []).filter(row => row.ref === ref && kinds.includes(row.kind));
     return !rows.length || rows.some(row => row.classId === run.class && row.level <= level);
@@ -43,7 +43,7 @@ export function rollClassMilestoneRewards(registries, rng, run, { banked = 0, me
     if (grant.kind === 'cards') {
       // A class grant stays in the class catalogue. School lesson libraries
       // remain exclusive to the ability-skill reward.
-      const source = registries.masterySource || registries;
+      const source = registries;
       options = options.filter(id => {
         const card = source.cards.get(id);
         if (!card.abilityKind) return true;

@@ -18,7 +18,6 @@
 //   · settling a fight: its copy of the counts back to the run, and every
 //     companion one fight closer to leaving (engine/runCombat.js runCombatEnd);
 //   · the content door's checks and the Settings rows for every number.
-import { hasClassMastery } from './classMasteryRun.js';
 import { NOTE } from '../content/balance.js';
 import { awardSkillXp, skillTracks } from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
@@ -77,7 +76,7 @@ export function unknownCompanionId(registries, run) {
 /** A consumable's shelf sentence, its {tokens} filled from the row's live values. */
 export function consumableText(registries, def) {
   const track = def.skill ? skillTracks(registries).find((row) => row.id === def.skill) : null;
-  return String((hasClassMastery(registries.masteryRun) && def.masteryBlurb) || def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
+  return String(def.blurb || '').replace(/\{(\w+)\}/g, (whole, key) => {
     if (key === 'skill') return track ? track.label : String(def.skill || '');
     return def[key] !== undefined ? String(def[key]) : whole;
   });
@@ -105,7 +104,7 @@ export function skillBookReadPlan(registries, run, id, { inCombat = false, skill
   if (!reason && !tracks.some((row) => row.id === track)) reason = say('book.refuse.track');
   if (!reason && !lessons.length) reason = say('book.refuse.empty');
   if (!reason && choice && !lessons.some((row) => row.kind === choice.kind && row.id === choice.id)) reason = say('book.refuse.choice');
-  const xp = hasClassMastery(run) && track?.startsWith('class:') ? 0 : def?.xp || 0;
+  const xp = def?.xp || 0;
   return { ok: !reason, reason, id, def, xp, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
 }
 
@@ -120,9 +119,7 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
   // copies remain available in the sideboard under the deck editor's rules.
   const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
   const bonuses = classBookBonuses(registries, run, plan.def);
-  const receipt = hasClassMastery(run) && plan.skillId.startsWith('class:')
-    ? { skillId: plan.skillId, gained: 0, levels: 0 }
-    : awardSkillXp(registries, run, plan.skillId, plan.def.xp);
+  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp);
   const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
   if (plan.choice.kind === 'class') {
     if (classLearned) learnClassCard(registries, run, plan.choice.id);

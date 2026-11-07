@@ -27,10 +27,10 @@ function finishFixture({ failCheckpoint = false } = {}) {
     clearRun: slot => { cleared.push(slot); manager.clearRun(slot); }, hasRun: slot => manager.hasRun(slot),
   };
   const fixture = new Function('commitRunFinishAsync', 'saves', 'isConfiguredRun', `
-    let run = { seed: 'A', classMasteryState: { receiptId: 'A' } }, activeSlot = 1;
+    let run = { seed: 'A' }, activeSlot = 1;
     const registries = { unlocks: [] }, rng = { getCounters: () => ({}) }, shotState = false;
-    const crypto = { randomUUID: () => 'unused' };
-    const refreshRunClassMastery = () => {}, stampSkillBonuses = () => {}, hasClassMastery = () => false;
+    const crypto = { randomUUID: () => 'A' };
+    const stampSkillBonuses = () => {};
     const runResult = victory => ({ victory, seed: run.seed });
     const completedRunMeta = (registries, meta, result) => ({ meta: { results: [result] }, unlocked: [] });
     ${body('async function finishRun(', '\nasync function showFinishedRun(')}

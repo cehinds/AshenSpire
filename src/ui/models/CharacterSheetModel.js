@@ -1,4 +1,3 @@
-import { masteryUnlockName, registriesForClassMastery } from '../../model/classMasteryRun.js';
 import { abilityRankAt, isAbilitySkill } from '../../model/abilityGrades.js';
 import { classRewardBudget, expandedProgression } from '../../model/classMilestones.js';
 // src/ui/models/CharacterSheetModel.js — the Character sheet's two ladders,
@@ -45,9 +44,8 @@ const skillRows = (registries) => balanceOf(registries).skill || {};
 // The public model also accepts the root registry. Read this character's saved
 // rules even when its caller has not already projected a mastery registry.
 export function characterSheetRegistries(registries, run) {
-  const scoped = registriesForClassMastery(registries, run);
-  return { ...scoped, progressionEnabled: expandedProgression(run),
-    balance: { ...scoped.balance, ...(run.enemyKnowledgeRules ? { enemyKnowledge: run.enemyKnowledgeRules } : {}), ...(expandedProgression(run) && run.progressionRuleSnapshot
+  return { ...registries, progressionEnabled: expandedProgression(run),
+    balance: { ...registries.balance, ...(run.enemyKnowledgeRules ? { enemyKnowledge: run.enemyKnowledgeRules } : {}), ...(expandedProgression(run) && run.progressionRuleSnapshot
       ? { progression: run.progressionRuleSnapshot } : {}) } };
 }
 
@@ -163,10 +161,6 @@ export function trackLadder(registries, run, track) {
     const grants = [];
     if (track.kind === 'class') {
       grants.push({ kind: 'classNodeDraft' });
-      if (run.classMasteryState) {
-        const names = registries.classMastery.filter(row => row.classId === classId && row.level === level).map(row => masteryUnlockName(registries, row));
-        if (names.length) grants.push({ kind: 'masteryUnlock', names });
-      }
       // The class level's source bonuses (engine/sourceRewardBonuses.js):
       // a feat choice and a class-pool card, each at its authored chance.
       if (expanded) {
@@ -193,7 +187,7 @@ export function trackLadder(registries, run, track) {
     if (!ability && levelQueuesRankUp(track.kind, level)) grants.push({ kind: 'rankUp' });
     if (classId) grants.push(...tiersOpeningAt(registries, classId, level));
     if (!(expanded && classId) && levelQueuesSkillFeat(registries, track.id, level)) {
-      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id, !!run.classMasteryState, registries).filter((f) => f.minLevel <= level).map((f) => f.name)) });
+      grants.push({ kind: 'feat', options: Object.freeze(trackSkillFeats(track.id, false, registries).filter((f) => f.minLevel <= level).map((f) => f.name)) });
     }
     if (!(expanded && classId) && levelQueuesAttributePick(registries, track.id, level)) {
       grants.push({ kind: 'attribute', options: Object.freeze(linkedAttributes(registries, track.id).map((id) => attrLabels.get(id) || id)) });

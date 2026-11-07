@@ -1180,9 +1180,6 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     for (const key of ['impactPerXp', 'buildupPerXp']) {
       if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
     }
-    for (const key of ['perWin', 'perElite', 'perBoss', 'perQuest']) {
-      if (Number.isFinite(configured.balance.classMastery?.pay?.[key])) configured.balance.classMastery.pay[key] = Math.max(0, Math.round(configured.balance.classMastery.pay[key] * xpMultiplier));
-    }
     for (const key of ['perWin', 'bossKill', 'perQuest']) {
       if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));
     }

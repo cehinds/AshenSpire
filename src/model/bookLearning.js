@@ -30,7 +30,7 @@ export function bookLessons(registries, run, def, skillId = def.skill) {
     const rank = abilityRankAt(registries,Math.max(1,skillLevel(run,skillId)));
     return abilityOfferPool(registries,run,skillId,rank).map(id => ({kind:'card',id,name:registries.cards.get(id).name,abilityRank:rank}));
   }
-  registries = registries.masterySource || registries;
+  registries = registries;
   if (!bookTracks(registries, def).some((track) => track.id === skillId)) return [];
   const choices = [];
   if (def.learnClass || def.learnAny) {

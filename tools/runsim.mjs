@@ -1,4 +1,3 @@
-import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 // tools/runsim.mjs — headless FULL-RUN simulator (M3 acceptance: "all 3
 // classes can complete 3-act runs").
 //
@@ -79,8 +78,7 @@ const levelBundle = XP_CURVE
   : contentBundle;
 // SPEC §13.4p: explicitly exercise new rated runs; preserve the historical
 // simulator corpus when the flag is absent.
-const CLASS_MASTERY = argv.includes('--class-mastery');
-const SINGLE_BREAK = argv.includes('--single-break-meter') || CLASS_MASTERY;
+const SINGLE_BREAK = argv.includes('--single-break-meter');
 const REG = createRegistries(SINGLE_BREAK ? configuredContentBundle(levelBundle, advancedConfigSnapshot()) : levelBundle);
 // THE GRACE REFILL A/B (Sten, 2026-08-08). Constantine flagged the cost himself
 // — "However, that would mean making combat harder" — and a nod is not an
@@ -335,7 +333,7 @@ function printIncoming(book, runs) {
 // ---- the combat bot (same policy as tests/balance) --------------------------
 const sourceRegistries = REG;
 function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
-  const REG = registriesForClassMastery(sourceRegistries, run);
+  const REG = sourceRegistries;
   const enc = REG.encounters.get(encounterId);
   // A boss scales by the tier it is met at (balance.bossTiers) in place of
   // the seat ratio, as main.js's combatMods does.
@@ -489,7 +487,6 @@ function waiveMana(combat, refused) {
 const loop = createRunLoop(REG, {
   fight: (run, rng, encId, cm, ds) => botFight(run, rng, encId, cm, ds),
   levelPick,
-  classMastery: CLASS_MASTERY,
   attributes: spendAllocation,
   get graceOn() { return GRACE_ON; },
   seededSeats: SEEDED_SEATS,
@@ -522,7 +519,6 @@ const tierBook = {};
 const tierRow = (key) => (tierBook[key] = tierBook[key] || { reached: 0, cleared: 0 });
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
-  const masteryXp = [];
   manaBook = { spent: 0, waived: 0, fights: 0, flasks: 0 };
   const deaths = {};
   const ds = DEEP || INCOMING ? newDeepStats() : null;
@@ -545,7 +541,6 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
-    masteryXp.push(r.masteryXp || 0);
     if (SEAT_TIERS) {
       for (const t of r.tiers) {
         const keys = [`${cls.id}|${t.tier}`, `*|${t.tier}|${t.seat}`, `*|${t.tier}`];
@@ -570,10 +565,6 @@ for (const cls of REG.classes.all()) {
     `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
     `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
-  if (CLASS_MASTERY) {
-    const sorted = [...masteryXp].sort((a,b)=>a-b);
-    console.log(`  mastery XP/run: mean ${(masteryXp.reduce((a,b)=>a+b,0)/N).toFixed(1)}, median ${sorted[Math.floor(N/2)]}, p90 ${sorted[Math.min(N-1,Math.floor(N*.9))]}, min ${sorted[0]}, max ${sorted.at(-1)} (${N} fresh-profile seeds)`);
-  }
   if (DIGEST) {
     for (const f of decisionDigest.fightsOf(cls.id)) console.log(digestLine(cls.name, f));
   }

@@ -176,27 +176,6 @@ test('legacy carrier rows and explicit saved faces preserve original schools and
   }
 });
 
-test('a pre-expansion save reload keeps every original damage carrier while new grades retain their traits', async () => {
-  const { createRunState, serializeRun, deserializeRun } = await engineModule('src/model/state.js');
-  const { registriesForClassMastery } = await engineModule('src/model/classMasteryRun.js');
-  const legacy = registries.legacyProgressionSource;
-  const run = createRunState({ registries: legacy, classId: 'herald', seed: 17 });
-  run.schemaVersion = 21;
-  const reloaded = deserializeRun(serializeRun(run));
-  const projected = registriesForClassMastery(registries, reloaded);
-  assert.equal(projected.balance.progression, undefined);
-  for (const [id, expected] of Object.entries(legacyCarriers)) {
-    const face = resolveCard(projected, { cardId: id, upgraded: false });
-    assert.deepEqual({ damageSchool: face.damageSchool, exposureBuildupPerHit: face.exposureBuildupPerHit }, expected, id);
-  }
-  for (const id of ['starShower', 'scourge', 'desperateRite']) {
-    const face = resolveCard(registries, { cardId: id, abilityRank: 2 });
-    assert.equal(face.damageSchool, 'magic'); assert.equal(face.exposureBuildupPerHit, 5);
-    const savedFace = resolveCard(registries, { cardId: id, legacyAbility: true });
-    assert.deepEqual({ damageSchool: savedFace.damageSchool, exposureBuildupPerHit: savedFace.exposureBuildupPerHit }, legacyCarriers[id]);
-  }
-});
-
 test('assembled content validates every normalized card, feat and relic rule', () => {
   const validation = validateContent(contentBundle);
   assert.deepEqual(validation.errors, []);

@@ -1,6 +1,5 @@
 // Starting-kit discovery: one data table, one eligibility gate, one profile receipt.
 
-import { masteryReferenceOpen } from './classMasteryRun.js';
 import { classCreationConfig } from './characterCreation.js';
 
 export const PROGRESSION_MODES = Object.freeze(['normal', 'custom', 'debug', 'showcase']);
@@ -91,7 +90,7 @@ export function startingKitProblems(registries) {
 export function kitIsDiscovered(kit, meta, registries = null) {
   if (kit.baseline === true) return true;
   const found = new Set((meta && meta.discoveredArmaments) || []);
-  return startingKitPieceIds(kit).every((id) => found.has(id) && (!registries?.classMasteryVersion || !meta.classMastery || masteryReferenceOpen(registries, meta, `armament/${id}`, ['armament', 'weapon'])));
+  return startingKitPieceIds(kit).every((id) => found.has(id));
 }
 
 export function startingKitViews(registries, classId, meta = {}) {
@@ -219,7 +218,6 @@ export function armourIsStartingEligible(row, meta, registries, classId) {
   if (!row) return false;
   // Shared sets are equipped in the Armoury, where current attributes are checked.
   if (row.sharedSet) return false;
-  if (registries.classMasteryVersion === 1 && !masteryReferenceOpen(registries, meta, `armor/${row.classId}/${row.id}`, ['armament'])) return false;
   if (row.unlock === '') return true;
   if ((classCreationConfig(registries, classId).armourIds || []).includes(row.id)) return true;
   return new Set((meta && meta.unlocked) || []).has(row.unlock);

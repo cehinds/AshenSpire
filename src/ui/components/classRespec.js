@@ -14,7 +14,7 @@ export function classRespecOptionName(registries,kind,id,rank = null){
   else if(kind==='feat')name=registries.classSkillFeats.find(row=>row.id===id)?.name || id;
   else if(kind==='attribute')name=registries.attributes.get(id)?.name || id[0].toUpperCase()+id.slice(1);
   else if(kind==='armory'){
-    const source=registries.masterySource || registries;
+    const source=registries;
     name=id.startsWith('armament/')?source.equipment.armaments.find(row=>row.id===id.slice(9))?.name:source.equipment.armour.find(row=>`armor/${row.classId}/${row.id}`===id)?.name;
   }
   return `${name || id}${Number.isInteger(rank)?` ${t('classRespec.rankSuffix',{rank})}`:''}`;

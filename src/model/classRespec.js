@@ -14,7 +14,7 @@ import { createCardInstance, validateRunShape } from './state.js';
 // Stable preview sentinel; UI wording is independently authored in uiStrings.
 export const RESPEC_UNASSIGNED = 'Unassigned';
 const copy = value => structuredClone(value);
-const sourceOf = reg => reg.masterySource || reg;
+const sourceOf = reg => reg;
 const stateKey = run => { const {zones,collection,...owned}=run;return JSON.stringify(owned); };
 const catalogueKey = reg => JSON.stringify([sourceOf(reg).cards.all(),sourceOf(reg).relics.all(),sourceOf(reg).classMastery,sourceOf(reg).classSkillFeats,sourceOf(reg).equipment,sourceOf(reg).classTree,reg.balance.progression]);
 const ownedCard = (run,grant) => [...run.deck,...(run.sideboard || [])].find(inst => inst.instanceId === grant.selection?.instanceId && inst.rewardReceiptId === grant.id);
