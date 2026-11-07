@@ -29,6 +29,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
+// Ceiling on KNOWN_ORPHANS: lower it whenever the list shrinks, never raise it.
+export const ORPHAN_CEILING = 95;
+
 export const KNOWN_ORPHANS = new Set([
   'tools/actends.mjs',
   'tools/alternative-art-qa.mjs',
@@ -304,6 +307,7 @@ test('every top-level tool is reachable from a root, or listed in KNOWN_ORPHANS'
     'these tools/*.mjs are reachable from no root (package.json, .github/, run.sh, run.bat, tests/) or other tool: ' +
       'add a caller, or move each to tools/attic/ (see tools/attic/README.md); do not add to KNOWN_ORPHANS',
   );
+  assert.ok(KNOWN_ORPHANS.size <= ORPHAN_CEILING, `KNOWN_ORPHANS grew to ${KNOWN_ORPHANS.size} (ceiling ${ORPHAN_CEILING}); it may only shrink`);
   const orphanSet = new Set(orphans);
   const stale = [...KNOWN_ORPHANS].filter((k) => !tracked.has(k) || !orphanSet.has(k));
   assert.deepEqual(stale, [], 'KNOWN_ORPHANS lists tools that are now reachable or no longer tracked; remove them from the list');
