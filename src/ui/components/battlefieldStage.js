@@ -330,6 +330,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // would land on the art. The first observation of a rack is its current size and changes nothing.
   const watchedRacks = new WeakSet();
   let rackRequest = 0;
+  // Disconnected by release() with the other observers.
   const rackObserver = new ResizeObserver(entries => {
     const fresh = entries.filter(({ target }) => watchedRacks.has(target));
     if (!fresh.length) return;
@@ -1658,6 +1659,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);
     cancelAnimationFrame(overheadRequest);
+    cancelAnimationFrame(rackRequest);
+    rackObserver.disconnect();
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();
