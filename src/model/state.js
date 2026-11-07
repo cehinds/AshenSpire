@@ -1034,6 +1034,66 @@ export function levelProblems(level) {
   return problems;
 }
 
+/** Phase: a saved fight snapshot must agree with the run's expanded-combat state. */
+function checkExpandedSnapshot(run, problems, snapshot, path, terminal = false) {
+  if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+  // An absent rangeState is an old active fight; never adopt the run policy here.
+  if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
+    && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
+  if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+  if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
+  else if (run.reactionRulesVersion === 2) {
+    // Core contact policy belongs to the fight: historical active fights keep
+    // their whole-root plan, while newly created fights use per-hit contacts.
+    // The run still owns every tuning field; snapshot validation separately
+    // restricts contactPolicy to the known optional value.
+    const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
+      && snapshot.gameProfile?.hash === run.gameProfile.hash
+      && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
+    const tuning = rules => {
+      if (!localContactPolicy) return rules;
+      const { contactPolicy, ...rest } = rules || {};
+      return rest;
+    };
+    if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
+  }
+  problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
+  const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
+  if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
+    && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
+  if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
+}
+
+/** Phase: a saved fight snapshot must agree with the run's enemy-knowledge state. */
+function checkKnowledgeSnapshot(run, problems, snapshot, path) {
+  if (!typeOk(snapshot, 'object')) return;
+  const knowledge = snapshot.enemyKnowledge;
+  if (!run.enemyKnowledgeRules) {
+    // Configured FixCore fights own their cached reads locally. They do not
+    // open the legacy run learning/Perception ledger or bank any knowledge.
+    // The caller still validates the complete combat snapshot above.
+    const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
+      && gameModule(run, 'effects')?.fixCoreVersion === 1
+      && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
+      && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
+      && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
+      && knowledge?.bankable === false && knowledge.encounter === null;
+    if (battleLocal) return;
+    if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
+    return;
+  }
+  if (!knowledge) {
+    problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
+    return;
+  }
+  if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
+  if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
+  if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
+  const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
+  const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
+  if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
+}
+
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
   if (run.gameProfile) {
@@ -1067,62 +1127,6 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!Number.isSafeInteger(pools[field]) || pools[field] < (field === 'maxHp' ? 1 : 0)) problems.push(`ashenBlightBasePools.${field} must be a valid unboosted maximum`);
     }
   }
-  const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
-    if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
-    // An absent rangeState is an old active fight; never adopt the run policy here.
-    if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
-      && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
-    if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
-    if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
-    else if (run.reactionRulesVersion === 2) {
-      // Core contact policy belongs to the fight: historical active fights keep
-      // their whole-root plan, while newly created fights use per-hit contacts.
-      // The run still owns every tuning field; snapshot validation separately
-      // restricts contactPolicy to the known optional value.
-      const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
-        && snapshot.gameProfile?.hash === run.gameProfile.hash
-        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
-      const tuning = rules => {
-        if (!localContactPolicy) return rules;
-        const { contactPolicy, ...rest } = rules || {};
-        return rest;
-      };
-      if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
-    }
-    problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
-    const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
-    if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
-      && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
-    if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
-  };
-  const validateKnowledgeSnapshot = (snapshot, path) => {
-    if (!typeOk(snapshot, 'object')) return;
-    const knowledge = snapshot.enemyKnowledge;
-    if (!run.enemyKnowledgeRules) {
-      // Configured FixCore fights own their cached reads locally. They do not
-      // open the legacy run learning/Perception ledger or bank any knowledge.
-      // The caller still validates the complete combat snapshot above.
-      const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
-        && gameModule(run, 'effects')?.fixCoreVersion === 1
-        && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
-        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
-        && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
-        && knowledge?.bankable === false && knowledge.encounter === null;
-      if (battleLocal) return;
-      if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
-      return;
-    }
-    if (!knowledge) {
-      problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
-      return;
-    }
-    if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
-    if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
-    if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
-    const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
-    const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
-    if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
-  };
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;
     if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
@@ -1131,8 +1135,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       for (const field of ['nodeId', 'encounterId']) if (typeof pending[field] !== 'string' || !pending[field]) problems.push(`combatPendingOutcome.${field} must identify its fight`);
       for (const problem of combatSnapshotProblems(pending.snapshot)) problems.push(`combatPendingOutcome.snapshot.${problem}`);
       if (pending.snapshot?.phase !== 'ended' || pending.snapshot?.result !== pending.result) problems.push('combatPendingOutcome.snapshot must contain the matching ended fight');
-      validateExpandedSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot', true);
-      validateKnowledgeSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot');
+      checkExpandedSnapshot(run, problems, pending.snapshot, 'combatPendingOutcome.snapshot', true);
+      checkKnowledgeSnapshot(run, problems, pending.snapshot, 'combatPendingOutcome.snapshot');
       if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
     }
   }
@@ -1255,8 +1259,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
-      validateExpandedSnapshot(entered.snapshot, 'combatEntered.snapshot');
-      validateKnowledgeSnapshot(entered.snapshot, 'combatEntered.snapshot');
+      checkExpandedSnapshot(run, problems, entered.snapshot, 'combatEntered.snapshot');
+      checkKnowledgeSnapshot(run, problems, entered.snapshot, 'combatEntered.snapshot');
     }
   }
   // A respec withdraws what the record names (FINISH D13a), so it may never
