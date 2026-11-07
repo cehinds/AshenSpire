@@ -120,9 +120,7 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
         || !(option.autoCounter === true ? option.id === 'autoCounter' && option.cardId === null && option.play.autoCounter === true : text(option.play.cardInstanceId))
         || !Number.isFinite(option.staminaCost) || option.staminaCost < 0 || !Number.isFinite(option.manaCost) || option.manaCost < 0)
       || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('Invalid pending reaction choice');
-    // A Combat Rounds Preview pause (SPEC §4.11) holds its attack in the round, not in the action queue.
-    const roundPause = Boolean(state.combatRounds?.paused && state.combatRounds.round?.awaiting);
-    if (!roundPause && (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun))) problems.push('Reaction choice requires its unstarted contact plan');
+    if (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun)) problems.push('Reaction choice requires its unstarted contact plan');
     if (!['enemy', 'player', 'suspended'].includes(state.phase)) problems.push('Reaction choice is outside combat');
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
@@ -164,7 +162,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   // Only transaction-bearing runtime records are traversed. Logs, registries,
   // catalogues and RNG state do not carry authority to execute an action.
   const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
-    state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
+    state.reactionRootPlay, ...actors.map(([entity]) => entity?.combatCounter)];
   const seen = new Set(), plans = [], reservations = [], groups = [], lineagePlans = [], rangeCarriers = [];
   const inspect = (value, quoted = false) => {
     if (!value || typeof value !== 'object' || seen.has(value)) return;

@@ -1,4 +1,4 @@
-// src/engine/combatRounds/stance.js — the timeline stance and kind of an action (SPEC §4.11, stance-advantage.csv).
+// src/engine/combatRounds/stance.js — the timeline stance and kind of an action (SPEC §4.6a, §4.9; stance-advantage.csv).
 //
 // Pure: no DOM, no imports. Shared by the rounds adapter and the action-cost model (model/actionCosts.js), which
 // would otherwise import the adapter in a cycle.

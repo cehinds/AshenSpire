@@ -3179,9 +3179,9 @@ async function onCombatEnd(result, combat, enc) {
     }
     return showFinishedRun(false);
   }
-  // Settings → Advanced → Recovery: a won fight restores its after-combat
+  // A won fight restores its authored after-combat
   // percent of each pool (0 at the defaults, model/recoveryRules.js).
-  applyAfterCombatRecovery(run, saves.loadMeta().settings);
+  applyAfterCombatRecovery(run);
   if (result === 'victory') run.hp = Math.min(run.maxHp, run.hp + 5 * featStacks(run, 'vitalRenewal'));
 
   // A breath between the last blow and the spoils (components/victoryBeat.js):
@@ -3674,7 +3674,7 @@ function showRest(openPanel = null, locationId = null) {
   if (record !== priorRevisit) persist();
   const restState = record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
-    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
+    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus() });
     // A resumed classic shrine arrives again, and the refill is a top-up so
     // that pours nothing twice. The arrival's effects — the refill, or any
     // rule a later row authors on `arrived` — are written the moment they
@@ -3914,7 +3914,7 @@ function showShop() {
     restAtInn: (quote) => {
       const healMult = 1;
       const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
-      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus() });
     },
     // The market's quest event (SPEC §14.3): paid and marked seen, then the
     // visit closes exactly as Leave closes it, and the event door opens once.

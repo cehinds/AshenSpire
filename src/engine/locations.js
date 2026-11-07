@@ -47,8 +47,8 @@ export function locationCarrier(registries, locationId) {
  *   opts.healMult      the custom mod's heal scale (1 when none)
  *   opts.refillCounts  the grace-refill counts the settings resolved, if any
  *   opts.restBonus     { hp, stamina, mana } percents of each maximum a Rest
- *                      adds on top of the place's own rules (Settings →
- *                      Advanced → Recovery, model/recoveryRules.js)
+ *                      adds on top of the place's own rules (authored
+ *                      model/recoveryRules.js)
  * The visit's rules are mounted on creation; nothing is emitted until
  * arriveAt. `restDenied` names the relic forbidding the Rest here, or null.
  */

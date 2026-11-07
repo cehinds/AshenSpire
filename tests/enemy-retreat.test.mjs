@@ -7,7 +7,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
-import { enemyMoveQuote, buildEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
+import { enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 
 const profile = resolveGameProfile('core');

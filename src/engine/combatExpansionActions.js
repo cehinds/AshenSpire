@@ -27,7 +27,7 @@ export function effectCarrier(carrier, effect) {
   if (carrier?.counterReturnAttack) merged.combatProfile.counterReturnAttack = true;
   return merged;
 }
-export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
+export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
   if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1) && !carrier?.counterReturnAttack)) {
     for (const action of actions) ctx.enqueue(action);
     return null;
@@ -110,7 +110,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   const queued = contactActions(ctx, group, actions);
   for (const action of queued) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
-    meta: { ...completionMeta, expansionGroup: group } });
+    meta: { expansionGroup: group } });
   // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
   ctx._groupSink?.push(group);
   return group;
@@ -279,41 +279,28 @@ export function completeExpandedAction(ctx, action) {
     return;
   }
   if (group.cancelled) { ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1); return; }
-  // Completion can enqueue guard-break and trait pressure after the scoped action returns.
-  // Copy the delayed round receipt onto only those completion-generated actions; reaction
-  // stack actions never pass through this wrapper and therefore cannot borrow the multiplier.
-  const roundPoiseMultiplier = action.meta?.roundPoiseMultiplier;
-  const previousEnqueue = ctx.enqueue;
-  if (roundPoiseMultiplier) ctx.enqueue = queued => previousEnqueue({
-    ...queued,
-    meta: { ...queued.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } },
-  });
-  try {
-    beginExpandedAction(ctx, group, action.source);
-    if (group.contactSequence) group.targets = completedRootTargets(group);
-    for (const row of Object.values(group.targets)) {
-      const target = expansionEntity(ctx, row), receipt = row.receipt;
-      if (!target || !receipt) continue;
-      if (!target.alive) {
-        // A Smash that killed the target still broke its Guard; a dead target takes no bonus Poise.
-        if (expansionSeatConnected(ctx, target)) Matchups.completeGuardBreak(ctx, action.source, target, group.carrier, receipt);
-        continue;
-      }
-      if (!expansionTargetPresent(ctx, target)) continue;
-      if (!group.contactSequence) {
-        const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-        Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
-          { restrictions: Control.controlRestrictions(ctx, target) });
-      }
-      Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
-        actionKey: group.key, damaging: receipt.amount > 0 });
+  beginExpandedAction(ctx, group, action.source);
+  if (group.contactSequence) group.targets = completedRootTargets(group);
+  for (const row of Object.values(group.targets)) {
+    const target = expansionEntity(ctx, row), receipt = row.receipt;
+    if (!target || !receipt) continue;
+    if (!target.alive) {
+      // A Smash that killed the target still broke its Guard; a dead target takes no bonus Poise.
+      if (expansionSeatConnected(ctx, target)) Matchups.completeGuardBreak(ctx, action.source, target, group.carrier, receipt);
+      continue;
     }
-    for (const row of Object.values(group.targets)) Engagement.discardCounterRangeReservation(group,expansionEntity(ctx,row),row);
-    applyTraitImpact(ctx, action, group);
-    ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
-  } finally {
-    if (roundPoiseMultiplier) ctx.enqueue = previousEnqueue;
+    if (!expansionTargetPresent(ctx, target)) continue;
+    if (!group.contactSequence) {
+      const serial = group.manualCounterSerials?.[row.playerId || 'player'];
+      Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
+        { restrictions: Control.controlRestrictions(ctx, target) });
+    }
+    Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
+      actionKey: group.key, damaging: receipt.amount > 0 });
   }
+  for (const row of Object.values(group.targets)) Engagement.discardCounterRangeReservation(group,expansionEntity(ctx,row),row);
+  applyTraitImpact(ctx, action, group);
+  ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
 }
 
 // A target counts as hit when a damage contact connected (not avoided; a fully

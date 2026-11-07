@@ -1,7 +1,7 @@
-// Always-on combat visuals (SPEC §4.11; owner decision 2026-10-12): the blue selection, the soft shadows and the thin
-// target outline are on in every fight, rounds mode or not. The outline uses stance advantage only when rounds mode is
-// off (speed counts only in rounds mode): green when the card's stance beats the enemy's revealed stance, red when it
-// loses, none when neutral or unrevealed.
+// Always-on combat visuals (owner decision 2026-10-12): the blue selection, the soft shadows and the thin target
+// outline are on in every fight. The outline uses stance advantage alone: green when the card's stance beats the
+// enemy's revealed stance, red when it loses, none when neutral or unrevealed. (The combat-rounds mode that once
+// shared the layer was removed in cleanup 3i-A.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -41,7 +41,7 @@ test('the stance outline: green when the card beats the revealed stance, red whe
   assert.equal(stanceBonus(TABLE, 'attack', 'smash') > 0, true);
 });
 
-test('the stance outline reads the same stance table as the rounds outline', () => {
+test('the stance outline reads the stance-advantage table', () => {
   for (const [pair] of TABLE) {
     const [a, b] = pair.split('>');
     if (a === b) continue;
@@ -75,20 +75,20 @@ function decorateArmed(combat) {
   // No element is created in a normal fight with the toggles off: the outline is a dataset write only.
   globalThis.document = { createElement: () => { throw new Error('no element when the toggles are off'); } };
   try {
-    decorateCombatRoundsScreen(dom.root, combat, { armedCardId: card.instanceId, targetedId: combat.enemies[0].id });
+    decorateCombatRoundsScreen(dom.root, combat, { armedCardId: card.instanceId });
   } finally {
     Object.assign(globalThis, previous);
   }
   return dom;
 }
 
-test('a plain fight with every toggle off draws the stance outline on the enemy, with the shadow first on the sprite', () => {
+test('a plain fight draws the stance outline on the enemy, with the shadow first on the sprite', () => {
   const { c } = normalFight({ intentMove: 'guard', intentKind: 'block' });
   const dom = decorateArmed(c);
   // An attack loses to a revealed block (block beats attack in the table): red.
   assert.equal(dom.box.dataset.crOutline, 'red');
   assert.equal(dom.img.dataset.targetOutline, 'red', 'the sprite art carries the outline');
-  assert.equal('combatRounds' in dom.root.dataset, false, 'no rounds marker in a plain fight');
+  assert.equal('combatRounds' in dom.root.dataset, false, 'no stale rounds marker');
 });
 
 test('a plain fight draws no outline against a neutral (attack) intent, and none when no card is aimed', () => {
@@ -98,7 +98,7 @@ test('a plain fight draws no outline against a neutral (attack) intent, and none
   assert.equal(dom.img.dataset.targetOutline, undefined);
   const { c: idle } = normalFight({ intentMove: 'guard', intentKind: 'block' });
   const none = fakeBox(idle);
-  decorateCombatRoundsScreen(none.root, idle, { armedCardId: null, targetedId: idle.enemies[0].id });
+  decorateCombatRoundsScreen(none.root, idle, { armedCardId: null });
   assert.equal(none.box.dataset.crOutline, undefined, 'no card aimed: no outline');
 });
 

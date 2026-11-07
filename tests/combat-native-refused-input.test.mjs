@@ -10,7 +10,7 @@ assert.ok(start >= 0 && end > start);
 // Run native wiring and callbacks returned to the shared armHold control.
 const wire = source.slice(start, end + 4);
 
-function harness({ affordable = false, range = false, queued = false, blocked = null,
+function harness({ affordable = false, range = false, blocked = null,
   energy = 0, mana = 1, stamina = 2, cost = 3, manaCost = 4, staminaCost = 5, costIsX = false,
   needsTarget = false, oneTapPlay = false, busy = false } = {}) {
   const logs = [], tips = [], calls = [];
@@ -28,7 +28,6 @@ function harness({ affordable = false, range = false, queued = false, blocked = 
     armHold: (_el, options) => options,
     logIgnored: (what, why) => logs.push({ what, why }), dlog: (...args) => logs.push(args),
     showTooltipFor: (_el, html) => tips.push(html), esc: value => value,
-    isRoundQueued: () => queued, unqueueCard: () => calls.push('unqueue'),
     busy, inputBusy: () => busy, selected: null, selfArm: null, selectedFlask: 'old-flask',
     armSelf: id => calls.push(`arm:${id}`), syncCardSelection: () => calls.push('sync'),
     focusTargeting: () => calls.push('focus'),
@@ -66,14 +65,6 @@ for (const input of ['tap', 'confirm']) {
     assert.equal(h.scope.selected, 'native-c1');
     assert.deepEqual(h.calls, input === 'confirm' ? ['sync', 'focus'] : ['sync']);
     assert.deepEqual(h.logs, []);
-  });
-
-  test(`native ${input} takes a queued card back before busy and affordability guards`, () => {
-    const h = harness({ queued: true, busy: true });
-    h[input]();
-    assert.deepEqual(h.calls, ['unqueue']);
-    assert.deepEqual(h.logs, []);
-    assert.deepEqual(h.tips, []);
   });
 }
 

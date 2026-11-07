@@ -8,7 +8,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { enemyMoveSp, enemyMoveQuote, buildEnemyQueue, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
+import { enemyMoveSp, enemyMoveQuote, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 
@@ -51,7 +51,7 @@ test('Core rejects unaffordable forced openers and the minimum-one fallback, inc
   const combat = fight(), enemy = { ...combat.enemies[0], maxStamina: 2, pendingStaminaLoss: 1, movesHistory: [] };
   const def = { ...registries.enemies.get(enemy.enemyId), firstMove: 'hammerToss', moves: { hammerToss: registries.enemies.get(enemy.enemyId).moves.hammerToss } };
   const offered = [];
-  const queue = buildEnemyQueue(enemy, def, { combat, isFirstTurn: true, pick: (e, d, available) => { offered.push(available); return available >= 2 ? 'hammerToss' : null; } });
+  const queue = extendEnemyQueue(enemy, def, [], { combat, isFirstTurn: true, pick: (e, d, available) => { offered.push(available); return available >= 2 ? 'hammerToss' : null; } });
   assert.deepEqual(queue, []);
   assert.deepEqual(offered, [1]);
 });
@@ -234,7 +234,7 @@ test('an attack approach persists: the next planned attack is not charged an Adv
   enemy.maxStamina = 4;
   enemy.movesHistory = [];
   delete enemy.combatStance;
-  const queue = buildEnemyQueue(enemy, def, { combat, pick: () => 'caneStrike' });
+  const queue = extendEnemyQueue(enemy, def, [], { combat, pick: () => 'caneStrike' });
   assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
 });
 
@@ -266,7 +266,7 @@ test('movement projection resolves authored repeat formulas without granting oth
   enemy.maxStamina = 3;
   const before = { range: structuredClone(combat.rangeState), block: enemy.block, counters: combat.rng.getCounters() };
   let index = 0;
-  const queue = buildEnemyQueue(enemy, def, { combat, pick: () => ['advance', 'caneStrike', 'caneStrike'][index++] });
+  const queue = extendEnemyQueue(enemy, def, [], { combat, pick: () => ['advance', 'caneStrike', 'caneStrike'][index++] });
   assert.deepEqual(queue, [{ moveId: 'advance', sp: 1 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
   assert.deepEqual({ range: combat.rangeState, block: enemy.block, counters: combat.rng.getCounters() }, before);
 });
@@ -295,7 +295,7 @@ test('an enemy that cannot afford a multi-hit move never picks it', () => {
   const crowded = { ...def, moves: { ...def.moves, tripleCut: three } };
   enemy.maxStamina = 2; enemy.movesHistory = [];
   const picked = new Set();
-  for (let i = 0; i < 20; i++) for (const row of buildEnemyQueue(enemy, crowded, { combat, pick: (e, d, maxSp, pricing) => Object.keys(d.moves).find(id => id === 'tripleCut' && enemyMoveQuote(d.moves[id], { enemy: e, moveId: id, combat: pricing }).totalSp <= maxSp) ?? 'caneStrike' })) picked.add(row.moveId);
+  for (let i = 0; i < 20; i++) for (const row of extendEnemyQueue(enemy, crowded, [], { combat, pick: (e, d, maxSp, pricing) => Object.keys(d.moves).find(id => id === 'tripleCut' && enemyMoveQuote(d.moves[id], { enemy: e, moveId: id, combat: pricing }).totalSp <= maxSp) ?? 'caneStrike' })) picked.add(row.moveId);
   assert.ok(!picked.has('tripleCut'), 'a 3 SP move is not queued from a 2 SP pool');
 });
 
