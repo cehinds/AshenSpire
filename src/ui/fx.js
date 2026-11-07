@@ -1598,7 +1598,7 @@ function playLegacyTimeline(events, ctx, done) {
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
     let actorAnimation = null;
-    if (actorEl && ctx.animateActor ) {
+    if (actorEl && ctx.animateActor && !beat.resultSaid) { // a rest beat (reactionAfterResult) never swings again
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
         traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
@@ -1613,7 +1613,7 @@ function playLegacyTimeline(events, ctx, done) {
       activeActorAnimation = actorAnimation;
     } else {
       actorAnimation = null;
-      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal') {
+      if (ctx.figureAnimations !== false && actorEl && beat.kind !== 'reveal' && !beat.resultSaid) {
         const attacking = beat.kind === 'attack' || beat.kind === 'counter';
         safe(() => flash(actorEl, attacking ? 'act-attack' : 'act-move', speed.lungeMs));
         safe(() => playPoseOn(actorEl, attacking ? 'attack' : 'guard', speed.lungeMs));

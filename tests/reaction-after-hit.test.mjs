@@ -19,7 +19,7 @@ const reaction = [
 ];
 const move = { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactPrepared: true };
 
-function drive(t, events, fn) {
+function drive(t, events, fn, extra = {}) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   t.mock.method(globalThis.performance, 'now', () => Date.now());
   withKitDom(dom => {
@@ -38,7 +38,7 @@ function drive(t, events, fn) {
     const ctx = { layer, combatEl: dom.document.createElement('div'), anchorFor: id => anchors[id] || null,
       // The player's card beat is the reaction animation; the enemy's own swing was already played before the prompt.
       animateActor: beat => { at(`anim:${beat.actorId}`); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
-      onBeatApplied() {}, onFlush() {} };
+      onBeatApplied() {}, onFlush() {}, ...extra };
     let done = 0;
     playTimeline(events, ctx, () => done++);
     try {
@@ -112,4 +112,11 @@ test('a reaction that cancels the attacker leaves the next enemy move whole, aft
     assert.ok(when(timeline, 'anim:player') < when(timeline, 'anim:e1'), 'the reaction plays first, then the second move plays whole (own swing)');
     assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1);
   });
+});
+
+test("the legacy 'impact' order does not swing the enemy a second time for the rest beat", t => {
+  const events = [...reaction, move, ...hitOf(5), { type: 'enemyMoveEnded', sourceId: 'e1' }];
+  drive(t, events, timeline => {
+    assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1, 'one enemy swing');
+  }, { beatOrder: 'impact' });
 });
