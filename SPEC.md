@@ -1563,25 +1563,61 @@ One chain of data rows and one truth function (`model/flaskgrowth.js`). `balance
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-**The what-changed receipt (owner ask, 2026-10-31).** Every committed event choice (the event screen, quest-chain dialogue, quest-board and dungeon choices) takes a run snapshot before it commits and, when the run differs afterwards, opens the page-locked **What changed** receipt (`ui/components/whatChangedModal.js`): the event's name as title, the authored `resultText` as its lead line, then one row per stat, resource, relic, card (with before and after faces) or armament that moved. A pure flavour choice that changes nothing opens no receipt. The same receipt follows a Core rest-site Smith or card upgrade (the profile rest services; not level-up, which ends in its own reward door). The classic rest site's Smith keeps its own receipt line and is not wired to this modal.
+Governs event rolls on Unknown nodes, the M2 launch events, event data shape, quest chains and the What changed receipt.
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `src/content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
+#### Unknown-node roll and M2 events
 
-1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
-2. **Abandoned Merchant Cart** — *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
-3. **Wayward Pilgrim** — *Give 50 cinders* (gain a random relic) / *Refuse* (nothing).
-4. **Ancient Cinder Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave*.
+- Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning; `mapConfigs[act].unknownWeights` in `src/content/mapconfig.js`).
+- Every event is a real trade-off. M2 launch set:
 
-Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
+| # | Event | Choices |
+|---|---|---|
+| 1 | Goldbough Avatar | *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave* |
+| 2 | Abandoned Merchant Cart | *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave* |
+| 3 | Wayward Pilgrim | *Give 50 cinders* (gain a random relic) / *Refuse* (nothing) |
+| 4 | Ancient Cinder Stone | *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave* |
 
-**Quest chains (E12, #257).** Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock). Two gates read those facts, both authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+- Event definition is a data object `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }`; `effects` are run-level opcodes from the one effect DSL (§3.4).
 
-- **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
-- **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
+#### The What changed receipt
 
-The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Second Cairn** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
+- Every committed event choice (event screen, quest-chain dialogue, quest-board and dungeon choices) takes a run snapshot before it commits.
+  - If the run differs afterwards, it opens the page-locked **What changed** receipt (`ui/components/whatChangedModal.js`).
+  - Contents: the event's name as title, the authored `resultText` as lead line, then one row per stat, resource, relic, card (before and after faces) or armament that moved.
+  - A pure flavour choice that changes nothing opens no receipt.
+- The same receipt follows a Core rest-site Smith or card upgrade (the profile rest services); not level-up, which ends in its own reward door.
+- The classic rest site's Smith keeps its own receipt line and is not wired to this modal.
 
-**Quest completion and dialogue (plan phase 10a, proposal §7.5).** A committed choice goes through one door, `engine/quests.js commitEventChoice`: the run effects, then the history row, then the completion check. A chain is a third sidecar, `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave. Completion is `completeQuest`: it appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits. An atlas quest's claimed reward completes through the same door with `source: 'atlas'`. Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8): the event text divides into beats on blank lines, the speaker named in `eventSpeakers` (a `content/source/speakers.csv` row: `id,name,portraitKey`; a missing portrait shows the name plate) stands right and the player left, and the event's choices are the responses on the last beat. Back, Continue, Skip speech and speech ending move only the beat; only a response commits, and binding responses keep the hold. Validation refuses by name a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest. One-off events keep the Event screen.
+#### Quest chains (E12)
+
+- Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock).
+- Two gates read those facts, authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+  - **Choice-level:** `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs.
+    - `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest.
+    - Leave stays requirement-free so a branch can never trap.
+  - **Event-level (quest steps):** `eventHistoryRequirements[eventId]`, same grammar.
+    - `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback.
+    - `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves as before.
+- First chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Second Cairn** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken).
+  - `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door.
+- A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`).
+  - No generic pool (elite or boss drop, shop stock, an event's random relic) may hand it over first, so the choice that promises it always delivers.
+  - Validation refuses a quest-pool relic no event choice grants.
+
+#### Quest completion and dialogue (plan phase 10a)
+
+- A committed choice goes through one door, `engine/quests.js commitEventChoice`: run effects, then the history row, then the completion check.
+- A chain is a third sidecar: `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`.
+  - Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave.
+- Completion is `completeQuest`: appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits.
+  - An atlas quest's claimed reward completes through the same door with `source: 'atlas'`.
+- Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8).
+  - The event text divides into beats on blank lines.
+  - The speaker is named in `eventSpeakers` (a `content/source/speakers.csv` row `id,name,portraitKey`; a missing portrait shows the name plate) and stands right; the player stands left.
+  - The event's choices are the responses on the last beat.
+  - Back, Continue, Skip speech and speech ending move only the beat; only a response commits; binding responses keep the hold.
+- Validation refuses by name: a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest.
+- One-off events keep the Event screen.
 
 ---
 

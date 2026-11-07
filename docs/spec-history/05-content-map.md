@@ -30,3 +30,9 @@ Archive of rationale, dates and superseded values moved out of SPEC.md by the co
 - §5.5.2 quote: "Constantine, 2026-08-08 (D17 message 6): *“…those two are locked in with 3 charges, with upgrade options via relics or quest events or talismans or flask seeds to increase the amount of charges”*." D19: *"future unlocks for larger total amount"*. "(his four words, …)". "machine-enforced since run schema v3" and the "cleanup" rationale: a re-derivation of capacity from the chain alone would silently delete granted charges.
 - C1 seam: "Capacity is one freely reallocatable pool; its approved new-run default is 4. The older 3-total and 3-each readings are superseded history, not alternatives."
 
+### From §5.6 Events
+
+- What-changed receipt: "(owner ask, 2026-10-31)".
+- "Every event is a real trade-off, StS-style."
+- Quest chains heading: "(E12, #257)"; completion heading: "(plan phase 10a, proposal §7.5)".
+
