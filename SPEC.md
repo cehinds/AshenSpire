@@ -1,86 +1,81 @@
 # Ashen Spire — Detailed Specification
 
-*(Formerly "Spire of the Erdtree / EldenSpire" — renamed in the IP scrub, `95c3b87`.)*
+Single-player browser roguelike deckbuilder, mechanically faithful to Slay the Spire, thematically inspired by (legally distinct from) Elden Ring. Companions: `DEVELOPER.md`, `CREDITS.md`.
 
-> **KNOWN DEBT, stated once here rather than apologised for per section: this spec's in-game
-> vocabulary is still largely pre-scrub.** It says runes/Vagabond/Astrologer/Prophet/Erdtree
-> where the tree ships cinders/Reaver/Starseer/Herald/Goldbough. **`docs/IP-SCRUB.md` is the
-> authoritative old→new map** and every name in it is a shipped fact. **The broad mechanical
-> rename act once proposed here is dropped: the owner does not want it (owner decision,
-> 2026-09-27).** Read historical prose through that map rather than sweeping it piecemeal. When
-> an audited section describes current shipped definitions, however, it uses the canonical names
-> consistently throughout that section and records the reconciliation in its audit. The count of old names:
-> `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
+- Numbers are **initial balance targets** (M3 pass may move them); structures (formulas, orderings, state shapes) are contractual.
+- Two contracts supersede conflicting older prose here:
+  - [STANCE-COMBAT-RULES](docs/STANCE-COMBAT-RULES.md) (planned): stance discounts, ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews, HUD/floaters.
+    - Unrelated WardToBlock and reaction rules stay in force.
+    - Implemented in a separate PR (CONTRIBUTING ground rule 1).
+  - [combat-clarity-2026-10-20](docs/design/combat-clarity-2026-10-20.md): Precision, reaction costs, per-hit Counters, combat feedback, progression presentation. Implementation tracked separately.
 
-A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: the original brief this spec expands (PROMPT.md, removed 2026-10-11), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
+> **Known debt: vocabulary.** Largely pre-scrub names: runes/Vagabond/Astrologer/Prophet/Erdtree
+> = cinders/Reaver/Starseer/Herald/Goldbough as shipped. [docs/IP-SCRUB.md](docs/IP-SCRUB.md) is the authoritative old→new map. No broad rename (owner, 2026-09-27). Audited sections use canonical names throughout. Old-name count: `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
-Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
+### Scope status
 
-> **Stance combat continuation (planned, owner 2026-10-14).** [docs/STANCE-COMBAT-RULES.md](docs/STANCE-COMBAT-RULES.md) is normative for the revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews and HUD/floater rules. It supersedes conflicting older prose in this specification and its combat contracts; all unrelated WardToBlock and reaction rules remain in force. Implementation follows in a separate PR under CONTRIBUTING ground rule 1.
+**planned** = contract written before its code (CONTRIBUTING rule 1). **built** = features ship; "Left to do" is not exhaustive. Verdicts for §12, §14–§15: [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); release criteria: [docs/FINISH.md](docs/FINISH.md). Update a row in the PR that changes it.
 
-> **Combat clarity corrections (owner 2026-10-20).** [docs/design/combat-clarity-2026-10-20.md](docs/design/combat-clarity-2026-10-20.md) records the current owner's corrections to Precision, reaction costs, per-hit Counters, combat feedback and progression presentation. It supersedes conflicting earlier rules for these subjects. Implementation and validation are tracked separately from this approved contract.
-
-### Scope status — what is built, partly built and planned
-
-*Checked 2026-09-27 against `dev` @ `7f78c5d0` (build `0.7.1.625`). Rows 14 and 13.4p–r (new) re-checked 2026-10-10 against `dev` @ `73a1342aa` (build `0.7.1.1262`); the other rows are as of 2026-09-27. One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. **built** means the section's features ship; the "what is left" column names the known gaps and is not exhaustive, so a gap found later is a correction to this table, not a contradiction of it. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
-
-| § | Area | Status | Evidence, and what is left |
+| § | Area | Status | Left to do |
 |---|---|---|---|
-| top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
-| 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
-| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
-| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
-| 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 57, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
-| 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
-| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
-| 8 | Testing | **built** | `tests/run-node.mjs`. |
-| 9 | Milestones M1–M4 | M1, M2 **built**; M3 **partly built**; M4 **partly built** | M3: 7 cards have no route in (`tools/contentreach.mjs`) and there is no balance gate (D1). M4: the feel, performance and asset-pass items are in FINISH §5, §7 and §10. |
-| 10 | Forward hooks | **seams built**, features **planned** | By design: v1 keeps them empty. |
-| 11 | Non-goals | — | The narrow layout and audio have shipped (the section says so). Multiplayer (LAN co-op) was removed (owner, 2026-10-31). |
-| 12 | Expansion (dodge, trader arts, HUD piles, branching bosses, roster, animation) | **built**, two items open | P6: 1–5 elites per seat averaging 3 (3 ship, one per seat). P8b: the Power resting stance (`resolveCombatPose` returns `idle`). |
-| 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of the former seat-adventure proposal (removed 2026-10-11; see git history); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid (§13.4n). **Post-1.0** (owner decision, 2026-09-27): 3b-ii (equipment rows joining the deck), the class-swap boss-reward door (§13.4h) and quest XP. The tower, city and later seat phases are **planned** in that proposal, with no SPEC section yet; companions are owned by §14.3, not the proposal's phase 5 (owner decision, 2026-09-27). |
-| — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop path keeps its existing rules until given a rating context (that section's last line). |
-| 14 | Deck editor and the three shops | **partly built** (code for steps 1–7 of 7 is on `dev`) | The SPEC section landed in #1331; step 2, deck rules, the sideboard and ordered draw, in #1343 (`tests/deck-rules.test.mjs`); step 3, the deck editor UI and its doors, in #1372 (`tests/deck-editor.test.mjs`); step 4, shop kinds and the guaranteed minimum, in #1371 (`tests/shop-kinds.test.mjs`); step 5, market additions, in the PRs FINISH §14 links; step 6, the blacksmith screen, in #1390 (`tests/blacksmith.test.mjs`); step 7, the wise master, in #1438 (`tests/master.test.mjs`). Left: FINISH §2's "Deck editor between runs" line is unticked (its browser check moves a card in and out of the deck at 390×844 by mouse, touch and gamepad), so the section is not yet fully built. |
-| 13.4p–r | One break meter, class mastery, progression budgets | **built** for §13.4p and §13.4q; §13.4r **partly built** | §13.4p (D49): one Poise break meter; Ward and Arcane Exposure fold into Poise, from #1646 (SPEC) and #1653 (`tests/single-break-meter.test.mjs`, `tests/poise-restamp.test.mjs`). §13.4q (D52): class mastery lives on the profile, from #1654 (profile), #1655 (banking) and #1658 (runs) (`tests/class-mastery-profile.test.mjs`, `tests/class-mastery-run.test.mjs`, `tests/class-mastery-content.test.mjs`). §13.4r: a run's six feat slots and four attribute points are shared across class swaps, from #1811 (`tests/progression-expansion-core.test.mjs`). Left: the rest of §13.4r (modular rewards, ability grades, class respec, XP presentation) was not re-checked for this row. |
-| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **built** (steps 1–5 of 5) | The SPEC section landed in #1348; §15.1, the card reward schedule, in #1351 (`tests/card-reward-schedule.test.mjs`); §15.2, the levelling preview and per-fight cap, in #1349 (`tests/level-pace.test.mjs`); §15.3, crafting drops, in #1352 (`tests/crafting-drops.test.mjs`); §15.4, legendary sigils, in #1455 (`tests/legendary-sigils.test.mjs`), to the shapes of #1439. |
+| top | Combat and equipment revision | **partly built** | Full framework cutover not performed; three-build prototype gate and 36→50 class pools post-1.0 (D3). |
+| 1 | Product overview | **built** | — |
+| 2 | Legal and asset constraints | **partly built** | §2.4 asset indirection: `styles/` `url('../assets/…)` references still bypass `assetUrl()`. |
+| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | — |
+| 4 | Combat rules | **built** | Ashen Blight stays a separate proposal. |
+| 5 | Content | **built** | — |
+| 6 | Map generation | **built** | — |
+| 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | §7.5 Cinzel/Inter **TO BUILD** (system fallbacks; later pack files, EXTERNAL-ASSETS-PLAN step 3b; only "AS Lore" copies ship). Release proofs: contrast, reduced motion, target size, Back-everywhere (FINISH §5–§9). |
+| 8 | Testing | **built** | — |
+| 9 | Milestones M1–M4 | M1, M2 **built**; M3, M4 **partly built** | M3: 7 cards unreachable (`tools/contentreach.mjs`), no balance gate (D1). M4: feel, performance, asset-pass items (FINISH §5, §7, §10). |
+| 10 | Forward hooks | **seams built**, features **planned** | v1 keeps them empty by design. |
+| 11 | Non-goals | — | — |
+| 12 | Expansion (dodge, trader arts, HUD piles, branching bosses, roster, animation) | **built**, two items open | P6: 1–5 elites per seat averaging 3 (3 ship, one per seat). P8b: Power resting stance (`resolveCombatPose` returns `idle`). |
+| 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md); phase 2 only as 2a (2b, relic passives as property rules, unscheduled). Open: smithing re-point (4b-ii, §13.4e); tree screen (§13.4g); four ability-card sentences approximated (§13.4f); quest XP unpaid (§13.4n). **Post-1.0** (owner, 2026-09-27): 3b-ii (equipment rows join deck), class-swap boss-reward door (§13.4h), quest XP. Tower, city, later seat phases **planned**, no SPEC section; companions owned by §14.3. |
+| — | World Journey, shared armour sets, legacy dungeons, opening prologue, configurable stat pools | **built**, one boundary | Stat-pool rules apply to the solo path only; the combat workshop path keeps its rules until given a rating context. |
+| 14 | Deck editor and the three shops | **partly built** (steps 1–7 of 7 on `dev`) | FINISH §2 "Deck editor between runs" unticked (390×844 card move by mouse, touch, gamepad). |
+| 13.4p–r | One break meter, class mastery, progression budgets | §13.4p, §13.4q **built**; §13.4r **partly built** | §13.4r: modular rewards, ability grades, class respec, XP presentation not re-checked. |
+| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **built** (steps 1–5 of 5) | — |
 
 ### Combat and equipment revision: implementation contract
 
-[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) is the normative
-contract for the next combat ruleset: categorized tags, typed damage and defenses,
-weapon impact, deterministic Evade, trigger/stacking semantics, and the three-build
-prototype gate before equipment and class-card expansion. It also specifies the
-accepted stance, grip, affinity, armor, rune, loot, and empty-hand creation work.
+Normative: [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) — categorized tags, typed damage and defenses, weapon impact, deterministic Evade, trigger/stacking semantics, the three-build prototype gate, accepted stance, grip, affinity, armor, rune, loot and empty-hand creation work.
 
-This is a specification change, not a claim that those mechanics are shipped.
-Existing runs use their supported ruleset until an explicit migration is implemented.
-For the new ruleset, the linked contract supersedes the conflicting parts of
-sections 3.3-3.7 (schemas/effects/triggers), 3.8 (equipment and rewards), 3.12 (saves),
-4.1-4.5 (combat), 5.1-5.4 (content), 6 (reward generation), and 7.4 (stance animation).
-Those sections continue to describe legacy behavior during migration. New code
-must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
-or card-only poise with the replacement rules.
+- Not a claim the mechanics ship; existing runs keep their supported ruleset until an explicit migration.
+- For the new ruleset the contract supersedes the conflicting parts of:
+  - §3.3–3.7 (schemas/effects/triggers), §3.8 (equipment and rewards), §3.12 (saves)
+  - §4.1–4.5 (combat), §5.1–5.4 (content), §6 (reward generation), §7.4 (stance animation)
+  - Those sections describe legacy behavior during migration.
+- New code must not silently combine legacy dodge, idle-only recovery, armor-weight coupling, or card-only poise with the replacement rules.
+- **Scope for 1.0 (D3):** the prototype gate and the class reward-pool expansion 36→50 are **post-1.0** and stay the contract for later.
+  - 1.0 ships the 36-card pools of §5.1 and does not wait on the gate.
 
-**Scope for 1.0 (owner ruling D3, 2026-09-24):** the linked contract's three-build
-prototype gate and the class reward-pool expansion from 36 to 50 cards are
-**post-1.0**. The 1.0 release ships the 36-card class pools of §5.1 and does not wait
-on the prototype gate; both remain the contract for the work after 1.0, unchanged.
+#### Notes and history
+
+- The scope table is project status, not rules; its evidence is archived.
+
+Full history: [docs/spec-history/01-overview-legal.md](docs/spec-history/01-overview-legal.md).
 
 ---
 
 ## 1. Product overview
 
+A run: pick 1 of 4 classes → traverse a branching map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from the class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see "YOU PERISHED" with seed and stats.
+
 | | |
 |---|---|
-| Title | **Ashen Spire** (`AshenSpire` — the bundle name; page title `index.html:8`; title screen `src/ui/screens/title.js`) |
-| Platform | Modern evergreen browsers. 1280×800 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
-| Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
-| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
-| Entry point | `index.html` served by `node tools/serve.mjs`, which serves the media. Opened from any static server, it still boots and plays; once EXTERNAL-ASSETS-PLAN step 13 moves the media trees to the art repository, such a page has placeholders (§2.4), synthesized audio, system fonts and the low-detail map. Only the built file opens by double-click: the source page loads ES modules, which a `file://` page cannot. |
-| Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
+| Title | **Ashen Spire** (`AshenSpire` bundle name; page title `index.html:8`; title screen `src/ui/screens/title.js`) |
+| Platform | Modern evergreen browsers. 1280×800 is the **layout reference** (§7.2), not a minimum; a narrow layout ships, selected once by `main.js` writing `data-layout` (§11). |
+| Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step. |
+| Persistence | `localStorage`: three run slots plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer, opened from **Profile on the title screen** (§3.12). |
+| Entry point | `index.html` via `node tools/serve.mjs` (serves media). Any static server still boots and plays; after EXTERNAL-ASSETS-PLAN step 13 (media moves to the art repository) such a page has placeholders (§2.4), synthesized audio, system fonts, low-detail map. Only the built file opens by double-click (`file://` cannot load ES modules). |
+| Session length | Run ≈ 45–90 min; combat ≈ 2–5 min. |
 
-A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from that class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
+#### Notes and history
+
+- No rules moved out of §1.
+
+Full history: [docs/spec-history/01-overview-legal.md](docs/spec-history/01-overview-legal.md).
 
 ---
 
@@ -88,54 +83,39 @@ A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts �
 
 These override everything else in the spec.
 
-1. **No FromSoftware assets or names.** No ripped sprites, music, logos, or exact proper nouns (no "Godrick", "Margit", "Malenia", "Limgrave"). Generic fantasy terms ("runes", "grace", "flask") are fine.
-2. Every shipped asset is listed in `CREDITS.md` with source URL and license. Allowed licenses: CC0, CC-BY (with attribution), OFL for fonts.
+1. **No FromSoftware assets or names**: no ripped sprites, music, logos, or exact proper nouns (no "Godrick", "Margit", "Malenia", "Limgrave"). Generic fantasy terms ("runes", "grace", "flask") are fine.
+2. Every shipped asset is in `CREDITS.md` with source URL and license. Allowed: CC0, CC-BY (with attribution), OFL (fonts).
 3. Planned sources:
-   - **game-icons.net** (CC BY 3.0) — card art, relic icons, status icons, intent icons. This is the primary art source; its ~4000 flat fantasy icons cover nearly everything.
-   - **Kenney.nl** (CC0) — UI nine-slices, buttons, panel borders.
-   - **OpenGameArt.org** (filter CC0/CC-BY) — combat backgrounds, enemy portraits if suitable ones exist.
-   - **Google Fonts** (OFL) — display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
-4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code is meant never to hardcode an asset path; until §2.4 lands this is not yet true: the CSS backdrops in `styles/` and several UI modules (for example `src/ui/components/scenePainting.js`, `src/ui/components/engravedIcon.js`, `src/ui/cardArtwork.js`, `src/ui/defaultCardArtwork.js`) still build `assets/…` paths directly. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
-5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
+   - **game-icons.net** (CC BY 3.0): card art, relic, status, intent icons (primary; ~4000 icons).
+   - **Kenney.nl** (CC0): UI nine-slices, buttons, panel borders.
+   - **OpenGameArt.org** (CC0/CC-BY only): combat backgrounds, enemy portraits.
+   - **Google Fonts** (OFL): display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
+4. Every image is referenced through `src/ui/assets.js` (id → URL/inline-SVG map); game code never hardcodes an asset path.
+   - **Not yet true until §2.4 lands:** CSS backdrops in `styles/` and several UI modules (e.g. `src/ui/components/scenePainting.js`, `src/ui/components/engravedIcon.js`, `src/ui/cardArtwork.js`, `src/ui/defaultCardArtwork.js`) still build `assets/…` paths directly.
+   - Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name), so the game is fully playable with zero downloaded assets.
+5. Third-party **code** only if MIT/BSD/Apache/CC0, in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32, public domain).
 
 ### 2.1 The AI-use acknowledgement — one home, two surfaces
 
-The game was built by AI under human direction, and says so. **The text has exactly one home,
-`src/content/aiDisclosure.js`, and nothing retypes it** — the two surfaces render it:
+The game was built by AI under human direction and says so. The text has exactly one home, `src/content/aiDisclosure.js`; nothing retypes it. Two surfaces render it:
 
 - **In-product:** Settings → **About** (`src/ui/screens/about.js`).
-- **The store:** `node tools/ai-disclosure.mjs` prints the identical string for Steam's
-  AI-disclosure field; the value pasted there is that output, not a paraphrase.
+- **Store:** `node tools/ai-disclosure.mjs` prints the identical string for Steam's AI-disclosure field; paste that output, not a paraphrase.
 
-One fact with two hand-maintained copies is a player comparing the store page to the game and
-reading two different claims about the same thing. So the arrangement is enforced rather than
-intended: **`node tools/ai-disclosure.mjs --check` fails when a shipped bundle has drifted from
-the module**, and the load-bearing runtime claim (*no AI runs while you play*) is a **single
-named string** that both the player and the falsifier are given — it previously existed twice,
-in different words, so no comparison could ever have caught them diverging.
+Rules:
+- `node tools/ai-disclosure.mjs --check` fails when a shipped bundle has drifted from the module.
+- The load-bearing runtime claim (*no AI runs while you play*) is a single named string given to both the player and the falsifier.
+- The approval flag lives in `src/content/aiDisclosure.js`; this spec does not restate its value (read it there or run the tool).
+  - It records whose words the wording is; nothing reads it to decide whether to render, since the acknowledgement always shows.
+  - Approval is a release gate (§9), not a display condition.
+  - The flag is about THIS wording: any edit to the text returns it to `false` in the same act.
+- *Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild. The runtime claim's two-command falsifier is in the module beside the sentence.
 
-**The approval flag lives in `src/content/aiDisclosure.js` and this spec no longer restates
-its value.** Read it there, or run `node tools/ai-disclosure.mjs`, which prints the current
-state. The flag records whose words the wording is and **nothing reads it to decide whether to
-render** — the acknowledgement always shows. Approval is a release gate (§9), not a display
-condition. **The flag is about THIS wording:** any edit to the text returns it to `false` in
-the same act, or it stops recording anything.
+#### Notes and history
 
-> **This paragraph used to be a SECOND COPY of that boolean, and it went stale exactly as
-> predicted** *(Saga, 2026-08-07: "this sentence is a second copy of a boolean and it went
-> stale the day the boolean moved")*. It said `approved: true` while the module said `false`,
-> giving the release gate two authoritative answers.
->
-> **Saga named the honest fix and it is now done: the spec cites the module rather than
-> restating its value.** The 2026-08-07 note declined it only to avoid restructuring another
-> seat's file. `docs/SPEC-RECONCILE.md` still carries a third prose copy; it is a historical
-> row recording what change #73 did, and it is annotated rather than rewritten — but it is
-> the remaining copy, and it will go stale the next time the flag moves.
-> *(AS-HD-040, 2026-09-03.)*
+- `docs/SPEC-RECONCILE.md` holds a prose copy of the approval flag that will go stale when the flag moves.
 
-*Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
-bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
-its own two-command falsifier, stated in the module beside the sentence it defends.
+Full history: [docs/spec-history/01-overview-legal.md](docs/spec-history/01-overview-legal.md).
 
 ---
 
