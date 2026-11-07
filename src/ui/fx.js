@@ -36,6 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
+import { floaterWordShown, floaterNumberShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
@@ -397,6 +398,11 @@ export function combatReadoutLayer(layer, create = true) {
  * There are no side lanes and no jitter, so a caller passes no placement.
  */
 export function floatNum(layer, anchor, text, cls, tint, { onSpawn = null, immediate: forceImmediate = false } = {}) {
+  // Floater policy (owner, 2026-11-07): only HP damage and Defeated show. A hidden number's sound still plays.
+  if (!floaterNumberShown(cls)) {
+    if (typeof onSpawn === 'function') { try { onSpawn(); } catch { /* a sound must not stop the beat */ } }
+    return null;
+  }
   if (!layer || !anchor) return;
   layer = combatReadoutLayer(layer);
   const el = document.createElement('div');
@@ -694,6 +700,9 @@ export function stackPriority(kind = '') {
 
 /** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
 export function callout(layer, anchor, forId, kind) {
+  // Floater policy (owner, 2026-11-07): Dodged and Evaded draw as Missed; every other hidden word spawns nothing.
+  kind = floaterWordShown(kind);
+  if (kind == null) return null;
   const isStatus = kind.startsWith('status:');
   const statusId = isStatus ? kind.slice('status:'.length) : null;
   const def = kind.startsWith('action:') ? { word: kind.slice(7), tone: 'white' } : isStatus
