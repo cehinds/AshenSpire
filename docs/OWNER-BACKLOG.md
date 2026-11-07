@@ -99,3 +99,5 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answer 2026-11-07: "it applies to every one" — one fixed width for every combatant, player and enemies.
 - Questions: none
 - Link: —
+- Layout confirmed 2026-11-07 ("ok but don't strech it out"): Block icon (tall, left) | HP bar / Poise bar / badge row stacked, HP number right of the HP bar. Keep it compact: fixed width roughly today's bar width, thin rows, no stretching of the HUD (Block icon scales to the stack height, not the other way round). Covers #4, #5, #6, #11.
+
