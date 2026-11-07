@@ -40,7 +40,6 @@ export const KNOWN_ORPHANS = new Set([
   'tools/book-art-browser.mjs',
   'tools/book-art-export-preview.mjs',
   'tools/book-learning-browser.mjs',
-  'tools/card-components.test.mjs',
   'tools/card-effect-art-build.mjs',
   'tools/card-feedback.mjs',
   'tools/card-layer-editor-qa.mjs',
@@ -138,12 +137,22 @@ export function isTool(path) {
 function isToolSub(path) {
   return /^tools\/[^/]+\/.+/.test(path) && !path.startsWith('tools/attic/') && TEXT_EXT.test(path);
 }
+// tests/run-node.mjs discovers and runs every *.test.mjs in the repository,
+// skipping node_modules, dist, build, scratch and dot-directories other than
+// .github, so such a file is a root wherever it lives (tools/ included).
+export function isDiscoveredTest(path) {
+  if (!path.endsWith('.test.mjs')) return false;
+  const dirs = path.split('/').slice(0, -1);
+  return !dirs.some((d) => ['node_modules', 'dist', 'build', 'scratch'].includes(d) || (d.startsWith('.') && d !== '.github'));
+}
+
 // This file names every orphan in KNOWN_ORPHANS, so it must not count as a root.
 const SELF = 'tests/tools-reachability.test.mjs';
 
 export function isRoot(path) {
   if (path === SELF) return false;
   if (path === 'package.json' || path === 'run.sh' || path === 'run.bat') return true;
+  if (isDiscoveredTest(path)) return true;
   return (path.startsWith('.github/') || path.startsWith('tests/')) && TEXT_EXT.test(path);
 }
 
@@ -155,7 +164,7 @@ export function reachableTools(files, readText) {
   const seen = new Set();
   const queue = [];
   const visit = (p) => { if (!seen.has(p)) { seen.add(p); queue.push(p); } };
-  files.filter(isRoot).forEach(visit);
+  for (const r of files.filter(isRoot)) { visit(r); if (isTool(r)) reached.add(r); }
   const toolByName = new Map(tools.map((t) => [t.slice('tools/'.length), t]));
   const subsByBase = new Map();
   for (const s of subs) {
@@ -261,6 +270,16 @@ test('this test file is not a root, so KNOWN_ORPHANS cannot reach its own entrie
     'tools/o.mjs': '',
   });
   assert.deepEqual(orphanTools(files, read), ['tools/o.mjs']);
+});
+
+test('a *.test.mjs the runner discovers is a root, even under tools/', () => {
+  const { files, read } = fixture({
+    'tools/x.test.mjs': "import './y.mjs'",
+    'tools/y.mjs': '',
+    'scratch/z.test.mjs': 'tools/z.mjs',
+    'tools/z.mjs': '',
+  });
+  assert.deepEqual(orphanTools(files, read), ['tools/z.mjs']);
 });
 
 test('workflows and composite actions are roots', () => {
