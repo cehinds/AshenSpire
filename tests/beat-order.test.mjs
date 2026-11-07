@@ -19,7 +19,9 @@ import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
 pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 // D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
-const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;
+const IMPACT = 100, TOTAL = 300, AFTER = 1000, REACTION = 500, GAP = 500;
+// Owner 2026-11-06: intent word → one gap → stance → one gap → swing.
+const LEAD = 2 * GAP;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -348,7 +350,7 @@ test('a delayed ordered contact retains the full hit-stop and remaining authored
       cancel() { trace.push({ what: 'settle', at: Date.now() }); },
     };
     run(accuracyHit(7), { animateActor: () => actor, maxHpFor: () => 54 });
-    tick(LEAD); // Let the required pre-sprite wait finish on time.
+    tick(GAP); tick(GAP); // Let each required pre-sprite wait (intent, then action word) finish on time.
     tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
     finish();
     const delivered = LEAD + 350;
@@ -393,3 +395,126 @@ test('impact order retains its existing terminal visual delay',t=>{
  });
 });
 
+
+// Owner 2026-11-06: card played → cost → intent word → stance → animation → hit word → reaction → damage → the rest.
+test('the card-play order: cost, intent word, stance, animation, hit word, reaction, damage numbers', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    const mark = what => trace.push({ what, at: Date.now() });
+    run([
+      { type: 'energySpent', amount: 2 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
+      { type: 'attackHit', sourceId: 'player', targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], {
+      onLeadApplied: () => mark('cost-applied'),
+      onStanceLead: () => mark('stance'),
+    });
+    finish();
+    const all = [...trace.map(e => ({ ...e })), ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))]
+      .filter(e => e.what !== 'bars').sort((a, b) => a.at - b.at);
+    const names = all.map(e => e.what);
+    const first = what => names.indexOf(what);
+    assert.deepEqual(names.filter(n => ['float:−2 EP', 'cost-applied', 'word:action:Strike', 'stance', 'swing', 'word:hit', 'reaction:e1', 'float:-4'].includes(n)),
+      ['float:−2 EP', 'cost-applied', 'word:action:Strike', 'stance', 'swing', 'word:hit', 'reaction:e1', 'float:-4']);
+    assert.ok(first('float:−2 EP') < first('word:action:Strike'));
+    const at = what => all.find(e => e.what === what).at;
+    assert.equal(at('cost-applied'), 0, 'the cost is the first thing that happens');
+    assert.equal(at('stance'), GAP, 'the stance follows the beat start by one gap (intentMs)');
+    assert.equal(at('word:action:Strike'), 0, 'the intent word is up with the cost, before the stance');
+  });
+});
+
+// Owner 2026-11-06, enemy loop: reveal -> the enemy pays (SP floater, meter) -> move (word, animation) -> hit word -> reaction -> damage.
+test('the enemy-turn order: reveal, SP payment, move word, animation, hit word, reaction, damage', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    const mark = what => trace.push({ what, at: Date.now() });
+    run([
+      { type: 'enemyActorTurnStarted', sourceId: 'e1', intent: {} },
+      { type: 'enemyStaminaSpent', sourceId: 'e1', moveId: 'slash', amount: 2, remaining: 1 },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack' },
+      { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
+      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 },
+    ], { onLeadApplied: () => mark('cost-applied') });
+    finish();
+    const all = [...trace, ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))].sort((a, b) => a.at - b.at).map(e => e.what);
+    const wanted = ['float:−2 SP', 'cost-applied', 'word:action:Attack', 'swing', 'word:hit', 'reaction:player', 'float:-6'];
+    const seen = all.filter(n => wanted.includes(n));
+    assert.deepEqual(seen, wanted);
+  });
+});
+
+test('an enemy that cannot pay says OUT OF SP over itself and plays nothing', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([{ type: 'enemyMoveUnavailable', sourceId: 'e1', moveId: 'slash', required: 3, available: 1, resource: 'sp' }]);
+    finish();
+    assert.deepEqual(words.map(w => w.kind), ['outOfSp']);
+    assert.ok(!trace.some(e => e.what === 'swing' || e.what === 'contact'), 'no animation for a skipped move');
+  });
+});
+
+// Owner 2026-11-06: every cost floater of one play (SP, MP; the enemy's SP) appears in the cost beat, before the intent word.
+test('a card with two distinct costs (SP and MP) shows both cost floaters before the intent word and the stance', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([
+      { type: 'staminaSpent', amount: 1 },
+      { type: 'manaSpent', amount: 2 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], { onStanceLead: () => trace.push({ what: 'stance', at: Date.now() }) });
+    finish();
+    const word = words.find(w => w.kind === 'action:Strike');
+    const sp = trace.find(e => e.what === 'float:\u22121 SP'), mp = trace.find(e => e.what === 'float:\u22122 MP'), stance = trace.find(e => e.what === 'stance');
+    assert.ok(sp && mp && word && stance, 'both costs, the word and the stance all appear');
+    assert.ok(sp.at <= word.at && mp.at <= word.at, `both cost floaters (${sp.at}, ${mp.at}) precede the word (${word.at})`);
+    assert.ok(word.at < stance.at);
+  });
+});
+
+// Core 2 aliases energy to stamina (model/turnStamina.js): one payment emits energySpent AND staminaSpent.
+test('one aliased Core 2 payment (energySpent + staminaSpent) shows exactly one "-1 SP" floater', t => {
+  drive(t, ({ trace, run, finish }) => {
+    const applied = [];
+    run([
+      { type: 'energySpent', amount: 1 }, { type: 'staminaSpent', amount: 1 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'core.strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], { onLeadApplied: beat => applied.push(...beat.events.map(e => e.type)) });
+    finish();
+    const floats = trace.filter(e => /^float:\u2212/.test(e.what)).map(e => e.what);
+    assert.deepEqual(floats, ['float:\u22121 SP']);
+    assert.deepEqual(applied, ['energySpent', 'staminaSpent'], 'both receipts still reach the HUD');
+  });
+});
+
+test('the enemy SP payment floater precedes the enemy move word', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([
+      { type: 'enemyStaminaSpent', sourceId: 'e1', moveId: 'slash', amount: 2, remaining: 1 },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack' },
+    ]);
+    finish();
+    const cost = trace.find(e => e.what === 'float:\u22122 SP'), word = words.find(w => w.kind.startsWith('action:'));
+    assert.ok(cost && word && cost.at <= word.at);
+  });
+});
+
+// A cardPreparing trigger (feat:pilgrim-of-scars) can heal before cardPlayed; that receipt rides the beat's lead with the
+// cost but is not a cost, so it keeps its visuals while only the cost is played and applied up front.
+test('a heal that precedes cardPlayed keeps its +HP floater; only the cost is applied up front', t => {
+  drive(t, ({ trace, run, finish }) => {
+    const led = [];
+    run([
+      { type: 'energySpent', amount: 1 },
+      { type: 'healed', targetId: 'player', amount: 5 },
+      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
+    ], { onLeadApplied: beat => led.push(...beat.events.map(e => e.type)),
+         onBeatApplied: beat => led.push(...beat.events.map(e => 'applied:' + e.type)) });
+    finish();
+    assert.ok(trace.some(e => e.what === 'float:+5'), 'the +HP floater plays');
+    assert.ok(trace.some(e => e.what === 'float:−1 EP'), 'and so does the cost floater');
+    assert.deepEqual(led.filter(x => /energySpent|healed/.test(x)), ['energySpent', 'applied:healed'], 'the cost applies up front, the heal with the beat, each once');
+  });
+});

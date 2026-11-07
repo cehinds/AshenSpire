@@ -10,7 +10,7 @@ import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
-import { combatProfileFor } from '../model/combatCardProfile.js';
+import { combatProfileFor, defaultRangeFor } from '../model/combatCardProfile.js';
 import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
 import * as CardTactics from './combatCardTactics.js';
@@ -65,14 +65,18 @@ function committedRangeSource(ctx,source,carrier,effect,profile) {
   }
   return resolved;
 }
+const fartherRange = (a, b) => rangeBand(b ?? a) > rangeBand(a) ? b : a;
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   ctx=rangeSourceContext(ctx,source);
   const profile=rangeSourceProfile(carrier,effect);
   const resolved=committedRangeSource(ctx,source,carrier,effect,profile);
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
-  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
-  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weapon,
+  // A weapon contact reaches as far as the weapon or the card, whichever is farther (CONTENT-NOTES: a card takes the
+  // largest range it carries); the reach precision bonus stays with the weapon's own range (weaponCoverage).
+  const weaponCoverage = weapon ? resolved.weaponRange ?? resolved.range ?? piece?.range ?? 'melee' : null;
+  const coverage = weapon ? fartherRange(weaponCoverage, profile.range) : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || defaultRangeFor(profile);
+  return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weaponCoverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
@@ -99,7 +103,7 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
       for (const target of targets) if (target.alive && source.kind !== target.kind) {
         const contact = rangeSourceContact(ctx, source, target, action.card, eff, `${index}:${r}:${h}:${actorRangeKey(ctx, target)}`);
         contacts.push(contact);
-        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, propertyTags: contact.throwCapable ? ['throw'] : [] } };
+        if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, weaponRange: contact.weaponCoverage ?? undefined, propertyTags: contact.throwCapable ? ['throw'] : [] } };
       }
     }
     action.meta = { ...action.meta, rangeTargetBatches: batches };
@@ -326,7 +330,7 @@ export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
     // Freeze source identity only. Stance acceptance and other root metadata
     // are established after this pre-hook boundary and must stay current.
     return {usedArmamentId:resolved?.sourceType==='unarmed'?null:resolved?.itemId || null,
-      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
+      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,...(row.weapon&&row.weaponCoverage?{weaponRange:row.weaponCoverage}:{}),propertyTags:row.throwCapable?['throw']:[]}};
   };
   const snapshots = new Map((def.effects || []).filter(effect=>effect.op==='damage').map(effect=>[effect,capture(effect)]));
   if (!snapshots.size && carrier.combatProfile?.maneuver === 'counter') snapshots.set(null,capture(null));

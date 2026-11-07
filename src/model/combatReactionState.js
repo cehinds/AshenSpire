@@ -173,10 +173,11 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     if (Object.hasOwn(value, 'rangeContactId') && (!hasRange || !text(value.rangeContactId))) problems.push('Invalid frozen range contact identity');
     if (Object.hasOwn(value, 'resolvedRangeSource')) {
       const source = value.resolvedRangeSource;
-      const keys = ['sourceType', 'itemId', 'range', 'propertyTags'];
+      const keys = ['sourceType', 'itemId', 'range', 'weaponRange', 'propertyTags'];
       const valid = hasRange && record(source) && Object.keys(source).every(key => keys.includes(key))
         && ['weapon', 'unarmed', 'spell'].includes(source.sourceType)
         && ['melee', 'reach', 'ranged'].includes(source.range)
+        && (source.weaponRange === undefined || ['melee', 'reach', 'ranged'].includes(source.weaponRange))
         && (source.sourceType === 'weapon' ? text(source.itemId) : source.itemId === null)
         && Array.isArray(source.propertyTags) && source.propertyTags.length <= 1
         && source.propertyTags.every(tag => tag === 'throw' && source.sourceType === 'weapon');

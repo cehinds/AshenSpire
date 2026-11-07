@@ -2,7 +2,10 @@
   "motion": {
     "spritePlaybackRate": 0.5,
     "stageGapMs": 500,
-    "animationStepDurationMs": 390
+    "animationStepDurationMs": 390,
+    "animationStepDefaultMs": 550,
+    "enemyAttackDefaultMs": 750,
+    "enemyFloaterIntervalDefaultMs": 750
   },
   "behavior": {
     "autoCombat": false,
@@ -19,9 +22,11 @@
     "stageGapMaximumMs": 2000,
     "animationStepMinimumMs": 50,
     "animationStepMaximumMs": 3000,
+    "enemyPacingMinimumMs": 100,
+    "enemyPacingMaximumMs": 3000,
     "mobileFastPreset": {
       "combatStepPause": 250,
-      "animationStepDuration": 195
+      "animationStepDuration": 275
     }
   }
 }

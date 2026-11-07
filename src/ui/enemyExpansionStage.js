@@ -142,7 +142,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
       if (!sequence) { due = Date.now() + ms; draw(selected); timer = setTimeout(settle, ms); return true; }
       // One clock (requestAnimationFrame), one hold for every frame, and never a skipped frame: a late tick shows
       // the next frame, and the later frames keep their full hold.
-      const frameMs = Math.max(frameHoldMs(), ms / sequence.length), total = frameMs * sequence.length, token = generation;
+      const frameMs = Math.max(frameHoldMs({ enemy: true }), ms / sequence.length), total = frameMs * sequence.length, token = generation;
       let startAt = performance.now(), shown = 0;
       due = Date.now() + total;
       draw(sequence[0].pose);
