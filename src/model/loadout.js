@@ -1,23 +1,15 @@
-import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
-import { gameModule, gameContent } from './gameProfile.js';
-import { tokenRe } from './tokens.js';
-import { deriveStat } from './derivedStats.js';
-import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
+import { gameContent } from './gameProfile.js';
 import { ratingIds } from './ratingFormula.js';
 import { startingKitProblems } from './startingKits.js';
 import { tagService } from './tagService.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
-import { note } from './healLedger.js';
-import { stampSkillBonuses } from './skills.js';
-import { applyAbilityGrade } from './abilityGrades.js';
 import { parseMod, modEffectLines, modEffectLine } from './loadout/modStrings.js';
 import {
   HANDS, EQUIPMENT_ROLES, armamentIntrinsicStatProblems, slotHand, pieceHand, fitsSlot,
   ARMAMENT_INTRINSIC_STAT_FIELDS,
 } from './loadout/hands.js';
 import {
-  CARD_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, RUN_MOD_APPLIES, EQUIPMENT_POOL_CURRENT,
-  moveEquipmentPool,
+  CARD_MOD_APPLIES, RUN_MOD_APPLIES, EQUIPMENT_POOL_FIELDS, moveEquipmentPool,
 } from './loadout/applyVocab.js';
 import {
   equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands,
@@ -30,14 +22,7 @@ import {
   SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState,
 } from './loadout/slotLadder.js';
 import {
-  profileById, createLoadout, createEquipmentProfileRuleSnapshot,
-  restoreEquipmentProfileRuleSnapshot,
-} from './loadout/shape.js';
-import {
-  roleAmountReceipt, equipmentKitReceipt, equipmentRoleSource, equipmentKitPlan,
-} from './loadout/kit.js';
-import {
-  WeaponCardPackageModel, applyEquippedWeaponCardPlan, isEquipmentComposedInstance,
+  WeaponCardPackageModel, isEquipmentComposedInstance, applyEquippedWeaponCardPlan,
 } from './loadout/weaponPackages.js';
 import { buildEquippedWeaponCardPlan, WeaponDeckCompositionService } from './loadout/weaponPlan.js';
 import {
@@ -47,12 +32,19 @@ import {
   startingDeckConfig, BOUND_GRANT_TAG, boundGrantProblems, boundGrantCardIds,
   sortBySourceOrder,
 } from './loadout/grantSources.js';
+import { equippedIn, equippedPieces, figureSpec, loadoutTags } from './loadout/equipped.js';
+import { runMods, cardMods, reconcileRunLoadoutHp } from './loadout/cardMods.js';
 import {
-  reconcileGrantedCards, ITEM_OWNED_ROLES, isItemOwned, pieceItemRef, isCurrentEquipmentGrant,
+  createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot,
+} from './loadout/shape.js';
+import { equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt } from './loadout/kit.js';
+import {
+  ITEM_OWNED_ROLES, isItemOwned, pieceItemRef, reconcileGrantedCards, isCurrentEquipmentGrant,
   itemMountInstances, reconcileGrantedCardsInCombat, ownerItemRef,
 } from './loadout/grants.js';
-import { equippedIn, equippedPieces, figureSpec, loadoutTags } from './loadout/equipped.js';
 import { startingDeckPlan } from './loadout/deckPlan.js';
+import { applyCardMods } from './loadout/applyCardMods.js';
+import { stampDeck } from './loadout/stampDeck.js';
 
 // src/model/loadout.js — what you carry, and what it does to your cards.
 // (Being split into src/model/loadout/*.js; the remainder is below.)
@@ -706,452 +698,6 @@ function emitEquipmentChanged(ctx, reason, before, after) {
 
 
 /**
- * cardMods(registries, loadout, classId) → Map(cardId → ['damage=+4', ...]).
- * The prefix is dropped because it has already done its job (choosing the
- * card); order is slot order, and the applier honours it.
- */
-export function cardMods(registries, loadout, classId, { attackSourceWeaponId = undefined } = {}) {
-  const eq = registries.equipment || {};
-  const fields = eq.modFields || {};
-  const out = new Map();
-  for (const piece of equippedPieces(registries, loadout, classId)) {
-    const packageModel = WeaponCardPackageModel.fromPiece(registries, piece);
-    if (attackSourceWeaponId !== undefined && packageModel && piece.id !== attackSourceWeaponId) continue;
-    for (const raw of piece.mods || []) {
-      const mod = parseMod(raw);
-      const spec = mod && fields[mod.field];
-      if (!spec || spec.scope !== 'card') continue;
-      const cardId = cardForTarget(eq, mod.prefix, classId);
-      if (!cardId) continue;
-      const list = out.get(cardId) || [];
-      list.push(`${mod.field}=${mod.mode === 'add' ? (mod.value >= 0 ? '+' : '') : ''}${mod.value}`);
-      out.set(cardId, list);
-    }
-  }
-  return out;
-}
-
-function cardForTarget(eq, target, classId) {
-  const rows = eq.targets || [];
-  const exact = rows.find((t) => t.target === target && t.classId === classId);
-  if (exact) return exact.cardId;
-  const any = rows.find((t) => t.target === target && t.classId === '*');
-  return any ? any.cardId : null;
-}
-
-/**
- * runMods(registries, loadout, classId)
- *   → { maxHp, maxMana, maxStamina, swapCostDelta, startStatuses }
- * The `self.*` half of the vocabulary: things a piece does to you rather than
- * to a card. startStatuses are handed straight to createCombat's existing
- * playerStatuses hook, so the engine needs no equipment code to honour them.
- *
- * `swapCostDelta` is the TALISMAN half of A8 — *"perhaps this action costs more
- * or less depending on Talisman"* — and it arrives as one `apply` value rather
- * than a new field on a piece, because a talisman already says what it does in
- * the same `mods` column every other piece uses (`self.swapCost=+1`). It is
- * SIGNED and it is a DELTA, never a price: the price is derived in
- * `swapCostFor` below, which is the only place that knows the base.
- *
- * NOTHING IS AUTHORED FOR IT YET AND THAT IS A CONTENT FACT, NOT A GAP. The
- * talisman slot has zero rows (equipSlots.csv ships it ahead of its content),
- * so today this returns 0 for every real loadout — and the day a talisman row
- * exists it works with no code, which test 28b measures with a piece it
- * authors itself rather than waiting for one.
- */
-export function runMods(registries, loadout, classId, run = null) {
-  const subject = run || {gameProfile:registries.gameProfile,loadout,class:classId};
-  const gear = gameProfileEquipmentReceipt(registries,subject);
-  const resolvedRefs = new Set(gear.sources.map(source=>source.sourceId));
-  const fields = (registries.equipment || {}).modFields || {};
-  const stacks = new Map();
-  const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
-  let swapCostDelta = 0;
-  for (const piece of equippedPieces(registries, loadout, classId)) {
-    const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
-    for (const raw of piece.mods || []) {
-      const mod = parseMod(raw);
-      const spec = mod && fields[mod.field];
-      if (!spec || spec.scope !== 'run') continue;
-      // Resolved gear replaces pool stats; independent swap/status effects remain.
-      if (resolvedPiece && EQUIPMENT_POOL_FIELDS.includes(spec.apply)) continue;
-      if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
-        pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
-      } else if (spec.apply === 'swapCost') {
-        swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
-      } else if (spec.apply === 'startStatus') {
-        const prev = stacks.get(spec.status) || 0;
-        stacks.set(spec.status, mod.mode === 'add' ? prev + mod.value : mod.value);
-      }
-    }
-  }
-  pools.maxHp += gear.totals.hp; pools.maxMana += gear.totals.mp; pools.maxStamina += gear.totals.sp;
-  return {
-    ...pools,
-    swapCostDelta,
-    startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
-  };
-}
-
-/**
- * Reconcile all run pools after an out-of-combat loadout mutation. The derived
- * snapshot, persisted equipment contribution, and HP adjustment remain the
- * authorities; each current pool keeps its absolute deficit as its vessel
- * grows or shrinks. Partial combat stamping records are deliberately ignored.
- */
-export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses = false } = {}) {
-  if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
-    || !EQUIPMENT_POOL_FIELDS.every((maxField) => {
-      const currentField = maxField === 'maxHp' ? 'hp' : maxField.slice(3).toLowerCase();
-      return Number.isFinite(run[maxField]) && Number.isFinite(run[currentField]);
-    })) return null;
-  if (!Number.isInteger(run.maxHpAdjustment)) {
-    throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
-  }
-  const classDef = registries.classes.get(run.class);
-  const liveMods = runMods(registries, run.loadout, run.class, run);
-  const priorBonuses = run.equipmentPoolBonuses || Object.fromEntries(
-    EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]),
-  );
-  const bonuses = (adoptEquipmentBonuses || gameModule(run,'gear')?.armorBudget)
-    ? Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]))
-    : priorBonuses;
-  const results = {};
-  const applyPool = (maxField, currentField, derivedValue, equipmentBonus, nextMax, adjustment = 0) => {
-    const was = run[maxField];
-    const deficit = moveEquipmentPool(run, maxField, nextMax, run.equipmentPoolDeficits && run.equipmentPoolDeficits[currentField]);
-    results[maxField] = { derived: derivedValue, equipmentBonus, adjustment, max: nextMax, deficit, was };
-  };
-
-  // Keep this named composition explicit: three independent instruments pin
-  // the exact HP addends at creation and load. Mana/Stamina use the same
-  // persisted-equipment rule below without weakening that historical witness.
-  // The character level rides the derivation (plan phase 6): the snapshot's
-  // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
-  const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
-  const expanded = run.combatExpansionVersion === 2;
-  const attributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
-  const staminaPenalty = expanded ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
-  const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
-    attributes,
-    classDef,
-    level,
-  });
-  const equipmentBonus = bonuses.maxHp;
-  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
-  applyPool('maxHp', 'hp', derived.value, equipmentBonus, nextMax, run.maxHpAdjustment);
-  for (const [maxField, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina']]) {
-    const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
-      attributes,
-      classDef,
-      level,
-    });
-    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField] - (statId === 'stamina' ? staminaPenalty : 0));
-    applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
-  }
-  run.equipmentPoolBonuses = { ...bonuses };
-  if (expanded) {
-    run.energyMax = run.maxStamina;
-    run.ashenBlightBasePools = Object.fromEntries([['maxHp', 'hp'], ['maxMana', 'mana'], ['maxStamina', 'stamina']].map(([field, stat]) => [field,
-      Math.max(field === 'maxHp' ? 1 : 0, deriveStat(run.derivedStatRuleSnapshot.rules, stat, { attributes: run.attributes, classDef, level }).value + bonuses[field] + (field === 'maxHp' ? run.maxHpAdjustment : 0))]));
-  }
-  run.equipmentPoolDeficits = Object.fromEntries(
-    EQUIPMENT_POOL_FIELDS.map((field) => [EQUIPMENT_POOL_CURRENT[field], results[field].deficit]),
-  );
-  // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
-  // ends with stampDeck(), which begins with this call. That is why Sten's
-  // planted double-count went green: whatever the earlier writers put in the
-  // field, this one replaced it, and nothing recorded the replacement. It still
-  // replaces it. It no longer does so silently.
-  note(run, {
-    kind: 'overwrite',
-    field: 'maxHp',
-    site: 'loadout.js:reconcileRunLoadoutHp',
-    was: results.maxHp.was,
-    now: results.maxHp.max,
-    why: `max-HP home 3 of 3 and the last writer at the door — derived ${results.maxHp.derived} + equipment ${results.maxHp.equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${results.maxHp.deficit} carried`,
-  });
-  return {
-    derived: results.maxHp.derived,
-    equipmentBonus: results.maxHp.equipmentBonus,
-    adjustment: run.maxHpAdjustment,
-    maxHp: results.maxHp.max,
-    deficit: results.maxHp.deficit,
-    pools: results,
-  };
-}
-
-
-function firstIndexOfOp(effects, op) {
-  return effects.findIndex((e) => e && e.op === op);
-}
-
-function adjust(current, mod, floor) {
-  const next = mod.mode === 'add' ? (typeof current === 'number' ? current : 0) + mod.value : mod.value;
-  return floor == null ? next : Math.max(floor, next);
-}
-
-/**
- * applyCardMods(def, mods, opts) → a new card def, or `def` unchanged.
- *
- *   mods = ['damage=+4', 'hits=2', 'cost=+1']   (prefix already stripped)
- *   opts = { modFields, limits }
- *
- * Mods apply in order, so a later `=N` genuinely replaces an earlier `+N` —
- * that's what lets a Tower Shield's flat block override a smaller bonus rather
- * than stacking with it. Formula-valued amounts are left alone: a piece may
- * change a number, never the shape of an effect.
- */
-export function applyCardMods(def, mods, opts = {}) {
-  if (!mods || !mods.length) return def;
-  const fields = opts.modFields || {};
-  const limits = opts.limits || {};
-  const effects = (def.effects || []).map((e) => ({ ...e }));
-  let cost = def.cost;
-  const touched = [];
-
-  for (const raw of mods) {
-    const mod = parseMod(`x.${raw}`);
-    const spec = mod && fields[mod.field];
-    if (!spec) continue;
-    touched.push(spec);
-
-    if (spec.apply === 'cost') {
-      cost = adjust(cost, mod, limits.minCost != null ? limits.minCost : 0);
-      continue;
-    }
-    if (spec.apply === 'scale') {
-      for (const e of effects) {
-        if (typeof e.amount === 'number') e.amount = Math.max(0, e.amount + mod.value);
-        if (typeof e.stacks === 'number') e.stacks = Math.max(0, e.stacks + mod.value);
-      }
-      continue;
-    }
-    if (spec.apply === 'amount') {
-      const i = firstIndexOfOp(effects, spec.op);
-      const floor = spec.op === 'damage' ? limits.minDamage : spec.op === 'block' ? limits.minBlock : 0;
-      if (i === -1) {
-        if (mod.value > 0) effects.push({ op: spec.op, target: spec.effTarget, amount: mod.value });
-      } else if (typeof effects[i].amount === 'number') {
-        effects[i].amount = adjust(effects[i].amount, mod, floor != null ? floor : 0);
-      }
-      continue;
-    }
-    if (spec.apply === 'hits') {
-      const i = firstIndexOfOp(effects, spec.op);
-      if (i === -1) continue;
-      const max = limits.maxHits != null ? limits.maxHits : 99;
-      const n = adjust(effects[i].hits != null ? effects[i].hits : 1, mod, 1);
-      effects[i].hits = Math.min(max, n);
-      continue;
-    }
-    if (spec.apply === 'status') {
-      const i = effects.findIndex((e) => e && e.op === 'applyStatus' && e.status === spec.status);
-      if (i === -1) {
-        if (mod.value > 0) {
-          effects.push({ op: 'applyStatus', target: spec.effTarget, status: spec.status, stacks: mod.value });
-        }
-      } else if (typeof effects[i].stacks === 'number') {
-        effects[i].stacks = adjust(effects[i].stacks, mod, 0);
-      }
-    }
-  }
-
-  // Rules text: numbers already in the template re-bind on their own (the UI
-  // reads tokens off the effects). A mod that introduced something the text
-  // never mentioned gets its clause appended, so a burning Strike says so.
-  let textTemplate = def.textTemplate;
-  // Instantiate at use, after the module graph has initialized. Validation
-  // also calls the starting-deck planner, so load-time work closes a cycle.
-  const TOKEN_RE = tokenRe();
-  const present = new Set();
-  let m;
-  TOKEN_RE.lastIndex = 0;
-  while ((m = TOKEN_RE.exec(textTemplate || '')) !== null) present.add(m[1]);
-  for (const spec of touched) {
-    if (!spec.clause) continue;
-    TOKEN_RE.lastIndex = 0;
-    const tok = TOKEN_RE.exec(spec.clause);
-    if (!tok || present.has(tok[1])) continue;
-    present.add(tok[1]);
-    textTemplate = `${textTemplate} ${spec.clause}`.trim();
-  }
-
-  return { ...def, cost, effects, textTemplate, equipMods: mods };
-}
-
-
-/**
- * stampDeck(registries, run, cards) → number of instances re-stamped.
- *
- * Card instances carry their equipment numbers as `inst.mods`, which is what
- * makes the whole system fall out of the existing architecture: resolveCard
- * already turns an instance into a def, saves already serialize instances, and
- * co-op already ships instances between seats. Nothing else had to learn about
- * equipment.
- *
- * Re-stamping is idempotent, so calling it after every swap is safe. Pass
- * `cards` to stamp a hand mid-combat; it defaults to the run deck.
- */
-export function stampDeck(registries, run, cards, {
-  adoptEquipmentBonuses = true,
-  reconcileEquipmentPools = true,
-} = {}) {
-  if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
-  // Configured cards own their explicit deck and shared rating receipt. They
-  // have no legacy weapon-card slots to stamp or grants to reconcile; projecting
-  // those slots would also reject the explicitly authored two-dagger Rogue kit.
-  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode !== 'legacy') {
-    // Only the full-deck call reconciles Core's gear-granted cards (a pile subset must never mint or drop them).
-    if (cards == null) reconcileGrantedCards(registries, run);
-    return 0;
-  }
-  const list = cards || run.deck || [];
-  if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
-  // THE QUOTA IS THE RUN'S, NOT THE LOADOUT'S. A composed deck's attack count
-  // is decided once, at birth, from the grants the run started with — after
-  // that the deck HAS the instances it has, and swapping equipment re-skins
-  // them rather than changing how many there are. Recomputing from the current
-  // loadout made a swap between pieces with different grant counts throw
-  // ("attack instance count 3 does not match authored 4"). The authoritative
-  // full-deck restamp therefore reads the count off the deck itself; a subset
-  // restamp keeps the old behaviour, since a pile is not the whole truth.
-  // `run.deck` — NOT `list`. A subset restamp is handed one pile, and combat
-  // calls this once per pile, so reading the count off the subset threw the
-  // quota away exactly when it was most needed: the pile holding attack:3
-  // failed with "unknown equipmentAttackSlotId 'attack:3'" mid-swap. The whole
-  // deck is on the run in both cases and is the record of what the run was born
-  // with, so both paths read the same number from the same place.
-  // THE QUOTA IS READ, NOT DERIVED. Four rounds went into deriving it — from the
-  // plan, then from the loadout, then from `list`, then from `run.deck` — and
-  // every one of them was inert on the path that actually mattered: combat's
-  // swap builds a SYNTHETIC run with `deck: []` and calls this once per pile, so
-  // there was never a deck to count. state.js writes the number down at birth
-  // instead (`equipmentAttackSlotCount`), combat carries it onto the synthetic
-  // run like it carries the profile snapshot, and this reads it. `== null`, not
-  // falsy: zero is a quota, and a run born with no attacks says so.
-  //
-  // The count-the-deck path survives for one caller only — a run saved before
-  // the field existed, whose own deck is still the record of what it was born
-  // with. A synthetic run with neither has nothing to say, and replans.
-  let bornWith = Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined;
-  if (bornWith === undefined && Array.isArray(run.deck) && run.deck.length) {
-    bornWith = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
-  }
-  const attackPlan = buildEquippedWeaponCardPlan(registries, run.loadout, run.class, { attackSlotCount: bornWith, removedAttackSlotIds: run.removedAttackSlotIds });
-  for (const inst of list.filter((card) => card.equipmentRole === 'attack')) {
-    const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
-    const desired = attackPlan.slots.find((slot) => slot.equipmentAttackSlotId === inst.equipmentAttackSlotId);
-    const next = desired && run.equipmentProfileRuleSnapshot.profiles[desired.profileId];
-    if (prior && next && prior.compatibility !== next.compatibility) {
-      throw new Error(`Incompatible attack profile swap: ${inst.profileId} (${prior.compatibility}) -> ${desired.profileId} (${next.compatibility})`);
-    }
-  }
-  applyEquippedWeaponCardPlan(attackPlan, list, { allowSubset: cards != null });
-  // Only the authoritative full-deck restamp reconciles granted/weapon-art
-  // instances — a pile subset must never mint or drop them. Reconciling
-  // BEFORE the stamping loop (in place — list IS run.deck here) means a
-  // newly composed instance is stamped like any other card below.
-  if (cards == null) reconcileGrantedCards(registries, run);
-  const effectiveAttributes = effectiveAshenBlightAttributes(run);
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, effectiveAttributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
-  let n = 0;
-  for (const inst of list) {
-    let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
-    if (inst.equipmentRole === 'attack' || inst.kitRole) {
-      const profile = profileById(registries, inst.profileId);
-      const owner = inst.kitRole ? inst.grantedBy : inst.weaponId;
-      const piece = owner
-        ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
-        : null;
-      row = { role: inst.kitRole || 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, effectiveAttributes, run.equipmentProfileRuleSnapshot, run);
-    }
-    if (row && row.profile) {
-      const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
-      const nextCompatibility = run.equipmentProfileRuleSnapshot.profiles[row.profile.id].compatibility;
-      if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible ${inst.equipmentRole} profile swap: ${inst.profileId} (${prior.compatibility}) -> ${row.profile.id} (${nextCompatibility})`);
-      if (inst.equipmentRole !== 'attack') inst.cardId = row.profile.baseCardId;
-      inst.profileId = row.profile.id;
-      inst.ratingId = row.receipt.rating.id;
-      inst.ratingValue = row.receipt.rating.value;
-      if (Number.isFinite(row.receipt.cap)) inst.ratingCap = row.receipt.cap;
-      else delete inst.ratingCap;
-      inst.profileReceipt = { ...row.receipt };
-      const sourceArmamentId = row.piece && row.piece.id;
-      if (sourceArmamentId) {
-        inst.sourceArmamentId = sourceArmamentId;
-        inst.smithingLevel = run.itemUpgradeLevels?.[`armament/${sourceArmamentId}`]
-          ?? run.armamentLevels?.[sourceArmamentId]
-          ?? 0;
-        // Equipment-bound basics derive their upgrade from the source piece.
-        // Per-copy flags remain authoritative only for ordinary cards.
-        inst.upgraded = false;
-        delete inst.upgradeSteps;
-      } else {
-        delete inst.sourceArmamentId;
-        delete inst.smithingLevel;
-      }
-    }
-    let carrier;
-    if (row && row.profile) {
-      // Equipment roles deliberately re-resolve from the persisted host rule
-      // snapshot when the active set changes.
-      carrier = run.equipmentProfileRuleSnapshot.profiles[row.profile.id];
-    } else {
-      const schoolAbsent = inst.damageSchool === undefined;
-      const buildupAbsent = inst.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) throw new Error(`${inst.instanceId}: damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      // Non-equipment cards are immutable host-stamped instances. Consult live
-      // content only at the explicit new/legacy adoption door, never during a
-      // later equipment swap re-stamp.
-      // The first stamp reads the resolved instance face, including a chosen
-      // ability grade. Later stamps preserve the carrier already on the host
-      // instance instead of adopting live content changes.
-      const authored = registries.cards.get(inst.cardId);
-      carrier = schoolAbsent ? applyAbilityGrade(authored, inst.abilityRank) : inst;
-      // A non-attack card may name a school for its status or presentation
-      // without dealing per-hit exposure. Persist its school with an explicit
-      // zero carrier so new instances satisfy the same saved-pair contract.
-      if (schoolAbsent && authored.type !== 'attack' && typeof carrier.damageSchool === 'string'
-        && carrier.exposureBuildupPerHit === undefined) carrier = {...carrier,exposureBuildupPerHit:0};
-    }
-    const priorSchool = inst.damageSchool;
-    const priorBuildup = inst.exposureBuildupPerHit;
-    if (typeof carrier.damageSchool === 'string') inst.damageSchool = carrier.damageSchool;
-    else delete inst.damageSchool;
-    if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
-    else delete inst.exposureBuildupPerHit;
-    // The magic share is the profile's; the physical damage type is the lending weapon's (armaments.csv physicalDamageType).
-    const priorShare = inst.magicShare;
-    const priorPhysical = inst.physicalDamageType;
-    if (Number.isFinite(carrier.magicShare)) inst.magicShare = carrier.magicShare;
-    else delete inst.magicShare;
-    if (row && row.piece && row.piece.physicalDamageType) inst.physicalDamageType = row.piece.physicalDamageType;
-    else delete inst.physicalDamageType;
-    const mods = cardMods(registries, run.loadout, run.class, {
-      attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
-    });
-    const amountMod = row && row.role === 'attack' ? `damage=${row.receipt.effectBase}`
-      : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
-    const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
-    const prev = inst.mods || [];
-    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit
-      || priorShare !== inst.magicShare || priorPhysical !== inst.physicalDamageType;
-    if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
-    if (next.length) inst.mods = next;
-    else delete inst.mods;
-    n += 1;
-  }
-  // A full restamp also refreshes the derived skill bonus (SPEC §13.4o): a
-  // swapped hand changes which schools a track's levels reach. A fight's own
-  // pile restamps (cards != null) keep the bonus its cards started with.
-  if (cards == null) stampSkillBonuses(registries, run);
-  return n;
-}
-
-
-/**
  * canSwap(registries, slotId, { inCombat }) → { ok, word, reason }.
  * The rule lives in equipSlots.csv (`swap`): hands may be changed mid-fight at
  * a price, armour and talismans may not.
@@ -1792,4 +1338,9 @@ export {
   startingDeckWarnings,
   startingDeckRefs,
   orderStartingDeck,
+  cardMods,
+  runMods,
+  reconcileRunLoadoutHp,
+  applyCardMods,
+  stampDeck,
 };
