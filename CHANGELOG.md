@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.28`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
 - **Tool cleanup** ([#2653](https://github.com/cehinds/AshenSpire/pull/2653), `0.7.4.26`). The HUD studio's character-creation mock-ups no longer show the retired keepsake step, and the combat audit waits for the reward screen correctly.
 - **Selected HUD removed** ([#2654](https://github.com/cehinds/AshenSpire/pull/2654), `0.7.4.24`). Selecting or targeting a combatant no longer opens the larger HUD panel; every combatant keeps its mini HUD, and double-click, double-tap or hold opens the inspect panel.
