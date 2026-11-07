@@ -21,6 +21,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/combat.js",
-    "symbol": "recoverAtTurnEnd"
+    "symbol": "doSwapArmament"
   }
 }

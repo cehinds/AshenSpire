@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatRounds/timeline.js",
-    "symbol": "enterEntry"
+    "file": "src/engine/enemyIntentReceipt.js",
+    "symbol": "captureEnemyIntent"
   }
 }
