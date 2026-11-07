@@ -1309,94 +1309,67 @@ is unchanged.
 
 ### 5.1 Classes, creation presets, and levels
 
-**New creation mode.** Add a new stable mode id, `tuned`. It is not offered at creation and
-is not the default: new runs default to `lean`, labelled Standard (`src/content/attributes.js:190`;
-`content/source/characterCreation.json:3`). Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
-owns its total and allocation bounds. This is a new mode, not a mutation or rename of
-`standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
-continue to validate exactly as authored.
+Governs the `tuned` creation mode and class presets, the XP and level curves, starting cinders and combat cinder rewards, and the Rogue class slice.
 
-The `tuned` opening presets are contractual and each sums to 53:
+#### Creation modes and presets
 
-| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation (the owner's defaults, `classes.js`, #1273) |
+- New runs default to `lean`, labelled Standard (`src/content/attributes.js:190`; `content/source/characterCreation.json:3`).
+- `tuned` is a new stable mode id, not offered at creation and not the default. Fixed total 53 across STR / DEX / CON / WIS / INT; the mode row owns its total and allocation bounds. It does not mutate or rename `standard` or `pointbuy`: saved runs persist the mode id and both older modes must keep validating exactly as authored.
+- The `tuned` opening presets are contractual and each sums to 53:
+
+| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation (`classes.js`) |
 |---|---|---|
 | Reaver | `13 / 11 / 11 / 8 / 10` | `2 / 1` |
 | Starseer | `11 / 11 / 8 / 13 / 10` | `1 / 2` |
 | Herald | `12 / 11 / 8 / 12 / 10` | `2 / 1` |
 | Rogue | `11 / 13 / 10 / 9 / 10` | `2 / 1` |
 
-The preset is an editor opening position, not a lock: players may redistribute the fixed
-total within the mode's data-authored bounds. Starting derived values come only from the
-formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
+- A preset is an editor opening position, not a lock: players may redistribute the fixed total within the mode's data-authored bounds.
+- Starting derived values come only from the §3.5 formulas; classes carry no second hidden HP/Actions/hand formula.
+- **Standard** (a mode with `opensOn: 'preset'`, §13.4m) seats the class preset with nothing left to spend; *Edit points* reopens it as a revision.
+- **Assign Points** always begins a fresh allocation at the mode's baseline for every attribute, with its complete bonus pool unspent. Reopening it refunds the current allocation the same way; class presets and earlier edits do not consume points before the player assigns them.
 
-Choosing **Standard** (a mode with `opensOn: 'preset'`, §13.4m) seats the class preset with
-nothing left to spend; *Edit points* reopens it as a revision. Choosing **Assign Points**
-always begins a fresh allocation at that mode's baseline for every
-attribute, with its complete bonus pool unspent. Reopening Assign Points refunds the current
-allocation the same way; class presets and earlier edits do not consume points before the
-player assigns them.
+#### Level curve
 
-**Level curve.** A fresh run starts at displayed level 1 and the level is EARNED (plan phase 6,
-§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
-The configured character curve reads `balance.level.xp`; legacy exponential tables use
-`xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
-A linear table (`linear: true`) uses
-`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100 and
-`multScaler` 1.3 (the October 1 default) the steps cost 100, 230, 360, 490 XP.
-Since 2026-10-02 (owner) the character default is exponential (`linear: false`): base 100,
-growth 1.75, roundTo 10 — steps 100, 180, 310, 540, 940, 1,640, 2,870, 5,030, 8,800,
-15,390, so 35,800 XP reaches level 11. **Changed (owner, 2026-11-05, §13.4o):** base 200,
-growth 1.5, roundTo 10, cap level 20 — steps 200, 300, 450, 680, 1,010, 1,520, 2,280, 3,420, 5,130, 7,690 (level 19 costs 295,580; 886,350 XP from level 1 to 20); supersedes the ×1.303 curve. Base, scaler, rounding and
-the linear/exponential toggle are configurable. Tables without `linear: true`
-retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
-Older snapshots without that marker use exponential defaults unless the player explicitly
-sets a linear-curve override; live XP edits preserve the marker's presence or absence.
-Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points
-(the player's dial, read when the level is reached), which wait on the run's ledger until the
-player assigns them at a shrine. Historical exponential curve receipt (base 5 / growth 1.15 /
-rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 10,
-10, 10, 10, 20, 20 — 120 XP to level 11 (the rounding holds the first eight steps at its floor
-of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
-The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
-25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100, and since 2026-10-02 (owner) both use the exponential curve (`linear: false`, growth 1.75, roundTo 5): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The character level uses the same ×1.75 growth (above). **Changed (owner, 2026-10-04, §13.4o):** every track's max level costs about 100,000 XP — character base 200 ×1.5 to level 20 (owner, 2026-11-05), class base 400 ×1.224 to level 20, skill base 100 ×1.995 to level 10; applied 2026-10-05. The 11–12 levels a full
-run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
-`tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
-level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
-faucet) is gone with the purse.
+- A fresh run starts at displayed level 1; the level is EARNED (§13.4i). Fights pay XP (`balance.xp`: a won fight, and each kill by the door's pool).
+- The curve reads `balance.level.xp`. Base, scaler, rounding and the linear/exponential toggle are configurable.
+  - Exponential (default; any table without `linear: true`): `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
+  - Linear (`linear: true`): `xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100, `multScaler` 1.3, steps cost 100, 230, 360, 490 XP.
+- Each track's maximum level costs about 100,000 XP (§13.4o):
 
-**Cinders at the start and from fights (owner, 2026-09-24).** A run opens with
-`balance.startingCinders` **20** cinders (0 before). Combat rewards pay from
-`balance.rewards.cinders` — normal 45–75, elite 105–150, boss 225–270. The Advanced
-`cinderMultiplier` row scales that table and defaults to 1. The owner's exported
-`progression.rewardMultiplier: 20` is **retired, not a default** (owner, 2026-09-24: "I hate
-the 20x cinder, that needs to die"): the old key is dropped with a warning wherever a
-profile, run snapshot or imported file carries it. The retired shared opening-hand
-`gameConfig.handRules.starting.base|stat` are dropped at the same three doors (§4.1),
-warned when not the stock value.
+| Track | Config key | Base | Growth | roundTo | Max level |
+|---|---|---|---|---|---|
+| Character | `balance.level.xp` | 200 | 1.5 | 10 | 20 |
+| Class | `balance.skill.class.xp` | 400 | 1.224 | 5 | 20 |
+| Equipment skill | `balance.skill.xp` | 100 | 1.995 | 5 | 10 |
 
-**Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
+- Character steps (levels 1→2 …): 200, 300, 450, 680, 1,010, 1,520, 2,280, 3,420, 5,130, 7,690; level 19 costs 295,580; level 1 to 20 totals 886,350 XP.
+- New runs record `advancedConfigSnapshot.xpCurveVersion: 1`. Older snapshots without the marker use exponential defaults unless the player explicitly sets a linear-curve override; live XP edits preserve the marker's presence or absence.
+- Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points (the player's dial, read when the level is reached); they wait on the run's ledger until the player assigns them at a shrine.
+- No cinder buys a level.
+- Levels earned per full run (measured 11.5) were measured on the old curve and awards and are due a re-measure; `tools/runsim.mjs --xp-levels` measures the 10–20 band.
 
-- 61 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
-  validation-clean player text: exactly 57 in its ordinary reward pool (the class row's
-  `cardPool`: the 47 legacy cards, the original 43 plus the four poison cards, and the ten
-  expanded families), the signature card Ambush, the class ability card Prepare (§13.4f), and the
-  two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
-  starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
-  is the home of that number);
-- one class signature card and one starter relic, both reachable in a new Rogue run;
-- two starting equipment kits and five Rogue-specific outfits/armour sets, plus the four `sharedSet` rows
-  every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`),
-  including one free baseline of each required kind and the same unlock/discovery rules as the existing classes;
-- five stage/tint class sprites plus the equipment/body/armament art needed for every authored
-  Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
-- class presets, flask allocation, rewards, draft/custom-run, history and compendium
-  participation derived from the registries rather than new Rogue-only branches.
+#### Cinders at the start and from fights
 
-Rogue mechanics should compose the existing effect, formula, trigger, status, equipment and
-resource vocabularies. A new opcode/predicate is allowed only when the approved class identity
-cannot be expressed by those primitives, and then it is a separately specified closed-set
-extension with validation and engine tests—not imperative per-card code.
+- A run opens with `balance.startingCinders` 20.
+- Combat rewards pay from `balance.rewards.cinders`: normal 45–75, elite 105–150, boss 225–270. The Advanced `cinderMultiplier` row scales that table; default 1.
+- `progression.rewardMultiplier: 20` is **retired, not a default**: the key is dropped with a warning wherever a profile, run snapshot or imported file carries it.
+- The retired shared opening-hand `gameConfig.handRules.starting.base|stat` are dropped at the same three doors (§4.1), warned when not the stock value.
+
+#### Rogue full parity slice
+
+Rogue ships as a complete fourth class, not a selectable shell:
+
+- 61 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and validation-clean player text:
+  - 57 in the ordinary reward pool (the class row's `cardPool`: the 47 legacy cards, i.e. the original 43 plus the four poison cards, and the ten expanded families);
+  - the signature card Ambush; the class ability card Prepare (§13.4f);
+  - two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet).
+- A new Rogue starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize` is the home of that number).
+- One class signature card and one starter relic, both reachable in a new Rogue run.
+- Two starting equipment kits; five Rogue-specific outfits/armour sets plus the four `sharedSet` rows every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`), including one free baseline of each required kind and the same unlock/discovery rules as the existing classes.
+- Five stage/tint class sprites plus the equipment/body/armament art for every authored Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior.
+- Class presets, flask allocation, rewards, draft/custom-run, history and compendium participation derive from the registries, not new Rogue-only branches.
+- Rogue mechanics compose the existing effect, formula, trigger, status, equipment and resource vocabularies. A new opcode/predicate is allowed only when the approved class identity cannot be expressed by those primitives, and then as a separately specified closed-set extension with validation and engine tests, never imperative per-card code.
 
 ### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
