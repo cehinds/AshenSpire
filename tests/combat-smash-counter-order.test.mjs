@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -8,12 +8,12 @@ import { createCombat, dispatch } from '../src/engine/combat.js';
 function fight({ wardOnly = false, block = 3, poiseMax = 3, poiseGuard = 0 } = {}) {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing',
     ...(wardOnly ? { delivery: 'projectile' } : {}) };
-  const registries = createRegistries({ ...legacyContentBundle,
+  const registries = createRegistries({ ...contentBundle,
     // costRule 'fixed' (SPEC action costs, owner 2026-10-12): this fixture pins its own 4-damage Smash, so the guard-break
     // threshold the ordering tests read stays where it was; the 2-SP cost is the same as the table's.
-    cards: legacyContentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card, costRule: 'fixed',
+    cards: contentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card, costRule: 'fixed',
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
-    enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy),
   });
   const player = { classId: 'reaver', hp: 200, maxHp: 200, mana: 10, maxMana: 10, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] };

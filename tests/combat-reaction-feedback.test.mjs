@@ -9,7 +9,6 @@ import { createRng } from '../src/engine/rng.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
 const SWEEP = ['camp:physical', 'maneuver:sweep', 'range:melee', 'targeting:single'];
@@ -307,10 +306,10 @@ test('v1: a lethal Smash that breaks Guard emits combatGuardBroken once and queu
 
 test('v1: a Smash into an armed Counter breaks Guard through the synchronous door once', () => {
   const profile = { camp: 'physical', maneuver: 'smash', damageType: 'slashing' };
-  const registries = createRegistries({ ...legacyContentBundle,
-    cards: legacyContentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
+  const registries = createRegistries({ ...contentBundle,
+    cards: contentBundle.cards.map(card => card.id === 'kilnCleave' ? { ...card,
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
-    enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
   const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'],
     player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });

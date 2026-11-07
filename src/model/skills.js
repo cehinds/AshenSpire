@@ -3,9 +3,8 @@ import { upgradeStepsOf } from './cardUpgrade.js';
 import {spendAbilityDraft} from './abilityDraftReceipts.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
 export { activateAbilitySkill };
-import { progressionFeats } from '../content/progression/feats.js';
 import { isAbilitySkill, SPELLCRAFT_SKILL, MANEUVERS_SKILL } from './abilityGrades.js';
-import { expandedProgression, queueClassMilestone } from './classMilestones.js';
+import { expandedProgression } from './classMilestones.js';
 // src/model/skills.js — the skill ledger and its one curve (plan phase 4a,
 // proposal §6.1). A track per weapon group, per armour weight class, one for
 // the focus group, one for dual-wielding and one per class; every track
@@ -24,8 +23,6 @@ import { expandedProgression, queueClassMilestone } from './classMilestones.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 import { xpStepCost } from './xpCurve.js';
-import { classSkillFeats } from '../content/classSkillFeats.js';
-import { skillFeats } from '../content/skillFeats.js';
 import { PERCEPTION_SKILL } from './perception.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
@@ -158,66 +155,13 @@ export function awardSkillXp(registries, run, skillId, amount, { queueRewards = 
     if (queueRewards) {
       row.pendingDrafts += 1;
       if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
-      if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+      if (!(expandedProgression(run) && kind === 'class')) queueAttributePick(registries, skillId, row);
     }
     // Core queues only the rank-up (SPEC 13.4o): its other level rewards follow its own policy.
     else if (queueRankUps) queueRankUp(kind, row);
     cost = xpToNext(registries, kind, row.level);
   }
-  const skillAwards = [];
-  if (kind === 'class' && row.level > before) {
-    if (queueRewards) for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
-  }
-  return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain, skillAwards };
-}
-
-/** Count the levels already paid for by a track, without advancing its ledger. */
-export function pendingSkillLevelCount(registries, run, skillId) {
-  if (skillId === PERCEPTION_SKILL) return 0;
-  const kind = skillKindOf(registries, skillId);
-  const row = run && run.skills && run.skills[skillId];
-  if (!kind || !row) return 0;
-  let xp = row.xp;
-  let level = row.level;
-  let count = 0;
-  while (belowCap(registries, kind, level) && xp >= xpToNext(registries, kind, level)) {
-    xp -= xpToNext(registries, kind, level);
-    level += 1;
-    count += 1;
-  }
-  return count;
-}
-
-/** Pay XP now; the player's Level Up! action advances the skill later. */
-export function bankSkillXp(registries, run, skillId, amount) {
-  if (skillId === PERCEPTION_SKILL) throw new Error('Perception XP requires an accepted enemy knowledge success');
-  const kind = skillKindOf(registries, skillId);
-  if (!kind) throw new Error(`bankSkillXp: '${skillId}' is not a skill track`);
-  if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
-  if (expandedProgression(run) && isAbilitySkill(skillId) && amount > 0) activateAbilitySkill(run, skillId);
-  const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
-  const before = row.level;
-  const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
-  row.xp += gain;
-  return { skillId, before, after: before, levelUps: 0, pendingLevelUps: pendingSkillLevelCount(registries, run, skillId), gained: gain };
-}
-
-/** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
-export function claimBankedSkillLevel(registries, run, skillId) {
-  if (skillId === PERCEPTION_SKILL) return null;
-  const kind = skillKindOf(registries, skillId);
-  const row = run && run.skills && run.skills[skillId];
-  if (!kind || !row || !belowCap(registries, kind, row.level)) return null;
-  const cost = xpToNext(registries, kind, row.level);
-  if (row.xp < cost) return null;
-  const before = row.level;
-  row.xp -= cost;
-  row.level += 1;
-  row.pendingDrafts += 1;
-  if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
-  if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
-  const skillAwards = kind === 'class' ? payClassMilestone(registries, run, skillId.slice(6), row.level) : [];
-  return { skillId, before, after: row.level, levelUps: 1, gained: 0, skillAwards };
+  return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain };
 }
 
 // ---- drafts and rarity (plan phase 4b) ---------------------------------------
@@ -462,35 +406,11 @@ function trackSchools(registries, run) {
 }
 
 /**
- * passiveBlockFor(registries, run, inst) → the Block the run's passive tags
- * add to a card (SPEC §13.4o "Passive tag effects"): the sum of `passive.block`
- * over the taken skill feats whose tags the card's meet. It is stamped by tags
- * alone: where it lands is the RESOLVED face's business (`registries.js
- * applyPassiveBlock`, the first unconditional Block after upgrade, mods and
- * school), so a card that gains a Block on upgrade (Enter Bulwark+) gains it
- * too, and one with none is unchanged. Each feat is taken once; a table row
- * that grants a passive again (content C) adds again. Capped at
- * MAX_SKILL_BONUS.
- */
-export function passiveBlockFor(registries, run, inst) {
-  const def = inst && registries.cards.has(inst.cardId) ? registries.cards.get(inst.cardId) : null;
-  if (!def) return 0;
-  const tags = def.tags || [];
-  let bonus = 0;
-  for (const feat of (Array.isArray(run && run.skillFeats) ? run.skillFeats : []).map(skillFeatById)) {
-    const passive = feat && feat.passive;
-    if (passive && Number.isInteger(passive.block) && passive.tags.some((tag) => tags.includes(tag))) bonus += passive.block;
-  }
-  return Math.min(bonus, MAX_SKILL_BONUS);
-}
-
-/**
  * stampSkillBonuses(registries, run) → how many cards changed: writes each
- * owned card's `skillBonus` and `passiveBlock` (deck, then sideboard),
- * deleting each at 0. Both are DERIVED — from skill levels, the held pieces'
- * schools and the feats taken — so they are stamped at every door that can
- * move them: each save, each combat start and each full restamp, the way
- * equipment numbers are.
+ * owned card's `skillBonus` (deck, then sideboard), deleting it at 0. It is
+ * DERIVED — from skill levels and the held pieces' schools — so it is stamped
+ * at every door that can move it: each save, each combat start and each full
+ * restamp, the way equipment numbers are.
  */
 export function stampSkillBonuses(registries, run) {
   if (!run || !Array.isArray(run.deck)) return 0;
@@ -499,10 +419,8 @@ export function stampSkillBonuses(registries, run) {
   for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
     if (!inst) continue;
     const bonus = schoolsByTrack.length ? skillBonusFor(registries, run, inst, schoolsByTrack) : 0;
-    const block = passiveBlockFor(registries, run, inst);
-    if ((inst.skillBonus || 0) === bonus && (inst.passiveBlock || 0) === block) continue;
+    if ((inst.skillBonus || 0) === bonus) continue;
     if (bonus) inst.skillBonus = bonus; else delete inst.skillBonus;
-    if (block) inst.passiveBlock = block; else delete inst.passiveBlock;
     changed += 1;
   }
   return changed;
@@ -540,52 +458,6 @@ export function spendAttributePick(run, skillId) {
   return true;
 }
 
-// ---- the every-2nd-level skill feat (SPEC §13.4o) ----------------------------
-
-/** A skill feat by id, or null. */
-export const skillFeatById = (id, registries = null) => [...skillFeats, ...(registries?.classSkillFeats || [...classSkillFeats,...progressionFeats])].find((feat) => feat.id === id) || null;
-/** The feats a track authors (content/skillFeats.js), in authored order. */
-export const trackSkillFeats = (skillId, mastery = false, registries = null) => [...skillFeats, ...(mastery ? registries?.classSkillFeats || [...classSkillFeats,...progressionFeats] : [])].filter((feat) => feat.skillId === skillId);
-
-/** Whether reaching `level` on this track queues a feat pick: every featEvery levels of a track that authors any. */
-export function levelQueuesSkillFeat(registries, skillId, level) {
-  if (registries.progressionEnabled && skillId.startsWith('class:')) return registries.balance.progression.cadence.feat.includes(level);
-  const every = draftRows(registries).featEvery;
-  return Number.isInteger(every) && every > 0 && level > 0 && level % every === 0 && trackSkillFeats(skillId, false).length > 0;
-}
-
-function queueSkillFeat(registries, skillId, row) {
-  if (levelQueuesSkillFeat(registries, skillId, row.level)) row.pendingSkillFeats = (row.pendingSkillFeats || 0) + 1;
-}
-
-/** skillFeatOptions(run, skillId, level) → the track's feats open at `level` the run has not taken. */
-export function skillFeatOptions(run, skillId, level, registries = null) {
-  const taken = new Set(Array.isArray(run && run.skillFeats) ? run.skillFeats : []);
-  return trackSkillFeats(skillId, false, registries).filter((feat) => {
-    if (taken.has(feat.id)) return false;
-    return feat.minLevel <= level;
-  }).map((feat) => feat.id);
-}
-
-/**
- * takeSkillFeat(run, skillId, featId) → true when the feat joined the run: it
- * is the track's, not yet taken, and a pick was queued (which it spends).
- */
-export function takeSkillFeat(run, skillId, featId, registries = null) {
-  const feat = skillFeatById(featId, registries);
-  const row = run && run.skills && run.skills[skillId];
-  if (!feat || feat.skillId !== skillId || !row || !(row.pendingSkillFeats > 0)) return false;
-  if (Array.isArray(run.skillFeats) && run.skillFeats.includes(featId)) return false;
-  row.pendingSkillFeats -= 1;
-  run.skillFeats = [...(Array.isArray(run.skillFeats) ? run.skillFeats : []), featId];
-  return true;
-}
-
-/** critRulesFor(featIds) → the crit rules the run's skill feats grant, for the fight. */
-export function critRulesFor(featIds) {
-  return (Array.isArray(featIds) ? featIds : []).map(skillFeatById).filter((feat) => feat && feat.crit).map((feat) => structuredClone(feat.crit));
-}
-
 /**
  * skillsProblems(skills) → the shape's refusals, by name. Registry-free, as
  * the save door must be: a track id the registries no longer know is a stale
@@ -601,15 +473,11 @@ export function skillsProblems(skills) {
       if (!Number.isInteger(row[key]) || row[key] < 0) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
     // The queued rank-ups (SPEC §13.4o), absent on a ledger written before them.
+    // pendingSkillFeats is retired (skill feats are gone) but an old ledger row may still carry it.
     for (const key of ['pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats']) {
       if (row[key] !== undefined && !(Number.isInteger(row[key]) && row[key] >= 0)) problems.push(`skills.${id}.${key} must be a non-negative integer`);
     }
     for (const key of Object.keys(row)) if (!['xp', 'level', 'pendingDrafts', 'pendingRankUps', 'pendingAttributePicks', 'pendingSkillFeats'].includes(key)) problems.push(`skills.${id}.${key} is not a ledger field`);
   }
   return problems;
-}
-
-function payClassMilestone(registries, run, classId, level) {
-  if (!expandedProgression(run) || !queueClassMilestone(registries, run, classId, level)) return [];
-  return (registries.balance.progression.classSkills[classId] || []).map(skillId => bankSkillXp(registries, run, skillId, registries.balance.progression.skillBonusXp));
 }

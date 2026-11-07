@@ -81,9 +81,11 @@ export function digest(combat) {
 // SP the enemy is due to have left, which the mid-turn plan trim reads). Turns and RNG are unchanged.
 // Re-pinned 2026-11-07 for the foundation removal (cleanup 3i-B): combat state no longer carries the always-null `foundation` key.
 // Logs, event counts, turns and RNG are identical; putting `foundation: null` back at its old position reproduces the previous state hashes exactly.
+// Re-pinned 2026-11-07 for the skill-feat removal (cleanup P4b): combat state no longer carries the always-empty `skillFeats` list.
+// Logs, event counts, turns and RNG are identical; only the state hashes move.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '9ccfbdb41ed2f0ad', state: '4d73683916609efb', events: 198, turn: 6 }],
-  [[4242, 'reaver'], { log: '3ac47e4b5a03e967', state: 'f9cb7dfc0e5333ab', events: 235, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '9ccfbdb41ed2f0ad', state: '8519442f511e0c91', events: 198, turn: 6 }],
+  [[4242, 'reaver'], { log: '3ac47e4b5a03e967', state: '185b4ac725e0da51', events: 235, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

@@ -59,7 +59,6 @@ export function combatXpGains({ receipt = null, awards = [], levelGained = 0, le
   for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
   for (const award of awards || []) if (award) {
     add(award.skillId, award.gained);
-    for (const bonus of award.skillAwards || []) if (bonus) add(bonus.skillId, bonus.gained);
   }
   const level = Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0;
   const discarded = Number.isFinite(levelDiscarded) && levelDiscarded > 0 ? Math.floor(levelDiscarded) : 0;

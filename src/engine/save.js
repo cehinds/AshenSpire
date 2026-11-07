@@ -47,7 +47,7 @@ import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
 import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
-import { skillKindOf, rankUpKind, skillFeatById } from '../model/skills.js';
+import { skillKindOf, rankUpKind } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
@@ -178,10 +178,6 @@ function pendingRewardReferenceProblems(pending, registries) {
   // A rank-up (SPEC §13.4o) belongs to a card-school track.
   for (const up of Array.isArray(rewards.skillRankUps) ? rewards.skillRankUps : []) {
     if (!up || !rankUpKind(skillKindOf(registries, up.skillId))) problems.push(`rank-up track '${up && up.skillId}' is not a card-school track`);
-  }
-  // A feat pick (SPEC §13.4o) names feats of its own track.
-  for (const pick of Array.isArray(rewards.skillFeats) ? rewards.skillFeats : []) {
-    for (const id of (pick && pick.featIds) || []) if (skillFeatById(id)?.skillId !== pick.skillId) problems.push(`skill feat '${id}' is not a feat of '${pick && pick.skillId}'`);
   }
   // An attribute pick (SPEC §13.4o) belongs to a known track and names known attributes.
   for (const pick of Array.isArray(rewards.skillAttributes) ? rewards.skillAttributes : []) {

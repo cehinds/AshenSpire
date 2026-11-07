@@ -4,54 +4,6 @@ export const milestoneReceiptId = (classId, level, kind) => `class:${classId}:${
 export function classRewardBudget(registries, level) {
   return Object.fromEntries(Object.entries(registries.balance.progression.cadence).map(([kind, levels]) => [kind, levels.filter(at => at <= level).length]));
 }
-// A claim records XP and grant budgets separately from the player's choices.
-// Old profile levels are seeded as allocations without paying skill XP.
-export function queueClassMilestone(registries, run, classId, level, { veteran = false } = {}) {
-  run.classMilestones ||= {};
-  const id = `class:${classId}:${level}`;
-  if (run.classMilestones[id]) return null;
-  const cadence = registries.balance.progression.cadence;
-  const grants = Object.keys(cadence).filter(kind => cadence[kind].includes(level));
-  const receipt = { classId, level, skillXpPaid: !veteran, veteran, grants: Object.fromEntries(grants.map(kind => [kind, { id: milestoneReceiptId(classId, level, kind), state: 'pending' }])) };
-  run.classMilestones[id] = receipt;
-  capRunClassGrants(registries, run, classId);
-  return receipt;
-}
-// SPEC §13.4r: feat slots and class attribute points are a per-run budget
-// (reached milestones, up to six and four), not a per-class one. A second
-// class's milestones may use only what the run has not already taken, so a
-// class swap cannot replay or stack them. Excess pending grants are spent.
-export const RUN_BUDGET_KINDS = ['feat', 'attribute'];
-export function runGrantsTaken(run, kind) {
-  return Object.values(run.classMilestones || {}).filter(row => row.grants?.[kind]?.state === 'taken').length;
-}
-export function capRunClassGrants(registries, run, classId = run.class) {
-  const rows = Object.values(run.classMilestones || {}).filter(row => row.classId === classId).sort((a, b) => a.level - b.level);
-  const level = Math.max(run.skills?.[`class:${classId}`]?.level || 0, ...rows.map(row => row.level));
-  const budget = classRewardBudget(registries, level);
-  for (const kind of RUN_BUDGET_KINDS) {
-    let used = runGrantsTaken(run, kind);
-    for (const row of rows) {
-      const grant = row.grants[kind];
-      if (grant?.state !== 'pending') continue;
-      if (used >= (budget[kind] || 0)) { grant.state = 'spent'; grant.spentReason = 'run budget'; }
-      else used++;
-    }
-  }
-}
-export function pendingClassMilestones(run, classId = run.class) {
-  return Object.values(run.classMilestones || {}).filter(row => row.classId === classId).flatMap(row =>
-    Object.entries(row.grants).filter(([,grant]) => grant.state === 'pending').map(([kind, grant]) => ({ ...grant, kind, classId: row.classId, level: row.level })));
-}
-export function finishClassMilestone(run, receiptId, selection) {
-  for (const row of Object.values(run.classMilestones || {})) {
-    const grant = Object.values(row.grants).find(value => value.id === receiptId);
-    if (!grant || grant.state !== 'pending') continue;
-    grant.state = 'taken'; grant.selection = structuredClone(selection);
-    return true;
-  }
-  return false;
-}
 export function classMilestoneProblems(run) {
   const problems = [];
   const object = value => value && typeof value === 'object' && !Array.isArray(value);

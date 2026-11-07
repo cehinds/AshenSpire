@@ -4,23 +4,21 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { masteryRowId } from '../src/model/classMastery.js';
-import { skillFeatOptions } from '../src/model/skills.js';
 import { creationFeatBrowserGroups } from '../src/ui/models/CreationFeatBrowserModel.js';
 const registries = createRegistries(contentBundle);
 const born = classId => createRunState({ registries, classId, seed: 42 });
 
-test('birth browses canonical locked character, selected-class and skill feats without granting or mutation', () => {
+test('birth browses canonical locked selected-class and skill feats without granting or mutation', () => {
   const run = born('starseer'), before = JSON.stringify(run);
   const groups = creationFeatBrowserGroups(registries, run);
   assert.deepEqual(groups.map(group => group.id), ['character','class','skill']);
-  assert.equal(groups[0].rows.length, 6);
-  assert.ok(groups[0].rows.every(row => row.currentLevel === 1 && row.requiredLevel === 2 && row.locked));
+  assert.equal(groups[0].rows.length, 0, 'the general character feats are retired');
   assert.ok(groups[1].rows.length > 0);
   assert.ok(groups[1].rows.every(row => row.trackId === 'class:starseer' && row.name && row.description));
   assert.ok(groups[2].rows.some(row => row.id === 'bladeCritical' && row.requiredLevel === 2 && row.locked));
   assert.ok(groups[2].rows.some(row => row.id === 'shieldBraced' && row.trackLabel));
   assert.equal(JSON.stringify(run), before);
-  assert.deepEqual(run.feats, []);
+  assert.equal(run.feats, undefined);
 });
 
 test('actual track levels independently meet character, class and skill requirements', () => {
@@ -29,7 +27,6 @@ test('actual track levels independently meet character, class and skill requirem
   run.skills['class:reaver'] = { level: 1 };
   run.skills['item:blade'] = { level: 2 };
   const groups = creationFeatBrowserGroups(registries, run);
-  assert.ok(groups[0].rows.every(row => !row.locked));
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').requiredLevel, 1);
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').locked, false);
   assert.equal(groups[2].rows.find(row => row.id === 'bladeCritical').locked, false);
