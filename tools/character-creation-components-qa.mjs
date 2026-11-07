@@ -41,7 +41,7 @@ const componentIds = [
   'creation-part-material', 'creation-part-trim', 'creation-part-body',
   'creation-choice-art', 'creation-choice-copy', 'creation-step-navigation',
   'creation-feat-browser', 'creation-feat-tile', 'creation-feat-detail', 'creation-feat-emblem',
-  'class-choice-card', 'keepsake-choice', 'equipment-choice-card', 'primary-stat-card',
+  'class-choice-card', 'equipment-choice-card', 'primary-stat-card',
 ];
 mkdirSync(out, { recursive: true });
 const serving = await serve({ root, port: 0, open: false, quiet: true, host: '127.0.0.1' });
@@ -141,7 +141,7 @@ try {
     const liveUrl = `http://127.0.0.1:${serving.port}/${entry}?shot=customize&shotClass=starseer`;
     await live.goto(liveUrl, { waitUntil: 'domcontentloaded' });
     await live.locator('#cz-tab-class').waitFor({ state: 'attached', timeout: 60000 });
-    for (const stage of ['class', 'attributes', 'keepsake', 'equipment', 'feats', 'spells', 'review']) {
+    for (const stage of ['class', 'attributes', 'equipment', 'feats', 'spells', 'review']) {
       const control = live.locator(`#cz-tab-${stage}`);
       if (!await control.isVisible()) {
         if (width < 700) await live.locator('#cz-cat-select').tap(); else await live.locator('#cz-cat-select').click();

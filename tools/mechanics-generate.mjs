@@ -25,7 +25,7 @@ const OUT = join(ROOT, 'engine/mechanics');
 const FAMILIES = new Set('fx damage lifecycle trait maneuver camp targeting school cost scaling delivery counter range utility technique classification equipment theme source from item internal'.split(' '));
 const BARE_FALLBACK_SKIP = new Set(['fx', 'classification', 'from']);
 const CLASSIFICATION_ATTACH = {
-  class: 'character', relic: 'relic', flask: 'run', keepsake: 'run', event: 'run', encounter: 'run', enemy: 'entity', armament: 'gear',
+  class: 'character', relic: 'relic', flask: 'run', event: 'run', encounter: 'run', enemy: 'entity', armament: 'gear',
   armour: 'gear', basicCardProfile: 'card', slot: 'gear', startingKit: 'gear', unlock: 'run', companion: 'entity', sigil: 'gear', feat: 'character', enemyMove: 'entity',
 };
 const ATTACH_TO_MODEL = { card: 'card', status: 'entity', character: 'entity', entity: 'entity', gear: 'entity', relic: 'run', run: 'run', combat: 'combat', map: 'run', none: 'none' };

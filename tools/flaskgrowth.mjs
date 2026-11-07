@@ -49,7 +49,6 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, initializeRunFlaskCharges, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createSaveManager } from '../src/engine/save.js';
-import { KEEPSAKES } from '../src/content/keepsakes.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { flaskGrowthTable, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
 import { FLASK_GROWTH_SOURCES } from '../src/model/schemas.js';
@@ -86,11 +85,11 @@ function memStorage() {
   };
 }
 
-// The shipped moment door: the first keepsake whose authored effects carry the
-// addFlaskCapacity op — DERIVED from content, never named by id, so a keepsake
-// rename retunes this helper for free. Returns null if none ships.
+// The moment door: a one-charge addFlaskCapacity grant (the op an event or
+// effect list can issue; keepsakes, its first shipped caller, are removed).
+// A fixture, so the ledger doors keep a witness without a shipped caller.
 function shippedMomentGrant() {
-  return KEEPSAKES.find((k) => (k.effects || []).some((e) => e && e.op === 'addFlaskCapacity')) || null;
+  return { effects: [{ op: 'addFlaskCapacity', kind: 'hp', amount: 1 }] };
 }
 
 // A fictional relic + a growth row for it, entered as DATA into a real-bundle
@@ -462,9 +461,9 @@ function selftest() {
   //    corpus, entering by serializeRun → deserializeRun like any real save. ──
   console.log('DOOR 3 — the capacity ledger at the save door (serializeRun → deserializeRun → loadRun):');
 
-  behave('LEDGER: a shipped keepsake\'s moment grant writes its ledger line and survives the real save door', () => {
+  behave('LEDGER: a moment grant writes its ledger line and survives the real save door', () => {
     const grant = shippedMomentGrant();
-    if (!grant) return { ok: false, saw: 'no shipped keepsake carries addFlaskCapacity — this door\'s live witness is gone; if deliberate, retire this plant out loud' };
+    if (!grant) return { ok: false, saw: 'no moment grant' };
     const eff = grant.effects.find((e) => e.op === 'addFlaskCapacity');
     const reg = createRegistries(contentBundle);
     const run = freshRun(reg);

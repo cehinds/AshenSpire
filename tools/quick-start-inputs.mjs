@@ -243,7 +243,7 @@ async function main() {
     await click('[data-title-action="review-new"]', 'Start in this slot');
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
     // Core's authored creation has Class and Review only.
-    // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+    // The staged flow (Class -> Attributes -> Equipment -> Feats ->
     // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
     // data-creation-stage; Next (#cz-next) is the one real click that leaves a
     // stage, and each stage is waited for by that attribute.
@@ -264,9 +264,6 @@ async function main() {
     }
     await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
     await chooseStatMode('lean');
-    await click('#cz-next', 'Next (to Keepsake)');
-    await until(onStage('keepsake'), 'the Keepsake stage');
-    await click('#cz-keepsakes [data-keepsake-id]', 'a keepsake');
     await click('#cz-next', 'Next (to Equipment)');
     await until(onStage('equipment'), 'the Equipment stage');
     await openFace('armour');

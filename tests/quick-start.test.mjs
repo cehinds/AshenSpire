@@ -24,7 +24,7 @@ test('the shipped quick start row is valid and reads as authored', () => {
   assert.deepEqual(characterCreationProblems(REG).filter((p) => p.includes('quickStart')), []);
   const cfg = quickStartRunConfig(REG);
   assert.equal(cfg.classId, authored.classId);
-  assert.equal(cfg.keepsakeId, authored.keepsakeId);
+  assert.equal('keepsakeId' in cfg, false, 'a quick start carries no keepsake');
   assert.equal(cfg.attributeMode, authored.attributeMode);
   assert.equal(cfg.skipOpening, authored.skipOpening);
   assert.equal(cfg.startingRelicId, REG.classes.get(authored.classId).startingRelic);
@@ -33,7 +33,7 @@ test('the shipped quick start row is valid and reads as authored', () => {
 test('a quick start row that does not resolve is refused by name', () => {
   const cases = [
     [{ ...authored, classId: 'nobody' }, 'characterCreation.quickStart.classId'],
-    [{ ...authored, keepsakeId: 'nothingAtAll' }, 'characterCreation.quickStart.keepsakeId'],
+    [{ ...authored, keepsakeId: 'oldCinder' }, 'characterCreation.quickStart.keepsakeId: Unknown field'],
     [{ ...authored, attributeMode: 'freeform' }, 'characterCreation.quickStart.attributeMode'],
     [{ ...authored, skipOpening: 'yes' }, 'characterCreation.quickStart.skipOpening'],
     [{ ...authored, seed: 'ABC' }, 'characterCreation.quickStart.seed: Unknown field'],

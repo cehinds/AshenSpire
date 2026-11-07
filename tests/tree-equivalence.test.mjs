@@ -201,7 +201,7 @@ test('every object states exactly one kind, the one its collection and type name
   assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
   // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
   const canonicalCollections = [contentBundle.cards, contentBundle.classes, contentBundle.relics,
-    contentBundle.flasks, contentBundle.characterCreation.keepsakes, contentBundle.events,
+    contentBundle.flasks, contentBundle.events,
     contentBundle.encounters, contentBundle.enemies, contentBundle.equipment.armaments,
     contentBundle.equipment.armour, contentBundle.equipment.basicCardProfiles,
     contentBundle.equipment.slots, contentBundle.equipment.startingKits, contentBundle.unlocks,
