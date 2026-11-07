@@ -4,6 +4,8 @@ import { combatReadoutLayer, floatNum, callout, clearCallouts, setAnimSpeed } fr
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { floaterLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
+import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
+setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 
 test('root text feedback uses the root ruler and expires without touching sprite effects', context => {
   context.mock.timers.enable({ apis: ['setTimeout', 'Date'] });

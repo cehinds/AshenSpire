@@ -322,7 +322,9 @@ try {
   assert.ok(await evadeBadge.locator('svg').count(), 'Evade badge uses its SVG icon');
   const evadeBox = await evadeBadge.boundingBox();
   assert.ok(evadeBox && evadeBox.width <= 26 && evadeBox.height <= 26, 'Evade badge icon fits the compact HUD row');
-  for (const kind of ['evade', 'poise', 'ward', 'shield']) {
+  // Owner 2026-11-07: Poise is not drawn on the combat HUDs; the row carries Evade, Ward and Block.
+  assert.equal(await page.locator('.combatant.player .combat-health-row [data-defense-kind="poise"]').count(), 0, 'no Poise badge on the HUD');
+  for (const kind of ['evade', 'ward', 'shield']) {
     assert.ok(await page.locator('.combatant.player .combat-health-row [data-defense-kind="' + kind + '"]').count(), 'player ' + kind + ' row rendered');
   }
   await capture('combat-hud-desktop', { width: 1440, height: 1000 });

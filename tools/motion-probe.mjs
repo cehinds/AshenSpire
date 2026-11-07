@@ -745,19 +745,24 @@ try {
   // the run's customization is part of the player frame's art key, so a
   // render after changing it draws the player afresh in that style.
   for (const style of ['rendered', 'classic']) {
-    const mark = style === 'rendered' ? '.rendered-stage' : 'svg';
+    // Since 8bf90ed4e6 both styles draw the player as an alternative card stage
+    // (assets.js: createAlternativeCardStage); 'rendered' is the still one
+    // (data-still), 'classic' is not. The old .rendered-stage / svg marks are gone.
+    const mark = '.alternative-card-stage';
     await s.evaluate(`(() => { const run = window.__combatRunForShot;
       run.customization = { ...(run.customization || {}), spriteStyle: ${JSON.stringify(style)} };
       window.__renderCombatForShot(); })()`);
     await until(s.evaluate, `!!document.querySelector(${JSON.stringify(`.combatant.player .sprite ${mark}`)})
       && [...document.querySelectorAll('.combatant.player .sprite img')].every((i) => i.complete)`, `the player redrawn in the ${style} style`);
     await wait(300);
+    const stillAttr = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.hasAttribute('data-still')`);
+    check(stillAttr === (style === 'rendered'), `IDLE-${style}-STILL`, `the player's alternative card stage ${stillAttr ? 'has' : 'lacks'} data-still in the ${style} style`);
     const drawn = await idle(s, `IDLE-${style}`);
     check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
     if (style === 'rendered') {
       // A hidden nested Rendered stage must not retain a bob that starts
       // when the next guard/wounded/rest pose reveals it.
-      const carrier = '.rendered-stage';
+      const carrier = '.alternative-card-stage';
       const inner = await s.evaluate(`[...document.querySelectorAll(${JSON.stringify(`.combatant .sprite ${carrier} *`)})]
         .filter((el) => getComputedStyle(el).animationName.split(/,\\s*/).includes('sprite-idle'))
         .map((el) => el.tagName.toLowerCase() + '.' + [...el.classList].join('.'))`);

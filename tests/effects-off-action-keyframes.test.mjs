@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
-const keyframes = name => (css.match(new RegExp(`@keyframes ${name} \\{([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)) || []).slice(1).join('');
+const keyframes = name => (css.match(new RegExp(`@keyframes ${name} \\{\\n([\\s\\S]*?)\\n\\}|@keyframes ${name} \\{([^\\n]*)\\}`)) || []).slice(1).join('');
 
 test('every action keyframe applied to a sprite host under Effects off animates no filter', () => {
   const applied = new Map();

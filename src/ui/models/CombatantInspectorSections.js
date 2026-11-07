@@ -48,6 +48,11 @@ export function projectCombatantInspector(subject, text = (id) => id) {
     ...resources.filter(r => r.label === 'SP').map(r => ({ label: 'SP', value: `${r.value} / ${r.max}` })),
     intent && { label: text('inspector.summary.intent'), value: intent.name, detail: intent.detail || '' },
     { label: text('inspector.summary.defense'), value: text('inspector.summary.block', { amount: block?.value ?? 0 }) },
+    // The player's AC (SPEC: the combat HUD hides it, the inspect panel still lists it): the Evasion DC an enemy hit roll must reach.
+    subject.ac && { label: text('combat.protection.ac'), value: String(subject.ac.value), detail: [
+      subject.ac.evade ? text('combat.protection.acEvade', { value: subject.ac.evade }) : '',
+      text('combat.protection.acBase', { value: subject.ac.base }),
+    ].filter(Boolean).join(' · ') },
   ].filter(Boolean);
   // Current state: active pools other than HP/Block, then active effects. A
   // subject that lists its effects as abilities shows them there instead.

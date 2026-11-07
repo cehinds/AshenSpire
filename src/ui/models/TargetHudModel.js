@@ -34,20 +34,20 @@ export function playerHudPlacement({ anchor, width, height, gap, bounds }) {
 
 // One stable-target clock, including leave grace. Updating content for the
 // same IDs does not restart dwell; a switch is one delay, never exit+enter.
-// Owner 2026-11-05: the player's selected HUD is on at all times and the mini overhead bar never shows for the player.
-// Presentation only: a pinned player is not an eligible or focused target, and enemies keep mini-until-selected.
-export const targetHudPinnedIds = entries => [...entries].filter(entry => entry.role === 'player').map(entry => entry.id);
+// Owner 2026-11-07: "Disable select HUD and just do mini HUD ... Bring back the player's health bar and disable the mini select HUD."
+// The player's figure carries only its overhead mini HUD (HP bar + intent), like an enemy before it is selected; it is never
+// pinned and never gets a selected panel. Enemies keep mini-until-selected. (Supersedes the 2026-11-05 always-selected rule.)
+export const targetHudPinnedIds = () => [];
 export function targetHudDesiredIds({ entries: all, eligible = [], focused = null, hover = null, focusWithin = null }) {
-  const entries = [...all], known = new Set(entries.map(entry => entry.id));
-  return [...new Set([...targetHudPinnedIds(entries), ...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
+  const entries = [...all], known = new Set(entries.filter(entry => entry.role !== 'player').map(entry => entry.id));
+  return [...new Set([...eligible, focused, hover, focusWithin].filter(id => known.has(id)))];
 }
-// True while a player frame shows its panel only because it is pinned: its sprite glow and floor tint stay off.
-export const targetHudPinnedOnly = ({ entries, id, eligible = [], focused = null, hover = null, focusWithin = null }) =>
-  targetHudPinnedIds([...entries]).includes(id) && ![...eligible, focused, hover, focusWithin].includes(id);
-// The floor tint marks a target being acted on or read, so the pinned panel alone adds none.
-export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null, hover = null, focusWithin = null }) {
-  const pinned = targetHudPinnedIds([...all]), asked = [...eligible, focused, hover, focusWithin];
-  return [...new Set([...shown, ...eligible, focused].filter(Boolean))].filter(id => !pinned.includes(id) || asked.includes(id));
+// Nothing is pinned any more, so no frame is "pinned only"; kept for callers.
+export const targetHudPinnedOnly = () => false;
+// The floor tint marks a target being acted on or read.
+export function targetHudTintIds({ entries: all, shown = [], eligible = [], focused = null }) {
+  void all;
+  return [...new Set([...shown, ...eligible, focused].filter(Boolean))];
 }
 
 export function createTargetHudDwell({ onChange, delay = targetHudConfig().motion.dwellMs, schedule = setTimeout, cancel = clearTimeout }) {
