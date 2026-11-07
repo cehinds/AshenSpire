@@ -249,6 +249,7 @@
       "desktopShortMiniHudGroupHeightPx": 80,
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5,
+      "playerMiniHudSpriteGapPx": 10,
       "miniHud": {
         "designWidthPx": 140,
         "baseFontPx": 13,
