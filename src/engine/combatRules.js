@@ -29,7 +29,7 @@ export function playRefusal(message, reason, extra = {}) {
   return Object.assign(new Error(message), { playRefusal: { reason, ...extra } });
 }
 
-const SHARED_RULE_KEYS = ['combatExpansionRules', 'combatMatchupRules', 'combatIntentRules', 'handRules'];
+const SHARED_RULE_KEYS = ['combatExpansionRules', 'combatMatchupRules', 'combatIntentRules'];
 
 /** Clone one graph, preserving references between players, piles and seats.
  *

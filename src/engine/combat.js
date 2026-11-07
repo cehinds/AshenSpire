@@ -182,7 +182,7 @@ export function createCombat({
     combatMatchupRules: deepFreeze(structuredClone(registries.balance?.combatMatchups || combatMatchups)),
     combatIntentRules: deepFreeze(structuredClone(registries.balance?.combatIntent || combatIntent)),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : {}),
-    ...(handRules ? { handRules: deepFreeze(structuredClone(handRules)), pendingDiscardDraw: 0 } : {}),
+    ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     equipmentProfileRuleSnapshot,
