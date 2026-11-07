@@ -162,6 +162,18 @@ test('planCuts: a push that never started a run still gets its cut; release-then
   assert.equal(fold(planCuts([ev(1, 'main', 'a', 'b'), ev(2, 'release', 'b', 'c')], null, noBots)), '0.8.1');
 });
 
+test('records: messages shaped like the %B%x1e split (leading newline) are found below HEAD', () => {
+  const r1 = advanceMessage('0.7.3', 'release', 'a'.repeat(40), { id: '48504741615', timestamp: '2026-10-31T18:56:02Z' });
+  const r2 = advanceMessage('0.7.4', 'release', 'b'.repeat(40), { id: '49337483466', timestamp: '2026-11-07T01:00:00Z' });
+  const quoted = 'build: stamp\n\nquoting:\nversion-advance: 0.9.9 after release ccccccc\nVersion-Advance-Event: 99 2026-12-01T00:00:00Z\n';
+  const msgs = ['build: stamp 0.7.5.18\n', '\n' + quoted, '\n' + r2, '\n' + r1];
+  const recs = parseRecords(msgs);
+  assert.equal(recs.length, 2);
+  assert.deepEqual(latestRecord(recs), { id: '49337483466', timestamp: '2026-11-07T01:00:00Z', branch: 'release' });
+  assert.equal(recordsEvent(msgs, 48504741615), true);
+  assert.equal(recordsEvent(msgs, 99), false);
+});
+
 test('records: the trailer round-trips and the cursor is the newest by (timestamp, id)', () => {
   const m1 = advanceMessage('0.7.3', 'release', 'a'.repeat(40), { id: '7', timestamp: '2026-11-02T00:00:07Z' });
   const m2 = advanceMessage('0.8.0', 'main', 'b'.repeat(40), { id: '12', timestamp: '2026-11-02T00:00:03Z' });
