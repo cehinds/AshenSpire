@@ -1633,74 +1633,55 @@ Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► 
 
 ### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
-- **.NET-inspired application and Component Model contract.** Architecture follows Clean
-  Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
-  Application Interfaces define ports; Application Services orchestrate use cases; Infrastructure
-  implements browser storage, audio, network, and other platform adapters; Presentation Models are
-  immutable contracts analogous to C# records; Presentation ViewModels project domain snapshots
-  into screen/card compositions and named commands; Views are thin full-screen hosts; Components
-  are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
-  composition root. The existing paths migrate incrementally: `src/model/` is Domain,
-  `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
-  `src/ui/screens/` is Views, and `src/ui/components/` is reusable presentation implementation. Every reusable UI component receives an immutable Component
-  Model that names its semantic component id and variant, owns only serializable presentation
-  properties, declares named behaviors, and recursively composes child Component Models. Screen
-  ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
-  declared commands to callbacks. Shared primitives such as panels, metadata fields, meters, trays,
-  slots, action controls, and hotkey badges are composed rather than redefined. Component Models
-  never own mutable simulation state or import engine rules: ViewModels project current domain state
-  into model properties. A migrated surface has one ViewModel composition and one renderer, never a
-  model path beside a hand-written fallback.
-- **Shared Presentation primitives.** The public primitive Component Model ids are `panel`,
-  `component-background`, `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`,
-  `item-slot`, `folding-tray`, `tray-header`, `tray-resize-handle`, `tray-content`, and `tooltip`. Specialized
-  models compose these primitives and may add semantic variants; they do not clone their record
-  shape, accessibility contract, token ownership, or behavior vocabulary.
-- **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
-  screen-specific markup. The shared composition is `shared-run-hud`, containing
-  `run-header-strip`, `primary-hud-row`, `inventory-belt`, and `hud-quick-settings`.
-  Its reusable children are
-  `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
-  `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
-  `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`,
-  `crimson-flask-control`, `azure-flask-control`,
-  `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
-  `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
-  `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
-  its screen supplies state and callbacks. UI components never own simulation state.
-  `act-route-strip` is a Map-only sibling below `shared-run-hud`, never one of its children and
-  never mounted by Combat. On narrow Map layouts it occupies about 80% of the viewport while
-  reserving the HUD utility-control gutter on the right.
-  `hud-quick-settings` is shared by Title, Map, and Combat. It anchors beneath the top-right
-  HUD edge as a vertical pair, exposes live positive-state Fullscreen and Music controls,
-  persists Music through the profile settings service, and reads Fullscreen from the browser
-  instead of storing a duplicate flag. On narrow screens it keeps the same composition but
-  presents 44px square glyph controls so enemy intent remains unobscured. Browsers without a
-  fullscreen API expose the Fullscreen control as unavailable rather than drawing a dead switch.
-- **Startup Gate Component Model.** `startup-gate` is a boot-scoped presentation component, not a
-  variant of the Title screen. Its immutable model supplies wordmark copy, input-family prompts,
-  deterministic decorative-particle records, accessibility metadata, and the named reveal
-  behavior. Its renderer owns layout and temporary event binding, consumes the one first-input
-  owner supplied by the composition root, and uses the shared build-stamp renderer. It never
-  imports simulation state, persists dismissal, or mounts Title controls behind itself.
-  The gate composes `startup-ash-field` → `startup-ash-particle` and `startup-mark` →
-  `startup-wordmark`, `startup-subtitle`, `startup-divider`, and `startup-prompt`. The mark's
-  phone backing is transparent; the content remains centered and opaque.
-- **Title Menu components.** The revealed Title composes `title-brand-lockup` from
-  `title-wordmark`, `title-subtitle`, and `title-divider`; `title-menu` from six
-  `title-menu-item` controls, each with a `title-menu-gem`; and the independent
-  `title-tagline`. Load and New reuse one `title-menu-modal`, composed from
-  `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`,
-  `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
-  `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
-  occupied; the action group supplies `title-modal-back-control` and
-  `title-modal-continue-control`. The DOM-free `saveSlotSelectionModel` projects Load and New
-  from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
-  the selected-focus restoration target, primary-action availability, and the load/create
-  command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components. Every modal close control paints a square
-  at 75% of its shared icon-button box while retaining the full authored tap target for pointer,
-  touch, keyboard, and controller input.
+Component architecture, stable component ids, the shared run HUD (Map and Combat), creation/Shrine/Menu/Armoury surfaces, and the combat layout. Advanced Settings is §7.2.1.
+
+#### Architecture
+
+- **.NET-inspired application and Component Model contract.** Clean Architecture with an MVVM-shaped presentation layer:
+
+| Layer | Role | Path today |
+|---|---|---|
+| Domain Models | pure game state and rules | `src/model/` |
+| Application Interfaces | ports | |
+| Application Services | orchestrate use cases | |
+| Infrastructure | browser storage, audio, network, other platform adapters | |
+| Presentation Models | immutable contracts, like C# records | `src/ui/models/` |
+| Presentation ViewModels | project domain snapshots into screen/card compositions and named commands | `src/ui/viewModels/` |
+| Views | thin full-screen hosts | `src/ui/screens/` |
+| Components | reusable renderers | `src/ui/components/` |
+| Behaviors | bind interactions and lifecycle | |
+
+  `main.js` trends toward a composition root; existing paths migrate incrementally.
+- Every reusable UI component receives an immutable **Component Model** that names its semantic component id and variant, owns only serializable presentation properties, declares named behaviors, and recursively composes child Component Models. Screen ViewModels compose those records; renderers translate them to DOM; behavior adapters connect declared commands to callbacks.
+- Shared primitives (panels, metadata fields, meters, trays, slots, action controls, hotkey badges) are composed, not redefined. Component Models never own mutable simulation state or import engine rules; ViewModels project current domain state into model properties.
+- A migrated surface has one ViewModel composition and one renderer, never a model path beside a hand-written fallback.
+- A component owns structure and accessibility; its screen supplies state and callbacks.
+
+#### Component ids
+
+Ids are stable semantic names, not screen-specific markup.
+
+- **Shared primitives:** `panel`, `component-background`, `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`, `item-slot`, `folding-tray`, `tray-header`, `tray-resize-handle`, `tray-content`, `tooltip`. Specialized models compose these and may add semantic variants; they do not clone their record shape, accessibility contract, token ownership or behavior vocabulary.
+
+| Family | Ids and roles |
+|---|---|
+| Shared HUD | `shared-run-hud` contains `run-header-strip`, `primary-hud-row`, `inventory-belt`, `hud-quick-settings` |
+| HUD leaves | `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`, `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`, `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`, `crimson-flask-control`, `azure-flask-control`, `relic-tray`, `potion-tray` |
+| Combat (adds) | `battlefield-stage`, `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`), `player-hand-tray`, `combat-action-rail` |
+| Map only | `act-route-strip`: sibling below `shared-run-hud`, never its child, never mounted by Combat; on narrow Map layouts about 80% of the viewport, reserving the HUD utility-control gutter on the right |
+| Startup | `startup-gate` → `startup-ash-field` → `startup-ash-particle`; `startup-mark` → `startup-wordmark`, `startup-subtitle`, `startup-divider`, `startup-prompt` |
+| Title | `title-brand-lockup` (`title-wordmark`, `title-subtitle`, `title-divider`); `title-menu` (six `title-menu-item`, each with `title-menu-gem`); independent `title-tagline`; `title-menu-modal` (see below) |
+
+- **`hud-quick-settings`** is shared by Title, Map and Combat. It anchors beneath the top-right HUD edge as a vertical pair of live positive-state Fullscreen and Music controls. Music persists through the profile settings service; Fullscreen is read from the browser (no duplicate flag). On narrow screens: same composition, 44px square glyph controls so enemy intent stays unobscured. Browsers without a fullscreen API show Fullscreen as unavailable, not a dead switch.
+- UI components never own simulation state.
+
+#### Startup Gate and Title components
+
+- `startup-gate` is a boot-scoped presentation component, not a Title variant. Its immutable model supplies wordmark copy, input-family prompts, deterministic decorative-particle records, accessibility metadata and the named reveal behavior. Its renderer owns layout and temporary event binding, consumes the one first-input owner supplied by the composition root, and uses the shared build-stamp renderer. It never imports simulation state, persists dismissal, or mounts Title controls behind itself. The mark's phone backing is transparent; content stays centered and opaque.
+- Load and New reuse one `title-menu-modal`, composed from `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`, `title-save-slot-list`, `title-modal-actions`. Each `title-save-slot` supplies `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when occupied; the actions supply `title-modal-back-control` and `title-modal-continue-control`.
+- The DOM-free `saveSlotSelectionModel` projects Load and New from the same immutable slot records and Behavior Models; selected styling, `aria-pressed`, selected-focus restoration target, primary-action availability and the load/create command payload all resolve to one slot. Save data and callbacks stay screen inputs.
+- Every modal close control paints a square at 75% of its shared icon-button box while keeping the full authored tap target for pointer, touch, keyboard and controller.
+
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
