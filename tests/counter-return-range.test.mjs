@@ -4,7 +4,6 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { beforeReactionAction } from '../src/engine/combatReactions.js';
 import { executeAction } from '../src/engine/actions.js';
@@ -15,7 +14,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 const registries = createRegistries(contentBundle);
 function fight() {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
-    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10,
       maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   ctx.player.ratings = { ar: 9, dr: 0, pr: 3, ward: 30, poise: 30 };
@@ -73,27 +72,6 @@ test('range misses preserve prepared Evade; eligible accuracy misses spend it wh
   }
 });
 
-test('a pressure-only return shares one hit roll with Evasion; a natural twenty lands both payload lanes', () => {
-  for (const evade of [true, false]) {
-    const ctx = fight(), target = ctx.enemies[0];
-    if (evade) { target.combatEvade = { charges: 1, bonus: 100, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 }; target.statuses.evade = { stacks: 1 }; }
-    let accuracyDraws = 0;
-    ctx.rng.int = stream => { if (stream === 'combatAvoidance') accuracyDraws++; return evade ? 1 : 20; };
-    const carrier = returnCarrier();
-    enqueueExpandedAction(ctx, returnActions(ctx, carrier), { source: ctx.player, target, carrier });
-    drain(ctx);
-    assert.equal(accuracyDraws, 1, 'one group Accuracy check includes Evasion without a second roll');
-    if (evade) {
-      assert.equal(target.combatEvade.charges, 0, 'the shared Accuracy attempt spends the prepared charge too');
-      assert.equal(target.statuses.evade, undefined, 'one Evasion stack is consumed on an eligible miss');
-      assert.equal(target.persistentWard.value, 30); assert.equal(target.poiseMeter.value, 0);
-    } else {
-      assert.equal(target.persistentWard.value, 27); assert.equal(target.poiseMeter.value, 2);
-      assert.equal(target.wardMeter.value, 0, 'explicit Poise does not also damage the Ward break meter');
-    }
-  }
-});
-
 test('base Evasion uses the target seat equipment, explicit ratings override it, and prepared Evade adds no base rating', () => {
   const ctx = fight(), target = ctx.player;
   ctx.attributes = { dexterity: 3 };
@@ -110,35 +88,4 @@ test('base Evasion uses the target seat equipment, explicit ratings override it,
   assert.equal(counterBaseEvasion(scoped, target), 3, 'prepared charge/card bonus is separate');
   target.evasion = 9;
   assert.equal(counterBaseEvasion(scoped, target), 9, 'explicit value is full base Evasion');
-});
-
-test('spell Counter HP uses PR for both physical and magical types, while pressure has no invented PR or HP', () => {
-  const ctx = fight();
-  for (const damageType of ['blunt', 'fire']) {
-    const carrier = { ...returnCarrier(), combatReaction: false, skipRatingBonus: false,
-      combatProfile: { camp: 'spell', maneuver: 'counter', damageType }, attack: { source: 'spell', damageType } };
-    assert.equal(counterEffectPreview(ctx, ctx.player, ctx.enemies[0], carrier, { op: 'damage', amount: 5 }).value, 8);
-    assert.equal(counterEffectPreview(ctx, ctx.player, ctx.enemies[0], carrier, { op: 'wardDamage', amount: 2 }).value, 2);
-  }
-});
-
-test('queued return range and hit metadata survive snapshots; version-one actions keep their original path', () => {
-  const ctx = fight(), carrier = returnCarrier();
-  ctx.piles.hand.push({ instanceId: 'snapshot-defense', cardId: 'crystalBarrier', upgraded: false, abilityRank: 1 });
-  const enemy = ctx.enemies[0];
-  const actions = returnActions(ctx, carrier, 5).map(action => ({
-    ...action, source: enemy, owner: enemy, target: ctx.player,
-  }));
-  enqueueExpandedAction(ctx, actions, { source: enemy, target: ctx.player, carrier });
-  assert.equal(beforeReactionAction(ctx, ctx.queue[0], {
-    play: (candidate, play) => dispatch(candidate, { type: 'playCard', ...play }),
-  }), true, 'a real Reaction offer pauses the queued return');
-  assert.ok(ctx.pendingReaction);
-  const saved = serializeCombatSnapshot(ctx);
-  const restored = restoreCombatSnapshot({ registries, rng: createRng(5), snapshot: saved });
-  assert.ok(restored.queue.some(action => action.card?.counterReturnAttack === true && action.card.counterRequiredRange === 'melee'));
-  const legacy = fight(); legacy.combatExpansionVersion = 1;
-  assert.equal(counterAttackPreview(legacy, legacy.player, legacy.enemies[0], carrier), null);
-  enqueueExpandedAction(legacy, returnActions(legacy, carrier), { source: legacy.player, target: legacy.enemies[0], carrier });
-  assert.equal(legacy.queue[0].meta.expansionGroup, undefined);
 });

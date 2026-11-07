@@ -6,9 +6,8 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { armCombatCounter } from '../src/engine/combatMatchups.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { combatRules } from '../src/content/combatRules.js';
 
-function fight({ maneuver = 'attack', block = 6, counter = true, foundation = false, ward = 0 } = {}) {
+function fight({ maneuver = 'attack', block = 6, counter = true, ward = 0 } = {}) {
   const bundle = { ...contentBundle,
     tagging: contentBundle.tagging.map(row => row.family === 'enemyMove' && row.scope === 'wanderingSoldier'
       && row.objectId === 'slash' && row.tagId === 'maneuver:attack' ? { ...row, tagId: `maneuver:${maneuver}` } : row),
@@ -19,8 +18,7 @@ function fight({ maneuver = 'attack', block = 6, counter = true, foundation = fa
   const registries = createRegistries(bundle);
   const actor = { classId: 'reaver', hp: 500, maxHp: 500, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'guard', cardId: 'defend' }], relicIds: [] };
-  const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null,
-    ...(foundation ? { ruleset: combatRules, combatProfiles: { player: { armor: 0 } } } : {}) };
+  const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'] };
   const combat = createCombat({ ...options, player: actor });
   const player = combat.player;
   player.block = block;

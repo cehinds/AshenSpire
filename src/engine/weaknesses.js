@@ -46,7 +46,7 @@ function imbuedElements(ctx, source, carrier) {
  * (the wielded weapon's, via the carrier's resolved profile), `magic` when any of it is magic, and each element
  * (its school or damage type, its damage components, an element an attacker status adds to weapon attacks).
  */
-export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile, ctx?.ratingsRules)) {
+export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile)) {
   const triggers = new Set();
   const types = [profile.damageType, carrier.damageType, profile.physicalDamageType, carrier.physicalDamageType, ...(profile.damageComponents || []).map(row => row?.type)];
   for (const type of types) add(triggers, type);

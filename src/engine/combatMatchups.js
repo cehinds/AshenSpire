@@ -832,8 +832,7 @@ export function decayStanceRoundStart(ctx) {
   const rows = ctx.players
     ? [...ctx.players.values()].filter(seat => seat.entity?.combatExpansionVersion === 2).map(seat => ({
       entity: seat.entity, context: { ...ctx, player: seat.entity, combatExpansionVersion: 2,
-        registries: ctx.registriesForPlayer?.(seat.id) || ctx.registries,
-        ratingsRules: ctx.ratingsRules && seat.ratingRows ? { ...ctx.ratingsRules, ratings: seat.ratingRows } : ctx.ratingsRules },
+        registries: ctx.registriesForPlayer?.(seat.id) || ctx.registries },
     }))
     : [{ entity: ctx.player, context: ctx }];
   rows.push(...(ctx.enemies || []).map(entity => ({ entity,

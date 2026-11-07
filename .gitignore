@@ -548,7 +548,6 @@ build/combat-effects-preview.zip
 
 # Local combat workshop and game test-build screenshots/logs.
 artifacts/combat-foundations/
-artifacts/combat-test/
 
 
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)

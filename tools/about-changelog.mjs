@@ -1226,11 +1226,18 @@ async function orderSelftest() {
 }
 
 async function orderCorpus(ordinalFile) {
-  const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
+  const { ordinal: built, release: rel } = JSON.parse(ordinalFile);
   // ROOM FOR A RISE UNDER THE CEILING. Every plant runs against buildordinal.json
   // one build further on, so `${rel}.${n + 1}` is newer than `${rel}.${n}` and
   // still names a build that exists. A later release names none: the check
   // bounds every stamp by buildordinal.json, not only the current release's.
+  // ROOM FOR A FALL TOO. Right after a release cut the box restarts at ordinal
+  // 0 (version-advance.yml), and the stale-receipt plants stamp `${rel}.${n - 1}`;
+  // at 0 that is `-1`, not a build, and the corpus went red on its own shape
+  // (2026-11-07, 0.7.5.0). The corpus box is this selftest's own file, so it
+  // stands at least one build in: the plants' arithmetic, not the tree's box,
+  // is what the corpus proves.
+  const n = Math.max(1, built);
   const roomy = JSON.stringify({ ...JSON.parse(ordinalFile), ordinal: n + 1 }, null, 2);
   const next = `${Number(rel.split('.')[0]) + 1}.0.0`;
   const r = (pr, ord, rl = rel) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${rl}.${ord}\`).`;

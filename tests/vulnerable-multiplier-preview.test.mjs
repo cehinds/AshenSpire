@@ -16,7 +16,7 @@ function fight(core) {
       ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 8, hits: 1 }], textTemplate: 'Deal {damage} damage.' } : card) });
   const actor = { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'flurry', cardId: 'twinbladeFlurry' }], relicIds: [] };
-  const combat = createCombat({ registries, rng: createRng(51), enemyIds: ['wanderingSoldier'], ratingsRules: null,
+  const combat = createCombat({ registries, rng: createRng(51), enemyIds: ['wanderingSoldier'],
     ...(core ? { combatExpansionVersion: 2 } : {}), player: actor });
   if (core) combat.fixCoreRules = structuredClone(fixCoreRules(combat));
   const enemy = combat.enemies[0];

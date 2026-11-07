@@ -62,7 +62,7 @@ function fixture({ fixCore = true } = {}) {
   const player = { classId: 'reaver', hp: 50, maxHp: 50, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'a', cardId: 'twinbladeFlurry' }], relicIds: [] };
   const gameProfile = fixCore ? { formatVersion: 1, modules: { effects: { fixCoreVersion: 1 } } } : undefined;
-  const combat = createCombat({ registries, rng: createRng(7), player, gameProfile, combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['wanderingSoldier'], ratingsRules: null });
+  const combat = createCombat({ registries, rng: createRng(7), player, gameProfile, combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['wanderingSoldier'] });
   return combat;
 }
 

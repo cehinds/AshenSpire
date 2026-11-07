@@ -172,14 +172,7 @@ export function runEnemyPlan(ctx, entry, hooks) {
   const halted = enemyEntryHalt(ctx, entry);
   if (halted) return halted;
   const saved = ctx.queue;
-  const foundation = ctx.foundation ? { actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
-    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null;
   ctx.queue = [];
-  if (ctx.foundation) {
-    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
-    ctx.foundationNextSerial = ctx.foundation.actionSerial;
-    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
-  }
   hooks.setOwner?.(ctx, entry.targetPlayerId);
   const wasPlaying = ctx._reactionPlaying;
   ctx._reactionPlaying = true;
@@ -200,7 +193,6 @@ export function runEnemyPlan(ctx, entry, hooks) {
     const left = ctx.queue;
     ctx.queue = saved;
     if (ctx.result) saved.length = 0; else saved.unshift(...left);
-    if (ctx.foundation && foundation) Object.assign(ctx.foundation, foundation);
   }
   return null;
 }

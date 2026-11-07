@@ -142,7 +142,6 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       candidate._reactionPlaying = true; candidate._buffer = null;
       candidate._reactionSourceId = aim;
       candidate.pendingExpansionActions = 0;
-      if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
       hooks.setOwner?.(candidate, seat);
       const play = { cardInstanceId: inst.instanceId, ...(aimed ? { targetId: aim } : {}),
         ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}), ...(rangeRoute ? {rangeRoute} : {}) };
@@ -491,15 +490,8 @@ function playStackEntry(ctx, group, entry, hooks) {
     }
     seats.push(ownerId);
   }
-  ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
-    actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
-    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
+  ctx.reactionResume = { queue: ctx.queue };
   ctx.queue = [];
-  if (ctx.foundation) {
-    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
-    ctx.foundationNextSerial = ctx.foundation.actionSerial;
-    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
-  }
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = entry.sourceId || group.sourceId;
   let refusal = null;
@@ -578,15 +570,8 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   delete ctx.pendingReaction;
   ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option?.play.cardInstanceId || null });
   if (!option) { reportRestOfRoot(ctx, group, ownerId, hooks); return; }
-  ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
-    actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
-    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
+  ctx.reactionResume = { queue: ctx.queue };
   ctx.queue = [];
-  if (ctx.foundation) {
-    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
-    ctx.foundationNextSerial = ctx.foundation.actionSerial;
-    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
-  }
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = group.sourceId;
   const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
@@ -639,7 +624,6 @@ export function restoreReactionQueue(ctx) {
   if (!ctx.reactionResume || (ctx.pendingAbilityDiscard || ctx.pendingCardChoice) || ctx.pendingAbilityPlay) return;
   const saved = ctx.reactionResume;
   ctx.queue.push(...saved.queue);
-  if (ctx.foundation && saved.foundation) Object.assign(ctx.foundation, saved.foundation);
   delete ctx.reactionResume;
   return true;
 }

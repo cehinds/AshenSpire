@@ -269,6 +269,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
           if (!sceptre) assert.equal(max, before[`max${field[0].toUpperCase()}${field.slice(1)}`], `${field} returns to its starting maximum`);
         }
         assert.equal(p.energyMax, p.maxStamina);
+        assert.equal(p.combatTraits, undefined, 'a Core swap leaves the legacy expansion equipment projection off, as combat creation does');
         commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
         const saves = createSaveManager(createMemoryStorage());
         saves.saveRun(run, combat.rng);
