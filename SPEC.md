@@ -1721,46 +1721,43 @@ Ids are stable semantic names, not screen-specific markup.
 
 #### Armoury components
 
-- Family: `armoury-overlay` → `armoury-panel`, with `armoury-header`, `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`, `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`, `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, `armoury-region-header`. These ids are stable.
-- Records are built in `ArmouryModels.js` and rendered by `armouryComponents.js`; hosts bind commands and lifecycle; models stay immutable, serializable, DOM-free.
-- Armaments is a configured `folding-tray` instance, not a second primitive or parallel implementation.
-- Persisted view ids stay `grid`, `rack`, `hybrid`; player-facing labels are **Character**, **Inventory**, **Hybrid**. The equipment subject keeps the compatibility region id `slots`; the visible tray instance is `armaments`.
+- Family: `armoury-overlay` → `armoury-panel`, with `armoury-header`, `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`, `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`, `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, `armoury-region-header`. Ids are stable.
+- Records: `ArmouryModels.js`; renderers: `armouryComponents.js`; models immutable, serializable, DOM-free.
+- Armaments is a configured `folding-tray` instance, not a second primitive.
+- Persisted view ids `grid`, `rack`, `hybrid` are labelled **Character**, **Inventory**, **Hybrid**. Equipment region id `slots`; tray instance `armaments`.
 
-The three views project the same loadout (no separate stores or screens):
+The views project one loadout:
 
-| View (id) | Layout |
+| View | Layout |
 |---|---|
-| **Character** (`grid`) | Character-only, full body width, two columns: identity, class/level text and responsive sprite left; Combat Power, Attributes, Relics right. Mounts no Armaments, Inventory or Stats tray. |
-| **Inventory** (`rack`) | Full-width equipment workspace: Armaments in the left pane, exactly one shared Inventory in the right pane, resizable divider with authored ratios and snap stops. Stats is a context tray. Never a second, hand-specific Inventory below Armaments. |
-| **Hybrid** (`hybrid`) | Authored compact Character/Armaments split with its own resizable, snapping divider. Inventory and Cards are compact context trays below; no separate Stats tray. |
+| **Character** (`grid`) | Full width, two columns: identity, class/level, sprite left; Combat Power, Attributes, Relics right. No Armaments, Inventory or Stats tray. |
+| **Inventory** (`rack`) | Armaments left, exactly one shared Inventory right, resizable divider with authored ratios and snap stops. Stats is a context tray. No second Inventory below Armaments. |
+| **Hybrid** (`hybrid`) | Compact Character/Armaments split with its own resizable, snapping divider. Inventory and Cards are compact trays below; no Stats tray. |
 
-**Trays.**
-- Armaments, Inventory, Cards and Stats use `folding-tray` → `tray-header` + optional expanded-only `tray-resize-handle` + `tray-content`. Stable tray instance ids: `armaments`, `inventory`, `cards`, `stats`.
-- The `trayModel` factory owns edge, expanded state, count/summary semantics, resize capability and optional list/grid sort intent; `renderTray` owns the uniform DOM and accessibility grammar. Sort controls appear only while the tray is expanded.
-- Closed arrows point inward; open arrows point back to the anchored edge, including the open Right Tray form `> TRAY NAME`.
-- A tray with the resize capability exposes a 44px mouse, touch-hold and keyboard surface: Top/Bottom resize vertically, Left/Right horizontally. Size is remembered in memory by stable tray id and edge for the current play session only. Folding returns to the standard bar or rail; reopening restores the last expanded size; starting/resuming a run or returning to Title resets the authored default.
-- Armoury supporting trays open at 45vh, keep ≥30vh when another tray is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug content before its first resize; Armoury trays apply the configured default ratio immediately.
-- Armaments is non-resizable; Inventory disables height resizing while it fills the Inventory-view pane. Bottom trays stay bottom-anchored and grow upward.
+**Trays**
+- Armaments, Inventory, Cards, Stats (ids `armaments`, `inventory`, `cards`, `stats`) use `folding-tray` → `tray-header` + optional expanded-only `tray-resize-handle` + `tray-content`.
+- `trayModel` owns edge, expanded state, count/summary, resize capability and optional sort intent; `renderTray` owns DOM and accessibility. Sort controls show only while expanded.
+- Closed arrows point inward; open arrows point to the anchored edge (open Right Tray: `> TRAY NAME`).
+- Resizable trays expose a 44px mouse, touch-hold and keyboard surface (Top/Bottom vertical, Left/Right horizontal).
+  - Size is kept in memory per tray id and edge for the session; folding returns to the bar or rail, reopening restores the last size; starting/resuming a run or returning to Title resets the default.
+  - Armoury trays open at 45vh, keep ≥30vh when another tray is expanded, snap every 10vh from 30vh to 90vh. The generic component may hug content before its first resize.
+  - Armaments is non-resizable; Inventory has no height resize while filling the Inventory-view pane. Bottom trays stay bottom-anchored and grow upward.
 
-**Equipment positions are procedural content.**
-- `content/source/equipSlots.csv` supplies each slot's id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule, storage behavior and order; `content/source/unlocks.csv` supplies additional position rungs; `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the set of slots.
-- The Armoury iterates every authored position as one compact vertical list showing locked, empty or occupied state. Each row is a button that selects it for the Inspect panel beside the list; Replace and Unequip are separate buttons. Empty positions follow occupied and locked ones automatically. Adding a position or slot group must not need a screen branch.
-- Item kind decides eligibility only. The selected hand position owns the sprite socket: a shield in a right-hand position renders in the right hand, a sword in a left-hand position in the left.
-- The figure composer supports armour/body, the worn layers `head`, `hands`, `feet` (from `assets/equipment/<slot>_<id>.webp`; nothing drawn when the file is absent) and authored left/right-hand layers. A back or other visible attachment needs an explicit asset-composer and configuration extension, not an inferred screen coordinate.
-- Which zone a slot fills is `model/zones.js`'s one map (§13.4b); a slot row it does not name is refused at boot.
+**Equipment positions are procedural content**
+- `content/source/equipSlots.csv` supplies slot id, label, position label/code, accepted kinds, hand/socket, set capacity, swap rule, storage behavior, order; `content/source/unlocks.csv` adds position rungs; `armouryUi.layout.equipment.slotOrder` sets preferred group order.
+- One compact vertical list shows every authored position as locked, empty or occupied; empty ones follow occupied and locked. Each row is a button selecting it for the Inspect panel; Replace and Unequip are separate buttons. A new position needs no screen branch.
+- Item kind decides eligibility only; the selected hand position owns the sprite socket (shield in a right-hand position draws in the right hand).
+- The figure composer draws armour/body, `head`, `hands`, `feet` (`assets/equipment/<slot>_<id>.webp`, nothing when absent) and left/right-hand layers. Other attachments need an explicit composer and configuration extension.
+- `model/zones.js` is the one slot→zone map (§13.4b); a slot it does not name is refused at boot.
 
-**Armaments List and inventory faces.**
-- Compact occupied rows: complete scaled equipment-card thumbnail, authored position code, name and Equipped/Reserve badge, Inspect/Replace grouped, Unequip at the right. Sizing is authored in `armouryUi.layout.equipment.compactList`. Inspect shows the full equipment inspection beside desktop rows, or in a separate mobile view with Back.
-- Armament inventory faces use read-only first-tap disclosure and never equip on hold: `armouryUi.layout.cardClasses.armamentItem` has `holdAction` false and inline comparison. Other Inventory classes keep the `inventoryItem` capability.
-- An unassigned item needs an explicit compatible destination; choices identify position, occupant, active/reserve and locked state. Selecting a destination never equips or activates. Equip/Move/Unequip are named buttons; Make active is separate, including for empty reserves. Successful changes name the item and destination.
-- Requirements, grip and storage checks stay authoritative. Combat changes dispatch priced engine intents; inspection never mutates a loadout. Mouse/pen drag stays available; touch gestures scroll. Magic is the primary combat-power label; Potency remains its modifier.
+**Armaments list and inventory faces**
+- Occupied rows: scaled equipment-card thumbnail, position code, name, Equipped/Reserve badge, Inspect/Replace grouped, Unequip at right (`armouryUi.layout.equipment.compactList`). Inspect opens beside desktop rows, or in a separate mobile view with Back.
+- Armament faces use read-only first-tap disclosure and never equip on hold (`armouryUi.layout.cardClasses.armamentItem`: `holdAction` false, inline comparison); other classes keep `inventoryItem`.
+- An unassigned item needs an explicit compatible destination (choices show position, occupant, active/reserve, locked). Selecting never equips. Equip/Move/Unequip are named buttons; Make active is separate, including for empty reserves. Changes name item and destination.
+- Requirements, grip and storage checks stay authoritative. Combat changes dispatch priced engine intents; inspection never mutates a loadout. Mouse/pen drag works; touch scrolls. Magic is the primary combat-power label; Potency its modifier.
 
-**Equipment receipts** are read models, never re-derived in a screen. The equipment receipt panel (`.armoury-equipment-receipts`, in the Character view's Equipment cards card and the Stats tray) renders:
-- the exact equipment card packages and equip requirements;
-- the Poise threshold (`.player-poise-receipt`);
-- the **Equip load** (`.player-load-receipt`, `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word from the framework Weight Class service (`registries.framework.weightClass`; capacity from Constitution and Strength plus `mechanics.weight.capacityBase`).
-
-Load counts each equipped armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Every piece weight is multiplied by `mechanics.weight.itemWeightScale` (0.2) and kept to a tenth. The item card's Weight label reads the same `pieceWeight` rule, so item and total agree.
+**Equipment receipts** are read models, never re-derived in a screen. `.armoury-equipment-receipts` (Character view's Equipment cards card, Stats tray) shows card packages, equip requirements, the Poise threshold (`.player-poise-receipt`) and **Equip load** (`.player-load-receipt`, `model/statProjection.playerLoadReceipt`): load / capacity, percent, Weight Class word (`registries.framework.weightClass`; capacity from Constitution, Strength and `mechanics.weight.capacityBase`).
+- Load sums each equipped armament's `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`). Each piece is multiplied by `mechanics.weight.itemWeightScale` (0.2), kept to a tenth; the item card's Weight label reads the same `pieceWeight` rule.
 
 #### Shared HUD composition and combat layout
 
@@ -1911,17 +1908,17 @@ Hit feedback, beat order, pacing, defeat/victory screens, sound.
 - Victory: title "Victory", aria-label "Ember restored".
 
 **Sound** is shipped and procedural.
-- `sfx.js` is the hook bus: every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …). `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
-- Content lives in two files, one home each: `src/content/music.js` (scales, per-context beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
-- A recipe is a list of layers in the closed two-word vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id. Retuning a sound is a table edit, never an engine edit.
-- Ids are composed; `resolveRecipe` (`content/sfx.js`) is one pure function: exact id → the family row (segment before the first `_`) → `default`. E.g. `procBurst_bleed` plays its own row; a proc with no row falls to `procBurst`; anything unknown plays the required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row named for the segment before the underscore: no engine change, no registration list.
-- Volumes/mute are settings; the score ships audible (music default non-zero).
-- A context's bed value is a bed object or the exact word `'silence'` (`MUSIC_SILENCE_WORD`, `src/model/schemas.js`). `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, zero gain, wrong or miscased word); an unknown context at runtime warns naming itself and plays nothing.
-- Only the rendered tracks ship as audio files (listed in a music manifest). Each is written as notes in a score module (`music/score/<id>.mjs`) and rendered offline by `tools/score/render.mjs`. `music/*.mp3` and `music/manifest.json` are gitignored build output; per EXTERNAL-ASSETS-PLAN steps 9–13 the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and scores and render tool live there under `art/music/`.
-- Override paths fail differently:
-  - A music folder with `manifest.json` replaces a context's procedural bed; a missing/unplayable track falls back to the synth bed. The folder is the Settings folder, or (setting blank, page served over http(s)) the shipped tracks, read through the common pack's index in the web edition and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`). A `file://` page cannot fetch them and keeps the synth.
-  - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; `audio.js` `sfx()` short-circuits on a manifest entry, and a failed sample load falls back to the synth for that id (`src/ui/audio.js:152-154`).
-  - `MUSIC_MANIFEST` is still imported and never read: a dormant slot, not a path.
+- `sfx.js` is the hook bus: feedback moments call `sfx.play(id)`; `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine synthesizing every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
+- Content, one home each: `src/content/music.js` (scales, beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
+- A recipe is a list of layers in the closed vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id.
+- `resolveRecipe` (`content/sfx.js`): exact id → family row (segment before the first `_`) → required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row; no engine change or registration list.
+- Volumes/mute are settings; music default is non-zero.
+- A context's bed is a bed object or exactly `'silence'` (`MUSIC_SILENCE_WORD`, `src/model/schemas.js`). `validateContent` rejects quiet-shaped mistakes by name (null, missing variants, `[]`, zero gain, wrong or miscased word); an unknown context at runtime warns naming itself and plays nothing.
+- Only rendered tracks ship as audio files, listed in a music manifest, rendered offline from `music/score/<id>.mjs` by `tools/score/render.mjs`. Tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`); scores and render tool live under `art/music/`. `music/*.mp3` and `music/manifest.json` are gitignored.
+- Overrides:
+  - A music folder with `manifest.json` replaces a context's bed; a missing/unplayable track falls back to the synth bed. The folder is the Settings folder or, with it blank on http(s), the shipped tracks (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth.
+  - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; a failed sample load falls back to the synth (`src/ui/audio.js:152-154`).
+  - `MUSIC_MANIFEST` is imported and never read: a dormant slot.
 
 ### 7.5 Visual style
 
