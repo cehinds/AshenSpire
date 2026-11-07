@@ -24,25 +24,25 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: —
 
 ## #4 All statuses as badges in one row with Precision
-- Status: requested
+- Status: in progress
 - Asked: 2026-11-07 — "Id like all status's to be batches like automatic sweeP"; clarified: "no: I mean in the same row as precision and status effects since those buffs are status effects just buff status effects"
 - Means: Every status effect on a combatant, buffs included (e.g. the clock/speed-lines one), renders as the same small round count badge in one shared row with Precision (the crosshair badge), not scattered in different styles/places. ("Automatic Sweep" in the first ask was Precision.)
 - Questions: none
-- Link: —
+- Link: branch feature/MiniHudLayout
 
 ## #5 Enemy Block to the left of the health bar
-- Status: requested
+- Status: in progress
 - Asked: 2026-11-07 — "move the block to the left of the health bar for enemies" (screenshot: Block shield "7" sits below-left of the bar, under its left end; red box marks the spot at the bar's left end)
 - Means: On enemy mini HUDs, the Block badge moves from under the bar to directly left of the HP bar, in line with it. Player HUD and the rest of the layout (#2) stay.
 - Questions: none
-- Link: —
+- Link: branch feature/MiniHudLayout
 
 ## #6 Status row under the health bar
-- Status: requested
+- Status: in progress
 - Asked: 2026-11-07 — "also, I want the precisiuon to be under the health" (screenshot: red box directly under the HP bar)
 - Means: The Precision + status badge row (#4) sits directly under the HP bar, instead of left of it/below-left. Pairs with #5 (enemy Block left of the bar).
 - Questions: none
-- Link: —
+- Link: branch feature/MiniHudLayout
 
 ## #7 Magic damage becomes plain damage; spells default to Reach
 - Status: requested
@@ -92,13 +92,13 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Link: —
 
 ## #11 Poise bar always visible, fixed-width HUD
-- Status: requested
+- Status: in progress
 - Asked: 2026-11-07 — "just keep the poise visible at all times but make it have the height of the health bar. also, I'd liek the health bar with the badges to be a fixed width instead of dynamically changing."
 - Means: Poise bar is always shown (no hiding, no badge shifting), the same height as the HP bar, under it (layout with #5 Block left of the bar, #6 badges under). The HP bar plus its badge row has one fixed width on every combatant instead of resizing with content.
 - Update 2026-11-07 — "have poise bar and hp be the same width, and stays fixed even if there is no block also I want the block icon to be larger to fit the height of the hp, poise, and status effect badges rows": HP and Poise bars share one width, fixed whether or not Block is present (Block's slot is reserved when Block is 0). The Block icon grows to span the full height of the HP, Poise and badge rows stacked (placed left of the bars, #5).
 - Answer 2026-11-07: "it applies to every one" — one fixed width for every combatant, player and enemies.
 - Questions: none
-- Link: —
+- Link: branch feature/MiniHudLayout
 - Layout confirmed 2026-11-07 ("ok but don't strech it out"): Block icon (tall, left) | HP bar / Poise bar / badge row stacked, HP number right of the HP bar. Keep it compact: fixed width roughly today's bar width, thin rows, no stretching of the HUD (Block icon scales to the stack height, not the other way round). Covers #4, #5, #6, #11.
 
 - Update 2026-11-07 — "keep the number inside the shield too": the Block value stays printed inside the (now larger) Block shield icon.
