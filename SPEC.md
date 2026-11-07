@@ -231,21 +231,9 @@ Entity types, each with a schema in `schemas.js`:
 
 ### 3.4 Effect DSL (opcodes)
 
-An effect is an array of opcode objects. Playing a card, triggering a relic or resolving an event choice enqueues them on the action queue (§3.9).
+An effect is an array of opcode objects, enqueued on the action queue (§3.9) when a card is played, a relic triggers or an event choice resolves.
 
-```js
-// Gorefire Slash: "Deal 5 damage. Apply 3 Bleed."
-effects: [
-  { op: 'damage',      target: 'enemy', amount: 5 },
-  { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
-]
-
-// Last Stand: "Gain Block equal to missing HP (max 20)."
-effects: [
-  { op: 'block', target: 'self',
-    amount: { f: 'missingHp', of: 'self', max: 20 } },
-]
-```
+Example: `effects: [{ op: 'damage', target: 'enemy', amount: 5 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }]`.
 
 **Opcodes** (closed set; extending it is an engine PR):
 
@@ -283,13 +271,7 @@ floor(global × (AP × action + MP × mana + SP × stamina)
 
 Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing; formulas are validatable data.
 
-```js
-{ f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 }   // Bleed burst
-{ f: 'missingHp', of: 'self', max: 20 }                        // Last Stand
-{ f: 'stacks', status: 'bleed', of: 'allEnemies', per: 4 }     // War Surgeon
-{ f: 'energySpent', per: 6 }                                   // X-cost scaling
-{ f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
-```
+Example: `{ f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 }` (Bleed burst).
 
 Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `metric {metric, of, per?}`, `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}`.
 - `metric`: a combat counter times `per`; `sameCardPlays` reads how many times this card has been played this combat, before the current play (a first play reads 0).
@@ -353,17 +335,7 @@ priced by ONE function, `statRowValue` (`model/derivedStats.js`):
 
 Relics, powers, statuses, stances, mounted properties and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start.
 
-```js
-// Fell Omen Brand: "Whenever an enemy Staggers, draw 2."
-triggers: [{ on: 'enemyStaggered', do: [{ op: 'draw', amount: 2 }] }]
-
-// Watchful Omen, phase 2 at 50% HP (defined on the enemy):
-phases: [{ on: 'hpBelowPct', pct: 50, once: true,
-  do: [ { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
-        { op: 'applyStatus', target: 'player', status: 'weak',  stacks: 1 },
-        { op: 'applyStatus', target: 'self',   status: 'strength', stacks: 2 } ],
-  unlockMoves: ['twinDaggers'] }]
-```
+Examples: `triggers: [{ on: 'enemyStaggered', do: [{ op: 'draw', amount: 2 }] }]`; a boss phase defined on the enemy: `phases: [{ on: 'hpBelowPct', pct: 50, once: true, do: [...], unlockMoves: ['twinDaggers'] }]`.
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
@@ -408,26 +380,11 @@ Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predica
   hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
 ```
 
-The Elden Ring layer, fully as data:
-
-```js
-bleed: {
-  stackMode: 'add', decay: 'none',
-  proc: { threshold: 7, burstPercent: 15, burstMin: 8, burstMax: 35, poiseDamage: 3,
-    resistance: { status: 'bleedResist', tags: ['beast', 'humanoid'] } },
-},
-crimsonBlight: {
-  stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
-  hooks: [{ on: 'ownerTurnStart',
-    do: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
-},
-weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
-vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.25 } },
-frost:      { stackMode: 'add', decay: 'none',
-  proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
-    effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
-```
+Shipped examples (all data):
+- `bleed`: `stackMode 'add'`, `decay 'none'`, `proc { threshold 7, burstPercent 15, burstMin 8, burstMax 35, poiseDamage 3, resistance { status 'bleedResist', tags ['beast','humanoid'] } }`.
+- `crimsonBlight`: `add`, `decay { duration 3 }` (re-apply adds stacks + refreshes); hook `ownerTurnStart` → `loseHp` by its own stacks.
+- `weak`: `add`, `perTurnEnd`, `damageDealtMult 0.75`. `vulnerable`: `add`, `perTurnEnd`, `damageTakenMult 1.25`.
+- `frost`: `add`, `decay 'none'`, `proc { threshold 10, burstPercent 8, burstMin 4, burstMax 20 }`, effects leave the target Weak and Frost-Exposed.
 
 - **Poise/Stagger** uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. A full meter applies the `staggered` status (skipped turn, ×1.5 damage taken). After a break the threshold grows by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). Core fights ship `dealPoiseDamage` only.
 - **Stances** (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
@@ -435,7 +392,7 @@ frost:      { stackMode: 'add', decay: 'none',
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
-Generators are code in `src/engine/`; their knobs are data in `src/content/`. Every generator is a pure function of `(config, rngStream, runState)`, so it is snapshot-testable with fixed seeds (§8). This section also holds the equipment composition rules (swap cost, starting deck, item-owned cards, mounts, kits).
+Algorithms are code; knobs are data. Every generator is a pure function of `(config, rngStream, runState)`, snapshot-testable with fixed seeds (§8). Also holds equipment composition: swap cost, starting deck, item-owned cards, mounts, kits.
 
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
@@ -457,8 +414,8 @@ Two closed vocabularies in `balance.equipment`, derived rather than authored per
 - Swap price (`swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number):
   - `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`. `base: 'default'` is `swapCost` for everything.
   - `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods.
-  - The two fields are closed and their product is total (all four cells price a swap); a fourth rule is one row of `swapCostRules`, no code.
-- `changeEquipment` applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile and persists the same loadout object.
+  - The two fields are closed and their product is total; a new rule is one `swapCostRules` row.
+- `changeEquipment` applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, persists the same loadout object.
 - A weapon's category is its tags (`heavy`, `flourish`), never a `swapCost` column.
 - `persistence` is the only scope word: default `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`).
 - `apply` in `equipMods.csv` is a closed set per scope (`CARD_MOD_APPLIES` / `RUN_MOD_APPLIES` in `model/loadout.js`); any other value is a validation failure.
@@ -478,15 +435,15 @@ Two closed vocabularies in `balance.equipment`, derived rather than authored per
   - Merchant and event removal may remove run-owned basic attacks, including their current weapon-derived faces. Removal retires the slot for the run without renumbering survivors.
   - Equipment swaps, combat setup, save/load and mid-combat restamping use the same surviving slot plan and never restore a removed copy.
   - Item-owned grants are ineligible for permanent deck removal. The merchant revalidates the selected instance, funds and nonempty-deck guard before charging.
-- Authored data: the cap, per-class bias and default, odd-split winner and grant-source vocabulary. Sources are rows in the `grantSource` tag domain (adding one is a spreadsheet line).
-  - The engine mints bound cards at four seams (global, armor, weapon, class) and reads each seam's stamped tag from `startingDeck.sources`; renaming a source is a data edit (map, tag row and `sourceOrder` move together).
-  - A binding naming no registered source, or an unbound seam, is refused by name rather than dealing that source's cards last.
+- All authored: cap, per-class bias and default, odd-split winner, grant sources (rows in the `grantSource` tag domain).
+  - Bound cards are minted at four seams (global, armor, weapon, class); each seam's tag is read from `startingDeck.sources` (map, tag row and `sourceOrder` move together on a rename).
+  - A binding naming no registered source, or an unbound seam, is refused by name.
 
 **Card ownership: the run, or one item.**
 - Run-owned cards are the run's for good: base strikes and defends (gear only re-skins them), class signature, global grants, rewards.
 - Item-owned cards ride with the item: equip it and they arrive, unequip it and they leave, re-equip and they return identical. **If the item is not equipped, its cards are gone** (owner ruling).
 - Three authoring sources feed it: a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table (`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included). One reconcile applies it on every equip transition, in or out of combat.
-- Item-owned instances carry deterministic ids and the owner's namespaced ref, so reconcile is idempotent and a save is stable across it.
+- Item-owned instances carry deterministic ids and the owner's namespaced ref (idempotent reconcile, stable saves).
 
 #### Card mounts: the smith's services
 
@@ -508,16 +465,11 @@ Every card an item lends sits in a **mount** on that item, keyed by the instance
 #### Equipped weapon card packages
 
 - `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered priority list plus that profile as filler. `WeaponDeckCompositionService` builds an `EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place.
-- Slot allocation:
-  - No eligible weapon: Unarmed in every attack slot.
-  - One eligible weapon in either hand: owns every slot.
-  - Two eligible one-handed weapons: split right `ceil(N/2)`, left `floor(N/2)`.
-  - Within a hand, ordered priority/effect references precede repeated filler. Shields and other items without a weapon package consume no quota.
-  - Explicit `handsRequired: 2` claims the whole attack quota and is never inferred from tags, names, art or kind.
+- Slots: no eligible weapon = Unarmed in every slot; one eligible weapon (either hand) owns every slot; two one-handed split right `ceil(N/2)`, left `floor(N/2)`. Within a hand, ordered priority/effect references precede repeated filler. Shields and items without a package consume no quota. Explicit `handsRequired: 2` claims the whole quota (never inferred from tags, names, art or kind).
 - The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades and acquisition metadata; it changes only package-derived card/profile/receipt/mod fields.
 - Equip, unequip, hand move and active set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt. Creation and load/continue call the same service directly.
 - Combat rebinds generated attack instances wherever they live (hand, draw, discard, exhaust) after the current card resolution.
-- Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are never appended.
+- Legacy role-only generated attacks map once, in deck order, to `attack:0..N-1`; never appended.
 - A conflicting off-hand, a duplicate piece without distinct equipment instance identity, or a claimed but invalid package fails closed. Unarmed is only the valid zero-weapon plan.
 - **Exact active-combat snapshot:** its own saved loadout is the authority.
   - After snapshot shape and content-reference validation, the same service migrates the complete generated attack set in pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated loadout replaces the stale top-level run projection before continue.
