@@ -15,16 +15,11 @@ import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest
 import { retiredProfileReason } from './model/retiredProfile.js';
 import { resolveGameProfile, gameModule, gameContent, applyGameProfileToContent, bindGameProfileRegistries } from './model/gameProfile.js';
 import { isConfiguredRun, gameProfileClassAvailable } from './model/gameProfileRun.js';
-import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
-import { isAbilitySkill } from './model/abilityGrades.js';
-import { expandedProgression } from './model/classMilestones.js';
-import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
 import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
-import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
@@ -66,7 +61,7 @@ import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { grantSmithingReward, smithingRewardId } from './model/smithing.js';
 import { applyNodeRefill, refillFlasksAtActChange } from './model/nodeRefill.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
@@ -76,16 +71,12 @@ import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from './model/playsEver.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
-import { pendingRankUpRows, coreCardRanks, skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
-import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
-import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
-import { equippedPieces } from './model/loadout.js';
+import { pendingRankUpRows, coreCardRanks, skillKindOf, stampSkillBonuses } from './model/skills.js';
+import { featMultiplier, featStacks } from './model/feats.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint } from './model/rewardSourcePolicy.js';
-import { rollSigilDrop } from './model/sigils.js';
+import { allocateAttributePoint, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, xpToNext as levelXpToNext } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
@@ -98,16 +89,7 @@ import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
-import {
-  rollEncounter,
-  rollRuneReward,
-  rollCombatCardOffer,
-  rollClassDraftIds,
-  rollFlaskDrop,
-  rollRelicReward,
-  rollRelicChoices,
-  rollArmamentDrop,
-} from './engine/encounters.js';
+import { rollEncounter, rollRuneReward } from './engine/encounters.js';
 import { configuredShopKind } from './model/gameProfileShopKind.js';
 import { commitGameProfileShopSale } from './model/gameProfileShopSales.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
@@ -1620,8 +1602,6 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     showGameProfileReward();
   } else if (run.gameProfileOpenShop) {
     showShop();
-  } else if (run.pendingReward) {
-    mountPendingReward();
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
@@ -2344,57 +2324,7 @@ function runResult(victory) {
   };
 }
 
-/**
- * Close out a run: record it, advance the durable progress tally, and hand back
- * anything newly earned. Kept in one place so a defeat and a victory can never
- * disagree about what counts.
- */
-/**
- * rollDrop(source) → armament id | null — a PURE roll, nothing stored.
- *
- * It used to be REMEMBERED: the roll itself pushed the piece into run storage
- * and meta.found, before the reward menu ever mounted. That made the menu's
- * armament row a lie three ways at once — Skip could not leave it, manual
- * Continue could not leave it, and NEW could never show on first discovery,
- * because the ownership comparison ran against a found set the roll had
- * already written (Aurora's merge review on #290 at f29d468; Codex
- * 4989824448). Persistence now lives in collectArmament, reached only through
- * the reward screen's take/apply path — tap, or auto-collect at Continue.
- * The exclusion inputs (found, carried) are read-only here.
- */
-function rollDrop(source) {
-  const meta = saves.loadMeta();
-  const id = rollArmamentDrop(registries, rng, {
-    source,
-    found: meta.found || [],
-    carried: carriedIds(run.loadout),
-  });
-  return id; // the roll is PURE: collection persists (collectArmament), not discovery
-}
-
-/**
- * collectArmament(id, source) — the one home of the armament bargain, fired
- * when the player TAKES the row (or auto-collect takes it for them): the piece
- * goes into this run's storage so you can use it now, and into the profile's
- * found set so it stays available in every run after — a climb that ends badly
- * still widens the wardrobe. What was never taken was never found: a skipped
- * or left-behind piece stays out of meta.found and can drop again.
- */
-function collectArmament(id, source) {
-  if (!id) return false;
-  // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
-  // addToStorage returns false at the cap and on a duplicate, and a found
-  // entry for a piece the bag refused is a poisoned record — claimed but not
-  // stored, and excluded from every future drop. The menu derives the same
-  // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
-  // the depth behind that face — same array, its own answer.
-  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
-  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
-  recordCollectedArmament(id, source);
-  return true;
-}
-
-// Called only after collection or a committed trader purchase stored the item.
+// Called only after a committed trader purchase stored the item.
 function recordCollectedArmament(id, source) {
   if (!carriedIds(run.loadout).includes(id)) return;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
@@ -2415,12 +2345,11 @@ function recordCollectedArmament(id, source) {
   return true;
 }
 
-/** A treasure node's Smithing Stone door (SPEC §15.3); null when it pays nothing. */
-function treasureSmithingReward() {
-  if (!smithingRewardPays(registries, 'treasure')) return null;
-  return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
-}
-
+/**
+ * Close out a run: record it, advance the durable progress tally, and hand back
+ * anything newly earned. Kept in one place so a defeat and a victory can never
+ * disagree about what counts.
+ */
 async function finishRun(victory) {
   const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries, finishedRng = rng;
   const owned = () => run === finishedRun && activeSlot === finishedSlot;
@@ -2721,17 +2650,7 @@ function enterNode(nodeId) {
       return showShop();
     }
     case 'treasure': {
-      if (isConfiguredRun(run)) return beginGameProfileReward({ source: 'treasure', after: 'map' });
-      const relicId = rollRelicReward(registries, rng, run.relics);
-      const armamentId = rollDrop('treasure');
-      // Treasure pays Smithing Stones through the combat door's faucet (SPEC
-      // §15.3), and only when its tables pay anything: both ship at 0, so no
-      // zero-amount claim is written and a save is unchanged.
-      const smithingStoneReceipt = treasureSmithingReward();
-      // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
-      // as the legacy dungeon's treasure door does, so a reload remounts an
-      // unclaimed sigil row instead of losing it.
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginGameProfileReward({ source: 'treasure', after: 'map' });
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -3141,15 +3060,6 @@ async function onCombatEnd(result, combat, enc) {
     grantStats: !!gameModule(run, 'stats'),
   });
   const levelsEarned = levelAward.levelUps;
-  // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
-  // above were paid before the door opens, so the screen cannot re-derive what
-  // this fight paid — it is handed the amounts, on the offer, where the
-  // pending-reward checkpoint persists them and a reload resumes the same
-  // sentence. Ledger state is read live from the run; only the GAIN is kept,
-  // and it is the amount each award SAYS it paid, never a second reading of
-  // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelDiscarded: levelAward.discarded });
-  const levelChoices = rollLevelChoices(levelsEarned);
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   if (!configuredProgression) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -3182,373 +3092,14 @@ async function onCombatEnd(result, combat, enc) {
   // boundary below. A reload therefore resumes the reward menu instead of
   // losing either the Stone or the other spoils.
 
-  if (configuredProgression) {
-    // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
-    const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
-      xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
-    run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
-    const boss = enc.pool === 'boss';
-    if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
-    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt });
-  }
-
-  if (enc.pool === 'boss') {
-    run.bossesBeaten = run.bossesBeaten || [];
-    for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
-    // …and the item types in hand as it fell (plan phase 5c, bossWithGroup).
-    run.bossGroups = run.bossGroups || {};
-    const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
-    for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
-    if (run.actNumber >= 3) {
-      // The Blighted Valkyrie falls: the Sovereign Ember is restored.
-      audio.music('victory');
-      return showFinishedRun(true);
-    }
-    // Act boss down: boss rewards, then the climb continues.
-    // A boss always drops an armament — unless you already own every one it
-    // could give, in which case it pays out instead of dropping nothing.
-    const bossArmament = rollDrop('boss');
-    const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss') : [];
-    const bossClassDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
-    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
-    // from; one relic (or none) keeps the single relicId shape.
-    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
-    const bossRewards = {
-      title: victoryTitle(enc),
-      cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
-      classDrafts: bossClassDrafts,
-      skillDrafts: bossDrafts,
-      skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps() : [],
-      skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes() : [],
-      skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats() : [],
-      ...rollCardRows('boss', levelsEarned),
-      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
-      ...sigilOffer('boss'),
-      armamentId: bossArmament,
-      smithingStoneReceipt,
-      xpGains,
-      xpReceipt,
-      xpBefore,
-      levelChoices,
-      characterRewardStart: run.level.level,
-    };
-    return beginPendingReward(withSourceBonuses(bossRewards), { source: 'boss', after: 'advanceAct' });
-  }
-
-  // Skill and class level rewards are independent of the combat card roll.
-  const drafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool) : [];
-  const classDrafts = !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
-  const rewards = {
-    title: victoryTitle(enc),
-    cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
-    classDrafts,
-    skillDrafts: drafts,
-    skillRankUps: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillRankUps() : [],
-    skillAttributes: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes() : [],
-    skillFeats: !configuredProgression && settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats() : [],
-    ...rollCardRows(enc.pool, levelsEarned),
-    flaskId: rollFlaskDrop(registries, rng, run),
-    relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
-    // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
-    ...sigilOffer(enc.pool),
-    // Elites are the mid-run source of armaments; ordinary fights are not by
-    // default (balance.equipment.drops.chance.normal ships at 0, which rolls
-    // nothing — SPEC §15.3 — until the owner raises it).
-    armamentId: rollDrop(enc.pool),
-    smithingStoneReceipt,
-    xpGains,
-    xpReceipt,
-    xpBefore,
-    levelChoices,
-    characterRewardStart: run.level.level,
-  };
-  beginPendingReward(withSourceBonuses(rewards), { source: enc.pool, after: 'map' });
-
-  function withSourceBonuses(offer) {
-    return runSourceRewardOffer(registries, rng, run, offer, {
-      pool: enc.pool, includeBanked: false, levelsGained: classAward?.levelUps || 0, meta:saves.loadMeta(),
-    });
-  }
-}
-
-/**
- * The spoils' card rows (SPEC §15.1): the independent combat card offer,
- * unless the schedule turns it off for this pool or its chance misses,
- * and a level card per level this fight bought when `onLevelUp` is on. The
- * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
- * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
- * `levelCards` only when they say something, so the shipped schedule writes
- * the offer it wrote before).
- */
-function rollCardRows(pool, levelUps) {
-  return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
-    levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
-  }).rewards;
-}
-
-function rollLevelChoices(levelsEarned) {
-  if (isConfiguredRun(run)) return [];
-  const settings = saves.loadMeta().settings || {};
-  const offerFeats = settingOn(settings, 'rewardLevelFeats');
-  const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
-  if (!offerFeats && !offerClassTree) return [];
-  const out = [];
-  const firstRewardLevel = run.level.level;
-  for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
-    const options = [];
-    if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
-    if (offerClassTree && !run.classUnequipped) {
-      const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
-      const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
-      options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
-        .map((id) => ({ kind: 'classNode', id })));
-    }
-    if (options.length) out.push({ ordinal, options });
-  }
-  return out;
-}
-
-/**
- * The drafts the ledger has queued, one per track with a draft pending and at
- * most balance.skill.draftsPerCombat per track per door (the rest wait for
- * the next fight); a track whose schools offer nothing rolls no row and keeps
- * its draft. Rolled on the 'cardRewards' stream the card offer would have
- * used, at the door's own odds (the boss's at a boss door).
- */
-function rollSkillDrafts(pool, includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    const queued = row.pendingDrafts || 0;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    if (expandedProgression(run) && isAbilitySkill(track.id)) {
-      out.push(...rollPendingAbilityOffers(registries,rng,run,{skillId:track.id,banked,limit:perDoor}));
-      continue;
-    }
-    for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
-      const level = i < queued ? Math.max(1,row.level - queued + i + 1) : row.level + i - queued + 1;
-      const cardIds = rollGuaranteedSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool });
-      // Each offered card arrives at its own rank (SPEC §13.4o), rolled now so
-      // the offer, its save and its reload all show the same card.
-      if (cardIds.length) out.push({ skillId: track.id, level, cardIds, ranks: cardIds.map(() => rollDraftRank(registries, rng, level)), claimOrdinal: i < queued ? 0 : i - queued + 1 });
-    }
-  }
-  return out;
-}
-
-/**
- * The rank-ups the ledger has queued (SPEC §13.4o): one per level of a
- * card-school track, offered beside that level's draft and on the same
- * terms (`draftsPerCombat` per door, banked levels counted when the door
- * claims them). No roll: the cards it chooses among are the run's own.
- */
-function rollSkillRankUps(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    if (expandedProgression(run) && isAbilitySkill(track.id)) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    // The queued ones stand now; a banked level adds one when its claim
-    // reaches a level that queues one (from 2 on), keyed by that claim.
-    const entries = [
-      ...Array.from({ length: row.pendingRankUps || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesRankUp(track.kind, entry.level)),
-    ];
-    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry });
-  }
-  return out;
-}
-
-/**
- * The attribute picks the ledger has queued (SPEC §13.4o, every 4th level of a
- * track with a linked attribute set), offered beside that level's draft on the
- * same terms; banked levels count when the door claims them.
- */
-function rollSkillAttributes(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (expandedProgression(run) && track.kind === 'class') continue;
-    const attributeIds = skillLinkedAttributes(registries, track.id);
-    if (!row || !attributeIds.length) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    const entries = [
-      ...Array.from({ length: row.pendingAttributePicks || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesAttributePick(registries, track.id, entry.level)),
-    ];
-    for (const entry of entries.slice(0, perDoor)) out.push({ skillId: track.id, ...entry, attributeIds });
-  }
-  return out;
-}
-
-/**
- * The skill-feat picks the ledger has queued (SPEC §13.4o, every 2nd level of
- * a track that authors feats), offered with the track's untaken feats open at
- * that level; a level with none open waits in the ledger.
- */
-function rollSkillFeats(includeBanked = false) {
-  const perDoor = registries.balance.skill.draftsPerCombat;
-  const out = [];
-  for (const track of skillTracks(registries)) {
-    const row = run.skills && run.skills[track.id];
-    if (!row) continue;
-    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
-    const entries = [
-      ...Array.from({ length: row.pendingSkillFeats || 0 }, () => ({ level: row.level, claimOrdinal: 0 })),
-      ...Array.from({ length: banked }, (_, k) => ({ level: row.level + k + 1, claimOrdinal: k + 1 }))
-        .filter((entry) => skillLevelQueuesSkillFeat(registries, track.id, entry.level)),
-    ];
-    if (expandedProgression(run) && track.kind === 'class') continue;
-    // One door never offers a feat twice (two rows could otherwise share the
-    // only one, and the second could never land), and a pick with no feat
-    // open does not use up the door's slot.
-    const offered = new Set();
-    let rows = 0;
-    for (const entry of entries) {
-      if (rows >= perDoor) break;
-      const featIds = skillFeatOptions(run, track.id, entry.level, registries).filter((id) => !offered.has(id));
-      if (!featIds.length) continue;
-      featIds.forEach((id) => offered.add(id));
-      out.push({ skillId: track.id, ...entry, featIds });
-      rows += 1;
-    }
-  }
-  return out;
-}
-
-/**
- * The class draft the ledger has queued (plan phase 5b): a pick from the
- * class tree per class level climbed, ONE per door — a second roll at the
- * same door would read the same picks and could offer the first row's node
- * again, or the node the first pick excludes (the review of #1192). The rest
- * of the queue waits for the next fight; a level whose tier offers nothing
- * draftable keeps its draft.
- */
-function rollClassDrafts(includeBanked = false) {
-  if (run.classUnequipped) return [];
-  const row = run.skills && run.skills[classSkillId(run.class)];
-  if (!row) return [];
-  const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
-  if (!(row.pendingDrafts > 0 || banked > 0)) return [];
-  const level = row.level + banked;
-  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level });
-  return nodeIds.length ? [{ classId: run.class, level, nodeIds, claimOrdinal: row.pendingDrafts > 0 ? 0 : 1 }] : [];
-}
-
-function beginPendingReward(rewards, { source, after }) {
-  rewards = configuredRewardOffer(rewards, source);
-  rewards = mergeProgressionRewards(run.deferredProgression, rewards, run, {
-    manual: true,
-    characterStart: rewards.characterRewardStart ?? run.level?.level ?? 1,
-  });
-  const { available, deferred } = partitionProgressionRewards(rewards, run);
-  run.pendingReward = pendingRewardCheckpoint(available, { source, after });
-  if (Object.keys(deferred).length) run.deferredProgression = deferred;
-  else delete run.deferredProgression;
-  persistOrWarn();
-  return mountPendingReward();
-}
-
-// SPEC §15.4: a legendary sigil drop for this pool, on its own `sigils`
-// stream. The offer carries `sigilId` only when one dropped, so with the
-// shipped chances of 0 every offer is the one it was before, and no stream moves.
-function sigilOffer(pool) {
-  const sigilId = rollSigilDrop(registries, rng, run, pool);
-  return sigilId ? { sigilId } : {};
-}
-
-function configuredRewardOffer(rewards, source) {
-  const settings = saves.loadMeta().settings || {};
-  return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
-}
-
-function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
-  if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
-  // Older pending saves used per-door claim counters. Convert those offers once
-  // to absolute levels before they can be deferred to a different victory.
-  const baseRun = { ...run, skills: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) =>
-    [id, { ...row, level: Math.max(0, row.level - (checkpoint.skillClaims?.[id] || 0)) }])) };
-  checkpoint.rewards = mergeProgressionRewards({}, checkpoint.rewards, baseRun, {
-    manual: pendingLevelCount(registries, run) > 0 || (checkpoint.levelClaims || 0) > 0,
-    characterStart: Math.max(1, (run.level?.level || 1) - (checkpoint.levelClaims || 0)),
-  });
-  return mountRewards(app, {
-    registries,
-    run,
-    saves,
-    rng,
-    rewards: checkpoint.rewards,
-    checkpoint,
-    onClaimLevel: () => claimBankedLevel(registries, run, {
-      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
-      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
-    }),
-    onClaimSkill: async (skillId) => {
-      const claimRun = run, claimRegistries = registries;
-      const needsBank = hasClassMastery(claimRun) && skillId.startsWith('class:') && claimRun.classMasteryState.bankable;
-      const candidate = needsBank ? structuredClone(claimRun) : claimRun;
-      const claim = claimBankedSkillLevel(claimRegistries, candidate, skillId);
-      if (claim && needsBank) {
-        const bank = await saves.bankClassMastery(candidate, claimRegistries);
-        if (run !== claimRun || run.pendingReward !== checkpoint) return null;
-        if (!bank.ok) {
-          showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
-          return null;
-        }
-        adoptClassMasteryProfile(candidate, bank.meta);
-        for (const key of ['skills', 'classMasteryState', 'classRewardLevels', 'classMilestones']) {
-          if (Object.hasOwn(candidate, key)) claimRun[key] = candidate[key];
-        }
-        if (bank.warning) showSettingsNotice(bank.warning, 'profile');
-      }
-      if (claim && skillId === classSkillId(run.class)) {
-        run.classRewardLevels = { ...run.classRewardLevels, [run.class]: claim.after };
-        const added = mergeProgressionRewards(checkpoint.rewards,{skillDrafts:rollSkillDrafts('normal',true),classMilestoneRewards:rollClassMilestoneRewards(registries,rng,run,{banked:pendingSkillLevelCount(registries,run,skillId),meta:saves.loadMeta()})},run);
-        Object.assign(checkpoint.rewards,added);
-      }
-      return claim;
-    },
-    onClaimClassReward: (receiptId,selection) => claimClassMilestoneReward(registries,run,receiptId,selection,{meta:saves.loadMeta(),collectEquipment:ref => {
-      if (ref.startsWith('armament/')) return collectArmament(ref.slice(9),checkpoint.source);
-      const [,classId,id] = ref.split('/');
-      const piece = (registries.masterySource || registries).equipment.armour.find(row => row.classId === classId && row.id === id);
-      if (!piece) return false;
-      run.loadout.boughtArmour ||= [];
-      if (!run.loadout.boughtArmour.some(row => row.classId === classId && row.id === id)) run.loadout.boughtArmour.push({classId,id});
-      return true;
-    }}),
-    onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
-    onCollectArmament: (id) => collectArmament(id, checkpoint.source),
-    onPersist: persistContinuing,
-    onDone: () => {
-      const after = checkpoint.after;
-      const saved = mergeProgressionRewards(run.deferredProgression, unclaimedProgressionRewards(checkpoint), run);
-      if (Object.keys(saved).length) run.deferredProgression = saved;
-      else delete run.deferredProgression;
-      delete run.pendingReward;
-      if (returnTo) {
-        persistOrWarn();
-        app.querySelector('.reward-veil')?.remove();
-        return returnTo();
-      }
-      rewardDoneCount++;
-      if (after === 'advanceAct') advanceAct();
-      else {
-        persistOrWarn();
-        showMap();
-      }
-    },
-  });
+  // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
+  const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
+    xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
+  run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
+  const boss = enc.pool === 'boss';
+  if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
+  if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -4527,125 +4078,10 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     }
     showShop();
   } else if (shotState === 'reward') {
-    if (shotParams.get('shotReward') === 'configured') {
-      if (!isConfiguredRun(run)) throw new Error('Configured reward shot requires a configured game profile.');
-      // Enter the production offer/save/renderer callbacks; do not pose an
-      // alternate UI or grant a preselected option for this reach state.
-      beginGameProfileReward({ source: 'combat', after: 'map' });
-    } else {
-    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
-    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
-    // is a screen no instrument owns — release-shots derives its denominator
-    // from the states this file declares and screenreach can only reach a
-    // screen that has one.
-    //
-    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
-    // photographs identically every run, at its max edge (five rows: cinders,
-    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
-    // the other edge (no kinds, bare Continue), because a menu's zero case is
-    // where a derivation quietly draws furniture for absent rewards.
-    // The armament is authored, not rolled: the pose wants the same five rows
-    // in every capture, and a rolled id would vary with the seed. Collection
-    // still runs through the SAME collector the real sites hand in — the roll
-    // is pure now (rollDrop), so what a pose and a real reward share is the
-    // whole take/apply path, and what they differ in is only where the offer's
-    // ids came from. tools/reward-collect-drive.mjs exercises the real
-    // rollDrop → mountRewards door; this pose is for photographs.
-    const pose = shotParams.get('shotReward') || 'full';
-    const smithingStoneReceipt = pose === 'empty'
-      ? null
-      : grantSmithingReward(registries, run, 'elite', 'shot:reward', rng);
-    // `?shotReward=draft` poses a skill draft in the card row's seat (plan
-    // phase 4b): the ledger is given the queued draft the row spends, so the
-    // take runs the real door, and the cards are the pool's first three of
-    // the track's schools — authored order, no roll.
-    // THE PROGRESSION PANEL WANTS LEDGERS TO DRAW (2026-09-20): the pose gives
-    // the run an authored character level and three touched tracks, so the
-    // bars, the levels and the gain lines photograph identically every run —
-    // the same reason the offer's ids are authored rather than rolled. The
-    // draft pose's own ledger write below still wins for its track.
-    if (pose !== 'empty') {
-      run.level = { xp: 40, level: 1, unspentPoints: 0 };
-      run.skills = {
-        'item:blade': { xp: 18, level: 2, pendingDrafts: 0 },
-        'armour:heavy': { xp: 6, level: 1, pendingDrafts: 0 },
-        [`class:${run.class}`]: { xp: 20, level: 1, pendingDrafts: 0 },
-        'item:shield': { xp: 4, level: 0, pendingDrafts: 0 },
-        ...(run.skills || {}),
-      };
-    }
-    if (pose === 'level') {
-      run.level.xp = levelXpToNext(registries, 1) + 25;
-      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
-    }
-    if (pose === 'refill') {
-      // Two banked levels on each track, so the refill pose shows a second Level up.
-      run.level.xp = levelXpToNext(registries, 1) + levelXpToNext(registries, 2) + 95;
-      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 0) + skillXpToNext(registries, 'weapon', 1) + 55, level: 0, pendingDrafts: 0 };
-    }
-    if (pose === 'draft') {
-      run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
-    }
-    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
-    const shotReceipt = pose === 'receipt' ? { total: 65, rows: [
-      { kind: 'power', amount: 25 },
-      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
-      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 18 },
-      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 4 },
-      { kind: 'enemy', name: 'Ash Warden', level: 2, amount: 3 },
-      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 2 },
-      { kind: 'enemy', name: 'Ash Warden', level: 1, amount: 1 },
-    ] } : pose === 'level' ? { total: levelXpToNext(registries, 1) - 15, rows: [
-      { kind: 'power', amount: levelXpToNext(registries, 1) - 55 },
-      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
-      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 28 },
-    ] } : { total: 24, rows: [
-      { kind: 'power', amount: 16 }, { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 8 },
-    ] };
-    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
-      title: 'VICTORY',
-      cinders: 32,
-      ...(pose === 'draft' ? {
-        skillDrafts: [{ skillId: 'item:blade', level: 2, cardIds: registries.classes.get(run.class).cardPool.filter((id) => (registries.cards.get(id).tags || []).some((t) => draftSchools.has(t))).slice(0, 3) }],
-        cardIds: [],
-      } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
-      flaskId: 'crimsonFlask',
-      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
-      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
-      armamentId: 'greatsword',
-      smithingStoneReceipt,
-      // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: shotReceipt.total, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
-      xpReceipt: shotReceipt,
-      ...(pose === 'level' ? {
-        levelChoices: [{ ordinal: 0, options: [
-          { kind: 'feat', id: 'fieldStudy' },
-          { kind: 'feat', id: 'weaponDrill' },
-          { kind: 'feat', id: 'vitalRenewal' },
-        ] }],
-        skillDrafts: [{ skillId: 'item:blade', level: 3, claimOrdinal: 1,
-          cardIds: registries.classes.get(run.class).cardPool.filter((id) =>
-            (registries.cards.get(id).tags || []).some((tag) => skillSchools(registries, run.loadout, 'item:blade').includes(tag))).slice(0, 3) }],
-        xpGains: { level: levelXpToNext(registries, 1) - 15, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
-        xpBefore: { character: { level: 1, xp: 40 }, tracks: { 'item:blade': { level: 2, xp: 0 }, [`class:${run.class}`]: { level: 1, xp: 10 } } },
-      } : {}),
-    };
-    if (pose === 'pending' || pose === 'level' || pose === 'receipt' || pose === 'refill') {
-      beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
-      // Cross the ordinary load door in the same ephemeral shot store. This is
-      // the interruption/reload proof: the mounted row below comes from saved
-      // pendingReward bytes, not the just-rolled local object.
-      resumeRun(activeSlot);
-    } else {
-      mountRewards(app, {
-        registries, run, saves, rng,
-        onCollectArmament: (id) => collectArmament(id, 'showcase'),
-        onPersist: persist,
-        rewards: shotOffer,
-        onDone: () => { rewardDoneCount++; showMap(); },
-      });
-    }
-    }
+    // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
+    // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
+    if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
+    beginGameProfileReward({ source: 'combat', after: 'map' });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
     // four POOL doors (which sit above the shot branches, right after newRun,

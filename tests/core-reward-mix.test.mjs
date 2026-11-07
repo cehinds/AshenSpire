@@ -119,7 +119,7 @@ test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30)
   }
   for (const [kind, share] of Object.entries({ cards: .6, equipment: .1, potions: .3 })) assert.ok(Math.abs((counts[kind] || 0) / 1000 - share) <= .03, JSON.stringify(counts));
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /case 'treasure': \{\s*if \(isConfiguredRun\(run\)\) return beginGameProfileReward\(\{ source: 'treasure'/, 'the treasure node must open a treasure-source reward');
+  assert.match(main, /case 'treasure': \{\s*return beginGameProfileReward\(\{ source: 'treasure'/, 'the treasure node must open a treasure-source reward');
 });
 
 test('combat offers admit no relic but brimmingGourd, and no armor', () => {

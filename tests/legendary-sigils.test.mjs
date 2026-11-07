@@ -424,45 +424,6 @@ test('the reward menu: a sigil row follows the relic row, and taking it adds the
   assert.deepEqual(rewardPlan({}, {}).rows, []);
 });
 
-test('main.js rolls the drop at a won fight, a non-terminal boss and the treasure door, and never before the last boss ends the run', () => {
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /function sigilOffer\(pool\) \{\s*const sigilId = rollSigilDrop\(registries, rng, run, pool\);\s*return sigilId \? \{ sigilId \} : \{\};/, 'an offer carries sigilId only when one dropped');
-  assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 1, 'the treasure door rolls');
-  assert.match(main, /\.\.\.sigilOffer\(enc\.pool\)/);
-  const finish = main.indexOf('return showFinishedRun(true);', main.indexOf("if (enc.pool === 'boss')"));
-  const bossRoll = main.indexOf("...sigilOffer('boss')");
-  assert.ok(finish > 0 && bossRoll > finish, 'the boss roll sits after the terminal victory returns');
-  const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
-  assert.match(reward, /sigil\(row\)/, 'the reward screen collects a sigil row');
-});
-
-test('the map treasure checkpoints its offer: claimed straight through or after a reload, the unclaimed sigil row survives', () => {
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  const door = main.slice(main.indexOf("case 'treasure': {"), main.indexOf("default:\n      throw new Error(`Unknown node kind"));
-  assert.ok(door.includes('beginPendingReward('), 'the map treasure checkpoints its offer');
-  assert.ok(!door.includes('mountRewards('), 'and never mounts an unsaved offer');
-  const boss = registriesWith({ [DROP_KEY('treasure')]: 100 });
-  for (const reloadFirst of [false, true]) {
-    const run = freshRun(boss, 13);
-    const rng = createRng(13);
-    const sigilId = rollSigilDrop(boss, rng, run, 'treasure');
-    assert.ok(LEGENDARIES.includes(sigilId));
-    // The door checkpoints (main.js case 'treasure').
-    run.pendingReward = pendingRewardCheckpoint({ sigilId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
-    let live = run;
-    if (reloadFirst) {
-      const back = reload(run, boss);
-      assert.ok(back.run, back.status.reason);
-      live = back.run;
-      assert.equal(live.pendingReward.rewards.sigilId, sigilId, 'the unclaimed sigil row survives the reload');
-    }
-    // Take the sigil and Continue (mountPendingReward's onDone).
-    live.sigils = [...live.sigils, live.pendingReward.rewards.sigilId];
-    delete live.pendingReward;
-    assert.ok(live.sigils.includes(sigilId));
-  }
-});
-
 // ---------------------------------------------------------------------------
 // Save: schema 19
 // ---------------------------------------------------------------------------
