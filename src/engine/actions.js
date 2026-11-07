@@ -2062,6 +2062,13 @@ function runOpcode(ctx, action, eff) {
       // threshold is the only scale there is.
       const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (usesSingleBreakMeter(ctx)) {
+          // Version 1 has one break meter (Poise) and retires arcaneExposure; the same amount fills Poise.
+          const threshold = Number.isFinite(firedThreshold) ? firedThreshold : t.poiseMeter?.max || 0;
+          const amount = eff.pct !== undefined ? Math.floor(threshold * evalNum(ctx, action, eff.pct, 0, t) / 100) : evalNum(ctx, action, eff.amount, 0, t);
+          dealPoiseDamage(ctx, t, amount);
+          continue;
+        }
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined

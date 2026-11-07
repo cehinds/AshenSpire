@@ -76,3 +76,15 @@ test('a restored version-1 fight routes Ward guard to Poise and saves again', ()
   assert.ok(c.player.poiseGuard > 0);
   assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(c)), []);
 });
+
+test('a restored version-1 fight routes the arcane-exposure effect to Poise', () => {
+  const saved = serializeCombatSnapshot(fight({ stamp: 1 }));
+  saved.breakMeterVersion = 1;
+  for (const entity of [saved.player, ...saved.enemies]) for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) delete entity[field];
+  const c = restoreCombatSnapshot({ registries: createRegistries(contentBundle), rng: createRng(7), snapshot: saved });
+  const e = c.enemies[0]; const before = e.poiseMeter.value;
+  executeAction(c, { source: c.player, owner: c.player, card: {}, effect: { op: 'arcaneBuildup', target: 'enemy', amount: 2 }, targetId: e.id, meta: {} });
+  assert.equal(e.arcaneExposure, undefined);
+  assert.ok(e.poiseMeter.value > before);
+  assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(c)), []);
+});
