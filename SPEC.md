@@ -956,34 +956,82 @@ if dmg < 0 → 0
 
 ### 4.3a Action costs (owner decisions, 2026-10-12)
 
-**Always on.** Action costs apply in every fight, solo play. The tunables are `content/actionCosts.js`; the rules are `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card and rank, after the upgrade and before the equipment and status mods. Every weight, with its reason and the calibration, is in [docs/alternative-combat-rounds/COST-WEIGHTS.md](docs/alternative-combat-rounds/COST-WEIGHTS.md); a test fails when that file and the config disagree.
+Every card's Stamina (SP) and Mana (MP) cost is derived by formula. Always on, in every fight, solo play. Tunables: `content/actionCosts.js`; rules: `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card and rank, after the upgrade and before the equipment and status mods. Every weight and the calibration: [docs/alternative-combat-rounds/COST-WEIGHTS.md](docs/alternative-combat-rounds/COST-WEIGHTS.md); a test fails when that file and the config disagree.
 
-- **The formula (owner's shape; Mana-side rank, Ethereal and stacks added by the owner, 2026-10-12; restores break even, 2026-10-13).** Each resource is priced on its own side:
-  - S_sp = `damageWeight` × physical damage steps + `rankWeight` × rank + Σ SP-side tag weights + range weight + `castingEffortWeight` (a cast card) + SP-side statuses × stacks + drawback weights (negative).
-  - S_mp = `damageWeight` × magical damage steps + `rankWeightMp` × rank (a magical card) + Σ MP-side tag weights + MP-side statuses × stacks.
-  - **SP** (the card's `cost`) = floor(S_sp / `spDivisor`); **MP** (its `manaCost`) = floor(S_mp / `mpDivisor`). Each sum is floored at 0 first. If both are 0 after the maneuver floor, the larger side pays 1 (SP on a tie; SP for a card that restores Mana); a floored smash or sweep already pays SP and is not also charged 1 MP.
-  - **Restores break even (owner, 2026-10-13).** A card that restores Mana adds `restoreWeight` × that Mana to its MP, and one that restores Stamina adds `restoreWeight` × that Stamina to its SP; the face shows the full price. Its own restore pays that part: `applyActionCosts` marks it on the restore effect (`funded`), the engine's one card pricing (`resolvedCardPlayCosts`) charges the price less `ownRestoreFunds(def)`, and the restore gives back its amount less `funded`. The card is castable at 0 of that pool and changes it by exactly 0 (Attune, Ember Communion: 1 SP, 1 Mana, castable at 0 Mana, net Mana 0). Replaced rule (2026-10-12): the restore was subtracted from the price, so these cards netted Mana.
-- **Terms.** A card is magical when it carries any MP-side tag; its damage and the statuses it applies then count on the MP side. Damage counts its hits and is turned into points by the `damageSteps` table (each threshold reached adds `damageWeight`; an empty table means damage × `damageWeight`). A tag counts once per card, at a weight from -3 to 3. The range weight is the largest range among the card's delivery and reach tags (owner: melee 1, reach 2, ranged 3). A status the card applies (`applyStatus`, or `buildup` as one stack) weighs 2 or more (owner) × its stacks; `statusStackCap` (none by default) caps the stacks priced. A cast card is one with `camp:spell` or `maneuver:casting`.
-- **Drawbacks (owner).** Exhaust, Ethereal (owner, 2026-10-12), a curse or status added to the player's own piles (`addCard`), an HP or other resource cost (`loseHp`), a discard (`discard`), and several turns to cast (`grantCardCharge`). They carry negative weights on the SP side; a side never goes below 0.
-- **Rank.** The card's rank above the base: an ability grade's own rank (0–5), or a legacy instance rank minus 1 (SPEC §13.4o). A base card is rank 0. Each rank is priced on its own, so a higher rank can cost more; on a magical card it weighs on both sides.
-- **Shipped tunables (calibrated 2026-10-12, see COST-WEIGHTS.md):** `spDivisor` (D) **6** (the owner's ruling, not tuned), `mpDivisor` (P) 8, `damageWeight` 1.5 on the steps 1 / 3 / 5 / 8 / 12, `rankWeight` 1, `rankWeightMp` 4, `castingEffortWeight` 6, `restoreWeight` 1, `statusWeight` 2, no stack cap, `smashPoiseBase` 3; Ethereal weighs -1; the smash, sweep and heavy tags weigh 0 (the floor prices a base smash). P was raised from 6 because at 6 the rank 1–3 spell and rank 1–2 targets miss 80%.
-- **The owner's targets (2026-10-12)** and the shipped hit rates: most basic and cantrip cards cost 1 Stamina (basics 81%; cantrips 78% at 1 SP / 0 MP, 94% at 1 SP; cantrips and basics cost no Mana, owner 2026-11-01); smashes and sweeps cost 2 (100% at rank 0, by the floor); rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one (84%); most rank 1–3 spells cost 1–2 Mana (82%); many magic cards cost at least 1 SP, 0-SP magic still possible (95% at 1+); higher SP usually means lower MP (99% are not 2+/2+).
-- **Layering.** The derived SP and MP replace the authored `cost` and `manaCost`; the authored numbers are not inputs. The existing per-card rules then apply on top, unchanged: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after the derived step, so a mod's flat bonus is added to the scaled number and is not scaled itself.
-- **Opt-outs (a card keeps its authored cost, Mana and numbers):** a card whose content sets `costRule: 'fixed'` (the 0-cost cards listed below); a curse or status (by type); an X cost (variable). Every other card is priced, the Dodge Roll and powers included.
-- **Opt-outs by content (`costRule: 'fixed'`):** warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward. Curses (guilt, wound, dazed) and statuses (slimed) are opted out by type. Core zero-cost cards (§4.3): core.flick, core.pebbleThrow, core.brace, core.quickGuard, core.whetstoneNick, core.temperedEdge.
-- **Smashes and sweeps (owner, 2026-10-13).** "Some higher rank ones could cost 1 sp? But basic ones are 2sp": at rank 0 a smash or a sweep costs at least its floor (`MANEUVER_SP_FLOORS`: 2 each); a higher rank has no floor, and an authored upgrade that lowers the cost lowers the floor by as much. "Be sure to add poise and base damage to account for the higher cost for smashes and AoE for sweeps but normal damage": a smash at 2 SP or more scales its damage and Poise damage; a sweep at 2 SP or more keeps its damage unscaled (`SWEEP_UNSCALED_OPS`) and scales its other riders. "All smashes deal poise damage": every smash adds `smashPoiseBase` (3) to its own Poise damage, or gains a Poise damage effect of that amount on its first damage target, at every rank, and its face names it.
-- **Balance rule (provisional default, owner to tune).** A card whose derived SP is 2 or more has its numeric effect amounts multiplied by `twoCostMultiplier` = **1.8** and rounded to a whole number. Scaled: `damage`, `block`, `buildup`, `heal`, `gainBarrier`, `gainPoise`, `gainWard`, `poiseDamage`, `wardDamage` (`SCALED_EFFECT_OPS`). Never scaled: costs, card counts (`draw`, `discard`, `addCard`), turns and durations (`applyStatus` duration), stack counts, hit counts, and HP or Mana prices. A card at 1 SP keeps its base values. The cost is priced on the unscaled face.
-- **Card text** is built from the same resolved effects, so it shows the scaled numbers.
-- **Known gap (expanded rules, version 2).** Effects that the expanded-rules projection adds after the derived step (for example Shield Bash's Block 5) are not scaled. Its counter reply is projected from the scaled damage.
-- **Validation.** `validateCostConfig` refuses a tag weight outside -3..3 or not whole, a negative weight on a tag that is not a drawback, a side other than SP or MP, a range weight outside 1..3, a status weight outside 2..3, a non-positive budget number and a damage step table that is not ascending, each by name. `validateActionCostTable` refuses a bad enemy stance price (§4.6a). The card schema admits `costRule`; values other than `'fixed'` are not valid content.
+**Formula.** Each resource is priced on its own side.
+- `S_sp` = `damageWeight` × physical damage steps + `rankWeight` × rank + Σ SP-side tag weights + range weight + `castingEffortWeight` (a cast card) + SP-side statuses × stacks + drawback weights (negative).
+- `S_mp` = `damageWeight` × magical damage steps + `rankWeightMp` × rank (a magical card) + Σ MP-side tag weights + MP-side statuses × stacks.
+- **SP** (the card's `cost`) = floor(`S_sp` / `spDivisor`); **MP** (its `manaCost`) = floor(`S_mp` / `mpDivisor`).
+  - Each sum is floored at 0 first.
+  - If both are 0 after the maneuver floor, the larger side pays 1 (SP on a tie; SP for a card that restores Mana). A floored smash or sweep already pays SP and is not also charged 1 MP.
+- **Restores break even** (owner, 2026-10-13): a card that restores Mana adds `restoreWeight` × that Mana to its MP; one that restores Stamina adds `restoreWeight` × that Stamina to its SP. The face shows the full price.
+  - The card's own restore pays that part: `applyActionCosts` marks it on the restore effect (`funded`); the engine's one card pricing (`resolvedCardPlayCosts`) charges the price less `ownRestoreFunds(def)`; the restore gives back its amount less `funded`.
+  - So the card is castable at 0 of that pool and changes it by exactly 0 (Attune, Ember Communion: 1 SP, 1 Mana, castable at 0 Mana, net Mana 0).
 
-*Falsify:* a dry Herald cannot cast Ember Communion; a magic card's Mana does not rise with its rank; Ethereal raises a cost; the owner's Sword Strike (3 damage, bladed, physical, slash, all weight 1, D = 20) sums to 6 and costs 1 SP; Exhaust never raises a card's cost; moving points from the MP side to the SP side never lowers SP or raises MP; a grade's Mana in the framework cost profile is the formula's; COST-WEIGHTS.md and the config disagree on a number (`action-costs-formula.test.mjs`, `action-costs-cards.test.mjs`, `action-costs-weights-doc.test.mjs`).
+**Terms**
+- A card is **magical** when it carries any MP-side tag; its damage and the statuses it applies then count on the MP side.
+- **Damage** counts its hits and becomes points via the `damageSteps` table (each threshold reached adds `damageWeight`; an empty table means damage × `damageWeight`).
+- A **tag** counts once per card, at a weight from -3 to 3.
+- **Range weight** = the largest range among the card's delivery and reach tags (melee 1, reach 2, ranged 3).
+- A **status** the card applies (`applyStatus`, or `buildup` as one stack) weighs 2 or more × its stacks; `statusStackCap` (none by default) caps priced stacks.
+- A **cast card** has `camp:spell` or `maneuver:casting`.
+- **Rank** = the card's rank above the base: an ability grade's own rank (0–5), or a legacy instance rank minus 1 (§13.4o). A base card is rank 0. Each rank is priced on its own, so a higher rank can cost more; on a magical card it weighs on both sides.
+- **Drawbacks** carry negative SP-side weights (a side never goes below 0): Exhaust, Ethereal, a curse or status added to the player's own piles (`addCard`), an HP or other resource cost (`loseHp`), a discard (`discard`), several turns to cast (`grantCardCharge`).
+
+**Shipped tunables**
+
+| Tunable | Value |
+|---|---|
+| `spDivisor` (D) | 6 (owner's ruling, not tuned) |
+| `mpDivisor` (P) | 8 |
+| `damageWeight` | 1.5, on steps 1 / 3 / 5 / 8 / 12 |
+| `rankWeight` / `rankWeightMp` | 1 / 4 |
+| `castingEffortWeight` | 6 |
+| `restoreWeight` | 1 |
+| `statusWeight` | 2, no stack cap |
+| `smashPoiseBase` | 3 |
+| Tag weights | Ethereal -1; smash, sweep, heavy 0 (the floor prices a base smash) |
+
+**Owner targets and shipped hit rates**
+- Most basic and cantrip cards cost 1 Stamina (basics 81%; cantrips 78% at 1 SP / 0 MP, 94% at 1 SP). Cantrips and basics cost no Mana (owner, 2026-11-01).
+- Smashes and sweeps cost 2 (100% at rank 0, by the floor).
+- Rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one (84%). Most rank 1–3 spells cost 1–2 Mana (82%).
+- Many magic cards cost at least 1 SP; 0-SP magic is still possible (95% at 1+). Higher SP usually means lower MP (99% are not 2+/2+).
+
+**Layering and opt-outs**
+- The derived SP and MP replace the authored `cost` and `manaCost` (authored numbers are not inputs). Per-card rules then apply on top, unchanged: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after the derived step, so a mod's flat bonus is added to the scaled number and not scaled itself.
+- Opt-outs (the card keeps its authored cost, Mana and numbers): `costRule: 'fixed'` content; a curse or status (by type); an X cost. Every other card is priced, the Dodge Roll and powers included.
+  - `costRule: 'fixed'` content: warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward.
+  - Curses (guilt, wound, dazed) and statuses (slimed) are opted out by type.
+  - Core zero-cost cards (§4.3): core.flick, core.pebbleThrow, core.brace, core.quickGuard, core.whetstoneNick, core.temperedEdge.
+
+**Smashes and sweeps** (owner, 2026-10-13)
+- At rank 0 a smash or sweep costs at least its floor (`MANEUVER_SP_FLOORS`: 2 each). A higher rank has no floor; an authored upgrade that lowers the cost lowers the floor by as much.
+- A smash at 2 SP or more scales its damage and Poise damage. A sweep at 2 SP or more keeps its damage unscaled (`SWEEP_UNSCALED_OPS`) and scales its other riders.
+- All smashes deal Poise damage: every smash adds `smashPoiseBase` (3) to its own Poise damage, or gains a Poise damage effect of that amount on its first damage target, at every rank; its face names it.
+
+**Balance rule** (provisional default, owner to tune)
+- A card whose derived SP is 2 or more has its numeric effect amounts multiplied by `twoCostMultiplier` = **1.8** and rounded to a whole number. A card at 1 SP keeps its base values. The cost is priced on the unscaled face.
+- Scaled (`SCALED_EFFECT_OPS`): `damage`, `block`, `buildup`, `heal`, `gainBarrier`, `gainPoise`, `gainWard`, `poiseDamage`, `wardDamage`.
+- Never scaled: costs, card counts (`draw`, `discard`, `addCard`), turns and durations (`applyStatus` duration), stack counts, hit counts, HP or Mana prices.
+- Card text is built from the same resolved effects, so it shows the scaled numbers.
+- Known gap (expanded rules, version 2): effects the expanded-rules projection adds after the derived step (e.g. Shield Bash's Block 5) are not scaled; its counter reply is projected from the scaled damage.
+
+**Validation.** `validateCostConfig` refuses, each by name: a tag weight outside -3..3 or not whole; a negative weight on a tag that is not a drawback; a side other than SP or MP; a range weight outside 1..3; a status weight outside 2..3; a non-positive budget number; a damage step table that is not ascending. `validateActionCostTable` refuses a bad enemy stance price (§4.6a). The card schema admits `costRule`; values other than `'fixed'` are invalid.
+
+**Falsify** (tests `action-costs-formula.test.mjs`, `action-costs-cards.test.mjs`, `action-costs-weights-doc.test.mjs`)
+- A dry Herald cannot cast Ember Communion; a magic card's Mana does not rise with its rank; Ethereal does not raise a cost; Exhaust never raises a cost.
+- The owner's Sword Strike (3 damage, bladed, physical, slash, all weight 1, D = 20) sums to 6 and costs 1 SP.
+- Moving points from the MP side to the SP side never lowers SP or raises MP.
+- A grade's Mana in the framework cost profile is the formula's; COST-WEIGHTS.md and the config agree on every number.
 
 ### 4.4 Status effects
 
-Enemy weaknesses to a status (owner, 2026-10-31): an enemy authored weak to a status (`stacks`) takes extra stacks whenever an opponent applies it, and one weak to its damage (`tick`) takes Burn and Venom ticks and Bleed and Frost bursts multiplied (default ×1.5). See §4.7.
+All statuses, the Elden Ring layer included, are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
-Common (StS layer):
+**Enemy weaknesses to a status** (owner, 2026-10-31; §4.7): an enemy authored weak to a status (`stacks`) takes extra stacks whenever an opponent applies it; one weak to its damage (`tick`) takes Burn and Venom ticks and Bleed and Frost bursts multiplied (default ×1.5).
+
+**Common (StS layer)**
 
 | Status | On whom | Effect | Decay |
 |---|---|---|---|
@@ -993,64 +1041,55 @@ Common (StS layer):
 | Vulnerable | any | take 25% more attack damage | −1 stack at owner's turn end |
 | Frail | player | 25% less block from cards | −1 stack at turn end |
 
-Elden Ring layer (the thematic differentiator — these must feel distinct):
-
-**Threshold-proc statuses** *(#61, Constantine's direction 2026-08-06 — supersedes the
-earlier Bleed row; every number is a PROVISIONAL table knob in the row itself)*: a proc
-status builds points toward a **constant** threshold; points do not decay. At the
-threshold the target takes percent-of-its-max-HP damage as **its own proc** — its own
-event and damage-record entry, never folded into the triggering hit — then the build-up
-**resets to zero** (overflow dropped; the old carry-and-escalate ×1.5 is gone), and, if
-the target carries a listed creature tag, it gains a short resistance status (strength on
-the resist row, duration in its decay, gate in the proc row). Declared per row:
-`threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc),
-stagger (direct), effects, resistance {status, tags}`. Schema + validator enforce every
-knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
-by a declared `stacking` rule (closed enum: additive | multiplicative). **Its bonus rounds
-up** (owner, 2026-10-12): the hit's damage without the exposure floors as usual, and the
-exposure's share of it is added rounded up (`taggedBonusFloor`, `model/combatRules.js`), so a
-base-3 tagged card still gains a point; preview and hit share the one derivation. Every other
-multiplier, plain Vulnerable included, keeps its floor.
-
-**The numbers are deliberately NOT restated in this spec.** Every knob above is marked
-PROVISIONAL in its own row and is expected to move — Bleed's threshold was picked against the
-sim after this section was first written, and the prose here said `12` while the shipped row
-said `7` until this pass caught it. A restated provisional value is a cache guaranteed to rot;
-§6 already refuses to restate its samples for the same reason. **Read them from the rows:**
+**Threshold-proc statuses** (Bleed, Frost, Insanity)
+- A proc status builds points toward a **constant** threshold; points do not decay.
+- At the threshold the target takes percent-of-its-max-HP damage as **its own proc** (its own event and damage-record entry, never folded into the triggering hit). The build-up then **resets to zero** (overflow dropped).
+- If the target carries a listed creature tag it gains a short resistance status (strength on the resist row, duration in its decay, gate in the proc row).
+- Declared per row: `threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc), stagger (direct), effects, resistance {status, tags}`. Schema and validator enforce every knob (`model/schemas.js`, `model/validate.js`).
+- Tag-scoped extra vulnerability composes by a declared `stacking` rule (closed enum: additive | multiplicative). **Its bonus rounds up** (owner, 2026-10-12): the hit's damage without the exposure floors as usual and the exposure's share is added rounded up (`taggedBonusFloor`, `model/combatRules.js`), so a base-3 tagged card still gains a point. Preview and hit share the one derivation. Every other multiplier, plain Vulnerable included, keeps its floor.
+- Every threshold-proc number is PROVISIONAL in its own row and is not restated in this spec. Read them from the rows:
 
 ```
 node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc)\
   .forEach(s=>console.log(s.id, JSON.stringify(s.proc))))"
 ```
 
+**Elden Ring layer**
+
 | Status | Mechanic |
 |---|---|
-| **Bleed (threshold-proc)** | The build-up the Reaver's kit is written around; fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
-| **Frost (threshold-proc)** | Deliberately the smallest burst of the three; the proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
-| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter (neither fills nor grows it) but is otherwise the same Stagger a full meter is — the skipped turn and the `staggered` status, so every Staggered-gated rider fires (owner, 2026-10-12) — and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
-| **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
-| **Necrotic Blight** *(`necroticBlight`)* | The status the **Necrotic** damage type applies (§4.7), and nothing else. Same tick as Crimson Blight (N `loseHp` at its turn start, ignores block, stacks do not tick down), but it **lasts the whole fight** (decay `none`; owner, 2026-10-12) — only a cleanse removes it. All other Crimson Blight (enemy moves, Herald cards, relics, flasks, equipment mods) keeps the 3-turn duration above. Herald payoffs that read Blight stacks count both rows. |
-| **Venom** *(`venom`; renamed Poisoned by the TagRefactor)* | Damage over time: at its turn start the owner loses HP equal to its stacks (ignores Block); one stack expires each turn. Applied by Poison-typed hits (§4.7) and by `applyStatus`. |
-| **Confused** *(`confused`)* | On enemy: deals 10% less damage; at its turn start, 50% chance to take 3 Poise damage per stack. 1 stack expires each turn. Applied by Psychic hits (§4.7). |
-| **Slowed** *(`slowed`)* | On enemy: deals 10% less damage and gains 25% less Block. 1 stack expires each turn. Applied by Earth hits (§4.7). |
-| **Entombed** *(`entombed`)* | On enemy: skips its next turn and takes 25% less damage until it ends. Card-applied only; no damage type applies it. |
-| **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
-| **Silenced** *(`silenced`)* | On enemy: spell-camp moves deal 50% less damage for 2 turns. Its only modifier is `spellDamageDealtMult` (closed `MODIFIER_TYPES`), which scales the spell-camp damage its owner deals and leaves physical damage alone; preview and hit read the same multiplier |
-| ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
-| **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 Stamina per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). When full: the enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up). A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter. Every enemy break also applies the `staggered` status (+50% attack damage taken until the end of the *player's* next turn). That holds for the Insanity break and a status-gauge Poise break alike (the ratings-meter variant of this rule is retired, #2633). Poise does not decay by default. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill opens the next turn one Stamina short. A fill also applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak). |
+| **Bleed** (threshold-proc) | Fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
+| **Frost** (threshold-proc) | The smallest burst of the three. The proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
+| **Insanity** (threshold-proc) | The largest burst, hardest to fill. Adds Poise damage **and a direct Stagger** that bypasses the meter (neither fills nor grows it) but is otherwise the same Stagger a full meter is: the skipped turn and the `staggered` status, so every Staggered-gated rider fires (owner, 2026-10-12). Leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below. |
+| **Crimson Blight** (`crimsonBlight`) | DoT on enemy: N `loseHp` at its turn start. Stacks **do not tick down**; it lasts **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Necrotic Blight** (`necroticBlight`) | Applied by the **Necrotic** damage type (§4.7) and nothing else. Same tick as Crimson Blight (N `loseHp` at its turn start, ignores block, no stack decay) but **lasts the whole fight** (decay `none`, owner 2026-10-12); only a cleanse removes it. All other Crimson Blight (enemy moves, Herald cards, relics, flasks, equipment mods) keeps the 3-turn duration. Herald payoffs that read Blight stacks count both rows. |
+| **Venom** (`venom`) | DoT: at its turn start the owner loses HP equal to its stacks (ignores Block); one stack expires each turn. Applied by Poison-typed hits (§4.7) and `applyStatus`. |
+| **Confused** (`confused`) | On enemy: deals 10% less damage; at its turn start 50% chance to take 3 Poise damage per stack. 1 stack expires each turn. Applied by Psychic hits (§4.7). |
+| **Slowed** (`slowed`) | On enemy: deals 10% less damage and gains 25% less Block. 1 stack expires each turn. Applied by Earth hits (§4.7). |
+| **Entombed** (`entombed`) | On enemy: skips its next turn and takes 25% less damage until it ends. Card-applied only; no damage type applies it. |
+| **Burn** (`burn`) | Third damage-over-time row, applied by `burn`-tagged effects and equipment mods (`equipMods.csv`). |
+| **Silenced** (`silenced`) | On enemy: spell-camp moves deal 50% less damage for 2 turns. Its only modifier is `spellDamageDealtMult` (closed `MODIFIER_TYPES`), which scales the spell-camp damage its owner deals and leaves physical damage alone; preview and hit read the same multiplier. |
+| **Madness** | On player (from enemies/curses): at turn start lose 2 HP per stack but gain 1 Stamina per stack, then Madness clears. |
+| **Poise / Stagger** | See below. |
 
-All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
+No `frostbite` status ships; the frost identity is the **Frost** proc row and its `frostExposed` exposure.
+
+**Poise / Stagger**
+- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). Poise does not decay by default.
+- When full the enemy becomes **Staggered**: its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up).
+- A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter.
+- Every enemy break (Insanity's and a status-gauge Poise break alike) also applies the `staggered` status: +50% attack damage taken until the end of the *player's* next turn.
+- **The player has a meter too** (§13.4k): max = the one `poise` stat row (§3.5, §13.4l) + body armour + relics; impact fills it; a fill opens the next turn one Stamina short and applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak).
 
 ### 4.5 Stances (Reaver mechanic)
 
-At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances are combat-scoped.
+At most one stance is active; stances are combat-scoped. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Some cards read "If in [stance]: bonus" (predicate `inStance`). The stance icon shows beside the player's status row.
 
-- **Gorefire Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
-- **Bulwark Stance:** whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.
-- **Brace:** damage taken ×0.75. On entering: gain 4 Block. Leaving it for another stance gives 1 Strength.
-
-Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon shows beside the player's status row.
+| Stance | While active | On entering |
+|---|---|---|
+| Gorefire | Your attacks apply +2 Bleed | Take 2 damage (ignores block) |
+| Bulwark | Whenever you play a Skill, gain 2 Block | Gain 3 Block |
+| Brace | Damage taken ×0.75 | Gain 4 Block; leaving it for another stance gives 1 Strength |
 
 ### 4.6 Enemy intents
 
