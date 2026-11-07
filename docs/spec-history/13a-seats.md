@@ -68,3 +68,28 @@ Archive of history, rationale and provenance moved out of SPEC.md §13.1–13.4n
 - `shrineHealMult` renamed `restHealMult`; `shrineNoRest` (no filter) renamed `restDenied`. `shrineHealPct`/`balance.shrine.healPct` and `shrineHealAmount` are gone. `restMana`'s `toFloorPct` and `missingMana` were new at phase 7; `refillFlasks` a new opcode. The single-floor rule a percentage rest replaced.
 - Inn `questBoard` service added in phase 10b.
 - **Town budget (deleted as obsolete):** `generateJourney(seed, profileId, atlas, { townsPerActMax })` counted `city` nodes per difficulty act and rolled again over the cap; `main.js` passed `balance.atlas.townsPerActMax` (1). Every shipped city was act 1 and a route held one hub, so it changed no seeded route. `townsPerActMax` has no reader in src/ or content/.
+
+## §13.4k (plan phase 8)
+- Focus discount owner quotes (2026-11-01): "armaments that have the focus tag (which is most sceptors) it reduces mana cost by 1 max(mp-1, 0)"; "magic focus mana reduction effect only works on cards with the magic tag property"; one Focus armament gives the discount and it does not stack; the Prepared-stance condition is also owner 2026-11-01.
+- Re-cost narrative: the four signature arts cost 1 Stamina beside their 1 Mana (A2 since took the Starseer's Starstone Pebble — with Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — off the Mana line). The proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it (under the then tiers two classes started with one point of each).
+- The foundation ruleset's weapon impact that once replaced the player's Poise meter, and the ratings meter's `ratingImpact`, were retired (#2633). The ratings-on variant (`Ratings.applyRatingImpact`, which applied no status) retired with the ratings meter.
+- "Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l)."
+
+## §13.4l (plan phase 9) — removed as obsolete or superseded
+- Creation offered `tuned2`: baseline 5 across five attributes, ten points, floor 3, ceiling 12, fixed total 35, `belowBaseline: 'allow'`, `redistribution: 'fixedTotal'`; `tuned`, `standard`, `pointbuy` stayed in the table out of creation. Superseded by §13.4m (`lean`/`assign`).
+- Derived-stat ruleset 5 (superseded by ruleset 7, §3.5): `hp = 30 + 4 × CON`, `mana = 1 + WIS`, `stamina = 1 + CON`, `poise = 1 + CON`, `energy = 3 + floor(DEX / 5)`, `draw = 3 + floor(INT / 5)`. Rulesets 1–4 "remain readable: a run restores the snapshot it was written with, and the required row set is a function of the version". Ruleset 6 introduced multi-attribute pool rows.
+- A run whose snapshot predates the poise row kept phase 8's term (Constitution one-for-one, `balance.poise.playerPerConstitution` as shipped 1). Pre-ruleset-7 runs are now refused at load (§3.5, `engine/save.js retiredProfileReason`).
+- `equipmentRequirements.csv` was first moved onto the 3–12 scale (superseded by 1–4, §13.4m). Before the preset gear check, a failing preset "threw away the whole game configuration behind a generic notice".
+- The band was re-measured: `docs/BALANCE.md` §5 regenerated on the rebased content; tier-1 boss band moved up for Reaver and Rogue, left to the M3 balance pass.
+
+## §13.4m (owner, 2026-09-20)
+- Owner words: "I'd like the default stats to be low, with everyone having a total pool of points starting off. the default stat for each stat is 1 and assign allows a user to assign 3 points … reduce equipment requirements accross the board for this low stat environment. Also, I'd like to have more stat customization options in general to be able to make this change in the settings."
+- Standard label history: briefly "Assigned" on 2026-09-24, then "Standard"; the id stays `lean`. Owner 2026-09-24 on creation: "should have the option of standard (pre assigned class presets) and assign points (x points to assign but configurable in advanced settings)".
+- `lean` shipped with `statConversionScale: 1/5` (one lean point read as one tuned2 tier); removed with derived-stat ruleset 6 (owner 2026-09-21: "all calculations should be sum(floor(statmult*stat)) + equipment bonus"). Derived rows are the owner's 2026-09-24 defaults, `base + Σ floor(weight × attribute) + floor(perLevel × (level − 1))`. `statConversionScale` still exists as an optional schema key only.
+- Dodge Roll retune (plan A3, 2026-09-24): the d20-habit `floor((DEX − 10) / 2)` read −3 to −5 for every creatable character, leaving a preset's landed dodge guarding 2 at best when Light, 0 Medium, less than nothing Heavy. Medium was 2 / 1 and Heavy 3 / 2 stamina/actions (more than any preset's opening Stamina of 1 or 2). Measured with `node tools/runsim.mjs 240 --seeded-seats`: dodges landed 57–65% of plays for 4.4–6.0 guard (35–44% for 0.6–2.0 before); wins stayed in the 35–65% band (Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240). The `assign` mode (#1294) shares the lean centre 3.
+- The `derivedStatRuleSnapshot` bullet once described where the removed conversion scale sat among the override layers.
+- Standard row dials: the topic was *Assign points* while one mode was offered; before the 2026-09-24 change typing *Points available to assign* alone could not move the total that bounded it.
+- `tuned2` joined `tuned`, `standard`, `pointbuy` out of creation "for the same reason" (in-flight saves admitted against their mode's total).
+
+## §13.4n (plan phase 10b)
+- Quest pay `src/engine/quests.js:50-54`; `questLevelXp` `src/model/levelup.js:122`; character XP for quests post-1.0 by owner decision 2026-09-27.
