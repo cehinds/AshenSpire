@@ -1,9 +1,8 @@
 import { t } from '../strings.js';
 import { setCombatantTargetHud } from './combatantFrame.js';
-import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, playerHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds } from '../models/TargetHudModel.js';
+import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, createTargetHudDwell, targetHudDesiredIds, targetHudTintIds } from '../models/TargetHudModel.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
-import { currentSpriteBodyBounds, currentSpriteArtBounds, frozenSpriteBox } from './combatSpriteGeometry.js';
 import { anchorLocalBox } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 import { refreshIconTray } from './iconTray.js';
@@ -48,7 +47,6 @@ function panelFor(entry) {
 }
 
 /** Scoped presentation owner. Target activation delegates to the combat owner. */
-const playerAnchors = new WeakMap();
 export function mountCombatTargetHud(combat, { field = combat.querySelector('.field'), config = targetHudConfig(), onActivate, canInspect = () => true } = {}) {
   const layer = node('div', 'target-hud-layer'), cells = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   layer.setAttribute('aria-label', t('combat.targetHud.details'));
@@ -283,22 +281,6 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   // coordinates (css px from its top-left) and projected through the current frame box and zoom, so a page-zoom change
   // below the relayout threshold cannot leave the panel behind the figure. Only a settled measurement (art and body both
   // loaded) is kept; a fallback envelope is never frozen.
-  const bodyAnchors = new WeakMap();
-  function playerAnchor(frame, epoch, zoom) {
-    const sprite = frame.querySelector('.sprite');
-    const body = currentSpriteBodyBounds(sprite, scheduleGeometry), ink = currentSpriteArtBounds(sprite, scheduleGeometry);
-    const edge = ink && Number.isFinite(ink.left) && Number.isFinite(ink.right) && ink.right > ink.left ? ink : body;
-    const measured = body && Number.isFinite(edge?.left) && Number.isFinite(edge?.right)
-      ? { left: edge.left, width: edge.right - edge.left, top: body.headY ?? body.top, height: Math.max(0, (body.feetY ?? body.bottom) - (body.headY ?? body.top)) } : null;
-    const box = rect(frame), kept = bodyAnchors.get(frame);
-    const settled = measured && body.settled !== false && ink?.settled !== false;
-    if (settled && !(kept && kept.epoch === epoch)) bodyAnchors.set(frame, { epoch, local: {
-      left: (measured.left - box.left) / zoom, top: (measured.top - box.top) / zoom, width: measured.width / zoom, height: measured.height / zoom } });
-    const now = bodyAnchors.get(frame);
-    if (measured && now && now.epoch === epoch) return { settled: true, left: box.left + now.local.left * zoom, top: box.top + now.local.top * zoom,
-      width: now.local.width * zoom, height: now.local.height * zoom };
-    return measured ? { settled: false, ...measured } : { settled: false, ...frozenSpriteBox(sprite) };
-  }
   // The Inspect control stands inside its panel's top-right corner (the name leaves room for it), so a panel as wide as its
   // cell never has a neighbour's control over it. It follows the panel's box: placed with it, and again whenever the panel
   // changes size (a status tray appearing grows an enemy's panel upward), through a ResizeObserver, never a poll.
@@ -337,24 +319,20 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale / zoom}px`);
       setStyle(node, 'width', `${anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width: cellWidth, height: 0 }, { zoom }).width}px`);
     }
-    // Reads: each panel's height (after its font and width), each enemy's rack and the player's anchor.
+    // Reads: each panel's height (after its font and width), each enemy's rack.
     let ready = true;
     for (const row of rows) {
       row.height = row.record.node.getBoundingClientRect().height || sizing.panelHeightPx;
-      if (row.entry.role === 'player') { row.anchor = playerAnchor(row.frame, epoch, zoom); if (!row.anchor.settled) ready = false; }
-      else {
-        const rack = row.frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack ? rack.getBoundingClientRect() : null;
-        if (!box || !box.height) { ready = false; continue; }
-        row.rack = { centerX: box.left + box.width / 2, top: box.top };
-      }
+      const rack = row.frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack ? rack.getBoundingClientRect() : null;
+      if (!box || !box.height) { ready = false; continue; }
+      row.rack = { centerX: box.left + box.width / 2, top: box.top };
     }
     // Writes: positions. An enemy panel hangs from its bottom edge (CSS translates it up by its own height), so a taller
-    // status tray never moves it down; the player's top is the body's top.
+    // status tray never moves it down.
     const boxes = [];
     for (const row of rows) {
       let at;
-      if (row.entry.role === 'player') at = row.anchor && playerHudPlacement({ anchor: row.anchor, width: row.cellWidth, height: row.height, gap, bounds });
-      else if (row.rack) {
+      if (row.rack) {
         const placed = enemyHudPlacement({ centerX: row.rack.centerX, bottom: row.rack.top - gap / 4, width: row.cellWidth, height: row.height, bounds });
         at = { left: placed.left, top: placed.top + row.height };
         Object.assign(row.record, { hang: row.rack.top - gap / 4, minTop: bounds.top, hangApplied: at.top, zoom });
