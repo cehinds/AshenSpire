@@ -43,3 +43,10 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: The Precision + status badge row (#4) sits directly under the HP bar, instead of left of it/below-left. Pairs with #5 (enemy Block left of the bar).
 - Questions: none
 - Link: —
+
+## #7 Magic damage becomes plain damage; spells default to Reach
+- Status: pending
+- Asked: 2026-11-07 — "I'd like to change magic damage to just deal damage but are reach spells by default, with the school having it's unique status effect."
+- Means: Drop "magic" as a separate damage type: spell damage is just damage. Spells have Reach (ranged) by default. Each spell school gets its own unique status effect instead.
+- Questions: Which unique status per school (names/effects)? Do existing magic-damage resists/bonuses just become normal damage ones?
+- Link: —
