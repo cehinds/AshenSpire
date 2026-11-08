@@ -28,7 +28,7 @@ test('the whole-run probe runs in a test-stage job, not in the release-only stam
   const job = all.get('browser-full-run');
   assert.match(job, /needs: stage\n/, 'browser-full-run does not depend on the stage decision');
   assert.match(job, /if: \$\{\{ needs\.stage\.outputs\.functional == 'true' \}\}/, 'browser-full-run is not gated on the functional stage output');
-  assert.match(job, /uses: \.\/\.github\/actions\/fetch-art/, 'browser-full-run runs without the fetched art packs');
+  assert.match(job, /uses: \.\/\.github\/actions\/prepare/, 'browser-full-run runs without Node and the fetched art packs');
   assert.match(job, /uses: \.\/\.github\/actions\/which-browser/, 'browser-full-run runs without a browser');
   assert.match(all.get('boundary'), /browser-full-run/, 'boundary does not name browser-full-run');
 });
@@ -136,7 +136,7 @@ test('slot-load plants have a dedicated source-only functional job and remain re
   const job = all.get('browser-slot-load-plants');
   assert.match(job, /timeout-minutes: 20\n/);
   assert.match(job, /fail-fast: false\n/);
-  for (const action of ['actions/checkout@', './.github/actions/setup-node', './.github/actions/fetch-art', './.github/actions/which-browser']) assert.ok(job.includes(action), `missing ${action}`);
+  for (const action of ['actions/checkout@', './.github/actions/prepare', './.github/actions/which-browser']) assert.ok(job.includes(action), `missing ${action}`);
   assert.doesNotMatch(job, /tools\/(?:launch|bundle)\.mjs|--build-only/, 'the plants consume source, so no standalone build is needed');
   const boundary = all.get('boundary');
   assert.match(boundary, /needs: \[[^\]\n]*browser-slot-load-plants/);
