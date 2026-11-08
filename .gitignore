@@ -533,7 +533,7 @@ _site/
 # (tools/component-refs.mjs). Cut from the concept paintings on demand and
 # passed to tools/lowpoly-blender.py; `node tools/launch.mjs --build-only`
 # does not touch them, so a committed copy would go stale unnoticed.
-# Regenerate with: node tools/component-refs.mjs
+# Regenerate with: node tools/attic/component-refs.mjs
 build/components/
 
 # Cut frames from the painted pose sheets (tools/painted-poses.mjs), the input to
