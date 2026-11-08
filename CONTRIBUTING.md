@@ -287,6 +287,10 @@ artifact; a push to `test` is the playtest build. Where the ordinal comes
 from, what each branch keeps and how Pages gets its builds are in
 [docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
 
+### Sandbox QA before the PR
+
+Owner's request, 2026-11-07: test a visible or behavioural change in a real browser against the request before the PR, with a list of what failure and success look like. Write acceptance criteria, run `node tools/qa-sandbox.mjs <acceptance.json> --base origin/dev` (`npm run qa:sandbox`), and paste the *Acceptance criteria* block (it is in `.github/pull_request_template.md`) into the PR body. How, and a worked example, are in [docs/qa/SANDBOX-QA.md](docs/qa/SANDBOX-QA.md).
+
 ### QA evidence goes to CI artifacts, not the tree
 
 Owner's ruling, 2026-10-10. Bulk machine-generated evidence — full browser-run
