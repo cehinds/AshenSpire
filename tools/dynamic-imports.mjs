@@ -11,7 +11,7 @@
 
 const ID = /[\w$]/;
 
-export function scanDynamicImports(src) {
+export function scanDynamicImports(src, { comments } = {}) {
   const out = [];
   const n = src.length;
   let i = 0;
@@ -21,12 +21,26 @@ export function scanDynamicImports(src) {
   const braceStack = []; // template-literal ${ nesting: true when the { opened a ${
   const regexAfterWord = new Set(['return', 'typeof', 'case', 'in', 'of', 'delete', 'void', 'throw', 'new', 'else', 'do', 'yield', 'await']);
 
+  // Optional exact comment spans let the build backstop exempt prose without
+  // exempting executable code that follows a closing block-comment delimiter.
+  function skipComment(j) {
+    const start = j;
+    if (src[j] === '/' && src[j + 1] === '/') {
+      while (j < n && src[j] !== '\n') j++;
+    } else if (src[j] === '/' && src[j + 1] === '*') {
+      const end = src.indexOf('*/', j + 2);
+      j = end < 0 ? n : end + 2;
+    }
+    if (j !== start) comments?.push({ start, end: j });
+    return j;
+  }
+
   // Skip whitespace and comments from j: `import /* lazy */ ('./x.js')` is a call.
   function skipGap(j) {
     for (;;) {
       while (j < n && /\s/.test(src[j])) j++;
-      if (src[j] === '/' && src[j + 1] === '/') { while (j < n && src[j] !== '\n') j++; continue; }
-      if (src[j] === '/' && src[j + 1] === '*') { const e = src.indexOf('*/', j + 2); j = e < 0 ? n : e + 2; continue; }
+      const end = skipComment(j);
+      if (end !== j) { j = end; continue; }
       return j;
     }
   }
@@ -52,8 +66,8 @@ export function scanDynamicImports(src) {
 
   while (i < n) {
     const c = src[i];
-    if (c === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; continue; }
-    if (c === '/' && src[i + 1] === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; continue; }
+    const commentEnd = skipComment(i);
+    if (commentEnd !== i) { i = commentEnd; continue; }
     if (c === '"' || c === "'") { skipString(c); prev = 'a'; prevWord = ''; continue; }
     if (c === '`') { i++; templateText(); prev = 'a'; prevWord = ''; continue; }
     if (c === '/') {

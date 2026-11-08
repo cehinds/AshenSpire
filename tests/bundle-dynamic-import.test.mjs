@@ -241,3 +241,40 @@ test('a comment-separated dynamic call before a static import does not break the
     assert.deepEqual(findCycleHazards('src/main.js', root), []);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('backstop: code after a block comment cannot hide a scanner miss', () => {
+  for (const prefix of ['/* lazy */ ', '/* lazy\n */ ']) {
+    const root = fixture({
+      'main.js': `${prefix}const x = {} / 2; globalThis.load = () => import('./dev.js');\n`,
+      'dev.js': 'export const value = 1;\n',
+    });
+    try {
+      assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js/);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
+
+test('backstop: only the comment span is exempt, including inline comments', () => {
+  const root = fixture({
+    'main.js': "const n = 1; /* import(x) */\nconst m = 2; // import(y)\n/*\n import(z)\n */\n",
+  });
+  try { bundleAndRun(root); } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a failed static dependency rejects every later dynamic importer', async () => {
+  const root = fixture({
+    'main.js': "globalThis.loadA = () => import('./a.js');\nglobalThis.loadB = () => import('./b.js');\nglobalThis.loadC = () => import('./c.js');\n",
+    'a.js': "import './b.js';\nexport const value = 'a';\n",
+    'b.js': "globalThis.log.push('b');\nthrow new Error('boom');\n",
+    'c.js': "import './b.js';\nexport const value = 'c';\n",
+  });
+  try {
+    const { context } = bundleAndRun(root);
+    let failure;
+    await assert.rejects(context.loadA(), error => { failure = error; return error.message === 'boom'; });
+    for (const load of [context.loadB, context.loadC, context.loadA]) {
+      await assert.rejects(load(), error => error === failure);
+    }
+    assert.deepEqual([...context.log], ['b'], 'the throwing dependency is evaluated once');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

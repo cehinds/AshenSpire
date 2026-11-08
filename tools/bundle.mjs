@@ -915,15 +915,17 @@ function transformModule(id, src, absPath) {
 // BACKSTOP. A native import() must never reach the shipped script (it would
 // fetch over file:// and fail at runtime). Every literal call was rewritten
 // above, so any `import(` text left in a body is one the scanner missed, or a
-// string that spells it. Fail loudly, naming file and line; a line that is only
-// a comment is exempt.
+// string that spells it. Fail loudly, naming file and line; only a match inside
+// an actual comment span is exempt, never the code after that comment.
 function assertNoNativeImport(id, body) {
   const lines = body.split('\n');
+  const comments = [];
+  scanDynamicImports(body, { comments });
   const re = /\bimport(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\(/g;
   let m;
   while ((m = re.exec(body)) !== null) {
     const line = body.slice(0, m.index).split('\n').length;
-    if (/^\s*(\/\/|\/\*|\*)/.test(lines[line - 1])) continue;
+    if (comments.some(({ start, end }) => m.index >= start && m.index < end)) continue;
     fail('native import( left in ' + id + ' at line ' + line + ' after transform — the bundler could not follow it:\n' + lines[line - 1].trim());
   }
 }
@@ -1144,6 +1146,7 @@ const moduleEntries = order
 function assembleRuntime(entries, rootId) {
   // Present only when some module has a dynamic import, so a bundle without one
   // is byte-identical to what it was before dynamic imports were supported.
+  const hasDynamicImports = entries.includes('require.dyn(');
   const DYN_HELPER = `
   var __dyn = {};
   require.dyn = function (id) {
@@ -1152,16 +1155,16 @@ function assembleRuntime(entries, rootId) {
   return `${RUNTIME_OPEN}  var __modules = {
 ${entries}
   };
-  var __cache = {};
-  function require(id) {
+  var __cache = {};${hasDynamicImports ? '\n  var __errors = Object.create(null);' : ''}
+  function require(id) {${hasDynamicImports ? '\n    if (Object.prototype.hasOwnProperty.call(__errors, id)) throw __errors[id];' : ''}
     if (Object.prototype.hasOwnProperty.call(__cache, id)) return __cache[id].exports;
     var factory = __modules[id];
     if (!factory) throw new Error("Module not found: " + id);
     var module = { exports: {} };
     __cache[id] = module;
-    ${MODULE_CALL}
+    ${hasDynamicImports ? `try { ${MODULE_CALL} } catch (error) { __errors[id] = error; throw error; }` : MODULE_CALL}
     return module.exports;
-  }${entries.includes('require.dyn(') ? DYN_HELPER : ''}
+  }${hasDynamicImports ? DYN_HELPER : ''}
   require(${JSON.stringify(rootId)});
 })();`;
 }
