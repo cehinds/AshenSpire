@@ -1,4 +1,4 @@
-import { createRng } from '../engine/rng.js';
+import { createRng } from './rng.js';
 import { rarityUnlockedAt, skillLevel } from './skills.js';
 
 /** Pure reward projection. Only a successful read advances bookReadRevision.

@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/combatRounds/stance.js",
-    "symbol": "stanceFor"
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
   }
 }
