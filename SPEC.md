@@ -3132,7 +3132,7 @@ Full history: [docs/spec-history/14-statpools-shops.md](docs/spec-history/14-sta
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils
 
-Governs when card rewards come and how often, the levelling curve and its preview and cap, armament, smithing-stone and refined-stone drops, and legendary sigils. Rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` draws only the Victory receipt and the card rank-up chooser. Old saves carrying `run.pendingReward` or `run.deferredProgression` still load and validate (`engine/save.js`); nothing writes them.
+Governs when card rewards come and how often, the levelling curve and its preview and cap, armament, smithing-stone and refined-stone drops, and legendary sigils. Rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` draws only the Victory receipt and the card rank-up chooser. Old saves carrying `run.pendingReward` or `run.deferredProgression` still load and validate (`engine/save.js`); nothing writes them. Where a rule below describes the removed legacy reward door (its pending-reward rows and the schedule it consumed), it is historical, not the live Core contract.
 
 Rules from §14's preamble apply:
 - Every number is a `balance.*` leaf with a `[NOTE]`, so its `gameConfig.*` Settings row is generated and frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
