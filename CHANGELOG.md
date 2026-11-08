@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Loadout code reorganised** ([#2708](https://github.com/cehinds/AshenSpire/pull/2708), `0.7.4.32`). The equipment and starting-deck rules now live in smaller files behind the same door; nothing you play changes, and old saves load exactly as before.
 - **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
 
 ## 2026-11-07
