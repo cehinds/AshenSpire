@@ -1878,7 +1878,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 
 **Beat order** (`beatOrder`, default `sequential`)
 - The attacker's stance, attack clip and return play first; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
-- `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers never wait for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
+- `reactionMs` after the reaction starts (data row, default 180 ms at Normal; under Action pacing `actionPacing()` sets `reactionMs: gapMs`, so the 180 ms default applies only without it) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers never wait for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
 - Contact spark and attacker hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
 - `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
 
@@ -1904,7 +1904,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - Rendered tracks are the only shipped audio (offline from `music/score/<id>.mjs` by `tools/score/render.mjs`); tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), scores and render tool under `art/music/`; `music/*.mp3` and `music/manifest.json` are gitignored.
 - Overrides:
   - A music folder with `manifest.json` (the Settings folder or, blank on http(s), the shipped tracks via `SHIPPED_MUSIC_FOLDER`, `content/music.js`) replaces a context's bed; a missing/unplayable track falls back to the synth, as does a `file://` page.
-  - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; a failed sample load falls back to the synth (`src/ui/audio.js:152-154`).
+  - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; `audio.js` `sfx()` short-circuits on a manifest entry, and a failed sample load falls back to the synth (`src/ui/audio.js:152-154`).
   - `MUSIC_MANIFEST` is imported and never read (dormant).
 
 ### 7.5 Visual style
@@ -1919,7 +1919,7 @@ Palette tokens, card rendering, fonts.
 
 #### Notes and history
 
-- Every public component id must stay backticked (`tools/ui-components.mjs`, C10); minimum touch target is 44 px.
+- Every public component id must stay backticked (`tools/ui-components.mjs`, C10).
 - The perspective grid is the only combat layout; classic layout, the Battlefield tab and the formation editor are gone.
 
 Full history: [docs/spec-history/07-ui.md](docs/spec-history/07-ui.md).
