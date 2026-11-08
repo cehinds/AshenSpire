@@ -578,7 +578,7 @@ if dmg < 0 → 0
 
 - The tactical matchup multipliers (§4.7) run after the floor.
 - Staggered's ×1.5 is the `staggered` status's `damageTakenMult` and applies only under legacy ratings; with ratings on (the default) a break applies no status (§4.4).
-- (§17, `docs/FIXCORE-DECISIONS.md` D17) In the configured Core path with Ward off, the magic part of a hit meets Poise first, then Block; the legacy order above is unchanged.
+- (§17, `docs/FIXCORE-DECISIONS.md` D17) In the configured Core path with Ward off, the magic part of a hit meets Poise first, then Block; the legacy order above is unchanged. *Superseded for new Core 2 fights (owner 2026-11-07, backlog #7): one damage kind; see §17, One damage kind in Core 2.*
 - Multipliers and adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.
 - Multi-hit attacks compute per hit. Damage consumes Block first; the remainder hits HP.
 - `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength / Weak / Vulnerable / Stagger *and Block*.
@@ -878,7 +878,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - Spell Counter: incoming spells or physical projectiles, same Piercing interception. Against a physical projectile it drains Ward only (no HP / ordinary Guard spill, no reply Poise); against an incoming spell it may return ordinary Health-capable damage. The incoming move determines caster eligibility, so hybrid enemies behave correctly.
 - Enemy Counter base damage = explicit `counterDamage` metadata, falling back to ordinary move damage, then the configured default. Optional `counterPoiseDamage` supplies its listed reply Poise. Existing support payloads and weighted move-selection numbers are retained.
 
-**Damage riders.** Riders resolve once per committed root action (player card or enemy move) and target, with no reaction chaining. Status riders require positive HP loss; an already printed matching status suppresses the extra automatic one. Multi-hit cards get no extra rider per hit.
+**Damage riders.** (Legacy and expanded profiles; in Core 2, *School statuses* (§4.7) replaces them.) Riders resolve once per committed root action (player card or enemy move) and target, with no reaction chaining. Status riders require positive HP loss; an already printed matching status suppresses the extra automatic one. Multi-hit cards get no extra rider per hit.
 
 | Damage label | Rider |
 |---|---|
@@ -907,8 +907,8 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
 
 **Enemy weaknesses in Core**
 - Every enemy carries an authored `weaknesses` array (enemy schema; `content/source/act{1,2,3}Enemies.json` and the Core pack's `characters.json`; 1–3 rows, bosses exactly one): `[{ to, effect, amount? }]`. The expanded-path `weak`/`resist` maps are untouched; Core reads only this field.
-- `to`: a physical type (`blunt`, `slashing`, `piercing`); `magic` (the hit has any magic share); an element (`fire`, `frost`, `lightning`, `sacred`, `decay`, `arcane`, `earth`, `psychic`, `poison`); or, for the status effects, a status (`burn`, `bleed`, `paralysis`, `frost`, `venom`, `vulnerable`).
-- A hit's triggers: its wielded weapon's physical type, `magic`, and each element it carries (its school or damage type, its damage components, any element an attacker status adds to weapon attacks; Elemental Weapon works in Core, the fire element is enabled for configured profiles).
+- `to`: a physical type (`blunt`, `slashing`, `piercing`); `magic` (legacy and expanded profiles, and Core 2 fights saved before `damage.unified`: the hit has any magic share); `spell` (Core 2 under `damage.unified`, owner 2026-11-07: a hit from a spell-camp card or move only; an element-imbued weapon (Elemental Weapon, `imbuedElements`) triggers its element, not `spell`, and a melee-spell hybrid triggers `spell` only if it is spell-camp; this is intended; existing `to: "magic"` rows become `to: "spell"`, and a saved run's `weaknessDiscovery` keys `magic:*` become `spell:*` at load, idempotently, with no RNG draw; the rename skips fights still running on the old split, so a mid-fight save keeps its `magic:*` keys and its enemy rows still match); an element (`fire`, `frost`, `lightning`, `sacred`, `decay`, `arcane`, `earth`, `psychic`, `poison`); or, for the status effects, a status (`burn`, `bleed`, `paralysis`, `frost`, `chilled`, `venom`, `vulnerable`).
+- A hit's triggers: its wielded weapon's physical type, `magic` (or, under `damage.unified`, `spell`; a spell hit then adds no default physical type), and each element it carries (its school or damage type, its damage components, any element an attacker status adds to weapon attacks; Elemental Weapon works in Core, the fire element is enabled for configured profiles).
 - Effects:
 
 | Effect | Rule |
@@ -925,8 +925,8 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - Only a discovered weakness draws a HUD chip (up to two, under the nameplate) or a "Weak to X" inspector line; an undiscovered one shows nothing, not even a placeholder.
   - A chip is a fixed square, the size of a combat badge, holding the trigger's own mark (damage-type, element or status symbol, `model/weaknessIcons.js`, never a letter); tooltip on hover, focus and tap ("Weak to Piercing: +25% damage"), same text as its accessible name.
 
-**Lightning, Shocked, Damp and Bedrock.** Core combat on the Lightning damage type; the Lightning rider (1 Weak after HP loss) is unchanged.
-- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning magic damage, 1 SP, 0 MP (a cantrip costs no Mana); upgraded 4.
+**Lightning, Shocked, Damp and Bedrock.** Core combat on the Lightning damage type; the Lightning rider (1 Weak after HP loss) is unchanged in the legacy and expanded profiles; in Core 2 the Weak comes from *School statuses* below.
+- **Spark** (`core.spark`): Core Cantrip (tags `rank.cantrip`, `lightning`, `school:lightning`), 3 Lightning damage, 1 SP, 0 MP (a cantrip costs no Mana); upgraded 4.
 - **Lightning hit** = a card or enemy move with the `lightning` tag or dealing Lightning damage.
   - *Metal conducts:* a target using metal equipment (row `material: metal`; Core weapons, shields, armour are tagged) takes the hit at +1 Precision for the attacker (+1 Accuracy on that hit).
   - *Shock contest* (stream `combatContest`): after HP loss the hit tries to inflict 1 Shocked. Roll d20 + (target's current Shocked stacks × (caster INT + WIS + card rank)) vs DC = target's current Poise + STR + DEX + CON + level (d20 helper `engine/d20Chance.js` and the roll log; the receipt shows total vs DC). Card rank = the played copy's `cardRank` (§13.4o; 1 when absent). Success: 1 Shocked.
@@ -937,6 +937,9 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - Any Fire hit (fire school or damage type, or a card applying Burn) that deals HP loss to a Damp holder removes all its Damp.
   - Enemies that open Damp say so in `startStatuses` (Stitch Crab: 2).
 - **Bedrock** (earth, badge: a rock): stackable defence; each lightning hit on a holder is fully absorbed (no HP loss, no Shocked, no riders) and removes 1 stack. No decay. Earth-element enemies (authored `element: earth`; Charred Colossus) begin each fight with 3. The Shocked contest and Bedrock are Core combat only.
+
+**School statuses (owner 2026-11-07).** In Core 2, after a hit from a card or move of a school deals HP damage, the target gains that school's status, once per action per target, and not when the card already prints that same status. The data is `schoolStatuses` in `content/source/fixCoreMechanics.json`, keyed by school; with no school, the damage type through the existing aliases decides. fire: 1 Burn. lightning: 1 Weak (the Shocked contest above still runs as today; the Weak comes from this table alone). frost: 1 Chilled (not the legacy `frost` gauge status). force: strip 1 Ward stack. divine: the caster cleanses 1 of its own statuses (the existing cleanse list). decay: 1 Necrotic Blight. poison damage type: 1 Venom. illusion: 1 Confused. earth: 1 Slowed. alteration (abjuration and transmutation): none, since its effects are protective or transforming and carry no damage rider. In Core 2, `schoolStatuses` replaces the damage-type riders (§4.7 table and `combatMatchups.damageRiders`), which apply to the legacy and expanded profiles only; the legacy Frost gauge and Cold rider do not run in Core 2, and Core frost cards that print `frost` move to Chilled. Weakness rows follow: a Core 2 weakness row `to: "frost"` with effect `stacks` becomes `to: "chilled"` (adds Chilled stacks when an opponent applies Chilled; Ember-Starved Pilgrim and Cinder Mantis), `chilled` joins the statuses a `stacks` row may name, and a `frost` `tick` row has no Core 2 effect (Chilled has no burst), so the content migration rewrites it to `stacks` on `chilled`.
+- **Chilled and Frozen.** Core overrides Chilled to stack (the v2 `refresh`/`onConsume` rule stays for v2 only). At 2 Chilled the target becomes Frozen and all its Chilled is removed: it loses its next action (the existing Frozen action loss), then Frozen ends. Frozen never stacks above 1. A Damp target that gains Chilled becomes Frozen at once and loses all its Damp, so it cannot be frozen by every hit. Fire damage removes Chilled and Frozen (the existing thaw); Blunt shatters Frozen as today but no longer removes Chilled in Core. There is no immunity window. *Falsify:* a second 6-damage frost spell on a target that already has 1 Chilled makes it Frozen with no Chilled left; on a Damp target the first frost spell that deals HP damage makes it Frozen with no Damp left, and a second frost spell on it only applies 1 Chilled; a fire hit on a Chilled target leaves neither Chilled nor Frozen; a lightning spell with no printed status leaves exactly 1 Weak after HP loss (one source, never two), and one that already prints Weak adds no second.
 - **Own-element bonus:** an enemy move whose school, damage type or element tag matches the enemy's `element` multiplies its damage, status stacks and other effect amounts by 1.25, floored (at least the printed amount). The same multiplier applies to element tags an elemental affinity adds to an armament's cards: affinity N adds N tags of that element to each card it grants (an enemy's attuned weapon: floor(N × 1.25)).
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
@@ -2387,7 +2390,7 @@ Full history: [docs/spec-history/13b-progression.md](docs/spec-history/13b-progr
 
 ### 13.4p One break meter: Ward and Arcane Exposure fold into Poise
 
-A fighter has one break meter, Poise. Magical impact fills it like physical impact; the Ward and Arcane Exposure meters are gone. Magic damage meets Poise first, 1:1, then Block; physical keeps Block first (Core 2, §17, `docs/FIXCORE-DECISIONS.md` D17). Where an earlier section disagrees, this one wins inside its scope. Pointers sit in §3.6, §4.2, §7.2 (`arcane-exposure-bar`), §12.1, §13.4k and the ratings section.
+A fighter has one break meter, Poise. Magical impact fills it like physical impact; the Ward and Arcane Exposure meters are gone. Magic damage meets Poise first, 1:1, then Block; physical keeps Block first (Core 2, §17, `docs/FIXCORE-DECISIONS.md` D17). Where an earlier section disagrees, this one wins inside its scope. Pointers sit in §3.6, §4.2, §7.2 (`arcane-exposure-bar`), §12.1, §13.4k and the ratings section. *Superseded for new Core 2 fights (owner 2026-11-07, backlog #7): one damage kind; see §17, One damage kind in Core 2.*
 
 - **Scope.** Retired with the ratings meter: it governed fights created with combat ratings (`ratingsRules`), which no longer ship, on runs whose snapshot carries `breakMeterVersion: 1`. New runs stamp it at creation. A stamp is still accepted on a saved run and changes nothing; Stagger is §4.4's `dealPoiseDamage`.
 - **One meter: Poise.** In scope, every hit that deals HP damage deals impact into the target's Poise, physical or magical. Impact values are unchanged (weapon weight, a card's own Poise or Ward value, category defaults). A fill is the Poise break, **Stagger**, with its existing growth and overflow: an enemy loses its next move, the player loses `poiseActionLoss` actions next turn. Disruption is retired (no second break, no `wardActionLoss`).
@@ -2622,7 +2625,7 @@ Ratings (AR, DR, PR, Poise, Ward) turn attributes and gear into damage, mitigati
 - Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
 
 ### Card damage
-- Card damage = base + AR (physical) or PR (magical).
+- Card damage = base + AR (physical) or PR (magical); in Core 2 under `damage.unified`, PR applies to spell-camp attacks, and spell damage is otherwise ordinary damage.
 - Physical defensive-skill Block gets DR; magical Block and healing get PR. Magical power hooks keep their originating card, so their damage, Block and healing get PR.
 - Resource generation, buff duration, card draw and action costs get no PR.
 - Profile-level attribute scaling is off for these runs (no double bonus). Authored card-specific modifiers still apply.
@@ -3220,6 +3223,12 @@ Rules for new runs on **`ashen.core@2.0.0`**, the FixCore rules version 1 profil
   - Cards authored `ranged` keep their data and read as Reach on the card face, deck editor and upgrade preview; an upgrade never offers Reach to Ranged.
   - A policy with no `maxRange` (run or save from before the cap) keeps all three bands and replays unchanged.
 
+**Spells are Reach by default (owner, 2026-11-06; recorded 2026-11-07).** In Core 2 a
+spell-camp card or move, a projectile or a ranged maneuver is Reach unless tagged
+`range:melee`; every other card or move is Melee. *Falsify:* an untagged spell-camp card
+reads as Reach on its face and in the range check, and the same card tagged `range:melee`
+reads as Melee.
+
 ### Damage, Block, Poise and statuses
 
 All combat values are floored whole numbers. The attacker's chain (Vulnerable, stance) floors once to the **incoming damage**; Block and the physical/magic split use it; Poise or Ward mitigation floors once more.
@@ -3234,11 +3243,13 @@ All combat values are floored whole numbers. The attacker's chain (Vulnerable, s
 | Boss SP | tuned through stats to at most 3 per turn |
 
 
-**Order.** Physical part: Block, then Barrier and Poise. Magic part: Poise first.
+**Order.** Physical part: Block, then Barrier and Poise. Magic part: Poise first. *Superseded for new Core 2 fights (owner 2026-11-07, backlog #7): one damage kind; see §17, One damage kind in Core 2.*
 - **Magic hits Poise first:** the magic part meets Poise 1:1 (Poise loses up to the whole magic amount); only what Poise cannot cover meets the Block left after the physical part, then Barrier, then HP, with no further Poise absorb.
 - A mixed hit (meleeSpell 0.7, arcane 0.5, technique 0.3) resolves the physical part first (Block, then Poise), then the magic part (Poise left, then Block left), on one shared Poise pool per hit.
 - Magic lane shows a "Poise N" float and log line (`magicPoise` on `damageDealt`; receipt stages `poise-magic` "Poise meets the spell", `block-magic`). With Ward enabled, magic keeps the Block, Barrier, Ward order.
 - Configured Core path (`profileDamageReceipt`) only; the expanded path (`prepareExpandedDefense`) is unchanged. Falsified by `tests/magic-poise-first.test.mjs`.
+
+**One damage kind in Core 2 (owner 2026-11-07, backlog #7: "I'd like to change magic damage to just deal damage but are reach spells by default, with the school having its unique status effect").** In new Core 2 fights a hit's damage has no physical/magic split. Every hit meets Block first, then Barrier, then Poise (×0.75 while active), then HP, except that a target holding Ward stacks keeps §4.1a's Ward routing (the whole hit to Poise first, the remainder to Block and HP), which already ignored the split and is unchanged. This supersedes the 2026-10-31 "Magic hits Poise first" lane above, `magicPoise`, the `poise-magic` and `block-magic` receipt stages, and "Block soaks … its physical part first and then its magic part"; Pierce works on the whole hit. The rule is the versioned flag `damage.unified: true` in `content/source/fixCoreMechanics.json`, snapshotted per fight, so an already-saved Core 2 fight finishes under the split it started with; legacy and expanded profiles are unchanged. Spell-camp attacks keep reading PR (spell power) instead of AR: that is scaling, not a damage type, and Weak's ×0.75 still applies only to AR. The `magic` weakness trigger becomes `spell` (see *Enemy weaknesses in Core*), and Core 2 applies no school resist (it is display only, `src/model/enemyKnowledgeView.js`). No Core 2 content carries a magic resist or bonus; the legacy `magic` school key and `spellDamageDealtMult` are unchanged. Card faces and receipts show one damage number, never "magic · physical". *Falsify:* a Core 2 fight where a 6-damage frost spell hits a target with 4 Block and Poise active gives Block 0, HP loss floor(2×0.75) = 1, and 1 Chilled; a hit that shows a `poise-magic` stage or a "magic · physical" split under `damage.unified` fails.
 
 **Pierce** (card tag `pierce`, `damage:piercing`, or a piercing damage type).
 - Per hit, lets past up to floor(0.2 × the hit's damage) of what Block would have soaked (none with no Block), after stance and Smash bonuses, before Block, physical part first (`pierce.blockBypassFraction`, `content/source/fixCoreMechanics.json`).
