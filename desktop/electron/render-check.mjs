@@ -127,11 +127,11 @@ const pendingReplies = new Map();
 socket.onmessage = (event) =>
 {
   const reply = JSON.parse(event.data);
-  if (reply.id != null && pendingReplies.has(reply.id))
+  const pending = reply.id != null ? pendingReplies.get(reply.id) : undefined;
+  if (pending)
   {
-    const { resolve } = pendingReplies.get(reply.id);
     pendingReplies.delete(reply.id);
-    resolve(reply.result);
+    pending.resolve(reply.result);
   }
 };
 
@@ -164,6 +164,7 @@ await send('Runtime.enable');
 // ---- 5. Read the title screen ----
 
 await sleep(2500);
+/** @type {{ title: string, buttons: string[], textLen: number } | null} */
 const seen = await evaluateInPage(`({
   title: document.title,
   buttons: [...document.querySelectorAll('button')].map(b=>b.textContent.trim()).slice(0,3),
