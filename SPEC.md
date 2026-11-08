@@ -2204,17 +2204,39 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 ## 10. Forward hooks (build the seam now, not the feature)
 
-- **Ascension-style difficulty:** ships as `run.custom.ascension` (`src/content/customMods.js`). The `modifiers: []` slot this section first named is unused.
-- **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss — a status hook on `damageDealt`), enemy applying Bleed to the *player* (player-side meters already exist in the status model; player Bleed threshold 15).
-- **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
-- **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
-- **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
+Seams that exist so later features need no engine redesign.
+
+- Ascension-style difficulty
+  - Ships as `run.custom.ascension`.
+  - The `modifiers: []` slot is unused.
+- Act 2/3 signature mechanics (engine support from M1)
+  - Enemy phase-change interrupts (Watchful Omen already does this).
+  - Enemy self-heal on dealing damage (final boss; status hook on `damageDealt`).
+  - Enemy applying Bleed to the *player* (player-side meters exist; player Bleed threshold 15).
+- Daily seed / run sharing
+  - Seeds are displayed and enterable; nothing else needed in v1.
+- Content packs / mods
+  - A pack is one folder of content files passing validation.
+  - No pack loader in v1.
+- Second card pools per class ("Remembrance" variants)
+  - Class def takes `cardPool: []`; alternate pools are content-only.
 
 ## 11. Non-goals (v1)
 
-Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and audio bundled into the game file: the rendered score is loaded at runtime (pack files through the common index in the web edition, since EXTERNAL-ASSETS-PLAN step 3c; the `music/` folder beside the page in source and single-file builds), with the synth bed as its fallback, and SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
+Non-goals:
+- Accounts, monetization, a mod loader, Steam-style achievements.
+- Localization (strings live in content files, so l10n is possible later).
+- Multiplayer (the game is single-player).
+- Audio bundled into the game file:
+  - The rendered score loads at runtime: pack files through the common index in the web edition (EXTERNAL-ASSETS-PLAN step 3c); the `music/` folder beside the page in source and single-file builds.
+  - The synth bed is the fallback.
+  - SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
 
-Two things this list once excluded have since shipped and are no longer non-goals: a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4). **Multiplayer** (the Forsaken Together LAN co-op mode) was built, then removed (owner, 2026-10-31); the game is single-player.
+#### Notes and history
+
+- Narrow/mobile layout (`data-layout`, `balance.ui.uiScale`) and audio (§7.4) are shipped features, not non-goals.
+
+Full history: [docs/spec-history/10-hooks-non-goals.md](docs/spec-history/10-hooks-non-goals.md).
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
