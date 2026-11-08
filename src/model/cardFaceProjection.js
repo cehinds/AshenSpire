@@ -1,7 +1,7 @@
 // A face is a short reading of complete facts, never a clipped paragraph.
 // cardFaceLines and the Information pane retain the full card. Selection does
 // not promote this budget: every ordinary face owes the same three lines.
-import { effectiveD20Percent } from '../engine/d20Chance.js';
+import { effectiveD20Percent } from './d20Chance.js';
 
 export const FACE_EFFECT_LINES = 3;
 // Owner, 2026-10-31: one to three lines, at most five words per line. A line
