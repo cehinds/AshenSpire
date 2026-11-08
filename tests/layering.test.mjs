@@ -88,7 +88,7 @@ const KNOWN_INVERSIONS = [
   'src/model/playingCard.js -> src/engine/d20Chance.js',
   'src/model/proposalStatusRules.js -> src/engine/d20Chance.js',
   'src/model/rollReceipts.js -> src/engine/d20Chance.js',
-  'src/model/validate.js -> src/engine/cardZones.js',
+  'src/model/validate/effectGrammar.js -> src/engine/cardZones.js',
 ];
 
 function walk(dir, out = []) {
