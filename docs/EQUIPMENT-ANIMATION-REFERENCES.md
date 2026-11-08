@@ -57,7 +57,7 @@ The `twinSword` profile covers all 35 armor entries with 32 appearances. It sele
 
 All appearances share `STANCE-READY → ATK-01 → ATK-02 → ATK-03 → ATK-04 → ATK-05 → ATK-06 → ATK-07 → STANCE-READY`, 120ms steps, impact at 480ms. Sixteen poses include separate conversation and portrait art; all full-body poses retain two swords without baked effects. Change the profile to update every outfit. The [workshop](../art/twin-sword-reference-2026-09-19/index.html) edits sequence candidates and compares class/armor appearances.
 
-Validation: `node tests/twin-sword-animation.test.mjs`, `node tools/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
+Validation: `node tests/twin-sword-animation.test.mjs`, `node tools/attic/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
 
 ## Unarmed bindings
 

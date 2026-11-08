@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/swap-row-reads.mjs — Sunna, 2026-08-15.
+// tools/attic/swap-row-reads.mjs — Sunna, 2026-08-15.
 //
 // DOES THE SWAP-PRICE COMPARISON READ ON A PHONE. Viki's MR-41 arm 1 made the
 // Armoury's swap-cost row CONSULT `swapCostFor()` instead of deriving a second
@@ -93,9 +93,9 @@
 // parse is a different defect from a false one; the count is the evidence, the
 // ruling is in my log.
 //
-//   node tools/swap-row-reads.mjs              photograph + measure + judge
-//   node tools/swap-row-reads.mjs --selftest   plant known-bads, each RED
-//   node tools/swap-row-reads.mjs --out DIR    where the photographs land
+//   node tools/attic/swap-row-reads.mjs              photograph + measure + judge
+//   node tools/attic/swap-row-reads.mjs --selftest   plant known-bads, each RED
+//   node tools/attic/swap-row-reads.mjs --out DIR    where the photographs land
 //
 // BOUNDARY, printed on every run: source tree over http, one Linux box, one
 // Chromium, `?shot=map` → Armoury → Talisman → set 1, comparisons OPENED. It is
@@ -104,15 +104,15 @@
 // person's ruling and is in my log, not in this exit code.
 
 import { spawn, spawnSync } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 // ---- THE INK READER, ABSORBED FROM linebudget-camera.mjs (#179) ------------
 // Vira's card, and it is one sentence: CAPTURE IS NOT READING. This file called
 // Page.captureScreenshot at four sites and wrote every PNG straight to disk
@@ -1182,7 +1182,7 @@ const PLANTS = [
     find: '.equip-resource-change > .as-flavor { display: block; }',
     replace: '.equip-resource-change > .as-flavor { display: block; margin-top: 7px; border-top: 2px solid #fff; padding-top: 7px; }',
     also: {
-      file: 'tools/swap-row-reads.mjs',
+      file: 'tools/attic/swap-row-reads.mjs',
       find: '  const kept = runs.filter(([a, b]) => (b - a + 1) >= INK_BAND_FLOOR_PX);',
       replace: '  const kept = runs; // planted: the floor removed, exactly as I had shipped it',
     },

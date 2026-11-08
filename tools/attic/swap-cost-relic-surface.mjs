@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/swap-cost-relic-surface.mjs — ARM 2 of MR-41 (as amended by MR-46):
+// tools/attic/swap-cost-relic-surface.mjs — ARM 2 of MR-41 (as amended by MR-46):
 // the STARTING-RELIC half of A8 has no presentation anywhere, and this is its
 // wake.
 //
@@ -62,8 +62,8 @@
 // a real surface and the marker comes out with it. There is nothing left to
 // watch once the premise cannot die quietly.
 //
-//   node tools/swap-cost-relic-surface.mjs             the wake
-//   node tools/swap-cost-relic-surface.mjs --selftest  the same-door corpus
+//   node tools/attic/swap-cost-relic-surface.mjs             the wake
+//   node tools/attic/swap-cost-relic-surface.mjs --selftest  the same-door corpus
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, resolve, join, relative } from 'node:path';
@@ -79,7 +79,7 @@ import { fileURLToPath } from 'node:url';
 // copied tree travels the whole import graph exactly as a real row would. The
 // surface plants enter at the source files a real surface would be written in.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'swap-cost-relic-surface.mjs',
     plants: [
@@ -116,15 +116,15 @@ if (process.argv.includes('--selftest')) {
   }));
 }
 
-const { contentBundle } = await import('../src/content/index.js');
-const { createRegistries } = await import('../src/model/registries.js');
-const { createRunState } = await import('../src/model/state.js');
-const { equipmentSurfaceReceipt } = await import('../src/model/equipmentPresentation.js');
-const { statProjection, playerPoiseThresholdReceipt } = await import('../src/model/statProjection.js');
-const { creationBrief } = await import('../src/model/creationBrief.js');
-const { equipmentKitReceipt } = await import('../src/model/loadout.js');
+const { contentBundle } = await import('../../src/content/index.js');
+const { createRegistries } = await import('../../src/model/registries.js');
+const { createRunState } = await import('../../src/model/state.js');
+const { equipmentSurfaceReceipt } = await import('../../src/model/equipmentPresentation.js');
+const { statProjection, playerPoiseThresholdReceipt } = await import('../../src/model/statProjection.js');
+const { creationBrief } = await import('../../src/model/creationBrief.js');
+const { equipmentKitReceipt } = await import('../../src/model/loadout.js');
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 let checks = 0;
 let failures = 0;
 function check(name, fn) {

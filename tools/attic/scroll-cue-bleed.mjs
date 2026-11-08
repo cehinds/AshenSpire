@@ -26,7 +26,7 @@ import { serve } from '../serve.mjs';
 import { balance } from '../../src/content/balance.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(HERE, '..');
+const ROOT = resolve(HERE, '..', '..');
 const args = process.argv.slice(2);
 const argOf = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
 const artifactArg = argOf('--artifact');

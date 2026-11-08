@@ -25,11 +25,6 @@
       "tool": "tools/placement.mjs",
       "target": "styles/ui.css",
       "id": "d6870f4a9cfa5e42"
-    },
-    {
-      "tool": "tools/title-new-slot.mjs",
-      "target": "src/ui/models/SaveSlotSelectionModel.js",
-      "id": "d905e8929851cbd2"
     }
   ],
   "unreadable": {
@@ -151,18 +146,6 @@
       "count": 28,
       "digest": "c68e9388e48fc3bb"
     },
-    "tools/status-presentation-authority.mjs": {
-      "count": 4,
-      "digest": "3a1addc6a9ae4e8a"
-    },
-    "tools/swap-cost-relic-surface.mjs": {
-      "count": 2,
-      "digest": "e838dc2190fb3994"
-    },
-    "tools/swap-row-reads.mjs": {
-      "count": 9,
-      "digest": "cbdfdc82c68de702"
-    },
     "tools/tapsize.mjs": {
       "count": 2,
       "digest": "937b4f581c184b1d"
@@ -171,21 +154,9 @@
       "count": 3,
       "digest": "a99316891d40357e"
     },
-    "tools/text-geometry.mjs": {
-      "count": 9,
-      "digest": "a7e98194cadbd438"
-    },
-    "tools/title-new-slot.mjs": {
-      "count": 4,
-      "digest": "edaf8f33b2ee919a"
-    },
     "tools/tutorial-reach.mjs": {
       "count": 2,
       "digest": "a44c1e0b0012988e"
-    },
-    "tools/ui-sweep.mjs": {
-      "count": 3,
-      "digest": "89bbf8775e316cce"
     },
     "tools/uprightgate.mjs": {
       "count": 14,

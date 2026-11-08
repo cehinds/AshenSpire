@@ -5,7 +5,7 @@ import { PAINTED_OUTFITS } from '../../src/content/paintedOutfits.js';
 import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
-let sharp; try { sharp = require('sharp'); } catch { sharp = require('../work/deps/node_modules/sharp'); }
+let sharp; try { sharp = require('sharp'); } catch { sharp = require('../../work/deps/node_modules/sharp'); }
 const groups = {
   rogue: ['prepared', ['rogue','rogue-duelist','rogue-nightveil','rogue-shadow']],
   starseer: ['starstoneCharge', ['starseer','starseer-astral','starseer-eclipse','starseer-starlit']],

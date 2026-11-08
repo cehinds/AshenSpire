@@ -5,10 +5,10 @@
 // display token does. This is semantic markup only, not layout or styling.
 
 import fs from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { validateContent } from '../src/model/validate.js';
-import * as Schema from '../src/model/schemas.js';
-import * as UI from '../src/ui/uiContent.js';
+import { contentBundle } from '../../src/content/index.js';
+import { validateContent } from '../../src/model/validate.js';
+import * as Schema from '../../src/model/schemas.js';
+import * as UI from '../../src/ui/uiContent.js';
 
 // DOOR. Real input enters two ways: the schema/presenter modules are IMPORTED
 // and driven, and the two combat screens are read by readFileSync. The MUTANT
@@ -17,7 +17,7 @@ import * as UI from '../src/ui/uiContent.js';
 // on disk and re-runs this whole tool against it.
 // (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'status-presentation-authority.mjs',
     plants: [

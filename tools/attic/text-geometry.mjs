@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/text-geometry.mjs — Law 4: Text size owns text, not component geometry.
+// tools/attic/text-geometry.mjs — Law 4: Text size owns text, not component geometry.
 //
 // This gate enters through the real title screen, opens character customization,
 // applies the product's canonical Text M and XL values, and measures rendered
@@ -8,10 +8,10 @@
 // stay unchanged and the action remains at least 44 px on glass.
 //
 // Usage:
-//   node tools/text-geometry.mjs
-//   node tools/text-geometry.mjs --artifact AshenSpire.html
-//   node tools/text-geometry.mjs --shots docs/preview/text-geometry-source
-//   node tools/text-geometry.mjs --selftest
+//   node tools/attic/text-geometry.mjs
+//   node tools/attic/text-geometry.mjs --artifact AshenSpire.html
+//   node tools/attic/text-geometry.mjs --shots docs/preview/text-geometry-source
+//   node tools/attic/text-geometry.mjs --selftest
 //
 // BOUNDARY: Current profile artwork, one Chromium engine, two phone-shaped
 // viewports, the customization
@@ -22,12 +22,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { balance } from '../src/content/balance.js';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { balance } from '../../src/content/balance.js';
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const sourceCode = await doorSelftest({
     tool: 'text-geometry.mjs',
     // Browser source copies need the same verified art as the real checkout.
@@ -128,7 +128,7 @@ if (process.argv.includes('--selftest')) {
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(HERE, '..');
+const ROOT = resolve(HERE, '..', '..');
 const args = process.argv.slice(2);
 const argOf = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
 const artifactArg = argOf('--artifact');

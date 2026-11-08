@@ -6,11 +6,11 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { saveSlotSelectionModel } from '../src/ui/models/SaveSlotSelectionModel.js';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { saveSlotSelectionModel } from '../../src/ui/models/SaveSlotSelectionModel.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
 const CAPTURE_SHOTS = process.argv.includes('--screenshots');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -24,7 +24,7 @@ const browserPath = [
 ].find((candidate) => candidate && existsSync(candidate));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const code = await doorSelftest({
     tool: 'title-new-slot.mjs',
     timeoutMs: 60000,

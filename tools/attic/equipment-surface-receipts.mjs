@@ -241,7 +241,7 @@ if (equipmentSurfaceReceipt) {
   const gearRelics = contentBundle.relics.filter((r) => r.passives && Object.prototype.hasOwnProperty.call(r.passives, 'swapCostDelta')).map((r) => r.id);
   console.log(`FLOOR gear rung unexercised on shipped content — pieces authoring self.swapCost: ${gearPieces.length ? gearPieces.join(', ') : 'NONE'}`
     + ` · relics authoring swapCostDelta: ${gearRelics.length ? gearRelics.join(', ') : 'NONE'}.`
-    + ' Run `--selftest` for the gear rung; the relic rung has no surface at all (tools/swap-cost-relic-surface.mjs).');
+    + ' Run `--selftest` for the gear rung; the relic rung has no surface at all (tools/attic/swap-cost-relic-surface.mjs).');
   // If content ever DOES author one, the gear rung stops being selftest-only
   // and this contract must exercise it here rather than keep printing a floor.
   if (gearPieces.length) {
@@ -254,7 +254,7 @@ if (equipmentSurfaceReceipt) {
     // MR-77 replaced the sentence, and it would have gone RED on a surface that
     // qualified every row. A sentinel that re-types the prose it watches is a
     // second home for that prose (Sunna's own correction in
-    // tools/swap-row-reads.mjs; Sten, onevocab.mjs). What this contract owns is
+    // tools/attic/swap-row-reads.mjs; Sten, onevocab.mjs). What this contract owns is
     // that the declined delta is REPORTED AT ALL; whether the sentence reads is
     // photographed and judged by a person elsewhere.
     check(seen.length === COMBAT_SLOTS.length && seen.every((r) => r.before === r.after && (r.note || '').trim()),

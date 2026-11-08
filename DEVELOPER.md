@@ -529,7 +529,7 @@ holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/attic/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
-separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+separate pile tabs. `node tools/attic/ui-sweep.mjs --out docs/sweep` photographs every
 room at a desk and a phone width and asserts the facts the 2026-09-11 review's
 fixes stand on (the run band on every room, wrapped event choices, the phone
 action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
@@ -929,7 +929,7 @@ Run at least:
 ```bash
 node tools/content-build.mjs --check
 node tools/ui-components.mjs --selftest
-node tools/tray-components.mjs
+node tools/attic/tray-components.mjs
 node tests/run-node.mjs
 ```
 

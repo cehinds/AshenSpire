@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (259 tool files, plus the 8 subfolders)
+## Tools something references (246 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -238,32 +238,20 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `source-display-art.mjs` | Source-only measurement precondition. These are the same data owners used by bundle.mjs. | tests art-authoring, art-source, fetch-art; tools click-impact-probe |
 | `sprites-blender.py` | tools/sprites-blender.py — procedural class sprites, rendered in Blender. | tools attic/class-material-leaks, concept-cutout, equipment-blender.py +1; docs CREDITS.md, asset-data/classes/LOOK-REFERENCE-ROGUE.md, asset-data/classes/SUCCESSOR-CONTRACT.md +1; other asset-data/classes/build_rogue.proposal.py, asset-data/classes/check-look-conformance.mjs, asset-data/sprites/class-sprites.manifest.json +1 |
 | `stance-combat-qa.mjs` | Actual-screen screenshot QA for the stance/accuracy HUD. All UI is rendered | wf ward-to-block-cards; docs docs/STANCE-COMBAT-QA.md |
-| `starter-card-art-browser.mjs` | Run against serve after fetching the pinned art release. | docs docs/preview/starter-card-art/README.md |
-| `starting-equipment-qa.mjs` | (no header comment) | docs docs/COMPONENT-CATALOG.md, docs/preview/starting-equipment/README.md |
 | `startup-gate.mjs` | Issue #229 — the cold boot belongs to the startup gate until one complete | wf ci, dev-preview; tests doorplant-shard; tools plantsites-baseline.json, settingsreach; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/preview/issue-229-startup-gate-build-1305/README.md |
-| `status-presentation-authority.mjs` | Status instance presentation authority. Names and mechanic fields never | tools plantsites-baseline.json |
 | `statusreach.mjs` | statusreach — CAN A PLAYER EVER MEET THIS STATUS? | tests run-node, statusreach-expansion, statusreach-stance; tools contentreach |
 | `style-lint.mjs` | tools/style-lint.mjs — a ratchet on raw sizes, layers and colours in styles/*.css. | tests run-node, style-lint; docs DEVELOPER.md |
 | `surfaces.mjs` | surfaces — is every navigable surface DECLARED IN DATA also HANDLED? | tests config-migration, run-node; tools gatelist, screen-census; other src/config/authored.js, src/main.js +1 |
-| `swap-cost-relic-surface.mjs` | swap-cost-relic-surface — ARM 2 of MR-41 (as amended by MR-46): | tools equipment-surface-receipts, plantsites-baseline.json; other src/model/equipmentPresentation.js |
-| `swap-row-reads.mjs` | swap-row-reads — Sunna, 2026-08-15. | tools equipment-surface-receipts, plantsites-baseline.json |
 | `sync-alternatives.mjs` | Merge a promoted test snapshot into existing alternative pairs. No force | wf sync-alternatives; tests alternative-branches |
 | `tapsize.mjs` | tapsize — does Minimum tap size actually move the floor, on glass? | tests engine.test.js; tools flaskbox, hud-quick-compact, mapreach +4; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/screens/settings.js +1 |
 | `testnumbers.mjs` | testnumbers — NO TWO TESTS WEAR THE SAME NUMBER. | tests run-node; tools plantsites-baseline.json |
 | `tokens-css.mjs` | tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json as CSS custom properties. | tests run-node, serve-watch, tokens-css; tools launch, serve; docs DEVELOPER.md; other index.html, styles/tokens.generated.css |
-| `text-geometry.mjs` | text-geometry — Law 4: Text size owns text, not component geometry. | tools plantsites-baseline.json |
 | `textfit.mjs` | textfit — THE GATE FOR "NOTHING BLEEDS", MEASURED ON A REAL PAGE. | tests card-presentation-levels |
-| `title-new-slot.mjs` | Focused acceptance for QA remediation #2: New Game keeps the selected empty | tools plantsites-baseline.json |
-| `tooltip-review-qa.mjs` | (no header comment) | docs docs/preview/concise-card-tooltips/README.md |
-| `tray-components.mjs` | Focused browser gate for the shared four-edge Folding Tray component. | docs DEVELOPER.md, docs/TRAY-COMPONENTS.md |
 | `tutorial-reach.mjs` | tutorial-reach — can a real player finish (or skip) the first-run | wf ci, tutorial-reach; tests run-node, tutorial-reach-stability; tools actionreach, gatelist, mobilefit +4; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
-| `twin-sword-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
 | `ui-components.mjs` | Reusable UI component contract: stable semantic ids, one shared Map/Combat | tests run-node, ui-component-catalogs; docs DEVELOPER.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1 |
-| `ui-sweep.mjs` | ui-sweep — THE CONTACT SHEET, AND THE FACTS IT WAS TAKEN FOR. | tools plantsites-baseline.json; docs DEVELOPER.md, ui-studio/README.md |
 | `ui-validate.mjs` | Validates the JSON UI layer (engine/ui/components, games/<game>/ui/screens) and writes engine/ui/index.json. | tests ui-json; tools build-game; docs engine/ui/README.md; other package.json |
 | `uistrings.mjs` | uistrings — THE COPY RATCHET. How many sentences does the | tests run-node; tools uistrings-baseline.json; docs DEVELOPER.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md; other docs/architecture-handoff/wireframe-gallery.html, src/ui/components/piles.js |
 | `unarmed-animation-import.mjs` | (no header comment) | tests unarmed-animation, unarmed-magic; docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
-| `uniform-stat-foldouts.mjs` | Focused rendered-browser contract for the primary-stat foldouts. | docs CHANGELOG.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +1 |
 | `update-architecture.mjs` | Refresh the current-dev architecture inventory without rewriting the core | wf alternative-sync, architecture-sync; tests alternative-branches; tools sync-alternatives; docs docs/ARCHITECTURE-CURRENT-DEV.md, docs/ARCHITECTURE-MAP.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other docs/architecture-handoff/source-map.json, src/ui/services/saveJsonFile.js |
 | `uprightgate.mjs` | uprightgate — R-32's machine check. A SHAPE THE BOARD DOES NOT FIT | tools about-changelog, holdconfirm, plantsites-baseline.json +1; other docs/architecture-handoff/pre-existing-changes.txt, src/content/balance.js +2 |
 | `urlpath-conversions.mjs` | Reject hand-rolled conversion between module URLs and filesystem paths. | tests run-node; tools sigil-medallion |
@@ -278,15 +266,14 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `watched.mjs` | watched — did anyone OPEN THE BUILD and SEE the control? | tests run-node; tools watched-probes.json, watched-selftest |
 | `weapon-card-packages.mjs` | (no header comment) | tests closedsets, run-node; tools closedsets; other src/engine/combatSnapshot.js, src/engine/save.js |
 | `webaudio-stub.mjs` | webaudio-stub — the ONE minimal WebAudio stub the headless audio | tests music-folder-race, music-region, music-tiles-index; tools music-bed-gain-probe, music-silence-probe, music-toggle-parity +2; other src/ui/components/card.js |
-| `weightclass-census.mjs` | weightclass-census — the Weight Class A/B evidence instrument. | docs docs/framework-migration-checklist.md; other content/framework/mechanics.json, src/framework/data/mechanics.js |
 | `workflow-lint.mjs` | workflow-lint — THE DOOR CANNOT SEE THE WIRING ABOVE ITSELF. | wf ci; tests fetch-art; tools gatelist, verdict; docs DEVELOPER.md, docs/RELEASE-CHECKLIST.md |
 | `zip.mjs` | zip — a deterministic zip writer and a small reader, no dependencies. | tests fetch-art, offline-zip; tools art-manifest, buildversion, fetch-art +1; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md; other src/model/offlineDownload.js, src/model/zipStream.js |
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (139 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (152 files)
 
-These 139 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 152 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -419,10 +406,23 @@ These 139 tools were moved to `tools/attic/`, not deleted: no tracked file outsi
 | `skill-book-shop-browser.mjs` | Real renderer, real purchase plan/commit, disposable visit (no user saves). |
 | `sound-opening.mjs` | Browser regression (review of #1472): a FRESH fight sounds its opening draw | docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `starseer-spell-reactions-qa.mjs` | Real standalone HTML input. Fixtures use canonical engine enemies and cards; | docs docs/preview/starseer-spell-reactions/README.md |
+| `starter-card-art-browser.mjs` | Run against serve after fetching the pinned art release. | docs docs/preview/starter-card-art/README.md |
 | `starting-abilities-qa.mjs` | (no header comment) |
+| `starting-equipment-qa.mjs` | (no header comment) | docs docs/COMPONENT-CATALOG.md, docs/preview/starting-equipment/README.md |
+| `status-presentation-authority.mjs` | Status instance presentation authority. Names and mechanic fields never | tools plantsites-baseline.json |
+| `swap-cost-relic-surface.mjs` | swap-cost-relic-surface — ARM 2 of MR-41 (as amended by MR-46): | tools equipment-surface-receipts, plantsites-baseline.json; other src/model/equipmentPresentation.js |
+| `swap-row-reads.mjs` | swap-row-reads — Sunna, 2026-08-15. | tools equipment-surface-receipts, plantsites-baseline.json |
 | `sword-shield-animation-browser.mjs` | (no header comment) |
+| `text-geometry.mjs` | text-geometry — Law 4: Text size owns text, not component geometry. | tools plantsites-baseline.json |
 | `textsize-baseline.mjs` | textsize-baseline — #53's browser witness. |
+| `title-new-slot.mjs` | Focused acceptance for QA remediation #2: New Game keeps the selected empty | tools plantsites-baseline.json |
+| `tooltip-review-qa.mjs` | (no header comment) | docs docs/preview/concise-card-tooltips/README.md |
 | `tooltippersist.mjs` | tooltippersist — E8: the tooltip stays up until something replaces |
+| `tray-components.mjs` | Focused browser gate for the shared four-edge Folding Tray component. | docs DEVELOPER.md, docs/TRAY-COMPONENTS.md |
+| `twin-sword-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
+| `ui-sweep.mjs` | ui-sweep — THE CONTACT SHEET, AND THE FACTS IT WAS TAKEN FOR. | tools plantsites-baseline.json; docs DEVELOPER.md, ui-studio/README.md |
 | `unarmed-animation-browser.mjs` | (no header comment) |
+| `uniform-stat-foldouts.mjs` | Focused rendered-browser contract for the primary-stat foldouts. | docs CHANGELOG.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +1 |
 | `uprightsetting.mjs` | uprightsetting — BOTH EDGES OF HIS AMENDMENT TO THE UPRIGHT GATE. |
 | `viewport-units.mjs` | viewport-units — Law 2's detector for viewport-constrained UI CSS. |
+| `weightclass-census.mjs` | weightclass-census — the Weight Class A/B evidence instrument. | docs docs/framework-migration-checklist.md; other content/framework/mechanics.json, src/framework/data/mechanics.js |

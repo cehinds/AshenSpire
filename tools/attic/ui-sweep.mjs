@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/ui-sweep.mjs — THE CONTACT SHEET, AND THE FACTS IT WAS TAKEN FOR.
+// tools/attic/ui-sweep.mjs — THE CONTACT SHEET, AND THE FACTS IT WAS TAKEN FOR.
 //
 // Constantine, 2026-09-11: "clean up the ui and ux experience. not very great
 // right now. do a review". The review was thirty photographs — fifteen states
@@ -44,10 +44,10 @@
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
 //
 // Usage:
-//   node tools/ui-sweep.mjs                      every state, both shapes
-//   node tools/ui-sweep.mjs --only event,map     a subset (comma-separated)
-//   node tools/ui-sweep.mjs --out docs/sweep     keep the photographs
-//   node tools/ui-sweep.mjs --selftest           plant three known-bads
+//   node tools/attic/ui-sweep.mjs                      every state, both shapes
+//   node tools/attic/ui-sweep.mjs --only event,map     a subset (comma-separated)
+//   node tools/attic/ui-sweep.mjs --out docs/sweep     keep the photographs
+//   node tools/attic/ui-sweep.mjs --selftest           plant three known-bads
 //
 // Exit 0 = every fact held; 1 = a finding; 2 = no browser / bad arguments.
 //
@@ -59,17 +59,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[at + 1] : null; };
 const only = (argOf('--only') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const outDir = argOf('--out');
 
 if (args.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const plants = [
     {
       name: 'the event wrap rule drops back under the OptionCard ellipsis rule',

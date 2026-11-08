@@ -1,6 +1,6 @@
 // Run against tools/serve.mjs after fetching the pinned art release.
 // STARTER_ART_URL / STARTER_ART_OUTPUT override the server and evidence directory.
-import {launchBrowser,resolveBrowser} from './browser.mjs';
+import {launchBrowser,resolveBrowser} from '../browser.mjs';
 import {writeFileSync,mkdirSync} from 'node:fs';
 const out=process.env.STARTER_ART_OUTPUT || 'docs/preview/starter-card-art';
 mkdirSync(out,{recursive:true});

@@ -4,15 +4,15 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 // The caret is read off the one table (src/ui/components/foldGlyph.js): a
 // bottom tray opens upward and says so with ▴; this tool must not type a
 // second copy of that family (it did, as `v < ^ >`, and went red the day the
 // family changed under it).
-import { TRAY_FOLD_GLYPH } from '../src/ui/components/foldGlyph.js';
+import { TRAY_FOLD_GLYPH } from '../../src/ui/components/foldGlyph.js';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const SHOTS = process.argv.includes('--shots');
 const SHOT_DIR = resolve(ROOT, 'scratch', 'tray-components');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));

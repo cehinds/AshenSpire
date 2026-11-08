@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/weightclass-census.mjs — the Weight Class A/B evidence instrument.
+// tools/attic/weightclass-census.mjs — the Weight Class A/B evidence instrument.
 //
 // For every class x attribute preset x starting armour set x (right hand x
 // left hand) choice the character creator can produce — each hand offered
@@ -10,29 +10,29 @@
 // this branch ships, how are the shipped kits distributed across
 // Light / Medium / Heavy — and does any kit start Heavy by accident?
 //
-//   node tools/weightclass-census.mjs                    the table + one verdict line
-//   node tools/weightclass-census.mjs --capacity-base=N  the same census as if
+//   node tools/attic/weightclass-census.mjs                    the table + one verdict line
+//   node tools/attic/weightclass-census.mjs --capacity-base=N  the same census as if
 //                                      mechanics.weight.capacityBase were N (the
 //                                      A/B for the contract's feasibility flag —
 //                                      no data changes; the delta rides as a bonus)
 //
 // Terminal verdict form (tools/verdict.mjs): "weightclass-census: OK — N checks passed".
 
-import { createRegistries } from '../src/model/registries.js';
-import { contentBundle } from '../src/content/index.js';
-import { createRunState } from '../src/model/state.js';
-import { playerLoadReceipt, ARMOUR_WEIGHT_RULE } from '../src/model/statProjection.js';
-import { attributeRules } from '../src/content/attributes.js';
-import { creationHandChoices } from '../src/model/characterCreation.js';
-import { creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, orderedAttributes } from '../src/model/attributes.js';
-import { itemUpgradeTiers } from '../src/model/itemUpgrades.js';
-import { startingHandsRequirementFailure } from '../src/model/loadout.js';
-import { mechanics } from '../src/framework/data/mechanics.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRunState } from '../../src/model/state.js';
+import { playerLoadReceipt, ARMOUR_WEIGHT_RULE } from '../../src/model/statProjection.js';
+import { attributeRules } from '../../src/content/attributes.js';
+import { creationHandChoices } from '../../src/model/characterCreation.js';
+import { creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, orderedAttributes } from '../../src/model/attributes.js';
+import { itemUpgradeTiers } from '../../src/model/itemUpgrades.js';
+import { startingHandsRequirementFailure } from '../../src/model/loadout.js';
+import { mechanics } from '../../src/framework/data/mechanics.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const creation = JSON.parse(readFileSync(resolve(ROOT, 'content/source/characterCreation.json'), 'utf8'));
 const REG = createRegistries(contentBundle);
 const BASE_ARG = (process.argv.find((a) => a.startsWith('--capacity-base=')) || '').slice('--capacity-base='.length);
