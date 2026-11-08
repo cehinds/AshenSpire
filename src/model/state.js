@@ -124,6 +124,43 @@ export const MAX_CARD_RANK = 99;
 // (model/runStorage.js); a 25 save loads unchanged, an older build keeps a 26 one.
 export const RUN_SCHEMA_VERSION = 26;
 
+// Schema versions named for the version that FIRST carries each field. A run is
+// "pre-X" when its schemaVersion is below RUN_SCHEMA_X (migrateRunSchema).
+// The oldest schema version this build reads.
+const RUN_SCHEMA_FIRST = 1;
+// v1 is the only legacy schema.
+const RUN_SCHEMA_LEGACY_END = 2;
+// The flask capacity ledger (flaskCharges) first appears in v3.
+const RUN_SCHEMA_FLASK_LEDGER = 3;
+// Versions below 4 predate the HP ledger.
+const RUN_SCHEMA_HP_LEDGER = 4;
+// Versions below 5 predate the equipment pools.
+const RUN_SCHEMA_EQUIPMENT_POOLS = 5;
+// seatOrder first appears in v6.
+const RUN_SCHEMA_SEATS = 6;
+// zones first appear in v7.
+const RUN_SCHEMA_ZONES = 7;
+// The skill ledger first appears in v8.
+const RUN_SCHEMA_SKILLS = 8;
+// Class tree picks (coreTags) first appear in v9.
+const RUN_SCHEMA_CORE_TAGS = 9;
+// XP levels first appear in v10.
+const RUN_SCHEMA_XP_LEVELS = 10;
+// The sideboard first appears in v11.
+const RUN_SCHEMA_SIDEBOARD = 11;
+// The refined-stone purse first appears in v13.
+const RUN_SCHEMA_REFINED_STONES = 13;
+// A shop stock kind first appears in v14.
+const RUN_SCHEMA_SHOP_KINDS = 14;
+// The sigil inventory first appears in v15.
+const RUN_SCHEMA_SIGILS = 15;
+// Consumables and companions first appear in v16.
+const RUN_SCHEMA_CONSUMABLES = 16;
+// The training pool first appears in v18.
+const RUN_SCHEMA_TRAINING_POOL = 18;
+// Attuned sigils first appear in v19.
+const RUN_SCHEMA_ATTUNED_SIGILS = 19;
+
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
   let n = 0;
@@ -1751,49 +1788,53 @@ export function initializeRunFlaskCharges(run, registries) {
  */
 export function migrateRunSchema(run) {
   if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
+  const v = run.schemaVersion;
+  if (!Number.isInteger(v) || v < RUN_SCHEMA_FIRST || v > RUN_SCHEMA_VERSION) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
+  }
   const originalVersion = run.schemaVersion;
-  const legacy = run.schemaVersion === 1;
-  const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
-  const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
-  const preEquipmentPools = [1, 2, 3, 4].includes(run.schemaVersion);
+  const legacy = v < RUN_SCHEMA_LEGACY_END;
+  const preLedger = v < RUN_SCHEMA_FLASK_LEDGER; // v2: no flaskCharges capacity ledger yet
+  const preHpLedger = v < RUN_SCHEMA_HP_LEDGER;
+  const preEquipmentPools = v < RUN_SCHEMA_EQUIPMENT_POOLS;
   // v5 and older: no seatOrder. Admitted here; FILLED at the load door
   // (save.js), which has the registries this file does not (SPEC §13.4).
-  const preSeats = [1, 2, 3, 4, 5].includes(run.schemaVersion);
+  const preSeats = v < RUN_SCHEMA_SEATS;
   // v6 and older: no zones. Filled HERE, not at the load door, because the
   // projection reads only the run's own fields (projectZones is registry-free).
-  const preZones = [1, 2, 3, 4, 5, 6].includes(run.schemaVersion);
+  const preZones = v < RUN_SCHEMA_ZONES;
   // v7 and older: no skill ledger. Filled HERE with the empty ledger — a run
   // that never recorded a hit has none, and the shape wants the object.
-  const preSkills = [1, 2, 3, 4, 5, 6, 7].includes(run.schemaVersion);
+  const preSkills = v < RUN_SCHEMA_SKILLS;
   // v8 and older: no class tree picks. Filled HERE with none (plan phase 5b).
-  const preCoreTags = [1, 2, 3, 4, 5, 6, 7, 8].includes(run.schemaVersion);
+  const preCoreTags = v < RUN_SCHEMA_CORE_TAGS;
   // v9 and older: levels were bought with cinders and counted in `levelUps`.
   // Filled HERE (plan phase 6): the displayed level those purchases reached,
   // no XP toward the next, nothing waiting — the points were spent as bought.
-  const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
+  const preXpLevels = v < RUN_SCHEMA_XP_LEVELS;
   // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
   // deck editor never touched has no owned card out of its deck.
-  const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
+  const preSideboard = v < RUN_SCHEMA_SIDEBOARD;
   // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
   // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
   // no refined stone was ever paid before the purse existed.
-  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
+  const preRefinedStones = v < RUN_SCHEMA_REFINED_STONES;
   // v13 and older: a shop stock without a kind. Filled HERE (SPEC §14.2): it
   // is a market offering today's shelves, and its shelves are kept as saved.
-  const preShopKinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(run.schemaVersion);
+  const preShopKinds = v < RUN_SCHEMA_SHOP_KINDS;
   // v14 and older: no sigil inventory. Filled HERE (SPEC §14.3): a run that
   // could not buy a sigil owns none and has cut no slot.
-  const preSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].includes(run.schemaVersion);
+  const preSigils = v < RUN_SCHEMA_SIGILS;
   // v15 and older: no consumables, no companions. Filled HERE (SPEC §14.3): a
   // run that could not buy either holds none.
-  const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
+  const preConsumables = v < RUN_SCHEMA_CONSUMABLES;
   // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
   // v17 and older: no training pool. Filled HERE with 0 (SPEC §14.5): no
   // respec could have refunded anything before the wise master existed.
-  const preTrainingPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(run.schemaVersion);
+  const preTrainingPool = v < RUN_SCHEMA_TRAINING_POOL;
   // v18 and older: no attuned sigils. Filled HERE with [] (SPEC §15.4): no
   // legendary could be attuned before the Sigils panel existed.
-  const preAttunedSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(run.schemaVersion);
+  const preAttunedSigils = v < RUN_SCHEMA_ATTUNED_SIGILS;
   // v19 and older: no dealt-deck rule. Nothing is filled HERE: the heal
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
@@ -1804,9 +1845,6 @@ export function migrateRunSchema(run) {
   // before this runs, so there is nothing to fill. The bump exists so an OLDER
   // build refuses and keeps a v26 slot (save.js 'newer') rather than reading a
   // run with no pinned profile as corrupt and archiving it.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
-  }
   if (run.combatExpansionVersion === 2) {
     bringCombatExpansionRulesForward(run.combatExpansionRules);
     // A run saved in (or just after) a fight carries its own frozen copy in
