@@ -360,9 +360,12 @@ test('planCuts: release and main ordering is right with a test event between the
 
 test('planRun: a test event is paged from the test ref and applied once; a re-run after its record plans nothing', async () => {
   const e = tev(70, 'b', 'c', T1);
-  const cuts = await planRun({ fetchPage: feedOf([e]), messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
+  const cuts = await planRun({ fetchPage: feedOf([e]), messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {}, withTest: true });
   assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['70', 'test']]);
-  const again = await planRun({ fetchPage: feedOf([e]), messages: [advanceMessage('0.7.4', 'test', 'c'.repeat(7), e)], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {} });
+  // Without --with-test (an old-yml caller) the test ref is never read and no test cut is planned.
+  const old = await planRun({ fetchPage: feedOf([e, ev(71, 'release', 'p', 'q', 'push', T1)]), messages: [], isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(old.map((c) => c.branch), ['release']);
+  const again = await planRun({ fetchPage: feedOf([e]), messages: [advanceMessage('0.7.4', 'test', 'c'.repeat(7), e)], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {}, withTest: true });
   assert.deepEqual(again, []);
 });
 
@@ -393,4 +396,17 @@ test('bumpOrdinal: force adds 1 on an unchanged tree without resetting; the defa
     assert.equal(forced.ordinal, base.ordinal + 1);
     assert.equal(readOrdinal(root).release, base.release, 'same release: no reset');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('planCuts: restore-test-branch re-creating `test` is not a cut; a creation still is on release and main', () => {
+  const z = '0'.repeat(40);
+  const events = [tev(1, z, 'abc', T1, 'branch_creation'), ev(2, 'release', z, 'def', 'branch_creation', T1), ev(3, 'main', z, 'fed', 'branch_creation', T1)];
+  assert.deepEqual(planCuts(events, null, noBots).map((c) => [c.id, c.branch]), [['2', 'release'], ['3', 'main']]);
+});
+
+test('the test-record subject buildversion row H licenses is exactly the one advanceSubject writes', async () => {
+  const { TEST_RECORD_SUBJECT } = await import('../tools/buildversion.mjs');
+  assert.match(advanceSubject('0.7.4', 'test', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
+  assert.doesNotMatch(advanceSubject('0.7.4', 'release', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
+  assert.doesNotMatch(advanceSubject('0.7.4', 'main', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
 });

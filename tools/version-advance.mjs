@@ -21,6 +21,12 @@
 // when a commit on HEAD carries `Version-Advance-Event: <id> ...`, else 1; the workflow runs it
 // before each bump, so a re-run never bumps twice. `--message <triple> <branch> <sha> <id> <ts>`
 // prints the commit message (subject plus that trailer).
+// `--plan` lists release and main events only; `--with-test` adds the push-to-test BUILD events. The new
+// version-advance.yml passes it. A workflow run starts from the pushed branch's OWN copy of the yml, so
+// until release and main carry the new yml an old-yml run (which exits 1 on any branch but release or
+// main) must never be handed a test event: without the flag it never is. The accepted cost: a test event
+// can be skipped when an older-yml run records a later release/main event and so advances the cursor
+// past it (one missed build bump).
 // .github/workflows/version-advance.yml is the caller; a person never runs it.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -128,7 +134,7 @@ export const kindOfBranch = (branch) => ({ release: 'candidate', main: 'minor', 
 /**
  * The cuts owed, oldest first. Pure. `events` are feed entries (any order, any overlap);
  * `cursor` is the newest recorded {id, timestamp} or null (then SINCE). An event is a cut when it
- * is after the cursor, on release, main or test (test only after TEST_SINCE), of a pushing type (branch_creation counts; its
+ * is after the cursor, on release, main or test (test only after TEST_SINCE, and never a branch_creation), of a pushing type (branch_creation counts on release and main; its
  * all-zero before is a cut, not a bot check) and not bot-only per `isBotOnly(event)`.
  * branch_deletion and other types are dropped. Copies of one event (same ref, before, after,
  * timestamp) are one cut, under the lowest id. Each cut: {id, timestamp, branch, before, after}.
@@ -143,7 +149,9 @@ export function planCuts(events, cursor, isBotOnly) {
   for (const e of [...events].sort(cmpEvents)) {
     const branch = eventBranch(e);
     if (!branch || !CUT_TYPES.has(e.activity_type)) continue;
-    if (branch === 'test' && Date.parse(e.timestamp) <= Date.parse(TEST_SINCE)) continue;
+    // test: history before TEST_SINCE is not owed, and a branch_creation is restore-test-branch.yml
+    // recreating `test` after a test -> release merge deleted it, not a push (it would end every release at .1).
+    if (branch === 'test' && (e.activity_type === 'branch_creation' || Date.parse(e.timestamp) <= Date.parse(TEST_SINCE))) continue;
     const key = [e.ref, e.before, e.after, Date.parse(e.timestamp)].join('|');
     const rep = groups.get(key);
     if (!rep) groups.set(key, e);
@@ -212,11 +220,11 @@ export async function awaitLag({ fetchPage, ref, after, sleep, tries = 5, firstD
  * FailClosed (and the caller writes nothing) on feed lag or a lost cursor. `trigger` is
  * {ref, after} for a push event, null for a dispatch.
  */
-export async function planRun({ fetchPage, messages, trigger = null, isBotOnly, sleep, since = SINCE }) {
+export async function planRun({ fetchPage, messages, trigger = null, isBotOnly, sleep, since = SINCE, withTest = false }) {
   const cursor = latestRecord(parseRecords(messages));
   if (trigger && trigger.after && !ZERO_SHA.test(trigger.after)) await awaitLag({ fetchPage, ref: trigger.ref, after: trigger.after, sleep });
   const events = [];
-  for (const ref of ['refs/heads/release', 'refs/heads/main', 'refs/heads/test']) events.push(...await collectEvents({ fetchPage, ref, cursor, since }));
+  for (const ref of withTest ? ['refs/heads/release', 'refs/heads/main', 'refs/heads/test'] : ['refs/heads/release', 'refs/heads/main']) events.push(...await collectEvents({ fetchPage, ref, cursor, since }));
   return planCuts(events, cursor, isBotOnly);
 }
 
@@ -257,13 +265,13 @@ function realIsBotOnly(repo, root) {
 
 const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function plan(root) {
+async function plan(root, withTest) {
   const repo = process.env.GITHUB_REPOSITORY;
   if (!repo) throw new Error('GITHUB_REPOSITORY is required for --plan');
   const messages = execFileSync('git', ['log', '--format=%B%x1e'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\x1e');
   const trigger = process.env.EVENT_NAME === 'push' ? { ref: process.env.EVENT_REF, after: process.env.EVENT_AFTER } : null;
   try {
-    const cuts = await planRun({ fetchPage: realFetchPage(repo), messages, trigger, isBotOnly: realIsBotOnly(repo, root), sleep: sleepMs });
+    const cuts = await planRun({ fetchPage: realFetchPage(repo), messages, trigger, isBotOnly: realIsBotOnly(repo, root), sleep: sleepMs, withTest });
     for (const c of cuts) console.log(`${c.id} ${c.timestamp} ${c.branch} ${c.after}`);
     return 0;
   } catch (error) {
@@ -274,7 +282,7 @@ async function plan(root) {
 }
 
 async function main(argv, root = ROOT) {
-  if (argv.includes('--plan')) return plan(root);
+  if (argv.includes('--plan')) return plan(root, argv.includes('--with-test'));
   const de = argv.indexOf('--done-event');
   if (de >= 0) {
     const messages = execFileSync('git', ['log', '--format=%B%x1e'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\x1e');
