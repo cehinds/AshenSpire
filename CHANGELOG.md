@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-08
+
+- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.32`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+
 ## 2026-11-07
 
-- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.30`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+- **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
 - **Tool cleanup** ([#2653](https://github.com/cehinds/AshenSpire/pull/2653), `0.7.4.26`). The HUD studio's character-creation mock-ups no longer show the retired keepsake step, and the combat audit waits for the reward screen correctly.
