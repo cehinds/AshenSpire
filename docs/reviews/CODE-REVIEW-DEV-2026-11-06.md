@@ -356,7 +356,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
 - [ ] `runOpcode` → `OPCODE_HANDLERS` map (H3)
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
-- [ ] `migrateRunSchema`: `schemaVersion < N` with named constants (Low)
+- [x] `migrateRunSchema`: `schemaVersion < N` with named constants (Low) — #2657
 - [ ] `engine/combat.js`: name the `A`/`F`/`R`/`S` namespace imports (Low)
 
 ### 6. Hygiene
