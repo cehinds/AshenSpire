@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (327 tool files, plus the 9 subfolders)
+## Tools something references (313 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -74,35 +74,28 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
 | `card-art-contact-sheets.py` | QA montage of existing artwork, never an artwork-generation step. | docs docs/EXTENDED-CARD-ART.md |
 | `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
-| `card-components.mjs`, `card-layout-save.mjs`, `card-master-qa.mjs`, `card-rank-layers-qa.mjs`, `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-components.mjs`, `card-layout-save.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
 | `card-components.test.mjs` | (no header comment) | tests run-node (discovered: every *.test.mjs) |
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
 | `card-one-shape.mjs` | card-one-shape — THE PLAYING CARD HAS ONE SHAPE, MEASURED ON REAL | tests card-size-tuning; docs docs/COMPONENT-CATALOG.md, docs/COMPONENT-MODEL-ARCHITECTURE.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
 | `card-value-index-oracle.mjs` | Record the independent pre-index implementation against today's content. | tests card-value-tag-index |
 | `catalog-json.mjs` | Encode repeated JSON string tokens, not JavaScript. Author JSON stays readable. | tests buildversion-schema-versions, catalog-json, game-profile-cli +1; tools content-build, game-config |
 | `character-creation-check.mjs` | Focused real-Chromium verification of character creation's stats step. | tests card-size-tuning; tools modal-shell-contract; docs DEVELOPER.md; other .gitignore, docs/architecture-handoff/pre-existing-changes.txt |
-| `character-creation-components-qa.mjs` | Photograph actual production components from the existing shot catalog. | docs DEVELOPER.md, docs/ai/CHARACTER-CREATION-HANDOFF.md |
 | `characters-convert.mjs` | Players and enemies in one shape (owner 2026-10-17): games/ashenspire/packs/core/characters.json. | tools enemy-decks-convert; docs engine/modules/characters/guide.md |
 | `check-feature-pages.mjs` | Verify public delivery only. Never download or execute a feature game's HTML. | wf pages-builds; tests art-migrate-trigger, check-feature-pages |
 | `class-loadouts.mjs` | Observed-red contract: equipment-bound core roles plus one class signature. | tests engine.test.js; tools cross-class-equipment, plantsites-baseline.json |
 | `class-smash-export.py` | Export approved whole-strip class Smash art with one shared world registration. | tests class-smash-export; docs docs/ART-AUTHORING.md; other src/content/classSmashAnimations.js |
-| `class-smash-gameplay-qa.mjs` | (no header comment) | docs pose-studio/stances/class-smash/qa/README.md |
 | `click-impact-card.mjs` | (no header comment) | tests click-impact-card; tools click-impact-probe, combat-action-row, motion-probe +1 |
 | `click-impact-probe.mjs` | click-impact-probe — how long from the click that plays a card | wf quick-start; tests beat-order, click-impact; tools map-tap-latency; docs DEVELOPER.md, docs/FINISH.md, docs/preview/combat-targeting-1115/README.md +2; other docs/preview/combat-targeting-1127/results.json, src/ui/fx.js |
 | `click-impact-rounds.mjs` | tools/click-impact-rounds.mjs — the click-impact probe's judgement, apart from the drive | tests click-impact-rounds; tools click-impact-probe |
 | `click-impact-stages.mjs` | Independent acceptance policy: the current ordered presentation owes one gap at each stage boundary and half-rate sprites. | tests click-impact-stages; tools click-impact-probe |
 | `closedsets.mjs` | closedsets — Viki, 2026-08-08. | tests closedsets, run-node, spell-damage-dealt-mult; tools doorplant, onevocab; docs docs/plan-progression-and-property-system.md; other src/buildversion.js, src/content/encounters/weald.js +2 |
 | `collect-feature-previews.mjs` | Trusted Pages collector: download data only; never run a feature checkout. | wf pages-builds; tests art-migrate-trigger, collect-feature-previews; tools combat-audit/hosted-preview |
-| `combat-action-row.mjs` | combat-action-row — #21's single-owner combat action-row gate. | tools plantsites-baseline.json; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/armamentRadial.js +1 |
-| `combat-default-weapons-qa.mjs` | Paid plays in a controlled registered-card encounter; no renderer/timeline patches. | docs pose-studio/stances/class-smash/qa/default-weapons/README.md |
-| `combat-effects-ship.mjs`, `combat-expansion-smoke.mjs`, `combat-layer-qa.mjs`, `combat-option-c-qa.mjs`, `combat-size-qa.mjs`, `combat-sprite-scale-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
-| `combat-feel-probe.mjs` | Real-browser hit-stop check: production CSS and painted stages, desktop and phone. | docs DEVELOPER.md |
+| `combat-expansion-smoke.mjs`, `combat-layer-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-formation-extra-qa.cjs` | (no header comment) | tests fetch-art |
-| `combat-hud-menus.mjs` | Trusted desktop/phone HUD menu checks. Source or --standalone; controlled | docs DEVELOPER.md |
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |
 | `combat-log-touch-qa.mjs` | Exercise the log with browser-native taps/drags. No app state injection. | tests combat-log-modal |
 | `combat-mobile-touch-qa.mjs` | Real touch gestures against the authored starting hand. No combat state is | tests combat-inspect-visibility |
-| `combat-save.mjs` | Focused acceptance for QA remediation #3: explicit combat saves preserve | tools plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
 | `combat-stances-gallery.mjs` | Real combat-UI held screenshots and registered-stage reference clips. | docs pose-studio/stances/combat-stances-gallery/README.md |
 | `combatant-overhead-qa.mjs` | (no header comment) | docs DEVELOPER.md |
 | `component-refs.mjs` | component-refs — cut each costume component out of its painting and | tools lowpoly-components.json; other .gitignore |
@@ -346,9 +339,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (71 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (85 files)
 
-These 71 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 85 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -379,11 +372,25 @@ These 71 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
 | `card-layer-editor-qa.mjs` | Compatibility entry point. The save QA uses an isolated copy of the game JSON. | tools card-layers/README.md |
 | `card-layout-save-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-master-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-rank-layers-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
 | `card-use-qa.mjs` | Actual selected-card inspection and hold-to-use flows, desktop and touch. |
+| `character-creation-components-qa.mjs` | Photograph actual production components from the existing shot catalog. | docs DEVELOPER.md, docs/ai/CHARACTER-CREATION-HANDOFF.md |
 | `class-book-browser.mjs` | (no header comment) |
 | `class-material-leaks.mjs` | class-material-leaks — catch cross-class material leaks statically. |
+| `class-smash-gameplay-qa.mjs` | (no header comment) | docs pose-studio/stances/class-smash/qa/README.md |
+| `combat-action-row.mjs` | combat-action-row — #21's single-owner combat action-row gate. | tools plantsites-baseline.json; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/armamentRadial.js +1 |
 | `combat-attached-details-qa.mjs`, `combat-card-stability-qa.mjs`, `combat-formation-qa.mjs`, `combat-ground-qa.mjs` | (no header comment) |
+| `combat-default-weapons-qa.mjs` | Paid plays in a controlled registered-card encounter; no renderer/timeline patches. | docs pose-studio/stances/class-smash/qa/default-weapons/README.md |
+| `combat-effects-ship.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
+| `combat-feel-probe.mjs` | Real-browser hit-stop check: production CSS and painted stages, desktop and phone. | docs DEVELOPER.md |
 | `combat-header-qa.mjs` | Verify real rendered header geometry and health after an authored enemy turn. |
+| `combat-hud-menus.mjs` | Trusted desktop/phone HUD menu checks. Source or --standalone; controlled | docs DEVELOPER.md |
+| `combat-option-c-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
+| `combat-save.mjs` | Focused acceptance for QA remediation #3: explicit combat saves preserve | tools plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
+| `combat-size-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
+| `combat-sprite-scale-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-sprite-selection-qa.mjs` | Real selection inputs exercise the visual emphasis without changing the |
 | `combat-target-clarity-qa.mjs` | Real combat targeting and stature regression; uses production renderer, art and input. |
 | `combatant-stage.mjs` | Rendered contract for the combat battlefield's vertical safe corridor. |

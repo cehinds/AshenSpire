@@ -79,6 +79,6 @@ It verifies grouped move/scale, saving, regeneration, reload, native card
 rendering, long-effect anchors, desktop/phone, stale/origin rejection and an
 export matching the canonical JSON byte-for-data.
 
-`node tools/card-master-qa.mjs` with `CARD_MASTER_OUT` set to a D: folder checks
+`node tools/attic/card-master-qa.mjs` with `CARD_MASTER_OUT` set to a D: folder checks
 component PNG editing and saving, direct master-file regeneration, real combat
 rendering with live content bindings, and desktop/phone/inspection screenshots.

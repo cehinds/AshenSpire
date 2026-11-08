@@ -70,14 +70,6 @@
       "count": 6,
       "digest": "c623c7dfccf25f64"
     },
-    "tools/combat-action-row.mjs": {
-      "count": 6,
-      "digest": "359c8fa846ac4a93"
-    },
-    "tools/combat-save.mjs": {
-      "count": 3,
-      "digest": "7f42d1401647d9b4"
-    },
     "tools/confirmation-modal.mjs": {
       "count": 10,
       "digest": "a983e412b7d5bd49"

@@ -476,7 +476,7 @@ stages expose their existing authored idle bounds. The shared formation fit
 reduces all art together when space is limited, retaining per-row depth and
 ground anchors. Names, health bars and their inspection targets do not shrink.
 Run `node --test tests/combat-sprite-scale.test.mjs` and
-`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`node tools/attic/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
 `COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
 Playwright and Edge and covers elite/boss ratios, feet, health bars, card
 selection and returning from an enemy turn at desktop and narrow widths.
@@ -527,7 +527,7 @@ holds — the merchant's shelves, a mount's deck list — is authored once at
 `.card-shelf` in styles/kit.css, and checked by
 `node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
-Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+Combat HUD regression checks: `node tools/attic/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
 separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
 room at a desk and a phone width and asserts the facts the 2026-09-11 review's
@@ -975,10 +975,10 @@ Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
 
 ```bash
-node tools/combat-save.mjs
-node tools/combat-save.mjs --selftest
+node tools/attic/combat-save.mjs
+node tools/attic/combat-save.mjs --selftest
 # after the one authorized artifact regeneration:
-node tools/combat-save.mjs --artifact --screenshots
+node tools/attic/combat-save.mjs --artifact --screenshots
 ```
 
 ## HUD layout tokens (`content/hud-layout/<form-factor>.json`)
@@ -1413,7 +1413,7 @@ Every folio has a direct `#folio-<component-id>` link. The new page heading,
 panel, choice tile, material/trim/body layers, navigation, and canonical feat
 browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
 production renderers. Feat inspection grants nothing with the current allowance
-of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+of zero. `node tools/attic/character-creation-components-qa.mjs --out /tmp/creation-components`
 captures each registered specimen at desktop and phone widths and checks DOM
 identity, layout fit, runtime errors, and interaction state. Add `--artifact`
 to check the frozen `build/download/AshenSpire.html` build after integration.
@@ -1610,7 +1610,7 @@ Settings → Advanced → Progression controls starting stat pools, class attrib
 
 ### Combat hit-stop validation
 
-Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
+Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/attic/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
 
 ### Alternative combat art
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/combat-action-row.mjs — #21's single-owner combat action-row gate.
+// tools/attic/combat-action-row.mjs — #21's single-owner combat action-row gate.
 //
 // The real ?shot=combat door supplies the hand, settings, input wiring, and
 // rendered controls. This instrument measures the WGC6 footer: five persistent
@@ -18,21 +18,21 @@
 // shows Discard and Exhaust separately and closes by its one Close.
 //
 // Usage:
-//   node tools/combat-action-row.mjs
-//   node tools/combat-action-row.mjs --only 884x1326 --text XL --hand 7
-//   node tools/combat-action-row.mjs --standalone
-//   node tools/combat-action-row.mjs --shots docs/preview --label before
-//   node tools/combat-action-row.mjs --selftest
+//   node tools/attic/combat-action-row.mjs
+//   node tools/attic/combat-action-row.mjs --only 884x1326 --text XL --hand 7
+//   node tools/attic/combat-action-row.mjs --standalone
+//   node tools/attic/combat-action-row.mjs --shots docs/preview --label before
+//   node tools/attic/combat-action-row.mjs --selftest
 //
 // Exit 0 = every measured cell held; 1 = product finding; 2 = no cell/browser.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[at + 1] : null; };
 const standalone = args.includes('--standalone');
@@ -44,7 +44,7 @@ const evidenceLabel = argOf('--label') || 'evidence';
 const soloOnly = args.includes('--solo-only'); // accepted for the selftest argv; solo is the only board
 
 if (args.includes('--selftest') || args.includes('--selftest-source')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const sourcePlants = [
     {
       name: 'the five controls lose their one semantic owner',

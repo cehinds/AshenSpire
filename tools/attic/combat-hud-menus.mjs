@@ -4,10 +4,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(process.env.ASHENSPIRE_HUD_OUT || join(ROOT, 'outputs', 'combat-hud-menus'));
 const STANDALONE = process.argv.includes('--standalone');
 const APP_PATH = STANDALONE ? '/AshenSpire.html' : '/';

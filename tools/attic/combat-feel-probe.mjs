@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');

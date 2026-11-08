@@ -1,5 +1,5 @@
 // Photograph actual production components from the existing shot catalog.
-// node tools/character-creation-components-qa.mjs [--artifact] [--out DIR]
+// node tools/attic/character-creation-components-qa.mjs [--artifact] [--out DIR]
 // Browser plugin not available: use the repository's Playwright/CDP workflow.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -7,12 +7,12 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || (process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES ? `${process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES}/playwright` : 'playwright'));
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const outputArgument = args.indexOf('--out');
 const out = resolve(outputArgument >= 0 ? args[outputArgument + 1] : resolve(root, 'outputs/character-creation-components'));

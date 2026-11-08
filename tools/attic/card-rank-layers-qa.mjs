@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import {CARD_COMPONENTS} from '../src/content/cardComponents.generated.js';
+import {CARD_COMPONENTS} from '../../src/content/cardComponents.generated.js';
 import {resolve} from 'node:path';
 import {mkdirSync} from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-import {launchBrowser} from './browser.mjs';
-import {serve} from './serve.mjs';
+import {launchBrowser} from '../browser.mjs';
+import {serve} from '../serve.mjs';
 const output=resolve(process.env.RANK_QA_OUT || 'scratch/qa/card-rank-layers');
 mkdirSync(output,{recursive:true});
 const server=await serve({root:process.cwd(),port:0,open:false});

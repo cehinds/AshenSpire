@@ -5,10 +5,10 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
 const CAPTURE_SHOTS = process.argv.includes('--screenshots');
 const ARTIFACT = process.argv.includes('--artifact');
@@ -23,7 +23,7 @@ const browserPath = [
 ].find((candidate) => candidate && existsSync(candidate));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const code = await doorSelftest({
     tool: 'combat-save.mjs',
     timeoutMs: 90000,

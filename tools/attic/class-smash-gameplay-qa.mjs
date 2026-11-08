@@ -1,11 +1,11 @@
-import {optionalClassSmashAudioProbe,classSmashConsoleNotice} from './lib/class-smash-qa-notices.mjs';
+import {optionalClassSmashAudioProbe,classSmashConsoleNotice} from '../lib/class-smash-qa-notices.mjs';
 // Actual paid UI plays in the unpatched compiled game; Shot Kit sets the fixture.
 import {createRequire} from 'node:module';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
-import {launchBrowser} from './browser.mjs';
-import {classSmashAnimations} from '../src/content/classSmashAnimations.js';
+import {launchBrowser} from '../browser.mjs';
+import {classSmashAnimations} from '../../src/content/classSmashAnimations.js';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url=process.env.QA_BUILD_URL || 'http://127.0.0.1:4402/dist/AshenSpire.html';
 const out=resolve(process.env.QA_OUTPUT || '/tmp/class-smash-qa');mkdirSync(out,{recursive:true});
