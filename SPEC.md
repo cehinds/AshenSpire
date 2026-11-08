@@ -2675,101 +2675,28 @@ What does change for a **new** run on an existing seed: which seat the run opens
 - The delivering PR is the first of the `0.7` line and **proposes `0.7.1`** (`contentBundle.version`, `src/content/index.js`): a new run-order system live for players with its save-schema migration is a MINOR under `docs/versioning.md` rule 2, and the third component is the first candidate of that line. The owner's release cut is what makes it `0.7.0`.
 - Delivered as one feature PR into `dev` after this section merges, with: `content/seats.js`; encounter files re-homed; schema and validation; `engine/encounters.js`, `engine/actmap.js`, `main.js`, `tools/runsim.mjs` callers; `model/state.js` v6 and migration; `model/environmentArt.js`; Custom Run pin; HUD/map labels; `balance.seatTiers` with BALANCE.md numbers; tests named above plus `tests/seats.test.mjs`; a CHANGELOG receipt.
 
-## World Journey: authored atlas and seeded routes
+## Shared armor sets
+Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs the listed stat at 3.
 
-World Journey is a selectable run mode alongside the existing Classic Climb.
-It uses a fixed square world painting spanning five biomes. Geography and landmark
-positions are authored content; a seed selects an active connected route through
-that geography. The initial content revision has 200 candidate world nodes and a
-profile targeting 20 active nodes. Local points do not consume the world budget.
+Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
 
-Every valid journey includes three ordered anchor roles: starting city, major
-city, and final legacy dungeon. Profiles pin IDs or filter eligible candidates.
-Only the selected anchors are guaranteed. Other landmarks and regions vary per
-run; visiting every region is optional. The main route and alternatives have
-separate configurable limits. Alternatives reconnect toward the final dungeon.
-A generator must reject impossible profiles with an actionable reason; it cannot
-silently remove anchors, ignore exclusions, or change the budget. Cross-region
-junctions are authored edges. Generation is deterministic by seed, profile version,
-and content revision. Saved manifests retain chosen node and edge IDs, encounter
-outcomes and content revision, rather than regenerating when resumed.
+- Tags stay in `tagging.csv`; `inventoryArtKey` picks the item illustration.
+- `sharedOutfitArt.js` picks a distinct sprite collection per class/outfit combination (16, incl. readiness, defeat); `artClassId` plus `artKey` is the classic-rig fallback.
+- Card review page shows all four wearers per outfit, with selectable combat poses.
 
-World nodes use stable IDs. Inspecting a node never travels. Travel requires a
-currently available connection and any authored conditions. Completion, discovery,
-service claims and quest state belong to the run, not the content tables. World
-terrain starts as indistinct parchment and reveals around discovered nodes.
-Undiscovered nodes do not expose names, local maps, services or boss identities.
-Inactive content remains unavailable for that run. Completed encounters cannot be
-farmed by revisiting; eligible services retain stock and one-time claims.
+#### Notes and history
+Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
 
-Major landmarks render as separate illustrated overlays with hover and keyboard
-focus enlargement. Selecting one opens a single location dialog, with an interior
-map and a detail pane for the selected fixed local point. On narrow screens the
-pane follows the map. Cities have fixed service and quest sites; dungeons have
-fixed entrance, junction, objective and boss sites. Availability can vary without
-moving a site. Travel/Enter and service actions are explicit, separate from
-inspection. Escape closes the dialog and restores focus. Touch does not require
-hover. Region, location and node bindings select appropriate combat scenery.
+## New-game opening presentation
 
-Encounter resolution is explicit node encounter, then node enemy-pool override,
-then region default. A final dungeon requires an explicit boss encounter and never
-falls back to a random ordinary enemy. Encounters reference the existing enemy
-registry by enemy ID. Service and quest handlers use validated named operations.
-Gate conditions reference obtainable objectives; mandatory routes must remain
-solvable. The final selected dungeon boss ends World Journey in victory, without
-creating a second procedural act. Classic runs retain their existing progression.
+Solo new games may show a configurable prologue after creation, starting draft and map generation, before map mounting. Five shipped scenes plus four empty editor slots that stay off (`PROLOGUE_DEFAULTS.scenes`, `src/model/prologue.js`); text and presentation overrides are in the advanced configuration snapshot/export.
+- Optional `run.prologue` = `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` - 1,reason?:'completed'|'skipped'}`.
+- Pending saves resume at saved scene boundary; absent or completed state never replays; preview writes none. `settings.prologueSeen` is a profile playback preference, not gameplay RNG.
+- Skip and Set forth each complete the presentation exactly once, without selecting or resolving a node. Default five-second transition and per-scene holds are independent; final arrival waits for the player; Settings and hidden pages suspend playback.
 
-Authoritative content is in third normal form. Maps, regions, nodes, placements,
-edges, assets, enemies, encounters, pools, services, quests and profiles have stable
-primary keys. Many-to-many relationships use junction tables. Local region IDs
-are derived through their owning world location; node rows do not copy map or
-region labels. Handler bindings belong to service types, not repeated placements.
-CSV and JSON imports use the same relational table contract as the database and
-reject duplicate keys, invalid references and unsupported rules atomically.
-Runtime indexes, joined view models and immutable run manifests are derived read
-models; they are not competing authoring sources. Content revisions identify the
-exact rules used by a run. A revision mismatch must be explained instead of
-silently regenerating the route.
+#### Notes and history
+Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
 
-A location dialog must never reroll the route or grant travel permission by
-itself; World Journey uses only explicitly implemented actions.
-
-### Shared armor sets (2026-09-19)
-Four sharedSet outfits are available in every class's Armoury after creation. They use the existing class-scoped armor save keys, with one identical authored row per wearer class. Empty unlock means owned; sharedSet excludes these rows from starting-armour selection and the exactly-one-baseline rule. Equip enforces current attributes at 3 (12 before the §13.4m lean rebase): Wayfarer Plate STR, Nightweave INT, Rite Vestments WIS, Gutter Leathers DEX. Existing starting outfits and saves remain valid.
-
-Bonuses are authored in outfits.csv using existing modifiers: Wayfarer +2 Defend Block/+4 max HP; Nightweave +1 class-power Potency/+1 max Mana; Rite +1 Defend Block/+6 max HP; Gutter +1 Strike Damage/+1 max Stamina. These are modest initial alternatives, not a claim of completed balance playtesting. Tags remain in tagging.csv. inventoryArtKey selects the item illustration. sharedOutfitArt.js selects a distinct painted sprite collection for each of the sixteen class/outfit combinations, including readiness and defeat. artClassId plus artKey remains the fallback for the classic composited rig. The card review page shows all four wearers per outfit with selectable combat poses.
-
-# Legacy dungeon integration (2026-09-19)
-
-The Thorn Matriarch, Glass Regent, and Furnace Saint boss entrances open their
-authored legacy dungeon before combat. Each contains 24 connected locations,
-two entrance roads, node lore, and four paired floor/background scene plates.
-Travel follows authored edges and requires resolving the current location.
-Conversations use the shared dialogue view. Hostile choices enter ordinary
-combat and its existing reward/checkpoint flow. Escape rolls 1–100 against
-clamp(40 + 3 × (Dexterity − 10), 10, 85), using the saved events RNG stream;
-success retreats unresolved, failure commits combat. Choices and rewards
-cannot be repeated by revisiting. Boss victory clears fog and enables leaving
-the dungeon, which performs the original boss location's progression.
-Optional run.legacyDungeon stores version, dungeon/parent identifiers,
-current/previous nodes, visited/resolved sets, cleared state and pending choice.
-Old saves without this field retain their original behavior. A saved combat
-inside a dungeon resumes the dungeon encounter, including in World Journey.
-Scene draw order is floor, background, actors, then interface.
-
-
-## New-game opening presentation (2026-09-19)
-
-Solo new games may show a configurable prologue (five shipped scenes by default, plus four empty editor slots that stay switched off; `PROLOGUE_DEFAULTS.scenes` in `src/model/prologue.js`) after creation and
-starting draft, after map generation but before map mounting. Its text and
-presentation overrides are included in the existing advanced configuration
-snapshot/export. Optional `run.prologue` is `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` − 1,reason?:'completed'|'skipped'}`.
-Pending saves resume at the saved scene boundary; absent or completed state does
-not replay. Preview does not write this state. `settings.prologueSeen` is a
-profile playback preference, never part of gameplay RNG. Skip and Set forth
-complete presentation exactly once without selecting/resolving a node. The
-five-second default transition and per-scene holds are independent; final
-arrival waits for the player. Settings and hidden pages suspend playback.
 ## Configurable stat pools, ratings, Poise and Ward
 
 New runs snapshot the rating rules. Existing configuration snapshots without ratingsVersion 1 keep legacy combat arithmetic. New Settings values apply at new-run creation, not retroactively to a saved character. New combat snapshots persist ratings, both impact meters *(only Poise in §13.4p's scope)*, break growth and fractional status-resistance remainders.
