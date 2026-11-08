@@ -2,6 +2,14 @@
   "version": "0.2.1",
   "tasks": [
     {
+      "taskLabel": "AshenSpire: Dev server (live reload)",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run dev"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
       "taskLabel": "AshenSpire: Play",
       "appliesTo": "/package.json",
       "type": "launch",

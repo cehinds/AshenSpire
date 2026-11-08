@@ -1,6 +1,6 @@
 # perf-g design: structural rework of the combat play path
 
-Read-only survey of worktree /home/user/wt/perf @ 0c62e7e6f4 (2026-10-30). Owner constraints: no visual change (pixels, animation timing, HUD frequency identical); yardstick `node tools/perf-probe.mjs --scenario combat,hand --runs 3 --throttle 4`; targets combat p95 ≤100 ms (now ~120-160), frames >33 ms ≤8% (now ~12-13%), combat blocking ≤2.8 s (now ~2.9-3.1), hand p95 ≤33 ms (now 33.4). Runtime-hash files are off limits (engine/kernel, engine/runtime, contracts, gameConfig.js, fixCoreMechanics.js, mechanicsKernel.js). src/model must not use document/window/localStorage.
+Read-only survey of worktree /home/user/wt/perf @ 0c62e7e6f4 (2026-10-30). Owner constraints: no visual change (pixels, animation timing, HUD frequency identical); yardstick `node tools/attic/perf-probe.mjs --scenario combat,hand --runs 3 --throttle 4`; targets combat p95 ≤100 ms (now ~120-160), frames >33 ms ≤8% (now ~12-13%), combat blocking ≤2.8 s (now ~2.9-3.1), hand p95 ≤33 ms (now 33.4). Runtime-hash files are off limits (engine/kernel, engine/runtime, contracts, gameConfig.js, fixCoreMechanics.js, mechanicsKernel.js). src/model must not use document/window/localStorage.
 
 ## 0. What a play costs today and where the full render sits
 

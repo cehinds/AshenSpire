@@ -14,11 +14,10 @@
 // The 2026-11-07 combat-rounds removal (cleanup 3i-A) repoints four mechanic manifests (engine/mechanics/*/mechanic.json legacy.file, hashed into the mechanics-runtime artifact) away from deleted files, which moves the runtime hash; it approves this edge again and adds the runtime before it (0fe8ce...); the cost.stamina manifest repoint (resolvedCardPlayCosts) moved it once more and adds b3c6a6.... No rule changed: a save from there keeps its own snapshotted rules.
 // The 2026-11-07 ratings-meter removal (cleanup 3i-B) marks the status.ward manifest authored, which moves the runtime hash once more and adds 965682.... No rule changed.
 // The 2026-11-07 keepsake removal (keepsake tag and mechanic dropped from the content and tag tables) moves the runtime hash again; it approves this edge again and adds the runtime before it (05977e...). No rule changed: a save from there keeps its own snapshotted rules.
-// The 2026-11-08 enemy level budget (characters defaults: no tier attributeBudget, attributeFill.floor, no attributeOffset; gameConfig enemyAttributeBudget) moves the runtime hash again; it approves this edge again and adds the runtime before it (802e46...). A save from there keeps its own snapshotted enemy rows.
+// The 2026-11-07 mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs, code review H2) moves the runtime hash again and adds 802e46.... No rule changed: a save from there keeps its own snapshotted rules.
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
+// The 2026-11-08 enemy level budget (characters defaults: no tier attributeBudget, attributeFill.floor, no attributeOffset; gameConfig enemyAttributeBudget) moves the runtime hash again; dev's runtime before it (a7efc3...) is now in PREVIOUS_RUNTIMES.
 const PREVIOUS_RUNTIMES = new Set([
-  // Explicit tag-budget compatibility repair; these profiles keep their own saved budgets.
-  'sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e',
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
   'sha256:df30b7dac0b52f363d4875c083955c3efeaf9cebe235ef3e523a2e8d58c0f2e5',
@@ -34,9 +33,10 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:b3c6a61e232308597b39a6d77757c473dd6d33b69fe3db848eabba1bc58421f6',
   'sha256:965682a58b40bf7289b03d5ca54789f45b08c55bc1e8db5619e3894a742a80a7',
   'sha256:05977e492f74b543357e606b8e3cf7a0dd8984bc746a4dda123c976c851f660b',
+  'sha256:a7efc394eb86299cf97384c6e3d451a645a93a8249f5ddcf4e17fe86c0768193',
   'sha256:802e46d530589fa030bd1a34ee07ec890ea678d4754c7320291a5d91b91cd1ff',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:50cd7878c98e298e6f8737561dc805fa40ff84e08b7d9e41c0b013a2ae27ab47';
+const FIXED_EVASION_RUNTIME = 'sha256:bd2ea8343c8a93dc5c569daa9ac65c8322928d7624077afb475a03192ac0d6e6';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

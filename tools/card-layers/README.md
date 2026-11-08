@@ -71,7 +71,7 @@ regions of shared source images.
 
 ## Browser verification
 
-Run `node tools/card-layout-save-qa.mjs` (or the compatibility entry point
+Run `node tools/attic/card-layout-save-qa.mjs` (or the compatibility entry point
 `card-layer-editor-qa.mjs`) with `PLAYWRIGHT_MODULE` and `CHROME`. Set
 `CARD_EDITOR_OUT` to a D: evidence folder. This creates an isolated copy of the
 game JSON and generated data; the user's saved layout is not overwritten.
@@ -79,6 +79,6 @@ It verifies grouped move/scale, saving, regeneration, reload, native card
 rendering, long-effect anchors, desktop/phone, stale/origin rejection and an
 export matching the canonical JSON byte-for-data.
 
-`node tools/card-master-qa.mjs` with `CARD_MASTER_OUT` set to a D: folder checks
+`node tools/attic/card-master-qa.mjs` with `CARD_MASTER_OUT` set to a D: folder checks
 component PNG editing and saving, direct master-file regeneration, real combat
 rendering with live content bindings, and desktop/phone/inspection screenshots.
