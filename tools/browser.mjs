@@ -671,6 +671,133 @@ export async function buildPageUrl(htmlPath, { over = process.env.ASHEN_BUILD_OV
 }
 
 // ---------------------------------------------------------------------------
+// connectCdp — THE ONE CDP CLIENT (CODE-REVIEW-DEV-2026-11-06 H5).
+// `launchBrowser` stops at `wsUrl`; some fifty tools then hand-copied the same
+// id counter, pending Map and session routing on top of it. This is that
+// client, once. Every copy had `ready`, `send(method, params, sessionId)` and
+// `close()`; a third of them also had event listeners, and two had a per-call
+// deadline plus a dead-socket check. Those are covered here; a tool that needs
+// more than this keeps its own wrapper over the returned object.
+//
+//   const cdp = connectCdp(wsUrl, { timeoutMs });
+//   await cdp.ready;                                  // the socket is open
+//   const r = await cdp.send('Runtime.evaluate', { expression }, sessionId);
+//   const off = cdp.on('Runtime.exceptionThrown', (params, sessionId) => {});
+//   const offAll = cdp.onEvent((message) => {});      // every event, whole frame
+//   const params = await cdp.once('Page.loadEventFired', pred?, ms?);
+//   cdp.close();
+//
+// A CDP error response rejects `send` with Error(message) carrying `.code`.
+// Anything the TRANSPORT does (a closed or errored socket, a deadline) rejects
+// with an Error tagged `cdp: true`, so a polling loop can tell a dead browser
+// from a page that has not painted yet. Closing or losing the socket rejects
+// every call still in flight, and a call sent after that rejects at once.
+// `timeoutMs` is a number, or a function of the method name (0 or less: none).
+// A deadline timer is unref'd, so it never keeps a finished process alive.
+// `WebSocketImpl` is for tests (tests/browser-connect-cdp.test.mjs).
+// ---------------------------------------------------------------------------
+export function connectCdp(wsUrl, { timeoutMs = 0, WebSocketImpl = globalThis.WebSocket } = {}) {
+  const ws = new WebSocketImpl(wsUrl);
+  const pending = new Map();
+  const byMethod = new Map();
+  const anyEvent = new Set();
+  let nextId = 1;
+  let dead = null;
+  let opened = false;
+  const transportError = (message) => Object.assign(new Error(message), { cdp: true });
+  const failAll = (why) => {
+    dead = dead || why;
+    for (const call of [...pending.values()]) {
+      clearTimeout(call.timer);
+      call.reject(transportError(`${call.method}: ${why}`));
+    }
+    pending.clear();
+  };
+  const detail = (e) => (e && (e.message || e.error?.message)) || 'no detail';
+
+  const ready = new Promise((resolve, reject) => {
+    ws.addEventListener('open', () => { opened = true; resolve(); });
+    ws.addEventListener('error', (e) => reject(transportError(`the DevTools socket failed to open (${detail(e)})`)));
+    ws.addEventListener('close', () => reject(transportError('the DevTools socket closed before it opened')));
+  });
+  ready.catch(() => {}); // a caller that never awaits `ready` must not crash on an unhandled rejection
+
+  ws.addEventListener('message', (event) => {
+    const m = JSON.parse(typeof event.data === 'string' ? event.data : String(event.data));
+    if (m.id != null && pending.has(m.id)) {
+      const call = pending.get(m.id);
+      pending.delete(m.id);
+      clearTimeout(call.timer);
+      if (m.error) call.reject(Object.assign(new Error(m.error.message), { code: m.error.code }));
+      else call.resolve(m.result);
+      return;
+    }
+    if (!m.method) return;
+    for (const fn of [...(byMethod.get(m.method) || [])]) fn(m.params, m.sessionId);
+    for (const fn of [...anyEvent]) fn(m);
+  });
+  ws.addEventListener('close', () => failAll('the DevTools socket closed with the command in flight (the browser is gone)'));
+  ws.addEventListener('error', (e) => { if (opened) failAll(`the DevTools socket errored with the command in flight (${detail(e)})`); });
+
+  function send(method, params = {}, sessionId) {
+    if (dead) return Promise.reject(transportError(`${method} was not sent: ${dead}`));
+    const id = nextId++;
+    return new Promise((resolve, reject) => {
+      const call = { method, resolve, reject, timer: null };
+      const ms = typeof timeoutMs === 'function' ? timeoutMs(method) : timeoutMs;
+      if (ms > 0) {
+        call.timer = setTimeout(() => {
+          pending.delete(id);
+          reject(transportError(`CDP ${method} did not answer within ${ms} ms (a blocked renderer or a dropped command)`));
+        }, ms);
+        call.timer.unref?.();
+      }
+      pending.set(id, call);
+      try {
+        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      } catch (error) {
+        pending.delete(id);
+        clearTimeout(call.timer);
+        reject(error);
+      }
+    });
+  }
+
+  function on(method, fn) {
+    if (!byMethod.has(method)) byMethod.set(method, new Set());
+    byMethod.get(method).add(fn);
+    return () => byMethod.get(method).delete(fn);
+  }
+
+  function onEvent(fn) {
+    anyEvent.add(fn);
+    return () => anyEvent.delete(fn);
+  }
+
+  function once(method, pred = () => true, ms = 0) {
+    return new Promise((resolve, reject) => {
+      let timer = null;
+      let off = () => {};
+      const settle = (fn, value) => { off(); clearTimeout(timer); fn(value); };
+      off = on(method, (params, sessionId) => { if (pred(params, sessionId)) settle(resolve, params); });
+      if (ms > 0) {
+        timer = setTimeout(() => settle(reject, transportError(`${method} did not arrive within ${ms} ms`)), ms);
+        timer.unref?.();
+      }
+      if (dead) settle(reject, transportError(`${method} was not awaited: ${dead}`));
+      else ws.addEventListener('close', () => settle(reject, transportError(`${method}: the DevTools socket closed before the event arrived`)), { once: true });
+    });
+  }
+
+  function close() {
+    failAll('the DevTools socket was closed with the command in flight');
+    ws.close();
+  }
+
+  return { ready, send, on, onEvent, once, close, ws };
+}
+
+// ---------------------------------------------------------------------------
 // THE SELFTEST — every scenario in its own private TMPDIR, so the leftover set
 // is this run's BY CONSTRUCTION rather than by a set difference over shared /tmp.
 // ---------------------------------------------------------------------------
