@@ -98,3 +98,11 @@
   box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
   padding: 0; font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .5);
 }
+/* A badge the stage squeezed out to leave the status tray room is counted in the tray's +N tile. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge[data-squeezed] { display: none !important; }
+/* A status pip's count sits inside the pip's lower-right corner, like Precision's, never below it where the row would clip it. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses .status-icon > :is(.as-pip-count, .stk) {
+  position: absolute !important; left: auto !important; top: auto !important; right: 0 !important; bottom: 0 !important;
+  width: auto; height: auto; min-width: calc(var(--icon-tray-size, var(--mh-badge)) * .38); padding: 0 calc(1px / var(--ui-zoom, 1));
+  font-size: max(calc(7px / var(--ui-zoom, 1)), calc(var(--icon-tray-size, var(--mh-badge)) * .4)) !important; line-height: 1.1; transform: none;
+}
