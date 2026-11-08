@@ -2675,25 +2675,7 @@ What does change for a **new** run on an existing seed: which seat the run opens
 - The delivering PR is the first of the `0.7` line and **proposes `0.7.1`** (`contentBundle.version`, `src/content/index.js`): a new run-order system live for players with its save-schema migration is a MINOR under `docs/versioning.md` rule 2, and the third component is the first candidate of that line. The owner's release cut is what makes it `0.7.0`.
 - Delivered as one feature PR into `dev` after this section merges, with: `content/seats.js`; encounter files re-homed; schema and validation; `engine/encounters.js`, `engine/actmap.js`, `main.js`, `tools/runsim.mjs` callers; `model/state.js` v6 and migration; `model/environmentArt.js`; Custom Run pin; HUD/map labels; `balance.seatTiers` with BALANCE.md numbers; tests named above plus `tests/seats.test.mjs`; a CHANGELOG receipt.
 
-## World Journey: authored atlas and seeded routes
-
-Selectable run mode beside Classic Climb: authored square five-biome map; seed picks a connected route. Geography and landmarks are authored.
-
-- Initial revision: 200 candidate nodes, profile targets 20 active nodes; local points use no budget.
-- Ordered anchors: starting city, major city, final legacy dungeon; profiles pin IDs or filter candidates, only selected anchors guaranteed. Other landmarks and regions vary; visiting all is optional.
-- Main route and alternatives have separate configurable limits. Alternatives reconnect toward final dungeon; cross-region junctions are authored edges. Impossible profiles are rejected with an actionable reason, never by silently dropping anchors, ignoring exclusions or changing the budget.
-- Deterministic by seed, profile version, content revision. Saved manifests keep node/edge IDs, encounter outcomes, content revision; resume never regenerates; a revision mismatch must be explained.
-- Stable node IDs. Inspecting never travels; travel needs an available connection plus authored conditions. Completion, discovery, service claims and quest state belong to the run, not content.
-- Terrain starts as parchment, revealed around discovered nodes; undiscovered nodes expose no names, local maps, services or bosses. Inactive content is unavailable for the run. Completed encounters cannot be farmed; eligible services keep stock and one-time claims.
-- Major landmarks are illustrated overlays, enlarged on hover/focus; selecting one opens one dialog: interior map plus detail pane (below map on narrow screens) for the selected fixed local point.
-- Fixed sites (availability may vary). Cities: service, quest. Dungeons: entrance, junction, objective, boss.
-- Travel/Enter and service actions are explicit and separate from inspection; only implemented actions exist. The dialog never rerolls the route or grants travel. Escape closes and restores focus. Touch needs no hover. Region/location/node bindings select combat scenery.
-- Encounter resolution: node encounter, then node enemy-pool override, then region default. A final dungeon needs an explicit boss encounter, never a random ordinary enemy. Encounters reference the enemy registry by ID; service/quest handlers use validated named operations. Gates reference obtainable objectives; mandatory routes stay solvable. Final selected dungeon boss ends World Journey in victory; no second act.
-- Third normal form: maps, regions, nodes, placements, edges, assets, enemies, encounters, pools, services, quests, profiles have stable primary keys; many-to-many uses junction tables.
-- Local region IDs derive via the owning world location; node rows copy no map/region labels; handler bindings belong to service types, not placements. CSV/JSON imports use the database's relational contract and atomically reject duplicate keys, invalid references, unsupported rules.
-- Runtime indexes, joined view models and immutable run manifests are derived read models, not sources. A content revision identifies a run's exact rules.
-
-### Shared armor sets
+## Shared armor sets
 Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs the listed stat at 3.
 
 Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
@@ -2701,17 +2683,6 @@ Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Bloc
 - Tags stay in `tagging.csv`; `inventoryArtKey` picks the item illustration.
 - `sharedOutfitArt.js` picks a distinct sprite collection per class/outfit combination (16, incl. readiness, defeat); `artClassId` plus `artKey` is the classic-rig fallback.
 - Card review page shows all four wearers per outfit, with selectable combat poses.
-
-#### Notes and history
-Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
-
-# Legacy dungeon integration
-
-The Thorn Matriarch, Glass Regent and Furnace Saint boss entrances open their authored legacy dungeon before combat: 24 connected locations, two entrance roads, node lore, four paired floor/background scene plates.
-- Travel follows authored edges and requires resolving current location. Conversations use the shared dialogue view; hostile choices enter ordinary combat and its reward/checkpoint flow. Choices/rewards cannot repeat.
-- Escape: 1-100 roll on the saved events RNG stream vs clamp(40 + 3 x (Dexterity - 10), 10, 85). Success retreats unresolved; failure commits combat. Boss victory clears fog and enables leaving, which performs the original boss location's progression.
-- Optional `run.legacyDungeon`: version, dungeon/parent IDs, current/previous nodes, visited/resolved sets, cleared state, pending choice. Saves without it keep original behavior.
-- Saved dungeon combat resumes the dungeon encounter, also in World Journey. Draw order: floor, background, actors, interface.
 
 #### Notes and history
 Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
