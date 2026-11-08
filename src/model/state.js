@@ -1129,9 +1129,8 @@ function checkProfileAndCombatRules(run, problems) {
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
+/** Phase: a pending combat outcome must hold the matching ended fight. */
+function checkPendingCombatOutcome(run, problems) {
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;
     if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
@@ -1145,6 +1144,12 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
   problems.push(...classMilestoneProblems(run));
   problems.push(...abilityDraftClaimProblems(run));
   if (run.classRewardLevels !== undefined) {
