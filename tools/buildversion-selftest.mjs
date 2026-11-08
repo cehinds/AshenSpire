@@ -672,6 +672,20 @@ function historyCorpus() {
     [bump, 'green',
       'a push-to-test record: the ordinal is raised by exactly one, same release, digest unchanged, HEAD subject is a version-advance test record — the licensed bump', null, false,
       (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
+    [bump, 'green',
+      'a promotion MERGE brings a test record plus a docs-only commit above it; the merge parent predates the bump (+1, digest unchanged) — the record is in parent..HEAD', null, false,
+      (dir) => {
+        const p = resolve(dir, ORDINAL_HOME);
+        const rec = readFileSync(p, 'utf8');
+        git(dir, 'reset', '-q', '--hard', 'HEAD~1');
+        git(dir, 'checkout', '-q', '-b', 'side');
+        writeFileSync(p, rec, 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`);
+        writeFileSync(resolve(dir, 'docs-only.md'), 'words\n');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'docs: words');
+        git(dir, 'checkout', '-q', 'main');
+        git(dir, 'merge', '-q', '--no-ff', '-m', 'Merge side into main', 'side');
+      }],
     [bump, 'red',
       'the same +1 with the digest unchanged, but HEAD is an ordinary commit and not a test record — still a hand edit', null, false,
       (dir) => git(dir, 'commit', '-q', '--amend', '-m', 'bump the ordinal by hand')],

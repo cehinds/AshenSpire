@@ -1442,12 +1442,13 @@ export function check(root = REPO_ROOT) {
         && (before.ordinal !== now.ordinal || before.release !== now.release);
       // THE ONE LICENSED EXCEPTION (owner, 2026-11-07): a push to `test` raises the ordinal by one
       // with the tree unchanged (version-advance.yml, bumpOrdinal force). Same release, parent + 1,
-      // and HEAD's own subject is a `version-advance: ... after test <sha>` record. Nothing else.
+      // and a commit in parent..HEAD (HEAD itself, or one a promotion merge brought in, a docs-only
+      // commit may sit above the bump) has a `version-advance: ... after test <sha>` subject. Nothing else.
       const testBump = recordOnly && before.release === now.release && now.ordinal === before.ordinal + 1
-        && TEST_RECORD_SUBJECT.test(g('log', '-1', '--format=%s', 'HEAD').trim());
+        && g('log', '--format=%s', `${parent}..HEAD`).split('\n').some((subject) => TEST_RECORD_SUBJECT.test(subject.trim()));
       if (testBump) {
         add(true, 'H ORDINAL INCREASES',
-          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and HEAD is a version-advance test record — the licensed build bump`);
+          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and a version-advance test record sits in ${parent.slice(0, 7)}..HEAD — the licensed build bump`);
       } else if (recordOnly) {
         // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
         // moves, and the release lives inside the digest's roots, so a record
