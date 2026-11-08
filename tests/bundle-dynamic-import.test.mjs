@@ -169,3 +169,33 @@ test('a bundle with no dynamic import carries no dynamic helper', () => {
     assert.ok(!c.assembleRuntime('"src/main.js": function (module, exports, require) {\n}', 'src/main.js').includes('__dyn'));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+import { findCycleHazards } from '../tools/bundle-cycles.mjs';
+
+test('bundle-cycles: each lazy root is analysed independently of source order', () => {
+  // B named-imports `value` from A while A (loading) pulls B in: a hazard, but
+  // only when A is the lazy root. Declaring the loader for B first must not hide it.
+  for (const order of [['b', 'a'], ['a', 'b']]) {
+    const root = fixture({
+      'main.js': order.map(n => `globalThis.load_${n} = () => import('./${n}.js');`).join('\n') + '\n',
+      'a.js': "import * as B from './b.js';\nexport const value = 1;\nexport const useB = () => B;\n",
+      'b.js': "import { value } from './a.js';\nexport const copy = value;\n",
+    });
+    try {
+      const hazards = findCycleHazards('src/main.js', root);
+      assert.equal(hazards.length, 1, order.join(','));
+      assert.equal(hazards[0].importer, 'src/b.js');
+      assert.deepEqual(hazards[0].names, ['value']);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
+
+test('bundle-cycles: a dynamic edge alone is not a boot-time cycle', () => {
+  const root = fixture({
+    'main.js': "import { x } from './a.js';\nglobalThis.x = x;\n",
+    'a.js': "export const x = 1;\nexport const later = () => import('./main.js');\n",
+  });
+  try {
+    assert.deepEqual(findCycleHazards('src/main.js', root), []);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
