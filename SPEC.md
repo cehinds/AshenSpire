@@ -1961,7 +1961,10 @@ Player animations:
   - Three enemies fit without horizontal scroll; four or more may scroll; short heights may scroll vertically. Inspection never plays a card.
 - **HUD and floaters, all form factors**:
   - Every combatant, player included, shows only the overhead mini HUD (HP bar, action intent), never a selected panel (`ui/models/TargetHudModel.js`). Double click, double tap or hold on a non-target figure opens the inspect panel.
-  - Poise and AC are not drawn on combat HUDs (no meter row, badge, HP-bar overlay, AC badge); the inspect panel still lists them.
+  - Poise is drawn as an always-visible bar under HP (an empty trough at 0/0), with no Poise badge or HP-bar overlay; AC is not drawn. The inspect panel still lists both.
+  - Mini HUD layout, every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): intent row above, its left edge on the HP bar's; a tall Block shield on the left (value inside, slot reserved at Block 0) spanning the HP bar (number to its right), the Poise bar (same width and height) and one badge row.
+  - Badge row: small round count badges for Precision, Evade, Ward, Counter, Reflect and every status and buff, fitted within the bar width; the rest collapse into +N, which opens the inspector.
+  - Bar width and height are per-form-factor HUD layout tokens (`--hud-mini-bar-width`, `--hud-mini-bar-height`), never a function of max HP, Block or badge count.
   - Floaters are an allowlist (`ui/models/FloaterPolicyModel.js`):
     - Drawn: attack damage numbers (HP an attack deals; HP lost to an effect or proc tick draws none), Hit (and Hit — Evade Failed), Missed (dodge or evade reads as Missed), Blocked, Countered, Defeated.
     - Not drawn: cost, Block, heal, Poise, Ward, Barrier, pierce numbers; status/buff words; break, stagger, critical, resisted, immune, range, contest words.

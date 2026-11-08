@@ -75,6 +75,9 @@ export const HUD_LAYOUT_TOKENS = Object.freeze([
   { name: '--hud-details-min-width', type: 'length', default: PER_CONSUMER, consumers: [
     c('styles/combat-layers.css', 'auto'),
   ] },
+  // The combat mini HUD (styles/combat-mini-hud.css): one fixed bar width and height per form factor, local px under --ui-zoom.
+  { name: '--hud-mini-bar-width', type: 'length', default: PER_CONSUMER, consumers: [c('styles/combat-mini-hud.css', '150px')] },
+  { name: '--hud-mini-bar-height', type: 'length', default: PER_CONSUMER, consumers: [c('styles/combat-mini-hud.css', '10px')] },
   { name: '--hud-tools-bg', type: 'color', default: 'transparent', consumers: [c('styles/combat-layers.css')] },
   { name: '--hud-header-hp-max-width', type: 'length', allowNone: true, default: 'none', consumers: [c('styles/player-polish.css')] },
   { name: '--hud-tools-span', type: 'keyword', values: ['field', 'hand'], default: 'field', consumers: [c('src/ui/components/combatTools.js')] },

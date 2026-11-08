@@ -33,9 +33,11 @@ test('nothing hides the player overhead mini HUD', () => {
   assert.doesNotMatch(js, /hudPinned/);
 });
 
-test('the HUD meter plan drops the poise row; the inspect panel still lists Poise', () => {
+test('the HUD meter plan always carries the Poise bar (an empty trough at 0/0); the inspect panel still lists Poise', () => {
   const js = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(js, /bar\.id !== 'poise' && !stackHidden\.has\(bar\.id\)/, 'meterInputs filters poise out of the plan');
+  assert.doesNotMatch(js, /bar\.id !== 'poise' && !stackHidden/, 'meterInputs no longer filters poise out of the plan');
+  assert.match(js, /!stackHidden\.has\(bar\.id\) && \(!expanded \|\| bar\.id === 'hp' \|\| bar\.id === 'poise'\)/, 'the expanded rules keep HP and Poise');
+  assert.match(js, /if \(!plan\.some\(\(bar\) => bar\.id === 'poise'\)\)/, 'meterInputs adds an empty Poise bar when the entity has no meter');
   assert.match(js, /label: 'Poise', value: v\.poiseMeter/, 'combatantSubject resources keep Poise');
 });
 
