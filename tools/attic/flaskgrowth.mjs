@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/flaskgrowth.mjs — the growth chain's corpus, and proof it refuses.
+// tools/attic/flaskgrowth.mjs — the growth chain's corpus, and proof it refuses.
 // Sten, 2026-08-13.
 //
 // Subject: balance.flaskGrowth (model/flaskgrowth.js) — D17 message 6's chain:
@@ -40,22 +40,22 @@
 //   bottom, flask-data-authority's pattern.
 //
 // Usage:
-//   node tools/flaskgrowth.mjs              # what the shipped chain contains
-//   node tools/flaskgrowth.mjs --selftest   # plants; exits 1 on any miss
+//   node tools/attic/flaskgrowth.mjs              # what the shipped chain contains
+//   node tools/attic/flaskgrowth.mjs --selftest   # plants; exits 1 on any miss
 
-import { contentBundle } from '../src/content/index.js';
-import { validateContent } from '../src/model/validate.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createRunState, initializeRunFlaskCharges, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
-import { executeRunEffects } from '../src/engine/actions.js';
-import { createSaveManager } from '../src/engine/save.js';
-import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { flaskGrowthTable, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth } from '../src/model/flaskgrowth.js';
-import { FLASK_GROWTH_SOURCES } from '../src/model/schemas.js';
+import { contentBundle } from '../../src/content/index.js';
+import { validateContent } from '../../src/model/validate.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createRunState, initializeRunFlaskCharges, validateRunShape, serializeRun, deserializeRun } from '../../src/model/state.js';
+import { executeRunEffects } from '../../src/engine/actions.js';
+import { createSaveManager } from '../../src/engine/save.js';
+import { reallocateFlaskCharges } from '../../src/model/gracerefill.js';
+import { flaskGrowthTable, flaskGrowthPlan, flaskGrowthClause, syncFlaskGrowth } from '../../src/model/flaskgrowth.js';
+import { FLASK_GROWTH_SOURCES } from '../../src/model/schemas.js';
 // The REAL tooltip renderer — imports headless (no DOM at module top), so the
 // clause is proven on the same function the reward, shop, map and combat
 // tooltips call, not on a helper beside it.
-import { relicText } from '../src/ui/components/card.js';
+import { relicText } from '../../src/ui/components/card.js';
 import fs from 'node:fs';
 
 const argv = process.argv.slice(2);

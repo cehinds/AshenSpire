@@ -1,8 +1,8 @@
-// tools/component-refs.mjs — cut each costume component out of its painting and
+// tools/attic/component-refs.mjs — cut each costume component out of its painting and
 // sample its palette, so the low-poly parts are built against a reference crop
 // and coloured from the paint, not from memory.
 //
-//   node tools/component-refs.mjs [--out DIR]     (default build/components)
+//   node tools/attic/component-refs.mjs [--out DIR]     (default build/components)
 //
 // Reads tools/lowpoly-components.json. Writes <out>/<class>/<part>.png (the crop,
 // matted) and <out>/palette.json: per part, the mean colour of its opaque pixels,
@@ -10,9 +10,9 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { decodePng, encodePng, cutout } from './concept-cutout.mjs';
+import { decodePng, encodePng, cutout } from '../concept-cutout.mjs';
 
-const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const outRoot = arg('--out', join(ROOT, 'build', 'components'));

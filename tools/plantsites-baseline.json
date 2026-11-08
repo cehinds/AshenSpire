@@ -74,17 +74,9 @@
       "count": 10,
       "digest": "a983e412b7d5bd49"
     },
-    "tools/derived-runtime-authority.mjs": {
-      "count": 3,
-      "digest": "89f8750385c28673"
-    },
     "tools/displayfirst.mjs": {
       "count": 4,
       "digest": "063406fbfc09d1eb"
-    },
-    "tools/equipment-surface-receipts.mjs": {
-      "count": 3,
-      "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
       "count": 9,

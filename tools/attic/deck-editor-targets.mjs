@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// tools/deck-editor-targets.mjs — the deck editor's browser probe (SPEC §14.1
+// tools/attic/deck-editor-targets.mjs — the deck editor's browser probe (SPEC §14.1
 // UX, docs/FINISH.md §14 "Deck editor UI").
 //
-//   node tools/deck-editor-targets.mjs      exit 0 when every check holds
-//   node tools/deck-editor-targets.mjs --preview-fit-only   desktop resize regression
+//   node tools/attic/deck-editor-targets.mjs      exit 0 when every check holds
+//   node tools/attic/deck-editor-targets.mjs --preview-fit-only   desktop resize regression
 //
 // In a real Chromium with touch emulation (so `(pointer: coarse)` matches) at
 // 360×640 and 390×844, each at UI zoom 1 and 0.62, it mounts the production
@@ -24,10 +24,10 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const VIEWPORTS = process.argv.includes('--preview-fit-only') ? [] : [[360, 640], [390, 844]];
 const ZOOMS = [1, 0.62];
 const MIN_TARGET_PX = 48;

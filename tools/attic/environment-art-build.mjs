@@ -4,12 +4,12 @@ import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
-import { authoringNeeds } from './art-authoring.mjs';
+import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../../src/content/environments.js';
+import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
 const sharp = require('sharp');
-const root = fileURLToPath(new URL('../', import.meta.url));
+const root = fileURLToPath(new URL('../../', import.meta.url));
 const path = p => join(root, p);
 mkdirSync(path('assets/environments/'), { recursive: true });
 for (const region of ENVIRONMENTS) {
@@ -37,4 +37,4 @@ for (const [source, target] of [
   await texture.webp({ quality: target.includes("landmark") ? 84 : 74, effort:6 }).toFile(path(`assets/environments/${target}`));
 }
 
-await import('./map-detail-build.mjs');
+await import('../map-detail-build.mjs');

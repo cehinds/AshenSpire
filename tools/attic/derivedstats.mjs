@@ -1,4 +1,4 @@
-// tools/derivedstats.mjs — executable contract for the inert derived-stat table.
+// tools/attic/derivedstats.mjs — executable contract for the inert derived-stat table.
 //
 // This deliberately does not enter tests/run-node.mjs while the rules remain
 // inert. It imports no run/combat/session code and reads the Phase 1 attribute
@@ -8,8 +8,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { derivedStatRules } from '../src/content/derivedStats.js';
-import { attributes as phase1Attributes } from '../src/content/attributes.js';
+import { derivedStatRules } from '../../src/content/derivedStats.js';
+import { attributes as phase1Attributes } from '../../src/content/attributes.js';
 import {
   derivedStatRuleProblems,
   resolveDerivedStatRules,
@@ -18,9 +18,9 @@ import {
   restoreDerivedStatRuleSnapshot,
   deriveAttributeTierReceipt,
   ruleWeights,
-} from '../src/model/derivedStats.js';
+} from '../../src/model/derivedStats.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ATTRIBUTE_IDS = phase1Attributes.slice().sort((a, b) => a.order - b.order).map((row) => row.id);
 // THE MODEL EVERY PINNED NUMBER BELOW DESCRIBES.
 //

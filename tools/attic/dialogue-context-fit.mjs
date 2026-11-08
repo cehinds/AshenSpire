@@ -1,4 +1,4 @@
-// tools/dialogue-context-fit.mjs — the W4c context band holds its responses.
+// tools/attic/dialogue-context-fit.mjs — the W4c context band holds its responses.
 //
 // Owner, 2026-09-15: up to four responses show in the quest dialogue's context
 // band without scrolling; the band scrolls only when there are five or more.
@@ -16,17 +16,17 @@
 // A mount that renders anything other than the expected responses throws
 // (exit 2): a band with nothing in it proves nothing, so it cannot pass.
 //
-//   node tools/dialogue-context-fit.mjs              → verdict, exit 0 / 1
-//   node tools/dialogue-context-fit.mjs --out DIR    → also a PNG per case
+//   node tools/attic/dialogue-context-fit.mjs              → verdict, exit 0 / 1
+//   node tools/attic/dialogue-context-fit.mjs --out DIR    → also a PNG per case
 // Exit 2 when no browser is available: unknown is not a pass.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const { uiConfig } = await import(new URL('../src/config/generated/ui.js', import.meta.url));
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+const { uiConfig } = await import(new URL('../../src/config/generated/ui.js', import.meta.url));
 const MIN_GAP_PX = uiConfig.scenes.w4c.positioning.portraits.minGapPx;
 const MIN_VISIBLE_VH = uiConfig.scenes.w4c.positioning.portraits.minVisibleHeightVh;
 const MAX_OUTER_VW = uiConfig.scenes.w4c.positioning.portraits.maxOuterOverflowVw;

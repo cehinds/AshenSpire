@@ -5,15 +5,15 @@ import {createRequire} from 'node:module';
 import {mkdirSync,writeFileSync,readFileSync,unlinkSync} from 'node:fs';
 import {resolve,relative} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {launchBrowser} from './browser.mjs';
-import {optionalClassSmashAudioProbe,classSmashConsoleNotice} from './lib/class-smash-qa-notices.mjs';
-import {alternativeCardAnimations} from '../src/content/alternativeCardAnimations.js';
-import {alternativeSelectedStances} from '../src/content/alternativeSelectedStances.js';
-import {playerCounterSweepSprites} from '../src/content/playerCounterSweepSprites.js';
-import {playerAttackSprites} from '../src/content/playerAttackSprites.js';
-import {classSmashAnimations} from '../src/content/classSmashAnimations.js';
-import {classSmashSequence} from '../src/model/classSmashAnimations.js';
-import {selectedWeaponSequence} from '../src/model/selectedWeaponSequences.js';
+import {launchBrowser} from '../browser.mjs';
+import {optionalClassSmashAudioProbe,classSmashConsoleNotice} from '../lib/class-smash-qa-notices.mjs';
+import {alternativeCardAnimations} from '../../src/content/alternativeCardAnimations.js';
+import {alternativeSelectedStances} from '../../src/content/alternativeSelectedStances.js';
+import {playerCounterSweepSprites} from '../../src/content/playerCounterSweepSprites.js';
+import {playerAttackSprites} from '../../src/content/playerAttackSprites.js';
+import {classSmashAnimations} from '../../src/content/classSmashAnimations.js';
+import {classSmashSequence} from '../../src/model/classSmashAnimations.js';
+import {selectedWeaponSequence} from '../../src/model/selectedWeaponSequences.js';
 const kits={reaver:['greatsword',''],rogue:['dagger','buckler'],starseer:['ashStaff',''],herald:['boneSceptre','']};
 const held=['ready','offensive','defensive','casting','counter','sweep','smash'];
 const core=['attack','smash','sweep','counter','defend','spell','ranged','rangedMagic'];
@@ -127,7 +127,7 @@ The canonical fixture kit and depicted legacy equipment are labeled separately. 
 
 Curated media uses high-quality animated WebP, JPEG full combat screens, WebP actor crops/contact sheets, and four inline GIF Smash overviews. Original native PNGs, full live traces and bulk manifest remain in scratch and are excluded from this directory. Per-clip metadata records phase order, weights and cadence.
 
-Reproduce with \`tools/combat-stances-gallery.mjs\`: provide QA_BUILD_URL, QA_EXPECT_ORDINAL, QA_EXPECT_DIGEST and QA_RUNTIME_SOURCE, capture to QA_OUTPUT outside the repository, then use --render-existing and --curate-existing with QA_CURATED_OUTPUT. Node/Playwright, repository Chromium launcher, Python/Pillow and ffmpeg are used. --inventory performs no browser work.
+Reproduce with \`tools/attic/combat-stances-gallery.mjs\`: provide QA_BUILD_URL, QA_EXPECT_ORDINAL, QA_EXPECT_DIGEST and QA_RUNTIME_SOURCE, capture to QA_OUTPUT outside the repository, then use --render-existing and --curate-existing with QA_CURATED_OUTPUT. Node/Playwright, repository Chromium launcher, Python/Pillow and ffmpeg are used. --inventory performs no browser work.
 
 ${Object.keys(report.actors).map(actor=>'## '+human(actor)+'\n\n![Native in-engine held layers]('+actor+'/held-contact-sheet.webp)\n\n![Smash phase review]('+actor+'/clips/smash/review.gif)\n').join('\n')}`);
 

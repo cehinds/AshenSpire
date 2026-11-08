@@ -1,4 +1,4 @@
-// tools/foldsurvivors.mjs — E5's class, and the reason no existing gate could
+// tools/attic/foldsurvivors.mjs — E5's class, and the reason no existing gate could
 // see it.
 //
 // THE DEFECT. `mountDisclosure` sets `host.innerHTML` (disclosure.js). Every
@@ -57,10 +57,10 @@
 import { existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const BROWSERS = ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'];
 const browserPath = process.env.CHROME || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

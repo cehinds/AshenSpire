@@ -30,23 +30,9 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 
 // Ceiling on KNOWN_ORPHANS: lower it whenever the list shrinks, never raise it.
-export const ORPHAN_CEILING = 67;
+export const ORPHAN_CEILING = 53;
 
 export const KNOWN_ORPHANS = new Set([
-  'tools/combat-stances-gallery.mjs',
-  'tools/combatant-overhead-qa.mjs',
-  'tools/component-refs.mjs',
-  'tools/deck-editor-targets.mjs',
-  'tools/derived-runtime-authority.mjs',
-  'tools/derivedstats.mjs',
-  'tools/dialogue-context-fit.mjs',
-  'tools/e11-reward-correction.mjs',
-  'tools/environment-art-build.mjs',
-  'tools/equipment-animation-browser.mjs',
-  'tools/equipment-surface-receipts.mjs',
-  'tools/export-layered-card-art.mjs',
-  'tools/flaskgrowth.mjs',
-  'tools/foldsurvivors.mjs',
   'tools/gear-convert.mjs',
   'tools/hand-pager-threshold.mjs',
   'tools/handrenderers.mjs',

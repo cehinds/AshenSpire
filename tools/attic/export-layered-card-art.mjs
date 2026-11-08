@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import {authoringRoot,authoringPath} from './art-authoring.mjs';
+import {authoringRoot,authoringPath} from '../art-authoring.mjs';
 // Select already-approved cutouts; do not repaint, flatten, or recolor them.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve, dirname, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
 const artFile=rel=>authoringPath(rel,{root,assetRoot:artRoot});
 // The proposal viewer owns the geometry. Load its standalone script as data;

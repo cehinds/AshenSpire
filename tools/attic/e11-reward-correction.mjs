@@ -4,10 +4,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const OUT = resolve(ROOT, 'scratch/qa/e11-reward-correction');
 mkdirSync(OUT, { recursive: true });
 const { port } = await serve({ root: ROOT, port: 8211, open: false });

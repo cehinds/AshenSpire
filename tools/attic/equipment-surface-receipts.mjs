@@ -3,10 +3,10 @@
 // creation and the Armoury. This is source-only: it must not read dist.
 
 import fs from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries, passiveSum } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import { resolveSwapCostRule, swapCostFor } from '../src/model/loadout.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries, passiveSum } from '../../src/model/registries.js';
+import { createRunState } from '../../src/model/state.js';
+import { resolveSwapCostRule, swapCostFor } from '../../src/model/loadout.js';
 
 // ---------------------------------------------------------------------------
 // ARM 1 of MR-41 (as amended by MR-46) — THE SWAP-PRICE ROW'S SAME-DOOR CORPUS
@@ -25,7 +25,7 @@ import { resolveSwapCostRule, swapCostFor } from '../src/model/loadout.js';
 // module is a TWO-STAGE door). Each plant below therefore carries the talisman
 // row AND the defect, and runs the real compile in between.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   // The content half, identical in every plant: one talisman, authored the way
   // Constantine authors content — a row in the spreadsheet, no code. This is
   // the act equipSlots.csv's own blurb is waiting for ("Empty until talismans
@@ -94,7 +94,7 @@ function check(ok, label, detail = '') {
 let equipmentSurfaceReceipt = null;
 let armamentIntrinsicReceipt = null;
 try {
-  ({ equipmentSurfaceReceipt, armamentIntrinsicReceipt } = await import('../src/model/equipmentPresentation.js'));
+  ({ equipmentSurfaceReceipt, armamentIntrinsicReceipt } = await import('../../src/model/equipmentPresentation.js'));
 } catch (error) {
   check(false, 'shared equipment presentation reader exists', error.message);
 }
@@ -268,12 +268,12 @@ if (equipmentSurfaceReceipt) {
   }
 }
 
-const customize = fs.readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
-const armoury = fs.readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
-const receiptComponents = fs.readFileSync(new URL('../src/ui/components/equipmentReceipts.js', import.meta.url), 'utf8');
+const customize = fs.readFileSync(new URL('../../src/ui/screens/customize.js', import.meta.url), 'utf8');
+const armoury = fs.readFileSync(new URL('../../src/ui/screens/equipment.js', import.meta.url), 'utf8');
+const receiptComponents = fs.readFileSync(new URL('../../src/ui/components/equipmentReceipts.js', import.meta.url), 'utf8');
 // The Armoury's rules moved to the kit (styles/kit.css, 2026-09-04 sweep); ui.css draws nothing for it any more.
-const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8')
-  + fs.readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../../styles/ui.css', import.meta.url), 'utf8')
+  + fs.readFileSync(new URL('../../styles/kit.css', import.meta.url), 'utf8');
 for (const [source, label] of [[customize, 'creation'], [armoury, 'Armoury']]) {
   check(/equipmentSurfaceReceipt/.test(source), `${label} consumes the shared equipment presentation reader`);
   check(/renderEquipmentRequirements/.test(source), `${label} renders the shared requirement receipt`);
@@ -305,7 +305,7 @@ check(/\.equip-chip[^}]*min-height\s*:\s*var\(--tap-floor\)/s.test(css),
 // mis-stripped. It is a text match either way — what it buys is that PROSE
 // ABOUT the code can no longer satisfy a check ABOUT the code.
 const codeOnly = (source) => source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
-const presentation = codeOnly(fs.readFileSync(new URL('../src/model/equipmentPresentation.js', import.meta.url), 'utf8'));
+const presentation = codeOnly(fs.readFileSync(new URL('../../src/model/equipmentPresentation.js', import.meta.url), 'utf8'));
 // A MEMBER READ is the defect; the passive KEY is not. `passiveSum(registries,
 // run.relics, 'swapCostDelta')` names the relic channel and hands it to
 // `swapCostFor` — that is the one home being fed. `beforeMods.swapCostDelta` is

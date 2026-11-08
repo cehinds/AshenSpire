@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (313 tool files, plus the 8 subfolders)
+## Tools something references (299 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -95,9 +95,6 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |
 | `combat-log-touch-qa.mjs` | Exercise the log with browser-native taps/drags. No app state injection. | tests combat-log-modal |
 | `combat-mobile-touch-qa.mjs` | Real touch gestures against the authored starting hand. No combat state is | tests combat-inspect-visibility |
-| `combat-stances-gallery.mjs` | Real combat-UI held screenshots and registered-stage reference clips. | docs pose-studio/stances/combat-stances-gallery/README.md |
-| `combatant-overhead-qa.mjs` | (no header comment) | docs DEVELOPER.md |
-| `component-refs.mjs` | component-refs — cut each costume component out of its painting and | tools lowpoly-components.json; other .gitignore |
 | `concept-cutout.mjs` | concept-cutout — turn the four class concept paintings into the | tools component-refs, painted-poses, pose-cutout +2; docs CREDITS.md, asset-data/classes/SUCCESSOR-CONTRACT.md, docs/ART-REPO-PLAN.md +4; other asset-data/classes/rejected-inputs.json, asset-data/sprites/class-sprites.manifest.json +2 |
 | `config-build.mjs` | config-build — compile content/config/**.json into | wf alternative-sync; tests build-lock, deck-editor-costs, engine-export +3; tools content-build, engine-export, launch +1; docs DEVELOPER.md, content/config/README.md, docs/COMPONENT-MODEL-ARCHITECTURE.md +8; other package.json, src/config/generated/ui.js +14 |
 | `confirmation-modal.mjs` | Focused acceptance for QA remediation #4: Load and Quit Without Saving use | tools escape-back, plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
@@ -110,31 +107,22 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
-| `deck-editor-targets.mjs` | deck-editor-targets — the deck editor's browser probe (SPEC §14.1 | docs docs/FINISH.md |
-| `derived-runtime-authority.mjs` | Runtime authority contract for Energy and Draw. The run's versioned derived | tools class-loadouts, cross-class-equipment, plantsites-baseline.json |
 | `derived-tables.mjs` | Derived, read-only tables of the resolved Core profile (owner 2026-10-17): every character's attributes | tests derived-tables |
-| `derivedstats.mjs` | derivedstats — executable contract for the inert derived-stat table. | other docs/architecture-handoff/pre-existing-changes.txt |
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
-| `dialogue-context-fit.mjs` | dialogue-context-fit — the W4c context band holds its responses. | tools dialogue-hud-fit |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `disabled-reason.mjs` | disabled-reason — "A disabled Next button shows its reason as | tests disabled-reason; docs docs/COMPONENT-CATALOG.md, docs/FINISH.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv +1 |
 | `display-art-library.mjs` | Organize existing, hash-verified exports without repainting or re-encoding them. | wf alternative-sync; docs assets-display/README.md, docs/ai/session-continuations/2026-10-08/pr-integration-and-promotion.md |
 | `displayfirst.mjs` | displayfirst — FULLSCREEN IS THE FIRST THING A PLAYER MEETS UNDER | wf ci; tests advanced-settings-groups; tools flask-menu-probe, hudparity, plantsites-baseline.json; docs docs/framework-migration-checklist.md; other src/ui/components/settingsPreview.js, src/ui/screens/settings.js |
 | `doorplant.mjs` | doorplant — the same-door selftest harness: plant a known-bad in a | wf ci, dev-preview; tests doorplant-shard, doorplant-source-roots, motion-probe-alternative +1; tools about-changelog, actionreach, armoury-picked-up +59; docs DEVELOPER.md, docs/FINISH.md |
 | `doublescroll.mjs` | doublescroll — TWO THUMBS SIDE BY SIDE IN ONE DOOR. Constantine, | wf ci |
-| `e11-reward-correction.mjs` | E11/#256 exact-head browser gate: the real reward renderer, shared hold | other docs/architecture-handoff/pre-existing-changes.txt |
 | `enemy-back-motion-normalize.py` | Conservative grid-aware export. Never redraw, mask or overwrite master artwork. | (none) |
 | `enemy-back-normalize.py` | Mechanical proposal export: fixed cells, one scale, no inferred pixels. | (none) |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |
 | `enemy-level-content.mjs` | Focused inert-content gate for issue #238. | tests content-validators; docs docs/FINISH.md |
 | `enemy-sheets.mjs` | tools/enemy-sheets.mjs - one editable character sheet per Core enemy (owner request 2026-11-01). | tests enemy-sheets; tools jev; docs CONTRIBUTING.md, DEVELOPER.md, games/ashenspire/packs/core/enemies/_reference.md; other games/ashenspire/packs/core/enemies/_reference.json, games/ashenspire/packs/core/enemies/ashRevenant.json, games/ashenspire/packs/core/enemies/ashheartDragon.json +31 |
 | `engine-export.mjs` | engine-export — the game's data as engine-ready JSON. | tests build-lock, engine-export; docs docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/IMPLEMENTATION.md, docs/ai/json-game-modules/PSEUDOCODE.md +3; other .gitignore, docs/engine-export/unity/AshenSpireExportImporter.cs +4 |
-| `environment-art-build.mjs` | Encode approved original boards and complete maps. Runtime SVG viewBoxes | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md |
-| `equipment-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
 | `equipment-blender.py` | tools/equipment-blender.py — armament + armour-set sprites, rendered in Blender. | tests engine.test.js, run-node; tools attic/class-material-leaks, palette-audit.py, poses-blender.py +1; docs CREDITS.md, asset-data/classes/LOOK-REFERENCE-ROGUE.md, asset-data/classes/SILHOUETTE-SUCCESSOR-CONTRACT.md +3; other asset-data/classes/build_rogue.proposal.py, asset-data/classes/rejected-inputs.json, content/source/weapons.csv +1 |
-| `equipment-surface-receipts.mjs` | Observed-red contract for the one presentation receipt shared by character | tools plantsites-baseline.json, swap-cost-relic-surface; other src/model/equipmentPresentation.js, src/ui/screens/customize.js |
 | `escape-back.mjs` | escape-back — Escape and pad B back out of every screen, measured | tests escape-back; docs DEVELOPER.md, docs/FINISH.md; other src/ui/input.js, src/ui/screens/map.js |
-| `export-layered-card-art.mjs` | Select already-approved cutouts; do not repaint, flatten, or recolor them | docs docs/card-art-composition.md; other src/content/layeredCardArt.generated.js |
 | `export-extended-card-art.mjs` | (no header comment) | tests extended-card-artwork; docs docs/EXTENDED-CARD-ART.md; other src/ui/extendedCardArtwork.js |
 | `export-reviewed-card-art.mjs` | Compile the approved review snapshot. PNGs remain separately addressable. | tests reviewed-card-art; docs docs/card-art-composition.md; other src/content/reviewedCardArt.generated.js |
 | `external-play-art-state.mjs` | (no header comment) | tests external-play-network; tools external-play |
@@ -146,9 +134,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `flask-menu-probe.mjs` | flask-menu-probe — every flask menu, opened in Chromium. | wf ci; tools flask-action-contract, plantsites-baseline.json; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `flask-reallocation.mjs` | Fixed-capacity Crimson/Azure charge contract. This intentionally starts red: | tools flaskbox |
 | `flaskbox.mjs` | flaskbox — A FLASK THAT IS A CONTROL HAS ONE BOX, AND IT IS AT THE | tools flask-reallocation, placement, plantsites-baseline.json +1; other src/ui/screens/rest.js |
-| `flaskgrowth.mjs` | flaskgrowth — the growth chain's corpus, and proof it refuses. | docs SPEC.md; other src/content/balance.js, src/model/flaskgrowth.js +2 |
 | `flaskpresentation.mjs` | Contract for data-owned, non-color-only flask identity on every major surface. | tools flaskbox |
-| `foldsurvivors.mjs` | foldsurvivors — E5's class, and the reason no existing gate could | other src/ui/components/disclosure.js |
 | `footer-paint.mjs` | The transparent padding of authored PNG/WebP components is not missing ink. | tests footer-paint; tools hintstrip |
 | `framework-data-build.mjs` | framework-data-build — compile content/framework/*.json into | tests build-lock, engine-export; tools content-build, engine-export, framework-gate; docs DEVELOPER.md, docs/ENGINE-EXPORT.md, docs/framework-cutover-report.md +1; other editor/server.mjs, editor/tests/studio.test.mjs +10 |
 | `framework-gate.mjs` | framework-gate — the cutover gate runner (framework contract: | tools content-build; docs docs/framework-cutover-report.md, docs/framework-migration-checklist.md |
@@ -338,9 +324,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (85 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (99 files)
 
-These 85 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 99 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -391,16 +377,30 @@ These 85 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `combat-size-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-sprite-scale-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-sprite-selection-qa.mjs` | Real selection inputs exercise the visual emphasis without changing the |
+| `combat-stances-gallery.mjs` | Real combat-UI held screenshots and registered-stage reference clips. | docs pose-studio/stances/combat-stances-gallery/README.md |
 | `combat-target-clarity-qa.mjs` | Real combat targeting and stature regression; uses production renderer, art and input. |
+| `combatant-overhead-qa.mjs` | (no header comment) | docs DEVELOPER.md |
 | `combatant-stage.mjs` | Rendered contract for the combat battlefield's vertical safe corridor. |
+| `component-refs.mjs` | component-refs — cut each costume component out of its painting and | tools lowpoly-components.json; other .gitignore |
 | `configured-shot-qa.mjs` | Screenshot fixtures must mount the surface named by ?shot, even when the |
 | `configured-ui-qa.mjs` | (no header comment) |
 | `controlstrip.mjs` | controlstrip — DOES THE SCREEN TELL THE TRUTH ABOUT ITS CONTROLS? |
 | `creation-flow-qa.mjs` | Focused runtime flow checks using production content/renderers, without gameplay mocks. |
 | `current-build-ui-repair.mjs` | #045/#046 current-build acceptance: real rendered title/combat geometry and |
+| `deck-editor-targets.mjs` | deck-editor-targets — the deck editor's browser probe (SPEC §14.1 | docs docs/FINISH.md |
 | `defeated-targets.mjs` | Rendered regression: a retained defeated frame cannot consume targeting. |
+| `derived-runtime-authority.mjs` | Runtime authority contract for Energy and Draw. The run's versioned derived | tools class-loadouts, cross-class-equipment, plantsites-baseline.json |
+| `derivedstats.mjs` | derivedstats — executable contract for the inert derived-stat table. | other docs/architecture-handoff/pre-existing-changes.txt |
+| `dialogue-context-fit.mjs` | dialogue-context-fit — the W4c context band holds its responses. | tools dialogue-hud-fit |
 | `dialogue-hud-fit.mjs` | dialogue-hud-fit — THE W4c HUD IS READABLE, ON EVERY SCREEN. |
+| `e11-reward-correction.mjs` | E11/#256 exact-head browser gate: the real reward renderer, shared hold | other docs/architecture-handoff/pre-existing-changes.txt |
+| `environment-art-build.mjs` | Encode approved original boards and complete maps. Runtime SVG viewBoxes | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md |
+| `equipment-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
+| `equipment-surface-receipts.mjs` | Observed-red contract for the one presentation receipt shared by character | tools plantsites-baseline.json, swap-cost-relic-surface; other src/model/equipmentPresentation.js, src/ui/screens/customize.js |
+| `export-layered-card-art.mjs` | Select already-approved cutouts; do not repaint, flatten, or recolor them | docs docs/card-art-composition.md; other src/content/layeredCardArt.generated.js |
 | `flask-data-authority.mjs` | Data-authority contract for capacity, charge identity, and Grace labels. |
+| `flaskgrowth.mjs` | flaskgrowth — the growth chain's corpus, and proof it refuses. | docs SPEC.md; other src/content/balance.js, src/model/flaskgrowth.js +2 |
+| `foldsurvivors.mjs` | foldsurvivors — E5's class, and the reason no existing gate could | other src/ui/components/disclosure.js |
 | `inspect-one-click-browser.mjs` | Real-browser regression for one-press inspection (owner, 2026-10-13: a visible |
 | `layoutmode.mjs` | layoutmode — #39's focused browser witness. |
 | `level-semantics.mjs` | Focused pure-model gate for issue #237. |

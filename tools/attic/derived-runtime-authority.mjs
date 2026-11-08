@@ -12,17 +12,17 @@
 // real module on disk and re-runs this whole tool against it.
 // (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 import fs from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
 import {
   createRunState, deserializeRun, initializeRunDerivedStats, serializeRun,
   validateRunShape,
-} from '../src/model/state.js';
-import { createRng } from '../src/engine/rng.js';
-import { createCombat } from '../src/engine/combat.js';
+} from '../../src/model/state.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createCombat } from '../../src/engine/combat.js';
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'derived-runtime-authority.mjs',
     plants: [
