@@ -3150,23 +3150,23 @@ For current usage and checks, see `games/ashenspire/guide.md`; product rules and
 
 ## 17. FixCore combat rules (new core rules version)
 
-Rules for new runs on **`ashen.core@2.0.0`**, the FixCore rules version 1 profile ("Core 2"). They override earlier combat rules where they conflict, for those runs only; earlier runs keep their snapshotted rules (see Migration boundary). This section specifies behavior; implementation is separate and not claimed complete here.
+Rules for new runs on **`ashen.core@2.0.0`**, the FixCore rules version 1 profile ("Core 2"). They override earlier combat rules for those runs only (see Migration boundary). Behavior spec; implementation is separate and not claimed complete.
 
-- Normative companions: the [FixCore design document](docs/design/FixCore-complete.md) (corrected requirements, defaults, architecture contracts, detailed behavior and falsification criteria; its source snippets and method names are proposals, not shipped code) and the owner rulings of 2026-10-18 in `docs/FIXCORE-DECISIONS.md`.
-- [Optional engagement, Advance, Throw and concise-card contract](docs/design/RangeAdvance.md): normative amendment for Core. Its compatibility boundary supersedes the no-migration rule only for the new range policy. Specified separately from implementation.
+- Normative companions: the [FixCore design document](docs/design/FixCore-complete.md) (requirements, defaults, architecture contracts, behavior, falsification criteria; its snippets and method names are proposals, not shipped code) and the owner rulings in `docs/FIXCORE-DECISIONS.md`.
+- [RangeAdvance contract](docs/design/RangeAdvance.md) (optional engagement, Advance, Throw, concise cards): normative amendment for Core; its compatibility boundary supersedes the no-migration rule only for the new range policy.
 
 ### Range
 
 - **Persistence.** Once a player or enemy has paid an Advance, the pair stays at the closed distance; later actions against that opponent pay no Advance until the distance grows again. Committed in saved engagement state; enemy forecasts project it.
 - **Enemy retreat.** A one-band retreat card (`moveEngagement`, `bands: 1`) costs its authored SP (Advance price + 1; 2 SP at defaults). Core enemies that start at Reach or beyond own one, plan it only while engaged closer than their starting range, and never twice in a row. See [RangeAdvance](docs/design/RangeAdvance.md).
-- **Maximum range is Reach.** `range.maxRange` in `content/source/fixCoreMechanics.json` (authored `"reach"`) is snapshotted into the run and each fight like the rest of the policy.
+- **Maximum range is Reach.** `range.maxRange` (`content/source/fixCoreMechanics.json`, authored `"reach"`) is snapshotted into the run and each fight.
   - A fight never stores an engagement band past the cap: starting bands (shortbow wearer, enemy that starts Ranged) are capped; a Retreat at the cap is a no-op; an enemy never plans a retreat past it.
   - Cards authored `ranged` keep their data and read as Reach on the card face, deck editor and upgrade preview; an upgrade never offers Reach to Ranged.
   - A policy with no `maxRange` (run or save from before the cap) keeps all three bands and replays unchanged.
 
 ### Damage, Block, Poise and statuses
 
-Every applied or displayed combat value is a whole number, rounded down. The attacker's chain (Vulnerable, stance, AR) is floored once to the **incoming damage**; Block and the physical/magic split use that whole number; Poise or Ward mitigation floors once more. Core has no Ward (see below).
+All combat values are floored whole numbers. The attacker's chain (Vulnerable, stance, AR) floors once to the **incoming damage**; Block and the physical/magic split use it; Poise or Ward mitigation floors once more.
 
 | Rule | Value |
 |---|---|
@@ -3175,58 +3175,50 @@ Every applied or displayed combat value is a whole number, rounded down. The att
 | Weak | −25% AR |
 | Vulnerable | +25% incoming damage (multiplier 1.25, every profile) |
 | Enemy STR, CON, DEX | authored `attributeOffset` −2 after gear and relics, floored at 0 |
-| Boss SP | tuned through stats to at most 3 SP per turn |
+| Boss SP | tuned through stats to at most 3 per turn |
 
-Example: a slash of 8 into Poise becomes 6 and Poise falls by 2.
 
-**Order of resolution.** Physical part: Block soaks first, then Barrier and Poise. Magic part (below): Poise first.
-- **Magic hits Poise first.** The magic part meets Poise first and 1:1 (Poise loses up to the whole magic amount, so a spell deals its full amount as Poise damage); only what Poise cannot cover meets the Block left after the physical part, then Barrier, then HP; the remainder gets no further Poise absorb.
-- A mixed hit (meleeSpell 0.7, arcane 0.5, technique 0.3) resolves its physical part first (Block, then Poise), then its magic part (the Poise left, then the Block left), on one shared Poise pool per hit.
-- Worked (Poise 6, Block 5):
-  - Spell 10: Poise 0, Block 1, HP 0. With Poise 2 instead: Poise 0, Block 0, HP 3.
-  - Physical 10: Block emptied, the remaining 5 loses floor(0.75 × 5) = 3 HP and Poise 2.
-- The hit shows a "Poise N" float and log line for the magic lane (`magicPoise` on `damageDealt`; receipt stages `poise-magic` "Poise meets the spell" and `block-magic`). With Ward enabled, magic keeps the Block, Barrier, Ward order.
-- Applies to the configured Core path (`profileDamageReceipt`); the non-profile expanded FixCore path (`prepareExpandedDefense`) is unchanged. Falsified by `tests/magic-poise-first.test.mjs`.
+**Order.** Physical part: Block, then Barrier and Poise. Magic part: Poise first.
+- **Magic hits Poise first:** the magic part meets Poise 1:1 (Poise loses up to the whole magic amount); only what Poise cannot cover meets the Block left after the physical part, then Barrier, then HP, with no further Poise absorb.
+- A mixed hit (meleeSpell 0.7, arcane 0.5, technique 0.3) resolves the physical part first (Block, then Poise), then the magic part (Poise left, then Block left), on one shared Poise pool per hit.
+- Magic lane shows a "Poise N" float and log line (`magicPoise` on `damageDealt`; receipt stages `poise-magic` "Poise meets the spell", `block-magic`). With Ward enabled, magic keeps the Block, Barrier, Ward order.
+- Configured Core path (`profileDamageReceipt`) only; the expanded path (`prepareExpandedDefense`) is unchanged. Falsified by `tests/magic-poise-first.test.mjs`.
 
 **Pierce** (card tag `pierce`, `damage:piercing`, or a piercing damage type).
-- Per hit, lets past up to floor(0.2 × that hit's damage) of what Block would have soaked (nothing with no Block). Computed after stance and Smash bonuses, before Block, physical part first. Fraction: `pierce.blockBypassFraction` in `content/source/fixCoreMechanics.json`.
-- Block is spent as if the hit had not pierced, so Block left is the same as without pierce and a pierce action never costs less HP than the same action without it.
-- The pierced physical amount meets Poise first and 1:1, not by the 25% rule: Poise loses up to the pierced amount; only what Poise cannot cover reaches HP; a Poise it empties is a normal break; with no Poise it goes straight to HP. The part Block does not soak keeps the ordinary rule against the Poise left, so Poise never counts the pierced amount twice. A Smash against a defensive stance has no Poise absorption, so its pierced part gets none.
-- Example: a 15-damage pierce hit otherwise fully Blocked pierces 3:
-  - Poise 8 becomes 5, HP loss 0.
-  - Poise 2 becomes 0 (broken), 1 HP lost.
-- The hit shows a "Pierced N" float and a log line (with what Poise took). Expanded and legacy paths keep their Piercing/Precision guard-bypass amounts. Precision is a hit-roll status in Core and bypasses nothing.
+- Per hit, lets past up to floor(0.2 × the hit's damage) of what Block would have soaked (none with no Block), after stance and Smash bonuses, before Block, physical part first (`pierce.blockBypassFraction`, `content/source/fixCoreMechanics.json`).
+- Block is spent as if the hit had not pierced; pierce never costs less HP than the same action without it.
+- The pierced physical amount meets Poise first, 1:1 (not the 25% rule): Poise loses up to that amount, only the uncovered rest reaches HP; an emptied Poise is a normal break; no Poise means straight to HP. The unpierced part keeps the ordinary rule against the Poise left (no double count). A Smash vs a defensive stance gets no Poise absorption for its pierced part.
+- Shows a "Pierced N" float and log line (with what Poise took). Expanded and legacy paths keep their Piercing/Precision guard-bypass amounts; Precision bypasses nothing in Core.
 
-**Poise and break.** Poise does not regenerate passively. A defensive card adds its final Block to current Poise (capped at max Poise) and grants that Block. A Poise break puts the target in the Staggered stance (not a stacking status): −1 SP and +1 Vulnerable; further breaks while Staggered add Vulnerable stacks that extend duration only.
+**Poise and break.** No passive regeneration; a defensive card adds its final Block to current Poise (capped at max) and grants that Block. A break puts the target in the Staggered stance (not a stacking status): −1 SP, +1 Vulnerable; further breaks while Staggered add Vulnerable stacks that extend duration only.
 
 **Statuses.** Stacks add; potency stays fixed while active and added stacks extend duration. Natural decay removes one stack at the owner's turn start, at most once per round. The physical/spell `camp` is for matchups only.
 
-**Ward.** Off in Core 2 (`ward.enabled: false` in `content/source/fixCoreMechanics.json`): no Ward pool, Block cards restore only Poise, Ward reduces no damage.
+**Ward** is off in Core 2 (`ward.enabled: false`, `content/source/fixCoreMechanics.json`): no Ward pool, Block cards restore only Poise.
 
-**PIPs** show Block, Poise, Evasion stacks and active status stacks; never an AC number. HP stays in its health display.
+**PIPs** show Block, Poise, Evasion stacks and active status stacks; never AC. HP stays in its health display.
 
 ### Defense, Smash and stance bonuses
 
-- Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DR, stance and other bonuses. Counter's return damage is unchanged.
+- Base Defend gives 10 Block; Counter gives floor(Defend Block × 0.5) = 5, before DR, stance and other bonuses.
 - Stance rating bonuses (+1 AR offensive stance, +3 DR defensive stance) apply to Block and damage alike; the card face and preview show the boosted value.
 - Matching stance multiplies effectiveness by 1.25.
 - **Smash vs a defensive stance** (Defend or Prepared, per the stances module's matchups): deals 1.25 × normal damage + floor(0.25 × the target's current Block, read before this hit's Block absorbs it). "Normal" is the Smash chain without the 1.25 offensive-advantage multiplier, which this ×1.25 replaces rather than stacks with; AR, matching stance and Vulnerable still apply. Block then absorbs the total as usual.
-  - No 25% Poise absorption; instead the target's Poise loses floor(0.5 × the total), capped at the Poise held, with the usual break and Staggered rules and one stagger per target per round.
+  - No 25% Poise absorption; the target's Poise loses floor(0.5 × the total), capped at the Poise held, with usual break/Staggered rules and one stagger per target per round.
   - Values: `smashVsDefensive` in `content/source/fixCoreMechanics.json`.
 
 ### Contests
 
-A card authored `contest: 'mental'` or `'physical'` (`schemas.js`, `validate.js`; also allowed in an `upgrade` block) never rolls Accuracy and ignores range. Enemy-targeted effects resolve one seeded contest per target per card play, rolled once before the effects run (`src/engine/contest.js`, `combatMatchups.beginTacticalAction`; die: `combatContest` stream, §3.11).
+A card authored `contest: 'mental'` or `'physical'` (`schemas.js`, `validate.js`; also in an `upgrade` block) never rolls Accuracy and ignores range. Enemy-targeted effects resolve one seeded contest per target per card play, rolled before the effects run (`src/engine/contest.js`, `combatMatchups.beginTacticalAction`; die: `combatContest` stream, §3.11).
 
 - **Roll:** d20 + caster attributes + card rank (`cardRank`, 1 when absent) vs **DC** = target's CURRENT Poise (`persistentPoise.value`) + target attributes + target level. **A tie succeeds.**
   - Attribute pairs are data (`content/framework/mechanics.json` `contest`): mental = caster INT + WIS vs target WIS; physical = caster DEX + CON vs target CON.
-  - Example: rank 1, INT 1, WIS 2, roll 5 = 9 vs enemy Poise 7 + WIS 1 + level 1 = 9: success; roll 4 fails.
-- **Events:** no range row (never an Advance, never out of range); no `attackHit` / `attackMissed`; emits `contestPassed` or `contestFailed` with the receipt (roll, attribute parts, rank, total, DC parts, DC, `passed`).
-- **Failure** marks that target avoided for the card's enemy-targeted effects only; self effects (Read Intent's own status, a draw) still happen.
-- **Display:** log "Read Intent contest: 9 vs 9 · success" (full-detail row itemises d20 [5] + INT 1 + WIS 2 + rank 1 vs Poise 7 + WIS 1 + level 1); callouts READ and RESISTED; hit badge shows "DC N" not a percentage.
-- **Cards:** Read Intent, Blight (curse), Charm (mental); Weaken (bodily Weak), Bind (bodily restraint), Hexmark (Vulnerable and Weak) (physical). Foresight has no enemy target, so no contest. Cards that also deal damage or add a burden card to the enemy keep the Accuracy roll.
-- Core 2 only: Current or legacy combat ignores `contest` and keeps the Accuracy roll and range (RNG consumption unchanged).
-- Intent knowledge is §4.9; the contest only decides whether Read Intent's explicit reveal lands (§4.6).
+- **Events:** no range row (never an Advance or out of range); no `attackHit`/`attackMissed`; emits `contestPassed` or `contestFailed` with the receipt (roll, attribute parts, rank, total, DC parts, DC, `passed`).
+- **Failure** avoids that target for enemy-targeted effects only; self effects (Read Intent's status, a draw) still happen.
+- **Display:** log "Read Intent contest: 9 vs 9 · success"; callouts READ and RESISTED; hit badge "DC N", not a percentage.
+- **Cards:** mental: Read Intent, Blight, Charm; physical: Weaken (Weak), Bind, Hexmark (Vulnerable and Weak). Foresight has no enemy target, no contest. Cards that also deal damage or add a burden card to the enemy keep the Accuracy roll.
+- Core 2 only: Current/legacy ignores `contest`, keeps the Accuracy roll and range (RNG use unchanged).
+- Intent knowledge: §4.9; the contest only decides whether Read Intent's reveal lands (§4.6).
 
 ### Accuracy, Evasion and Precision
 
@@ -3238,109 +3230,121 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 | Evasion | 8 + DEX + 2 × Evade stacks, plus equipped Evasion bonuses once; eligible prepared-Evade bonuses stay additive |
 | Need | Evasion − Precision |
 
-- Constants `evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 3 are the `accuracy` block of `content/framework/mechanics.json`, not the locked FixCore rules; weights and stack gain are configurable in `accuracy` in `content/source/fixCoreMechanics.json`.
-- **Precision stacks:** an offensive stance entry grants exactly 1 (buff cards 1 to 3). They lose 3 at the start of their owner's turn (floored at 0; players and enemies; shown on the badge); Persistent stacks are exempt.
-  - Older line, kept (conflicts with "exactly 1" and the formula above): an offensive stance change grants 1 + floor(0.5·DEX + 0.1·STR + 0.2·(WIS + INT) + level) stacks and the same mix is the Precision multiplier base; example DEX 2, level 1, other stats 0: 3 stacks give Precision 1 + 2 × 4 = 9.
-- **Evade stacks:** one decays at the owner's turn start; a miss still consumes one. No stance multiplier on Evasion. Disabling Evade suppresses stack and prepared bonuses, not baseline DEX or equipped Evasion.
-  - Example, DEX 2, no gear (conflicts with the Evasion formula above): 0 stacks Evasion 3, 1 stack 6, 2 stacks 9.
-- **Evade card:** 3 SP, grants 3 Evade stacks per play, independent of DEX (`accuracy.evadeStackBase = 3`, `accuracy.evadeStackDex = 0`); text "Gain 3 Evade."
-  - Entering a stance with any other card carrying the Evade tag or profile grants the same 3 stacks (from `accuracy.evadeStackBase`; a resumed fight keeps its snapshotted value). Non-Core expanded combat keeps `stanceRules.evadeStacks = 1`.
-- Core 2 only: the legacy profile keeps the previous formulas (Precision = 1 + mix × (stacks + 1); Evasion = 1 + DEX + Evade stacks × (1 + DEX)) and Precision does not decay there.
-- Shown values are floored; the hit-chance preview enumerates the exact attacker d20 outcomes (20, or 400 with advantage or disadvantage), floored.
-- A versioned accuracy migration updates the previous shipped default gain pair (base 1, DEX coefficient 1) to (1, 0) in existing Core runs; nondefault saved pairs and explicitly versioned overrides keep their values; an old custom pair identical to the former default migrates too.
-- Enemy attributes come from their stats; an enemy's level is 0 unless its definition supplies one.
+- Constants `evasionBase` 8, `evadePerStack` 2, `precisionStackValue` 1, `precisionDecayPerTurn` 3 are the `accuracy` block of `content/framework/mechanics.json` (not locked FixCore rules); weights and stack gain are configurable in `accuracy` in `content/source/fixCoreMechanics.json`.
+- **Precision stacks:** an offensive stance entry grants exactly 1 (buff cards 1 to 3). They lose 3 at their owner's turn start (floored at 0; players and enemies; shown on the badge); Persistent stacks are exempt.
+  - Older line, kept (conflicts with "exactly 1" and the formula above): a stance change grants 1 + floor(0.5·DEX + 0.1·STR + 0.2·(WIS + INT) + level) stacks and the same mix is the Precision multiplier base (DEX 2, level 1: 3 stacks give Precision 1 + 2 × 4 = 9).
+- **Evade stacks:** one decays at the owner's turn start; a miss still consumes one. No stance multiplier. Disabling Evade suppresses stack and prepared bonuses, not DEX or equipped Evasion.
+  - Older example (conflicts with the Evasion formula above): DEX 2, no gear: 0/1/2 stacks give Evasion 3/6/9.
+- **Evade card:** 3 SP, 3 Evade stacks per play, independent of DEX (`accuracy.evadeStackBase = 3`, `accuracy.evadeStackDex = 0`); text "Gain 3 Evade."
+  - Entering a stance with any other card carrying the Evade tag or profile grants the same 3 (a resumed fight keeps its snapshotted value). Non-Core expanded combat keeps `stanceRules.evadeStacks = 1`.
+- Core 2 only: legacy keeps the previous formulas (Precision = 1 + mix × (stacks + 1); Evasion = 1 + DEX + Evade stacks × (1 + DEX)) and no Precision decay.
+- Hit-chance preview enumerates exact d20 outcomes (20; 400 with advantage/disadvantage), floored.
+- Versioned migration: the former default gain pair (base 1, DEX 1), or an identical custom pair, becomes (1, 0) in existing Core runs; other saved pairs and versioned overrides keep their values.
+- Enemy level is 0 unless its definition supplies one.
 
 ### Perception and hit-chance display
 
-- Perception: seeded `d20 + WIS` by the observer vs DC = 5 + target INT + target WIS + configured bonuses (default none). It does not gate the hit-chance display.
-- Hit chance shows on each valid target while a card that can deal damage or apply an effect to it is selected, regardless of Perception.
-- One tap or click selects a card and never plays it; play needs a second tap or a target pick. One-tap play is an opt-in Settings switch, off by default.
+- Perception: seeded `d20 + WIS` by the observer vs DC = 5 + target INT + target WIS + configured bonuses (default none).
+- Hit chance shows on each valid target while a card that can damage it or apply an effect to it is selected, regardless of Perception.
+- One tap or click selects a card; play needs a second tap or a target pick. One-tap play is an opt-in Settings switch, off by default.
 
 ### Stance discounts and spell cards
 
-- **Adept discounts (Core 2).** Equipped Reaver/Rogue Martial Adept: −1 SP on a nonspell card. Equipped Starseer/Herald Magic Adept: −1 MP on a spell/Magic card, as classified by the Core `isSpellCard`/shared combat-profile rule (including mirrored Cantrips whose profile camp is Spell). Applies only when the actor was already in the matching stance before playing the card.
-- **Defend stance:** every defensive card (Defend, Counter; an Evade card is a Defend card) takes the cut in the class's own lane, physical or spell Defend stance alike (a physical Defend stance discounts a Ward cantrip and the reverse). Counter stance does not extend the cut to other defensive cards; it and every offensive stance keep the exact stance-and-camp match.
-- Discounts apply on the player's turn and to enemy-turn reactions. Floor: 1 on the player's turn; 0 for an enemy-turn reaction. A Counter card with the Reaction trait played from Counter stance on the enemy's turn costs max(SP − 1, 0) whether or not the class is an Adept.
-- Not discounted: the other resource lane, a card of the wrong classification, a stance entered by that card, an authored zero-cost card (stays zero), X-cost cards (spend all current SP as authored).
-- At most one same-stance cut (no additional generic reaction cut). Mana Surge's separate rule stays without stacking a second reaction or Adept cut. The same-stance Magic Adept cut and the successive-Spell Mana cut are one MP reduction when both apply; successive-Spell eligibility and timing are unchanged across mirrored stance changes. Range/Advance charges and upcast prices are independent and unchanged.
-- **Mirrored spells** (sceptre or staff Strike, Ward or Channel, Arcane Spark) take the basic card's stance and type for matchups but stay Spells and Cantrips: the corner and footer show the spell mark, the basic card's mark and its word (e.g. "ATTACK", "SMASH"), and they count as Spells for the successive-Spell Mana cut. Spells that mirror nothing keep the word "SPELL". Core 2 only; Current/v2 keeps sceptre and staff cards in the casting stance with their old faces.
+- **Adept discounts (Core 2).** Equipped Reaver/Rogue Martial Adept: −1 SP on a nonspell card. Equipped Starseer/Herald Magic Adept: −1 MP on a spell/Magic card per Core `isSpellCard`/the shared combat-profile rule (incl. mirrored Cantrips with profile camp Spell). Only when already in the matching stance before playing the card.
+- **Defend stance (physical or spell):** every defensive card (Defend, Counter; an Evade card is a Defend card) takes the cut in the class's own lane (a physical Defend stance discounts a Ward cantrip and the reverse). Counter stance and every offensive stance keep the exact stance-and-camp match.
+- Discounts apply on the player's turn (floor 1) and to enemy-turn reactions (floor 0). Exception: Counter, Reaction cost.
+- Not discounted: the other resource lane, wrong-classification cards, a stance entered by that card, zero-cost and X-cost cards.
+- At most one same-stance cut; Mana Surge's separate rule stays without stacking a reaction or Adept cut. The same-stance Magic Adept cut and the successive-Spell Mana cut are one MP reduction when both apply (successive-Spell timing unchanged across mirrored stance changes). Range/Advance charges and upcast prices are independent.
+- **Mirrored spells** (sceptre/staff Strike, Ward, Channel; Arcane Spark) take the basic card's stance and type for matchups but stay Spells and Cantrips: corner and footer show the spell mark, the basic card's mark and its word (e.g. "ATTACK", "SMASH"); they count as Spells for the successive-Spell Mana cut. Others say "SPELL". Core 2 only (Current/v2 keeps the casting stance and old faces).
 
 ### Rest sites, progression and combat pacing
 
-- **Rest sites:** each act has 3, one on the floor directly before the boss. A rest site heals and offers Smith and Level Up, none exclusive; it closes only through Continue. Core Smith is free and reaches tier 2 at most; a higher tier needs a Blacksmith (§14.4) and its row says "Needs a Blacksmith".
-- **Level Up** spends a level already earned ("free" = does not use up the rest visit; the rest grants no level).
-- **Attribute points:** spending is not rest-only. The Core Victory receipt and the Armory character sheet each spend them through `allocateAttributePoint` (`src/model/levelup.js`), which neither heals nor uses up a rest visit; every other `applyLevelUp` caller stays rest-only, and the Level Up rest service stays. Each attribute row (Victory receipt, Armory allocation card) shows its largest per-point gain (e.g. `+10 HP`) with every gain in its tooltip, computed from live stat rows and combat formulas by `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
-- **Victory receipt:** shows only the Character bar (named for the class). Class-mastery and weapon/skill tracks are still paid and banked; their level notices after a won fight are acknowledged silently. Core character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; missing in an older snapshot means 1).
-- Strategize is not a rest service: deck and equipment editing happen at will outside combat and are disabled during combat. The Armory control's outline glows blue while it holds a new item (black otherwise).
-- About 15% of randomly typed map nodes are shops; reward groups: cards 60 / equipment and relics 10 / potions 30. Armor budget = 3 + a per-rarity bonus (default 0).
-- **Pacing:** see independent pacing controls below. Combat speed: auto-combat ×1.5 by default, manual play ×1.25, both configurable.
-- **Auto-combat** chooses the player's reactions and also plays the player's turn. Reaction: the one that counters the perceived incoming action, else the card type of the player's last stance, ties toward the player's past choices. Each turn it plays, at most `maxActionsPerTurn` times and through the same play path as a click, the playable card that fits the combat preference (offense or defense), then the one that counters the perceived incoming maneuver, then the costliest affordable, then first in hand; then ends the turn through the End Turn path. It stops at once when turned off, the fight ends or a prompt opens.
+- **Rest sites:** 3 per act, one directly before the boss. A rest heals and offers Smith and Level Up (none exclusive); it closes only through Continue. Core Smith is free, tier 2 at most; higher needs a Blacksmith (§14.4), shown as "Needs a Blacksmith".
+- **Level Up** spends an already-earned level, not the rest visit; the rest grants no level.
+- **Attribute points** are spent on the Core Victory receipt and the Armory character sheet through `allocateAttributePoint` (`src/model/levelup.js`), which neither heals nor uses up a rest visit; every other `applyLevelUp` caller stays rest-only, and the Level Up rest service stays.
+  - Each attribute row shows its largest per-point gain (e.g. `+10 HP`), every gain in its tooltip, from `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
+- **Victory receipt** shows only the Character bar (class-named); class-mastery and weapon/skill tracks are still paid and banked, notices acknowledged silently. Character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; older snapshot: 1).
+- Strategize is not a rest service: deck and equipment editing are free outside combat, disabled in it. The Armory control outline is blue while it holds a new item, else black.
+- ~15% of randomly typed map nodes are shops; reward groups cards 60 / equipment and relics 10 / potions 30. Armor budget 3 + per-rarity bonus (default 0).
+- **Combat speed** (configurable): auto-combat ×1.5, manual play ×1.25 by default. Step pacing: see Pacing controls below.
+- **Auto-combat** picks the player's reactions and plays the player's turn.
+  - Reaction: counters the perceived incoming action, else the card type of the last stance, ties toward past choices.
+  - Each turn it plays (at most `maxActionsPerTurn`, via the click path) the playable card ranked by: fits the combat preference (offense/defense), counters the perceived incoming maneuver, costliest affordable, first in hand; then ends the turn via End Turn.
+  - Stops at once when turned off, the fight ends or a prompt opens.
 
 ### Counter
 
-Core 2 only; the legacy profile keeps its rules (fully-resisted requirement for a Counter return; its reaction-cost behavior).
+Core 2 only; legacy keeps its rules (fully-resisted requirement; its reaction-cost behavior).
 
-- **Incoming damage** = the hit's damage after the attacker's whole chain (AR, matching stance, Vulnerable, stance advantage and defense) and its single floor, before Block, Barrier, Ward or Poise take anything (the `incoming` figure of the damage receipt).
+- **Incoming damage** = the hit after the attacker's whole chain (AR, matching stance, Vulnerable, stance advantage and defense) and its single floor, before Block, Barrier, Ward or Poise (the receipt's `incoming`).
 - **Return:** the card's authored damage (the payload's `hp`, once per answered attack) + floor(`counterStacks` × 0.1 × incoming) per covered hit + (when the Counter beats the incoming maneuver) floor(0.25 × incoming).
-- **Poise damage** of the return = floor(0.2 × return damage); with advantage floor(0.5 × return damage).
-- **Advantage** (stances module `matchups.counter`: Counter beats Attack and Smash): also grants the Counter's owner floor(0.25 × incoming) Block before the hit is absorbed.
-- The return fires whenever a covered incoming attack hits the armed Counter, even if some damage gets through; once per owner cycle; still subject to coverage and range.
-- Example: enemy Attack 8 into a Counter played behind 9 Block (9 stacks, printed damage 4) returns 4 + floor(9 × 0.1 × 8) + floor(0.25 × 8) = 4 + 7 + 2 = 13 damage and 6 Poise damage. Against a maneuver the Counter does not beat (e.g. Sweep): no advantage share, no advantage Block, Poise damage fraction 0.2.
-- The card face, target preview and combat log ("X countered Y for D (base B + stacks S×10% of I)") state the same numbers (previews skip the attack-rating bonus, as the live return does). Fractions are data in `content/source/fixCoreMechanics.json` (`counter`).
-- **Counter stacks.** `counterStacks` is a whole-number stack count on the combat entity (absent = 0), not a status. Playing a card with the `maneuver:counter` tag adds the player's current Block, read after the card's own Block grant, to `counterStacks` (no cap), on top of arming the single-use Counter. Stacks persist across stance changes and fade by 2 at each owner turn start, after the single-use charge clears, never below 0 (the charge still clears at owner turn start and on stance change). Any left clear when the fight ends. A snapshot validates (type and sign only) and restores them; a save without the field loads as 0; a count is held to a safety ceiling of 999 on load (not a rule).
-- **Auto-Counter.** In Counter stance with no Counter armed, a covered enemy hit may be answered with no card for 1 SP (reaction "Counter (1 SP)", taken by auto combat when SP allows): it arms a Counter with authored damage 0, so it returns only the stacks' share (plus advantage).
+- **Poise damage** of the return = floor(0.2 × return damage); floor(0.5 ×) with advantage.
+- **Advantage** (`matchups.counter`: Counter beats Attack and Smash) also gives the Counter's owner floor(0.25 × incoming) Block before the hit is absorbed.
+- The return fires whenever a covered incoming attack hits the armed Counter, even if some damage gets through; once per owner cycle; subject to coverage and range.
+- Example: Attack 8 into a Counter played behind 9 Block (printed damage 4) returns 4 + 7 + 2 = 13 damage, 6 Poise damage.
+- Card face, preview and log ("X countered Y for D (base B + stacks S×10% of I)") state the same numbers (previews skip the attack-rating bonus, as the live return does). Fractions: `counter` in `content/source/fixCoreMechanics.json`.
+- **Counter stacks:** `counterStacks`, a whole-number count on the combat entity (absent = 0), not a status.
+  - Playing a `maneuver:counter` card adds the player's current Block (read after the card's own Block grant) to it, uncapped, besides arming the single-use Counter.
+  - Persist across stance changes; fade by 2 at each owner turn start after the single-use charge clears, never below 0 (the charge clears at owner turn start and on stance change). Clear when the fight ends.
+  - Snapshot validates (type and sign) and restores them; absent field loads as 0; load ceiling 999 (not a rule).
+- **Auto-Counter:** in Counter stance with none armed, a covered enemy hit may be answered with no card for 1 SP (reaction "Counter (1 SP)", taken by auto combat when SP allows), arming a Counter with authored damage 0 (returns only the stacks' share, plus advantage).
 - Values in `counter` in `content/framework/mechanics.json`: `stackFraction` 0.1, `decayPerTurn` 2, `autoCounterStamina` 1.
-- A Counter card with the Reaction trait played from Counter stance on the enemy's turn costs max(SP − 1, 0) whether or not the class is a Martial Adept (see Stance discounts).
+- **Reaction cost:** a Counter card with the Reaction trait played from Counter stance on the enemy's turn costs max(SP − 1, 0), Adept or not. Every other card keeps the Adept rules.
 
 ### Reflect
 
-Core 2 only. `reflectStacks` is a whole number 0 to 10 (absent = 0) on the combat entity, not a status; clears when the fight ends; a snapshot validates and restores it. The card "Mirror Guard" (`core.mirrorGuard`, 1 SP, "Gain 1 Reflect.") grants it via the `applyReflect` effect.
+Core 2 only. `reflectStacks`: whole number 0 to 10 (absent = 0) on the combat entity, not a status; clears at fight end; snapshots validate and restore it. The card "Mirror Guard" (`core.mirrorGuard`, 1 SP, "Gain 1 Reflect.") grants it via the `applyReflect` effect.
 
-- When a hit from another body reaches an entity holding Reflect, incoming damage (after the attacker's whole chain, before Block) is cut to floor(incoming × (1 − min(0.9, stacks × 0.3))). Once the hit lands the attacker takes floor(original incoming × min(0.9, stacks × 0.3)) of the same damage type, and the holder loses one stack.
-- The returned hit needs no hit roll, takes the attacker's own Block and Poise like any damage, and can neither reflect nor trigger a Counter again.
-- Counter returns, reflected returns and hits with the `unreflectable` trait are neither cut nor returned and spend no stack. Previews and forecasts use the same cut.
-- Badge shows the stack count; tooltip "Cuts each hit by N% and sends N% of it back"; log "X reflected D back at Y (S stacks)".
+- A hit from another body on a Reflect holder: incoming damage (after the attacker's chain, before Block) is cut to floor(incoming × (1 − min(0.9, stacks × 0.3))). Once it lands the attacker takes floor(original incoming × min(0.9, stacks × 0.3)) of the same damage type, and the holder loses one stack.
+- The returned hit needs no hit roll, takes the attacker's Block and Poise as any damage, and can neither reflect nor trigger a Counter.
+- Counter returns, reflected returns and `unreflectable` hits are neither cut nor returned and spend no stack. Previews use the same cut.
+- Badge: stack count, tooltip "Cuts each hit by N% and sends N% of it back"; log "X reflected D back at Y (S stacks)".
 - Values in `reflect` in `content/framework/mechanics.json`: `reducePerStack` 0.3, `returnPerStack` 0.3, `reduceCap` 0.9, `stackCap` 10.
 
 ### Stances and Evade
 
-- Stances: **Attack, Smash, Sweep, Counter, Defend, Prepared, Idle (no stance)**. Internal id `casting` names Prepared; no id is renamed.
-- Evade is a behaviour tag and a status, not a stance. A card's stance comes from its maneuver alone (defend gives Defend, counter gives Counter). A card with the evade tag or profile keeps its evade behaviour (Evade stacks and the entry grant of `accuracy.evadeStackBase`) whatever its maneuver. So an Evade card plays in Defend stance (an exact same-stance match with Defend stance), and a Counter card with the evade tag plays in Counter stance and still grants its Evade stacks.
-- Matchup tables that named Evade now name Defend. The configured `sweep` edge beats Counter and Smash; Defend's entries are kept. The card footer keeps its "DEFENSE" text.
-- A saved `combatStance` or `concurrentStances` row with maneuver `evade` loads as Defend; a retired `counterStance` hybrid loads as Counter and the flag is dropped (`bringStancesForward` in `src/model/combatSnapshot.js`, at the run load door and snapshot restore).
-- **Spell Counters** carrying Counter coverage (`frostCounter` and its school siblings) arm in Core: they keep the prepared stance they enter; the shared `armsAsCoreCounter` predicate (`src/model/profileStance.js`) arms them for live play, preview, card face and inspector help. Their return is a magical attack that rolls to hit, uses PR in place of AR, follows the same half, advantage, Poise and once-per-owner-cycle rules, and returns no authored Ward or Flux. The incoming hit is priced against Prepared, not Counter stance; any card accepted after arming (Spell, Skill, maneuver or Evade) disarms it.
+- Stances: **Attack, Smash, Sweep, Counter, Defend, Prepared, Idle (no stance)**. Internal id `casting` names Prepared.
+- Evade is a tag and status, not a stance. A card's stance comes from its maneuver alone; a card with the evade tag or profile keeps its Evade behaviour (stacks, entry grant of `accuracy.evadeStackBase`) whatever its maneuver. So an Evade card plays in Defend stance (an exact same-stance match), and a Counter card with the evade tag plays in Counter stance and still grants Evade stacks.
+- Matchup tables name Defend, not Evade. The configured `sweep` edge beats Counter and Smash. The card footer keeps "DEFENSE".
+- A saved `combatStance`/`concurrentStances` row with maneuver `evade` loads as Defend; a retired `counterStance` hybrid loads as Counter, flag dropped (`bringStancesForward`, `src/model/combatSnapshot.js`, at run load and snapshot restore).
+- **Spell Counters** with Counter coverage (`frostCounter` and school siblings) arm in Core and keep the prepared stance they enter; `armsAsCoreCounter` (`src/model/profileStance.js`) arms them for live play, preview, card face and inspector help. Their return is a magical attack that rolls to hit, uses PR in place of AR, follows the same advantage, Poise and once-per-owner-cycle rules, and returns no authored Ward or Flux. The incoming hit is priced against Prepared; any card accepted after arming (Spell, Skill, maneuver or Evade) disarms it.
 
 ### Migration boundary
 
-- Runs created under earlier core/profile versions keep their snapshotted rules, except the bounded Core progression policy below, the Core 2 collected-card/Adept editing migration (§14.1) and the per-fight action-policy boundary (§4.6a).
-- New Core 2 fights, including future fights from an existing run, stamp `core2ActionRulesVersion: 1`. An already-active fight without the field keeps its previously accepted prices and queues: no silent repricing, no retroactive charge.
-- Runtime-hash compatibility checks stay in force: a save that requires an earlier runtime keeps requiring its matching build unless a separately tested adapter supports it.
-- Selecting or editing `ashen.core@2.0.0` affects new runs only (except the per-fight action policy at fight creation). No automatic migration to FixCore. Any later change to this contract or migration of an existing run needs a separate SPEC change and an explicit, tested migration contract.
-- The legacy preset keeps its prior rules, except Vulnerable is +25% (×1.25) in every profile including `ashen.current@1.0.0` (D16). Existing Current runs take ×1.25 once loaded (balance change, no save migration).
+- Earlier-profile runs keep their snapshotted rules, except the Core progression policy below, the Core 2 collected-card/Adept editing migration (§14.1) and the per-fight action policy (§4.6a).
+- New Core 2 fights (including from an existing run) stamp `core2ActionRulesVersion: 1`; an active fight without the field keeps its accepted prices and queues (no repricing, no retroactive charge).
+- Runtime-hash checks stay: a save needing an earlier runtime keeps needing its matching build unless a tested adapter supports it.
+- Editing `ashen.core@2.0.0` affects new runs only (except the per-fight policy). No automatic migration to FixCore; migrating an existing run needs a separate SPEC change and tested migration contract.
+- The legacy preset keeps its prior rules, except Vulnerable is ×1.25 in every profile including `ashen.current@1.0.0` (D16); existing Current runs take it once loaded (no save migration).
 
 ### Core clarity, progression and editing amendment
 
-- **Core card face.** The damage number on a combat card face is what one hit does against a reference enemy, not the raw number (Core Strike shows 9, not 12, vs a Poise target). Reference: the aimed living enemy, else the frontmost living enemy; with no enemy, or outside combat (deck view, rewards, shop, codex, smithing receipts), the raw number. It is the targeted preview's first hit, from that enemy's state as the effect meets it (after the card's own earlier Poise damage), including Poise, Vulnerable and Weak, stance advantage, the target's defensive stance, Smash vs a defensive stance, and Ward when enabled. It excludes Block and Barrier (so the face equals the targeted preview's hit except for what Block and Barrier would soak, and the bonus a Smash vs a defensive stance gains from the target's Block). Only damage aimed at an enemy takes it; self and ally damage keep the raw number. A multi-hit card whose hits differ shows the same before-Block sequence.
-- **Multi-hit.** `5 × 3` is three contacts of 5, 15 total before defenses and modifiers; a total never becomes the base damage of each contact. Each contact resolves defenses, statuses and accuracy independently and offers its own eligible paid Counter opportunity (amends the once-per-owner-cycle rule for distinct paid manual Counters: a newly paid Counter may answer each contact; automatic Counter returns keep their owner-cycle limit). Unequal projected contacts show their sequence, not a uniform multiplier. Receipts and visible results match the revealed projection; uncertain results stay within its displayed bounds.
-- **Boss action previews.** Revealed boss moves expose their direct payload as well as damage (Block, healing, statuses, card additions, charging effects), with readable descriptions. Formula-backed values are projected on detached state without consuming RNG, selecting a different move or executing a script. HP-triggered phase changes stay distinct from a selected move. Perception and concealment rules still govern unrevealed choices. Once played, the current or last action is available through inspection.
-- **Enemy inspection.** Show solo enemies' current and max SP, authored deck/card or move-set composition, and public current/last action with costs and effects. Distinguish a move set from a true deck; do not fabricate draw order or reveal an unrevealed planned choice.
-- **Card readability.** Target three concise effect lines. On a hand face the rules shrink (to the readable floor) and show when they render in one or two lines; three or more lines at the floor show the Inspect cue. Text wraps within a fixed-size rules panel and shrinks its font rather than stretching the panel or taking artwork space; keep a readable font floor and an in-panel inspection cue when text cannot fit. A standard Counter face says Gain X Block and Counter X; its tag and inspection explain the mechanics and the automatic Poise rider. Inspection and full Rules access retain every effect, amount, condition and duration. Visible tags may carry repeated mechanic definitions, with prose retained when the explaining tag is unavailable.
-- **Opening and progression.** Enable the existing opening/intro flow and its settings for Core. New Core runs grow only the active class and weapons actually used; armor, accessories and character levels do not gain progression. Keep the slow class/weapon curves; expose separate nonnegative class/weapon XP multipliers, default 1 (missing in an older snapshot = 1). Class/weapon crossing presentation stays enabled.
-- **Bounded existing-Core progression policy, version 1.** Stop future character-level XP and new character-level reward doors in Core 2, including older Core 2 snapshots. Preserve their snapshot hashes, earned levels, attributes, XP ledger and already-earned pending rewards or unspent attribute points; grandfather pending claims until spent. Does not migrate a legacy or future non-Core profile, rewrite its combat rules, replay the intro mid-run, or grant new rewards.
-- **Independent pacing controls.** Persisted controls for the pause between combat steps and for action/reaction animation step duration. Default step pause 500 ms. A mobile-fast preset visibly sets both; manual edits remain possible. Speed multipliers and reduced-motion compose consistently. Report intentional pauses separately from input latency, main-thread stalls and action processing time.
-- **Editing and archive boundaries.** Preserve the public launch doors and architecture layers. Use readable named icon identifiers and asset references in editable source (centralized legacy aliases may preserve old data). Keep authored content/configuration authoritative, with practical Visual Studio editing recipes and validation commands. Move code into an excluded archive only after checking runtime, dynamic, tooling and test references; retain provenance and restoration instructions.
-- Mobile goal: at least 2× faster interactions, stretch 4× throughput. Report the measured baseline, device/browser or emulation settings, complete action correctness and remaining stalls; a timing preset alone does not meet it.
+- **Core card face.** The damage number on a combat card face is what one hit does against a reference enemy, not the raw number.
+  - Reference: the aimed living enemy, else the frontmost living enemy; with none, or outside combat (deck view, rewards, shop, codex, smithing receipts), the raw number.
+  - It is the targeted preview's first hit from that enemy's state as the effect meets it (after the card's own earlier Poise damage). Includes Poise, Vulnerable, Weak, stance advantage, the target's defensive stance, Smash vs a defensive stance, and Ward when enabled; excludes Block and Barrier (and the bonus Smash gains from the target's Block).
+  - Only damage aimed at an enemy takes it; self and ally damage keep the raw number. A multi-hit card whose hits differ shows the same before-Block sequence.
+- **Multi-hit.** `5 × 3` is three contacts of 5 (15 before defenses and modifiers); a total never becomes each contact's base damage. Each contact resolves defenses, statuses and accuracy independently and offers its own eligible paid Counter (amends once-per-owner-cycle: a newly paid manual Counter may answer each contact; automatic Counter returns keep the owner-cycle limit). Unequal contacts show their sequence, not a uniform multiplier. Receipts match the revealed projection; uncertain results stay in its displayed bounds.
+- **Boss action previews.** Revealed boss moves expose their payload as well as damage (Block, healing, statuses, card additions, charging) with readable descriptions. Formula-backed values are projected on detached state, consuming no RNG and selecting no move. HP-triggered phase changes stay distinct from a selected move. Perception and concealment still govern unrevealed choices. Once played, the current or last action is inspectable.
+- **Enemy inspection.** Show solo enemies' current/max SP, authored deck or move-set composition (kept distinct) and public current/last action with costs and effects; never fabricate draw order or reveal an unrevealed choice.
+- **Card readability.** Target three concise effect lines.
+  - Hand-face rules shrink to the readable floor and show at one or two lines; three or more at the floor show the Inspect cue.
+  - Text wraps in a fixed-size panel and shrinks its font, never stretching the panel or taking artwork space; keep a font floor and an in-panel inspection cue.
+  - A standard Counter face says Gain X Block and Counter X; tag and inspection explain the mechanics and automatic Poise rider.
+  - Inspection and full Rules keep every effect, amount, condition, duration.
+- **Opening and progression.** Core enables the existing intro flow and settings. New Core runs grow only the active class and weapons used (no armor, accessory or character-level progression), on the slow curves, with separate nonnegative class/weapon XP multipliers (default 1; older snapshot: 1). Crossing presentation stays on.
+- **Bounded existing-Core progression policy, version 1.** Core 2 (including older snapshots) stops future character-level XP and new character-level reward doors. Snapshot hashes, earned levels, attributes, XP ledger and earned pending rewards or unspent attribute points are preserved; pending claims are grandfathered until spent. It does not migrate a legacy or future non-Core profile, rewrite its combat rules, replay the intro mid-run, or grant rewards.
+- **Pacing controls.** Persisted, independent controls for the pause between combat steps (default 500 ms) and action/reaction animation step duration. A mobile-fast preset visibly sets both; manual edits remain possible. Speed multipliers and reduced motion compose. Report intentional pauses separately from input latency, main-thread stalls and processing time.
+- **Editing and archive boundaries.** Preserve the public launch doors and architecture layers. Editable source uses readable named icon identifiers and asset references (centralized legacy aliases may keep old data). Authored content/configuration stays authoritative, with Visual Studio editing recipes and validation commands. Archive code only after checking runtime, dynamic, tooling and test references; keep provenance and restoration instructions.
+- Mobile goal: at least 2× faster interactions, stretch 4× throughput; report baseline, device/emulation, action correctness and remaining stalls (a timing preset alone does not meet it).
 
 ### Reward inspection and earned-effect feedback
 
-- Reward choices keep a separate Inspect action before collection and during confirmation review, using the existing read-only inspectors for cards, equipment, relics and potions. Closing inspection preserves the selection and review stage. An in-flight claim disables inspection until the save succeeds or fails.
-- Class and used-weapon level notices show the earned level transition, visible progression, actual resolved card-value changes and newly available unlocks where the active rules grant them; a level with no stat bonus or unlock says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible without the progression animation.
-- Positive status grants show `+N Status name` above the recipient (player and enemy self-buffs and grants from another actor). N is the actual increase after caps and refresh/unique stacking (a reapplication that adds nothing shows no gain). Use the recipient registry's displayed status name. Buildup and hostile status feedback keep their channels. Buff labels share the existing overhead queue and appear with the action's results, adding no combat steps or waits.
+- Reward choices keep a separate Inspect action (existing read-only inspectors) before collection and during confirmation review. Closing it preserves the selection and review stage; an in-flight claim disables it until the save succeeds or fails.
+- Class and used-weapon level notices show the level transition, visible progression, resolved card-value changes and new unlocks the active rules grant; a level with none says so. Next-benefit previews follow the active authored rules and owned-card context. A saved notice resumes without paying XP or granting effects again. Reduced motion keeps final values visible.
+- Positive status grants (self-buffs and grants from another actor, player or enemy) show `+N Status name` above the recipient, using the registry's displayed name. N is the actual increase after caps and refresh/unique stacking (none shown if nothing added). Buildup and hostile feedback keep their channels. Labels share the overhead queue and add no combat steps or waits.
 
 #### Notes and history
 
-- The Precision stance-gain line and the Evasion example under Accuracy use the previous formulas and are kept beside the current ones.
-- Core 2 is a separate profile; nothing here migrates earlier runs.
-- Range policy lives in `content/source/fixCoreMechanics.json`; Counter/Reflect/contest/accuracy constants in `content/framework/mechanics.json`.
+- The Precision stance-gain line and Evasion example under Accuracy use previous formulas, kept beside the current ones.
 
 Full history: [docs/spec-history/17-fixcore.md](docs/spec-history/17-fixcore.md).
