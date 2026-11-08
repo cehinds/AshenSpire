@@ -524,7 +524,7 @@ the fight's copy of the counts, which rides the combat snapshot. Run
 `node --test tests/market-additions-5b.test.mjs`. How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
-`.card-shelf` in styles/kit.css, and checked by
+`.card-shelf` in styles/kit-shelf.css, and checked by
 `node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
@@ -784,6 +784,13 @@ the two apart. Ask Node instead:
 ```bash
 node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(const c of b){if(c===13)cr++;if(c===10)lf++}console.log('CR',cr,'LF',lf)" styles/kit.css
 ```
+
+**The kit stylesheet is several files.** `styles/kit.css` was cut by its section banners into
+`styles/kit-<section>.css` parts, linked from `index.html` in cascade order where `kit.css` used
+to be. `index.html` is the one record of that order. A test or tool that needs the kit's CSS as
+text calls `readKitCss()` from `tools/kit-css.mjs` (the parts joined); a plant that names
+`styles/kit.css` is mapped to the part holding its find-string. `tests/kit-css-parts.test.mjs`
+keeps the parts, `index.html` and the other pages that link them in step.
 
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
