@@ -1,44 +1,185 @@
-// Does the PACKAGED app actually render? Bjorn showed the package exposes CDP;
-// this re-establishes the runtime half at the rebased SHA and distinguishes
-// "hung with no window" from "running fine", which an exit code cannot.
-// Launched with NO spike env and NO --disable-gpu: the plain player launch.
+// Does the PACKAGED app actually render? Launches it plainly (no spike env, no
+// --disable-gpu), attaches over CDP and checks the title screen painted.
+// Run:   node desktop/electron/render-check.mjs <path-to-packaged-binary>
+// Env:   PKG_PORT (debug port, default 9741). Needs xvfb-run.
+// Exit:  0 pass, 1 no target / nothing painted, 2 wrong target.
 import { spawn } from 'node:child_process';
+
+/**
+ * @typedef {object} CdpTarget
+ * @property {string} type
+ * @property {string} url
+ * @property {string} webSocketDebuggerUrl
+ */
+
 const BIN = process.argv[2];
 const PORT = Number(process.env.PKG_PORT || 9741);
-const proc = spawn('xvfb-run', ['-a', BIN, '--no-sandbox', `--remote-debugging-port=${PORT}`], { stdio: 'ignore', env: { ...process.env, SPIKE_T0: '', SPIKE_MODE: '', SPIKE_USERDATA: '' } });
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const DEBUG_URL = `http://127.0.0.1:${PORT}`;
+
+/** @param {number} milliseconds */
+function sleep(milliseconds)
+{
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * @param {string} path
+ * @returns {Promise<any>}
+ */
+async function fetchJson(path)
+{
+  const response = await fetch(`${DEBUG_URL}${path}`);
+  return await response.json();
+}
+
+// ---- 1. Launch the packaged app ----
+
+const launchArgs = [
+  '-a',
+  BIN,
+  '--no-sandbox',
+  `--remote-debugging-port=${PORT}`,
+];
+const launchEnv = {
+  ...process.env,
+  SPIKE_T0: '',
+  SPIKE_MODE: '',
+  SPIKE_USERDATA: '',
+};
+const launchOptions = {
+  stdio: /** @type {'ignore'} */ ('ignore'),
+  env: launchEnv,
+};
+const proc = spawn('xvfb-run', launchArgs, launchOptions);
+
+/**
+ * @param {number} exitCode
+ * @returns {never}
+ */
+function killAndExit(exitCode)
+{
+  proc.kill('SIGKILL');
+  process.exit(exitCode);
+}
+
+// ---- 2. Wait for a debug target (up to 60 x 1s) ----
+
+/** @type {CdpTarget[] | null} */
 let targets = null;
-const t0 = Date.now();
-for (let i = 0; i < 60; i++) {
+const startedAt = Date.now();
+for (let attempt = 0; attempt < 60; attempt++)
+{
   await sleep(1000);
-  try { const j = await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json(); if (j.length) { targets = j; break; } } catch {}
+  try
+  {
+    const targetList = await fetchJson('/json/list');
+    if (targetList.length)
+    {
+      targets = targetList;
+      break;
+    }
+  }
+  catch
+  {
+    // Debug port not up yet; try again.
+  }
 }
-if (!targets) { console.log('NO TARGET — the packaged app never exposed a page (this is the hang)'); proc.kill('SIGKILL'); process.exit(1); }
-// GUARD: a stray HeadlessChrome answered this port once and my "PASS" was a
-// measurement of somebody else's browser — the exact failure this round is
-// about, in my own hands. Assert we are attached to THE PACKAGED APP: its page
-// must be the game's URL (file:// before the installer; now the wrapper's fixed
-// https://ashenspire.invalid/ origin, main.js), and the browser must be Electron.
-const ver = await (await fetch(`http://127.0.0.1:${PORT}/json/version`)).json();
-const page = targets.find(t => t.type === 'page');
-const isOurs = /Electron/i.test(ver['User-Agent'] || '') && /^(file:\/\/|https:\/\/ashenspire\.invalid\/)/.test(page.url) && /AshenSpire/.test(page.url);
-if (!isOurs) {
-  console.log(`WRONG TARGET — refusing to measure. browser=${(ver['User-Agent']||'').slice(0,60)} url=${page.url.slice(0,70)}`);
-  proc.kill('SIGKILL'); process.exit(2);
+if (!targets)
+{
+  console.log('NO TARGET — the packaged app never exposed a page (this is the hang)');
+  killAndExit(1);
 }
+
+// ---- 3. Confirm the target is our app ----
+// A stray HeadlessChrome once answered this port and a "PASS" measured the
+// wrong browser. The page must be the game's URL (file:// or the wrapper's
+// https://ashenspire.invalid/ origin, main.js) and the browser must be Electron.
+
+const version = await fetchJson('/json/version');
+const userAgent = version['User-Agent'] || '';
+const page = /** @type {CdpTarget} */ (targets.find((target) => target.type === 'page'));
+const isElectron = /Electron/i.test(userAgent);
+const isGameUrl = /^(file:\/\/|https:\/\/ashenspire\.invalid\/)/.test(page.url);
+const isOurs = isElectron && isGameUrl && /AshenSpire/.test(page.url);
+if (!isOurs)
+{
+  console.log(`WRONG TARGET — refusing to measure. browser=${userAgent.slice(0, 60)} url=${page.url.slice(0, 70)}`);
+  killAndExit(2);
+}
+const secondsToAttach = ((Date.now() - startedAt) / 1000).toFixed(1);
 console.log(`target confirmed: Electron, ${page.url.slice(-38)}`);
-console.log(`attached in ${((Date.now()-t0)/1000).toFixed(1)}s · ${targets.length} target(s) · url=${targets[0].url.slice(0,60)}`);
-const ws = new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl);
-await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});
-let id=0; const w=new Map();
-ws.onmessage=(m)=>{const g=JSON.parse(m.data); if(g.id!=null&&w.has(g.id)){const{ok}=w.get(g.id);w.delete(g.id);ok(g.result);}};
-const send=(m2,p2={})=>{const n=++id;ws.send(JSON.stringify({id:n,method:m2,params:p2}));return new Promise(ok=>w.set(n,{ok}));};
+console.log(`attached in ${secondsToAttach}s · ${targets.length} target(s) · url=${targets[0].url.slice(0, 60)}`);
+
+// ---- 4. Connect over CDP ----
+
+const socket = new WebSocket(page.webSocketDebuggerUrl);
+await new Promise((resolve, reject) =>
+{
+  socket.onopen = resolve;
+  socket.onerror = reject;
+});
+
+let lastMessageId = 0;
+/** @type {Map<number, { resolve: (result: any) => void }>} */
+const pendingReplies = new Map();
+
+/** @param {MessageEvent} event */
+socket.onmessage = (event) =>
+{
+  const reply = JSON.parse(event.data);
+  if (reply.id != null && pendingReplies.has(reply.id))
+  {
+    const { resolve } = pendingReplies.get(reply.id);
+    pendingReplies.delete(reply.id);
+    resolve(reply.result);
+  }
+};
+
+/**
+ * @param {string} method
+ * @param {object} [params]
+ * @returns {Promise<any>}
+ */
+function send(method, params = {})
+{
+  const messageId = ++lastMessageId;
+  const message = { id: messageId, method, params };
+  socket.send(JSON.stringify(message));
+  return new Promise((resolve) => pendingReplies.set(messageId, { resolve }));
+}
+
+/**
+ * @param {string} expression
+ * @returns {Promise<any>}
+ */
+async function evaluateInPage(expression)
+{
+  const params = { expression, returnByValue: true };
+  const reply = await send('Runtime.evaluate', params);
+  return reply.result.value;
+}
+
 await send('Runtime.enable');
-const ev = async (e) => (await send('Runtime.evaluate',{expression:e,returnByValue:true})).result.value;
+
+// ---- 5. Read the title screen ----
+
 await sleep(2500);
-const seen = await ev(`({ title: document.title, buttons: [...document.querySelectorAll('button')].map(b=>b.textContent.trim()).slice(0,3), textLen: document.body.innerText.length })`);
+const seen = await evaluateInPage(`({
+  title: document.title,
+  buttons: [...document.querySelectorAll('button')].map(b=>b.textContent.trim()).slice(0,3),
+  textLen: document.body.innerText.length,
+})`);
 console.log('RENDERED:', JSON.stringify(seen));
-const ok = seen && seen.textLen > 0 && seen.buttons.some(b => /climb|continue|new/i.test(b));
-console.log(ok ? 'PASS — the packaged app boots and paints its title screen on a PLAIN launch' : 'FAIL — attached but nothing playable painted');
-proc.kill('SIGKILL');
-process.exit(ok ? 0 : 1);
+
+// ---- 6. Verdict ----
+
+const hasStartButton = seen && seen.textLen > 0 && seen.buttons.some((button) => /climb|continue|new/i.test(button));
+if (hasStartButton)
+{
+  console.log('PASS — the packaged app boots and paints its title screen on a PLAIN launch');
+}
+else
+{
+  console.log('FAIL — attached but nothing playable painted');
+}
+killAndExit(hasStartButton ? 0 : 1);
