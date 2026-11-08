@@ -1309,100 +1309,65 @@ is unchanged.
 
 ### 5.1 Classes, creation presets, and levels
 
-**New creation mode.** Add a new stable mode id, `tuned`. It is not offered at creation and
-is not the default: new runs default to `lean`, labelled Standard (`src/content/attributes.js:190`;
-`content/source/characterCreation.json:3`). Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
-owns its total and allocation bounds. This is a new mode, not a mutation or rename of
-`standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
-continue to validate exactly as authored.
+#### Creation modes and presets
 
-The `tuned` opening presets are contractual and each sums to 53:
+- New runs default to `lean`, labelled Standard (`src/content/attributes.js:190`; `content/source/characterCreation.json:3`).
+- `tuned`: stable mode id, not offered at creation, not the default.
+  - Fixed total 53 across STR / DEX / CON / WIS / INT; the mode row owns its total and bounds.
+  - `standard` and `pointbuy` keep validating as authored (saves persist the mode id).
+- `tuned` presets (contractual, each sums to 53). A preset is an opening position, not a lock: redistribute within the mode's bounds.
 
-| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation (the owner's defaults, `classes.js`, #1273) |
+| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation |
 |---|---|---|
 | Reaver | `13 / 11 / 11 / 8 / 10` | `2 / 1` |
 | Starseer | `11 / 11 / 8 / 13 / 10` | `1 / 2` |
 | Herald | `12 / 11 / 8 / 12 / 10` | `2 / 1` |
 | Rogue | `11 / 13 / 10 / 9 / 10` | `2 / 1` |
 
-The preset is an editor opening position, not a lock: players may redistribute the fixed
-total within the mode's data-authored bounds. Starting derived values come only from the
-formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
+- Starting derived values come only from §3.5 formulas.
+- **Standard** (`opensOn: 'preset'`, §13.4m) seats the class preset with nothing to spend; *Edit points* reopens it as a revision.
+- **Assign Points** starts a fresh allocation at the mode's baseline with the full bonus pool unspent; reopening refunds the same way.
 
-Choosing **Standard** (a mode with `opensOn: 'preset'`, §13.4m) seats the class preset with
-nothing left to spend; *Edit points* reopens it as a revision. Choosing **Assign Points**
-always begins a fresh allocation at that mode's baseline for every
-attribute, with its complete bonus pool unspent. Reopening Assign Points refunds the current
-allocation the same way; class presets and earlier edits do not consume points before the
-player assigns them.
+#### Level curve
 
-**Level curve.** A fresh run starts at displayed level 1 and the level is EARNED (plan phase 6,
-§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
-The configured character curve reads `balance.level.xp`; legacy exponential tables use
-`xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
-A linear table (`linear: true`) uses
-`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100 and
-`multScaler` 1.3 (the October 1 default) the steps cost 100, 230, 360, 490 XP.
-Since 2026-10-02 (owner) the character default is exponential (`linear: false`): base 100,
-growth 1.75, roundTo 10 — steps 100, 180, 310, 540, 940, 1,640, 2,870, 5,030, 8,800,
-15,390, so 35,800 XP reaches level 11. **Changed (owner, 2026-11-05, §13.4o):** base 200,
-growth 1.5, roundTo 10, cap level 20 — steps 200, 300, 450, 680, 1,010, 1,520, 2,280, 3,420, 5,130, 7,690 (level 19 costs 295,580; 886,350 XP from level 1 to 20); supersedes the ×1.303 curve. Base, scaler, rounding and
-the linear/exponential toggle are configurable. Tables without `linear: true`
-retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
-Older snapshots without that marker use exponential defaults unless the player explicitly
-sets a linear-curve override; live XP edits preserve the marker's presence or absence.
-Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points
-(the player's dial, read when the level is reached), which wait on the run's ledger until the
-player assigns them at a shrine. Historical exponential curve receipt (base 5 / growth 1.15 /
-rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 10,
-10, 10, 10, 20, 20 — 120 XP to level 11 (the rounding holds the first eight steps at its floor
-of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
-The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
-25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100, and since 2026-10-02 (owner) both use the exponential curve (`linear: false`, growth 1.75, roundTo 5): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The character level uses the same ×1.75 growth (above). **Changed (owner, 2026-10-04, §13.4o):** every track's max level costs about 100,000 XP — character base 200 ×1.5 to level 20 (owner, 2026-11-05), class base 400 ×1.224 to level 20, skill base 100 ×1.995 to level 10; applied 2026-10-05. The 11–12 levels a full
-run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
-`tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
-level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
-faucet) is gone with the purse.
+- Level starts at 1 and is EARNED (§13.4i): fights pay XP (`balance.xp`: a won fight, and each kill by the door's pool). No cinder buys a level.
+- Curve from `balance.level.xp`; base, scaler, rounding and linear/exponential are configurable.
+  - Exponential (default, `linear: false`; any table without `linear: true`): `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
+  - Linear: `round(base + (n − 1) × base × multScaler, roundTo)`; base 100, `multScaler` 1.3 → 100, 230, 360, 490.
+- Each track's max level costs about 100,000 XP (§13.4o):
 
-**Cinders at the start and from fights (owner, 2026-09-24).** A run opens with
-`balance.startingCinders` **20** cinders (0 before). Combat rewards pay from
-`balance.rewards.cinders` — normal 45–75, elite 105–150, boss 225–270. The Advanced
-`cinderMultiplier` row scales that table and defaults to 1. The owner's exported
-`progression.rewardMultiplier: 20` is **retired, not a default** (owner, 2026-09-24: "I hate
-the 20x cinder, that needs to die"): the old key is dropped with a warning wherever a
-profile, run snapshot or imported file carries it. The retired shared opening-hand
-`gameConfig.handRules.starting.base|stat` are dropped at the same three doors (§4.1),
-warned when not the stock value.
+| Track | Config key | Base | Growth | roundTo | Max level |
+|---|---|---|---|---|---|
+| Character | `balance.level.xp` | 200 | 1.5 | 10 | 20 |
+| Class | `balance.skill.class.xp` | 400 | 1.224 | 5 | 20 |
+| Equipment skill | `balance.skill.xp` | 100 | 1.995 | 5 | 10 |
 
-**Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
+- Character steps: 200, 300, 450, 680, 1,010, 1,520, 2,280, 3,420, 5,130, 7,690 (level 19 costs 295,580; 886,350 XP for 1 to 20).
+- New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
+  - Older snapshots without it use exponential defaults unless a linear override is set; live XP edits preserve its presence or absence.
+- Each level grants `balance.levelUp.pointsPerLevel` attribute points, held on the run's ledger until assigned at a shrine.
+- Levels per full run (11.5) predate this curve; re-measure: `tools/runsim.mjs --xp-levels`.
 
-- 61 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
-  validation-clean player text: exactly 57 in its ordinary reward pool (the class row's
-  `cardPool`: the 47 legacy cards, the original 43 plus the four poison cards, and the ten
-  expanded families), the signature card Ambush, the class ability card Prepare (§13.4f), and the
-  two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
-  starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
-  is the home of that number);
-- one class signature card and one starter relic, both reachable in a new Rogue run;
-- two starting equipment kits and five Rogue-specific outfits/armour sets, plus the four `sharedSet` rows
-  every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`),
-  including one free baseline of each required kind and the same unlock/discovery rules as the existing classes;
-- five stage/tint class sprites plus the equipment/body/armament art needed for every authored
-  Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
-- class presets, flask allocation, rewards, draft/custom-run, history and compendium
-  participation derived from the registries rather than new Rogue-only branches.
+#### Cinders
 
-Rogue mechanics should compose the existing effect, formula, trigger, status, equipment and
-resource vocabularies. A new opcode/predicate is allowed only when the approved class identity
-cannot be expressed by those primitives, and then it is a separately specified closed-set
-extension with validation and engine tests—not imperative per-card code.
+- Start: `balance.startingCinders` 20.
+- Combat rewards (`balance.rewards.cinders`): normal 45–75, elite 105–150, boss 225–270; scaled by the Advanced `cinderMultiplier` (default 1).
+- Retired, dropped with a warning from any profile, run snapshot or import: `progression.rewardMultiplier: 20`, and the shared opening-hand `gameConfig.handRules.starting.base|stat` (§4.1; warned when not stock).
+
+#### Rogue full parity slice
+
+Rogue is a complete fourth class:
+
+- 61 authored cards (`src/content/cards/rogue.js`), all upgradable: 57 in the reward pool (`cardPool`: 47 legacy = original 43 + four poison, plus ten expanded families), signature Ambush, ability Prepare (§13.4f), generated Shiv and Smoke Pellet.
+- 11-card starting deck incl. signature and ability card (`balance.startingDeckSize`); one starter relic.
+- Two starting kits; five Rogue outfits/armour sets plus the four `sharedSet` rows every class wears (`content/source/outfits.csv`: nine `rogue` rows), one free baseline per required kind; same unlock/discovery rules as other classes.
+- Five stage/tint sprites plus art for every kit and outfit (ordinary missing-art fallback).
+- Everything else (presets, flask allocation, rewards, draft/custom-run, history, compendium) derives from registries, no Rogue-only branches.
+- Mechanics compose existing vocabularies; a new opcode/predicate only when unavoidable, as a specified closed-set extension with validation and engine tests, never per-card code.
 
 ### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
-The base reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards as they unlock (53 in all). This table is the M1 set.
-
-Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine id `energy` is an alias). `+` column = upgrade delta.
+Reward pool: 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards on unlock (53). Rarity S/C/U/R = starter/common/uncommon/rare; cost in Stamina (engine id `energy`); last column is the upgrade delta.
 
 | Card | R | Cost | Type | Text | Upgrade |
 |---|---|---|---|---|---|
@@ -1431,13 +1396,20 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
 | Warrior's Vow | R | 0 | Skill | Innate. Enter a Stance of your choice. Exhaust. | draw 1 |
 
-Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (status, unplayable, Ethereal), **Guilt** (curse, unplayable, at turn end in hand: lose 1 HP), **Slimed** (status, cost 1, Exhaust) — enemies and events inject these.
+Colorless/curse/status M1 minimum (enemies and events inject these):
+
+| Card | Kind | Rules |
+|---|---|---|
+| Wound | status | Unplayable. |
+| Dazed | status | Unplayable, Ethereal. |
+| Guilt | curse | Unplayable; at turn end in hand: lose 1 HP. |
+| Slimed | status | Cost 1, Exhaust. |
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Weaknesses (owner, 2026-10-31): every enemy in this roster and the later acts has authored weaknesses (SPEC §4.7, *Enemy weaknesses in Core*): hounds and beasts are weak to fire and blunt, spirits and wisps to sacred and magic, armoured soldiers and knights to blunt, lightning and blunt staggers, undead to sacred and burn ticks, insects and vermin to frost and slashing, constructs to blunt and lightning (Stamina loss), casters to piercing and Paralysis stacks, and each boss to one themed trigger.
+Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are M3 (mechanics in §10): a Grafted-King-inspired phase boss; a final Malenia-inspired boss that heals 3 per hit landed on you and inflicts Bleed on the *player*.
 
-Basics (encounters roll from the weighted table in `src/content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
+**Basics**
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
@@ -1447,17 +1419,33 @@ Basics (encounters roll from the weighted table in `src/content/encounters/weald
 | Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Wyrm Aspirant** (HP 82–86, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+**Elite — Wyrm Aspirant** (HP 82–86, Poise 24). Opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
-Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
-- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
-- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
-- Staggering him cancels a Held Blade in progress (satisfying counterplay).
+**Boss — The Fell Warden** (Margit-inspired, HP 120, Poise 30)
+
+- Phase 1 (>50% HP): pattern cycle with a signature **delay** mechanic.
+  - *Held Blade* shows "Attack 14 — Delayed". On its turn it does nothing (gains 8 Block); the **following** turn it attacks for 14 regardless of newly rolled intents.
+  - Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
+- Phase 2 (≤50% HP, `phases` trigger, once): roars, applying 1 Frail + 1 Weak to the player; gains +2 Strength; unlocks *Twin Daggers 3×4*.
+- Staggering him cancels a Held Blade in progress.
 - Reward: 225–270 cinders, a choice of boss relics (§6), card reward with rare upgrade odds boosted.
 
-(Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
+**Authored weaknesses** (SPEC §4.7, *Enemy weaknesses in Core*): every enemy here and in later acts has them.
+
+| Enemy kind | Weak to |
+|---|---|
+| Hounds, beasts | fire, blunt |
+| Spirits, wisps | sacred, magic |
+| Armoured soldiers, knights | blunt, lightning (lightning and blunt staggers) |
+| Undead | sacred, burn ticks |
+| Insects, vermin | frost, slashing |
+| Constructs | blunt, lightning (Stamina loss) |
+| Casters | piercing, Paralysis stacks |
+| Each boss | one themed trigger |
 
 ### 5.4 Relics (M2 set of 16; 74 ship in all: 64 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
+
+Relic behavior uses the trigger DSL (§3.6).
 
 | Relic | Rarity | Effect |
 |---|---|---|
@@ -1479,68 +1467,14 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 | Ancestral Horn | rare | Powers cost 1 less. |
 | Ash of Remembrance | boss | **+1 Stamina each turn; at combat start, gain 1 Madness.** |
 
-Relic behavior uses the trigger DSL (§3.6) — the same declarative form as powers, statuses, and boss phases.
-
 ### 5.5 Flasks (potions)
 
-The Crimson/Azure charge pool's shared capacity is 3 (`balance.flaskCapacity`; owner, 2026-09-24 — 4 before). Utility
-potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
-not silently increase the other. Utility potions are found from combats, shops and events,
-while Crimson/Azure charges refill at every grace (§5.5.1). **Act change (owner, 2026-10-27):** the owner said "Refull potions between acts", and "potions" means the HP and MP flasks. So in a configured run `advanceAct()` refills both Crimson and Azure pools to their allocation at every act change, whatever `routes.startNodeRefills` says (that flag still governs the start node's own entry refill, which also restores HP). A legacy/current-profile run never refilled its flasks between acts and still does not. Falsified by `tests/act-change-flask-refill.test.mjs`.
-
-Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
-charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
-A persisted Gameplay setting may allow those restorative charges to be used between combats;
-it is off by default. An out-of-combat use applies the same authored healing or Mana effect and
-spends one charge, exactly as combat does.
-
-**Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
-
-#### 5.5.1 The grace refill
-
-The earlier “3 HP and 3 Mana” vessel reading is superseded by the approved shared pool (4, then 3 since 2026-09-24).
-It remains history, not a second implementable mode.
-
-**The grace is the Shrine of Emberlight** — this game has no separate `grace` node type and does not invent one.
-
-- **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like a run that comes to rest.
-- **Data driven.** Capacity, each class's starting split and the set of reallocatable charge
-  kinds are content rows. Screens read those rows; no screen owns a copied 3, 2/1 or 1/2.
-- **A fill, not a grant.** A grace fills the run's currently allocated HP and Mana vessels up
-  to their maxima. Re-mounting the shrine is idempotent and can never grow capacity.
-- **Free allocation.** At a grace the player may redistribute all 3 capacity between HP and
-  Mana at no cinder, action or item cost. Every split whose non-negative integers sum to 3 is
-  legal; reallocating is a committed run choice, and current charges are bounded by the new
-  per-kind maxima. Utility potions are untouched.
-- **Class openings.** Reaver, Herald and Rogue start `2 HP / 1 Mana`; Starseer starts `1 HP /
-  2 Mana` (owner, 2026-09-24; `3 / 1` and `2 / 2` on the pool of 4 before). These are presets over the same freely reallocatable pool, not class caps.
-- **Configurable in debug settings.** Debug controls edit the same capacity/allocation data
-  domain and show its lawful range; they do not author an independent ladder or refill count.
-- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus
-  `node tools/gracerefill.mjs --selftest`): unknown/duplicate kind, malformed capacity or
-  allocation, negative/fractional count, a split that does not sum to capacity, dangling or
-  wrong-kind override, and any refill that would silently alter utility inventory.
-- **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
-
-#### 5.5.2 The growth chain — how the maximum grows
-
-> Constantine, 2026-08-08 (D17 message 6): *"…those two are locked in with 3 charges, with upgrade options via relics or quest events or talismans or flask seeds to increase the amount of charges"*.
-
-**One chain, data rows, one truth function** (`model/flaskgrowth.js`). `balance.flaskGrowth` is a table of `{ source, id, kind, amount }` rows: holding the named source grows the named kind's maximum by `amount`. Sources are the closed set `FLASK_GROWTH_SOURCES` (`relic`, `questEvent`, `talisman`, `flaskSeed` — his four words, `model/schemas.js`); a fifth source is an engine act, never a row.
-
-- **Derived, so reversible.** `flaskCharges.grown` records what the chain currently contributes; `syncFlaskGrowth` reconciles at every door a source changes through (run birth, run load, the relic-gain sites, the equipment screen). Gaining a source grows the maximum; losing one shrinks it back, currents bounded.
-- **Two doors, one grant each.** The chain is the *possession* door. The `addFlaskCapacity` opcode remains the *moment* door (quest-event choice effects; keepsakes, its first caller, were removed with the keepsake cleanup). An event granting through both is a boot refusal — one grant may not land twice under two names.
-- **The capacity accounts for itself — machine-enforced since run schema v3.** `flaskCharges.capacity` is one stored number fed by both doors, and each door writes its ledger line: the chain in `grown` (per kind, reversible), the moment door in `granted` (a total, permanent — under pool the grant's kind is spent the moment it lands, so only the sum is history). `validateRunShape` refuses, by name, any save where `capacity ≠ base + grown.hp + grown.mana + granted` — so a "cleanup" that re-derives capacity from the chain alone, silently deleting every granted charge, goes red on the first save it touches instead of reading green while it wipes them. Corpus: `node tools/flaskgrowth.mjs --selftest` (both doors, observed red first); migration attribution for pre-ledger saves is stated at §3.12.
-- **Declared ahead of content, on purpose:** `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet — the moment door is the live mechanism); any `flaskSeed` row refuses at boot (no seed item vocabulary exists; the word is reserved, not invented). `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
-- **The optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored — the unlock ceiling is Constantine's number to author (D19's *"future unlocks for larger total amount"*), never invented here.
-- **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`): unknown source · non-charge kind · negative, zero or fractional amount · duplicate grant · dangling relic/event/talisman ref · the two-door collision · any seed row · cap malformed or exceeded.
-- **THE C1 SEAM — DECIDED: POOL.** Capacity is one freely reallocatable pool; its approved
-  new-run default is 4. The older 3-total and 3-each readings are superseded history, not
-  alternatives. The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth`
-  alone. **The overflow rule is load-bearing**: reallocate a grown charge away, then lose the
-  source—removal takes from the row's kind first and overflows to the other, currents bounded;
-  gated in the corpus, both edges, observed red first.
-- **Live rows ship under D19's parenthesis** (*"future unlocks for larger total amount"*). The rows and their numbers live in `balance.flaskGrowth` alone — read them there or run `node tools/flaskgrowth.mjs`; this spec deliberately does not restate them (a row copied into prose is a number nothing syncs). PROVISIONAL: the M3 balance pass owns the weights. The relic's tooltip sentence is **derived** from its row (`flaskGrowthClause`), so a retune retunes the tooltip. Law 0's falsifier is proven both ways in the corpus: fictional relic + row, zero code, the maximum grows; and the live plant re-derives its expectations from the shipped table itself.
+- Crimson/Azure charges share one pool of capacity 3 (`balance.flaskCapacity`). Utility potions are separate entries sized by `balance.flaskSlots`; neither limit raises the other. Utility potions come from combats, shops and events.
+- Crimson and Azure are permanent vessels in the potion tray: never dropped, no utility slot. A Gameplay setting (off by default) allows using them between combats (same effect, one charge).
+- Charges refill at every grace (§5.5.1). **Act change:** in a configured run `advanceAct()` refills both pools to their allocation, whatever `routes.startNodeRefills` says.
+  - That flag still governs the start node's own entry refill, which also restores HP.
+  - A legacy/current-profile run never refilled between acts.
+- **Kind:** closed set `FLASK_KINDS` (`hp`, `mana`, `utility`; `model/schemas.js`), derived in `model/gracerefill.js` `flaskKindOf`: `heal` is `hp`, the `restoreMana` opcode is `mana`, else `utility`; an explicit `kind:` overrides.
 
 | Flask | Effect |
 |---|---|
@@ -1552,58 +1486,156 @@ It remains history, not a second implementable mode.
 | Blood Unction | Your attacks apply 2 extra Bleed per hit this turn. |
 | Wondrous Draught (rare) | Two random flask effects at once. |
 
+#### 5.5.1 The grace refill
+
+The grace is the Shrine of Emberlight (there is no `grace` node type).
+
+- Automatic on arrival, before the Rest/Smith choice; smith and rest are refilled alike.
+- Capacity, class splits and reallocatable kinds are content rows; no screen copies 3, 2/1 or 1/2.
+- A fill, not a grant: fills allocated HP and Mana vessels to their maxima; idempotent; never grows capacity.
+- Free allocation (a committed run choice): redistribute all 3 between HP and Mana at no cost; any non-negative integer split summing to 3 is legal; current charges are bounded by the new maxima; utility potions untouched.
+- Class openings (presets, not caps): Reaver, Herald, Rogue `2 HP / 1 Mana`; Starseer `1 HP / 2 Mana`.
+- Debug controls edit the same data and show its lawful range.
+- Refusals (`graceRefillRefusals`, boot; `node tools/gracerefill.mjs --selftest`): unknown/duplicate kind; malformed capacity/allocation; negative/fractional count; split not summing to capacity; dangling or wrong-kind override; refill altering utility inventory.
+- Balance: the old no-Mana simulation is stale; a Mana-aware A/B balance run remains a release gate.
+
+#### 5.5.2 The growth chain — how the maximum grows
+
+`balance.flaskGrowth` rows `{ source, id, kind, amount }` (`model/flaskgrowth.js`): holding the source grows that kind's maximum by `amount`.
+
+- Sources: closed set `FLASK_GROWTH_SOURCES` (`relic`, `questEvent`, `talisman`, `flaskSeed`; `model/schemas.js`); a fifth is an engine act.
+- Derived, reversible: `flaskCharges.grown` holds the chain's contribution; `syncFlaskGrowth` reconciles at run birth, run load, relic gains and the equipment screen (gain grows, loss shrinks, currents bounded).
+- Two doors: the chain (*possession*) and the `addFlaskCapacity` opcode (*moment*, quest-event choice effects). An event granting through both is a boot refusal.
+- Capacity ledger (run schema v3): `flaskCharges.capacity` is one stored number; `grown` (per kind, reversible) and `granted` (permanent total) are its ledgers. `validateRunShape` refuses any save where `capacity ≠ base + grown.hp + grown.mana + granted`. Pre-ledger migration: §3.12.
+- Not yet binding: `questEvent` rows validate but report NOT BINDING; any `flaskSeed` row refuses at boot; `talisman` rows refuse until the first talisman is authored.
+- Optional `balance.flaskGrowthMax` arms an aggregate refusal only when authored (D19).
+- Refusals (`flaskGrowthRefusals`, boot; `node tools/flaskgrowth.mjs --selftest`): unknown source; non-charge kind; negative/zero/fractional amount; duplicate grant; dangling relic/event/talisman ref; two-door collision; any seed row; cap malformed or exceeded.
+- C1 seam, decided POOL: one freely reallocatable pool, approved new-run default 4 (contradiction kept: §5.5 and §5.5.1 say 3). Kind-delta binding stays in `syncFlaskGrowth`.
+  - Overflow rule: reallocate a grown charge away, then lose the source: removal takes the row's kind first, overflows to the other, currents bounded.
+- Live rows are in `balance.flaskGrowth` only (not restated; `node tools/flaskgrowth.mjs`); PROVISIONAL, the M3 balance pass owns weights. The relic tooltip derives from its row (`flaskGrowthClause`).
+
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-**The what-changed receipt (owner ask, 2026-10-31).** Every committed event choice (the event screen, quest-chain dialogue, quest-board and dungeon choices) takes a run snapshot before it commits and, when the run differs afterwards, opens the page-locked **What changed** receipt (`ui/components/whatChangedModal.js`): the event's name as title, the authored `resultText` as its lead line, then one row per stat, resource, relic, card (with before and after faces) or armament that moved. A pure flavour choice that changes nothing opens no receipt. The same receipt follows a Core rest-site Smith or card upgrade (the profile rest services; not level-up, which ends in its own reward door). The classic rest site's Smith keeps its own receipt line and is not wired to this modal.
+#### Unknown-node roll and M2 events
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `src/content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
+- Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (`mapConfigs[act].unknownWeights`, `src/content/mapconfig.js`).
+- Event = data `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }`; `effects` are §3.4 run-level opcodes.
 
-1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
-2. **Abandoned Merchant Cart** — *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
-3. **Wayward Pilgrim** — *Give 50 cinders* (gain a random relic) / *Refuse* (nothing).
-4. **Ancient Cinder Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave*.
+| # | Event | Choices |
+|---|---|---|
+| 1 | Goldbough Avatar | *Offer a card* (remove 1 card, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt) / *Leave* |
+| 2 | Abandoned Merchant Cart | *Loot* (gain 75 cinders, 50%: fight a Wandering Soldier ambush) / *Leave* |
+| 3 | Wayward Pilgrim | *Give 50 cinders* (gain a random relic) / *Refuse* (nothing) |
+| 4 | Ancient Cinder Stone | *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave* |
 
-Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
+#### What changed receipt
 
-**Quest chains (E12, #257).** Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock). Two gates read those facts, both authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+- Every committed event choice (event screen, quest dialogue, quest-board, dungeon) snapshots the run first; if the run differs afterwards it opens the page-locked receipt (`ui/components/whatChangedModal.js`).
+  - Title: event name; lead: `resultText`; one row per stat, resource, relic, card (before/after) or armament moved. No change, no receipt.
+- It also follows a Core rest-site Smith or card upgrade (not level-up). The classic rest site's Smith keeps its own receipt line.
 
-- **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
-- **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
+#### Quest chains
 
-The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Second Cairn** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
+- Each committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`).
+- Two gates, sidecar data in `content/events.js`:
+  - Choice: `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }`; `availableEventChoices` hides unmet choices without reindexing. Leave is never gated.
+  - Event: `eventHistoryRequirements[eventId]`, same grammar; `engine/encounters.js resolveUnknownNode` admits it only once satisfied, never as a repeat fallback. `buildActMap` carries `run.history` so an act answers earlier acts.
+- Chain: Grave of the Nameless → The Keeper of the Nameless (any grave choice but Leave) → The Second Cairn (any keeper choice).
+- A quest's named relic is `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool may hand it out; validation refuses a quest-pool relic no choice grants.
 
-**Quest completion and dialogue (plan phase 10a, proposal §7.5).** A committed choice goes through one door, `engine/quests.js commitEventChoice`: the run effects, then the history row, then the completion check. A chain is a third sidecar, `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave. Completion is `completeQuest`: it appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits. An atlas quest's claimed reward completes through the same door with `source: 'atlas'`. Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8): the event text divides into beats on blank lines, the speaker named in `eventSpeakers` (a `content/source/speakers.csv` row: `id,name,portraitKey`; a missing portrait shows the name plate) stands right and the player left, and the event's choices are the responses on the last beat. Back, Continue, Skip speech and speech ending move only the beat; only a response commits, and binding responses keep the hold. Validation refuses by name a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest. One-off events keep the Event screen.
+#### Quest completion and dialogue
+
+- One door: `engine/quests.js commitEventChoice` runs effects, then the history row, then the completion check.
+- `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any second-cairn answer but Leave.
+- `completeQuest` appends `{ kind: 'questCompleted', questId, source }` to `run.history` at most once per quest per run and emits `questCompleted` (nothing else emits it). `RUN_SHAPE` is unchanged. Run-history rows carry no wall clock. An atlas quest's claimed reward completes the same way with `source: 'atlas'`.
+- Chain steps open in the dialogue screen: text splits into beats on blank lines; the `eventSpeakers` speaker (`content/source/speakers.csv`: `id,name,portraitKey`; no portrait shows the name plate) stands right, the player left; choices are the responses on the last beat.
+  - Back, Continue, Skip speech and speech ending move only the beat; only a response commits; binding responses keep the hold.
+- Validation refuses by name: unresolved step or completion ref, step without speaker, unknown speaker, a Leave that completes a quest. One-off events keep the Event screen.
+
+#### Notes and history
+
+- Older XP curves and awards are archived, not rules.
+- Flask growth rows live in `balance.flaskGrowth` only.
+
+Full history: [docs/spec-history/05-content-map.md](docs/spec-history/05-content-map.md).
 
 ---
 
 ## 6. Map generation
 
-Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
+Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), the Core branched map, rewards, merchant prices.
 
-- Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
-- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (shipped `entries: 1` puts every path in one entrance column; the first 2 paths start at distinct columns only when `entries` is unset); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
-- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
+### Grid, paths, anchors
 
-  | anchor | resolves to |
-  |---|---|
-  | `{ at: 'first' }` | floor 1 |
-  | `{ at: 'last' }` | the last rollable floor (`floors`-1) |
-  | `{ at: 'floor', index: n }` | `n` — **an error** if outside 1..`floors`-1 |
-  | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
+- Per act a **`floors` × `columns`** grid (shipped 12 × 7). The top floor is always a single Shrine row, the Boss above it. Rules reach floors **1..`floors`-1** (the *rollable band*, the denominator for every fraction).
+- **6 paths** bottom-to-top from a random floor-1 column (shipped `entries: 1`: one entrance column; the first 2 start at distinct columns only when `entries` is unset); each step moves column −1/0/+1; edges may merge, never cross (swap targets).
+- Every floor a rule names is an ANCHOR, never an index. Kinds are a closed set in `model/floorplan.js` (a new kind is an engine change, Law 1):
 
-  `resolveFloorPlan()` is the **only** place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution, so they cannot disagree about what a rule meant. An anchor that will not resolve is a **boot error naming the entry** (Law 1 clause 5) and `mapgen` throws rather than generating an unauthored map.
-- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Shrine before `noShrineBefore` (`{ at: 'fraction', of: 0.27 }` → floor 3), no Elite before `noEliteBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
-- **`restBeforeElite`: a map that holds an Elite holds a Shrine on some EARLIER floor.** E13 — Constantine asked for a rest "so eletes, maybe shop, and definitely before a boss"; before-a-boss the top-floor Shrine always kept, before-elites nothing did (**124 of 180 maps over the canonical seed stream carried an Elite with no Shrine below it**; 0 of 180 now). It is why the gate is TWO anchors and not one: a single `noEliteOrShrineBefore` opened rests and Elites on the same floor, so a rest could never sit below the first Elite, and the schema now REJECTS that key rather than reading it as both. Kept the way the counts are kept — the roll is barred, and a final step on **every** exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot. Enforcing it only where the generator relaxes was not enough: a **fixed Elite rank** bypasses every gate (`typeOnce` assigns fixed ranks before any rule runs) and can satisfy `minElites` on its own, so the relax path never ran — 10 of 40 maps broke the promise that way. Two arrangements are boot errors instead, because the generator cannot fix them for itself: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all. A **fixed Shrine** below the Elite gate is itself the rest and needs no floor held free. Two things it does not claim: it is a fact about the GRAPH, not a path — a walker may still route past the rest to an Elite, and `tools/mapplan.mjs` measures how often rather than this line promising otherwise — and it moved the shortest act these rules describe from 4 floors to 7, which narrows the debug run-shape cap.
-- **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
-- **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
-- **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
-- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Sealstone Key** relic, `?` nodes render their resolved type.
-- **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
-- Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
-- The Core preview route (configured routes module) opens on a fight: `firstFloor: fight`, rests on floors 3 and 6, the whole map visible (owner, 2026-10-18); the legacy fixed-Monster rule above is the Current profile's.
-- **Core branched act map (owner, 2026-10-25; `buildGameProfileActMap`, `routes.maxBranches`).** The configured Core route has nine pre-boss depths with rests on depths 3, 6 and 9. Depth 1 is ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest when authored so) whose edges reach the first lane(s) of every branch, so the player picks a branch straight after it; with `routes.startNodeRefills` (default true) it carries `refill: true`, and entering it restores HP to max and refills both flask pools (a graph without the field does nothing new). The branch count is `b = rng.int('map', 1, min(maxBranches, distinct bosses))`, so it grows with the boss pool up to `maxBranches`, which Core caps at 3 (owner, 2026-10-27; the engine allows at most 5); the bosses are the first `b` of a seeded shuffle of the pool, hence distinct. From depth 2 each branch is its own subgraph inside up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5, so the board is at most `2 * branchColumns` columns wide), a tree with a rest node of its own in every lane that exists on a rest depth, at least one elite in every lane that exists at or past `minimumThreatFloor` on a non-rest depth (the guarantee is per lane, not per path: a remerge edge can carry a path past a lane's elite; a lane with no such depth has none), and its own boss `boss_k`. Edges after depth 1 never leave a branch, so the rests before each boss are that branch's own. **Branching trees, no forced rejoin (owner, 2026-10-27):** the owner said "I noticed that the map seems to re[group] at rest points, it should be branching trees without rejoining. so one starting point, but 1-3 separate branches", then "it can remerge but not consistently". So `maxBranches` is 3 in Core and a rest depth never forces a merge (every lane that exists has its own rest). **Sub-branches (owner, 2026-10-27):** "Refull potions between acts, each branching path should also branch but join into one boss. So 3 main branches each with a boss but those sub branches can branches too", clarified as: the main branch count stays 1-3 (never forced to 3). So each main branch is a tree, not parallel lanes: it opens narrow at depth 2 with ONE node, or TWO when it has three lanes (a 50% `map` draw), then forks outward over the next depths, each boundary node drawing `FORK_PERCENT` (40%) per depth to grow a new neighbouring lane, forced so the branch is full by depth `prebossNodes - 3` (depth 6 in Core); over the last two depths a three-lane branch may narrow once (25%, an outer lane's node joins its neighbour), never below two lanes, so once a branch has widened it never collapses back to one path (before its first fork the trunk may be a single path, rest depths included); a one-lane branch (b of 4-5) stays a single path. Every path ends at the branch's boss. On top of the tree, per branch and per gap between two in-branch depths one `map` draw (18%) may add ONE remerge edge between neighbouring lanes that exist on both depths, so a node forks and its neighbour gains a second parent; that is rare, seeded, and a branch never remerges into every rest depth. Measured over 200 seeds x 3 acts: 71.6% of branches open with one node (all two-lane branches, half of three-lane ones), 1.26 fork edges and 3.8 distinct paths per branch, remerge 17.7% of eligible gaps. A lane's nodes, ids and columns stay `n{depth}_{branchIndex * L + lane}` and `branch * L + lane`, so a lane that does not exist at a depth has no node there. `bossId` is `boss_0`, `bossIds` lists every branch's boss, `shrineIds` lists every pre-boss rest of every branch (one per lane that exists on that depth; `shrineId` is the first), and each node carries `branch` (null on shared depth 1). The first boss beaten ends the act. A profile without `maxBranches` keeps the single-trunk map and a stored graph is never regenerated, so older saves load as they were. Falsified by `tests/game-profile-map.test.mjs` (distinct bosses, narrow openings, outward forks, rests per existing lane, no collapse at rests, rare remerges over 200 seeds, per-lane elite, branch-local edges, reachability, identical replays) and `tests/core-rest-sites.test.mjs`.
+| Anchor | Resolves to |
+|---|---|
+| `{ at: 'first' }` | floor 1 |
+| `{ at: 'last' }` | last rollable floor (`floors`-1) |
+| `{ at: 'floor', index: n }` | `n`; error outside 1..`floors`-1 |
+| `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
 
-Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 to 5 (a random count per combat door, `rewards.combatOfferCount` {min 3, max 5}, rolled on `cardRewards`; chests and level cards keep 3) (owner, 2026-11-05) at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic. A solo boss victory offers up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`src/main.js`, `rollRelicChoices` on the `relicRewards` stream; one left gives a single `relicId`) and the player picks one; auto-collect picks one at random from the unowned options, and with auto-collect off an unpicked choice is left behind. Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
+  - `resolveFloorPlan()` alone turns an anchor into a floor (generator, validator, `tools/mapplan.mjs`). An unresolvable anchor is a boot error naming the entry (Law 1 clause 5); `mapgen` throws.
+
+### Node typing
+
+- Fixed ranks: Monster at `first`; Treasure at fraction 0.64 (floor 7 of 11 shipped).
+- Rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster.
+
+| Constraint | Anchor | Shipped floor |
+|---|---|---|
+| No Shrine before `noShrineBefore` | fraction 0.27 | 3 |
+| No Elite before `noEliteBefore` | fraction 0.43 | 5 |
+| No Shrine on `noShrineOn` | `last` | 11 |
+
+- No two identical non-Monster types adjacent along an edge. **`minElites` ≥ 2, `minMerchants` ≥ 1 per act**; if violated, regenerate typing (map RNG stream, bounded retries), then relax the weakest constraint.
+- **`restBeforeElite`:** a map with an Elite has a Shrine on some EARLIER floor.
+  - Gated by TWO anchors (`noShrineBefore`, `noEliteBefore`); the schema REJECTS `noEliteOrShrineBefore`.
+  - The roll is barred; a final step on every exit path (fixed ranks bypass gates) opens a rest on a floor certified at boot.
+  - Boot errors: a fixed Elite with no floor beneath it able to hold a rest; no rest floor at all. A fixed Shrine below the Elite gate is the rest.
+  - A graph fact, not a path guarantee. Shortest act: 7 floors (narrows the debug run-shape cap).
+- **`minElites` counts graph nodes, not reachability** (some starts reach no Elite; `tools/mapplan.mjs` prints it; nothing gates on it; making the generator honour `minElites` is an open design call).
+- `?` nodes resolve via `mapConfigs[act].unknownWeights` (§5.6).
+- Map claims are distributions, never seeds; `tools/mapplan.mjs` prints mean and range and refuses to report if its seeds did not vary. Stops per run = exactly **`floors` + 1**.
+
+### Player view and camera
+
+- Full act map visible; only nodes edge-connected to the current node are clickable. **Sealstone Key** shows `?` types.
+- Camera opens framed on the current decision; grab-drag on both axes. **Settings → Advanced → Interface → Two-axis map dragging** (default on); off = vertical-only, horizontal centred. Zoom reset recentres; the saved camera keeps both axes.
+- Acts 2/3 reuse the generator with other encounter tables and elite/boss pools (data only).
+- Core preview route: opens on a fight (`firstFloor: fight`), rests on floors 3 and 6, whole map visible; the fixed-Monster rule above is the Current profile's.
+
+### Core branched act map
+
+`buildGameProfileActMap`, `routes.maxBranches`. A profile without `maxBranches` keeps the single-trunk map; stored graphs are never regenerated.
+
+- Nine pre-boss depths; rests on depths 3, 6, 9.
+- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new).
+- Branches `b = rng.int('map', 1, min(maxBranches, distinct bosses))`; Core `maxBranches` 3 (engine max 5). Bosses: first `b` of a seeded shuffle; the first boss beaten ends the act.
+- From depth 2 each branch is a subgraph in up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5; board at most `2 * branchColumns` wide). Edges after depth 1 never leave a branch.
+- No forced rejoin: every lane on a rest depth has its own rest; each lane holds at least one elite on some non-rest depth at or past `minimumThreatFloor` (per lane, not per path: a remerge edge can carry a path past it; a lane with no such depth has none).
+- Each branch is a tree:
+  - Opens at depth 2 with ONE node, or TWO when it has three lanes (50% `map` draw).
+  - Forks outward: each boundary node draws `FORK_PERCENT` (40%) per depth to grow a neighbouring lane; forced full by depth `prebossNodes - 3` (6 in Core).
+  - Last two depths: a three-lane branch may narrow once (25%, an outer lane joins its neighbour), never below two lanes; once widened it never collapses to one path (before its first fork the trunk may be a single path, rest depths included). A one-lane branch (b 4–5) stays single. Every path ends at the branch's boss.
+- Remerge: per branch and per gap between in-branch depths, one `map` draw (18%) may add ONE edge between neighbouring lanes existing on both depths; never into every rest depth.
+- Ids: `n{depth}_{branchIndex * L + lane}`, column `branch * L + lane`. `bossId` `boss_0`; `bossIds` all `boss_k`; `shrineIds` every pre-boss rest (`shrineId` the first); nodes carry `branch` (null on depth 1).
+
+### Rewards after combat and merchant prices
+
+- Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic. Flask roll: §5.5.
+- Card reward on the §15.1 schedule: shipped 10% per won fight (`balance.rewards.cardRewards.chancePct`); choose 1 of 3–5 (random per combat door, `rewards.combatOfferCount` {min 3, max 5}, `cardRewards` stream; chests and level cards keep 3). Default odds common 60 / uncommon 35 / rare 5, Elite 45/40/15; a class's reward weights may override.
+- Solo boss victory: up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`rollRelicChoices`, `relicRewards` stream; one left gives a single `relicId`); pick one. Auto-collect picks randomly; with it off an unpicked choice is left behind.
+- Merchant prices (cinders): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
+
+#### Notes and history
+
+- Map figures come from `tools/mapplan.mjs`, never restated here.
+
+Full history: [docs/spec-history/05-content-map.md](docs/spec-history/05-content-map.md).
 
 ---
 
