@@ -67,7 +67,7 @@ const overflow = page => page.evaluate(() => {
 });
 
 try {
-  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 3]) {
+  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 2, 3]) {
     const page = await board(width, height, enemies), tag = `${width}x${height} ${enemies}e`;
     let geo = await geometry(page);
     // Armed: every legal enemy's panel shows.
@@ -90,7 +90,8 @@ try {
       }
     }
     const enemyRacks = geo.filter(g => g.role === 'enemy').map(g => g.rack).sort((a, b) => a.x - b.x);
-    for (let i = 1; i < enemyRacks.length; i++) assert.ok(enemyRacks[i].x - enemyRacks[i].width / 2 >= enemyRacks[i - 1].x + enemyRacks[i - 1].width / 2 - 1, `${tag}: neighbouring enemy HUDs do not overlap`);
+    // Three enemy lanes on a phone are narrower than the fixed width (owner 2026-11-07: fixed, compact); two must clear each other.
+    if (width > 600 || enemies <= 2) for (let i = 1; i < enemyRacks.length; i++) assert.ok(enemyRacks[i].x - enemyRacks[i].width / 2 >= enemyRacks[i - 1].x + enemyRacks[i - 1].width / 2 - 1, `${tag}: neighbouring enemy HUDs do not overlap`);
     assert.ok(player.rack.x - player.rack.width / 2 >= player.spriteRight - 8 || player.rack.x >= player.figureX, `${tag}: the player mini HUD stands right of the figure (rack x ${player.rack.x.toFixed(1)}, figure ${player.figureX.toFixed(1)})`);
     assert.deepEqual(await overflow(page), [], `${tag}: no HUD text overflows`);
     // Select, play and (phone only, to bound the run) end the turn: nothing moves, nothing is replaced.
@@ -154,9 +155,23 @@ try {
       assert.ok(row.box && row.hp, `${name}: its mini HUD (HP bar) exists`);
       if (row.id !== 'player') assert.ok(row.intent, `${name}: the enemy mini HUD shows its intent`);
       assert.ok(Math.abs(row.box.width - rows[0].box.width) <= 1, `${name}: mini HUD ${row.box.width.toFixed(1)} is the one fixed width (${rows[0].box.width.toFixed(1)})`);
-      if (row.id !== 'player') assert.ok(row.box.width <= row.cellWidth + 2, `${name}: an enemy mini HUD ${row.box.width.toFixed(1)} fits its cell ${row.cellWidth.toFixed(1)}`);
+      if (row.id !== 'player' && width > 600) assert.ok(row.box.width <= row.cellWidth + 2, `${name}: an enemy mini HUD ${row.box.width.toFixed(1)} fits its cell ${row.cellWidth.toFixed(1)}`);
       assert.ok(row.box.left >= -1 && row.box.right <= row.vw + 1 && row.box.top >= -1 && row.box.bottom <= row.vh, `${name}: mini HUD ${JSON.stringify(row.box)} is inside the field`);
     }
+    await page.close();
+  }
+  // Owner 2026-11-07: the badge row never runs past the HP bar, on any form factor; surplus statuses collapse into +N.
+  for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, 2);
+    await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.statuses = { ...(enemy.statuses || {}) }; for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) enemy.statuses[id] = { stacks: 1, duration: 2 }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant > .target-hud-overhead-meters')].map(rack => {
+      const bar = rack.querySelector('.combat-health-meter .m-track').getBoundingClientRect(), badges = rack.querySelector('.combat-health-badges').getBoundingClientRect();
+      const reach = Math.max(badges.right, ...[...rack.querySelectorAll('.combat-health-badges *')].map(n => n.getBoundingClientRect().right));
+      return { bar: bar.width, badges: badges.width, right: reach, barRight: bar.right, icons: rack.querySelectorAll('.statuses .status-icon').length };
+    }));
+    assert.ok(rows.some(r => r.icons >= 2), `${width}: statuses render in the badge row`);
+    for (const r of rows) { assert.ok(r.badges <= r.bar + 1, `${width}: badge row ${r.badges.toFixed(1)} is within the bar width ${r.bar.toFixed(1)}`); assert.ok(r.right <= r.barRight + 1, `${width}: no badge past the bar right edge (${r.right.toFixed(1)} vs ${r.barRight.toFixed(1)})`); }
     await page.close();
   }
   // A panel already pushed against the top edge keeps its top on screen when a status grows it (short landscape phone).

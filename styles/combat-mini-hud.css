@@ -77,7 +77,7 @@
 /* The badge row: every badge kind and the status tray, one size, one row. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
   grid-column: 2; grid-row: 3; display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap;
-  gap: var(--mh-gap); width: 100%; min-width: 0; height: var(--mh-badge); margin: 0; padding: 0;
+  gap: var(--mh-gap); width: var(--mh-bar-w); max-width: 100%; min-width: 0; height: var(--mh-badge); margin: 0; padding: 0; overflow: hidden;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge {
   position: relative !important; inset: auto !important; margin: 0 !important; zoom: 1 !important; transform: none !important;
@@ -90,6 +90,11 @@
   min-width: 0; min-height: 0 !important; height: var(--mh-badge); margin: 0 !important; padding: 0; gap: var(--icon-tray-gap, var(--mh-gap)); pointer-events: auto;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses .as-pip {
-  box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)); width: var(--icon-tray-size, var(--mh-badge)); height: var(--icon-tray-size, var(--mh-badge));
+  box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
   font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .55);
+}
+/* The +N tile is one icon wide, so a full row never runs past the bar. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses > .status-overflow {
+  box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
+  padding: 0; font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .5);
 }

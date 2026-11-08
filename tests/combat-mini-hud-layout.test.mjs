@@ -66,6 +66,7 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
   assert.match(css, /--mh-bar-h: var\(--hud-mini-bar-height, 10px\)/);
   assert.match(css, /\.combat-health-poise-bar\.combat-health-poise-bar \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
   assert.match(css, /\.combat-health-meter > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'the HP trough is that width');
+  assert.match(css, /\.combat-health-badges \{[^}]*width: var\(--mh-bar-w\); max-width: 100%[^}]*overflow: hidden/, 'the badge row is capped at the bar width (the browser test counts 8 statuses)');
   assert.match(css, /grid-row: 1 \/ 4/, 'the shield spans the HP, Poise and badge rows');
   for (const form of FORM_FACTORS) {
     const { tokens } = JSON.parse(read(`content/hud-layout/${form}.json`));
