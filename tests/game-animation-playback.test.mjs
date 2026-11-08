@@ -15,7 +15,7 @@ pinCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the sh
 
 // Execute the shipped screen handler with instrumented presentation services.
 // This exercises its real disabled handle rather than supplying a test handle.
-const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const begin = screen.indexOf('  function playFamilyAnimation(');
 const end = screen.indexOf('\n\n  let selected =', begin);
 assert.ok(begin > 0 && end > begin);
