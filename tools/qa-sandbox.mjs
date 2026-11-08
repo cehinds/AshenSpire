@@ -67,6 +67,7 @@ export function validateAction(action, where) {
   if ((kind === 'click' || kind === 'tap' || kind === 'key') && !isStr(v)) return [`${where}: ${kind} needs a string`];
   if (kind === 'wait' && !(v && Number.isFinite(v.ms))) return [`${where}: wait needs {ms}`];
   if (kind === 'hold' && !(v && isStr(v.selector) && Number.isFinite(v.ms))) return [`${where}: hold needs {selector, ms}`];
+  if (kind === 'hold' && v.position != null && !['x', 'y'].every(axis => Number.isFinite(v.position[axis]) && v.position[axis] >= 0 && v.position[axis] <= 1)) return [`${where}: hold position needs x and y fractions between 0 and 1`];
   return [];
 }
 
@@ -211,7 +212,8 @@ async function runActions(page, actions) {
     else if (a.tap) await page.tap(a.tap, { timeout: 5000 }).catch(() => page.click(a.tap, { timeout: 5000 }));
     else if (a.hold) {
       const box = await (await page.waitForSelector(a.hold.selector, { timeout: 5000 })).boundingBox();
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      const position = a.hold.position || { x: .5, y: .5 };
+      await page.mouse.move(box.x + box.width * position.x, box.y + box.height * position.y);
       await page.mouse.down(); await page.waitForTimeout(a.hold.ms); await page.mouse.up();
     } else if (a.key) await page.keyboard.press(a.key);
     else if (a.wait) await page.waitForTimeout(a.wait.ms);
