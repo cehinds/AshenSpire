@@ -298,3 +298,15 @@ test('a failed static dependency rejects every later dynamic importer', async ()
     assert.deepEqual([...context.log], ['b'], 'the throwing dependency is evaluated once');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('backstop: regex classes and nested template text cannot invent comments', () => {
+  for (const prefix of ['const re = /[/*]/;', 'const text = `outer${`/*`}`;']) {
+    const source = `${prefix} const x = {} / 2; globalThis.load = () => import('./dev.js');\n`;
+    assert.doesNotThrow(() => new Function(source), 'the fixture is valid JavaScript');
+    assert.deepEqual(scanDynamicImports(source), [], 'exercise a scanner miss');
+    const root = fixture({ 'main.js': source, 'dev.js': 'export const value = 1;\n' });
+    try {
+      assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js/);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
