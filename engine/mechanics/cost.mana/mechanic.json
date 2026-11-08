@@ -21,6 +21,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/actions.js",
-    "symbol": "runRunOpcode"
+    "symbol": "RUN_OPCODE_HANDLERS"
   }
 }

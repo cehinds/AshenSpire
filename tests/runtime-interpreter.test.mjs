@@ -376,12 +376,9 @@ test('ops.json portable set equals the implemented ops', () => {
   assert.deepEqual(portable, [...PORTABLE_OPS].sort());
 });
 
-test('ops.json op names equal the case names inside actions.js runOpcode', () => {
-  const text = readFileSync(new URL('../src/engine/actions.js', import.meta.url), 'utf8');
-  const from = text.indexOf('function runOpcode(');
-  const to = text.indexOf('export function createRunContext(');
-  assert.ok(from > 0 && to > from);
-  const cases = new Set([...text.slice(from, to).matchAll(/case '([A-Za-z]+)':/g)].map(m => m[1]));
+test('ops.json op names equal the handler keys of actions.js runOpcode/runRunOpcode', async () => {
+  const { OPCODE_HANDLERS, RUN_OPCODE_HANDLERS } = await import('../src/engine/actions.js');
+  const cases = new Set([...Object.keys(OPCODE_HANDLERS), ...Object.keys(RUN_OPCODE_HANDLERS)]);
   assert.deepEqual([...Object.keys(ops.ops)].sort(), [...cases].sort());
   assert.equal(Object.keys(ops.ops).length, 45);
   assert.equal(ops.format, 'ashen.ops@1');

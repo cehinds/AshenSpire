@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
-import { characterSettings, enemyAttributeBudget } from '../engine/kernel/gameConfig.js';
+import { characterSettings, enemyAttributeBudget, resolveEnemyAttributes } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { validateGameProfileSnapshot, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -39,4 +39,30 @@ test('authored points and the last applicable explicit tag budget retain priorit
   assert.equal(enemyAttributeBudget(row, tagged), 9);
   assert.equal(enemyAttributeBudget({ ...row, attributePoints: 11 }, tagged), 11);
   assert.equal(enemyAttributeBudget({ id: 'player', level: 19, tags: ['character.player'] }, tagged), settings.tagRules['character.player'].attributeBudget[1]);
+});
+
+// Captured from dev e719856's generated catalog; its digest matches the committed lock.
+test('the latest dev profile keeps its authored budgets through enemy-level integration', () => {
+  const original = JSON.parse(gunzipSync(readFileSync(new URL('./fixtures/dev-profile-fae7af.json.gz', import.meta.url))));
+  const profile = validateGameProfileSnapshot(structuredClone(original));
+  assert.deepEqual(profile, original);
+  const settings = characterSettings(profile.modules);
+  const expected = {
+    wanderingSoldier: [1, 1, 0, 0, 0],
+    fellWarden: [1, 3, 1, 1, 0],
+    ashheartDragon: [2, 2, 1, 1, 0],
+  };
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = deserializeRun(serializeRun(createRunState({ registries, classId: 'reaver', seed: 512 })));
+  assert.deepEqual(run.gameProfile, original);
+  for (const [id, own] of Object.entries(expected)) {
+    const row = profile.content.enemies.find(enemy => enemy.id === id);
+    const attributes = resolveEnemyAttributes(row, settings, '512/e0');
+    assert.deepEqual(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map(key => attributes[key]), own, `${id}: prechange seeded allocation`);
+    const fight = createRunCombat({ registries, run, rng: createRng(512), enemyIds: [id] });
+    const restored = restoreCombatSnapshot({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(fight), expectedGameProfile: run.gameProfile });
+    assert.deepEqual(restored.enemies[0].ownAttributes, fight.enemies[0].ownAttributes);
+    assert.equal(restored.enemies[0].level, fight.enemies[0].level);
+    assert.deepEqual(restored.gameProfile, original);
+  }
 });

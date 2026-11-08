@@ -34,7 +34,7 @@ test('restampSmithingCards drops the steps of an equipment-bound card it resets'
 test('every site that resets upgraded to false on a spread or live instance clears upgradeSteps', () => {
   for (const [file, needle] of [
     ['../src/model/smithing.js', 'instance.upgraded = false;'],
-    ['../src/model/loadout.js', 'inst.upgraded = false;'],
+    ['../src/model/loadout/stampDeck.js', 'inst.upgraded = false;'],
   ]) {
     const source = readFileSync(new URL(file, import.meta.url), 'utf8');
     const at = [...source.matchAll(new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))];
