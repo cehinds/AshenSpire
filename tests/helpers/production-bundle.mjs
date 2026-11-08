@@ -8,7 +8,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 // Exercise the shipped compiler and loader without packaging artwork. Native
 // ESM keeps cyclic named imports live; the production transform does not.
 export function productionBundle({ additionalModules = [] } = {}) {
-  const source = readFileSync(resolve(ROOT, 'tools/bundle.mjs'), 'utf8');
+  const source = readFileSync(resolve(ROOT, 'tools/bundle.mjs'), 'utf8').replace(/\r\n?/g, '\n');
   const extract = (start, end) => {
     const first = source.indexOf(start), last = source.indexOf(end, first);
     if (first < 0 || last < 0) throw new Error(`Bundler fixture cannot find ${start} / ${end}`);

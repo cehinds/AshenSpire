@@ -263,7 +263,7 @@ test('a read buff and a read spell follow-up show the icon they would show as th
 
 test('a skipped playback flushes the un-applied receipts into the row memo once (the reducer the screen runs)', async () => {
   const { readFileSync } = await import('node:fs');
-  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
   const body = source.match(/function reduceFollowRows\(events\) \{([\s\S]*?)\n  \}\n\n  function applyBeatToDisp/)?.[1];
   assert.ok(body, 'the screen has one reducer for the follow-up receipts');
   const c = fight({ reads: [MISS, READ], plan: two(registries) });
