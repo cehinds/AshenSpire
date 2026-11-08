@@ -174,6 +174,43 @@ try {
     for (const r of rows) { assert.ok(r.badges <= r.bar + 1, `${width}: badge row ${r.badges.toFixed(1)} is within the bar width ${r.bar.toFixed(1)}`); assert.ok(r.right <= r.barRight + 1, `${width}: no badge past the bar right edge (${r.right.toFixed(1)} vs ${r.barRight.toFixed(1)})`); }
     await page.close();
   }
+  // Owner 2026-11-07: a phone enemy with Evade, Ward and Precision (Block 0) and three more statuses: the badges and the tray share one
+  // capacity, so nothing crosses the bar's right edge and the +N tile stays whole (badges that do not fit collapse into it).
+  {
+    const page = await board(390, 844, 2);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.block = 0; e.persistentWard = { value: 5 };
+      e.statuses = { evade: { stacks: 2 }, precision: { stacks: 2 }, weak: { stacks: 1, duration: 2 }, vulnerable: { stacks: 1, duration: 2 }, frail: { stacks: 1, duration: 2 } }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const m = await page.evaluate(() => { const rack = [...document.querySelectorAll('.combatant.enemy > .target-hud-overhead-meters')].find(r => r.querySelector('.statuses .status-icon, .statuses .status-overflow'));
+      const bar = rack.querySelector('.combat-health-meter .m-track').getBoundingClientRect(), more = rack.querySelector('.status-overflow')?.getBoundingClientRect();
+      const drawn = [...rack.querySelectorAll('.combat-health-badges > .combat-health-badge, .combat-health-badges > .statuses > *')].map(n => n.getBoundingClientRect()).filter(r => r.width > 0);
+      return { barRight: bar.right, right: Math.max(...drawn.map(r => r.right)), more: more && { left: more.left, right: more.right, width: more.width, height: more.height } }; });
+    assert.ok(m.right <= m.barRight + 0.5, `phone: nothing crosses the bar's right edge (${m.right.toFixed(1)} vs ${m.barRight.toFixed(1)})`);
+    assert.ok(m.more && m.more.width > 8 && Math.abs(m.more.width - m.more.height) <= 1.5 && m.more.right <= m.barRight + 0.5, 'phone: the +N tile is drawn whole');
+    await page.close();
+  }
+  // Owner rule (2026-11-06): a value change adds and removes no node, with overflowing statuses too (the tray is not morphed with the meters),
+  // and keyboard focus on the +N tile survives.
+  for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, 2);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.statuses = { ...(e.statuses || {}) };
+      for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) e.statuses[id] = { stacks: 1, duration: 2 }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const more = page.locator('.combatant.enemy .statuses .status-overflow').first();
+    assert.equal(await more.count(), 1, `${width}: statuses overflow into +N`);
+    await more.focus();
+    await watch(page);
+    const before = await rects(page);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.hp = Math.max(1, e.hp - 3); window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => { const e = window.__combat.enemies.find(x => x.alive); e.block = 9; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(800);
+    assert.equal(await swaps(page), 0, `${width}: an HP change and a Block change add or remove no HUD node with overflowing statuses`);
+    const racksOnly = rows => rows.filter(row => !/^target-hud-panel/.test(row[0])); // the detail panel is retired and never shown
+    assert.deepEqual(racksOnly(await rects(page)), racksOnly(before), `${width}: and move no HUD box`);
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('status-overflow')), true, `${width}: focus on +N survives`);
+    await page.close();
+  }
   // A panel already pushed against the top edge keeps its top on screen when a status grows it (short landscape phone).
   {
     const page = await board(844, 390, 3);

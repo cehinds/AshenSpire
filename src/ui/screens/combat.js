@@ -2036,6 +2036,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // make the pips dead patches on a target.
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
+    row.dataset.morphKeep = 'true'; // a morph of the meters (an HP or Block change) leaves the tray in the badge row alone
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     for (const status of rows) {
       const statusTip = () => {
@@ -2189,9 +2190,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
     const procs = procPlan && !expanded ? procPlan.bars.map((sid) => ({ sid, value: v.statuses[sid].meter.value, max: v.statuses[sid].meter.max, resisted: hasResistAgainst(entity, sid) })) : [];
-    // The status tray is drawn in the HP row's badge row, so a status gained or lost redraws the meters.
-    const statusIn = statusRows(entity);
-    return { v, plan, stackHidden, hp, procs, statusIn, key: [entity.kind, plan, hp, arcane, procs, statusIn] };
+    return { v, plan, stackHidden, hp, procs, key: [entity.kind, plan, hp, arcane, procs] };
   }
 
   function meterBars(entity, { tooltips = true, inputs = meterInputs(entity) } = {}) {
@@ -2215,9 +2214,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const poiseEl = bars.querySelector('.as-meter[data-res="poise"]');
         const next = el.nextSibling === poiseEl ? poiseEl.nextSibling : el.nextSibling;
         const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
-        // The Poise bar and the status tray join the HP row: bars stacked, then one badge row (see combatHealth.js).
+        // The Poise bar joins the HP row: bars stacked, then one badge row. The status tray is seated in that badge row by combatantFrame.js.
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true,
-          poise: poiseEl, statuses: statusRow(entity, {}, inputs.statusIn) });
+          poise: poiseEl });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -2332,6 +2331,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (changed.leading) slots.leading = build.leading();
     if (changed.name) slots.name = build.name();
     if (changed.meters) slots.meters = build.meters();
+    if (changed.statuses) slots.statuses = build.statuses();
     if (changed.chips) slots.chips = build.chips();
     updateCombatantSlots(box, slots);
     record.slotKeys = keys;
@@ -2369,12 +2369,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const playerName = combatantName('player', p);
     const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
+    const statusIn = statusRows(p);
     const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
     const keys = {
       classes: JSON.stringify(classNames()),
       leading: JSON.stringify([playerName, settings]),
       name: JSON.stringify([nameLabel, settings]),
       meters: JSON.stringify([meterIn.key, settings]),
+      statuses: JSON.stringify([statusIn, settings]),
       chips: JSON.stringify([stanceDef && [p.stanceId, stanceDef.name, stanceDef.icon, abilityName(p.stanceId)],
         companionRows.map(({ id, def, fightsLeft }) => [id, def.name, def.blurb, fightsLeft]), settings]),
     };
@@ -2383,6 +2385,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       leading: () => [combatantInfo(combatantName('player', p), opener => openCombatantDoor(combatantSubject('player', p), opener))],
       name: () => markMeterRow(labelStack({ label: nameLabel, attrs: { class: 'nm' } }), 'name'),
       meters: () => meterBars(p, { inputs: meterIn }),
+      statuses: () => statusRow(p, {}, statusIn),
       chips: () => {
         const chips = [];
         if (stanceDef) {
@@ -2419,7 +2422,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       sprite: profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: build.name(),
       meters: build.meters(),
-      trailing: [...build.chips()],
+      trailing: [build.statuses(), ...build.chips()],
     };
     const box = existing ? existing : combatantFrame(slots);
     let wrote;
@@ -2523,12 +2526,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const idx = living.indexOf(enemy);
       const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
       const meterIn = meterInputs(enemy);
+      const statusIn = statusRows(enemy);
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
         leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, !!targeting, settings]),
         name: JSON.stringify([def.name, enemy.alive, settings]),
         meters: JSON.stringify([meterIn.key, settings]),
+        statuses: JSON.stringify([statusIn, settings]),
         chips: JSON.stringify(knownWeaknesses(enemy)),
       };
       const build = {
@@ -2584,6 +2589,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return markMeterRow(nm, 'name');
         },
         meters: () => meterBars(enemy, { inputs: meterIn }),
+        statuses: () => statusRow(enemy, {}, statusIn),
         chips: () => weaknessChips(knownWeaknesses(enemy)),
       };
       const slots = record ? null : {
@@ -2594,7 +2600,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         sprite: profileEnemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: build.name(),
         meters: build.meters(),
-        trailing: [...build.chips()],
+        trailing: [build.statuses(), ...build.chips()],
       };
       const box = record ? record.box : combatantFrame(slots);
       const rowWrote = record ? writeSlots(box, record, keys, build) : true;

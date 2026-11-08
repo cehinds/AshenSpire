@@ -109,3 +109,13 @@ test('a child that appears or goes does not shift its siblings onto the wrong no
   assert.equal(morph(live, row(meter('30'))), 1, 'one badge removed');
   assert.equal(live.childNodes[0], kept);
 });
+
+test('a live child marked data-morph-keep is never removed by a morph of its parent (the HUD status tray in the badge row)', () => {
+  const live = markBuilt(el('div', { class: 'row' }, el('span', { class: 'a' }, 'x')));
+  const tray = el('div', { class: 'statuses' }); tray.dataset = { morphKeep: 'true' };
+  live.appendChild(tray);
+  const swaps = morph(live, el('div', { class: 'row' }, el('span', { class: 'a' }, 'y')));
+  assert.equal(swaps, 0);
+  assert.ok(live.childNodes.includes(tray), 'the kept tray stays');
+  assert.equal(live.childNodes[0].textContent, 'y');
+});
