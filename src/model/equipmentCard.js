@@ -4,7 +4,7 @@ import { parseMod } from './loadout.js';
 import { pieceWeight } from './statProjection.js';
 import { balance } from '../content/balance.js';
 import { breakPropertyText } from './breakMeter.js';
-import { affinityTags } from '../engine/elementRules.js';
+import { affinityTags } from './elementRules.js';
 
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
