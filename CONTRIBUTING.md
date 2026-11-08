@@ -303,9 +303,14 @@ ignored, and the local QA tools write to the ignored `scratch/qa/`. Evidence a
 document needs to show goes under one of the folders below, and
 `tests/qa-evidence-size.test.mjs` (a discovered test, so it gates a PR into
 `dev`) fails any tracked JSON over 256 KiB under `docs/qa/`,
-`docs/art-evidence/`, `docs/preview/` or a `receipts/` or
-`evidence/` folder, unless its `ALLOWED` list names the file and the tool or
-test that reads it. The oversized #1781 files were removed from the tree on
+`docs/art-evidence/`, `docs/preview/`, a `receipts/` or
+`evidence/` folder, or anywhere under `tools/`, and any tracked image
+(png, jpg, jpeg, webp, gif) over 256 KiB under `tools/`, unless its `ALLOWED`
+list names the file and the tool or test that reads it. `tools/results/` is
+ignored (H5, 2026-11-07): local runs write to `scratch/qa/<tool>/`, and a
+workflow that produces screenshots uploads them with `actions/upload-artifact`.
+Images under the `docs/` evidence folders are not gated yet; oversized ones are
+still tracked there and need their own cleanup. The oversized #1781 files were removed from the tree on
 2026-10-10; `git log --diff-filter=D -- <path>` finds the removing commit and
 `git show <commit>^:<path>` restores the bytes.
 
