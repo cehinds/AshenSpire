@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: shorter game rules, rewards and profile** ([#2692](https://github.com/cehinds/AshenSpire/pull/2692), `0.7.4.38`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, rewards and profile** ([#2692](https://github.com/cehinds/AshenSpire/pull/2692), `0.7.4.40`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Preview builds recover after automatic updates** ([#2716](https://github.com/cehinds/AshenSpire/pull/2716), `0.7.4.40`). Automatically updated pull requests start a fresh preview build, while changes outside the build's generated metadata still fail validation.
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.38`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.38`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train B** ([#2702](https://github.com/cehinds/AshenSpire/pull/2702), `0.7.4.38`). Lands #2686, #2685 and #2688 together. Nothing you play changes.
