@@ -128,7 +128,7 @@
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "c623c7dfccf25f64"
+      "digest": "2343e83f4eb692dd"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
@@ -188,7 +188,7 @@
     },
     "tools/hand-side-probe.mjs": {
       "count": 5,
-      "digest": "e1ee0130ed5f11a3"
+      "digest": "bc41928bdca5a474"
     },
     "tools/hintstrip.mjs": {
       "count": 14,
@@ -228,7 +228,7 @@
     },
     "tools/onevocab.mjs": {
       "count": 10,
-      "digest": "a3c92f8aba7fb4f8"
+      "digest": "e302291d77d5e76c"
     },
     "tools/placement.mjs": {
       "count": 10,
@@ -260,7 +260,7 @@
     },
     "tools/runcreation.mjs": {
       "count": 5,
-      "digest": "3c4b36e60ac18c68"
+      "digest": "5f79750f799be5bb"
     },
     "tools/saveroundtrip.mjs": {
       "count": 6,
