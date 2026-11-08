@@ -152,8 +152,8 @@ Design laws (contractual):
 1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. Content is validated at boot (dev mode) and in tests; unknown fields, bad enums and dangling ids fail loudly (§3.14).
 2. **No entity-specific engine code.** No `if (status === 'bleed')`. The engine implements closed primitives: opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), a generic status model (§3.7). All behavior is content data composing them.
 3. **Procedural content stays procedural.** Map generation, encounter and reward rolls, and enemy move selection are seeded algorithms (§3.8); every knob they consume is content data.
-4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5).
-5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage` or timers. Under `src/model/` only `offlineDownload.js` sets timers (request timeouts). `tests/engine.test.js` runs a combat with no DOM (it also imports some UI presentation models and helpers, never mounting a screen).
+4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage` or timers. Under `src/model/` only `offlineDownload.js` sets timers (request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads, `tests/engine.test.js`, also imports some UI presentation models and helpers but never mounts a screen.
 6. **Budgeted escape hatch.** `src/content/scripts.js` registers named custom behaviors the DSL can't express: target <5% of content, each entry commented with why. A script pattern appearing twice becomes a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
@@ -203,9 +203,9 @@ States where a thing BELONGS, not what exists. Print the real tree: `find src to
   - Every tag is a node; parentage is `parentId` only (a dotted id is an opaque key). Roots are domains; `domain` and `aside` (a root whose tags never join a tag list: `presentation`, `classification`) are written on roots only.
   - Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role`; nodes carry no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath`; precedence `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }`).
   - Derived: the five tag tables, the property rules, `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14).
-- **Enemy cap: a combat never has more than 3 enemies.** An encounter's `enemies[]` lists at most 3 ids (validator rejects more); `createCombat` / `createRunCombat` open with the first 3. Any future summon, split or reinforcement must check `enemySlotFree` and do nothing at 3 alive. Lives in `MAX_ENEMIES_PER_COMBAT` (`src/model/combatLimits.js`); `?shotEnemies` and `?shotEnemyCount` fixtures obey it.
+- **Enemy cap: a combat never has more than 3 enemies.** An encounter's `enemies[]` lists at most 3 ids (validator rejects more); `createCombat` / `createRunCombat` open with the first 3. No effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing at 3 alive. Lives in `MAX_ENEMIES_PER_COMBAT` (`src/model/combatLimits.js`); `?shotEnemies` and `?shotEnemyCount` fixtures obey it.
 - `registries.js` loads content into typed, deep-frozen registries keyed by id; cross-references are by id only; getters throw on unknown ids.
-- **Definitions vs instances:** state (`model/state.js`) holds instances referencing definitions by id: deck card `{ instanceId, cardId, upgraded }`; enemy `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, never definitions (`contentVersion`, §3.12).
+- **Definitions vs instances:** state (`model/state.js`) holds instances referencing definitions by id: deck card `{ instanceId, cardId, upgraded }`; enemy `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, never definitions, so saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
 - **Player intents (closed set; dispatch `src/engine/combat.js:850-915`):** `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. Run-level actions are not intents: each screen calls its own `src/engine/` function (e.g. `restAt(visit)`, `src/engine/locations.js:121`).
 
 ### 3.4 Effect DSL (opcodes)
@@ -264,10 +264,10 @@ Ops (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `mi
 |---|---|---|---|---|---|---|---|---|---|
 | HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Stock pools incl. starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. Max HP clamps to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget (HUD: Actions); first extra Action at DEX 4. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget (HUD: Actions); the DEX term adds its first Action at DEX 4. |
 | Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Alias of `stamina` (`src/model/turnStamina.js`); combat reads Stamina. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Per-class overrides configurable. |
-| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4; retained cards reduce it only at capacity. |
+| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards reduce it only at capacity. |
 | Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | `attributeBaseline` 4: +1 per five INT above 4. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
@@ -277,7 +277,7 @@ Ops (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `mi
 
 Basic-profile base values (data): guard profiles (`unarmedGuard` = 1, `ratingId` `dr`); attack profiles (`unarmedAttack` = 3, `ratingId` `ar`); magic profiles (`content/source/basicCardProfiles.csv`).
 
-**Retired homes.** `validateContent` refuses by name: `balance.handMax`, `balance.combatRatings.multiplier`, `handRules.starting|turn|capacity`, `balance.poise.playerPerConstitution`. Their settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`, `balance.handMax`, per-item `combatRatings.bonuses.*`) are **dropped, never converted** on import and profile load/restore, with one warning per family (`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
+**Retired homes.** `validateContent` refuses by name: `balance.handMax`, `balance.combatRatings.multiplier`, `handRules.starting|turn|capacity`, `balance.poise.playerPerConstitution`. Their settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`, `balance.handMax`, per-item `combatRatings.bonuses.*`) are **dropped, never converted** on import and profile load/restore, with one warning per family (`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`). The `statRowsVersion` marker is gone, so any `derivedStatRules.rules.draw.*` or `.poise.*` key is read with its current meaning (`advancedConfig.js:225-235`).
 
 **Pre-ruleset-7 runs are refused, not priced:** a run without a pinned Core 2 profile is refused at load (`engine/save.js` `retiredProfileReason`); bytes stay in the slot, never migrated. Tool/test snapshots older than ruleset 7 read missing rating and hand rows from the live table (`model/statRows.js` `statRow`).
 
@@ -382,7 +382,7 @@ Every card an item lends sits in a **mount** on that item, keyed by the composer
 - Slots: no eligible weapon → Unarmed in every slot; one eligible weapon (either hand) → owns all; two one-handed → right `ceil(N/2)`, left `floor(N/2)`. Within a hand, priority/effect references precede repeated filler. Shields and package-less items use no quota. `handsRequired: 2` claims the whole quota (never inferred from tags, names, art or kind).
 - The plan keeps `equipmentAttackSlotId`, `instanceId`, upgrades and acquisition metadata; it changes only package-derived card/profile/receipt/mod fields.
 - Equip, unequip, hand move and set swap apply it atomically and emit one post-commit `equipmentChanged` receipt; creation and load/continue call the same service.
-- Combat rebinds generated attacks wherever they live (hand, draw, discard, exhaust) after the current card resolves. Legacy role-only attacks map once, in deck order, to `attack:0..N-1`.
+- Combat rebinds generated attacks wherever they live (hand, draw, discard, exhaust) after the current card resolves. Legacy role-only attacks map once, in deck order, to `attack:0..N-1` and are never appended.
 - A conflicting off-hand, a duplicate piece without distinct equipment instance identity, or a claimed-but-invalid package fails closed; Unarmed is only the valid zero-weapon plan.
 - **Exact combat snapshots** use their own saved loadout as authority. After shape and reference validation the service migrates the generated attack set in pile order `draw`, `hand`, `discard`, `exhaust` (no card changes pile) and replaces the stale top-level run projection before continue. It must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card reference. Invalid duplicate or two-handed-plus-offhand snapshots are archived fail-closed, never normalized or replaced with Unarmed.
 
@@ -420,7 +420,7 @@ Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager
 
 ### 3.10 Event bus
 
-Events are emitted by executed actions. Closed list: `EVENTS` in `src/model/schemas.js` (payloads in `docs/ENGINE-API.md`); † marks an event specified ahead of implementation. `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. Core events (not exhaustive):
+Events are emitted by executed actions. Closed list: `EVENTS` in `src/model/schemas.js` (payloads in `docs/ENGINE-API.md`); an event marked † is specified ahead of implementation and joins `EVENTS` when it lands. `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. Core events (not exhaustive):
 
 `combatStart`, `combatEnd(victory)`, `playerTurnStart`, `playerTurnEnd`, `enemyTurnStart`, `enemyTurnEnd`, `cardDrawn`, `cardPlayed`, `cardExhausted`, `cardDiscarded`, `deckShuffled`, `damageDealt(source,target,amount,blocked,isAttack)`, `blockGained`, `hpLost`, `healed`, `statusApplied`, `statusExpired`, `meterFilled`, `stanceEntered`, `stanceExited`, `enemySpawned`, `enemyDied`, `enemyStaggered`, `energyGained` / `energySpent` (legacy names; `energy` is the retired alias of Stamina), `flaskUsed`, `relicTriggered(relicId)`, `equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)`, `combatReactionOffered`, `combatReactionChosen`, `combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)`, `combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)`.
 
@@ -449,7 +449,7 @@ Key `sote_run_v1`; **three slots, one run each** (`SLOTS`, `save.js`). The persi
 - **Save-safe changes:**
   - A run carrying `attributeMode`, attributes, a flask capacity ledger, level receipts, equipment-profile rules or a `derivedStatRuleSnapshot` keeps them; new presets, formulas, flask allocations and level prices apply to new runs only. Live content tuning of existing ids is allowed.
   - New persisted state must be optional for older saves and deterministically migrated (or get a schema migration) before any current save is written; a missing new field never archives a valid save. Prefer existing opcodes/statuses/snapshots.
-  - New content gets a new stable id and never renames or deletes an existing one; adding definitions alone needs no schema bump. `standard` and `pointbuy` creation modes keep their validation.
+  - The Rogue/tuning addition is save-safe: the new creation mode gets a new stable id; `standard` and `pointbuy` stay valid with their old validation rules; Rogue adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset id. Adding those definitions alone needs no run- or profile-schema bump.
 - **Pool-deck mark:** a Sealed or Draft run carries `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE`, `model/cardRemoval.js`): its deck is held to the attack slots it was dealt. Standard runs never carry it. A pool save from schema ≤19 lacks the mark: the load door heals its quota to the dealt slots once, marks it, notes it. A schema-20+ pool save without the mark is refused by name.
 - **Flask capacity ledger:** `flaskCharges` carries `base`, `grown` (possession door), `granted` (moment door); `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted` (§5.5.2). A v2 save is attributed once at the load door (`initializeRunFlaskCharges`): unaccounted surplus goes to `granted`; `base` comes from `balance.flaskCapacity`, clamped so no charge is invented.
 
@@ -496,8 +496,7 @@ Falsify: `node tests/run-node.mjs` (no profile, corrupt, older, **newer**, two a
 
 #### Notes and history
 
-- Rules live in data and the closed primitive sets (§3.4–§3.7); engine code never special-cases an entity.
-- Run and profile schema versions live in `src/model/state.js` and `src/engine/save.js`, never in this document.
+- Content is data; the engine knows only the closed primitive sets of §3.4–§3.7.
 
 Full history: [docs/spec-history/03-architecture.md](docs/spec-history/03-architecture.md).
 
