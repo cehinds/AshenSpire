@@ -93,7 +93,7 @@ into FINISH.md as blockers.
 Send the owner each PR's preview and screenshots. Under the standing merge
 approval (owner, 2026-10-13), merge a PR into `dev` once another agent or session
 has reviewed it, conflicts are resolved and fast checks are green, with no
-per-PR owner wait; then promote `dev` to `test` once per wave (CONTRIBUTING
+per-PR owner wait; then promote `dev` to `review` once per wave (CONTRIBUTING
 rule 6). Never merge to `release` or `main`; those stay owner-only.
 
 ## Phase 4 — Release candidate
