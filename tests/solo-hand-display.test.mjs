@@ -98,6 +98,14 @@ test('the in-combat Armoury cards read the running fight\'s own hand rules', () 
   // The attribute rows (and their hand rules) are the Armoury stats model's, not the screen's, since the extraction.
   const equipment = source('../models/ArmouryStatsModel.js');
   assert.match(equipment, /hand: handRules \|\| runHandRules\(registries, run, meta\.settings \|\| \{\}\)/);
+  // THE HANDOFF, link by link, so dropping `handRules` anywhere on it fails: the mount param,
+  // the ctx equipment.js builds, the panel's read of ctx, and the call into the model.
+  const screen = source('equipment.js');
+  assert.match(screen, /export function mountEquipment\([\s\S]*?\bhandRules = null\b/, 'mountEquipment takes handRules');
+  assert.match(screen, /armouryStatsPanel\(\{[^}]*\bhandRules\b/, 'equipment.js puts handRules in the stats panel ctx');
+  const panel = source('../components/armouryStatsPanel.js');
+  assert.match(panel, /const \{[^}]*\bhandRules\b[^}]*\} = ctx/, 'the panel reads handRules from ctx');
+  assert.match(panel, /armouryStatsModel\(\{[^}]*\bhandRules\b/, 'the panel hands handRules to the model');
   // The fight's own hand wins over whatever else the screen could resolve:
   // a fight dealt from the tuned Reaver row names Constitution, even beside a
   // projection read off the stock table.
