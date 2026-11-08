@@ -37,4 +37,4 @@ for (const [source, target] of [
   await texture.webp({ quality: target.includes("landmark") ? 84 : 74, effort:6 }).toFile(path(`assets/environments/${target}`));
 }
 
-await import('../map-detail-build.mjs');
+await import('./map-detail-build.mjs');

@@ -106,10 +106,6 @@
       "count": 2,
       "digest": "92bb0583dd59c2c0"
     },
-    "tools/hand-pager-threshold.mjs": {
-      "count": 7,
-      "digest": "a935e3c0071a13d9"
-    },
     "tools/hand-side-probe.mjs": {
       "count": 5,
       "digest": "e1ee0130ed5f11a3"
@@ -117,14 +113,6 @@
     "tools/hintstrip.mjs": {
       "count": 14,
       "digest": "65f34a023cb01bf5"
-    },
-    "tools/hudbars.mjs": {
-      "count": 1,
-      "digest": "e7ab8b142a458ba6"
-    },
-    "tools/hudparity.mjs": {
-      "count": 18,
-      "digest": "db596af6d92d5788"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,

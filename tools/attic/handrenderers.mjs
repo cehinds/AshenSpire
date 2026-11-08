@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/handrenderers.mjs — THE GREEN-DEBT SENTINEL. How many places in this
+// tools/attic/handrenderers.mjs — THE GREEN-DEBT SENTINEL. How many places in this
 // tree build the player's hand? The number is printed out loud, every run.
 //
 // Bjorn, 2026-08-15. My own sentence, adopted verbatim by Marina in the
@@ -41,9 +41,9 @@
 // and the alternative is the discharge going unannounced.
 //
 // Usage:
-//   node tools/handrenderers.mjs            count, print the line, verdict
-//   node tools/handrenderers.mjs --json     the same, machine-readable
-//   node tools/handrenderers.mjs --selftest the known-bad corpus (six plants)
+//   node tools/attic/handrenderers.mjs            count, print the line, verdict
+//   node tools/attic/handrenderers.mjs --json     the same, machine-readable
+//   node tools/attic/handrenderers.mjs --selftest the known-bad corpus (six plants)
 // Exit: 0 observed == declared · 1 it moved · 2 the harness could not measure
 //
 // REMOVAL CONDITION (SOP 1's corollary): this file is DELETED the day the
@@ -59,7 +59,7 @@ import { resolve, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (f, d = null) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 const ROOT = resolve(argOf('--root', HERE));
@@ -158,13 +158,13 @@ function run() {
   const r = scan(ROOT);
   const ref = gitShort(ROOT);
   if (r.error) {
-    if (AS_JSON) console.log(JSON.stringify({ tool: 'tools/handrenderers.mjs', ref, error: r.error }, null, 1));
+    if (AS_JSON) console.log(JSON.stringify({ tool: 'tools/attic/handrenderers.mjs', ref, error: r.error }, null, 1));
     else console.error(`handrenderers: ${r.error}\n  Unknown is never a pass (SOP 2's silence guard).`);
     return 2;
   }
   if (AS_JSON) {
     console.log(JSON.stringify({
-      tool: 'tools/handrenderers.mjs', ref, declared: DECLARED, observed: r.count,
+      tool: 'tools/attic/handrenderers.mjs', ref, declared: DECLARED, observed: r.count,
       line: sentinelLine(r.count, ref), files: r.byFile, sites: r.sites, debt: DEBT,
     }, null, 1));
     return r.count === DECLARED ? 0 : 1;
@@ -291,7 +291,7 @@ function selftest() {
     pl.build(tree);
     let out = ''; let code = 0;
     try {
-      out = execFileSync(process.execPath, [join(HERE, 'tools/handrenderers.mjs'), '--root', tree],
+      out = execFileSync(process.execPath, [join(HERE, 'tools/attic/handrenderers.mjs'), '--root', tree],
         { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     } catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
     const sawRe = pl.wantRe.test(out);
@@ -310,7 +310,7 @@ function selftest() {
   console.log(`all ${plants.length} plants behaved: 3 observed RED, 3 observed GREEN.`);
   console.log('DOOR: every plant was a real file written into a copy of the real src/ tree and read back');
   console.log('  through the same directory walk and the same scan a real run performs. Entry point:');
-  console.log('  `node tools/handrenderers.mjs --root <planted tree>`, a whole run, no internals called.');
+  console.log('  `node tools/attic/handrenderers.mjs --root <planted tree>`, a whole run, no internals called.');
   console.log('NOT PASSED THROUGH: the bundler. Every plant is a source-tree fact; a hand constructed only');
   console.log('  in dist/AshenSpire.html is outside this door and outside this tool (verify-shipped owns it).');
   console.log('BOUNDARY: the plants prove the COUNTER can move and can refuse to move. They do not prove');

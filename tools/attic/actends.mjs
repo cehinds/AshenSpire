@@ -114,7 +114,7 @@ const args = process.argv.slice(2);
 const useDist = args.includes('--dist');
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const SEEDS = arg('--seeds', 'SHOWCASE,BJORN1,BJORN2,SUNNA3,VIRA4,VIKI5,MARINA6,RUNE7,FREJA8,VEGA9,STEN10,SAGA11').split(',');
-// 390x844 and 1200x730 are tools/mapfit.mjs's shapes; 320x640 is the smallest
+// 390x844 and 1200x730 are tools/attic/mapfit.mjs's shapes; 320x640 is the smallest
 // phone carried by mapreach.mjs and mapspacing.mjs. Same width, device pixel
 // ratio and `mobile` flag. Two instruments measuring the same screen
 // under different emulation produce two numbers and one argument; this file had
@@ -284,7 +284,7 @@ async function cdp(shape, seed, plant = null) {
 }
 
 // A 120-line WebSocket client is not worth writing twice; this is the same
-// minimal frame codec tools/mapfit.mjs and tools/mapfog.mjs already carry, and
+// minimal frame codec tools/attic/mapfit.mjs and tools/mapfog.mjs already carry, and
 // if a third copy appears it goes in one home (Bjorn's second-copy guard).
 function openWs(wsUrl) {
   const u = new URL(wsUrl);
@@ -448,7 +448,7 @@ console.log('  `map` measures real endpoint circles. `orientation` accepts only 
 console.log('  node-free orientation strip where the');
 console.log('  measured real span exceeds the measured port at the current zoom. Neither path');
 console.log('  judges the composition or measures the reachable halo. Says nothing');
-console.log('  about mid-climb framing (tools/mapfit.mjs), whether the node is in the DOM');
+console.log('  about mid-climb framing (tools/attic/mapfit.mjs), whether the node is in the DOM');
 console.log('  (tools/mapfog.mjs), or whether the unlit ground READS as parchment - the act');
 console.log('  plate mounts (data-map-plate="ok"), but only eyes can say it reads.');
 

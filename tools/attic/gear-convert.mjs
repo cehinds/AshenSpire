@@ -2,14 +2,14 @@
 // Re-runnable conversion: content/source/weapons.csv + outfits.csv -> games/ashenspire/packs/core/gear.json
 // for the gear module (owner 2026-10-17). Each item gets a gear-type tag, effect tags from its old
 // mods, and only the points its old mods implied; the gear module's fill algorithm places the rest.
-//   node tools/gear-convert.mjs [--dry]
+//   node tools/attic/gear-convert.mjs [--dry]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveGearItem } from '../engine/kernel/gameConfig.js';
-import { projectGearRangeMetadata } from './lib/gear-range-metadata.mjs';
+import { resolveGearItem } from '../../engine/kernel/gameConfig.js';
+import { projectGearRangeMetadata } from '../lib/gear-range-metadata.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DRY = process.argv.includes('--dry');
 const METADATA_ONLY = process.argv.includes('--range-metadata');
 const settings = JSON.parse(readFileSync(resolve(ROOT, 'engine/modules/gear/defaults.json'), 'utf8'));

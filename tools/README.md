@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (299 tool files, plus the 8 subfolders)
+## Tools something references (285 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -142,28 +142,19 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `fullscreen-control.mjs` | Deterministic controller checks for Settings > Fullscreen. No browser claims: | wf ci; tools plantsites-baseline.json; docs SPEC.md |
 | `game-config.mjs` | Compile source JSON to importable JS for the repository's import-only bundler. | wf feature-preview; tests base-card-pack, enemies-module, engine-export +4; tools build-game, content-build, derived-tables +2; docs DEVELOPER.md, docs/ENGINE-EXPORT.md, docs/ai/json-game-modules/ARCHITECTURE.md +32; other src/content/generated/gameProfiles.js, workbench/core/files.mjs +6 |
 | `gatelist.mjs` | gatelist — WHICH INSTRUMENTS DOES A GATE ACTUALLY RUN, AND DOES IT | wf ci; tests run-node; tools plantsites-baseline.json, watched |
-| `gear-convert.mjs` | Re-runnable conversion: content/source/weapons.csv + outfits.csv -> games/ashenspire/packs/core/gear.json | docs engine/modules/gear/guide.md |
 | `gesture-cancel.mjs` | gesture-cancel — the gesture lifecycle, observed: a cancelled drag | tools card-drag-targeting, inspecthold, plantsites-baseline.json |
 | `git-artifact.mjs` | Read a committed artifact regardless of whether Git stores its bytes or an | wf pages-builds; tools git-artifact.test, pages-site |
 | `git-artifact.test.mjs` | (no header comment) | wf ci |
 | `gracerefill.mjs` | gracerefill — what a grace hands back, and proof it refuses. | tests run-node; docs SPEC.md; other src/model/gracerefill.js, src/model/validate.js +2 |
-| `hand-pager-threshold.mjs` | hand-pager-threshold — focused browser acceptance for #208. | tools plantsites-baseline.json |
 | `hand-resize-probe.mjs` | Browser regression: observe real hand width changes without writing styles | tests card-two-beats |
 | `hand-side-probe.mjs` | hand-side-probe — WHICH SIDE OF THE MODEL IS AN ARMAMENT DRAWN ON? | wf ci; tools plantsites-baseline.json; docs docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `handlayout.mjs` | handlayout — the hand-layout word (C2), measured: overlap FITS, | tests card-two-beats; tools inspecthold, overlapreader +1; other src/model/validate.js, src/ui/components/hand.js +1 |
-| `handrenderers.mjs` | handrenderers — THE GREEN-DEBT SENTINEL. How many places in this | tools onefold; other src/ui/components/disclosure.js |
 | `head-meta.mjs` | head-meta — the web/share metadata the bundle carries (FINISH §13). | tests web-meta; tools buildversion, bundle, og-image; docs docs/EXTERNAL-ASSETS-PLAN.md |
 | `hintstrip.mjs` | hintstrip — THE COMBAT ACTION ROW SITS UNDER THE CARDS, WHOLE, AND | wf ci; tests doorplant-shard, run-node; tools gatelist, plantsites-baseline.json; docs docs/FINISH.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/hand.js +1 |
-| `holdbeat.mjs` | holdbeat — DID THE BEAT ACTUALLY MAKE A SOUND? (Vega, 2026-08-08.) | tools sfx-loudness; other src/ui/components/holdbeat.js |
 | `holdconfirm.mjs` | holdconfirm — THE SECOND BEAT: WHICH ACTIONS TAKE ONE, WHICH FORM, | tests card-two-beats, confirmation-modal; tools armoury-picked-up, controlstrip, release-shots; other src/main.js, src/model/consequence.js +7 |
 | `hud-layout-css.mjs` | hud-layout-css — compile content/hud-layout/<form-factor>.json into | tests hud-layout-css, run-node; tools content-build, hud-component-studio/README.md, hud-layout-tokens +1; docs DEVELOPER.md, docs/hud-layout-tokens.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, styles/hud-layout.generated.css +4 |
 | `hud-layout-tokens.mjs` | hud-layout-tokens — the HUD layout token allowlist and its | tests hud-layout-css; tools content-build, hud-component-studio/css-export.js, hud-layout-css; docs DEVELOPER.md |
-| `hud-potion-followup.mjs` | hud-potion-followup — the exact approved shared-HUD follow-up. | tools hudparity |
-| `hud-quick-compact.mjs` | Focused rendered receipt for the HUD's two quick controls, Fullscreen and | other docs/design/battlefield-options-2026-10-16/visual-preview.html, styles/kit.css |
-| `hudbars.mjs` | hudbars — does the HUD bar's LENGTH actually track the maximum? | tools hudparity, plantsites-baseline.json; docs docs/spec-audit/SPEC-AUDIT.md; other docs/architecture-handoff/wireframe-gallery.html, src/content/balance.js +4 |
-| `hudparity.mjs` | hudparity — ONE HUD: the map and the combat screen draw the same | tools hudbars, plantsites-baseline.json; other docs/architecture-handoff/wireframe-gallery.html, src/main.js +1 |
 | `hybrid-input-parity.mjs` | hybrid-input-parity — same-door acceptance for AshenSpire #204. | tests qa-evidence-size; tools card-drag-targeting, plantsites-baseline.json; other docs/design/battlefield-options-2026-10-16/visual-preview.html, docs/preview/hybrid-input-parity-manifest.json +2 |
-| `hybridstats.mjs` | hybridstats — observed contract for the integrated Hybrid stats slice. | other src/ui/components/runHud.js |
 | `inspecthold.mjs` | inspecthold — hold-to-inspect on the hand, observed: a read can | tools creationbrief, handlayout +2; docs docs/preview/shared-card-inspection/README.md; other src/ui/components/holdconfirm.js, src/ui/input.js |
 | `jev.mjs` | tools/jev.mjs — the deterministic-first gate: triage logs against tools/jev.rules.json, run the fast checks, regen, restamp, devmerge. | tests jev; docs .claude/skills/jev/SKILL.md, DEVELOPER.md, docs/ai/AI-ROUTING.md |
 | `launch.mjs` | launch — the one-click launcher. | wf alternative-sync, ci, dev-preview +3; tests build-lock; tools actionreach, asset-pack, axisfit +29; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, content/config/README.md +24; other .gitignore, docs/architecture-handoff/source-map.json +10 |
@@ -171,18 +162,13 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `layered-environment-build.mjs` | Publish native-size reviewed components; never read authoring PNGs at runtime. | tests layered-environment-build; docs CREDITS.md; other src/content/layeredEnvironments.js |
 | `linkcheck.mjs` | linkcheck — every named import in the tree resolves to a real | wf dev-preview; tests linkcheck-batch-sharing, run-node-lanes, run-node +1; tools gatelist; docs DEVELOPER.md; other src/ui/screens/rest.js |
 | `local-checks.mjs` | Shared finite local QA payload. Run in an owned background worker when needed. | tests local-checks-snapshot; docs docs/local-background-checks.md |
-| `location-presentation-report.mjs` | (no header comment) | docs docs/location-presentation/README.md |
 | `lowpoly-blender.py` | tools/lowpoly-blender.py — low-poly 3D class figures, rigged and posed. | tools lowpoly-components.json, painted-poses, pose-sprites; docs CREDITS.md; other .gitignore |
 | `map-camera-persistence.mjs` | Same-door gate for issue #38: a player-chosen map zoom and vertical camera | wf map-camera; tests map-tap-main-thread; tools full-run-probe, tutorial-reach; docs DEVELOPER.md, docs/FINISH.md |
-| `map-detail-build.mjs` | Native-resolution pyramid, deliberately outside assets/ (which is inlined). | tools environment-art-build; docs CREDITS.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/design/improve-map-battlefield-art/README.md +3; other src/content/mapArt.generated.js |
 | `map-tap-latency.mjs` | map-tap-latency — how long does a phone tap on a map node take to | tests map-tap-main-thread; other docs/qa/map-tap-latency/result.json |
 | `map-two-axis-pan.mjs` | Issue #1168: the opt-in/default two-axis map camera moves horizontally and | wf dev-preview; tests map-two-axis-pan-scale |
-| `mapfit.mjs` | mapfit — when the game frames the act map for the player, is the | tools actends; other src/content/mapconfig.js, src/model/map/mapview.js +2 |
 | `mapfog.mjs` | mapfog — does the fog cover the right things, and does the screen | tests engine.test.js; tools actends, browser, pairsweep; docs engine/modules/routes/guide.md; other src/model/map/mapknowledge.js |
 | `mapplan.mjs` | mapplan — the data-driven tooling for map config (SPEC §6). | tests engine.test.js; docs SPEC.md, docs/framework-migration-checklist.md; other src/content/mapconfig.js, src/engine/mapgen.js +5 |
-| `mapreach.mjs` | mapreach — can a player REACH every map node, and what can they see | tools actends, mapfit; docs SPEC.md; other docs/architecture-handoff/wireframe-gallery.html, docs/design/battlefield-options-2026-10-16/visual-preview.html +3 |
 | `maps-validate.mjs` | maps-validate - validates the JSON map layer. | tests build-game, maps-json; tools build-game; other package.json |
-| `mapspacing.mjs` | mapspacing — measure adjacent map-floor pitch on the rendered map. | tools actends; other src/model/map/mapview.js |
 | `markhome.mjs` | markhome — card text marks may not be keyed to one of their two | tests run-node |
 | `measure-classes.mjs` | measure-classes — instrumented per-class win-rate measurement | tests run-node-lanes, sim-parity, simbot-decisions +1; docs docs/balance-sims/starseerkit-decision.md, docs/balance-sims/sweep-bleed-threshold.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md; other src/engine/runCombat.js |
 | `measure.mjs` | tools/measure.mjs — measured counts against budgets, so a performance PR can show before/after numbers instead of an argument. | tests perf-tools |
@@ -324,9 +310,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (99 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (113 files)
 
-These 99 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 113 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -401,11 +387,25 @@ These 99 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `flask-data-authority.mjs` | Data-authority contract for capacity, charge identity, and Grace labels. |
 | `flaskgrowth.mjs` | flaskgrowth — the growth chain's corpus, and proof it refuses. | docs SPEC.md; other src/content/balance.js, src/model/flaskgrowth.js +2 |
 | `foldsurvivors.mjs` | foldsurvivors — E5's class, and the reason no existing gate could | other src/ui/components/disclosure.js |
+| `gear-convert.mjs` | Re-runnable conversion: content/source/weapons.csv + outfits.csv -> games/ashenspire/packs/core/gear.json | docs engine/modules/gear/guide.md |
+| `hand-pager-threshold.mjs` | hand-pager-threshold — focused browser acceptance for #208. | tools plantsites-baseline.json |
+| `handrenderers.mjs` | handrenderers — THE GREEN-DEBT SENTINEL. How many places in this | tools onefold; other src/ui/components/disclosure.js |
+| `holdbeat.mjs` | holdbeat — DID THE BEAT ACTUALLY MAKE A SOUND? (Vega, 2026-08-08.) | tools sfx-loudness; other src/ui/components/holdbeat.js |
+| `hud-potion-followup.mjs` | hud-potion-followup — the exact approved shared-HUD follow-up. | tools hudparity |
+| `hud-quick-compact.mjs` | Focused rendered receipt for the HUD's two quick controls, Fullscreen and | other docs/design/battlefield-options-2026-10-16/visual-preview.html, styles/kit.css |
+| `hudbars.mjs` | hudbars — does the HUD bar's LENGTH actually track the maximum? | tools hudparity, plantsites-baseline.json; docs docs/spec-audit/SPEC-AUDIT.md; other docs/architecture-handoff/wireframe-gallery.html, src/content/balance.js +4 |
+| `hudparity.mjs` | hudparity — ONE HUD: the map and the combat screen draw the same | tools hudbars, plantsites-baseline.json; other docs/architecture-handoff/wireframe-gallery.html, src/main.js +1 |
+| `hybridstats.mjs` | hybridstats — observed contract for the integrated Hybrid stats slice. | other src/ui/components/runHud.js |
 | `inspect-one-click-browser.mjs` | Real-browser regression for one-press inspection (owner, 2026-10-13: a visible |
 | `layoutmode.mjs` | layoutmode — #39's focused browser witness. |
 | `level-semantics.mjs` | Focused pure-model gate for issue #237. |
+| `location-presentation-report.mjs` | (no header comment) | docs docs/location-presentation/README.md |
+| `map-detail-build.mjs` | Native-resolution pyramid, deliberately outside assets/ (which is inlined). | tools environment-art-build; docs CREDITS.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/design/improve-map-battlefield-art/README.md +3; other src/content/mapArt.generated.js |
 | `map-pan-ownership.mjs` | Issue #40: with two-axis map dragging disabled, the browser owns touch/pen |
 | `map-route-probe.mjs` | Live map history layout and destination-inspection regression probe. |
+| `mapfit.mjs` | mapfit — when the game frames the act map for the player, is the | tools actends; other src/content/mapconfig.js, src/model/map/mapview.js +2 |
+| `mapreach.mjs` | mapreach — can a player REACH every map node, and what can they see | tools actends, mapfit; docs SPEC.md; other docs/architecture-handoff/wireframe-gallery.html, docs/design/battlefield-options-2026-10-16/visual-preview.html +3 |
+| `mapspacing.mjs` | mapspacing — measure adjacent map-floor pitch on the rendered map. | tools actends; other src/model/map/mapview.js |
 | `merchant-offers-browser.mjs` | Production merchant renderer and transactions, on a disposable preview visit. |
 | `mobile-card-check.mjs` | Touch regression checks for selection, confirmation, cancellation and detail text. |
 | `mobile-readability-qa.mjs` | (no header comment) |

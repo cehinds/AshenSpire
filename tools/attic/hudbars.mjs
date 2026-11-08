@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/hudbars.mjs — does the HUD bar's LENGTH actually track the maximum?
+// tools/attic/hudbars.mjs — does the HUD bar's LENGTH actually track the maximum?
 //
 // Constantine, 2026-08-08: "the size of that bar should scale depending on the
 // max total. much like elden ring's hud". That is a claim about how the HUD
@@ -85,8 +85,8 @@
 // asserts against, it is real code that really shipped, and it needs nothing
 // authored to produce it:
 //
-//     node tools/hudbars.mjs --tree <a checkout at dev=08e184a>   → A1 RED
-//     node tools/hudbars.mjs --tree <this branch>                 → A1 GREEN
+//     node tools/attic/hudbars.mjs --tree <a checkout at dev=08e184a>   → A1 RED
+//     node tools/attic/hudbars.mjs --tree <this branch>                 → A1 GREEN
 //
 // THE HYBRID ASSERTIONS WERE ALSO WATCHED RED BY THE SAME DOOR (2026-08-13,
 // each planted as a scratch stylesheet edit, rebuilt, swept via ?shotMaxHp,
@@ -141,14 +141,14 @@
 // that (a sweep that measured one seed 24 times, 2026-08-08). The DOOR line at
 // the foot of every run says where the input entered.
 //
-//   node tools/hudbars.mjs                  → the sweep, human table
-//   node tools/hudbars.mjs --falsifier      → Law 0: one reader + one row, zero UI
-//   node tools/hudbars.mjs --scales         → what a curved transpose would do
-//   node tools/hudbars.mjs --model-scale    → every enemy, if the under-model
+//   node tools/attic/hudbars.mjs                  → the sweep, human table
+//   node tools/attic/hudbars.mjs --falsifier      → Law 0: one reader + one row, zero UI
+//   node tools/attic/hudbars.mjs --scales         → what a curved transpose would do
+//   node tools/attic/hudbars.mjs --model-scale    → every enemy, if the under-model
 //                                             surface scaled by max
-//   node tools/hudbars.mjs --tree DIR       → measure another checkout
-//   node tools/hudbars.mjs --json out.json
-//   node tools/hudbars.mjs --selftest       → plant each arm's known-bad by the
+//   node tools/attic/hudbars.mjs --tree DIR       → measure another checkout
+//   node tools/attic/hudbars.mjs --json out.json
+//   node tools/attic/hudbars.mjs --selftest       → plant each arm's known-bad by the
 //                                             real door, require the named red,
 //                                             revert, and prove the tree clean
 //
@@ -195,15 +195,15 @@
 // LINEAR scale is the one he meant, or about any screen that is not combat.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { printArtifactProvenance } from './artifact-provenance.mjs';
-import { serve } from './serve.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
 const val = (n, d) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
@@ -898,7 +898,7 @@ const MUTANTS = Object.freeze({
   // holding that shape together. (2) A 3.4rem label does not clip either — the
   // plate is a flex item with no fixed width, so an oversized label STEALS ROOM
   // FROM THE TROUGH instead of overflowing (which is P4/P5's subject in
-  // tools/hudparity.mjs, not A4's). A fixed narrow plate is the edit that puts
+  // tools/attic/hudparity.mjs, not A4's). A fixed narrow plate is the edit that puts
   // the label in a box it cannot fit — the shape a reserved column gets written
   // as — and it reds A4 at every bar (measured: hp "HP 40/40" 26.77 px in 12 px,
   // 6 findings at 320x640).

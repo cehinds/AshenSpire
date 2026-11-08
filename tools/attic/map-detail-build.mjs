@@ -4,12 +4,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MAP_PRESENTATION as policy } from '../src/content/mapPresentation.js';
-import { authoringNeeds } from './art-authoring.mjs';
-import { policyFor, twinDimensions } from './mobileart-policy.mjs';
+import { MAP_PRESENTATION as policy } from '../../src/content/mapPresentation.js';
+import { authoringNeeds } from '../art-authoring.mjs';
+import { policyFor, twinDimensions } from '../mobileart-policy.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const sharp = createRequire(import.meta.url)('sharp');
-const root = fileURLToPath(new URL('../', import.meta.url));
+const root = fileURLToPath(new URL('../../', import.meta.url));
 const sources = [
   ...['the-fractured-realm', 'the-shattered-gulf', 'the-fivefold-frontier'].map(id => [`${id}-world`, `worlds/${id}.png`]),
   ['fractured-realm-square', existsSync(resolve(root, 'art/environments/worlds/fractured-realm-square-detail.png')) ? 'worlds/fractured-realm-square-detail.png' : 'worlds/fractured-realm-square.png'],

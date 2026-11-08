@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/mapspacing.mjs — measure adjacent map-floor pitch on the rendered map.
+// tools/attic/mapspacing.mjs — measure adjacent map-floor pitch on the rendered map.
 //
 // ROW_H is not evidence. The delivered pitch is ROW_H × map zoom × --ui-zoom,
 // and Fit may move the middle term when geometry changes. This instrument reads
@@ -8,10 +8,10 @@
 // the screen invites the player to press remains wholly in the scrollport.
 //
 // Usage:
-//   node tools/mapspacing.mjs
-//   node tools/mapspacing.mjs --dist
-//   node tools/mapspacing.mjs --out evidence/map-spacing-after
-//   node tools/mapspacing.mjs --mutate   # compresses node Y in the page; must red
+//   node tools/attic/mapspacing.mjs
+//   node tools/attic/mapspacing.mjs --dist
+//   node tools/attic/mapspacing.mjs --out evidence/map-spacing-after
+//   node tools/attic/mapspacing.mjs --mutate   # compresses node Y in the page; must red
 //
 // Exit 0 = every cell meets NODE_PITCH_MIN_PX and keeps invited nodes visible.
 // With --mutate, exit 0 means the planted compression was caught.
@@ -21,15 +21,15 @@
 // phone shapes × fog/path × 115/Fit) and carries an observed-red compression.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { NODE_PITCH_MIN_PX } from '../src/model/map/mapview.js';
+import { serve } from '../serve.mjs';
+import { NODE_PITCH_MIN_PX } from '../../src/model/map/mapview.js';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const arg = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
 const mutate = args.includes('--mutate');

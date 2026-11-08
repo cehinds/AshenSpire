@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/hudparity.mjs — ONE HUD: the map and the combat screen draw the same
+// tools/attic/hudparity.mjs — ONE HUD: the map and the combat screen draw the same
 // character's resource bars at the same proportions, at his reference scale.
 // The rendered check on E9 / #254.
 //
@@ -107,7 +107,7 @@
 //     screens still carry different secondary chrome below that row. P4 holds
 //     bar-percentage authority at all four declared shapes; P6 holds both controls
 //     wholly inside the viewport. Shared-shell available-width authority belongs
-//     to `node tools/hud-potion-followup.mjs --browser`, which proves the authored
+//     to `node tools/attic/hud-potion-followup.mjs --browser`, which proves the authored
 //     82 percent and its applied geometry rather than duplicating it here.
 //   · WHETHER 200/20/20 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
@@ -126,9 +126,9 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const valuesOf = (flag) => {
@@ -686,7 +686,7 @@ function boundary() {
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
   console.log('    differs below that row. P4 holds bar percentages; the sweep includes the 320x640 narrow edge.');
   console.log('    Shared-shell 82% available-width authority and applied geometry belong to');
-  console.log('    `node tools/hud-potion-followup.mjs --browser`, not a duplicate host cap here.');
+  console.log('    `node tools/attic/hud-potion-followup.mjs --browser`, not a duplicate host cap here.');
   console.log('  · P1 holds top-HUD HP/MP/SP equality. Combat poise is dynamic on the player character card;');
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · WHETHER 200/20/20 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
@@ -932,7 +932,7 @@ function p8Selftest() {
 // draw the same character at the same proportions, at his reference".
 // ---------------------------------------------------------------------------
 async function selftest() {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const plants = [
     {
       // Width authority lives in hud-potion-followup. This browser plant keeps
@@ -1176,7 +1176,7 @@ async function selftest() {
       // within its own bound, then the tool must print its boundary and exit
       // nonzero instead of leaving a promise in `pending` forever.
       name: 'the CDP socket drops between screen navigations',
-      file: 'tools/hudparity.mjs',
+      file: 'tools/attic/hudparity.mjs',
       find: "          await cdp.send('Page.navigate', { url: 'about:blank' }, S);",
       replace: "          await cdp.send('Page.navigate', { url: 'about:blank' }, S);\n          cdp.close();",
       expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
@@ -1209,7 +1209,7 @@ async function selftest() {
   ];
   let selectorFailed = 0;
   for (const edge of selectorCases) {
-    const run = spawnSync(process.execPath, [join(ROOT, 'tools/hudparity.mjs'), ...edge.args], {
+    const run = spawnSync(process.execPath, [join(ROOT, 'tools/attic/hudparity.mjs'), ...edge.args], {
       cwd: ROOT, encoding: 'utf8', timeout: 10000, maxBuffer: 4 * 1024 * 1024,
     });
     const output = `${run.stdout || ''}\n${run.stderr || ''}`;

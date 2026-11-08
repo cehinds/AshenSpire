@@ -1,5 +1,5 @@
-import { locationPresentation as data } from '../src/content/generated/locationPresentation.js';
-import { presentationProblems } from '../src/model/locationPresentation.js';
+import { locationPresentation as data } from '../../src/content/generated/locationPresentation.js';
+import { presentationProblems } from '../../src/model/locationPresentation.js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 

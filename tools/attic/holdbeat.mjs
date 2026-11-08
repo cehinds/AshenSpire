@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/holdbeat.mjs — DID THE BEAT ACTUALLY MAKE A SOUND? (Vega, 2026-08-08.)
+// tools/attic/holdbeat.mjs — DID THE BEAT ACTUALLY MAKE A SOUND? (Vega, 2026-08-08.)
 //
 // THE DEFECT THIS EXISTS FOR. A press-and-hold whose only feedback is a fill is
 // a gesture you cannot tell is working once your hand is on top of the fill.
@@ -71,10 +71,10 @@
 //   the decision not to ship haptics is in the report, not in an exit code.
 //
 // Usage
-//   node tools/holdbeat.mjs                  source tree via tools/serve.mjs
-//   node tools/holdbeat.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
-//   node tools/holdbeat.mjs --mutate         must catch a suspended context
-//   CHROME=/path/to/chrome node tools/holdbeat.mjs
+//   node tools/attic/holdbeat.mjs                  source tree via tools/serve.mjs
+//   node tools/attic/holdbeat.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
+//   node tools/attic/holdbeat.mjs --mutate         must catch a suspended context
+//   CHROME=/path/to/chrome node tools/attic/holdbeat.mjs
 //
 // Exit codes
 //   0  every check held     1  a real failure
@@ -93,18 +93,18 @@
 // holds — with no hold there is no beat and this tool has no subject.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { printArtifactProvenance } from './artifact-provenance.mjs';
-import { recipeLoudness } from './sfx-loudness.mjs';
-import { SFX_RECIPES } from '../src/content/sfx.js';
-import { balance } from '../src/content/balance.js';
+import { serve } from '../serve.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
+import { recipeLoudness } from '../sfx-loudness.mjs';
+import { SFX_RECIPES } from '../../src/content/sfx.js';
+import { balance } from '../../src/content/balance.js';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const useDist = args.includes('--dist');

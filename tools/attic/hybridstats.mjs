@@ -1,4 +1,4 @@
-// tools/hybridstats.mjs — observed contract for the integrated Hybrid stats slice.
+// tools/attic/hybridstats.mjs — observed contract for the integrated Hybrid stats slice.
 //
 // This gate starts red on the approved Phase1 + inert-derived stack. It checks
 // the ownership boundaries before UI polish: the run owns versioned resolved
@@ -8,17 +8,17 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createRunState, validateRunShape } from '../src/model/state.js';
-import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
-import { createCombat } from '../src/engine/combat.js';
-import { createRng } from '../src/engine/rng.js';
-import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../src/model/resources.js';
-import { statProjection } from '../src/model/statProjection.js';
-import { derivedStatRules } from '../src/content/derivedStats.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createRunState, validateRunShape } from '../../src/model/state.js';
+import { createSaveManager, createMemoryStorage } from '../../src/engine/save.js';
+import { createCombat } from '../../src/engine/combat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { RESOURCE_SOURCE_IDS, resourceBarPlan, resourceDomains } from '../../src/model/resources.js';
+import { statProjection } from '../../src/model/statProjection.js';
+import { derivedStatRules } from '../../src/content/derivedStats.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const REG = createRegistries(contentBundle);
 let checks = 0;
 let failures = 0;

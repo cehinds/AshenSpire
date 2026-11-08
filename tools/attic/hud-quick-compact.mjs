@@ -23,10 +23,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = resolve(ROOT, 'scratch/qa/hud-quick-compact');
 const BUILD = process.argv.includes('--build');
 const SHAPES = [

@@ -1,4 +1,4 @@
-// tools/mapfit.mjs — when the game frames the act map for the player, is the
+// tools/attic/mapfit.mjs — when the game frames the act map for the player, is the
 // player's next step ON SCREEN?
 //
 // THE DEFECT THIS EXISTS FOR. Bjorn, at 390x844: 9 of 12 seeds hide at least one
@@ -8,7 +8,7 @@
 // The reachable nodes are the only decision on that screen. Not a hard map; a
 // hidden choice.
 //
-// WHY IT IS NOT tools/mapreach.mjs. That sweep asks whether a node a player can
+// WHY IT IS NOT tools/attic/mapreach.mjs. That sweep asks whether a node a player can
 // SEE can be PRESSED — it hit-tests against the chrome, at four dimensions of
 // coincidence, and it is right to. This one asks the question one step earlier:
 // is the node in the viewport at all, after the game has finished framing. A map
@@ -33,15 +33,15 @@
 // different problem that had never been looked at.
 //
 // Usage
-//   node tools/mapfit.mjs                      source tree via tools/serve.mjs
-//   node tools/mapfit.mjs --dist               dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
-//   node tools/mapfit.mjs --only 390x844
-//   node tools/mapfit.mjs --seeds BJORN1,BJORN2  --floors 1,4,7,10
-//   node tools/mapfit.mjs --quick              one shape, three seeds, entrance only
-//   node tools/mapfit.mjs --mutate             REINSTATE the defect; must go red
-//   node tools/mapfit.mjs --zoom Fit           sweep the COMPUTED frame
-//   node tools/mapfit.mjs --zoom 115           sweep one percentage
-//   CHROME=/path/to/chrome node tools/mapfit.mjs
+//   node tools/attic/mapfit.mjs                      source tree via tools/serve.mjs
+//   node tools/attic/mapfit.mjs --dist               dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
+//   node tools/attic/mapfit.mjs --only 390x844
+//   node tools/attic/mapfit.mjs --seeds BJORN1,BJORN2  --floors 1,4,7,10
+//   node tools/attic/mapfit.mjs --quick              one shape, three seeds, entrance only
+//   node tools/attic/mapfit.mjs --mutate             REINSTATE the defect; must go red
+//   node tools/attic/mapfit.mjs --zoom Fit           sweep the COMPUTED frame
+//   node tools/attic/mapfit.mjs --zoom 115           sweep one percentage
+//   CHROME=/path/to/chrome node tools/attic/mapfit.mjs
 //
 // WITH NO --zoom THIS SWEEPS WHAT SHIPS, which since #107 is a percentage: Sunna
 // held the computed frame as the default because, arriving without the fog and
@@ -84,15 +84,15 @@
 // the animation before the ResizeObserver fires.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { serve } from '../serve.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const useDist = args.includes('--dist');
@@ -341,7 +341,7 @@ async function main() {
   }
   console.log(`\n  BOUNDARY — what a green here does NOT mean:
   (a) NOT REACHABILITY. A node on screen may still sit under a control;
-      tools/mapreach.mjs owns that and this tool never hit-tests.
+      tools/attic/mapreach.mjs owns that and this tool never hit-tests.
   (b) ONE MACHINE, headless Chromium, ${shapes.map((s) => `${s.w}x${s.h}`).join(' and ')} only.
   (c) THE FRAME AFTER IT SETTLES. Nothing here measures the 400 ms before it.
   (d) NOT 'verified-at' ANY CI REF — hand-run, like everything on this repo.`);

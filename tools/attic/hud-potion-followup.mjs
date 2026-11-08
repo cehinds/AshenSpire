@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/hud-potion-followup.mjs — the exact approved shared-HUD follow-up.
+// tools/attic/hud-potion-followup.mjs — the exact approved shared-HUD follow-up.
 //
 // Source checks hold the authored seams. The browser door reads the resulting
 // geometry and key labels at 1200x730. `--source-selftest` and
@@ -9,9 +9,9 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
 
 const sourceReceipt = () => ({

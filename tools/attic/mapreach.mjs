@@ -1,4 +1,4 @@
-// tools/mapreach.mjs — can a player REACH every map node, and what can they see
+// tools/attic/mapreach.mjs — can a player REACH every map node, and what can they see
 // AT REST, at every shape, every text size, every map zoom, on more than one map?
 //
 // TWO QUESTIONS, AND THEY ARE NOT THE SAME QUESTION. This is the 2026-08-08
@@ -128,13 +128,13 @@
 //      guard, kept).
 //
 // Usage
-//   node tools/mapreach.mjs                       source tree via tools/serve.mjs
-//   node tools/mapreach.mjs --dist                dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
-//   node tools/mapreach.mjs --only 320x640
-//   node tools/mapreach.mjs --texts S,XL          default S,M,L,XL
-//   node tools/mapreach.mjs --seeds SHOWCASE,FOO  --steps 4  --quick
-//   node tools/mapreach.mjs --mutate[=bar|chrome|clamp|text]   must go red
-//   CHROME=/path/to/chrome node tools/mapreach.mjs
+//   node tools/attic/mapreach.mjs                       source tree via tools/serve.mjs
+//   node tools/attic/mapreach.mjs --dist                dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
+//   node tools/attic/mapreach.mjs --only 320x640
+//   node tools/attic/mapreach.mjs --texts S,XL          default S,M,L,XL
+//   node tools/attic/mapreach.mjs --seeds SHOWCASE,FOO  --steps 4  --quick
+//   node tools/attic/mapreach.mjs --mutate[=bar|chrome|clamp|text]   must go red
+//   CHROME=/path/to/chrome node tools/attic/mapreach.mjs
 //
 // Exit codes
 //   0  nothing trapped, every node reachable, the structure holds
@@ -144,18 +144,18 @@
 //      tripped / --mutate not caught  — never a pass
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 // WHAT TREE DID THIS SEE? Naming the file is not naming its freshness — this
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
-import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 const BROWSERS = [
   process.env.CHROME,

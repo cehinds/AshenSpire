@@ -30,23 +30,9 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 
 // Ceiling on KNOWN_ORPHANS: lower it whenever the list shrinks, never raise it.
-export const ORPHAN_CEILING = 53;
+export const ORPHAN_CEILING = 39;
 
 export const KNOWN_ORPHANS = new Set([
-  'tools/gear-convert.mjs',
-  'tools/hand-pager-threshold.mjs',
-  'tools/handrenderers.mjs',
-  'tools/holdbeat.mjs',
-  'tools/hud-potion-followup.mjs',
-  'tools/hud-quick-compact.mjs',
-  'tools/hudbars.mjs',
-  'tools/hudparity.mjs',
-  'tools/hybridstats.mjs',
-  'tools/location-presentation-report.mjs',
-  'tools/map-detail-build.mjs',
-  'tools/mapfit.mjs',
-  'tools/mapreach.mjs',
-  'tools/mapspacing.mjs',
   'tools/modal-no-reset.mjs',
   'tools/music-bed-gain-probe.mjs',
   'tools/offline-play-qa.mjs',

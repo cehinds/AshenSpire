@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/hand-pager-threshold.mjs — focused browser acceptance for #208.
+// tools/attic/hand-pager-threshold.mjs — focused browser acceptance for #208.
 //
 // The real combat shot door poses exact hand sizes. This instrument reads the
 // real DOM, accessibility tree, hit-test surface, unified cursor, and geometry
@@ -7,12 +7,12 @@
 // not call a pager helper directly.
 //
 // Usage:
-//   node tools/hand-pager-threshold.mjs
-//   node tools/hand-pager-threshold.mjs --only 390x844 --text XL
-//   node tools/hand-pager-threshold.mjs --hand 7
-//   node tools/hand-pager-threshold.mjs --standalone   # only after artifacts move
-//   node tools/hand-pager-threshold.mjs --shots docs/preview/hand-pager-source
-//   node tools/hand-pager-threshold.mjs --selftest-source
+//   node tools/attic/hand-pager-threshold.mjs
+//   node tools/attic/hand-pager-threshold.mjs --only 390x844 --text XL
+//   node tools/attic/hand-pager-threshold.mjs --hand 7
+//   node tools/attic/hand-pager-threshold.mjs --standalone   # only after artifacts move
+//   node tools/attic/hand-pager-threshold.mjs --shots docs/preview/hand-pager-source
+//   node tools/attic/hand-pager-threshold.mjs --selftest-source
 
 // Exit 0 = every measured cell held; 1 = a product finding; 2 = no cell ran or
 // the browser/fixture failed.
@@ -20,12 +20,12 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 if (process.argv.includes('--selftest') || process.argv.includes('--selftest-source')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const sourceStatus = await doorSelftest({
     tool: 'hand-pager-threshold.mjs',
     args: ['--only', '390x844', '--text', 'XL'],
