@@ -2,7 +2,7 @@ import { fixCoreModuleParameters } from './fixCoreMechanics.js';
 import { MAX_ENEMIES_PER_COMBAT } from './combatLimits.js';
 import { compileBindings } from './mechanicsKernel.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
-import { validateZoneEffect } from '../engine/cardZones.js';
+import { validateZoneEffect } from './cardZoneRules.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
 //

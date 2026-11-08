@@ -80,14 +80,12 @@ const KNOWN_INVERSIONS = [
   'src/model/cardFaceProjection.js -> src/engine/d20Chance.js',
   'src/model/cardFaceText.js -> src/engine/d20Chance.js',
   'src/model/cardUpgradeSteps.js -> src/engine/rng.js',
-  'src/model/combatSnapshot.js -> src/engine/cardZones.js',
   'src/model/combatSnapshot.js -> src/engine/enemyBurdens.js',
   'src/model/equipmentCard.js -> src/engine/elementRules.js',
   'src/model/gameProfileRewards.js -> src/engine/rng.js',
   'src/model/playingCard.js -> src/engine/d20Chance.js',
   'src/model/proposalStatusRules.js -> src/engine/d20Chance.js',
   'src/model/rollReceipts.js -> src/engine/d20Chance.js',
-  'src/model/validate.js -> src/engine/cardZones.js',
 ];
 
 function walk(dir, out = []) {

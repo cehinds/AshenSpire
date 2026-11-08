@@ -2,7 +2,7 @@ import { CORE2_ACTION_RULES_VERSIONS } from './core2ActionPolicy.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from './fixCoreMechanics.js';
 import { enemySpPaymentValid } from './core2ActionPolicy.js';
 import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
-import { validateZoneEffect } from '../engine/cardZones.js';
+import { validateZoneEffect } from './cardZoneRules.js';
 import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
 import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
