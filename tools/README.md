@@ -220,6 +220,7 @@ prefix; its callers are the union.
 | `profile-first-run.mjs` | profile-first-run — Viki, 2026-08-08 (M7). | tests engine.test.js; tools browser |
 | `profile-surface-drive.mjs` | profile-surface-drive — Rune, 2026-08-07 (#67). | tools plantsites-baseline.json |
 | `prologue-editor-save.mjs` | A local authoring bridge for the opening editor. Only the final journey | tests prologue-editor-defaults; tools displayfirst, serve |
+| `qa-sandbox.mjs` | Pre-PR browser QA sandbox: runs an acceptance spec (success and failure checks) at desktop and phone viewports, screenshots, optional before/after against `--base <ref>`; writes report.md. | tests qa-sandbox; docs CONTRIBUTING.md, docs/qa/SANDBOX-QA.md; other package.json (`qa:sandbox`) |
 | `quest-choice-contract.mjs` | Issue #257: previous event choices can unlock or exclude later quest steps. | docs SPEC.md, docs/framework-migration-checklist.md; other src/model/validate.js |
 | `quick-start-inputs.mjs` | Count real native inputs from the default Core New Game menu to its first | wf quick-start; tests quick-start-tutorial-input, quick-start; tools map-camera-persistence; docs docs/FINISH.md |
 | `quicknav-reach.mjs` | quicknav-reach — the shipped quick menu, checked in a browser. | tools plantsites-baseline.json |
