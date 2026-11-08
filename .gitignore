@@ -604,3 +604,6 @@ build/windows-installer/
 
 # Compiled build artifact (tools/build-game.mjs); CI publishes it. games/<game>/build.summary.json is committed.
 /dist/build/
+
+# QA sandbox output (tools/qa-sandbox.mjs)
+/qa-sandbox-out/
