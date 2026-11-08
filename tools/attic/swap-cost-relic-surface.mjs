@@ -81,7 +81,7 @@ import { fileURLToPath } from 'node:url';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'swap-cost-relic-surface.mjs',
+    tool: 'attic/swap-cost-relic-surface.mjs',
     plants: [
       {
         // THE PREMISE DYING, through the door a relic actually enters by.

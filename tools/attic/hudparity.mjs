@@ -1192,7 +1192,7 @@ async function selftest() {
   // leaves a plant with nowhere to land. The DOOR is unnarrowed, which is the
   // axis the corpus is about.
   const code = await doorSelftest({
-    tool: 'hudparity.mjs',
+    tool: 'attic/hudparity.mjs',
     args: ['--only-shape', '844x340', '--only-pose', 'shipped,high', '--port', '8478'],
     plants,
     timeoutMs: 420000,

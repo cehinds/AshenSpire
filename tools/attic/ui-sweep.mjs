@@ -95,7 +95,7 @@ if (args.includes('--selftest')) {
       expectRed: /FAIL R3 combat .*status tray/,
     },
   ];
-  process.exit(await doorSelftest({ tool: 'ui-sweep.mjs', plants, args: ['--only', 'event,map,combat'], timeoutMs: 400000 }));
+  process.exit(await doorSelftest({ tool: 'attic/ui-sweep.mjs', plants, args: ['--only', 'event,map,combat'], timeoutMs: 400000 }));
 }
 
 const SHAPES = [

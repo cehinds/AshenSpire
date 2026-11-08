@@ -121,14 +121,14 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
   const NARROW_ARGS = ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '7'];
   const WIDE_ARGS = ['--solo-only', '--only', '1200x730', '--text', 'M', '--hand', '7'];
   let code = await doorSelftest({
-    tool: 'combat-action-row.mjs',
+    tool: 'attic/combat-action-row.mjs',
     args: NARROW_ARGS,
     timeoutMs: 600000,
     plants: narrowPlants,
   });
   if (code) process.exit(code);
   code = await doorSelftest({
-    tool: 'combat-action-row.mjs',
+    tool: 'attic/combat-action-row.mjs',
     args: WIDE_ARGS,
     timeoutMs: 600000,
     plants: widePlants,
@@ -147,7 +147,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ...(plant.append != null ? { append: `<style>${plant.append}</style>` } : {}),
   }));
   code = await doorSelftest({
-    tool: 'combat-action-row.mjs',
+    tool: 'attic/combat-action-row.mjs',
     args: ['--standalone', ...NARROW_ARGS],
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],
@@ -155,7 +155,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
   });
   if (code) process.exit(code);
   process.exit(await doorSelftest({
-    tool: 'combat-action-row.mjs',
+    tool: 'attic/combat-action-row.mjs',
     args: ['--standalone', ...WIDE_ARGS],
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],

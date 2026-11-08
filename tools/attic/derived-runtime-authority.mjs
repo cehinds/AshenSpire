@@ -24,7 +24,7 @@ import { createCombat } from '../../src/engine/combat.js';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'derived-runtime-authority.mjs',
+    tool: 'attic/derived-runtime-authority.mjs',
     plants: [
       {
         name: 'live content drift rewrites the persisted Energy/Draw stamp',

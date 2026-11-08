@@ -215,7 +215,7 @@ if (process.argv.includes('--selftest')) {
   const CANCELDOWN = "        addEventListener('pointercancel', gone, true);";
   const UNGUARDED = '          /* planted: the eater does not check whose lift this is */';
   process.exit(await doorSelftest({
-    tool: 'armoury-picked-up.mjs',
+    tool: 'attic/armoury-picked-up.mjs',
     timeoutMs: 900000,
     plants: [
       {

@@ -25,7 +25,7 @@ const browserPath = [
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   const code = await doorSelftest({
-    tool: 'combat-save.mjs',
+    tool: 'attic/combat-save.mjs',
     timeoutMs: 90000,
     plants: [
       {

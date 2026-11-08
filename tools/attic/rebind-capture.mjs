@@ -737,7 +737,7 @@ function runScopedTool({
   return new Promise((done) => {
     const started = Date.now();
     const args = executable === process.execPath
-      ? [join('tools', 'rebind-capture.mjs'), `--qa18-child-scope=${scope}`]
+      ? [join('tools', 'attic', 'rebind-capture.mjs'), `--qa18-child-scope=${scope}`]
       : [];
     let child;
     let timedOut = false;

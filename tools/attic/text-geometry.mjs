@@ -29,7 +29,7 @@ import { balance } from '../../src/content/balance.js';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   const sourceCode = await doorSelftest({
-    tool: 'text-geometry.mjs',
+    tool: 'attic/text-geometry.mjs',
     // Browser source copies need the same verified art as the real checkout.
     extraCopy: ['assets', 'music', 'map-detail'],
     timeoutMs: 240000,
@@ -96,7 +96,7 @@ if (process.argv.includes('--selftest')) {
   // modify only a copied shipped bundle, so artifact mode cannot borrow clean
   // ownership evidence from the checkout while the selected artifact is stale.
   process.exit(await doorSelftest({
-    tool: 'text-geometry.mjs',
+    tool: 'attic/text-geometry.mjs',
     args: ['--artifact', 'AshenSpire.html'],
     timeoutMs: 240000,
     extraCopy: ['AshenSpire.html'],

@@ -27,7 +27,7 @@
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'profile-surface-drive.mjs',
+    tool: 'attic/profile-surface-drive.mjs',
     timeoutMs: 900000,
     plants: [
       {

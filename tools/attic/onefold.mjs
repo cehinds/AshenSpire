@@ -301,7 +301,7 @@ export function mountQuietFold(host, label) {
 
 async function selftest() {
   const { doorSelftest } = await import(join(HERE, 'tools/doorplant.mjs'));
-  const code = await doorSelftest({ tool: 'onefold.mjs', plants: PLANTS, timeoutMs: 60000 });
+  const code = await doorSelftest({ tool: 'attic/onefold.mjs', plants: PLANTS, timeoutMs: 60000 });
 
   // THE REFERENT GUARD, THROUGH THE REAL CLI. Not a fixture handed to scan():
   // the tool is spawned exactly as a person spawns it, at a root with no src/,

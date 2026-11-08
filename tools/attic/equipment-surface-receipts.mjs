@@ -35,7 +35,7 @@ if (process.argv.includes('--selftest')) {
   const csvRow = { file: 'content/source/weapons.csv', append: TALISMAN };
   const REBUILD = [['node', 'tools/content-build.mjs']];
   process.exit(await doorSelftest({
-    tool: 'equipment-surface-receipts.mjs',
+    tool: 'attic/equipment-surface-receipts.mjs',
     plants: [
       {
         // THE DEFECT ITSELF, restored verbatim: the tree exactly as it stood at

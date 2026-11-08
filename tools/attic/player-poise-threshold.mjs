@@ -44,7 +44,7 @@ import * as projectionModel from '../../src/model/statProjection.js';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'player-poise-threshold.mjs',
+    tool: 'attic/player-poise-threshold.mjs',
     plants: [
       {
         // THE WAKE RED'S OWN KNOWN-BAD (development.md, *The wake condition*,

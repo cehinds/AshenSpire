@@ -1339,7 +1339,7 @@ function copyTree(dir) {
 }
 
 function runIn(dir) {
-  const r = spawnSync('node', [join(dir, 'tools', 'swap-row-reads.mjs'), '--out', join(dir, 'shots')], {
+  const r = spawnSync('node', [join(dir, 'tools', 'attic', 'swap-row-reads.mjs'), '--out', join(dir, 'shots')], {
     cwd: dir, encoding: 'utf8', env: { ...process.env, CHROME: process.env.CHROME || '/usr/bin/chromium' }, timeout: 600000,
   });
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };

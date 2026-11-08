@@ -51,7 +51,7 @@
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'quicknav-reach.mjs',
+    tool: 'attic/quicknav-reach.mjs',
     args: ['--shape', '390x844-text-m'],
     timeoutMs: 900000,
     plants: [

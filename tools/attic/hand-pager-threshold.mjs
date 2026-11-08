@@ -27,7 +27,7 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 if (process.argv.includes('--selftest') || process.argv.includes('--selftest-source')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   const sourceStatus = await doorSelftest({
-    tool: 'hand-pager-threshold.mjs',
+    tool: 'attic/hand-pager-threshold.mjs',
     args: ['--only', '390x844', '--text', 'XL'],
     timeoutMs: 600000,
     plants: [{
@@ -78,7 +78,7 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
   // authored threshold even while every source-page cell is green, so this
   // copied artifact must independently go red and the clean artifact green.
   process.exit(await doorSelftest({
-    tool: 'hand-pager-threshold.mjs',
+    tool: 'attic/hand-pager-threshold.mjs',
     args: ['--standalone', '--only', '390x844', '--text', 'XL'],
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],

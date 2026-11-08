@@ -19,7 +19,7 @@ import * as UI from '../../src/ui/uiContent.js';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'status-presentation-authority.mjs',
+    tool: 'attic/status-presentation-authority.mjs',
     plants: [
       {
         name: 'the presenter infers percent from the status NAME again',

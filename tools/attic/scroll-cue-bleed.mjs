@@ -77,7 +77,7 @@ const SHOP_PANE_SEAM = '.shop-offers, .shop-detail { min-height: 0; overflow: au
 async function runSelftest() {
   const { doorSelftest } = await import('../doorplant.mjs');
   const common = {
-    tool: 'scroll-cue-bleed.mjs',
+    tool: 'attic/scroll-cue-bleed.mjs',
     args: ['--only', '360x640', '--surface', 'shop'],
     timeoutMs: 300000,
     plants: [

@@ -26,7 +26,7 @@
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'restore-settings-drive.mjs',
+    tool: 'attic/restore-settings-drive.mjs',
     timeoutMs: 900000,
     plants: [
       {

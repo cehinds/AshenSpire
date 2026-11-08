@@ -30,7 +30,7 @@ const browserPath = [
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   const code = await doorSelftest({
-    tool: 'modal-no-reset.mjs',
+    tool: 'attic/modal-no-reset.mjs',
     timeoutMs: 120000,
     plants: [
       {
