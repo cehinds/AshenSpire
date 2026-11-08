@@ -16,7 +16,7 @@ Archive of provenance and superseded text moved out of SPEC.md §17. Not rules.
 - Defense and Smash: owner 2026-10-19, multiplier reduced 2026-10-23. Stance bonuses: 2026-10-19 "stance bonuses must improve cards".
 
 ## Contests (owner, 2026-10-31)
-- Owner's example (rank 1, INT 1 WIS 2, roll 5) retained in rules.
+- Owner's example (rank 1, INT 1 WIS 2, roll 5) restored in the rules after review.
 
 ## Accuracy
 - Fixed Evasion defense: owner correction 2026-10-21. Amended 2026-10-31: enemies hit too easily, any Precision of 1 or more hit 95%.
