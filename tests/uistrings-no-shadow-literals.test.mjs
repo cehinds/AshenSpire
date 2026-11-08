@@ -78,7 +78,7 @@ const ALLOWED = [
   ['src/ui/components/damageReceipt.js', 'Against', 'leading word of the per-target damage receipt scope line; not the Core Smash stance-matchup sentence'],
   ['src/ui/components/card.js', 'Spell', 'the card face camp subtype and range-name table; not the deck editor stance label'],
   ['src/ui/components/collectibleCard.js', 'Consumable', 'a potion usage line on the collectible card; not the deck editor stance label'],
-  ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
+  ['src/ui/components/armouryInventory.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
   ['src/ui/screens/deckEditor.js', 'disabled', 'DOM attribute name; not reaction switch copy'],
   ['src/ui/audio.js', 'disabled', 'stored music status value; not the optional reaction switch face'],
   ['src/ui/components/holdconfirm.js', 'disabled', 'stored hold mode; not reaction switch copy'],
