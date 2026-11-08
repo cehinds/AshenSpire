@@ -35,6 +35,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-08
 
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.36`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
+- **Behind the scenes: shorter game rules, overview and legal** ([#2683](https://github.com/cehinds/AshenSpire/pull/2683), `0.7.4.36`). The rules document's opening, §1 and §2 are rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, hooks and non-goals** ([#2684](https://github.com/cehinds/AshenSpire/pull/2684), `0.7.4.36`). The rules document's §10 and §11 are rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, testing and milestones** ([#2689](https://github.com/cehinds/AshenSpire/pull/2689), `0.7.4.36`). The rules document's §8 and §9 are rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.36`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
+- **Behind the scenes: shorter game rules, architecture** ([#2698](https://github.com/cehinds/AshenSpire/pull/2698), `0.7.4.36`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, combat** ([#2695](https://github.com/cehinds/AshenSpire/pull/2695), `0.7.4.36`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, core combat** ([#2699](https://github.com/cehinds/AshenSpire/pull/2699), `0.7.4.36`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Save migration tidied** ([#2657](https://github.com/cehinds/AshenSpire/pull/2657), `0.7.4.36`). Old run saves are recognised by named schema versions instead of long version lists; every older save loads exactly as before.
 - **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.36`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
 - **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.36`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
