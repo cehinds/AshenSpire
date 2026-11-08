@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: combat HUD and settings, merge train** ([#2731](https://github.com/cehinds/AshenSpire/pull/2731), `0.7.4.46`). Lands #2709 and #2718 together.
 - **Behind the scenes: settings rows come from one table** ([#2718](https://github.com/cehinds/AshenSpire/pull/2718), `0.7.4.46`). This is a tooling-only change, and nothing you play changes. The Settings screen's rows now come from a data model and are built by shared kit builders, labels are escaped, and the Undo button's label comes from the strings table.
 - **Combat mini HUD redone** ([#2709](https://github.com/cehinds/AshenSpire/pull/2709), `0.7.4.46`). Every fighter now shows a tall Block shield on the left, an HP bar, an always-visible Poise bar of the same size, and one row of round badges for Precision and every status, buffs included, all at one fixed compact width.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
