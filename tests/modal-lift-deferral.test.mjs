@@ -30,7 +30,7 @@ function page(fn) {
   document.activeElement = opener;
   screen.appendChild(opener);
   app.appendChild(screen);
-  const restoreDom = installDom(dom), savedRaf = globalThis.requestAnimationFrame;
+  const restoreDom = installDom(dom); // also restores requestAnimationFrame
   let queue = [];
   globalThis.requestAnimationFrame = (fn) => { queue.push(fn); return queue.length; };
   const frame = () => { const run = queue; queue = []; run.forEach((fn) => fn(0)); };
@@ -38,7 +38,6 @@ function page(fn) {
   try { return fn({ document, screen, opener, frame }); } finally {
     resetModalState();
     restoreDom();
-    if (savedRaf === undefined) delete globalThis.requestAnimationFrame; else globalThis.requestAnimationFrame = savedRaf;
   }
 }
 
