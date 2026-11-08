@@ -21,6 +21,15 @@ export function scanDynamicImports(src) {
   const braceStack = []; // template-literal ${ nesting: true when the { opened a ${
   const regexAfterWord = new Set(['return', 'typeof', 'case', 'in', 'of', 'delete', 'void', 'throw', 'new', 'else', 'do', 'yield', 'await']);
 
+  // Skip whitespace and comments from j: `import /* lazy */ ('./x.js')` is a call.
+  function skipGap(j) {
+    for (;;) {
+      while (j < n && /\s/.test(src[j])) j++;
+      if (src[j] === '/' && src[j + 1] === '/') { while (j < n && src[j] !== '\n') j++; continue; }
+      if (src[j] === '/' && src[j + 1] === '*') { const e = src.indexOf('*/', j + 2); j = e < 0 ? n : e + 2; continue; }
+      return j;
+    }
+  }
   function skipString(q) {
     i++;
     // An unescaped newline ends a '…' or "…" string (it is a syntax error in
@@ -81,10 +90,10 @@ export function scanDynamicImports(src) {
       const before = src[start - 1];
       if (word === 'import' && before !== '.') {
         let j = i;
-        while (j < n && /\s/.test(src[j])) j++;
+        j = skipGap(j);
         if (src[j] === '(') {
           j++;
-          while (j < n && /\s/.test(src[j])) j++;
+          j = skipGap(j);
           let spec = null;
           let end = j;
           const q = src[j];
@@ -93,7 +102,7 @@ export function scanDynamicImports(src) {
             while (k < n && src[k] !== q && src[k] !== '\n' && src[k] !== '\\') k++;
             if (src[k] === q) {
               let m = k + 1;
-              while (m < n && /\s/.test(src[m])) m++;
+              m = skipGap(m);
               if (src[m] === ')') { spec = src.slice(j + 1, k); end = m + 1; }
             }
           }

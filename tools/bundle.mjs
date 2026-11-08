@@ -919,10 +919,12 @@ function transformModule(id, src, absPath) {
 // a comment is exempt.
 function assertNoNativeImport(id, body) {
   const lines = body.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (!/\bimport\s*\(/.test(lines[i])) continue;
-    if (/^\s*(\/\/|\/\*|\*)/.test(lines[i])) continue;
-    fail('native import( left in ' + id + ' at line ' + (i + 1) + ' after transform — the bundler could not follow it:\n' + lines[i].trim());
+  const re = /\bimport(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\(/g;
+  let m;
+  while ((m = re.exec(body)) !== null) {
+    const line = body.slice(0, m.index).split('\n').length;
+    if (/^\s*(\/\/|\/\*|\*)/.test(lines[line - 1])) continue;
+    fail('native import( left in ' + id + ' at line ' + line + ' after transform — the bundler could not follow it:\n' + lines[line - 1].trim());
   }
 }
 

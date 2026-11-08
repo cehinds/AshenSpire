@@ -199,3 +199,31 @@ test('bundle-cycles: a dynamic edge alone is not a boot-time cycle', () => {
     assert.deepEqual(findCycleHazards('src/main.js', root), []);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('import with a comment before the parenthesis is still a call', async () => {
+  assert.deepEqual(scanDynamicImports("f = () => import /* lazy */ ('./dev.js');").map(c => c.spec), ['./dev.js']);
+  assert.deepEqual(scanDynamicImports("f = () => import // c\n ( /* a */ './dev.js' /* b */ );").map(c => c.spec), ['./dev.js']);
+  const root = fixture({
+    'main.js': "globalThis.load = () => import /* lazy */ ('./dev.js');\n",
+    'dev.js': 'export const value = 3;\n',
+  });
+  try {
+    const { context, order } = bundleAndRun(root);
+    assert.deepEqual([...order].sort(), ['src/dev.js', 'src/main.js']);
+    assert.equal((await context.load()).value, 3);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('import with a comment before a non-literal argument fails the build', () => {
+  const root = fixture({ 'main.js': "globalThis.load = (n) => import /* x */ (n);\n" });
+  try {
+    assert.throws(() => bundleAndRun(root), /src\/main\.js/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('backstop: import /* c */ ( in a string literal is caught too', () => {
+  const root = fixture({ 'main.js': "const s = 'import /* c */ (x)';\n" });
+  try {
+    assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js at line 1/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
