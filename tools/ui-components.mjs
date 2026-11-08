@@ -2,7 +2,7 @@
 // Reusable UI component contract: stable semantic ids, one shared Map/Combat
 // HUD composition, one player/enemy Combatant Frame, and no simulation state
 // imported into component modules.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -543,7 +543,8 @@ export function receipt() {
     runHud: read('src/ui/components/runHud.js'),
     shop: read('src/ui/screens/shop.js'),
     event: read('src/ui/screens/event.js'),
-    validate: read('src/model/validate.js'),
+    // validate.js is an orchestrator now; its section validators live in src/model/validate/.
+    validate: [read('src/model/validate.js'), ...readdirSync(resolve(ROOT, 'src/model/validate')).sort().map((f) => read(`src/model/validate/${f}`))].join('\n'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
     // The combat action row's one home since 2026-10-01.
