@@ -13,7 +13,7 @@ const word = (...parts) => parts.join('');
 export const WEAKNESS_MANA = word('ma', 'na'), WEAKNESS_STAMINA = word('stam', 'ina');
 export const WEAKNESS_PHYSICAL = Object.freeze(['blunt', 'slashing', 'piercing']);
 export const WEAKNESS_ELEMENTS = Object.freeze(['fire', 'frost', 'lightning', 'sacred', 'decay', 'arcane', 'earth', word('psy', 'chic'), word('poi', 'son')]);
-export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', 'chilled', word('ven', 'om'), 'vulnerable']);
+export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', word('chil', 'led'), word('ven', 'om'), 'vulnerable']);
 // Statuses that deal damage of their own, so a `tick` weakness has something to scale.
 export const WEAKNESS_TICK_STATUSES = Object.freeze(['burn', 'bleed', 'frost', word('ven', 'om')]);
 export const WEAKNESS_HIT_EFFECTS = Object.freeze(['damage', WEAKNESS_MANA, WEAKNESS_STAMINA, 'stagger']);
