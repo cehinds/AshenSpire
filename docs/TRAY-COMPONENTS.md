@@ -207,7 +207,7 @@ the shared renderer.
 
 ## Verification
 
-`node tools/tray-components.mjs --shots` drives all four edge variants in a
+`node tools/attic/tray-components.mjs --shots` drives all four edge variants in a
 real browser, checks literal arrows (including open Right `>`), ARIA/content
 state, side-rail geometry, child-model delivery, and every configurable Armoury
 subject. It also verifies the clickable catalog detail drawer and the dedicated
