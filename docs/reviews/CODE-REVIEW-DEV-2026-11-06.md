@@ -354,7 +354,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `collectContentProblems` → one validator per bundle section (H3)
 - [x] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3) — #2707
 - [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
-- [ ] `runOpcode` → `OPCODE_HANDLERS` map (H3)
+- [x] `runOpcode` → `OPCODE_HANDLERS` map (H3) — #2679
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
 - [x] `migrateRunSchema`: `schemaVersion < N` with named constants (Low) — #2657
 - [ ] `engine/combat.js`: name the `A`/`F`/`R`/`S` namespace imports (Low)
