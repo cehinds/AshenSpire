@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Enemy levels and readable stats** ([#2717](https://github.com/cehinds/AshenSpire/pull/2717), `0.7.4.48`). New Core runs use enemy levels 1–5 and the player's attribute-point budget per level, with every own stat starting at 1. Enemy inspection separates own points from gear bonuses and keeps the full label readable on phones. Empty health-bar padding no longer steals a neighboring enemy's taps or long presses. Existing runs keep their saved attribute budgets.
-- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.48`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
+- **Enemy levels and readable stats** ([#2717](https://github.com/cehinds/AshenSpire/pull/2717), `0.7.4.50`). New Core runs use enemy levels 1–5 and the player's attribute-point budget per level, with every own stat starting at 1. Enemy inspection separates own points from gear bonuses and keeps the full label readable on phones. Empty health-bar padding no longer steals a neighboring enemy's taps or long presses. Existing runs keep their saved attribute budgets.
+- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.50`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.48`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.48`). Card previews and card resolution allocate about half as much memory; play is unchanged.
 - **Save checks tidied** ([#2713](https://github.com/cehinds/AshenSpire/pull/2713), `0.7.4.48`). The run-save validator and derived-stat setup are split into named steps; saves load exactly as before.
