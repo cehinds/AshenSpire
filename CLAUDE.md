@@ -43,6 +43,14 @@ merged. Resolve the conflicts once on the combined branch, run the fast checks
 and the merged PRs' tests, have the conflict resolution reviewed, and merge the
 combined PR on green CI. Every combined pull request must already be reviewed.
 
+**Sandbox QA before the PR** (owner, 2026-11-07): before opening a pull request
+for a visible change, write acceptance criteria (the request, what success looks
+like, what failure looks like) and run them in the browser sandbox with
+`npm run qa:sandbox -- <acceptance.json> --base origin/dev`. Open the PR only when
+every check passes, and put the criteria, the PASS result and the 1280x800 and
+390x844 screenshots in its *Acceptance criteria* section
+([docs/qa/SANDBOX-QA.md](docs/qa/SANDBOX-QA.md)).
+
 **Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
 visible (UI, tools, the Workbench, art, layout), finish the report with fresh
 screenshots of the changed screens and a preview the owner can open (a
