@@ -960,8 +960,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -985,9 +984,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the probe serves the source tree
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1011,9 +1009,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the standalone is built below
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -1071,8 +1068,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the probe serves the source tree
-      - uses: ./.github/actions/setup-node
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1102,8 +1098,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the probe serves the source tree
-      - uses: ./.github/actions/setup-node
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1135,9 +1130,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the standalone is built below
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -1171,9 +1165,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1200,9 +1193,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1219,8 +1211,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1241,9 +1232,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1410,9 +1400,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1455,9 +1444,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
@@ -1490,8 +1478,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # figures are fetched from the pinned art packs below
-      - uses: ./.github/actions/setup-node
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
       - uses: ./.github/actions/which-browser
