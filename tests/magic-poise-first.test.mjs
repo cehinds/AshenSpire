@@ -1,5 +1,7 @@
 // Owner, 2026-10-31: magic damage hits Poise FIRST (1:1) and then Block; physical hits Block first and then Poise (75/25).
 // Pure receipts on the live Core profile, Ward off (shipped data).
+// Owner, 2026-11-07 (backlog #7): new Core 2 fights carry `damage.unified` and have ONE damage kind (no magic lane); the split below is what a fight
+// saved before that flag keeps, so the (a)-(d) cases run with the flag removed from the fight's snapshot ("split") and the unified cases pin the new rule.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -14,14 +16,15 @@ import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function liveCore() {
+function liveCore(unified = false) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   delete combat.player.combatStance;
+  if (!unified) { const { damage, ...old } = combat.fixCoreRules; combat.fixCoreRules = old; }
   return combat;
 }
-function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10 } = {}) {
-  const combat = liveCore(), target = combat.enemies[0];
+function hit(carrier, { block = 0, poise = 0, barrier = 0, amount = 10, unified = false } = {}) {
+  const combat = liveCore(unified), target = combat.enemies[0];
   Object.assign(target, { block, barrier, persistentWard: null, persistentPoise: { value: poise, max: Math.max(20, poise) }, gameProfilePoise: 0, statuses: {} });
   delete target.combatStance;
   delete target.weaknesses; // enemy weaknesses (SPEC 5.3) are tested in enemy-weaknesses.test.mjs; this suite isolates the Poise/Block order
@@ -32,7 +35,7 @@ const physical = { combatProfile: { camp: 'physical', damageType: 'slashing' } }
 const spell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
 const arcane = { combatProfile: { camp: 'spell', damageType: 'arcane' }, magicShare: 0.5 };
 
-test('(a) pure spell 10 vs Poise 6, Block 5: Poise 6->0 first, the 4 left meets Block 5->1, HP 0', () => {
+test('split (flag off): (a) pure spell 10 vs Poise 6, Block 5: Poise 6->0 first, the 4 left meets Block 5->1, HP 0', () => {
   const r = hit(spell, { poise: 6, block: 5 });
   assert.equal(r.receipt.magicPoise, 6);
   assert.equal(r.poiseAfter, 0);
@@ -43,7 +46,7 @@ test('(a) pure spell 10 vs Poise 6, Block 5: Poise 6->0 first, the 4 left meets 
   assert.ok(ids.indexOf('poise-magic') >= 0 && ids.indexOf('poise-magic') < ids.indexOf('block-magic'), 'receipt shows Poise before Block');
 });
 
-test('(b) pure spell 10 vs Poise 2, Block 5: Poise 2->0, Block 5->0, HP 3', () => {
+test('split (flag off): (b) pure spell 10 vs Poise 2, Block 5: Poise 2->0, Block 5->0, HP 3', () => {
   const r = hit(spell, { poise: 2, block: 5 });
   assert.equal(r.receipt.magicPoise, 2);
   assert.equal(r.poiseAfter, 0);
@@ -51,7 +54,7 @@ test('(b) pure spell 10 vs Poise 2, Block 5: Poise 2->0, Block 5->0, HP 3', () =
   assert.equal(r.receipt.hpLoss, 3);
 });
 
-test('(c) physical 10 vs Poise 6, Block 5: Block 5->0 first, then the 5 meets Poise (HP floor(0.75x5)=3, Poise 6->4)', () => {
+test('split (flag off): (c) physical 10 vs Poise 6, Block 5: Block 5->0 first, then the 5 meets Poise (HP floor(0.75x5)=3, Poise 6->4)', () => {
   const r = hit(physical, { poise: 6, block: 5 });
   assert.equal(r.receipt.magicPoise, 0);
   assert.equal(r.blockAfter, 0);
@@ -65,7 +68,7 @@ test('a spell costs more Poise than the same physical hit', () => {
   assert.equal(hit(spell, { poise: 20 }).receipt.hpLoss, 0);
 });
 
-test('(d) mixed arcane 10 (5 physical, 5 magic) vs Poise 6, Block 5: physical through Block, magic through the Poise left', () => {
+test('split (flag off): (d) mixed arcane 10 (5 physical, 5 magic) vs Poise 6, Block 5: physical through Block, magic through the Poise left', () => {
   const r = hit(arcane, { poise: 6, block: 5 });
   assert.equal(r.receipt.damageReceipt.hits[0].physical, 5);
   assert.equal(r.receipt.damageReceipt.hits[0].magical, 5);
@@ -147,4 +150,49 @@ test('the damage floater floats the whole hit, and equals the combat log number 
   const pierced = ev(hit({ ...arcane, tags: ['pierce'] }, { poise: 20, block: 100 }));
   assert.ok(pierced.pierced > 0 && pierced.hpLoss === 0, 'fixture: a pierced hit that cost no HP');
   assert.equal(guardHitFloatParts(pierced).fullHit.text, String(hitAsLayered(pierced)), 'a pierced zero-HP hit still has its full number');
+});
+
+// ---- damage.unified (owner 2026-11-07): one damage kind, Block, then Barrier, then Poise x0.75, then HP ----------------------------------
+const U = { unified: true };
+test('unified: a 6-damage frost spell vs Block 4 and Poise active gives Block 0, HP loss 1 (SPEC Falsify)', () => {
+  const r = hit({ combatProfile: { camp: 'spell', damageType: 'frost', magicShare: 1 } }, { amount: 6, block: 4, poise: 10, ...U });
+  assert.equal(r.blockAfter, 0);
+  assert.equal(r.receipt.hpLoss, 1, 'floor(2 x 0.75)');
+  assert.equal(r.receipt.magicPoise, 0);
+  assert.equal(r.poiseAfter, 9, 'Poise loses what it absorbed (1)');
+  const ids = r.receipt.damageReceipt.hits[0].sources.map(s => s.id);
+  assert.ok(!ids.includes('poise-magic') && !ids.includes('block-magic'), 'no magic lane stage');
+});
+test('unified: pure spell 10 vs Poise 6, Block 5 meets Block first, then Poise x0.75 (like physical)', () => {
+  const r = hit(spell, { poise: 6, block: 5, ...U });
+  assert.equal(r.blockAfter, 0);
+  assert.equal(r.receipt.hpLoss, 3);
+  assert.equal(r.poiseAfter, 4);
+  assert.deepEqual(r.receipt.damageReceipt.hits[0].magical, 0);
+  assert.equal(r.receipt.damageReceipt.hits[0].physical, 10);
+});
+test('unified: a spell and a physical hit of the same size resolve identically', () => {
+  for (const o of [{ poise: 20 }, { poise: 6, block: 5 }, { poise: 0, block: 3 }]) {
+    const a = hit(spell, { ...o, ...U }).receipt, b = hit(physical, { ...o, ...U }).receipt;
+    assert.deepEqual([a.hpLoss, a.blocked, a.poiseMitigated], [b.hpLoss, b.blocked, b.poiseMitigated]);
+  }
+});
+test('unified: a mixed arcane hit is one number, with no magical part', () => {
+  const r = hit(arcane, { poise: 6, block: 5, ...U });
+  assert.equal(r.receipt.damageReceipt.hits[0].magical, 0);
+  assert.equal(r.receipt.damageReceipt.hits[0].physical, 10);
+  assert.equal(r.receipt.magicPoise, 0);
+});
+test('unified: pierce works on the whole hit and spends Block as the same hit without pierce', () => {
+  const plain = hit(spell, { block: 10, poise: 5, ...U });
+  const pierced = hit({ ...spell, tags: ['pierce'] }, { block: 10, poise: 5, ...U });
+  assert.equal(pierced.receipt.pierceBypassed, 2, 'floor(.2 x 10)');
+  assert.equal(pierced.blockAfter, plain.blockAfter);
+  assert.ok(pierced.receipt.hpLoss >= plain.receipt.hpLoss);
+});
+test('unified: spells still read PR, not AR (scaling is not a damage type)', () => {
+  const combat = liveCore(true), target = combat.enemies[0];
+  Object.assign(target, { block: 0, persistentPoise: { value: 0, max: 20 }, statuses: {} }); delete target.weaknesses;
+  const gain = (pr) => { combat.player.ratings = { ...combat.player.ratings, pr, ar: 0 }; return profileDamageReceipt(combat, combat.player, target, 10, spell, { roll: 0 }).damageReceipt.hits[0].incoming; };
+  assert.ok(gain(20) > gain(0), 'PR raises a spell hit');
 });

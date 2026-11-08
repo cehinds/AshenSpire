@@ -50,3 +50,24 @@ test('a pierce hit lets floor(0.2 x its damage) past Block',()=>{
  }
  assert.ok(!isPierceHit(physical.combatProfile,physical));
 });
+// Owner, 2026-11-07 (backlog #7): the tests above run under the shipped damage.unified; a fight saved before the flag keeps its split.
+function poiseHit(carrier,block,poise,unified) {
+ const combat=liveCore(),target=combat.enemies[0];
+ if (!unified) { const {damage,...old}=combat.fixCoreRules; combat.fixCoreRules=old; }
+ Object.assign(target,{block,barrier:0,persistentWard:null,persistentPoise:{value:poise,max:20},gameProfilePoise:0,statuses:{}});
+ delete target.weaknesses;
+ return profileDamageReceipt(combat,combat.player,target,10,{...carrier,skipRatingBonus:true},{roll:0});
+}
+test('unified: Block soaks a spell first, then Barrier, then Poise x0.75 (Block 4, Poise 10: 6 -> 4 through Poise, HP 2)',()=>{
+ const r=poiseHit(magic,4,10,true);
+ assert.equal(r.blocked,4);
+ assert.equal(r.magicPoise,0);
+ assert.equal(r.hpLoss,Math.floor(6*0.75));
+ assert.equal(r.poiseMitigated,6-Math.floor(6*0.75));
+});
+test('split (flag off): the same spell meets Poise first, 1:1, then Block',()=>{
+ const r=poiseHit(magic,4,10,false);
+ assert.equal(r.magicPoise,10);
+ assert.equal(r.blocked,0);
+ assert.equal(r.hpLoss,0);
+});

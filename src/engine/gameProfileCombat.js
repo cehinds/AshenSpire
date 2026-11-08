@@ -3,7 +3,7 @@ import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreUnifiedDamage } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -163,7 +163,10 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
-  let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
+  // Owner, 2026-11-07 (SPEC §17, One damage kind in Core 2): under damage.unified the whole hit is one damage number (physical = the hit, magical = 0):
+  // Block, then Barrier, then Poise x0.75, then HP; Pierce works on the whole hit and there is no magic Poise lane. The rating (PR for spells) is unchanged.
+  const unified = modern && fixCoreUnifiedDamage(ctx);
+  let physical = modern ? (unified ? incoming : parts.physical) : incoming, magical = modern && !unified ? parts.magic : 0;
   let barrierMitigated = 0, pierceBypassed = 0, piercePoise = 0, magicPoise = 0, blockSpent = null;
   // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),
   // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.

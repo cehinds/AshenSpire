@@ -64,18 +64,21 @@ test('actual card dispatch matches selected target receipt and card face after e
  assert.equal(receipt.totalDamage,preview.damageReceipt.totalDamage);
  assert.ok(receipt.hits[0].sources.some(row=>row.id.startsWith('ar:')));
 });
-test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG',()=>{
- const {combat,target}=live();Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
+const SPL={hits:[20,20,25],hp:[6,19,25],pools:[[12,0,2,0],[0,0,0,1],[0,0,0,0]]},UNI={hits:[20,25,25],hp:[7,25,25],pools:[[12,0,0,1],[0,0,0,0],[0,0,0,0]]};
+// Owner, 2026-11-07: one damage kind under damage.unified (the shipped rule); a fight saved before the flag keeps the physical/magic split.
+for(const unified of [false,true])test(`mixed multihit receipt spends Block Ward and Poise sequentially (no numeric Barrier pool) and previews without RNG (damage.unified ${unified})`,()=>{
+ const {combat,target}=live();if(!unified)delete combat.fixCoreRules.damage;Object.assign(target,{block:12,persistentWard:{value:1,max:20},persistentPoise:{value:1,max:20}});
  const carrier={skipRatingBonus:true,magicShare:.5,combatProfile:{camp:'physical',maneuver:'attack',range:'melee',damageComponents:[{damageType:'blunt',share:.5},{damageType:'magic',share:.5}]}};
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
  // Owner, 2026-11-03: hitDamages is the raw hit; the resolved HP loss per hit is the receipt's hpLoss.
- assert.deepEqual(preview.hitDamages,[20,20,25]);assert.equal(preview.totalDamage,65);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3
- assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);// hit 2 meets 1 Poise (capped)
+ const want=unified?UNI:SPL;
+ assert.deepEqual(preview.hitDamages,want.hits);assert.equal(preview.totalDamage,want.hits.reduce((a,b)=>a+b,0));// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3
+ assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),want.hp);assert.equal(preview.hpLoss,want.hp.reduce((a,b)=>a+b,0));// hit 2 meets 1 Poise (capped)
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),preview.hitDamages);assert.equal(500-target.hp,50);
- assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),preview.hitDamages);assert.equal(500-target.hp,want.hp.reduce((a,b)=>a+b,0));
+ assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),want.pools);
 });
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
  const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};

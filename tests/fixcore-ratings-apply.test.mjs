@@ -189,8 +189,19 @@ test('PR (INT) does not change a physical attack card', () => {
 });
 
 // ---- PR bonus routes to the magical part of a split; enemies keep AR for their spells --------------------------------
-test('PR bonus lands in the magical half of Arcane Spark; the physical half is unchanged', () => {
+// Owner, 2026-11-07 (backlog #7): the shipped rule has one damage kind, so PR raises the single number; a fight saved before damage.unified keeps the split.
+const splitFight = w => { const { damage, ...old } = w.combat.fixCoreRules; w.combat.fixCoreRules = old; return w; };
+test('unified: PR raises Arcane Spark as one damage number (no magical half)', () => {
   const base = world('starseer'), up = world('starseer', stat('intelligence'));
+  const part = w => { const { combat, target } = w; const id = hand(combat, 'core.cantrip');
+    return previewCard(combat, id, target.id).values.find(v => v.op === 'damage').damageReceipt.hits[0]; };
+  const a = part(base), b = part(up), w = weights(up.combat).pr, delta = ratings(up).pr - ratings(base).pr;
+  assert.equal(a.magical, 0); assert.equal(b.magical, 0);
+  assert.equal(b.physical - a.physical, Math.floor(delta * w), 'PR moves the one number');
+  assert.equal(a.physical, a.incoming);
+});
+test('split (flag off): PR bonus lands in the magical half of Arcane Spark; the physical half is unchanged', () => {
+  const base = splitFight(world('starseer')), up = splitFight(world('starseer', stat('intelligence')));
   const part = w => { const { combat, target } = w; const id = hand(combat, 'core.cantrip');
     const hit = previewCard(combat, id, target.id).values.find(v => v.op === 'damage').damageReceipt.hits[0]; return hit; };
   const a = part(base), b = part(up), w = weights(up.combat).pr, delta = ratings(up).pr - ratings(base).pr;

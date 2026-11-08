@@ -177,12 +177,14 @@ test('property: over a grid of damage, Block and Poise, pierce never lowers HP l
 
 // Invariant over whole actions: Block is spent as the plain hit would spend it, so carrying Block/Poise between hits never lets a pierce
 // action deal less HP than the same action without pierce. Mixed physical+magic and Ward-enabled included; preview equals apply.
-test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off), pierce never lowers total HP loss and preview equals apply', () => {
+// Owner, 2026-11-07: run it under damage.unified (the shipped rule: one damage kind) and with the flag removed (a fight saved before it keeps the split).
+for (const unified of [true, false]) test(`property (damage.unified ${unified}): over multi-hit actions (2-4 hits, mixed damage, Ward on and off), pierce never lowers total HP loss and preview equals apply`, () => {
   let checked = 0, skipped = 0;
   const ctxs = [live(), live(), live()];
   for (const ctx of ctxs) { ctx.enemies[0].basePrecisionBonus = 1000; }
   const reset = (ctx, { block, poise, ward, barrier }) => {
     ctx.fixCoreRules = { ...structuredClone(ctx.fixCoreRules || ctx.gameProfile.fixCoreRules), ward: { enabled: ward } };
+    if (unified) ctx.fixCoreRules.damage = { unified: true }; else delete ctx.fixCoreRules.damage;
     Object.assign(ctx.player, { hp: 200, maxHp: 200, block, barrier, statuses: {}, persistentPoise: { value: poise, max: 30 },
       persistentWard: { value: ward ? 4 : 0, max: 10 } });
     delete ctx.player.combatStance; delete ctx.player.combatCounter;
@@ -215,4 +217,20 @@ test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off)
       assert.equal(forecastOf('piercing'), pierce, `preview != apply: ${label}`); checked++;
     }
   assert.ok(checked > skipped, `preview == apply held in ${checked} cases (${skipped} skipped for the older Poise-break forecast gap)`);
+});
+
+// Owner, 2026-11-07: under damage.unified, Pierce works on the whole hit, spell or physical.
+test('unified: a piercing spell lets floor(0.2 x the whole hit) past Block; a split fight lets the same through the physical part first', () => {
+  for (const unified of [true, false]) {
+    const ctx = live();
+    ctx.fixCoreRules = { ...structuredClone(ctx.fixCoreRules || ctx.gameProfile.fixCoreRules) };
+    if (unified) ctx.fixCoreRules.damage = { unified: true }; else delete ctx.fixCoreRules.damage;
+    const target = ctx.player;
+    Object.assign(target, { block: 50, barrier: 0, statuses: {}, persistentPoise: { value: 0, max: 0 }, persistentWard: { value: 0, max: 0 } });
+    const r = profileDamageReceipt(ctx, ctx.enemies[0], target, 10, { tags: ['camp:spell', 'damage:fire', 'pierce'], skipRatingBonus: true, magicShare: 1,
+      combatProfile: { camp: 'spell', maneuver: 'casting', damageType: 'fire', range: 'reach' } }, { roll: 0 });
+    assert.equal(r.pierceBypassed, 2, `unified ${unified}: floor(.2 x 10)`);
+    assert.equal(r.hpLoss, 2);
+    assert.equal(r.damageReceipt.hits[0].magical, unified ? 0 : 10, 'the split exists only without the flag');
+  }
 });

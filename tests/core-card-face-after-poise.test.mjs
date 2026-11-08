@@ -125,7 +125,8 @@ test('an aimed enemy that died falls back to the frontmost living enemy', () => 
 test('the rendered face sequence and total are the before-Block ones (cardFaceLines and combatCardSummary)', async () => {
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const { combatCardSummary } = await import('../src/model/playingCard.js');
-  const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 10, block: 5 }] });
+  // Poise 3: under damage.unified a spell meets Block first and Poise x0.75 (no longer 1:1), so a small pool is what breaks mid-card and moves the later hits.
+  const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 3, block: 5 }] });
   combat.player.energy = 3; combat.player.stamina = 3; combat.player.mana = 9;
   const preview = previewCard(combat, id, combat.enemies[0].id);
   const row = preview.values.find(v => v.op === 'damage');
