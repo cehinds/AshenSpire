@@ -10,6 +10,7 @@ import { abilityKindForSkill, abilityRankAt, isAbilitySkill, SPELLCRAFT_SKILL, M
 import { abilityOfferPool } from '../../model/abilityOffers.js';
 import { expandedProgression } from '../../model/classMilestones.js';
 import { resolveCard } from '../../model/registries.js';
+import { ATTRIBUTE_PREVIEW_ENGINE } from '../../engine/attributePreviewEngine.js';
 import { characterSheetRegistries } from './CharacterSheetModel.js';
 
 /** Presentation only: all values retain the run's own calculation receipts. */
@@ -27,7 +28,7 @@ export function progressionStats(registries, run, settings = {}) {
       formula: `Maximum cards held: ${handReceipts.capacity.value}` },
     { ...resources.find(row => row.id === 'draw'), faceLabel: 'Draw' }];
   const attributes = attributeCardModels(registries, run.attributes, {
-    projection, equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles, hand, gainContext: { run, settings },
+    projection, equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles, hand, gainContext: { run, settings, engine: ATTRIBUTE_PREVIEW_ENGINE },
   });
   // Compare against the same formula with this attribute at zero. This also
   // respects retired pooled rounding, configured gain, and shared caps.

@@ -334,8 +334,8 @@ export function attributeCardModels(registries, attributes, { projection = null,
     const lines = [...feeds, ...scaling, ...unlocks];
     // WHAT ONE MORE POINT BUYS, from the live formulas (model/attributePointPreview.js):
     // `gains` is every non-zero gain, largest first; `mainGain` the one a level-up row shows.
-    // Only a caller holding a run (`gainContext: { run, settings }`) can price a point.
-    const gains = gainContext?.run ? sortedAttributeGains(attributePointGains(registries, gainContext.run, def.id, { settings: gainContext.settings || {} })) : [];
+    // Only a caller holding a run (`gainContext: { run, settings, engine }`, engine = ATTRIBUTE_PREVIEW_ENGINE) can price a point.
+    const gains = gainContext?.run ? sortedAttributeGains(attributePointGains(registries, gainContext.run, def.id, { settings: gainContext.settings || {}, engine: gainContext.engine })) : [];
     return {
       id: def.id,
       key: `attribute:${def.id}`,

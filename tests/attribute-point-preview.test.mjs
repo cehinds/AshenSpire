@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { ATTRIBUTE_PREVIEW_ENGINE as engine } from '../src/engine/attributePreviewEngine.js';
 import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../src/model/attributePointPreview.js';
 
 const build = (mutate = null) => {
@@ -16,7 +17,7 @@ const build = (mutate = null) => {
 
 test('Core 2 largest per-point gains read from the live formulas', () => {
   const { registries, run } = build();
-  const text = (id) => largestAttributeGain(registries, run, id)?.text;
+  const text = (id) => largestAttributeGain(registries, run, id, { engine })?.text;
   assert.equal(text('strength'), '+1 AR');
   assert.equal(text('dexterity'), '+1 DR');
   assert.equal(text('constitution'), '+10 HP');
@@ -26,12 +27,12 @@ test('Core 2 largest per-point gains read from the live formulas', () => {
 
 test('the full list names every non-zero gain and skips Ward while Core switches it off', () => {
   const { registries, run } = build();
-  const con = attributePointGains(registries, run, 'constitution');
+  const con = attributePointGains(registries, run, 'constitution', { engine });
   assert.ok(con.some(g => g.statId === 'hp' && g.delta === 10));
   assert.ok(con.every(g => g.delta !== 0 && g.statId !== 'ward'));
   assert.match(attributeGainSummary(con), /^\+10 HP, /);
-  assert.ok(attributePointGains(registries, run, 'intelligence').some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
-  assert.ok(attributePointGains(registries, run, 'dexterity').some(g => g.statId === 'evasion' && g.delta === 1));
+  assert.ok(attributePointGains(registries, run, 'intelligence', { engine }).some(g => g.statId === 'openingHand' && g.text === '+1 Opening hand'));
+  assert.ok(attributePointGains(registries, run, 'dexterity', { engine }).some(g => g.statId === 'evasion' && g.delta === 1));
 });
 
 test('a changed authored gain changes the text: nothing is hard-coded', () => {
@@ -40,7 +41,7 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
     rules.rules.rules.hp.constitution = 20;
     r.derivedStatRuleSnapshot = rules;
   });
-  assert.equal(largestAttributeGain(registries, run, 'constitution').text, '+20 HP');
+  assert.equal(largestAttributeGain(registries, run, 'constitution', { engine }).text, '+20 HP');
 });
 
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -79,7 +80,7 @@ test('the Armoury allocation modal shows the same span, and the Rest card model 
     assert.ok(chips.map(c => c.textContent).includes('+10 HP'));
     sheet.close();
   });
-  const cards = attributeCardModels(registries, run.attributes, { gainContext: { run } });
+  const cards = attributeCardModels(registries, run.attributes, { gainContext: { run, engine } });
   assert.equal(cards.find(c => c.id === 'constitution').mainGain.text, '+10 HP');
   assert.ok(cards.every(c => Array.isArray(c.gains)));
 });
@@ -91,7 +92,7 @@ test('a blight attribute bonus moves the threshold: the preview matches what all
     r.level.unspentPoints = 1;
   });
   const stamina = () => run.maxStamina;
-  const predicted = attributePointGains(registries, run, 'constitution').find(g => g.statId === 'stamina')?.delta ?? 0;
+  const predicted = attributePointGains(registries, run, 'constitution', { engine }).find(g => g.statId === 'stamina')?.delta ?? 0;
   rederivePools(registries, run, 'test'); // the milestone was injected after birth: settle its one-off bonus first
   const before = stamina();
   allocateAttributePoint(registries, run, 'constitution');
@@ -101,13 +102,13 @@ test('a blight attribute bonus moves the threshold: the preview matches what all
 
 test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', () => {
   const core = build();
-  assert.ok(!attributePointGains(core.registries, core.run, 'dexterity').some(g => g.statId === 'energy'));
+  assert.ok(!attributePointGains(core.registries, core.run, 'dexterity', { engine }).some(g => g.statId === 'energy'));
   const legacyRegistries = createRegistries(contentBundle);
   const run = createRunState({ seed: 4242, classId: 'rogue', registries: legacyRegistries });
   run.combatExpansionVersion = 1; // a run born before combat expansion 2: energy is its own pool
   run.attributes.dexterity = 3;
   rederivePools(legacyRegistries, run, 'test');
-  const predicted = attributePointGains(legacyRegistries, run, 'dexterity').find(g => g.statId === 'energy');
+  const predicted = attributePointGains(legacyRegistries, run, 'dexterity', { engine }).find(g => g.statId === 'energy');
   run.level.unspentPoints = 1;
   const before = run.energyMax;
   allocateAttributePoint(legacyRegistries, run, 'dexterity');
@@ -118,19 +119,19 @@ test('a legacy (combatExpansionVersion 1) run prices Energy; Core 2 omits it', (
 test('Core 2 (configured combat) reads the hand from profileHandSize: INT 3 -> 4 deals one more card', () => {
   const { registries, run } = build();
   run.attributes.intelligence = 3;
-  const gains = attributePointGains(registries, run, 'intelligence');
+  const gains = attributePointGains(registries, run, 'intelligence', { engine });
   for (const id of ['draw', 'openingHand', 'handSize']) assert.equal(gains.find(g => g.statId === id)?.delta, 1, `${id} +1`);
   assert.equal(gains.find(g => g.statId === 'draw').before, 7);
   assert.equal(gains.find(g => g.statId === 'draw').after, 8);
   assert.ok(gains.some(g => g.statId === 'pr' && g.delta === 1));
-  assert.equal(largestAttributeGain(registries, run, 'intelligence').statId, 'pr', 'tie-break keeps PR as mainGain');
+  assert.equal(largestAttributeGain(registries, run, 'intelligence', { engine }).statId, 'pr', 'tie-break keeps PR as mainGain');
 });
 
 test('a legacy run still counts Draw and Opening hand through the hand rows: capacity caps them', () => {
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 4242, classId: 'rogue', registries });
   run.combatExpansionVersion = 1;
-  const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence').map(g => g.statId); };
+  const ids = (int) => { run.attributes.intelligence = int; return attributePointGains(registries, run, 'intelligence', { engine }).map(g => g.statId); };
   const capped = ids(3);
   assert.ok(!capped.includes('draw') && !capped.includes('openingHand'), 'INT 3 -> 4 deals no extra card, so shows none');
   const raisesCapacity = ids(8);

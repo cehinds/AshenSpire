@@ -17,6 +17,7 @@
 // `saves` and `rng` are optional: stubs get a deterministic pick, never Math.random.
 
 import { uiIconText } from '../../content/uiIcons.js';
+import { ATTRIBUTE_PREVIEW_ENGINE } from '../../engine/attributePreviewEngine.js';
 import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../../model/attributePointPreview.js';
 import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
@@ -170,8 +171,8 @@ export function mountRewards(app, {
       const attrs = levelUpPlan(registries, run).attributes;
       // The largest thing one more point buys, from the live formulas (model/attributePointPreview.js).
       const gainChip = (attrId) => {
-        const gains = attributePointGains(registries, run, attrId, { settings });
-        const top = largestAttributeGain(registries, run, attrId, { settings });
+        const gains = attributePointGains(registries, run, attrId, { settings, engine: ATTRIBUTE_PREVIEW_ENGINE });
+        const top = largestAttributeGain(registries, run, attrId, { settings, engine: ATTRIBUTE_PREVIEW_ENGINE });
         return top ? el('span', { class: 'reward-stat-gain', text: top.text, title: attributeGainSummary(gains) }) : null;
       };
       host.replaceChildren(

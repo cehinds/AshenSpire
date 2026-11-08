@@ -8,12 +8,11 @@
 // at zero. The rows are the run's own stat rows (`statRow` / `statRowValue`),
 // plus the three FixCore numbers that are not stat rows: Evasion and Precision
 // are read through the combat engine's own functions on a throwaway entity, and
-// Perception's roll bonus is the observer's Wisdom (rollKnowledgeRead).
+// Perception's roll bonus is the observer's Wisdom (rollKnowledgeRead). The model layer sits below src/engine, so the four
+// engine functions arrive as `engine` (src/engine/attributePreviewEngine.js ATTRIBUTE_PREVIEW_ENGINE).
 import { statRowValue } from './derivedStats.js';
 import { statRow } from './statRows.js';
 import { fixCoreEnabled, fixCoreWardDisabled } from './fixCoreMechanics.js';
-import { effectiveEvasion, precisionStatMix } from '../engine/stanceHit.js';
-import { configuredCombat, profileHandSize } from '../engine/gameProfileCombat.js';
 import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { runHandRules, handSizeReceipts } from './handRules.js';
@@ -44,8 +43,10 @@ function previewContext(registries, run, attributes) {
   return { ctx, entity };
 }
 
-/** attributePointGains(registries, run, attributeId, { settings }) → [{ statId, label, before, after, delta, text }] for +1 of that attribute. */
-export function attributePointGains(registries, run, attributeId, { settings = {} } = {}) {
+/** attributePointGains(registries, run, attributeId, { settings, engine }) → [{ statId, label, before, after, delta, text }] for +1 of that attribute. */
+export function attributePointGains(registries, run, attributeId, { settings = {}, engine } = {}) {
+  if (!engine) throw new Error('attributePointGains needs the engine functions (ATTRIBUTE_PREVIEW_ENGINE)');
+  const { effectiveEvasion, precisionStatMix, configuredCombat, profileHandSize } = engine;
   // The same transforms rederivePools (model/levelup.js) applies before pricing a
   // pool: a constant blight or gear bonus moves which floored point crosses a threshold.
   const effective = (attributes) => { const probe = { ...run, attributes, allocatedAttributes: undefined }; return gameProfileEffectiveAttributes(registries, probe, effectiveAshenBlightAttributes(probe)); };
@@ -108,7 +109,7 @@ export function sortedAttributeGains(gains) {
   return [...gains].sort((a, b) => score(b) - score(a) || rank(a.statId) - rank(b.statId));
 }
 
-/** largestAttributeGain(registries, run, attributeId, { settings }) → the single biggest gain row, or null. */
+/** largestAttributeGain(registries, run, attributeId, { settings, engine }) → the single biggest gain row, or null. */
 export function largestAttributeGain(registries, run, attributeId, options = {}) {
   return sortedAttributeGains(attributePointGains(registries, run, attributeId, options))[0] || null;
 }
