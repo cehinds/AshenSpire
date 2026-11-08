@@ -34,8 +34,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.32`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
-- **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.32`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
+- **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.36`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
+- **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.36`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
+- **Save migration tidied** ([#2657](https://github.com/cehinds/AshenSpire/pull/2657), `0.7.4.36`). Old run saves are recognised by named schema versions instead of long version lists; every older save loads exactly as before.
+- **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.36`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
+- **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.36`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
+- **Tools reachability test** ([#2669](https://github.com/cehinds/AshenSpire/pull/2669), `0.7.4.34`). A new test fails when a tool script is reachable from no workflow, npm script, test or other tool, so retired tools go to the attic instead of piling up.
+- **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.34`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
 
 ## 2026-11-07
 
