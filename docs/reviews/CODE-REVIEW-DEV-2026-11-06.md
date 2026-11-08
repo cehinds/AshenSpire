@@ -316,8 +316,8 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Move `src/engine/d20Chance.js`, `rng.js`, `combatRounds/stance.js` under `src/model/`, old paths re-export (H1)
 - [ ] Move the pure validators and parsers (`validateZoneEffect`, `enemyBurdenProblems`, resolver parsers, `counterstrikeAmount`) into model; pass engine functions into `attributePointPreview` as parameters (H1)
 - [x] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
-- [ ] Delete the unused `src/framework/index.js` barrel and its stale header (H2)
-- [ ] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2)
+- [x] Delete the unused `src/framework/index.js` barrel and its stale header (H2) — [#2676](https://github.com/cehinds/AshenSpire/pull/2676)
+- [x] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2) — [#2676](https://github.com/cehinds/AshenSpire/pull/2676)
 - [ ] Move content projections (`combatExpansionCards.js`, `traitProjection.js`, `equipment.js` functions) into `src/model` (M6)
 - [ ] Load `combatTest.js`/`combatBuilds.js` and `armamentKitPreview.js` by dynamic `import()` under `shotState` only (M6)
 - [x] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7) — #2677
@@ -326,7 +326,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 - [ ] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5)
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
-- [ ] Attic or delete the 115 orphan tools (H5)
+- [x] Attic or delete the 115 orphan tools (H5) — [#2715](https://github.com/cehinds/AshenSpire/pull/2715)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
 - [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
 - [x] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10) — [#2712](https://github.com/cehinds/AshenSpire/pull/2712)

@@ -102,8 +102,8 @@ Simple artwork now renders the approved revision-14 cutouts as independent PNG l
 Edit `asset-data/card-art/layered-selection.json` to choose approved composition codes for combat identities. Run:
 
 ```
-node tools/export-layered-card-art.mjs
-node tools/export-layered-card-art.mjs --check
+node tools/attic/export-layered-card-art.mjs
+node tools/attic/export-layered-card-art.mjs --check
 ```
 
 The exporter selects 28 compositions and 44 component PNGs from `docs/design/new-card-art/cutout-manifest.json`, verifies their hashes, and copies them unchanged into `assets-display/card-cutouts/`. It writes the readable `asset-data/card-art/layered-runtime.json` and its synchronous browser-module twin, `src/content/layeredCardArt.generated.js`. The full proposal library stays separate from the runtime subset.
