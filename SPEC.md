@@ -141,669 +141,364 @@ its own two-command falsifier, stated in the module beside the sentence it defen
 
 ## 3. Architecture — data- and model-driven, procedural where it counts
 
+Four layers, one-way dependencies. The engine knows only a closed set of primitives (opcodes, formula ops, triggers, a generic status model); all game content and tuning is validated data. Randomness is seeded and saved.
+
 ### 3.1 Layers and design laws
 
-Four layers; dependencies point downward only:
-
-```
-┌─ UI        (src/ui)      renders model state; dispatches player intents
-├─ Systems   (src/engine)  generic interpreters (action queue, triggers,
-│                          status model) + seeded PROCEDURAL GENERATORS
-├─ Model     (src/model)   schemas, registries, formulas, state, validation
-└─ Content   (src/content) pure data packs — all game content and tuning
-```
+Dependencies point downward only: UI (`src/ui`: renders model state, dispatches player intents) → Systems (`src/engine`: generic interpreters + seeded procedural generators) → Model (`src/model`: schemas, registries, formulas, state, validation) → Content (`src/content`: pure data packs).
 
 Design laws (contractual):
 
-1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
-2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
-3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
+1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. Content is validated at boot (dev mode) and in tests; unknown fields, bad enums and dangling ids fail loudly (§3.14).
+2. **No entity-specific engine code.** No `if (status === 'bleed')`. The engine implements closed primitives: opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), a generic status model (§3.7). All behavior is content data composing them.
+3. **Procedural content stays procedural.** Map generation, encounter and reward rolls, and enemy move selection are seeded algorithms (§3.8); every knob they consume is content data.
 4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
-5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads (`tests/engine.test.js`) also imports some UI presentation models and helpers, but never mounts a screen.
-6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage` or timers. Under `src/model/` only `offlineDownload.js` sets timers (request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads, `tests/engine.test.js`, also imports some UI presentation models and helpers but never mounts a screen.
+6. **Budgeted escape hatch.** `src/content/scripts.js` registers named custom behaviors the DSL can't express: target <5% of content, each entry commented with why. A script pattern appearing twice becomes a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
 
-**This section states where a thing BELONGS. It does not list what exists** — that list has a
-home (the tree) and a command, and the previous edition of this section was a hand-maintained
-copy of it that had drifted to **52 files listed against 92 shipped, four of them dead paths**
-— the three pre-scrub class card files, renamed, and `floorplan.js` filed under `engine/`
-while it lives in `model/` (§6 cited the right path all along, so the spec disagreed with
-itself) — while `tools/`, `content/source/`, `build/` and `dist/` were absent entirely.
-**That count was measured at `267397a` and `src/` held 94 two commits later**, which is the
-point: an inventory is a cache, and even the sentence describing its rot has to name its own
-expiry or it becomes the next one. A restatement of the tree is a cache with no write event; it rots while nobody edits
-it. Print the real one:
+States where a thing BELONGS, not what exists. Print the real tree: `find src tools content/source styles tests -type f | sort`; shape check: `node tools/dirorder.mjs --selftest`.
 
-```
-find src tools content/source styles tests -type f | sort      # what exists
-node tools/dirorder.mjs --selftest                             # the shape check, watched red first
-```
-
-| Directory | Contract — what may live here |
+| Directory | Contract |
 |---|---|
-| `index.html` · `styles/` | Boot page and stylesheets. `base.css` owns the palette tokens, the root sizing anchor and `--ui-zoom`; `combat.css` / `map.css` / `ui.css` are screen-scoped and **measure nothing** — `main.js` decides layout once and writes `data-layout` (§7.2). |
-| `src/model/` | Shape and meaning, no behaviour: schemas, registries, the formula evaluator, content validation, run/combat state + its persisted-shape declaration, `floorplan.js` (what a floor rule MEANS, §6), `loadout.js`, `unlocks.js`. Headless. |
-| `src/engine/` | Behaviour over that shape, still headless — no DOM, storage, timers or randomness beyond the seeded streams: turn loop, opcodes, triggers, the status-model interpreter, mapgen, `actmap.js` (the one act-boot path — game and both harnesses import it, §6), encounters, rng, save. |
-| `src/content/` | Pure data, no logic: cards, statuses, stances, relics, flasks, events, enemies, encounters, keywords, tags, classes, equipment, balance, mapconfig, music beds, SFX recipes, and the budgeted `scripts.js` hatch (<5%). `generated/` is compiled from `content/source/*.csv` — **never hand-edited**. |
+| `index.html` · `styles/` | Boot page and stylesheets. `base.css` owns palette tokens, the root sizing anchor and `--ui-zoom`; `combat.css` / `map.css` / `ui.css` are screen-scoped and **measure nothing** (`main.js` decides layout once, writes `data-layout`, §7.2). |
+| `src/model/` | Shape and meaning, no behaviour, headless: schemas, registries, formula evaluator, validation, run/combat state + persisted-shape declaration, `floorplan.js` (§6), `loadout.js`, `unlocks.js`. |
+| `src/engine/` | Behaviour over that shape, headless (no DOM, storage, timers, or randomness beyond seeded streams): turn loop, opcodes, triggers, status interpreter, mapgen, `actmap.js` (the one act-boot path; game and both harnesses import it, §6), encounters, rng, save. |
+| `src/content/` | Pure data, no logic: cards, statuses, stances, relics, flasks, events, enemies, encounters, keywords, tags, classes, equipment, balance, mapconfig, music beds, SFX recipes, `scripts.js` hatch (<5%). `generated/` is compiled from `content/source/*.csv`, **never hand-edited**. |
 | `src/ui/` | Everything that touches the DOM, and nothing the engine imports: screens, components, fx, audio, input/gesture, asset maps. |
-| `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
-| `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) is headless and needs no DOM (it also asserts some UI presentation models and helpers); other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
-| `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
+| `content/source/` | Authoring CSVs compiled into `src/content/generated/`. |
+| `tools/` | Node instruments and harnesses; the observed-red idiom (`--selftest` / `--mutate`) is wired in `.github/workflows/ci.yml`. |
+| `tests/` | `index.html` (browser) and `run-node.mjs` (headless). `engine.test.js` needs no DOM; other `*.test.mjs` may mount screens on a stub DOM (e.g. `card-rank.test.mjs`). |
+| `build/` · `dist/` | Bundles from `tools/bundle.mjs` and shipped copies. Default: single-file. Web edition: `bundle.mjs --external-art` writes `build/web/` (game file, pinned pack indexes `packs/`, object store `objects/`), published by Pages (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e the pack shape becomes the default beside a self-contained single file under `download/`. `node tools/verify-shipped.mjs` checks they agree with source. |
 
-**The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
-`engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
-`content`; **`content` never imports `ui`.** It may import `model/` schemas and helpers (and the
-`config/` and `framework/` data modules). A content file that imports from `engine` is the
-defect this layering exists to catch.
+**Import rule:** imports point inward. `ui` → `engine`, `model`, `content`; `engine` → `model`, `content`; `model` → `content`. **`content` never imports `ui`** (it may import `model/` schemas/helpers and the `config/` and `framework/` data modules). A content file importing `engine` is the defect this layering catches.
 
 ### 3.3 Domain model, registries, and state
 
-**Entity types** (each with a schema in `schemas.js`):
-
-| Entity | Key fields |
+| Entity | Key fields (each has a schema in `schemas.js`) |
 |---|---|
-| Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: every key of `PASSIVE_TYPES` (`src/model/schemas.js:317-348`), for example `runeGainMult`, `restDenied`, `swapCostDelta` and `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
-| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain node confers, keyed by the node. A VIEW: derived by `tools/content-build.mjs` from the tag tree (below) — the node row, its `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, its sentence in `nodeTerms.csv`, its effects in `nodeEffects.json` with every `{variable}` replaced by the balance path its `default` binding names — and joined in `src/content/propertyRules.js`, which resolves those paths at load. Its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property node. **Every family may carry a property node**; what the mount path can hold is the engine's narrower list (`engine/properties.js` `MOUNTABLE_KINDS`). Property nodes are stamped onto a holder's `propertyTags`, never its `tags` |
-| Tag tree | `content/source/nodes.csv` — `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`. THE one vocabulary: every tag any object carries is a node, and a node's parent is `parentId` and nothing else (an id's dotted spelling is an opaque key). Roots are domains; `domain` (the framework's enum word) and `aside` (a root whose tags never join a tag list — `presentation`, `classification`) are written on roots only. Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root — who may carry what), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role` — a node carries no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath` — what a variable reads, per scope; `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }` naming variables). Derived from it: the five tag tables, the property rules, and `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14) |
+| Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override) |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` |
+| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` |
 | Status | `id, name, icon, stackMode, decay, proc?, meter?, modifiers?, hooks?` (§3.7; `meter?` is the legacy build-up form) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
-| Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
+| Keyword | `id, name, tooltip` (display only) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
 | Encounter | `id, enemies[], weight, minFloor?, pool: normal \| elite \| boss, act? (default 1)` |
-
-**Enemy cap** (owner, 2026-11-03: "Limit to just 3 enemies max"). A combat never has more than 3 enemies, in every layout. An encounter's `enemies[]` lists at most 3 ids (the content validator rejects more); `createCombat` and `createRunCombat` open a fight with the first 3 ids only; no effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing while 3 enemies are alive. The cap lives in one place, `MAX_ENEMIES_PER_COMBAT` in `src/model/combatLimits.js`; the screenshot fixtures `?shotEnemies` and `?shotEnemyCount` obey it too.
-| Event | `id, name, art, text, choices[]` (each choice: `label, requires?, effects, resultText`) |
+| Event | `id, name, art, text, choices[]` (choice: `label, requires?, effects, resultText`) |
 | Flask | `id, rarity, targeted?, effects[]` |
 | Class | `id, name, maxHp, startingRelic, startingDeck[], cardPool[]` |
-| MapConfig | per-act: `floors, columns, pathCount, typeWeights, floorRules` |
-| Balance | flat constants object (odds tables, prices…; stats are derivedStatRules rows) |
+| MapConfig | per-act `floors, columns, pathCount, typeWeights, floorRules` |
+| Balance | flat constants (odds, prices…; stats are `derivedStatRules` rows) |
 
-- `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
-- **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
-- **Player intents are a closed set** (everything the UI may ask the combat engine to do; the solo dispatch switch in `src/engine/combat.js:850-915`): `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. Run-level actions are not intents: each screen calls its own function in `src/engine/`, for example `restAt(visit)` in `src/engine/locations.js:121`.
+- **Relic passives** are a closed key set with one home, `PASSIVE_TYPES` (`src/model/schemas.js:317-348`), from which the relic schema's `passives` node is built. Examples: `runeGainMult`, `restDenied`, `swapCostDelta`, `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source).
+  - `restDenied` is `true` or a list of location tags (§13.4j), the one passive that is not a number or flag.
+  - `passiveMult` / `passiveSum` / `passiveFlag` also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does.
+- **PropertyRule** = what one `property`-domain node confers; exactly one per property node. A VIEW derived by `tools/content-build.mjs` from the tag tree (node row, `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, sentence in `nodeTerms.csv`, effects in `nodeEffects.json` with each `{variable}` replaced by the balance path its `default` binding names), joined in `src/content/propertyRules.js`, which resolves paths at load.
+  - Its `passives` node is built from the same `PASSIVE_TYPES` fields.
+  - Every family may carry a property node; what the mount path holds is the narrower `MOUNTABLE_KINDS` (`engine/properties.js`).
+  - Property nodes are stamped onto `propertyTags`, never `tags`.
+- **Tag tree** (`content/source/nodes.csv`: `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`) is THE one tag vocabulary.
+  - Every tag is a node; parentage is `parentId` only (a dotted id is an opaque key). Roots are domains; `domain` and `aside` (a root whose tags never join a tag list: `presentation`, `classification`) are written on roots only.
+  - Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role`; nodes carry no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath`; precedence `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }`).
+  - Derived: the five tag tables, the property rules, `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14).
+- **Enemy cap: a combat never has more than 3 enemies.** An encounter's `enemies[]` lists at most 3 ids (validator rejects more); `createCombat` / `createRunCombat` open with the first 3. No effect adds an enemy mid-fight today; any future summon, split or reinforcement must check `enemySlotFree` and do nothing at 3 alive. Lives in `MAX_ENEMIES_PER_COMBAT` (`src/model/combatLimits.js`); `?shotEnemies` and `?shotEnemyCount` fixtures obey it.
+- `registries.js` loads content into typed, deep-frozen registries keyed by id; cross-references are by id only; getters throw on unknown ids.
+- **Definitions vs instances:** state (`model/state.js`) holds instances referencing definitions by id: deck card `{ instanceId, cardId, upgraded }`; enemy `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, never definitions, so saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
+- **Player intents (closed set; dispatch `src/engine/combat.js:850-915`):** `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. Run-level actions are not intents: each screen calls its own `src/engine/` function (e.g. `restAt(visit)`, `src/engine/locations.js:121`).
 
 ### 3.4 Effect DSL (opcodes)
 
-An effect is an array of opcode objects; playing a card, triggering a relic, or resolving an event choice enqueues them onto the action queue (§3.9).
+An effect is an array of opcode objects, enqueued on the action queue (§3.9) when a card is played, a relic triggers or an event choice resolves.
 
-```js
-// Gorefire Slash: "Deal 5 damage. Apply 3 Bleed."
-effects: [
-  { op: 'damage',      target: 'enemy', amount: 5 },
-  { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
-]
+**Opcodes** (closed; extending is an engine PR):
+- **Combat:** `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; retired alias id), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise`, `gainWard`, `dodgeRoll`.
+- **Run-level** (events, shops, rewards reuse the DSL): `addCinders`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- `gainPoise` / `gainWard`: `amount` plus the card's Block rating bonus (DR on a physical skill, PR on a magical card), held as the target's Poise/Ward guard. It absorbs physical/magical impact before the matching meter fills; clears at the start of its owner's turn with Block. Emits `meterGuardGained`.
+- `dodgeRoll`: player only, no fields. The die, Dexterity + Weight Class check, difficulty and temporary guard come from the framework's `dodgeRoll` rule over `mechanics.json`. Rolls on stream `misc`; success lands the guard as Block through the block door. Emits `dodgeRolled`.
+- Engine-internal `completeCombatAction` (`src/engine/actions.js`, `completeExpandedAction`) closes an expanded combat action. Content must not author it; validation accepts it (`COMBAT_OPCODES`, `src/model/schemas.js`) and an authored one does nothing (no `expansionGroup`).
 
-// Last Stand: "Gain Block equal to missing HP (max 20)."
-effects: [
-  { op: 'block', target: 'self',
-    amount: { f: 'missingHp', of: 'self', max: 20 } },
-]
-```
+Common fields: `target: self | enemy | allEnemies | randomEnemy` (`enemy` on a card needs UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6), `repeat: n` (multi-hit).
 
-**Opcode list** (closed set; extending it is an engine PR):
+**`removeStatus { status, amount? }`**
+- No `amount`: remove the whole status and its application history.
+- With `amount` (number or Formula): evaluate per target, clamp nonnegative, remove that many stacks (or build-up, for a status with `proc` or legacy `meter`); remove the status at zero magnitude. E.g. `amount: 1` cleanses one Weak stack, not every application.
+- Absent status is a no-op. Receipts report the quantity actually removed.
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Engine-internal: `completeCombatAction`, which `executeAction` runs to close an expanded combat action (`src/engine/actions.js`, `completeExpandedAction`). Content should not author it; validation still accepts it (it is in `COMBAT_OPCODES`, `src/model/schemas.js`), and an authored one does nothing because it carries no `expansionGroup`.
-- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (renamed from `addRunes`; the old id is not accepted), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+**Card rating values are cost-derived.** Before cards enter the registries, primary values are recalculated:
 
-Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
+`floor(global × (AP × action + MP × mana + SP × stamina) − statusReduction × Σ statusMultiplier[distinct applied status]) + ratingCardBonus[card]`, never below zero; the signed card bonus is added after flooring.
 
-`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc` or the legacy `meter`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
-
-**Card rating values are cost-derived.** Before card definitions enter the
-registries, primary values are recalculated as:
-
-```
-floor(global × (AP × action + MP × mana + SP × stamina)
-      − statusReduction × Σ(statusMultiplier[distinct applied status]))
-+ ratingCardBonus[card]
-```
-
-The result cannot fall below zero. `X`-cost attacks use one Action in the
-per-hit formula and retain one repeated hit per Action actually spent. Physical
-Attack damage uses the AR card-value formula; damage and Block
-on magic-tagged cards use PR (Potency Rating); physical Block uses DR. Physical
-and magical Attack impact use the Poise and Ward formulas respectively, except
-that a physical hit carrying its source weapon keeps that weapon's weight
-category (§13.4). An explicit `poiseDamage` effect uses the matching formula,
-and a card that authors one carries its impact there: it gets no second
-per-hit value, and its hit keeps the category default. A card a basic-card
-profile moves across the physical/magical line (a staff's Strike, Defend or
-technique, or a card a staff's weapon package deals) is projected on both
-sides, and resolves through the formulas of the school it resolves in.
-Existing conditional and formula-valued effects remain bonus values; only the
-primary/base component is replaced. A face whose only amount is a formula
-(Last Stand's missing HP) keeps it exactly as authored and has no bonus row:
-a base in front of it would be a second effect, and every per-effect addition
-would land twice. The signed card-specific bonus is added after flooring. Each rating owns
-configurable global, AP, MP, SP, status-reduction, per-status, and per-card
-values under `balance.damage`. They are available in Advanced → Combat. A run
-snapshots those settings, so the same configuration and inputs always produce
-the same values.
+- `X`-cost attacks use one Action in the per-hit formula and retain one repeated hit per Action spent.
+- Physical Attack damage uses the AR formula; damage and Block on magic-tagged cards use PR; physical Block uses DR.
+- Physical/magical Attack impact use the Poise/Ward formulas, except a physical hit carrying its source weapon keeps that weapon's weight category (§13.4). An explicit `poiseDamage` effect uses the matching formula, carries the card's impact, gets no second per-hit value, and keeps the category default.
+- A card a basic-card profile moves across the physical/magical line (a staff's Strike, Defend, technique, or a staff package's dealt card) is projected on both sides and resolves through the formulas of the school it resolves in.
+- Conditional and formula-valued effects remain bonus values; only the primary/base component is replaced. A face whose only amount is a formula (Last Stand's missing HP) keeps it as authored, with no bonus row.
+- Each rating owns configurable global, AP, MP, SP, status-reduction, per-status and per-card values under `balance.damage` (Advanced → Combat). A run snapshots them.
 
 ### 3.5 Formulas — structured objects, not strings
 
-Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. No string parsing — formulas are validatable data:
+Every dynamic number is a JSON formula object evaluated by `model/formulas.js` (no string parsing).
 
-```js
-{ f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 }   // Bleed burst
-{ f: 'missingHp', of: 'self', max: 20 }                        // Last Stand
-{ f: 'stacks', status: 'bleed', of: 'allEnemies', per: 4 }     // War Surgeon
-{ f: 'energySpent', per: 6 }                                   // X-cost scaling
-{ f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
-```
+Ops (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `metric {metric, of, per?}`, `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}`.
+- `metric`: a combat counter × `per`; `sameCardPlays` = plays of this card this combat before the current one (first play reads 0).
+- `traitBonus` (Counterstrike): `base + max(floor(base × pct), 1)` for positive base ([combat-card-traits-contract.md](docs/combat-card-traits-contract.md)).
+- Every evaluation floors its final result. The **same evaluator** computes UI card previews (§3.13, §4.2).
 
-Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `metric {metric, of, per?}` (a combat counter times `per`; `sameCardPlays` reads how many times this card has been played this combat, before the current play, so a first play reads 0), `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}` (Counterstrike: `base + max(floor(base × pct), 1)` for a positive base; [combat-card-traits-contract.md](docs/combat-card-traits-contract.md)). Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
+#### Derived character stats
 
-**Approved configurable character defaults.** These are the shipped defaults, not engine
-constants. Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus
-fold is authored in content data; Settings/debug overrides layer over that data rather than
-adding a second formula in UI or engine code. The run snapshots the resolved formula rules at
-birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
+- Values are shipped defaults, authored as content data (bases, coefficients, divisors, rounding, reference maxima, flat-bonus folds); Settings/debug overrides layer over them, with no second formula in UI or engine. The run snapshots the resolved rules at birth, so tuning applies to new runs only. The structured formula table is the one authority.
 
-**One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
-character has — HP, Mana, Stamina, the opening hand, the per-turn draw, the hand size,
-AR, DR, PR, Ward and Poise — is ONE row of `src/content/derivedStats.js`, in one shape:
-
-`{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
-
-and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
+**One row per stat** in `src/content/derivedStats.js` (HP, Mana, Stamina, opening hand, draw, hand size, AR, DR, PR, Ward, Poise):
+`{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`, priced by `statRowValue` (`model/derivedStats.js`):
 
 `value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
 
-Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
-attribute reaches 8. Two optional fields serve the hand rows (§4.1): `attributeBaseline`
-counts only the points above it (each term is floor(max(0, attribute − attributeBaseline) ×
-weight)), which restates the retired hand groups exactly, and `byClass.<class>` (the opening
-hand alone) gives a class its own base and weights over the row's bounds.
-**Rounding is per attribute: the owner chose it** (owner decision, 2026-09-24, answering
-"Per attribute (keep)"); rounding the total was declined, so Mana is 4, not 6, at every
-attribute 5. Mana's INT weight is 0.125 per the owner's sum-to-1 formula
-(`.5 w + 0.25 c + 0.125 str + 0.125 int = 1`).
-Equipment, relics and statuses are external addends on top (armour
-`poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
-owner's current defaults (2026-10-06): STR adds 1 AR, DEX adds 1 DR,
-CON adds 1 HP and 1 Poise, WIS adds 1 Ward, and INT adds 1 PR per point.
-These main bonuses use one attribute each to make character creation readable.
-Mana and Stamina retain their separate configurable weights; existing saves
-keep their snapshotted rules.
+- Rounding is per attribute, not on the total: each term floors alone (weight 0.125 adds nothing until the attribute reaches 8; Mana is 4, not 6, at every attribute 5). Mana's INT weight 0.125 follows the sum-to-1 formula `.5 w + 0.25 c + 0.125 str + 0.125 int = 1`.
+- Hand rows (§4.1) may add `attributeBaseline` (term = floor(max(0, attribute − baseline) × weight)) and `byClass.<class>` (opening hand only: own base and weights over the row's bounds).
+- External addends: armour `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses.
+- Main-bonus defaults, per point: STR +1 AR; DEX +1 DR; CON +1 HP and +1 Poise; WIS +1 Ward; INT +1 PR. Mana and Stamina keep separate configurable weights. Existing saves keep their snapshotted rules.
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
-| Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs and refills each turn. The HUD calls it Actions. |
-| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`), and combat reads Stamina (`src/content/derivedStats.js`). Historical: DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27), the first extra Action at DEX 4. |
-| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
-| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
-| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | INT scales it like Draw: only points above 4 count (`attributeBaseline`), so +1 per five INT above 4. Independently configurable. |
+| HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Stock pools incl. starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. Max HP clamps to ≥ 1. |
+| Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Wisdom leads. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget (HUD: Actions); the DEX term adds its first Action at DEX 4. |
+| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Alias of `stamina` (`src/model/turnStamina.js`); combat reads Stamina. |
+| Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Per-class overrides configurable. |
+| Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards reduce it only at capacity. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | `attributeBaseline` 4: +1 per five INT above 4. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
 | Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
-| Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
+| Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: rating with ratings on, vessel with them off; armour and relics add. |
 
-| Output | Source | Meaning |
-|---|---|---|
-| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | The data-owned base value used by the basic guard/defense profile. |
-| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | The data-owned base value used by the basic physical strike profile. |
-| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | The data-owned base value used by the basic magic profile. |
+Basic-profile base values (data): guard profiles (`unarmedGuard` = 1, `ratingId` `dr`); attack profiles (`unarmedAttack` = 3, `ratingId` `ar`); magic profiles (`content/source/basicCardProfiles.csv`).
 
-**Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
-one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
-baseline, pointsPerCard, minimum, maximum }`) and `balance.handMax`. `validateContent` refuses
-each by name if it returns (`balance.handMax`, `balance.combatRatings.multiplier`,
-`handRules.starting|turn|capacity`), as it refuses `balance.poise.playerPerConstitution`. Their
-settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`,
-`balance.handMax`, and the per-item `combatRatings.bonuses.*`) are **dropped, never converted**,
-on import and on profile load/restore, with one warning per family
-(`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`).
-Unmarked pre-ruleset-7 settings are no longer detected: the `statRowsVersion` marker is gone, so
-any `derivedStatRules.rules.draw.*` or `.poise.*` key is read with its current meaning.
+**Retired homes.** `validateContent` refuses by name: `balance.handMax`, `balance.combatRatings.multiplier`, `handRules.starting|turn|capacity`, `balance.poise.playerPerConstitution`. Their settings keys (`combatRatings.ratings.*`, `combatRatings.multiplier`, `handRules.*`, `balance.handMax`, per-item `combatRatings.bonuses.*`) are **dropped, never converted** on import and profile load/restore, with one warning per family (`model/advancedConfig.js` `normalizeAdvancedSettings`, `parseAdvancedConfigFile`). The `statRowsVersion` marker is gone, so any `derivedStatRules.rules.draw.*` or `.poise.*` key is read with its current meaning (`advancedConfig.js:225-235`).
 
-**Pre-ruleset-7 runs are refused, not priced.** The shipping game refuses any run without a pinned
-Core 2 profile at load (`engine/save.js` `retiredProfileReason`): the bytes stay in the slot and
-are never migrated, so no frozen ruleset-6 pricing exists. A run snapshot older than ruleset 7
-that does load (tools and tests with no game profile) reads the rating and hand rows its
-snapshot lacks from the live table (`model/statRows.js` `statRow`).
-
-The defaults above are independently configurable rows. “Configurable” never means parsing
-formula strings or letting a screen recompute them: the structured formula table remains the
-one authority, uses the shared floor rule, and is validated/snapshotted through the existing
-model door.
+**Pre-ruleset-7 runs are refused, not priced:** a run without a pinned Core 2 profile is refused at load (`engine/save.js` `retiredProfileReason`); bytes stay in the slot, never migrated. Tool/test snapshots older than ruleset 7 read missing rating and hand rows from the live table (`model/statRows.js` `statRow`).
 
 ### 3.6 Trigger DSL and predicates
 
-Relics, powers, statuses, stances, mounted properties, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
+Relics, powers, statuses, stances, mounted properties and enemy boss phases hook the engine through one declarative form, wired by `triggers.js` at combat start. Trigger fields: `on` (event from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`. Enemy `phases` take `{ on: 'hpBelowPct', pct, once, do, unlockMoves }`.
 
-```js
-// Fell Omen Brand: "Whenever an enemy Staggers, draw 2."
-triggers: [{ on: 'enemyStaggered', do: [{ op: 'draw', amount: 2 }] }]
+**Predicates** (closed; combine with `all / any / not`): `inStance {stance}`, `hasStatus {of, status, atLeast?}`, `hasBlock {of}`, `hpBelowPct {of, pct}`, `firstCardThisTurn`, `firstAttackThisCombat`, `cardTypeIs {type}`, `everyNthCardThisCombat {n}`, `random {pct}` (named stream).
+- `cardTagIs {tag}`: the contextual card's `tags` ∪ the snapshot's `derivedTags`, or the event's `cardTags` ∪ `derivedTags` (§13.4c).
+- Event-payload gates: `eventIsAttack`, `hpDamagePositive`, `eventSourceIsOwner`, `eventTargetIsOwner`, `eventStatusIs {status}`.
+  - `healPositive`: a `healed` event that healed something (`applyHeal` emits amount 0 at full HP).
+  - `manaPositive`: a `manaRestored` event that restored something (`restoreMana` emits amount 0 at full Mana).
+- Progression gates `skillLevelAtLeast {skill, level}`, `classLevelAtLeast {level}` read the skill/class ledger of plan phase 4 and are **false until that ledger exists** (a branch gated on them is inert).
 
-// Watchful Omen, phase 2 at 50% HP (defined on the enemy):
-phases: [{ on: 'hpBelowPct', pct: 50, once: true,
-  do: [ { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
-        { op: 'applyStatus', target: 'player', status: 'weak',  stacks: 1 },
-        { op: 'applyStatus', target: 'self',   status: 'strength', stacks: 2 } ],
-  unlockMoves: ['twinDaggers'] }]
-```
-
-Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
-
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'cardTagIs', tag }` (the contextual card's `tags` ∪ the snapshot's `derivedTags`, or the event's `cardTags` ∪ `derivedTags`; §13.4c), `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'hpDamagePositive' }` / `{ p: 'healPositive' }` (a `healed` event that healed something — `applyHeal` emits one with amount 0 at full HP) / `{ p: 'manaPositive' }` (a `manaRestored` event that restored something — `restoreMana` emits one with amount 0 at full Mana) / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), `{ p: 'skillLevelAtLeast', skill, level }` / `{ p: 'classLevelAtLeast', level }` (progression gates; they read the skill and class ledger of plan phase 4 and are **false until that ledger exists**, so a branch gated on them is inert), and `all / any / not` combinators.
-
-**Property mounts — the one path a property reaches combat** (`src/engine/properties.js`). A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`; `mountProperties` resolves its property tags to their rules (keeping a rule only when its `requires` are on the same carrier and its `excludes` are not) and records them at `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`; `unmountProperties` deletes it. **A source key mounts once:** mounting one already mounted throws by name, so a re-equip can never fire a trigger twice. Today's carriers are the equipped armaments and armour: `createCombat` mounts the loadout's worn pieces before any event, and both equipment doors (`swapArmament`, and `changeEquipment` after `equipPiece`) re-sync — the outgoing piece's properties leave with it, the incoming piece's arrive. Mounts are **never saved**: `restoreCombatSnapshot` re-derives them from the restored loadout. `scanTriggers` walks mounted rules as its fourth source, beside relics, stances and statuses, under the gate key `property:<owner>:<sourceKey>:<i>` (source keys sorted, so a restored fight fires in the live order; the key is stable across unequip and re-equip, so a `once` gate is not reset by swapping). Shipped: both sceptres carry **`siphon`** — when the holder's own hit causes an `arcaneBreak` (*`arcaneStagger` in §13.4p's scope*), restore `balance.exposure.siphonRefund` Mana (`siphonRefundMastered` once the focus track `item:magic-focus` reaches `siphonMasteryLevel` — a `skillLevelAtLeast` gate on the ledger of plan phase 4a, §13.4d). The **`overcharge`** rule (buildup per hit × `balance.exposure.overchargeBuildupMult`, via the `exposureBuildupMult` passive) rides the Blight Rod and the Gorefire Brand; **`staggerBreak`** (the plain staves) and **`resonance`** (the Goldbough Branch) are §13.4k's (plan phase 8).
+**Property mounts — the one path a property reaches combat** (`src/engine/properties.js`)
+- A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`. `mountProperties` resolves its property tags to rules (kept only if its `requires` are on the same carrier and its `excludes` are not) into `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`; `unmountProperties` deletes it.
+- **A source key mounts once**: re-mounting throws by name, so a re-equip never fires a trigger twice.
+- Carriers: equipped armaments and armour. `createCombat` mounts worn pieces before any event; both equipment doors (`swapArmament`; `changeEquipment` after `equipPiece`) re-sync (outgoing leaves, incoming arrives).
+- Mounts are **never saved**; `restoreCombatSnapshot` re-derives them from the restored loadout.
+- `scanTriggers` walks mounted rules as its fourth source (after relics, stances, statuses) under gate key `property:<owner>:<sourceKey>:<i>`. Source keys are sorted (restored fights fire in live order); the key is stable across unequip/re-equip, so a `once` gate is not reset by swapping.
+- Shipped rules:
+  - **`siphon`** (both sceptres): when the holder's own hit causes an `arcaneBreak` (*`arcaneStagger` in §13.4p's scope*), restore `balance.exposure.siphonRefund` Mana (`siphonRefundMastered` once focus track `item:magic-focus` reaches `siphonMasteryLevel`, a `skillLevelAtLeast` gate, §13.4d).
+  - **`overcharge`** (Blight Rod, Gorefire Brand): buildup per hit × `balance.exposure.overchargeBuildupMult`, via the `exposureBuildupMult` passive.
+  - **`staggerBreak`** (plain staves), **`resonance`** (Goldbough Branch): §13.4k.
 
 ### 3.7 Status model — statuses are content, not code
 
-`src/content/statuses.js` defines every status over a generic model interpreted by `src/engine/statuses.js`. **Adding a status requires no engine change.** Schema:
+`src/content/statuses.js` defines every status over a generic model interpreted by `src/engine/statuses.js`; adding a status needs no engine change. Schema:
 
 ```
 { id, name, icon,
   stackMode: 'add' | 'refresh' | 'unique',
   decay: 'none' | 'perTurnEnd' | { duration: n } | 'onConsume',
-  proc?: { threshold, burstPercent, burstMin, burstMax, poiseDamage?, effects?, stagger?, resistance? },   // build-up statuses: at threshold, burst, then reset to zero
-  meter?: { max, growthMult, onFill },                     // legacy build-up form, still accepted: on fill run onFill, emit meterFilled, grow the max by growthMult
-  modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?,
-                attackDamageAdd?, blockAdd? },             // consulted by §4.2 math
-  hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
+  proc?: { threshold, burstPercent, burstMin, burstMax, poiseDamage?, effects?, stagger?, resistance? },
+  meter?: { max, growthMult, onFill },
+  modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?, attackDamageAdd?, blockAdd? },
+  hooks?: [triggers §3.6] }
 ```
 
-The Elden Ring layer, fully as data — no engine special cases:
-
-```js
-bleed: {
-  stackMode: 'add', decay: 'none',
-  proc: { threshold: 7, burstPercent: 15, burstMin: 8, burstMax: 35, poiseDamage: 3,
-    resistance: { status: 'bleedResist', tags: ['beast', 'humanoid'] } },
-},
-crimsonBlight: {
-  stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
-  hooks: [{ on: 'ownerTurnStart',
-    do: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
-},
-weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
-vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.25 } },
-frost:      { stackMode: 'add', decay: 'none',
-  proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
-    effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
-```
-
-Poise/Stagger uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. A full meter applies the `staggered` status (skipped turn, ×1.5 damage taken). After a break the threshold grows by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). The ratings-meter variant (a break applying no status, growth by `breaks.thresholdGrowth` in `applyRatingImpact`) is retired with the ratings meter (#2633); Core fights ship `dealPoiseDamage` only. Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
-
-**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
+- `proc`: build-up statuses; at `threshold` they burst, then reset to zero.
+- `meter`: legacy build-up form, still accepted: on fill run `onFill`, emit `meterFilled`, grow max by `growthMult`.
+- `modifiers` are consulted by §4.2 math.
+- Examples: Bleed, Crimson Blight, Weak, Vulnerable, Frost (`src/content/statuses.js`).
+- **Poise/Stagger** uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. A full meter applies `staggered` (skipped turn, ×1.5 damage taken). After a break the threshold grows by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). Core fights ship `dealPoiseDamage` only.
+- **Stances** (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter`; exclusivity is the `enterStance` primitive.
+- **Engine-primitive exceptions** (fixed behaviors, not data): **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost**. `src/content/keywords.js` supplies only their names and tooltips.
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
-| Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
+Algorithms are code; knobs are data. Every generator is a pure function of `(config, rngStream, runState)`, snapshot-testable with fixed seeds (§8).
+
+| Generator | Algorithm (`src/engine/`) | Knobs (`src/content/`) |
 |---|---|---|
-| Act map | StS path-walk + typing constraints (§6), `src/engine/mapgen.js` + `src/model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
-| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/<seat>.js` (marches, reach, weald): pools, weights, elite/boss lists |
-| Rewards | rarity odds in `model/rewardOdds.js`; flask decay in `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
+| Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
+| Encounters | weighted roll, no-repeat window, `encounters.js` | `encounters/<seat>.js` (marches, reach, weald): pools, weights, elite/boss lists |
+| Rewards | rarity odds `model/rewardOdds.js`; flask decay `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
-Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
+#### Swap cost and equipment changes
 
-**Armaments: what a swap costs, and what is on the shelf** *(A8/A7, Constantine 2026-08-08)*
+Closed vocabularies in `balance.equipment`:
+- **`swapCostRule`** (one of `swapCostRules[].id`) prices every mid-fight equipment action (prepared-set swaps and replace/move/unequip): **base → gear → floor 0**.
+  - `base: 'category'`: destination piece's tags against ordered `swapCostByCategory` (first match wins), else `swapCost`. `base: 'default'`: `swapCost` for all.
+  - `gear: true`: adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods.
+  - Truth function `swapCostFor()` (`model/loadout.js`); `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. The fields are closed and their product total; a new rule is one `swapCostRules` row.
+- **`allowChangesInCombat`**: true lets the player-turn Armoury replace, move or unequip carried gear via the `changeEquipment` intent (applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, persists the same loadout); false closes UI and mutation paths.
+- **`basicTag`**: a piece carrying it answers the **found** gate free (`ownership()`); no opinion on the **earned** gate (a row with both is refused by name). `persistence` is the only scope word: default `perRun`; any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`).
+- A weapon's category is its tags (`heavy`, `flourish`), never a `swapCost` column.
+- `apply` in `equipMods.csv` is closed per scope (`CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`, `model/loadout.js`); anything else fails validation.
 
-Two closed vocabularies, both in `balance.equipment`, both derived rather than authored per row:
+#### The starting deck
 
-| Question | Word | Chain |
-|---|---|---|
-| what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
-| may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
-| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — the shipped default is `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`). |
+`balance.startingDeckSize` caps the BASE cards (minted strikes and defends) at **character creation only**. Order:
+1. **Bound cards first**, never capped, dropped or refused: cards from `bound`-tagged pieces (`equipmentGrants.csv`), a weapon package's `grantedCards` and `weaponArtDefaults`, the class signature, `startingDeck.global.grants`.
+2. **Base cards fill the rest:** `filler = max(0, cap − bound)`, split attack/guard by the class's `strikeBias`; an odd remainder goes to `startingDeck.oddFillerGoesTo` (default `attack`).
+3. **The equipped profile gives base cards their identity** (sword: Slashing Strikes; bare hand: `unarmedProfiles`); it never tops up a floor.
 
-**A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
-column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
-rule fields are closed and **their product is total**: all four cells price a swap, and a fourth
-rule is one row of `swapCostRules` with no code (proven by test 28q).
+- Equipment alone ≥ cap: no base cards minted. A balance question for gear authors, not a validation failure; `startingDeckWarnings()` warns (class and loadout named), refuses nothing (`validateEquipment` returns problems only).
+- After creation the cap does not apply: no re-minting, no holding a total.
+- **Attack count holds mid-run:** a swap re-skins the birth attack slots (`equipmentAttackSlotCount`, recorded at creation, never re-derived) minus permanently removed ones.
+  - `removedAttackSlotIds`: unique stable `attack:N` ids from the birth allocation; absent = none.
+  - Merchant and event removal may remove run-owned basic attacks (including weapon-derived faces), retiring the slot without renumbering. Swaps, combat setup, save/load and restamping share the surviving slot plan and never restore a removed copy.
+  - Item-owned grants cannot be permanently removed. The merchant revalidates instance, funds and nonempty-deck guard before charging.
+- All authored: cap, per-class bias, odd-split winner, grant sources (rows in the `grantSource` tag domain). Bound cards mint at four seams (global, armor, weapon, class) reading tags from `startingDeck.sources` (map, tag row and `sourceOrder` move together); a binding naming no registered source, or an unbound seam, is refused by name.
 
-`apply` in `equipMods.csv` is a closed set **per scope** — `CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`
-in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
-validation failure; before A8 it validated clean and silently did nothing.
+**Card ownership: the run or one item.** Run-owned cards stay for good (base strikes/defends, class signature, global grants, rewards). Item-owned cards ride with the item: equip and they arrive, unequip and they leave, re-equip and they return identical; **an unequipped item's cards are gone**.
+- Sources: weapon package `grantedCards`, `weaponArtDefaults`, and the `bound` table (`equipmentGrants.csv`, `bound` tag on any piece incl. armour). One reconcile applies it on every equip transition, in or out of combat; instances carry deterministic ids and the owner's namespaced ref (idempotent, stable saves).
 
-**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
-strikes and defends the game mints for you — and it applies at **character creation and
-nowhere else**. The order is fixed:
+#### Card mounts: the smith's services
 
-1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
-   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
-   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
-   never capped, never dropped and never refused. They belong to the equipment, not the run.
-2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
-   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
-   `startingDeck.oddFillerGoesTo` names — `attack` by default.
-3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
-   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
-   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
-   up a floor.
+Every card an item lends sits in a **mount** on that item, keyed by the composer-minted instance id (stable across restamp, save, fight). A smith (Shrine's, or one a merchant rolls) can **upgrade** an item (tier promotion), **extract** a card from a mount, **seat** a run-owned card in an emptied or open mount.
+- **Extract:** the card becomes run-owned (joins the deck). The mount shows its kind's **fallback** until seated: weapon-art mounts fall back to the unarmed technique (Dodge Roll, from `unarmedProfiles`), granted mounts to nothing; override per item in `cardMounts.fallbackByItem`. A fallback is never extractable.
+- **Extractable** = a card tag (`cardMounts.extractableTag`, `extractable`); strikes and defends lack it. A mount accepts any tag in its kind's `accepts`.
+- **Seat:** the deck instance leaves, rides with the item, extractable again. Extra mounts (`cardMounts.extraMounts`, per item, a kind) sit behind a flag that is off.
+- **Not in Sealed or Draft runs:** pool decks never get lent cards (`isPoolDeckRun`, `model/cardRemoval.js`). `extractionRefusal` answers `poolDeck` from Custom Climb rules or `run.poolDeck === true` on a fight's synthetic run; `extractionPlan` lists no candidate and carries the `refusal`; `commitExtraction` refuses by name (even a free grant) before touching the run. Every smith door (Shrine, merchant smith, blacksmith `extractArt`) shows the service unavailable with `blacksmith.refuse.extract.poolDeck`. Seating a card the run already owns is unchanged.
+- **Prices:** Smithing Stones (`smithing.services.extract.cost`, `.install.cost`), free by owner's word. **Who offers:** `smithing.services.offeredAt` = node kind, chance, service list. Chance 100 consumes no roll; a merchant's 25 rolls once per visit on the smith's RNG stream and rides with the stock (reload doesn't re-roll; no later reward shifts).
+- `run.itemMounts` (per item, per mount: emptied, or card seated) is read by the composer on every restamp and carried into combat and saved fights, so a swap or load cannot re-mint an extracted card. It never touches item authoring; absent = untouched.
 
-If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
-with only its equipment cards. That is a **balance question for whoever authors the gear**,
-not a validation failure — `startingDeckWarnings()` reports it as a warning, naming the class and
-the loadout, and refuses nothing. `validateEquipment` returns problems only and does not show that warning.
+#### Equipped weapon card packages
 
-**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
-smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
-attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
-attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
-read, never re-derived), minus permanently removed slots. `removedAttackSlotIds`
-records unique stable `attack:N` ids from that birth allocation; absent means none.
-Merchant and event removal may remove run-owned basic attacks, including their
-current weapon-derived faces. Removal retires that slot for the run without
-renumbering survivors. Equipment swaps, combat setup, save/load and mid-combat
-restamping use the same surviving slot plan and never restore a removed copy.
-Item-owned grants remain ineligible for permanent deck removal. The merchant
-revalidates the selected instance, funds and nonempty-deck guard before charging.
-
-**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
-the base strikes and defends (gear only re-skins them), the class signature, global grants,
-rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
-leave, equip it again and they return identical. **If the item is not equipped, its cards are
-gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
-a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
-(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
-reconcile that applies it on every equip transition, in or out of combat. Item-owned
-instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
-idempotent and a save is stable across it.
-
-Everything above is data. The cap, the per-class bias and its default, the odd-split
-winner, and the grant-source vocabulary are all authored — the sources are rows in the
-`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
-The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
-tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
-the map, the tag row and `sourceOrder` move together, and a binding that names no
-registered source — or a seam left unbound — is refused by name rather than silently
-dealing that source's cards last.
-
-**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
-on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
-same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
-does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
-its mounts, and **seat** a run-owned card in an emptied or open mount.
-
-- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
-  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
-  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
-  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
-  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
-  item's, and is never itself extractable.
-- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
-  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
-  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
-- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
-  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
-  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
-- **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
-  equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
-  hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
-  from the run's own Custom Climb rules, or from a stored `run.poolDeck === true` flag on a fight's
-  synthetic run (`isPoolDeckRun`): `extractionPlan`
-  lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
-  grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
-  smith, the blacksmith's `extractArt` — shows the service unavailable with the
-  `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is
-  unchanged.
-- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
-  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
-  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
-  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
-  roll again and the roll shifts no later reward in an existing seed.
-
-What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
-read by the composer on every restamp and carried into combat and into a saved fight the way
-the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
-item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
-migration invents the field.
-
-**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
-priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
-`EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
-weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
-two eligible one-handed weapons split right `ceil(N/2)` then left `floor(N/2)`. Within a hand,
-ordered priority/effect references precede repeated filler. Shields and other items without a
-weapon package consume no quota.
-
-The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades, and acquisition metadata and
-changes only package-derived card/profile/receipt/mod fields. Equip, unequip, hand move, and active
-set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt; creation
-and load/continue call the same composition service directly. Combat rebinds generated attack
-instances wherever they currently live in hand, draw, discard, or exhaust after the current card
-resolution. Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are
-never appended. Explicit `handsRequired: 2` claims the whole attack quota and is never inferred
-from tags, names, art, or kind. A conflicting off-hand, duplicate piece without distinct equipment
-instance identity, or a claimed but invalid package fails closed; Unarmed is only the valid
-zero-weapon plan.
-
-An exact active-combat snapshot uses its own saved loadout as the authority. After snapshot shape
-and content-reference validation, the same service migrates the complete generated attack set in
-the fixed pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated
-snapshot loadout replaces the stale top-level run projection before continue. Package migration
-must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card
-reference. Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived
-fail-closed rather than normalized or replaced with Unarmed.
+- `WeaponCardPackageModel` adapts `attackProfile` as an empty ordered priority list plus that profile as filler. `WeaponDeckCompositionService` builds an `EquippedWeaponCardPlan` and rebinds the stable generated attack instances in place.
+- Slots: no eligible weapon → Unarmed in every slot; one eligible weapon (either hand) → owns all; two one-handed → right `ceil(N/2)`, left `floor(N/2)`. Within a hand, priority/effect references precede repeated filler. Shields and package-less items use no quota. `handsRequired: 2` claims the whole quota (never inferred from tags, names, art or kind).
+- The plan keeps `equipmentAttackSlotId`, `instanceId`, upgrades and acquisition metadata; it changes only package-derived card/profile/receipt/mod fields.
+- Equip, unequip, hand move and set swap apply it atomically and emit one post-commit `equipmentChanged` receipt; creation and load/continue call the same service.
+- Combat rebinds generated attacks wherever they live (hand, draw, discard, exhaust) after the current card resolves. Legacy role-only attacks map once, in deck order, to `attack:0..N-1` and are never appended.
+- A conflicting off-hand, a duplicate piece without distinct equipment instance identity, or a claimed-but-invalid package fails closed; Unarmed is only the valid zero-weapon plan.
+- **Exact combat snapshots** use their own saved loadout as authority. After shape and reference validation the service migrates the generated attack set in pile order `draw`, `hand`, `discard`, `exhaust` (no card changes pile) and replaces the stale top-level run projection before continue. It must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card reference. Invalid duplicate or two-handed-plus-offhand snapshots are archived fail-closed, never normalized or replaced with Unarmed.
 
 #### Complete armament kits
 
-Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
-`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, and staves (sceptres
-are staves) each lend one Strike, one Guard, and one signature Armament Art while
-equipped. Armour, talismans, and consumables do not acquire this kit.
+Every shipped hand-equipped armament authors `weaponCardPackage.combatKit: { attackProfileId, guardProfileId, artCardId }`.
+- Weapons, shields and staves (sceptres are staves) each lend one Strike, one Guard and one signature Armament Art while equipped. Armour, talismans, consumables get none.
+- Kit cards are guaranteed before the filler budget is divided (a shield supplies a Strike even beside a sword or at budget zero). A shield's Strike/Guard use its own profiles, scaling, damage school and smithing level. Attack modifiers are restricted to their source armament; Guard modifiers keep the loadout-wide rule.
+- Filler attack slots and removals keep their identities. Shield + non-shield: the non-shield keeps the filler quota. Two other one-handed armaments split filler as before. A two-handed armament lends one kit.
+- Kit basics use ids `kit:<item>:attack|guard`, are not smith mounts, cannot be extracted or permanently removed; recorded as `grantedBy`, `equipmentRole: granted`, `kitRole`, `profileId`.
+- The signature Art uses the weapon-art mount and its extraction/fallback rules (a smith replacement can change it). Each item's signature mount installs independently even if two items author the same card; optional non-kit arts keep the shared-art rule.
+- Reconciliation keeps cards already in discard or exhaust; unequip removes item-owned contributions, re-equip restores their ids.
+- New armed starting decks omit the redundant global technique grant (`tests/framework.test.mjs`); unarmed behavior is unchanged. Existing saves keep run-owned cards and their attack-slot quota; reconciliation adopts missing kits without re-minting removed filler. Equipment previews use the same composer, counts included.
 
-These three item-owned cards are guaranteed before the starting filler budget
-is divided. A shield therefore supplies a Strike even beside a sword or when
-the filler budget is zero. Its Strike and Guard use its own profiles, attribute
-scaling, damage school, and smithing level. Attack modifiers are restricted to
-their source armament; Guard modifiers retain the existing loadout-wide rule.
-Run-owned filler attack slots and permanent removals retain their existing
-identities. In a shield/non-shield pair the non-shield retains the filler attack
-quota; the shield still lends its guaranteed Strike. Two other one-handed
-armaments split filler as before. A two-handed armament lends one kit.
+**Everyone has the Dodge Roll.** Every composed deck carries exactly one, as a `weaponArt` instance. An empty hand owns it (`grantedBy: unarmed:<hand>`, right before left); with no empty hand (both armed or two-handed) the body does (`unarmed:body`). Filling a hand moves it, never removes it. An art mount already holding it counts (one, not two). Like every bound card it is dealt before base cards and counts against `startingDeckSize`.
 
-Kit basics use deterministic `kit:<item>:attack|guard` identities, are not smith
-mounts, and cannot be extracted or permanently removed. Their owner is recorded
-in `grantedBy`, with `equipmentRole: granted`, `kitRole`, and `profileId`.
-The signature Art uses the existing weapon-art mount and extraction/fallback
-rules. A deliberate smith replacement can therefore change the signature Art.
-Each item's signature mount is installed independently, even when two items
-author the same card; optional non-kit arts retain the existing shared-art rule.
-Reconciliation preserves cards already in discard or exhaust. Unequipping
-removes item-owned contributions and re-equipping restores their stable IDs.
+**Shield signature Arts**
 
-New armed starting decks omit the redundant global technique grant
-(proved in `tests/framework.test.mjs`). Fully
-unarmed Strike/Guard/technique behavior remains unchanged.
+| Shield | Art | Stamina | Block | Other |
+|---|---|---|---|---|
+| Round Shield | Shield Bash | — | — | — |
+| Buckler | Riposte | — | — | — |
+| Kite Shield | Guardian | 1 | 5 | Exhausts; adds temporary 1-Stamina Enter: Bulwark skill to hand |
+| Tower Shield | Bastion | 1 | 12 | 1 Weak to self; Exhausts |
+| Spiked Shield | Spiked Reprisal | 1 | 4 | 4 damage; 2 Bleed |
 
-**Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
-2026-09-02 empty-hand rule). Holding equipment never costs the dodge: every
-composed deck carries exactly one Dodge Roll as a `weaponArt` instance. An
-empty hand owns it (`grantedBy: unarmed:<hand>`, right before left); with no
-empty hand — both hands armed, or a two-handed armament — the body owns it
-(`unarmed:body`). Filling a hand moves it and never removes it. An art mount
-already holding the Dodge Roll counts, so there is one, not two. Like every
-bound card it is dealt before the base cards and counts against
-`startingDeckSize`; Strikes and Defends are added last, from what the cap leaves.
-Existing saves retain run-owned cards and their original attack-slot quota;
-normal equipment reconciliation adopts missing item-owned kits without
-re-minting permanently removed filler. Equipment previews use the same composer
-and show the exact contributed cards, including counts.
-
-Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
-Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
-Guardian costs 1 Stamina, grants 5 Block, adds a temporary 1-Stamina Enter: Bulwark
-skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
-every class, and enters the existing Bulwark stance. A full hand sends it to
-discard. It never enters the permanent run deck and disappears after combat.
-Bastion costs 1 Stamina, grants 12 Block, applies 1 Weak to self, and Exhausts.
-Spiked Reprisal costs 1 Stamina, grants 4 Block, deals 4 damage, and applies 2
-Bleed. Existing card effects supply the other authored armament Arts.
+Guardian's generated skill Exhausts, is usable by every class, enters the Bulwark stance; a full hand sends it to discard; never enters the permanent deck; gone after combat. Other armament Arts use existing card effects.
 
 ### 3.9 Action queue
 
-Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
-
-Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Triggers react to events; they never mutate directly.
+Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager).
+- Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions.
+- The queue drains fully before control returns to the UI.
+- **Nothing mutates HP/block/piles/statuses except an executed action.** Triggers react to events; they never mutate directly.
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. The core events are (not exhaustive; `EVENTS` is):
+Events are emitted by executed actions. Closed list: `EVENTS` in `src/model/schemas.js` (payloads in `docs/ENGINE-API.md`); an event marked † is specified ahead of implementation and joins `EVENTS` when it lands. `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. Core events (not exhaustive):
 
-```
-combatStart, combatEnd(victory)
-playerTurnStart, playerTurnEnd, enemyTurnStart, enemyTurnEnd
-cardDrawn, cardPlayed, cardExhausted, cardDiscarded, deckShuffled
-damageDealt(source,target,amount,blocked,isAttack)
-blockGained, hpLost, healed
-statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
-enemySpawned, enemyDied, enemyStaggered
-energyGained, energySpent   // legacy names: `energy` is the retired alias of Stamina, the one cost pool
-flaskUsed, relicTriggered(relicId)
-equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
-combatReactionOffered, combatReactionChosen
-combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)
-combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
-```
+`combatStart`, `combatEnd(victory)`, `playerTurnStart`, `playerTurnEnd`, `enemyTurnStart`, `enemyTurnEnd`, `cardDrawn`, `cardPlayed`, `cardExhausted`, `cardDiscarded`, `deckShuffled`, `damageDealt(source,target,amount,blocked,isAttack)`, `blockGained`, `hpLost`, `healed`, `statusApplied`, `statusExpired`, `meterFilled`, `stanceEntered`, `stanceExited`, `enemySpawned`, `enemyDied`, `enemyStaggered`, `energyGained` / `energySpent` (legacy names; `energy` is the retired alias of Stamina), `flaskUsed`, `relicTriggered(relicId)`, `equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)`, `combatReactionOffered`, `combatReactionChosen`, `combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)`, `combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)`.
 
 ### 3.11 Seeded RNG
 
-- `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
-- **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue`, `enemyReaction`, `combatRounds`, `combatContest` (the d20 of an insight contest, §17 Contests; appended last, and a run that never plays a contest card writes no key for it) (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` gets one shuffle call at run creation, for the seat order (§13), which makes n−1 counter steps on that stream; it exists so that order can be seeded without moving a single draw on any other stream.
-- Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
+- `rng.js` is **mulberry32**. A run seed (uint32, shown base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered on class-select.
+- **Named streams**, each from seed + stream salt + a monotonically increasing counter *saved with the run*. Closed set `STREAM_NAMES` (`src/engine/rng.js`; unknown name throws): `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue`, `enemyReaction`, `combatRounds`, `combatContest`.
+  - `seats`: one shuffle at run creation for seat order (§13), n−1 counter steps, moving no other stream.
+  - `combatContest`: the d20 of an insight contest (§17 Contests); appended last; a run that never plays a contest card writes no key for it.
+- Consequences: re-fighting a combat after reload gives the same shuffles; a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
 
-**Two schemas, one home each — this is the contract, and the values are not restated here.**
-`RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
-`src/engine/save.js`. Neither number is restated as a current value anywhere else, and a second copy of
-either is a defect; the dated bumps below are history.
+Two schemas, one home each (never restated as values): `RUN_SCHEMA_VERSION` in `src/model/state.js`, `META_SCHEMA_VERSION` in `src/engine/save.js`.
 
-**The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
-persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
-`validateRunShape()` checking it — so the save contract is a table, not whatever
-`createRunState` happens to set, and this spec points at it rather than carrying a copy that
-drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
-id only (§3.3).
+#### The run
 
-- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
-  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
-  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
-  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
-  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. The saved event log keeps every row
-  but not the per-event `abilityBefore`/`abilityEntities` evaluation context (entity clones read only while that event is
-  scanned), which kept a 40-turn fight's save under the browser quota; the live log keeps it. A live event buffer, or an
-  action queue that no pending reaction or ability discard holds, is not a committed
-  boundary and refuses the save. Older `combatEntered`
-  records without a snapshot remain compatible and restart the encounter deterministically.
-- An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
-  with a dangling id → the save is **refused and archived**, never silently repaired. A run
-  saved before equipment existed is the one healed case: it gets a fresh loadout and a
-  re-stamped deck rather than being thrown away.
-- A `schemaVersion` **newer** than this build is refused and **preserved**, as the profile is
-  (property 1 below): runStatus `newer`, nothing archived, the bytes left in their slot, so
-  opening an old build cannot eat a run a newer one wrote. Every older schema, v1 to the
-  current one, loads and migrates forward; `tests/save-migration.test.mjs` proves it over one
-  real save per version (`tests/fixtures/run-save-schema-versions.json`).
-- **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
-  stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
-  adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
-  id. Adding those definitions alone does not justify a run- or profile-schema bump.
-- A run already carrying `attributeMode`, attributes, a flask capacity ledger, level receipts,
-  equipment-profile rules or a `derivedStatRuleSnapshot` keeps those persisted facts. New
-  default presets, formulas, flask allocations and level prices are read at new-run creation;
-  they do not rewrite an in-progress run on load. Existing definition ids may still receive
-  ordinary live content tuning under the content-version rule above.
-- If implementation discovers genuinely new persisted state, the field is optional for older
-  saves and deterministically migrated (or receives an explicit schema migration) before any
-  current save is written. A missing new field may never make an otherwise valid current save
-  archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
-- **Run schemaVersion 20** (2026-10-02, #1479): a Sealed or Draft run carries
-  `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE` in `model/cardRemoval.js`), the mark that
-  its starting deck is held to the attack slots it was dealt, not the ones its equipment
-  composes. A Standard run never carries it. A pool save from schema 19 or older has no
-  mark: the load door heals its quota down to the dealt slots once, marks it, and notes the
-  heal. A schema-20 pool save without the mark is refused by name. The bump is what makes a
-  schema-19 build refuse and preserve a schema-20 pool save (runStatus `newer`) instead of
-  dealing the equipment's own cards back into the dealt deck.
-- **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
-  `base` (born), `grown` (possession door), `granted` (moment door) — and
-  `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`
-  (§5.5.2). A v2 save is admitted and **attributed once** at the load door
-  (`initializeRunFlaskCharges`), by a stated rule, never silently: chain growth always
-  wrote `grown`, so the surplus base and chain cannot account for is attributed to the
-  untracked moment door (`granted`); `base` is witnessed by the current authored
-  `balance.flaskCapacity`, clamped so the attribution can invent no charge.
+Key `sote_run_v1`; **three slots, one run each** (`SLOTS`, `save.js`). The persisted field list is data: `RUN_SHAPE` in `model/state.js`, checked by `validateRunShape()`; a floor, not a whitelist (unlisted keys pass through). Instances by id only (§3.3).
+- **Saved** after every committed player choice (node chosen, reward taken).
+  - Entering combat writes a deterministic `combatEntered` checkpoint (older ones without a snapshot restart the encounter deterministically).
+  - **Save Game** / **Save and Quit** in a fully resolved combat replaces it with a versioned `CombatSnapshotService` record of the committed turn (phase, resources, hand and piles, enemies and intents, statuses, triggers, equipment, event log). Loading restores it without replaying start, draws or enemy rolls.
+  - The saved event log keeps every row but drops per-event `abilityBefore`/`abilityEntities` (kept in the live log).
+  - A live event buffer, or an action queue not held by a pending reaction or ability discard, is not a committed boundary: the save is refused.
+- **Refused and archived, never repaired:** unknown older-or-invalid `schemaVersion`, malformed shape, or `contentVersion` mismatch with a dangling id. Healed case: a run saved before equipment existed gets a fresh loadout and re-stamped deck.
+- **Newer `schemaVersion`:** refused and **preserved** (runStatus `newer`, nothing archived). Every older schema, v1 to current, loads and migrates forward (`tests/save-migration.test.mjs`, fixtures `tests/fixtures/run-save-schema-versions.json`).
+- **Save-safe changes:**
+  - A run carrying `attributeMode`, attributes, a flask capacity ledger, level receipts, equipment-profile rules or a `derivedStatRuleSnapshot` keeps them; new presets, formulas, flask allocations and level prices apply to new runs only. Live content tuning of existing ids is allowed.
+  - New persisted state must be optional for older saves and deterministically migrated (or get a schema migration) before any current save is written; a missing new field never archives a valid save. Prefer existing opcodes/statuses/snapshots.
+  - The Rogue/tuning addition is save-safe: the new creation mode gets a new stable id; `standard` and `pointbuy` stay valid with their old validation rules; Rogue adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset id. Adding those definitions alone needs no run- or profile-schema bump.
+- **Pool-deck mark:** a Sealed or Draft run carries `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE`, `model/cardRemoval.js`): its deck is held to the attack slots it was dealt. Standard runs never carry it. A pool save from schema ≤19 lacks the mark: the load door heals its quota to the dealt slots once, marks it, notes it. A schema-20+ pool save without the mark is refused by name.
+- **Flask capacity ledger:** `flaskCharges` carries `base`, `grown` (possession door), `granted` (moment door); `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted` (§5.5.2). A v2 save is attributed once at the load door (`initializeRunFlaskCharges`): unaccounted surplus goes to `granted`; `base` comes from `balance.flaskCapacity`, clamped so no charge is invented.
 
-**The profile** — key `sote_meta_v1`: settings, unlocks, durable progress, found armaments,
-and the last 20 run results. **It is the one artifact a player cannot re-earn**, so it carries
-five durability properties (#66/#67), each of which is a claim a command can falsify:
+#### The profile
 
-1. **Versioned both ways.** An older `schemaVersion` migrates or refuses **by name**; a
-   **newer** one refuses and **preserves** — the case a stamp alone cannot catch, and the one
-   that silently destroys a profile when a player opens an old build after a new one.
-2. **A verified write, then a mirror.** `sote_meta_backup_v1` is rotated **only after the
-   primary is read back cleanly** — a mirror of bytes never proved readable is not a backup.
-   A write that fails read-back restores the primary from the last known good.
-3. **Archives are keyed and appended, never overwritten** — `sote_run_archived` is the index
-   for both kinds, entries keyed by kind, slot and time. **Runs** age out and are capped;
-   **profiles are never deleted, never aged out, and never evicted by run pressure**, and a
-   profile archive **never removes the primary** (the bytes are the evidence). If profiles
-   alone ever fill the drawer, the oldest is **moved to its own salvage key with a recorded
-   notice** — not silently dropped — so the browser's storage quota is the only real ceiling
-   and it is named rather than hidden.
-4. **Never silently empty.** A failed load is a **named, visible state** (`profileStatus()`,
-   surfaced by `ui/screens/profileNotice.js`), never a fresh profile wearing the same
-   filename. While in that state the profile is **quarantined**: the next ordinary settings
-   write cannot overwrite the original bytes, which are the evidence of every other failure.
-5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `restoreProfile(id)` are reachable by the player from **Profile on the title screen**
-   (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
-   primary — which archives the outgoing one and clears the quarantine. An archive nothing can
-   open is a promise, not a feature.
+Key `sote_meta_v1`: settings, unlocks, durable progress, found armaments, last 20 run results. The one artifact a player cannot re-earn, so five durability properties:
+1. **Versioned both ways:** older `schemaVersion` migrates or refuses by name; **newer** refuses and **preserves**.
+2. **Verified write, then mirror:** `sote_meta_backup_v1` rotates only after the primary reads back cleanly; a failed read-back restores the primary from the last good.
+3. **Archives are keyed and appended, never overwritten** (`sote_run_archived`, keyed by kind, slot, time). Runs age out and are capped. Profiles are never deleted, aged out or evicted by run pressure, and archiving never removes the primary; if profiles alone fill the drawer, the oldest moves to its own salvage key with a recorded notice.
+4. **Never silently empty:** a failed load is a named, visible state (`profileStatus()`, `ui/screens/profileNotice.js`), never a fresh profile under the same filename. It is **quarantined**: the next settings write cannot overwrite the original bytes.
+5. **The drawer has a handle:** `listArchives()` / `getArchive()` / `exportArchive()` / `restoreProfile(id)` from **Profile on the title screen** (`ui/screens/profileArchive.js`): inspect, export, or promote an archive (archives the outgoing primary, clears quarantine). `drawerNotices()` reports what the drawer did.
 
-*Falsify the set:* `node tests/run-node.mjs` (the profile-durability cases: no profile, corrupt
-profile, older version, **newer** version, two archives in a row) — and the drawer's own
-notices (`drawerNotices()`) are how the screen reports what it had to do to itself.
+Falsify: `node tests/run-node.mjs` (no profile, corrupt, older, **newer**, two archives in a row).
 
 ### 3.13 Card text templating
 
-Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by occurrence ordinal: the first is bare, the second is `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
+- Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."`
+- Tokens bind to opcode values by op/status name, disambiguated by occurrence ordinal (first is bare, second is `{damage.2}`).
+- The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2): a Strike in hand shows 9 with +3 Strength and shows it struck through to 6 when Weak.
+- Validation (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
 
 ### 3.14 Content validation
 
-`model/validate.js` runs at every boot (`src/main.js:182`) and from the test page. It checks, across ALL registries:
+`model/validate.js` runs at every boot (`src/main.js`) and from the test page, across ALL registries:
 
 1. Every content object conforms to its schema (fields, types, enums).
 2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
-3. Every opcode, formula op, event name, and predicate used anywhere is in the closed sets of §3.4–§3.6.
+3. Every opcode, formula op, event name and predicate used is in the closed sets of §3.4–§3.6.
 4. Every text-template token binds (§3.13).
 5. `scripts.js` budget report: script-using content is listed; the count must stay <5% of total content objects.
-6. Value-range and pairing rules that a field-wise check cannot see — a floor anchor outside
-   its act's rollable band, a proc row whose `burstMin` exceeds its `burstMax`, a music bed
-   that is quiet by accident rather than by the declared silence word (§7.4) — each failing
-   **naming the entry**, per Law 1 clause 5.
-7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
-   a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
-   `{ "balance": "path" }` names a real balance number; and any family may carry a
-   `property` tag. Each refusal names its row (`tests/engine.test.js` test 80).
+6. Value-range and pairing rules a field-wise check cannot see, each failing **naming the entry** (Law 1 clause 5): a floor anchor outside its act's rollable band; a proc row whose `burstMin` exceeds its `burstMax`; a music bed that is quiet by accident rather than by the declared silence word (§7.4).
+7. Property rules (§3.3 PropertyRule), each refusal naming its row (`tests/engine.test.js` test 80):
+   - every `property` tag has exactly one rule; a rule's tag is a property tag;
+   - `requires`/`excludes` name property tags; `requires` has no cycle;
+   - a sidecar `{ "balance": "path" }` names a real balance number;
+   - any family may carry a `property` tag.
 
-**Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
-failures *downstream of itself*, so the standing check is over observable outcome, in the
-repo's existing observed-red idiom:
+**Content smoke (Law 1 clause 6)** is the standing check over observable outcome, in the observed-red idiom:
 
-```
-node tools/content-build.mjs --selftest    # the known-bad corpus: every case fails for its named reason
-node tools/content-build.mjs --mutate      # reinstate each defect N ways; each must be caught
-```
+`node tools/content-build.mjs --selftest` (known-bad corpus: every case fails for its named reason); `--mutate` (reinstate each defect N ways; each must be caught).
 
-Both edges, in clause 6's own words: **one entry added by table + asset alone appears and
-plays; one deliberately broken entry fails with its id printed.** A corpus nobody has watched
-go red is `unknown`, not green.
+- Both edges: one entry added by table + asset alone appears and plays; one deliberately broken entry fails with its id printed.
+- A corpus nobody has watched go red is `unknown`, not green.
+
+#### Notes and history
+
+- Content is data; the engine knows only the closed primitive sets of §3.4–§3.7.
+
+Full history: [docs/spec-history/03-architecture.md](docs/spec-history/03-architecture.md).
 
 ---
 
