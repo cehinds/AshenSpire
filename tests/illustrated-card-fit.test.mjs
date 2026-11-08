@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fitIllustratedCards } from '../src/ui/components/illustratedCardFitter.js';
 import { invalidateLayoutMetrics } from '../src/ui/layoutMetrics.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Layout-backed doubles: scroll size follows font/width, while the containing
 // bay follows the fitter's real percentage-height and max-height writes.

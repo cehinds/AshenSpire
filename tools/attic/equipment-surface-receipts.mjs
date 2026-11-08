@@ -283,7 +283,8 @@ check(/role-copy-count/.test(armoury), 'Armoury renders role copy-count selector
 for (const label of ['Attack rating (AR)', 'Defense rating (DEF)', 'Weapon Art Mana', 'Unique Skill Stamina']) {
   check(armoury.includes(label), `Armoury renders intrinsic '${label}'`);
 }
-check(/renderCandidateComparison/.test(armoury) && /equip-candidate-comparison/.test(receiptComponents),
+const armouryInventory = fs.readFileSync(new URL('../src/ui/components/armouryInventory.js', import.meta.url), 'utf8');
+check(/renderCandidateComparison/.test(armouryInventory) && /equip-candidate-comparison/.test(receiptComponents),
   'Armoury renders the canonical candidate comparison');
 check(/equip-resource-change/.test(receiptComponents) && /equip-added-effect/.test(receiptComponents),
   'Armoury renders resource and explicit-effect comparison selectors');

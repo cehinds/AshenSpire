@@ -4,7 +4,7 @@ import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { tagSymbolSvg } from '../src/ui/components/cardTagSymbols.js';
 import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 test('protection badges are independent, Defense (Block) is first, then Ward, and broken protection disappears', () => {
   for (const [defense, ward, kinds] of [[12, 8, ['shield', 'ward']], [12, 0, ['shield']], [0, 8, ['ward']], [0, 0, []]]) {

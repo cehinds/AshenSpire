@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { latestReactionNote, createReactionNote, avoidRects, REACTION_NOTE_MS } from '../src/ui/components/reactionNote.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = {
   cards: new Map([['counter', { name: 'Counter', cardTags: [] }], ['sweep', { name: 'Sweep', cardTags: ['maneuver:sweep'] }]]),

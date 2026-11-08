@@ -7,7 +7,7 @@ import { mountRewards } from '../src/ui/screens/reward.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { uiIconId } from '../src/content/uiIcons.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const flask = { name: 'Blue Draught', artKey: 'blue', tint: '#abc' };

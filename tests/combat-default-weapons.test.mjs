@@ -48,7 +48,7 @@ test('melee, ranged, magic, guard and counter semantics survive equipment-indepe
 });
 
 test('real stages expose canonical sequences and avoid loading dormant alternate families',async()=>{
-  const {rewardDom}=await import('./helpers/reward-dom.mjs');
+  const {rewardDom}=await import('./helpers/dom.mjs');
   const {createAlternativeCardStage}=await import('../src/ui/alternativeCardStage.js');
   const {applyDisplayAppearance}=await import('../src/ui/displayAppearance.js');
   const dom=rewardDom(),loaded=[],stages=[];

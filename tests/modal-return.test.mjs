@@ -43,7 +43,7 @@ test('the Back label names the place that opened the flow', () => {
 });
 
 test('Blacksmith card list: confirm lands back on a refreshed list, Back exits fully', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   await withKitDom(async (dom) => {
     resetModalParents(); resetModalState();
@@ -85,7 +85,7 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
 });
 
 test('the row refocused by the return is marked quiet (no tooltip); a plain focus is not', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   const tooltip = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8'));
   assert.match(tooltip, /if \(el\.dataset\.quietFocus\) return;/, 'the tooltip skips a quiet focus');
@@ -107,7 +107,7 @@ test('the row refocused by the return is marked quiet (no tooltip); a plain focu
 });
 
 test('a refused confirm (false or a throw) does not reopen the list over the refusal', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { mountCardUpgradeModal } = await import('../src/ui/components/cardUpgradeModal.js');
   const attempt = (result) => {
     let opens = 0;

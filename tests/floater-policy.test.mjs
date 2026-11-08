@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { FLOATER_WORDS_SHOWN, floaterWordShown, floaterNumberShown, floaterGlyphShown, setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js';
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 test('the allowlist is Hit, Hit - Evade Failed, Missed, Blocked and Countered', () => {
   assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'blocked', 'countered']);

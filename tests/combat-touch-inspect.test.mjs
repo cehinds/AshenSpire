@@ -8,7 +8,7 @@
 // every living enemy. The old sprite-overlaid combatantInspectControl stays gone.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { combatantInfo } from '../src/ui/components/combatantOverhead.js';
 
 const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');

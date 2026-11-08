@@ -182,7 +182,7 @@ test('a fresh boss fight holds its opening cues until the name splash closes', (
 });
 
 test('the boss splash runs onClose exactly once, whichever way it closes', async (t) => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { showBossIntro } = await import('../src/ui/components/intro.js');
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const ways = {
