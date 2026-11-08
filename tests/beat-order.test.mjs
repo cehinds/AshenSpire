@@ -1,7 +1,6 @@
-// BEAT ORDER (owner, 2026-10-11; ui/animationPace.js beatOrder). An attack beat
+// BEAT ORDER (owner, 2026-10-11; SPEC §7.4). An attack beat
 // plays: attacker in stance → its swing → back to stance → the defender's
-// reaction → the numbers → the bars. 'impact' keeps the older order (reaction
-// and numbers at the impact frame, bars after the swing). Instant pacing and
+// reaction → the numbers → the bars. Instant pacing and
 // reduced motion add no waits but keep reaction → numbers → bars.
 //
 // Each test drives the shipped playTimeline under mocked timers and records a
@@ -12,7 +11,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
@@ -61,7 +60,7 @@ function drive(t, fn) {
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
     try { fn({ dom, anchors, layer, trace, words, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
-    finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
+    finally { setAnimSpeed('normal'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
 
@@ -131,10 +130,7 @@ test('an incoming contact animates before its choice and its resumed receipt nev
   });
 });
 
-test('the default beat order is sequential', () => {
-  assert.equal(getBeatOrder(), 'sequential');
-  setBeatOrder('nonsense');
-  assert.equal(getBeatOrder(), 'sequential', 'an unknown order falls back to the default');
+test('every pace has reaction and stance-lead waits', () => {
   for (const pace of ['slow', 'normal', 'fast']) {
     assert.ok(ANIM_SPEEDS[pace].reactionMs > 0 && ANIM_SPEEDS[pace].stanceLeadMs > 0, `${pace} has reaction and stance waits`);
   }
@@ -218,39 +214,6 @@ for (const mode of ['instant', 'reduced-motion']) {
     });
   });
 }
-
-test('beatOrder impact keeps the older order: reaction and number at impact, bars after the swing', (t) => {
-  drive(t, ({ trace, run, finish }) => {
-    run(playerHit(4), { beatOrder: 'impact' });
-    finish();
-    assert.deepEqual(order(trace), ['contact', 'reaction:e1', 'float:-4', 'settle', 'bars']);
-    assert.equal(timeOf(trace, 'float:-4'), IMPACT);
-    assert.equal(timeOf(trace, 'bars'), TOTAL);
-  });
-});
-
-test('impact-order beats wait for the paced receipt reaction before the next swing', (t) => {
-  drive(t, ({ trace, run, finish }) => {
-    const seen = [];
-    const mark = (what) => trace.push({ what, at: Date.now() });
-    const beat = (id, amount) => [
-      { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: id, targetId: 'e1' },
-      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked: 0 },
-    ];
-    run([...beat('c1', 4), ...beat('c2', 5)], {
-      beatOrder: 'impact',
-      reactionForReceipt: e => e.type === 'damageDealt' ? () => mark('pilot') : null,
-      reactionTimingForReceipt: (e, s) => { seen.push(s); return 900; },
-    });
-    finish();
-    const swings = trace.filter(e => e.what === 'swing').map(e => e.at);
-    const pilots = trace.filter(e => e.what === 'pilot').map(e => e.at);
-    assert.equal(swings.length, 2, 'two beats swing');
-    assert.ok(pilots.length > 0, 'the paced reaction plays');
-    assert.ok(swings[1] >= pilots[0] + 900, `second swing at ${swings[1]} waits for the 900 ms reaction from ${pilots[0]}`);
-    assert.ok(seen.length > 0 && seen.every(s => 'minFrameMs' in s), 'the reaction is timed with the paced speed');
-  });
-});
 
 test('a counter beat uses ordered reaction, damage and HUD stages', (t) => {
   drive(t, ({ trace, run, finish }) => {
@@ -388,14 +351,6 @@ test('a longer stage-reported recovery takes precedence over the ordered clock e
   });
 });
 
-test('impact order retains its existing terminal visual delay',t=>{
- drive(t,({trace,run,finish})=>{
-  run(accuracyHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54,beatOrder:'impact'});finish();
-  assert.equal(timeOf(trace,'contact'),300);
-  assert.equal(timeOf(trace,'float:-7'),300);
-  assert.equal(timeOf(trace,'settle'),300+ANIM_SPEEDS.normal.stepMs+60);
- });
-});
 
 
 // Owner 2026-11-06: card played → cost → intent word → stance → animation → hit word → reaction → damage → the rest.

@@ -319,12 +319,12 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [x] Delete the unused `src/framework/index.js` barrel and its stale header (H2) — [#2676](https://github.com/cehinds/AshenSpire/pull/2676)
 - [x] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2) — [#2676](https://github.com/cehinds/AshenSpire/pull/2676)
 - [ ] Move content projections (`combatExpansionCards.js`, `traitProjection.js`, `equipment.js` functions) into `src/model` (M6)
-- [ ] Load `combatTest.js`/`combatBuilds.js` and `armamentKitPreview.js` by dynamic `import()` under `shotState` only (M6)
+- [x] Load `combatTest.js`/`combatBuilds.js` and `armamentKitPreview.js` by dynamic `import()` under `shotState` only (M6) — #2710, #2724
 - [x] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7) — #2677
 
 ### 3. Deletions
 
-- [ ] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5)
+- [x] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5) — [#2670](https://github.com/cehinds/AshenSpire/pull/2670)
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
 - [x] Attic or delete the 115 orphan tools (H5) — [#2715](https://github.com/cehinds/AshenSpire/pull/2715)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)

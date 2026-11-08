@@ -4,7 +4,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, setAnimSpeed, setBeatOrder, stanceState } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, stanceState } from '../src/ui/fx.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/dom.mjs';
@@ -45,7 +45,7 @@ function swingAt(t, stage) {
         onBeatApplied() {}, onFlush() {},
       }, () => completed++);
       for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
-    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    } finally { setAnimSpeed('normal'); }
   });
   assert.equal(completed, 1);
   return { swing, settled, settledAt };
@@ -92,7 +92,7 @@ test('a stance-changing attack plays stance change, then the action animation, t
         onBeatApplied() {}, onFlush() {},
       }, () => completed++);
       for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
-    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    } finally { setAnimSpeed('normal'); }
   });
   assert.equal(completed, 1);
   assert.deepEqual(order.filter((step, i) => step !== 'hit' || i === order.lastIndexOf('hit')).slice(0, 3), ['stance', 'action', 'hit']);
@@ -131,7 +131,7 @@ function leadOrder(t, events) {
         onBeatApplied: () => { applied++; }, onFlush() {},
       }, () => completed++);
       for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
-    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    } finally { setAnimSpeed('normal'); }
   });
   assert.equal(completed, 1);
   assert.ok(applied > 0);
