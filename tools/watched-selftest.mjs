@@ -169,7 +169,7 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   // ROOT to it — the same-door rule pictureSelftest below is built on.
   {
     const tree = mkdtempSync(join(tmpdir(), 'watched-readsrc-'));
-    for (const n of ['src', 'styles', 'tools', 'content']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
+    for (const n of ['src', 'styles', 'tools', 'content', 'engine']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
     const victim = join(tree, 'src/ui/models/SettingsRowsModel.js');
     const before = readFileSync(victim, 'utf8');
     if (!before.includes("key: 'holdConfirm'")) { console.error("FLOOR: plant 14 expects S3's anchor in SettingsRowsModel.js and did not find it"); return 2; }
@@ -200,9 +200,9 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   // this one proves the ANCHOR CHOICE is what makes it fire.
   {
     const tree = mkdtempSync(join(tmpdir(), 'watched-readparam-'));
-    for (const n of ['src', 'styles', 'tools', 'content']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
+    for (const n of ['src', 'styles', 'tools', 'content', 'engine']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
     const victim = join(tree, 'src/ui/screens/equipment.js');
-    const SIG = 'export function opensCollapsed(regionId, stored)';
+    const SIG = 'export function opensCollapsed(regionId, stored, mode = null)';
     const before = readFileSync(victim, 'utf8');
     if (!before.includes(`${SIG} {`)) { console.error("FLOOR: plant 15 expects A5's signature anchor in equipment.js and did not find it"); return 2; }
     // The mutation: a parameter appears. Same class as #316's removal — the
@@ -215,7 +215,7 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
       return { out, code };
     };
     const tight = runIt();
-    const okRed = tight.code === 2 && /A5: anchor "export function opensCollapsed\(regionId, stored\)" is in NONE/.test(tight.out);
+    const okRed = tight.code === 2 && new RegExp(`A5: anchor "${SIG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" is in NONE`).test(tight.out);
     // COST EDGE: loosen the anchor back to the bare symbol, same bytes.
     const probesPath = join(tree, 'tools/watched-probes.json');
     const pj = readFileSync(probesPath, 'utf8');
