@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:2c829d9c2e99819afabfb34bc3a43082ae25c2a8011e5dea2a4fc4fd9ae51220",
+      "hash": "sha256:970b86a8f935ace01471eae280facfb5355203d498a6ab54996152b84bcaca2e",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -22,7 +22,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:154fc1aba9f999d1b5a10f53660ccd9521b560efdbbb4c0dce9511805ea792df"
+          "hash": "sha256:47359239c81ce8a7209fc084601128213a68c7d6dbb17e334c6cb8972960760b"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js",
-          "hash": "sha256:4a31807e25818625fe9c6316b3dc04882ed941b884bbd4303ad6bd2b5f933e69"
+          "hash": "sha256:0259765de687eda8d9b09ec59f9d54545d9211aa38a157a0f2117fc41d707a46"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -580,7 +580,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:d97dc6b4409a87e769e0f6de2f106264d222fd54475429fb5a0aa2d9bb63f7d7"
+          "hash": "sha256:5f3b670885b0d5fd42caffe2a5a3fe9a3d16599b974b0b220ab09035718eca53"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e"
+      "runtimeHash": "sha256:50cd7878c98e298e6f8737561dc805fa40ff84e08b7d9e41c0b013a2ae27ab47"
     },
     "core": {
-      "hash": "sha256:2c829d9c2e99819afabfb34bc3a43082ae25c2a8011e5dea2a4fc4fd9ae51220",
+      "hash": "sha256:970b86a8f935ace01471eae280facfb5355203d498a6ab54996152b84bcaca2e",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -746,7 +746,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:154fc1aba9f999d1b5a10f53660ccd9521b560efdbbb4c0dce9511805ea792df"
+          "hash": "sha256:47359239c81ce8a7209fc084601128213a68c7d6dbb17e334c6cb8972960760b"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js",
-          "hash": "sha256:4a31807e25818625fe9c6316b3dc04882ed941b884bbd4303ad6bd2b5f933e69"
+          "hash": "sha256:0259765de687eda8d9b09ec59f9d54545d9211aa38a157a0f2117fc41d707a46"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1304,7 +1304,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:d97dc6b4409a87e769e0f6de2f106264d222fd54475429fb5a0aa2d9bb63f7d7"
+          "hash": "sha256:5f3b670885b0d5fd42caffe2a5a3fe9a3d16599b974b0b220ab09035718eca53"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e"
+      "runtimeHash": "sha256:50cd7878c98e298e6f8737561dc805fa40ff84e08b7d9e41c0b013a2ae27ab47"
     }
   }
 }

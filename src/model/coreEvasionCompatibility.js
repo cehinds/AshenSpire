@@ -17,6 +17,8 @@
 // The 2026-11-08 enemy level budget (characters defaults: no tier attributeBudget, attributeFill.floor, no attributeOffset; gameConfig enemyAttributeBudget) moves the runtime hash again; it approves this edge again and adds the runtime before it (802e46...). A save from there keeps its own snapshotted enemy rows.
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
 const PREVIOUS_RUNTIMES = new Set([
+  // Explicit tag-budget compatibility repair; these profiles keep their own saved budgets.
+  'sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e',
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
   'sha256:df30b7dac0b52f363d4875c083955c3efeaf9cebe235ef3e523a2e8d58c0f2e5',
@@ -34,7 +36,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:05977e492f74b543357e606b8e3cf7a0dd8984bc746a4dda123c976c851f660b',
   'sha256:802e46d530589fa030bd1a34ee07ec890ea678d4754c7320291a5d91b91cd1ff',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e';
+const FIXED_EVASION_RUNTIME = 'sha256:50cd7878c98e298e6f8737561dc805fa40ff84e08b7d9e41c0b013a2ae27ab47';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

@@ -318,9 +318,13 @@ function enemyAttributeWeights(row, settings) {
 }
 // Owner 2026-11-07 (SPEC §17, Enemy levels and stat budget): an enemy's attribute budget is the Core player's
 // starting budget plus `attributePointsPerLevel` for each level after the first. Both are read from config.
-// An authored `attributePoints` still wins. Without a player rule the tier's own budget applies.
+// Authored points and explicit tag budgets still win. Historical run snapshots
+// retain tier budgets; only the new unbudgeted enemy tags use player progression.
 export function enemyAttributeBudget(row, settings, level = enemyLevel(row, settings)) {
   if (Number.isSafeInteger(row.attributePoints)) return row.attributePoints;
+  if (characterTags(row).some(tag => settings.tagRules?.[tag]?.attributeBudget)) {
+    return characterRule(row, settings).attributeBudget[1];
+  }
   const player = settings.tagRules?.['character.player']?.attributeBudget;
   if (!player) return characterRule(row, settings).attributeBudget[1];
   const perLevel = Number.isFinite(settings.attributePointsPerLevel) ? settings.attributePointsPerLevel : 1;

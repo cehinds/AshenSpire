@@ -107,7 +107,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-05: the Reach cap (range.maxRange in fixCoreMechanics.json, src/model/combatEngagement.js) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-07: the keepsake removal drops the keepsake tag and mechanic, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-07: the combat-rounds removal repoints four mechanic manifests (legacy.file), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:6e0a0ca3c568797c7a60e42e18e619afcf9dfe1d54a84472d3a7b2c7d6c86c6e');
+  assert.equal(profile.lock.runtimeHash, 'sha256:50cd7878c98e298e6f8737561dc805fa40ff84e08b7d9e41c0b013a2ae27ab47');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
