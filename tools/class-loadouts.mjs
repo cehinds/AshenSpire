@@ -59,12 +59,12 @@ if (process.argv.includes('--selftest')) {
         // defect named here is the refusal being GONE, so both sites go.
         edits: [
           {
-            file: 'src/model/loadout.js',
+            file: 'src/model/loadout/stampDeck.js',
             find: 'if (prior && next && prior.compatibility !== next.compatibility) {',
             replace: 'if (false && prior && next && prior.compatibility !== next.compatibility) {',
           },
           {
-            file: 'src/model/loadout.js',
+            file: 'src/model/loadout/stampDeck.js',
             find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
             replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
           },
@@ -78,7 +78,7 @@ if (process.argv.includes('--selftest')) {
         // its own it is deletable without a single red, which is why it gets
         // its own plant and its own named assertion rather than sharing the
         // attack one.
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/stampDeck.js',
         find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         expectRed: /FAIL a non-attack role refuses the same silent state-loss swap/,
