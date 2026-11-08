@@ -142,3 +142,54 @@ test('index.html links the generated sheet straight after base.css', () => {
   const links = [...read('index.html').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(links[links.indexOf('styles/base.css') + 1], 'styles/tokens.generated.css');
 });
+
+const COLOUR_DATA = () => ({
+  ...tokens(),
+  color: {
+    palette: { bg: '#0d0b08', bgRaise: '#171310', resHp: '#a43c35', mapStructure: '#7a6b54' },
+    notes: { mapStructure: 'the roads and rings' },
+    themes: { hiContrast: { selector: 'body.hi-contrast', colors: { mapStructure: '#85714f' }, notes: { mapStructure: 'unchanged' } } },
+  },
+});
+
+test('the colour palette is emitted in :root with kebab-case names, notes as comments', () => {
+  const { css, errors } = generateTokensCss(COLOUR_DATA(), { stylesheets: BASE });
+  assert.deepEqual(errors, []);
+  const root = css.slice(0, css.indexOf('\n}\n'));
+  for (const line of ['--bg: #0d0b08;', '--bg-raise: #171310;', '--res-hp: #a43c35;', '--map-structure: #7a6b54; /* the roads and rings */']) {
+    assert.ok(root.includes(`  ${line}`), line);
+  }
+  assert.ok(root.indexOf('/* colours */') > root.indexOf('--touch-'), 'colours follow the existing groups');
+});
+
+test('a colour theme is emitted as its own block under its selector', () => {
+  const { css } = generateTokensCss(COLOUR_DATA(), { stylesheets: BASE });
+  assert.ok(css.includes('body.hi-contrast {\n  --map-structure: #85714f; /* unchanged */\n}\n'), css);
+});
+
+test('an unknown colour key, a bad colour, and a theme colour not in the palette are refused by name', () => {
+  const unknown = COLOUR_DATA();
+  unknown.color.theme = {};
+  assert.ok(generateTokensCss(unknown, { stylesheets: BASE }).errors.some((e) => e === `${TOKENS_JSON}: color: unknown key "theme" — allowed keys are palette, notes, themes`));
+  const unknownInTheme = COLOUR_DATA();
+  unknownInTheme.color.themes.hiContrast.media = 'print';
+  assert.ok(generateTokensCss(unknownInTheme, { stylesheets: BASE }).errors.some((e) => e.includes('color.themes.hiContrast: unknown key "media"')));
+  const bad = COLOUR_DATA();
+  bad.color.palette.bg = 'red';
+  assert.ok(generateTokensCss(bad, { stylesheets: BASE }).errors.some((e) => e.includes('color.palette.bg must be a hex')));
+  const orphan = COLOUR_DATA();
+  orphan.color.themes.hiContrast.colors.parchment = '#fdf6e6';
+  const r = generateTokensCss(orphan, { stylesheets: BASE });
+  assert.equal(r.css, null);
+  assert.ok(r.errors.some((e) => e.includes('color.themes.hiContrast.colors.parchment: not in color.palette')), r.errors.join('\n'));
+});
+
+test('a colour a stylesheet still declares at the same selector is refused; a scoped one is fine', () => {
+  const stale = { 'styles/base.css': ':root { --bg: #000; }\nbody.hi-contrast { --map-structure: #fff; }' };
+  const r = generateTokensCss(COLOUR_DATA(), { stylesheets: stale });
+  assert.equal(r.css, null);
+  assert.ok(r.errors.some((e) => e.includes('color.palette.bg would declare --bg under :root, which styles/base.css already declares there')), r.errors.join('\n'));
+  assert.ok(r.errors.some((e) => e.includes('color.themes.hiContrast.colors.mapStructure would declare --map-structure under body.hi-contrast')), r.errors.join('\n'));
+  const scoped = { ...BASE, 'styles/ui.css': '.card { --bg: #123; }\n:root .x { --bg: #456; }' };
+  assert.deepEqual(generateTokensCss(COLOUR_DATA(), { stylesheets: scoped }).errors, []);
+});

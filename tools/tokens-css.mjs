@@ -17,6 +17,13 @@
 // tools/launch.mjs runs --write before bundling; tools/serve.mjs --watch runs
 // it after config-build when tokens.json changes.
 //
+// Colours: color.palette (+ color.notes) becomes a `/* colours */` section of the
+// :root block, and each color.themes.<k> becomes its own rule under its selector
+// (body.hi-contrast, body.cb-safe), written after :root so it overrides the palette.
+// camelCase keys are kebab-cased (bgRaise → --bg-raise). The tool refuses a colour
+// whose name a stylesheet still declares at that selector; a scoped redeclaration
+// (a component's own --gold) is the cascade and is fine.
+//
 // Naming: type.scale.<k> → --t-<kebab k> in rem (the root is 10px at Text M, so
 // 16px is 1.6rem); layer.<k> → --layer-<kebab k>; motion.<k> → --motion-<kebab k>
 // in ms; touch.<kFooPx> → --touch-<kebab foo> in px (a finger does not grow with
@@ -100,6 +107,34 @@ export function tokenEntries(data) {
   return out;
 }
 
+/** The colour custom properties: { block ('palette' or the theme key), selector, path, name, value, note }. */
+export function colorEntries(data) {
+  const out = [];
+  const color = data.color;
+  if (!color) return out;
+  for (const [key, value] of Object.entries(color.palette ?? {})) out.push({ block: 'palette', selector: ':root', path: `color.palette.${key}`, name: `--${kebab(key)}`, value, note: color.notes?.[key] ?? null });
+  for (const [theme, def] of Object.entries(color.themes ?? {})) {
+    for (const [key, value] of Object.entries(def.colors ?? {})) out.push({ block: theme, selector: def.selector, path: `color.themes.${theme}.colors.${key}`, name: `--${kebab(key)}`, value, note: def.notes?.[key] ?? null });
+  }
+  return out;
+}
+
+/** How many times `css` declares `name` in a rule whose selector list includes `selector` exactly. */
+function declaredAt(css, selector, name) {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  let n = 0;
+  for (const m of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (!m[1].split(',').some((s) => s.trim().replace(/\s+/g, ' ') === selector)) continue;
+    n += [...m[2].matchAll(propPattern(name, 'g'))].length;
+  }
+  return n;
+}
+
+const noteComment = (note, indent) => {
+  const lines = note.split('\n').map((l) => l.trimEnd());
+  return lines.length === 1 ? ` /* ${lines[0]} */` : `\n${indent}/* ${lines.join(`\n${indent}   `)} */`;
+};
+
 const GROUP_TITLES = {
   type: 'type scale (rem: the root is 10px at Text M, so it follows the Text size setting)',
   layer: 'stacking layers (z-index), bottom to top',
@@ -149,6 +184,18 @@ export function generateTokensCss(data, { stylesheets = {}, file = TOKENS_JSON }
       }
     }
   }
+  const colours = colorEntries(data);
+  const colourSeen = new Map();
+  for (const c of colours) {
+    const id = `${c.selector} ${c.name}`;
+    if (colourSeen.has(id)) errors.push(`${file}: ${c.path} and ${colourSeen.get(id)} both publish ${c.name} under ${c.selector}`);
+    colourSeen.set(id, c.path);
+    if (c.block === 'palette' && seen.has(c.name)) errors.push(`${file}: ${c.path} and ${seen.get(c.name)} both publish ${c.name}`);
+    for (const [path, text] of Object.entries(stylesheets)) {
+      const count = c.block === 'palette' ? rootDeclarationCount(text, c.name) : declaredAt(text, c.selector, c.name);
+      if (count > 0) errors.push(`${file}: ${c.path} would declare ${c.name} under ${c.selector}, which ${path} already declares there — delete it from ${path} (one home per fact)`);
+    }
+  }
   if (errors.length) return { css: null, errors };
 
   const lines = [HEADER, ':root {'];
@@ -160,7 +207,17 @@ export function generateTokensCss(data, { stylesheets = {}, file = TOKENS_JSON }
     for (const e of own) lines.push(`  ${e.name}: ${e.value};`);
     if (homed.length) lines.push(`  /* already declared where they live, not repeated: ${homed.map((e) => `${e.name} (${e.home})`).join(', ')} */`);
   }
+  const own = colours.filter((c) => c.block === 'palette');
+  if (own.length) {
+    lines.push('  /* colours */');
+    for (const c of own) lines.push(`  ${c.name}: ${c.value};${c.note ? noteComment(c.note, '  ') : ''}`);
+  }
   lines.push('}');
+  for (const [theme, def] of Object.entries(data.color?.themes ?? {})) {
+    lines.push(`/* colour theme: ${theme} */`, `${def.selector} {`);
+    for (const c of colours.filter((e) => e.block === theme)) lines.push(`  ${c.name}: ${c.value};${c.note ? noteComment(c.note, '  ') : ''}`);
+    lines.push('}');
+  }
   return { css: lines.join('\n') + '\n', errors };
 }
 
