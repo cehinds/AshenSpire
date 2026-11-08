@@ -236,7 +236,7 @@ for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
 }
 
 // The expansion's colorless counters and cantrips are a card pool: JSON under
-// content/source/cards, re-exported by combatExpansionCards.js (which keeps the projection).
+// content/source/cards, re-exported by combatExpansionCards.js (the projection is src/model/combatExpansionCardProjection.js).
 test('expansion cards: combatExpansionNewCards deep-equals content/source/cards/combatExpansionNewCards.json', () => {
   const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/cards/combatExpansionNewCards.json'), 'utf8'));
   assert.ok(Array.isArray(authored) && authored.length > 0, 'combatExpansionNewCards.json is a non-empty array');

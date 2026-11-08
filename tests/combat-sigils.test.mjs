@@ -7,7 +7,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playingCardModel, combatCardType, staticCardTokens } from '../src/model/playingCard.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {

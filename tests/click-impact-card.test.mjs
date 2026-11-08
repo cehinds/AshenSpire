@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hasImmediateHostileDamage, hasImmediateCombatImpact } from '../tools/click-impact-card.mjs';
 import { contentBundle } from '../src/content/index.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
 const registries = createRegistries(contentBundle);

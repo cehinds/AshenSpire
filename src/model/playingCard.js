@@ -33,7 +33,7 @@ import { cardTagExplanation } from './cardTagExplanation.js';
 import { coreSmashClause } from './smashClause.js';
 import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
-import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from './combatExpansionCardProjection.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';

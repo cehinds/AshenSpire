@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { coreContentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { combatExpansionEntityProblems } from '../src/model/combatTacticsRules.js';
 import { stanceOf, stanceEntryBonuses, stanceRatingBonus, sameStance } from '../src/model/stanceRules.js';

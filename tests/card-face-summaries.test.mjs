@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { playingCardDefinition, staticCardTokens } from '../src/model/playingCard.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';

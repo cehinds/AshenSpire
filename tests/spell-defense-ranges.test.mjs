@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyCombatExpansionCard, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
+import { combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { contentBundle } from '../src/content/index.js';

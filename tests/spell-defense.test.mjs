@@ -11,7 +11,7 @@ import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { combatCardSummary, playingCardModel } from '../src/model/playingCard.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 
 const registries = createRegistries(contentBundle);
 const guard = school => ({ type: 'skill', skipRatingBonus: true,

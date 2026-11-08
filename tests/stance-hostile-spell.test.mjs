@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, resolvedCardPlayCosts } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { stanceOf, stanceEntryBonuses, stanceRatingBonus } from '../src/model/stanceRules.js';
 import { createRng } from '../src/engine/rng.js';

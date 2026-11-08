@@ -5,7 +5,7 @@ import { applyCardAppearance } from '../src/ui/components/cardAppearance.js';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS } from '../src/content/combatSigils.js';
 import { contentBundle } from '../src/content/index.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { withModalDom } from './helpers/dom.mjs';

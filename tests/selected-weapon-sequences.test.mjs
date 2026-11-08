@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {selectedWeaponSequence as clip, selectedWeaponSequenceTiming as timing, selectedWeaponCounterOrigins} from '../src/model/selectedWeaponSequences.js';
 import {selectedWeaponCounterFor,REAVER_GREATSWORD_PILOT as pilot} from '../src/model/selectedWeaponStances.js';
-import {applyCombatExpansionCard} from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
 import {ANIM_SPEEDS} from '../src/ui/animationPace.js';

@@ -117,7 +117,7 @@ test('the Crit chance row shows the 5% step the crit d20 rolls', async () => {
 test('an authored buildup chance on a card reads the 5% step it rolls', async () => {
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
-  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { applyCombatExpansionCard } = await import('../src/model/combatExpansionCardProjection.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const reg = createRegistries(contentBundle);
   const card = applyCombatExpansionCard(reg.cards.get('cinderSigil'));
@@ -131,7 +131,7 @@ test('an authored buildup chance on a card reads the 5% step it rolls', async ()
 test('an authored buildup chance that rolls as 100% or 0% prints no chance note', async () => {
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
-  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { applyCombatExpansionCard } = await import('../src/model/combatExpansionCardProjection.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const reg = createRegistries(contentBundle);
   const card = applyCombatExpansionCard(reg.cards.get('cinderSigil'));

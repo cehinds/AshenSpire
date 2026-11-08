@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
 // v2 spell range follows the delivery tag unless an expansion row or the ranged list sets it.

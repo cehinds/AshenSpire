@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
-import { applyCombatExpansionCard, combatExpansionCardOverlay, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
+import { combatExpansionCardOverlay, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
 import { counterCoverageMatches } from '../src/engine/combatMatchups.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 

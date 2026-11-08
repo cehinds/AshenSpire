@@ -6,7 +6,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { playingCardDefinition, playingCardModel } from '../src/model/playingCard.js';
 import { cardBonusTags } from '../src/model/cardBonusTags.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { cardSideTags, cardTagRailHtml } from '../src/ui/components/cardTagSymbols.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/dom.mjs';

@@ -10,7 +10,7 @@ import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock, computeAttackDamage } from '../src/engine/actions.js';
 import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/model/combatRatings.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { objectTagIds } from '../src/content/tags.js';
 import { previewCard } from '../src/engine/combat.js';

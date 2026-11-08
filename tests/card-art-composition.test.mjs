@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { simpleCardArt, cardArtElement, cardArtPreviewFixtures, cardArtStatuses } from '../src/ui/cardArtComposition.js';
 import { cardArtLayersHtml } from '../src/ui/cardArtLayers.js';
 import { contentBundle } from '../src/content/index.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
 const face = (tags, extra = {}) => ({ id: 'custom', cardTags: tags, ...extra });

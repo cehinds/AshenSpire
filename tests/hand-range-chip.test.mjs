@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatCardRange } from '../src/model/combatCardProfile.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { cardRangeChipHtml } from '../src/ui/components/cardTagSymbols.js';

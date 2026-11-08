@@ -179,7 +179,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatStatusRules } from '../src/content/combatStatusRules.js';
 import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';

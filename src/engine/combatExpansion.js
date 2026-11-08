@@ -3,7 +3,7 @@ import { configuredCombat } from './gameProfileCombat.js';
 import { projectGameCard } from '../model/gameProfile.js';
 import { resolveCard } from '../model/registries.js';
 import { upcastCard } from '../model/upcasting.js';
-import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../model/combatExpansionCardProjection.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { corruptedCardProjection } from './ashenBlight.js';
 

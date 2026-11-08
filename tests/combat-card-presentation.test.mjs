@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));

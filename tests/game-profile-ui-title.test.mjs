@@ -64,7 +64,7 @@ test('configured long damage faces retain type, damage and Poise in compact word
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
   const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
-  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { applyCombatExpansionCard } = await import('../src/model/combatExpansionCardProjection.js');
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const profile = resolveGameProfile('core');
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
