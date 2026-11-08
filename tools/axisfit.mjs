@@ -305,9 +305,19 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 // Deliberately the same regex against the same file: two readers of one home is
 // not a second copy of a fact, it is two witnesses to it. If the shape of that
 // source moves, BOTH go loud, which is the behaviour wanted.
+// The ?shot= states are declared in two places: the comparisons left in
+// src/main.js, and the table keys of src/dev/shotStates.js (the pose ladder
+// moved there; its entries read `    map: () => poseRunState('map'),`).
+function shotStateNames(mainSrc) {
+  const poses = resolve(ROOT, 'src', 'dev', 'shotStates.js');
+  const posesSrc = existsSync(poses) ? readFileSync(poses, 'utf8') : '';
+  const names = [...mainSrc.matchAll(/shotState === '([a-z]+)'/g), ...posesSrc.matchAll(/^ {4}([a-z]+): \(\) =>/gm)];
+  return [...new Set(names.map((m) => m[1]))].sort();
+}
+
 function appShotStates() {
   const src = readFileSync(resolve(ROOT, 'src', 'main.js'), 'utf8');
-  return [...new Set([...src.matchAll(/shotState === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  return shotStateNames(src);
 }
 
 // A ?shot= state excluded from the axis sweep must be named HERE with its
