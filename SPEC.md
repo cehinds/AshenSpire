@@ -1625,11 +1625,11 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - Hit-stop: 60 ms on a hit of 6 HP or more, 120 ms on a hit of 35% of max HP or more (data rows; 0 disables). The attacker's impact frame and the target's recoil hold; only those two figures pause, and a click skips it.
 - Damage numbers size by share of max HP: `pct20` from 20%, `pct35` from 35%, `crit` from 25 HP. Hits ≥20% fire the `bigHit` haptic.
 
-**Beat order** (`beatOrder`, default `sequential`)
+**Beat order**
 - The attacker's stance, attack clip and return play first; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
 - `reactionMs` after the reaction starts (data row, default 180 ms at Normal; under Action pacing `actionPacing()` sets `reactionMs: gapMs`, so the 180 ms default applies only without it) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers never wait for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
 - Contact spark and attacker hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
-- `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
+- Counter return beats use the same sequence: the attacker's return, then the reaction, then the numbers `reactionMs` later.
 
 **Animation settings**
 - Instant and Reduced motion drop the hit-stop; slow/normal/fast keep it. Reduced motion also drops the shake; the Screen shake setting drops only the shake; Reduce flashes suppresses flashes (`src/ui/fx.js`).
