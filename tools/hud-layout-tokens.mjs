@@ -30,9 +30,9 @@ export const HUD_LAYOUT_TOKENS = Object.freeze([
     c('styles/player-polish.css', FOUR_WAY), // header HP value
     c('styles/combat.css', 'none'), // turn ribbon label
     c('styles/combat-layers.css', 'none'), // idle enemy intent, enemy names, Combat log label
-    c('styles/kit.css', '0 1px 2px #000'), // enemy / player / details HP values
+    c('styles/kit-creation-study.css', '0 1px 2px #000'), // enemy / player / details HP values
     c('styles/combat.css', FOUR_WAY), // Reaction label
-    c('styles/kit.css', '0 1px 3px #000'), // footer labels
+    c('styles/kit-combat.css', '0 1px 3px #000'), // footer labels
   ] },
   { name: '--hud-text-plate-bg', type: 'color', default: 'transparent', consumers: [c('styles/combat-layers.css')] },
   { name: '--hud-text-plate-radius', type: 'length', default: '0px', consumers: [c('styles/combat-layers.css')] },

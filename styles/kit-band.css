@@ -1,0 +1,333 @@
+/* ═══ METER — a resource read at a glance ══════════════════════════════════ */
+/* Label · value · track. The TRACK's length is data (the surface writes its
+   width inline: max ÷ reference, so a bigger pool is a longer bar), the fill is
+   cur ÷ max. `.skinny` is the poise weight: no label, no value, a hairline
+   track. `.inset` puts the value inside the track for the under-model strip,
+   where there is no room beside it. Tones name the resource, never a screen. */
+.as-meter { --meter-h: 10px; --meter-tone: var(--gold); position: relative; display: flex; align-items: center; gap: 0.6rem; min-width: 0; width: 100%; container-type: inline-size; }
+/* THE LADDER, MEASURED, NOT GUESSED (§02): a meter too narrow for its name
+   drops the NAME and keeps the glyph and the value, because the value is the
+   fact and the glyph is the identity. Only then does anything truncate. */
+/* 9rem, AND rem RATHER THAN em, both measured. This rung was written `8em` and
+   never fired once: font-relative units in a container query resolve against the
+   container's OWN font-size, and these meters inherit 0.92rem = 9.2px, so 8em
+   was 73.6 px — under every column the game actually draws (the arcane receipt's
+   container is 130 px at 1200x730 and 80 px at 390x844, in the LOCAL px a
+   container query compares, which the battlefield's scale then renders as 88 and
+   68). The name stayed and clipped instead: "ARCANE …" at the desk, "A…" on the
+   phone. 9rem = 90 px falls between those two columns, which is the cut this
+   ladder is about — wide enough for HP/MP/SP wherever they are drawn (120 px at
+   320 px of viewport), too narrow for a word. */
+@container (max-width: 9rem) { .as-meter > .m-plate > .m-label { display: none; } }
+.as-meter > .m-plate { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 0.5rem; min-width: 0; white-space: nowrap; }
+.as-meter .m-label { flex: 0 0 auto; white-space: nowrap; font: 600 1.05rem/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.as-meter .m-value { flex: 0 0 auto; white-space: nowrap; font: 600 1.15rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-meter > .m-well { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+/* `stack` — the plate ABOVE the track, for a meter in a narrow column (under a
+   combatant, in a list). THE NAME WRAPS RATHER THAN TRUNCATING, and the receipt
+   grows downward to hold it. Measured on the arcane receipt at ?shot=combat,
+   whose name is fifteen characters: "Arcane Exposure" wants 131 px and its
+   column is 92 px at 1200x730 and 68 px at 390x844, so with the label on one
+   nowrap line it read "ARCANE …" at the desk and "A…" on the phone — a label
+   that has stopped being a word. The 8em rung above drops a name that does not
+   fit a WIDE meter; in a stacked one there is a whole line to give it, and a
+   two-line name costs the sprite nothing. The value never wraps and never
+   truncates: it is the fact. */
+.as-meter.stack { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+.as-meter.stack > .m-plate { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.as-meter.stack .m-label { flex: 0 1 auto; min-width: 0; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: normal; line-height: 1.2; }
+/* The rung above is also what stops this wrap from becoming a letter-per-line
+   column: at 390x844 the plate leaves the name about 20 px, and `anywhere`
+   spelled ARCANE EXPOSURE downwards. `overflow-wrap: normal` keeps the break at
+   the space, and under 9rem there is no name to break — the glyph says which
+   school it is. */
+.as-meter.stack .m-value { flex: 0 0 auto; }
+.as-meter .m-track { position: relative; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 100%; height: var(--meter-h); min-width: 0; padding: 0; border: 0; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); border-radius: var(--r-pill); overflow: hidden; }
+.as-meter .m-fill { position: absolute; inset: 0 auto 0 0; background: var(--meter-tone); border-radius: inherit; }
+.as-meter[data-tone="hp"] { --meter-tone: var(--res-hp, var(--blood)); }
+.as-meter[data-tone="mp"], .as-meter[data-tone="mana"] { --meter-tone: #4f82d8; }
+.as-meter[data-tone="sp"], .as-meter[data-tone="stamina"] { --meter-tone: #5f925d; }
+.as-meter[data-tone="poise"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="arcane"] { --meter-tone: #8a6fd6; }
+.as-meter[data-tone="danger"] { --meter-tone: var(--danger); }
+/* The two climbs: character XP in gold, a skill track in the cooler steel
+   so a glance separates "the level" from "a track". */
+.as-meter[data-tone="xp"] { --meter-tone: var(--gold); }
+.as-meter[data-tone="skill"] { --meter-tone: #7fa8c9; }
+.as-meter.inset { --meter-h: 13px; }
+.as-meter.inset .m-label { display: none; }
+.as-meter.inset > .m-plate { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; z-index: 1; }
+.as-meter.inset .m-value { font-size: 0.95rem; letter-spacing: 0.04em; text-shadow: 0 1px 2px #000; }
+.as-meter.skinny { --meter-h: 4px; }
+.as-meter.skinny > .m-plate { display: none; }
+.as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+/* Lite: pulse-gold animates box-shadow (paint every frame); show one still glow. */
+:root[data-performance='lite'] .as-meter.pulse .m-fill { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
+.reduced-motion .as-meter.pulse .m-fill { animation: none; }
+/* A dashed rim says "this length is the floor, not the data". */
+.as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }
+/* A meter that is locked reads dimmed; a striped fill says a resistance holds. */
+.as-meter.locked { opacity: 0.6; }
+.as-meter.resisted .m-fill { background: repeating-linear-gradient(45deg, var(--meter-tone) 0 4px, transparent 4px 8px); }
+/* A stack of meters, one under the other, tight. */
+.as-meters { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; min-width: 0; }
+.as-meters.tight { gap: 2px; }
+/* Main Vitals use the shared screen-pixel token. Dividing by the page zoom
+   makes the authored 3px separation land as 3px on glass at every UI scale;
+   model strips retain the kit's tighter local stack. */
+.resbars[data-surface="main"] { gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
+
+/* ═══ SLOT — a square control that holds one thing: art, a count, a key ═══ */
+/* Flasks, relics, quick items. The box is the IconButton's (a control) or `sm`
+   (a chip that is only read). The count is a round StatePill on the corner,
+   the key a Keycap in the other. */
+.as-slot { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; box-sizing: border-box; width: var(--iconbtn-size); height: var(--iconbtn-size); min-width: var(--iconbtn-size); min-height: var(--iconbtn-size); padding: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); color: var(--parchment); cursor: pointer; overflow: visible; }
+.as-slot:hover, .as-slot:focus-visible { border-color: var(--gold); background: var(--panel); }
+.as-slot.is-selected { border-color: var(--parchment); box-shadow: 0 0 0 1px var(--parchment); }
+.as-slot[aria-disabled="true"] > .sl-art { opacity: 0.5; filter: grayscale(0.6); }
+.as-slot.sm { width: 3rem; height: 3rem; min-width: 3rem; min-height: 3rem; }
+.as-slot.static { cursor: default; }
+.as-slot.static:hover { border-color: var(--line-soft); }
+.as-slot > .sl-art { display: grid; place-items: center; width: 72%; height: 72%; font-size: 1.8rem; line-height: 1; }
+.as-slot.sm > .sl-art { font-size: 1.4rem; }
+.as-slot > .sl-art img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Whatever art is handed to the well fills it, wrappers and all. */
+.as-slot > .sl-art > *, .as-slot > .sl-art > * > * { display: grid; place-items: center; width: 100%; height: 100%; max-width: 100%; max-height: 100%; min-width: 0; margin: 0; }
+.as-slot > .as-pill.round { position: absolute; top: 1px; right: 1px; padding: 0 0.4rem; background: var(--bg); border-color: var(--gold); color: var(--parchment); font-size: 1rem; line-height: 1.5; letter-spacing: 0; }
+.as-slot > .as-keycap { position: absolute; right: 1px; bottom: 1px; min-width: 1.5rem; padding: 0 0.3rem; font-size: 0.9rem; line-height: 1.4; }
+.as-slot[aria-disabled="true"] > .as-pill.round { border-color: var(--line-soft); color: var(--muted); }
+/* A gamepad's glyph is round; the keycap follows the device. */
+body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
+/* While a thumb is driving there is no key to press: every keycap on a
+   control leaves — a Slot's, a Button's, the one floating on a card. */
+@media (pointer: coarse) { .as-slot > .as-keycap, .as-btn > .as-keycap, .as-keycap.float { display: none; } }
+
+/* ═══ BAND — a page-level chrome strip (the HUD, an action row, a zoom bar) ═ */
+/* `.topbar` is the hook the combat bar still writes; the kit name is the recipe. */
+/* `position: relative` ON BOTH, because the utility rail hangs off the bottom
+   of whichever one carries it (`top: 100%`, § QUICK SETTINGS). `.as-band`
+   already had it for its grip; `.topbar` did not, and a bare `.topbar` with
+   no `as-band` would have let the
+   rail escape to the nearest positioned ancestor and hung a full
+   screen height below the fold. hud-quick-compact's 18 surfaces are solo
+   map/combat/title, so no gate would have said so. */
+.as-band, .topbar { position: relative; display: flex; align-items: center; gap: 1.2rem; flex: 0 0 auto; min-width: 0; padding: 0.6rem 1.6rem; background: var(--bg-raise); border-bottom: 1px solid var(--line); }
+.as-band.foot { border-bottom: 0; border-top: 1px solid var(--line); }
+.as-band.stack { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+.as-band.quiet { background: transparent; border: 0; }
+.as-band-row { display: flex; align-items: center; gap: 1.2rem; min-width: 0; width: 100%; }
+/* THE METERS START LEVEL WITH THE CONTROLS BESIDE THEM. The resource row's
+   height is set by its right-hand cluster — two rows of IconButtons, 112 CSS px
+   at 360x800 — while the three meters are 41, so `align-items: center` left
+   them straddling the gap between the ⚒ ☰ row and the flasks below, aligned to
+   neither. Cross-axis only: the row's height is the cluster's either way, so
+   this moves no other row and the map and combat HUDs stay the same height. */
+.hud-resource-row { align-items: flex-end; }
+.hud-resource-row > .hud-vitals-panel { align-self: flex-end; }
+.as-band-row > .grow { flex: 1 1 auto; min-width: 0; }
+.as-band-row.split { justify-content: space-between; }
+.as-band-row.end { justify-content: flex-end; }
+.as-band-row.center { justify-content: center; }
+/* Three tracks: identity, a centred receipt, the trail — the run header's shape. */
+.as-band-row.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.as-band-row.thirds > :last-child { justify-self: end; }
+
+/* ═══ BAND FOLD — ONE FACT LINE AND ONE METER LINE ════════════════════
+   A HOST that gives the shared band less room than its two full-width rows
+   need FOLDS it, and the fold is one rule set here, not one per host. Two ask
+   for it and they asked differently, which is the defect this block closes:
+   the map's W4b header (§ MAP HEADER, `data-hud-layout="map-compact"`) carried
+   these rules alone, and when W4c's dialogue band took the same fold
+   (§ DIALOGUE, `data-hud-compact='true'`, 2026-09-17) it took the GRID and
+   left the yielding behind — so at 430 wide the three fact tracks and the
+   stacked meters overflowed their half-width columns and printed on top of
+   each other. A fold that is copied is a fold that is copied wrong.
+
+   WHAT YIELDS, in the text law's order. The row keeps its three tracks at
+   every width, because the centred receipt is centred at every width and that
+   is the whole point of the middle track. What gives is DETAIL: a chip may
+   shrink, and the class name and the act's seat name ellipsize inside their
+   own track rather than running over Cinders. Keys and numbers never do.
+   The meters stop stacking and sit side by side on one line. */
+.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+.dialogue-screen[data-hud-compact='true'] .shared-hud { --band-fold-gap: calc(8px / var(--ui-zoom, 1)); }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row > .as-statstrip {
+  min-width: 0; margin: 0; flex-wrap: nowrap;
+}
+/* The trail FILLS its track and packs right, rather than the kit's
+   `justify-self: end` (above), which sizes it to its max-content and lets it
+   run left over Cinders on a phone instead of yielding. */
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .hud-run-meta {
+  justify-self: stretch; justify-content: flex-end; gap: 0 var(--band-fold-gap);
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .as-chip {
+  display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap;
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row :is(.hud-class, .hud-act) > .cv {
+  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* One meter line: HP, MP and SP side by side instead of stacked. */
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars > .resline {
+  min-width: 0; gap: calc(6px / var(--ui-zoom, 1));
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* ═══ BAND ON A PHONE — THE SAME BAND IN EVERY VIEW ══════════════════
+   THE OWNER'S RULE (2026-09-18): "just vertically stacked vitality block,
+   cinders, armament and menu button. should be uniform in every view. act and
+   floor should show up in wide screen but on mobile, that's how it should be."
+
+   So on a phone the band carries FOUR THINGS and nothing else: the three
+   meters STACKED, the Cinders receipt, Armoury, Menu. The class name, the act
+   and the floor are WIDE-SCREEN FACTS — they are not truncated on a phone,
+   they are not there. A phone reads the same band on the map, in a room, in a
+   fight and in a conversation, which is what "uniform in every view" means and
+   what neither the fold nor the map header gave it before: the fold's one
+   meter line and its ellipsized act chip are a WIDE answer to a narrow band,
+   and they stop at this gate.
+
+   THE GATE IS THE PUBLISHED ONE. `data-layout="narrow"` is written on <html>
+   by main.js's applyUiScale from balance.ui.uiScale.narrowMax (520 visual px),
+   by the same call that chose the zoom. This block re-measures nothing. */
+:root[data-layout='narrow'] .shared-hud .hud-info-row > :is(.hud-identity, .hud-run-meta) { display: none; }
+/* The receipt keeps the middle track of § BAND thirds, so it stays centred
+   with its neighbours gone rather than sliding to an edge. */
+:root[data-layout='narrow'] .shared-hud .hud-info-row > .hud-center { grid-column: 2; justify-self: center; }
+/* STACKED, in every host. This outranks § BAND FOLD's one meter line on
+   purpose: the fold is what a band does when it is too short for its rows, and
+   a phone answers that by dropping the wide facts instead. */
+:root[data-layout='narrow'] .shared-hud .resbars {
+  display: flex; flex-direction: column; align-items: stretch; row-gap: calc(4px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .shared-hud .resbars > .resline { min-width: 0; }
+/* "JUST" IS FOUR THINGS, so the map's route receipt goes with the act chip it
+   restates — the same act name, one line lower. A phone's band is the band,
+   not the band plus this host's extra. The map still carries the route on
+   every wider screen, where it sits beside the facts rather than under them. */
+:root[data-layout='narrow'] .shared-hud .act-route-strip { display: none; }
+/* The band takes the height its four things need. W4b's 10 vh and W4c's band
+   are WIDE-SCREEN heights, and a height that holds one folded line cannot hold
+   three meters — honoured as a floor here, never as a ceiling. */
+:root[data-layout='narrow'] .shared-hud[data-hud-layout="map-compact"] {
+  height: auto; min-height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1));
+}
+
+/* On a phone the three tracks stay three — the centred receipt is centred at
+   every width, which is the whole point of the middle track — and what yields
+   is DETAIL: a trail keeps the first part of each compound fact and drops the
+   rest (a build keeps its number, drops its source). */
+@container game-viewport (max-width: 640px) {
+  .as-band-row.thirds { gap: 0.5rem; }
+  /* TWO SELECTORS, NOT ONE, and the phone photograph is why. A trail carries two
+     shapes of compound fact: the build stamp (number · source) and a progress
+     Chip (key, then value / total). `> * > :nth-child(n+2)` hit both — right for
+     the stamp, wrong for the chip, where the second child IS the value: at
+     390x844 the header read "ACT" and "FLOOR" with no numbers at all, which is a
+     label announcing nothing. So the head of each fact stays and only its tail
+     goes: the stamp keeps BUILD and drops src, the chip keeps "1" and drops
+     "/ 12". */
+  .as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }
+  /* `> *` and not `:nth-child(n+2)`: the value itself is a TEXT NODE inside
+     `.cv` and the "/ total" is the only ELEMENT in there, so counting elements
+     from the second would keep the tail it is here to drop. */
+  .as-statstrip.trail > .as-chip > .cv > * { display: none; }
+  /* THREE TRACKS AT EVERY WIDTH, again. From 2026-08 to 2026-09-05 the phone
+     shape was two tracks with the trail dropped to its own row, because the
+     corner had taken the trail's track and the over-wide trail spilled onto
+     the centred receipt. Both of the things that made that necessary are gone:
+     the trail is empty (the build stamp left the band) and so is the identity
+     cluster (name, class and floor left it the same day). With nothing in the
+     outer tracks, a two-track grid only did harm — its `auto` middle track sat
+     at the right edge, so the Cinders receipt read right-aligned at 390 and
+     320 wide (hudparity `cinders-centre`, twelve findings; Constantine:
+     "cinder should be centered"). The wide rule above now holds here too. */
+  /* ONE LINE FOR THE IDENTITY'S EYEBROW, so the run HUD is the SAME HEIGHT on
+     every screen that draws it. The context line beneath it is already nowrap;
+     the eyebrow was not, so it wrapped wherever its track was tightest — and
+     the map's track is tighter than combat's, which made the map's HUD 19px
+     taller than the same HUD one screen earlier (hud-quick-compact:
+     "Map and Combat draw different HUDs"). A HUD that changes height as you
+     walk through a door moves every control under it. It truncates instead,
+     which is the step the text law names after the box has stopped yielding. */
+  .hud-identity > .as-eyebrow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* PADDING YIELDS BEFORE THE ROW WRAPS, which is the first step of the text
+     law and the second half of the same equal-height problem. `.hud-top` is
+     content-sized, so the trail's track is as wide as the widest row beside it
+     — 159px on the map, which carries no flask belt, against 247px in combat.
+     At the kit's 1.35rem column gap the map's three facts wanted 168px, so the
+     build stamp dropped to a second line and the map's HUD grew a row. The
+     gap gives up 8.5px instead; all three facts keep their whole text and both
+     screens draw the same HUD. */
+  .as-statstrip.trail { gap: 0.75rem 0.5rem; }
+}
+/* A cluster is a group of IconButtons or Slots that share one gap. */
+.as-cluster { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0; }
+.as-cluster.wrap { flex-wrap: wrap; }
+.as-cluster.stack { flex-direction: column; align-items: stretch; }
+.as-cluster.end { margin-left: auto; }
+/* QUICK ACCESS now carries only Armoury and Menu — Crimson and Azure moved
+   into the potion belt — so the two remaining controls take the full
+   meter-stack height instead of staying a compact 2 x 2 square. The max()
+   keeps the guarantee that a face never falls below the authored tap floor,
+   and the transparent ::after still carries that floor around each face.
+   hud-quick-compact.mjs, which measures this edge against the SP row, is
+   ALREADY red on dev (15 findings) before this change; it reads 12 with this
+   change and 12 with the old 1.8rem face, so the size is not what breaks it. */
+.shared-hud {
+  --hud-quick-tile-size: max(2.8rem, var(--tap-floor));
+  --hud-quick-tile-gap: 0.45rem;
+}
+.shared-hud .hud-control-grid,
+.shared-hud .hud-control-grid > .as-cluster { gap: var(--hud-quick-tile-gap); }
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot) {
+  position: relative;
+  width: var(--hud-quick-tile-size); height: var(--hud-quick-tile-size);
+  min-width: var(--hud-quick-tile-size); min-height: var(--hud-quick-tile-size);
+}
+.shared-hud .hud-control-grid :is(.as-iconbtn, .as-slot)::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--tap-floor); height: var(--tap-floor);
+  transform: translate(-50%, -50%);
+}
+
+/* Resources and relics share the left grid column. The rail participates in
+   normal flow, so expanding its icons grows the background with the content. */
+.shared-hud > .hud-top {
+  display: grid; width: 100%; min-width: 0; height: auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info info" "meters actions" "rail actions" "route route";
+  align-items: start; gap: 0.5rem 1.2rem;
+}
+.shared-hud .hud-resource-row { display: contents; }
+.shared-hud .hud-info-row { grid-area: info; }
+.shared-hud .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: start; }
+.shared-hud .hud-control-grid { grid-area: actions; align-self: start; }
+.shared-hud .act-route-strip { grid-area: route; }
+.shared-hud .hud-bottom {
+  position: static; grid-area: rail; min-width: 0; width: 100%;
+  align-self: start; pointer-events: none;
+}
+.shared-hud .hud-bottom:empty { display: none; }
+.shared-hud .hud-bottom > :not(.icon-tray) { pointer-events: auto; }
+.as-band { position: relative; }
+/* A detail selected by a tap, waiting for the second tap that explains it
+   (components/tooltip.js). Screens with their own selected look (the combat
+   overhead controls) restate it; this is the one everything else wears. */
+.tooltip-selected:not(.overhead-control) { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--r-1, 4px); }
+

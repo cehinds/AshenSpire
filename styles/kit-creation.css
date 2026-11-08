@@ -1,0 +1,831 @@
+/* ═══ THE SAME CHOICES AS A LIST ══════════════════════════════════════════
+   Grid, above, is a browsing wall: the card is shrunk to 152px, the Choose
+   button follows its foot in a reserved action slot, and both it
+   and the information badge are hidden until a card is focused — everything
+   bought back is spent on fitting more cards in the glass (#996).
+   List makes the opposite trade and is the honest counterpart the toggle
+   never had. One card per row at a readable 108px beside a text column, so
+   the name and the Choose button are legible WITHOUT focusing first, and the
+   action is a plain block in the flow rather than an overlay: a row has the
+   height to hold it, so hiding it would buy nothing. Row count, not card
+   count, is what a list is for.
+   The card keeps its lift on focus — that is the picker's focus language and
+   it reads the same in either view. */
+.cc-card-selectors[data-view="list"] { display:flex; flex-direction:column; gap:10px; padding:var(--cc-choice-head,80px) 6px 14px; align-content:start; }
+.cc-card-selectors[data-view="list"] .poker-equipment-choice {
+  position:relative; display:grid; grid-template-columns:var(--card-w-glance-compact, 108px) minmax(0,1fr); gap:12px;
+  align-items:center; width:100%; min-width:0; max-width:none; padding:8px;
+  border:1px solid var(--line-soft, #5e4c32); border-radius:10px;
+}
+.cc-card-selectors[data-view="list"] .poker-equipment-choice.on { border-color:var(--gold, #c9a227); }
+/* The list view sets its cards beside their own text, so it reads a narrower
+   width — `sizing.levels.glance.variants.compact` in card.json, not a number
+   invented here. The TRACK above reads the same token, so the column and the
+   card it holds cannot disagree; a literal there would cap whatever the card
+   asked for, which is how the shop's oversized frame happened (#1167).
+   THE VIEW DECIDES THIS WIDTH, NOT THE LEVEL, and keying it on `[data-level]`
+   was wrong: `levelForView('list')` returns `focus` (src/model/cardFields.js),
+   so EVERY card in this view is `focus`, selected or not — measured in the
+   real picker, not inferred. A `[data-level="glance"]` key therefore matched
+   nothing here and the rule was dead on its only surface.
+   That is also why writing it unconditionally does not bring back the defect
+   it was keyed to avoid: nothing in this view promotes on selection, so there
+   is no card here that this cap would hold at a resting size. The level still
+   chooses the FIELD SET the card shows — which is the whole point of a list
+   row, name and effects legible beside the card — while the view chooses how
+   wide it is drawn. */
+.cc-card-selectors[data-view="list"] .equipment-poker-card { width:100%; transform-origin:center left; max-width:var(--card-w-glance-compact, 108px); }
+.cc-card-selectors[data-view="list"] .equipment-choose {
+  position:static; width:100%; margin-top:0; min-height:var(--tap-floor); font-size:14px;
+}
+
+/* WHAT AN UNFOCUSED CHIP WITHHOLDS IS AUTHORED NOW, NOT HAND-ROLLED HERE.
+   A `:not(.choice-focused)` rule hiding the old info badge stood
+   here: one screen's private flag, in CSS, for the one field anybody had got
+   round to hiding. That is the mechanism the presentation levels replace —
+   `content/config/ui/components/card.json` says what each of glance / focus /
+   inspect shows, `src/model/cardFields.js` answers it, and the face does not
+   render what it is not saying. A second copy of that decision in a selector
+   is exactly the drift Law 1 is about, so the rule is gone rather than kept
+   "just for the button". */
+/* The catalogue's three-level specimen: FLOW ONLY. Each face is sized by the
+   picker rules above, because how big a card is has one home and this is not
+   it; all this adds is that the three stand side by side under their names. */
+.cc-card-levels { display:flex; flex-wrap:wrap; align-items:flex-start; }
+.cc-card-levels > .cc-card-level { margin:0; }
+.cc-card-levels > .cc-card-level > figcaption { text-align:center; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.cc-equipment-details { max-width:none; }
+.cc-equipment-details h3 { margin:0 0 8px; }
+.cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
+/* THE SUBSTEP'S WAY ON OUTRANKS THE STAGE'S SKIP.
+   The stage row above (`.cz-stage .modal-btnrow.end`) is pinned to the
+   scrollport floor at `z-index:2`, and this button is right-aligned in the same
+   band. MEASURED at 1366x768 with Main Hand open: scrolled so `Continue to Off
+   Hand` reaches the floor, the two overlap by 46.9px vertically and 203.7px
+   horizontally, and `elementFromPoint` at this button's own centre returned
+   `BUTTON.as-btn cz-next` — the player pressing the section's Continue was
+   reaching `Continue to seed`, SKIPPING the armament they had come to choose.
+   Below 700px the sticky rule further down already answers this with
+   `z-index:3`; above it this button is a static grid item, so it lost the paint
+   order to a later, positioned sibling. A grid item's containing block is its
+   own one-row grid area, so it cannot be made sticky here (the reason the
+   sticky rule is mobile-only) — but it does not need travel, only rank.
+   `position:relative` with no offsets moves nothing and changes no layout; it
+   only lets the z-index apply. */
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; position:relative; z-index:3; }
+/* The ready lift scales the button about its centre, and at the grid's right
+   edge that is a 2px horizontal overflow (measured: section scrollWidth 1100
+   against clientWidth 1098 at 1024 wide). Growing from the right edge keeps
+   the lift inside the section. */
+.cc-equipment-continue, .cz-next, .cc-primary-continue { transform-origin:100% 50%; }
+/* Ready, the label is bold, and bold "Continue to equipment" ran 2px past the
+   long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
+   Less side padding than the row's clamp gives it, so the words stay whole. */
+.cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
+/* AND THE ROW GIVES THE WORDS THE ROOM, because the padding alone could not.
+   Creation's physical text floor (`.customize :is(..., button)`, 16px over the
+   zoom) outranks the ButtonRow's fit-to-box type clamp, so the label does not
+   shrink into a `long` row: "Continue to character" wanted 227px of that row's
+   208px box at 1280x720 and ellipsed to "Continue to chara...". The step's way
+   on is one button alone on its row, so the row is sized to the longest of
+   those labels instead of the shared `long` step. */
+.as-btnrow:has(> .cz-next), .modal-btnrow:has(> .cz-next) { --step: 26rem; }
+/* THE WAY ON NEVER SCROLLS OUT OF REACH (Constantine, 2026-09-12: *"the
+   continue button always in view and not requiring too much scrolling"*).
+   MEASURED: with the right-hand section open at 390x844 the creation scroll is
+   2129px against a 784px viewport, and the section's Continue sits at the end
+   of it. A player who had chosen scrolled back through everything to leave.
+   STICKY RATHER THAN MOVED TO THE FOOT, and the reason is the hooks: `#cz-start`
+   and `.cz-next[data-next]` are read by startup-gate, character-creation-check
+   and the contact sheet, and the foot is `.cz-actions`. Relocating the buttons
+   changes what every one of those instruments walks. Sticky changes where the
+   same button PAINTS and nothing about where it lives, so the fix costs no
+   instrument a re-teach.
+   The row carries its own ground: a transparent sticky control with the stage's
+   content sliding under it is unreadable at the moment it matters. */
+.cz-stage {
+  /* How far above the scrollport's floor a SECOND sticky row has to rest, so it
+     clears the first. Authored once because CSS cannot ask how tall a sibling
+     is — but DERIVED, not typed, because every part of that height is a setting
+     the player can move:
+        var(--tap-floor)  the button inside the row, which is
+                          `calc(var(--tap-target) / var(--ui-zoom, 1))` — it
+                          grows with Minimum tap size and with Auto's zoom
+        12px              the row's own `padding-block: 10px 2px`, below
+        10px              the scrollport's `padding-bottom`, which is why the
+                          stage row's painted bottom sits above the floor
+                          rather than on it
+     THIS WAS A CONSTANT AND THE CONSTANT WAS WRONG. 64px measured clean at the
+     default 44px target, and collided again as soon as the target moved: at
+     `--tap-target: 60px` the rows overlapped by 8px at zoom 1 and by 27.8px at
+     zoom 0.62. A number that only holds at one setting is a number that has
+     not been derived. */
+  --cz-continue-row: calc(var(--tap-floor) + 22px);
+}
+.cz-stage .modal-btnrow.end,
+.cz-stage .cc-primary-continue-row {
+  position:sticky; bottom:0; z-index:2;
+  background:linear-gradient(to top, var(--panel) 62%, transparent);
+  padding-block:10px 2px; margin-block-start:8px;
+}
+/* TWO WAYS ON CAN BE STICKY AT ONCE, AND THEY MUST NOT SHARE THE BAND.
+   The character stage holds both: the nested `Continue` that closes Primary
+   Stats and opens the next step, and the stage's own `Continue to equipment`.
+   MEASURED at 390x844 with Primary Stats open, both rested at exactly
+   top 693 / bottom 748 — the same 55px band, the same z-index — so the stage
+   row, later in the DOM, painted over the nested one. What a player saw at the
+   bottom of the glass was the DISABLED `Continue to equipment`, with the
+   actionable control hidden underneath it.
+   Both are needed: with the nested row made static it falls to 828, which is
+   71px below a band that ends at 757, so it cannot simply stop being sticky.
+   So they STACK — the nested row rests one row higher, and paints above, which
+   also keeps it legible while the two pass each other on a scroll.
+   The selector carries `.modal-btnrow` because the nested row wears `end` too,
+   and would otherwise lose the specificity contest with the rule above. */
+.cz-stage .modal-btnrow.cc-primary-continue-row {
+  bottom:var(--cz-continue-row); z-index:3;
+}
+/* A fold's summary is a control: it takes the tap floor and the kit's ring.
+   THE FLOOR IS THE TOKEN, NOT THE NUMBER. `--tap-floor` is
+   `calc(var(--tap-target) / var(--ui-zoom, 1))` precisely because `body` carries
+   `zoom: var(--ui-zoom)`: a literal 44px below body renders at 44 x zoom, so at
+   Auto's 0.62 floor this control would have been a ~27px physical target while
+   every button beside it stayed 44. The division cancels the zoom; the number
+   does not. The comment said "takes the tap floor" while the code took a
+   constant that happens to equal it at zoom 1. */
+.cc-starting-fold > .cc-starting-summary {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px;
+  min-height:var(--tap-floor); padding:10px 4px; cursor:pointer; list-style:none;
+}
+.cc-starting-fold > .cc-starting-summary::-webkit-details-marker { display:none; }
+.cc-starting-fold > .cc-starting-summary::after {
+  content:'\203A'; margin-inline-start:auto; color:var(--muted);
+  transition:transform 150ms ease-out;
+}
+.cc-starting-fold[open] > .cc-starting-summary::after { transform:rotate(90deg); }
+.cc-starting-fold > .cc-starting-summary b { color:var(--gold); }
+.cc-starting-fold > .cc-starting-summary .cc-package-context { margin:0; }
+.reduced-motion .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+}
+/* INSIDE THE FOLD THE CARDS ARE A REFERENCE, AND ARE DRAWN AS ONE. The
+   renderer's `small` flag was the wrong tool and is not used here: its only
+   effect is `transform: scale(0.92)`, which `.cc-starting-card > .card` above
+   correctly cancels — a transformed card still occupies its untransformed box,
+   so it saves no scroll at all. A smaller BOX does. Three to a row instead of
+   two turns six faces from three rows into two. */
+.cc-starting-fold .cc-starting-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; }
+.cc-starting-fold .cc-starting-card { padding-top:34px; }
+.cc-starting-fold .cc-starting-card > .card { max-width:104px; }
+.cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
+.cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
+.cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
+.cc-starting-card { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:42px; }
+.cc-card-quantity { font-size:13px; color:var(--gold); align-self:start; }
+.cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:var(--card-ratio); min-width:0; margin:0; transform:none; }
+.equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
+/* CARD LORE — the identity line in inspection and the lore modal behind it
+   (components/loreLine.js). The player picks the face, size, spacing and slant
+   under Advanced → Text & lore; models/LoreTypeModel.js writes the choice on
+   <html> as data-lore-* words and the rules below turn words into type. The
+   faces are bundled (assets/fonts/, CREDITS.md) under their own "AS Lore"
+   names, so none of them changes the game's headings or body text. The lore
+   window sizes in rem against the 62.5% root (1rem = 10px at Text M); the
+   inspection line is 1.6rem (16px at Text M, so Text size grows it) with the
+   card-inspection pane's zoom floor, the same in playing-card and equipment
+   inspection. */
+/* FONT LICENCES — carried here so the notices travel inside every build,
+   single-file and mobile alike (the same text is asset-data/fonts/OFL.txt).
+
+Card lore faces bundled in assets/fonts/ (Latin subset WOFF2, from the Fontsource
+packages of the Google Fonts releases). Each is licensed under the SIL Open Font
+License, Version 1.1, reproduced below; also available with a FAQ at https://openfontlicense.org
+
+IM Fell English: Copyright (c) 2010, Igino Marini (mail@iginomarini.com)
+EB Garamond: Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)
+Cormorant Garamond: Copyright 2015 The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant)
+Crimson Pro: Copyright 2018 The Crimson Pro Project Authors (https://github.com/Fonthausen/CrimsonPro)
+Spectral: Copyright 2017 The Spectral Project Authors (https://github.com/productiontype/Spectral)
+Libre Baskerville: Copyright 2012 The Libre Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville)
+Cinzel: Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel)
+Inter: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+*/
+@font-face { font-family:'AS Lore Fell'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Fell'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/im-fell-english-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Garamond'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/eb-garamond-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cormorant'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/cormorant-garamond-500-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Crimson'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/crimson-pro-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Spectral'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/spectral-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Baskerville'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/libre-baskerville-400-italic.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Cinzel'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/cinzel-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:normal; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-normal.woff2') format('woff2'); }
+@font-face { font-family:'AS Lore Inter'; font-style:italic; font-weight:400; font-display:swap; src:url('../assets/fonts/inter-400-italic.woff2') format('woff2'); }
+:root { --lore-font:'AS Lore Fell', Georgia, serif; --lore-size:1.7rem; --lore-scale:1; --lore-leading:1.6; --lore-tracking:0em; --lore-slant:italic; --lore-identity-slant:italic; }
+:root[data-lore-face="fell"] { --lore-font:'AS Lore Fell', Georgia, serif; }
+:root[data-lore-face="garamond"] { --lore-font:'AS Lore Garamond', Georgia, serif; }
+:root[data-lore-face="cormorant"] { --lore-font:'AS Lore Cormorant', Georgia, serif; }
+:root[data-lore-face="crimson"] { --lore-font:'AS Lore Crimson', Georgia, serif; }
+:root[data-lore-face="spectral"] { --lore-font:'AS Lore Spectral', Georgia, serif; }
+:root[data-lore-face="baskerville"] { --lore-font:'AS Lore Baskerville', Georgia, serif; }
+:root[data-lore-face="cinzel"] { --lore-font:'AS Lore Cinzel', Georgia, serif; }
+:root[data-lore-face="inter"] { --lore-font:'AS Lore Inter', 'Segoe UI', system-ui, sans-serif; }
+:root[data-lore-face="georgia"] { --lore-font:Georgia, 'Times New Roman', serif; }
+:root[data-lore-size="S"] { --lore-size:1.5rem; --lore-scale:0.9; }
+:root[data-lore-size="M"] { --lore-size:1.7rem; --lore-scale:1; }
+:root[data-lore-size="L"] { --lore-size:1.9rem; --lore-scale:1.1; }
+:root[data-lore-size="XL"] { --lore-size:2.2rem; --lore-scale:1.25; }
+:root[data-lore-leading="tight"] { --lore-leading:1.4; }
+:root[data-lore-leading="normal"] { --lore-leading:1.6; }
+:root[data-lore-leading="loose"] { --lore-leading:1.85; }
+:root[data-lore-tracking="tight"] { --lore-tracking:-0.01em; }
+:root[data-lore-tracking="normal"] { --lore-tracking:0em; }
+:root[data-lore-tracking="wide"] { --lore-tracking:0.04em; }
+:root[data-lore-slant="upright"] { --lore-slant:normal; }
+:root[data-lore-identity-slant="upright"] { --lore-identity-slant:normal; }
+/* Cinzel ships no italic; an upright face beats a browser-faked slant. */
+:root[data-lore-face="cinzel"] { --lore-slant:normal; --lore-identity-slant:normal; }
+.inspection-lore-line { display:flex; align-items:baseline; gap:12px; width:100%; box-sizing:border-box; margin:12px 0 0; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--parchment); text-align:left; font:inherit; }
+button.inspection-lore-line { cursor:pointer; }
+button.inspection-lore-line:hover { border-color:var(--gold); }
+button.inspection-lore-line:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+.inspection-lore-line .lore-identity { flex:1; min-width:0; font-family:var(--lore-font); font-size:calc(var(--lore-scale) * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-style:var(--lore-identity-slant); letter-spacing:var(--lore-tracking); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ONE LINE, like creation flavor (SPEC): a long identity ends in an ellipsis;
+   the whole of it opens in the lore modal from this same line. */
+/* A line with nothing behind it (an equipment blurb) has no modal to open,
+   so it wraps in full rather than hide words a touch player cannot reach. */
+p.inspection-lore-line .lore-identity { white-space:normal; overflow:visible; text-overflow:clip; }
+.inspection-lore-line .lore-read { flex:none; font-size:calc(0.75 * max(1.6rem, calc(16px / var(--ui-zoom, 1)))); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); }
+.lore-modal-text { display:grid; gap:14px; max-width:62ch; padding:1.6rem 2rem 2.2rem; font-family:var(--lore-font); font-size:var(--lore-size); line-height:var(--lore-leading); letter-spacing:var(--lore-tracking); font-style:var(--lore-slant); }
+.lore-modal-text p { margin:0; }
+.lore-modal-text .lore-identity { font-size:calc(var(--lore-size) + 0.2rem); font-style:var(--lore-identity-slant); }
+.lore-modal-text .lore-closing { margin-top:4px; padding-top:12px; border-top:1px solid var(--line); color:var(--parchment); opacity:0.82; }
+.equipment-poker-card .epc-frame > .epc-flavor { display:block; box-sizing:border-box; min-width:0; min-height:0; max-height:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:calc(var(--epc-flavor-row,14px) - 2px); line-height:1; padding-top:0; }
+/* THE EQUIPMENT SUMMARY: one row of inert cards — the character, then what
+   is worn and held in the order the sections ask for it — with the receipts
+   folded beneath. The character card keeps the poker cards' proportion so the
+   row reads as one hand. */
+.cc-summary-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 180px)); gap:16px 14px; justify-content:start; align-items:start; }
+.cc-summary-slot { position:relative; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.cc-summary-slot > .as-eyebrow { margin:0; }
+.cc-summary-slot > .equipment-poker-card { width:100%; margin:0; }
+.cc-summary-slot > .card-inspection-target,
+.cc-review .cc-starter-deck > .card-inspection-target {
+  position:relative; z-index:1;
+  transition:margin-top var(--card-info-fade,120ms) ease;
+}
+.cc-summary-slot > .card-inspection-target.inspection-selected,
+.cc-review .cc-starter-deck > .card-inspection-target.inspection-selected {
+  z-index:2;
+  margin-top:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))));
+}
+@media (prefers-reduced-motion:reduce) {
+  .cc-summary-slot > .card-inspection-target,
+  .cc-review .cc-starter-deck > .card-inspection-target { transition:none; }
+}
+.cc-summary-slot.unmet > .equipment-poker-card { outline:2px solid var(--danger); outline-offset:2px; border-radius:10px; }
+.cc-summary-unmet { margin:0; color:var(--danger); font-size:13px; line-height:1.35; }
+.cc-summary-empty { display:grid; place-items:center; aspect-ratio:var(--card-ratio); width:100%; max-width:var(--card-w-glance, 182.4px); border:1px dashed var(--line); border-radius:10px; color:var(--muted); }
+/* This summary sits beside equipment faces, whose frame is 5:7. The global
+   --card-ratio describes illustrated playing cards and may be a different shape. */
+.cc-summary-character { position:relative; display:flex; flex-direction:column; gap:6px; width:100%; max-width:var(--card-w-glance, 182.4px); aspect-ratio:5/7; overflow:visible; box-sizing:border-box; padding:10px; border:1px solid var(--gold); border-radius:10px; background:color-mix(in srgb, var(--gold) 6%, var(--panel)); cursor:help; }
+.cc-summary-eyebrow { color:var(--muted); font-size:11px; letter-spacing:0.1em; text-transform:uppercase; }
+.cc-summary-name { margin:0; color:var(--gold); font:700 18px/1.15 var(--font-display); overflow-wrap:anywhere; }
+.cc-summary-character > .as-hairline { margin:0; }
+.cc-summary-stats { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:4px 10px; }
+.cc-summary-stats > .as-statpair { justify-content:space-between; font-size:13px; }
+.cc-summary-stats .sp-v { flex-shrink:0; overflow:visible; text-overflow:clip; }
+.cc-summary-character[data-summary-level='glance'] > .cc-summary-stats:last-child { margin-top:auto; }
+.cc-summary-more { grid-column:1 / -1; color:var(--muted); font:700 16px/0.7 var(--font-body); letter-spacing:0.15em; }
+.card-inspection-art > .cc-summary-character {
+  width:100%; max-width:var(--card-w-inspect,384px); min-height:0; aspect-ratio:auto; overflow:visible; margin:0 auto; padding:14px; gap:10px;
+  cursor:default;
+}
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats { grid-template-columns:minmax(0,1fr); gap:8px; }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats > .as-statpair { font-size:14px; }
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-k {
+  overflow:visible; text-overflow:clip; white-space:normal; font-size:12px; line-height:1.3; letter-spacing:0.06em;
+}
+.cc-summary-character[data-summary-level='inspect'] .cc-summary-stats .sp-v { font-size:17px; }
+.card-inspection-modal:has(.cc-summary-character) .modal-body { overflow-y:auto; overflow-x:hidden; }
+.card-inspection-modal:has(.cc-summary-character) .card-inspection-layout { height:auto; align-content:start; }
+.card-inspection-modal:has(.cc-summary-character) .card-inspection-details { min-height:auto; overflow:visible; }
+.cc-summary-inspection-details h3 { margin:0 0 12px; color:var(--gold); font:700 20px/1.2 var(--font-display); }
+.cc-summary-inspection-details dt { margin-top:12px; color:var(--parchment); font-weight:700; }
+.cc-summary-inspection-details dd { margin:3px 0 0; color:var(--muted); }
+.cc-summary-calculations { margin-top:4px; }
+/* THE CLASS STEP FITS THE GLASS ON DESKTOP (2026-09-12).
+   Constantine: "continue button is cut off". The step's one way on — its
+   "Continue to character" — stood below the door's foot at EVERY desktop size
+   measured, because the split grows to its content inside a scrolling body and
+   the Continue row is the last thing in that column:
+
+     1280x720   glass 477px, step 598px, Continue at y=725, foot at y=621
+     1366x768   glass 515px, step 628px, Continue at y=762, foot at y=666
+     1512x860   glass 584px, step 694px, Continue at y=842, foot at y=752
+     1920x1080  glass 737px, step 859px, Continue at y=1044, foot at y=946
+
+   Same cure as THE OPEN EQUIPMENT SECTION below, one step later in the same
+   flow: the split is capped to what the door body leaves under the step's own
+   face, and its two panes scroll INSIDE that cap — the class list and the
+   preview each own their overflow — so the Continue never leaves the glass.
+   The subtraction is the same one, for the same reason: the door's head and
+   foot, the step face and the panel's breathing room, over the zoom (the
+   chrome measured 23.2-24.5rem across the four sizes above, so 25rem is the
+   conservative floor for all of them). The `max()` keeps a short window from
+   collapsing the split to nothing — under it the body scrolls as it did.
+   Below the split's own stacking width the phone layout stands: chooser first,
+   preview after it, the page scrolling as one. */
+@container (width > 64rem) {
+  .cc-class-split { max-height: max(30rem, calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - 25rem)); grid-template-rows: minmax(0, 1fr); }
+  .cc-class-split > .as-split-pane { min-height: 0; }
+  .cc-class-split > .as-split-pane > .as-pane { min-height: 0; overflow: hidden; }
+  .cc-class-split > .cc-class-preview-host > .as-pane { overflow-y: auto; scrollbar-gutter: stable; }
+  .cc-class-split .cc-choice-collection { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+}
+/* THE OPEN EQUIPMENT SECTION FITS THE GLASS ON DESKTOP (2026-09-11).
+   Constantine: "the screen is slightly too big, i should be able to see
+   everything when it opens on desktop." Measured at 1366x768 before this
+   rule: the Main Hand section stood 1423px tall — the card-package preview in
+   the detail pane — with its Continue at y=1707 on a 768px glass. The section
+   is capped to what the door body leaves under the section's own face, and
+   its two columns scroll INSIDE that cap: the choices column and the detail
+   pane each own their overflow, so the Continue never leaves the glass. The
+   subtraction is the door's head and foot, the section face and the panel's
+   breathing room, divided by the zoom for the reason .modal's ceiling is.
+   The choices scrollport's head (above) is what keeps the above-card inspect
+   control off the section face on the first row. Phones keep the stacked,
+   page-scrolling layout below. */
+@container game-viewport (min-width:701px) {
+  .cc-equip-group[data-equipment-section] { max-height:calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
+  .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
+  .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
+}
+@container game-viewport (max-width:700px) {
+  .cc-equip-group > .cc-card-selectors { grid-row:auto; }
+  .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  /* THE SECTION'S OWN WAY ON, MEASURED: with the Main Hand section open at
+     390x844 the `Continue to Off Hand` button sat 1815px down a 784px
+     scrollport — 1058px below the fold, at the end of the armament picker it
+     exists to close. The stage-level sticky rule above never reached it: that
+     rule matches `.modal-btnrow.end` and `.cc-primary-continue-row`, and this
+     is a bare `.cc-equipment-continue` inside `.cc-equip-group`.
+     THE GROUP BECOMES A COLUMN FLEX CONTAINER HERE, and that is load-bearing
+     rather than cosmetic: a grid item's containing block is its own one-row
+     grid area, so `position:sticky` inside it has nowhere to travel and does
+     nothing. A flex item's containing block is the container's content box —
+     the full height of the open section — which is the travel sticky needs.
+     At this width the group already rendered as one stacked column, so the
+     switch changes the layout in no other way. */
+  .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; padding-bottom:4px; }
+  .cc-equipment-continue { position:sticky; bottom:4px; z-index:3; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
+  .cc-starting-card-grid { gap:9px 6px; }
+  .cc-starting-card > .card { max-width:150px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .cc-card-selectors .equipment-poker-card { transition:none; }
+  .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
+}
+.reduced-motion .cc-card-selectors .equipment-poker-card { transition:none; }
+.reduced-motion .cc-card-selectors .choice-focused .equipment-poker-card { transform:none; }
+
+.shop-inspect-card { position:relative; }
+/* Face rows come from balance.ui.equipmentCard via the card's own custom
+   property: regions declare a floor and a priority, and src/model/equipmentCard.js
+   solves them. The literal is the fallback for a card rendered before its tokens
+   land, not a second opinion about the layout. */
+.equipment-poker-card .epc-frame, .collectible-poker-card .epc-frame {
+  grid-template-rows:var(--epc-rows, 231.6px 22px 40px 18px 88.4px 18px 16px);
+  container-type:inline-size;
+}
+.epc-type { font-size:14px; padding:2px; letter-spacing:.04em; }
+.epc-facts { padding:2px 0; }
+.epc-fact { font-size:14px; }
+.epc-fact strong { font-size:22px; }
+.epc-tag { font-size:14px; padding:1px 4px; letter-spacing:0; }
+.epc-effects { font-size:14px; line-height:1.2; padding:1px 0; }
+.epc-heading { font-size:12px; letter-spacing:.03em; }
+.epc-flavor { font-size:14px; line-height:1.1; padding-top:0; }
+.epc-footer { font-size:13px; letter-spacing:0; }
+/* The inspection door's own height, so it keeps it at whatever rung the
+   Modals width choice puts the door on (it asks for lg). */
+.card-inspection-modal.modal[data-authored-size='lg'] { height:auto; }
+.equipment-poker-card, .card.playing-poker-card, .shop-inspect-card { -webkit-user-select:none; user-select:none; }
+.card-inspection-details { font-size:max(16px, calc(16px / var(--ui-zoom, 1))); }
+.epc-effects { position:relative; }
+.epc-bonus + .epc-bonus { display:none; }
+.epc-effects:has(.epc-bonus + .epc-bonus) .epc-bonus { padding-right:16px; }
+.epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
+.epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-tag { display:inline-block; margin-right:3px; }
+/* WC2a1–WC2c3 possession sub-variants. PossessionVariantModel decides which
+   rows a region carries and how many the face shows (wireframeUi.possession);
+   rows past that budget carry `hidden` and stay listed in the inspection. */
+.equipment-poker-card .epc-frame [hidden] { display:none !important; }
+.equipment-poker-card .epc-facts[data-layout='lines'] { display:flex; flex-direction:column; justify-content:center; gap:1px; padding:2px 0; }
+.epc-facts[data-layout='lines'] > .epc-line { display:block; min-width:0; font:13px/1.2 Arial,sans-serif; color:#e5dccb; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* WC2c2: the registered resource tint marks the row; the text keeps its contrast. */
+.epc-facts[data-layout='lines'] > .epc-line[style*='--line-tint'] { border-inline-start:3px solid var(--line-tint); padding-inline-start:5px; }
+.equipment-poker-card[data-possession] .epc-bonus + .epc-bonus:not([hidden]) { display:-webkit-box; margin-top:0; }
+.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus { -webkit-line-clamp:1; }
+.equipment-poker-card[data-possession] .epc-effects:not([data-more]) .epc-bonus { padding-right:0; }
+.equipment-poker-card[data-possession] .epc-effects:has(.epc-bonus + .epc-bonus):not([data-more])::after { content:none; }
+/* WC2a1/WC2a2 detail one (Damage / Defense values): value over label inside the
+   solved 40 px row. The 22 px value's normal line box, its margin and the row
+   padding measured 44 px, spilling into the tag row. */
+.equipment-poker-card[data-possession] .epc-facts:not([data-layout='lines']) { padding-block:0; align-items:center; }
+.equipment-poker-card[data-possession] .epc-fact strong { line-height:1; margin-bottom:0; }
+/* Detail surfaces disclose the complete label, even when compact faces truncate. */
+.modal-head-id h2, .as-head-id h2, .as-tip .tt-title {
+  font-size: clamp(calc(16px / var(--ui-zoom, 1)), 2rem, calc(22px / var(--ui-zoom, 1))); white-space: normal; overflow: visible;
+  text-overflow: clip; overflow-wrap: anywhere; line-height: 1.3; max-height: none;
+}
+.as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
+.title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+/* W3b: with a save, the menu and that save's preview share the body; the
+   wordmark above stays centred. W3a (no save) keeps the lone centred menu. */
+.title-screen .as-titlemenu:has(> .title-home) { max-width: 60rem; }
+/* The wordmark sizes from its container (12cqi); widening the block for the
+   preview must not grow it. min(12cqi, 4.8rem) is exactly its size in the
+   40rem no-save block, whatever the host width. */
+.title-screen .as-titlemenu:has(> .title-home) .tm-name { font-size: min(12cqi, 4.8rem); }
+.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(2 * var(--view-vw, 1vw)); align-items: center; margin: 1.8rem 0; }
+.title-screen .title-home > .title-menu { margin: 0; }
+:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); }
+.title-screen .title-save-preview { display: grid; gap: .35rem; min-width: 0; padding: 1rem 1.2rem; text-align: left; border: 1px solid var(--line-soft); border-radius: var(--r-3); background: color-mix(in srgb, var(--panel) 82%, transparent); }
+.title-screen .title-save-preview > p { margin: 0; }
+.title-screen .title-save-name { font: 600 1.6rem/1.2 var(--font-display); color: var(--parchment); }
+.title-screen .title-save-facts, .title-screen .title-save-identity { color: var(--muted); overflow-wrap: anywhere; }
+.title-screen .title-menu .tm-entry.slot-continue.is-highlighted:not(:disabled) { color: var(--gold); font-weight: 700; }
+.title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
+.set-range { touch-action: pan-x; min-height: var(--tap-floor); }
+.cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
+.cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
+
+
+/* Reserve room for the above-card control in Inventory scroll content. */
+.armoury .disc-faces:has(.poker-inventory-face) { padding-top:64px; }
+
+.armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
+
+/* Leave space inside scrollports for the above-card control, including wrapped rows. */
+:is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
+  padding-top: 64px; row-gap: 64px;
+}
+/* Reward-card status stack, top to bottom: Information, NEW, card.
+   These three variables are the only placement knobs a theme or future card
+   size needs. The empty Information lane is reserved so revealing it never
+   pushes the row or the card under the player's pointer. */
+.reward-door .reward-row {
+  --reward-status-gap: 6px;
+  --reward-new-badge-height: calc(1.08rem + 6px);
+  --reward-status-stack-height: calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--reward-new-badge-height) + var(--reward-status-gap) + var(--reward-status-gap));
+}
+.reward-door .reward-row:has(.card[data-new='1']) {
+  padding-top: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
+  row-gap: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
+}
+.mount-row.card-inspection-target { position: relative; padding-right: 54px; }
+/* Focusing a selected card must retain its inspection gutter in scrollports. */
+.card-inspection-target { scroll-margin-top: 64px; }
+
+/* Inspection shows the complete face; compact pickers retain their text budget. */
+.card-inspection-art > .card { min-height:308px; }
+.card-inspection-modal .card-inspection-art > .card { height:auto; aspect-ratio:auto; }
+.card-inspection-art > .card .cd-body { flex:0 0 auto; height:auto; overflow:visible; }
+.card-inspection-art > .card .ctext { display:block; flex:0 0 auto; overflow:visible; -webkit-line-clamp:unset; }
+@container game-viewport (max-width:600px) {
+  .card-inspection-modal .card-inspection-layout { grid-template-columns:minmax(0,1fr); }
+  .card-inspection-modal .card-inspection-art { width:100%; max-width:var(--card-w-inspect,384px); }
+}
+/* Green means the primary action is ready; native/ARIA disabled states remain muted.
+   A DANGER PRIMARY IS NOT GREEN. Green is "go" (Constantine, 2026-09-04); a
+   loss that is the way forward — Overwrite, Delete — keeps the danger tint
+   from `button.primary.danger` above. This rule's four :not()s outrank that
+   two-class rule, so without the exclusion every ready danger door painted
+   its red button green (measured on the title's Overwrite and Delete doors,
+   2026-09-11: background rgb(37, 92, 57) on both). */
+/* The positive (ready) role, one home; the End Turn exception below reuses it. */
+:root { --control-positive-fill:#255c39; --control-positive-border:#6fb580; --control-positive-text:#f0fff3; }
+button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
+}
+button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
+.as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
+  background-color:var(--control-positive-fill);
+}
+/* COLOR-INTERACTION-CONTRACT §3 (models/ControlAppearance.js): exits stay
+   brown/gold until highlighted by pointer, keyboard or pad, then turn red. */
+.as-btn[data-control-role='exit']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color:var(--danger); color:var(--parchment);
+}
+.modal-close[data-control-role='exit']:is(:hover, :focus-visible, .gp-focus) > .modal-close-face { border-color:var(--danger); color:var(--danger); }
+/* Registered exception combatEndTurn: a legal early end is neutral at rest and
+   green while highlighted; spent actions already mark it ready above. */
+.as-btn[data-control-exception='combatEndTurn']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
+}
+button.primary:disabled, button.primary[aria-disabled='true'],
+.as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
+  background-color:var(--panel); border-color:var(--line); color:var(--muted);
+}
+/* Modal height is independent of its standard width. Keep chrome pinned and
+   let the body scroll at its natural text/art size. */
+/* The veil's vertical padding and the door's height ceiling are ONE pair of
+   numbers: the ceiling used to subtract a literal 24px that matched neither
+   the 8px minimum nor a notched phone's insets, so a content-tall door could
+   paint under the home indicator. Insets are divided by the zoom for the
+   reason combat.css's --safe-*-local are: an env() length inside the zoomed
+   body renders at env x zoom, which under-covers the notch at every zoom
+   below 1. */
+.modal-veil:not(dialog), .as-veil {
+  --veil-pad-top: max(8px, calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1)));
+  --veil-pad-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)));
+  padding: var(--veil-pad-top) max(8px, calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1))) var(--veil-pad-bottom) max(8px, calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1)));
+}
+.modal, .as-modal { max-height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); min-height: 0; }
+.modal[data-height='long'], .as-modal[data-height='long'] { height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)); }
+/* A short viewport (the decider's own `data-short`, written by main.js): the
+   railed doors give up their fixed share and follow their body, and the
+   veil's ceiling above still caps them. */
+:root[data-short='true'] .modal[data-size='lg'], :root[data-short='true'] .modal[data-size='xl'],
+:root[data-short='true'] .as-modal[data-size='lg'], :root[data-short='true'] .as-modal[data-size='xl'] { height: auto; }
+.modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
+/* SCROLL LOCK. modalManager.js writes the open-modal count on <html>; while any
+   modal is open the page behind it does not scroll. base.css already pins
+   `html, body { overscroll-behavior: none }` and the doors' own bodies keep
+   `contain` above, so a drag inside a door never chains to the page. */
+html[data-modal-depth]:not([data-modal-depth="0"]) body { overflow: hidden; }
+.as-pane > * { flex-shrink: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
+/* Ready actions rise slightly without moving surrounding layout. */
+button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:background-color 480ms ease, border-color 480ms ease, color 480ms ease, scale 480ms ease, translate 480ms ease, box-shadow 480ms ease; }
+button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+.as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  scale:1.015; translate:0 -2px; box-shadow:0 4px 10px #0005;
+}
+/* The lift's shadow used to replace a box-shadow ring here; the ring is an
+   OUTLINE now (--focus-ring, base.css), so lift and ring never compete. */
+.modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  flex-direction:column; align-items:stretch;
+}
+.modal-foot:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:none; }
+/* THE WAY ON IS ON THE RIGHT; THE WAY BACK IS ON THE LEFT. Constantine,
+   2026-09-11: "progression buttons should be on the right, and back buttons
+   should be on the left". `modalFooter()` already builds the row in that
+   order — every secondary, then the one primary — and `.modal-btnrow` lays it
+   out as equal grid tracks, which is the owner's earlier rule from
+   2026-09-03: "make primary and secondary buttons at the bottom uniform in
+   size" (tools/modal-shell-contract.mjs asserts those equal tracks). So a
+   ready primary needs NOTHING here but the full width of the foot to divide.
+
+   IT USED TO TAKE MORE THAN THAT, AND THAT IS WHAT PUT IT ON THE LEFT. The
+   block replaced the ladder's tracks with `grid-template-columns:repeat(2,
+   minmax(0,1fr))` and gave the primary `grid-column:1 / -1; order:1`,
+   intending a full-width row of its own. Grid does not place it that way: the
+   ordered item takes the explicit two-track span, the auto-placed secondary
+   is pushed into an IMPLICIT third track, and the line reads primary-then-back
+   from the left. Measured at 1280x800 before this change — creation's foot
+   computed `grid-template-columns: 383.47px 383.47px 383.47px`, Begin at x=10
+   spanning 842px and Back at x=854; the title's slot picker did the same with
+   Continue at x=424 and Back at x=717.
+
+   A FLEX ROW IS NOT THE FIX EITHER, measured rather than assumed: the ladder's
+   buttons carry `min-width:0` with an ellipsis, so a primary on `flex:1 1 auto`
+   shrank Back to a 32px box with the word gone — on both surfaces, and
+   `flex:0 0 auto` on the secondaries did not bring it back. The tracks stay;
+   only the overrides go. The emphasis this block was written for is the
+   primary's colour, lift and focus ring above, none of which moved. */
+.modal-foot-actions:has(> .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  width:100%; margin-left:0;
+}
+.modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  max-width:none; min-width:0;
+}
+/* A lone exit (pile, flask, combatant door) lost `.primary` with its role;
+   it still spans the foot it is the only way out of. */
+.modal-foot-actions:has(> [data-control-role='exit']:only-child) { width:100%; margin-left:0; }
+.modal-foot-actions > [data-control-role='exit']:only-child { max-width:none; min-width:0; }
+/* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
+   stacked ready-primary foot above is for a door whose primary is the one
+   thing left to do; here Back is a real way out, and Constantine (2026-09-11):
+   "continue and done etc confirmation buttons should be on the right, and
+   back buttons on the left". Scoped to this foot; every other door keeps the
+   stack. */
+.modal-foot.cz-actions:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  flex-direction:row; align-items:center;
+}
+.modal-foot.cz-actions:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) > .modal-foot-note { display:block; }
+.modal-foot.cz-actions > .modal-foot-actions:has(> .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false'])) {
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); grid-template-columns:none;
+  width:min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px)); margin-left:auto;
+}
+.modal-foot.cz-actions > .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+  grid-column:auto; order:0; width:auto;
+}
+@media (prefers-reduced-motion:reduce) { button.primary, .as-btn.primary, button.primary.beat-hold, .as-btn.primary.beat-hold { transition:none; } }
+body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transition:none; }
+/* Pending confirmations keep their explanatory text even on narrow screens. */
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) { flex-wrap:wrap; }
+.modal-foot:not(:has(> .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']))) > .modal-foot-note { display:block; flex:1 1 100%; }
+.modal-foot > .modal-foot-note > span { visibility:visible; white-space:normal; overflow:visible; }
+/* Redrawn ready controls fade in too; hold progress itself remains uneased. */
+@starting-style {
+  button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
+  .as-btn.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
+    background-color:color-mix(in srgb, var(--gold) 20%, var(--panel));
+    border-color:var(--gold); scale:1; translate:0 0; box-shadow:none;
+  }
+}
+
+/* Local entrance preview: one activation lights the city and crossfades
+   into the hall before releasing the real title menu. */
+.startup-gate { background: #100e0b; }
+.startup-gate .tower-scene,
+.tower-scene .tower-exterior,
+.tower-scene .tower-city-unlit,
+.tower-scene .tower-city-lit,
+.tower-scene .tower-hall {
+  position: absolute; inset: 0; pointer-events: none;
+  background-position: center; background-size: cover;
+}
+.startup-gate .tower-scene { z-index: 0; overflow: hidden; }
+.tower-city-unlit { background-image: url('../assets/bg/river-citadel-unlit.webp'); }
+.tower-city-lit { background-image: url('../assets/bg/river-citadel-lit.webp'); opacity: 0; }
+.tower-hall { opacity: 0; background: #080705; }
+.tower-interior-city, .tower-door-frame {
+  position: absolute; inset: 0; pointer-events: none;
+  background-position: center; background-size: cover;
+}
+.tower-interior-city {
+  background-image: url('../assets/bg/tower-city-background-unlit.webp');
+  filter: brightness(.28) saturate(.82);
+}
+.tower-door-frame {
+  background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall.webp');
+  -webkit-mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+  mask: url('../assets/bg/tower-door-mask.svg') center / cover no-repeat;
+}
+.startup-gate::after {
+  background: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)),
+    radial-gradient(ellipse at center, rgba(7,6,4,.25), rgba(7,6,4,.5));
+}
+.startup-gate .startup-ash-field { opacity: 0; }
+.startup-gate.is-revealing { opacity: 1; }
+.startup-gate.is-revealing > .as-titlemenu,
+.startup-gate.is-revealing > .build-stamp { animation: towerLockupAway 380ms ease both; }
+.startup-gate.is-revealing .tower-city-lit { animation: towerLightsWake var(--tower-light-ms) ease both; }
+.startup-gate.is-revealing .tower-exterior { animation: towerExteriorFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
+.startup-gate.is-revealing .tower-hall { animation: towerHallFade var(--tower-fade-ms) ease var(--tower-fade-delay) both; }
+@keyframes towerLockupAway { to { opacity: 0; } }
+@keyframes towerLightsWake { from { opacity: 0; } to { opacity: 1; } }
+@keyframes towerExteriorFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes towerHallFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.title-screen { background: #080705; }
+.title-screen::before { background: none; }
+.title-screen > .tower-hall { position: absolute; inset: 0; z-index: 0; opacity: 1; pointer-events: none; }
+.title-screen .tower-door-frame { animation: towerDoorBreathe 5500ms ease-in-out infinite alternate; }
+@keyframes towerDoorBreathe { from { opacity: 1; } to { opacity: .92; } }
+.reduced-motion .title-screen .tower-door-frame,
+:root[data-ambient='off'] .title-screen .tower-door-frame { animation: none; }
+.title-screen .as-titlemenu { text-shadow: 0 2px 12px #090705; }
+.startup-wordmark, .title-screen .tm-name { position: relative; isolation: isolate; }
+.startup-wordmark::before, .title-screen .tm-name::before {
+  content: ''; position: absolute; inset: -.14em -.25em; z-index: -1;
+  pointer-events: none; border-radius: .18em;
+  background: linear-gradient(90deg, transparent, rgba(7,6,4,.68) 15%, rgba(7,6,4,.68) 85%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent);
+  animation: titleBackdropIn 850ms ease both;
+}
+@keyframes titleBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+.reduced-motion .startup-wordmark::before,
+.reduced-motion .title-screen .tm-name::before { animation: none; }
+.tower-preview-replay {
+  margin-top: .8rem; padding: .5rem 1rem; min-height: 3.2rem;
+  color: var(--gold); border: 1px solid rgba(190,160,95,.3);
+  background: rgba(8,7,5,.65); font-size: 1.1rem; letter-spacing: .08em;
+  cursor: pointer; border-radius: 2px;
+}
+.tower-preview-replay:hover, .tower-preview-replay:focus-visible { border-color: var(--gold); color: var(--parchment); }
+@container game-viewport (orientation: portrait) {
+  .tower-door-frame {
+    background-image: linear-gradient(180deg, rgba(8,7,5,.28), rgba(8,7,5,.48)), url('../assets/bg/tower-entrance-hall-phone.webp');
+    -webkit-mask-image: url('../assets/bg/tower-door-mask-phone.svg');
+    mask-image: url('../assets/bg/tower-door-mask-phone.svg');
+  }
+}
+.startup-gate.tower-calm .tower-exterior,
+.startup-gate.tower-calm .tower-city-lit,
+.startup-gate.tower-calm .tower-hall,
+.startup-gate.tower-calm > .as-titlemenu,
+.startup-gate.tower-calm > .build-stamp { animation: none; }
+.startup-gate.tower-calm .tower-exterior { opacity: 0; }
+.startup-gate.tower-calm .tower-hall { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .title-screen .tower-door-frame { animation: none; }
+  .startup-gate > .as-titlemenu, .startup-gate .tm-foot { animation: none; }
+  .startup-wordmark::before, .title-screen .tm-name::before { animation: none; }
+}
+@container game-viewport (max-width: 360px) and (orientation: portrait) {
+  .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
+}

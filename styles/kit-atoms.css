@@ -1,0 +1,418 @@
+/* styles/kit.css — THE COMPONENT KIT, in the game.
+   ───────────────────────────────────────────────────────────────────────────
+   Every player-facing surface is composed from the pieces in this file and
+   nothing else. The vocabulary is the kit artifact's (§03 sub-components,
+   §04 assemblies, §05 bodies, §07 menus, §08 tooltips, §10 cards), under the
+   same names, so a rule read on the kit page is the rule that runs here.
+
+   THE SHELL'S OWN CLASSES ARE KIT ASSEMBLIES UNDER THE REPO'S NAMES. The kit
+   page called them `.as-head`, `.as-foot`, `.as-iconbtn`, `.as-btnrow`; the
+   game had already named the same assemblies `.modal-head`, `.modal-foot`,
+   `.modal-iconbtn`/`.modal-close`, `.modal-btnrow`, and thirty tools read
+   those names off the rendered page. So this file styles BOTH spellings with
+   one rule each — the repo name is the hook, the kit name is the recipe — and
+   nothing in styles/ui.css may draw shell chrome any more.
+
+   SCALE. The kit page was authored at a 15px root; this game's root is 10px
+   (html { font-size: 62.5% }). Every kit rem is ×1.5 here, once, at the
+   declaration — never at a call site. Radii are px in both, unchanged.
+
+   LAWS KEPT: no vw/vh (the body is zoomed by --ui-zoom); the tap floor is
+   --tap-floor and the icon box is --iconbtn-size (base.css); rem for type
+   and the boxes that hold it, px for geometry that must not scale with type;
+   one home per fact.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* the kit's own two page tokens the game lacked */
+  --ink-dim: #b9ac91;
+  --rule: #2a2419;
+  --r-pill: 999px;
+}
+
+/* ═══ TEXT ATOMS ════════════════════════════════════════════════════════════ */
+.as-eyebrow { display: block; font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.as-title-l { --track: 0.05em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--parchment); }
+.as-title-m { margin: 0; font: 600 2.25rem/1.1 var(--font-display); letter-spacing: 0.03em; color: var(--parchment); }
+.as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); }
+.as-subtitle { margin: 0; color: var(--muted); font-size: 1.32rem; line-height: 1.4; }
+.as-hairline { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.as-status { color: var(--muted); font-size: 1.2rem; text-align: right; }
+.as-flavor { color: var(--muted); font-style: italic; font-size: 1.28rem; }
+.as-prose { margin: 0; color: var(--parchment); font-size: 1.4rem; line-height: 1.5; }
+.as-prose + .as-prose { color: var(--muted); font-size: 1.3rem; }
+/* Ornament — the only decorative atom, spent on the title screen and on a
+   decision. It marks "you are being asked something". */
+.as-ornament { display: flex; align-items: center; gap: 1.05rem; color: var(--gold); }
+.as-ornament::before, .as-ornament::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line-soft)); }
+.as-ornament::after { background: linear-gradient(270deg, transparent, var(--line-soft)); }
+.as-ornament span { font-size: 0.9rem; line-height: 1; }
+
+/* ═══ CONTAINMENT — a label can never leave its control ═════════════════════ */
+/* THE RECIPE, on the shell's own text-bearing controls, as one rule: the
+   defect was found five times on five controls and is fixed once. */
+.modal-btnrow > button, .modal-tab, .modal-head-status, .modal-foot-note > span, .modal-head-id h2 {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btn, .as-tab, .modal-tab, .as-railitem, .as-seg button, .as-iconbtn,
+.as-pill, .as-tag, .as-chip .cv, .as-chip .ck,
+.as-row > .r-label, .as-option .on, .cb-name, .cd-name, .as-status,
+.as-statrow .sr-name, .as-detailcard .dc-name, .modal-head-status,
+.as-labelstack .ls-label, .as-labelstack .ls-hint,
+.as-meter .m-label, .as-meter .m-value, .as-statpair .sp-k, .as-statpair .sp-v {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.as-btnrow, .as-head, .as-head-id, .as-head-actions, .as-row, .as-option,
+.as-statrow, .as-statstrip, .as-kitline, .as-tabs, .as-pane-head, .as-labelstack,
+.as-meter, .as-meter > .m-plate, .as-meters, .as-cluster, .as-band-row,
+.as-detailbody, .as-detailbody .lines { min-width: 0; }
+.as-btnrow > *, .as-row > *, .as-option > *, .as-statrow > *, .as-pane-head > * { min-width: 0; }
+
+/* Text in a flex heading needs its own shrinking box: ellipsis cannot paint
+   on an anonymous flex text item. Badges and controls keep their own space. */
+.as-label-text { display: block; flex: 0 1 auto; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-option .on, .as-face .on { min-width: 0; max-width: 100%; }
+.as-option .on > :not(.as-label-text), .as-face .on > :not(.as-label-text) { flex: 0 0 auto; max-width: 100%; }
+.as-option, .as-face, .as-detailcard, .as-optionrow, .as-options, .as-statpair, .as-kitline .ki { min-width: 0; max-width: 100%; }
+.as-option .ob, .as-face .ob, .as-option .ob > *, .as-face .ob > *, .as-detailcard > * { min-width: 0; max-width: 100%; }
+.as-option .od, .as-option .om, .as-face .od, .as-face .om,
+.as-detailcard, .as-prose, .as-subtitle, .as-flavor, .as-labelstack .ls-hint,
+.as-statrow .sr-hint, .as-blocker { overflow-wrap: anywhere; }
+.as-detailcard .dc-name { white-space: normal; }
+.as-row > .r-trail, .as-option > .r-trail { min-width: 0; max-width: 50%; flex-wrap: wrap; }
+.as-row > .r-trail > *, .as-option > .r-trail > * { min-width: 0; max-width: 100%; }
+button, .as-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══ CONTROL ATOMS ═════════════════════════════════════════════════════════ */
+/* Button — three weights, no fourth. The base `button` element IS the kit's
+   secondary button, so a screen that writes <button> gets the kit for free
+   and nothing can draw a fourth weight by omitting a class. */
+button, .as-btn {
+  min-height: var(--tap-floor);
+  padding: 0.75rem 1.65rem;
+  text-align: center; white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  font: 500 1.38rem/1 var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+button:hover, .as-btn:hover, button:focus-visible, .as-btn:focus-visible { background: var(--panel); border-color: var(--gold); }
+button:disabled, .as-btn:disabled, .as-btn[aria-disabled="true"] { border-color: var(--line); color: var(--muted); background: var(--panel); cursor: default; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.38rem; padding: 0.75rem 1.65rem; }
+button.primary, .as-btn.primary { background-color: color-mix(in srgb, var(--gold) 20%, var(--panel)); border-color: var(--gold); color: var(--parchment); font-weight: 600; }
+button.primary:hover, .as-btn.primary:hover { background-color: color-mix(in srgb, var(--gold) 30%, var(--panel)); }
+button.primary:disabled, .as-btn.primary:disabled { background-color: var(--panel); border-color: var(--line); color: var(--muted); }
+button.danger, .as-btn.danger, button.subtle.danger { border-color: var(--danger); color: var(--danger); background: var(--panel); }
+button.danger:hover, .as-btn.danger:hover { background: rgba(212, 98, 46, 0.08); }
+/* A loss is the way forward on a danger door: primary weight, danger colour. */
+/* Opaque on purpose: the same tint over the panel, mixed rather than layered,
+   so the face has one colour a contrast check (and a screenshot) can read.
+   background-color, not background: the hold-progress image lives on the same
+   element and a colour rule must never reset it. */
+button.primary.danger, .as-btn.primary.danger { background-color: color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color: var(--danger); color: var(--parchment); }
+button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: color-mix(in srgb, var(--danger) 24%, var(--panel)); }
+
+/* IconButton — ONE tap-safe box for every header action, close included. A
+   LENGTH, not a floor: --iconbtn-size (base.css), the same on every component. */
+.as-iconbtn, .modal-iconbtn, .modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;
+  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+  color: var(--parchment);
+  font: 400 1.6rem/1 var(--font-body);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.as-iconbtn:hover, .modal-iconbtn:hover, .modal-close:hover,
+.as-iconbtn:focus-visible, .modal-iconbtn:focus-visible, .modal-close:focus-visible { border-color: var(--gold); color: var(--gold); background: var(--panel); }
+
+/* Close keeps the full accessible hit target above, while its visible square
+   is 75% of that target. Every modal inherits the same smaller corner mark. */
+/* Match button.subtle specificity so its text-button padding cannot crush the icon. */
+button.modal-close { position: relative; padding: 0; background: transparent; border-color: transparent; }
+.modal-close > .modal-close-face {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 75%; height: 75%; flex-shrink: 0; pointer-events: none;
+  font: 24px/1 Arial, sans-serif;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+}
+.modal-close:hover, .modal-close:focus-visible { background: transparent; border-color: transparent; }
+.modal-close:hover > .modal-close-face, .modal-close:focus-visible > .modal-close-face { border-color: var(--gold); }
+
+/* ButtonRow — a grid of EQUAL tracks; the row is min(box, n × step). */
+.as-btnrow, .modal-btnrow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch; gap: 8px; min-width: 0;
+  --n: 1; --step: 15rem;
+  width: min(100%, calc(var(--n) * var(--step) + (var(--n) - 1) * 8px));
+}
+.as-btnrow:has(> :nth-child(2):last-child), .modal-btnrow:has(> :nth-child(2):last-child) { --n: 2; }
+.as-btnrow:has(> :nth-child(3):last-child), .modal-btnrow:has(> :nth-child(3):last-child) { --n: 3; }
+.as-btnrow:has(> :nth-child(4):last-child), .modal-btnrow:has(> :nth-child(4):last-child) { --n: 4; }
+.as-btnrow:has(> :nth-child(5):last-child), .modal-btnrow:has(> :nth-child(5):last-child) { --n: 5; }
+.as-btnrow[data-size="short"],  .modal-btnrow[data-size='short']  { --step: 10rem; }
+.as-btnrow[data-size="medium"], .modal-btnrow[data-size='medium'] { --step: 15rem; }
+.as-btnrow[data-size="long"],   .modal-btnrow[data-size='long']   { --step: 21rem; }
+.as-btnrow[data-size="fill"],   .modal-btnrow[data-size='fill']   { width: 100%; }
+.as-btnrow > button, .modal-btnrow > button {
+  container-type: inline-size;
+  padding-inline: clamp(0.5rem, 8%, 1.4rem);
+  font-size: clamp(1.1rem, 9cqi, 1.38rem);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.as-btnrow > button[data-size="square"], .modal-btnrow > button[data-size='square'] {
+  aspect-ratio: 1; width: auto; height: auto; justify-self: start;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0;
+}
+.as-btnrow.end, .modal-btnrow.end { justify-content: end; margin-left: auto; }
+.as-btnrow.center, .modal-btnrow.center { margin-inline: auto; }
+/* A button that carries an identity (a flask's art + name) keeps the art
+   inside its own box: the line grows to the art, never the reverse. */
+.as-btnrow > button:has(.flask-identity), .modal-btnrow > button:has(.flask-identity) { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; line-height: 1.3; }
+
+/* Tab — switches SUBJECT. Underline, no box. */
+.as-tabs, .modal-tabs { display: flex; gap: 0.2rem; min-width: 0; }
+.as-tab, .modal-tab {
+  min-height: var(--tap-floor);
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 0; border-bottom: 2px solid transparent;
+  border-radius: var(--r-2) var(--r-2) 0 0;
+  color: var(--ink-dim);
+  font: 500 1.38rem/1 var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.as-tab[aria-selected="true"], .modal-tab[aria-selected="true"], .modal-tab.on, .as-tab.on { color: var(--gold); border-bottom-color: var(--gold); background: transparent; }
+.as-tab:hover, .modal-tab:hover, .as-tab:focus-visible, .modal-tab:focus-visible { color: var(--parchment); background: transparent; border-color: transparent; border-bottom-color: var(--line-soft); box-shadow: none; }
+.as-tab[aria-selected="true"]:hover, .modal-tab[aria-selected="true"]:hover, .modal-tab.on:hover { border-bottom-color: var(--gold); }
+
+/* RailItem — switches SECTION. Bordered, full width of its rail, gold when
+   current. Always in a vertical column. */
+.as-railitem {
+  display: block; width: 100%;
+  min-height: var(--tap-floor);
+  padding: 0.75rem 0.9rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  color: var(--ink-dim);
+  font: 500 1.35rem/1.2 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-railitem:hover { border-color: var(--line-soft); color: var(--parchment); }
+.as-railitem[aria-current="true"], .as-railitem[aria-selected="true"], .as-railitem.on { border-color: var(--gold); color: var(--gold); background: rgba(var(--accent-rgb), 0.08); }
+
+/* Segmented — 2–3 mutually exclusive values, one visible at a glance. */
+.as-seg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: var(--r-2); overflow: hidden; }
+.as-seg button { min-height: calc(var(--tap-floor) - 2px); padding: 0.6rem 1.2rem; background: transparent; border: 0; border-radius: 0; color: var(--ink-dim); font: 500 1.23rem/1 var(--font-body); cursor: pointer; }
+.as-seg button + button { border-left: 1px solid var(--line-soft); }
+.as-seg button:hover, .as-seg button:focus-visible { background: rgba(var(--accent-rgb), 0.06); color: var(--parchment); border-color: var(--line-soft); box-shadow: none; }
+.as-seg button[aria-pressed="true"], .as-seg button.on { background: rgba(var(--accent-rgb), 0.14); color: var(--gold); }
+.as-seg button:disabled { color: var(--muted); background: transparent; }
+
+/* Toggle — a binary setting. The knob is the state; the pill is the track. */
+.as-toggle, .as-switch-track {
+  position: relative; display: inline-block; flex: 0 0 auto;
+  width: 5.2rem; height: 2.8rem; min-height: 0; padding: 0;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.as-toggle .knob, .as-switch-track .knob { position: absolute; top: 0.3rem; left: 0.3rem; width: 2rem; height: 2rem; border-radius: 50%; background: var(--muted); transition: left 140ms, background 140ms; }
+.as-toggle.on, .as-toggle[aria-checked="true"], .as-switch-input:checked + .as-switch-track { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
+.as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob, .as-switch-input:checked + .as-switch-track .knob { left: calc(100% - 2.3rem); background: var(--gold); }
+.as-toggle:disabled, .as-switch-input:disabled + .as-switch-track { opacity: 0.55; cursor: default; }
+/* The switch is a real checkbox (role="switch"): the input covers the label so it takes every tap, Space toggles it
+   from the keyboard, and the track beside it draws the state and the focus ring. */
+.as-switch { position: relative; display: inline-flex; flex: 0 0 auto; cursor: pointer; }
+.as-switch-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.as-switch-input:disabled { cursor: default; }
+.as-switch-input:is(:focus-visible, .gp-focus) + .as-switch-track { outline: 2px solid var(--gold); outline-offset: 2px; }
+.as-switch::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
+/* The drawn pill is 2.8rem × 5.2rem; the finger gets the tap floor around it
+   on both axes. `overflow: visible` because `button { overflow: hidden }`
+   (CONTAINMENT, above) clipped this pseudo to the pill: measured 17–33 px of
+   hit area, the pill's own height, before 2026-09-14. */
+.as-toggle { overflow: visible; }
+.as-toggle::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
+
+/* StatePill — binary state, scannable down a column. */
+.as-pill {
+  display: inline-block; padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+}
+.as-pill[data-on="true"] { border-color: var(--gold); color: var(--gold); }
+.as-pill.round { border-radius: var(--r-pill); font-size: 0.93rem; letter-spacing: 0.1em; }
+
+/* Tag — micro-label in its parent's tint. */
+.as-tag { display: inline-block; padding: 0.08rem 0.5rem; border: 1px solid currentColor; border-radius: var(--r-1); font: 500 0.96rem/1.5 var(--font-body); color: var(--muted); white-space: nowrap; }
+.as-tag.more { border-style: dashed; color: var(--muted); }
+
+/* Keycap */
+.as-keycap {
+  display: inline-grid; place-items: center;
+  min-width: 2rem; padding: 0.08rem 0.4rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+  font: 500 1.05rem/1.5 var(--font-body); color: var(--ink-dim);
+}
+
+/* Glyph — an icon column wide enough that labels align with or without one.
+   `min-width` and not a fixed basis: a keyboard or a die is a WIDE emoji (⌨ is
+   20 px against a 17.5 px column, measured) and a fixed basis clipped it, which
+   is the one thing §02 says a mark may never do. Narrow glyphs still align. */
+.as-glyph { flex: 0 0 auto; min-width: 1.75rem; color: var(--muted); font-size: 1.42rem; line-height: 1; text-align: center; }
+
+/* LabelStack — what a control does, and one line on how. */
+.as-labelstack { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-labelstack .ls-label { font-size: 1.41rem; color: var(--parchment); white-space: nowrap; }
+.as-labelstack .ls-hint { color: var(--muted); font-size: 1.2rem; white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ArtWell — a square that holds a thing's art at a size worth looking at. */
+.as-artwell {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 8.4rem; height: 8.4rem;
+  background: radial-gradient(circle at 50% 40%, #3a1a18, #17110d);
+  border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  font-size: 3.6rem; line-height: 1;
+}
+.as-artwell.sm { width: 5.1rem; height: 5.1rem; font-size: 2.25rem; }
+.as-artwell.cool { background: radial-gradient(circle at 50% 40%, #2b3a44, #12100c); }
+.as-artwell img { width: 100%; height: 100%; object-fit: contain; }
+
+/* DetailCard — an inset, gold-edged card that shows exactly what is at stake. */
+.as-detailcard { display: flex; flex-direction: column; gap: 0.2rem; padding: 1.28rem 1.5rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-3); text-align: left; }
+.as-detailcard .dc-eyebrow { font-size: 1.02rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.as-detailcard .dc-name { margin: 0.1rem 0 0.2rem; font: 600 1.72rem/1.1 var(--font-display); color: var(--gold); }
+.as-detailcard .dc-line { font-size: 1.32rem; font-weight: 600; color: var(--parchment); }
+.as-detailcard .dc-meta { font-size: 1.05rem; letter-spacing: 0.08em; color: var(--muted); }
+.as-detailcard.muted { border-color: var(--line); }
+.as-detailcard.muted .dc-name { color: var(--muted); }
+
+/* ═══ THE TWO LIST ATOMS ════════════════════════════════════════════════════ */
+/* Row — Glyph + label + StatusText + trail. Menus, popovers, action menus. */
+.as-row {
+  display: flex; align-items: center; gap: 1.05rem;
+  width: 100%; min-height: var(--tap-floor);
+  padding: 0.7rem 1.35rem;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 500 1.47rem/1.3 var(--font-body);
+  text-align: left; white-space: nowrap;
+  cursor: pointer;
+}
+.as-row:hover, .as-row:focus-visible { background: var(--panel); border-color: transparent; box-shadow: none; }
+.as-row > .r-label { flex: 0 1 auto; }
+.as-row > .as-status, .as-row > .r-trail { margin-left: auto; }
+.as-row > .as-status + .r-trail { margin-left: 0; }
+.as-row > .as-status { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.as-row .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-row[data-tone="current"], .as-row[data-tone="current"] .as-glyph, .as-row.on, .as-row.on .as-glyph { color: var(--gold); }
+.as-row[data-tone="loss"], .as-row[data-tone="loss"] .as-glyph, .as-row.danger, .as-row.danger .as-glyph { color: var(--danger); }
+.as-row[aria-disabled="true"], .as-row:disabled { color: var(--muted); cursor: default; background: transparent; }
+.as-row[aria-disabled="true"]:hover, .as-row:disabled:hover { background: transparent; }
+/* The settings variant: same grammar, hairline between, no hover fill — a
+   settings row is read, not chosen. It may wrap its control under the label
+   when the pane is narrow, and it never clips a hint. */
+.as-row.setting { padding: var(--modal-inset, 1.4rem); border-bottom: 1px solid var(--rule); cursor: default; white-space: normal; flex-wrap: wrap; row-gap: 0.6rem; }
+.as-row.setting:hover { background: transparent; }
+.as-row.setting:last-child { border-bottom: 0; }
+.as-row.setting > .as-labelstack { flex: 1 1 18rem; }
+.as-row.setting > .r-trail { margin-left: auto; }
+.as-row.setting > .r-trail input[type="text"] { width: 100%; }
+
+/* OptionCard — choosing between things, not settings. */
+.as-options { display: flex; flex-direction: column; gap: 1.05rem; width: 100%; }
+.as-option {
+  position: relative;
+  display: flex; gap: 1.5rem; align-items: center;
+  width: 100%;
+  padding: 1.28rem 3.3rem 1.28rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  color: inherit; text-align: left; white-space: normal;
+  font: inherit;
+  cursor: pointer;
+}
+.as-option:hover { border-color: var(--line-soft); background: var(--panel); }
+.as-option::after { content: '›'; position: absolute; top: 50%; right: 1.28rem; transform: translateY(-50%); color: var(--muted); font-size: 1.72rem; line-height: 1; }
+.as-option:hover::after, .as-option[aria-checked="true"]::after, .as-option[aria-pressed="true"]::after { color: var(--gold); }
+/* Selection changes colour, never footprint: 1px border in both states, halo by shadow. */
+.as-option[aria-checked="true"], .as-option[aria-pressed="true"], .as-option.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
+}
+.as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+/* Original class symbols follow the existing 2.25rem font inside its 3rem slot. */
+.as-option .og > .engraved-glyph { width:1em; height:1em; }
+.as-option .relic-art { width: 3rem; height: 3rem; }
+.tray-icon > .relic-art { width: 100%; height: 100%; }
+.as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.as-option .on { display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; }
+.as-option .od { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.as-option .om { margin: 0; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
+.as-option > .r-trail { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+.as-option.noarrow > .r-trail { margin-right: 0; }
+.as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
+.as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
+.as-option.noarrow { padding-right: 1.5rem; }
+/* `.class-pick` (§ SCREENS) re-declares the padding at 1.5rem all round, and
+   an OptionCard that is also a class-pick kept its chevron: the last word of a
+   two-line description ran under the › (measured on the Reaver and Herald rows,
+   2026-09-11 — text edge 17 px from the border, chevron 12.8 px in). The arrow
+   side keeps the OptionCard's own clearance. */
+.as-option.class-pick:not(.noarrow) { padding-right: 3.3rem; }
+.as-option.noarrow::after { content: none; }
+/* A row of an option and a trailing IconButton (delete) share one height. */
+.as-optionrow { display: flex; align-items: stretch; gap: 0.75rem; }
+.as-optionrow > .as-option { flex: 1 1 auto; }
+.as-optionrow > .as-iconbtn { align-self: center; }
+
+/* ═══ NUMBER ATOMS ══════════════════════════════════════════════════════════ */
+.as-statrow { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1.05rem 1.35rem; border: 1px solid var(--rule); border-radius: var(--r-2); background: var(--bg-raise); }
+.as-statrow + .as-statrow { margin-top: 0.6rem; }
+.as-statrow .sr-id { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.as-statrow .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); white-space: nowrap; }
+.as-statrow .sr-vals { margin-left: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.2rem 1.2rem; text-align: right; }
+.as-statrow.drill { cursor: pointer; }
+.as-statrow.drill:hover { border-color: var(--line-soft); }
+.as-statrow.drill::after { content: '›'; align-self: center; color: var(--muted); font-size: 1.65rem; line-height: 1; }
+.as-statpair { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; }
+.as-statpair .sp-k { font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-statpair .sp-v { font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-delta { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.as-delta .d-from { color: var(--muted); font-weight: 600; }
+.as-delta .d-arrow { color: var(--muted); }
+.as-delta .d-to { font-weight: 700; }
+.as-delta[data-dir="up"] .d-to { color: var(--green); }
+.as-delta[data-dir="down"] .d-to { color: var(--danger); }
+.as-delta[data-dir="flat"] .d-to { color: var(--parchment); }
+.as-blocker { padding: 1.05rem 1.35rem; border: 1px solid var(--danger); border-radius: var(--r-2); background: rgba(212, 98, 46, 0.08); color: var(--danger); font: 600 1.42rem/1.3 var(--font-body); }
+.as-blocker.pinned { margin-top: auto; }
+.as-blocker.in-foot { flex: 0 1 auto; min-width: 0; padding: 0.6rem 1.05rem; font-size: 1.32rem; }
+.as-blocker.in-foot::before { content: '⚠ '; }
+
+/* StatChip / KitLine — an option card's FACTS, on one baseline, one gap. */
+.as-statstrip, .as-kitline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem 1.35rem; margin: 0.6rem 0 0; }
+.as-kitline { font-size: 1.28rem; color: var(--ink-dim); }
+.as-chip { display: inline-flex; align-items: baseline; gap: 0.45rem; white-space: nowrap; cursor: help; }
+.as-chip .ck { border-bottom: 1px dotted var(--line-soft); font-size: 0.93rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.as-chip .cv { font: 600 1.42rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+.as-chip:hover .ck { border-bottom-color: var(--gold); color: var(--ink-dim); }
+.as-kitline .ki { display: inline-flex; align-items: baseline; gap: 0.5rem; cursor: help; }
+.as-kitline .ki .kg { flex: 0 0 auto; color: var(--gold); }
+.as-kitline .ki .kn { border-bottom: 1px dotted var(--line-soft); }
+.as-kitline .ki:hover .kn { border-bottom-color: var(--gold); }
+

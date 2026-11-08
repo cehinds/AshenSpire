@@ -1,0 +1,678 @@
+/* THE CHARACTER SHEET (screens/characterSheet.js): a read-only map of every
+   level. A ladder row is level · XP · grants; reached rows dim, the current
+   row is gold and marked, a milestone (a level that pays more than the
+   every-level draft) carries a gold rule so the eye finds it in a column. */
+.character-sheet .character-sheet-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.character-sheet .cs-pane { position: relative; display: flex; flex-direction: column; gap: .75rem; min-width: 0; min-height: 0; overflow: auto; padding: var(--modal-inset, 1rem); }
+.character-sheet .cs-skills { display: grid; grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); min-height: 0; overflow: hidden; flex: 1 1 auto; }
+.character-sheet .cs-rail .cs-rail-item { white-space: normal; flex: 0 0 auto; }
+.character-sheet .cs-rail .cs-rail-item:not(.touched):not(.own):not(.on) { opacity: .7; }
+.character-sheet .cs-cadence { margin: 0; color: var(--ink-dim); }
+.character-sheet .cs-track-title { margin: 0; }
+.character-sheet .cs-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.character-sheet .cs-row {
+  display: grid; grid-template-columns: 3rem minmax(6.5rem, 8.5rem) minmax(0, 1fr) auto; align-items: center; gap: .4rem .75rem;
+  padding: .5rem .75rem; border: 1px solid var(--line); border-radius: var(--r-sm, 4px); min-height: 44px;
+}
+.character-sheet .cs-row.milestone { border-left: 3px solid var(--gold); }
+.character-sheet .cs-row[data-state="reached"] { opacity: .62; }
+.character-sheet .cs-row[data-state="current"] { border-color: var(--gold); background: rgba(var(--accent-rgb), .1); }
+.character-sheet .cs-row[data-state="next"] { border-style: dashed; border-color: var(--gold); }
+.character-sheet .cs-level { font: 600 1.5rem/1 var(--font-display, serif); color: var(--parchment); text-align: center; }
+.character-sheet .cs-row[data-state="current"] .cs-level { color: var(--gold); }
+.character-sheet .cs-xp { display: flex; flex-direction: column; gap: .1rem; font-variant-numeric: tabular-nums; }
+.character-sheet .cs-total { color: var(--ink-dim); font-size: .85em; }
+.character-sheet .cs-grants { display: flex; flex-wrap: wrap; gap: .3rem; min-width: 0; }
+.character-sheet .cs-grant.routine { opacity: .75; }
+.character-sheet .cs-here { color: var(--gold); white-space: nowrap; }
+@container game-viewport (max-width: 760px) {
+  /* A phone stacks the rail above the ladder as a scrolling strip, and a row
+     puts its grants under the level and XP rather than squeezing a column. */
+  .character-sheet .cs-skills { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .character-sheet .cs-rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .character-sheet .cs-rail .cs-rail-item { width: auto; white-space: nowrap; }
+  .character-sheet .cs-row { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
+  .character-sheet .cs-here { grid-row: 1; grid-column: 3; }
+  .character-sheet .cs-grants { grid-column: 1 / -1; }
+}
+
+/* The bar's layers (fills, its XP text) stay inside the bar's own stacking
+   context, so nothing in it can rise over the Level up that covers it. */
+.reward-door .rp-layered-bar { isolation: isolate; }
+/* LEVEL UP COVERS ITS BAR (SPEC §13.4o): the waiting bar's own cell holds the
+   button over it, so the press sits exactly where the fill stopped. One bar
+   carries it at a time; the rest wait their turn. */
+.reward-door .reward-progress-row.reward-level-ready .reward-level-up { grid-area: bar; justify-self: stretch; align-self: center; position: relative; z-index: 2; width: 100%; min-width: max-content; min-height: max(44px, var(--tap-floor, 44px)); margin: 0; font-size: max(14px, .95rem); }
+.reward-door .reward-progress-row.reward-level-ready .rp-next { visibility: hidden; }
+/* Merchant offers use one readable image/details/action row on every shelf.
+   The native card remains inspectable; its intrinsic card geometry is preserved. */
+.merchant-workspace .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.merchant-workspace .shop-detail[hidden] { display: none; }
+.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+}
+:root .shop-workspace .shop-shelf .merchant-offer {
+  display: grid;
+  grid-template-columns: minmax(0, var(--card-w-glance, 16rem)) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  align-self: stretch;
+  gap: var(--book-gap);
+  min-height: var(--book-min-height);
+  width: 100%;
+  max-width: none;
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+}
+.merchant-offer-media { min-width: 0; display: grid; place-items: center; }
+.merchant-offer-media > img { width: 100%; max-height: 16rem; object-fit: contain; }
+.merchant-offer-media > .book-art { width: 100%; }
+.merchant-offer-media .card, .merchant-offer-media .equipment-poker-card { max-width: 100%; }
+.merchant-offer-media > .shop-inspect-card { width: 100%; padding: 0; border: 0; background: none; }
+.merchant-offer-glyph { display: grid; place-items: center; width: 100%; min-height: 10rem; font-size: 4rem; color: var(--gold); }
+:root .merchant-offer > .merchant-offer-details { min-width: 0; margin: 0; width: auto; text-align: left; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+:root .merchant-offer-details .shop-offer-avail { position: static; text-align: left; }
+.merchant-offer-details > h3 { margin: 0 0 .7rem; color: var(--gold); font-size: 1.8rem; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+.merchant-offer-details > p { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.5; overflow-wrap: anywhere; }
+.merchant-offer-actions { display: grid; gap: .8rem; justify-items: stretch; align-content: center; min-width: 0; }
+.merchant-offer-action.as-btn { width: 100%; min-width: 0; min-height: 44px; white-space: normal; }
+.merchant-offer-price.as-status { color: var(--gold); text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.merchant-workspace .shop-services .class-row { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+@container game-viewport (max-width: 600px) {
+  :root .shop-workspace .shop-shelf .merchant-offer { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: var(--book-compact-gap); padding: var(--book-compact-padding); }
+  .merchant-offer-actions { grid-column: 2; grid-template-columns: minmax(0, 1fr); }
+  .merchant-offer-media { grid-row: 1 / span 2; }
+  .merchant-offer-details { padding-left: var(--book-compact-gap); }
+  .merchant-offer-details > h3 { font-size: 1.5rem; }
+  .merchant-offer-details > p { font-size: 1.2rem; }
+}
+
+/* Character and skill rows share the same aligned columns and visible name. */
+.reward-door .reward-claim-layout > .reward-menu:empty { display: none; }
+.reward-door .reward-claim-layout:has(> .reward-menu:empty) .reward-side { grid-column: 1 / -1; }
+.reward-door .reward-claim-layout[aria-busy='true'] .reward-level-offer { visibility: hidden; }
+.reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: subgrid;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+  gap: 0 .6rem;
+}
+.reward-door .reward-progress-row[data-kind='character'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+  font-size: 1rem;
+}
+.reward-door .reward-progress-row[data-kind='character'].reward-level-ready {
+  grid-template-areas: 'name level' 'bar next' 'gain gain';
+}
+/* Character / Armory / Edit Deck hub. Keep the summary fitted; detail doors scroll. */
+.armoury .armoury-railed { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-view="grid"] .armoury-character { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(0, 1.3fr); grid-template-rows: auto minmax(0, 1fr); gap: .8rem 1.2rem; }
+.armoury[data-view="grid"] .armoury-character-stats { overflow: visible; gap: .6rem; }
+.armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: clamp(12rem, calc(28 * var(--view-vh, 1vh)), 28rem); }
+.character-skill-section { display: grid; gap: .35rem; }
+.character-skill-progression { width: 100%; text-align: left; }
+.progression-summary, .progression-skill-button { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel, #201b16); color: var(--parchment); text-align: left; }
+button.progression-summary, .progression-attributes-toggle { display: flex; flex-direction: column; gap: .55rem; padding: .8rem 1rem; cursor: pointer; }
+.progression-banner-title { font-family: var(--font-display, serif); font-size: 1.6rem; }
+.progression-summary-line { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: 1.3rem; line-height: 1.5; }
+.progression-summary-line > span { white-space: nowrap; }
+.progression-summary-line strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+.progression-attributes-banner { display: flex; align-items: center; gap: .7rem; padding-right: 1rem; }
+.progression-attributes-toggle { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: left; }
+.progression-points { flex: none; border: 1px solid var(--line); border-radius: .4rem; min-height: 44px; padding: .5rem .8rem; font: inherit; font-size: 1.3rem; color: var(--muted); background: transparent; cursor: default; }
+.progression-points.available { color: #e0f2ff; background: #16476c; border-color: #72c5ff; box-shadow: 0 0 .6rem #3faaff40; cursor: pointer; transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.progression-points.available:is(:hover, :focus-visible) { transform: translateY(-2px); background: #205e8e; box-shadow: 0 0 1.4rem #52b8ff90; }
+.progression-attributes-detail { border-top: 1px solid var(--line); padding: .7rem 1rem; }
+.progression-attributes-detail[hidden] { display: none; }
+.progression-attributes-detail > .as-prose { margin: 0 0 .5rem; font-size: 1.2rem; }
+.progression-attributes-detail .cc-attribute-card { margin-block: .3rem; }
+.progression-summary:focus-visible, .progression-skill-button:focus-visible, .progression-attributes-toggle:focus-visible, .progression-points:focus-visible { outline: var(--focus-ring, 2px solid var(--gold)); outline-offset: 2px; }
+.progression-skill-button { display: block; padding: .4rem .6rem; min-height: 44px; cursor: pointer; }
+.progression-skill-button:is(:hover, :focus-visible), button.progression-summary:hover, .progression-attributes-toggle:hover { border-color: var(--gold); background: rgba(var(--accent-rgb), .08); }
+.progression-skill-button .as-meter { pointer-events: none; width: 100%; }
+.character-sheet.progression-hub .character-sheet-body { overflow: auto; }
+.character-sheet.progression-hub .cs-pane { overflow: visible; gap: .65rem; }
+.progression-track-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.progression-feats .as-title-s { margin-block: 0 .3rem; }
+.progression-feat-list, .progression-tags { display: flex; flex-wrap: wrap; gap: .5rem; }
+.progression-levels { border: 1px solid var(--line); border-radius: .4rem; }
+.progression-levels > summary { min-height: 44px; padding: .75rem 1rem; cursor: pointer; }
+.progression-levels .cs-ladder { padding: .8rem; }
+.progression-associated-cards { display: flex; gap: 1rem; overflow-x: auto; padding: .5rem .25rem 1rem; }
+.progression-associated-cards > * { flex-shrink: 0; }
+.progression-inspection .cs-pane { overflow: visible; padding: 0; }
+.progression-inspection .cc-class-resource-grid { flex-wrap: wrap; }
+.progression-inspection .progression-stat-card { width: 100%; }
+.deck-editor:has(> .modal-head) { grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+@container game-viewport (max-width: 680px) {
+  .armoury[data-view="grid"] .armoury-character { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: .6rem; }
+  .armoury[data-view="grid"] .armoury-character > * { grid-column: 1; grid-row: auto; }
+  .armoury[data-view="grid"] .armoury-sprite-pane.as-artwell { height: calc(100px / var(--ui-zoom, 1)); }
+  .progression-track-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-attributes-banner { flex-wrap: wrap; padding: .4rem .7rem; gap: .3rem; }
+  .progression-attributes-toggle { padding: .3rem; }
+  .progression-points { margin-left: auto; font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+  .progression-summary-line { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); gap: .3rem .8rem; }
+  .progression-hub .cs-cadence { font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progression-points.available { transition: none; }
+  .progression-points.available:is(:hover, :focus-visible) { transform: none; }
+}
+
+.progression-inspection > .modal-body { padding: var(--modal-inset, 1.4rem); }
+.progression-points, .progression-skill-button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
+
+:is(.progression-attributes-detail, .progression-stat-card) .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+:is(.progression-attributes-detail, .progression-stat-card) .ls { min-width: 0; }
+
+:is(.progression-attributes-detail, .progression-stat-card) .disc-face > .as-row .ls-hint { white-space: normal; overflow: visible; text-overflow: clip; -webkit-line-clamp: unset; }
+
+/* Feats expose their effect before inspection, using the same framed option motif. */
+.progression-feats-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; }
+.progression-feats-heading .as-title-s { margin: 0; }
+.progression-feat-count { color: var(--muted); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.progression-feat-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+button.progression-feat-card { display: flex; flex-direction: column; align-items: stretch; gap: .55rem; width: 100%; min-width: 0; padding: 1rem 1.2rem; text-align: left; color: var(--parchment); border: 1px solid var(--line-soft); border-radius: var(--r-2); background-color: var(--panel); cursor: pointer; }
+button.progression-feat-card::after { content: none; }
+.progression-feat-topline, .progression-feat-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.progression-feat-name { color: var(--gold); font-family: var(--font-display); font-size: 1.6rem; }
+.progression-feat-state { flex: none; font-size: 1.1rem; color: var(--ink-dim); }
+[data-feat-owned='true'] .progression-feat-state { color: var(--good, #a2be91); }
+.progression-feat-effect { font: 400 1.35rem/1.5 var(--font-body); color: var(--parchment); }
+.progression-feat-footer { margin-top: auto; color: var(--ink-dim); font-size: 1.1rem; }
+.progression-feat-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.progression-feat-tag { border: 1px solid var(--line-soft); padding: .2rem .5rem; border-radius: var(--r-2); }
+.progression-feat-open { font-size: 2rem; line-height: 1; }
+button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--gold); background-color: color-mix(in srgb, var(--panel) 90%, var(--gold)); }
+.progression-feat-empty { padding: .9rem 1.1rem; border: 1px solid var(--line-soft); border-radius: var(--r-2); }
+.progression-feat-empty .as-prose { margin: .3rem 0 0; font-size: 1.25rem; color: var(--ink-dim); }
+@container game-viewport (max-width: 680px) {
+  .progression-feat-list { grid-template-columns: minmax(0, 1fr); }
+  .progression-feat-effect { font-size: max(1.35rem, calc(12px / var(--ui-zoom, 1))); }
+}
+
+/* Starting abilities use combat card faces and explicit multi-pick controls. */
+.cc-equip-group[data-equipment-section="startingAbilities"] { display:flex; flex-direction:column; }
+.cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); grid-row:auto; gap:48px 12px; padding:64px 6px 14px; }
+.cc-ability-choice { display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+.cc-ability-choice > .card { width:100%; max-width:180px; flex-shrink:0; }
+.cc-ability-choose { width:100%; max-width:180px; white-space:normal; text-align:center; }
+.cc-ability-progress { margin:0; flex-shrink:0; }
+
+/* Expanded combat keeps detailed tags in inspection, with one readable type. */
+.expanded-combat-card .ic-text[data-card-binding="tags"] { letter-spacing:.035em; text-transform:uppercase; }
+.expanded-combat-card .ic-text[data-card-binding="rules"] { white-space:normal; line-height:1.2; overflow:visible; }
+.card-upcast-controls { position:absolute; top:100%; left:0; right:0; z-index:80; display:none; align-items:center; gap:4px; padding:3px; background:#1d1913; border:1px solid var(--gold); border-radius:5px; }
+.card:is(.selected,.inspection-selected) > .card-upcast-controls { display:flex; }
+.card-upcast-controls :is(button,select) { min-height:32px; min-width:0; font-size:12px; }
+.card-upcast-rank { flex:1; width:100%; }
+.card-upcast-rank[hidden] { display:none; }
+.combat-expansion-controls { position:absolute; right:8px; bottom:8px; z-index:20; display:flex; flex-direction:column; gap:5px; width:min(260px,44%); padding:0; border:0; background:none; }
+.combat-expansion-controls:empty, .combat-expansion-controls[hidden] { display:none; }
+.combat-recovery-controls { display:flex; flex-wrap:wrap; gap:4px; }
+.combat-recovery-controls button { flex:1 1 100px; min-height:36px; font-size:12px; white-space:normal; }
+@container game-viewport (max-width:600px) { .combat-expansion-controls { width:min(220px,46%); } .combat-recovery-controls button { min-height:44px; } }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,select) { pointer-events:auto; }
+@container game-viewport (max-width:600px) { .card-upcast-controls :is(button,select) { min-height:max(44px, var(--tap-floor)); } }
+
+/* Recovery and pending feat actions have no permanent protection box. */
+.field > .combat-expansion-controls { position:absolute; left:8px; right:auto; top:8px; bottom:auto; z-index:2600; }
+@container game-viewport (max-width:600px) { .field > .combat-expansion-controls { top:48px; } }
+
+/* Positive Blight occupies the open center of the floating header. A phone
+   gives it a full-width row so health, relics and menu controls stay clear. */
+.combat-hud > .combat-blight-hud {
+  position:absolute; top:calc(6px / var(--ui-zoom, 1)); left:50%; transform:translateX(-50%);
+  width:min(calc(600px / var(--ui-zoom, 1)), calc(100% - 460px / var(--ui-zoom, 1)));
+  min-width:0; pointer-events:auto;
+}
+.combat-hud > .combat-blight-hud:empty { display:none; }
+.combat-blight-hud > .ashen-blight { margin:0; padding:.35rem .6rem; border:0; background:#171411bd; }
+.combat-blight-hud .ashen-blight-heading { font-size:max(.8rem, calc(11px / var(--ui-zoom, 1))); line-height:1.2; }
+.combat-blight-hud .ashen-blight-track { height:calc(18px / var(--ui-zoom, 1)); margin:.45rem 0 .15rem; }
+@container game-viewport (max-width:700px) {
+  .combat-hud > .combat-blight-hud { position:relative; top:auto; left:auto; transform:none; width:100%; margin:.25rem auto 0; }
+}
+
+/* Character creation component study: production DOM parts, scoped to this
+   workspace (or an independently mounted specimen). Existing screens retain
+   their kit layout and appearance. Touch/text floors compensate CSS UI zoom. */
+.cc-design-workspace, .cc-page-parts {
+ --cc-body-font:max(16px,calc(16px / var(--ui-zoom,1)));
+ --cc-control-floor:max(48px,calc(48px / var(--ui-zoom,1)));
+ --cc-copy:#e7dec8;
+ --cc-copy-muted:#c0b394;
+ --cc-brass:#bea368;
+ --cc-emerald:#70cb91;
+ color:var(--cc-copy);
+ font-size:var(--cc-body-font);
+}
+.cc-design-workspace { --tap-floor:var(--cc-control-floor); }
+.cc-page-parts { min-width:0; }
+.cc-page-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin:0 0 24px; }
+.cc-page-heading-copy { min-width:0; }
+.cc-page-heading .cc-page-eyebrow { color:var(--cc-brass); font-size:max(14px,calc(14px / var(--ui-zoom,1))); letter-spacing:.1em; }
+.cc-page-heading .cc-page-title { margin:8px 0 12px; color:#d7b45f; font-family:Georgia,serif; font-size:clamp(28px,calc(2.5 * var(--view-vw, 1vw)),38px); line-height:1.2; }
+.cc-page-heading .cc-page-description { margin:0; font-size:var(--cc-body-font); line-height:1.5; color:var(--cc-copy); }
+.cc-part { position:relative; isolation:isolate; overflow:visible; background:#11100c; border:0; min-width:0; }
+.cc-part-material { position:absolute; inset:0; z-index:-2; pointer-events:none; background-image:var(--cc-part-material-url); background-color:#15120e; background-size:360px; opacity:.45; border-radius:4px; }
+.cc-part-trim { position:absolute; inset:0; width:100%; height:100%; z-index:-1; object-fit:fill; pointer-events:none; }
+.cc-part-body { position:relative; min-width:0; }
+.cc-panel { padding:24px; }
+.cc-panel-heading { margin-bottom:20px; }
+.cc-panel-heading .as-title-m { margin:0 0 10px; color:#d7b45f; font-family:Georgia,serif; }
+.cc-panel-heading .as-subtitle { font-size:var(--cc-body-font); line-height:1.5; margin:0; }
+.cc-choice-tile { display:block; width:100%; padding:20px; min-height:164px; color:var(--cc-copy); text-align:left; cursor:pointer; box-shadow:none; }
+.cc-choice-tile .cc-choice-body { display:grid; grid-template-columns:100px minmax(0,1fr); align-items:center; gap:20px; }
+.cc-choice-art { display:flex; align-items:center; justify-content:center; min-width:0; }
+.cc-choice-art > img { max-width:100%; max-height:124px; object-fit:contain; }
+.cc-choice-copy { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.cc-choice-title { color:#d7b45f; font-family:Georgia,serif; font-size:24px; line-height:1.25; }
+.cc-choice-description { color:var(--cc-copy); font-size:var(--cc-body-font); line-height:1.4; white-space:normal; overflow-wrap:break-word; }
+.cc-choice-tile.chosen { outline:2px solid var(--cc-emerald); outline-offset:-2px; }
+.cc-choice-tile.chosen .cc-part-material { background-color:#163e2b; }
+.cc-choice-tile:focus-visible { outline:3px solid var(--cc-emerald); outline-offset:3px; }
+.cc-feat-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,360px); gap:24px; align-items:start; }
+.cc-feat-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; min-width:0; }
+.cc-feat-availability { margin:8px 0 0; max-width:340px; font-size:var(--cc-body-font); line-height:1.45; color:var(--cc-copy-muted); }
+.cc-feat-emblem { position:relative; display:inline-flex; align-items:center; justify-content:center; width:100px; height:100px; flex:none; isolation:isolate; }
+.cc-feat-medallion-material { position:absolute; inset:12%; z-index:-2; border-radius:50%; background:radial-gradient(circle at 40% 30%,#294434,#102018 72%); box-shadow:inset 0 0 16px #080c08; }
+.cc-feat-medallion-trim { position:absolute; inset:4%; z-index:-1; border:2px solid var(--cc-brass); border-radius:50%; box-shadow:0 0 0 4px #19140d,inset 0 0 0 4px #19140d,inset 0 0 0 5px #8f7544; }
+.cc-feat-emblem .engraved-icon { width:54%; height:54%; color:#d7b45f; }
+.cc-feat-detail .cc-part-body { display:flex; flex-direction:column; align-items:center; text-align:center; }
+.cc-feat-detail .cc-feat-emblem { width:218px; height:218px; max-width:100%; margin:12px 0 24px; }
+.cc-feat-detail-title { color:#d7b45f; font-family:Georgia,serif; font-size:30px; line-height:1.25; margin:0; }
+.cc-feat-detail-divider { width:85%; margin:26px 0; }
+.cc-feat-detail-description { font-size:var(--cc-body-font); line-height:1.6; margin:0 0 36px; }
+.cc-step-navigation .as-railitem, .cc-design-workspace .as-railitem,
+.cc-design-workspace button, .cc-design-workspace input, .cc-design-workspace select { min-height:var(--cc-control-floor); }
+.cc-design-workspace input, .cc-design-workspace select, .cc-design-workspace .ls-label,
+.cc-design-workspace .as-optioncard .as-subtitle { font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-ability-progress { font-size:var(--cc-body-font); color:var(--cc-copy-muted); }
+.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-content:start; align-content:start; }
+.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w,14rem); }
+.cc-design-workspace .cc-ability-choose { max-width:var(--card-w,14rem); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
+/* Review uses the same authored resting width for the character, equipment
+   and starter deck. A shelf must not promote its playing cards to focus size. */
+.cc-design-workspace .cc-review :is(.cc-summary-cards, .cc-starter-deck) {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, var(--card-w-glance, 182.4px)), var(--card-w-glance, 182.4px)));
+  justify-content:start;
+  align-items:start;
+}
+.cc-design-workspace .cc-review .card { width:100%; max-width:var(--card-w-glance, 182.4px); }
+@container game-viewport (max-width:960px) {
+ .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
+ .cc-feat-detail .cc-part-body { min-height:300px; }
+ .cc-feat-detail .cc-feat-emblem { width:168px; height:168px; }
+}
+@container game-viewport (max-width:600px) {
+ .cc-page-heading { flex-direction:column; gap:8px; margin-bottom:20px; }
+ .cc-page-heading .cc-page-title { font-size:max(28px,calc(26px / var(--ui-zoom,1))); }
+ .cc-page-heading .cc-page-description, .cc-feat-availability { max-width:none; }
+ .cc-feat-choices { grid-template-columns:minmax(0,1fr); gap:16px; }
+ .cc-choice-tile { padding:18px; }
+ .cc-choice-tile .cc-choice-body { grid-template-columns:88px minmax(0,1fr); gap:16px; }
+ .cc-feat-emblem { width:88px; height:88px; }
+ .cc-choice-title { font-size:max(22px,calc(22px / var(--ui-zoom,1))); }
+ .cc-panel { padding:22px; }
+ .cc-design-workspace .cz-scroll { padding:16px; }
+ .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; }
+ .cc-design-workspace .cc-ability-choice { width:100%; }
+ .cc-design-workspace .cc-ability-choice > .card { max-width:var(--card-w,14rem); }
+ /* Older equipment-fit rules hid its stage picker. The shared navigation
+    must remain reachable on every page, including Equipment and Spells. */
+ .customize.cc-design-workspace:has(#cz-equipment-panel) .as-railed[data-cat-nav="selector"] > .as-catnav-toggle,
+ .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { display:flex!important; min-height:var(--cc-control-floor); }
+ .cc-design-workspace .as-catnav-toggle .as-catnav-face { white-space:normal; font-size:var(--cc-body-font); }
+}
+/* The compact kit selector and its current-step status share one row. */
+.cc-design-workspace .cc-creation-current-step { display:none; }
+.customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1.25fr) minmax(128px,1fr); grid-template-rows:auto minmax(0,1fr); gap:0 12px; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cc-creation-current-step { display:flex; align-items:center; grid-column:1; grid-row:1; min-height:var(--cc-control-floor); margin:10px 0 10px var(--modal-inset); padding:8px 12px; color:var(--cc-copy); background:#163e2b; border:1px solid var(--cc-emerald); border-radius:4px; font-size:var(--cc-body-font); line-height:1.35; visibility:visible; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:2; grid-row:1; margin:10px var(--modal-inset) 10px 0; min-height:var(--cc-control-floor); }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-column:1 / -1; grid-row:2; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { grid-column:1 / -1; }
+.cc-design-workspace .cc-review-edit { min-width:var(--cc-control-floor); min-height:var(--cc-control-floor); }
+/* OptionCard image rules reserve a small illustration slot; decorative kit
+   trim belongs to the complete surface and must never inherit that slot. */
+.cc-page-parts.cc-part > .cc-part-trim { inset:0; width:100%; height:100%; max-width:none; max-height:none; margin:0; object-fit:fill; }
+.cc-design-workspace .cc-choice-tile { min-height:164px; }
+/* Nine-slice the shipped vector frame: corners stay crisp while the middle
+   edges stretch across any panel ratio, without SVG image letterboxing. */
+.cc-page-parts.cc-part > .cc-part-trim { display:block; box-sizing:border-box; border:12px solid transparent; border-image-slice:28; border-image-width:12px; border-image-repeat:stretch; }
+/* Native creation fields retain the same soot/brass palette as kit rows. */
+.cc-design-workspace select { color-scheme:dark; color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); border:1px solid var(--line,#786443); border-radius:var(--r-2,4px); padding:10px 12px; }
+.cc-design-workspace select option { color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); }
+.cc-choice-title { white-space:normal; overflow-wrap:break-word; }
+@container game-viewport (max-width:600px) {
+ .customize.cc-design-workspace .cz-actions { min-width:0; max-width:100%; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); width:100%!important; min-width:0!important; max-width:100%; margin:0!important; gap:8px; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:100%!important; min-width:0!important; max-width:100%; white-space:normal; }
+}
+.cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:16px; }
+@container game-viewport (max-width:600px) { .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:12px; } }
+.cc-feat-groups { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 20px; }
+.cc-feat-group-filter { min-height:var(--cc-control-floor); padding:10px 18px; font-size:var(--cc-body-font); color:var(--cc-copy); }
+.cc-feat-group-filter.on { color:var(--cc-emerald); border-color:var(--cc-emerald); }
+.cc-feat-level-requirement { display:flex; flex-direction:column; gap:7px; margin-top:5px; font-size:max(14px,calc(14px / var(--ui-zoom,1))); line-height:1.45; white-space:normal; }
+.cc-feat-lock-status { display:flex; align-items:center; gap:7px; color:var(--cc-copy-muted); }
+.cc-feat-lock-status .engraved-icon { width:18px; height:18px; flex:none; }
+.cc-feat-lock-status.available { color:var(--cc-emerald); }
+.cc-feat-level-copy { color:var(--cc-copy-muted); }
+.cc-feat-detail .cc-feat-level-requirement { align-items:center; padding-bottom:24px; }
+.cc-feat-detail-description { margin-bottom:22px; }
+@container game-viewport (max-width:600px) {
+ .cc-feat-groups { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+ .cc-feat-group-filter { padding:10px 6px; white-space:normal; }
+}
+/* Equipment's former compact layout suppressed the whole category rail.
+   Opening the shared selector must expose its real tabs on every page. */
+.customize.cc-design-workspace .cz-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { display:flex!important; }
+@container game-viewport (max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
+/* Spells is now its own page rather than an equipment fold. Match its real
+   selector hook and keep card rules readable instead of the old tiny grid. */
+.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
+.cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
+@container game-viewport (max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
+.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
+.cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
+.cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
+
+/* Compact creation study: short benefits on the cards, complete rules in the
+   inspector. Physical desktop sizes compensate the game's UI zoom. */
+@container game-viewport (min-width:601px) {
+ .cc-design-workspace, .cc-page-parts { --cc-body-font:calc(16px / var(--ui-zoom,1)); --cc-control-floor:calc(36px / var(--ui-zoom,1)); }
+ .cc-design-workspace .as-railitem { min-height:var(--cc-control-floor); padding:8px 12px; font-size:var(--cc-body-font); }
+ .cc-design-workspace .cz-actions button { padding:8px 20px; font-size:var(--cc-body-font); }
+}
+.cc-feat-browser .cc-page-heading { gap:16px; margin-bottom:14px; }
+.cc-feat-browser .cc-page-title { font-size:calc(30px / var(--ui-zoom,1)); margin:4px 0 6px; }
+.cc-feat-browser .cc-page-eyebrow { font-size:calc(11px / var(--ui-zoom,1)); }
+.cc-feat-browser .cc-page-description { line-height:1.35; }
+.cc-feat-availability { max-width:250px; font-size:calc(13px / var(--ui-zoom,1)); margin-top:4px; }
+.cc-feat-groups { gap:8px; margin-bottom:14px; }
+.cc-feat-group-filter { padding:6px 14px; }
+.cc-feat-layout { grid-template-columns:minmax(0,1fr) minmax(240px,30%); gap:18px; }
+.cc-feat-choices { gap:12px; }
+.cc-feat-browser .cc-choice-tile { min-height:112px; padding:12px; }
+.cc-feat-browser .cc-choice-body { grid-template-columns:64px minmax(0,1fr) 16px; gap:10px; }
+.cc-feat-browser .cc-feat-emblem { width:64px; height:64px; }
+.cc-feat-browser .cc-choice-copy { gap:6px; }
+.cc-feat-browser .cc-choice-title { font-size:calc(20px / var(--ui-zoom,1)); }
+.cc-feat-browser .cc-choice-description { font-size:calc(14px / var(--ui-zoom,1)); line-height:1.35; }
+.cc-feat-tile-status { display:flex; align-items:center; justify-content:center; color:var(--cc-copy-muted); }
+.cc-feat-tile-status .engraved-icon { width:16px; height:16px; }
+.cc-feat-detail { padding:18px; }
+.cc-feat-detail .cc-feat-emblem { width:108px; height:108px; margin:2px 0 14px; }
+.cc-feat-detail-title { font-size:calc(24px / var(--ui-zoom,1)); }
+.cc-feat-detail-divider { margin:16px 0; }
+.cc-feat-detail-description { line-height:1.45; margin-bottom:14px; }
+.cc-feat-detail .cc-feat-level-requirement { font-size:calc(14px / var(--ui-zoom,1)); padding-bottom:0; gap:6px; }
+.cc-feat-return { display:none; }
+@container game-viewport (max-width:960px) {
+ .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
+ .cc-feat-choices { display:contents; }
+ .cc-feat-browser .cc-choice-tile { order:var(--cc-choice-order); }
+ .cc-feat-detail { order:var(--cc-inspector-order); }
+ .cc-feat-detail .cc-part-body { min-height:0; }
+ .cc-feat-return { display:block; margin-top:14px; min-height:var(--cc-control-floor); padding:8px 18px; font-size:var(--cc-body-font); }
+}
+@container game-viewport (max-width:600px) {
+ .cc-feat-browser .cc-page-title { font-size:calc(26px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-page-eyebrow { font-size:calc(12px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-page-heading { margin-bottom:12px; }
+ .cc-feat-availability { max-width:none; font-size:calc(14px / var(--ui-zoom,1)); }
+ .cc-feat-layout { gap:12px; }
+ .cc-feat-browser .cc-choice-tile { min-height:100px; padding:12px; }
+ .cc-feat-browser .cc-choice-body { grid-template-columns:60px minmax(0,1fr) 18px; gap:10px; }
+ .cc-feat-browser .cc-feat-emblem { width:60px; height:60px; }
+ .cc-feat-browser .cc-choice-title { font-size:calc(20px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-choice-description { font-size:calc(16px / var(--ui-zoom,1)); }
+ .cc-feat-detail .cc-feat-emblem { width:96px; height:96px; }
+ .cc-feat-detail .cc-feat-level-requirement { font-size:calc(16px / var(--ui-zoom,1)); }
+}
+@container game-viewport (min-width:601px) {
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { grid-template-columns:repeat(2,160px)!important; width:auto!important; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:160px!important; min-width:0!important; }
+}
+@container game-viewport (max-width:960px) {
+ .cc-feat-browser:not([data-detail-open="true"]) .cc-feat-detail { display:none; }
+}
+@container game-viewport (min-width:601px) {
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { width:100%!important; justify-content:space-between!important; }
+}
+/* Long class/skill summaries are teasers; the inspector always retains the
+   complete authored benefit and every level requirement. */
+.cc-feat-browser .cc-choice-description { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+
+/* Local authoring branch: original native raster emblem composition. */
+.cc-native-feat-emblem .cc-native-feat-canvas { position:relative; display:block; flex:none; width:89.7435897436%; height:100%; }
+.cc-native-feat-emblem .cc-native-feat-canvas > img { max-width:none; max-height:none; margin:0; pointer-events:none; }
+/* Hotfix: the maneuver picker lives in the Equipment fold, whose pane is
+   overflow:hidden, so it is its own vertical scrollport (the flex column at
+   6147 loses to the generic equipment-section grid). */
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] { display:flex; flex-direction:column; gap:8px; height:100%; min-height:0; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
+
+/* Defense order is shared by player and enemy health rows. */
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) { color: var(--parchment); gap: .08em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect)::before { border-radius: 50%; background: #20242a; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) { font-size: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+/* Ward status (SPEC 4.1a): the Poise badge turns purple, and a purple bar over the HP bar shows current Poise in HP points (same scale as HP). */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward { color: var(--parchment); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise-ward::before { background: linear-gradient(135deg, var(--ward-purple), color-mix(in srgb, var(--ward-purple) 55%, black)); border: 1px solid color-mix(in srgb, var(--ward-purple) 50%, white); }
+:root .combat .combatant .combat-health-meter .m-track { position: relative; }
+:root .combat .combatant .combat-health-poise-overlay { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--ward-purple) 62%, transparent); border-right: 2px solid color-mix(in srgb, var(--ward-purple) 40%, white); border-radius: 5px 0 0 5px; pointer-events: none; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+/* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
+   --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
+   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap.
+   Deliberately pure white, not --parchment: owner-kept exception (2026-10-18) for legibility over art. */
+:root .combat .combatant > .combat-hit-chance {
+  position: absolute; left: var(--combat-body-center-x, 50%); top: var(--combat-body-center-y, 50%);
+  translate: -50% -50%; z-index: var(--combat-layer-hud, 700); pointer-events: none; white-space: nowrap;
+  color: white; font: 700 calc(26px / var(--ui-zoom, 1))/1 var(--font-body, Georgia, serif);
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 0 -2px 0 black, 0 2px 0 black, -2px 0 0 black, 2px 0 0 black;
+}
+
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) svg { width: .85em; height: .85em; display: block; }
+
+:root .combat .combatant .combat-health-meter .m-value,
+:root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+
+/* Keep the Evade icon inside the same compact badge geometry as defenses. */
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision, .combat-health-counter, .combat-health-reflect) {
+  flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
+  min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
+  aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
+}
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) { min-width: 0; width: .8em; height: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon, .combat-health-counter-icon, .combat-health-reflect-icon) svg { width: 100%; height: 100%; max-width: 100%; }
+
+.expanded-combat-card .ic-text[data-card-binding="rules"] .face-line { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+/* The enabled purse layer is part of the shared HUD, in normal flow. */
+.shared-hud .hud-cinders-strip { display:flex; flex:0 0 auto; justify-content:flex-start; }
+.shared-hud .hud-cinders-strip .hud-center { display:flex; min-width:0; }
+.shared-hud .hud-cinders-strip .hud-cinders { white-space:nowrap; }
+
+/* Reward review has an explicit red return/skip action, independent of the
+   theme's orange danger tint. Only the chooser footer uses this treatment. */
+.reward-door .reward-chooser-foot .danger {
+  background: #a51f2b;
+  border-color: #e65b66;
+  color: #fff7f3;
+}
+.reward-door .reward-chooser-foot .danger:hover,
+.reward-door .reward-chooser-foot .danger:focus-visible {
+  background: #c02634;
+  border-color: #ff8b94;
+  color: #fff7f3;
+}
+/* A selected card offers Skip, Edit deck, Add to library and Add to deck. On a phone four equal tracks truncate the
+   labels, so the foot wraps to two rows of two (Skip and Edit deck above, Add to library and Add to deck below). */
+@media (max-width: 600px) {
+  .reward-door .reward-chooser-foot .modal-foot-actions[data-action-count='4'] {
+    grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-columns: auto;
+  }
+}
+/* Author display:flex otherwise overrides the browser's hidden attribute. */
+.reward-door .reward-choice-option[hidden] { display: none; }
+.reward-door .reward-choice-grid[inert] {
+  --choice-count: 1;
+  grid-template-columns: minmax(0, 16rem);
+  justify-content: center;
+}
+
+/* Combat-log actor roles are named in the legend as well as separated by hue. */
+.combat-log-actor { font-weight:600; }
+.combat-log-actor[data-combat-log-side='player'] { color:var(--combat-log-player-color); }
+.combat-log-actor[data-combat-log-side='enemy'] { color:var(--combat-log-enemy-color); }
+.combat-log-role-legend { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0 0 0.45rem; color:var(--parchment); font-size:0.9em; }
+.combat-log-role { display:inline-flex; align-items:center; gap:0.4rem; }
+.combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
+.combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
+.combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }
+
+/* Console uses the shared modal and a native selectable text field on phones. */
+.console-log-pane { display: flex; flex-direction: column; gap: var(--space-2, 8px); min-width: 0; }
+.console-log-text { box-sizing: border-box; width: 100%; min-width: 0; height: 48vh; height: 48dvh; min-height: 8rem; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; font-size: max(16px, 1rem); line-height: 1.4; user-select: text; touch-action: auto; }
+.combat-log-modal [data-console-shortcut][hidden] { display: none !important; }
+
+/* The rank-up bonus choice (owner, 2026-11-01): 2-3 option buttons under the card strip. */
+.reward-door .reward-rank-bonus { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; align-items: stretch; width: 100%; max-width: 60rem; margin: .4rem auto 0; position: sticky; bottom: 0; z-index: 2; padding: .6rem .4rem; background: var(--bg-raise); border-top: 1px solid var(--line); }
+/* sticky: the choices stay in view while the player scrolls the cards */
+.reward-door .reward-rank-bonus[hidden] { display: none; }
+.reward-door .reward-rank-bonus-title { flex: 0 0 100%; margin: 0; text-align: center; font-weight: 600; }
+.reward-door .reward-bonus-option { flex: 1 1 12rem; min-width: 0; max-width: 20rem; min-height: var(--tap-floor); white-space: normal; overflow-wrap: anywhere; line-height: 1.25; padding: .6rem .8rem; }
+/* The shared toast (src/ui/components/toast.js): a short sentence that floats
+   over its screen for ~3 s, then fades. Never takes a click. */
+.as-toast {
+  position: absolute; left: 50%; bottom: 7rem; transform: translateX(-50%); z-index: var(--z-toast, 700);
+  max-width: min(60rem, calc(100% - 3.2rem)); box-sizing: border-box; pointer-events: none;
+  padding: 0.9rem 1.8rem; border: 1px solid var(--gold); border-radius: var(--r-3);
+  background: var(--bg-raise); color: var(--parchment); text-align: center;
+  font-size: max(1.3rem, calc(13px / var(--ui-zoom, 1))); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  opacity: 1; transition: opacity 300ms ease-out;
+}
+.as-toast[hidden] { display: none; }
+.as-toast.is-leaving { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .as-toast { transition: none; } }
+body.reduced-motion .as-toast { transition: none; }
+
+/* The Replace comparison (src/ui/components/equipCompareModal.js): everything
+   centred, the buttons right-justified; the card-upgrade modal's faces and
+   as-delta colours do the rest. Unchanged rows are dimmed. */
+.equip-compare-modal .equip-compare-body { display: flex; flex-direction: column; align-items: center; gap: 1.6rem; text-align: center; }
+.equip-compare-faces { align-items: center; justify-content: center; flex-wrap: nowrap; gap: 1.6rem; }
+.equip-compare-face { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.equip-compare-caption { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.equip-compare-which { color: var(--muted); font-size: max(1.2rem, calc(12px / var(--ui-zoom, 1))); letter-spacing: 0.08em; text-transform: uppercase; }
+.equip-compare-arrow { color: var(--gold); font-size: 3.2rem; line-height: 1; }
+.equip-compare-rows { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; width: 100%; }
+.equip-compare-rows .as-statrow { justify-content: center; width: auto; max-width: 100%; gap: 1.6rem; }
+.equip-compare-rows .as-statrow.is-same { opacity: 0.55; }
+.equip-compare-face { flex: 0 0 auto; }
+.equip-compare-face .equipment-poker-card { width: 14rem !important; max-width: 100%; --epc-level-w: 14rem; }
+.equip-compare-rows .as-statrow .sr-name { overflow: visible; text-overflow: clip; flex: none; }
+.equip-compare-rows .as-statrow { padding-block: 0.2rem; column-gap: 2rem; }
+/* The owner's tweak for this door: the buttons sit together at the right, not as equal tracks across the foot. */
+.modal.equip-compare-modal .modal-foot-actions { display: flex !important; width: auto !important; margin-left: auto !important; justify-content: flex-end; gap: 1rem; }
+.modal.equip-compare-modal .modal-foot-actions > button.as-btn { flex: 0 0 auto !important; width: auto !important; min-width: 12rem !important; max-width: none !important; padding-inline: 2rem; overflow: visible; }
+.equip-compare-modal .equip-compare-body { overflow-y: auto; min-height: 0; }
+@media (max-width: 600px) { .equip-compare-faces { gap: 0.6rem; } .equip-compare-arrow { font-size: 2.2rem; } }
+/* CARD READING MODAL: THE CARD AND ITS DETAILS FIT ONE SCREEN (owner, 2026-11-01).
+   The inspected card used to fill the inspect width (320px, 480 tall) and stack
+   over its details, so every card needed a scroll to reach its chips and tag
+   text. The modal now draws the card at a share of the inspect level
+   (--card-modal-scale, about 62% of the old height); the door's two-column
+   decision in cardInspection.js reads the same scale, so a wide door sits the
+   details beside the card and a phone stacks them under it. The share is one
+   token here, not a second authored width: the inspect level and its tuner are
+   unchanged. */
+:root { --card-modal-scale: .625; }
+.card-inspection-modal { --card-w-modal: calc(var(--card-w-inspect,384px) * var(--card-modal-scale)); }
+.card-inspection-modal .card-inspection-layout { grid-template-columns: minmax(0, var(--card-w-modal)) minmax(0, 1fr); gap: 1.5rem; }
+.card-inspection-modal .card-inspection-art { max-width: var(--card-w-modal); }
+.card-inspection-modal .card-inspection-art > .card { min-height: 0; }
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .equipment-poker-card,
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .card { max-width: var(--card-w-modal); }
+.card-inspection-modal .card-inspection-details .inspection-tags { margin-top: 8px; }
+/* Effect tags: the tooltip text, read inline under the chips. */
+.inspection-effect-tags { margin: 10px 0 0; display: grid; gap: 6px; }
+.inspection-effect-tags dt { margin: 0; color: var(--gold); font-size: 13px; font-weight: bold; line-height: 1.3; }
+.inspection-effect-tags dd { margin: 0; color: var(--parchment, inherit); font-size: 14px; line-height: 1.4; }
+/* The reading modal is the one place a card and all of its reading sit
+   together, so it takes more of the screen than the generic lg rung and sets
+   its details tighter. */
+.modal.card-inspection-modal[data-size='lg'] { width: min(100%, calc(var(--modal-rung-width) * 1.3)); height: 97%; }
+.card-inspection-modal .card-inspection-details { font-size: 14px; line-height: 1.35; max-width: none; }
+.card-inspection-modal .playing-card-details { gap: 8px; padding: 0; }
+.card-inspection-modal .playing-card-details .ti-meta { padding-bottom: 8px; gap: 8px; }
+.card-inspection-modal .playing-card-details .ctext { font-size: 16px; line-height: 1.4; }
+.card-inspection-modal .card-inspection-details .combat-rule-hint { margin-block: 0; padding: 2px 8px; }
+.card-inspection-modal .card-inspection-layout { padding: 12px 16px; }
+/* Tight rhythm in the reading modal: no wasted space between or inside blocks. */
+.card-inspection-modal .card-inspection-details :is(.inspection-sigils, .inspection-effect-tags) { margin-block: 0; }
+.card-inspection-modal .card-inspection-details .inspection-sigils { gap: 4px; margin-top: 6px; }
+.card-inspection-modal .card-inspection-details .inspection-sigil-row { line-height: 1.3; gap: 8px; }
+.card-inspection-modal .card-inspection-details .inspection-sigils .combat-sigil { width: 24px; height: 24px; }
+.card-inspection-modal .card-inspection-details .inspection-effect-tags { margin-top: 6px; gap: 4px; }
+.card-inspection-modal .card-inspection-details .inspection-tags { margin-top: 6px; gap: 4px; }
+.card-inspection-modal .card-inspection-details .inspection-tag { padding: 2px 6px; }
+.card-inspection-modal .playing-card-details { gap: 6px; }
+/* A stacked door (a phone) draws the card smaller and the reading at 13px so both fit. */
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .card,
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .equipment-poker-card { max-width: calc(var(--card-w-modal) * .72); }
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-layout { gap: 8px; padding: 8px 12px; }
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-details { font-size: 13px; line-height: 1.3; }
+:root[data-card-door='stacked'] .card-inspection-modal .playing-card-details .ctext { font-size: 14px; }
+
+/* THE ARMORY PAGE (owner, 2026-11-05): the view dropdown is gone, so the
+   Armory tab is ONE scrolling body — the equipment slots on top, the
+   Inventory's sections below, nothing with a scroll of its own. The pane
+   scrolls; the item collection and the selected item's detail take their
+   natural height (the detail stays in view beside the list on wide hosts). */
+.armoury[data-view='rack'] .armoury-railed > .armoury-pane { overflow-y: auto; overflow-x: hidden; }
+.armoury[data-view='rack'] .armoury-content,
+.armoury[data-view='rack'][data-pane='inventory'] .armoury-content { display: flex; flex-direction: column; flex: 0 0 auto; gap: 1.6rem; min-height: auto; overflow: visible; }
+.armoury[data-view='rack'] .armoury-subject { flex: 0 0 auto; min-height: auto; overflow: visible; }
+.armoury[data-view='rack'] .armoury-body { flex: none; width: 100%; overflow: visible; }
+.armoury[data-view='rack'] .armoury-inventory { display: block; flex: none; width: 100%; min-height: auto; overflow: visible; border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.armoury[data-view='rack'] .armoury-inventory > .ep-list.armoury-split { display: grid; grid-template-rows: auto auto; align-items: start; flex: none; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-selection-context { grid-row: 1; }
+.armoury[data-view='rack'] .ep-list.armoury-split > :is(.armoury-item-collection, .armoury-item-detail) { overflow: visible; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
+.armoury[data-view='rack'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 2; position: sticky; top: 0; align-self: start; max-height: calc(100 * var(--view-vh, 1vh) - 14rem); overflow-y: auto; }
+.armoury[data-view='rack'][data-split='rows'] .armoury-inventory > .ep-list.armoury-split { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; }
+.armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-collection { grid-row: 2; }
+.armoury[data-view='rack'][data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-row: 3; position: static; max-height: none; overflow: visible; }
+
+/* A play leaves the hand's other cards in place; when the gap closes (hand.js, behavior.hand.playSettle) they ease over. */
+@media (prefers-reduced-motion: no-preference) {
+  :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { transition: left .22s ease-out; }
+}
+
+/* Owner 2026-11-06: the Armory's Inventory section (usable items only, e.g. skill books) is compact rows under the slot rows;
+   its detail opens beneath them once an item is chosen and is absent before. */
+.armoury .ep-list.armoury-split.is-books-only { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
+.armoury .ep-list.armoury-split.is-books-only > .armoury-item-collection { grid-column: 1; grid-row: 1; overflow: visible; }
+.armoury .ep-list.armoury-split.is-books-only > .armoury-item-detail { grid-column: 1; grid-row: 2; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: .6rem; position: static; max-height: none; overflow: visible; }
+.armoury .ep-list.armoury-split.is-books-only[data-detail-open='false'] > .armoury-item-detail { display: none; }

@@ -1,0 +1,126 @@
+/* ═══ BANNER — a transient display-face announcement ═══════════════════════ */
+/* ENEMY TURN / TURN 3: it stands over the board for a second and goes. Not a
+   modal (nothing to answer), not a status line (it is the moment itself). */
+.as-banner {
+  position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%);
+  z-index: 640; pointer-events: none;
+  margin: 0; color: var(--gold);
+  font: 700 4rem/1 var(--font-display); letter-spacing: 0.3em; text-indent: 0.3em; text-transform: uppercase; white-space: nowrap;
+  text-shadow: 0 0 24px rgba(var(--accent-rgb), 0.5), 0 2px 8px #000;
+  animation: as-banner 1100ms ease-out forwards;
+}
+.as-banner.small { font-size: 2.2rem; top: 30%; animation-duration: 900ms; }
+@keyframes as-banner {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.reduced-motion .as-banner { animation-duration: 500ms; }
+
+/* ═══ DOCK — a floating strip of Tabs ══════════════════════════════════════ */
+/* Seats on a couch: one Tab per subject, a Keycap for the switch, a StatePill
+   for "has something to do". It hangs off the bottom edge over the board. */
+.as-dock {
+  position: fixed; left: 50%; bottom: 4.6rem; transform: translateX(-50%);
+  z-index: 620; max-width: calc(100% - 2rem);
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+/* Asleep under a door (modalManager page chrome): drop beneath the veil (z 500)
+   instead of floating above a dialog it cannot answer. */
+.as-dock[inert], .as-dock[data-page-locked] { z-index: calc(var(--layer-sheet) - 50); } /* under the modal veil (--layer-sheet); the page lock marks data-page-locked, not inert */
+.as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
+.as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+/* ═══ FOLD — a Row that opens ══════════════════════════════════════════════ */
+/* A <details> whose summary is the kit's Row: label left, StatusText right,
+   caret in the Glyph column. What it opens is prose under a hairline. */
+.as-fold { border-bottom: 1px solid var(--rule); }
+.as-fold:last-child { border-bottom: 0; }
+.as-fold > summary { list-style: none; }
+.as-fold > summary::-webkit-details-marker { display: none; }
+.as-fold > summary > .as-glyph { transition: transform 150ms; }
+.as-fold[open] > summary > .as-glyph { transform: rotate(90deg); color: var(--gold); }
+.as-fold > .fold-body { display: flex; flex-direction: column; gap: 0.6rem; padding: 0 1.35rem 1rem calc(1.35rem + 1.75rem + 1.05rem); }
+.as-fold > .fold-body code { font-family: monospace; font-size: 1.2rem; color: var(--ink-dim); word-break: break-word; }
+@media (prefers-reduced-motion: reduce) { .as-fold > summary > .as-glyph { transition: none; } }
+
+/* ═══ LOG — a monospace scroll box ═════════════════════════════════════════ */
+.as-log {
+  margin: 0; flex: 1 1 auto; min-height: 18rem; max-height: 100%; overflow: auto;
+  padding: 1rem 1.2rem; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-2);
+  color: var(--ink-dim); font: 400 1.15rem/1.45 monospace; white-space: pre-wrap; word-break: break-word;
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+
+/* ═══ PAGE DOORS — a door standing on the page, and a pane on the page ═════ */
+/* A screen that asks one thing (the run's end, the crisis notice) wears the
+   door's box without the veil, like the event. A screen that lists things
+   (history, the compendium) is a Pane bounded to a reading width. */
+.screen > .modal.as-pagedoor { flex: 0 1 auto; max-height: 100%; }
+.screen > .modal.as-pagedoor[data-size="lg"], .screen > .modal.as-pagedoor[data-size="xl"] { height: auto; max-height: 100%; }
+.screen > .modal.as-pagedoor > .modal-body { min-height: 0; }
+.as-pagedoor .as-decide > .as-detailcard + .as-detailcard { margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-btnrow, .as-pagedoor .as-decide > .modal-btnrow { margin: 1.5rem auto 0; }
+.as-pagedoor .as-decide > .modal-btnrow + .modal-btnrow { margin-top: 0.8rem; }
+.as-pagedoor .as-decide > .as-kitline, .as-pagedoor .as-decide > .as-statstrip { justify-content: center; margin-top: 1.2rem; }
+.as-pagedoor .as-decide > .as-status { display: block; text-align: center; margin-top: 0.9rem; }
+.as-pagedoor .as-decide > .as-status:empty { display: none; }
+.as-pagedoor .as-decide > .as-fold { text-align: left; margin-top: 1.2rem; border-top: 1px solid var(--rule); border-bottom: 0; }
+.as-pagedoor .as-decide > .set-section-head { align-items: center; margin-top: 1.8rem; }
+.as-pagedoor .as-decide > .as-prose + .as-detailcard, .as-pagedoor .as-decide > .as-prose + .as-prose { margin-top: 1rem; }
+.as-title-l[data-tone="loss"] { color: var(--danger); }
+/* A DetailCard that carries its own actions and its own support fold. */
+.as-detailcard > .modal-btnrow, .as-detailcard > .as-btnrow { margin-top: 0.8rem; }
+.as-detailcard > .as-fold { border: 0; margin-top: 0.2rem; }
+.as-detailcard > .as-fold > summary { padding-inline: 0; }
+.as-detailcard > .as-fold > .fold-body { padding-inline: 0; }
+.as-detailcard > .as-prose { font-size: 1.32rem; }
+/* A RailItem with a count beside its label. */
+.as-railitem.with-status { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+/* The count is the half a narrow rail must not eat: it holds its size and the
+   NAME yields — first by wrapping onto its own line, then by ellipsis. Measured
+   at 390x844, where "WEAPONS 0/9" clipped its count against the rail's end. */
+.as-railitem.with-status { flex-wrap: wrap; row-gap: 0.15rem; white-space: normal; }
+.as-railitem.with-status > .as-status { flex: 0 0 auto; font-size: 1.05rem; }
+.as-railitem.with-status > :not(.as-status) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A railed screen scrolls its grid, never its pane. */
+.screen > .as-railed > .as-pane { overflow: hidden; }
+.as-pane > .as-options.grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+.screen > .as-pane { --modal-inset: 1.4rem; width: min(100%, 76rem); flex: 0 1 auto; max-height: 100%; }
+.screen > .as-railed { --modal-inset: 1.4rem; container-type: inline-size; width: min(100%, 96rem); flex: 1 1 auto; min-height: 0; max-height: 100%; background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden; }
+@container game-viewport (max-width: 640px) { .screen > .as-railed, .screen > .as-pane { --modal-inset: 1rem; } }
+/* A KitLine that lists rather than explains: no help underline, no help cursor. */
+.as-kitline.plain .ki { cursor: default; }
+.as-kitline.plain .ki .kn { border-bottom: 0; }
+.screen > .as-railed > .as-pane { height: 100%; }
+/* Rows that read a fact rather than choose one: the table's replacement. */
+.as-pane .as-row.setting > .r-label { flex: 0 1 auto; color: var(--muted); }
+.as-pane .as-row.setting > .as-status { color: var(--parchment); text-align: right; }
+/* A pane's foot: the ButtonRow under a hairline. */
+.as-pane > .as-btnrow, .as-pane > .modal-btnrow { margin-top: 1.4rem; flex: 0 0 auto; }
+.as-pane > .as-options { flex: 0 0 auto; }
+/* An OptionCard whose Glyph is an ArtWell (a piece's own icon). */
+.as-option > .as-artwell { flex: 0 0 auto; }
+.as-option.is-ghost > .as-artwell img { filter: brightness(0) invert(1); opacity: 0.72; }
+.as-option.is-ghost { border-style: dashed; background: transparent; }
+.as-option.is-ghost .on { color: var(--muted); font-style: italic; }
+.as-option[data-rarity="rare"]:not(.is-selected) { border-left: 3px solid var(--gold); }
+.as-option[data-rarity="uncommon"]:not(.is-selected) { border-left: 3px solid var(--frost); }
+/* A grid of OptionCards: the compendium's constant grid. */
+.as-options.grid { align-content: start; }
+.as-options.grid > .as-option { width: auto; }
+/* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
+   base.css named it, so every `.danger` weight read an unset variable. */
+:root { --danger: #d4622e; }
+/* THE FOCUS RING, ONE TOKEN (Constantine's review, 2026-09-11). Every control
+   — kit atom, repo hook class, the pad's cursor — wears this ring on
+   :focus-visible and .gp-focus, from base.css's one house rule. Fourteen
+   per-component rings (2px, 3px, gold, #f2d87e, #fff0bd, box-shadow halos,
+   inset lines) used to say the same thing in different inks; a component
+   may still move its OFFSET (inside a card, on a tab) but never its ink. */
+:root { --focus-ring: 2px solid var(--gold); --focus-ring-offset: 2px; --door-ms: 150ms; }
+

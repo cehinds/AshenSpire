@@ -1,0 +1,192 @@
+/* ═══ DIALOGUE — W4c, the quest dialogue screen (WGQ0–WGQ8) ════════════════ */
+/* A child of the W4 parent above (owner, 2026-09-15). Layers, bottom to top
+   (DialogueModel.DIALOGUE_LAYER_Z, written as --dialogue-z-*): the skybox
+   (WGS6) and the floor (WGS7), one environment plate fitted to the scene
+   window between the HUD and the context and running on behind every band;
+   the two portraits (WGQ2/WGQ3), the speaker over the listener; the opaque
+   context band (WGQ4); the HUD and footer bands. Each portrait is the whole
+   figure zoomed so its top third meets the context band's top edge (the
+   reveal line); that band, the footer and the frame edge cut the rest, with
+   no mask. components/dialogueStage.js writes the bands, the frame units
+   (--w4-vw/--w4-vh, local px), the reveal and floor lines and each figure's
+   placement; lengths come from DialogueModel (wireframeUi.dialogue). The
+   fallbacks here are first-paint values only. */
+:root .w4-frame.dialogue-screen { position: relative; width: 100%; background: #17130f; isolation: isolate; }
+/* The plate, the HUD and the footer are there at t=0: no screen-in animation.
+   Only the portraits and the context enter (DialogueModel.dialogueEntrance). */
+#app > .dialogue-screen { animation: none; }
+.dialogue-screen > .topbar { position: relative; z-index: var(--dialogue-z-hud, 6); background: rgba(13, 11, 8, 0.92); }
+/* THE BAND ALWAYS DRAWS, AND HOLDS ITS OWN ROWS (owner, 2026-09-15). The
+   shared HUD stacks an identity row above a resource row, which is two rows in
+   a band that is 10% of the host: 103px of rows in 94px of band at 390x844,
+   and the same again on a short landscape screen. Folded, the two rows KEEP
+   THEIR OWN LINE and are drawn smaller (below), and below the narrow gate the
+   band is four things and fits without either (§ BAND ON A PHONE). They sat
+   side by side on one line until 2026-09-18, which is what drew CLASS over
+   ACT. The relic and potion belt follows vitality in the same grid.
+   Its height contributes to the band, including when relics expand. */
+/* dev's own answer to the same overlap (25f513d, "owner, a real phone"):
+   both rows KEEP THEIR OWN LINE here and are drawn smaller. It stands — it
+   is what a SHORT WIDE host needs, where the facts are still drawn. § BAND
+   ON A PHONE takes over below the narrow gate, where they are not. */
+.dialogue-screen[data-hud-compact='true'] > .topbar {
+  /* Both rows KEEP THEIR OWN LINE and are drawn smaller, rather than being
+     folded side by side: at 411px wide two rows in one line put "CLASS Reaver"
+     on top of "CINDERS 0" and the act name through "FLOOR 0" (owner, a real
+     phone, 2026-09-18). A row that cannot be read is worse than a row that is
+     small, and the band still has to hold both. */
+  padding-block: var(--dialogue-hud-pad, 0.25rem);
+  font-size: var(--dialogue-hud-scale, 0.85em);
+}
+.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top {
+  gap: var(--dialogue-hud-row-gap, 0.15rem);
+}
+.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row, .hud-resource-row) {
+  min-width: 0;
+  margin: 0;
+  column-gap: var(--dialogue-hud-col-gap, 0.6rem);
+}
+/* The fact row's own gap is the fold's (§ BAND FOLD), so the facts yield the
+   same way here as they do in the map's header. */
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-info-row { gap: var(--band-fold-gap); }
+/* The identity truncates rather than wrapping, the way the map's compact
+   header already does: a HUD that changes height moves every control below it. */
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-identity > .as-eyebrow,
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-identity > .as-context {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dialogue-plate-layer { position: absolute; inset: 0; pointer-events: none; }
+.dialogue-plate-layer > .environment-backdrop { top: 0; height: 100%; }
+.dialogue-skybox { z-index: var(--dialogue-z-skybox, 2); clip-path: inset(0 0 calc(100% - var(--dialogue-floor-line, 18%)) 0); }
+.dialogue-floor { z-index: var(--dialogue-z-floor, 3); clip-path: inset(var(--dialogue-floor-line, 18%) 0 0 0); }
+.dialogue-scene { grid-row: 2; min-height: 0; pointer-events: none; }
+.dialogue-portraits { position: absolute; inset: 0; z-index: var(--dialogue-z-portraits, 4); pointer-events: none; isolation: isolate; }
+.dialogue-portrait { position: absolute; inset: 0; margin: 0; z-index: var(--dialogue-own-z, 0); transition: opacity 160ms ease, filter 160ms ease; }
+.dialogue-portrait[data-layer='playerPortrait'] { --dialogue-own-z: var(--dialogue-z-player-portrait, 4); }
+.dialogue-portrait[data-layer='npcPortrait'] { --dialogue-own-z: var(--dialogue-z-npc-portrait, 4); }
+/* Inside the portrait layer the speaker is drawn over the listener
+   (sceneLayouts W4c portraits.speakerAbove); the listener dims below. */
+.dialogue-portrait[data-speaking='true'] { z-index: calc(var(--dialogue-own-z, 0) + var(--dialogue-speaker-lift, 1)); }
+/* The listener is dimmed to the floor its config sets (positioning.portraits
+   .listener), never past it: both speakers stay readable at every size. */
+.dialogue-portrait[data-speaking='false'] {
+  opacity: var(--dialogue-listener-opacity, 0.62);
+  filter: saturate(var(--dialogue-listener-saturation, 0.55)) brightness(var(--dialogue-listener-brightness, 0.8));
+}
+.dialogue-portrait-art { position: absolute; inset: 0; }
+/* WCF3: the speaker wears the shared selection glow. It sits on the untransformed
+   art layer so the zoom does not thicken it. */
+.dialogue-portrait[data-speaking='true'] > .dialogue-portrait-art {
+  filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
+}
+/* The shared sprite functions stamp combat's fixed sizes inline; the stage
+   adapter places the figure by transform from the layer's origin. */
+.dialogue-portrait-art > .dialogue-figure { position: absolute !important; left: 0; top: 0; margin: 0; transform-origin: 0 0; flex: none; }
+.speaker-portrait-still { width: 512px; height: 512px; }
+.speaker-portrait-image { display: block; width: 100%; height: 100%; object-fit: contain; }
+.dialogue-portrait[data-figure-fit='pending'] > .dialogue-portrait-art { visibility: hidden; }
+/* Painted player figures face right as authored (combat does the same). */
+.dialogue-portrait .class-sprite > .facing { transform: none; }
+/* The speaker's art faces the player unless the layout says otherwise (mirrorNpc). */
+.dialogue-screen[data-mirror-npc='false'] .dialogue-portrait[data-layer='npcPortrait'] .facing { transform: none !important; }
+.dialogue-portrait-slot {
+  position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end;
+  top: calc(var(--dialogue-scene-top, var(--w4-band-hud, 10%)) + var(--dialogue-slot-top, 2%));
+  height: calc(var(--dialogue-reveal-line, 50%) - var(--dialogue-scene-top, var(--w4-band-hud, 10%)) - var(--dialogue-slot-top, 2%));
+  width: var(--dialogue-portrait-w, 20%);
+}
+.dialogue-portrait[data-side='left'] > .dialogue-portrait-slot { left: var(--dialogue-inset-x, 2.5%); }
+.dialogue-portrait[data-side='right'] > .dialogue-portrait-slot { right: var(--dialogue-inset-x, 2.5%); }
+.dialogue-screen[data-dialogue-compact='true'] .dialogue-portrait-slot { width: var(--dialogue-portrait-w-compact, 30%); }
+.dialogue-portrait-name {
+  margin: 0; padding: 0.2em 0.5em; text-align: center; color: #f1e6cf; text-shadow: 0 1px 2px #000;
+  font-size: max(1.3rem, calc(14px / var(--ui-zoom, 1))); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(to top, rgba(13, 11, 8, 0.82), rgba(13, 11, 8, 0));
+}
+/* The name plate: a speaker with no art still stands in its slot, on the
+   reveal line; the plate carries the name. */
+.dialogue-portrait[data-portrait='plate'] .dialogue-portrait-name { display: none; }
+.dialogue-plate { display: grid; place-items: center; box-sizing: border-box; width: 100%; min-height: calc(3 * var(--dialogue-ref-rem, 1.6rem)); padding: 0.8rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); background: var(--panel); color: var(--gold); font: 600 max(1.6rem, calc(16px / var(--ui-zoom, 1)))/1.25 var(--font-display); text-align: center; }
+/* L5: the context band is opaque; its top edge is the reveal line. */
+.dialogue-context {
+  grid-row: 3; position: relative; z-index: var(--dialogue-z-context, 5); min-height: 0; box-sizing: border-box;
+  display: flex; justify-content: center; padding: var(--dialogue-context-inset-y, 2%) var(--dialogue-context-inset-x, 2.5%);
+  background: #15120e; border-top: 1px solid var(--line);
+}
+/* The context band's panel: the quest title on one line, the narrative beat,
+   then (last beat only) the responses as one grid. behavior.maxVisibleResponses
+   of them show without scrolling: dialogueStage uses the first of the scene
+   config's responseLayouts that holds them (a column or two below the text,
+   or a grid beside it on short hosts); only responses past that scroll this
+   panel. Every size is the scene config's, in reference rems; the fallbacks
+   here are first-paint values only. */
+.dialogue-region {
+  flex: 0 1 var(--dialogue-context-w, 95%); max-width: 100%; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'title' 'text' 'responses';
+  align-content: start; gap: var(--dialogue-context-gap, 0.4rem);
+  padding: var(--dialogue-context-pad, 0.6rem);
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-1);
+}
+.dialogue-region[data-response-placement='beside'] {
+  grid-template-columns: minmax(0, calc(var(--dialogue-beside-text, 0.5) * 100%)) minmax(0, 1fr);
+  grid-template-areas: 'title responses' 'text responses';
+  grid-template-rows: auto 1fr;
+}
+.dialogue-title {
+  grid-area: title; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 600 var(--dialogue-title-size, 1.5rem) / var(--dialogue-title-line, 1.2) var(--font-display); color: var(--gold);
+}
+.dialogue-caption-text { grid-area: text; margin: 0; font-size: var(--dialogue-text-size, 1.4rem); line-height: var(--dialogue-caption-line, 1.35); }
+/* Room for the caption's lines while speaking, so beats never move the
+   controls; on the answering beat that room belongs to the responses. */
+.dialogue-region:not([data-phase='respond']) .dialogue-caption-text { min-height: var(--dialogue-caption-min, 4rem); }
+.dialogue-region[data-side='player'] .dialogue-caption-text { font-style: italic; }
+.dialogue-responses {
+  grid-area: responses; min-width: 0; display: grid; align-content: start;
+  grid-template-columns: repeat(var(--dialogue-response-columns, 1), minmax(0, 1fr));
+  gap: var(--dialogue-response-gap, 0.4rem);
+}
+/* THE ANSWERS TAKE THE BAND'S SPARE HEIGHT rather than leaving a strip of it
+   empty under the last one (owner, a phone, 2026-09-18) — but only when the
+   band can hold them grown, which the stage measures before asking for it.
+   They stop at sizing.responses.maxHeightRem, so four answers never become
+   slabs on a desktop. */
+.dialogue-region[data-response-stretch='true'] > .dialogue-responses {
+  align-content: stretch;
+  grid-auto-rows: var(--dialogue-response-row-h, minmax(var(--dialogue-response-min-h, 2.75rem), var(--dialogue-response-max-h, 5.5rem)));
+}
+.dialogue-responses:empty { display: none; }
+.dialogue-region[data-response-placement='beside'] > .dialogue-responses { align-self: center; }
+.dialogue-responses > .dialogue-response {
+  width: 100%; height: auto; min-height: var(--dialogue-response-min-h, 44px); margin: 0; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: var(--dialogue-response-pad-block, 0.3rem) var(--dialogue-response-pad-inline, 0.6rem);
+  font-size: var(--dialogue-response-size, 1.3rem); line-height: var(--dialogue-response-line, 1.2);
+  white-space: normal; text-align: left;
+}
+.dialogue-response-label {
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%;
+  -webkit-line-clamp: var(--dialogue-response-lines, 2); line-clamp: var(--dialogue-response-lines, 2);
+}
+.dialogue-response-note { display: block; font-size: 0.85em; color: var(--muted); }
+/* L6: the footer band (WGQ5), the three-action variant: equal thirds after the
+   shared gaps (WCB0 footer shares), calc(6 * var(--view-vh, 1vh)) tall, never under the touch target. */
+:root .w4-frame > .dialogue-foot {
+  grid-row: 4; position: relative; z-index: var(--dialogue-z-footer, 6); min-height: 0; box-sizing: border-box;
+  /* One full-width track: the kit buttons are inline-size containers, so an
+     auto track would size to nothing and collapse the equal shares. */
+  display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 0;
+  padding: 0 var(--dialogue-foot-inset-x, 2.5%);
+  background: #15120e; border-top: 1px solid var(--line);
+}
+.dialogue-foot > .modal-foot-actions { width: 100%; margin-left: 0; gap: var(--dialogue-foot-gap, 1.5%); }
+.dialogue-foot > .modal-foot-actions > button {
+  height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));
+  min-height: var(--dialogue-action-h, calc(44px / var(--ui-zoom, 1)));
+}
+/* A layer switched off (sceneLayouts layering.layers[].enabled) draws nothing:
+   the bands' own display rules must not outrank `hidden`. */
+:root .w4-frame > :is(.dialogue-context, .dialogue-foot, .dialogue-plate-layer, .dialogue-portraits, .topbar)[hidden],
+:root .w4-frame .dialogue-portrait[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .dialogue-portrait { transition: none; } }
+

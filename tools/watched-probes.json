@@ -729,7 +729,7 @@
   {
    "id": "T4",
    "by": "Bjorn",
-   "read": "styles/kit.css (the NavRail — the strip is a vertical rail of RailItems now) · src/ui/screens/settings.js .set-tabs",
+   "read": "styles/kit-atoms.css (the NavRail — the strip is a vertical rail of RailItems now) · src/ui/screens/settings.js .set-tabs",
    "anchors": [
     "as-rail set-tabs"
    ],

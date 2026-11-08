@@ -1,0 +1,373 @@
+/* W1c — CHARACTER CREATION IS A W1 WORKSPACE (FRONTEND-WIREFRAMES "W1c").
+   The head carries the title, the small portrait and the exit; the body is
+   the kit's railed layout — the categories in a rail beside the pane, or as
+   one [Category ▾] selector above it on a compact host (categoryNav) — and
+   only the active category is in the pane. The pane is the one scroll
+   region; the page and the body never scroll. The portrait's size and the
+   attribute grid's column count are the model's (uiConfig.screens.creation),
+   written as custom properties by the screen; nothing here is a number. */
+.customize:not(.component-catalog) .modal-body.cz-scroll { display: flex; flex-direction: column; overflow: hidden; min-height: 0; padding: 0; }
+.customize .cz-railed { flex: 1 1 auto; min-height: 0; height: 100%; width: 100%; }
+.customize .cz-railed[data-cat-nav='rail'] { grid-template-columns:19rem minmax(0,1fr); }
+.customize .cz-pane { overflow: auto; min-height: 0; height: 100%; }
+.customize .cz-pane > .cz-stage { height: auto; }
+.customize .modal-head .figure.cz-portrait {
+  flex: 0 0 auto; width: var(--creation-portrait) !important; height: var(--creation-portrait) !important;
+  min-height: 0 !important; min-width: 0 !important; max-width: none; margin-inline-start: var(--creation-portrait-gap); border-radius: 50%; overflow: hidden; align-self: center;
+}
+.customize .modal-head .figure.cz-portrait > * { width: 100%; height: 100%; object-fit: cover; }
+.customize .cz-tab { display:flex; flex-direction:row; align-items:center; gap:8px; white-space:normal; padding-block:10px; }
+.customize .cz-tab > .rail-label { flex:0 1 auto; min-width:0; }
+.customize .cz-tab-value { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; font-size:calc(1em * var(--creation-rail-value-scale)); color:var(--muted); }
+.customize .cz-tab-value:empty { display:none; }
+.customize .cc-primary-stats { display: grid; grid-template-columns: repeat(var(--creation-attribute-columns), minmax(0, 1fr)); gap: var(--creation-attribute-gap); }
+.customize .cc-review { padding: 0 var(--creation-review-pad) var(--creation-review-pad); }
+
+/* W1c, the choices in view: no head over a choice collection, only the small
+   view switch at the right; descriptions clip to the config's lines; a pane
+   too short for the class list folds them to one line, then drops the
+   preview column so the cards take the width (customize.js fitStage). */
+.customize .cz-head-tools { display: flex; align-items: center; gap: var(--creation-head-tools-gap); margin-inline-start: auto; }
+.customize .cz-head-tools > [hidden] { display: none; }
+.customize .cc-view-switch { min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: var(--creation-view-switch-pad); font-size: var(--creation-view-switch-glyph); line-height: 1; }
+.customize .cz-class .od { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--creation-choice-lines); overflow: hidden; }
+.customize .cz-railed[data-choice-fit="compact"] .cz-class .od { -webkit-line-clamp: 1; }
+.customize .cz-railed[data-choice-fit="compact"] .cz-class { padding-block: var(--creation-choice-compact-pad); }
+.customize .cz-railed[data-choice-fit="compact"] .cc-choice-collection { gap: var(--creation-choice-compact-gap); }
+.customize .cz-railed[data-choice-fit="bare"] .cz-class .od { display: none; }
+.customize .cz-railed[data-choice-fit="bare"] .cz-class { padding-block: var(--creation-choice-bare-pad); }
+.customize .cz-railed[data-choice-fit="bare"] .cc-choice-collection { gap: var(--creation-choice-bare-gap); }
+.customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-preview-host,
+.customize .cz-railed[data-preview-off="true"] .cc-class-split > .cc-class-divider { display: none; }
+.customize .cz-railed[data-preview-off="true"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
+
+/* Intrinsic run-HUD sizing wins over host percentage bands and short-landscape
+   chrome. All content stays inside its background; menu never shares a row
+   with the relic icons. */
+:root .shared-hud > .hud-top { height: auto; }
+:root .shared-hud .resbars { display: flex; flex-direction: column; align-items: stretch; }
+:root[data-layout='narrow'] .shared-hud > .hud-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info info" "meters actions" "rail actions";
+}
+:root[data-layout='narrow'] .shared-hud .hud-control-grid { align-self: start; }
+/* The chosen class puts a compact icon and contained sprite beside its details.
+   Let the card grow on narrow screens instead of clipping its description. */
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
+.customize .cz-railed .cz-class.unfolded { display:block; grid-column:1 / -1; height:auto; min-height:0; padding-block:1.2rem; }
+.customize .cz-class.unfolded > :is(.og, .ob) { display:none; }
+.customize .cz-class.unfolded > .cc-class-unfold { min-height: 0; display: grid; grid-template-columns: clamp(11rem, calc(16 * var(--view-vw, 1vw)), 15rem) minmax(0, 1fr); gap:1rem; align-items:center; }
+.customize .cc-unfold-portrait { display:flex; align-items:center; justify-content:flex-start; gap:.6rem; min-width:0; }
+.customize .cc-unfold-class-icon { display:inline-flex; flex:0 0 auto; color:var(--gold); }
+.customize .cc-unfold-class-icon > * { width:2rem; height:2rem; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art { display:block; flex:1 1 auto; height:auto !important; width:min(100%, 12rem) !important; aspect-ratio:1 / 1; max-width:12rem; min-height:0; min-width:0; border:0; border-radius:0; background:none; box-shadow:none; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art > * { width: 100%; height: 100%; object-fit: contain; }
+.customize .cc-unfold-summary { display:flex; flex-direction:column; justify-content:center; gap:.55rem; min-width:0; text-align:start; font-weight:normal; }
+.customize .cc-unfold-heading { color:var(--gold); font:600 1.6rem/1.25 var(--font-display); }
+.customize .cc-unfold-description { color:var(--parchment); font-size:max(1.4rem, 14px); line-height:1.45; }
+.customize .cc-unfold-mastery { color:var(--muted); font-size:max(1.1rem, 11px); line-height:1.35; }
+.customize .cc-unfold-summary .cc-class-resource-grid { display:flex; flex-wrap:wrap; gap:.35rem .8rem; }
+.customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
+.customize article.cz-class { cursor:default; }
+.customize article.cz-class .cc-unfold-heading { overflow-wrap:anywhere; }
+.customize .cc-preview-detail-trigger { display:inline-flex; align-items:center; align-self:flex-start; width:auto; min-width:0; min-height:0; padding:.2rem 0; border:0; border-radius:2px; background:transparent; color:inherit; font:inherit; line-height:inherit; text-align:start; white-space:normal; cursor:pointer; }
+.customize .cc-preview-detail-trigger :is(.ck, .cc-unfold-relic-name) { text-decoration:underline dotted; text-underline-offset:3px; }
+.customize .cc-preview-detail-trigger:hover { color:var(--gold); background:transparent; }
+.customize .cc-preview-detail-trigger:focus-visible, .customize article.cz-class:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+.cc-preview-detail-modal > .modal-body { padding:var(--modal-inset, 1.4rem); }
+.cc-preview-detail-body p { margin:0; }
+.cc-preview-detail-definition { font-size:max(1.4rem, 14px); line-height:1.5; }
+.cc-preview-detail-value { font-size:1.6rem; }
+.cc-preview-detail-calculation { border-top:1px solid var(--line-soft); padding-top:1.2rem; }
+.cc-preview-detail-formula { overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.customize .cz-class.unfolded::after { display: none; }
+
+/* Creation is read top-to-bottom: compact stats, resources, then Continue.
+   Only the workspace pane scrolls when enlarged text needs more room. */
+.customize .cc-character-grid { grid-template-columns:minmax(0,1fr); }
+.customize .cc-character-grid > .cc-stats-side { order:0; }
+.customize .cc-character-grid > .cc-preview-side { order:1; min-height:0; }
+.customize #cz-primary-stats { gap:4px; grid-template-columns:minmax(0,1fr); }
+.customize .cc-name-row { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:1rem; padding-block:.5rem; }
+.customize .cc-name-row > .r-trail { max-width:100%; width:100%; }
+.customize .cc-name-row .cz-name { width:100%; max-width:100%; }
+.customize #cz-primary-stats .cc-primary-stat.hosts-face > .as-row,
+.cc-stat-modal .cc-primary-stat.hosts-face > .as-row { min-height:var(--tap-floor); padding:.35rem .8rem; gap:.6rem; }
+.customize #cz-primary-stats .cc-primary-stat { min-height:var(--tap-floor); }
+.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
+.customize #cz-primary-stats :is(.ls-label, .as-status) { font-size:inherit; }
+.customize #cz-primary-stats .ls-hint { font-size:max(1em, calc(14px / var(--ui-zoom, 1))); line-height:1.3; white-space:normal; overflow:visible; }
+.customize #cz-primary-group { gap:.6rem; }
+.customize #cz-statedit { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.6rem; align-items:center; }
+.customize #cz-statedit .cc-mode-edit { white-space:nowrap; min-height:var(--tap-floor); }
+.customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
+.customize .cc-primary-footer { display:flex; flex-wrap:wrap; gap:.75rem 1.5rem; align-items:center; }
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin:0; padding:0; width:auto; background:none; border:0; align-items:center; flex:0 0 auto; }
+.customize .cc-primary-continue-row .cc-primary-continue { flex:0 0 auto; width:max-content; min-width:11rem; padding-inline:1.2rem; }
+.customize .cc-primary-footer .cc-resource-row { display:contents; }
+.cc-derived:has(> .cc-resource-row) { display:flex; flex-direction:column; align-items:stretch; gap:.35rem; }
+.cc-resource-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:.35rem 1.25rem; }
+.customize #cz-derived .cc-derived { display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; gap:.35rem .9rem; }
+.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(16px / var(--ui-zoom, 1))); }
+.customize #cz-derived .as-chip .cv { font-size:inherit; }
+.customize #cz-derived .as-chip .ck { font-size:max(.875em, calc(14px / var(--ui-zoom, 1))); letter-spacing:.03em; }
+.customize .cc-equipment-details:empty { display:none; }
+.customize .cc-equip-group:has(> .cc-equipment-details:empty) { grid-template-columns:minmax(0,1fr); }
+.customize .cc-equip-group > .cc-card-selectors { --cc-choice-head:14px; grid-row:auto; overflow:visible; max-height:none; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { padding-top:var(--cc-choice-head); gap:24px 12px; }
+.customize .cc-equip-group[data-equipment-section] { max-height:none; grid-template-rows:auto auto; gap:12px; }
+.customize .cc-equip-group > .cc-equipment-details { max-height:none; overflow:visible; }
+.customize .cc-equipment-continue { position:static; grid-column:1 / -1; grid-row:auto; }
+.customize .cc-card-selectors .equipment-choose { font-size:max(14px, calc(14px / var(--ui-zoom, 1))); }
+.customize .cc-card-selectors[data-view="list"] .equipment-choose { grid-column:1 / -1; }
+.customize .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
+
+/* Compact equipment selection: one header, one active section, one way forward. */
+.customize .cc-equipment-header { display:flex; align-items:center; gap:12px; padding:10px 6px; border-bottom:1px solid #74603c; }
+.customize .cc-equipment-header b { color:var(--gold,#c9a227); }
+.customize .cc-equipment-header select { flex:1; min-width:0; background:transparent; color:inherit; border:0; font:inherit; }
+.customize #cz-equipment-count { white-space:nowrap; font-size:12px; }
+.customize [data-creation-stage="equipment"] .as-catnav-toggle { display:none; }
+.customize #cz-equipment-fold .disc-fold-row:not([open]) { display:none; }
+.customize #cz-equipment-fold .disc-fold-row > summary { display:none; }
+.customize #cz-equipment-fold .disc-fold-row { border:0; padding:0; }
+.customize .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; gap:8px; padding:0; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,180px)); justify-content:center; padding:58px 6px 4px; gap:16px 12px; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="list"] { padding-top:58px; }
+.customize .cc-card-selectors .equipment-choose { display:none; }
+.customize .cc-equipment-details { border:0; padding:4px 8px; }
+.customize .cc-item-heading { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.customize .cc-item-heading h3 { margin:0 auto 0 0; font-size:1.25rem; }
+.customize .cc-item-heading .inspection-facts { display:flex; gap:6px; margin:0; }
+.customize .cc-compact-details { display:flex; flex-direction:column; gap:8px; }
+.customize .cc-compact-details .inspection-effect,.customize .cc-compact-details .inspection-requirement { margin:0; font-size:14px; }
+.customize .cc-compact-details .inspection-lore-line { margin:0; padding:6px 8px; }
+.customize .cc-single-tags { display:flex; flex-wrap:nowrap; gap:5px; min-width:0; width:100%; }
+.customize .cc-single-tags > .inspection-tag { flex:none; white-space:nowrap; font-size:12px; padding:5px 7px; }
+.cc-single-tags > [hidden] { display:none!important; }
+.cc-tags-popup { position:fixed; inset:auto; margin:0; width:min(290px,calc(calc(100 * var(--view-vw, 1vw)) - 24px)); padding:12px; background:#302719; border:1px solid #b79a4e; border-radius:8px; color:#e4d5af; box-shadow:0 8px 28px #000b; }
+.cc-tags-popup .inspection-tag { display:inline-block; margin:0 5px 5px 0; cursor:pointer; }
+.cc-tag-explanation { margin:6px 0 0; font-size:14px; line-height:1.4; }
+.customize .cc-equipment-continue { margin:2px 8px 8px; position:static; }
+.customize .cc-equipment-continue:not([aria-disabled="true"]),.customize .cz-next-stage:not([aria-disabled="true"]) { background:#245a3a; border-color:#76aa78; color:var(--parchment); }
+.customize #cz-equipment-receipts,.customize .cc-move-note { display:none; }
+.customize .cc-card-selectors .epc-facts { display:flex; gap:16px; justify-content:center; }
+.customize .cc-card-selectors .epc-fact { display:flex; flex-direction:row; gap:5px; align-items:center; }
+.customize .cc-card-selectors .epc-heading { display:none; }
+
+.customize:has(#cz-equipment-panel) .as-catnav-toggle { display:none!important; }
+.customize .cc-equip-group[data-equipment-section] { max-width:480px; width:100%; margin:0 auto; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+.customize .cc-equipment-continue { align-self:stretch; width:auto; }
+.customize .cc-equipment-details .cc-item-heading h3 { margin:0 auto 0 0; }
+.customize .cc-compact-details .inspection-facts { flex-wrap:nowrap; }
+.customize .cc-compact-details .inspection-facts .inspection-tag { padding:4px 6px; font-size:12px; white-space:nowrap; }
+
+.customize .cc-compact-details { width:100%; max-width:none; }
+.customize .cc-item-heading h3 { font-size:max(20px,calc(20px / var(--ui-zoom,1))); }
+.customize .cc-single-tags > .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+.customize .cc-item-heading .inspection-facts { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:44%; justify-content:start; overflow-x:auto; overflow-y:hidden; padding-bottom:14px; }
+
+.customize .cc-equip-group > .cc-equipment-details { width:100%; max-width:100%; box-sizing:border-box; align-self:stretch; }
+.customize .cc-single-tags { box-sizing:border-box; overflow:clip; }
+
+.customize .cc-starting-package > h4 { display:none; }
+.customize .cc-starting-package { margin-top:8px; }
+.customize .cc-starting-summary { padding:8px; }
+
+.customize .cc-equipment-header { font-size:max(14px,calc(14px / var(--ui-zoom,1))); }
+.customize #cz-equipment-count { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+.customize .cc-equip-group[data-equipment-section] { max-width:max(440px,calc(440px / var(--ui-zoom,1))); }
+@container game-viewport (max-width:700px) {
+  .customize:has(#cz-equipment-panel) .cz-railed { display:block; }
+  .customize:has(#cz-equipment-panel) .as-rail { display:none; }
+  .customize:has(#cz-equipment-panel) .cz-pane { width:100%; height:100%; }
+}
+.customize .cc-card-selectors .epc-footer { font-size:13px; line-height:1; }
+.customize .cc-compact-details .inspection-facts .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+
+/* Picker faces use the shared glance sizing, including the selected card. */
+.customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance, 182.4px); }
+.customize .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance, 182.4px))); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-template-columns:none; grid-auto-columns:var(--card-w-glance, 182.4px); }
+.customize .cc-card-selectors .epc-fact { white-space:nowrap; }
+
+/* Equipment uses the available page height; actions own a reserved bottom row. */
+.customize .cz-pane:has(> #cz-equipment-panel) { overflow:hidden; }
+.customize .cz-pane > #cz-equipment-panel { height:100%; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr); padding-bottom:0; }
+.customize #cz-equipment-fold { min-height:0; height:100%; }
+.customize #cz-equipment-fold > div { height:100%; }
+.customize #cz-equipment-fold > div:not(:has(> details[open])) { display:none; }
+.customize #cz-equipment-fold .disc-fold-row[open] { height:100%; min-height:0; margin:0; }
+.customize #cz-equipment-fold .disc-reveal { height:100%; min-height:0; padding:0; margin:0; box-sizing:border-box; }
+.customize .cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:12px 20px; width:100%; max-width:none; height:100%; min-height:0; padding:0 12px; box-sizing:border-box; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1 / -1; grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance, 182.4px))); align-content:start; justify-content:center; overflow:auto; min-height:0; padding:58px 6px 12px; scroll-padding-inline:6px; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1 / -1; min-height:0; overflow:auto; }
+.customize .cc-equip-group > .cc-equipment-details { grid-column:2; grid-row:1; margin:0; padding:20px 0 0; min-height:0; overflow:auto; align-self:stretch; }
+.customize .cc-equipment-continue { grid-column:2; grid-row:2; align-self:end; margin:0 0 12px; width:100%; }
+.customize .cc-item-heading { gap:6px; }
+.customize .cc-compact-details { gap:8px; }
+.customize .cc-starting-summary { display:flex; flex-wrap:wrap; gap:4px 8px; }
+.customize .cc-starting-summary .cc-package-context { font-size:12px; margin:0; }
+@container game-viewport (max-width:700px) {
+ .customize .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto; gap:8px; padding:0 10px; }
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1; grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:calc((100% - 24px) / 3); justify-content:start; gap:12px; padding:54px 0 10px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
+ .customize .cc-card-selectors[data-view="grid"] .poker-equipment-choice { padding:0; scroll-snap-align:start; }
+ .customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance, 182.4px); }
+ .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1; max-height:calc(32 * var(--view-vh, 1vh)); }
+ .customize .cc-equip-group > .cc-equipment-details { grid-column:1; grid-row:2; padding:2px 0; }
+ .customize .cc-equipment-continue { grid-column:1; grid-row:3; margin:0 0 10px; }
+}
+
+.customize #cz-equipment-fold .disc-fold-row[open] { position:relative; }
+.customize #cz-equipment-fold .disc-reveal { position:absolute; inset:0; height:auto; display:block; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { row-gap:54px; }
+@container game-viewport (max-width:700px) {
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { padding-top:70px; row-gap:12px; }
+}
+
+/* Creation header: stable menu and a single, plain close control. */
+.customize .cz-menu-button { min-width: var(--tap-floor); min-height: var(--tap-floor); font: 24px/1 Arial, sans-serif; padding: 0; }
+.customize .cz-head-view-tools { flex: 0 0 auto; }
+@container game-viewport (max-width: 600px) {
+  .customize .cz-head-view-tools .cc-view-option { padding-inline: 6px; min-width: var(--tap-floor); }
+}
+/* `--place-gap` is the ONE home for the hairline under the ☰ button: fx.js
+   placeGap() reads this declaration, customize.js writes nothing, and
+   tools/placement.mjs reads the same line the code used. */
+.customize .cz-head-tools.cz-header-menu { --place-gap: 8px; display: none; position: fixed; inset: auto; margin: 0; padding: 12px; width: 220px; background: var(--panel); color: var(--text); border: 1px solid var(--line-soft); border-radius: var(--r-2); box-shadow: 0 8px 24px #0008; }
+/* Short windows scroll the game actions inside the available menu height. */
+.customize .cz-head-tools.cz-header-menu:popover-open { display: grid; gap: 12px; overflow: hidden auto; }
+.customize .cz-menu-navigation { display: grid; gap: 6px; }
+.customize .modal-head .modal-close { border: 1px solid var(--line-soft); }
+.customize .modal-head .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
+
+/* Keep all three creation header controls on the same square footprint. */
+.customize .modal-head :is(.figure.cz-portrait, .cz-menu-button, .modal-close) {
+  box-sizing: border-box;
+  flex: 0 0 var(--tap-floor);
+  width: var(--tap-floor) !important;
+  height: var(--tap-floor) !important;
+  min-width: var(--tap-floor) !important;
+  min-height: var(--tap-floor) !important;
+  max-width: var(--tap-floor);
+  max-height: var(--tap-floor);
+  padding: 0;
+  align-self: center;
+}
+
+/* Book lessons use live card faces and a searchable, keyboard-operable list. */
+.book-learning-veil { z-index: 13000; }
+.book-learning-panel { width: min(90rem, calc(96 * var(--view-vw, 1vw))); max-height: calc(94 * var(--view-vh, 1dvh)); display: flex; flex-direction: column; }
+.book-learning-body { overflow: auto; min-height: 0; display: grid; gap: 1rem; padding: 1.4rem; }
+.book-learning-body > p { margin: 0; }
+.book-learning-body input, .book-learning-body select { width: 100%; min-height: 44px; padding: .8rem 1rem; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-2); }
+.book-learning-body select:disabled { opacity: 1; color: var(--ink-dim); }
+.book-learning-rarity { color: var(--ink-dim); font-size: 1.2rem; }
+.book-lesson-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 1fr); gap: 1.4rem; }
+.book-lesson-list { display: grid; align-content: start; gap: .6rem; max-height: calc(42 * var(--view-vh, 1dvh)); overflow: auto; }
+.book-lesson-option.as-btn { min-height: 44px; width: 100%; text-align: left; white-space: normal; }
+.book-lesson-option[aria-pressed='true'] { outline: 2px solid var(--gold); outline-offset: -2px; }
+.book-lesson-detail { display: grid; justify-items: center; align-content: start; gap: 1rem; }
+.book-lesson-detail > p { width: 100%; }
+.book-learning-status { color: var(--gold); }
+@container game-viewport (max-width: 600px) {
+  .book-learning-panel { font-size: 14px; }
+  .book-lesson-columns { grid-template-columns: minmax(0, 1fr); }
+  .book-lesson-list { max-height: calc(25 * var(--view-vh, 1dvh)); }
+  .book-learning-rarity { font-size: 12px; }
+}
+.book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
+.book-art > svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+.book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
+.inventory-face .book-art { width: 4rem; }
+.inventory-model .book-art { width: min(100%, 15rem); }
+
+/* Unified turn Stamina uses the former action diamond, in green. */
+.card .card-cost-rail > .cost.stamina-cost,
+.card.playing-poker-card .cost.stamina-cost { color: #88e183; border-color: #529b58; background: #14271b; }
+.stamina-budget,
+.combat-action-row .energy-orb,
+.combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
+
+/* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
+:root .combat.combat .combat-action-row > .energy-orb.stamina-orb {
+  padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
+  overflow: visible; display: block;
+}
+:root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+:root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }
+
+/* Approved compact defense HUD: Ward, shield, then an elastic HP trough.
+   The wrapper keeps the resource plan's total max-HP-scaled width. */
+:root .combat .combatant .combat-health-row {
+  /* Owner colours (2026-10-12): Block silver, Ward purple, Barrier blue, HP red. */
+  --health-red: #ad403a; --block-silver: #d8dde3; --ward-purple: #b38ae8; --barrier-blue: #5fa8ff;
+  --health-row-h: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))));
+  display: flex; align-items: center; align-self: center; gap: 2.85%; min-width: calc(112px / var(--ui-zoom, 1)); max-width: 100%;
+  min-height: var(--health-row-h); flex: none;
+}
+:root .combat .combatant .combat-health-row > .combat-health-meter {
+  position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
+  container-type: inline-size; container-name: combat-health;
+}
+/* The fill takes the highest layer still standing: Barrier > Block > Ward > Health red (healthGuardTone). */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='barrier'] { --meter-tone: var(--barrier-blue) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='block'] { --meter-tone: var(--block-silver) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='ward'] { --meter-tone: var(--ward-purple) !important; }
+/* Poise still standing: a gold trim around the whole health bar. Poise has no badge; its value is in the bar's tooltip and aria-label. */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-poised='true'] { border-radius: 6px; box-shadow: 0 0 0 max(1px, calc(1.5px / var(--ui-zoom, 1))) #ffd34d, 0 0 6px 1px #ffd34d88; }
+:root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
+:root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
+  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-purple); outline-offset: 1px;
+  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #b38ae966;
+}
+:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge {
+  position: relative; flex: 0 0 max(11.428%, calc(20.8px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
+  color: #fff1d6; font: 500 calc(var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))) * .8)/1 var(--font-body);
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
+}
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+/* Block badge: a dark plate with a silver rim, so its silver figure reads with a black outline. */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac::before { border-radius: 4px; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac .combat-health-badge-value { -webkit-text-stroke: 0; }
+/* Caption under the AC square: same footprint as a badge so it lines up under the square, no plate; shown only where the bar owns its own line. */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ac-caption { display: none; font-size: .7em; letter-spacing: .04em; color: var(--gold); opacity: .9; pointer-events: none; }
+:root .combat .combatant .combat-health-row > .combat-health-block-slot { flex: 0 0 auto; order: -1; }
+/* With the AC square beside it the bar takes the rest of the line instead of the whole line. */
+:root .combat .combatant .combat-health-row:has(> .combat-health-block-slot:not([hidden])) > .combat-health-meter { flex: 1 1 0 !important; width: auto !important; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow::before { border-radius: 50%; background: linear-gradient(135deg, var(--panel-2, var(--panel)), var(--panel) 70%); box-shadow: inset 0 0 0 1px var(--gold); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-overflow .combat-health-badge-value { white-space: nowrap; letter-spacing: -.02em; -webkit-text-stroke: 0; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
+/* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { min-width: max-content; }
+:root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
+@container combat-health (max-width: 4em) {
+  :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
+  :root .combat .combatant .combat-health-meter .m-value::after {
+    content: attr(data-current-hp); font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)));
+  }
+}
+@container game-viewport (max-width: 600px) {
+  :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
+  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(12.8px / var(--ui-zoom, 1)); }
+}
+
+.character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
+.character-sheet-action { min-height: 44px; width: 100%; margin-top: .4rem; }
+

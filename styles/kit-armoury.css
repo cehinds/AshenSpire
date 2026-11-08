@@ -1,0 +1,186 @@
+/* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
+/* The head is the kit's (tab strip = the views, IconButton close in the same
+   corner as every door). Under the hairline the body is the surface's own
+   two-pane machine, edge to edge; every pane is kit pieces — OptionCards for
+   the positions and the inventory, DetailCards for the character's numbers,
+   Folding Trays along the bottom — and the layout facts (pane ratios, the
+   tray caps) arrive as custom properties from armouryUi.json. `.armoury-*`
+   and `.equip-*` stay on the parts because the tools read them. */
+.armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.armoury-trays { display: contents; }
+.armoury-trays > [data-tray-edge="bottom"]:first-child { margin-top: auto; }
+/* A context tray arrives at its content's height, capped so the subject keeps
+   the room (Constantine, 2026-08-23: the tray must not claim half the door). */
+.armoury .as-tray { --tray-compact: 35%; }
+.equip-resource-change > .as-flavor { display: block; }
+.as-blocker.armoury-notice { flex: 0 0 auto; border-radius: 0; border-width: 0 0 1px; padding-inline: var(--modal-inset); }
+/* THE SUBJECT GROWS FROM NOTHING (basis 0), so an open tray keeps its own
+   content height and the subject takes what is left — never the other way
+   round — and it always keeps a floor of the door. */
+.armoury-subject { flex: 1 1 0; display: flex; min-width: 0; min-height: 34%; overflow: hidden; }
+.armoury .as-tray[data-collapsed="0"] { flex: 0 1 auto; }
+/* The Armaments tray stands INSIDE a pane and fills it. */
+.armoury-body .as-tray.armoury-equipment { --tray-compact: none; flex: 1 1 auto; min-height: 0; border-top: 0; max-height: none; }
+.armoury-body .as-tray.armoury-equipment[data-collapsed="1"] { flex: 0 0 auto; }
+.armoury-body .as-tray.armoury-equipment > .as-pane { flex: 1 1 auto; }
+.armoury-body .as-tray.armoury-equipment > .tray-header > .as-row { padding-inline: 0.6rem; }
+.armoury-body .as-tray.armoury-equipment > .tray-header { padding-right: 0; }
+/* THE BODY IS A GRID OF PANES; the ratios are the authored ones. */
+.armoury-body {
+  flex: 1 1 auto; min-height: 0; min-width: 0; overflow: hidden;
+  display: grid; gap: var(--armoury-gap, 1.6rem); padding: var(--modal-inset);
+  grid-template-columns: minmax(0, var(--armoury-character-ratio, 0.4fr)) minmax(0, var(--armoury-equipment-ratio, 0.6fr));
+}
+.armoury[data-pane="both"] .armoury-body { grid-template-columns: minmax(0, var(--armoury-character-ratio, 0.4fr)) 0.7rem minmax(0, var(--armoury-equipment-ratio, 0.6fr)); gap: 0; }
+.armoury[data-pane="both"] .armoury-left { grid-column: 1; padding-right: 0.7rem; }
+.armoury[data-pane="both"] .armoury-right { grid-column: 3; padding-left: 0.7rem; }
+.armoury[data-pane="both"] .armoury-hybrid-splitter { display: block; grid-column: 2; grid-row: 1; }
+.armoury[data-pane="character"] .armoury-body, .armoury[data-pane="inventory"] .armoury-body { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-pane="character"] .armoury-right, .armoury[data-pane="inventory"] .armoury-right { display: none; }
+.armoury-left, .armoury-right { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; min-height: 0; overflow: hidden auto; }
+/* Inventory view: armaments beside the inventory, a splitter between. */
+.armoury[data-pane="inventory"] .armoury-content { display: grid; grid-template-columns: minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.7rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr)); gap: 0; }
+.armoury[data-pane="inventory"] .armoury-body { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="inventory"] .armoury-inventory { grid-column: 3; grid-row: 1; min-height: 0; overflow-y: auto; border-top: 0; }
+.armoury[data-pane="inventory"] .armoury-pane-splitter { display: block; grid-column: 2; grid-row: 1; }
+.armoury[data-pane="inventory"] .armoury-inventory.as-tray[data-collapsed="0"] { align-self: stretch; height: auto; max-height: none; }
+.armoury[data-pane="inventory"] .armoury-inventory.as-tray[data-collapsed="0"] > .as-pane { flex: 1 1 auto; }
+/* A PHONE STACKS the two panes and turns the splitter on its side. */
+.armoury[data-responsive="phone"] .armoury-body { gap: 0.7rem; padding: 0.7rem; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, var(--armoury-armaments-pane-width, 0.6fr)) 0.55rem minmax(0, var(--armoury-inventory-pane-width, 0.4fr)); }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-body { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-pane-splitter { grid-column: 1; grid-row: 2; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-inventory { grid-column: 1; grid-row: 3; border-top: 1px solid var(--line); }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) { grid-template-rows: minmax(0, 1fr) auto; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) > .armoury-pane-splitter { display: none; }
+.armoury[data-pane="inventory"][data-responsive="phone"] .armoury-content:has(> .armoury-inventory[data-collapsed="1"]) > .armoury-inventory { grid-row: 2; }
+/* THE CHARACTER PANE: LabelStack summary, the figure in an ArtWell, the
+   numbers in fold-open DetailCards. In the Character view the numbers stand
+   beside the figure; elsewhere they stack under it. */
+.armoury-character { display: grid; grid-template-rows: auto minmax(8rem, var(--armoury-sprite-ratio, 0.38fr)) minmax(0, var(--armoury-stats-ratio, 0.62fr)); gap: 0.9rem; min-width: 0; min-height: 100%; }
+.armoury-character > .character-summary { align-self: start; }
+.armoury[data-pane="character"] .armoury-character { grid-template-columns: minmax(0, var(--armoury-summary-pane-ratio, 0.4fr)) minmax(0, var(--armoury-stats-pane-ratio, 0.6fr)); grid-template-rows: auto minmax(0, 1fr); gap: 1rem 1.4rem; }
+.armoury[data-pane="character"] .character-summary { grid-column: 1; grid-row: 1; }
+.armoury[data-pane="character"] .armoury-sprite-pane { grid-column: 1; grid-row: 2; }
+.armoury[data-pane="character"] .armoury-character-stats { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+.character-summary { padding-bottom: 0.6rem; border-bottom: 1px solid var(--line); }
+.character-summary > .as-title-s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.character-summary > .as-subtitle { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.armoury[data-responsive="phone"] .character-summary > .as-subtitle { display: none; }
+.armoury-sprite-pane.as-artwell { width: 100%; height: 100%; min-height: 0; max-height: 100%; }
+.armoury-sprite-pane .armoury-figure { position: relative; width: auto; height: min(82%, 22rem); aspect-ratio: 150 / 190; max-width: 78%; max-height: 82%; }
+.armoury-figure img, .armoury-figure > * { width: 100%; height: 100%; object-fit: contain; }
+.armoury[data-responsive="phone"] .armoury-sprite-pane .armoury-figure { height: min(74%, 14rem); max-width: 68%; max-height: 74%; }
+.armoury-character-stats { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; min-height: 0; overflow: auto; }
+/* An attribute face and a power face are label + value, one per line. */
+.armoury-character-stats .disc-faces > .disc-face .on { font: 500 1.41rem/1.3 var(--font-body); letter-spacing: 0; color: var(--parchment); }
+.armoury-character-stats .disc-faces > .disc-face .od {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 1.2rem;
+}
+.armoury-character-stats .disc-faces > .disc-face > .r-trail,
+.armoury-character-stats .disc-faces > .disc-face > .r-trail > .as-status {
+  flex: 0 0 auto; min-width: 2ch; white-space: nowrap;
+}
+/* THE POSITIONS: one OptionCard per position; the occupied one opens its
+   DetailCard under itself. */
+.equip-slots.as-options { gap: 0.75rem; }
+.armoury-equipment-slot-component, .armoury-equipment-slot-component > .es-sets { display: contents; }
+.armoury-position-card { min-width: 0; width: 100%; }
+details.armoury-position-card > summary { list-style: none; }
+details.armoury-position-card > summary::-webkit-details-marker { display: none; }
+details.armoury-position-card[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; }
+details.armoury-position-card > .as-detailcard { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+.armoury-position-card .r-trail { flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+.armoury-position-card .r-trail > .as-btn.armoury-position-action { padding-inline: 1rem; font-size: 1.2rem; }
+.armoury-position-grid-groups { display: grid; gap: 1.2rem; }
+.armoury-position-grid-group { display: grid; gap: 0.6rem; min-width: 0; }
+.armoury-position-grid-tiles > .as-options.grid { --opt-min: 9rem; gap: 0.6rem; }
+.armoury-position-grid-card { flex-direction: column; text-align: center; padding: 0.9rem 0.6rem; gap: 0.5rem; }
+.armoury-position-grid-card.is-empty { grid-column: 1 / -1; width: 100%; }
+.armoury-position-grid-card > .ob { align-items: center; }
+.armoury-position-grid-card .on { font-size: 1.3rem; }
+.armoury-position-grid-detail { margin-top: 0.4rem; }
+/* THE INVENTORY: one shared list of OptionCard faces; the open one reveals
+   art beside its facts. */
+.armoury-inventory .ep-list > .disc-faces { gap: var(--armoury-tray-content-gap, 0.35rem); }
+.ep-list { min-width: 0; }
+.inventory-face .inventory-equipped { color: var(--equip-equipped-tag-color, var(--gold)); border-color: var(--equip-equipped-tag-color, var(--gold)); }
+.inventory-face[draggable="true"] { cursor: grab; }
+.inventory-face.dragging { cursor: grabbing; opacity: 0.55; }
+.inventory-face > .hold-hint { margin: 0; white-space: nowrap; }
+.inventory-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; align-items: start; min-width: 0; }
+.inventory-detail.beat-hold { position: relative; }
+.inventory-detail.beat-hold > .hold-hint { position: absolute; top: 0.35rem; right: 0.45rem; margin: 0; white-space: nowrap; }
+.inventory-information { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.inventory-information > .as-kitline, .inventory-information > .as-statstrip { margin: 0; }
+.inventory-information > .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.inventory-card-action-label { pointer-events: none; align-self: flex-start; }
+.ep-equip { align-self: flex-start; }
+.ep-equip.locked { opacity: 0.55; cursor: not-allowed; }
+.armoury[data-responsive="phone"] .inventory-detail { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-responsive="phone"] .inventory-detail > .inventory-model { justify-self: center; }
+/* THE COMPARISON — a fold of StatRows and deltas inside the reveal. */
+.equip-candidate-comparison { min-width: 0; overflow-wrap: anywhere; }
+.equip-candidate-comparison > summary { display: flex; align-items: center; gap: 0.75rem; min-height: var(--tap-floor); cursor: pointer; list-style: none; }
+.equip-candidate-comparison > summary::-webkit-details-marker { display: none; }
+.equip-candidate-comparison > summary > .as-eyebrow { color: var(--gold); }
+.equip-card-changes, .equip-receipt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.equip-card-changes > li, .equip-receipt-list > li { min-width: 0; }
+.equip-added-effect.none, .equip-resource-change.none { color: var(--muted); }
+.equip-resource-change > .as-kitline, .equip-receipt-list .as-kitline { margin: 0; }
+.equipment-requirements, .player-poise-receipt, .player-load-receipt, .equip-role-receipts { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; overflow-wrap: anywhere; }
+/* A receipt's key is a formula, not a word: it wraps, and the row stacks its values under the name when narrow. */
+.armoury-equipment-receipts .as-statpair, .equip-candidate-comparison .as-statpair { white-space: normal; }
+.armoury-equipment-receipts .as-statrow, .equip-candidate-comparison .as-statrow { flex-wrap: wrap; }
+.armoury-equipment-receipts .as-statrow .sr-vals, .equip-candidate-comparison .as-statrow .sr-vals { flex: 1 1 12rem; }
+.equipment-requirements .met, .equip-card-changes .met { color: var(--green); }
+.equipment-requirements .unmet, .equip-card-changes .unmet { color: var(--danger); }
+/* THE CARDS TRAY: one OptionCard row per equipment card, fold-open. */
+.armoury-card-list.as-options { gap: 0.45rem; }
+.armoury-card-list[data-card-view="grid"] { display: grid; grid-template-columns: repeat(var(--armoury-card-grid-columns, 4), minmax(0, 1fr)); }
+.armoury-card-row { min-width: 0; }
+details.armoury-card-row > summary { list-style: none; }
+details.armoury-card-row > summary::-webkit-details-marker { display: none; }
+details.armoury-card-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; }
+details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+.armoury-card-row-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.armoury[data-responsive="phone"] .armoury-card-row-detail { grid-template-columns: minmax(0, 1fr); }
+.armoury-card-row .r-trail { flex-wrap: wrap; justify-content: flex-end; }
+/* THE STATS TRAY (Inventory view): DetailCards of StatPairs in a grid. */
+.armoury-stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.6rem; }
+.armoury-stats-summary > .armoury-equipment-receipts { grid-column: 1 / -1; }
+.armoury-equipment-receipts { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+/* The kit picker chip (creation's kit picker, pieceChip) is an OptionCard;
+   the rarity rides the border. */
+.as-option.rarity-uncommon { border-left: 3px solid var(--frost); }
+.as-option.rarity-rare { border-left: 3px solid var(--gold); }
+.equip-chip.as-option { min-height: var(--tap-floor); }
+.equip-chip .ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+.equip-chip .ec-equipped { color: var(--equip-equipped-tag-color, var(--gold)); border-color: var(--equip-equipped-tag-color, var(--gold)); }
+
+/* ═══ SHRINE — equal-height option headers, with expanding fold content ═══ */
+.shrine-option-list, .shrine-option-grid {
+  --shrine-card-h: max(6rem, min(var(--shrine-folded-card-height, calc(10 * var(--view-vh, 1vh))), var(--shrine-folded-card-max-height, 8.4rem)));
+}
+.shrine-option-list { width: min(100%, 44rem); margin-inline: auto; flex-direction: column; align-items: stretch; gap: 1.05rem; }
+.shrine-option-list > .class-pick { width: 100%; }
+:is(.shrine-option-list, .shrine-option-grid) > .class-pick { box-sizing: border-box; height: var(--shrine-card-h); }
+:is(.shrine-option-list, .shrine-option-grid) > .shrine-fold[open] { height: auto; }
+:is(.shrine-option-list, .shrine-option-grid) > .class-pick p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.shrine-option-grid { align-items: stretch; }
+.shrine-fold { display: block; padding: 0; overflow: hidden; text-align: left; }
+.shrine-fold > summary { display: flex; gap: 1.5rem; align-items: center; height: calc(var(--shrine-card-h) - 2px); box-sizing: border-box; padding: 1.28rem 1.5rem; cursor: pointer; list-style: none; }
+.shrine-fold > summary::-webkit-details-marker { display: none; }
+.shrine-fold > summary > .glyph { flex: 0 0 3rem; margin: 0; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.shrine-fold > summary > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.shrine-fold .on { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+.shrine-fold .om { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 1.05rem; letter-spacing: 0.08em; }
+.shrine-fold-caret { flex: 0 0 auto; color: var(--muted); font-size: 1.72rem; line-height: 1; transition: transform 150ms; }
+.shrine-fold:hover .shrine-fold-caret, .shrine-fold[open] .shrine-fold-caret { color: var(--gold); }
+.shrine-fold[open] .shrine-fold-caret { transform: rotate(90deg); }
+.shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.shrine-fold-content { display: grid; gap: 1.05rem; padding: 1.28rem 1.5rem 1.5rem; }
+.shrine-fold-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; align-items: center; }
+

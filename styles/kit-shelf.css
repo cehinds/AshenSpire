@@ -1,0 +1,209 @@
+/* ═══ CARD SHELF — a row of resting cards, four across, whole ══════════════ */
+/* WHAT THIS REPLACES. A shelf of cards you are browsing past was laid out five
+   different ways: the merchant's armaments in `min(280px, 100%)` tiles (the
+   FOCUS width, around a 152px GLANCE card), its relics and flasks in
+   `flex: 1 1 26rem` OptionCards, a mount's deck list and the pile viewer in
+   fixed 140px and 220px boxes. None of them said how many cards a row holds,
+   so the answer was whatever the container happened to be — at 1328x744 the
+   merchant's armament shelf held ONE, with the rest behind a scroll.
+
+   THE RULE, ONCE. `maxColumns` cards across; each track as wide as the row
+   allows, never below `--card-shelf-min` and never above a card's resting
+   width; below that floor the row holds fewer rather than shaving them. The
+   three numbers are authored at `content/config/ui/components/card.json ->
+   sizing.shelf` and projected by CardSizeModel.js, whose `cardShelfColumnsAt`
+   is this rule's arithmetic, asked from Node by tests/card-shelf.test.mjs.
+
+   The floor is written `min(--card-shelf-min, --card-w-glance)` for the same
+   reason the model clamps it: a card tuned (or a phone variant dropped) below
+   the floor would otherwise be stretched to a floor wider than itself. */
+.card-shelf {
+  --card-shelf-track: max(
+    min(var(--card-shelf-min, 120px), var(--card-w-glance, 182.4px)),
+    calc((100% - (var(--card-shelf-cols, 4) - 1) * var(--card-shelf-gap, 12px)) / var(--card-shelf-cols, 4))
+  );
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--card-shelf-gap, 12px);
+  width: 100%;
+  max-width: none;
+}
+/* NO GROW. A wrapping flex row lets the last row's stragglers spread into the
+   slack beside them — measured on the merchant's five-card shelf at 1328x744:
+   four cards at 145px and the fifth, alone on its row, at 155. One shelf, one
+   card, two sizes. The track already fills the row, because
+   components/cardShelf.js writes `--card-shelf-cols` from the count the shelf
+   actually holds at its measured width, so there is nothing left for growth to
+   do but break the agreement between the rows. */
+.card-shelf > * {
+  flex: 0 1 var(--card-shelf-track);
+  min-width: 0;
+  max-width: var(--card-w-glance, 182.4px);
+  margin: 0;
+}
+/* A line of prose on a shelf is not a card: an empty shelf's "nothing for sale
+   on this visit" would otherwise be squeezed into one 152px column. */
+.card-shelf > :is(.as-status, p, h3, .shop-offer-avail) { flex-basis: 100%; max-width: none; }
+/* NOR IS AN OFFER WITH NO CARD IN IT. The merchant's SELL shelf is mixed: an
+   armament he will buy is a card, a relic or flask is an OptionCard with a
+   name, a description and a price and no face at all. Capping THAT at a card's
+   width ellipsised the name and stood the description in a 152px strip, so a
+   tile that holds no card keeps the kit's own measure (`.class-pick`, kit
+   above) and takes a row of its own. `.shop-collectible-offer` is the tile
+   that DOES hold a face and is deliberately not exempt. */
+.card-shelf > .shop-text-offer { flex: 1 1 26rem; max-width: 40rem; }
+/* Skill books carry their own details and purchase action. The shelf's shared
+   grid track sizes every offer to its tallest row, including wrapped copy. */
+.shop-workspace[data-shop-content='skillBooks'] .shop-pane > .shop-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.shop-workspace[data-shop-content='skillBooks'] .shop-offers { container-type: inline-size; }
+.shop-offers > #shop-skillBooks:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--book-gap);
+  align-content: start;
+  align-items: stretch;
+}
+#shop-skillBooks > .shop-book-offer {
+  display: grid;
+  grid-template-columns: var(--book-art-width) minmax(0, 1fr) var(--book-action-width);
+  align-items: center;
+  gap: var(--book-gap);
+  width: 100%;
+  max-width: none;
+  min-height: var(--book-min-height);
+  padding: var(--book-padding);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, var(--panel), var(--bg));
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 8%);
+}
+.shop-book-art { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
+.shop-book-details { min-width: 0; border-left: 1px solid var(--line); padding-left: var(--book-gap); }
+.shop-book-details > .shop-book-name { color: var(--gold); font-size: 1.8rem; line-height: 1.25; margin: 0 0 0.7rem; overflow-wrap: anywhere; }
+[data-book-id='bladeManual'] .shop-book-name { color: var(--green, #76b881); }
+.shop-book-details > p { color: var(--ink-dim); font-size: 1.3rem; line-height: 1.45; margin: 0; }
+.shop-book-details > .shop-book-usage { margin-top: 0.5rem; }
+.shop-book-actions { display: grid; gap: 0.65rem; min-width: 0; text-align: center; }
+.shop-book-buy.as-btn {
+  width: 100%; min-width: 0; min-height: 4.4rem; padding: 0.8rem 0.5rem;
+  color: #f8dfa4; border: 0; border-radius: 0.5rem;
+  background: var(--book-buy-art) center / 100% 100% no-repeat;
+  font-family: var(--font-display, Georgia, serif); font-size: 1.7rem;
+  text-transform: none; letter-spacing: 0.02em; text-shadow: 0 1px 2px #211407;
+  box-shadow: none;
+}
+.shop-book-buy.as-btn.beat-hold,
+.shop-book-buy.as-btn.beat-hold:is(:hover, :focus, :active) {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 52%) 0 8px, rgb(0 0 0 / 58%) 8px 16px), var(--book-buy-art);
+  background-size: calc(var(--hold, 0) * 100%) 100%, 100% 100%;
+  background-position: left center, center;
+  background-repeat: no-repeat;
+}
+.shop-book-buy.as-btn:hover:not(:disabled) { filter: brightness(1.18); }
+.shop-book-buy.as-btn:disabled { opacity: 0.5; filter: grayscale(0.65); cursor: not-allowed; }
+.shop-book-price { color: var(--gold); font-size: 1.1rem; line-height: 1.4; font-variant-numeric: tabular-nums; text-transform: uppercase; overflow-wrap: anywhere; }
+.shop-book-details .shop-offer-avail { margin-top: 0.6rem; }
+@container (max-width: 460px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns: var(--book-compact-art-width) minmax(0, 1fr) var(--book-compact-action-width);
+    gap: var(--book-compact-gap); padding: var(--book-compact-padding);
+  }
+  .shop-book-details { padding-left: var(--book-compact-gap); }
+  .shop-book-details > .shop-book-name { font-size: 1.5rem; }
+  .shop-book-details > p { font-size: 1.2rem; }
+}
+/* The game's UI zoom can shrink an entire desktop composition on a phone.
+   Keep these text-led offers readable and their native Buy targets tappable. */
+@container game-viewport (max-width: 600px) {
+  #shop-skillBooks > .shop-book-offer {
+    grid-template-columns:
+      max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1)))
+      minmax(0, 1fr)
+      max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)));
+  }
+  .shop-book-details > .shop-book-name { font-size: max(1.5rem, calc(1.5rem / var(--ui-zoom, 1))); }
+  .shop-book-details > p { font-size: max(1.2rem, calc(1.2rem / var(--ui-zoom, 1))); }
+  .shop-book-price { font-size: max(1.1rem, calc(1.1rem / var(--ui-zoom, 1))); }
+  .shop-book-buy.as-btn {
+    min-height: max(4.4rem, calc(44px / var(--ui-zoom, 1)));
+    font-size: max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)));
+  }
+}
+/* THE PLAYING CARD IS A FIXED BOX and `flex-shrink: 0`, so on a shelf it would
+   have overflowed its track rather than fitting in it. `--card-w` is the box's
+   one width input and the height is computed from its landmarks, not from the
+   width — so a narrower card is the same card with its text clamped by the
+   budget that already clamps it (`.ctext` line-clamp); Information opens the
+   full text. */
+.card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
+/* `[data-small]` scales the card by transform: on a shelf the TRACK is what
+   makes it small, and a transform on top of that only opens a gap. Hover and
+   focus keep their lift. */
+.card-shelf .card[data-small="true"]:not(:hover, :focus-visible, :focus-within) { transform: none; }
+/* The pick row's lift, kept: a shop shelf used to be a `.reward-row` and wore
+   it, and the signal should not depend on which class a shelf happens to have. */
+.card-shelf .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+
+/* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
+/* The head names the event and its {Status}; the narrative (ArtWell + prose)
+   stands beside the responses, stacked on narrow hosts; the foot holds
+   Continue, allowed once a response is taken. It stands on the page rather
+   than over one, so it wears the door's box without the veil. The frame is
+   the CHOICE BODY block below. */
+.event-narrative > .as-artwell { margin: 0 auto 1.2rem; }
+.event-narrative > .as-prose { margin: 0; }
+.event-door .as-options { text-align: left; }
+.event-door .as-option.ev-choice { min-height: var(--tap-floor); }
+.event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
+.event-door .as-option .on { white-space: normal; }
+/* The label's own ellipsis rule outranked the line above, so a choice's
+   consequence — "gain 90 cinders; take 6 damage" — was cut to "gain 90
+   cinders; t…" on a phone. A choice wraps; it never hides.
+   MEASURED, NOT REASONED — the first fix here was `.event-door .as-option .on
+   .as-label-text` at (0,4,0) and it lost: the ellipsis rule is `.as-option .on
+   > span:not(.as-pill):not(.as-tag)` (§ OptionCard below), and `:not()` counts
+   its argument, so that rule is (0,4,1). The label still read `nowrap` at
+   390x844 on 2026-09-11 with the "fix" in the file. `.ev-choices` lifts this
+   to (0,5,0), which is the smallest step that actually wins. */
+.event-door .ev-choices .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ═══ CHOICE BODY — the W1 frame for W1s Rest and W1u Event ═══════════════ */
+/* Shares arrive as custom properties from ChoiceBodyModel (wireframeUi
+   .choiceBody), divided by --ui-zoom so each is a share of the visible
+   viewport. The frame takes what the run HUD leaves, capped at its nominal
+   height; only the body scrolls. Fallbacks are first-paint values only. */
+.screen.choice-screen { justify-content: flex-start; gap: 0; padding-inline: var(--choice-outer-x, 2.4rem); padding-bottom: var(--choice-outer-y, 2.4rem); }
+.modal.choice-door { flex: 1 1 auto; min-height: 0; width: var(--choice-frame-width, 100%); max-width: 100%; max-height: var(--choice-frame-height, 100%); }
+.choice-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; box-sizing: border-box; min-height: var(--choice-head-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.choice-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.choice-door > .modal-body { padding: var(--choice-inset-top, var(--modal-inset)) var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot { box-sizing: border-box; min-height: var(--choice-foot-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+/* The two body slots: side by side on wide hosts, stacked on narrow ones. */
+.choice-body-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--choice-column-gap, 1.5rem); row-gap: var(--choice-row-gap, 1rem); align-items: start; }
+:root[data-layout='narrow'] .choice-body-columns { grid-template-columns: minmax(0, 1fr); }
+.choice-body-columns > * { min-width: 0; }
+.choice-body .class-row.shrine-option-list {
+  width: 100%; max-width: none; margin-inline: 0;
+  /* Six collapsed actions are the Shrine's initial menu, not overflow
+     content. Keep their rhythm compact enough to show the whole menu first;
+     the body still scrolls when a fold opens or the viewport is genuinely
+     short. */
+  gap: 0.8rem;
+}
+/* W1s availability column: what arrival restored, then each choice's state. */
+.choice-status { display: grid; gap: 0.6rem; align-content: start; }
+.screen .choice-status .rest-refill { margin: 0; max-width: none; text-align: left; }
+.choice-status-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.choice-status-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.choice-status-row[data-state='available'] .choice-status-state { color: var(--gold); }
+.choice-status-row:is([data-state='unavailable'], [data-state='used']) .choice-status-state { color: var(--muted); }
+

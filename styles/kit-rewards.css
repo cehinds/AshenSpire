@@ -1,0 +1,253 @@
+/* ═══ REWARDS — a decision door over the battlefield ═══════════════════════ */
+/* Victory is a modal, not a screen: the md door stands on the veil over the
+   field it was won on (or the map, or a bare backdrop after a reload). Rows
+   are OptionCards; the foot carries the hold copy and Continue on the ladder. */
+.reward-backdrop { min-height: 100%; }
+/* ONE LAYOUT AT EVERY WIDTH (owner, 2026-10-26): the phone's single column,
+   capped at a phone-like width and centred, so desktop reads the same. */
+.modal.reward-door[data-size]:has(.reward-claim-layout) { --modal-rung-width: calc(480px / var(--ui-zoom, 1)); width: var(--modal-rung-width); max-width: 100%; }
+.reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
+.reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
+.reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
+.reward-door[data-victory-compact='true'] > .modal-head .modal-head-actions { display: none; }
+.reward-door .reward-compact-xp { width: 100%; min-width: 0; display: grid; gap: .65rem; }
+.reward-door .reward-compact-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6rem; min-width: 0; font-variant-numeric: tabular-nums; }
+.reward-door .reward-compact-heading { white-space: nowrap; color: var(--parchment); font-weight: 700; }
+.reward-door .reward-compact-arithmetic { display: flex; align-items: baseline; justify-content: flex-start; gap: .15rem; min-width: 0; }
+.reward-door .reward-compact-formula { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.reward-door .reward-compact-more { flex: none; border: 0; padding: 0 .15rem; background: transparent; color: var(--gold); font: inherit; cursor: help; }
+.reward-door .reward-compact-more[hidden] { display: none; }
+.reward-door .reward-compact-value { justify-self: end; white-space: nowrap; color: var(--gold); }
+.reward-door .reward-compact-list { box-sizing: border-box; height: min(calc(var(--receipt-rows, 4) * 2.1rem + .7rem), calc(32 * var(--view-vh, 1vh))); margin: 0; padding: .35rem .55rem; list-style: none; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; border: 1px solid var(--line); border-radius: var(--r-4); background: color-mix(in srgb, var(--panel) 72%, var(--bg)); }
+.reward-door .reward-compact-row { min-height: 2.1rem; display: flex; align-items: center; justify-content: space-between; gap: .7rem; min-width: 0; }
+.reward-door .reward-compact-row-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reward-door .reward-compact-row-value { flex: none; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
+.reward-door .reward-compact-continue:disabled { opacity: .58; cursor: default; }
+.reward-door .reward-compact-continue.is-ready { background: #28693f; border-color: #71c990; color: var(--parchment); }
+.reward-door .reward-compact-continue.is-ready:is(:hover, :focus-visible) { background: #368a59; border-color: #a0e6b6; }
+.reward-door .reward-menu { max-width: none; min-width: 0; width: 100%; }
+/* A reward's intrinsic title width must not expand into the XP column. */
+.reward-door .reward-menu > .reward-kind { box-sizing: border-box; width: 100%; }
+.reward-door .reward-menu > .reward-kind h3 { white-space: normal; flex-wrap: wrap; overflow-wrap: anywhere; }
+/* W1t: reward choices above their claim status, one column at every width. */
+.reward-door .reward-claim-layout { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2 * var(--view-vh, 1vh)); align-items: start; }
+.reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
+.reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
+.reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
+.reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
+/* PROGRESSION, above the claim status (Constantine 2026-09-20): what the fight
+   moved, in the same right-hand column as what is left to take. One row is
+   name · level · meter · the level it fills toward, with the fight's gain on a
+   second line; narrow hosts drop the meter to its own line rather than
+   squeezing four columns into a phone. */
+.reward-door .reward-side { display: grid; gap: 1.2rem; min-width: 0; align-content: start; }
+.reward-door .reward-progress { display: grid; gap: .5rem; min-width: 0; grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto; }
+.reward-door .reward-progress > * { grid-column: 1 / -1; }
+.reward-door .reward-progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+/* `row-gap: 0` and a margin on the gain line, not a gap: the gain row is
+   declared for every row but filled only where the fight paid, and a gap
+   would make a row with no gain a hair taller than one with. */
+.reward-door .reward-progress-row {
+  display: grid; min-width: 0; gap: 0 .6rem; align-items: center;
+  grid-template-columns: minmax(0, auto) auto minmax(3.5rem, 1fr) auto;
+  grid-template-areas: 'name level bar next' 'gain gain gain gain';
+}
+/* THE BARS MUST LINE UP, and a per-row grid cannot promise that: each row sized
+   its own name column, so "Reaver mastery" pushed its meter right of "Blade"'s
+   and the panel read as four unrelated measurements. Subgrid gives the list one
+   set of columns and the rows borrow it; the per-row rule above stays as the
+   fallback for a host without it. */
+@supports (grid-template-columns: subgrid) {
+  /* Both lists borrow the PANEL's columns, so the character level and the
+     skill tracks below it are one ledger read down a single set of bars. */
+  .reward-door .reward-progress-list { grid-template-columns: subgrid; }
+  .reward-door .reward-progress-row { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
+/* The track labels are authored lowercase where they name a weight class
+   ("heavy armour"); a line that starts a row is capitalised on sight, not by
+   re-writing the content table every screen reads. */
+.reward-door .rp-name::first-letter { text-transform: uppercase; }
+.reward-door .rp-name { grid-area: name; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); }
+.reward-door .rp-level { grid-area: level; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
+.reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
+.reward-door .rp-bar { grid-area: bar; min-width: 0; }
+.reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
+.reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
+.reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
+.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: auto; min-height: 44px; padding: .65rem 1rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .95rem; line-height: 1; font-weight: 700; }
+.reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
+.reward-door .rp-layered-bar { position: relative; height: 1.6rem; overflow: hidden; border-radius: 999px; background: #2b2821; box-shadow: inset 0 0 0 1px var(--line); }
+.reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
+.reward-door .rp-layered-bar .rp-under { background: #62c686; z-index: 1; }
+.reward-door .rp-layered-bar .rp-over { background: #d7b64b; z-index: 2; }
+.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; justify-content: safe flex-end; max-width: calc(100% - 1.1rem); color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
+.reward-door .rp-layered-bar.rp-bar-ready .rp-under, .reward-door .rp-layered-bar.rp-bar-ready .rp-over { background: #6ab8f5; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
+.reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
+.reward-door .reward-progress-row[data-kind='character'] .rp-next { position: relative; z-index: 1; transition: transform .35s ease; }
+.reward-door .reward-progress-row[data-kind='character'] .reward-level-up { position: relative; z-index: 2; grid-area: next; }
+/* A LEVEL'S REWARD WAITS, IT IS NOT FORCED. A claim no longer opens its
+   chooser; the reward it unlocked joins the menu in the Level up blue and
+   lifted off the list, and the one a claim just unlocked rises into place
+   once (reward-fresh, a single short run; the reduced-motion kill in
+   base.css collapses it). */
+.reward-door .reward-kind.reward-level-offer {
+  --level-ready-blue: #75bfff;
+  border-color: var(--level-ready-blue);
+  background: color-mix(in srgb, var(--level-ready-blue) 12%, var(--panel));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 45%, transparent), 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 16px color-mix(in srgb, var(--level-ready-blue) 22%, transparent);
+  transform: translateY(-2px);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.reward-door .reward-kind.reward-level-offer:is(:hover, :focus-visible) { border-color: #a7d9ff; transform: translateY(-3px); }
+.reward-door .reward-kind.reward-level-offer > .glyph,
+.reward-door .reward-kind.reward-level-offer h3 { color: #a7d9ff; }
+.reward-door .reward-kind.reward-fresh { animation: reward-offer-rise .45s ease-out; }
+@keyframes reward-offer-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  60% { opacity: 1; transform: translateY(-4px); }
+  to { transform: translateY(-2px); }
+}
+.reward-door .reward-level-summary { margin: 0 0 .6rem; color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-skill-summary + .reward-skill-summary { margin-top: 1.2rem; }
+.reward-door .reward-skill-meter { height: .4rem; background: var(--line); border-radius: .2rem; overflow: hidden; margin-bottom: .65rem; }
+.reward-door .reward-skill-fill { display: block; height: 100%; background: var(--frost); animation: reward-skill-fill .7s ease-out; }
+.reward-door .reward-skill-effects { color: var(--text); font-variant-numeric: tabular-nums; }
+.reward-door .reward-skill-next { margin: .5rem 0 0; color: var(--muted); }
+@keyframes reward-skill-fill { from { width: var(--skill-before); } }
+.reduced-motion .reward-skill-fill { animation: none; }
+@media (prefers-reduced-motion: reduce) { .reward-skill-fill { animation: none; } }
+.reward-door .reward-level-rewards { margin-bottom: .6rem; }
+.reward-door .reward-level-log { margin: .4rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
+.reward-door .reward-level-line { color: #a7d9ff; font-variant-numeric: tabular-nums; }
+.reward-door .reward-stat-allocation { grid-column: 1 / -1; display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
+.reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
+.reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
+.reward-door .reward-stat-add { min-width: 2.5rem; }
+.reward-stat-name { min-width: 0; overflow-wrap: anywhere; }
+.reward-stat-gain, .se-gain { margin-left: .5em; color: var(--muted); font-size: max(12px, .8rem); font-weight: 500; font-family: var(--font-body, inherit); letter-spacing: 0; white-space: nowrap; }
+/* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
+.reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
+.reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
+.reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
+.reward-door .reward-progress-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name level' 'bar bar' 'gain next';
+}
+.reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
+.reward-door .rp-next { justify-self: end; }
+.reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+.reward-door .reward-row .reward-node { white-space: normal; }
+/* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
+   three columns in ONE row on desktop and phone alike. Each column is the
+   option's card face on top and its text button under it; both select, and the
+   chosen one wears the green trim. The face scales to its column, the button
+   text wraps and never clips. */
+/* The column count follows the offer (--choice-count, set from JS): one to four
+   options, each column capped at 16rem and the row centred, so a lone option
+   sits in the middle rather than stretching across the door. */
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+/* Owner (2026-11-02): desktop cards are 20% larger (--card-w-glance 152 to 182.4). The grid column was capped at 16rem
+   (160px) and the door at its 57rem rung, which held the card at 158px at 1280x720; both now follow the card width.
+   A phone keeps its two-column rule below (the narrow layout never reaches here). */
+:root:not([data-layout='narrow']) .reward-door .reward-row.reward-choice-grid { grid-template-columns: repeat(var(--choice-count, 3), minmax(0, max(16rem, var(--card-w-glance, 182.4px)))); max-width: max(60rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px)); }
+:root:not([data-layout='narrow']) .modal.reward-door[data-size]:has(.reward-choice-grid) { --modal-rung-width: max(57rem, calc(var(--choice-count, 3) * var(--card-w-glance, 182.4px) + (var(--choice-count, 3) - 1) * 12px + 2 * var(--modal-inset) + 20px)); }
+.reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
+/* Every face uses the shared glance width, independent of its card family or
+   selection. Equal grid rows and flexible buttons let the longest rules set
+   their common height, including when phone choices wrap onto a second row. */
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 182.4px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
+.reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 0 3.5rem; height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
+@container game-viewport (max-width: 520px) {
+  /* Equal tracks keep all offered faces and buttons comparable on phones.
+     Text wraps in the shared button row rather than shrinking the hit area. */
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
+  .reward-door .reward-choice-option { gap: .4rem; }
+  /* An odd last choice (3 or 5 offered) centres under the pair above it instead of hugging the left column. */
+  .reward-door .reward-row.reward-choice-grid > .reward-choice-option:last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; width: calc(50% - 4px); justify-self: center; }
+  .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
+}
+.reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
+/* The ring itself is the shared one above; the door adds only the lift. */
+.reward-door .reward-choice-option > .card:hover,
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
+.reward-door .reward-confirm:not(:disabled) {
+  background: color-mix(in srgb, var(--green) 22%, var(--panel));
+  border-color: var(--green);
+  color: var(--parchment);
+}
+.reward-door .reward-confirm:not(:disabled):hover,
+.reward-door .reward-confirm:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--green) 34%, var(--panel));
+  border-color: var(--green);
+}
+
+/* ═══ PAGE DOOR — a door that stands on the page, edge to edge ═══════════ */
+/* A PAGE DOOR wears the door's box without the veil (as the event does), in
+   two rungs. The DEFAULT hugs its content and stands on the page ground — a
+   result, a question, a notice. `full` takes the whole screen for a place you
+   work in (creation, the Custom Climb): the phone gets every pixel, a wide
+   screen a capped column with the ground either side. The rules for the
+   default rung are in the PAGE DOORS section below; `full` overrides them. */
+.screen.as-page { justify-content: flex-start; gap: 0; padding: 0; overflow: hidden; }
+.as-page > .modal.as-pagedoor.full, .screen > .modal.as-pagedoor.full {
+  width: 100%; max-width: 124rem; height: 100%; max-height: 100%; flex: 1 1 auto;
+  border-radius: 0; border-width: 0 1px;
+}
+.as-pagedoor.full > .modal-body {
+  display: flex; flex-direction: column; align-items: stretch; gap: 1.6rem;
+  padding: var(--modal-inset);
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.as-pagedoor.full > .modal-foot { background: var(--panel); }
+/* A pane that sits inside another inset (a fold's panel) carries none of its own. */
+.as-pane.flush { padding: 0; overflow: visible; }
+/* A pane's items never shrink into each other: the pane scrolls instead. */
+.as-pane > * { flex-shrink: 0; }
+.as-pane.flush > .as-hairline { margin: 1rem 0; }
+
+/* ═══ SPLIT — two panes and a draggable handle ══════════════════════════════ */
+/* Body D's two panes with a handle between them: `--split-share` is the left
+   pane's share, the handle is a real button on the tap floor (keys move it
+   too), and under a narrow box the split stacks and the handle goes. */
+.as-split {
+  --split-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--split-share)) auto minmax(0, 1fr);
+  gap: 1.05rem; align-items: stretch; width: 100%; min-width: 0;
+}
+.as-split > .as-split-pane { min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--panel); }
+/* A pane inside a Split on the page is not a scroll owner — the page body is. */
+.as-split > .as-split-pane > .as-pane { flex: 1 1 auto; overflow: visible; }
+.as-split-handle {
+  position: relative; justify-self: center; align-self: stretch;
+  width: var(--tap-floor); min-width: var(--tap-floor); min-height: 0; padding: 0;
+  border: 0; border-radius: 0; background: transparent; cursor: col-resize;
+}
+.as-split-handle::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-soft); }
+.as-split-handle::after {
+  content: '‹ ›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 0.4rem 0.3rem; color: var(--muted); background: var(--panel);
+  font: 500 1.2rem/1 var(--font-body); letter-spacing: 0.1em; white-space: nowrap;
+}
+.as-split-handle:hover, .as-split-handle:focus-visible { background: transparent; border: 0; box-shadow: none; }
+.as-split-handle:hover::after, .as-split-handle:focus-visible::after { color: var(--gold); }
+@container (max-width: 64rem) {
+  .as-split { grid-template-columns: minmax(0, 1fr); }
+  .as-split-handle { display: none; }
+  /* THE DECISION COMES FIRST ON A PHONE. Stacked, the class step led with the
+     preview pane — figure, resources, relic — and the list of classes, the
+     one thing the step asks for, began below the fold at 390x844 (measured
+     2026-09-11). Beside each other the order is preview | chooser and reads
+     fine; stacked, the chooser goes first and the preview follows it. */
+  .cc-class-split > .cc-class-preview-host { order: 2; }
+}
+

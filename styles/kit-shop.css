@@ -1,0 +1,291 @@
+/* ═══ W1d / W1v — THE MERCHANT AS A WORKSPACE (screens/shop.js) ═══════════
+   One frame under the run band: W0 head, a category rail beside the pane
+   (above it on compact hosts), the W1v pane of offers and the selected
+   offer's detail, and the W0 foot. The page never scrolls; only the offers
+   and the detail do. ShopWorkspaceModel.js owns every number and shop.js
+   writes them as custom properties and data attributes. */
+.screen.shop-workspace { overflow: hidden; gap: 0; padding-inline: 2.5%; padding-bottom: 1rem; }
+.shop-frame {
+  --modal-inset: 1.4rem;
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  width: 100%;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden;
+}
+.shop-frame > .modal-head { padding-block: 0.6rem; }
+/* The rail is its own scrollport: on a short host its items scroll inside it
+   and never run under the foot (measured at 844x390, where they did). */
+.shop-frame > .shop-railed { flex: 1 1 auto; min-height: 0; height: auto; grid-template-columns: var(--shop-rail-width, 17.25rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.shop-frame > .shop-foot-host > .modal-foot { padding-block: 0.6rem; }
+:root .shop-workspace[data-shop-rail='side'] .shop-railed > .shop-rail { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+/* Compact: the kit's [Category ▾] selector above the pane (kit.css W1
+   CATEGORY NAVIGATION); data-shop-rail mirrors its decision. */
+:root .shop-workspace[data-shop-rail='top'] .shop-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.shop-rail > .as-railitem.with-status > .as-status { color: inherit; opacity: 0.8; }
+.shop-pane { min-height: 0; overflow: hidden; padding-block: 0.8rem; }
+.as-pane > .shop-pane-head { flex: 0 0 auto; margin-bottom: 0.6rem; }
+.as-pane > .shop-body { flex: 1 1 auto; min-height: 0; display: grid; gap: var(--shop-gap, 1rem); }
+.shop-workspace[data-shop-pane='columns'] .shop-body { grid-template-columns: minmax(0, var(--shop-offers-fr, 1fr)) minmax(0, var(--shop-detail-fr, 1fr)); }
+.shop-workspace[data-shop-pane='stacked'] .shop-body { grid-template-rows: minmax(0, 1fr) auto; }
+.shop-workspace[data-shop-pane='stacked'] .shop-detail { max-height: var(--shop-detail-max, 50%); }
+.shop-body > .shop-detail[hidden] { display: none; }
+/* The two scrollports. `scrollbar-color` inherits from `.screen`, so the
+   product thumb reads the same here as on every other page. */
+.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.shop-offers > .shop-shelf { max-width: none; width: 100%; padding: 2px; }
+.shop-offers > .shop-services { display: flex; flex-direction: column; gap: 1rem; }
+.shop-offers > .shop-services .class-row, .shop-offers > .shop-services > #shop-remove { max-width: none; }
+/* A narrow `.class-row` stacks as a column, where the kit's `flex: 1 1 26rem`
+   on `.class-pick` becomes a 260 px HEIGHT: the remove, smith and sell tiles
+   each stood a third of a phone tall around one line of text (measured at
+   390x844). In the offers a tile keeps its content height. */
+:root[data-layout='narrow'] .shop-offers .class-row > .class-pick { flex: 0 0 auto; }
+.shop-offer.is-selected > .card, .shop-offer.is-selected > .shop-inspect-card, .shop-offer.is-selected > div > .card { outline: 2px solid var(--gold); outline-offset: 3px; }
+.shop-offer.class-pick.is-selected { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.shop-offer-avail { display: block; white-space: normal; color: var(--muted); }
+.shop-detail { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--panel); }
+.shop-detail > .shop-detail-name { margin: 0; }
+.shop-detail > .shop-detail-desc { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.4; }
+.shop-detail > .as-status { white-space: normal; text-align: left; align-self: flex-start; }
+.shop-detail > .shop-detail-price { color: var(--gold); }
+.shop-detail > .shop-detail-avail.is-available { color: var(--parchment); }
+/* Shared inspection: 270px artwork + 180px information within the 450px face. */
+.equipment-poker-card .epc-frame,
+.collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
+.epc-frame > .epc-name { position:absolute; z-index:1; top:26px; left:27px; right:27px; min-height:29px; height:auto; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:#211a12dd; padding:3px 6px; }
+.epc-name > span { display:none; }
+.epc-art img { padding:35px 8px 8px; }
+.epc-frame > :is(.epc-type,.epc-flavor), .epc-footer > span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+/* A BONUS IS THE MECHANIC, SO IT WRAPS BEFORE IT TRUNCATES. `nowrap` + ellipsis
+   cut real numbers mid-word — "Class power: +1 Poten…" — which is worse than a
+   second line. It still ends in an ellipsis once it passes the authored line
+   budget, so a pathological string cannot push the footer off the card. */
+.epc-bonus { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:var(--epc-bonus-lines,2); overflow:hidden; white-space:normal; }
+
+/* TYPE SCALES WITH THE CARD, AND CLAMPS RATHER THAN CLIPS. Each size is a
+   clamp(min, ideal, max) emitted from balance.ui.equipmentCard.text; the ideal
+   is in `cqw` against the frame's own inline size, so a face dropped into a
+   narrow column shrinks its own type instead of cutting the line off. */
+.epc-name { font-size:var(--epc-text-name, 20px); }
+.epc-type { font-size:var(--epc-text-type, 11px); }
+.epc-fact { font-size:var(--epc-text-fact, 10px); }
+.epc-fact strong { font-size:var(--epc-text-factValue, 16px); }
+.epc-tag { font-size:var(--epc-text-tag, 10px); }
+.epc-heading { font-size:var(--epc-text-heading, 10px); }
+.epc-bonus { font-size:var(--epc-text-bonus, 13px); line-height:1.3; }
+.epc-flavor { font-size:var(--epc-text-flavor, 12px); }
+.epc-footer { font-size:var(--epc-text-footer, 10px); }
+
+.epc-frame > .epc-tags { flex-wrap:nowrap; overflow:hidden; }
+.epc-frame > .epc-effects { overflow:hidden; }
+.epc-heading { margin-bottom:2px; }
+.epc-flavor { padding-top:3px; }
+/* The art column is sized by the inspect level, not by a number kept here —
+   an art track narrower than the card makes the card smaller than the one you
+   tapped to open it, which is the defect this whole change closes. */
+/* OUTSIDE THE MODAL THE LAYOUT WRAPS ON ITS OWN BOX (#1164). The two-column
+   grid used to hold here for every host, and only two things stacked it: the
+   `max-width:600px` collapse below and the `[data-card-door='stacked']` rules,
+   which are scoped to `.card-inspection-modal` because that is the only host
+   `cardInspectionLayout()` measures. So a bare host (reward, inventory,
+   service modal) or an Armoury pane kept two columns from 601px up —
+   measured on weapon-cards-preview at 601/650/703: details 162/211/264px.
+   A flex row that wraps needs no breakpoint and no viewport reading: the art
+   asks for the inspect width, the details ask for the readable minimum, and
+   when both do not fit in THIS layout's content box the details drop to a line
+   of their own. The details are therefore at least the readable minimum beside
+   the card, or the full line under it — never the seam between.
+   384px IS card.json's `sizing.doorReadableMinPx`; CSS cannot read it, so
+   tests/card-door-stack.test.mjs holds this literal to the config. The modal
+   keeps its grid and its measured `data-card-door` decision (rules below). */
+.card-inspection-layout { display:flex; flex-wrap:wrap; align-items:flex-start; gap:24px; min-width:0; width:100%; padding:16px; box-sizing:border-box; }
+.card-inspection-layout > .card-inspection-art { flex:0 1 var(--card-w-inspect,384px); }
+.card-inspection-layout > .card-inspection-details { flex:1 1 384px; }
+/* A wrapped art line is centred, not left on a 320px box at the line start;
+   the details' end margin takes any slack on a two-column line, so a wide host
+   still reads card-then-text from the start edge. Not the modal: its grid has
+   its own tracks and a stacked door centres its art itself (rules below). */
+.card-inspection-layout:not(.card-inspection-modal .card-inspection-layout) { justify-content:center; }
+.card-inspection-layout:not(.card-inspection-modal .card-inspection-layout) > .card-inspection-details { margin-inline-end:auto; }
+.card-inspection-art { min-width:0; width:100%; }
+.card-inspection-art > .equipment-poker-card { width:100%; }
+.card-inspection-details { min-width:0; max-width:65ch; font:16px/1.55 Arial,sans-serif; overflow-wrap:anywhere; }
+.card-inspection-details dl { margin:0; }
+.card-inspection-details dt:first-child { margin-top:0; }
+.card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
+.equipment-poker-explanations { margin-top:0; }
+/* One drawn face for both information controls; the size is a variable so the
+   WCB1: every host's control is the one shared circle (--inspect-size, a
+   44 physical px target, with a 16 px label) unless the host declares its own
+   --card-info-size, which nothing does today — the hook stays for a host that
+   must pin the circle to a size the zoom does not choose. */
+.card-inspection-target > .card-info-button,
+.merchant-offer-media > .card-info-button,
+.combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+/* A clue is a word; the formation column must not clip it to a number badge. */
+:root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
+/* The (i) badge exists only on a combat-hand card (bindCardInspection `infoBadge`). A hand card's
+   Inspect is the portal above the card (handInspectionOverlay), made only while that card is
+   selected; the in-card copy stays hidden so it never paints at a temporary spot and then moves. */
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
+/* A shop card row has no selection step: its (i) is always shown, in the thumbnail's top-right corner, and only inspects. */
+.merchant-offer-media.has-card-info { position:relative; }
+.merchant-offer-media > .card-info-button { position:absolute; z-index:2; top:-6px; right:-6px; visibility:visible; pointer-events:auto; }
+/* The thumbnail is narrower than the (i) circle, so a corner badge covers the art. Seat the badge centred in a lane under
+   the art (the reward door reserves one above its row), and let a shelf holding such rows size them to fit the lane. */
+.merchant-offer-media.has-card-info { --shop-inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); padding-bottom:calc(var(--shop-inspect-box) + 4px); }
+.merchant-offer-media.has-card-info > .card-info-button { top:auto; right:auto; bottom:0; left:50%; transform:translateX(-50%); }
+:root .shop-workspace.merchant-workspace .shop-offers > .shop-shelf:not([hidden]):not(.shop-services):has(.merchant-offer-media.has-card-info) { grid-auto-rows:minmax(var(--merchant-row-height,110px), auto); }
+:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer:has(> .merchant-offer-media.has-card-info) { height:auto; min-height:var(--merchant-row-height,110px); }
+:root .shop-workspace.merchant-workspace .shop-shelf .merchant-offer-media.has-card-info { height:auto; min-height:calc(var(--shop-inspect-box) + 4px + 48px / var(--ui-zoom, 1)); }
+/* WCF3: the selected card and its inspect control share one glow. The hand
+   moves that control into an overlay, so the portal wears the same filter. */
+.inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* Owner, 2026-10-31: a hand card never wears the yellow select state, only the targeting colour (--selection-color).
+   Hold-start, keyboard focus and a second press all add `.inspection-selected`; it glows like `.selected`.
+   Gold stays on the deck editor, rewards and every other card surface. */
+:root .hand .card { --focus-ring: 2px solid var(--selection-color, var(--green)); }
+:root .hand .card:is(.selected, .inspection-selected), :root .hand-overlay > .hand-info-portal {
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, var(--green)));
+}
+:root .hand .card.inspection-selected { border-color: var(--selection-color, var(--green)); }
+:root .hand .card.playing-poker-card:is(.selected, .inspection-selected, :focus-visible):not(.is-chosen) {
+  border-color: var(--selection-color, var(--green));
+  box-shadow: 0 0 0 2px var(--selection-color, var(--green)), 0 0 18px color-mix(in srgb, var(--selection-color, var(--green)) 40%, transparent);
+}
+/* Reward card pickers: the CHOSEN card (the chooser's own state, set by a face tap or its name button alike)
+   shows its (i) in the lane reserved above the row. */
+.reward-door .reward-choice-face.is-chosen > .card-info-button { visibility:visible; pointer-events:auto; }
+.card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
+.card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
+.card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,var(--card-w-inspect,384px)) minmax(0,1fr); }
+.card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:var(--card-ratio); box-sizing:border-box; }
+.playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
+.playing-card-details .tt-title { display:none; }
+.playing-card-details .ti-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.playing-card-details .ctext { font-size:18px; line-height:1.55; }
+.playing-card-details .ti-flavor { color:var(--muted); line-height:1.5; }
+.card-inspection-modal button.card-inspection-play:disabled { opacity:1; cursor:not-allowed; }
+.cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(220px, .85fr) minmax(0,1.15fr); gap:24px; align-items:start; }
+.cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(180px,220px)); gap:16px; }
+.cc-equipment-details { padding:16px; border:1px solid #74603c; border-radius:8px; min-width:0; }
+@container game-viewport (max-width:700px) { .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); } }
+
+.card-inspection-art > .card { width:220px; height:308px; min-width:0; max-width:100%; margin:0 auto; transform:none; }
+.card-inspection-art > .card .ctext { overflow:hidden; text-overflow:ellipsis; }
+
+.inspection-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.inspection-tag { display:inline-block; max-width:100%; padding:4px 8px; border:1px solid var(--line); border-radius:5px; color:var(--gold); font:inherit; font-size:13px; line-height:1.4; white-space:normal; overflow-wrap:anywhere; cursor:help; }
+.tooltip-keyword { color:var(--gold); border-bottom:1px dotted currentColor; cursor:help; }
+/* On a card face outside the inspector a keyword is decoration only (owner, 2026-11-05). */
+.card .tooltip-keyword { cursor:inherit; pointer-events:none; }
+:is(.card-inspection-modal, .card-inspection-layout) .card .tooltip-keyword { cursor:help; pointer-events:auto; }
+.tooltip-keyword:focus-visible, .inspection-tag:focus-visible { outline:var(--focus-ring); outline-offset:3px; }
+.inspection-facts { display:flex; flex-wrap:wrap; gap:8px; }
+.inspection-facts .inspection-tag { font-size:15px; color:var(--parchment); }
+.inspection-effect { margin:0 0 14px; font-size:18px; line-height:1.55; }
+.inspection-facts + .inspection-effect { margin-top:18px; }
+.inspection-requirement { color:var(--gold); line-height:1.5; }
+.equipment-poker-explanations { min-width:0; }
+.equipment-poker-explanations .inspection-effect:last-of-type { margin-bottom:0; }
+.as-tip .ctext { white-space:normal; max-height:none; overflow:visible; }
+.as-tip .inspection-tags { gap:5px; }
+@container game-viewport (max-width:600px) {
+  .card-inspection-modal .card-inspection-layout, .card-inspection-layout { grid-template-columns:minmax(0,1fr); gap:16px; padding:16px; }
+  .playing-card-details .ctext { font-size:16px; }
+  .card-inspection-art { width:100%; max-width:100%; margin-inline:auto; }
+  .card-inspection-layout > .card-inspection-art { flex-basis:100%; }
+  .card-inspection-art > .card { width:160px; height:auto; aspect-ratio:var(--card-ratio); margin-inline:auto; }
+  .card-inspection-art > .equipment-poker-card { width:100%; height:auto; margin-inline:auto; }
+  .card-inspection-art > .inspection-tags { justify-content:center; }
+  .inspection-effect { font-size:16px; }
+  .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
+}
+.equipment-choose { width:100%; margin-top:10px; min-height:var(--tap-floor); }
+/* CHOSEN IS THE RING ON THE CARD, NOT A LABEL UNDER IT. The button that made
+   the choice goes quiet once the choice is made — hidden, never removed, so
+   the row keeps the height it had and the cards beneath it do not walk up the
+   page when you pick one. The state a sighted player reads off the ring is
+   carried for everyone else by the chip's `.equip-chosen-note`. */
+.poker-equipment-choice.on > .equipment-choose { visibility:hidden; pointer-events:none; }
+/* The gold `.poker-equipment-choice.on` outline that used to sit here is
+   GONE ON PURPOSE (#997): it was this picker's own invention, and the chosen
+   state is now the one green ring the whole game shares, drawn on the card's
+   own face by `.is-chosen` above. `.on` stays on the CHIP because the rule
+   just above still needs it to quiet the button. */
+
+/* Creation keeps card nodes in place so focus can lift and settle smoothly.
+   ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
+   The information badge hangs above a selected card on every surface, this one
+   included; a corner exception here read as a second rule for the same
+   control. What made the exception necessary was room, not placement — with
+   nothing reserved the badge straddled the STARTING ARMOUR header's border
+   (measured 1280x800, 2026-09-11) — so these selectors reserve it: the 64 px
+   row gap every other card scrollport keeps, and a head that is DERIVED from
+   the badge it has to clear, floored at the 80 px this rule used to type.
+   THE HEAD IS THE BADGE'S OWN RISE, READ FROM THE BADGE'S OWN TOKENS.
+   Nothing declares --card-info-size any more, so the control here is the shared
+   circle, and main.js writes its size and hang onto the document root from
+   wireframeUi.inspect (--inspect-size, --inspect-gap). --cc-choice-rise reads
+   those same two properties through the same var chain the button's own `top`
+   uses, so a config change moves the head with the badge instead of past it: at
+   sizeRem 4 / gapPx 20 the badge grows to 67.2 px and the old head, which had
+   the 2.75 and the 10 typed into it, clipped 17.3 px (measured 2026-09-14).
+   The third term is the focus lift — translateY(-6px) plus the 5 % of the
+   card's height that scale(1.05) about center bottom grows upward, 20.2 px of
+   layout at UI size S — which is what the 26 covers, with slack.
+   A head derived from --tap-floor was tried and refused, and the max() floor is
+   why: that token divides by a zoom that runs ABOVE 1 on a desktop (1.48 at
+   1920), and a head that shrinks with it clipped 8 px off the first row there
+   while the badge had not moved. This expression only ever GROWS the head, and
+   it resolves to exactly 80 px at every zoom of 1 or more, so the Auto sizes
+   keep the geometry measured above.
+   THE ROW GAP RIDES THE SAME TOKEN, and keeps the 64 every other card
+   scrollport keeps wherever the head is at its floor. A second row's badge
+   overlaps the row above by design — it is drawn over that card at z-index 8,
+   measured 2.9 px into it at 1280 with the default tokens — so the gap is not
+   full clearance and is not what keeps a badge whole. Deriving it only stops a
+   bigger badge from deepening that overlap: the gap grows by exactly what the
+   head grows, never less than 64.
+   The floor alone was not enough: at UI size S (--ui-zoom 0.85) with NORMAL
+   motion the badge's top sat 0.8 px past the scrollport's padding box at every
+   desk width measured — 1280, 1366, 1440 and 1920 (2026-09-14; ui-sweep's
+   fixture asks for reduced motion, which drops the lift, so R5 could not see
+   it, and the row now runs a second pass that can). Derived, the head is
+   89.53 px there and the same cells clear by 7.3 px; 390 at Auto (zoom 0.9)
+   takes 86 px and clears by 18.1.
+   Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
+   390, at UI sizes Auto, S, M and XL, under normal motion.
+*/
+/* The derived head belongs to the SCROLLPORT, not to one of its two layouts:
+   the badge hangs above a selected card in either view, and in either view the
+   first row is the one that would push it onto the section face. So the two
+   custom properties and the group placement sit on the container itself and
+   both `data-view` branches read them. */
+.cc-equip-group > .cc-card-selectors { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); grid-row:1 / span 2; }
+.cc-equip-group > .cc-card-selectors[data-view="grid"] { padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); align-content:start; }
+.cc-card-selectors[data-view="grid"] .poker-equipment-choice { position:relative; min-width:0; width:100%; justify-self:center; padding:4px; }
+/* FOUR CHOICES IN THE GLASS, NOT TWO (2026-09-12). Constantine: "cards are
+   too big. I should easily be able to see 4 cards on this screen." Measured
+   before this rule, the Main Hand choices column showed exactly two cards at
+   every desktop size (1366x768: a 497x505 scrollport holding 228x371 cards;
+   1440x900: 548x600 holding 252x412; 1920x1080: 703x710 holding 326x529) —
+   the column was pinned to two tracks, so a wide pane bought bigger cards
+   rather than more of them. The track count above is therefore unpinned and
+   the card is browsing-sized at 152px; the reading is the detail pane's job
+   and the art is the inspect modal's.
+   THE HEAD AND ROW GAP ABOVE ARE NOT PART OF THAT SAVING. This branch also
+   removed them, on the premise that the information badge sat inside the
+   card's corner and the head was reserving nothing. That premise no longer
+   holds: the badge hangs ABOVE a selected card on every surface, and the head
+   is what keeps the first row's badge off the section face. So the derived
+   head and gap stand exactly as they are, and only the track count and the
+   card cap come across.
+   Choose appears below the selected card, in its own reserved action slot. */
+.cc-card-selectors[data-view="grid"] .equipment-choose { position:static; width:100%; margin-top:10px; }
+.cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
+.cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
+/* Retain the action slot so browsing does not move the next row under a pointer. */
+.cc-card-selectors[data-view="grid"] .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
+

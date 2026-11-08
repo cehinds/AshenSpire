@@ -1,0 +1,178 @@
+/* ═══ CARD GRID — faces in a scrolling body, wrapped, one gap ══════════════ */
+.as-cardgrid { display: flex; flex-wrap: wrap; gap: 1.4rem; align-content: flex-start; }
+
+/* ═══ HOLD — the second beat on a control ══════════════════════════════════ */
+/* `.beat-hold` is written by the machinery (components/holdconfirm.js) on any
+   control the second-beat table arms; `--hold` is 0..1 per frame. The fill is a
+   high-contrast light/dark stripe instead of an accent wash: accent-filled
+   primary buttons already look lit, so another gold layer disappears on them.
+   Alternating luminance stays legible on both primary and plain controls. It
+   is a BACKGROUND (paints under a bare text node), never eased (an abort must
+   read instantly), and it survives reduced-motion because it is state, not motion.
+   `.hold-hint` is the word beside the label; it leaves an icon-sized control
+   and leaves the control a focus cursor is on (a pad confirms in one press). */
+.beat-hold, button.beat-hold, .as-btn.beat-hold,
+button.beat-hold:hover, .as-btn.beat-hold:hover,
+button.beat-hold:focus, .as-btn.beat-hold:focus,
+button.beat-hold:active, .as-btn.beat-hold:active {
+  background-image: repeating-linear-gradient(135deg,
+    rgba(255, 255, 255, 0.52) 0 8px,
+    rgba(0, 0, 0, 0.58) 8px 16px);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+  transition-property: border-color, color, transform;
+}
+.beat-hold[data-hold-feedback="delegated"], .beat-hold[data-hold-feedback="delegated"]:hover,
+.beat-hold[data-hold-feedback="delegated"]:focus, .beat-hold[data-hold-feedback="delegated"]:active { background-image: none; }
+.beat-hold[data-hold="holding"] { border-color: var(--gold); }
+.hold-hint { margin-left: 0.6em; font-size: 0.75em; letter-spacing: 0.14em; color: var(--gold); opacity: 0.75; }
+/* IN A ROW THE WORD FOLLOWS THE LABEL, NOT THE TRAIL. The trail takes the row's
+   free space with `margin-left: auto`, so a hint appended after it (which is
+   where the machinery appends it — it dresses the control, not the row) landed
+   past the keycap and was clipped by the panel's padding box. Ordering it ahead
+   of the trail puts it where it reads, beside the verb it qualifies. */
+.as-row > .hold-hint { order: 0; flex: 0 0 auto; }
+.as-row > .as-status, .as-row > .r-trail { order: 1; }
+.gp-focus > .hold-hint, .as-slot .hold-hint, .flask-slot .hold-hint { display: none; }
+/* The armed control stays identified while its question stands. */
+.beat-armed { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The confirm form (the Smith, the brazier) is a DetailCard with a ButtonRow. */
+.beat-confirm { flex-basis: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin: 6px 0 2px; padding: 1.05rem 1.35rem; max-width: 34rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); }
+.beat-confirm .beat-q { margin: 0; color: var(--parchment); font-size: 1.32rem; text-align: center; }
+.beat-confirm .beat-detail { color: var(--muted); font-size: 1.2rem; text-align: center; }
+.beat-confirm .beat-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.beat-confirm .beat-actions button { min-height: var(--tap-floor); min-width: var(--tap-floor); }
+
+/* ═══ SPOTLIGHT — a coaching bubble over a live board ══════════════════════ */
+/* The veil and the bubble's static copy take no input: the board beneath keeps
+   answering even when a compact layout leaves no rectangle large enough to
+   keep the whole Popover clear of the hand. Only the ButtonRow is pressable. */
+.as-spot-veil { position: fixed; inset: 0; z-index: 800; pointer-events: none; }
+.as-spot { position: absolute; border: 2px solid var(--gold); border-radius: var(--r-3); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.25), 0 0 0 9999px rgba(0, 0, 0, 0.55); pointer-events: none; transition: left 200ms, top 200ms, width 200ms, height 200ms; }
+.as-spot-veil > .as-pop { position: absolute; pointer-events: none; padding: 1.35rem 1.5rem calc(var(--tap-floor) + 2.7rem); display: flex; flex-direction: column; gap: 0.75rem; }
+.as-spot-veil > .tut-row { position: absolute; z-index: 1; pointer-events: auto; max-width: calc(100% - 24px); }
+.reduced-motion .as-spot { transition: none; }
+
+/* ═══ PILL TONES · STATPAIR SIZES · KEYCAP FLOAT · BUTTONROW WIDE ══════════ */
+/* An intent, a block count, a stance: a StatePill in the fact's own tint. */
+.as-pill[data-tone="danger"] { border-color: var(--danger); color: var(--danger); }
+.as-pill[data-tone="frost"] { border-color: var(--frost); color: var(--frost); }
+.as-pill[data-tone="gold"] { border-color: var(--gold); color: var(--gold); }
+.as-pill[data-tone="green"] { border-color: var(--green); color: var(--green); }
+.as-pill[data-tone="violet"] { border-color: #a07ad6; color: #a07ad6; }
+.as-pill[data-tone="ember"] { border-color: var(--ember); color: var(--ember); }
+.as-pill.lg { padding: 0.35rem 0.9rem; font: 700 1.35rem/1.3 var(--font-body); letter-spacing: 0.06em; background: var(--bg-raise); }
+.as-pill.lg .as-glyph { display: inline; flex: none; font-size: 1.2rem; color: inherit; margin-right: 0.4rem; }
+.as-pill.dashed { border-style: dashed; }
+.as-pill.solid { background: var(--frost); color: #0d0b08; border-color: var(--frost); font-weight: 800; }
+/* A StatPair that stands alone reads large; `.stack` puts the value over the key. */
+.as-statpair.lg .sp-v { font-size: 2rem; }
+.as-statpair.stack { flex-direction: column; align-items: center; gap: 0.15rem; }
+.as-statpair.stack .sp-k { font-size: 0.85rem; letter-spacing: 0.1em; }
+.as-statpair.stack .sp-v { font-size: 1.5rem; line-height: 1.1; }
+/* A keycap that floats on its subject's top edge (a card's positional key). */
+.as-keycap.float { position: absolute; top: -1rem; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 2rem; font-weight: 700; font-size: 1.05rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55); pointer-events: none; }
+body.pad-mode .as-keycap.float { display: none; }
+/* A pill pinned to its subject's foot (a card's unavailability reason). */
+.as-pill.foot { position: absolute; left: 0.3rem; right: 0.3rem; bottom: 0.3rem; z-index: 3; text-align: center; white-space: normal; background: var(--bg); text-transform: none; letter-spacing: 0; font-size: 0.85rem; line-height: 1.2; }
+/* A keycap inside a button sits before its verb with one gap. */
+.as-btn > .as-keycap:first-child { margin-right: 0.5rem; }
+/* A ButtonRow member that deserves twice the width (the primary). */
+.as-btnrow > .wide, .modal-btnrow > .wide { grid-column: span 2; }
+.as-btnrow > button.tall, .modal-btnrow > button.tall { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; white-space: normal; line-height: 1.1; }
+.as-btnrow > button.tall > .as-keycap { font-size: 0.9rem; }
+/* `.cell` — a StatPair that STANDS IN A ROW OF CONTROLS and therefore has to
+   read as one: the panel ground, the line, the row's radius, the tap floor's
+   height. It is still read and not pressed (no hover, no pointer). Measured:
+   on bare ground a receipt in the combat action row painted 3% of its box, and
+   an instrument that asks whether a control is drawn could not see it. */
+.as-statpair.cell {
+  box-sizing: border-box; justify-content: center; gap: 0.2rem;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0.4rem 0.6rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  cursor: default;
+}
+/* A StatPair standing in a ButtonRow fills its track like a button would, so
+   the row's edges are the row's and it is as tall as the button beside it. */
+.as-btnrow > .as-statpair { justify-self: stretch; align-self: stretch; }
+.as-btnrow > button > .as-statpair { pointer-events: none; }
+/* THE COMBATANT'S OWN ATOMS — the nameplate is a LabelStack, the intent, the
+   block count and the stance are StatePills, the effects are Pips and every
+   bar is a Meter. Only what the SPRITE surface asks of them is here: a
+   nameplate reads centred under the figure, and a pill under a sprite is
+   tighter than one in a list. */
+.combatant .as-labelstack { align-items: center; text-align: center; }
+.combatant .as-labelstack .ls-label { font-size: 1.2rem; }
+.combatant .as-pill.lg { font-size: 1.2rem; padding: 0.2rem 0.7rem; }
+.combatant .as-meter { --meter-h: 12px; }
+.combatant .as-meter.skinny { --meter-h: 6px; }
+.combatant .as-meter.procbar { --meter-h: 8px; }
+.combatant .as-meter.procbar > .m-plate { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 1; pointer-events: none; }
+.combatant .as-meter.procbar .m-value { font-size: 0.8rem; }
+.combatant .block-badge { position: absolute; left: -1.4rem; bottom: 3.4rem; z-index: 2; }
+/* THE INSPECTOR'S CONTENT is Panes' parts inside a Folding Tray: an Eyebrow
+   over a hairline, then Rows. The tray owns its box (combat.css places the
+   host at the field's edge); these say only how tight the reading is. */
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-resources { gap: 0.45rem; }
+.combatant-inspector-section { margin-top: 0.7rem; }
+.combatant-abilities > summary, .combatant-ability > summary { cursor: pointer; padding-block: 0.4rem; }
+.combatant-abilities > summary { display: list-item; list-style-position: inside; }
+.combatant-ability { border-bottom: 1px solid var(--line); padding-block: 0.25rem; }
+.combatant-ability > summary { color: var(--gold); font-weight: 600; }
+.combatant-ability > .as-prose { margin: 0.2rem 0 0.65rem; }
+.combatant-abilities summary:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.combatant-inspector-section > .as-hairline { margin: 0.35rem 0 0.2rem; }
+.combatant-inspector-row { padding-inline: 0; white-space: normal; align-items: flex-start; }
+.combatant-inspector-row > .r-label { flex: 0 1 auto; }
+.combatant-inspector-row > .as-status { text-align: right; }
+/* A pip: a round badge with a glyph and a count, for statuses in a row. */
+.as-pips { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-width: 0; }
+.as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
+.as-pip > .as-pill.round { position: absolute; right: -0.5rem; bottom: -0.5rem; padding: 0 0.3rem; background: var(--bg); color: var(--parchment); border-color: var(--line); font-size: 0.85rem; letter-spacing: 0; line-height: 1.4; }
+.as-pip.ring { color: var(--parchment); text-shadow: 0 0 2px #000; }
+
+/* ═══ ICON TRAY — the one row of round icons (components/iconTray.js) ═══════
+   The combatant card's status effects, the relic rail and the Potions minis
+   are one component (owner, 2026-09-14), the status row its reference. A Pips
+   row that never wraps or scrolls: iconTray.js writes --icon-tray-size and
+   --icon-tray-gap from planIconTray, and what does not fit is the final +N
+   tile. The fallbacks are that plan's numbers before its first fit. Only the
+   icons take a press; the row itself passes it through. */
+.as-pips.icon-tray {
+  flex-wrap: nowrap; justify-content: flex-start; align-items: center;
+  gap: var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1)));
+  min-width: 0; min-height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  pointer-events: none;
+}
+.icon-tray > * { pointer-events: auto; }
+.icon-tray .as-pip {
+  flex: none; box-sizing: border-box;
+  width: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))); height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  min-width: 0; min-height: 0;
+  font-size: calc(var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))) * 0.62);
+  cursor: pointer;
+}
+.icon-tray .as-pip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.icon-tray .as-pip > .tag-symbol-art { width: 64%; height: 64%; }
+.icon-tray .as-pip[aria-disabled="true"] > :not(.as-pill) { opacity: 0.5; filter: grayscale(0.6); }
+/* A painted face (a flask) sits in the round well the way a glyph does. */
+.icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
+.icon-tray .as-pip > .flask-identity :is(.flask-art, .flask-art-image) { display: grid; place-items: center; width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > span:not(.as-pill) { display: grid; place-items: center; width: 78%; height: 78%; }
+.combat-potion-tray .potion-mini .flask-identity,
+.combat-potion-tray .potion-mini .flask-identity :is(.flask-art,.flask-art-image) { width: 100%; height: 100%; object-fit: contain; }
+.combat-potion-tray .potion-mini > .as-pill { right: 0; bottom: 0; }
+/* The +N tile: a round tile that opens the host's full list (WCF2), or a
+   disclosure whose popover holds the rest. */
+.icon-tray > .status-overflow-more {
+  flex: none; box-sizing: border-box; padding: 0; min-width: 0; min-height: 0;
+  width: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))); height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  display: grid; place-items: center; border-radius: 50%; line-height: 1; color: var(--gold);
+}
+.status-overflow { position: relative; font-size: calc(11px / var(--ui-zoom, 1)); }
+.status-overflow summary { cursor: pointer; list-style: none; padding: 2px; color: var(--gold); }
+.status-overflow-list { position: absolute; top: 100%; right: 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; width: calc(170px / var(--ui-zoom, 1)); background: #17130f; border: 1px solid var(--gold); z-index: 100; }
+/* Legend rows and other read-only Rows: no hover, no cursor. */
+.as-row.static, .as-row.static:hover { cursor: default; background: transparent; }
+

@@ -1,0 +1,434 @@
+/* Approved wireframe composition. Domain controls retain their handlers. */
+/* THE W4 PARENT. W4a combat and W4c dialogue are one frame of four bands, top
+   to bottom: the HUD, the scene, the context and the footer. Their sizes come
+   from allocateSceneBands (models/CombatLayout.js) through each screen's
+   adapter (components/combatLayout.js, components/dialogueStage.js) as
+   --w4-band-*; the scene is the flexible row. A screen names only its
+   first-paint fallbacks. Combat's hand area spans the context and footer
+   bands and divides them itself. */
+:root :is(.combat[data-layout='formation'], .w4-frame) {
+  display: grid; flex: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)); min-height: 0; overflow: clip;
+  grid-template-rows: auto minmax(0, 1fr)
+    var(--w4-band-context, var(--w4-context-fallback, 35%)) var(--w4-band-footer, var(--w4-footer-fallback, 15%));
+}
+:root .w4-frame > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
+:root .combat[data-layout='formation'] {
+  --w4-context-fallback: max(calc(208px / var(--ui-zoom, 1)), 30%);
+  --w4-footer-fallback: max(calc(56px / var(--ui-zoom, 1)), 5%);
+}
+:root .combat[data-layout='formation'] > .hand-area {
+  grid-row: 3 / span 2;
+  grid-template-rows: minmax(0, 1fr) var(--w4-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
+  position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card {
+  position: absolute; left: var(--hand-card-x); top: var(--hand-card-y);
+  flex: none; margin: 0; padding: 0; zoom: 1;
+  width: var(--hand-card-width); min-width: var(--hand-card-width); max-width: var(--hand-card-width);
+  height: var(--hand-card-height); min-height: var(--hand-card-height); max-height: var(--hand-card-height);
+  aspect-ratio: var(--card-ratio); transform-origin: center center;
+  transform: rotate(var(--hand-card-angle)) !important;
+  z-index: auto !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected,.gp-focus) {
+  /* Keep horizontal reveal independent of the existing animated fan lift. */
+  translate: var(--hand-upcast-shift, 0px) var(--hand-upcast-rise, 0px);
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card.gp-focus {
+  z-index: 51 !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
+  transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
+  z-index: 50 !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art {
+  width: 100%; height: auto; margin: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .cname {
+  font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); min-height: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext {
+  font-size: max(calc((12px - 2pt) / var(--ui-zoom, 1)), calc(.8rem - 2pt)); line-height: 1.25;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail {
+  top: calc(10% + .25rem); left: .35rem; right: auto; bottom: auto;
+  display: flex; flex-direction: column; gap: .2rem; width: auto;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail > :is(.cost,.mana-cost,.stamina-cost) {
+  position: static; border: 0; background: none; width: auto; height: auto; min-width: 0;
+  padding: 0; font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); line-height: 1.2;
+}
+:root .combat[data-layout='formation'] .combat-action-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: .25rem; max-width: calc(640px / var(--ui-zoom, 1)); justify-self: center; padding: .15rem;
+  --combat-control-size: calc(48px / var(--ui-zoom, 1)) !important;
+}
+:root .combat[data-layout='formation'] .combat-action-row > * {
+  min-width: 0; width: 100%; max-width: none; margin: 0; align-self: center;
+}
+:root .combat[data-layout='formation'] .combat-action-row :is(.energy-orb,.combat-potions,.end-turn) {
+  height: var(--combat-control-size); min-height: var(--combat-control-size); max-height: var(--combat-control-size);
+}
+:root .combat[data-layout='formation'] .combat-action-row .energy-orb,
+:root .combat[data-layout='formation'] .combat-action-row .combat-potions {
+  width: var(--combat-control-size); min-width: var(--combat-control-size); aspect-ratio: 1;
+}
+:root .combat[data-layout='formation'] .combat-action-row .pile {
+  height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+}
+/* WGC6: one centered, tightly packed five-track group sized by
+   packCombatFooter(). Applies once the layout adapter has measured the row.
+   The doubled `.combat.combat` keeps the specificity the former
+   solo-only gate had. */
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']{
+  --combat-control-size: var(--footer-circle) !important;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-spent-width) var(--footer-circle);
+  justify-content: center; align-items: center; gap: var(--footer-gap);
+  width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
+}
+/* Discard/Exhaust is wider than Draw: two 13px counts sit beside the icon. */
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.spent {
+  width: var(--footer-spent-width); min-width: var(--footer-spent-width);
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']> * {
+  grid-column: span 1; grid-row: 1;
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-geometry='supported']> .pile {
+  width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
+}
+/* Footer Atelier art: live labels are SVG text, never baked into a bitmap.
+   Wide layouts honor the authored positions; compact controls keep readable
+   labels and the existing minimum hit targets and short-host rails. */
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] {
+  position: relative; isolation: isolate;
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
+  position: relative; padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none; overflow: visible;
+  color: #e7dcc0; text-shadow: var(--hud-text-shadow, 0 1px 3px #000);
+}
+.footer-art-face { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
+@media (pointer: coarse) {
+  .footer-art-face [data-footer-binding='endTurnKey'] { display: none; }
+  /* Owner 2026-10-28: no keyboard key hints on touch. The compact End Turn label's key line (second line) and
+     its HOLD word go; the hold gesture itself is unchanged. Keyboard and mouse keep both. */
+  .combat-action-row .end-turn .footer-compact-line:nth-child(n+2),
+  .combat-action-row .end-turn > .hold-hint,
+  .combat-action-row .end-turn .et-key { display: none; }
+}
+.footer-sp-text { position: absolute; inset: 0; pointer-events: none; }
+.combat-action-row[data-footer-art] .stamina-orb > svg text { visibility: hidden; }
+.footer-compact-label { display: none; }
+.footer-art-rails { position: absolute; inset: 0; height: 100%; pointer-events: none; z-index: -1; }
+.combat-action-row .footer-art-rails > .footer-art-face { height: 100%; }
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] {
+  display: block; width: var(--footer-art-width, 100%); height: 100%; margin-inline: auto;
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  position: absolute; left: var(--art-x); top: var(--art-y); width: var(--art-w); height: var(--art-h);
+  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1)); max-height: none;
+}
+/* The authored plate can be shorter than the primary action's physical target. */
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='false'] > .end-turn {
+  min-width: calc(48px / var(--ui-zoom, 1)); min-height: calc(48px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > button:focus-visible {
+  outline: 2px solid #e9c783; outline-offset: 3px;
+}
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art] > button:hover:not(:disabled) .footer-art-face {
+  filter: brightness(1.18);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) .footer-art-face {
+  filter: drop-shadow(0 0 4px #83b885);
+}
+.combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
+.combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+  height: 100%; min-height: calc(44px / var(--ui-zoom, 1)); display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.combat-action-row[data-footer-compact='true'] button .footer-art-face { height: 58%; flex: 0 1 58%; }
+.combat-action-row[data-footer-compact='true'] .footer-compact-label {
+  display: block; font: 600 max(.72rem, calc(12px / var(--ui-zoom, 1)))/1.12 Georgia, serif;
+  width: 100%; white-space: nowrap; text-align: center;
+}
+.combat-action-row[data-footer-compact='true'] .footer-compact-line { display: block; width: max-content; margin-inline: auto; white-space: nowrap; }
+:root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile {
+  height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1))); min-height: var(--footer-pile-height, calc(44px / var(--ui-zoom, 1)));
+}
+/* Every compact-label row (601-680px hosts and short-host rails such as
+   844x390 included) keeps 44px piles: a 42% icon over 11px counts fits them. */
+.combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
+.combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
+/* A compact face is sized by height; its width follows the art's own aspect (the
+   aspect-ratio footerArt.js writes) so the contained art is not stretched into a
+   pile's full width. */
+.combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { width: auto; }
+/* Piles on a compact host (<= 600px, packCombatFooter's compact branch): a 28px
+   icon over 13px counts, the minimum legible size on a phone. Discard/Exhaust's
+   two lines are the tallest content, and the pile height (pileHeightPx) is sized
+   for them. Scoped to .combat[data-compact-combat] because 600-680px keeps the
+   44px piles, which cannot hold this stack. */
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: calc(28px / var(--ui-zoom, 1)); flex: 0 0 auto; }
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(13px / var(--ui-zoom, 1)); }
+/* Phone portrait (compact-combat): the art gets the height the row has. The
+   layout's pile is 60 px (pileHeightPx), which leaves a 28 px face too small
+   to read. The row keeps its 92 px height; each pile column is 88 px, a 56 px
+   face over its label with about 5 px clear of the screen edge (the art is
+   about 35-37 px tall at its natural aspect), and Potions takes a 60 px face,
+   so its art is 64 px wide at its natural aspect. The selectors outrank the
+   packed-footer rules they replace. */
+:root .combat[data-layout='formation'][data-compact-combat='true'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile,
+:root .combat[data-layout='formation'][data-compact-combat='true'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > .combat-potions {
+  height: calc(88px / var(--ui-zoom, 1)); min-height: calc(88px / var(--ui-zoom, 1));
+}
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face[data-art-fit='contain'] { height: calc(56px / var(--ui-zoom, 1)); }
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .combat-potions .footer-art-face[data-art-fit='contain'] { height: calc(60px / var(--ui-zoom, 1)); }
+/* The art bottom meets its label: the face drops by its blank strip (--art-drop, a fraction of its own height). */
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { transform: translateY(calc(var(--art-drop, 0) * 100% + 1.6px)); }
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
+.combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
+.combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
+/* The pile and potion labels sit above their art too: a dropped face (--art-drop) overlaps its label's box with
+   blank strip, and the label is the text a player reads, so it paints over the face, never under it. */
+.combat-action-row[data-footer-art] :is(.pile,.combat-potions) > .footer-compact-label { position: relative; z-index: 1; }
+/* HOLD's line box (line-height 1) is shorter than the glyphs' content area, so a hit at the edge of its ink
+   landed on the plate beneath it. A pixel of padding, taken back by a negative margin, makes its box the
+   ink's box without moving it or growing the button. */
+.combat-action-row[data-footer-art] .end-turn > .hold-hint { padding-block: 1px; margin-block: -1px; }
+/* W4a short landscape: allocateCombatBands() chose rails. The footer row is
+   gone; the same WGC6 grid overlays the hand band and wraps the hand:
+   (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat > .hand-area {
+  grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
+  grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
+  column-gap: var(--wireframe-rail-gap);
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] {
+  grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-spent-width) var(--footer-circle);
+  grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
+  row-gap: var(--footer-gap); align-content: stretch;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > * {
+  grid-row: 3; pointer-events: auto;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails'].combat .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
+/* Notched hosts held sideways: the device's safe-area insets (combat.css's
+   --safe-*-local, zero on every other host) keep the rails and the hand they
+   wrap, the formation, and the HUD's two ends off the notch. The layout
+   adapter plans the rails for the width left between the insets. */
+:root .combat[data-layout='formation'].combat > .hand-area {
+  padding-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation'].combat > .field {
+  margin-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation'].combat > .topbar {
+  padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
+}
+@container game-viewport (max-height: 500px) {
+  :root .combat[data-layout='formation'].combat > .topbar {
+    padding-inline: max(calc(8px / var(--ui-zoom, 1)), var(--safe-left-local, 0px)) max(calc(8px / var(--ui-zoom, 1)), var(--safe-right-local, 0px));
+  }
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar .label {
+  font-size: calc(12px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar.hp {
+  height: max(.85rem, calc(14px / var(--ui-zoom, 1)));
+}
+/* WCM0: row heights from combatantMeterGeometry (the combat layout adapter).
+   HP carries the compact current/maximum at the value-text size; a secondary
+   or buildup row is too short for readable numbers, so its exact values live
+   in its tooltip and the inspector. Stance is a strip the size of HP. */
+:root .combat[data-layout='formation'].combat .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
+:root .combat[data-layout='formation'].combat .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat[data-layout='formation'].combat .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
+:root .combat[data-layout='formation'].combat .combatant .stance-chip[data-meter-row='stance'] {
+  display: flex; align-items: center; justify-content: center; gap: .25rem; box-sizing: border-box;
+  width: 100%; height: var(--combatant-stance-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); min-height: 0;
+  padding: 0 .3rem; border-radius: 3px; font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1;
+}
+/* Rows the configured list keeps for the selected combatant only. */
+:root .combat[data-layout='formation'].combat .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
+/* THE ART TRACK IS THE CARD'S SIZE, NOT A SHARE OF THE DOOR. A `34fr` split
+   made the inspected card a percentage of whatever modal it landed in — 292 px
+   on a desktop and 118 px on a phone, where the phone's is SMALLER than the
+   glance card you tapped to open it. The track is the authored inspect width;
+   the details take what is left. */
+.card-inspection-modal .card-inspection-layout {
+  display: grid; grid-template-columns: minmax(0, var(--card-w-inspect,384px)) minmax(0, 1fr);
+  min-height: 0; height: 100%; gap: 2%; padding: 1rem;
+}
+.card-inspection-modal .card-inspection-art { min-width: 0; max-width: var(--card-w-inspect,384px); width: 100%; }
+.card-inspection-modal .card-inspection-art > .card[data-wireframe='WC1'] {
+  width: 100%; height: auto; min-height: 0; aspect-ratio: var(--card-ratio);
+}
+.card-inspection-modal .modal-body { overflow: hidden; min-height: 0; }
+.card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* THE READING DOOR STACKS WHEN TWO COLUMNS NO LONGER FIT.
+   Two separate faults put this here, and both are worth naming because they
+   are the same shape as each other:
+   1. The two-column rule pinned the art track to the authored inspect width
+      and sat AFTER the `max-width: 600px` collapses further up this file —
+      same specificity, later in source — so it won at every width. On a 390px
+      phone the card took 320 and the details took a sliver.
+   2. The first fix for that repeated the mistake one level down: its mobile
+      overflow rules sat BEFORE `.modal-body { overflow: hidden }` and
+      `.card-inspection-details { overflow-y: auto }` just above, so the
+      details stayed an inner scrollport and the body stayed clipped. The
+      promised single scroll was not what shipped. Copilot caught it on #1162.
+   Hence its position here: after everything it has to beat.
+
+   THE THRESHOLD IS NOT A NUMBER IN THIS FILE. A media query cannot read a
+   custom property, so an earlier draft wrote `calc(20rem + 24rem)` and called
+   it derived — it was a second copy of the inspect width that would not have
+   moved when card.json did. `cardInspectionLayout()` in
+   src/ui/components/cardInspection.js measures against the authored width plus
+   the authored readable measure and sets `data-card-door`, so the one home
+   stays the config. It sits with the door rather than in `src/main.js`, which
+   four of the five pages that host this layout never load. */
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
+  align-content: start;
+  height: auto;
+  gap: 1rem;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art {
+  max-width: 100%; margin-inline: auto;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .equipment-poker-card,
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .card {
+  width: 100%; max-width: var(--card-w-inspect,384px); margin-inline: auto;
+}
+/* The column scrolls as ONE: the details stop owning a scrollport of their own
+   and the body takes it, which is what "read down the page" means. */
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-details {
+  overflow-y: visible; min-height: 0;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .modal-body {
+  overflow-y: auto; overflow-x: hidden;
+}
+/* WCO2: the guard badge sits outside the sprite on its role's side, at its
+   role's height (overlay.defenseAnchorByRole via the combat layout adapter);
+   the fallbacks are the same accepted geometry. Never mirrored. */
+:root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
+  right: var(--defense-right-player, auto); left: var(--defense-left-player, calc(100% + .5rem));
+  top: var(--defense-top-player, 12%); bottom: auto; transform: translateY(-50%);
+}
+:root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
+  left: var(--defense-left-enemy, auto); right: var(--defense-right-enemy, calc(100% + .5rem)); top: var(--defense-top-enemy, 88%);
+}
+/* The badge sits inside the zoomed sprite host (battlefieldStage). It undoes
+   that zoom and anchors to the visible art's box, published by the stage:
+   --s is 1 for the right edge and 0 for the left; --f the height fraction. */
+:root .combat[data-layout='formation'].combat .combatant .sprite > .block-badge {
+  --s: var(--defense-right-player, 1); --f: var(--defense-fraction-player, .12);
+  /* Out of the host's flex row: a relative badge was offset from its place
+     after the art, which is why it floated far from the sprite. */
+  position: absolute;
+  zoom: calc(1 / var(--sprite-zoom, 1));
+  left: calc(var(--art-left, 0px) + (var(--art-right, 100%) - var(--art-left, 0px)) * var(--s) + var(--defense-gap, .5rem) * (2 * var(--s) - 1));
+  right: auto; bottom: auto;
+  top: calc(var(--art-top, 0px) + var(--art-height, 100%) * var(--f));
+  transform: translate(calc((var(--s) - 1) * 100%), -50%);
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
+  font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
+}
+:root .combat[data-layout='formation'].combat .combatant.enemy .sprite > .block-badge {
+  --s: var(--defense-right-enemy, 0); --f: var(--defense-fraction-enemy, .88);
+}
+/* WCO1: the intent keeps its minimum height and value font. */
+:root .combat[data-layout='formation'].combat .combatant-leading .intent {
+  min-height: max(calc(48px / var(--ui-zoom, 1)), var(--intent-min, 2.8rem));
+}
+:root .combat[data-layout='formation'] .combatant .sprite::before {
+  content: ''; position: absolute; left: 50%; bottom: 0;
+  width: var(--floor-shadow-width, 70%); height: 8%; border-radius: 50%; transform: translate(-50%,50%);
+  background: #0008; pointer-events: none; z-index: -1;
+}
+.modal-foot-actions[data-action-count] {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr);
+  width: 100%; min-width: 0; gap: var(--button-gap);
+}
+.modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
+.modal-foot-actions[data-action-count='0'] { display: none; }
+/* The compact receipt has one small way forward at its lower-right edge. It
+   keeps the shared footer assembly, but does not stretch that single action
+   across the entire modal as a full reward decision does. */
+.reward-door[data-victory-compact='true'] > .reward-foot { flex-direction: row; align-items: center; }
+.reward-door[data-victory-compact='true'] > .reward-foot > .modal-foot-actions[data-action-count] {
+  display: flex; width: 100%; margin-left: 0; justify-content: flex-end;
+}
+.reward-door[data-victory-compact='true'] > .reward-foot > .modal-foot-actions > .reward-compact-continue {
+  flex: 0 0 10rem; width: 10rem; min-width: 0; max-width: none;
+}
+/* WCB0 BUTTON SIZES. Every value comes from wireframeUi.buttons through
+   ButtonSizeModel.buttonSizeTokens(), written onto :root by the kit; this
+   block only combines them. A reference rem is at least 16 physical px (the
+   hand and footer plans' unit), so heights neither shrink with the zoom nor
+   with the 10px root. Widths belong to the group that owns the action region:
+   the footer above divides it into equal shares after the shared gap (a sole
+   action fills it); a choice row gives every sibling one preset of the row,
+   capped by the equal share, and wraps labels rather than sizing to them. */
+:root {
+  --button-reference-rem: max(calc(16px / var(--ui-zoom, 1)), 1rem);
+  --button-gap: calc(var(--button-gap-rem, 0) * var(--button-reference-rem));
+  --button-minimum: calc(var(--button-minimum-rem, 0) * var(--button-reference-rem));
+}
+button[data-button-size$='-standard'] { --button-height-multiplier: var(--button-height-standard); }
+button[data-button-size$='-tall'] { --button-height-multiplier: var(--button-height-tall); }
+button[data-button-size$='-double'] { --button-height-multiplier: var(--button-height-double); }
+button[data-button-size] {
+  min-height: max(var(--tap-floor), calc(var(--button-standard-rem, 0) * var(--button-height-multiplier, 1) * var(--button-reference-rem)));
+}
+.as-choicerow {
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+  gap: var(--button-gap); width: 100%; min-width: 0; box-sizing: border-box;
+}
+.as-choicerow > button[data-button-size^='third-'] { --button-preset: var(--button-third); }
+.as-choicerow > button[data-button-size^='half-'] { --button-preset: var(--button-half); }
+.as-choicerow > button[data-button-size^='full-'] { --button-preset: var(--button-full); }
+.as-choicerow > button {
+  flex: 0 0 auto; box-sizing: border-box; min-width: 0; max-width: 100%;
+  width: min(var(--button-preset), calc((100% - (var(--button-count) - 1) * var(--button-gap)) / var(--button-count)));
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.2;
+}
+.as-choicerow[data-button-count='1'] > button { min-width: min(var(--button-minimum), 100%); }
+.as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
+.modal-close { aspect-ratio: 1; flex: none; padding: 0; }
+.hand-overlay { position: relative; }
+.hand-overlay > .hand-info-portal {
+  position: absolute; z-index: 500; transform: translateX(-50%);
+  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
+  border: 1px solid var(--gold); border-radius: 50%; padding: 0;
+  display: grid; place-items: center; background: var(--bg); color: var(--gold);
+  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .hand-hit-lane {
+  pointer-events: auto; position: absolute; left: 0; top: 0;
+  width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
+  transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
+  transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
+  transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
+}
+

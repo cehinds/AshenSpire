@@ -1,0 +1,412 @@
+/* ═══ THE CARD — one fixed box, fixed landmarks, one shared row budget ═════ */
+/* `.card` is the hook every screen and tool reads; `.as-card` is the recipe.
+   THE BOX IS FIXED — `height`, not a floor — and its total is spelled out from
+   its landmarks so a landmark that changes moves the box with it. Below the
+   band there is ONE budget of rows that tags and text share: one tag row
+   leaves three lines of text, two leave two. Both full is the only case that
+   truncates; selecting the face reveals its Information button for full text. */
+:root {
+  --card-w: 14rem;
+  --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
+  --card-art-h: 6rem;         /* FIXED. */
+  --card-band-h: 1.7rem;      /* FIXED. */
+  --card-row: 1.5rem;         /* one row of the shared budget */
+  --card-body-rows: 4;
+  --card-pad: 0.8rem;
+  --card-gap: 0.4rem;
+}
+.card, .as-card {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--card-w);
+  height: calc(var(--card-name-h) + var(--card-art-h) + var(--card-band-h) + var(--card-body-rows) * var(--card-row) + 3 * var(--card-gap) + 2 * var(--card-pad) + 1.2rem);
+  padding: calc(var(--card-pad) + 1.2rem) var(--card-pad) var(--card-pad);
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--card-gap);
+  background: var(--bg-raise);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  color: var(--parchment);
+  cursor: pointer; flex-shrink: 0;
+  transition: transform 140ms, box-shadow 140ms, border-color 140ms;
+}
+.card.rarity-uncommon { border-color: var(--frost); }
+.card.rarity-rare { border-color: var(--gold); }
+.card.rarity-special { border-color: #6a3a7a; }
+/* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
+.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); filter: var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* THE CHOSEN CARD WEARS ONE GREEN RING, AND NOTHING STANDS UNDER IT.
+   Victory wrote this signal first (`.reward-selected`): the card you picked is
+   ringed in green, on its own edge. Every other card picker now borrows the
+   SAME ring — creation's kit, the stables' mounts — because a player who
+   learns the signal at the spoils door should not have to learn a second one
+   in the Armoury, and because a word printed under the art ("Selected") reads
+   as a button you can press when it is really a state you are in.
+   GOLD STAYS HOVER, FOCUS AND INSPECTION; GREEN IS THE CHOICE THAT STANDS.
+   A combat hand card is the exception (owner, 2026-10-31): it has no gold
+   state at all. Armed, held, focused and inspected it wears the selection
+   colour (rules after `.inspection-selected` below), and hover is a neutral lift.
+   Two arms because the two card families are drawn differently — a `.card`
+   carries its own border, while an `.equipment-poker-card` is only the aspect
+   box and the frame it draws is `.epc-frame`, whose inset bevel has to
+   survive the ring (restated here, not dropped). */
+:is(.card, .as-card).is-chosen,
+.reward-door .reward-row .card.reward-selected {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
+}
+.equipment-poker-card.is-chosen > .epc-frame {
+  border-color: var(--green);
+  box-shadow:
+    0 0 0 2px var(--green),
+    0 0 20px color-mix(in srgb, var(--green) 30%, transparent),
+    0 9px 26px #0006,
+    inset 0 0 0 4px #17120e,
+    inset 0 0 0 5px color-mix(in srgb, var(--green) 45%, #695334);
+}
+.card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+/* Lite: filters force an offscreen pass per card. Selection is a ring, unaffordable a flat dim; no filter on either. */
+:root[data-performance='lite'] .card.selected, :root[data-performance='lite'] .card[data-selected="true"], :root[data-performance='lite'] .as-card[data-selected="true"] {
+  filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 12px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-performance='lite'] .card.unaffordable:not(.illustrated-card) { filter: none; opacity: 0.6; }
+.card[data-small="true"] { transform: scale(0.92); }
+/* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
+.card .card-costs { display: contents; }
+.card .cost, .as-cost {
+  position: absolute; top: -1rem; left: -1rem;
+  display: grid; place-items: center;
+  width: 3rem; height: 3rem;
+  background: var(--bg); border: 2px solid var(--gold); border-radius: 50%;
+  font: 600 1.4rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.card .mana-cost, .card .stamina-cost {
+  position: absolute; right: -0.7rem; min-width: 3.2rem; height: 2.4rem; padding: 0 0.6rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+  border-radius: var(--r-pill); font: 600 1rem/1 var(--font-body); font-variant-numeric: tabular-nums; z-index: 3;
+}
+.card .mana-cost { top: -0.7rem; background: #111b35; border: 2px solid #4f82d8; color: #cfe1ff; }
+.card .stamina-cost { top: 1.9rem; background: #142016; border: 2px solid #5f925d; color: var(--parchment); }
+/* Approved WC0/WC1 cost rail: below the name, inside the art. Costs have
+   contrast outlines, never boxes; the remaining exposed fan edge shows all
+   three resource types. Legacy classes remain available to screen callers. */
+.card .card-cost-rail {
+  position: absolute;
+  top: calc(var(--card-pad) + 1.2rem + var(--card-name-h) + var(--card-gap) + 0.25rem);
+  left: calc(var(--card-pad) + 0.25rem);
+  display: flex; flex-direction: column; gap: 0.2rem;
+  z-index: 3; pointer-events: none;
+}
+.card .card-cost-rail > div {
+  position: static; display: flex; justify-content: flex-start; gap: 0.2rem;
+  width: auto; min-width: 0; height: auto; padding: 0;
+  border: 0; border-radius: 0; background: none;
+  font: 600 max(12px, 1.1rem)/1.2 var(--font-body);
+  paint-order: stroke fill; -webkit-text-stroke: 2px var(--bg);
+  text-shadow: 0 1px 2px var(--bg);
+}
+.card .card-cost-rail > .cost { color: var(--gold); }
+.card .card-cost-rail > .stamina-cost { color: var(--green); }
+.card .card-cost-rail > .mana-cost { color: var(--frost); }
+/* THE NAME IS ONE LINE IN A FIXED BOX. A long name steps its type down. */
+.card .cname, .as-card .cd-name {
+  --track: 0.02em;
+  flex: 0 0 var(--card-name-h); height: var(--card-name-h);
+  display: block; align-content: center; text-overflow: ellipsis;
+  font: 600 1.2rem/1.15 var(--font-display); letter-spacing: var(--track); text-indent: var(--track);
+  text-align: center; white-space: nowrap; overflow: hidden; min-width: 0;
+}
+.card[data-name="long"] .cname { font-size: 1.05rem; }
+.card[data-name="verylong"] .cname { font-size: 0.92rem; }
+.card.upgraded .cname { color: var(--green); }
+/* ArtWell at a fixed landmark. */
+.card .art {
+  flex: 0 0 var(--card-art-h); height: var(--card-art-h); width: 100%;
+  display: grid; place-items: center;
+  background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
+  font-size: 2.9rem; line-height: 1; color: var(--parchment);
+}
+.card .art .playing-card-art { width: 100%; height: 100%; object-fit: cover; object-position: center 42%; }
+.card[data-wireframe="WC1"] .art .playing-card-art { position: absolute; inset: 0; }
+.card .art:has(.playing-card-art) .card-art-glyph { display: none; }
+.card .art .ctags { z-index: 1; }
+.card-inspection-modal .card .art .playing-card-art { object-fit: contain; }
+/* TypeBand — the type's own tint, full card width, fixed landmark. */
+.card .ctype, .as-typeband {
+  --track: 0.22em;
+  flex: 0 0 var(--card-band-h); height: var(--card-band-h);
+  display: grid; place-items: center;
+  border-radius: var(--r-1);
+  font: 500 0.95rem/1 var(--font-body); letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  color: var(--card-type-color, var(--gold));
+  background: color-mix(in srgb, var(--card-type-color, var(--gold)) 15%, #2a241c);
+  white-space: nowrap; overflow: hidden; min-width: 0;
+}
+/* THE SHARED BUDGET. */
+.card .cd-body {
+  flex: 0 0 calc(var(--card-body-rows) * var(--card-row));
+  height: calc(var(--card-body-rows) * var(--card-row));
+  display: flex; flex-direction: column; gap: 0.3rem; overflow: hidden; min-width: 0;
+}
+/* THE TWO-ROW BUDGET IS MEASURED, NOT GUESSED IN CALC. This rule used to clamp
+   the strip with `max-height: calc(2 * (1.5rem + 0.3rem))`, which is a guess at
+   what a chip row costs — and the guess was low: a shipped `.ctag` measures
+   17px against the 15px assumed, so even a correctly fitted two-row strip was
+   clipped, and an over-long one lost whole rows with no ellipsis and no `+N`.
+   fitCardFace() counts the rows on the real face and hides every chip past the
+   second behind a `+N` chip, so the strip's natural height IS the budget.
+   `overflow: hidden` stays only as the belt for the frame before the first fit. */
+.card .ctags { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; align-content: flex-start; line-height: 1; overflow: hidden; }
+.card .ctag {
+  font-size: 0.85rem; letter-spacing: 0.04em; white-space: nowrap; line-height: 1.3;
+  color: var(--tag-color, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--tag-color, var(--muted)) 45%, transparent);
+  background: color-mix(in srgb, var(--tag-color, var(--muted)) 12%, transparent);
+  border-radius: var(--r-1); padding: 0.1rem 0.4rem;
+}
+.card .ctag[hidden] { display: none; }
+.card .ctext {
+  flex: 1 1 auto; min-height: 0;
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+  line-height: var(--card-row); font-size: 1.1rem; text-align: center; color: var(--ink-dim);
+}
+.ctext b { color: var(--parchment); }
+.card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
+.card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
+.card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
+
+/* WC0: one intrinsic face in every host. The four tracks own the full
+   height; metadata never becomes a gameplay action.
+
+   THE SHAPE AND THE TRACKS ARE READ, NOT RESTATED. This rule used to write
+   `aspect-ratio: 5 / 8` and `1fr 4fr 4fr 1fr` out longhand, which was the same
+   pair of facts content/config/ui/components/card.json already declared — so
+   editing the JSON moved the hand's layout arithmetic (HandLayout, via
+   wireframeUi) and left the card's own face exactly as it was. Both halves now
+   read one home; src/ui/models/CardSizeModel.js projects it onto :root and
+   carries the note on which shape won. There is deliberately NO fallback here:
+   an unprojected card is shapeless and loud, never quietly the wrong shape. */
+.card[data-wireframe="WC1"] {
+  aspect-ratio: var(--card-ratio);
+  height: auto;
+  padding: 0;
+  display: grid;
+  grid-template-rows: var(--card-bands);
+  gap: 0;
+  overflow: visible;
+}
+.card[data-wireframe="WC1"] > .cname,
+.card[data-wireframe="WC1"] > .art,
+.card[data-wireframe="WC1"] > .cd-body {
+  height: auto; min-height: 0; min-width: 0; margin: 0;
+  box-sizing: border-box;
+}
+.card[data-wireframe="WC1"] > .cname { padding-inline: 0.3rem; }
+.card[data-wireframe="WC1"] > .art {
+  position: relative; border-radius: 0; border-inline: 0;
+  overflow: hidden;
+}
+.card[data-wireframe="WC1"] .ctags {
+  position: absolute; inset: auto 0.25rem 0.25rem;
+}
+.card[data-wireframe="WC1"] > .cd-body { padding: 0.4rem; }
+.card[data-wireframe="WC1"] .ctext { -webkit-line-clamp: 5; }
+/* The rail hangs just under the name band, so it reads that band's share
+   rather than repeating "10%" — a third copy of the same authored number. */
+.card[data-wireframe="WC1"] > .card-cost-rail { top: calc(var(--card-band-head) + 0.25rem); left: 0.35rem; }
+.card[data-wireframe="WC1"] > .card-metadata {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 0; overflow: hidden; padding-inline: 0.4rem;
+  border-top: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 0.9rem; text-transform: capitalize;
+}
+/* WCI3: the owned count holds the end of the band even when rarity is absent. */
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-slot="end"] { margin-inline-start: auto; }
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-kind="owned"] { text-transform: none; white-space: nowrap; }
+/* WCI2: contained artwork keeps its intrinsic ratio; the anchor only says
+   where the spare room goes (around it, or above a figure on its baseline). */
+[data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
+[data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
+[data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
+/* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
+/* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
+   boss → huge). Only the sprite well scales; nameplate, bars and meters stay
+   where a player learned them. The player is always normal. */
+.combatant { --stature: 1; }
+.combatant[data-stature="large"] { --stature: 1.15; }
+.combatant[data-stature="huge"] { --stature: 1.3; }
+.combatant .sprite > img { transform-origin: bottom center; scale: var(--stature); }
+.combatant .meters { width: calc(13rem * var(--stature)); }
+/* The marks inside card text — the same in the fan and in the tooltip. */
+.ctext .kw { color: var(--gold); }
+.ctext .st-bleed { color: var(--bleed); font-weight: 600; }
+.ctext .val { font-weight: 700; }
+.ctext .val.up { color: var(--green); }
+.ctext .val.down { color: var(--ember); }
+
+/* The nameplate is the way into a combatant's full read on touch (there is no
+   `I` on a phone). It reads as a control without becoming a button-shaped box
+   over the battlefield: the hit area is the tap floor, the affordance is the
+   cursor and the focus ring. */
+.combatant .nm-inspect { cursor: help; min-height: var(--tap-floor); display: flex; flex-direction: column; justify-content: center; }
+.combatant .nm-inspect:hover .ls-label, .combatant .nm-inspect:focus-visible .ls-label { color: var(--gold); }
+.combatant .nm-inspect:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); border-radius: var(--r-1); }
+.as-tip[data-tooltip-variant="combatant-context"] > .as-btn {
+  display: flex; width: 100%; min-height: 0; padding: 3px 8px;
+  margin-top: 6px; font-size: 0.85em; line-height: 1.3;
+}
+/* A card's pending choice (Warrior's Vow's stance, ui/components/cardChoiceModal.js). */
+.card-choice .card-choice-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1rem; }
+.card-choice .card-choice-row { display: flex; flex-direction: column; gap: 0.35rem; }
+.card-choice .card-choice-row .as-prose { margin: 0; }
+/* The full read, in a door: the same sections the edge tray renders. */
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow: hidden; }
+/* W1w: sprite/name/HP preview left, details right; only the details scroll. */
+.combatant-door .combatant-inspector-layout {
+  display: grid; grid-template-columns: minmax(0, calc(var(--inspector-preview-fraction, .38) * 100%)) minmax(0, 1fr);
+  gap: 1rem; flex: 1 1 auto; min-height: 0; align-items: start;
+}
+.combatant-door .combatant-inspector-details { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; max-height: 100%; overflow-y: auto; overflow-x: hidden; }
+.combatant-door .combatant-inspector-preview { display: grid; gap: .5rem; min-width: 0; align-content: start; }
+.combatant-door .combatant-inspector-art { display: grid; place-items: end center; aspect-ratio: 3 / 4; overflow: hidden; }
+.combatant-door .combatant-inspector-art > * { max-width: 100%; max-height: 100%; }
+
+/* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
+/* Fullscreen and music are the two controls that belong to the PAGE, not to
+   whatever is on it. They ride a rail of their own: a vertical stack pinned to
+   the right edge, immediately BELOW the band, over the surface's content.
+   WHY NOT THE TOP-RIGHT CORNER, which is where they were for a day. Owner,
+   2026-09-04: "move full screen and music … to anchored to top right corner
+   and not block any text"; owner, 2026-09-05, with a screenshot of build
+   0.4.0.1454: "I miss the old Hudson and music and full screen placement".
+   The corner is inside the band, so keeping text out from under the pair meant
+   every surface reserving a horizontal slice of its own top row — and the
+   measurement is what settles it: at 360x800 the map's header reserved
+   243 of 434 CSS px, 56% of the band, for a pair 106px wide, and the identity
+   ellipsed to "FORSAKEN ·…" while the meters collapsed to 50px. Below the band
+   the pair overlays content that was already yielding to it: `.field` in
+   styles/combat.css pads its right edge for exactly this rail, and the map's
+   route strip calls its own right margin "the HUD's utility gutter". Those two
+   gutters were written for this placement and were never removed, so for a day
+   the game reserved space in three places for two buttons.
+   The band is the containing block (`.as-band { position: relative }`), so
+   `top: 100%` follows the band's own height on every surface and at every text
+   size without a number to keep in step. `--hud-quick-edge-gap` is authored
+   (balance.ui.hudQuickSettings.edgeGapPx, planted on <html> by main.js) and
+   divided by the zoom, so the gap is the same on glass at every UI size. */
+/* THE RAIL'S FOOTPRINT, as one token the surfaces under it reserve. It is ONE
+   IconButton wide, not two, because the rail is a COLUMN — the same value this
+   token replaced when it was inlined in styles/combat.css. */
+:root { --quick-corner: calc(var(--iconbtn-size) + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))); }
+.hud-quick-settings {
+  position: absolute; z-index: 80;
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem;
+  margin: 0; padding: 0;
+}
+/* The notice speaks to the LEFT of the rail rather than pushing it off the
+   edge: the rail is a column now, so there is no room under it. */
+.hud-quick-settings > .hud-quick-notice {
+  position: absolute; top: 0; right: calc(var(--iconbtn-size) + 0.4rem);
+  max-width: 22rem; text-align: right; white-space: normal;
+}
+.hud-quick-settings > .hud-quick-notice[hidden] { display: none; }
+/* NOTHING RESERVES A SLICE OF ITS OWN TOP ROW ANY MORE. The rail sits under the
+   band, so the run header gets
+   its full width back — that is the point of moving it, and re-adding a
+   `padding-inline-end: var(--quick-corner)` to any of them would give the dead
+   space back. What DOES reserve for the rail is what sits beneath it:
+   `.field` (styles/combat.css) and the map's route strip, both already written
+   for this placement. */
+/* A narrow map header cannot hold its whole line AND the corner, and `nowrap`
+   made its actions overflow INTO the corner rather than yield. It wraps: the
+   way out drops to its own line under the pair (kit law — a narrow shape is a
+   different composition), which is what keeps the corner clear of text. */
+.topbar.map-header { flex-wrap: wrap; row-gap: 0.4rem; }
+/* THE ROOMS WEAR THE MAP'S BAND (components/runHud.js): the merchant, the
+   Shrine and an event mount the same header above their `.screen`, so a
+   player between fights always sees the purse, the pools and the act. The
+   screen below it keeps its own composition; only the top edge changes —
+   a page under a band starts at the band, not at a centred column's top
+   padding. */
+.topbar.room-header { flex-wrap: wrap; row-gap: 0.4rem; }
+.screen.room-screen { justify-content: flex-start; justify-content: safe flex-start; }
+/* The belt (relics left, flasks right) hangs 0.4rem BELOW the band, absolutely,
+   over whatever follows — on the map that is parchment, in a room it was the
+   title ("Shrine of Ember" under a flask at 390 wide). The room's top padding
+   is the belt's own height plus the band's gap, so the page starts under it. */
+.screen.room-screen { padding-top: calc(var(--iconbtn-size) + 1.6rem); }
+
+/* ═══ SCREENS — a page wears the same atoms a door does ═══════════════════ */
+/* A screen's banner is Title·L over an Eyebrow-weight subtitle; the same
+   two atoms the kit's TitleMenu and Pane use, centred because a screen's
+   banner is the one centred text a page has. */
+.screen > h2, .screen > .as-title-l { --track: 0.06em; margin: 0; font: 700 2.55rem/1.1 var(--font-display); letter-spacing: var(--track); text-indent: var(--track); color: var(--gold); text-align: center; }
+.screen > .subtitle, .screen > .as-eyebrow { margin: 0; color: var(--muted); font-size: 1.1rem; letter-spacing: 0.22em; text-transform: uppercase; text-align: center; }
+/* OptionCard under the names the screens already write: `.class-pick` is the
+   card, `.glyph` its Glyph, `.cp-body` its body, `h3` its Title·S, `p` its
+   prose, `.chip` a StatePill, `.locked` disabled. A row of them is `.class-row`. */
+.class-row { display: flex; flex-wrap: wrap; gap: 1.05rem; justify-content: center; width: 100%; max-width: 80rem; }
+.class-pick {
+  position: relative; display: flex; gap: 1.5rem; align-items: center;
+  flex: 1 1 26rem; max-width: 40rem; min-width: 0;
+  padding: 1.28rem 1.5rem;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3);
+  color: inherit; text-align: left; cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.class-pick:hover { border-color: var(--line-soft); }
+.class-pick.selected, .class-pick[aria-checked="true"], .class-pick[aria-pressed="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.class-pick.locked { opacity: 0.55; cursor: default; }
+/* `quiet`: still a choice, but not the one to reach for — Rest at full
+   health and mana still ends the visit, so it stays pressable and reads muted. */
+.class-pick.quiet { opacity: 0.7; }
+.class-pick.quiet > .cp-body > h3 { color: var(--muted); }
+.class-pick.locked:hover { border-color: var(--line); }
+/* The configured next class stays readable and focusable behind a dark veil.
+   Only its decorative lock and unlock instruction rise above the dimmed face. */
+.class-pick.configured-class-lock.locked[data-class] {
+  display:grid; grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);
+  gap:16px; min-height:80px; opacity:1;
+}
+.class-pick.configured-class-lock.locked[data-class] > .og { position:absolute; left:15px; }
+.class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; padding-left:40px; }
+.class-pick.configured-class-lock.locked[data-class] .on { white-space:normal; }
+.class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint {
+  grid-column:3; position:relative; z-index:3; justify-self:end;
+  max-width:100%; white-space:normal; color:var(--parchment);
+}
+.class-pick.configured-class-lock.locked[data-class] > .class-lock-veil {
+  position:absolute; inset:0; z-index:2; display:grid; place-items:center;
+  border-radius:inherit; background:rgba(8,9,10,.48); pointer-events:none;
+  color:#b89a54;
+}
+.class-lock-veil > svg { display:block; width:56px; height:56px; }
+/* Compact tiles reserve a band above and below the centered silhouette. */
+.cc-choice-collection[data-view="grid"] .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .og { display:none; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock .od { display:none; }
+.cc-choice-collection[data-view="grid"] .configured-class-lock > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
+@container game-viewport (max-width:600px) {
+  .class-pick.configured-class-lock.locked[data-class] { min-height:180px; grid-template-columns:minmax(0,1fr); grid-template-rows:1fr 56px 1fr; }
+  .class-pick.configured-class-lock.locked[data-class] > .og { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .ob { grid-column:1; grid-row:1; padding-left:0; align-self:start; }
+  .class-pick.configured-class-lock.locked[data-class] .od { display:none; }
+  .class-pick.configured-class-lock.locked[data-class] > .class-unlock-hint { grid-column:1; grid-row:3; justify-self:center; align-self:end; }
+}
+
+.class-pick > .glyph { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.class-pick > .cp-body, .class-pick > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.class-pick h3 { margin: 0; display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.class-pick p { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
+.class-pick .chip { display: inline-block; align-self: flex-start; margin-top: 0.3rem; padding: 0.15rem 0.6rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); font: 500 1.02rem/1.5 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.class-pick .chip.reward-new { color: var(--gold); border-color: var(--gold); }
+.class-pick > button.reward-skip { flex: 0 0 auto; align-self: center; }
+/* The reward menu is a column of OptionCards, full pane width. */
+.reward-menu { flex-direction: column; align-items: stretch; max-width: 60rem; }
+.reward-menu > .class-pick, .shrine-option-list > .class-pick { max-width: none; flex: 0 0 auto; }
+.reward-row { display: flex; flex-wrap: wrap; gap: 2.2rem; justify-content: center; }
+.reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+

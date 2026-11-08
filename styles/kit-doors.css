@@ -1,0 +1,381 @@
+/* ═══ ASSEMBLIES — the shell ════════════════════════════════════════════════ */
+.modal-veil, .as-veil {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.62);
+  animation: door-veil-in var(--door-ms) ease-out;
+}
+/* A DOOR IS PLACED, NOT POPPED: the veil fades up and the door fades in over
+   it over --door-ms (one number; the tooltip's open reads it too, its rung
+   step is tooltipHelp.stepMs). The reduced-motion kill in base.css collapses
+   both. NO SCALE, measured: a 98% settle shrinks every rect inside the door
+   for its first frames, and the instruments read the tap floor the tick a
+   door opens — startup-gate read Load Game's Close at 43.9 of 44 px (CI run
+   1454) — so the door's box is final from frame one. OPEN ONLY, on purpose:
+   a door's removal is synchronous by contract — thirteen tools and the
+   confirmation contract read `.modal-veil` absence on the tick of the close —
+   so the way out stays a cut rather than a veil that lingers over the board. */
+@keyframes door-veil-in { from { opacity: 0; } }
+@keyframes door-in { from { opacity: 0; } }
+.modal-veil > .modal, .modal-veil > .as-modal, .as-veil > .as-modal { animation: door-in var(--door-ms) ease-out; }
+/* Under reduced motion the door is simply there — no name, not a 0.01 ms
+   run whose first frame is still at 0 (measured: frame one read opacity 0
+   under the kill alone). */
+.reduced-motion .modal-veil, .reduced-motion .as-veil, .reduced-motion .modal-veil > .modal, .reduced-motion .modal-veil > .as-modal, .reduced-motion .as-veil > .as-modal,
+.reduced-motion #tooltip[data-open="true"], .reduced-motion #tooltip-2[data-open="true"] { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-veil, .as-veil, .modal-veil > .modal, .modal-veil > .as-modal, .as-veil > .as-modal,
+  #tooltip[data-open="true"], #tooltip-2[data-open="true"] { animation: none; }
+}
+/* THE INSET IS THE DOOR'S: one number, all four sides, every bar. */
+.as-modal, .modal {
+  --modal-inset: 1.4rem;
+  container-type: inline-size;
+  display: flex; flex-direction: column;
+  width: 100%; max-height: 90%;
+  padding: 0;
+  background: var(--bg-raise);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-4);
+  overflow: hidden;
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.69), inset 0 1px 0 rgba(var(--accent-rgb), 0.09);
+}
+/* FOUR WIDTHS, a body picks the smallest that holds it — and the rung it lands
+   on is also PUBLISHED as `--modal-rung-width`, because a door that computes
+   its own width from the rung (the Settings window, which takes the smaller of
+   the rung and the player's own window width) must not re-type the number.
+   `data-size` is the rung in force: the body's own, moved by the Modals width
+   choice. A rule that belongs to ONE DOOR rather than to a rung keys off
+   `data-authored-size`, which is what that door asked for and never moves. */
+.modal[data-size='sm'], .as-modal[data-size="sm"] { --modal-rung-width: 43rem; width: var(--modal-rung-width); max-width: 100%; }
+.modal[data-size='md'], .as-modal[data-size="md"] { --modal-rung-width: 57rem; width: var(--modal-rung-width); max-width: 100%; }
+.modal[data-size='lg'], .as-modal[data-size="lg"] { --modal-rung-width: 76rem; width: var(--modal-rung-width); max-width: 100%; height: 86%; }
+.modal[data-size='xl'], .as-modal[data-size="xl"] { --modal-rung-width: 96rem; width: var(--modal-rung-width); max-width: 100%; height: 88%; }
+/* A FIXED BOX AT THE RAILED RUNGS (Constantine, 2026-09-03: "modals should be
+   fixed size"): the height is the veil's share, so switching from a four-row
+   pane to a nine-row pane changes what scrolls, never the door. sm and md
+   follow their body — a question and a detail card have floors, not a share. */
+
+/* ModalHead = (Eyebrow + Title·S | Tab×n) + IconButton×n. Identity left,
+   actions right, hairline under; the actions row sits at the TOP. */
+.modal-head, .as-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-bottom: 1px solid var(--line);
+}
+.modal-head-id, .as-head-id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { margin: 0; font: 600 1.8rem/1.15 var(--font-display); letter-spacing: 0.045em; color: var(--gold); white-space: nowrap; }
+.modal-eyebrow { font-size: 1rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+.modal-head-actions, .as-head-actions { display: flex; align-items: flex-start; align-self: flex-start; gap: 0.75rem; flex: 0 0 auto; }
+.modal-head-status { color: var(--muted); font-size: 1.2rem; white-space: nowrap; align-self: center; }
+
+/* ModalFoot = FootNote + ButtonRow. */
+.modal-foot, .as-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  flex: 0 0 auto;
+  padding: var(--modal-inset);
+  border-top: 1px solid var(--line);
+}
+.as-foot-note, .modal-foot-note { flex: 1 12 27rem; min-width: 0; container-type: inline-size; color: var(--muted); font-size: 1.23rem; }
+.as-foot-note > span, .modal-foot-note > span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 9rem) { .modal-foot-note > span { visibility: hidden; } .as-foot-note > span { visibility: hidden; } }
+.modal-foot-actions, .as-foot-actions { margin-left: auto; flex: 0 1 auto; justify-content: end; }
+.modal-foot-actions button { min-height: var(--tap-floor); }
+
+/* Body — the surface's own, and what flexes. */
+.modal-body, .as-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/* NavRail + Pane — body A. Vertical at every width the modal can be. */
+.as-railed { display: grid; grid-template-columns: 17.25rem minmax(0, 1fr); min-height: 22.5rem; height: 100%; }
+.as-rail { display: flex; flex-direction: column; gap: 0.6rem; padding: var(--modal-inset); border-right: 1px solid var(--line); overflow: auto; }
+.as-pane { display: flex; flex-direction: column; padding: var(--modal-inset); min-width: 0; overflow: auto; }
+.as-pane > .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-subtitle { margin-top: 0.5rem; }
+.as-pane > .as-title-m { margin-top: 0.3rem; }
+.as-pane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
+@container (max-width: 52rem) {
+  .as-railed { grid-template-columns: 11.25rem minmax(0, 1fr); }
+  .as-rail { padding: 0.9rem; gap: 0.45rem; }
+  .as-railitem { padding: 0.75rem 0.8rem; font-size: 1.2rem; }
+}
+
+/* Decision — body C. The one place the game centres text. */
+.as-decide { padding: 2.4rem 2.1rem 1.8rem; text-align: center; display: flex; flex-direction: column; gap: 0; }
+.as-decide > .as-ornament { margin: 1.28rem 0 1.65rem; }
+.as-decide > .as-title-l { text-align: center; }
+.as-decide > .prompt { margin: 1.5rem 0 0; color: var(--muted); font-size: 1.32rem; }
+.as-decide > .as-options { margin-top: 0.3rem; text-align: left; }
+.as-decide > .as-detailcard { text-align: left; }
+.as-decide > .as-prose { text-align: center; }
+
+/* Detail — body B. The height is the art's, not the prose's. */
+.as-detailbody { display: flex; gap: 1.95rem; padding: 2.1rem; align-items: flex-start; min-height: calc(8.4rem + 4.2rem); }
+.as-detailbody .lines { flex: 1 1 27rem; min-width: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Workspace — body D. Two panes and a separator. */
+.as-splitbody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 22.5rem; }
+.as-splitbody > * + * { border-left: 1px solid var(--line); }
+@container (max-width: 51rem) { .as-splitbody { grid-template-columns: 1fr; } .as-splitbody > * + * { border-left: 0; border-top: 1px solid var(--line); } }
+
+/* ═══ MENUS — three widths, one Row atom ════════════════════════════════════ */
+.as-pop { --place-gap: 6px; width: 31.5rem; max-width: 100%; background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6); overflow: hidden auto; }
+.as-pop-cap { padding: 0.9rem 1.35rem; border-bottom: 1px solid var(--line); }
+.as-group { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
+.as-group:last-child { border-bottom: 0; }
+.as-actions { width: 23.25rem; }
+.as-actions .am-name { padding: 0.9rem 1.35rem 0.5rem; font: 600 1.65rem/1 var(--font-display); letter-spacing: 0.04em; color: var(--gold); }
+.as-actions .am-detail { padding: 0 1.35rem 0.9rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
+
+/* TitleMenu — the one menu with no panel around it. */
+.offline-play-modal .offline-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-block: 1rem; }
+.offline-play-modal .offline-direct { display: inline-block; margin-block: 0.4rem 0.8rem; font-weight: 600; }
+.offline-play-modal #offline-branch { display: block; width: 100%; min-height: 44px; padding: 0.6rem; margin-block: 0.5rem 1rem; font: inherit; color: var(--parchment); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; color-scheme: dark; }
+.offline-play-modal #offline-branch:disabled { opacity: 0.65; }
+.offline-play-modal #offline-progress { display: block; width: 100%; height: 1rem; accent-color: var(--gold, #c9a84c); }
+.offline-play-modal li { margin-block: 0.6rem; }
+.offline-play-modal .modal-body { overflow-wrap: anywhere; }
+.offline-play-modal .modal-body { padding: 1.4rem; }
+.offline-play-modal ul { padding-inline-start: 1.5rem; list-style: disc; }
+.offline-play-modal h3 { margin-block: 1.5rem 0.7rem; }
+.as-titlemenu { width: 100%; max-width: 40rem; margin-inline: auto; text-align: center; container-type: inline-size; }
+/* The name fills its line: an indent would overflow and disable centering.
+   Shift half the trailing tracking instead, keeping the visible text centered. */
+/* THE translateX COMPENSATION IS CORRECT. IT WAS REMOVED ONCE, IN ERROR, AND
+   THIS PARAGRAPH IS THE RECORD SO IT IS NOT REMOVED AGAIN.
+
+   `letter-spacing` adds its track AFTER the final glyph too, so a centred line
+   has its INK sitting half a track LEFT of the box centre. The translateX puts
+   it back. #910 deleted it, on a measurement that took a Range over the text
+   as if that were the ink — but a Range INCLUDES the trailing advance, so it
+   reported the uncompensated layout as perfectly centred. The number was real;
+   it was measuring the wrong box, and it read 0px for a wordmark that was
+   visibly off.
+
+   Re-measured from PAINTED PIXELS — a screenshot scanned for the leftmost and
+   rightmost lit column of the wordmark, which has no box model to be wrong
+   about — as the ink's offset from the viewport centre, at three widths:
+
+                          390      1200     2550
+     with the transform   -1.5px   -1.5px   -2.5px
+     without it           -3.0px   -3.5px   -5.5px
+
+   The compensation roughly halves the error at every width. It is not a second
+   correction for a solved problem; the browser does NOT discount the trailing
+   advance when centring, and #910's claim that it does was wrong.
+
+   startup-gate now subtracts the trailing advance before judging centring
+   (A11.RESPONSIVE-SHAPE, and A11.CENTERING-DETECTOR is its self-test), so the
+   gate and this rule finally agree. Before that fix the gate measured the raw
+   advance box, which made the MISSING compensation look green — two errors
+   cancelling — and that false green is what invited #910.
+
+   `--ink-bias` IS THE SECOND, SEPARATE HALF OF THE SAME CORRECTION. Half a
+   track centres the glyphs' ADVANCES; ink is narrower than advances by each
+   end glyph's side bearing, and those do not cancel. In Cinzel 700 the
+   leading A's left bearing is 0.008em and the trailing E's right bearing is
+   0.045em (both read from a 1000px raster of each glyph), so the ink sits
+   (0.045 - 0.008) / 2 = 0.0185em LEFT of its advances' centre. That is about
+   1px at 1x, which is why it hid inside the tolerance — but `body { zoom }`
+   is 1.7 at 2550x1305, and at Text XL (57.6px) it grew to 1.8px of the
+   -2.67px startup-gate read there against its 2.5px ink budget. It is an em
+   quantity, so it scales with the type and the zoom and needs no per-shape
+   tuning. Inter (the readable-ui face) reads 0.0136em, within 0.3px at this
+   size, so one token serves both. It is specific to the A…E lockup: a
+   different name needs its own end-glyph bearings measured. */
+.as-titlemenu .tm-name { --track: 0.08em; --ink-bias: 0.0185em; margin: 0; transform: translateX(calc(var(--track) / 2 + var(--ink-bias))); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+.as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
+.as-titlemenu li + li { border-top: 1px solid var(--rule); }
+.as-titlemenu .tm-entry {
+  display: block; width: 100%; min-height: var(--tap-floor);
+  padding: 1.05rem 0;
+  background: transparent; border: 0; border-radius: 0;
+  color: var(--parchment);
+  font: 600 1.88rem/1 var(--font-display);
+  --track: 0.1em;
+  letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase;
+  cursor: pointer;
+}
+.as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); background: transparent; box-shadow: none; }
+.as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu .tm-reason { margin: -0.4rem 0 0.6rem; padding: 0; border: 0; color: var(--muted); text-align: center; }
+.as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
+.as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
+
+/* ═══ TOOLTIP — Title + meta + effect + hairline + glossary + flavour ══════ */
+.as-tip { width: 36rem; max-width: 100%; padding: 1.1rem 1.35rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); font-size: 1.35rem; line-height: 1.45; color: var(--parchment); }
+.as-tip .ti-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+.as-tip .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+.as-tip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+.as-tip .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.as-tip .ti-cost b { color: var(--parchment); font-weight: 600; }
+.as-tip .ti-detail { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+.as-tip .ti-detail b { color: var(--parchment); }
+.as-tip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+.as-tip .as-flavor { display: block; margin-top: 0.75rem; }
+
+/* ═══ PAGE-LEVEL ═══════════════════════════════════════════════════════════ */
+/* A phone: the inset stays one number, the note goes, every row fills. */
+@container game-viewport (max-width: 640px) {
+  .as-modal, .modal { --modal-inset: 1rem; }
+  .modal-foot, .as-foot { align-items: stretch; }
+  .modal-foot-note, .as-foot-note { display: none; }
+  .modal-foot-actions, .as-foot-actions { width: 100%; }
+  .modal-btnrow[data-size], .as-btnrow[data-size] { width: 100%; }
+  .modal-btnrow > button, .as-btnrow > button { padding-inline: clamp(0.4rem, 6%, 8px); }
+  .as-railed { grid-template-columns: 10rem minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .as-toggle .knob, .as-switch-track .knob { transition: none; } }
+
+/* ═══ INPUTS INSIDE A ROW — the kit's field, one look ══════════════════════ */
+.as-row.setting input[type="text"], .as-row.setting input[type="number"] {
+  min-height: var(--tap-floor); padding: 0.6rem 1rem;
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-2);
+  color: var(--parchment); font: 500 1.38rem/1 var(--font-body); font-variant-numeric: tabular-nums;
+}
+.as-row.setting input[type="number"] { width: 9rem; text-align: right; }
+.as-row.setting input[type="text"] { width: min(100%, 30rem); }
+.as-row.setting input:focus-visible { border-color: var(--gold); }
+.as-row.setting input[type="range"] { width: 18rem; accent-color: var(--gold); cursor: pointer; }
+input[type="range"] { min-height: var(--tap-floor); }
+.as-row.setting > .as-status.range-val { flex: 0 0 auto; margin-left: auto; min-width: 3.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.as-row.setting > .as-status.range-val + .r-trail { margin-left: 0; }
+.as-row.setting .set-applied-slot:empty { display: none; }
+.as-row.setting .set-applied-slot { color: var(--ink-dim); font-size: 1.2rem; margin-top: 0.2rem; }
+/* A row that does nothing while a switch is off (settings.js refreshGates):
+   the label dims, the control is disabled, and the gate line says which switch
+   opens it. The line keeps full ink — it is the answer to "why is this grey". */
+.as-row.setting.set-row-gated .ls-label { color: var(--ink-dim); }
+.as-row.setting.set-row-gated .r-trail { opacity: 0.55; }
+.as-row.setting .set-gate-note { color: var(--ink); font-style: italic; }
+.as-row.setting .ls-hint code { color: var(--ink-dim); }
+.set-section-head { display: flex; flex-direction: column; gap: 0.3rem; }
+.set-section-head + .as-hairline { margin: 1.4rem 0; }
+.as-pane > .as-pane-head { margin-bottom: 1.2rem; }
+
+/* ═══ HOUSEKEEPING ═════════════════════════════════════════════════════════ */
+/* `hidden` wins over any display a kit class sets — a detail card the caller
+   hid must not draw its border. */
+.as-detailcard[hidden], .as-option[hidden], .as-row[hidden], .modal-foot-note[hidden], .as-pane [hidden], .modal-head [hidden], .as-iconbtn[hidden], .modal-close[hidden], .as-btnrow[hidden], .as-band[hidden], .as-pop[hidden], .as-slot[hidden] { display: none !important; }
+/* A hold-armed IconButton keeps its glyph; the hold hint is the tooltip's job. */
+.as-iconbtn .hold-hint, .modal-iconbtn .hold-hint, .modal-close .hold-hint { display: none; }
+/* THE SCROLL OWNERS INSIDE A DOOR wear the house scrollbar, not Chromium's. */
+.modal-body, .as-body, .as-pane, .as-rail, .as-pop, .modal .set-panel {
+  scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent;
+}
+.modal-body::-webkit-scrollbar, .as-pane::-webkit-scrollbar, .as-rail::-webkit-scrollbar, .as-pop::-webkit-scrollbar { width: 8px; height: 8px; }
+.modal-body::-webkit-scrollbar-thumb, .as-pane::-webkit-scrollbar-thumb, .as-rail::-webkit-scrollbar-thumb, .as-pop::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 4px; }
+.modal-body::-webkit-scrollbar-track, .as-pane::-webkit-scrollbar-track, .as-rail::-webkit-scrollbar-track, .as-pop::-webkit-scrollbar-track { background: transparent; }
+
+/* ═══ THE LIVE TOOLTIP — one panel per level, four rungs by height ═════════ */
+/* `--place-gap` stays the ONE home fx.js placeGap() reads (tools/placement.mjs
+   P2); px because a hairline gap is chrome, not read text. */
+#tooltip, #tooltip-2 {
+  --place-gap: 14px;
+  position: fixed; z-index: 1000; left: 0; top: 0;
+  width: var(--tip-w, 30rem); max-width: calc(100% - 16px);
+  max-height: var(--tip-h, 19.5rem); overflow: hidden;
+  padding: 1.1rem 1.35rem;
+  background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-2);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  font-size: 1.35rem; line-height: 1.45; color: var(--parchment);
+  display: none; opacity: 0; visibility: hidden;
+  transition: opacity 140ms ease-out;
+  pointer-events: none;
+}
+#tooltip-2 { z-index: 1001; }
+/* WT0.ARROW — on the edge facing the trigger, pointing at its centre after
+   any flip or shift (tooltip.js pointArrow, TooltipPlacementModel). It lies
+   outside the panel, so it is `fixed`: the panel's overflow clip does not
+   reach a fixed descendant, and both share the zoomed body's local px. */
+#tooltip::after, #tooltip-2::after {
+  content: none; position: fixed; pointer-events: none;
+  left: var(--tip-arrow-left, 0px); top: var(--tip-arrow-top, 0px);
+  width: var(--tip-arrow-w, 0px); height: var(--tip-arrow-h, 0px);
+  background: var(--gold);
+}
+#tooltip[data-arrow="bottom"]::after, #tooltip-2[data-arrow="bottom"]::after { content: ''; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+#tooltip[data-arrow="top"]::after, #tooltip-2[data-arrow="top"]::after { content: ''; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+#tooltip[data-arrow="left"]::after, #tooltip-2[data-arrow="left"]::after { content: ''; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
+#tooltip[data-arrow="right"]::after, #tooltip-2[data-arrow="right"]::after { content: ''; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+/* THE RUNGS DIFFER BY HEIGHT: small a value and a line; medium prose and a
+   short list; large an effect and a glossary; expanded is large extended
+   down. A tooltip never scrolls and never clips: it steps up, and past
+   `expanded` the answer is a modal. */
+#tooltip[data-size="small"],    #tooltip-2[data-size="small"]    { --tip-w: 25.5rem; --tip-h: 12rem; }
+#tooltip[data-size="medium"],   #tooltip-2[data-size="medium"]   { --tip-w: 31.5rem; --tip-h: 19.5rem; }
+#tooltip[data-size="large"],    #tooltip-2[data-size="large"]    { --tip-w: 37.5rem; --tip-h: 27rem; }
+#tooltip[data-size="expanded"], #tooltip-2[data-size="expanded"] { --tip-w: 37.5rem; --tip-h: 42rem; }
+#tooltip[data-overflow="true"], #tooltip-2[data-overflow="true"] { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+/* THE TOOLTIP OPENS THE WAY A DOOR DOES — the declared opacity transition
+   never ran on open (display none → block is a fresh render), so the open is a
+   keyframe; the rung's step-up is a clip reveal driven from tooltip.js. */
+@keyframes tip-in { from { opacity: 0; } }
+#tooltip[data-open="true"], #tooltip-2[data-open="true"] { opacity: 1; visibility: visible; pointer-events: auto; animation: tip-in var(--door-ms) ease-out; }
+#tooltip[data-stuck="true"] { pointer-events: none; }
+/* ON A TOUCH SCREEN A TOOLTIP THAT NOTHING INSIDE CAN ANSWER IS SEE-THROUGH.
+   There is no hover to keep, so an open tooltip only ever needs the finger
+   when it scrolls or carries a term that opens a nested reading. Every other
+   one used to swallow the tap that landed on it — measured at 390x844 on
+   character creation: the seed field's "Edit seed." sat over the STARTING
+   EQUIP row and the row could not be opened at all. The tap now reaches the
+   control beneath, and the document's own pointerdown closes the tooltip. */
+@media (pointer: coarse) {
+  #tooltip[data-open="true"]:not([data-overflow="true"]):not(:has(.tooltip-keyword[data-tip], .inspection-tag[data-tip], [data-tip][role="button"], a, button)),
+  #tooltip-2[data-open="true"]:not([data-overflow="true"]):not(:has(.tooltip-keyword[data-tip], .inspection-tag[data-tip], [data-tip][role="button"], a, button)) { pointer-events: none; }
+}
+#tooltip.is-fading { opacity: 0; transition: opacity var(--tooltip-fade-duration) ease-out; }
+.reduced-motion #tooltip, .reduced-motion #tooltip-2 { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip, #tooltip-2 { transition: none !important; } }
+/* The content grammar: title, meta (type + cost), effect, tags, then under
+   the one divider the glossary and the flavour. `.tt-*` are the same parts
+   under the names the surfaces already write. */
+#tooltip .ti-title, #tooltip-2 .ti-title, #tooltip .tt-title, #tooltip-2 .tt-title { margin-bottom: 0.45rem; font: 600 1.58rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); }
+#tooltip .ti-meta, #tooltip-2 .ti-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem 0.9rem; margin-bottom: 0.75rem; }
+#tooltip .ti-meta .as-tag { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.9rem; }
+#tooltip .ti-cost, #tooltip-2 .ti-cost { font-size: 1.2rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+#tooltip .ti-cost b { color: var(--parchment); font-weight: 600; }
+#tooltip .ti-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+#tooltip .ti-detail, #tooltip-2 .ti-detail, #tooltip .tt-kw, #tooltip-2 .tt-kw { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-detail b, #tooltip .tt-kw b, #tooltip-2 .tt-kw b { color: var(--parchment); }
+#tooltip .ti-list { margin: 0.75rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; }
+#tooltip .ti-flavor, #tooltip .as-flavor { display: block; margin-top: 0.75rem; color: var(--muted); font-style: italic; font-size: 1.28rem; }
+#tooltip .mk-val, #tooltip .val { color: var(--parchment); font-weight: 600; }
+/* A term inside a tooltip that has its own entry says so with the dotted mark. */
+#tooltip [data-tip], #tooltip [title] { border-bottom: 1px dotted var(--line-soft); cursor: help; }
+#tooltip [data-tip]:hover, #tooltip [title]:hover { border-bottom-color: var(--gold); }
+/* A target being read says so, quietly. */
+[data-tip-open="true"] { outline: 1px solid rgba(var(--accent-rgb), 0.45); outline-offset: 2px; }
+/* Variants a surface may still pin (widths in the surface's own terms). */
+#tooltip[data-tooltip-variant='combatant-folded'] { --tip-w: 28.5rem; padding: 0.9rem 1.2rem; }
+#tooltip[data-tooltip-variant='combatant-expanded'] { --tip-w: 36rem; }
+#tooltip[data-tooltip-variant='combatant-context'] { --place-gap: 6px; --tip-w: 31.5rem; padding: 0.5rem 0.9rem; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='combatant-context'] .tt-combatant-line b { color: var(--gold); }
+#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
+#tooltip .tt-combatant-focus { display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--line-soft); }
+#tooltip .tt-combatant-focus b { color: var(--gold); }
+#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
+#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
+#tooltip[data-tooltip-variant='equipment-comparison'] { --tip-w: 42rem; overflow: auto; }
+#tooltip .equip-candidate-comparison { margin-left: 0; }
+
+/* ═══ CONTROLS — bindings are Keycaps, rebinds are short buttons ═══════════ */
+.rebind-ctl { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+.rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
+.rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
+.rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
+:root[data-performance='lite'] .rebind-btn.listening { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
+.pad-live { color: var(--green); }
+.pad-off { color: var(--muted); }
+.controls-pane { padding: 0; }
+.overlay-body > .controls-pane { padding: var(--modal-inset); }
+
+/* ═══ THE QUICK MENU HANGS OFF ITS BUTTON ══════════════════════════════════ */
+/* The popover is PLACED (quicknav.js → fx.placeAnchored: under the ☰,
+   right-aligned) — so its veil is a plain scrim, not a centring flex box,
+   and the panel is fixed-position so left/top mean what the placer wrote. */
+.modal-veil.qn-veil { display: block; padding: 0; background: rgba(0, 0, 0, 0.35); }
+.qn-panel { position: fixed; left: 0; top: 0; }
+

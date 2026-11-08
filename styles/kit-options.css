@@ -1,0 +1,339 @@
+/* ═══ OPTIONS — list or grid, one atom ══════════════════════════════════════ */
+/* The same OptionCards, in a column (the default) or a grid: a `data-view` a
+   Segmented control writes. A card in either never keeps the class-pick
+   alias's row width — the container decides the footprint. */
+.as-options > .as-option.class-pick { max-width: none; flex: 0 0 auto; }
+.as-options[data-view="grid"] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+.as-options[data-view="grid"] > * { min-width: 0; width: 100%; }
+.as-options[data-view="grid"] > .as-option { flex-direction: column; align-items: stretch; text-align: center; padding-right: 1.5rem; }
+.as-options[data-view="grid"] > .as-option::after { content: none; }
+.as-options[data-view="grid"] > .as-option .on { justify-content: center; }
+.as-options > .as-option .on > .as-pill { margin-left: 0.3rem; }
+
+/* SWATCH lives once, below — B's square-pick block was folded into it at the
+   merge (one home per fact). `.tint` is a no-op class kept as a hook. */
+
+/* ═══ FIGURE WELL — an ArtWell tall enough for a standing sprite ═══════════ */
+.as-artwell.figure { width: 16rem; height: 20rem; font-size: 6.4rem; border-width: 2px; transition: border-color 200ms, box-shadow 300ms; }
+/* The figure well explicitly keeps the painting as authored. This also guards
+   portrait-like figure surfaces if combat-facing rules are introduced later. */
+.as-artwell.figure .class-sprite > .facing { transform: none; }
+
+/* ═══ STEPPER — a Segmented of − / value / + ════════════════════════════════ */
+.as-seg.stepper button { min-width: var(--tap-floor); min-height: calc(var(--tap-floor) - 2px); padding-inline: 0.9rem; font-size: 1.6rem; }
+.as-seg.stepper .seg-value {
+  display: inline-grid; place-items: center; min-width: 3.6rem; padding-inline: 0.6rem;
+  border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+  font: 600 1.5rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment);
+}
+.as-seg button[aria-disabled="true"] { color: var(--muted); cursor: default; background: transparent; }
+.as-seg button[aria-disabled="true"]:hover { background: transparent; color: var(--muted); }
+
+/* ═══ A FOLD INSIDE A ROW ═══════════════════════════════════════════════════ */
+/* A disclosure host in a settings row dissolves: its face and its reveal
+   become the row's own wrap items, so the reveal drops under the whole row
+   (trail included) with the row's own gap — the D26 mechanism, unchanged. */
+.as-row.setting > .as-row-fold, .as-row.setting > .as-row-fold > .disc-faces,
+.as-row.setting > .as-row-fold > .disc-fold-row { display: contents; }
+.as-row.setting > .as-row-fold .disc-face { flex: 1 1 16rem; min-width: 0; }
+.as-row-fold > .disc-faces > .disc-face { flex: 1 1 100%; }
+.as-row-fold > .disc-fold-row > .disc-face { width: 100%; }
+/* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
+.as-row.setting > .as-row-fold .disc-reveal { order: 2; }
+.as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
+
+/* Allocation uses the same connected primary-stat fold, with the point
+   controls inside its header. The details element keeps its own layout box. */
+.as-row.setting.se-row { display: block; padding: 0; border: 0; }
+.as-row.setting.se-row > .as-row-fold,
+.as-row.setting.se-row > .as-row-fold > .disc-fold-row { display: block; width: 100%; }
+.as-row.setting.se-row .disc-face { width: 100%; }
+.as-row.setting.se-row .disc-face > .as-row { flex-wrap: nowrap; }
+.as-row.setting.se-row .se-controls { flex: 0 0 auto; margin-left: auto; }
+.as-row.setting.se-row .disc-summary { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-face > .as-row { flex-wrap: nowrap; }
+.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
+.disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
+.disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-face > .as-row > .as-status { font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); flex: 0 0 auto; }
+.disc-face > .as-row.face-lite .ls-label { color: var(--parchment); font: 500 1.3rem/1.2 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.cc-primary-stat > .as-row.face-lite .ls-label { text-transform: none; }
+.disc-face > .as-row.face-lite > .as-status { color: var(--muted); font: 500 1.28rem/1 var(--font-body); }
+
+/* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
+.as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
+.as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+/* The same note under a forward control that refuses (refusal.js reasonNote):
+   the reason a Next / Continue / Confirm is off, as text, never only a tooltip.
+   Its own floor keeps it readable wherever a screen shrinks its type. */
+.as-reasonnote { display: block; flex: 1 1 100%; width: 100%; box-sizing: border-box; margin: 0.4rem 0 0; font-size: max(11px, 1.2rem); text-align: start; }
+.as-reasonnote[hidden] { display: none; }
+/* A hidden row takes its reason line with it (the line is the row's next sibling). */
+[hidden] + .as-reasonnote, [style*="display: none"] + .as-reasonnote { display: none; }
+/* In a foot (a flex row), the shown line takes its own row under the buttons,
+   on the primary's side. */
+.modal-foot:has(> .as-reasonnote:not([hidden])), .as-foot:has(> .as-reasonnote:not([hidden])) { flex-wrap: wrap; }
+.modal-foot > .as-reasonnote, .as-foot > .as-reasonnote { order: 2; margin: 0; padding: 0 0.8rem 0 0; border-left: 0; border-right: 2px solid var(--danger); text-align: end; }
+
+/* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
+.as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
+.as-stack.tight { gap: 0.6rem; }
+.as-pane > .as-statstrip { margin-top: 0.9rem; }
+.as-pane > .as-btnrow.end { margin-top: 1.2rem; }
+.as-pane-head { flex-wrap: wrap; row-gap: 0.6rem; }
+.as-pane-head > .set-section-head { min-width: 0; }
+.as-pane-head > .r-trail > .as-row.setting { width: auto; border-bottom: 0; padding-block: 0; min-height: 0; }
+.as-pane > .as-artwell, .as-stack > .as-artwell { align-self: center; }
+.as-pane-head > .r-trail { flex: 0 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: flex-end; }
+/* ═══ OPTION GRID / OPTION FLOW — OptionCards in columns, or wrapping ══════ */
+/* `.as-options` is the column. `grid` is as many columns as fit (`--opt-min`
+   the floor); `flow` is a wrapping row of self-sized cards where `wide` takes
+   its line; `tight` closes the gap for a dense list. */
+.as-options.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--opt-min, 22rem)), 1fr)); gap: 1.05rem; }
+.as-options.grid > .as-option { width: auto; }
+.as-options.flow { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 0.6rem; }
+.as-options.flow > .as-option { width: auto; flex: 1 1 auto; }
+.as-options.flow > .as-option.wide { flex: 1 1 100%; }
+.as-options.tight { gap: 0.45rem; }
+/* An option may carry an ArtWell where its glyph would be, or a compact inset. */
+.as-option > .as-artwell { flex: 0 0 auto; }
+.as-option.compact { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact > .as-artwell.sm { width: 4rem; height: 4rem; font-size: 1.8rem; }
+.as-option.compact .on { font-size: 1.45rem; }
+.as-option.more { border-style: dashed; }
+.as-option.more .on { color: var(--muted); }
+.as-option.drop-ready { border-color: var(--green); box-shadow: inset 0 0 0 2px var(--green); }
+.as-option .on > .as-pill, .as-option .on > .as-tag { flex: 0 0 auto; }
+/* The name is a flex item inside `.on`, so the ellipsis lives on it. */
+.as-option .on > span:not(.as-pill):not(.as-tag), .as-option .on > strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-option .r-trail > .as-status { text-align: right; }
+.as-option .r-trail > .as-btn { min-height: var(--tap-floor); }
+.as-option .ob > .as-kitline, .as-option .ob > .as-statstrip { margin-top: 0.3rem; }
+/* Prose in a card breaks a word before it breaks the card. */
+.as-option .od, .as-option .om, .as-face .od, .as-face .om { overflow-wrap: anywhere; }
+.as-option .ob > .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+/* ═══ FACE HOST — an option whose whole content is one face element ════════ */
+/* The host stays bare so its one child owns the padding and can paint the
+   whole card (a hold fill, a drag ghost). Both supported children — Face and
+   Row — use the same balanced inset; a hosted Row must not dissolve all the
+   way to the border. */
+.as-option.hosts-face { padding: 0; }
+.as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
+.as-option.hosts-face > .as-row { width: 100%; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; }
+.as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact.hosts-face > .as-row { min-height: 5rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+/* Primary stats keep this compact face in creation, allocation, and Armoury.
+   Two text lines are reserved even when a short summary happens to fit on one,
+   so a narrow INT or CON summary cannot make one card taller than its peers. */
+.as-option.cc-primary-stat.hosts-face > .as-row { min-height: 7rem; padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
+.as-face > .ob { flex: 1 1 8rem; }
+.as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
+.as-face > .r-trail > .as-status { flex: 0 0 auto; }
+/* ═══ STAT ROW — body E's row, with its builder's parts ════════════════════ */
+.as-statrow .sr-hint { color: var(--muted); font-size: 1.02rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.as-statrow .sr-vals > .as-statpair, .as-statrow .sr-vals > .as-delta { white-space: nowrap; }
+.as-statrow .sr-vals .as-delta { font-size: 1.32rem; }
+.as-statrow.flat { border: 0; border-radius: 0; background: transparent; padding: 0.6rem 0; border-top: 1px solid var(--rule); }
+.as-statrow.flat + .as-statrow.flat { margin-top: 0; }
+.as-statrow.flat:first-child { border-top: 0; }
+.as-statrow .sr-name > .as-pill, .as-statrow .sr-name > .as-tag { margin-left: 0.5rem; vertical-align: middle; }
+.as-statrow.muted { opacity: 0.55; }
+/* ═══ DETAIL CARD — what may stand inside one ═════════════════════════════ */
+.as-detailcard > .as-prose { margin-top: 0.3rem; }
+.as-detailcard > .as-kitline, .as-detailcard > .as-statstrip { margin-top: 0.4rem; }
+.as-detailcard > .as-flavor { margin-top: 0.4rem; }
+.as-detailcard > .as-hairline { margin: 0.6rem 0; }
+.as-detailcard > .as-eyebrow { margin-top: 0.6rem; }
+.as-detailcard > .as-statrow.flat:first-of-type { border-top: 0; }
+.as-detailcard .dc-lines { margin: 0.3rem 0 0; padding-left: 1.65rem; color: var(--muted); font-size: 1.28rem; line-height: 1.45; }
+.as-detailcard .dc-lines b { color: var(--parchment); }
+.as-detailcard > .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.as-detailcard.wide { width: 100%; }
+/* A FOLD: a DetailCard whose head is a Row that opens it. */
+details.as-detailcard { padding: 0; gap: 0; }
+details.as-detailcard > summary { list-style: none; cursor: pointer; border-radius: inherit; }
+details.as-detailcard > summary::-webkit-details-marker { display: none; }
+details.as-detailcard > summary > .as-row { padding-inline: 1.5rem; }
+details.as-detailcard > summary > .as-row > .as-title-s { font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 100%; }
+details.as-detailcard > summary > .as-row > .as-status { flex: 1 1 0; min-width: 2rem; }
+details.as-detailcard > :not(summary) { padding: 0 1.5rem 1.28rem; }
+details.as-detailcard[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 0.9rem; }
+.as-glyph.caret { display: inline-block; transition: transform 140ms; }
+details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .as-glyph.caret { transition: none; } }
+/* Armoury information folds grow with their labels and summaries. */
+.armoury-character-stats > details.character-info-card { flex: 0 0 auto; width: 100%; min-width: 0; }
+details.character-info-card > summary > .character-info-head {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  height: auto; min-height: var(--tap-floor); gap: 0.3rem 0.75rem;
+  padding-block: 0.7rem; white-space: normal;
+}
+details.character-info-card > summary > .character-info-head > .character-info-label {
+  grid-column: 2; min-width: 0; max-width: 100%; font-size: max(1.35rem, calc(15px / var(--ui-zoom, 1)));
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
+}
+details.character-info-card > summary > .character-info-head > .as-status {
+  grid-column: 2; min-width: 0; margin-left: 0; text-align: left;
+  font-size: max(1.2rem, calc(15px / var(--ui-zoom, 1))); line-height: 1.45;
+  white-space: normal; overflow-wrap: anywhere; overflow: visible;
+}
+details.character-info-card > summary:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+/* THE CLIMB. The level bar closes the character summary; the skill track bars
+   stack inside the Skill progression fold. Both are the kit's stacked Meter,
+   so nothing here draws a bar — it only places them. */
+.character-summary > .character-level-meter { margin-top: 0.55rem; }
+.character-level-meter > .m-plate, .character-skill-meter > .m-plate { flex-wrap: wrap; row-gap: 0.15rem; }
+.character-level-meter .character-level-points { flex: 0 0 auto; margin-left: 0.6rem; color: var(--gold); }
+.character-level-meter[data-capped="true"] .m-value { color: var(--gold); }
+/* A point waiting is a thing to go and do, so the bar says so in the accent. */
+.character-level-meter.has-points .m-label { color: var(--gold); }
+.character-skills > .as-meters.character-skill-meters { display: flex; flex-direction: column; gap: 0.7rem; }
+.character-skill-meter.own-class .m-label { color: var(--parchment); }
+.character-skill-meter .character-skill-drafts { flex: 0 0 auto; margin-left: 0.6rem; }
+/* ═══ STEPPER — a −/count/+ unit of two tap-floor buttons ═════════════════ */
+.as-stepper { display: inline-flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
+.as-stepper > .as-btn { width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; font-size: 1.8rem; line-height: 1; }
+.as-stepper > .as-btn[aria-disabled="true"] { color: var(--muted); border-color: var(--line); cursor: default; }
+.as-stepper > .as-btn[aria-disabled="true"]:hover { border-color: var(--line); }
+.as-stepper > .st-value { min-width: 2ch; text-align: center; font: 600 1.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; color: var(--parchment); }
+/* ═══ SPLITTER — a draggable separator between two panes ══════════════════ */
+.as-splitter { display: none; position: relative; min-width: 0.7rem; min-height: 0.7rem; cursor: col-resize; touch-action: none; }
+.as-splitter[aria-orientation="horizontal"] { cursor: row-resize; }
+.as-splitter::before { content: ''; position: absolute; inset: 0 0.28rem; background: var(--line-soft); border-radius: var(--r-pill); }
+.as-splitter[aria-orientation="horizontal"]::before { inset: 0.22rem 0; }
+.as-splitter:hover::before, .as-splitter:focus-visible::before, .as-splitter.dragging::before { background: var(--gold); box-shadow: 0 0 0.5rem rgba(var(--accent-rgb), 0.55); }
+/* ═══ FOLDING TRAY — a docked region that folds to its header ═════════════ */
+/* The header is a Row (caret Glyph + Title·S + StatusText count) beside an
+   IconButton; the body is a Pane. Folded, only the header stands; unfolded,
+   the tray HUGS ITS CONTENT up to a compact cap (`--tray-compact`) until a
+   hand resizes it, after which its height is the remembered share of its
+   host — a percentage of the panel, never of the glass (no vh below body).
+   `.folding-tray` / `.tray-*` / `.region-fold` / `.rf-*` / `[data-fold]` /
+   `[data-collapsed]` / `[data-sized]` / `[data-tray-edge]` / `[data-role]`
+   are the hooks the tools read; they draw nothing of their own. */
+.as-tray { --tray-compact: none; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-top: 1px solid var(--line); background: var(--bg-raise); }
+.as-tray > .tray-header { display: flex; align-items: center; gap: 0.75rem; min-width: 0; flex: 0 0 auto; padding-right: var(--modal-inset, 1.4rem); }
+.as-tray > .tray-header > .as-row { flex: 1 1 auto; min-width: 0; padding-inline: var(--modal-inset, 1.4rem); }
+.as-tray > .tray-header > .as-row > .as-glyph { color: var(--gold); }
+.as-tray > .tray-header > .as-row > .as-title-s { flex: 0 0 auto; max-width: 60%; font-size: 1.35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-tray > .tray-header > .as-row > .as-status { flex: 1 1 auto; }
+.as-tray > .tray-header > .as-iconbtn { flex: 0 0 auto; }
+.as-tray > .as-pane { flex: 0 1 auto; min-height: 0; overflow: auto; padding-top: 0.9rem; }
+.as-tray > .as-pane[hidden] { display: none !important; }
+.as-tray[data-collapsed="1"] { flex: 0 0 auto; }
+.as-tray[data-collapsed="1"] > :not(.tray-header) { display: none; }
+.as-tray[data-collapsed="0"] > .tray-header { border-bottom: 1px solid var(--line); }
+.as-tray[data-tray-edge="top"][data-collapsed="0"][data-sized="0"], .as-tray[data-tray-edge="bottom"][data-collapsed="0"][data-sized="0"] { max-height: var(--tray-compact); }
+.as-tray[data-tray-edge="top"][data-collapsed="0"], .as-tray[data-tray-edge="bottom"][data-collapsed="0"] { min-height: var(--tap-floor); }
+.as-tray[data-sized="1"] > .as-pane { flex: 1 1 auto; }
+/* Side trays: a folded rail the height of its host, the title turned. */
+.as-tray[data-tray-edge="left"], .as-tray[data-tray-edge="right"] { border-top: 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"], .as-tray[data-tray-edge="right"][data-collapsed="1"] { align-self: stretch; flex: 0 0 var(--tap-floor); width: var(--tap-floor); }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] > .tray-header, .as-tray[data-tray-edge="right"][data-collapsed="1"] > .tray-header { flex-direction: column; height: 100%; padding: 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] > .tray-header > .as-row, .as-tray[data-tray-edge="right"][data-collapsed="1"] > .tray-header > .as-row { flex-direction: column; justify-content: flex-start; width: var(--tap-floor); height: 100%; padding: 0.6rem 0; }
+.as-tray[data-tray-edge="left"][data-collapsed="1"] .tray-title, .as-tray[data-tray-edge="right"][data-collapsed="1"] .tray-title,
+.as-tray[data-tray-edge="left"][data-collapsed="1"] .tray-count, .as-tray[data-tray-edge="right"][data-collapsed="1"] .tray-count { writing-mode: vertical-rl; text-orientation: mixed; margin: 0; text-align: left; flex: 0 0 auto; }
+.as-tray[data-tray-edge="left"] { margin-block: 0.6rem; margin-left: 0.6rem; }
+.as-tray[data-tray-edge="right"] { margin-block: 0.6rem; margin-right: 0.6rem; }
+.as-tray[data-tray-edge="left"][data-collapsed="0"], .as-tray[data-tray-edge="right"][data-collapsed="0"] { align-self: stretch; width: calc(100% - 0.6rem); height: auto; }
+/* The resize grip: a tap-floor surface astride the tray's free edge. */
+.as-tray > .tray-resize-handle { position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0; }
+.as-tray > .tray-resize-handle::after { content: ''; position: absolute; border-radius: var(--r-pill); background: color-mix(in srgb, var(--gold) 58%, transparent); transition: background-color 120ms ease, transform 120ms ease; }
+.as-tray > .tray-resize-handle[data-ui-variant="top"], .as-tray > .tray-resize-handle[data-ui-variant="bottom"] { left: 50%; width: 9.6rem; height: var(--tap-floor); transform: translateX(-50%); cursor: ns-resize; }
+.as-tray > .tray-resize-handle[data-ui-variant="top"] { bottom: 0; transform: translate(-50%, 50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="bottom"] { top: 0; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="top"]::after, .as-tray > .tray-resize-handle[data-ui-variant="bottom"]::after { width: 4.8rem; height: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle[data-ui-variant="left"], .as-tray > .tray-resize-handle[data-ui-variant="right"] { top: 50%; width: var(--tap-floor); height: 9.6rem; transform: translateY(-50%); cursor: ew-resize; }
+.as-tray > .tray-resize-handle[data-ui-variant="left"] { right: 0; }
+.as-tray > .tray-resize-handle[data-ui-variant="right"] { left: 0; }
+.as-tray > .tray-resize-handle[data-ui-variant="left"]::after, .as-tray > .tray-resize-handle[data-ui-variant="right"]::after { width: 2px; height: 4.8rem; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.as-tray > .tray-resize-handle:is(:hover, :focus-visible)::after, .as-tray > .tray-resize-handle[data-dragging="1"]::after { background: var(--gold); }
+/* ═══ DISCLOSURE — faces are OptionCards, the reveal is a DetailCard ═══════ */
+/* components/disclosure.js draws every fold in the tree: a row of faces
+   (`.as-options.flow`, or a column) and ONE reveal, a full-width DetailCard
+   moved under the tapped face's line. The `.disc-*` names are the hooks the
+   tools read; the shapes are the kit's. */
+.disc-faces > .disc-reveal { flex: 1 1 100%; width: 100%; grid-column: 1 / -1; }
+.disc-faces > .disc-face .disc-value { white-space: nowrap; }
+.disc-faces > .disc-face .disc-summary { white-space: normal; }
+.disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
+/* A self-contained fold keeps its face and reveal as siblings inside one
+   semantic card, matching the Armoury's card-row grammar. */
+details.disc-fold-row { min-width: 0; }
+details.disc-fold-row > summary { list-style: none; }
+details.disc-fold-row > summary::-webkit-details-marker { display: none; }
+details.disc-fold-row[open] > summary { border-radius: var(--r-3) var(--r-3) 0 0; border-color: var(--gold); }
+details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3); border-top: 0; }
+
+/* Creation uses the same attached OptionCard / DetailCard fold as the Armoury.
+   Physical text floors preserve readability when the game canvas scales down. */
+.customize .cz-disc { display: flex; flex-direction: column; gap: 8px; }
+.customize .disc-fold-row > summary { min-height: calc(44px / var(--ui-zoom, 1)); }
+.customize .disc-fold-row > summary::after { content: '›'; position: static; flex: 0 0 auto; margin-left: 8px; }
+.customize .disc-fold-row[open] > summary::after { transform: rotate(90deg); }
+.customize :is(.disc-name, .on, .dc-name, .ls-label, .as-title-s, input, button) {
+  font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: 1.4;
+}
+.customize :is(.od, .ls-hint, .as-status, .disc-value, .as-flavor, .as-prose, .dc-meta, .dc-lines, .equip-role-receipts, .cc-equip-group) {
+  font-size: max(1.2rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5;
+}
+.customize .cc-equip-group :is(small, span, p, b, i) { font-size: inherit; }
+.customize .cc-equip-group .as-statrow { flex-wrap: wrap; }
+.customize .cc-equip-group :is(.sr-name, .as-statpair) { white-space: normal; }
+.customize .cc-equip-group .sr-vals { flex: 1 1 100%; text-align: left; justify-content: flex-start; }
+.customize .cc-equip-group .sp-k { letter-spacing: normal; text-transform: none; }
+.rating-calculations { display:grid; gap:10px; margin-top:8px; }
+.rating-calculation { display:grid; gap:5px; padding:9px 0 0; border-top:1px solid color-mix(in srgb,var(--gold,#c9a227) 32%,transparent); min-width:0; }
+.rating-calculation-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; color:var(--gold,#c9a227); letter-spacing:.12em; }
+.rating-calculation-head strong { color:var(--ink,#f6eed8); font-size:1.08em; letter-spacing:normal; }
+.rating-attributes,.rating-formula { color:var(--ink,#f6eed8); line-height:1.5; overflow-wrap:anywhere; }
+.rating-line-label { display:block; color:var(--muted,#b9aa8e); font-size:.78em; letter-spacing:.12em; text-transform:uppercase; }
+.rating-separator { color:var(--muted,#b9aa8e); }
+.rating-term,.rating-source { white-space:normal; }
+.customize .as-pane-head { flex-wrap: wrap; }
+.customize .as-pane-head > .r-trail { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+.customize .disc-face :is(.ob, .r-trail) { min-width: 0; }
+.customize .disc-face :is(.disc-name, .on, .ls-label) { white-space: normal; overflow: visible; text-overflow: clip; }
+.customize .disc-face .r-trail { flex-shrink: 1; overflow-wrap: anywhere; }
+.customize .cc-primary-stat .disc-summary { white-space: normal; }
+.customize .cc-preview-side > .cz-portrait { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 24rem; border: 0; }
+@container game-viewport (max-width: 900px) {
+  .customize .cc-character-grid { grid-template-columns: minmax(0, 1fr); }
+  .customize .cc-preview-side { min-height: 0; }
+  .customize .cc-preview-side > .cz-portrait { flex: none; height: 24rem; }
+}
+/* ASSIGN POINTS IS NARROWER THAN THE COLUMN THE RULE ABOVE WAS WRITTEN FOR.
+   `white-space: normal` lets a summary read in full where there is room, which
+   is right in Character Creation. Inside the Assign Points overlay there is not
+   room: Intelligence's hint — the longest of the five — wraps to a second line,
+   which takes its inner row from 29.41px to 43.44px and its card from the 44px
+   tap floor the other four sit exactly on to 45.44px. Five cards, four at 44
+   and one at 45.44, is no longer the one compact family this surface promises,
+   and tools/uniform-stat-foldouts.mjs has been red on dev for it since #647.
+   Measured in headless Chromium at 390x844.
+
+   The compact face row already ellipsises by default (`.disc-face > .as-row
+   .ls-hint`, above); this restores that default on the one surface too narrow
+   to honour the wrap, which is what `.armoury-character-stats` does for the
+   same content. Scoped to the overlay on purpose — Character Creation is wide
+   enough to wrap without overflowing, and keeps the full sentence. */
+.cc-stat-overlay .disc-faces > .disc-face .disc-summary {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* A FULL-WIDTH FACE IS A LINE OF ITS OWN, AND THE `.disc-faces >` IS LOAD-BEARING.
+   Without it this reads `.disc-face.disc-pick` — two classes — and loses on
+   specificity to `.as-options.flow > .as-option { flex: 1 1 auto }` three rules
+   up, which is three. Measured at d51b46a, headless Chromium 1200x730: all four
+   creation sections (CLASS / CHARACTER / STARTING EQUIP / SEED) computed
+   `flex: 1 1 auto` and shared ONE line at top=77, so the one reveal — a
+   `flex: 1 1 100%` row of the same wrap — could only ever land after the whole
+   row. That is Constantine's "instead it just shows up at hte bottom", and it
+   is the SAME defect MR-287 fixed in disclosure.js, re-opened by a stylesheet:
+   the placement code was right and had nothing to place between. Scoped to the
+   child combinator the count is three either way and the later rule — this one
+   — wins, on flow hosts and column hosts alike. */
+.disc-faces > .disc-face.disc-pick, .disc-faces > .disc-face.disc-armament, .disc-faces > .disc-face.disc-relic, .disc-faces > .disc-face.disc-item, .disc-faces > .disc-face.disc-power, .disc-faces > .disc-face.disc-stat, .disc-faces > .disc-face.disc-attribute, .disc-faces > .disc-face.disc-section { flex: 1 1 100%; }
+.disc-reveal > .dc-name { font-size: 1.5rem; }
+.disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
