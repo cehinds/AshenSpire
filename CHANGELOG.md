@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Combat mini HUD redone** ([#2709](https://github.com/cehinds/AshenSpire/pull/2709), `0.7.4.32`). Every fighter now shows a tall Block shield on the left, an HP bar, an always-visible Poise bar of the same size, and one row of round badges for Precision and every status, buffs included, all at one fixed compact width.
 - **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
 
 ## 2026-11-07
