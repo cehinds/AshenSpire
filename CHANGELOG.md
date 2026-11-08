@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Unused tools moved to the attic** ([#2715](https://github.com/cehinds/AshenSpire/pull/2715), `0.7.4.36`). 95 tool scripts nothing runs any more moved to the tools attic, still runnable from there, and the tools check now fails on any new unused tool; nothing you play changes.
 - **Save migration tidied** ([#2657](https://github.com/cehinds/AshenSpire/pull/2657), `0.7.4.36`). Old run saves are recognised by named schema versions instead of long version lists; every older save loads exactly as before.
 - **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.36`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
 - **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.36`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
@@ -42,9 +43,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **Unused tools moved to the attic** ([#2715](https://github.com/cehinds/AshenSpire/pull/2715), `0.7.4.36`). 95 tool scripts nothing runs any more moved to the tools attic, still runnable from there, and the tools check now fails on any new unused tool; nothing you play changes.
-- **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.34`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
-- **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.34`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
+- **Behind the scenes: shorter game rules, merge train B** ([#2702](https://github.com/cehinds/AshenSpire/pull/2702), `0.7.4.32`). Lands #2686, #2685 and #2688 together. Nothing you play changes.
+- **Behind the scenes: shorter game rules, planned expansion** ([#2686](https://github.com/cehinds/AshenSpire/pull/2686), `0.7.4.32`). The rules document's §12 is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, seats and levels** ([#2685](https://github.com/cehinds/AshenSpire/pull/2685), `0.7.4.32`). The rules document's §13.1–13.4n is rewritten as short bullets with the same rules, and rules for removed systems are dropped. Nothing you play changes.
+- **Behind the scenes: shorter game rules, skill and class progression** ([#2688](https://github.com/cehinds/AshenSpire/pull/2688), `0.7.4.32`). The rules document's §13.4o–13.7 is rewritten as short bullets with the same rules, and rules for removed feat and mastery systems are dropped. Nothing you play changes.
 - **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
