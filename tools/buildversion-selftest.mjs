@@ -669,6 +669,18 @@ function historyCorpus() {
       'the ordinal is RAISED by hand with the source digest unchanged — it sorts higher, but no build writes a new number without a new digest', null, false],
     [null, 'green',
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
+    [bump, 'green',
+      'a push-to-test record: the ordinal is raised by exactly one, same release, digest unchanged, HEAD subject is a version-advance test record — the licensed bump', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
+    [bump, 'red',
+      'the same +1 with the digest unchanged, but HEAD is an ordinary commit and not a test record — still a hand edit', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', 'bump the ordinal by hand')],
+    [bump, 'red',
+      'the same +1 with the digest unchanged under a release-cut record (after release, not after test) — only a test record is licensed', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after release ${'a'.repeat(40)} [version-advance]`)],
+    [(j) => ({ ...j, ordinal: j.ordinal + 2 }), 'red',
+      'a test record that raises the ordinal by TWO with the digest unchanged — the licence is exactly one', null, false,
+      (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
   );
 
   // THE PARENT RECORD GIT CANNOT READ. HEAD names its parent and the parent's

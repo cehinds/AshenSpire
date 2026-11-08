@@ -123,6 +123,8 @@ export const SINGLE_FILE_BUNDLE = 'build/download/AshenSpire.html';
 
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
+/** The subject of a push-to-`test` record (tools/version-advance.mjs advanceSubject): the one commit that may raise the ordinal under an unchanged digest (row H). */
+export const TEST_RECORD_SUBJECT = /^version-advance: \d+\.\d+\.\d+ after test [0-9a-f]{7,40} \[version-advance\]$/;
 /**
  * UNPADDED, AND THE GUARANTEE IT COSTS IS NAMED RATHER THAN DROPPED QUIETLY.
  *
@@ -1438,7 +1440,15 @@ export function check(root = REPO_ROOT) {
         || before.ordinal !== now.ordinal || before.release !== now.release;
       const recordOnly = before !== null && now !== null && before.digest === now.digest
         && (before.ordinal !== now.ordinal || before.release !== now.release);
-      if (recordOnly) {
+      // THE ONE LICENSED EXCEPTION (owner, 2026-11-07): a push to `test` raises the ordinal by one
+      // with the tree unchanged (version-advance.yml, bumpOrdinal force). Same release, parent + 1,
+      // and HEAD's own subject is a `version-advance: ... after test <sha>` record. Nothing else.
+      const testBump = recordOnly && before.release === now.release && now.ordinal === before.ordinal + 1
+        && TEST_RECORD_SUBJECT.test(g('log', '-1', '--format=%s', 'HEAD').trim());
+      if (testBump) {
+        add(true, 'H ORDINAL INCREASES',
+          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and HEAD is a version-advance test record — the licensed build bump`);
+      } else if (recordOnly) {
         // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
         // moves, and the release lives inside the digest's roots, so a record
         // whose number changed under an unchanged digest was edited by hand (or
