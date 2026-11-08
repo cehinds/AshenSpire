@@ -1,5 +1,5 @@
 {
-  "request": "Keep going with the enemy levels and browser validation",
+  "request": "Push the enemy changes and open a PR, then fix the hitbox overlap and continue the unfinished work.",
   "viewports": [
     {
       "name": "desktop",
@@ -134,6 +134,57 @@
         }
       ],
       "failure": []
+    },
+    {
+      "url": "?shot=combat&gameProfile=core&shotSeed=4&shotEnemies=wanderingSoldier,wyrmAspirant,fellWarden&shotHand=5",
+      "success": [
+        {
+          "label": "Inspected the intended enemy",
+          "includes": "Wyrm Aspirant",
+          "selector": ".combatant-door",
+          "kind": "text"
+        },
+        {
+          "label": "Empty HUD rows pass through",
+          "prop": "pointer-events",
+          "equals": "none",
+          "selector": ".combatant.player .combat-health-row",
+          "kind": "style"
+        },
+        {
+          "label": "Visible player HP stays interactive",
+          "prop": "pointer-events",
+          "equals": "auto",
+          "selector": ".combatant.player .combat-health-meter .m-track",
+          "kind": "style"
+        },
+        {
+          "label": "Inspector fits viewport",
+          "selector": ".combatant-door",
+          "kind": "within",
+          "container": "body"
+        },
+        {
+          "label": "No application errors",
+          "max": 0,
+          "ignore": [
+            "^Blocked call to navigator\\.vibrate"
+          ],
+          "kind": "consoleErrors"
+        }
+      ],
+      "name": "crowded-enemy-inspection",
+      "failure": [],
+      "actions": [
+        {
+          "hold": {
+            "ms": 800,
+            "selector": ".combatant[data-eid=\"e2\"] .sprite"
+          }
+        }
+      ],
+      "settleMs": 1600,
+      "ready": ".combatant[data-eid=\"e2\"] .sprite"
     }
   ]
 }

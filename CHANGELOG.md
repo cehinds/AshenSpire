@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Enemy levels and readable stats** ([#2717](https://github.com/cehinds/AshenSpire/pull/2717), `0.7.4.44`). New Core runs use enemy levels 1–5 and the player's attribute-point budget per level, with every own stat starting at 1. Enemy inspection separates own points from gear bonuses and keeps the full label readable on phones. Empty health-bar padding no longer steals a neighboring enemy's taps or long presses. Existing runs keep their saved attribute budgets.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.44`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
 - **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.44`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
 - **Save code reorganised** ([#2707](https://github.com/cehinds/AshenSpire/pull/2707), `0.7.4.44`). The save manager is now built from four smaller parts (archive, profile, shared profile copies, space reclaim). Saves, old saves and exported settings load exactly as before.
