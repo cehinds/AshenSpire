@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-08
 
 - **Display settings moved out of the boot file** ([#2690](https://github.com/cehinds/AshenSpire/pull/2690), `0.7.4.32`). Interface scale, tap size and card size now apply from their own module; the game looks and plays the same.
+- **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.32`). Developer screenshot poses now live in their own module; the game plays the same.
 
 ## 2026-11-07
 
