@@ -125,3 +125,50 @@ export function scanDynamicImports(src) {
   }
   return out;
 }
+
+// commentRanges(src) -> [[start, end), ...] of the line and block comments.
+//
+// The backstop's mask, deliberately NOT scanDynamicImports' lexer: it has no
+// regex-versus-division guess. A `/` that is not the start of `//` or `/*` is
+// code, so when this is unsure the text counts as code and the backstop fails
+// the build rather than excusing a native import(). A backslash skips the next
+// character (so `\/*` inside a regex is not a comment), and a '…' or "…" string
+// ends at an unescaped newline, so a stray quote costs at most one line.
+export function commentRanges(src) {
+  const out = [];
+  const n = src.length;
+  let i = 0;
+  while (i < n) {
+    const c = src[i];
+    if (c === '\\') { i += 2; continue; }
+    if (c === '/' && src[i + 1] === '/') {
+      const s = i;
+      while (i < n && src[i] !== '\n') i++;
+      out.push([s, i]);
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      const s = i;
+      const e = src.indexOf('*/', i + 2);
+      i = e < 0 ? n : e + 2;
+      out.push([s, i]);
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      i++;
+      while (i < n && src[i] !== c && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+      i++;
+      continue;
+    }
+    if (c === '`') {
+      // Template text: comments are not comments here. ${…} is treated as text too,
+      // which can only hide a comment, never invent one, so it errs toward code.
+      i++;
+      while (i < n && src[i] !== '`') i += src[i] === '\\' ? 2 : 1;
+      i++;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
