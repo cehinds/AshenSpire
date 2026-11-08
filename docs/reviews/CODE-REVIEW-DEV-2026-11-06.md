@@ -353,7 +353,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [x] `mountEquipment` → `components/armoury*` fed by models (H3) — [#2714](https://github.com/cehinds/AshenSpire/pull/2714)
 - [ ] `collectContentProblems` → one validator per bundle section (H3)
 - [x] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3) — #2707
-- [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
+- [x] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3) — #2708
 - [ ] `runOpcode` → `OPCODE_HANDLERS` map (H3)
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
 - [x] `migrateRunSchema`: `schemaVersion < N` with named constants (Low) — #2657

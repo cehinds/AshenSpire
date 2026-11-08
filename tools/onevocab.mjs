@@ -196,7 +196,7 @@ const MAX_HP_COMPOSITION = [
     addends: ['hp.value', 'hpEquipmentBonus', 'run.maxHpAdjustment'],
   },
   {
-    file: 'src/model/loadout.js',
+    file: 'src/model/loadout/cardMods.js',
     key: 'loadout.js#reconcile',
     role: 'reconcileRunLoadoutHp — runs LAST at run creation and decides the run',
     anchor: 'const nextMax = Math.max(1,',
@@ -773,7 +773,7 @@ if (SELFTEST) {
         // A second road for a grant that already has one, planted in the writer
         // that DECIDES a freshly created run (reconcile runs last).
         name: 'a relic resource grant is added a second time, outside the table',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/cardMods.js',
         find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
         replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + 2);',
         expectRed: /SECOND derivation path|arriving off-table|TWO ANSWERS/,
@@ -794,7 +794,7 @@ if (SELFTEST) {
         // between the list has four terms and the sum has not moved. This
         // plant was NOT CAUGHT by A6(a) before it read the terms by name.
         name: 'a fourth max-HP addend appears and adds nothing today',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/cardMods.js',
         find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
         replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + (run.relicHpFlat || 0));',
         expectRed: /SURPLUS TERM\(S\)[^\n]*: \(run\.relicHpFlat \|\| 0\)/,
@@ -804,7 +804,7 @@ if (SELFTEST) {
         // forever, so no value assertion can ever see it; the list is four
         // words long and one of the words changed. Also NOT CAUGHT before.
         name: 'a max-HP term is swapped for a second spelling of itself',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/cardMods.js',
         find: '  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
         replace: '  const hpLedger = run.maxHpAdjustment;\n  const nextMax = Math.max(1, derived.value + equipmentBonus + hpLedger);',
         expectRed: /PINNED TERM\(S\) GONE: run\.maxHpAdjustment/,
@@ -830,7 +830,7 @@ if (SELFTEST) {
         // that exact term is the historical defect this whole seam was built
         // around.
         name: 'a pinned max-HP term is written TWICE — four addends, three names, no number moves',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/cardMods.js',
         find: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);',
         replace: 'const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment + run.maxHpAdjustment);',
         expectRed: /SURPLUS TERM\(S\)[^\n]*run\.maxHpAdjustment/,
