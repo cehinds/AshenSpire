@@ -278,7 +278,7 @@ if (!entrySrc) fail('no <script type="module" src="..."> entry found in index.ht
 // Match a side-effect import first so the multi-line `from` form cannot swallow
 // it together with a later named import.
 const IMPORT_RE =
-  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!\s*\()(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\()(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
 // A dynamic import the bundler can follow: `import('<relative literal>')`, one
 // string-literal argument. The target is bundled like any module but its factory

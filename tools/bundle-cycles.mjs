@@ -16,7 +16,7 @@ import { scanDynamicImports } from './dynamic-imports.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Same statement grammar as tools/bundle.mjs IMPORT_RE.
 const IMPORT_RE =
-  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!\s*\()([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\()([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
 const idOf = (abs, root = ROOT) => relative(root, abs).split(/[\\/]/).join('/');
 

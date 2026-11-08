@@ -227,3 +227,17 @@ test('backstop: import /* c */ ( in a string literal is caught too', () => {
     assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js at line 1/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('a comment-separated dynamic call before a static import does not break the static parse', async () => {
+  const root = fixture({
+    'main.js': "import /* lazy */ ('./dev.js');\nimport { shared } from './shared.js';\nglobalThis.log.push(shared);\n",
+    'dev.js': 'export const value = 1;\n',
+    'shared.js': "export const shared = 's';\n",
+  });
+  try {
+    const { context, order } = bundleAndRun(root);
+    assert.deepEqual([...order].sort(), ['src/dev.js', 'src/main.js', 'src/shared.js']);
+    assert.deepEqual([...context.log], ['s']);
+    assert.deepEqual(findCycleHazards('src/main.js', root), []);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
