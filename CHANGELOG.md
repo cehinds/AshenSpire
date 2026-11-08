@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
+- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.46`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
 - **Attic tool path fixed** ([#2722](https://github.com/cehinds/AshenSpire/pull/2722), `0.7.4.46`). One retired QA tool read a source file from the wrong folder after the attic move; nothing you play changes.
 - **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.46`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
