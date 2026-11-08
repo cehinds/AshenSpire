@@ -23,7 +23,7 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.route('**/combat-feel-check.html', (route) => route.fulfill({ contentType: 'text/html', body: '<!doctype html><link rel="stylesheet" href="/styles/base.css"><link rel="stylesheet" href="/styles/combat.css"><link rel="stylesheet" href="/styles/combat-poses.css"><body style="background:#181714;color:#eee"><h1>Combat hit-stop</h1><p>Attacker and target hold; idle movement keeps its clock.</p></body>' }));
+    await page.route('**/combat-feel-check.html', (route) => route.fulfill({ contentType: 'text/html', body: '<!doctype html><link rel="stylesheet" href="/styles/base.css"><link rel="stylesheet" href="/styles/combat.css"><body style="background:#181714;color:#eee"><h1>Combat hit-stop</h1><p>Attacker and target hold; idle movement keeps its clock.</p></body>' }));
     await page.goto(`http://localhost:${port}/combat-feel-check.html`);
     const result = await page.evaluate(async () => {
       const { playTimeline, setAnimSpeed } = await import('/src/ui/fx.js');
