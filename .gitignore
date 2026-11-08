@@ -605,5 +605,9 @@ build/windows-installer/
 # Compiled build artifact (tools/build-game.mjs); CI publishes it. games/<game>/build.summary.json is committed.
 /dist/build/
 
+# tools/results/ is local QA output, not kept in the tree (H5, 2026-11-07): writers use scratch/qa/
+# or, in CI, upload it as a workflow artifact.
+/tools/results/
+
 # QA sandbox output (tools/qa-sandbox.mjs)
 /qa-sandbox-out/
