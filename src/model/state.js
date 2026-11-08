@@ -1500,6 +1500,51 @@ function checkPendingRankUpsFeatsAttributes(run, problems, pending) {
   }
 }
 
+/** Phase: required levels, level cards, level choices and their sources. */
+function checkPendingLevelRewards(run, problems, pending) {
+  for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
+    for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
+      if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
+    }
+  }
+  if (pending.rewards?.levelCards !== undefined) {
+    // SPEC §15.1: absent on an offer written before the schedule.
+    const rows = pending.rewards.levelCards;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+    else {
+      const ordinals = new Set();
+      rows.forEach((d, i) => {
+        const p = `pendingReward.rewards.levelCards[${i}]`;
+        if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+        if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+        ordinals.add(d.ordinal);
+        if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+      });
+    }
+  }
+  if (pending.rewards?.levelChoices !== undefined) {
+    const rows = pending.rewards.levelChoices;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+    else rows.forEach((d, i) => {
+      const p = `pendingReward.rewards.levelChoices[${i}]`;
+      if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+        problems.push(`${p} must have an ordinal and choices`); return;
+      }
+      for (const option of d.options) {
+        if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+      }
+    });
+  }
+  for (const key of ['levelChoices', 'levelCards']) {
+    for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
+      if (!row || row.source === undefined) continue;
+      const path = `pendingReward.rewards.${key}[${i}]`;
+      if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
+      if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
+    }
+  }
+}
+
 /** Phase: the pending reward offer, its claims, drafts and chosen rows. */
 function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
@@ -1510,47 +1555,7 @@ function checkPendingReward(run, problems) {
       checkPendingRewardEnvelope(run, problems, pending);
       checkPendingMilestoneAndSkillDrafts(run, problems, pending);
       checkPendingRankUpsFeatsAttributes(run, problems, pending);
-      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
-        for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
-          if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
-        }
-      }
-      if (pending.rewards?.levelCards !== undefined) {
-        // SPEC §15.1: absent on an offer written before the schedule.
-        const rows = pending.rewards.levelCards;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
-        else {
-          const ordinals = new Set();
-          rows.forEach((d, i) => {
-            const p = `pendingReward.rewards.levelCards[${i}]`;
-            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
-            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
-            ordinals.add(d.ordinal);
-            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
-          });
-        }
-      }
-      if (pending.rewards?.levelChoices !== undefined) {
-        const rows = pending.rewards.levelChoices;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
-        else rows.forEach((d, i) => {
-          const p = `pendingReward.rewards.levelChoices[${i}]`;
-          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
-            problems.push(`${p} must have an ordinal and choices`); return;
-          }
-          for (const option of d.options) {
-            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
-          }
-        });
-      }
-      for (const key of ['levelChoices', 'levelCards']) {
-        for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
-          if (!row || row.source === undefined) continue;
-          const path = `pendingReward.rewards.${key}[${i}]`;
-          if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
-          if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
-        }
-      }
+      checkPendingLevelRewards(run, problems, pending);
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
       }
