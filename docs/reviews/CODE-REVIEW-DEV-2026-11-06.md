@@ -305,11 +305,11 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 ### 1. Guards
 
 - [x] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
-- [ ] Tools reachability test: fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
+- [x] Tools reachability test ([#2669](https://github.com/cehinds/AshenSpire/pull/2669)): fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
 - [x] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). Images under the docs evidence dirs are not gated yet: 61 tracked PNGs there exceed 256 KiB (`docs/art-evidence/2026-09-0x/`, `docs/qa/releases/`) and need a docs cleanup first.
 - [ ] Test that every `data-component` id is in `UiComponentId` (Low)
 - [ ] Unused-export lint (M5)
-- [ ] Test that `tools/README.md` lists every tool (Low)
+- [x] Test that `tools/README.md` lists every tool (Low) — [#2672](https://github.com/cehinds/AshenSpire/pull/2672)
 
 ### 2. Relocations with re-exports
 
