@@ -11,14 +11,14 @@ prefix; its callers are the union.
 
 `tools/attic/`: tools nothing references, kept runnable; see the Attic section.
 
-## Tools something references (315 files, plus the 8 subfolders)
+## Tools something references (312 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
 | `card-layers/` (7 files) | Open '/tools/card-layers/index.html#editor' on the existing source-preview server. | tools card-layout-save-qa, card-master-qa, card-rank-layers/preview.html; other workbench/tools.json |
 | `card-rank-layers/` (2 files) | Open '/tools/card-rank-layers/preview.html' on the repository preview server. | tools card-layout-save-qa, card-rank-layers-qa; other workbench/tools.json |
 | `card-solid-bb/` (2 files) | Implementation notes for 'feature/card-solid-bb'. The screenshots and 'report.json' | tools card-layers/index.html; other workbench/tools.json |
-| `combat-audit/` (16 files) | This audit found and fixed the primary Quit menu action and two measured initialization costs: the Settings card… | wf combat-audit-hosted-preview; tests combat-audit-card-condition-contracts, combat-audit-card-effect-contracts, combat-audit-cards +6; docs docs/handoffs/full-combat-audit.md, docs/preview/full-combat-audit/README.md, docs/preview/full-combat-audit/accepted-stance-followup.md +2 |
+| `combat-audit/` (16 files) | This audit found and fixed the primary Quit menu action and two measured initialization costs: the Settings card… | tests combat-audit-card-condition-contracts, combat-audit-card-effect-contracts, combat-audit-cards +6; docs docs/handoffs/full-combat-audit.md, docs/preview/full-combat-audit/README.md, docs/preview/full-combat-audit/accepted-stance-followup.md +2 |
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
 | `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; other .gitignore, editor/server.mjs +12 |
 | `results/` (82 files) | (no header comment) | tools buildstamp-shot, e11-reward-correction, hud-quick-compact +3; other src/content/statuses.js |
@@ -97,7 +97,7 @@ prefix; its callers are the union.
 | `config-build.mjs` | config-build — compile content/config/**.json into | wf alternative-sync; tests build-lock, deck-editor-costs, engine-export +3; tools content-build, engine-export, launch +1; docs DEVELOPER.md, content/config/README.md, docs/COMPONENT-MODEL-ARCHITECTURE.md +8; other package.json, src/config/generated/ui.js +14 |
 | `confirmation-modal.mjs` | Focused acceptance for QA remediation #4: Load and Quit Without Saving use | tools escape-back, plantsites-baseline.json; docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
 | `conhp.mjs` | conhp — D22 Constitution/HP authority contract. | tests fixtures/run-save-vigour-window.json; tools onevocab, runcreation, saveroundtrip; other docs/architecture-handoff/pre-existing-changes.txt |
-| `content-build.mjs` | content-build — compile authored JSON/CSV content into ES modules, | wf ward-to-block-cards; tests build-lock, engine-export, engine.test.js +1; tools config-build, dirorder, doorplant +8; docs DEVELOPER.md, SPEC.md, content/config/README.md +12; other docs/architecture-handoff/source-map.json, docs/design/class-armor-rear-2026-10-06/sources/outfits.js +59 |
+| `content-build.mjs` | content-build — compile authored JSON/CSV content into ES modules, | tests build-lock, engine-export, engine.test.js +1; tools config-build, dirorder, doorplant +8; docs DEVELOPER.md, SPEC.md, content/config/README.md +12; other docs/architecture-handoff/source-map.json, docs/design/class-armor-rear-2026-10-06/sources/outfits.js +59 |
 | `contentreach.mjs` | contentreach — CAN A PLAYER EVER GET THIS CARD, RELIC OR EVENT? | tests contentreach; docs SPEC.md, docs/FINISH.md |
 | `contrast-audit.mjs` | contrast-audit — what the eye actually gets: WCAG contrast of the | wf ci; tests contrast-title-continue, engine.test.js; tools buildstamp-shot, mapreach, pairsweep +1; docs SPEC.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/main.js +2 |
 | `core-entry-fixture.mjs` | A deterministic real-input route: seed 4, initial Shrine, then the leftmost | tests core-entry-fixture; tools click-impact-probe, quick-start-inputs |
@@ -263,7 +263,6 @@ prefix; its callers are the union.
 | `simrun.mjs` | (no header comment) | tests simbot-decisions, simrun-loop; tools measure-classes, runsim; docs DEVELOPER.md, SPEC.md, docs/FINISH.md +1 |
 | `slot-load-door.mjs` | The in-run Load door, driven in the real page (SPEC §3.12, §9 M2). | wf ci; tests slot-load-focus; tools plantsites-baseline.json; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `sound-opening.mjs` | Browser regression (review of #1472): a FRESH fight sounds its opening draw | docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
-| `stance-combat-qa.mjs` | Actual-screen screenshot QA for the stance/accuracy HUD. All UI is rendered | wf ward-to-block-cards; docs docs/STANCE-COMBAT-QA.md |
 | `starseer-spell-reactions-qa.mjs` | Real standalone HTML input. Fixtures use canonical engine enemies and cards; | docs docs/preview/starseer-spell-reactions/README.md |
 | `starter-card-art-browser.mjs` | Run against serve after fetching the pinned art release. | docs docs/preview/starter-card-art/README.md |
 | `starting-equipment-qa.mjs` | (no header comment) | docs docs/COMPONENT-CATALOG.md, docs/preview/starting-equipment/README.md |
@@ -298,8 +297,6 @@ prefix; its callers are the union.
 | `verdict.mjs` | verdict — THE CI DOOR. A TOOL'S SILENCE IS NOT ITS SUCCESS. | wf ci, dev-preview +6; tests fixtures/verdict/silent_exit_zero, fixtures/verdict/vacuous_green, receipts-pr; tools about-changelog, card-drag-targeting, displayfirst +17; docs DEVELOPER.md, docs/RELEASE-CHECKLIST.md, docs/architecture-handoff/CURRENT-SOURCE-AUDIT.md +2; other src/ui/components/card.js |
 | `verify-external.mjs` | verify-external — verify the DE-INLINED build: that the packs the | wf dev-preview; tools assetmime, bundle, external-play +2; docs DEVELOPER.md, dist/README.md, docs/ART-REPO-PLAN.md +2; other src/ui/assetPacks.js |
 | `verify-shipped.mjs` | verify-shipped — verify the file a PLAYER is handed, not the file the | wf ci, dev-preview; tests fixtures/verdict/vacuous_green; tools bundle, dirorder, gatelist +10; docs CHANGELOG.md, DEVELOPER.md, SPEC.md +15; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, editor/server.mjs +1 |
-| `ward-to-block-card-text.mjs` | (no header comment) | wf ward-to-block-cards |
-| `ward-to-block-cards-qa.mjs` | Capture five production card surfaces before and after opening their real inspector. | wf ward-to-block-cards |
 | `watched-selftest.mjs` | watched-selftest — the known-bad corpus for watched. | tools watched |
 | `watched.mjs` | watched — did anyone OPEN THE BUILD and SEE the control? | tests run-node; tools watched-probes.json, watched-selftest |
 | `weapon-card-packages.mjs` | (no header comment) | tests closedsets, run-node; tools closedsets; other src/engine/combatSnapshot.js, src/engine/save.js |
@@ -311,9 +308,9 @@ prefix; its callers are the union.
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (64 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (67 files)
 
-These 64 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 67 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line |
 | --- | --- |
@@ -364,6 +361,7 @@ These 64 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `reward-new-badge-qa.mjs` | Browser gate for the reward-card status stack: NEW sits above the card and |
 | `sfx-authority-contract.mjs` | Issue #67: played ids and authored SFX rows are one two-way authority. |
 | `skill-book-shop-browser.mjs` | Real renderer, real purchase plan/commit, disposable visit (no user saves). |
+| `stance-combat-qa.mjs` | Actual-screen screenshot QA for the stance/accuracy HUD. All UI is rendered |
 | `starting-abilities-qa.mjs` | (no header comment) |
 | `sword-shield-animation-browser.mjs` | (no header comment) |
 | `textsize-baseline.mjs` | textsize-baseline — #53's browser witness. |
@@ -371,3 +369,5 @@ These 64 tools were moved to `tools/attic/`, not deleted: no tracked file outsid
 | `unarmed-animation-browser.mjs` | (no header comment) |
 | `uprightsetting.mjs` | uprightsetting — BOTH EDGES OF HIS AMENDMENT TO THE UPRIGHT GATE. |
 | `viewport-units.mjs` | viewport-units — Law 2's detector for viewport-constrained UI CSS. |
+| `ward-to-block-card-text.mjs` | (no header comment) |
+| `ward-to-block-cards-qa.mjs` | Capture five production card surfaces before and after opening their real inspector. |
