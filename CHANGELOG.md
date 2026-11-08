@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Behind the scenes: spells deal plain damage, written down** ([#2706](https://github.com/cehinds/AshenSpire/pull/2706), `0.7.4.32`). This is a rules-text change, and nothing you play changes yet. The rulebook now says spell damage is ordinary damage that meets Block like any hit, spells reach by default, and each school of magic leaves its own status (Frost chills, then freezes); the change itself follows in its own update.
 - **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
