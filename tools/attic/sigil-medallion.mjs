@@ -25,15 +25,15 @@
 // a swing. That is inherent to a frame-anchored overlay on frame-animated art
 // and is a known cost, not a fault this tool is blind to.
 //
-//   node tools/sigil-medallion.mjs
+//   node tools/attic/sigil-medallion.mjs
 
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { medallionAnchor } from '../src/content/classArtAnchors.js';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { medallionAnchor } from '../../src/content/classArtAnchors.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DISC_PCT = 7; // classSprite(): the disc's height as a share of the frame
 const GLYPH_CQH = 62; // and the glyph's, as a share of the disc's CONTENT box (what `cqh` means)
 // THE x MUST BE LOAD-BEARING, AND ONE CLASS CANNOT PROVE THAT.

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const url = process.env.QA_BUILD_URL;
 if (!url) throw new Error('QA_BUILD_URL must name the served standalone HTML');

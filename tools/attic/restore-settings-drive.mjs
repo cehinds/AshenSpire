@@ -1,4 +1,4 @@
-// tools/restore-settings-drive.mjs — Rune, 2026-08-07 (#68 D22).
+// tools/attic/restore-settings-drive.mjs — Rune, 2026-08-07 (#68 D22).
 //
 // After a restore, does the SCREEN match the profile that was restored? Sunna's
 // scenario, through the title-screen Profile route: a live profile with high contrast OFF / reduced
@@ -6,7 +6,7 @@
 // motion OFF / text S — restore it and read the body classes and root
 // font-size, not the stored values.
 //
-// Run:  node tools/restore-settings-drive.mjs     (from the repo root)
+// Run:  node tools/attic/restore-settings-drive.mjs     (from the repo root)
 // Exit 0 = the real restore door dresses the screen and both visible Music consumers.
 //
 // BOUNDARY: headless Chromium at 390x844. It proves the settings are APPLIED,
@@ -24,7 +24,7 @@
 // that writes the settings and never dresses the screen in them — into a copy
 // of the real main.js, and re-runs this whole drive against it.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'restore-settings-drive.mjs',
     timeoutMs: 900000,
@@ -42,9 +42,9 @@ if (process.argv.includes('--selftest')) {
 
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8201, open: false });
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+const { port } = await serve({ root: fileURLToPath(new URL('../..', import.meta.url)), port: 8201, open: false });
 // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
 // Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
 // passed no `--user-data-dir` and never killed the browser at all, so every run

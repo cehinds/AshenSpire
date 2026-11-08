@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/scroll-cue-bleed.mjs — issue #29: painted bleed and visible scroll cues.
+// tools/attic/scroll-cue-bleed.mjs — issue #29: painted bleed and visible scroll cues.
 //
 // This is deliberately narrower than axisfit, screenreach, or actionreach. It
 // opens the real customize, map, and shop shot doors, inventories painted leaf
@@ -9,9 +9,9 @@
 // moving component. Horizontal and vertical witnesses are separate; the paging
 // hand is the horizontal control and the map is the vertical control.
 //
-//   node tools/scroll-cue-bleed.mjs
-//   node tools/scroll-cue-bleed.mjs --artifact AshenSpire.html
-//   node tools/scroll-cue-bleed.mjs --shots docs/preview/scroll-cue-bleed-source
+//   node tools/attic/scroll-cue-bleed.mjs
+//   node tools/attic/scroll-cue-bleed.mjs --artifact AshenSpire.html
+//   node tools/attic/scroll-cue-bleed.mjs --shots docs/preview/scroll-cue-bleed-source
 //
 // BOUNDARY: headless Chromium, 360x640 / 390x844 / 412x915 plus 1200x730,
 // Text M/XL and UI size S/XL. It does not claim a real OS thumb, WebKit,
@@ -21,9 +21,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { balance } from '../src/content/balance.js';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { balance } from '../../src/content/balance.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -75,7 +75,7 @@ const NAV_WAIT_MS = 45000;
 const SHOP_PANE_SEAM = '.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }';
 
 async function runSelftest() {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const common = {
     tool: 'scroll-cue-bleed.mjs',
     args: ['--only', '360x640', '--surface', 'shop'],

@@ -12,11 +12,11 @@ import {
   REAVER_ATTACK_SEQUENCE,
   isReaverAttackEligible,
   reaverAttackTiming,
-} from '../src/ui/reaverAttack.js';
+} from '../../src/ui/reaverAttack.js';
 
-import { authoringNeeds } from './art-authoring.mjs';
+import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['assets']);
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FRAME_DIR = join(ROOT, 'assets', 'animations', 'reaver', 'default-greatsword', 'right');
 const EXPECTED_RUNS = [
   ['F03', 3], ['F04', 3], ['F05', 3], ['F06', 3], ['F03', 3], ['F08', 4],

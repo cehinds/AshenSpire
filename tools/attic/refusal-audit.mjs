@@ -1,4 +1,4 @@
-// tools/refusal-audit.mjs — every control that refuses must say why.
+// tools/attic/refusal-audit.mjs — every control that refuses must say why.
 //
 // THE DEFECT THIS EXISTS FOR. Constantine, on his phone: "for armament, I can't
 // select the empty slot to equip available weapons." The slot opened; what
@@ -12,9 +12,9 @@
 // `data-refusal`, written by components/refusal.js, which cannot mark a control
 // without being handed the reason.
 //
-//   node tools/refusal-audit.mjs                 audit, print the census
-//   node tools/refusal-audit.mjs --port 8613     pick the HTTP port
-//   node tools/refusal-audit.mjs --shape 390x844 one shape instead of both
+//   node tools/attic/refusal-audit.mjs                 audit, print the census
+//   node tools/attic/refusal-audit.mjs --port 8613     pick the HTTP port
+//   node tools/attic/refusal-audit.mjs --shape 390x844 one shape instead of both
 //
 // THE DENOMINATOR IS FLOORED, NEVER THE FINDINGS (Vira's, via Marina, today): a
 // run that examined zero controls has not passed, it has measured nothing, and
@@ -37,14 +37,14 @@
 // number and is never restated here.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : d; };
 const PORT = Number(arg('--port', '8613'));

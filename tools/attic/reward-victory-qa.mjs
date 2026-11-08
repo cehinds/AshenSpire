@@ -3,8 +3,8 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { serve } from './serve.mjs';
-import { launchBrowser } from './browser.mjs';
+import { serve } from '../serve.mjs';
+import { launchBrowser } from '../browser.mjs';
 const { chromium } = createRequire(import.meta.url)(`${process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES}/playwright`);
 const output = process.env.REWARD_VICTORY_OUT || '/tmp/reward-victory';
 mkdirSync(output, { recursive: true });

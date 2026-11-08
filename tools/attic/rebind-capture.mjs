@@ -12,11 +12,11 @@ import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, parse, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { copySourceArt } from './art-source.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { copySourceArt } from '../art-source.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SHOT_DIR = process.env.QA18_EVIDENCE_DIR
   ? resolve(process.env.QA18_EVIDENCE_DIR)
   : resolve(ROOT, 'docs', 'preview');

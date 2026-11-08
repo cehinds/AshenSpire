@@ -3,12 +3,12 @@
 // restored save does) replays none of its history. A fresh BOSS fight holds
 // those cues while its name splash covers the board and sounds them, once, as
 // the splash closes (main.js showBossIntro onClose).
-// node tools/sound-opening.mjs   (CHROME picks the browser, tools/browser.mjs)
+// node tools/attic/sound-opening.mjs   (CHROME picks the browser, tools/browser.mjs)
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-const root = fileURLToPath(new URL('../', import.meta.url));
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+const root = fileURLToPath(new URL('../../', import.meta.url));
 const server = await serve({ root, port: 0, open: false });
 const url = 'http://localhost:' + server.server.address().port + '/';
 const browser = await launchBrowser({ prefix: 'soundopening-', headless: '--headless=new' });

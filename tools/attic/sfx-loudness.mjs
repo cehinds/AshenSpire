@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/sfx-loudness.mjs — deterministic A-weighted loudness of every SFX
+// tools/attic/sfx-loudness.mjs — deterministic A-weighted loudness of every SFX
 // recipe, computed from the table rather than rendered (#66, Sunna's mix gate).
 //
 // WHY THIS EXISTS. The render-based probe that found the frost defect
@@ -19,9 +19,9 @@
 // it is exactly reproducible, which is the trade that makes it useful for
 // TUNING. Find with the render; tune against this; confirm by ear.
 //
-//   node tools/sfx-loudness.mjs              every recipe, loudest first
-//   node tools/sfx-loudness.mjs --family procBurst   one family, with spread
-//   node tools/sfx-loudness.mjs --selftest   known-bad: prove it can go red
+//   node tools/attic/sfx-loudness.mjs              every recipe, loudest first
+//   node tools/attic/sfx-loudness.mjs --family procBurst   one family, with spread
+//   node tools/attic/sfx-loudness.mjs --selftest   known-bad: prove it can go red
 //
 // THE MODEL, stated so it can be argued with:
 //   tone  — energy = peak^2 * (dur/2), A-weighted at the geometric mean of
@@ -41,7 +41,7 @@
 // be checked against.
 
 import { pathToFileURL } from 'node:url';
-import { SFX_RECIPES } from '../src/content/sfx.js';
+import { SFX_RECIPES } from '../../src/content/sfx.js';
 
 // A-weighting, IEC 61672.
 function aw(f) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { openCombatQa } from './rear-qa-runtime.mjs';
+import { openCombatQa } from '../rear-qa-runtime.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const out = resolve(process.env.COMBAT_QA_OUT || '.codex/rear-player-actions');
 mkdirSync(out, { recursive: true });

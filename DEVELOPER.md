@@ -1312,7 +1312,7 @@ timeline per beat, `playEventCues` for instant playback and a fresh fight's
 opening (a boss fight's waits for its name splash to close);
 `playEventCues` stings once per turn. `node --test tests/sound-tiers.test.mjs`
 covers them, including the opening turn;
-`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+`node tools/attic/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
 a remounted one, and a fresh boss fight behind its splash
 (`?shot=boss&shotBossHold=0` lets the splash close).
 

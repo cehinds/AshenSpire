@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (272 tool files, plus the 8 subfolders)
+## Tools something references (259 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -206,21 +206,14 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `prologue-editor-save.mjs` | A local authoring bridge for the opening editor. Only the final journey | tests prologue-editor-defaults; tools displayfirst, serve |
 | `qa-sandbox.mjs` | Pre-PR browser QA sandbox: runs an acceptance spec (success and failure checks) at desktop and phone viewports, screenshots, optional before/after against `--base <ref>`; writes report.md. | tests qa-sandbox; docs CONTRIBUTING.md, docs/qa/SANDBOX-QA.md; other package.json (`qa:sandbox`) |
 | `quick-start-inputs.mjs` | Count real native inputs from the default Core New Game menu to its first | wf quick-start; tests quick-start-tutorial-input, quick-start; tools map-camera-persistence; docs docs/FINISH.md |
-| `readiness-poses-ship.mjs` | Normalize authored sprite sheets to the existing 640px canvas / y=600 floor. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/readinessPoseArt.js |
 | `readme-sync.mjs` | readme-sync — keeps the generated parts of README.md current. | wf readme-sync; tests readme-sync |
-| `rear-player-qa.mjs` | (no header comment) | docs docs/ai/session-continuations/2026-10-08/rear-sprites-and-layering.md |
 | `rear-qa-runtime.mjs` | Browser-test instrumentation only. The on-disk package stays unchanged; | tools combat-attached-details-qa, combat-card-stability-qa, combat-layer-qa +2 |
-| `reaver-attack-animation.mjs` | Standing validation for the owner-approved painted Reaver attack. The | docs docs/ART-REPO-PLAN.md |
-| `rebind-capture.mjs` | Focused browser acceptance for QA remediation #5 and #18: capture ownership | tools plantsites-baseline.json |
 | `rebuild-matches.mjs` | rebuild-matches — does a build from THIS source reproduce what is | tools buildversion, bundle; docs docs/EXTERNAL-ASSETS-PLAN.md, docs/versioning.md; other src/buildversion.js |
 | `receipts.mjs` | receipts — EVERY MERGED PULL REQUEST HAS A RECEIPT BEFORE IT IS PROMOTED. | wf receipts, worker-check; tests receipts-pr, receipts-root, receipts-window; tools about-changelog, build-stamp, equipment-surface-receipts +3; docs CHANGELOG.md, DEVELOPER.md, docs/FINISH.md +4; other package.json, src/model/equipmentPresentation.js +1 |
-| `refusal-audit.mjs` | refusal-audit — every control that refuses must say why. | other src/ui/components/refusal.js |
 | `release-series.mjs` | Gate current CI/CD builds; archived downloads retain their original versions. | wf ci, dev-preview, pages-builds; docs docs/RELEASE-CHECKLIST.md |
 | `release-shots-selftest.mjs` | release-shots-selftest — the known-bad corpus for release-shots. | tools release-shots |
 | `release-shots.mjs` | release-shots — photograph the RELEASE BUILD, screen by screen, | wf ci; tests engine.test.js, run-node; tools axisfit, buildstamp-shot, contrast-audit +5; docs SPEC.md, docs/SPEC-RECONCILE.md, docs/preview/issue-185-5198e8a/README.md +3; other src/buildversion.js, src/main.js +2 |
-| `restore-settings-drive.mjs` | restore-settings-drive — Rune, 2026-08-07 (#68 D22). | tools plantsites-baseline.json |
 | `reward-map-layout-qa.mjs` | Production reward/map mounts: column containment and touch response budget. | tools map-tap-latency |
-| `reward-victory-qa.mjs` | Production reward renderers with a deterministic mixed offer and paid XP fixture. | docs docs/qa/reward-victory-2026-10-23/README.md |
 | `rogue-parity.mjs` | Rogue full-slice contract. Source/model only: no browser and no generated build. | tests content-validators; docs docs/ART-REPO-PLAN.md, docs/FINISH.md |
 | `runcreation.mjs` | runcreation — WHO WROTE THIS NUMBER, AND WHAT DID THEY OVERWRITE? | tools onevocab, plantsites-baseline.json, saveroundtrip; other src/engine/save.js, src/model/healLedger.js |
 | `runsim-selftest-policy.mjs` | One budget owner for the simulator and its outer test-suite wrapper. | tests run-node, runsim-selftest-completion; tools runsim |
@@ -229,28 +222,22 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `screen-census.mjs` | screen-census — every player-facing screen in the tree, and what | tests run-node; tools refusal-audit |
 | `screenreach.mjs` | (no header comment) | wf ci; tests combat-frame-reach, combat-target-layers, screenreach-overlap-fixture +1; tools actionreach, flaskbox, mapreach +4; docs CHANGELOG.md, DEVELOPER.md, SPEC.md +2; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +2 |
 | `screenshot.mjs` | screenshot — capture real screenshots of the game into docs/preview/. | wf ci; tests shot-match, shot-ready, write-atomic; tools armoury-picked-up, browser, lib/shot-match +4; docs DEVELOPER.md, SPEC.md, docs/ART-REPO-PLAN.md +4; other src/main.js, workbench/core/jobs.mjs +5 |
-| `scroll-cue-bleed.mjs` | scroll-cue-bleed — issue #29: painted bleed and visible scroll cues. | tools combat-action-row, plantsites-baseline.json |
 | `seedrefuses.mjs` | seedrefuses — the seed field keeps the promise printed on it. | tests engine.test.js; other src/ui/components/mapboard.js |
 | `selected-weapon-profile-export.mjs` | (no header comment) | docs CREDITS.md, docs/design/update-stances/delivery-status.md; other docs/design/update-stances/production-matrix.json |
 | `serve.mjs` | serve — a zero-dependency static file server for local play. | wf ci, dev-preview +4; tests art-source, battlefield-layout.browser, final-wave-ui.browser +9; tools about-changelog, actends, actionreach +162; docs DEVELOPER.md, SPEC.md, dist/README.md +13; other docs/architecture-handoff/pre-existing-changes.txt, docs/preview/display-appearance-0.7.1.1163/capture.mjs +8 |
-| `settings-defaults.mjs` | settings-defaults — promote a settings profile to the build's defaults. | docs docs/SETTINGS-REVAMP.md; other src/content/settingsDefaults.js, src/main.js +1 |
 | `settingsreach.mjs` | settingsreach — can a tired human find the settings section they | tools artifact-provenance; other src/ui/screens/settings.js |
 | `sfx-filename-convention.mjs` | Focused door for #47: SFX files bind by assets/sfx/<id>.ogg without a | tools art-source; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `sfx-gain-probe.mjs` | sfx-gain-probe — headless gain-target inspection for the SFX | tools sfx-filename-convention, sfx-loudness, webaudio-stub |
-| `sfx-loudness.mjs` | sfx-loudness — deterministic A-weighted loudness of every SFX | tools holdbeat; docs SPEC.md; other src/content/sfx.js |
 | `short-landscape-support.mjs` | short-landscape-support — #27's short-wide combat composition. | tools plantsites-baseline.json, uprightgate; other src/content/balance.js |
 | `shotReady.mjs` | shotReady — "is every combatant's artwork on screen yet?", asked | tests shot-ready; tools screenshot; docs docs/FINISH.md; other docs/preview/display-appearance-0.7.1.1163/capture.mjs |
 | `shotguard-probe.mjs` | shotguard-probe — prove, in a real browser, that a ?shot= boot cannot | wf ci; other src/main.js |
-| `sigil-medallion.mjs` | The chosen sigil is drawn on the figure, on every style that draws a figure. | other src/ui/assets.js |
 | `simbot.mjs` | simbot — what the simulator bots may play, asked of the engine. | tests ability-riders, base-card-pack, card-cost-fastpath +11; tools balance, combat-expansion-smoke +4; docs DEVELOPER.md |
 | `simrun.mjs` | (no header comment) | tests simbot-decisions, simrun-loop; tools measure-classes, runsim; docs DEVELOPER.md, SPEC.md, docs/FINISH.md +1 |
 | `size-budget.mjs` | tools/size-budget.mjs — measured byte counts of the build against budgets, so a size PR can show before/after numbers. | tests perf-tools |
 | `slot-load-door.mjs` | The in-run Load door, driven in the real page (SPEC §3.12, §9 M2). | wf ci; tests slot-load-focus; tools plantsites-baseline.json; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
-| `sound-opening.mjs` | Browser regression (review of #1472): a FRESH fight sounds its opening draw | docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `source-display-art.mjs` | Source-only measurement precondition. These are the same data owners used by bundle.mjs. | tests art-authoring, art-source, fetch-art; tools click-impact-probe |
 | `sprites-blender.py` | tools/sprites-blender.py — procedural class sprites, rendered in Blender. | tools attic/class-material-leaks, concept-cutout, equipment-blender.py +1; docs CREDITS.md, asset-data/classes/LOOK-REFERENCE-ROGUE.md, asset-data/classes/SUCCESSOR-CONTRACT.md +1; other asset-data/classes/build_rogue.proposal.py, asset-data/classes/check-look-conformance.mjs, asset-data/sprites/class-sprites.manifest.json +1 |
 | `stance-combat-qa.mjs` | Actual-screen screenshot QA for the stance/accuracy HUD. All UI is rendered | wf ward-to-block-cards; docs docs/STANCE-COMBAT-QA.md |
-| `starseer-spell-reactions-qa.mjs` | Real standalone HTML input. Fixtures use canonical engine enemies and cards; | docs docs/preview/starseer-spell-reactions/README.md |
 | `starter-card-art-browser.mjs` | Run against serve after fetching the pinned art release. | docs docs/preview/starter-card-art/README.md |
 | `starting-equipment-qa.mjs` | (no header comment) | docs docs/COMPONENT-CATALOG.md, docs/preview/starting-equipment/README.md |
 | `startup-gate.mjs` | Issue #229 — the cold boot belongs to the startup gate until one complete | wf ci, dev-preview; tests doorplant-shard; tools plantsites-baseline.json, settingsreach; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/preview/issue-229-startup-gate-build-1305/README.md |
@@ -297,9 +284,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (126 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (139 files)
 
-These 126 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 139 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -415,10 +402,23 @@ These 126 tools were moved to `tools/attic/`, not deleted: no tracked file outsi
 | `profile-surface-drive.mjs` | profile-surface-drive — Rune, 2026-08-07 (#67). | tools plantsites-baseline.json |
 | `quest-choice-contract.mjs` | Issue #257: previous event choices can unlock or exclude later quest steps. | docs SPEC.md, docs/framework-migration-checklist.md; other src/model/validate.js |
 | `quicknav-reach.mjs` | quicknav-reach — the shipped quick menu, checked in a browser. | tools plantsites-baseline.json |
+| `readiness-poses-ship.mjs` | Normalize authored sprite sheets to the existing 640px canvas / y=600 floor. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/readinessPoseArt.js |
+| `rear-player-qa.mjs` | (no header comment) | docs docs/ai/session-continuations/2026-10-08/rear-sprites-and-layering.md |
+| `reaver-attack-animation.mjs` | Standing validation for the owner-approved painted Reaver attack. The | docs docs/ART-REPO-PLAN.md |
 | `reaver-attack-playtest.mjs` | Real-browser smoke for the painted Reaver sequence: play an actual Strike, |
+| `rebind-capture.mjs` | Focused browser acceptance for QA remediation #5 and #18: capture ownership | tools plantsites-baseline.json |
+| `refusal-audit.mjs` | refusal-audit — every control that refuses must say why. | other src/ui/components/refusal.js |
+| `restore-settings-drive.mjs` | restore-settings-drive — Rune, 2026-08-07 (#68 D22). | tools plantsites-baseline.json |
 | `reward-new-badge-qa.mjs` | Browser gate for the reward-card status stack: NEW sits above the card and |
+| `reward-victory-qa.mjs` | Production reward renderers with a deterministic mixed offer and paid XP fixture. | docs docs/qa/reward-victory-2026-10-23/README.md |
+| `scroll-cue-bleed.mjs` | scroll-cue-bleed — issue #29: painted bleed and visible scroll cues. | tools combat-action-row, plantsites-baseline.json |
+| `settings-defaults.mjs` | settings-defaults — promote a settings profile to the build's defaults. | docs docs/SETTINGS-REVAMP.md; other src/content/settingsDefaults.js, src/main.js +1 |
 | `sfx-authority-contract.mjs` | Issue #67: played ids and authored SFX rows are one two-way authority. |
+| `sfx-loudness.mjs` | sfx-loudness — deterministic A-weighted loudness of every SFX | tools holdbeat; docs SPEC.md; other src/content/sfx.js |
+| `sigil-medallion.mjs` | The chosen sigil is drawn on the figure, on every style that draws a figure. | other src/ui/assets.js |
 | `skill-book-shop-browser.mjs` | Real renderer, real purchase plan/commit, disposable visit (no user saves). |
+| `sound-opening.mjs` | Browser regression (review of #1472): a FRESH fight sounds its opening draw | docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
+| `starseer-spell-reactions-qa.mjs` | Real standalone HTML input. Fixtures use canonical engine enemies and cards; | docs docs/preview/starseer-spell-reactions/README.md |
 | `starting-abilities-qa.mjs` | (no header comment) |
 | `sword-shield-animation-browser.mjs` | (no header comment) |
 | `textsize-baseline.mjs` | textsize-baseline — #53's browser witness. |

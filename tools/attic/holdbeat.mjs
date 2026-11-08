@@ -47,7 +47,7 @@
 //   5. THE FIRST HOLD OF A FRESH PAGE, REPORTED not asserted. See below.
 //   6. HAPTICS, REPORTED not asserted. See below.
 //   7. THE COST AT HOLD #200. One whole confirmation, measured against one
-//      `cardPlay`, on the shared analytic meter (tools/sfx-loudness.mjs — the
+//      `cardPlay`, on the shared analytic meter (tools/attic/sfx-loudness.mjs — the
 //      same instrument, imported, not a second copy).
 //
 // TWO THINGS THIS TOOL REPORTS AND REFUSES TO ASSERT, each for its own reason:
@@ -100,7 +100,7 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from '../serve.mjs';
 import { printArtifactProvenance } from '../artifact-provenance.mjs';
-import { recipeLoudness } from '../sfx-loudness.mjs';
+import { recipeLoudness } from './sfx-loudness.mjs';
 import { SFX_RECIPES } from '../../src/content/sfx.js';
 import { balance } from '../../src/content/balance.js';
 
@@ -500,7 +500,7 @@ async function main() {
     const total = 10 * Math.log10(MARKS.length * tickE + comE);
     const card = one('cardPlay').dbA;
     ok(`a whole confirmation is quieter than one card play`, total < card,
-      `${MARKS.length}x holdTick + holdCommit = ${total.toFixed(1)} dBA vs cardPlay ${card.toFixed(1)} dBA (analytic, tools/sfx-loudness.mjs)`);
+      `${MARKS.length}x holdTick + holdCommit = ${total.toFixed(1)} dBA vs cardPlay ${card.toFixed(1)} dBA (analytic, tools/attic/sfx-loudness.mjs)`);
     ok(`the tick is the quietest row in the table`,
       Object.keys(SFX_RECIPES).every((id) => id === 'holdTick' || one(id).dbA >= one('holdTick').dbA),
       `holdTick ${one('holdTick').dbA.toFixed(1)} dBA, next quietest ${

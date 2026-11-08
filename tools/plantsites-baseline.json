@@ -27,11 +27,6 @@
       "id": "d6870f4a9cfa5e42"
     },
     {
-      "tool": "tools/rebind-capture.mjs",
-      "target": "styles/ui.css",
-      "id": "fecde7a543a0e80c"
-    },
-    {
       "tool": "tools/title-new-slot.mjs",
       "target": "src/ui/models/SaveSlotSelectionModel.js",
       "id": "d905e8929851cbd2"
@@ -132,14 +127,6 @@
       "count": 2,
       "digest": "ebe437dc45687dfd"
     },
-    "tools/rebind-capture.mjs": {
-      "count": 8,
-      "digest": "5fa9e8b17502dd06"
-    },
-    "tools/restore-settings-drive.mjs": {
-      "count": 1,
-      "digest": "9c9183a3f5779e9d"
-    },
     "tools/runcreation.mjs": {
       "count": 5,
       "digest": "3c4b36e60ac18c68"
@@ -151,10 +138,6 @@
     "tools/screenreach.mjs": {
       "count": 10,
       "digest": "c47a88f1fe5b5421"
-    },
-    "tools/scroll-cue-bleed.mjs": {
-      "count": 2,
-      "digest": "024e3beb3c87065c"
     },
     "tools/short-landscape-support.mjs": {
       "count": 2,

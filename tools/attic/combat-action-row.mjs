@@ -143,7 +143,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     file: 'AshenSpire.html',
     // The standalone is an HTML document: authored CSS must enter through a
     // style element, or it is inert text after </html> and the plant is
-    // unarmed (the same rule tools/scroll-cue-bleed.mjs applies).
+    // unarmed (the same rule tools/attic/scroll-cue-bleed.mjs applies).
     ...(plant.append != null ? { append: `<style>${plant.append}</style>` } : {}),
   }));
   code = await doorSelftest({
