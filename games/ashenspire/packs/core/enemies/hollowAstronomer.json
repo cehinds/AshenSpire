@@ -115,7 +115,7 @@
     "rangeRoutePolicy": "advance",
     "weaknesses": [
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "mana",
         "amount": 2
       }

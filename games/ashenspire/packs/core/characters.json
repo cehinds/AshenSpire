@@ -628,7 +628,7 @@
           "amount": 50
         },
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "damage"
         }
       ]
@@ -1530,7 +1530,7 @@
           "effect": "stacks"
         },
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "mana"
         }
       ]
@@ -2079,7 +2079,7 @@
           "effect": "damage"
         },
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "mana"
         },
         {
@@ -2639,7 +2639,7 @@
           "effect": "damage"
         },
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "damage"
         }
       ]
@@ -3148,7 +3148,7 @@
           "effect": "stacks"
         },
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "mana"
         }
       ]
@@ -3382,7 +3382,7 @@
       "rangeRoutePolicy": "advance",
       "weaknesses": [
         {
-          "to": "magic",
+          "to": "spell",
           "effect": "mana",
           "amount": 2
         }

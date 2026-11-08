@@ -176,7 +176,7 @@
         "effect": "damage"
       },
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "damage"
       }
     ]
@@ -586,7 +586,7 @@
         "effect": "stacks"
       },
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "mana"
       }
     ]
@@ -747,7 +747,7 @@
     ],
     "weaknesses": [
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "mana",
         "amount": 2
       }

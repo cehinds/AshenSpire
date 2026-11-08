@@ -3,7 +3,7 @@
 import { canonicalDamageType, componentPartsOf, magicShareOf, schoolOf, splitDamageTypesOf } from '../model/combatRatings.js';
 import { combatRules as damageTypeRules } from '../content/combatRules.js';
 import { weaknessAmount, WEAKNESS_ELEMENTS, WEAKNESS_PHYSICAL, WEAKNESS_STATUS_EFFECTS } from '../model/enemyWeaknessRules.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreUnifiedDamage } from '../model/fixCoreMechanics.js';
 import { proposalContext } from './proposalStatusRuntime.js';
 import { proposalRuleEnabled } from '../model/proposalStatusRules.js';
 
@@ -43,23 +43,28 @@ function imbuedElements(ctx, source, carrier) {
 
 /**
  * hitWeaknessTriggers(ctx, source, carrier, profile?, share?) -> the triggers a hit carries: its physical type(s)
- * (the wielded weapon's, via the carrier's resolved profile), `magic` when any of it is magic, and each element
+ * (the wielded weapon's, via the carrier's resolved profile), `magic` when any of it is magic (`spell` for a spell-camp hit under
+ * damage.unified), and each element
  * (its school or damage type, its damage components, an element an attacker status adds to weapon attacks).
  */
 export function hitWeaknessTriggers(ctx, source, carrier = {}, profile = carrier.combatProfile || {}, share = magicShareOf(profile)) {
   const triggers = new Set();
+  // Owner, 2026-11-07 (SPEC 5.3): under damage.unified the `magic` trigger is `spell` (a spell-camp card or move and nothing else), a spell hit
+  // adds no default physical type, and an imbued weapon hit triggers its element, never spell. A fight saved before the flag keeps `magic`.
+  const unified = fixCoreUnifiedDamage(ctx), spell = unified && profile.camp === 'spell';
   const types = [profile.damageType, carrier.damageType, profile.physicalDamageType, carrier.physicalDamageType, ...(profile.damageComponents || []).map(row => row?.type)];
   for (const type of types) add(triggers, type);
   const parts = componentPartsOf(profile);
   // A hit with a physical part and no stated type is the wielded weapon's blow, else bare-handed Blunt (splitDamageTypesOf).
-  if (share < 1 && ![...triggers].some(t => WEAKNESS_PHYSICAL.includes(t))) add(triggers, splitDamageTypesOf(profile).physical);
-  if (share > 0) {
-    triggers.add('magic');
+  if (share < 1 && !spell && ![...triggers].some(t => WEAKNESS_PHYSICAL.includes(t))) add(triggers, splitDamageTypesOf(profile).physical);
+  if (share > 0 || spell) {
+    if (!unified) { triggers.add('magic'); triggers.add('spell'); } // `spell` is the new name of the old `magic` row
+    else if (spell) triggers.add('spell');
     const school = damageTypeRules.schools?.[schoolOf(profile)];
     add(triggers, school?.magicType || schoolOf(profile));
     if (!parts && ![...triggers].some(t => WEAKNESS_ELEMENTS.includes(t))) add(triggers, splitDamageTypesOf(profile).magic);
   }
-  for (const element of imbuedElements(ctx, source, carrier)) { add(triggers, element); triggers.add('magic'); }
+  for (const element of imbuedElements(ctx, source, carrier)) { add(triggers, element); if (!unified) { triggers.add('magic'); triggers.add('spell'); } }
   return [...triggers];
 }
 

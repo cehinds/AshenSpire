@@ -248,7 +248,7 @@
         "amount": 50
       },
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "damage"
       }
     ]

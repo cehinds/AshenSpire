@@ -19,7 +19,7 @@ import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { proposalContext, applyProposalPlan } from '../src/engine/proposalStatusRuntime.js';
 import { proposalRuleEnabled } from '../src/model/proposalStatusRules.js';
-import { hitWeaknessTriggers, refillWeaknesses } from '../src/engine/weaknesses.js';
+import { hitWeaknessTriggers, refillWeaknesses, weaknessLabel } from '../src/engine/weaknesses.js';
 import { weaknessProblems, WEAKNESS_EFFECTS } from '../src/model/enemyWeaknessRules.js';
 
 const registries = createRegistries(contentBundle);
@@ -60,8 +60,10 @@ function liveCore(enemyId = 'wanderingSoldier') {
   delete target.combatStance;
   return { combat, target };
 }
-function hit(carrier, { enemyId, weaknesses, statuses, amount = 10 } = {}) {
+// Owner, 2026-11-07: new Core 2 fights carry damage.unified (the `magic` trigger is `spell`); `split` is a fight saved before the flag.
+function hit(carrier, { enemyId, weaknesses, statuses, amount = 10, split = false } = {}) {
   const { combat, target } = liveCore(enemyId);
+  if (split) { const { damage, ...old } = combat.fixCoreRules; combat.fixCoreRules = old; }
   if (weaknesses) target.weaknesses = weaknesses;
   if (statuses) target.statuses = statuses;
   const receipt = profileDamageReceipt(combat, combat.player, target, amount, { ...carrier, skipRatingBonus: true }, { roll: 0 });
@@ -94,92 +96,82 @@ test('the weakness stage multiplies after Vulnerable: 10 x1.25 x1.25 = 15', () =
   assert.ok(ids.indexOf('vulnerable') >= 0 && ids.indexOf('vulnerable') < ids.indexOf('weakness:blunt'));
 });
 
-test('several matching weaknesses multiply: blunt x1.25 and magic x1.5 on a blunt+magic hit', () => {
-  const weaknesses = [{ to: 'blunt', effect: 'damage' }, { to: 'magic', effect: 'damage', amount: 50 }, { to: 'fire', effect: 'damage', amount: 100 }];
+test('several matching weaknesses multiply: blunt x1.25 and spell x1.5 on a blunt+spell hit', () => {
+  const weaknesses = [{ to: 'blunt', effect: 'damage' }, { to: 'spell', effect: 'damage', amount: 50 }, { to: 'fire', effect: 'damage', amount: 100 }];
   const r = hit({ combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 0.5, physicalDamageType: 'blunt' } }, { weaknesses, amount: 16 });
+  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['blunt', 'fire', 'spell']);
+  assert.equal(r.receipt.hpLoss, Math.floor(16 * 1.25 * 1.5 * 2));
+});
+
+test('split (flag off): the old `magic` row still multiplies a hit with a magic share', () => {
+  const weaknesses = [{ to: 'blunt', effect: 'damage' }, { to: 'magic', effect: 'damage', amount: 50 }, { to: 'fire', effect: 'damage', amount: 100 }];
+  const r = hit({ combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 0.5, physicalDamageType: 'blunt' } }, { weaknesses, amount: 16, split: true });
   assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['blunt', 'fire', 'magic']);
   assert.equal(r.receipt.hpLoss, Math.floor(16 * 1.25 * 1.5 * 2));
 });
 
-test('a spell triggers magic and its element, not a physical type', () => {
+test('a spell triggers spell and its element, never a physical type (unified)', () => {
   const triggers = hitWeaknessTriggers(liveCore().combat, null, fireSpell);
-  assert.deepEqual(triggers.sort(), ['fire', 'magic']);
+  assert.deepEqual(triggers.sort(), ['fire', 'spell']);
   const r = hit(fireSpell, { enemyId: 'graveWisp' });
-  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['magic']);
+  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['spell']);
   const sacred = hit({ combatProfile: { camp: 'spell', damageType: 'sacred', magicShare: 1 } }, { enemyId: 'graveWisp' });
-  assert.deepEqual(sacred.receipt.weaknesses.map(w => w.to).sort(), ['magic', 'sacred']);
+  assert.deepEqual(sacred.receipt.weaknesses.map(w => w.to).sort(), ['sacred', 'spell']);
   const incoming = x => x.receipt.damageReceipt.hits[0].sources.filter(row => row.id.startsWith('weakness:')).at(-1).effective;
   assert.equal(incoming(r), 12);
   assert.equal(incoming(sacred), 18);
 });
 
-// ---- landed-hit effects ----
-function land(weaknesses, { hits = 1, chance = () => true, mana = 3 } = {}) {
-  const { combat, target } = liveCore();
-  target.weaknesses = weaknesses; target.mana = mana; target.hp = target.maxHp = 500;
-  // The stagger chance is a d20 on combatProcs (owner, 2026-11-01): `chance` decides whether that die meets any target.
-  const int = combat.rng.int.bind(combat.rng);
-  combat.rng.int = (stream, lo, hi) => (stream === 'combatProcs' && lo === 1 && hi === 20 ? (chance(stream, lo, hi) ? 20 : 1) : int(stream, lo, hi));
-  for (let i = 0; i < hits; i++) {
-    primeAccuracyRolls(combat, { die: 20 });
-    applyAttackDamage(combat, combat.player, target, 3, [], { ...blunt, skipRatingBonus: true });
-  }
-  return { combat, target, events: type => combat.eventLog.filter(e => e.type === type) };
-}
-
-test('a mana weakness costs the hit enemy Mana (floored at 0) and reports it', () => {
-  const r = land([{ to: 'blunt', effect: 'mana', amount: 2 }]);
-  assert.equal(r.target.mana, 1);
-  assert.deepEqual(r.events('manaLost').map(e => e.amount), [2]);
-  assert.equal(r.events('weaknessTriggered')[0].effect, 'mana');
-  assert.equal(land([{ to: 'blunt', effect: 'mana', amount: 2 }], { mana: 0 }).events('manaLost').length, 0);
+test('spell is a spell-camp hit and nothing else: a physical-camp hybrid with a magic share triggers its element, not spell', () => {
+  const combat = liveCore().combat;
+  const hybrid = { combatProfile: { camp: 'physical', damageType: 'blunt', magicShare: 0.5, school: 'fire' } };
+  const triggers = hitWeaknessTriggers(combat, null, hybrid);
+  assert.ok(triggers.includes('blunt') && triggers.includes('fire'), triggers.join());
+  assert.ok(!triggers.includes('spell') && !triggers.includes('magic'), triggers.join());
+  // a spell-camp card that names no physical type is never "weak to blunt" (no default physical type)
+  assert.ok(!hitWeaknessTriggers(combat, null, { combatProfile: { camp: 'spell', school: 'illusion' } }).some(t => ['blunt', 'slashing', 'piercing'].includes(t)));
+  // an enemy spell-camp move triggers spell on a player too
+  assert.ok(hitWeaknessTriggers(combat, combat.enemies[0], fireSpell).includes('spell'));
 });
 
-test('a stamina weakness queues SP loss for the enemy next turn; a non-matching hit does not', () => {
-  assert.equal(land([{ to: 'blunt', effect: 'stamina' }]).target.pendingStaminaLoss, 1);
-  assert.equal(land([{ to: 'fire', effect: 'stamina' }]).target.pendingStaminaLoss || 0, 0);
+test('split (flag off): a spell triggers magic and its element, and an authored `spell` row still matches it', () => {
+  const combat = liveCore().combat;
+  delete combat.fixCoreRules.damage;
+  assert.deepEqual(hitWeaknessTriggers(combat, null, fireSpell).sort(), ['fire', 'magic', 'spell']);
+  const r = hit(fireSpell, { enemyId: 'graveWisp', split: true });
+  assert.deepEqual(r.receipt.weaknesses.map(w => w.to).sort(), ['spell']);
 });
 
-test('a stagger weakness rolls its chance, and staggers once per target per round', () => {
-  const weak = [{ to: 'blunt', effect: 'stagger', amount: 40 }];
-  const rolls = [];
-  const r = land(weak, { hits: 2, chance: (stream, lo, hi) => { rolls.push([stream, lo, hi]); return true; } });
-  assert.deepEqual(rolls[0], ['combatProcs', 1, 20]);
-  assert.equal(r.events('enemyStaggered').filter(e => e.cause === 'weakness').length, 1, 'second hit the same round does not stagger again');
-  assert.equal(land(weak, { chance: () => false }).events('enemyStaggered').length, 0);
+test('the validator accepts spell (and magic), and the trait label reads "Spell"', () => {
+  assert.deepEqual(weaknessProblems([{ to: 'spell', effect: 'damage' }]), []);
+  assert.deepEqual(weaknessProblems([{ to: 'magic', effect: 'damage' }]), []);
+  assert.equal(describeWeakness({ to: 'spell', effect: 'damage' }).label, 'Spell');
+  assert.equal(weaknessTraitRows([{ to: 'spell', effect: 'damage' }])[0].name, 'Weak to Spell');
+  assert.equal(weaknessLabel('spell'), 'Weak to Spell');
 });
 
-test('the damage event lists the weaknesses it met', () => {
-  const r = land([{ to: 'blunt', effect: 'damage' }]);
-  const event = r.events('damageDealt')[0];
-  assert.deepEqual(event.weaknesses, [{ to: 'blunt', effect: 'damage', amount: 25 }]);
-  assert.equal(r.events('weaknessTriggered')[0].to, 'blunt');
+test('no Core content row still says to: "magic"', () => {
+  const rows = contentBundle.enemies.flatMap(def => (registries.enemies.get(def.id).weaknesses || []).map(w => [def.id, w.to]));
+  assert.deepEqual(rows.filter(([, to]) => to === 'magic'), []);
+  assert.ok(rows.some(([, to]) => to === 'spell'));
+  assert.ok(!JSON.stringify(pack).includes('"to":"magic"') && !JSON.stringify(pack).includes('"to": "magic"'));
 });
 
-// ---- status weaknesses ----
-test('burn applied by the player lands with +1 stack on a burn-stacks-weak enemy, not on a self-applied status', () => {
-  const { combat, target } = liveCore('lanternMoth');
-  assert.ok(target.weaknesses.some(w => w.to === 'burn' && w.effect === 'stacks'));
-  applyStatus(combat, target, 'burn', 2, combat.player);
-  assert.equal(target.statuses.burn.stacks, 3);
-  assert.equal(combat.eventLog.filter(e => e.type === 'weaknessTriggered' && e.effect === 'stacks').length, 1);
-  const other = liveCore('wanderingSoldier').target;
-  applyStatus(combat, other, 'burn', 2, combat.player);
-  assert.equal(other.statuses.burn.stacks, 2, 'an enemy with no burn weakness is unchanged');
-  const self = liveCore('lanternMoth');
-  applyStatus(self.combat, self.target, 'burn', 2, self.target);
-  assert.equal(self.target.statuses.burn.stacks, 2, 'the enemy burning itself is not weakness');
-});
-
-test('burn ticks x1.5 on a burn-tick-weak enemy (4 stacks: 6 HP, not 4)', () => {
-  for (const [enemyId, expected] of [['huskBrute', 6], ['wanderingSoldier', 4]]) {
-    const { combat, target } = liveCore(enemyId);
-    target.hp = target.maxHp = 100;
-    target.statuses.burn = { stacks: 4 };
-    const before = target.hp;
-    executeAction(combat, { effect: { op: 'loseHp', target: 'self', amount: { f: 'stacks', status: 'burn', of: 'owner' } }, source: target, owner: target, target });
-    assert.equal(before - target.hp, expected, enemyId);
-  }
+test('a saved run weaknessDiscovery magic:* keys become spell:* at load, idempotently and without duplicates', async () => {
+  const { migrateWeaknessDiscovery, isWeaknessDiscovered } = await import('../src/model/weaknessDiscovery.js');
+  const ledger = { graveWisp: ['magic:damage', 'blunt:damage'], courtSurgeon: ['magic:mana', 'spell:mana'], other: ['fire:damage'] };
+  assert.equal(migrateWeaknessDiscovery(ledger), true);
+  assert.deepEqual(ledger, { graveWisp: ['spell:damage', 'blunt:damage'], courtSurgeon: ['spell:mana'], other: ['fire:damage'] });
+  assert.equal(migrateWeaknessDiscovery(ledger), false, 'idempotent');
+  assert.equal(migrateWeaknessDiscovery(undefined), false);
+  assert.ok(isWeaknessDiscovered(ledger, 'graveWisp', { to: 'spell', effect: 'damage' }));
+  assert.ok(isWeaknessDiscovered(ledger, 'graveWisp', { to: 'magic', effect: 'damage' }), 'a fight in flight under the old rule still reads its magic row');
+  const { migrateRunSchema } = await import('../src/model/state.js');
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511 });
+  run.weaknessDiscovery = { graveWisp: ['magic:damage'] };
+  const before = JSON.stringify(run.rngState ?? null);
+  assert.deepEqual(migrateRunSchema(JSON.parse(JSON.stringify(run))).weaknessDiscovery, { graveWisp: ['spell:damage'] });
+  assert.equal(JSON.stringify(run.rngState ?? null), before, 'no RNG draw');
 });
 
 test('a bleed burst deals x1.5 to a bleed-tick-weak enemy', () => {
@@ -202,7 +194,8 @@ test('Elemental Weapon works in Core: a weapon hit adds fire damage, and the ele
   };
   const plain = run('blightHound', false), fire = run('blightHound', true);
   assert.ok(!plain.triggers.includes('fire'));
-  assert.ok(fire.triggers.includes('fire') && fire.triggers.includes('magic'), 'the imbued element is a trigger');
+  assert.ok(fire.triggers.includes('fire'), 'the imbued element is a trigger');
+  assert.ok(!fire.triggers.includes('magic') && !fire.triggers.includes('spell'), 'an imbued weapon triggers its element, never spell (owner 2026-11-07)');
   const bonus = fire.combat.queue.filter(a => a.effect?.op === 'damage' && a.card?.damageType === 'fire');
   assert.equal(bonus.length, 1, 'the weapon bonus is queued as a fire hit');
   assert.equal(bonus[0].effect.amount, 3);

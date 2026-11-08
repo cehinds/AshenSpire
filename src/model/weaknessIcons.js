@@ -5,10 +5,10 @@
 const POISON = ['poi', 'son'].join(''), VENOM = ['ven', 'om'].join('');
 export const WEAKNESS_ICON = Object.freeze({
   blunt: 'blunt', slashing: 'slashing', piercing: 'piercing',
-  magic: 'power', fire: 'fire', frost: 'frost', lightning: 'lightning',
+  magic: 'power', spell: 'power', fire: 'fire', frost: 'frost', lightning: 'lightning',
   sacred: 'divine', decay: 'decay', arcane: 'force', earth: 'earth',
   psychic: 'illusion', [POISON]: POISON,
-  burn: 'fire', bleed: 'bleed', paralysis: 'paralysis', [VENOM]: POISON, vulnerable: 'cracked',
+  burn: 'fire', chilled: 'frost', bleed: 'bleed', paralysis: 'paralysis', [VENOM]: POISON, vulnerable: 'cracked',
 });
 /** The tag-symbol id (`effect:<name>`) a trigger wears, or null for a trigger with no mark. */
 export const weaknessIconId = to => Object.hasOwn(WEAKNESS_ICON, to) ? `effect:${WEAKNESS_ICON[to]}` : null;

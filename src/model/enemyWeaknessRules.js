@@ -1,6 +1,6 @@
 // Enemy weaknesses (owner ask, 2026-10-31; SPEC section 5.3). Pure data rules, no engine state.
 // An authored `weaknesses` array on every enemy: [{ to, effect, amount? }].
-//   to     what the hit (or status) must be: a physical type, `magic`, an element, or a status.
+//   to     what the hit (or status) must be: a physical type, `magic` (`spell` under damage.unified), an element, or a status.
 //   effect damage  the hit deals (1 + amount/100) times as much (default 25)
 //          stacks  +amount stacks when that status is applied to the enemy (default 1)
 //          tick    that status's own tick or burst deals (1 + amount/100) times as much (default 50)
@@ -13,14 +13,15 @@ const word = (...parts) => parts.join('');
 export const WEAKNESS_MANA = word('ma', 'na'), WEAKNESS_STAMINA = word('stam', 'ina');
 export const WEAKNESS_PHYSICAL = Object.freeze(['blunt', 'slashing', 'piercing']);
 export const WEAKNESS_ELEMENTS = Object.freeze(['fire', 'frost', 'lightning', 'sacred', 'decay', 'arcane', 'earth', word('psy', 'chic'), word('poi', 'son')]);
-export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', word('ven', 'om'), 'vulnerable']);
+export const WEAKNESS_STATUSES = Object.freeze(['burn', 'bleed', 'paralysis', 'frost', 'chilled', word('ven', 'om'), 'vulnerable']);
 // Statuses that deal damage of their own, so a `tick` weakness has something to scale.
 export const WEAKNESS_TICK_STATUSES = Object.freeze(['burn', 'bleed', 'frost', word('ven', 'om')]);
 export const WEAKNESS_HIT_EFFECTS = Object.freeze(['damage', WEAKNESS_MANA, WEAKNESS_STAMINA, 'stagger']);
 export const WEAKNESS_STATUS_EFFECTS = Object.freeze(['stacks', 'tick']);
 export const WEAKNESS_EFFECTS = Object.freeze([...WEAKNESS_HIT_EFFECTS, ...WEAKNESS_STATUS_EFFECTS]);
 export const WEAKNESS_DEFAULT_AMOUNT = Object.freeze({ damage: 25, stacks: 1, tick: 50, mana: 1, stamina: 1, stagger: 25 });
-export const WEAKNESS_HIT_TRIGGERS = Object.freeze([...WEAKNESS_PHYSICAL, 'magic', ...WEAKNESS_ELEMENTS]);
+// `spell` (owner, 2026-11-07): a hit from a spell-camp card or move under damage.unified; `magic` stays for fights and content from before it.
+export const WEAKNESS_HIT_TRIGGERS = Object.freeze([...WEAKNESS_PHYSICAL, 'magic', 'spell', ...WEAKNESS_ELEMENTS]);
 
 /** The amount a weakness carries: its authored amount, else the effect's default. */
 export function weaknessAmount(weakness) {
@@ -40,7 +41,7 @@ export function weaknessProblems(weaknesses) {
     if (!WEAKNESS_EFFECTS.includes(row.effect)) return problems.push(`${at}.effect '${row.effect}' is unknown`);
     const onStatus = WEAKNESS_STATUS_EFFECTS.includes(row.effect);
     if (onStatus && !WEAKNESS_STATUSES.includes(row.to)) problems.push(`${at}.to '${row.to}' must be a status for effect '${row.effect}'`);
-    else if (!onStatus && !WEAKNESS_HIT_TRIGGERS.includes(row.to)) problems.push(`${at}.to '${row.to}' must be a damage type, element or 'magic' for effect '${row.effect}'`);
+    else if (!onStatus && !WEAKNESS_HIT_TRIGGERS.includes(row.to)) problems.push(`${at}.to '${row.to}' must be a damage type, element, 'spell' or 'magic' for effect '${row.effect}'`);
     if (row.effect === 'tick' && WEAKNESS_STATUSES.includes(row.to) && !WEAKNESS_TICK_STATUSES.includes(row.to)) problems.push(`${at}: '${row.to}' deals no damage of its own to tick`);
     if (row.amount !== undefined && (!Number.isFinite(row.amount) || row.amount <= 0)) problems.push(`${at}.amount must be a positive number`);
     if (row.effect === 'stagger' && row.amount > 100) problems.push(`${at}.amount is a percent chance, at most 100`);
@@ -55,7 +56,7 @@ export function weaknessProblems(weaknesses) {
 const title = word => word.charAt(0).toUpperCase() + word.slice(1);
 /** One weakness in words for the inspector and the bestiary: { label, text }. */
 export function describeWeakness(weakness) {
-  const amount = weaknessAmount(weakness), label = weakness.to === 'magic' ? 'Magic' : title(weakness.to);
+  const amount = weaknessAmount(weakness), label = weakness.to === 'magic' ? 'Magic' : weakness.to === 'spell' ? 'Spell' : title(weakness.to);
   const text = {
     damage: `+${amount}% damage`,
     stacks: `+${amount} stack${amount === 1 ? '' : 's'} applied`,

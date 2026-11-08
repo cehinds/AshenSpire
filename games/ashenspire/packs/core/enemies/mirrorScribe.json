@@ -84,7 +84,7 @@
         "effect": "damage"
       },
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "mana"
       },
       {

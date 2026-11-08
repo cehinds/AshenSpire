@@ -18,7 +18,26 @@ export function weaknessDiscoveryProblems(ledger) {
   return problems;
 }
 
-export const isWeaknessDiscovered = (ledger, enemyId, row) => !!ledger && Object.hasOwn(ledger, enemyId) && ledger[enemyId].includes(weaknessKey(row));
+// Owner, 2026-11-07: the `magic` trigger is `spell` under damage.unified. A saved run's `magic:*` keys become `spell:*` at load (migrateWeaknessDiscovery);
+// a fight still in flight under the old rule keeps `magic` rows, so a key is read under either name.
+const ALIAS = { magic: 'spell', spell: 'magic' };
+const aliasKey = key => { const [to, effect] = String(key).split(':'); return ALIAS[to] ? `${ALIAS[to]}:${effect}` : key; };
+export const isWeaknessDiscovered = (ledger, enemyId, row) => !!ledger && Object.hasOwn(ledger, enemyId) && Array.isArray(ledger[enemyId])
+  && (ledger[enemyId].includes(weaknessKey(row)) || ledger[enemyId].includes(aliasKey(weaknessKey(row))));
+
+/** Rename every `magic:*` key of a loaded ledger to `spell:*`, in place: idempotent, no duplicates, no RNG. Returns true when it changed. */
+export function migrateWeaknessDiscovery(ledger) {
+  if (!ledger || typeof ledger !== 'object' || Array.isArray(ledger)) return false;
+  let changed = false;
+  for (const enemyId of Object.keys(ledger)) {
+    const keys = ledger[enemyId];
+    if (!Array.isArray(keys) || !keys.some(key => typeof key === 'string' && key.startsWith('magic:'))) continue;
+    const next = [];
+    for (const key of keys) { const k = typeof key === 'string' && key.startsWith('magic:') ? `spell:${key.slice(6)}` : key; if (!next.includes(k)) next.push(k); }
+    ledger[enemyId] = next; changed = true;
+  }
+  return changed;
+}
 
 /** The rows of `weaknesses` this enemy type has discovered: what a chip, the inspector and the bestiary may show. */
 export function discoveredWeaknesses(weaknesses, ledger, enemyId) {

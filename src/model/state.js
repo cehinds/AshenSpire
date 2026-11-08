@@ -47,7 +47,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { snapshotEnemyKnowledgeRules } from './enemyKnowledgeRules.js';
-import { weaknessDiscoveryProblems } from './weaknessDiscovery.js';
+import { weaknessDiscoveryProblems, migrateWeaknessDiscovery } from './weaknessDiscovery.js';
 import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
@@ -1850,6 +1850,7 @@ export function migrateRunSchema(run) {
     run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;
   }
+  migrateWeaknessDiscovery(run.weaknessDiscovery); // owner, 2026-11-07: magic:* -> spell:*, idempotent, no RNG
   return run;
 }
 

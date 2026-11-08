@@ -87,7 +87,7 @@
         "effect": "stacks"
       },
       {
-        "to": "magic",
+        "to": "spell",
         "effect": "mana"
       }
     ],
