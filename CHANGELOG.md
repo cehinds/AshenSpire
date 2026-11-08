@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Faster, steadier tests** ([#2711](https://github.com/cehinds/AshenSpire/pull/2711), `0.7.4.40`). The tests share one fake page instead of four copies, and two slow tests wait for what they check instead of sleeping, so they finish sooner; nothing you play changes.
 - **Two dead CI workflows removed** ([#2712](https://github.com/cehinds/AshenSpire/pull/2712), `0.7.4.40`). Two automated checks that could never run (their branches are gone) were deleted, and the three tools only they ran moved to the attic; nothing you play changes.
 - **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.
 - **Art manifests compiled from source** ([#2677](https://github.com/cehinds/AshenSpire/pull/2677), `0.7.4.40`). Outfit, defeated-pose, enemy-state and enemy-landmark art tables now build from the content sources like every other table; the game is 70 KB smaller and plays the same.

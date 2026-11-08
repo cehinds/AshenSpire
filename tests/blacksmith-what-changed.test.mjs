@@ -38,7 +38,7 @@ function smithRun(registries, { stones = 3, cinders = 2000, seed = 31 } = {}) {
 }
 const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
 
 const mount = (dom, run) => {

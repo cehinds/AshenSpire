@@ -8,7 +8,7 @@ import { floatNum, callout, clearCallouts, floaterLanesFit, setAnimSpeed } from 
 import { floaterLifeMs, floaterStaggerMs, setCombatPacing } from '../src/ui/animationPace.js';
 import { FLOATER_STACK } from '../src/ui/floaterStack.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs
 

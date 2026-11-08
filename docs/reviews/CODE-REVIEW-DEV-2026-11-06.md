@@ -368,7 +368,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `package.json`: `"type": "module"` and a `test:pr` script (M10)
 - [ ] `ci.yml`: one `prepare` composite; rename `sync-alternatives.yml`/`alternative-sync.yml` by direction (M10, Low)
 - [ ] `tests/run-node.mjs`: data table of gates, one fixture loader (M10)
-- [ ] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low)
+- [x] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low) — [#2711](https://github.com/cehinds/AshenSpire/pull/2711)
 - [ ] `src/ui/models/` → `models/`, `projections/`, `controllers/`; merge single-caller stubs; stop `CombatIntentProjectionModel` and `CombatRangeRankModel` mutating their input (M8)
 - [ ] CSS: split `kit.css` by section, fold tiny override files, one token mechanism, `style-lint --write-baseline` (M9)
 - [ ] `settings.js`: `ROWS` to a model, rows via kit builders, Undo label via strings (Low)

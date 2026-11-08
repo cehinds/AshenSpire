@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatReadoutLayer, floatNum, callout, clearCallouts, setAnimSpeed } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { floaterLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
