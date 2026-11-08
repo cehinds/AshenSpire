@@ -49,8 +49,8 @@ export function rankOf(rel) {
 // Every rank inversion that exists today, as 'importer -> target' (repo-relative, posix; target as
 // resolved). Each group names the review box that removes it. Delete an entry when it is fixed.
 const KNOWN_INVERSIONS = [
-  // H2: the root kernel imports the model; bindings.mjs back-edge removed by its own box, formulas later
-  'engine/runtime/bindings.mjs -> src/model/mechanicsKernel.js',
+  // H2: the root kernel imports the formula DSL from the model; relocating src/model/formulas.js is the remaining step
+  'engine/runtime/bindings.mjs -> src/model/formulas.js',
   'engine/runtime/evaluator.mjs -> src/model/formulas.js',
   // M6: content imports model helpers; the projections (combatExpansionCards, traitProjection, equipment) move into src/model, the rest move down
   'src/content/combatExpansionCards.js -> src/model/combatRanges.js',

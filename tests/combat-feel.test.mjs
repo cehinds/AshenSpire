@@ -14,7 +14,7 @@ import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
@@ -361,7 +361,7 @@ test('an ordinary enemy pose holds past its original settle deadline', (t) => {
 });
 
 test('a lite (phone) tier does not drop the shake; only the setting does', () => {
-  const main = src('src/main.js');
+  const main = src('src/main.js') + src('src/ui/displaySettings.js');
   assert.match(main, /toggle\('no-shake', settings\.screenShake === false\)/);
   assert.doesNotMatch(main, /toggle\('no-shake'[^)]*quality/);
 });

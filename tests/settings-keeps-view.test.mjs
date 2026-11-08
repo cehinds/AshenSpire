@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { captureView, restoreView } from '../src/ui/screens/settings.js';
 
 // A rebuild of the Settings pane drops the scroll offset and the focused

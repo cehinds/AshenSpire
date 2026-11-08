@@ -175,7 +175,7 @@ test('an independently eligible target keeps precedence within an accepted click
 
 test('Enter on a focused target HUD panel is left to the panel; the cursor card is not pressed', async () => {
   const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }, _window, listeners) => {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
     const previousStyle = globalThis.getComputedStyle;
@@ -210,7 +210,7 @@ test('Enter on a focused target HUD panel is left to the panel; the cursor card 
 });
 
 test('an inspection-door panel is one button and keeps its content as its name', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document }) => {
     const shell = document.createElement('section'); shell.className = 'target-hud-detail';
     shell.setAttribute('aria-label', 'Hound details');

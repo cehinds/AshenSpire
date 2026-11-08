@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { illustratedCardHtml, CARD_LAYERS } from '../src/ui/components/illustratedCard.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 const reg = createRegistries(contentBundle);
 
 test('every ability family presents each authored rank and its canonical identity', () => {

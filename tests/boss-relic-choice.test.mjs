@@ -16,7 +16,7 @@ import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs
 import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const REG = createRegistries(contentBundle);
 const BOSS_POOL = REG.relics.all().filter((r) => r.rarity === 'boss' && relicInRewardPool(r)).map((r) => r.id);
@@ -164,7 +164,7 @@ test('the run-state validator refuses duplicate or empty relicChoices', () => {
 });
 
 // ---- the reward screen: the chooser, the apply path and the checkpoint ----
-// Mounts the production reward screen on the kit stub DOM (tests/helpers/kit-dom.mjs),
+// Mounts the production reward screen on the kit stub DOM (tests/helpers/dom.mjs),
 // the fixture the other reward-screen tests use.
 function mountBossReward(dom, { relicChoices, run, checkpoint = pendingRewardCheckpoint({ relicChoices }, { source: 'boss', after: 'advanceAct' }) }) {
   // The card door's shape watcher reads document.documentElement.dataset; the
