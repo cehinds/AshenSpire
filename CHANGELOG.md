@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-08
+
+- **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
+
 ## 2026-11-07
 
 - **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
