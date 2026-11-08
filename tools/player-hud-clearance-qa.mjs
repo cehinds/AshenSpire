@@ -105,6 +105,7 @@ try {
       assert.ok(Math.abs(hpTrack.left-poiseTrack.left) < 1 && Math.abs(hpTrack.left-badgeRow.left) < 1, name+': HP, Poise and badges align');
       assert.ok(hpTrack.bottom <= poiseTrack.top && poiseTrack.bottom <= badgeRow.top, name+': HP, Poise and badges stack without overlap');
       assert.ok(geometry.hp.left >= hpTrack.right, name+': HP fraction sits to the right of its bar');
+      assert.ok(Math.abs(geometry.hp.left-hpTrack.right-3) < 1, name+': the HP value uses only the budgeted 3px gap');
       assert.ok(Math.abs(badgeRow.width-hpTrack.width) < 1, name+': badges stay within the fixed bar width');
       for (const badge of geometry.badges) {
         assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'ward' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);

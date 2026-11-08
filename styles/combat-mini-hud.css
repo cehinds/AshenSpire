@@ -51,7 +51,7 @@
 
 /* HP: the bar, then its number on the right. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-meter.combat-health-meter {
-  grid-column: 2; grid-row: 1; display: flex !important; align-items: center; flex: none !important; order: 0 !important;
+  grid-column: 2; grid-row: 1; display: flex !important; align-items: center; flex: none !important; order: 0 !important; gap: 0; /* The plate supplies the one budgeted bar-to-value gap. */
   width: 100% !important; min-width: 0 !important; height: var(--mh-bar-h); margin: 0 !important; zoom: 1;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter > .m-well { flex: 0 0 var(--mh-bar-w); width: var(--mh-bar-w) !important; order: 1; min-width: 0; }
