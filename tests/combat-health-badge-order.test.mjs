@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { combatHealthModel, visibleBadges } from '../src/ui/models/CombatHealthModel.js';
 import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Owner 2026-11-01: badge order is Block > Poise > Evade > Ward, Precision, Counter, Reflect (no stance badge, owner 2026-11-05), at most 3 slots, a 3rd-slot "+N" overflow.
 const all = { defense: 5, poise: 3, poiseMax: 8, evasion: 2, ward: 4, precision: 3, counterStacks: 2, reflectStacks: 1 };

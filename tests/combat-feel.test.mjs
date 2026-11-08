@@ -14,7 +14,7 @@ import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
