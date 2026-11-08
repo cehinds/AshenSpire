@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.30`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, architecture** ([#2698](https://github.com/cehinds/AshenSpire/pull/2698), `0.7.4.30`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: shorter game rules, combat** ([#2695](https://github.com/cehinds/AshenSpire/pull/2695), `0.7.4.30`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: shorter game rules, core combat** ([#2699](https://github.com/cehinds/AshenSpire/pull/2699), `0.7.4.30`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
