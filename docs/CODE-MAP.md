@@ -65,10 +65,10 @@ flowchart TD
 
 | I want to... | Go to | Then run |
 |---|---|---|
-| Change a **card** stat | [content/source/cards/](../content/source/cards), [basicCardProfiles.csv](../content/source/basicCardProfiles.csv) | `node tools/content-build.mjs` |
+| Change a **card** stat | Core basic cards: [core/cards.json](../games/ashenspire/packs/core/cards.json); base reward cards: [base-cards/cards.json](../games/ashenspire/packs/base-cards/cards.json). Shared cards: [content/source/cards/](../content/source/cards), [basicCardProfiles.csv](../content/source/basicCardProfiles.csv) | `node tools/jev.mjs regen` |
 | Change a **Core enemy** | [games/ashenspire/packs/core/enemies/](../games/ashenspire/packs/core/enemies) character sheets ([Editing enemies](../DEVELOPER.md#editing-enemies)) | `node tools/jev.mjs regen` (runs `enemy-sheets --write`, `derived-tables` and the content/profile builds) |
-| Change an **item / weapon** | [weapons.csv](../content/source/weapons.csv), [relics.json](../content/source/relics.json), [equipSlots.csv](../content/source/equipSlots.csv) | `node tools/content-build.mjs` |
-| Change **balance numbers** | [content/source/balance*.json](../content/source) | `node tools/content-build.mjs` |
+| Change an **item / weapon** | Core gear ratings and points: [core/gear.json](../games/ashenspire/packs/core/gear.json), [gear settings](../engine/modules/gear). Shared presentation and item data: [weapons.csv](../content/source/weapons.csv), [relics.json](../content/source/relics.json), [equipSlots.csv](../content/source/equipSlots.csv) | `node tools/jev.mjs regen` |
+| Change **balance numbers** | Shared tables: [content/source/balance*.json](../content/source). Core module settings: [Core bundle](../games/ashenspire/bundles/core/bundle.json) overrides [engine/modules/](../engine/modules) defaults | `node tools/jev.mjs regen` |
 | Change **combat rules** | [src/engine/combat.js](../src/engine/combat.js), [combatRules.js](../src/engine/combatRules.js), [src/content/combatRules.js](../src/content/combatRules.js) | `npm test` |
 | Change a **screen layout** | [src/ui/screens/](../src/ui/screens), [content/config/ui/screens/](../content/config/ui/screens), [styles/](../styles) | `node tools/config-build.mjs`, `npm run validate:ui` |
 | Change **HUD layout** | [content/hud-layout/](../content/hud-layout) ([guide](hud-layout-tokens.md)) | `node tools/hud-layout-css.mjs --write` |
