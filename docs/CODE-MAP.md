@@ -60,6 +60,9 @@ flowchart TD
 
 ## I want to... | Go to | Then run
 
+- **Using `npm run dev`?** You can skip every `node tools/...` build command below: on save it reruns `content-build`, `config-build`, `hud-layout-css`, `tokens-css` and `game-config build` for the file you changed, then reloads the page ([tools/serve.mjs](../tools/serve.mjs) `buildToolFor`).
+  - **Why:** the commands are only needed without the dev server, or before you commit.
+
 | I want to... | Go to | Then run |
 |---|---|---|
 | Change a **card** stat | [content/source/cards/](../content/source/cards), [basicCardProfiles.csv](../content/source/basicCardProfiles.csv) | `node tools/content-build.mjs` |
@@ -69,10 +72,11 @@ flowchart TD
 | Change **combat rules** | [src/engine/combat.js](../src/engine/combat.js), [combatRules.js](../src/engine/combatRules.js), [src/content/combatRules.js](../src/content/combatRules.js) | `npm test` |
 | Change a **screen layout** | [src/ui/screens/](../src/ui/screens), [content/config/ui/screens/](../content/config/ui/screens), [styles/](../styles) | `node tools/config-build.mjs`, `npm run validate:ui` |
 | Change **HUD layout** | [content/hud-layout/](../content/hud-layout) ([guide](hud-layout-tokens.md)) | `node tools/hud-layout-css.mjs --write` |
-| Change **colours / fonts** | [content/config/ui/tokens.json](../content/config/ui/tokens.json) | `npm run tokens:css` |
+| Change **font sizes, layers, motion** | [content/config/ui/tokens.json](../content/config/ui/tokens.json) | `npm run tokens:css` |
+| Change **theme colours** | [styles/base.css](../styles/base.css) `:root`, `body.hi-contrast`, `body.cb-safe` (moving to tokens.json) | `npm run lint:style` |
 | Add a **UI component** | [src/ui/components/](../src/ui/components), [content/config/ui/components/](../content/config/ui/components) | `npm run validate:ui`, `npm test` |
 | Change **text / copy** | [content/source/uiStrings.csv](../content/source/uiStrings.csv), [src/ui/strings.js](../src/ui/strings.js) | `node tools/content-build.mjs` |
-| Change a **game profile / module** | [games/ashenspire/game.json](../games/ashenspire/game.json), [engine/modules/](../engine/modules) | `node tools/game-config.mjs`, `npm run build:game` |
+| Change a **game profile / module** | [games/ashenspire/game.json](../games/ashenspire/game.json), [engine/modules/](../engine/modules) | `node tools/game-config.mjs build`, `npm run build:game` |
 | Change **saves** | [src/engine/save.js](../src/engine/save.js), [saveMeta.js](../src/engine/saveMeta.js) | `npm test` |
 | Change **map / world** | [games/ashenspire/maps/](../games/ashenspire/maps), [src/engine/mapgen.js](../src/engine/mapgen.js) | `npm run validate:maps` |
 | Change **art lookup** | [src/ui/assetmap.js](../src/ui/assetmap.js), [art-manifest.json](../art-manifest.json), [asset-data/](../asset-data) | `node tools/art-manifest.mjs --check` |
@@ -87,12 +91,12 @@ flowchart TD
 
 - **[src/content/generated/](../src/content/generated)** from `node tools/content-build.mjs`
   - except `gameProfiles.js`, `baseCards.js`, `fixCoreProtection.js`, owned by their own tools
-- **[gameProfiles.js](../src/content/generated/gameProfiles.js)** and **[game.lock.json](../games/ashenspire/game.lock.json)** from `node tools/game-config.mjs`
+- **[gameProfiles.js](../src/content/generated/gameProfiles.js)** and **[game.lock.json](../games/ashenspire/game.lock.json)** from `node tools/game-config.mjs build`
 - **[src/config/generated/ui.js](../src/config/generated/ui.js)** from `node tools/config-build.mjs`
 - **[styles/tokens.generated.css](../styles/tokens.generated.css)** from `npm run tokens:css`
 - **[styles/hud-layout.generated.css](../styles/hud-layout.generated.css)** from `node tools/hud-layout-css.mjs --write`
 - **[engine/ui/index.json](../engine/ui/index.json)** from `node tools/ui-validate.mjs`
-- **[src/content/changelog.generated.js](../src/content/changelog.generated.js)** from the changelog build (do not touch)
+- **[src/content/changelog.generated.js](../src/content/changelog.generated.js)** from `node tools/about-changelog.mjs --write` (after editing CHANGELOG.md)
 - **Never commit** built HTML (`AshenSpire.html`, `dist/*.html`); CI builds it.
 - **Why:** hand edits are overwritten on the next build and fail the `--check` tests.
 
