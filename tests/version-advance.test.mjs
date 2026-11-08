@@ -309,3 +309,125 @@ test('simulation: recorded events are always an ordered prefix of the non-bot ev
     assert.deepEqual(dev.triple, expected, `seed ${seed}`);
   }
 });
+
+// ---- the `test` branch: a BUILD event (owner, 2026-11-07) ---------------------------------------
+import { TEST_SINCE, eventBranch, kindOfBranch } from '../tools/version-advance.mjs';
+import { VERSION_ADVANCE_SUBJECT } from '../tools/build-stamp.mjs';
+
+const tev = (id, before, after, ts, type = 'push') => ev(id, 'test', before, after, type, ts);
+const T1 = '2026-11-09T00:00:01Z';
+
+test('build: the triple is unchanged and test maps to kind build', () => {
+  assert.deepEqual(nextTriple([0, 7, 4], 'build'), [0, 7, 4]);
+  assert.equal(eventBranch({ ref: 'refs/heads/test' }), 'test');
+  assert.equal(kindOfBranch('test'), 'build');
+  assert.equal(kindOfBranch('release'), 'candidate');
+  assert.equal(kindOfBranch('main'), 'minor');
+  assert.equal(advanceSource(SRC, 'build').text, SRC);
+});
+
+test('build: records round-trip, and build-stamp still recognises the subject', () => {
+  const sha = 'd'.repeat(40);
+  const m = advanceMessage('0.7.4', 'test', sha, { id: '55', timestamp: T1 });
+  assert.equal(m.split('\n')[0], `version-advance: 0.7.4 after test ${sha} [version-advance]`);
+  assert.match(m.split('\n')[0], VERSION_ADVANCE_SUBJECT);
+  assert.deepEqual(latestRecord(parseRecords([m])), { id: '55', timestamp: T1, branch: 'test' });
+  assert.equal(recordsEvent([m], 55), true);
+  assert.equal(recordsEvent([m], 56), false);
+});
+
+test('planCuts: a test push is a build cut; pre-TEST_SINCE and bot-only test pushes are not', () => {
+  assert.equal(TEST_SINCE, '2026-11-08T21:40:47Z');
+  const events = [tev(1, 'a', 'b', '2026-11-05T00:00:00Z'), tev(2, 'b', 'c', T1), tev(3, 'c', 'bot', '2026-11-09T00:00:02Z'), tev(4, 'c', 'd', '2026-11-09T00:00:03Z', 'branch_deletion')];
+  const cuts = planCuts(events, null, (e) => e.after === 'bot');
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['2', 'test']]);
+  // A re-delivered copy of the same push, or a cursor on it, never bumps twice.
+  assert.equal(planCuts([...events, { ...events[1], id: 9 }], null, (e) => e.after === 'bot').filter((c) => c.branch === 'test').length, 1);
+  assert.deepEqual(planCuts(events, { id: '2', timestamp: T1 }, (e) => e.after === 'bot'), []);
+});
+
+test('activation: historical test activity at or before the frozen boundary is never replayed', () => {
+  const historical = [
+    tev('49491527871', 'a', 'b', '2026-11-08T20:44:29Z', 'pr_merge'),
+    tev('49495690958', 'b', '45b31ef1', '2026-11-08T21:40:47Z', 'pr_merge'),
+    tev('49495690999', 'x', 'y', '2026-11-08T21:40:47Z'),
+  ];
+  assert.deepEqual(planCuts(historical, null, noBots), []);
+  assert.deepEqual(planCuts(historical, { id: '1', timestamp: '2026-11-01T00:00:00Z', branch: 'release' }, noBots), []);
+});
+
+test('activation: the first later test cut and its duplicate feed row advance exactly once', async () => {
+  const historical = tev('49495690958', 'a', 'b', '2026-11-08T21:40:47Z', 'pr_merge');
+  const next = tev('49495691000', 'b', 'c'.repeat(40), '2026-11-08T21:40:48Z', 'pr_merge');
+  const events = [historical, next, { ...next, id: '49495691001' }];
+  const options = { fetchPage: feedOf(events), isBotOnly: noBots, sleep: async () => {}, withTest: true };
+  const cuts = await planRun({ ...options, messages: [] });
+  assert.deepEqual(cuts.map(cut => [cut.id, cut.branch]), [['49495691000', 'test']]);
+  const messages = [advanceMessage('0.7.4', 'test', next.after, next)];
+  assert.deepEqual(await planRun({ ...options, messages }), []);
+});
+
+test('planCuts: release and main ordering is right with a test event between them', () => {
+  const day = (n) => `2026-11-1${n}T00:00:00Z`;
+  const fold = (cuts) => cuts.reduce((t, c) => nextTriple(t, kindOfBranch(c.branch)), [0, 7, 4]).join('.');
+  const events = [ev(1, 'release', 'a', 'b', 'push', day(0)), tev(2, 'x', 'y', day(1)), ev(3, 'main', 'b', 'c', 'push', day(2)), tev(4, 'y', 'z', day(3))];
+  const cuts = planCuts(events, null, noBots);
+  assert.deepEqual(cuts.map((c) => c.branch), ['release', 'test', 'main', 'test']);
+  assert.equal(fold(cuts), '0.8.0');
+  // main then release, a test event between: 0.8.1.
+  const swapped = [ev(1, 'main', 'a', 'b', 'push', day(0)), tev(2, 'x', 'y', day(1)), ev(3, 'release', 'b', 'c', 'push', day(2))];
+  assert.equal(fold(planCuts(swapped, null, noBots)), '0.8.1');
+});
+
+test('planRun: a test event is paged from the test ref and applied once; a re-run after its record plans nothing', async () => {
+  const e = tev(70, 'b', 'c', T1);
+  const cuts = await planRun({ fetchPage: feedOf([e]), messages: [], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {}, withTest: true });
+  assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['70', 'test']]);
+  // Without --with-test (an old-yml caller) the test ref is never read and no test cut is planned.
+  const old = await planRun({ fetchPage: feedOf([e, ev(71, 'release', 'p', 'q', 'push', T1)]), messages: [], isBotOnly: noBots, sleep: async () => {} });
+  assert.deepEqual(old.map((c) => c.branch), ['release']);
+  const again = await planRun({ fetchPage: feedOf([e]), messages: [advanceMessage('0.7.4', 'test', 'c'.repeat(7), e)], trigger: { ref: e.ref, after: 'c' }, isBotOnly: noBots, sleep: async () => {}, withTest: true });
+  assert.deepEqual(again, []);
+});
+
+test('CLI: --kind build leaves the triple alone; --message accepts test', () => {
+  const run = (...args) => spawnSync(process.execPath, [join(ROOT, 'tools/version-advance.mjs'), ...args], { encoding: 'utf8' });
+  const cur = parseTriple(readFileSync(join(ROOT, VERSION_FILE), 'utf8')).join('.');
+  assert.equal(run('--kind', 'build').stdout.trim(), cur);
+  assert.equal(run('--message', cur, 'test', 'e'.repeat(40), '8', T1).status, 0);
+});
+
+test('bumpOrdinal: force adds 1 on an unchanged tree without resetting; the default never forces', async () => {
+  const { bumpOrdinal, readOrdinal, BUILD_IDENTITY_FILES, RELEASE_HOME } = await import('../tools/buildversion.mjs');
+  // A temp root holding only what sourceDigest/release read; the repo's buildordinal.json is never touched.
+  const root = mkdtempSync(join(tmpdir(), 'va-ord-'));
+  try {
+    for (const f of [...BUILD_IDENTITY_FILES, RELEASE_HOME]) {
+      mkdirSync(dirname(join(root, f)), { recursive: true });
+      cpSync(join(ROOT, f), join(root, f), { recursive: true });
+    }
+    writeFileSync(join(root, 'buildordinal.json'), '{}\n', 'utf8');
+    bumpOrdinal(root); // settle: digest now matches the tree
+    const base = readOrdinal(root);
+    const calm = bumpOrdinal(root);
+    assert.equal(calm.bumped, false);
+    assert.equal(readOrdinal(root).ordinal, base.ordinal, 'the default does not move an unchanged tree');
+    const forced = bumpOrdinal(root, { force: true });
+    assert.equal(forced.bumped, true);
+    assert.equal(forced.ordinal, base.ordinal + 1);
+    assert.equal(readOrdinal(root).release, base.release, 'same release: no reset');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('planCuts: restore-test-branch re-creating `test` is not a cut; a creation still is on release and main', () => {
+  const z = '0'.repeat(40);
+  const events = [tev(1, z, 'abc', T1, 'branch_creation'), ev(2, 'release', z, 'def', 'branch_creation', T1), ev(3, 'main', z, 'fed', 'branch_creation', T1)];
+  assert.deepEqual(planCuts(events, null, noBots).map((c) => [c.id, c.branch]), [['2', 'release'], ['3', 'main']]);
+});
+
+test('the test-record subject buildversion row H licenses is exactly the one advanceSubject writes', async () => {
+  const { TEST_RECORD_SUBJECT } = await import('../tools/buildversion.mjs');
+  assert.match(advanceSubject('0.7.4', 'test', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
+  assert.doesNotMatch(advanceSubject('0.7.4', 'release', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
+  assert.doesNotMatch(advanceSubject('0.7.4', 'main', 'a'.repeat(40)), TEST_RECORD_SUBJECT);
+});

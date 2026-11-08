@@ -73,8 +73,10 @@ The answer is semver's own pre-release segment, not a bent ladder:
 - **`rc.<n>` advances when the owner names a new candidate for QA** (historical; since 2026-11-01 version-advance.yml advances the candidate on each release cut) — every
   candidate QA receives is distinguishable by its stamp, and the ordinal keeps
   ordering builds within it. It once advanced at every `dev → test` promotion;
-  since 2026-09-26 every session promotes `dev` to `test` after each merge
-  (CONTRIBUTING.md rule 6), so a promotion alone no longer advances it.
+  since 2026-09-26 every session promotes `dev` after each merge
+  (CONTRIBUTING.md rule 6; to `review` since 2026-11-07), so a promotion alone no longer
+  advances the candidate. A push to `test` (the `review` → `test` promotion) raises only
+  the ordinal.
 - **Ordering is by the WHOLE version, component-wise numeric** — superseded
   2026-09-01, see "The candidate is the third component" below. Until then the
   ordinal was the one monotonic key: it never reset, so any two builds sorted
@@ -229,19 +231,23 @@ and archived with a named reason only when one does not (`engine/save.js`).
 
 `.github/workflows/version-advance.yml` runs on a push to `release` (candidate
 +1, tail to 0: 0.7.2.93 → 0.7.3.0) or to `main` (MINOR +1, candidate and tail to
-0: 0.7.3.x → 0.8.0.0). It runs `tools/version-advance.mjs`, which rewrites only
+0: 0.7.3.x → 0.8.0.0) or, since 2026-11-07, `test` (a **build** bump: the triple stays and the
+ordinal rises by one, 0.7.4.30 → 0.7.4.31, nothing reset). It runs `tools/version-advance.mjs`, which rewrites only
 the `version:` literal and the `// version-advance:` marker beside it in
 `src/content/index.js` (plus the `SERIES` constant in `tools/release-series.mjs`
 on a minor bump), then writes the box through `bumpOrdinal`, which restarts the
-ordinal at 0. It commits to `dev` as `version-advance: <triple> after
-<release|main> <source sha> [version-advance]`, with a trailer
+ordinal at 0 (a build bump calls `bumpOrdinal(root, { force: true })`, which adds 1 even when
+the tree's digest did not move and never resets while the release string is unchanged; the
+default call never forces). It commits to `dev` as `version-advance: <triple> after
+<release|main|test> <source sha> [version-advance]`, with a trailer
 `Version-Advance-Event: <id> <timestamp>`. A session never hand-edits the triple
-for these two events. MAJOR stays a hand edit.
+for these three events. `build-stamp.yml` skips the commit by author and the
+`[version-advance]` subject, whichever branch it names. MAJOR stays a hand edit.
 
 ### Version advance: the cursor model
 
 The cuts come from the repository activity feed, not from workflow run history:
-`GET /repos/{repo}/activity?ref=refs/heads/release` (and `main`) lists every
+`GET /repos/{repo}/activity?ref=refs/heads/release` (and `main`, `test`) lists every
 update of those refs whether or not a workflow ran for it. `tools/version-advance.mjs --plan`:
 
 - **Cursor.** The newest `Version-Advance-Event` recorded on `dev`, ordered by
@@ -251,12 +257,19 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
   run after merge replays that one cut and takes dev from 0.7.2 to 0.7.3. Copies of
   one event in the feed (same ref, before, after and timestamp, different ids) are
   one cut, under the lowest id.
-- **Plan.** Every later event on `release` or `main` of type `push`,
+- **Plan.** Every later event on `release`, `main` or `test` of type `push`,
   `force_push`, `pr_merge`, `merge_queue_merge` or `branch_creation`
   (`branch_deletion` is dropped), oldest first. Release then main gives 0.8.0 from 0.7.2;
-  main then release gives 0.8.1. The workflow applies them in that order, each as one
+  main then release gives 0.8.1; a `test` event between them adds only a build bump and changes
+  neither result. The workflow applies them in that order, each as one
   commit, skipping any whose event id `dev` already records, so a re-run or a race
   never bumps twice.
+- **`test` events** count only after `TEST_SINCE` in the tool (`2026-11-08T21:40:47Z`, inclusive; activity `49495690958`, captured while Test was frozen for activation): the cursor
+  alone would replay every `test` push since the last release or main record the day this merged.
+  Capture the latest historical Test event while Test is frozen for activation, and recheck
+  that history just before merging the enabling change so the cutoff cannot drift. A re-delivered `test` push is
+  the same event id (or a copy under the lowest id), so it records once and never bumps twice.
+- **Open PRs after a test bump.** Each `test` bump moves `buildordinal.json` on `dev` without a build-stamp run, so `pr-restamp.yml` does not refresh open PRs; `node tools/jev.mjs devmerge` brings a PR current.
 - **Bot-only events** (every commit in the event's own before..after is a
   github-actions[bot] commit) write no record; they are re-checked on each run from that
   event's own range, so nothing ages out. The range is read with `git log`, else after
@@ -356,7 +369,7 @@ hold both editions.
 | Trigger | Why it builds | What it keeps |
 |---|---|---|
 | pull request into `dev`, push to `dev` | the gates that read a bundle (`verify-shipped`, `buildversion --check`, the bundler parse gate, the tests that open the HTML) must see one, and a reviewer plays the PR's own build | `dev-standalone-<commit>`, 14 days (today's `dev-preview.yml` retention) |
-| **push to `test`** | the owner's request: the playtest build QA receives on each `dev → test` promotion | `test-standalone-<commit>`, 30 days |
+| **push to `test`** | the owner's request: the playtest build QA receives on each `review → test` promotion (`dev → test` before 2026-11-07) | `test-standalone-<commit>`, 30 days |
 | push to `release`, push to `main` | Pages publishes those sections (a push to `release` publishes the site, owner, 2026-10-11, once the `github-pages` environment admits `release`), and the release gate (`ci.yml` on push to `release`) reads a build | `<branch>-standalone-<commit>`, 90 days (GitHub's maximum) |
 
 A check that used to read a committed build now builds on demand in the same
