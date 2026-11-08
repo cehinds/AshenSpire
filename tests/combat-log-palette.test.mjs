@@ -3,7 +3,7 @@ import test from 'node:test';
 import { combatLogPalette, COMBAT_LOG_PALETTE_DEFAULTS, hasCombatLogColorContrast } from '../src/ui/models/CombatLogPaletteModel.js';
 import { openCombatLogModal } from '../src/ui/components/combatLogModal.js';
 import { resetModalState } from '../src/ui/modalState.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { settingsSearchHits, allResettableKeys, settingsRows } from '../src/ui/screens/settings.js';
 
 test('log actor segments render as escaped text with player and enemy roles', () => {

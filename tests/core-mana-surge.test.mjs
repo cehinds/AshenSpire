@@ -282,7 +282,7 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
 test('the rendered Mana Surge deck row shows the same zero Mana cost as live play', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const run = start('herald');
   const card = surges(run)[0];
   const model = deckEditorModel({ registries: reg, run });

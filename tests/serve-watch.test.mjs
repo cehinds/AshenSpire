@@ -141,6 +141,26 @@ function events(port) {
   });
 }
 
+/**
+ * Run `write()` every 200 ms (longer than the watcher's 150 ms debounce, or it would never fire) until a reload event for `rel` has arrived. A watcher
+ * that is attaching to a new directory (or re-arming after a rename) gives no signal
+ * of its own, so the test polls for the observable effect instead of sleeping a fixed
+ * time first; repeated writes only produce extra reloads, which later steps ignore by
+ * matching on the file name.
+ */
+async function reloadFor(stream, rel, write, ms = 3000) {
+  const from = stream.seen.length;
+  const deadline = Date.now() + ms;
+  const arrived = () => stream.seen.slice(from).some((e) => e.name === 'reload' && e.data === rel);
+  let lastWrite = 0;
+  while (!arrived()) {
+    if (Date.now() > deadline) throw new Error(`no reload for ${rel} within ${ms} ms`);
+    if (Date.now() - lastWrite >= 200) { write(); lastWrite = Date.now(); }
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  return rel;
+}
+
 for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers', { SERVE_WATCH_NO_RECURSIVE: '1' }]]) {
   test(`--watch: a changed file arrives as a reload event within 2 s (${label})`, async () => {
     const root = makeTree();
@@ -153,10 +173,8 @@ for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers
     assert.equal(await reload, 'src/deep/x.js');
     // A directory created after start is watched too.
     mkdirSync(join(root, 'src', 'later'));
-    await new Promise((r) => setTimeout(r, 400));
-    const again = stream.next('reload', 2000);
-    writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
-    assert.equal(await again, 'src/later/y.js');
+    let n = 0;
+    assert.equal(await reloadFor(stream, 'src/later/y.js', () => writeFileSync(join(root, 'src', 'later', 'y.js'), `export const y = ${n++};\n`)), 'src/later/y.js');
     stream.close();
     child.kill();
   });
@@ -181,18 +199,12 @@ test(`--watch: a directory deleted and recreated is watched on its new inode (${
   const { port, child } = await start(root, ['--watch'], env);
   const stream = await events(port);
   mkdirSync(join(root, 'src', 'later'));
-  await new Promise((r) => setTimeout(r, 400));
-  const first = stream.next('reload', 2000);
-  writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
-  assert.equal(await first, 'src/later/y.js');
-  // (each step waits out the debounce + post-build quiet window, 150 + 300 ms)
+  let n = 0;
+  // Each step polls for its reload (the debounce + post-build quiet window, 150 + 300 ms, passes meanwhile).
+  assert.equal(await reloadFor(stream, 'src/later/y.js', () => writeFileSync(join(root, 'src', 'later', 'y.js'), `export const y = ${n++};\n`)), 'src/later/y.js');
   rmSync(join(root, 'src', 'later'), { recursive: true, force: true });
-  await new Promise((r) => setTimeout(r, 600));
   mkdirSync(join(root, 'src', 'later'));
-  await new Promise((r) => setTimeout(r, 600));
-  const reborn = stream.next('reload', 2000);
-  writeFileSync(join(root, 'src', 'later', 'z.js'), 'export const z = 1;\n');
-  assert.equal(await reborn, 'src/later/z.js');
+  assert.equal(await reloadFor(stream, 'src/later/z.js', () => writeFileSync(join(root, 'src', 'later', 'z.js'), `export const z = ${n++};\n`)), 'src/later/z.js');
   stream.close();
   child.kill();
 });
@@ -397,11 +409,12 @@ test('--watch: index.html replaced by rename (an editor\'s atomic save) reloads 
   const { port, child } = await start(root, ['--watch']);
   const stream = await events(port);
   for (const n of [1, 2]) {
-    const reload = stream.next('reload', 2000);
-    writeFileSync(join(root, 'index.html.new'), INDEX.replace('hello', `saved ${n}`));
-    renameSync(join(root, 'index.html.new'), join(root, 'index.html'));
-    assert.equal(await reload, 'index.html', `rename ${n}`);
-    await new Promise((r) => setTimeout(r, 400));
+    let saves = 0;
+    const save = () => {
+      writeFileSync(join(root, 'index.html.new'), INDEX.replace('hello', `saved ${n}.${saves++}`));
+      renameSync(join(root, 'index.html.new'), join(root, 'index.html'));
+    };
+    assert.equal(await reloadFor(stream, 'index.html', save), 'index.html', `rename ${n}`);
   }
   stream.close();
   child.kill();

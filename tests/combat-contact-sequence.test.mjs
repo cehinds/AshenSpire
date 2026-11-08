@@ -12,7 +12,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 import { prepareTacticalCard, tacticalCarrier, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { bindCardInspection } from '../src/ui/components/cardInspection.js';
 import { beatsSpent, clearSelection, resetSelection, spendSelectingBeat } from '../src/ui/components/cardSelection.js';
 
