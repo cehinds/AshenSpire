@@ -19,7 +19,7 @@ Verification:
   scaled gains, unused weapons, no character XP, duplicate combat callbacks,
   save/load, failed receipt save/retry, and duplicate/reentrant continuation.
 - `node tools/game-config.mjs check` passes without generated pin changes.
-- `REWARD_VICTORY_OUT=<folder> node tools/reward-victory-qa.mjs` boots the
+- `REWARD_VICTORY_OUT=<folder> node tools/attic/reward-victory-qa.mjs` boots the
   configured reward route, then mounts production renderers with deterministic
   Evade/Sweep/Crimson Flask offers and an already-paid class/Blade XP fixture.
   These captures are staged renderer checks, not a completed browser fight.

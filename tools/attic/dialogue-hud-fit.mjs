@@ -10,7 +10,7 @@
 //
 // It drives the GAME'S OWN ROUTE (?shot=event), not a mounted screen: the HUD
 // exists only in a run, so a harness that mounts the dialogue alone (as
-// tools/dialogue-context-fit.mjs does, deliberately) cannot see this at all.
+// tools/attic/dialogue-context-fit.mjs does, deliberately) cannot see this at all.
 //
 // Usage
 //   node tools/attic/dialogue-hud-fit.mjs           the five hosts
