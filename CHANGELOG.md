@@ -34,9 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Display settings moved out of the boot file** ([#2690](https://github.com/cehinds/AshenSpire/pull/2690), `0.7.4.40`). Interface scale, tap size and card size now apply from their own module; the game looks and plays the same.
 - **Faster, steadier tests** ([#2711](https://github.com/cehinds/AshenSpire/pull/2711), `0.7.4.40`). The tests share one fake page instead of four copies, and two slow tests wait for what they check instead of sleeping, so they finish sooner; nothing you play changes.
 - **Two dead CI workflows removed** ([#2712](https://github.com/cehinds/AshenSpire/pull/2712), `0.7.4.40`). Two automated checks that could never run (their branches are gone) were deleted, and the three tools only they ran moved to the attic; nothing you play changes.
-- **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.
 - **Art manifests compiled from source** ([#2677](https://github.com/cehinds/AshenSpire/pull/2677), `0.7.4.40`). Outfit, defeated-pose, enemy-state and enemy-landmark art tables now build from the content sources like every other table; the game is 70 KB smaller and plays the same.
 - **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
 - **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
