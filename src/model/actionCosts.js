@@ -18,7 +18,7 @@ import {
   ENEMY_SP_ROW, ENEMY_BLIGHT_SHIFT, STATUS_WEIGHT, STATUS_WEIGHTS,
 } from '../content/actionCosts.js';
 import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
-import { stanceFor } from '../engine/combatRounds/stance.js';
+import { stanceFor } from './stance.js';
 import { spellCardCostSurcharge } from './combatCardProfile.js';
 
 export const ACTION_STANCES = Object.freeze(['attack', 'block', 'smash', 'counter', 'cast', 'sweep']);
