@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const multi = { kind: 'attack', moveId: 'flurry', damage: 5, hits: 3,
   hitDamages: [5, 5, 5], totalDamage: 15, projectedDamage: { basis: 'hp', label: '0–15' } };
@@ -46,6 +47,6 @@ test('the combatant mini HUD hides the scoped total line, and no target-HUD inte
   const css = readFileSync(new URL('../styles/combat-target-responsive.css', import.meta.url), 'utf8');
   assert.match(css, /\.combat \.combatant \.intent \.intent-damage-scope \{ display:none; \}/);
   const sheets = [readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8'), css,
-    readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8'), readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8')];
+    readKitCss(), readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8')];
   for (const sheet of sheets) assert.doesNotMatch(sheet, /target-hud-intent/, "the target panel's intent row was removed (2026-10-26)");
 });

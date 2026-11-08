@@ -26,8 +26,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
-const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = readKitCss().replace(/\/\*[\s\S]*?\*\//g, '');
 const card = JSON.parse(readFileSync(new URL('../content/config/ui/components/card.json', import.meta.url), 'utf8'));
 const READABLE = card.sizing.doorReadableMinPx;
 const INSPECT = card.sizing.levels.inspect.widthPx;

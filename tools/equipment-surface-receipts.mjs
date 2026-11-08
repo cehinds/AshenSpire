@@ -7,6 +7,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, passiveSum } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveSwapCostRule, swapCostFor } from '../src/model/loadout.js';
+import { readKitCss } from './kit-css.mjs';
 
 // ---------------------------------------------------------------------------
 // ARM 1 of MR-41 (as amended by MR-46) — THE SWAP-PRICE ROW'S SAME-DOOR CORPUS
@@ -273,7 +274,7 @@ const armoury = fs.readFileSync(new URL('../src/ui/screens/equipment.js', import
 const receiptComponents = fs.readFileSync(new URL('../src/ui/components/equipmentReceipts.js', import.meta.url), 'utf8');
 // The Armoury's rules moved to the kit (styles/kit.css, 2026-09-04 sweep); ui.css draws nothing for it any more.
 const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8')
-  + fs.readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  + fs.readKitCss();
 for (const [source, label] of [[customize, 'creation'], [armoury, 'Armoury']]) {
   check(/equipmentSurfaceReceipt/.test(source), `${label} consumes the shared equipment presentation reader`);
   check(/renderEquipmentRequirements/.test(source), `${label} renders the shared requirement receipt`);

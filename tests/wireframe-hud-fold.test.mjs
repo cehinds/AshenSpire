@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { balance } from '../src/content/balance.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // THE FOLD IS ONE RULE SET, NOT ONE PER HOST (styles/kit.css § BAND FOLD).
 //
@@ -12,7 +13,7 @@ import { balance } from '../src/content/balance.js';
 // top of each other. A fold that is copied is a fold that is copied wrong, so
 // what is checked here is that the rules name BOTH hosts and that the
 // dialogue band stacks its two rows rather than seating them side by side.
-const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
+const css = readKitCss().replace(/\r\n?/g, '\n');
 // The wireframe is READ, not imported: tools/linkcheck.mjs --selftest copies the
 // tree without docs/, and an import of a doc module reads as a broken one there.
 // tests/wireframe-button-sizes.test.mjs reads button-widths.json the same way.

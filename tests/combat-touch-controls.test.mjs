@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { handLayout, responsiveHandLayout } from '../src/ui/models/HandLayout.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
@@ -91,7 +92,7 @@ test('One-tap play reads the setting live, so a mid-combat toggle changes the ne
 
 test('the hand info portal keeps its centring transform in combat', () => {
   assert.doesNotMatch(css, /\.hand-info-portal\s*\{[^}]*transform:\s*none/);
-  assert.match(read('../styles/kit.css'), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
+  assert.match(readKitCss(), /\.hand-overlay > \.hand-info-portal\s*\{[^}]*transform:\s*translateX\(-50%\)/);
 });
 
 test('the combat hand asks for the (i) badge and no other card surface does', () => {

@@ -6,6 +6,7 @@ import {
   tooltipArrow, tooltipArrowSize, tooltipWireframe, tooltipWireframeConfig,
 } from '../src/ui/models/TooltipPlacementModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -69,6 +70,6 @@ test('the presenter stamps the wireframe from the one rung list, and the stylesh
   assert.match(presenter, /TOOLTIP_RUNGS/);
   assert.doesNotMatch(presenter, /\[\s*'small',\s*'medium',\s*'large',\s*'expanded'\s*\]/);
   assert.match(presenter, /dataset\.wireframe\s*=/);
-  const kit = source('styles/kit.css');
+  const kit = readKitCss();
   for (const edge of TOOLTIP_ARROW_EDGES) assert.match(kit, new RegExp(`#tooltip\\[data-arrow="${edge}"\\]::after`));
 });

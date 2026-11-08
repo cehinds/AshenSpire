@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { readFileSync } from 'node:fs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // Owner 2026-11-05: "No way to inspect reward cards." The selected reward card wears the
 // hand's (i) badge; the badge, or a second tap on the selected face, opens the inspector.
@@ -41,7 +42,7 @@ test('every reward card carries a badge, and only the selected one is shown', ()
   assert.deepEqual(faces.map(f => f.classList.contains('inspection-selected')), [false, false, false]);
   tap(faces[1]);
   assert.deepEqual(faces.map(f => f.classList.contains('is-chosen')), [false, true, false], 'badge shows on the chosen card only');
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /\.reward-door \.reward-choice-face\.is-chosen > \.card-info-button \{ visibility:visible; pointer-events:auto; \}/);
 }));
 

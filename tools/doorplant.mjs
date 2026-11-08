@@ -42,6 +42,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolveKitTarget } from './kit-css.mjs';
 import { artPath, copySourceArt, packTreeOf, SANDBOX_ENV } from './art-source.mjs';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -268,7 +269,7 @@ export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs 
       let drifted = null;
       const translated = [];
       for (const e of edits) {
-        const target = join(root, e.file);
+        const target = join(root, resolveKitTarget(root, e.file, e.find)); // 'styles/kit.css' is several files now (tools/kit-css.mjs)
         const bytes = readFileSync(target, 'utf8');
         // A defect can require two edits in one file. Preserve the bytes from
         // before the FIRST edit; overwriting this entry after the second edit

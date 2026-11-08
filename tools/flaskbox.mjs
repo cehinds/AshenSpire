@@ -90,6 +90,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
 
 import { launchBrowser } from './browser.mjs';
+import { readKitCss } from './kit-css.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -134,7 +135,7 @@ if (process.argv.includes('--source-selftest')) {
     input: readFileSync(join(ROOT, 'src/ui/input.js'), 'utf8'),
     css: readFileSync(join(ROOT, 'styles/ui.css'), 'utf8'),
     combatCss: readFileSync(join(ROOT, 'styles/combat.css'), 'utf8'),
-    kit: readFileSync(join(ROOT, 'styles/kit.css'), 'utf8'),
+    kit: readKitCss(ROOT),
     tool: readFileSync(fileURLToPath(import.meta.url), 'utf8'),
   };
   const plants = [

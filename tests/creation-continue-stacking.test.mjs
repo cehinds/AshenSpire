@@ -4,8 +4,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { readKitCss } from '../tools/kit-css.mjs';
 
-const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+const css = readKitCss();
 const source = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
 const reserved = css.slice(css.indexOf('/* Equipment uses the available page height;'));
 

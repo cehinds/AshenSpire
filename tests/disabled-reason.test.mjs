@@ -18,6 +18,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const REG = createRegistries(contentBundle);
 const noteOf = (control) => {
@@ -97,7 +98,7 @@ test('event screen: Continue before a response is taken says why, as text', asyn
 });
 
 test('stylesheet: the reason line is never display:none when shown, and is at least 11 px', () => {
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   const rule = css.match(/\.as-reasonnote\s*\{([^}]*)\}/);
   assert.ok(rule, '.as-reasonnote has a rule');
   assert.match(rule[1], /display:\s*block/);
@@ -125,7 +126,7 @@ test('a hidden button row takes its reason line with it (review of #1459: charac
     row.hidden = false; row.style.display = ''; refresh();
     assert.ok(shows(note), 'the row is back: so is its reason');
   });
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /\[hidden\]\s*\+\s*\.as-reasonnote/, 'a row hidden after the paint still takes the line (adjacent-sibling rule)');
 });
 

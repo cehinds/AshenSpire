@@ -6,8 +6,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { intentParts } from '../src/ui/components/combatantOverhead.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
-const css = (file) => readFileSync(new URL(`../styles/${file}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = (file) => (file === 'kit.css' ? readKitCss() : readFileSync(new URL(`../styles/${file}`, import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
 const rule = (text, selector) => {
   const at = text.indexOf(selector + ' {'); assert.ok(at >= 0, `${selector} rule exists`);
   return text.slice(at, text.indexOf('}', at));

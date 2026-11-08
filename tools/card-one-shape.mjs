@@ -43,6 +43,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { kitCssPaths } from './kit-css.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const SELFTEST = process.argv.includes('--selftest');
@@ -221,7 +222,7 @@ async function main() {
   // derived shape from a literal that happens to agree today; a stylesheet rule
   // that writes the ratio out longhand is the second copy that made this tool
   // necessary, so it is named here even while the pixels agree.
-  for (const file of ['styles/kit.css', 'styles/combat.css']) {
+  for (const file of [...kitCssPaths(ROOT), 'styles/combat.css']) {
     // Comments EXPLAIN the old literal — several of them quote it on purpose —
     // so they are blanked rather than line-matched, keeping line numbers.
     const text = readFileSync(resolve(ROOT, file), 'utf8')

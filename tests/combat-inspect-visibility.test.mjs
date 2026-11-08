@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { selectCombatantInfo } from '../src/ui/components/combatantOverhead.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // Owner decisions (2026-10-11), overriding PR #1818's "always show Inspect":
 //  A. No Inspect "i" paints at a temporary spot and then moves.
@@ -10,7 +11,7 @@ import { selectCombatantInfo } from '../src/ui/components/combatantOverhead.js';
 //  C. The player's stance chip and status icons stay visible while not selected.
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const combatLayers = read('../styles/combat-layers.css');
-const kit = read('../styles/kit.css');
+const kit = readKitCss();
 const battlefield = read('../src/ui/components/battlefieldStage.js');
 const overhead = read('../src/ui/components/combatantOverhead.js');
 const tools = read('../tools/combat-mobile-touch-qa.mjs');

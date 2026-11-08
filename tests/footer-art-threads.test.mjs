@@ -8,6 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 function buildRow(dom) {
   const doc = dom.document;
@@ -55,7 +56,7 @@ test('compact End Turn label shows the bound key under its words, as the full la
 // (844x390) fell back to the generic 58% icon and 12px label inside a 44px pile.
 test('every compact-label pile keeps the 42% / 11px fallback; phones override it', async () => {
   const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face \{ height: 42%; flex: 0 1 42%; \}$/m);
   assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-compact-label \{ font-size: calc\(11px \/ var\(--ui-zoom, 1\)\); \}$/m);
   assert.match(css, /^\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face \{ height: calc\(28px/m);

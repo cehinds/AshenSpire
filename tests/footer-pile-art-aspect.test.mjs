@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 function buildRow(dom) {
   const doc = dom.document;
@@ -55,13 +56,13 @@ test('the end plate keeps its stretch: only piles and potions are contain-fit', 
 
 test('compact contain faces size by height, so their width follows the art aspect', async () => {
   const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /^\.combat-action-row\[data-footer-compact='true'\] \.footer-art-face\[data-art-fit='contain'\] \{ width: auto; \}$/m);
 });
 
 test('phone piles and potions take a 56px art face in an 88px column, not the 28px face', async () => {
   const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.pile \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(56px \/ var\(--ui-zoom, 1\)\); \}/);
   assert.match(css, /\.combat\[data-compact-combat='true'\] \.combat-action-row\[data-footer-compact='true'\] \.combat-potions \.footer-art-face\[data-art-fit='contain'\] \{ height: calc\(60px \/ var\(--ui-zoom, 1\)\); \}/);
   assert.match(css, /height: calc\(88px \/ var\(--ui-zoom, 1\)\); min-height: calc\(88px \/ var\(--ui-zoom, 1\)\);/);
@@ -69,6 +70,6 @@ test('phone piles and potions take a 56px art face in an 88px column, not the 28
 
 test('compact contain faces drop onto their labels by their blank strip', async () => {
   const { readFileSync } = await import('node:fs');
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /\.footer-art-face\[data-art-fit='contain'\] \{ transform: translateY\(calc\(var\(--art-drop, 0\) \* 100% \+ 1\.6px\)\); \}/);
 });

@@ -24,6 +24,7 @@ import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { KIT_CSS_NAME, readKitCss } from './kit-css.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const BASELINE = resolve(ROOT, 'tools/plantsites-baseline.json');
@@ -119,8 +120,10 @@ export function scanPlantSites(root = ROOT) {
   for (const s of sites) {
     s.id = createHash('sha256').update(`${s.tool}\0${s.target}\0${s.find}`).digest('hex').slice(0, 16);
     const targetPath = resolve(root, s.target);
-    s.state = !existsSync(targetPath) ? 'missing-target'
-      : readFileSync(targetPath, 'utf8').replace(/\r\n/g, '\n').includes(s.find.replace(/\r\n/g, '\n')) ? 'resolves' : 'drifted';
+    // 'styles/kit.css' is several files now; its plants resolve against the parts joined (tools/kit-css.mjs).
+    const isKit = s.target === KIT_CSS_NAME;
+    s.state = !isKit && !existsSync(targetPath) ? 'missing-target'
+      : (isKit ? readKitCss(root) : readFileSync(targetPath, 'utf8')).replace(/\r\n/g, '\n').includes(s.find.replace(/\r\n/g, '\n')) ? 'resolves' : 'drifted';
   }
   return { sites, unreadable };
 }

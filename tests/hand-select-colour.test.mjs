@@ -6,11 +6,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const read = name => readFileSync(new URL(`../styles/${name}`, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const rulesOf = css => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(match => ({ selector: match[1].trim(), body: match[2] }));
 const GOLD = /#c9a227|#c49b56|#d0ac5d|#f2d87e|var\(--gold\)/i;
-const kit = rulesOf(read('kit.css')), cards = rulesOf(read('illustrated-cards.css')), combat = rulesOf(read('combat.css'));
+const kit = rulesOf(readKitCss().replace(/\/\*[\s\S]*?\*\//g, '')), cards = rulesOf(read('illustrated-cards.css')), combat = rulesOf(read('combat.css'));
 const handStateRules = rules => rules.filter(rule => /\.hand\b/.test(rule.selector) && /\.card\b/.test(rule.selector)
   && /\.(?:selected|inspection-selected)\b|:focus-visible|:hover/.test(rule.selector));
 

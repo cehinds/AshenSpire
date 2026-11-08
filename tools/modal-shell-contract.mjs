@@ -20,6 +20,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readKitCss } from './kit-css.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(root, rel), 'utf8');
@@ -35,7 +36,7 @@ function check(name, ok, detail = '') {
 // written for both spellings — the kit's `.as-*` name and the repo's
 // `.modal-*` hook — so the kit twin is stripped from each selector list and
 // the checks below read the repo name exactly as they always did.
-const css = read('styles/kit.css') + '\n' + read('styles/ui.css');
+const css = readKitCss(root) + '\n' + read('styles/ui.css');
 // COMMENTS OUT FIRST. The ladder's own block explains why `vh` is banned by
 // quoting the measurement that banned it ("74vh x zoom"), so a check that
 // greps the raw text fails on the sentence that documents the rule. Stripping

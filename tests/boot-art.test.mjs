@@ -22,6 +22,7 @@ import { artLoadNoticeHtml } from '../src/ui/components/artLoadNotice.js';
 import { ART_QUALITY_KEY, ART_LIGHT, ART_AUTO } from '../src/ui/highResArt.js';
 import { indexText } from '../tools/asset-pack.mjs';
 import { t, tFull } from '../src/ui/strings.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 const A = 'a'.repeat(64);
@@ -74,7 +75,7 @@ test('the critical set is content/config’s: the title backdrops and the faces,
   for (const e of CRITICAL_SET) assert.ok(['any', 'portrait', 'landscape'].includes(e.orientation), e.id);
   assert.equal(CRITICAL_WAIT_MS, config.behavior.artLoading.criticalWaitMs);
   const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8')).assets;
-  const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const kit = readKitCss();
   const fonts = ids.filter((id) => id.startsWith('assets/fonts/'));
   const backdrops = CRITICAL_SET.filter((e) => e.id.startsWith('assets/bg/'));
   assert.equal(fonts.length + backdrops.length, ids.length, 'only faces and backdrops');
@@ -129,7 +130,7 @@ test('the status line is not part of the startup gate: the gate’s model and ma
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   // Mounted after the gate, as a sibling in #app (outside its role="button").
   assert.match(main, /const artLine = bootArtLine\(\);\n  if \(artLine\) mountBootArtStatus\(app, bootArtStatusModel\(artLine\)\);/);
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /#app > \.boot-art-status \{[^}]*pointer-events: none;/, 'it takes no input: a press on it is a press on the gate');
   assert.match(css, /\.reduced-motion #app > \.boot-art-status \{ animation: none; \}/);
 });

@@ -6,6 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { renderCard } from '../src/ui/components/card.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // Owner 2026-11-04: "I meant for the (i) over cards to show up when selecting a
 // card so that I don't accidentally inspect when I didn't want to." The combat
@@ -62,7 +63,7 @@ test('the badge is shown only for the selected hand card, lifted above neighbour
   assert.match(overlay, /hand\.querySelector\('\.card\.inspection-selected'\)/, 'the portal follows the selected card only');
   assert.match(overlay, /if \(!selected\) return;/, 'no selection, no portal');
   assert.match(overlay, /restore\(\);/, 'losing the selection puts the badge back (hidden)');
-  const kit = read('../styles/kit.css');
+  const kit = readKitCss();
   assert.match(kit, /\.hand \.card-inspection-target > \.card-info-button \{ visibility:hidden; pointer-events:none; \}/);
   assert.match(kit, /\.hand-overlay > \.hand-info-portal\s*\{[^}]*z-index: 500/);
   assert.match(read('../styles/combat-layers.css'), /\.hand-info-portal\) \{\s*--inspect-box: calc\(44px/, '44px target');

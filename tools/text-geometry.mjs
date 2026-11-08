@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { balance } from '../src/content/balance.js';
+import { readKitCss } from './kit-css.mjs';
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -326,7 +327,7 @@ async function main() {
     // Kit owns the visible Class-stage Next action's workspace control floor,
     // shared HUD quick-access tile sizes, quick-nav rows and overview tabs.
     // Read those same authored rules from the selected artifact when shipped.
-    const kit = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/kit.css'), 'utf8'));
+    const kit = selectedArtifact ?? normalizeLines(readKitCss(ROOT));
     const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
     const enemyStage = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/enemyExpansionStage.js'), 'utf8');
     // The Text size row's note is the `full` form of settings.row.textSize in

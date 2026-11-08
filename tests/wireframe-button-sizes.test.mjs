@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { balance } from '../src/content/balance.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 import {
   BUTTON_SIZE_IDS, BUTTON_GROUP_KINDS, resolveButtonSize, planButtonGroup, resolveButtonGroupWidths, buttonSizeTokens,
 } from '../src/ui/models/ButtonSizeModel.js';
@@ -89,7 +90,7 @@ test('the icon exception agrees with the declared exit geometry', () => {
 });
 
 test('kit.css reads every token the model writes, and writes no preset the model does not', () => {
-  const css = read('styles/kit.css');
+  const css = readKitCss().replace(/\r\n?/g, '\n');
   const tokens = buttonSizeTokens();
   for (const [name, value] of Object.entries(tokens)) {
     assert.ok(css.includes(`var(${name}`), `${name} is written (${value}) but kit.css never reads it`);

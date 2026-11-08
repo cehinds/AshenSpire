@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // Owner 2026-11-05: card tooltips open only in the card inspect modal. Outside it the
 // triggers are decoration: no pointer events (a tap lands on the card), and the
 // tooltip service already holds them back and out of the tab order (see
 // tooltip-hand-keyword-gate.test.mjs). This pins the stylesheet half.
 const cards = readFileSync(new URL('../styles/illustrated-cards.css', import.meta.url), 'utf8');
-const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+const kit = readKitCss();
 const rule = (css, selector) => {
   const at = css.indexOf(selector + ' {');
   assert.notEqual(at, -1, 'missing rule: ' + selector);

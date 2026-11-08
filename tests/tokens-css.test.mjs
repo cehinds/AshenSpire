@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { buildTokensCss, generateTokensCss, tokenEntries, declaredProperties, TOKENS_JSON, TOKENS_CSS, REM_PX } from '../tools/tokens-css.mjs';
+import { kitCssPaths } from '../tools/kit-css.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -45,7 +46,7 @@ test('a token that has a home in base.css is not declared again', () => {
   }
   for (const name of generated) assert.ok(!base.has(name), `${name} duplicates a base.css declaration`);
   for (const name of generated) {
-    for (const sheet of ['kit.css', 'ui.css', 'combat.css', 'map.css']) {
+    for (const sheet of [...kitCssPaths().map((p) => p.replace(/^styles\//, '')), 'ui.css', 'combat.css', 'map.css']) {
       assert.ok(!declaredProperties(read(`styles/${sheet}`)).has(name), `${name} is also declared in ${sheet}`);
     }
   }

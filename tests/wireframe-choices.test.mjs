@@ -32,6 +32,7 @@ import { advancedSection, advancedSubgroups } from '../src/ui/models/AdvancedSet
 import { workspaceFrame, restampWorkspaceFrames } from '../src/ui/components/w1Workspace.js';
 import { smithWorkspaceVars } from '../src/ui/models/SmithWorkspaceModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
@@ -229,7 +230,7 @@ test('a door keeps its OWN rules when the choice moves it to another rung', () =
   // which belongs to the rung, keys off the rung in force and publishes its
   // width so a door can compose with it instead of re-typing 76rem.
   const ui = read('styles/ui.css');
-  const kit = read('styles/kit.css');
+  const kit = readKitCss();
   assert.equal(/\.modal\.settings-modal\[data-size=/.test(ui), false, 'the Settings window is on its authored rung');
   assert.ok(/\.modal\.settings-modal\[data-authored-size='lg'\]/.test(ui));
   assert.match(ui, /width: min\(var\(--modal-rung-width, 76rem\)/, 'and composes with the rung in force');

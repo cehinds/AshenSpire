@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // The floor shadow follows the current painted footprint, independently of HUD width.
 const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+const kit = readKitCss();
 const combat = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
 
 function fakeFrame({ spriteWidth, barWidth, artWidth = barWidth, selected = false, dataset = {} }) {

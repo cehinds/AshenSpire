@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
+import { readKitCss } from './kit-css.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -557,10 +558,10 @@ export function receipt() {
     armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
     armouryInventory: read('src/ui/components/armouryInventory.js'),
     css: read('styles/combat.css'),
-    kit: read('styles/kit.css'),
+    kit: readKitCss(ROOT).replace(/\r\n/g, '\n'),
     hudVisibility: read('styles/hud-visibility.css'),
     uiCss: read('styles/ui.css'),
-    kitCss: read('styles/kit.css'),
+    kitCss: readKitCss(ROOT).replace(/\r\n/g, '\n'),
     spec: read('SPEC.md'),
   };
 }

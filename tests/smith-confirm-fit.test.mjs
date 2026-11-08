@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { recoveryLedgerHtml } from '../src/ui/components/recoveryLedger.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
 const run = (over = {}) => ({ hp: 73, mana: 1, stamina: 3, flaskCharges: { hpCurrent: 2, manaCurrent: 1 }, ...over });
@@ -30,7 +31,7 @@ test('recovery preview: only changing pools keep a row, each with its gain', () 
 });
 
 const modal = read('src/ui/components/smithUpgradeModal.js');
-const css = read('styles/kit.css');
+const css = readKitCss().replace(/\r\n?/g, '\n');
 
 test('no attribute requirement is one "None", with no duplicate wording to wrap', () => {
   assert.match(modal, /smith-requirement-none[^\n]*text: 'None'/);

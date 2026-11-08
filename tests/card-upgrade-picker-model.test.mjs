@@ -11,6 +11,7 @@ import { commitCardUpgrade, planCardUpgrade } from '../src/model/cardUpgradeServ
 import { upgradePreviewHtml } from '../src/ui/components/card.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
 import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // The picker is the list; a chosen card's own modal is the shared confirmation modal, in the document body.
 const modalOf = dom => dom.document.querySelector('.confirmation-modal');
@@ -482,7 +483,7 @@ test('a pick past the end of a shrunken option list is clamped and still highlig
 // so the card covered the change list and its cost medallion sat on the "Option N" title. Layout needs a browser; this pins
 // the CSS rule that fixed it (the column sizes to the card, pads for the medallion, the changes wrap and may drop below).
 test('narrow option row: the face column fits its card and the changes list wraps', () => {
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   const narrow = css.slice(css.indexOf('.card-upgrade-option-list { flex-direction: column; }'));
   const block = narrow.slice(0, narrow.indexOf('\n}'));
   const face = block.match(/\.card-upgrade-option-face \{([^}]*)\}/)?.[1] || '';

@@ -11,6 +11,7 @@ import { mountConfiguredShop } from '../src/ui/screens/shop.js';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { readFileSync } from 'node:fs';
+import { readKitCss } from '../tools/kit-css.mjs';
 
 // Owner 2026-11-05: "add the (i) to shop and chest cards too". A chest (treasure) card pick is the reward
 // chooser, so it has the selected-card (i) from #2539. A shop has no selection step (a row's own button buys), so
@@ -51,7 +52,7 @@ test('every shop card offer shows the shared (i), always, beside its thumbnail',
     assert.equal(badges.length, 1, 'one (i) per card row');
     assert.equal(badges[0].parentNode.className.includes('merchant-offer-media'), true, 'it sits with the thumbnail, not inside the thumbnail button');
   }
-  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const css = readKitCss();
   assert.match(css, /\.merchant-offer-media > \.card-info-button \{[^}]*visibility:visible; pointer-events:auto;/, 'always visible, no selection needed');
 }));
 

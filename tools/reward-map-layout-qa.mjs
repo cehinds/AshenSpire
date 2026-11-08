@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { serve } from './serve.mjs';
+import { kitCssPaths } from './kit-css.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.UI_FIX_QA_OUT || 'scratch/reward-map-layout');
 mkdirSync(output, { recursive: true });
@@ -20,7 +21,7 @@ try {
     console.log(`Checking ${width}px`);
     // Source UI fixture; skip the development server's whole-tree build stamp.
     await page.route('**/src/buildversion.js', route => route.fulfill({ contentType: 'text/javascript', body: readFileSync('src/buildversion.js', 'utf8') }));
-    if (baseline) for (const path of ['styles/kit.css', 'styles/map.css', 'src/ui/screens/map.js']) {
+    if (baseline) for (const path of [...kitCssPaths(), 'styles/map.css', 'src/ui/screens/map.js']) {
       await page.route(`**/${path}`, route => route.fulfill({ contentType: path.endsWith('.css') ? 'text/css' : 'text/javascript', body: execFileSync('git', ['show', `HEAD:${path}`], { encoding: 'utf8' }) }));
     }
     const errors = [], failedRequests = [], expectedAudioFallbacks = [];
