@@ -2303,6 +2303,8 @@ Traders sell armaments and weapon arts; the combat HUD only exposes owned, avail
   - Test every moveset and boss with Dodge, status, potion, weapon-art, victory/defeat, save/resume.
   - Prove foundations with two regular enemies and one boss first.
 
+Roster targets:
+
 | Class | Target |
 |---|---|
 | Regular enemies | 20 unique |
@@ -2326,6 +2328,8 @@ Traders sell armaments and weapon arts; the combat HUD only exposes owned, avail
   - Engine outcomes remain authoritative. Skipping, interrupting or disabling animation never alters state or strands input.
   - Reduced motion: brief static/opacity feedback instead of travel/shake/repeat; outcome info kept.
   - Non-color cues, focus-visible controls, viewport-contained tooltips, mouse/keyboard/touch on desktop and phone. Validate timing, handler cleanup, multi-enemy performance in browser playtests.
+
+Player animations:
 
 | Card | Animation |
 |---|---|
