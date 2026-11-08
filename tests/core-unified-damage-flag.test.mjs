@@ -42,3 +42,22 @@ test('the flag validator refuses a malformed damage block', () => {
   assert.throws(() => validateFixCoreRules({ ...combat.fixCoreRules, damage: { unified: 'yes' } }));
   assert.throws(() => validateFixCoreRules({ ...combat.fixCoreRules, damage: { unified: true, other: 1 } }));
 });
+
+// SPEC clarification (owner 2026-11-07): a target holding Ward stacks keeps the wardRouted path (the whole hit to Poise first, then Block, then HP) with the flag on or off.
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+test('a Ward-stack target resolves identically with damage.unified on and off', () => {
+  const run = unified => {
+    const combat = liveCore(), target = combat.enemies[0];
+    if (!unified) { const { damage, ...old } = combat.fixCoreRules; combat.fixCoreRules = old; }
+    Object.assign(target, { block: 5, barrier: 0, persistentWard: null, persistentPoise: { value: 6, max: 20 }, gameProfilePoise: 0, statuses: { ward: { stacks: 2 } } });
+    delete target.weaknesses; delete target.combatStance;
+    const r = profileDamageReceipt(combat, combat.player, target, 10, { skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } }, { roll: 0 });
+    const { magical, physical, ...rest } = r.damageReceipt.hits[0];
+    return { wardRouted: r.wardRouted, hpLoss: r.hpLoss, blocked: r.blocked, poise: r.poiseMitigated, rest };
+  };
+  const on = run(true), off = run(false);
+  assert.equal(on.wardRouted, true);
+  assert.equal(on.poise, 6, 'Poise first, 1:1');
+  assert.equal(on.blocked, 4);
+  assert.deepEqual(on, off);
+});
