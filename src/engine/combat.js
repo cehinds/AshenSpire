@@ -1978,16 +1978,29 @@ export function getEntity(combat, id) {
   return findEntity(combat, id);
 }
 
-// Preview presentation metadata is a deep-frozen copy made once per source
-// rules object, so a preview costs no clone and a UI reader cannot alter combat.
-const frozenStatusRulesBySource = new WeakMap();
-function frozenStatusRules(source) {
-  let frozen = frozenStatusRulesBySource.get(source);
-  if (!frozen) {
-    frozen = Object.isFrozen(source) ? source : deepFreeze(structuredClone(source));
-    frozenStatusRulesBySource.set(source, frozen);
+// Share only proven immutable JSON rule graphs. Custom expansion tables may be
+// mutable below a frozen root, so their preview copy must stay fresh.
+const provenFrozenStatusRules = new WeakSet();
+function deeplyFrozenStatusRules(value, visiting) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'object') return false;
+  if (provenFrozenStatusRules.has(value)) return true;
+  const proto = Object.getPrototypeOf(value);
+  if (!Object.isFrozen(value) || (Array.isArray(value) ? proto !== Array.prototype : proto !== Object.prototype && proto !== null)
+      || Object.getOwnPropertySymbols(value).length || visiting?.has(value)) return false;
+  visiting ??= new WeakSet();
+  visiting.add(value);
+  for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) {
+    // Frozen accessors and objects such as Date/Map/Set are not immutable JSON.
+    if (!Object.hasOwn(descriptor, 'value') || !deeplyFrozenStatusRules(descriptor.value, visiting)) return false;
   }
-  return frozen;
+  visiting.delete(value);
+  provenFrozenStatusRules.add(value);
+  return true;
+}
+function frozenStatusRules(source) {
+  return deeplyFrozenStatusRules(source) ? source : deepFreeze(structuredClone(source));
 }
 
 /**

@@ -27,7 +27,7 @@ const registries = { ...base, enemies: { ...base.enemies, get(id) {
 function fixture({ spent = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'automatic-counter-forecast' });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  assert.equal(combat.enemies[0].maxStamina, 2);
+  assert.equal(combat.enemies[0].maxStamina, 3);
   assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],

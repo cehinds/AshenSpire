@@ -14,8 +14,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 14,
-      "max": 17
+      "min": 3,
+      "max": 4
     },
     "poiseMax": 7
   },
@@ -25,7 +25,7 @@
     "deckSize": 4,
     "reserveSize": 0,
     "distinctCards": 3,
-    "levelRange": "14-17"
+    "levelRange": "3-4"
   },
   "equipment": [
     {

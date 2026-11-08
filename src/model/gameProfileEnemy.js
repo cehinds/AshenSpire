@@ -11,7 +11,8 @@ export function gameProfileEnemyRatings(ctx,enemy) {
   const bonus=enemyItemBonuses(definition,content,ctx.gameProfile.modules.gear);
   const attributes=Object.fromEntries(Object.entries(allocated).map(([id,value])=>[id,enemyAttributeTotal(definition,settings,id,value,bonus)]));
   const pools=enemyPools({...definition,resolvedAttributes:allocated},settings,level,bonus);
-  return {attributes,level,maxStamina:pools.sp,stamina:pools.sp,maxMana:pools.mp,mana:pools.mp,baseEvasionBonus:bonus.evasion || 0,basePrecisionBonus:bonus.precision || 0,
+  const attributeBonuses=Object.fromEntries(Object.keys(allocated).map(id=>[id,bonus[id] || 0]));
+  return {attributes,ownAttributes:allocated,attributeBonuses,level,maxStamina:pools.sp,stamina:pools.sp,maxMana:pools.mp,mana:pools.mp,baseEvasionBonus:bonus.evasion || 0,basePrecisionBonus:bonus.precision || 0,
     ratings:{ar:(pools.ar || 0)+(bonus.ar || 0),dr:(pools.dr || 0)+(bonus.dr || 0),pr:0,
       poise:(enemy.ratings?.poise || 0)+(bonus.poise || 0),ward:(enemy.ratings?.ward || 0)+(bonus.ward || 0)},
     mechanicTags:definition.mechanicTags,mechanicBindings:definition.mechanicBindings};

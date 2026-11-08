@@ -14,6 +14,7 @@ import { combatRatingDefaults, resolveCombatRatings, combatRatingProblems } from
 // renderSettings sets on whatever container it filled.
 const ui = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
 const settingsSource = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+const settingsRowsSource = readFileSync(new URL('../src/ui/models/SettingsRowsModel.js', import.meta.url), 'utf8');
 
 /**
  * Every selector in the file, one per entry.
@@ -97,7 +98,7 @@ test('the top action row is gone: no search, Changed, Reset to defaults, options
   for (const gone of ['data-advanced-search', 'data-search-toggle', 'data-changed-toggle', 'data-reset-config', 'data-tip-dismiss', 'settingsHeaderTools']) {
     assert.ok(!settingsSource.includes(gone), `settings.js no longer builds ${gone}`);
   }
-  assert.ok(settingsSource.includes("key: 'downloadSaves'") && settingsSource.includes('data-btn="downloadSaves"'),
+  assert.ok(settingsRowsSource.includes("key: 'downloadSaves'") && settingsSource.includes('data-btn="downloadSaves"'),
     'Download & saves is still reachable, as a Display row');
 });
 

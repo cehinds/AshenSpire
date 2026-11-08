@@ -36,22 +36,23 @@ test('core profile enables the enemies module with its JSON defaults', () => {
   assert.equal(settings.healRules.shapes.find(s => s.id === 'cheap').exhaust, true);
 });
 
-test('attributes start at 0 and are assigned freely: minion 2, elite 4, boss 6 points', () => {
+test('attributes start at the floor of 1 and total the player budget plus one point per level above the first (owner, 2026-11-07)', () => {
   const total = e => Object.values(e.attributes).reduce((a, b) => a + b, 0);
+  assert.equal(settings.attributeFill.floor, 1);
   for (const e of enemies) {
-    const [lo, hi] = { minion: [2, 2], elite: [4, 4], boss: [6, 6] }[e.tier];
-    assert.ok(total(e) >= lo && total(e) <= hi, `${e.id} (${e.tier}) assigns ${total(e)}`);
-    assert.deepEqual(settings.tagRules['tier.' + e.tier].attributeBudget, [lo, hi]);
+    const level = Math.max(1, e.levelProfile?.min ?? 1);
+    assert.equal(total(e), 5 + level, `${e.id} (${e.tier}, level ${level}) assigns ${total(e)}`);
+    for (const [id, n] of Object.entries(e.attributes)) assert.ok(n >= 1, `${e.id} ${id}`);
+    assert.equal(settings.tagRules['tier.' + e.tier].attributeBudget, undefined, 'tiers no longer set a budget');
   }
   // Free assignment: stat shapes differ between enemies.
   assert.ok(new Set(enemies.map(e => JSON.stringify(e.attributes))).size >= 8, 'stat shapes vary');
 });
 
-test('CON stays small (at most 1) and every enemy can pay its dearest card', () => {
+test('every enemy can pay its dearest card', () => {
   for (const e of enemies) {
-    const pools = enemyPools(e, settings);
+    const pools = enemyPools(e, settings, undefined, enemyItemBonusesFn(e, profile.content, profile.modules.gear));
     const needs = Math.max(...[...e.deck, ...(e.unlockCards || [])].map(id => enemyCards.find(c => c.id === id)?.staminaCost ?? 0));
-    assert.ok(e.attributes.constitution <= 1, `${e.id} CON ${e.attributes.constitution}`);
     const needMp = Math.max(...[...e.deck, ...(e.unlockCards || [])].map(id => enemyCards.find(c => c.id === id)?.manaCost ?? 0));
     assert.ok(needMp <= pools.mp, `${e.id} can pay its dearest MP card`);
     assert.ok(needs <= pools.sp, `${e.id} can pay its dearest card`);
@@ -64,8 +65,8 @@ test('HP is 10 + CON 10 / STR 5 / DEX 3 / WIS 2 / INT 1 per point + 5 per level,
   for (const e of enemies) {
     const level = Math.max(1, e.levelProfile?.min ?? 1);
     const p = enemyPools(e, settings);
-    // attributeOffset (owner, 2026-10-25) is added after own points, floored at 0; the tier rows here have no gear.
-    const a = Object.fromEntries(Object.entries(e.attributes).map(([id, n]) => [id, Math.max(0, n + (settings.attributeOffset?.[id] || 0))]));
+    // No attributeOffset is configured since 2026-11-07; the rows here have no gear.
+    const a = e.attributes;
     assert.equal(p.hp, 10 + 10 * a.constitution + 5 * a.strength + 3 * a.dexterity + 2 * a.wisdom + 1 * a.intelligence + 5 * (level - 1), e.id);
     assert.equal(p.ar, a.strength, e.id);
     assert.equal(p.dr, a.dexterity, e.id);
@@ -105,8 +106,8 @@ test('validator refuses a deck outside the size bounds', () => {
   assert.throws(resolveWith(p => { p.enemies[0].defaultDeck = p.enemies[0].defaultDeck.slice(0, 2); }), /deck size 2 outside/);
 });
 
-test('validator refuses attributes outside the tier budget', () => {
-  assert.throws(resolveWith(p => { p.enemies[0].attributes = { ...(p.enemies[0].attributes || {}), strength: 20 }; }), /outside minion budget/);
+test('validator refuses attributes outside the level budget', () => {
+  assert.throws(resolveWith(p => { p.enemies[0].attributes = { ...(p.enemies[0].attributes || {}), strength: 20 }; }), /outside level \d budget/);
 });
 
 test('validator refuses a card the enemy can never afford (minion full heal)', () => {
@@ -203,7 +204,7 @@ test('attribute priority + rank weights fill unset points; variance moves only f
     assert.ok(Array.isArray(e.attributePriority) && e.attributePriority.length === 5, e.id);
     const base = resolveEnemyAttributes(e, settings);
     for (const [id, n] of Object.entries(e.attributes || {})) assert.ok(base[id] >= n, `${e.id} keeps set ${id}`);
-    assert.ok(base.constitution <= Math.max(settings.attributeFill.caps.constitution, e.attributes?.constitution || 0), `${e.id} CON cap`);
+    assert.ok(Object.values(base).every(n => n >= settings.attributeFill.floor), `${e.id} floor`);
     for (const seed of [1, 2, 3, 99]) {
       const varied = resolveEnemyAttributes(e, settings, seed);
       assert.equal(Object.values(varied).reduce((a, b) => a + b, 0), Object.values(base).reduce((a, b) => a + b, 0), `${e.id} same total`);
@@ -296,11 +297,13 @@ test('variance outcomes stay unique and bounded even at the schema maximum', asy
   assert.ok(outcomes.length < 5000, `${outcomes.length} spreads`);
 });
 
-test('attributeOffset lowers STR, CON and DEX by 2 after own points, floors at 0, and spares players', () => {
-  assert.deepEqual(settings.attributeOffset, { strength: -2, constitution: -2, dexterity: -2 });
+test('a configured attributeOffset still lowers STR, CON and DEX by 2 after own points, floors at 0, and spares players', () => {
+  assert.equal(settings.attributeOffset, undefined, 'no offset by default since 2026-11-07');
+  const custom = { ...settings, attributeOffset: { strength: -2, constitution: -2, dexterity: -2 } };
   const soldier = enemies.find(e => e.id === 'wanderingSoldier');
   const flat = { ...soldier, resolvedAttributes: { strength: 3, dexterity: 1, constitution: 2, wisdom: 0, intelligence: 0 } };
-  assert.equal(enemyPools(flat, settings).ar, 1, 'STR 3 - 2');
-  assert.equal(enemyPools(flat, settings).dr, 0, 'DEX 1 - 2 floors at 0');
-  assert.equal(enemyPools({ ...flat, tier: null }, settings).ar, 3, 'a row without a tier (a player) is not offset');
+  assert.equal(enemyPools(flat, custom).ar, 1, 'STR 3 - 2');
+  assert.equal(enemyPools(flat, custom).dr, 0, 'DEX 1 - 2 floors at 0');
+  assert.equal(enemyPools({ ...flat, tier: null }, custom).ar, 3, 'a row without a tier (a player) is not offset');
+  assert.equal(enemyPools(flat, settings).ar, 3, 'the default config applies no offset');
 });

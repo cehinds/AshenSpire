@@ -3538,6 +3538,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :is(.modal, .as-tip) .as-statrow .sr-vals :is(.as-statpair, .sp-k, .sp-v) { white-space: normal; overflow-wrap: anywhere; font-size: inherit; }
 .combatant-inspector-body .as-eyebrow { font-size: max(1rem, calc(12px / var(--ui-zoom, 1))); }
 
+/* Keep the own/gear key readable even in the phone inspector's narrow column. */
+.modal div.as-row.combatant-inspector-row[data-fact='attributes'] { flex-direction: column; gap: .25rem; }
+.modal div.as-row.combatant-inspector-row[data-fact='attributes'] > .r-label {
+  max-width: 100%; white-space: normal; overflow: visible; text-overflow: clip;
+}
+
 :is(.modal, .as-tip) .as-statrow .sr-hint { font-size: inherit; line-height: 1.45; overflow-wrap: anywhere; }
 
 /* Readable HUD ink without scaling the surrounding layout or hit targets. */

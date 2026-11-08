@@ -13,7 +13,7 @@
     },
     "targetBand": {
       "min": 1,
-      "max": 4
+      "max": 2
     }
   },
   {
@@ -31,7 +31,7 @@
     },
     "targetBand": {
       "min": 1,
-      "max": 4
+      "max": 2
     }
   },
   {
@@ -50,7 +50,7 @@
     },
     "targetBand": {
       "min": 1,
-      "max": 4
+      "max": 2
     }
   },
   {
@@ -68,7 +68,7 @@
     },
     "targetBand": {
       "min": 1,
-      "max": 4
+      "max": 2
     }
   },
   {
@@ -86,7 +86,7 @@
     },
     "targetBand": {
       "min": 1,
-      "max": 4
+      "max": 2
     }
   },
   {
@@ -102,8 +102,8 @@
       "max": 5
     },
     "targetBand": {
-      "min": 4,
-      "max": 6
+      "min": 2,
+      "max": 3
     }
   },
   {
@@ -119,8 +119,8 @@
       "max": 6
     },
     "targetBand": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     }
   },
   {
@@ -137,8 +137,8 @@
       "max": 3
     },
     "targetBand": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     }
   },
   {
@@ -154,8 +154,8 @@
       "max": 4
     },
     "targetBand": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     }
   },
   {
@@ -171,8 +171,8 @@
       "max": 4
     },
     "targetBand": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     }
   },
   {
@@ -188,8 +188,8 @@
       "max": 6
     },
     "targetBand": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     }
   },
   {
@@ -205,8 +205,8 @@
       "max": 6
     },
     "targetBand": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     }
   }
 ]

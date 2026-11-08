@@ -1131,11 +1131,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return { accepted: true, prediction: maneuver };
         } } : {}),
       name: def.name,
-      subtitle: (def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'),
+      subtitle: [(def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'), ...(Number.isFinite(entity.level) ? [`Level ${entity.level}`] : [])].join(' · '),
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
+        ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
+          value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
+            const own = entity.ownAttributes?.[id] ?? entity.attributes[id] ?? 0, bonus = entity.ownAttributes ? entity.attributeBonuses?.[id] || 0 : 0;
+            return `${t(`combat.attr.short.${id}`)} ${own}${bonus ? `${bonus > 0 ? '+' : '\u2212'}${Math.abs(bonus)}` : ''}`;
+          }).join(' · ') }] : []),
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
         ...combatStatRows(v, entity, 'enemy'),
@@ -2036,6 +2042,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // make the pips dead patches on a target.
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
+    row.dataset.morphKeep = 'true'; // a morph of the meters (an HP or Block change) leaves the tray in the badge row alone
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     for (const status of rows) {
       const statusTip = () => {
@@ -2172,7 +2179,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const procPlan = entity.kind === 'enemy' ? procDisplayPlan(entity) : null;
     const stackHidden = new Set(procPlan ? procPlan.hidden : []);
     const expanded = combat.combatExpansionVersion === 2;
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => bar.id !== 'poise' && !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp')); // Poise is hidden on the HUD (owner 2026-11-07); the inspect panel keeps it.
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (!expanded || bar.id === 'hp' || bar.id === 'poise'));
+    // Owner 2026-11-07 (backlog #11): the Poise bar is always drawn under HP, an empty trough at 0/0 (AC stays undrawn).
+    if (!plan.some((bar) => bar.id === 'poise')) {
+      const row = registries.resources.get('poise');
+      plan.push({ id: 'poise', name: row.name, glyph: row.glyph || '', tint: row.tint, weight: row.weight, band: row.band || null, cur: 0, max: 0, pct: 0, lengthPct: 100, domain: 0, labelMax: 0 });
+    }
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
@@ -2205,9 +2217,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (tooltips) el.tabIndex = 0;
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
-        const next = el.nextSibling;
+        const poiseEl = bars.querySelector('.as-meter[data-res="poise"]');
+        const next = el.nextSibling === poiseEl ? poiseEl.nextSibling : el.nextSibling;
         const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
-        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true });
+        // The Poise bar joins the HP row: bars stacked, then one badge row. The status tray is seated in that badge row by combatantFrame.js.
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true,
+          poise: poiseEl });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -2215,7 +2230,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
-      if (bar.id === 'poise' && bar.cur >= bar.max * 0.75) {
+      if (bar.id === 'poise' && bar.max > 0 && bar.cur >= bar.max * 0.75) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
         if (el) el.classList.add('pulse', 'full');
       }
