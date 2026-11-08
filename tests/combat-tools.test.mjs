@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatLogEntries } from '../src/model/combatLog.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { resetModalState, modalOpen } from '../src/ui/modalState.js';
 import { mountCombatTools, closeCombatFullLog } from '../src/ui/components/combatTools.js';
 import { readFileSync } from 'node:fs';

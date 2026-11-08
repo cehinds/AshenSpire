@@ -11,7 +11,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { affordableCards } from '../tools/simbot.mjs';
 import { playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const PageEvent = globalThis.Event;
 

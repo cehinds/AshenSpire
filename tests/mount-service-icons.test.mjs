@@ -2,7 +2,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountMountServiceModal } from '../src/ui/components/mountServiceModal.js';
 import { renderEquipmentSetCell } from '../src/ui/components/armouryComponents.js';
 import { equipmentSetCellModel } from '../src/ui/models/ArmouryModels.js';

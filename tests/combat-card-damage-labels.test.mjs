@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatCardDamageLabel, combatCardSummary } from '../src/model/playingCard.js';
 import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));

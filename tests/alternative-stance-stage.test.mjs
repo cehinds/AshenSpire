@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { createAlternativeStanceStage, withAlternativeStance } from '../src/ui/alternativeStanceStage.js';
 
 test('held artwork reuses pending and painted images but reloads changed URLs and retries failures', async () => {

@@ -5,7 +5,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { constantFormulaValue, describeFormula, evaluate } from '../src/model/formulas.js';
 import { staticCardTokens, combatCardSummary, playingCardModel } from '../src/model/playingCard.js';
 import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const reg = createRegistries(contentBundle);
 

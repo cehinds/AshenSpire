@@ -5,7 +5,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { mountEvent } from '../src/ui/screens/event.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const pick = (_dom, app, choiceIndex) => {
   app.querySelector(`#choices [data-choice="${choiceIndex}"]`).click();

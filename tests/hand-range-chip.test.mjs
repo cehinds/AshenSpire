@@ -10,7 +10,7 @@ import { combatCardRange } from '../src/model/combatCardProfile.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { cardRangeChipHtml } from '../src/ui/components/cardTagSymbols.js';
 import { t } from '../src/ui/strings.js';
-import { withModalDom as withDom } from './helpers/modal-dom.mjs';
+import { withModalDom as withDom } from './helpers/dom.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
