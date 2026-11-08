@@ -214,6 +214,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `release-series.mjs` | Gate current CI/CD builds; archived downloads retain their original versions. | wf ci, dev-preview, pages-builds; docs docs/RELEASE-CHECKLIST.md |
 | `release-shots-selftest.mjs` | release-shots-selftest — the known-bad corpus for release-shots. | tools release-shots |
 | `release-shots.mjs` | release-shots — photograph the RELEASE BUILD, screen by screen, | wf ci; tests engine.test.js, run-node; tools axisfit, buildstamp-shot, contrast-audit +5; docs SPEC.md, docs/SPEC-RECONCILE.md, docs/preview/issue-185-5198e8a/README.md +3; other src/buildversion.js, src/main.js +2 |
+| `restore-published-main.mjs` | Restore only verified, exact published main; no match retains the strict rebuild. Run `node tools/restore-published-main.mjs --out <dir>`. | wf pages-builds; tests restore-published-main |
 | `reward-map-layout-qa.mjs` | Production reward/map mounts: column containment and touch response budget. | tools map-tap-latency |
 | `rogue-parity.mjs` | Rogue full-slice contract. Source/model only: no browser and no generated build. | tests content-validators; docs docs/ART-REPO-PLAN.md, docs/FINISH.md |
 | `runcreation.mjs` | runcreation — WHO WROTE THIS NUMBER, AND WHAT DID THEY OVERWRITE? | tools onevocab, plantsites-baseline.json, saveroundtrip; other src/engine/save.js, src/model/healLedger.js |
