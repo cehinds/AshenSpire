@@ -33,6 +33,34 @@
   "damage": {
     "unified": true
   },
+  "schoolStatuses": {
+    "schools": {
+      "fire": { "status": "burn", "stacks": 1 },
+      "lightning": { "status": "weak", "stacks": 1 },
+      "frost": { "status": "chilled", "stacks": 1 },
+      "force": { "wardStrip": 1 },
+      "divine": { "cleanse": 1 },
+      "decay": { "status": "necroticBlight", "stacks": 1 },
+      "illusion": { "status": "confused", "stacks": 1 },
+      "earth": { "status": "slowed", "stacks": 1 },
+      "alteration": {}
+    },
+    "schoolAliases": {
+      "abjuration": "alteration",
+      "transmutation": "alteration"
+    },
+    "damageTypes": {
+      "cold": { "status": "chilled", "stacks": 1 },
+      "fire": { "status": "burn", "stacks": 1 },
+      "lightning": { "status": "weak", "stacks": 1 },
+      "force": { "wardStrip": 1 },
+      "holy": { "cleanse": 1 },
+      "necrotic": { "status": "necroticBlight", "stacks": 1 },
+      "poison": { "status": "venom", "stacks": 1 },
+      "psychic": { "status": "confused", "stacks": 1 },
+      "earth": { "status": "slowed", "stacks": 1 }
+    }
+  },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,
     "blockFraction": 0.25,

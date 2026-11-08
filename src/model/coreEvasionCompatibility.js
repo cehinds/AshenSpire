@@ -15,6 +15,7 @@
 // The 2026-11-07 ratings-meter removal (cleanup 3i-B) marks the status.ward manifest authored, which moves the runtime hash once more and adds 965682.... No rule changed.
 // The 2026-11-07 keepsake removal (keepsake tag and mechanic dropped from the content and tag tables) moves the runtime hash again; it approves this edge again and adds the runtime before it (05977e...). No rule changed: a save from there keeps its own snapshotted rules.
 // Backlog #7 (damage.unified in fixCoreMechanics.json) moves the runtime hash again; it approves this edge again and adds the runtime before it (802e46...).
+// Backlog #7 (schoolStatuses in fixCoreMechanics.json) moves the runtime hash again; it approves this edge again and adds the runtime before it (1d2768...).
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
@@ -33,8 +34,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:965682a58b40bf7289b03d5ca54789f45b08c55bc1e8db5619e3894a742a80a7',
   'sha256:05977e492f74b543357e606b8e3cf7a0dd8984bc746a4dda123c976c851f660b',
   'sha256:802e46d530589fa030bd1a34ee07ec890ea678d4754c7320291a5d91b91cd1ff',
+  'sha256:1d27685c953df52d9698f558250924b6a9ba12b4868c6e54344d197e4ea329d0',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:1d27685c953df52d9698f558250924b6a9ba12b4868c6e54344d197e4ea329d0';
+const FIXED_EVASION_RUNTIME = 'sha256:a6c7c84d985bd0492f8a95fcd9042c53037cfd8bef340f6cfe2ee47f6e898ed9';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

@@ -37,6 +37,8 @@ export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(ru
 // Owner, 2026-11-07 (backlog #7): one damage kind in Core 2. Versioned flag, snapshotted per fight with the rest of the rules:
 // a fight saved without the field keeps the physical/magic split it started with (the missing field reads false).
 export const fixCoreUnifiedDamage = ctx => fixCoreEnabled(ctx) && rawRules(ctx).damage?.unified === true;
+/** Owner, 2026-11-07 (SPEC 4.7, School statuses): the per-school status table, or null for a fight saved before it. */
+export const fixCoreSchoolStatuses = ctx => fixCoreEnabled(ctx) && fixCoreUnifiedDamage(ctx) ? rawRules(ctx).schoolStatuses || null : null;
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
 // Pure v1 -> current migration for persisted rules: a perception block saved
@@ -72,7 +74,7 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','damage','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','damage','schoolStatuses','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
@@ -82,6 +84,15 @@ export function validateFixCoreRules(rules) {
   fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
   if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
   if (rules.damage !== undefined && (typeof rules.damage !== 'object' || rules.damage === null || typeof rules.damage.unified !== 'boolean' || Object.keys(rules.damage).some(key => key !== 'unified'))) throw new Error('FixCore damage requires {unified:boolean}');
+  const ss = rules.schoolStatuses;
+  if (ss !== undefined) {
+    const entry = row => row && typeof row === 'object' && Object.keys(row).every(key => ['status', 'stacks', 'wardStrip', 'cleanse'].includes(key))
+      && (row.status === undefined || typeof row.status === 'string' && Number.isInteger(row.stacks) && row.stacks > 0)
+      && ['wardStrip', 'cleanse'].every(key => row[key] === undefined || Number.isInteger(row[key]) && row[key] > 0);
+    if (typeof ss !== 'object' || ss === null || Object.keys(ss).some(key => !['schools', 'schoolAliases', 'damageTypes'].includes(key))
+      || ![ss.schools, ss.damageTypes].every(table => table && typeof table === 'object' && Object.values(table).every(entry))
+      || (ss.schoolAliases !== undefined && !Object.values(ss.schoolAliases).every(value => typeof value === 'string'))) throw new Error('FixCore schoolStatuses requires {schools, damageTypes} rows of {status, stacks} | {wardStrip} | {cleanse}');
+  }
   fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))

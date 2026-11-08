@@ -4,6 +4,7 @@ import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
+import { schoolStatusEffects } from './schoolStatuses.js';
 import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -429,6 +430,10 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
   applyWeaknessEffects(ctx, source, target, receipt);
+  // Owner, 2026-11-07 (SPEC 4.7, School statuses): a hit's school status, after the HP loss; the legacy and expanded riders never run here.
+  for (const effect of schoolStatusEffects(ctx, source, target, carrier, { hpLoss: receipt.hpLoss })) {
+    ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
+  }
   afterHpChange(ctx, target, { sourceId: source?.id });
   if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
   return receipt.amount;
