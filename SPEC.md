@@ -2662,6 +2662,8 @@ Governs the class reward schedule, ability grades (rank 0-5), the Intelligence b
 
 #### Class milestones
 
+Class milestones no longer queue. The table is the cadence `classMilestoneProblems` checks saved receipts against; it grants nothing to new runs.
+
 | Category | Class levels |
 |---|---|
 | Cards | 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 |
@@ -2670,7 +2672,7 @@ Governs the class reward schedule, ability grades (rank 0-5), the Intelligence b
 | Relics | 5, 8, 11, 14, 17, 20 |
 | +1 class attribute choice | 5, 10, 15, 20 |
 
-- Each milestone gives its guaranteed choice even if no new definition unlocks there; categories coexist at one level.
+- A saved milestone row must carry exactly the categories its level lists.
 - No reward or XP is replayed at run start, swap, reload or respec.
 - Favored skills (other skills remain trainable):
   - Reaver: Combat Maneuvers, Blade, Shield, Heavy Armor.
