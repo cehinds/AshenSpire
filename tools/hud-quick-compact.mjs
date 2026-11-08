@@ -27,7 +27,7 @@ import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = resolve(ROOT, 'tools/results/hud-quick-compact');
+const OUT = resolve(ROOT, 'scratch/qa/hud-quick-compact');
 const BUILD = process.argv.includes('--build');
 const SHAPES = [
   { name: 'desktop', width: 1200, height: 730, mobile: false },
