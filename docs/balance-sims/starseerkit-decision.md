@@ -3,7 +3,7 @@
 ## Provenance and boundary
 
 - Exact game-source base: `ec4933ae12e373352cf880fd5e810a4f248fe6c4` (tree `feff2203ac3bbad58d624595407fa682d1506721`, live `dev` after PR #217).
-- Exact measurement-tree basis: `a5caff98a41ac8da6753274dd03bcff3992d3272` (tree `4671dfb21f0a2d9936dc1d8bd2a1670c68fac816`). Its only path beyond `dev` at measurement time is `tools/measure-classes.mjs`; the seven-file `tools/results/starseerkit-*` packet records that exact tool against product source byte-identical to `dev`.
+- Exact measurement-tree basis: `a5caff98a41ac8da6753274dd03bcff3992d3272` (tree `4671dfb21f0a2d9936dc1d8bd2a1670c68fac816`). Its only path beyond `dev` at measurement time is `tools/measure-classes.mjs`; the seven-file `docs/balance-sims/starseerkit-*` packet records that exact tool against product source byte-identical to `dev`.
 - Carried standalone receipt: `0.4.0.0850`, source identity `133f36b5af` (`buildordinal.json`). It is deliberately not regenerated or used by this headless measurement; the simulator imports source modules, and #205 owns no root/build/dist/buildordinal artifacts.
 - Runtime: Node `v24.16.0`.
 - Runs: `n=1000` per class and policy, deterministic seeds `(i*2654435761)>>>0`, `i=1..1000`.
