@@ -29,7 +29,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 
 ## Stale (51 sections)
 
-### Scope status — what is built, partly built and planned (SPEC L18-42)
+### Scope status (SPEC L18-42)
 
 - [ ] **stale** SPEC L27 (row 3): "Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`)"
   - Code: `src/model/state.js:108` `export const RUN_SCHEMA_VERSION = 23;`
