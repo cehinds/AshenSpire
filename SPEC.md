@@ -3224,6 +3224,10 @@ Rules for new runs on **`ashen.core@2.0.0`**, the FixCore rules version 1 profil
   - A policy with no `maxRange` (run or save from before the cap) keeps all three bands and replays unchanged.
 
 **Spells are Reach by default (owner, 2026-11-06; recorded 2026-11-07).** In Core 2 a
+spell-camp card or move, a projectile or a ranged maneuver is Reach unless tagged
+`range:melee`; every other card or move is Melee. *Falsify:* an untagged spell-camp card
+reads as Reach on its face and in the range check, and the same card tagged `range:melee`
+reads as Melee.
 
 ### Damage, Block, Poise and statuses
 
