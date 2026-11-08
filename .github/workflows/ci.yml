@@ -1040,6 +1040,16 @@ jobs:
         # visible from Node.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs
 
+      # The photographs it writes (tools/results/ is ignored, not committed): a
+      # CI artifact, per CONTRIBUTING.md "QA evidence goes to CI artifacts".
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: buildstamp-shots
+          path: tools/results/buildstamp-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: …and that gate can fail — six ways to lose the ink, each caught
         # Inverted expectation. Seven whole-program runs — a control and six
         # plants, each with its own served tree and its own browser — measured at
