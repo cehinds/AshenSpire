@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.46`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
 - **Developer screenshot modules load on demand** ([#2724](https://github.com/cehinds/AshenSpire/pull/2724), `0.7.4.46`). A normal start no longer loads the developer-only screenshot code; the game plays the same.
 - **On-demand build failures stay visible** ([#2721](https://github.com/cehinds/AshenSpire/pull/2721), `0.7.4.46`). Failed on-demand modules keep reporting their original error, and misleading comment text can no longer hide an unbundled import; normal play is unchanged.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.

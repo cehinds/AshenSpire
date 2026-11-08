@@ -324,7 +324,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 3. Deletions
 
-- [ ] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5)
+- [x] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5) — [#2670](https://github.com/cehinds/AshenSpire/pull/2670)
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
 - [x] Attic or delete the 115 orphan tools (H5) — [#2715](https://github.com/cehinds/AshenSpire/pull/2715)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
