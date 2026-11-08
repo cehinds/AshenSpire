@@ -131,7 +131,6 @@ const ALLOWED = [
   ['src/ui/components/combatantOverhead.js', 'Inspect', 'combatant overhead inspection names a combatant, not the Reading Desk card inspection action'],
   ['src/ui/components/offlinePlay.js', 'All', 'the save-import replacement warning begins with All slots; it is not the collection filter'],
   ['src/ui/input.js', 'Inspect', 'global input binding label, separate from the Reading Desk card action'],
-  ['src/ui/screens/settings.js', 'Undo', 'settings change undo, separate from the deck transaction undo'],
   ['src/ui/screens/equipment.js', 'Hand', 'the Armoury Resources table\'s hand-size line, not the Stats preview "Hand" topic title'],
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],

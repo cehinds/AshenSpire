@@ -2077,7 +2077,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const bar = document.createElement('div');
     bar.className = 'set-undo';
     bar.setAttribute('role', 'status');
-    bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
+    bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>${esc(t('settings.undo'))}</button>`;
     bar.querySelector('[data-undo]').onclick = async () => {
       const restore = {};
       // The seed record too, even when the Undo does not carry it: the save
