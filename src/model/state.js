@@ -1162,11 +1162,8 @@ function checkClassAndShopLedgers(run, problems, preShopKinds) {
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
+/** Phase: every RUN_SHAPE field is present, nullable or typed as declared (minus fields a legacy save predates). */
+function checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils }) {
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
@@ -1193,6 +1190,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   problems.push(...collectedCardProblems(run));
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
