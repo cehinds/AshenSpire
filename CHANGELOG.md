@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Quieter test runs** ([#2697](https://github.com/cehinds/AshenSpire/pull/2697), `0.7.4.40`). The repository now declares its scripts as modules, so every test run stops printing a module-type warning, and `npm run test:pr` runs the same checks a pull request does.
 - **Behind the scenes: the mechanics kernel lives in the engine kernel** ([#2676](https://github.com/cehinds/AshenSpire/pull/2676), `0.7.4.40`). Removed an unused framework index and moved the shared mechanics compiler under `engine/runtime`; nothing you play changes.
 - **Unused tools moved to the attic** ([#2715](https://github.com/cehinds/AshenSpire/pull/2715), `0.7.4.40`). 95 tool scripts nothing runs any more moved to the tools attic, still runnable from there, and the tools check now fails on any new unused tool; nothing you play changes.
 - **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.

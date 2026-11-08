@@ -365,7 +365,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] One `esc` in `ui/html.js`; `model/guards.js` for `deepFreeze`/`record`/`finite`; `HOSTILE_OPS` in `schemas.js`; one `snapshotCombat` helper (M4)
 - [ ] `tools/browser.mjs` exports `connectCdp`; migrate the ~96 copies (H5)
 - [ ] `tools/lib/cli.mjs` over `parseArgs`; `tools/lib/mutants.mjs` with sidecar `*.selftest.mjs`; one shared `sandbox()` for the `mkdtempSync` tools (M4)
-- [ ] `package.json`: `"type": "module"` and a `test:pr` script (M10)
+- [x] `package.json`: `"type": "module"` and a `test:pr` script (M10) — [#2697](https://github.com/cehinds/AshenSpire/pull/2697)
 - [ ] `ci.yml`: one `prepare` composite; rename `sync-alternatives.yml`/`alternative-sync.yml` by direction (M10, Low)
 - [ ] `tests/run-node.mjs`: data table of gates, one fixture loader (M10)
 - [x] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low) — [#2711](https://github.com/cehinds/AshenSpire/pull/2711)
