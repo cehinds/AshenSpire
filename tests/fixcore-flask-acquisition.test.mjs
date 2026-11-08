@@ -9,7 +9,7 @@ import { acquireFlask, chargeFlaskId, flaskAcquisitionPlan, reallocateFlaskCharg
 import { claimGameProfileReward, gameProfileShopPurchasePlan, purchaseGameProfileShopOffer } from '../src/model/gameProfileRewards.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);

@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { effectsOff, motionOff } from '../src/ui/performance.js';
