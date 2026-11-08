@@ -34,9 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.46`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Save checks tidied** ([#2713](https://github.com/cehinds/AshenSpire/pull/2713), `0.7.4.46`). The run-save validator and derived-stat setup are split into named steps; saves load exactly as before.
-- **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.40`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.46`). Card previews and card resolution allocate about half as much memory; play is unchanged.
+- **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.46`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
 - **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.44`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
 - **Save code reorganised** ([#2707](https://github.com/cehinds/AshenSpire/pull/2707), `0.7.4.44`). The save manager is now built from four smaller parts (archive, profile, shared profile copies, space reclaim). Saves, old saves and exported settings load exactly as before.
