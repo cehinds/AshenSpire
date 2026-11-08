@@ -9,7 +9,7 @@ import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { sfx } from '../src/ui/sfx.js';
 import { haptic } from '../src/ui/haptics.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests beat order and sound timing for every floater; the allowlist is tests/floater-policy.test.mjs

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fitIllustratedCards as fitCards } from '../src/ui/components/illustratedCardFitter.js';
 import { invalidateLayoutMetrics } from '../src/ui/layoutMetrics.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const fitIllustratedCards = cards => withKitDom(() => { invalidateLayoutMetrics(); fitCards(cards); });
 

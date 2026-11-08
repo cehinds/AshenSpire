@@ -12,7 +12,7 @@ import { cardAffectsEnemies, hitBadgeTargetIds } from '../src/model/hitBadge.js'
 import { rangeHitLabel } from '../src/ui/models/CombatRangeActionModel.js';
 import { upcastOptions } from '../src/model/upcasting.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // A pending reaction offer pauses the hand: its quotes are reused, then re-taken once it resolves.
 // Run the shipped screen functions, real engine quotes and the repository DOM

@@ -17,7 +17,7 @@ import { createRunState, validateRunShape, serializeRun, deserializeRun } from '
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
 import { orderedXpRows, xpFillDurations } from '../src/model/rewardXpPresentation.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // These tests drive the reward door's flow, not the curve: they pin the
 // October 2 curves (base 100, ×1.75 for the character, skills and class) their

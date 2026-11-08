@@ -111,7 +111,7 @@ test('revealing one actor never projects another unread enemy or its future choi
 });
 
 test('HUD and reaction prompt distinguish per-hit values from marked totals and current contact', async () => {
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   const { combatantIntent } = await import('../src/ui/components/combatantOverhead.js');
   const { openReactionChoiceModal } = await import('../src/ui/components/reactionChoiceModal.js');
   withKitDom(({ document }) => {
