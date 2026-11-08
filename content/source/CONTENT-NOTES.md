@@ -1980,7 +1980,7 @@ _No comments were written beside these numbers in the old balance.js._
   but the under-model track is 84.6 px at 390x844, so most of the roster
   lands on the 16 px floor and stops encoding anything.
   
-  MEASURED, all 19 enemies, `node tools/hudbars.mjs --model-scale`:
+  MEASURED, all 19 enemies, `node tools/attic/hudbars.mjs --model-scale`:
   15 of 38 bars (39 %) sit ON the floor, and 13 of the 19 HP bars (68 %) do
   — every enemy at or under 60 HP renders the same length as every other.
   A scale two thirds of whose values are pinned to its minimum is not a
