@@ -2837,7 +2837,7 @@ An attack that deals HP damage also deals impact: physical fills Poise, magical 
 
 ### Status resistance
 Reduces hostile buildup or incoming stacks, not duration or proc severity. Self-applied beneficial effects are unaffected; other effects are unresisted until configured.
-- Effective rating = Poise × physicalWeight + Ward × magicalWeight (positive, need not sum to 1). Applied = base × K/(K + effective rating), subject to the resistance cap.
+- Effective rating = Poise × physicalWeight + Ward × magicalWeight (both may be positive; need not sum to 1; e.g. Bleed's Ward weight is 0). Applied = base × K/(K + effective rating), subject to the resistance cap.
 - Fractional applications carry forward per target/status.
 
 | Status | Poise / Ward weight |
@@ -2885,7 +2885,7 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 | stance | 5 | a physical attack's `maneuver:` tag changes among attack, smash, ranged (smash only on a card paying 2 SP or more); once per card; never a Sweep, Defend or Counter |
 | school | 4 | a spell's `school:` tag set to another of frost, fire, lightning, force, alteration, illusion, divine, decay, earth; once per card |
 | element | 6 | a physical attack's damage school becomes magic, arcane, holy or fire (a magical property); once per card |
-| rank down | 3 | adds `rank.cantrip` (copy counts as a cantrip, Basic, F = 1, from then on); once per card; only on a card not already Basic |
+| rank down | 3 | adds `rank.cantrip` (the copy counts as a cantrip, free allowance F = 1, from then on); once per card; only on a card not already Basic |
 
 - **Cantrip and Basic Mana.** A cantrip or Basic costs no Mana, printed or upgrade-made (`core.mendingTouch` prints 0 MP; the validator refuses a `rank.cantrip` card with Mana).
   - Rank down sets the copy's Mana cost to 0 wherever the card resolves (saved copies included); the preview reads e.g. Mana 2 → 0.
@@ -2900,7 +2900,6 @@ Core only (Legacy and Current keep the single authored upgrade). Design and buil
 #### Notes and history
 - Runs born before ruleset 7 keep the frozen formulas in the rating table.
 - In §13.4p's scope Ward is a rating only (no Ward meter).
-- Core card upgrades (§13.4s) are Core only; Legacy and Current keep the single authored upgrade.
 
 Full history: [docs/spec-history/14-statpools-shops.md](docs/spec-history/14-statpools-shops.md).
 
@@ -3010,7 +3009,7 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 - Bounds are checked **only on confirm**. A reward, purchase or equipment swap may leave the deck outside them; the next visit shows the refusal until fixed.
 - Independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury; FINISH's Owner decisions list records whether to fold them together.
 
-**Play in deck order.** Off: the deck list is one row per card variant (card id, upgrade and mods, plus owner for a locked card) with ×N, a row's － takes one copy. On: one row per instance with a reorder handle. `run.deck` array order is the arrangement (no new field).
+**Play in deck order.** Off: the deck list is one row per card variant (card id, upgrade and mods, plus owner for a locked card; `deckVariantKey`/`cardVariantKey`) with ×N, a row's － takes one copy. Collection tiles use the same variant key, so Strike and Strike+ stay separate rows. On: one row per instance with a reorder handle. `run.deck` array order is the arrangement (no new field).
 - `createCombat` builds the draw pile in `run.deck` order instead of `rng.shuffle('shuffle', deck)`; drawn from the top, first card first. Innate cards still go on top, keeping relative order.
 - When the draw pile empties, `drawCards` takes its own ordered path (not `reshuffleDiscardIntoDraw`, which `shuffleDiscardIntoDraw` also uses): the discard pile ordered by each instance's index in `run.deck`, then cards not in the deck (created in combat) in discard order.
 - Combat start and the empty-pile return consume no `shuffle`-stream value while on; a seed played with it off is unchanged. Card effects that shuffle (`shuffleDiscardIntoDraw`, `addCard`'s random position) still use that stream.
@@ -3026,7 +3025,7 @@ The deck editor lets the player move cards between the deck and a sideboard unde
   - Phone rows read grip, art, then name, stance and range, then rules; mark and MP/SP sprites top right, stepper bottom right, the same at every phone width (smaller phones shrink art, costs and stepper rather than moving them; owner, 2026-10-11).
   - Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Ordered decks keep exact sequence instead of type groups. Copy counts show for single and grouped copies. Text search is off for now (owner, 2026-10-11).
 - **Undo** reverses the last successful add, removal or reorder, restoring the full Cancel state (allocation and mint counters included). Failed or unchanged actions create no history. Cancel restores the state at open; Done confirms the current valid state.
-- **Header:** live counter "N / min–max", red with the refusal sentence out of bounds; beside it a compact cost-curve histogram.
+- **Header:** the run header never has an Edit Deck button, in any mode (`tests/deck-editor.test.mjs`); the door is the Armoury, or the Rest screen under `restOnly`. Live counter "N / min–max", red with the refusal sentence out of bounds; beside it a compact cost-curve histogram.
 - **Filters and sort:** filter chips for type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded; sort chips for cost, name, type, source.
 - **Every drag has two twins.** A tap on a tile or row inspects without changing the run. The inspector carries explicit Add to deck and Remove from deck; rows carry ＋ and －. Reordering is a handle drag or ▲/▼.
 - **Gamepad:** D-pad moves grid focus; LB/RB switch panes (phone: list ↔ Draw order); A inspects or activates the focused Add/Remove; X picks up the focused deck row, D-pad moves it, X or A drops; Y cycles filters; B cancels; Start confirms (§7.3).
@@ -3051,7 +3050,7 @@ Core's shop keeps: `gameProfileShopSales`, `shopOfferPrice`, `balance.shop.sellF
 - Shows the run's before/after (`model/runChangeReceipt.js`): stat and resource deltas, card faces before and after, the armament's tier stat rows (`coreSmithingStats`), and a strip of cinders and stones spent. One Continue button closes it.
 - A refusal keeps the inline `.bs-refusal` and opens nothing; a commit that changes nothing opens nothing.
 
-**The Core Blacksmith** (owner, 2026-10-31). Core (`progression.cardRanks`) lays out a fixed workshop: `upgrade`, `upgradeArt` (card upgrade, §13.4s), `rankUp`, `armaments`, `weaponArts`; every other offering stays withheld (`blacksmithWithholds`). About 25% of Core shop nodes are one (`shops.blacksmithChance`). Numbers are the profile's `shops.blacksmith` block (`games/ashenspire/packs/core/shops.json`). Every service is a plan/commit pair on the stock's `tradeRevision`; a stale quote is refused by name and one quote commits once; stock and prices persist across a reload.
+**The Core Blacksmith** (owner, 2026-10-31). Core (`progression.cardRanks`) lays out a fixed workshop: `upgrade`, `upgradeArt` (card upgrade, §13.4s), `rankUp`, `armaments`, `weaponArts`; every other offering stays withheld (`blacksmithWithholds`), and an old saved stock that lists one is not drawn. About 25% of Core shop nodes are one (`shops.blacksmithChance`). Numbers are the profile's `shops.blacksmith` block (`games/ashenspire/packs/core/shops.json`). Every service is a plan/commit pair on the stock's `tradeRevision`; a stale quote is refused by name and one quote commits once; stock and prices persist across a reload.
 
 | Offering | What it does | Reuses |
 |---|---|---|

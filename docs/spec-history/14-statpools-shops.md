@@ -77,3 +77,6 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Unlimited basics, limited rares | Inscryption (squirrels), Monster Train (starter cards) | **Yes** | Matches the owner's copy rule: Strike/Defend ∞, arts and techniques by ownership. |
 | Crafting / dusting inside the editor | Hearthstone, LoR, Arena | **No** | Copies are earned in play and stacked at the blacksmith (§14.3); a second economy in the editor would duplicate it. |
 | Auto-fill "complete my deck" | Hearthstone, Arena | **No (v1)** | The deck starts from the run's real deck; nothing to fill. |
+
+## Review fixes (PR #2691)
+- Nothing else lived only in the Falsify list or the §14.7 table: header-has-no-Edit-Deck and the variant-key row rule were restored to §14.1; the rest restate rules kept in §14.1.
