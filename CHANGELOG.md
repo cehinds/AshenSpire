@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-08
+
+- **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
+
 ## 2026-11-07
 
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.32`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
