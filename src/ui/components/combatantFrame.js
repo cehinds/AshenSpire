@@ -118,7 +118,8 @@ export function updateCombatantSlots(frame, { classNames, leading, name, meters,
     const keptTray = live ? live.querySelector('.statuses') : null;
     swaps += reconcileList(live ? live.parentNode : host, live ? [live] : [], meters ? [meters] : [], anchor, { morphable: meterMorphable });
     const newRow = badgeRowOf(frame);
-    if (keptTray && newRow && !newRow.contains(keptTray)) { newRow.appendChild(keptTray); refreshIconTray(keptTray); }
+    // Reparenting keeps the tray's fitted cache (its full item list); the refit below works from it, never from the collapsed DOM.
+    if (keptTray && newRow && !newRow.contains(keptTray)) newRow.appendChild(keptTray);
   }
   if (statuses !== undefined) {
     // The status tray stays; its icons are written in place and only a status gained or lost adds or removes one.
