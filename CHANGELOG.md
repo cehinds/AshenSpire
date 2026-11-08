@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.32`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
 - **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.32`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
 
 ## 2026-11-07
