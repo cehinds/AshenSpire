@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-08
 
 - **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.40`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+- **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.
 - **Art manifests compiled from source** ([#2677](https://github.com/cehinds/AshenSpire/pull/2677), `0.7.4.40`). Outfit, defeated-pose, enemy-state and enemy-landmark art tables now build from the content sources like every other table; the game is 70 KB smaller and plays the same.
 - **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
 - **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
