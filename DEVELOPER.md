@@ -176,10 +176,10 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
-| `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
+| `sync-dev-to-alternative-dev.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
 | `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
 | `readme-sync.yml` → refreshes the README generated regions with `--write` (not a gate) | — | yes (push to `dev`) | — | — |
-| `sync-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
+| `sync-test-to-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
 | `worker-branch-cleanup.yml` → deletes origin `worker/**` branches merged into `test` (not a gate) | — | — | yes | — |
 | `restore-test-branch.yml` → recreates `test` from `release` when it is deleted (not a gate) | — | — | — | — |
 
