@@ -9,14 +9,36 @@ import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
 
 const KNOWN = new Set(Object.values(UI_COMPONENTS));
 const WRITES = [
-  { re: /dataset\.component\s*=\s*(['"`])([^'"`$]+)\1/g, literalAssign: true },
-  { re: /dataset:\s*\{[^}]*?\bcomponent:\s*(['"`])([^'"`$]+)\1/g, literalAssign: true },
+  { re: /dataset(?:\.component|\[\s*['"]component['"]\s*\])\s*=\s*(['"`])([^'"`$]+)\1/g, literalAssign: true },
+  { re: /['"]data-component['"]\s*:\s*(['"`])([^'"`$]+)\1/g, literalAssign: true },
   { re: /setAttribute\(\s*['"]data-component['"]\s*,\s*(['"`])([^'"`$]+)\1/g },
   { re: /(?<!\[)data-component=(["'])([^"'$]+)\1/g }, // not a [data-component="x"] selector read
 ];
 
+// `dataset: { ..., component: 'lit' }`: from each `dataset: {` walk forward
+// counting braces, so the balanced `{}` of a `${...}` in an earlier value cannot
+// end the object early, and test for `component:` only at depth 1 (this object's
+// own keys, not a nested one).
+const DATASET_KEY = /component\s*:\s*(['"`])([^'"`$]+)\1/y;
+function datasetLiterals(text, out) {
+  for (const m of text.matchAll(/dataset\s*:\s*\{/g)) {
+    let depth = 1;
+    for (let i = m.index + m[0].length; i < text.length && depth > 0; i++) {
+      const c = text[i];
+      if (c === '{') depth++;
+      else if (c === '}') depth--;
+      else if (depth === 1 && c === 'c' && /\W/.test(text[i - 1])) {
+        DATASET_KEY.lastIndex = i;
+        const k = DATASET_KEY.exec(text);
+        if (k) out.push({ id: k[2], literalAssign: true });
+      }
+    }
+  }
+}
+
 export function scanSource(text) {
   const out = [];
+  datasetLiterals(text, out);
   for (const { re, literalAssign } of WRITES) {
     for (const m of text.matchAll(re)) out.push({ id: m[2], literalAssign: !!literalAssign });
   }
@@ -33,9 +55,9 @@ function walk(dir, files = []) {
 }
 
 test('scanner flags planted bad writes', () => {
-  const bad = scanSource(`a.dataset.component = 'nope.x'; b.setAttribute('data-component','nope.y'); el('i', { dataset: { a: 1, component: 'nope.w' } }); \`<i data-component="nope.z" data-component="\${UI.ok}">\``);
-  assert.deepEqual(bad.map((b) => b.id).sort(), ['nope.w', 'nope.x', 'nope.y', 'nope.z']);
-  assert.equal(bad.filter((b) => b.literalAssign).length, 2);
+  const bad = scanSource(`a.dataset.component = 'nope.x'; b.setAttribute('data-component','nope.y'); el('i',{'data-component':'nope.a'}); el('i',{dataset:{slot:\`\${s.id}\`, component:'nope.b'}}); x.dataset['component']='nope.c'; \`<i data-component="nope.z" data-component="\${UI.ok}">\``);
+  assert.deepEqual(bad.map((b) => b.id).sort(), ['nope.a', 'nope.b', 'nope.c', 'nope.x', 'nope.y', 'nope.z']);
+  assert.equal(bad.filter((b) => b.literalAssign).length, 4);
 });
 
 test('every static data-component id in src/ is in UI_COMPONENTS', () => {
