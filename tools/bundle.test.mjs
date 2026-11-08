@@ -244,9 +244,9 @@ function bundledStartingDecks(html, { restoreCycle = false } = {}) {
   if (!match) return { ok: false, why: 'no bundled script' };
   let script = match[1].replace(/"data:[^"\\\n\r]*"/g, '"data:"');
   if (restoreCycle) {
-    const start = script.indexOf('"src/model/loadout.js": function');
+    const start = script.indexOf('"src/model/loadout/applyCardMods.js": function');
     const end = script.indexOf('\n},\n"', start);
-    if (start < 0 || end < 0) return { ok: false, why: 'loadout factory not found' };
+    if (start < 0 || end < 0) return { ok: false, why: 'applyCardMods factory not found' };
     const body = script.slice(start, end);
     const leaf = 'require("src/model/tokens.js")';
     if (!body.includes(leaf)) return { ok: false, why: 'token leaf import not found' };

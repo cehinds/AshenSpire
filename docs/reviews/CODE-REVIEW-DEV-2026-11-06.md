@@ -313,7 +313,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 2. Relocations with re-exports
 
-- [ ] Move `src/engine/d20Chance.js`, `rng.js`, `combatRounds/stance.js` under `src/model/`, old paths re-export (H1)
+- [x] Move `src/engine/d20Chance.js`, `rng.js`, `combatRounds/stance.js` under `src/model/`, old paths re-export (H1) — [#2680](https://github.com/cehinds/AshenSpire/pull/2680)
 - [ ] Move the pure validators and parsers (`validateZoneEffect`, `enemyBurdenProblems`, resolver parsers, `counterstrikeAmount`) into model; pass engine functions into `attributePointPreview` as parameters (H1)
 - [x] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
 - [x] Delete the unused `src/framework/index.js` barrel and its stale header (H2) — [#2676](https://github.com/cehinds/AshenSpire/pull/2676)
@@ -351,9 +351,9 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `main.js`: move narrative comments to docs; activity-launcher screen (`main.js:2620-2632`) → `src/ui/screens/` (H4)
 - [ ] `mountCombat` → `createX({ getState, dispatch, host })` modules: card input, beat playback, enemies, preview, armoury (H3)
 - [x] `mountEquipment` → `components/armoury*` fed by models (H3) — [#2714](https://github.com/cehinds/AshenSpire/pull/2714)
-- [ ] `collectContentProblems` → one validator per bundle section (H3)
+- [x] `collectContentProblems` → one validator per bundle section (H3) — #2725
 - [x] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3) — #2707
-- [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
+- [x] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3) — #2708
 - [x] `runOpcode` → `OPCODE_HANDLERS` map (H3) — #2679
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
 - [x] `migrateRunSchema`: `schemaVersion < N` with named constants (Low) — #2657

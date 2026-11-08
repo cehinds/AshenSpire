@@ -15,8 +15,10 @@
 // The 2026-11-07 ratings-meter removal (cleanup 3i-B) marks the status.ward manifest authored, which moves the runtime hash once more and adds 965682.... No rule changed.
 // The 2026-11-07 keepsake removal (keepsake tag and mechanic dropped from the content and tag tables) moves the runtime hash again; it approves this edge again and adds the runtime before it (05977e...). No rule changed: a save from there keeps its own snapshotted rules.
 // The 2026-11-07 mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs, code review H2) moves the runtime hash again and adds 802e46.... No rule changed: a save from there keeps its own snapshotted rules.
+// The 2026-11-08 stance move (src/engine/combatRounds/stance.js → src/model/stance.js, code review H1) repoints the maneuver_smash manifest, which moves the runtime hash again and adds a7efc3.... No rule changed: a save from there keeps its own snapshotted rules.
+// Merge train 2026-11-08 (#2708 loadout split + #2725 validator split + #2680 model leaf moves) lands them together, so the shipped runtime is the combined f0e3f7..., not #2680's own 9a69b3... (never on dev). No rule changed.
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
-// The 2026-11-08 runOpcode → OPCODE_HANDLERS map (pure refactor; five mechanic manifests now name the handler table) moves the runtime hash again; it approves this edge again and adds the runtime before it (a7efc3...). No rule changed: a save from there keeps its own snapshotted rules.
+// The 2026-11-08 runOpcode → OPCODE_HANDLERS map (pure refactor; five mechanic manifests now name the handler table) moves the runtime hash again; it approves this edge again. Merge train #2727 ships it on top of dev's f0e3f7... (the pre-merge 48ecb2... was never on dev); the final train runtime is fae7af.... No rule changed: a save from there keeps its own snapshotted rules.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -35,8 +37,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:05977e492f74b543357e606b8e3cf7a0dd8984bc746a4dda123c976c851f660b',
   'sha256:802e46d530589fa030bd1a34ee07ec890ea678d4754c7320291a5d91b91cd1ff',
   'sha256:a7efc394eb86299cf97384c6e3d451a645a93a8249f5ddcf4e17fe86c0768193',
+  'sha256:f0e3f7d50507dc85138f974f40b6981011e4174da69ded3c3d32dc150e87ea6b',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:48ecb2c852e4e5063c21dc5b69297bde4f5bcb7347cdb0237766e2afe13d644a';
+const FIXED_EVASION_RUNTIME = 'sha256:fae7af5e34880ba22e670dbf0af013f01a3f2167ad6cb6e0d4a8e45413068ae3';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

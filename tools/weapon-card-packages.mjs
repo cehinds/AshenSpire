@@ -203,14 +203,14 @@ function sameCombatProjection(left, right) {
 }
 
 async function runKnownBadPlant() {
-  const sourcePath = resolve(root, 'src/model/loadout.js');
+  const sourcePath = resolve(root, 'src/model/loadout/weaponPlan.js');
   const source = readFileSync(sourcePath, 'utf8');
   const anchor = 'const eligible = [right, left].filter((source) => source.package);';
   if (!source.includes(anchor)) {
     check(false, 'known-bad right-only plant is armed', 'source anchor drifted');
     return;
   }
-  const mutantPath = resolve(root, `src/model/.weapon-card-package-mutant-${process.pid}.mjs`);
+  const mutantPath = resolve(root, `src/model/loadout/.weapon-card-package-mutant-${process.pid}.mjs`);
   writeFileSync(mutantPath, source.replace(anchor, 'const eligible = [right].filter((source) => source.package);'));
   try {
     const mutant = await import(`${pathToFileURL(mutantPath).href}?mutant=${Date.now()}`);
