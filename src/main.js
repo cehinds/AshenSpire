@@ -41,8 +41,6 @@ import { openShopCardChoice, openShopArmamentChoice } from './ui/components/shop
 // backward-compatible recovery path for older saves and interrupted sessions.
 
 import { contentBundle } from './content/index.js';
-import { drawArmamentKitPreview } from './dev/armamentKitPreview.js';
-import { createShotStates } from './dev/shotStates.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
@@ -301,6 +299,14 @@ function rebuildRegistries(configuration = {}, gameProfile = registryGameProfile
 // thing that makes the gate below reach every state; keep the count at one.
 const shotParams = new URLSearchParams(location.search);
 const shotState = shotParams.get('shot');
+// The dev-only photograph modules load lazily, and only for a ?shot= boot: a
+// normal boot never fetches or evaluates them. Each path is a literal so the
+// bundler can see it. Both are awaited before the first posed screen.
+const devModules = shotState ? Promise.all([
+  import('./dev/shotStates.js'),
+  import('./dev/armamentKitPreview.js'),
+]) : null;
+let devKit = null;
 // ?shotMaxPoise's parked value (see the shot=combat block): module-scoped so it
 // reaches enterCombat without touching the run — a shot lever must not leak
 // into a save. Null means "no override; derive from the loadout receipt".
@@ -2202,7 +2208,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // a deck too small to reach the asked hand refuses rather than photograph an
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
-  if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  if (shotState === 'combat' && shotParams.get('shotKit') === '1') devKit.drawArmamentKitPreview(combat);
   if (shotState === 'combat' && shotParams.has('shotExpansion')) {
     // Memory-only QA pose. Cards still play through the production interpreter.
     const ids = ['emberDart', 'barrageCounter', 'rimeNeedle', 'drowsingMote', 'shieldBash', 'dodgeRoll', 'blightedTransmute', 'shatterOpportunity'];
@@ -2985,6 +2991,11 @@ if (shotState) {
 // already drawn on placeholders. A single file and the source tree pin
 // nothing, and this calls showFirstScreen() at once.
 function showFirstScreen() {
+  if (!shotState) return showFirstScreenNow(null);
+  // A posed `?shot=` state waits for the lazily loaded dev modules.
+  devModules.then(([shots, kit]) => { devKit = kit; showFirstScreenNow(shots.createShotStates); });
+}
+function showFirstScreenNow(createShotStates) {
   // The posed `?shot=` states live in src/dev/shotStates.js. The table is built
   // here, on each call, so the ctx getters see the bindings as they stand now.
   const shotStates = shotState ? createShotStates({
