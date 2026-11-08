@@ -43,7 +43,7 @@ test('a dev-era profile keeps v1 pricing and every enemy can afford a damage mov
     if (moves.length && !moves.some(([moveId, move]) => enemyMoveSp(move, { enemy, moveId, combat }) <= enemy.maxStamina)) stranded.push(id);
   }
   // Dev already shipped these gaps (stitchCrab: 1 SP pool, every damage move costs 2 under the flat multi-hit minimum) (fixed for current Core separately); the retune must add none.
-  assert.deepEqual(stranded.sort(), ['charredColossus', 'huskBrute', 'livingArmor', 'stitchCrab'], 'a dev-era run strands only what dev itself stranded');
+  assert.deepEqual(stranded.sort(), ['huskBrute', 'livingArmor', 'stitchCrab'], 'a dev-era run strands only what dev itself stranded (charredColossus no longer: the level budget gives it more SP, 2026-11-08)');
   for (const id of ['lanternMoth', 'mirrorScribe', 'ashheartDragon']) assert.ok(!stranded.includes(id), id);
   // The reviewer's examples: the v2 floor would strand these, v1 pricing does not.
   const combat = fightOf(setup, 'ashheartDragon'), enemy = combat.enemies[0], breath = registries.enemies.get('ashheartDragon').moves.ashBreath;

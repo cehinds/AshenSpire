@@ -6,6 +6,9 @@
     "tier.elite"
   ],
   "stats": {
+    "attributes": {
+      "wisdom": 2
+    },
     "attributePriority": [
       "strength",
       "dexterity",

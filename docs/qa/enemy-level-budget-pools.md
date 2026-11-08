@@ -1,6 +1,6 @@
 # Enemy level budget: pools before and after
 
-Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). No balance number was changed by hand; this only reports the effect of the new level and budget rule. Before = `origin/dev` at the branch base, after = this branch. Attributes are own points as STR/DEX/CON/WIS/INT (before gear and relics). Pools are HP/SP/MP including gear and relics.
+Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). Before = `origin/dev` at the branch base, after = this branch. Attributes are own points as STR/DEX/CON/WIS/INT (before gear and relics). Pools are HP/SP/MP including gear and relics.
 
 | Enemy | Tier | Level (before > after) | Own attrs before | Own attrs after | HP before > after | SP before > after | MP before > after |
 |---|---|---|---|---|---|---|---|
@@ -24,13 +24,13 @@ Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). No bal
 | The Stitched King | boss | 11 > 4 | 2/2/1/1/0 | 3/2/2/1/1 | 139 > 156 | 3 > 3 | 5 > 5 |
 | Mirror Scribe | minion | 7 > 2 | 0/0/0/1/1 | 1/1/1/2/2 | 44 > 40 | 2 > 2 | 2 > 2 |
 | Stitch Crab | minion | 7 > 2 | 1/1/0/0/0 | 2/2/1/1/1 | 45 > 72 | 1 > 1 | 2 > 1 |
-| The Glass Regent | boss | 11 > 4 | 2/1/0/2/1 | 3/1/1/2/2 | 87 > 104 | 3 > 2 | 4 > 2 |
+| The Glass Regent | boss | 11 > 4 | 2/1/0/2/1 | 3/1/1/2/2 | 87 > 104 | 3 > 3 | 4 > 2 |
 | The Marrow Organist | boss | 11 > 4 | 2/1/0/2/1 | 3/1/1/2/2 | 87 > 104 | 3 > 3 | 4 > 2 |
 | Ash Revenant | minion | 13 > 3 | 1/1/0/0/0 | 2/2/2/1/1 | 75 > 87 | 1 > 1 | 3 > 2 |
 | Ember-Starved Pilgrim | minion | 13 > 3 | 1/1/0/0/0 | 2/2/2/1/1 | 75 > 87 | 1 > 1 | 3 > 2 |
 | Valkyrie Shade | minion | 14 > 3 | 1/1/0/0/0 | 2/2/2/1/1 | 80 > 87 | 1 > 1 | 3 > 2 |
 | Charred Colossus | minion | 15 > 3 | 1/1/0/0/0 | 2/2/2/1/1 | 85 > 87 | 1 > 1 | 3 > 2 |
-| Wyrm Lord | elite | 18 > 4 | 2/1/1/0/0 | 3/2/2/1/1 | 145 > 127 | 3 > 3 | 4 > 2 |
+| Wyrm Lord | elite | 18 > 4 | 2/1/1/0/0 | 2/2/2/2/1 | 145 > 124 | 3 > 3 | 4 > 2 |
 | The Blighted Valkyrie | boss | 19 > 5 | 2/1/0/2/1 | 3/2/1/3/1 | 130 > 116 | 2 > 2 | 5 > 3 |
 | Cinder Mantis | minion | 14 > 3 | 1/1/0/0/0 | 2/2/2/1/1 | 75 > 59 | 3 > 2 | 3 > 1 |
 | Eclipse Cantor | minion | 14 > 3 | 0/0/0/1/1 | 2/1/1/2/2 | 79 > 50 | 3 > 2 | 3 > 2 |
@@ -38,4 +38,7 @@ Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). No bal
 | The Hollow Astronomer | boss | 19 > 5 | 2/1/0/2/1 | 3/1/1/3/2 | 137 > 121 | 3 > 3 | 5 > 4 |
 | The Ashheart Dragon | boss | 19 > 5 | 2/1/1/2/0 | 3/2/1/3/1 | 139 > 116 | 2 > 2 | 5 > 3 |
 
-Enemies given `stats.spFloor` so they can pay their dearest card: marrowOrganist (3), blightedValkyrie (2), ashheartDragon (2).
+Content tweaks the new budget forced (the validator and tests refuse an enemy that cannot pay its own cards):
+
+- `stats.spFloor`: marrowOrganist 3, blightedValkyrie 2, ashheartDragon 2, glassRegent 3.
+- wyrmLord: authored `attributes.wisdom = 2` so it keeps the 2 MP its Golden Bulwark costs when its relic is switched off.
