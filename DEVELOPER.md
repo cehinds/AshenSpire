@@ -1057,7 +1057,7 @@ Use these source locations when changing it in Visual Studio:
 | Runtime payment, committed source and reaction context | `src/engine/combatEngagement.js` |
 | Conditional follow-up targets and shared action payment | `src/engine/combatRangeLineage.js` |
 | Saved action and trigger validation | `src/model/combatReactionState.js`, `src/model/combatRangeLineageState.js` |
-| Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-range-action.css` |
+| Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-target-responsive.css` |
 | Quantified Precision/Evade tags and concise face copy | `src/model/cardBonusTags.js`, `src/model/cardFaceText.js` |
 
 After editing authored data, run `node tools/content-build.mjs` followed by
