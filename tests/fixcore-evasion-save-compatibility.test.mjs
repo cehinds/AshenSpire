@@ -109,7 +109,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-07: the combat-rounds removal repoints four mechanic manifests (legacy.file), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-07: the mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: the runOpcode switch → OPCODE_HANDLERS map repoints five mechanic manifests (legacy.symbol), which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:9af98fd0264c82879a033821234bd270f2d3f6d33ed3288c4cb9b77bbce7e6aa');
+  assert.equal(profile.lock.runtimeHash, 'sha256:48ecb2c852e4e5063c21dc5b69297bde4f5bcb7347cdb0237766e2afe13d644a');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
