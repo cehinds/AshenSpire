@@ -15,6 +15,7 @@ import {readLayeredArt} from './layered-art.mjs';
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+import { scanDynamicImports } from './dynamic-imports.mjs';
 import { cardCutoutAssets } from './card-cutout-assets.mjs';
 
 import { createHash } from 'node:crypto';
@@ -284,7 +285,7 @@ const IMPORT_RE =
 // is NOT run at boot; the call becomes a Promise over the loader's require(), so
 // a dev-only module costs nothing until the code path that asks for it runs.
 // Every other `import(` form (template, variable, non-relative) is refused.
-const DYNAMIC_IMPORT_RE = /(?<![.$\w])import\s*\(\s*(['"])([^'"\\\n]*)\1\s*\)/g;
+// tools/dynamic-imports.mjs finds them in code only, never in comments or strings.
 
 function resolveSpecifier(fromAbs, spec) {
   if (!spec.startsWith('.')) {
@@ -310,12 +311,11 @@ function findImportSpecifiers(src, fromAbs) {
     specs.push(spec);
   }
   const dynamic = [];
-  DYNAMIC_IMPORT_RE.lastIndex = 0;
-  while ((m = DYNAMIC_IMPORT_RE.exec(src)) !== null) dynamic.push(m[2]);
-  // Anything still an `import(` once the literal form is removed cannot be
-  // followed at build time (template, variable, concatenation).
-  if (/\bimport\s*\(/.test(src.replace(DYNAMIC_IMPORT_RE, ''))) {
-    fail('dynamic import() found in ' + idOf(fromAbs) + " — only import('./relative/literal.js') is supported by this bundler");
+  for (const call of scanDynamicImports(src)) {
+    if (call.spec === null) {
+      fail('dynamic import() found in ' + idOf(fromAbs) + " — only import('./relative/literal.js') is supported by this bundler");
+    }
+    dynamic.push(call.spec);
   }
   return { static: specs, dynamic };
 }
@@ -841,8 +841,11 @@ function transformModule(id, src, absPath) {
   let out = src.replace(IMPORT_RE, (stmt) => rewriteImport(stmt, absPath));
   // import('./x.js') -> Promise.resolve().then(() => require("src/x.js")): the
   // same exports object a static `import * as N` gets, factory run on first call.
-  out = out.replace(DYNAMIC_IMPORT_RE, (_w, _q, spec) =>
-    `Promise.resolve().then(() => require(${JSON.stringify(idOf(resolveSpecifier(absPath, spec)))}))`);
+  for (const call of scanDynamicImports(out).reverse()) {
+    out = out.slice(0, call.start)
+      + `Promise.resolve().then(() => require(${JSON.stringify(idOf(resolveSpecifier(absPath, call.spec)))}))`
+      + out.slice(call.end);
+  }
 
   // Now process exports, line by line, anchored at line start. Normalize CRLF
   // to LF so anchored per-line regexes (which use `$`, and `.` that excludes

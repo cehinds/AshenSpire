@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
+import { scanDynamicImports } from '../../tools/dynamic-imports.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -15,7 +16,7 @@ export function loadBundleCompiler({ root = ROOT, indexHtml } = {}) {
     return source.slice(first, last);
   };
   const bindings = {
-    resolve, dirname, relative, existsSync,
+    resolve, dirname, relative, existsSync, scanDynamicImports,
     ROOT: root,
     readText: path => readFileSync(path, 'utf8').replace(/\r\n?/g, '\n'),
     fail: message => { throw new Error(message); },

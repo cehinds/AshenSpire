@@ -11,14 +11,12 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scanDynamicImports } from './dynamic-imports.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Same statement grammar as tools/bundle.mjs IMPORT_RE.
 const IMPORT_RE =
   /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!\s*\()([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
-
-// import('./literal.js'): not part of boot-time evaluation (see tools/bundle.mjs).
-const DYNAMIC_IMPORT_RE = /(?<![.$\w])import\s*\(\s*(['"])([^'"\\\n]*)\1\s*\)/g;
 
 const idOf = (abs) => relative(ROOT, abs).split(/[\\/]/).join('/');
 
@@ -40,9 +38,8 @@ function parseImports(id) {
     const line = src.slice(0, m.index).split('\n').length;
     out.push({ target, names, line });
   }
-  DYNAMIC_IMPORT_RE.lastIndex = 0;
-  while ((m = DYNAMIC_IMPORT_RE.exec(src)) !== null) {
-    out.dynamic.push(idOf(resolve(dirname(abs), m[2])));
+  for (const call of scanDynamicImports(src)) {
+    if (call.spec !== null) out.dynamic.push(idOf(resolve(dirname(abs), call.spec)));
   }
   return out;
 }

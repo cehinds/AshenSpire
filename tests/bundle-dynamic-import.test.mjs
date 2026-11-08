@@ -80,3 +80,31 @@ test('a missing literal target fails the build', () => {
     assert.throws(() => loadBundleCompiler({ root, indexHtml: INDEX }), /unresolved import/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('the word import( in comments, strings, templates and regexes is not a call', async () => {
+  const root = fixture({
+    'main.js': [
+      '// import(name) in a line comment',
+      "/* import(`./x${n}.js`) in a block comment, with a 'quote */",
+      "const a = 'import(name)', b = \"import('./nope.js')\";",
+      'const c = `text import(x) ${1 + 1} import(y)`;',
+      "const d = /import\\(['\"]/.test(a) ? 1 : 2;",
+      'globalThis.log.push(a, c, d);',
+      "globalThis.load = () => import('./dev.js');",
+      '',
+    ].join('\n'),
+    'dev.js': 'export const value = 7;\n',
+  });
+  try {
+    const { context, order } = bundleAndRun(root);
+    assert.deepEqual([...order].sort(), ['src/dev.js', 'src/main.js'], 'only the real call is an edge');
+    assert.equal((await context.load()).value, 7);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a non-literal import() in code still fails even beside comment mentions', () => {
+  const root = fixture({ 'main.js': "// import('./fine.js') is prose\nconst s = 'import(x)';\nglobalThis.load = (n) => import(`./${n}.js`);\n" });
+  try {
+    assert.throws(() => loadBundleCompiler({ root, indexHtml: INDEX }), /src\/main\.js/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
