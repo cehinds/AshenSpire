@@ -4,7 +4,7 @@
 //   node --test tests/modal-manager.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { registerModal, registerPageChrome, resetModalState, openModals, modalOpen } from '../src/ui/modalManager.js';
 
 // A page: <html> > <body> > #app > [screen, hud], with a veil per modal in body.
@@ -21,13 +21,11 @@ function withPage(fn) {
   const screen = document.createElement('div');
   const hud = document.createElement('div');
   app.append(screen, hud);
-  const had = 'document' in globalThis;
-  const saved = globalThis.document;
-  globalThis.document = document;
+  const restoreDom = installDom(dom);
   resetModalState();
   try { return fn({ document, app, screen, hud }); } finally {
     resetModalState();
-    if (had) globalThis.document = saved; else delete globalThis.document;
+    restoreDom();
   }
 }
 
