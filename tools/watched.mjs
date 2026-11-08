@@ -114,7 +114,7 @@ const WATCH_STATES = (argOf('--states', 'shipped,already-true')).split(',').map(
 
 const LEDGER = argOf('--ledger');
 const PROBES = resolve(ROOT, argOf('--probes', 'tools/watched-probes.json'));
-const OUT = resolve(ROOT, argOf('--out', 'tools/results/watched'));
+const OUT = resolve(ROOT, argOf('--out', 'scratch/qa/watched'));
 const ONLY = argOf('--only') ? argOf('--only').split(',').map((s) => s.trim()) : null;
 const SELFTEST = has('--selftest');
 const DUMP = has('--dump');
