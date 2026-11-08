@@ -70,7 +70,7 @@ test('add to deck refuses non-card rewards', () => {
 });
 
 // ---- review step UI ----------------------------------------------------------
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 
 async function withDom(fn) {

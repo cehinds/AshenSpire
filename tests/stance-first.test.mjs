@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed, setBeatOrder, stanceState } from '../src/ui/fx.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
