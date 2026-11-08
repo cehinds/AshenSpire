@@ -619,8 +619,7 @@ function verifyEnemyContent(content, settings, gearSettings = null) {
     if (row.attributes !== undefined && (!record(row.attributes) || Object.keys(row.attributes).some(k => !ENEMY_ATTRIBUTES.includes(k)) || Object.values(row.attributes).some(n => !Number.isSafeInteger(n) || n < 0))) fail(`${at}/attributes`, 'expected nonnegative integer attributes');
     for (const id of row.attributePriority || []) if (!ENEMY_ATTRIBUTES.includes(id)) fail(`${at}/attributePriority`, `unknown attribute '${id}'`);
     const total = Object.values(resolveEnemyAttributes(row, settings)).reduce((a, b) => a + b, 0), budget = enemyAttributeBudget(row, settings);
-    const minTotal = Object.values(enemyAttributeMinimums(row, settings)).reduce((a, b) => a + b, 0);
-    if (total !== Math.max(budget, minTotal)) fail(`${at}/attributes`, `total ${total} outside level ${enemyLevel(row, settings)} budget ${budget}`);
+    if (total !== budget) fail(`${at}/attributes`, `total ${total} outside level ${enemyLevel(row, settings)} budget ${budget}`);
     if (!Array.isArray(row.defaultDeck)) fail(`${at}/defaultDeck`, 'expected defaultDeck array');
     for (const list of ['defaultGear', 'defaultRelics']) {
       const entries = row[list] || [];
