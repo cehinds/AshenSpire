@@ -329,7 +329,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Attic or delete the 115 orphan tools (H5)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
 - [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
-- [ ] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10)
+- [x] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10) — [#2712](https://github.com/cehinds/AshenSpire/pull/2712)
 - [x] Stop loading `combat-test.css` and `combat-rounds-preview.css` for players (M9) — [#2671](https://github.com/cehinds/AshenSpire/pull/2671)
 
 ### 4. After CLEANUP-PLAN steps 3g–3m
