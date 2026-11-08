@@ -94,7 +94,11 @@ const SELF = fileURLToPath(import.meta.url);
 // are a fact about each.
 const HOMES = [
   { path: 'tests/engine.test.js', how: "test('<n>. …')", re: /\btest\(\s*['"`](\d+[a-z]*)\.\s/g },
-  { path: 'tests/run-node.mjs', how: '`${verdict}  <n>. …`', re: /\}\s\s(\d+[a-z]*)\.\s/g },
+  // run-node's checks are a table of rows, `{ label: '<n>', lane: …, name: … }`. The
+  // emission pattern needs the row's opening shape; its label-anchored second
+  // derivation (`shaped`) needs only the `label: '<n>'` key, so a row whose keys
+  // were reordered or renamed makes the two disagree instead of vanishing.
+  { path: 'tests/run-node.mjs', how: "{ label: '<n>', lane: …", re: /\{\s*label:\s*'(\d+[a-z]*)',\s*lane:/g, shaped: /\blabel:\s*'(\d+[a-z]*)'/g },
 ];
 
 // THE SECOND DERIVATION OF THE SAME FACT, and it is what makes T2 mean anything.
@@ -140,7 +144,7 @@ function collect(root) {
     try { text = readFileSync(abs, 'utf8'); } catch (e) { problems.push(`declared home ${home.path} could not be read: ${e.message}`); continue; }
     const clean = stripComments(text);
     const found = [...clean.matchAll(new RegExp(home.re.source, 'g'))].map((m) => m[1]);
-    const shaped = [...clean.matchAll(new RegExp(LABEL_SHAPED.source, 'g'))].map((m) => m[1]);
+    const shaped = [...clean.matchAll(new RegExp((home.shaped || LABEL_SHAPED).source, 'g'))].map((m) => m[1]);
     if (!found.length) {
       problems.push(`${home.path}: its emission pattern ${home.how} matched NOTHING — the pattern has rotted or the file changed shape. `
         + 'Zero labels is UNKNOWN, never "all unique"');
@@ -174,10 +178,10 @@ if (process.argv.includes('--selftest')) {
     { name: 'BASELINE — the unplanted copy must go GREEN, not merely quieter',
       edits: [], want: 'green' },
     { name: 'the real dev collision, re-planted: run-node takes back the 50 that engine.test.js owns',
-      edits: [{ file: 'tests/run-node.mjs', find: '}  29. the status-reach', replace: '}  50. the status-reach' }],
+      edits: [{ file: 'tests/run-node.mjs', find: "label: '29'", replace: "label: '50'" }],
       want: 'red', match: /BAD\s+T1 .*engine\.test\.js \+ tests\/run-node\.mjs/ },
     { name: 'a duplicate INSIDE one home, not across the two',
-      edits: [{ file: 'tests/run-node.mjs', find: '}  52. the closed-set', replace: '}  51. the closed-set' }],
+      edits: [{ file: 'tests/run-node.mjs', find: "label: '52'", replace: "label: '51'" }],
       want: 'red', match: /BAD\s+T1 / },
     // ⚠ A PARTIAL ROT, AND THAT IS BETTER THAN THE TOTAL ONE I AIMED FOR.
     // `  test('` does not match every call — some are indented differently — so
