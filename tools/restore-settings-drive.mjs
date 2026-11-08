@@ -31,7 +31,7 @@ if (process.argv.includes('--selftest')) {
     plants: [
       {
         name: 'a restore stores the settings but never applies them to the screen',
-        file: 'src/main.js',
+        file: 'src/ui/displaySettings.js',
         find: "  document.body.classList.toggle('hi-contrast', settingOn(settings, 'highContrast'));",
         replace: '  /* planted: the restored profile is stored and the screen keeps the old dress */',
         expectRed: /FAIL\s+DOOR \d.*high contrast is ON SCREEN after restore/,

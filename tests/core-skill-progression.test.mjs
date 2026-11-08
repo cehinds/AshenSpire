@@ -28,8 +28,8 @@ import { awardLevelXp, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 
 const profile = resolveGameProfile('core');
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);

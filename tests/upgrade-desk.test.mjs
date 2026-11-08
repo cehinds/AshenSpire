@@ -16,7 +16,7 @@ import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { mountSmithUpgradeModal, itemAtTier } from '../src/ui/components/smithUpgradeModal.js';
 import { upgradeFacesNode, upgradeConfirmNodes } from '../src/ui/components/upgradeConfirm.js';
 import { openConfirmationModal, closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import '../src/engine/runCombat.js';

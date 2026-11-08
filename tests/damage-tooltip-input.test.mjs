@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { initInput, focusElement, clearFocus } from '../src/ui/input.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 function withInput(check) {
   withKitDom(({ document, Event }, _window, listeners) => {
