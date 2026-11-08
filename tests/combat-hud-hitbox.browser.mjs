@@ -64,9 +64,31 @@ try {
     await page.waitForTimeout(400);
     if (width < 900) await page.touchscreen.tap(point.x, point.y); else await page.mouse.click(point.x, point.y);
     await page.waitForFunction(() => window.__combat.eventLog.some(e => e.type === 'cardResolved' && e.cardId === 'core.strike' && e.targetId === 'e2'));
-    results.push({ width, height, input: width < 900 ? 'touch' : 'mouse', enemyBody: hit, playerTrack: playerHit, inspections: 'PASS', attackTarget: 'e2' });
+    // Filled trays retain their controls even though their transparent space passes through.
+    await page.evaluate(() => {
+      for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) {
+        window.__combat.player.statuses[id] = { stacks: 1, duration: 2 };
+      }
+      window.__renderCombatForShot();
+    });
+    const tray = '.combatant.player > .target-hud-overhead-meters .statuses';
+    await page.locator(tray + ' .as-pip:visible').first().waitFor();
+    const statusControls = [];
+    for (const kind of ['.as-pip', '.status-overflow']) {
+      const control = page.locator(tray + ' ' + kind + ':visible').first();
+      if (!await control.count()) continue; // Wide trays may fit every status without overflow.
+      const ownership = await control.evaluate(node => {
+        const r = node.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return { pointer: getComputedStyle(node).pointerEvents, ownHit: node === hit || node.contains(hit), actor: hit?.closest('.combatant')?.dataset.eid };
+      });
+      assert.deepEqual(ownership, { pointer: 'auto', ownHit: true, actor: 'player' }, `${width}: painted ${kind} stays interactive`);
+      statusControls.push(kind);
+    }
+    assert.ok(statusControls.includes('.as-pip'), `${width}: a painted status pip was checked`);
+    results.push({ width, height, input: width < 900 ? 'touch' : 'mouse', enemyBody: hit, playerTrack: playerHit, inspections: 'PASS', attackTarget: 'e2', statusControls });
     await page.close();
   }
+  assert.ok(results.some(result => result.statusControls.includes('.status-overflow')), 'the crowded fixture checked a painted overflow control');
   console.log(`PASS: ${results.length} viewports preserve enemy and player pointer ownership`);
 } finally {
   writeFileSync(`${out}/checks.json`, JSON.stringify(results, null, 2));

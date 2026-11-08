@@ -91,6 +91,9 @@
   display: flex !important; flex: 1 1 0; flex-wrap: nowrap; justify-content: flex-start !important; align-items: center;
   min-width: 0; min-height: 0 !important; height: var(--mh-badge); margin: 0 !important; padding: 0; gap: var(--icon-tray-gap, var(--mh-gap)); pointer-events: auto;
 }
+/* The player's empty tray can overlap another fighter. Only painted controls own input. */
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-badges > .statuses { pointer-events: none; }
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-badges > .statuses :is(.as-pip, .status-overflow) { pointer-events: auto; }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses .as-pip {
   box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
   font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .55);
