@@ -86,8 +86,10 @@ export const SINCE = '2026-10-31T18:56:00Z';
  * A push to `test` is a BUILD event (owner, 2026-11-07): the triple stays, the ordinal rises by one.
  * Test events at or before this instant are history, never owed (the cursor alone would replay every
  * test push since the last release/main record the day this merged).
+ * Bootstrap boundary: latest existing test activity 49495690958, captured while test
+ * is frozen for activation. The timestamp is inclusive; only later cuts are owed.
  */
-export const TEST_SINCE = '2026-11-08T03:05:00Z';
+export const TEST_SINCE = '2026-11-08T21:40:47Z';
 const CUT_TYPES = new Set(['push', 'force_push', 'pr_merge', 'merge_queue_merge', 'branch_creation']);
 const ZERO_SHA = /^0+$/;
 const SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (release|main|test) [0-9a-f]{7,40}\b/;

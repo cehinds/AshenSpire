@@ -337,13 +337,34 @@ test('build: records round-trip, and build-stamp still recognises the subject', 
 });
 
 test('planCuts: a test push is a build cut; pre-TEST_SINCE and bot-only test pushes are not', () => {
-  assert.equal(TEST_SINCE, '2026-11-08T03:05:00Z');
+  assert.equal(TEST_SINCE, '2026-11-08T21:40:47Z');
   const events = [tev(1, 'a', 'b', '2026-11-05T00:00:00Z'), tev(2, 'b', 'c', T1), tev(3, 'c', 'bot', '2026-11-09T00:00:02Z'), tev(4, 'c', 'd', '2026-11-09T00:00:03Z', 'branch_deletion')];
   const cuts = planCuts(events, null, (e) => e.after === 'bot');
   assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['2', 'test']]);
   // A re-delivered copy of the same push, or a cursor on it, never bumps twice.
   assert.equal(planCuts([...events, { ...events[1], id: 9 }], null, (e) => e.after === 'bot').filter((c) => c.branch === 'test').length, 1);
   assert.deepEqual(planCuts(events, { id: '2', timestamp: T1 }, (e) => e.after === 'bot'), []);
+});
+
+test('activation: historical test activity at or before the frozen boundary is never replayed', () => {
+  const historical = [
+    tev('49495690956', 'a', 'b', '2026-11-08T20:44:29Z', 'pr_merge'),
+    tev('49495690958', 'b', '45b31ef1', '2026-11-08T21:40:47Z', 'pr_merge'),
+    tev('49495690999', 'x', 'y', '2026-11-08T21:40:47Z'),
+  ];
+  assert.deepEqual(planCuts(historical, null, noBots), []);
+  assert.deepEqual(planCuts(historical, { id: '1', timestamp: '2026-11-01T00:00:00Z', branch: 'release' }, noBots), []);
+});
+
+test('activation: the first later test cut and its duplicate feed row advance exactly once', async () => {
+  const historical = tev('49495690958', 'a', 'b', '2026-11-08T21:40:47Z', 'pr_merge');
+  const next = tev('49495691000', 'b', 'c'.repeat(40), '2026-11-08T21:40:48Z', 'pr_merge');
+  const events = [historical, next, { ...next, id: '49495691001' }];
+  const options = { fetchPage: feedOf(events), isBotOnly: noBots, sleep: async () => {}, withTest: true };
+  const cuts = await planRun({ ...options, messages: [] });
+  assert.deepEqual(cuts.map(cut => [cut.id, cut.branch]), [['49495691000', 'test']]);
+  const messages = [advanceMessage('0.7.4', 'test', next.after, next)];
+  assert.deepEqual(await planRun({ ...options, messages }), []);
 });
 
 test('planCuts: release and main ordering is right with a test event between them', () => {
