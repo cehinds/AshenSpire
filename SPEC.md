@@ -849,7 +849,7 @@ Hand size, draw counts and cleanup are stat rows plus hand options, snapshotted 
 - `retain: true` keeps all ordinary unplayed cards. With `retain: false`, disabling `shuffleHand` restores discard cleanup. `drawMode: 'fill'` remains available. Forced overflow discards stay discards even with shuffle on.
 - Optional discards are selected when ending a turn (cancel leaves the turn untouched). Turn-end effects resolve before selected cards move to discard and cleanup runs; Ethereal and lifecycle rules still apply.
 - Optional replacement draws add to the next fixed draw, capped by capacity. Overflow either preserves existing cards or requires selecting the excess at turn end. Draw effects stop at capacity without consuming the draw pile. Reshuffling can be disabled.
-- Saves: rules, pending replacement draws and RNG counters persist, so resume is deterministic. A saved fight without `shuffleHand` keeps its prior discard behaviour and keeps its snapshotted rules. Pre-ruleset-7 hand-group adapters remain.
+- Saves: rules, pending replacement draws and RNG counters persist, so resume is deterministic. A saved fight without `shuffleHand` keeps its prior discard behaviour. Existing saved fights keep their snapshotted rules. Pre-ruleset-7 hand-group adapters remain.
 
 Baseline sequence (saved stat rows and hand options override its draw and cleanup defaults):
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
@@ -987,7 +987,13 @@ Every card's Stamina (SP) and Mana (MP) cost is derived by formula, in every fig
 
 **Validation.** `validateCostConfig` refuses, by name: a tag weight outside -3..3 or not whole; a negative weight on a non-drawback tag; a side other than SP or MP; a range weight outside 1..3; a status weight outside 2..3; a non-positive budget number; a non-ascending damage step table. `validateActionCostTable` refuses a bad enemy stance price (§4.6a). The card schema admits `costRule`; only `'fixed'` is valid.
 
-Tests: `action-costs-formula.test.mjs`, `action-costs-cards.test.mjs`, `action-costs-weights-doc.test.mjs`.
+Falsify (tests: `action-costs-formula.test.mjs`, `action-costs-cards.test.mjs`, `action-costs-weights-doc.test.mjs`):
+- A dry Herald cannot cast Ember Communion.
+- A magic card's Mana does not rise with its rank.
+- Ethereal never raises a cost; Exhaust never raises a cost.
+- Sword Strike (3 damage, bladed, physical, slash, all weight 1, D = 20) sums to 6 and costs 1 SP.
+- Moving points from the MP side to the SP side never lowers SP or raises MP.
+- A grade's Mana in the framework cost profile is the formula's.
 
 ### 4.4 Status effects
 
@@ -1105,11 +1111,11 @@ Enemies act from an SP pool derived from their stats; each move has an SP price.
   - Hit count: damage effects guarded by an `if` are separate branches and the largest branch counts (an either/or pair is one hit; a conditional bonus volley is not added). No cap; an authored price above the floor is not lowered. Charged once for the committed move.
   - Not multi-hit: one contact hitting several targets (area), one contact split into physical and magical damage, an ordinary one-hit root action in a multi-action turn.
   - Player cards use the same floor (`multiHitSpFloor`, `src/model/actionCosts.js`), applied to the paid price where the Core cost is read (`baseCardPriceReceipt`), never to the derived cost (so it never triggers the 2-SP damage multiplier).
-  - The same-stance discount never raises an authored zero-cost move.
+  - The same-stance discount never raises an authored zero-cost move; the separate multi-hit price still applies to multi-hit moves.
 - The multi-hit floor, finesse Dexterity scaling and the persistent paid Advance are Core 2 action rules version 2 (`CORE2_ACTION_RULES_VERSION`); a fight saved under version 1 keeps version 1 pricing and a temporary Advance until it ends.
 
 **Pool size**
-- SP = `ENEMY_SP_ROW` (1 + floor(0.25 × Dexterity) + floor(0.25 × Constitution) + floor(0.2 × Wisdom) + floor(0.2 × Intelligence), on the enemy's `attributes`) + `equipmentSp`, floored at 0.
+- SP = `ENEMY_SP_ROW` (1 + floor(0.25 × Dexterity) + floor(0.25 × Constitution) + floor(0.2 × Wisdom) + floor(0.2 × Intelligence), on the enemy's `attributes`) + `equipmentSp`, floored at 0. Enemy attributes are inflated next to a player's.
 - Bands (`ENEMY_SP_BANDS`, test-held for every shipped enemy): normal 1–2, elite 2–3, boss 3–4. A test fixture may fix a pool with `spPool`.
 - **Blight:** a `blighted` enemy's attributes shift by `ENEMY_BLIGHT_SHIFT` (−2 Intelligence, Wisdom, Dexterity; +2 Strength, Constitution; floored at 0) wherever stats are read (Blight Hound, Blighted Valkyrie).
 - **Live budget.** The pool is the enemy's actual Stamina budget and available SP at the turn-refill / pending-loss boundary used by execution.
@@ -1216,7 +1222,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
 - **Oath** is not a hit rider: while the player has not entered a stance earlier **this fight** , playing an Oath card grants 2 Block (`balance.tagMechanics.oath.block`). It is data: every class card carries the `oathKept` property rule, whose `stanceEntered` trigger sets the fight-long `stanceShifted` marker status (decay `none`) and whose `cardPreparing` trigger grants the Block while that marker is absent, so the card that enters the first stance still counts as kept.
 
 **Enemy elemental resist**
-- An enemy row in `combatExpansionEquipment.enemies` may carry a `resist` map beside `weak`, in percent (tiers 25 minor, 50 major; capped at 75 like armour resistances).
+- Under version 2, an enemy row in `combatExpansionEquipment.enemies` may carry a `resist` map beside `weak`, in percent (tiers 25 minor, 50 major; capped at 75 like armour resistances).
 - Every damage path (live hit, foundation components, preview) applies one line per damage type: `amount = max(0, ceil(total × (1 + weak/100) × (1 − resist/100)) − flat)`.
 - One row never both resists and is weak to the same type (the validator refuses it). About 10 to 15% of enemies resist an element, so a mono-element deck is dented, never walled.
 
@@ -1254,6 +1260,8 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
 - **Bedrock** (earth, badge: a rock): stackable defence; each lightning hit on a holder is fully absorbed (no HP loss, no Shocked, no riders) and removes 1 stack. No decay. Earth-element enemies (authored `element: earth`; Charred Colossus) begin each fight with 3. The Shocked contest and Bedrock are Core combat only.
 - **Own-element bonus:** an enemy move whose school, damage type or element tag matches the enemy's `element` multiplies its damage, status stacks and other effect amounts by 1.25, floored (at least the printed amount). The same multiplier applies to element tags an elemental affinity adds to an armament's cards: affinity N adds N tags of that element to each card it grants (an enemy's attuned weapon: floor(N × 1.25)).
 
+All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
+
 **Intent visibility and persistence**
 - **Concealment roll:** 70% base chance to conceal the exact selected action (not a hit chance; attacks keep existing accuracy/evade rules). For profiled moves `hiddenChance = clamp(0.70 − Wisdom × 0.02 − Intelligence × 0.01, 0, 0.95)`; reductions are percentage points; configuration may override coefficients. Wisdom 10 / Intelligence 5 gives 45% hidden.
   - A configured profile whose intent module sets `reads: exact` skips the roll and shows every intent exactly; the Core preview route does.
@@ -1270,7 +1278,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
 
 Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expansion-contract.md) and its referenced notes define version-2 ordering, state, defaults and acceptance. New runs snapshot version 2; older runs and snapshots keep §4.7's version-1 rules.
 - It adds: one persistent tactical stance; authored Counter coverage and returns; persistent Ward; reach and area tradeoffs; seeded Evade / recovery checks; control recovery cards; opt-in upcasting; tag/status combos; run-lasting Ashen Blight with three feat milestones.
-- Preview and rejected/cancelled actions are inert. Committed random outcomes and per-cycle budgets survive saves.
+- Preview and rejected/cancelled actions are inert. Committed random outcomes and per-cycle budgets survive saves. Solo play, enemy actions, and both presentation variants share the headless contract.
 
 **Card lifecycle and labels** (contract section of the same name; version 2 only, version-1 fights and snapshots unchanged)
 - The bottom type line keeps authored Counter / Smash / Sweep / Ranged / Defend / Attack / Spell identities for maneuver / offensive cards and Power / Skill / Status for support; lifecycle is an independent property.
@@ -1327,7 +1335,7 @@ Reaction prompts, the combat log and enemy-action presentation. Detailed contrac
 #### Notes and history
 
 - Hand rows, costs and the damage order are contractual; a few numbers (threshold-proc rows, the 1.8 multiplier, boss tuning) are provisional and live in data.
-- §4.7 carries version-1 tactical rules; §4.8–§4.10 are version-2 and later contracts that apply only to opted-in new runs.
+- §4.7 carries the version-1 tactical rules; §4.8 is the version-2 expansion.
 - Heading anchors `#47-tagged-combat-cards-and-readable-enemy-stances`, `4.1a` and `4.7` are cited by tools and docs.
 
 Full history: [docs/spec-history/04-combat.md](docs/spec-history/04-combat.md).
