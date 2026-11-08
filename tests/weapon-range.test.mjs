@@ -10,7 +10,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { weapons } from '../src/content/generated/weapons.js';
-import { ARMAMENTS, WEAPON_RANGES, weaponRangeOf, armamentById } from '../src/content/equipment.js';
+import { ARMAMENTS, armamentById } from '../src/content/equipment.js';
+import { WEAPON_RANGES, weaponRangeOf } from '../src/model/weaponRange.js';
 
 test('the closed range vocabulary is melee, reach and ranged', () => {
   assert.deepEqual([...WEAPON_RANGES], ['melee', 'reach', 'ranged']);

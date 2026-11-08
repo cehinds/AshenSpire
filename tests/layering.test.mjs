@@ -53,7 +53,6 @@ const KNOWN_INVERSIONS = [
   'engine/runtime/bindings.mjs -> src/model/formulas.js',
   'engine/runtime/evaluator.mjs -> src/model/formulas.js',
   // M6: content imports model helpers; the projections (combatExpansionCards, traitProjection, equipment) move into src/model, the rest move down
-  'src/content/equipment.js -> src/model/combatRanges.js',
   'src/content/generated/gameProfiles.js -> src/model/catalogJson.js',
   'src/content/generated/tagging.js -> src/model/catalogJson.js',
   'src/content/index.js -> src/model/enemyMoveSources.js',
