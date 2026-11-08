@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard, getEntity } from '../src/engine/combat.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // "When playing a card remove the card from hand first and then play animations."
 // Run the shipped renderHand and playCard against the real engine and the kit DOM fixture:

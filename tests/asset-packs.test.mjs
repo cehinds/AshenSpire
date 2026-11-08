@@ -630,9 +630,10 @@ test('the music folder: a single file applies it before the first screen, as on 
 
 test('main.js routes the boot music and the first screen through musicHold', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const display = readFileSync(new URL('../src/ui/displaySettings.js', import.meta.url), 'utf8');
   assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
-  assert.match(main, /bootMusic\.apply\(folder, \{ indexed \}\)/);
-  assert.match(main, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
+  assert.match(display, /bootMusic\.apply\(folder, \{ indexed \}\)/);
+  assert.match(display, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
   assert.match(main, /onTierArrived\(\(map\) => \{ builtInArtArrived\(map\); bootMusic\.sourceArrived\(\); artArrivedAfterFailure\(\); \}\)/, 'a tier switch or a Retry can bring the score back');
   // Step 5: the music hold is released once the load has settled, whichever
   // way the first screen was drawn (the gate at once, or a ?shot= screen after).

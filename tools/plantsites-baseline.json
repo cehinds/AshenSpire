@@ -256,7 +256,7 @@
     },
     "tools/restore-settings-drive.mjs": {
       "count": 1,
-      "digest": "9c9183a3f5779e9d"
+      "digest": "f7029e5bca51eb5a"
     },
     "tools/runcreation.mjs": {
       "count": 5,
@@ -276,7 +276,7 @@
     },
     "tools/short-landscape-support.mjs": {
       "count": 2,
-      "digest": "0df767382db6375e"
+      "digest": "62d2139293e3dad1"
     },
     "tools/slot-load-door.mjs": {
       "count": 9,
@@ -284,7 +284,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 28,
-      "digest": "c68e9388e48fc3bb"
+      "digest": "d712b9e16fb18c2a"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
@@ -324,7 +324,7 @@
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "9adb6b057eb6f540"
+      "digest": "fec3e3dc5fe05252"
     },
     "tools/zoomplace.mjs": {
       "count": 1,
