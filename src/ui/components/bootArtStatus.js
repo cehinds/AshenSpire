@@ -10,11 +10,12 @@
 // moves on, and the next screen's mount replaces it with the rest of #app.
 
 import { esc } from './tooltip.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 /** The line's markup for a model. */
 export function bootArtStatusHtml(model) {
   const a = model.accessibility;
-  return `<p class="boot-art-status" data-component="boot-art-status" data-boot-art-status data-state="${esc(model.variant)}"
+  return `<p class="boot-art-status" data-component="${UI.bootArtStatus}" data-boot-art-status data-state="${esc(model.variant)}"
     role="${esc(a.role)}" aria-live="${esc(a.live)}" aria-busy="${a.busy ? 'true' : 'false'}">${esc(model.properties.text)}</p>`;
 }
 

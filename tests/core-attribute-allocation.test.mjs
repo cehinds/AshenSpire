@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { core2Registries } from './helpers/core2.mjs';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 
 const registries = core2Registries();

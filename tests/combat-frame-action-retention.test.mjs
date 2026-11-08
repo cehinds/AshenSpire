@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { combatantFrame, updateCombatantFrame } from '../src/ui/components/combatantFrame.js';
 import { playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION } from '../src/ui/components/combatantOverhead.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const start = source.indexOf('  function syncPlayerActionIntent('), end = source.indexOf('  function armSelf(', start);
