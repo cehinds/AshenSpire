@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.42`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
+- **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.42`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
 - **Save code reorganised** ([#2707](https://github.com/cehinds/AshenSpire/pull/2707), `0.7.4.42`). The save manager is now built from four smaller parts (archive, profile, shared profile copies, space reclaim). Saves, old saves and exported settings load exactly as before.
 - **Behind the scenes: shorter game rules, merge train E** ([#2705](https://github.com/cehinds/AshenSpire/pull/2705), `0.7.4.42`). Lands #2701 and #2696 together, and drops the rules for the removed World Journey and legacy dungeons. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train C** ([#2703](https://github.com/cehinds/AshenSpire/pull/2703), `0.7.4.42`). Lands #2691, #2692 and #2693 together. Nothing you play changes.
@@ -72,7 +74,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.42`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
 - **Behind the scenes: shorter game rules, planned expansion** ([#2686](https://github.com/cehinds/AshenSpire/pull/2686), `0.7.4.32`). The rules document's §12 is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: shorter game rules, seats and levels** ([#2685](https://github.com/cehinds/AshenSpire/pull/2685), `0.7.4.32`). The rules document's §13.1–13.4n is rewritten as short bullets with the same rules, and rules for removed systems are dropped. Nothing you play changes.
 - **Behind the scenes: shorter game rules, skill and class progression** ([#2688](https://github.com/cehinds/AshenSpire/pull/2688), `0.7.4.32`). The rules document's §13.4o–13.7 is rewritten as short bullets with the same rules, and rules for removed feat and mastery systems are dropped. Nothing you play changes.
