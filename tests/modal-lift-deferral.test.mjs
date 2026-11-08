@@ -9,7 +9,7 @@
 //   node --test tests/modal-lift-deferral.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom, installDom } from './helpers/dom.mjs';
 import { resetModalState, modalOpen } from '../src/ui/modalManager.js';
 import { openModal } from '../src/ui/components/modalShell.js';
 
@@ -30,16 +30,14 @@ function page(fn) {
   document.activeElement = opener;
   screen.appendChild(opener);
   app.appendChild(screen);
-  const saved = { document: globalThis.document, raf: globalThis.requestAnimationFrame };
+  const restoreDom = installDom(dom); // also restores requestAnimationFrame
   let queue = [];
-  globalThis.document = document;
   globalThis.requestAnimationFrame = (fn) => { queue.push(fn); return queue.length; };
   const frame = () => { const run = queue; queue = []; run.forEach((fn) => fn(0)); };
   resetModalState();
   try { return fn({ document, screen, opener, frame }); } finally {
     resetModalState();
-    globalThis.document = saved.document;
-    if (saved.raf === undefined) delete globalThis.requestAnimationFrame; else globalThis.requestAnimationFrame = saved.raf;
+    restoreDom();
   }
 }
 

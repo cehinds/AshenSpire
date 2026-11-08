@@ -1,12 +1,12 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { playingCardDefinition, playingCardModel } from '../src/model/playingCard.js';
-import { cardPlainText, cardDetailHtml } from '../src/ui/components/card.js';
-import { createCombat, previewCard } from '../src/engine/combat.js';
-import { createRng } from '../src/engine/rng.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { playingCardDefinition, playingCardModel } from '../../src/model/playingCard.js';
+import { cardPlainText, cardDetailHtml } from '../../src/ui/components/card.js';
+import { createCombat, previewCard } from '../../src/engine/combat.js';
+import { createRng } from '../../src/engine/rng.js';
 
 const rules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
 const plain = html => String(html).replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')

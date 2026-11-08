@@ -10,7 +10,7 @@ import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/mod
 import { durationFor } from '../src/model/alternativeCardAnimation.js';
 import { ANIM_SPEEDS } from '../src/ui/animationPace.js';
 import { deckCardAnimationPlan, deckCardAnimationPreview } from '../src/ui/components/deckCardAnimationPreview.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const freshRun = () => createRunState({ seed: 21, classId: 'reaver', registries });

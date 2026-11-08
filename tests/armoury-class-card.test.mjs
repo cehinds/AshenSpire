@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { equipClassCard } from '../src/model/classLibrary.js';
 import { learnClassCard } from '../src/model/classLibraryState.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
 const REG = createRegistries(contentBundle);

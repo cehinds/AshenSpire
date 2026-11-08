@@ -8,7 +8,7 @@ import { createCombat, dispatch, previewCard, getEntity } from '../src/engine/co
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
 import { groupBeats } from '../src/ui/fx.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Owner 2026-11-05: "When drawing cards, my hand would change." Run the shipped renderHand and applyBeatToDisp over the
 // real engine's End Turn receipts, beat by beat, and read the painted hand after each beat. The old hand holds through

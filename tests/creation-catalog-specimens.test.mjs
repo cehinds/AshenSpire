@@ -4,7 +4,7 @@ import { el } from '../src/ui/kit/index.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { mountCreationPartSpecimens } from '../src/ui/catalog/creationSpecimens.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 test('catalog mounts all new registered production specimens with working inspection and local choice state', () => withKitDom(dom => {
   const host = el('div');

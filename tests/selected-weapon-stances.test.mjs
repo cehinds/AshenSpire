@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import {selectedWeaponCounterOrigins,selectedWeaponSequence,selectedWeaponSequenceTiming} from '../src/model/selectedWeaponSequences.js';
 import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT as pilot } from '../src/model/selectedWeaponStances.js';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
