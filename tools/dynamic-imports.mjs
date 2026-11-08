@@ -17,13 +17,16 @@ export function scanDynamicImports(src) {
   let i = 0;
   let prev = ''; // last significant code char, to tell a regex `/` from division
   let prevWord = '';
+  const parenStack = []; // true when the ( closes an if/while/for/with head: a / after it is a regex
   const braceStack = []; // template-literal ${ nesting: true when the { opened a ${
   const regexAfterWord = new Set(['return', 'typeof', 'case', 'in', 'of', 'delete', 'void', 'throw', 'new', 'else', 'do', 'yield', 'await']);
 
   function skipString(q) {
     i++;
-    while (i < n && src[i] !== q) i += src[i] === '\\' ? 2 : 1;
-    i++;
+    // An unescaped newline ends a '…' or "…" string (it is a syntax error in
+    // real code), so a stray quote can never swallow the lines after it.
+    while (i < n && src[i] !== q && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+    if (src[i] === q) i++;
   }
   // Scan template text from just after the opening backtick or after a closing }
   // of a ${…}; returns when the template ends (true) or a ${ opens (false).
@@ -61,6 +64,9 @@ export function scanDynamicImports(src) {
       }
       prev = '/'; prevWord = ''; i++; continue;
     }
+    if (c === '(') { parenStack.push(['if', 'while', 'for', 'with'].includes(prevWord)); prev = '('; prevWord = ''; i++; continue; }
+    if (c === ')') { prev = parenStack.pop() ? '(' : ')'; prevWord = ''; i++; continue; }
+    if ((c === '+' || c === '-') && src[i + 1] === c) { prev = 'a'; prevWord = ''; i += 2; continue; }
     if (c === '{') { braceStack.push(false); prev = '{'; prevWord = ''; i++; continue; }
     if (c === '}') {
       const wasTemplate = braceStack.pop();

@@ -108,3 +108,24 @@ test('a non-literal import() in code still fails even beside comment mentions', 
     assert.throws(() => loadBundleCompiler({ root, indexHtml: INDEX }), /src\/main\.js/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+import { scanDynamicImports } from '../tools/dynamic-imports.mjs';
+
+test('scanner: / after ++ or -- is division, not a regex', () => {
+  const calls = scanDynamicImports("let b = a++ / 2; f = () => import('./y.js');\nlet c = a-- / 2; g = () => import('./z.js');");
+  assert.deepEqual(calls.map(c => c.spec), ['./y.js', './z.js']);
+});
+
+test('scanner: / after an if/while/for/with head starts a regex', () => {
+  for (const head of ['if (ok)', 'while (ok)', 'for (;;)', 'with (o)']) {
+    const calls = scanDynamicImports(`${head} /x'/.test(s);\nf = () => import('./y.js');`);
+    assert.deepEqual(calls.map(c => c.spec), ['./y.js'], head);
+  }
+  assert.deepEqual(scanDynamicImports("if (true) /'/.test('x'); globalThis.load = () => import('./dev.js');").map(c => c.spec), ['./dev.js']);
+  // a ) that is not a control head still means division
+  assert.deepEqual(scanDynamicImports("let q = (a + b) / 2, r = 1 / 2; f = () => import('./y.js');").map(c => c.spec), ['./y.js']);
+});
+
+test('scanner: an unterminated quote does not swallow the following lines', () => {
+  assert.deepEqual(scanDynamicImports("const s = 'oops\nf = () => import('./y.js');").map(c => c.spec), ['./y.js']);
+});
