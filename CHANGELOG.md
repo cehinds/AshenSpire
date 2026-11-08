@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Build follows on-demand imports** ([#2710](https://github.com/cehinds/AshenSpire/pull/2710), `0.7.4.32`). The standalone build can now load a module only when it is first needed; the game plays the same.
 - **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
 
 ## 2026-11-07
