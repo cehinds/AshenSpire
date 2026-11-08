@@ -1609,7 +1609,7 @@ Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270)
 
 ## 7. UI/UX specification
 
-How screens flow, how the shared HUD and combat layout are composed from named components, how Advanced Settings, input, feedback and visual style behave. Component ids in backticks are contracts checked by `tools/ui-components.mjs`.
+Screens, the shared HUD and combat layout, Advanced Settings, input, feedback and visual style. Backticked component ids are contracts checked by `tools/ui-components.mjs`.
 
 ### 7.1 Screens & flow
 
@@ -1626,14 +1626,14 @@ Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► 
 - A Shrine, camp, inn or chapel is a location: a property carrier whose tag set says what it restores (§13.4j). Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered (§5.5.1), because the Shrine carries `restFlasks`. The screen reports what it was handed and what the slots could not hold; silent when nothing to say.
 - **Startup gate.** Cold boot mounts `startup-gate` before the Title DOM exists. It holds only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp.
   - Click/tap, Enter, Space, controller A/Cross and controller Start/Menu are consumed by the gate and reveal Title exactly once; that physical press cannot activate a Title control.
-  - Prompt copy follows the most recent pointer, touch, keyboard or controller family.
+  - Prompt copy follows the latest input family (pointer, touch, keyboard, controller).
   - Profile quarantine and recovery notices outrank the gate.
   - After reveal, focus lands on Title's first available save-slot action; every later return to Title in that boot bypasses the gate.
-  - Reduced motion keeps the same state and focus contract without meaningful animation.
+  - Reduced motion: same state and focus contract, no meaningful animation.
 
 ### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
-Component architecture, stable component ids, the shared run HUD (Map and Combat), creation/Shrine/Menu/Armoury surfaces, and the combat layout. Advanced Settings is §7.2.1.
+Component architecture and ids, the shared run HUD, creation/Shrine/Menu/Armoury surfaces, combat layout. Advanced Settings is §7.2.1.
 
 #### Architecture
 
@@ -1671,13 +1671,13 @@ Ids are stable semantic names, not screen-specific markup.
 | Startup | `startup-gate` → `startup-ash-field` → `startup-ash-particle`; `startup-mark` → `startup-wordmark`, `startup-subtitle`, `startup-divider`, `startup-prompt` |
 | Title | `title-brand-lockup` (`title-wordmark`, `title-subtitle`, `title-divider`); `title-menu` (six `title-menu-item`, each with `title-menu-gem`); independent `title-tagline`; `title-menu-modal` (see below) |
 
-- **`hud-quick-settings`** is shared by Title, Map and Combat. It anchors beneath the top-right HUD edge as a vertical pair of live positive-state Fullscreen and Music controls. Music persists through the profile settings service; Fullscreen is read from the browser (no duplicate flag). On narrow screens: same composition, 44px square glyph controls so enemy intent stays unobscured. Browsers without a fullscreen API show Fullscreen as unavailable, not a dead switch.
+- **`hud-quick-settings`** (Title, Map, Combat) anchors beneath the top-right HUD edge as a vertical pair of live Fullscreen and Music controls. Music persists via the profile settings service; Fullscreen is read from the browser (no duplicate flag). Narrow screens: same composition, 44px square glyph controls. Without a fullscreen API, Fullscreen shows unavailable.
 
 #### Startup Gate and Title components
 
 - `startup-gate` is a boot-scoped component, not a Title variant. Its immutable model supplies wordmark copy, input-family prompts, deterministic particle records, accessibility metadata and the named reveal behavior.
-  - Its renderer owns layout and temporary event binding, consumes the one first-input owner from the composition root, and uses the shared build-stamp renderer.
-  - It never imports simulation state, persists dismissal, or mounts Title controls behind itself. The mark's phone backing is transparent; content stays centered and opaque.
+  - Its renderer owns layout and temporary event binding, consumes the composition root's one first-input owner, and uses the shared build-stamp renderer.
+  - It never imports simulation state, persists dismissal, or mounts Title controls behind itself. The mark's phone backing is transparent.
 - Load and New share one `title-menu-modal`: `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`, `title-save-slot-list`, `title-modal-actions`.
   - Each `title-save-slot` supplies `title-save-slot-copy`, `title-save-slot-state`, and `title-save-slot-delete` only when occupied; the actions supply `title-modal-back-control` and `title-modal-continue-control`.
   - The DOM-free `saveSlotSelectionModel` projects Load and New from the same slot records and Behavior Models; selected styling, `aria-pressed`, focus restoration target, primary-action availability and command payload resolve to one slot. Save data and callbacks stay screen inputs.
@@ -1686,16 +1686,15 @@ Ids are stable semantic names, not screen-specific markup.
 #### Character Creation components
 
 - Ids: `character-disclosure`, `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`, `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`, `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `equipment-choice-card`, `relic-choice-card`. `class-preview-pane` composes `class-resource-grid`; `character-disclosure` composes the stat and appearance choices.
-- Presentation only; starting-deck composition and unarmed fallback mechanics are unchanged. Hand selectors include an Empty Hand card.
+- Presentation only (starting decks, unarmed fallback unchanged). Hand selectors include an Empty Hand card.
 - The focused choice drives the detail panel and a compact two-column grid of its starting combat cards (quantities from the current loadout).
-  - Choosing updates cards in place; the focused card lifts and enlarges over 180 ms (less movement on phones, none with reduced motion).
+  - Choosing updates cards in place; the focused card lifts and enlarges over 180 ms (less on phones, none with reduced motion).
   - Only the focused candidate exposes Choose/Selected and Information.
-- Layout: two columns of equipment choices beside details and card preview, Continue bottom-right; phones stack. Title strips fit their text. Continue names the next section. Automatic advancement is optional, default off.
-- Flavor is one ellipsized line; full text via inspection. In card and equipment inspection, lore is one identity line (flavor's first paragraph); when more follows it ellipsizes and is a control opening the lore modal with the whole text. Typeface, size, spacing and slant: Advanced → Text & lore.
+- Layout: two columns of equipment choices beside details and card preview, Continue bottom-right (phones stack); Continue names the next section; automatic advancement optional, default off.
+- Flavor is one ellipsized line (full text via inspection). In card and equipment inspection, lore is one identity line (flavor's first paragraph); when more follows it ellipsizes and opens the lore modal with the whole text. Typeface, size, spacing and slant: Advanced → Text & lore.
 - A new character defaults to the Animated sprite style; an existing character's explicit style is kept.
 - `primary-stat-card` is one attribute model and disclosure renderer for Character Creation, Shrine point assignment and the Armoury.
   - Folded face: short label, one-line summary, current value. Reveal and focus/hover tooltip: authored description plus benefits from stat rules and equipment gates.
-  - Art and copy come from content/asset inputs; screens own selection state and callbacks.
 - `stat-allocation-row` is the invisible composition parent for the attribute face, value, decrement/increment controls and a reveal spanning the whole row.
   - Opening or reopening Assign Points is a refund boundary: every attribute returns to the mode baseline first, making the full bonus pool available.
 - Setting rows keep one equal positive inset on all four sides.
@@ -1704,33 +1703,32 @@ Ids are stable semantic names, not screen-specific markup.
 
 - `shrine-option-card` is the shared folded option footprint for Rest, Smith, Flask Allocation and Level Up. Its viewport-relative width and height are data-owned by `balance.ui.shrinePresentation`; expanding a disclosure adds content below the uniform face.
 - Smith opens `smith-upgrade-modal`, composed from `smith-candidate-card` and `smith-upgrade-preview`. Each candidate is one distinct owned armament below the run's tier cap, never an individual deck copy.
-- Choosing a candidate is presentation-only and shows current and next tier, cost, Stone purse, shortfall and every grouped sourced-basic-card delta.
-- `Back to Shrine` and Escape close the modal without changing the run. Only an affordable, enabled `Confirm` spends the shown cost, promotes the armament, updates all its sourced basic cards, and leaves the Shrine.
+- Choosing a candidate is presentation-only: it shows current and next tier, cost, Stone purse, shortfall and every grouped sourced-basic-card delta.
+- `Back to Shrine` and Escape close the modal without changing the run. Only an affordable `Confirm` spends the cost, promotes the armament, updates its sourced basic cards and leaves the Shrine.
 - The DOM-free `SmithSelectionModel` owns the choose/review state and player-facing consequence copy.
 
 #### Combatant components
 
 - `combatant-frame` may compose `component-background`, `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`, `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar` *(not drawn in §13.4p's scope)* and `status-effect-tray`.
 - Hit feedback is `damage-feedback`, with distinct `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and residual HP loss are never visually conflated.
-- These are independently referenceable; the catalog may add components later without declaring them leaves.
 
 #### Menu components
 
 - Contextual launcher `quick-menu-panel` is composed from `quick-menu-caption` and `quick-menu-row`. The full in-run menu is `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, `menu-footer`; the footer composes `save-game-control` and `save-quit-control`.
-- Menu records are built in `MenuModels.js` and rendered by `menuComponents.js`; screen hosts bind commands and lifecycle callbacks; models stay immutable, serializable and DOM-free.
+- Records: `MenuModels.js`; renderers: `menuComponents.js`.
 - **Confirmation.** Potentially destructive Load and Quit Without Saving enter one shared `confirmation-modal`, whose `confirmation-action` is the only commit door.
-  - Danger variants are an `alertdialog`; focus goes first to the neutral `confirmation-cancel-control` (Back); Tab is trapped; Escape, Back or the scrim cancel without mutation and restore the invoking control. Stacked over the in-run menu, one Escape removes only the top confirmation.
-  - After a commit the service keeps an empty top-layer input shield for the bounded navigation activation window (600 ms default) so a second physical click cannot activate a newly rendered Title control or combatant; it releases after the destination paint settles.
-  - Danger borders keep the blood/ember palette; confirmation action and eyebrow text use the authored parchment token and must measure ≥4.5:1 against their computed backgrounds.
+  - Danger variants are an `alertdialog`: focus starts on the neutral `confirmation-cancel-control` (Back), Tab is trapped, and Escape, Back or the scrim cancel without mutation and restore the invoking control. Over the in-run menu, one Escape removes only the top confirmation.
+  - After a commit an empty top-layer input shield lasts the navigation activation window (600 ms default), so a second physical click cannot hit a new Title control or combatant; it releases after the destination paint.
+  - Danger borders keep the blood/ember palette; action and eyebrow text use the parchment token at ≥4.5:1 against computed backgrounds.
 - **Controls rebind capture.** `controls-rebind-capture` is the stable Controls component surface; `rebind-capture-service` ignores lone modifiers. Escape on an armed keyboard capture cancels it, restores `controls-key-rebind-control` from Press… to Key with focus intact, performs no binding mutation, and suppresses the event before the covered menu can close. With no capture armed, Escape keeps its ordinary one-layer Back behavior. A later re-arm accepts a free key; occupied-key conflict resolution is a separate, unspecified policy.
 
 #### Armoury components
 
 - Family: `armoury-overlay` → `armoury-panel`, with `armoury-header`, `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`, `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`, `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, `armoury-region-header`. Ids are stable.
 - Records: `ArmouryModels.js`; renderers: `armouryComponents.js`. Armaments is a configured `folding-tray` instance.
-- Persisted view ids `grid`, `rack`, `hybrid` are labelled **Character**, **Inventory**, **Hybrid**. Equipment region id `slots`; tray instance `armaments`.
+- Persisted view ids `grid`, `rack`, `hybrid` are labelled **Character**, **Inventory**, **Hybrid**; region id `slots`, tray instance `armaments`.
 
-The views project one loadout:
+Views project one loadout:
 
 | View | Layout |
 |---|---|
@@ -1739,19 +1737,19 @@ The views project one loadout:
 | **Hybrid** (`hybrid`) | Compact Character/Armaments split with its own resizable, snapping divider. Inventory and Cards are compact trays below; no Stats tray. |
 
 **Trays**
-- Armaments, Inventory, Cards, Stats (ids `armaments`, `inventory`, `cards`, `stats`) use `folding-tray` → `tray-header` + optional expanded-only `tray-resize-handle` + `tray-content`.
-- `trayModel` owns edge, expanded state, count/summary, resize capability and optional sort intent; `renderTray` owns DOM and accessibility. Sort controls show only while expanded.
+- Trays `armaments`, `inventory`, `cards`, `stats` use `folding-tray` → `tray-header` + optional expanded-only `tray-resize-handle` + `tray-content`.
+- `trayModel` owns edge, expanded state, count/summary, resize capability and sort intent; `renderTray` owns DOM and accessibility. Sort controls show only while expanded.
 - Closed arrows point inward; open arrows point to the anchored edge (open Right Tray: `> TRAY NAME`).
 - Resizable trays expose a 44px mouse, touch-hold and keyboard surface (Top/Bottom vertical, Left/Right horizontal).
-  - Size is kept in memory per tray id and edge for the session; folding returns to the bar or rail, reopening restores the last size; starting/resuming a run or returning to Title resets the default.
-  - Armoury trays open at 45vh, keep ≥30vh when another tray is expanded, snap every 10vh from 30vh to 90vh. The generic component may hug content before its first resize.
+  - Size is kept in memory per tray id and edge for the session; reopening restores it; starting/resuming a run or returning to Title resets the default. Folding returns to the bar or rail.
+  - Armoury trays open at 45vh, keep ≥30vh when another tray is expanded, snap every 10vh from 30vh to 90vh (the generic component may hug content before its first resize).
   - Armaments is non-resizable; Inventory has no height resize while filling the Inventory-view pane. Bottom trays stay bottom-anchored and grow upward.
 
 **Equipment positions are procedural content**
 - `content/source/equipSlots.csv` supplies slot id, label, position label/code, accepted kinds, hand/socket, set capacity, swap rule, storage behavior, order; `content/source/unlocks.csv` adds position rungs; `armouryUi.layout.equipment.slotOrder` sets preferred group order.
 - One compact vertical list shows every authored position as locked, empty or occupied; empty ones follow occupied and locked. Each row is a button selecting it for the Inspect panel; Replace and Unequip are separate buttons. A new position needs no screen branch.
 - Item kind decides eligibility only; the selected hand position owns the sprite socket.
-- The figure composer draws armour/body, `head`, `hands`, `feet` (`assets/equipment/<slot>_<id>.webp`, nothing when absent) and left/right-hand layers. Other attachments need an explicit composer and configuration extension.
+- The figure composer draws armour/body, `head`, `hands`, `feet` (`assets/equipment/<slot>_<id>.webp`, nothing if absent) and hand layers; other attachments need an explicit composer extension.
 - `model/zones.js` is the one slot→zone map (§13.4b); a slot it does not name is refused at boot.
 
 **Armaments list and inventory faces**
@@ -1766,7 +1764,7 @@ The views project one loadout:
 #### Shared HUD composition and combat layout
 
 - **One shared HUD on Map and Combat.** Neither screen hand-writes a second HUD. The one-row `run-header-strip` holds character identity left, Cinders truly centred, Act/Floor/Build/Seed/Source right.
-  - Cinders track and right metadata trail are each capped at 30% of the viewport (data-owned); the three tracks never overlap.
+  - Cinders track and right trail are each capped at 30% of the viewport (data-owned) and never overlap.
   - The five metadata items share one data-owned font size and one centred baseline.
   - When width is insufficient, the right trail hides Source, then Seed, then Build (Act and Floor last), including at the smallest supported width, before it may touch centred Cinders.
   - `metadataShowTotals` defaults to false: Act/Floor show current values (`ACT 1 · FLOOR 1`), not totals; enabling it is data-only.
@@ -1776,17 +1774,16 @@ The views project one loadout:
   - `quick-access-panel` is one outer square holding the Armoury and Menu controls: visible tiles 18 px inside ≥44 px accessible hit areas. The two panels have equal outer height.
   - Refillable HP/Mana flasks are controls (Potions projection), not utility potions, and are not in this panel.
   - `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick Access on the same row.
-  - Utility potions form one right-anchored horizontal tray packed from the Quick Access right edge (flush with the panel), growing or scrolling left. Relic and Potion trays share one vertically centred baseline and one data-owned item gap (default 2 px); utility potion tiles match relic tile size.
-  - Vitals and Quick Access panel-background opacity is data-owned, default 0%: at default the Vitals shell and resource-card frames have no visible border or background, the troughs and labels stay visible, and invisible reference frames do not size the panel.
+  - Utility potions form one horizontal tray packed flush to the Quick Access right edge, growing or scrolling left. Relic and Potion trays share one centred baseline and one data-owned item gap (default 2 px); potion tiles match relic tiles.
+  - Vitals and Quick Access panel-background opacity is data-owned, default 0%: the Vitals shell and resource-card frames show no border or background, troughs and labels stay visible, and invisible reference frames do not size the panel.
   - The map's `− ⊙ + ?` controls stay a separate lower group.
 - **Responsive combat composition.**
-  - `battlefield-stage` vertically centres player and enemy combatant frames at every supported shape (not bottom-aligned).
-  - Narrow layouts keep larger accessible player cards in the horizontal `player-hand-tray`, clear of combatants and `combat-action-rail`.
+  - `battlefield-stage` vertically centres player and enemy combatant frames at every shape.
+  - Narrow layouts keep larger accessible cards in the horizontal `player-hand-tray`, clear of combatants and `combat-action-rail`.
   - HUD and combat composition are verified at 1440×860, 1200×730, 844×390, 390×844 and 320×640.
 - **Resource-bar length is data-scaled, not a cap.**
   - Default reference maxima: HP 200, MP 20, SP 20.
-  - Fill is `current / maximum`; visual length compares that maximum with the data-owned reference and obeys the shared viewport cap.
-  - A character exceeding a reference lengthens only to the layout cap; gameplay state is never clamped.
+  - Fill is `current / maximum`; visual length compares the maximum with the data-owned reference, up to the shared viewport cap. Gameplay state is never clamped.
 
 **Combat zones**
 - **Enemy row (upper right 60%):** at most 3 enemies (see the Enemy cap rule under the Encounter schema).
@@ -1807,19 +1804,19 @@ Advanced Settings is the player-facing editor for authored configuration (not a 
 - A generated row's domain is read off its shipped value unless validation is stricter: a percent capped at 100 offers 0–100; a cap that must be positive starts at 1.
 
 **Tabs** (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`), in order: Opening, Progression, Stats, Rewards, Shops, Deck, Equipment, World, Interface, Text, Wireframes, Export, Sync, Changelog, About.
-- A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs and a `Progression`, `Combat` or retired `Rules` tab left on a moved topic, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`).
+- Retired tab ids open the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs and a `Progression`, `Combat` or retired `Rules` tab left on a moved topic, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`).
 - A release build shows only Deck, Interface, Text, Changelog, About (`RELEASE_ADVANCED_GROUP_IDS`); dev and test builds show all. Stored values are untouched.
 
 **Areas**
 - **Progression:** starting level; experience multiplier; XP curve (`balance.level.xp`); optional max level; attribute points per level; points per derived-stat tier. The level-pace preview (§15.2) shows the curve before a run.
-- **Class defaults:** each class exposes starting STR, DEX, CON, WIS, INT, resource/flask allocation and other schema-valid values, registry-derived. Values must satisfy the creation mode's bounds and allocation totals; invalid combinations are explained and cannot be applied silently.
+- **Class defaults:** registry-derived starting STR, DEX, CON, WIS, INT, resource/flask allocation and other schema-valid values; they must satisfy the creation mode's bounds and totals, and invalid combinations are explained, not applied.
 - **Cards and windows:** resting, selected and reading card sizes; phone sizes; modal, tray, HUD and window dimensions; UI scale and layout thresholds. Dependent constraints are enforced together (resting < selected < reading) and the editor names the blocking value.
 - **World, economy and rewards:** encounter/reward odds, currency and experience multipliers, pricing, map-generation tuning, other global balance values with a runtime override.
 - **Rules and accessibility:** eligible boolean flags and closed-set modes. Ordinary Display, Audio and Accessibility controls stay in their homes and appear in Advanced only in the searchable inventory; both resolve through one descriptor and one persisted value.
 
 **Combat formation**: the perspective grid is the only combat layout.
 - One sheared grid (rows slide right with depth; every cell the same parallelogram): three lanes, an enemy back and front rank, one player rank nearest the camera, open ground between (`teamGapRows` strip heights, default 0.6, no tiles). A cell's shadow is its foot anchor.
-- The party has a front strip (nearer the enemies) and a back strip; the extra enemy strip is drawn only when Core enables the extra row.
+- The party has a front strip (nearer the enemies) and a back strip; the extra enemy strip needs Core's extra row.
 - Enemies fill the back rank first (one in the middle, two on the outer lanes), then the front rank, up to six; the party shares its rank and the player starts in the left lane. More than six enemies widens the grid to more lanes, never two bodies on one anchor.
 - Cells keep gameplay addresses (column is depth, outer = back; row is a lane); the player's front column is not a perspective destination. Pressing an occupied enemy cell acts on that enemy (select, or play the armed card or flask).
 - Lane span, rank tops/heights, shear and foot fractions per phone, desktop and short strip are data (`combatFormationModel.positioning.perspectiveGrid`).
@@ -1827,24 +1824,24 @@ Advanced Settings is the player-facing editor for authored configuration (not a 
 - Supplied 1×1 and 2×2 layouts use responsive percentages (reference anchors at 1641×526 checked against the exports). Explicit saved group edits (percent offsets, optional snapping, default 50 CSS px step) take precedence. No in-battle positioning control.
 
 **Rows, reset and persistence**
-- Search and section navigation work at every supported viewport and text size.
-- Each row shows shipped default, resolved value, whether it affects the current run or only a new run, and Reset. A section, and the whole editor, can reset after confirmation.
+- Search and navigation work at every viewport and text size.
+- Each row shows shipped default, resolved value, current-run vs new-run effect, and Reset; sections and the whole editor reset after confirmation.
 - Invalid legacy or hand-edited values resolve to the authored default and are visibly reported; never accepted or dropped silently, never `NaN`/infinite state.
 - A renamed balance path keeps its stored override: the retired key is read as the current one wherever settings are read (bundle, snapshot, imported file); the current key wins when both exist. Today: `balance.shrine.healPct` → `balance.rest.hpPartialPct` (§13.4j).
-- Run-defining values are snapshotted at run creation and never recalculate an in-progress run, unless the descriptor declares live application safe. Older runs without a snapshot derive the historical shipped defaults for their version.
-- Profile settings store only overrides, so a changed shipped default stays meaningful and Reset never writes a stale copy.
+- Run-defining values are snapshotted at run creation and never recalculate an in-progress run unless the descriptor declares live application safe; older runs without a snapshot derive their version's shipped defaults.
+- Profile settings store only overrides; Reset never writes a stale default.
 
 **Portable export**
 - One Export configuration action, debug pages only (`pageDebug()`, `src/ui/screens/settings.js`), serializes versioned JSON: schema/version marker, build/source info, explicit overrides and resolved values. Never run saves, profile progress, unlocks, history, file paths, or quarantine/archive data.
 - Desktop with the File System Access API: Save As picker with a `.json` name. Otherwise (unavailable, declined, mobile): browser download/share fallback that never silently replaces an existing export.
-- Exporting changes no settings. Format is deterministic and round-trippable; Import is not specified.
+- Export changes no settings; the format is deterministic and round-trippable (Import unspecified).
 
 **Settings door geometry**
 - Uses the maximum safe visual viewport after the shared outer inset (no fixed 90% cap). Header, navigation and footer stay fixed; the content pane is the single vertical scroll owner, with no second scrollport in ancestors or section lists.
-- Narrow screens: navigation becomes a compact section chooser with the same destinations. Zoom and UI scale may change size; Settings applies no private zoom.
+- Narrow screens: compact section chooser. No private zoom.
 - The active row, focus target, scroll cue, footer actions and close control stay reachable at the required desktop, landscape and phone shapes, including Text XL and the mobile on-screen keyboard.
 
-**Delivery:** one complete feature. After each subsection the preview build is refreshed with desktop and phone screenshots; it ships only when the full eligible inventory, persistence/snapshot behavior, export fallback, single-scroll geometry, accessibility and repository checks pass together.
+**Delivery:** ships as one complete feature (inventory, persistence/snapshot, export fallback, single-scroll geometry, accessibility, repository checks together); each subsection gets a refreshed preview with desktop and phone screenshots.
 
 ### 7.3 Input
 
@@ -1862,14 +1859,13 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
   - Touch, mouse, trackpad and pen share one recognizer and settings.
   - Preview selects the nearest legal target; release uses the same resolver and revalidates playability. Self cards select the player; all-enemy cards their legal group. Distance ties are deterministic.
   - Below-threshold return, downward release, information-button gesture, pointer cancellation, capture loss, blur or a blocking modal cannot flick-play; no gesture commits twice. Disabling flicks keeps direct drops.
-- **Card rewards.** One touch, mouse, pen or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; a refused or throwing save restores the pending choice and allows retry.
-- **Controls capture** is under Menu components.
+- **Card rewards.** One touch, mouse, pen or Confirm activation selects without collecting and enables the footer Confirm; Back preserves selection. Confirmation persists once; a refused or throwing save restores the pending choice for retry.
 - **Tooltips.** Statuses (current math), intents (exact post-modifier damage), relics, flasks and map nodes show a concise tooltip after 1 s of continuous hover (`tooltipDelay`, default `1s`).
-  - Leaving early cancels; each new target and nested keyword waits the full delay. It stays visible over its owner or panel and dismisses 500 ms after leaving both; re-entry cancels dismissal.
-  - Touch does not synthesize hover. A click/tap on a non-control detail selects it (highlight) and opens nothing; a second click/tap on it explains at once. Selection ends on a press elsewhere, Escape, or the detail leaving.
+  - Leaving early cancels; each new target and nested keyword waits the full delay. It stays visible over its owner or panel, dismisses 500 ms after leaving both, and re-entry cancels dismissal.
+  - Touch does not synthesize hover. A tap on a non-control detail selects it (highlight); a second tap explains it at once. Selection ends on a press elsewhere, Escape, or the detail leaving.
   - Keyboard/gamepad focus explains after 500 ms regardless of hover delay; Enter or Space on a selectable detail explains at once.
   - Cards have no hover or tap tooltip: selecting reveals Information, which opens card inspection (nested keyword tooltips). Card tooltips open only there; on every other surface (hand, reward, shop, deck, upgrade faces) tag symbols, keywords and underlined numbers are plain decoration and a tap anywhere is the card's own action.
-  - Inspections show complete effect text and decision-relevant values/requirements, classifications as explained tags beneath the card, keywords as definitions; no repeated art descriptions, generic instructions, flavor explanations or identical effect text.
+  - Inspections show complete effect text, decision-relevant values/requirements, classifications as explained tags and keyword definitions; nothing repeated (art descriptions, generic instructions, flavor explanations, identical effect text).
   - Deliberate reading surfaces may require a validated hold: the Armoury equipment-comparison tooltip uses `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and never opens from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
@@ -1883,7 +1879,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 **Beat order** (`beatOrder`, default `sequential`)
 - The attacker's stance, attack clip and return play first; then the target's reaction (hurt pose and flash, shake, evade, block or Stagger wobble).
 - `reactionMs` after the reaction starts (data row, default 180 ms at Normal) the damage/guard/heal numbers fire with sound and haptic; then HP, Poise and Block bars update. Numbers never wait for a long fixed effect (heavy hit flash, Stagger wobble run underneath).
-- The contact spark and attacker hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
+- Contact spark and attacker hit-stop stay at the impact frame; the target holds its rest pose until its reaction starts.
 - `beatOrder: impact` fires reaction, number, sound and haptic at impact. Counter return beats keep impact order.
 
 **Animation settings**
@@ -1892,23 +1888,22 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 - Fixed effect durations: heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms. The Animation speed setting (slow/normal/fast/instant) scales pacing (beat, step, lunge), never these.
 
 **Action pacing**
-- Every action plays as action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, with one gap per step.
+- Each action plays: action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, one gap per step.
 - The gap is **Pause between steps**: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0. **Auto combat speed** divides it during auto combat (default ×1.5).
 
 **Defeat and Victory** (`src/ui/screens/gameover.js:58-65`)
-- Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished".
-- Victory: title "Victory", aria-label "Ember restored".
+- Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished". Victory: title "Victory", aria-label "Ember restored".
 
 **Sound** is shipped and procedural.
 - `sfx.js` is the hook bus (`sfx.play(id)`); `main.js` wires it to `src/ui/audio.js`, a WebAudio engine synthesizing every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory).
 - Content: `src/content/music.js` (scales, beds, `MUSIC_MANIFEST`) and `src/content/sfx.js` (`SFX_RECIPES`, `SFX_MANIFEST`).
 - A recipe is layers in the closed vocabulary `tone` and `noise` (`SFX_LAYER_SCHEMAS`, `model/schemas.js`); a malformed layer fails validation naming its recipe id.
 - `resolveRecipe`: exact id → family row (segment before the first `_`) → required `default` (audible, never silent: Law 1 clause 5). The fallback warns once per unknown id. A new family is one row; no engine change or registration list.
-- Volumes/mute are settings; music default is non-zero.
+- Volumes/mute are settings; music defaults non-zero.
 - A context's bed is a bed object or exactly `'silence'` (`MUSIC_SILENCE_WORD`, `src/model/schemas.js`). `validateContent` rejects quiet-shaped mistakes by name (null, missing variants, `[]`, zero gain, wrong or miscased word); an unknown context at runtime warns naming itself and plays nothing.
-- Rendered tracks are the only shipped audio, rendered offline from `music/score/<id>.mjs` by `tools/score/render.mjs`; tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), scores and render tool under `art/music/`. `music/*.mp3` and `music/manifest.json` are gitignored.
+- Rendered tracks are the only shipped audio (offline from `music/score/<id>.mjs` by `tools/score/render.mjs`); tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), scores and render tool under `art/music/`; `music/*.mp3` and `music/manifest.json` are gitignored.
 - Overrides:
-  - A music folder with `manifest.json` (the Settings folder or, blank on http(s), the shipped tracks via `SHIPPED_MUSIC_FOLDER`, `content/music.js`) replaces a context's bed; a missing/unplayable track falls back to the synth. A `file://` page cannot fetch shipped tracks and keeps the synth.
+  - A music folder with `manifest.json` (the Settings folder or, blank on http(s), the shipped tracks via `SHIPPED_MUSIC_FOLDER`, `content/music.js`) replaces a context's bed; a missing/unplayable track falls back to the synth, as does a `file://` page.
   - `SFX_MANIFEST` (shipped empty) replaces a synth SFX id; a failed sample load falls back to the synth (`src/ui/audio.js:152-154`).
   - `MUSIC_MANIFEST` is imported and never read (dormant).
 
@@ -1918,14 +1913,14 @@ Palette tokens, card rendering, fonts.
 
 - **Palette:** semantic tokens in `base.css`; three sets: the default dark set, a **high-contrast** variant, and `body.cb-safe`, a colourblind-safe remap on Okabe-Ito hues (danger→vermillion, heal→bluish-green, frost→sky, blight→orange).
   - Map structure has its own token, `--map-structure`, so roads and rings re-level without touching text colour.
-  - Hex values are not restated here: `grep -nE "^\s*--" styles/base.css`. The gate that they pass is `node tools/contrast-audit.mjs` (targets for both palettes).
+  - Hex values live in `styles/base.css`; `node tools/contrast-audit.mjs` gates both palettes.
 - **Cards:** DOM elements (not canvas): rounded rect, rarity-coloured frame, cost orb top-left, type banner. Type presentation (geometry + banner colour per card type) is data: `balance.ui.cardTypes`.
-- **Fonts (to build):** Cinzel (display) / Inter (body) are named in `font-family` with system fallbacks (Georgia / system-ui); the interface copies do not ship yet (`CREDITS.md` is authoritative). They will load at runtime as pack files through the pack loader (EXTERNAL-ASSETS-PLAN step 3b, which moves only the existing "AS Lore" faces). The fallbacks stay for a page whose fonts do not load.
+- **Fonts (to build):** Cinzel (display) / Inter (body) are named in `font-family` with system fallbacks (Georgia / system-ui) and do not ship yet (`CREDITS.md`). They will load as pack files through the pack loader (EXTERNAL-ASSETS-PLAN step 3b moves only the "AS Lore" faces); fallbacks stay.
 
 #### Notes and history
 
-- Tools parse this section: every public component id must stay backticked (`tools/ui-components.mjs`, C10); the relic rail sits in `inventory-belt` beneath Vitals; minimum touch target is 44 px.
-- Advanced Settings tabs and the perspective-grid combat layout are the only shipping forms; classic layout, the Battlefield tab and the formation editor are gone.
+- Every public component id must stay backticked (`tools/ui-components.mjs`, C10); minimum touch target is 44 px.
+- The perspective grid is the only combat layout; classic layout, the Battlefield tab and the formation editor are gone.
 
 Full history: [docs/spec-history/07-ui.md](docs/spec-history/07-ui.md).
 
