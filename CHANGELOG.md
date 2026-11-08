@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Developer screenshot modules load on demand** ([#2724](https://github.com/cehinds/AshenSpire/pull/2724), `0.7.4.42`). A normal start no longer loads the developer-only screenshot code; the game plays the same.
 - **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.42`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
 - **Save code reorganised** ([#2707](https://github.com/cehinds/AshenSpire/pull/2707), `0.7.4.42`). The save manager is now built from four smaller parts (archive, profile, shared profile copies, space reclaim). Saves, old saves and exported settings load exactly as before.
 - **Behind the scenes: shorter game rules, merge train E** ([#2705](https://github.com/cehinds/AshenSpire/pull/2705), `0.7.4.42`). Lands #2701 and #2696 together, and drops the rules for the removed World Journey and legacy dungeons. Nothing you play changes.
