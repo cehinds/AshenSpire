@@ -1436,7 +1436,7 @@ Weighted table: `src/content/encounters/weald.js` (§13.2). Act 2/3 rosters are 
 |---|---|
 | Hounds, beasts | fire, blunt |
 | Spirits, wisps | sacred, magic |
-| Armoured soldiers, knights | blunt (lightning and blunt staggers) |
+| Armoured soldiers, knights | blunt, lightning (lightning and blunt staggers) |
 | Undead | sacred, burn ticks |
 | Insects, vermin | frost, slashing |
 | Constructs | blunt, lightning (Stamina loss) |
@@ -1493,7 +1493,7 @@ The grace is the Shrine of Emberlight (there is no `grace` node type).
 - Automatic on arrival, before the Rest/Smith choice; smith and rest are refilled alike.
 - Capacity, class splits and reallocatable kinds are content rows; no screen copies 3, 2/1 or 1/2.
 - A fill, not a grant: fills allocated HP and Mana vessels to their maxima; idempotent; never grows capacity.
-- Free allocation: redistribute all 3 between HP and Mana at no cost; any non-negative integer split summing to 3 is legal; current charges are bounded by the new maxima; utility potions untouched.
+- Free allocation (a committed run choice): redistribute all 3 between HP and Mana at no cost; any non-negative integer split summing to 3 is legal; current charges are bounded by the new maxima; utility potions untouched.
 - Class openings (presets, not caps): Reaver, Herald, Rogue `2 HP / 1 Mana`; Starseer `1 HP / 2 Mana`.
 - Debug controls edit the same data and show its lawful range.
 - Refusals (`graceRefillRefusals`, boot; `node tools/gracerefill.mjs --selftest`): unknown/duplicate kind; malformed capacity/allocation; negative/fractional count; split not summing to capacity; dangling or wrong-kind override; refill altering utility inventory.
@@ -1547,7 +1547,7 @@ The grace is the Shrine of Emberlight (there is no `grace` node type).
 
 - One door: `engine/quests.js commitEventChoice` runs effects, then the history row, then the completion check.
 - `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any second-cairn answer but Leave.
-- `completeQuest` appends `{ kind: 'questCompleted', questId, source }` to `run.history` at most once per quest per run and emits `questCompleted`. An atlas quest's claimed reward completes the same way with `source: 'atlas'`.
+- `completeQuest` appends `{ kind: 'questCompleted', questId, source }` to `run.history` at most once per quest per run and emits `questCompleted` (nothing else emits it). `RUN_SHAPE` is unchanged. Run-history rows carry no wall clock. An atlas quest's claimed reward completes the same way with `source: 'atlas'`.
 - Chain steps open in the dialogue screen: text splits into beats on blank lines; the `eventSpeakers` speaker (`content/source/speakers.csv`: `id,name,portraitKey`; no portrait shows the name plate) stands right, the player left; choices are the responses on the last beat.
   - Back, Continue, Skip speech and speech ending move only the beat; only a response commits; binding responses keep the hold.
 - Validation refuses by name: unresolved step or completion ref, step without speaker, unknown speaker, a Leave that completes a quest. One-off events keep the Event screen.
@@ -1597,30 +1597,30 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
   - The roll is barred; a final step on every exit path (fixed ranks bypass gates) opens a rest on a floor certified at boot.
   - Boot errors: a fixed Elite with no floor beneath it able to hold a rest; no rest floor at all. A fixed Shrine below the Elite gate is the rest.
   - A graph fact, not a path guarantee. Shortest act: 7 floors (narrows the debug run-shape cap).
-- **`minElites` counts graph nodes, not reachability** (some starts reach no Elite; `tools/mapplan.mjs` prints it; nothing gates on it).
+- **`minElites` counts graph nodes, not reachability** (some starts reach no Elite; `tools/mapplan.mjs` prints it; nothing gates on it; making the generator honour `minElites` is an open design call).
 - `?` nodes resolve via `mapConfigs[act].unknownWeights` (§5.6).
-- Map claims are distributions, never seeds; `tools/mapplan.mjs` prints mean and range. Stops per run = exactly **`floors` + 1**.
+- Map claims are distributions, never seeds; `tools/mapplan.mjs` prints mean and range and refuses to report if its seeds did not vary. Stops per run = exactly **`floors` + 1**.
 
 ### Player view and camera
 
 - Full act map visible; only nodes edge-connected to the current node are clickable. **Sealstone Key** shows `?` types.
 - Camera opens framed on the current decision; grab-drag on both axes. **Settings → Advanced → Interface → Two-axis map dragging** (default on); off = vertical-only, horizontal centred. Zoom reset recentres; the saved camera keeps both axes.
 - Acts 2/3 reuse the generator with other encounter tables and elite/boss pools (data only).
-- Core preview route: opens on a fight (`firstFloor: fight`), rests on floors 3 and 6; the fixed-Monster rule above is the Current profile's.
+- Core preview route: opens on a fight (`firstFloor: fight`), rests on floors 3 and 6, whole map visible; the fixed-Monster rule above is the Current profile's.
 
 ### Core branched act map
 
 `buildGameProfileActMap`, `routes.maxBranches`. A profile without `maxBranches` keeps the single-trunk map; stored graphs are never regenerated.
 
 - Nine pre-boss depths; rests on depths 3, 6, 9.
-- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools.
+- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new).
 - Branches `b = rng.int('map', 1, min(maxBranches, distinct bosses))`; Core `maxBranches` 3 (engine max 5). Bosses: first `b` of a seeded shuffle; the first boss beaten ends the act.
 - From depth 2 each branch is a subgraph in up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5; board at most `2 * branchColumns` wide). Edges after depth 1 never leave a branch.
-- No forced rejoin: every lane on a rest depth has its own rest; every lane at or past `minimumThreatFloor` on a non-rest depth has an elite (per lane, not per path).
+- No forced rejoin: every lane on a rest depth has its own rest; each lane holds at least one elite on some non-rest depth at or past `minimumThreatFloor` (per lane, not per path: a remerge edge can carry a path past it; a lane with no such depth has none).
 - Each branch is a tree:
   - Opens at depth 2 with ONE node, or TWO when it has three lanes (50% `map` draw).
   - Forks outward: each boundary node draws `FORK_PERCENT` (40%) per depth to grow a neighbouring lane; forced full by depth `prebossNodes - 3` (6 in Core).
-  - Last two depths: a three-lane branch may narrow once (25%, an outer lane joins its neighbour), never below two lanes; once widened it never collapses to one path. A one-lane branch (b 4–5) stays single. Every path ends at the branch's boss.
+  - Last two depths: a three-lane branch may narrow once (25%, an outer lane joins its neighbour), never below two lanes; once widened it never collapses to one path (before its first fork the trunk may be a single path, rest depths included). A one-lane branch (b 4–5) stays single. Every path ends at the branch's boss.
 - Remerge: per branch and per gap between in-branch depths, one `map` draw (18%) may add ONE edge between neighbouring lanes existing on both depths; never into every rest depth.
 - Ids: `n{depth}_{branchIndex * L + lane}`, column `branch * L + lane`. `bossId` `boss_0`; `bossIds` all `boss_k`; `shrineIds` every pre-boss rest (`shrineId` the first); nodes carry `branch` (null on depth 1).
 
