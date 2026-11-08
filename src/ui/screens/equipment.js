@@ -1265,7 +1265,9 @@ export function mountEquipment(host, {
   /** While a position is picked: the candidates as an Item / Status / Actions table. */
   function pickerTable(args) {
     return armouryPickerTable({
-      run, eq, wrap, draw, setFooterPrimary, openItemInspection, requestEquip,
+      run, eq, wrap, draw, openItemInspection, requestEquip,
+      // Live: draw() rebinds setFooterPrimary, so never pass the value.
+      setFooterPrimary: (plan) => setFooterPrimary(plan),
       getPicking: () => picking,
       getPickerSort: () => pickerSort,
       setPickerSort: (sort) => { pickerSort = sort; },
@@ -1286,7 +1288,7 @@ export function mountEquipment(host, {
       registries, run, meta, layout, eq, inCombat, wrap,
       draw, commit, applyEquipmentChange, beginInventoryEquip, comparisonFor, footerAction, inventoryTarget,
       openInventoryForSelection, pickerTable, registerHold, requestEquip, responsiveMode, selectionFacts,
-      setFooterPrimary, slotSummary,
+      setFooterPrimary: (plan) => setFooterPrimary(plan), slotSummary,
       getPicking: () => picking,
       setPicking: (value) => { picking = value; },
       getSelectedInventoryKey: () => selectedInventoryKey,
