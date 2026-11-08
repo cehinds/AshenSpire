@@ -34,9 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: combat HUD and settings, merge train** ([#2731](https://github.com/cehinds/AshenSpire/pull/2731), `0.7.4.46`). Lands #2709 and #2718 together.
 - **Behind the scenes: settings rows come from one table** ([#2718](https://github.com/cehinds/AshenSpire/pull/2718), `0.7.4.46`). This is a tooling-only change, and nothing you play changes. The Settings screen's rows now come from a data model and are built by shared kit builders, labels are escaped, and the Undo button's label comes from the strings table.
 - **Combat mini HUD redone** ([#2709](https://github.com/cehinds/AshenSpire/pull/2709), `0.7.4.46`). Every fighter now shows a tall Block shield on the left, an HP bar, an always-visible Poise bar of the same size, and one row of round badges for Precision and every status, buffs included, all at one fixed compact width.
+- **Behind the scenes: combat HUD and settings, merge train** ([#2731](https://github.com/cehinds/AshenSpire/pull/2731), `0.7.4.46`). Lands #2709 and #2718 together.
 - **Behind the scenes: code split into smaller modules, merge train** ([#2728](https://github.com/cehinds/AshenSpire/pull/2728), `0.7.4.46`). Lands #2708, #2725 and #2680 together. Nothing you play changes.
 - **Behind the scenes: dice, random numbers and stances live in the model** ([#2680](https://github.com/cehinds/AshenSpire/pull/2680), `0.7.4.46`). Three small rule modules moved beside the rest of the game rules; nothing you play changes.
 - **Content checks reorganised** ([#2725](https://github.com/cehinds/AshenSpire/pull/2725), `0.7.4.46`). The content validator is now one small check per content section; it reports exactly the same problems, and nothing you play changes.
