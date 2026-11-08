@@ -329,7 +329,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Attic or delete the 115 orphan tools (H5)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
 - [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
-- [ ] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10)
+- [x] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10) — [#2712](https://github.com/cehinds/AshenSpire/pull/2712)
 - [x] Stop loading `combat-test.css` and `combat-rounds-preview.css` for players (M9) — [#2671](https://github.com/cehinds/AshenSpire/pull/2671)
 
 ### 4. After CLEANUP-PLAN steps 3g–3m
@@ -343,7 +343,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 - [x] `main.js` → `src/dev/shotStates.js` with a `{ state: fn }` table (H4) — #2674
 - [ ] `main.js` → `src/engine/rewardRolls.js`, pure in `(registries, run, rng, settings)` (H4)
-- [ ] `main.js` → `src/ui/displaySettings.js` (H4)
+- [x] `main.js` → `src/ui/displaySettings.js` (H4) — #2690
 - [ ] `main.js` → `src/engine/runPersistence.js` (H4)
 - [ ] `main.js` → `src/ui/bootArt.js` (H4)
 - [ ] `main.js` → `src/ui/rewardFlow.js` (H4)
@@ -368,7 +368,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `package.json`: `"type": "module"` and a `test:pr` script (M10)
 - [ ] `ci.yml`: one `prepare` composite; rename `sync-alternatives.yml`/`alternative-sync.yml` by direction (M10, Low)
 - [ ] `tests/run-node.mjs`: data table of gates, one fixture loader (M10)
-- [ ] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low)
+- [x] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low) — [#2711](https://github.com/cehinds/AshenSpire/pull/2711)
 - [ ] `src/ui/models/` → `models/`, `projections/`, `controllers/`; merge single-caller stubs; stop `CombatIntentProjectionModel` and `CombatRangeRankModel` mutating their input (M8)
 - [ ] CSS: split `kit.css` by section, fold tiny override files, one token mechanism, `style-lint --write-baseline` (M9)
 - [ ] `settings.js`: `ROWS` to a model, rows via kit builders, Undo label via strings (Low)

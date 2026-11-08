@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed, groupBeats } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';

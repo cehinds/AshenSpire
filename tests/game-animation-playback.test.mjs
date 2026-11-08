@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { playTimeline, setAnimSpeed, ANIM_SPEEDS } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { createPaintedStage } from '../src/ui/paintedOutfits.js';
 import { actionPacing } from '../src/ui/animationPace.js';
 import { figureAnimationsEnabled } from '../src/model/gameAnimationPolicy.js';

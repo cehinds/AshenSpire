@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { effectsOff, motionOff } from '../src/ui/performance.js';
@@ -90,9 +90,9 @@ test('image figures draw only the held stance glow with Effects off (no casting 
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {
   const { createPoseStage } = await import('../src/ui/services/PoseAnimator.js');
-  const dom = (await import('./helpers/reward-dom.mjs')).rewardDom();
-  const saved = { document: globalThis.document, Image: globalThis.Image };
-  globalThis.document = dom.document; globalThis.Image = class { set src(v) { this._s = v; } addEventListener() {} };
+  const { rewardDom, installDom } = await import('./helpers/dom.mjs');
+  const dom = rewardDom(), restoreDom = installDom(dom), savedImage = globalThis.Image;
+  globalThis.Image = class { set src(v) { this._s = v; } addEventListener() {} };
   dom.document.body.classList.add('motion-idle-off');
   try {
     const stage = createPoseStage('reaver', 'gold');
@@ -100,7 +100,7 @@ test('idle motion off stops resting swaps but lets every action pose through', a
     for (const pose of ['attack', 'guard', 'hit']) if (stage.poses.includes(pose)) assert.equal(stage.play(pose, 100), true, `${pose} plays`);
     assert.equal(stage.play('guard', 100), true, 'guard (what fx.js plays for non-attack actions) plays');
     assert.equal(stage.play('idle', 100), false, 'an idle swap is refused');
-  } finally { globalThis.document = saved.document; globalThis.Image = saved.Image; }
+  } finally { restoreDom(); globalThis.Image = savedImage; }
 });
 
 test('with Effects off the figure hit keyframes keep the recoil and drop the red tint', async () => {

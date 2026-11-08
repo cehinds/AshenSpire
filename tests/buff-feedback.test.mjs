@@ -6,7 +6,7 @@ import { playTimeline, setAnimSpeed, clearCallouts, statusPopupFor } from '../sr
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests beat order and sound timing for every floater; the allowlist is tests/floater-policy.test.mjs
 

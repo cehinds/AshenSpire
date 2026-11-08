@@ -17,7 +17,7 @@ test('every weakness trigger and every authored weakness has a real icon, never 
   assert.deepEqual([...triggers].filter(to => !Object.hasOwn(WEAKNESS_ICON, to)), []);
 });
 
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { weaknessChips, weaknessChipText } from '../src/ui/components/weaknessChips.js';
 
 test('a chip is a labelled square icon with the badge tooltip attached', () => {

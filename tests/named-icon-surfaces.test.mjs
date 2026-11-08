@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { uiIconId, uiIconText, uiIconGlyph } from '../src/content/uiIcons.js';
 import { sigilChoiceButton, characterSigilPreview, classChoiceCard, classUnfold, selectionSectionFace } from '../src/ui/components/creationCards.js';
 import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
