@@ -4,7 +4,7 @@
 // its accuracy receipt (reactionAfterResult). Drives the shipped playTimeline under mocked timers, as beat-order does.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, groupBeats, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
+import { playTimeline, groupBeats, setAnimSpeed } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing as pinCombatPacing } from '../src/ui/animationPace.js';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
@@ -47,7 +47,7 @@ function drive(t, events, fn, extra = {}) {
       for (let i = 0; i < 40000 && !done; i++) t.mock.timers.tick(1);
       assert.equal(done, 1, 'the timeline completes');
       fn(timeline);
-    } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    } finally { setAnimSpeed('normal'); }
   });
 }
 const when = (timeline, what) => timeline.find(row => row.what === what)?.at;
@@ -114,13 +114,6 @@ test('a reaction that cancels the attacker leaves the next enemy move whole, aft
     assert.ok(when(timeline, 'anim:player') < when(timeline, 'anim:e1'), 'the reaction plays first, then the second move plays whole (own swing)');
     assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1);
   });
-});
-
-test("the legacy 'impact' order does not swing the enemy a second time for the rest beat", t => {
-  const events = [...reaction, move, ...hitOf(5), { type: 'enemyMoveEnded', sourceId: 'e1' }];
-  drive(t, events, timeline => {
-    assert.equal(timeline.filter(r => r.what === 'anim:e1').length, 1, 'one enemy swing');
-  }, { beatOrder: 'impact' });
 });
 
 test('a failed avoidance check (avoided:false) announces nothing, so the damage still gets its Hit word', t => {
