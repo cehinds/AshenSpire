@@ -16,6 +16,7 @@
 // The 2026-11-07 keepsake removal (keepsake tag and mechanic dropped from the content and tag tables) moves the runtime hash again; it approves this edge again and adds the runtime before it (05977e...). No rule changed: a save from there keeps its own snapshotted rules.
 // The 2026-11-07 mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs, code review H2) moves the runtime hash again and adds 802e46.... No rule changed: a save from there keeps its own snapshotted rules.
 // The 2026-11-08 stance move (src/engine/combatRounds/stance.js → src/model/stance.js, code review H1) repoints the maneuver_smash manifest, which moves the runtime hash again and adds a7efc3.... No rule changed: a save from there keeps its own snapshotted rules.
+// Merge train 2026-11-08 (#2708 loadout split + #2725 validator split + #2680 model leaf moves) lands them together, so the shipped runtime is the combined 573b3a..., not #2680's own 9a69b3... (never on dev). No rule changed.
 // dev's runtime before that retune (73ef24...) and the earlier combined-merge runtime (df30b7...): a run saved there keeps its own snapshotted profile, rules and content.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
@@ -36,7 +37,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:802e46d530589fa030bd1a34ee07ec890ea678d4754c7320291a5d91b91cd1ff',
   'sha256:a7efc394eb86299cf97384c6e3d451a645a93a8249f5ddcf4e17fe86c0768193',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:9a69b3b328f8c71fd7af6ca297debaae2073c3d5f375d8829e92b0466b1c88cc';
+const FIXED_EVASION_RUNTIME = 'sha256:573b3a4f5f0f7a259138182971228450a4ebf9a6682ce52e5a68185833514f41';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
