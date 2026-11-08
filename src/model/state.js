@@ -1459,6 +1459,47 @@ function checkPendingMilestoneAndSkillDrafts(run, problems, pending) {
   }
 }
 
+/** Phase: chosen rank-ups, skill feats and skill attribute reward rows. */
+function checkPendingRankUpsFeatsAttributes(run, problems, pending) {
+  if (pending.chosenRankUps !== undefined) {
+    const chosen = pending.chosenRankUps;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
+    else {
+      const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
+      for (const [key, instanceId] of Object.entries(chosen)) {
+        if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
+        if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
+      }
+    }
+  }
+  for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
+    if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
+  }
+  if (pending.rewards?.skillFeats !== undefined) {
+    const picks = pending.rewards.skillFeats;
+    if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillFeats must be an array');
+    else picks.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillFeats[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, featIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.featIds) || !d.featIds.length || d.featIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.featIds must be a non-empty array of feat ids`);
+    });
+  }
+  if (pending.rewards?.skillAttributes !== undefined) {
+    const picks = pending.rewards.skillAttributes;
+    if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
+    else picks.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillAttributes[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
+    });
+  }
+}
+
 /** Phase: the pending reward offer, its claims, drafts and chosen rows. */
 function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
@@ -1468,43 +1509,7 @@ function checkPendingReward(run, problems) {
     } else {
       checkPendingRewardEnvelope(run, problems, pending);
       checkPendingMilestoneAndSkillDrafts(run, problems, pending);
-      if (pending.chosenRankUps !== undefined) {
-        const chosen = pending.chosenRankUps;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
-        else {
-          const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
-          for (const [key, instanceId] of Object.entries(chosen)) {
-            if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
-            if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
-          }
-        }
-      }
-      for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
-        if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
-      }
-      if (pending.rewards?.skillFeats !== undefined) {
-        const picks = pending.rewards.skillFeats;
-        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillFeats must be an array');
-        else picks.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillFeats[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, featIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.featIds) || !d.featIds.length || d.featIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.featIds must be a non-empty array of feat ids`);
-        });
-      }
-      if (pending.rewards?.skillAttributes !== undefined) {
-        const picks = pending.rewards.skillAttributes;
-        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
-        else picks.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillAttributes[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
-        });
-      }
+      checkPendingRankUpsFeatsAttributes(run, problems, pending);
       for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
         for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
           if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
