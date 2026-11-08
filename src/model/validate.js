@@ -1,6 +1,4 @@
-import { fixCoreModuleParameters } from './fixCoreMechanics.js';
 import { MAX_ENEMIES_PER_COMBAT } from './combatLimits.js';
-import { compileBindings } from './mechanicsKernel.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
@@ -31,8 +29,6 @@ import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems } from './tree.js';
 import { locationTaggingProblems } from './locations.js';
 import { wornZoneOf, handZoneOf } from './zones.js';
-import { skillTracks } from './skills.js';
-import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { derivedStatFloorProblems } from './startingStatConfig.js';
@@ -90,6 +86,7 @@ import { balanceRowProblems } from './validate/balanceRows.js';
 import { rewardScheduleProblems } from './validate/rewardSchedule.js';
 import { progressionProblems } from './validate/progression.js';
 import { classTreeProblems } from './validate/classTree.js';
+import { tagContextProblems } from './validate/tagContext.js';
 
 /**
  * The template-token grammar, in ONE place. `{block}`, `{bleed}`, `{damage.2}`.
@@ -165,46 +162,8 @@ function collectContentProblems(bundle, errors = [], options = {}) {
   // JSON mechanic attachments are validated by the same compiler that live
   // mounts use. Ordinary normalized classification tags keep their own door.
   const behaviorMechanics = new Map(fixCoreProtection);
-  const mechanicCarriers = [
-    ['cards', b.cards, 'card'], ['relics', b.relics, 'relic'], ['statuses', b.statuses, 'status'],
-    ['classes', b.classes, 'character'], ['enemies', b.enemies, 'entity'],
-    ['equipment.armaments', b.equipment?.armaments, 'gear'], ['equipment.armour', b.equipment?.armour, 'gear'],
-  ];
-  for (const [table, rows, kind] of mechanicCarriers) for (const row of Array.isArray(rows) ? rows : []) {
-    if (!row?.mechanicTags && !row?.mechanicBindings) continue;
-    try {
-      compileBindings({mechanics:behaviorMechanics,moduleParameters:fixCoreModuleParameters(),attachments:[{
-        ownerId:row.id,sourceInstanceId:row.id,kind,tags:row.mechanicTags || [],mechanicBindings:row.mechanicBindings || [],
-      }]});
-    } catch(error) { err(`${table}.${row.id}.mechanicBindings`,error.message); }
-  }
-
-  // The whole tag system in one pass: the registry, who may carry which
-  // domain, and every carrier's tags (model/tags.js states the rules).
-  const keywordIds = Array.isArray(b.keywords) ? b.keywords.map((k) => k && k.id) : [];
-  for (const problem of tagContentProblems(b, keywordIds)) {
-    err(problem.path, problem.message);
-  }
-  // Effect-tag vocabulary, FROM THE JOIN rather than from memory. Effect `tags`
-  // and taggedVulnerability lists draw from whatever domains tagFamilyDomains
-  // pairs the `effect` family with — today `card`, which is why this reads the
-  // same as the hard-coded set it replaces. Hard-coding it made that row
-  // decorative: editing `effect,card` to `effect,item` changed the table and
-  // nothing else, so the normalised constraint was not actually the constraint.
-  const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
-  // Creature identity is the creature domain of that same registry, so adding
-  // a kind is a node in nodes.csv rather than an edit to a frozen array.
-  const creatureTagIds = tagIdsInDomain(b, 'creature');
-  // Every node of the tree, for the predicate that may ask about any of them.
-  const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
-  // The skill tracks, derived (model/skills.js): the ids a progression gate
-  // may name are exactly the ones the ledger can hold.
-  const skillIds = new Set(skillTracks(b).map((t) => t.id));
-  const vctx = { ids, err, tagIds, nodeIds, skillIds };
-
-  // Equipment profiles are nested tables, but receive the same strict central
-  // schema walk as top-level registries. Absence is not an empty valid table.
-  const equipment = b.equipment;
+  tagContextProblems(b, err, ctx);
+  const { tagIds, creatureTagIds, vctx, equipment } = ctx; // inline reads
   if (!equipment || typeof equipment !== 'object' || Array.isArray(equipment)) {
     err('equipment', 'must be an object containing basicCardProfiles');
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
