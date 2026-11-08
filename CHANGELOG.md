@@ -72,6 +72,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.42`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
 - **Behind the scenes: shorter game rules, planned expansion** ([#2686](https://github.com/cehinds/AshenSpire/pull/2686), `0.7.4.32`). The rules document's §12 is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: shorter game rules, seats and levels** ([#2685](https://github.com/cehinds/AshenSpire/pull/2685), `0.7.4.32`). The rules document's §13.1–13.4n is rewritten as short bullets with the same rules, and rules for removed systems are dropped. Nothing you play changes.
 - **Behind the scenes: shorter game rules, skill and class progression** ([#2688](https://github.com/cehinds/AshenSpire/pull/2688), `0.7.4.32`). The rules document's §13.4o–13.7 is rewritten as short bullets with the same rules, and rules for removed feat and mastery systems are dropped. Nothing you play changes.
