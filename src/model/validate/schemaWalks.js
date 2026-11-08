@@ -23,7 +23,7 @@ import { walkSchema } from './schemaWalk.js';
 import { propertyRuleProblems } from './propertyRules.js';
 
 export function schemaWalkProblems(b, err, ctx) {
-  const { vctx, equipment } = ctx;
+  const { vctx } = ctx;
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     attributes: SCHEMAS.attribute,

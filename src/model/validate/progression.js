@@ -6,7 +6,7 @@ import { CARD_RARITIES } from '../schemas.js';
 import { normalizeCardMountRules } from '../cardMounts.js';
 
 export function progressionProblems(b, err, ctx) {
-  const { ids, bundle } = ctx;
+  const { bundle } = ctx;
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');

@@ -3,12 +3,16 @@
 // cross-reference data earlier sections built (and the data this one hands on).
 
 import { fixCoreModuleParameters } from '../fixCoreMechanics.js';
+import { fixCoreProtection } from '../../content/generated/fixCoreProtection.js';
 import { compileBindings } from '../mechanicsKernel.js';
 import { skillTracks } from '../skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from '../tags.js';
 
 export function tagContextProblems(b, err, ctx) {
   const { ids } = ctx;
+  // JSON mechanic attachments are validated by the same compiler that live
+  // mounts use. Ordinary normalized classification tags keep their own door.
+  const behaviorMechanics = new Map(fixCoreProtection);
   const mechanicCarriers = [
     ['cards', b.cards, 'card'], ['relics', b.relics, 'relic'], ['statuses', b.statuses, 'status'],
     ['classes', b.classes, 'character'], ['enemies', b.enemies, 'entity'],

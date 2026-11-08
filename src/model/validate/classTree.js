@@ -3,7 +3,7 @@
 // cross-reference data earlier sections built (and the data this one hands on).
 
 export function classTreeProblems(b, err, ctx) {
-  const { ids, flaskCapacity } = ctx;
+  const { flaskCapacity } = ctx;
   // THE CLASS TREE (plan phase 5b, content/source/classTree.csv): every row
   // names a class and a property node, sits in a tier the balance rows open,
   // a node sits in one class, and the top tier's nodes exclude one another
