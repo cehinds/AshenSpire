@@ -36,7 +36,7 @@ function live(damage = 5, effects = undefined, enemyIds = ['wanderingSoldier']) 
   } } };
   const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds });
-  assert.equal(combat.enemies[0].maxStamina, 2, 'the native pool is two SP');
+  assert.equal(combat.enemies[0].maxStamina, 3, 'the native pool is three SP (level 1: 5 + 1 attribute points, owner 2026-11-07)');
   // A three-contact move costs 1 SP per hit (owner, 2026-10-25): fund the fixture's slash.
   Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3, plannedMoves: [] });
   const enemy = combat.enemies[0], move = selected.enemies.get(enemy.enemyId).moves.slash;

@@ -138,9 +138,10 @@ test('hit chances: Reaver vs wanderingSoldier both ways, fellWarden and glassReg
     table[id] = row;
   }
   assert.deepEqual(table, {
-    wanderingSoldier: { 0: { playerHits: 80, enemyHits: 70 }, 1: { playerHits: 85, enemyHits: 75 } },
-    fellWarden: { 0: { playerHits: 80, enemyHits: 90 }, 1: { playerHits: 85, enemyHits: 95 } },
-    glassRegent: { 0: { playerHits: 80, enemyHits: 95 }, 1: { playerHits: 85, enemyHits: 95 } },
+    // Re-captured for the level budget (owner, 2026-11-07): enemies carry 5 + level attribute points, none below 1, and no DEX offset.
+    wanderingSoldier: { 0: { playerHits: 75, enemyHits: 75 }, 1: { playerHits: 80, enemyHits: 80 } },
+    fellWarden: { 0: { playerHits: 70, enemyHits: 90 }, 1: { playerHits: 75, enemyHits: 95 } },
+    glassRegent: { 0: { playerHits: 70, enemyHits: 95 }, 1: { playerHits: 75, enemyHits: 95 } },
   });
   assert.ok(table.wanderingSoldier[1].enemyHits < 95, 'a level-1 enemy no longer hits 95%');
 });

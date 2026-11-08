@@ -115,6 +115,7 @@ function factRows(section) {
   }
   return section.rows.map((r) => row({
     label: r.label, status: [r.value, r.detail].filter(Boolean).join(' · '), tag: 'div', className: 'combatant-inspector-row',
+    attrs: r.id ? { dataset: { fact: r.id } } : {},
   }));
 }
 

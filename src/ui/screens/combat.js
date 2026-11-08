@@ -1131,11 +1131,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return { accepted: true, prediction: maneuver };
         } } : {}),
       name: def.name,
-      subtitle: (def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'),
+      subtitle: [(def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'), ...(Number.isFinite(entity.level) ? [`Level ${entity.level}`] : [])].join(' · '),
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
+        ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
+          value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
+            const own = entity.ownAttributes?.[id] ?? entity.attributes[id] ?? 0, bonus = entity.ownAttributes ? entity.attributeBonuses?.[id] || 0 : 0;
+            return `${t(`combat.attr.short.${id}`)} ${own}${bonus ? `${bonus > 0 ? '+' : '\u2212'}${Math.abs(bonus)}` : ''}`;
+          }).join(' · ') }] : []),
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
         ...combatStatRows(v, entity, 'enemy'),
