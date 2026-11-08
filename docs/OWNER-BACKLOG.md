@@ -22,6 +22,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Means: Remove those four branches from the repo. The managing session's GitHub access was refused; the owner deletes them at github.com/cehinds/AshenSpire/branches.
 - Questions: none
 - Link: —
+- Progress 2026-11-08: only `tools-archive` is left; the owner deletes it on github.com.
 
 ## #4 All statuses as badges in one row with Precision
 - Status: in progress
@@ -51,6 +52,7 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answers 2026-11-07: school statuses — "check what's already in the code base" (existing damage riders in SPEC.md are the starting point: Fire→Burn, Lightning→Weak/Sap (+Shocked), Force→strip Ward, Holy→cleanse, Poison→Venom, Psychic→Confused, Earth→Slowed, Necrotic→Necrotic Blight; Frost/Alteration have none listed). Existing magic-damage resists/bonuses become normal damage ones.
 - Questions: none
 - Link: branch feature/OwnerPlainSpellDamage
+- Progress 2026-11-08: spec PR in progress on feature/OwnerPlainSpellDamageSpec. Decisions made while the owner was away; need the owner's OK in that PR: Core 2 gets one damage kind (D17 superseded, behind a snapshotted flag); PR still scales spells; 'magic' weakness trigger becomes 'spell'; magic resist becomes 'all'; Reach by default recorded. School statuses: fire Burn, lightning Weak+Shocked, frost Chilled (2 = Frozen), force strips Ward, divine cleanse, decay Blight, poison Venom, illusion Confused, earth Slowed.
 - Answers 2026-11-07 (Frost/Alteration): Frost applies Chilled, and Chilled escalates to Frozen (as in Divinity: Original Sin 2 environmental statuses); a Damp target's Chilled advances to Frozen automatically. Alteration acts like D&D abjuration and transmutation: protective/warding and transforming effects, not a damage-rider status.
 
 ## #8 Status saving throws (DC vs will/fortitude/reflex), spell and martial
@@ -116,4 +118,5 @@ Owner-requested changes. Tracker only: nothing here is implemented by the tracki
 - Answer 2026-11-07: "Same as today + test" — `release` still raises the 3rd number (4th reset to 0) and `main` the 2nd (3rd and 4th reset to 0); the new `test` bump raises the 4th number (build ordinal +1), resetting nothing.
 - Questions: none
 - Link: branch chore/OwnerReviewBranch
+- Progress 2026-11-08: PR #2694 (chore/OwnerReviewBranch) open; reviewer findings being fixed.
 - Answer 2026-11-07: reuse the existing pinned "Dev code review" session (session_01YN4Tdzu86M9f2RnGK78rX6) as the review-branch owner; no new session.
