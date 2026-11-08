@@ -30,7 +30,7 @@ export function loadBundleCompiler({ root = ROOT, indexHtml } = {}) {
     ${extract('function guardScript(', '// ---------------------------------------------------------------------------')}
     ${extract('const STRICT_DIRECTIVE =', 'const parseErrors =')}
     ${extract('function assembleRuntime(', 'const runtime =')}
-    return { sources, order, visit, entryAbs, idOf, IMPORT_RE, transformModule, guardScript, MODULE_FN, assembleRuntime };
+    return { sources, order, visit, entryAbs, idOf, IMPORT_RE, transformModule, guardScript, MODULE_FN, assembleRuntime, assertNoNativeImport };
   })()`, bindings, { filename: 'production-bundle-compiler.js' });
 }
 

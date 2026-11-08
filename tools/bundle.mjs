@@ -839,11 +839,13 @@ function transformModule(id, src, absPath) {
   // matching whole import statements with the same anchored regex used for
   // discovery, and replacing each with its require() form.
   let out = src.replace(IMPORT_RE, (stmt) => rewriteImport(stmt, absPath));
-  // import('./x.js') -> Promise.resolve().then(() => require("src/x.js")): the
-  // same exports object a static `import * as N` gets, factory run on first call.
+  // import('./x.js') -> require.dyn("src/x.js"): a Promise of the same exports
+  // object a static `import * as N` gets, factory run on first call. The promise
+  // is cached per target (assembleRuntime), so a module whose evaluation threw
+  // rejects the same way every time, as native import() does.
   for (const call of scanDynamicImports(out).reverse()) {
     out = out.slice(0, call.start)
-      + `Promise.resolve().then(() => require(${JSON.stringify(idOf(resolveSpecifier(absPath, call.spec)))}))`
+      + `require.dyn(${JSON.stringify(idOf(resolveSpecifier(absPath, call.spec)))})`
       + out.slice(call.end);
   }
 
@@ -910,6 +912,20 @@ function transformModule(id, src, absPath) {
   return { body, exportedNames: [...exportedNames] };
 }
 
+// BACKSTOP. A native import() must never reach the shipped script (it would
+// fetch over file:// and fail at runtime). Every literal call was rewritten
+// above, so any `import(` text left in a body is one the scanner missed, or a
+// string that spells it. Fail loudly, naming file and line; a line that is only
+// a comment is exempt.
+function assertNoNativeImport(id, body) {
+  const lines = body.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (!/\bimport\s*\(/.test(lines[i])) continue;
+    if (/^\s*(\/\/|\/\*|\*)/.test(lines[i])) continue;
+    fail('native import( left in ' + id + ' at line ' + (i + 1) + ' after transform — the bundler could not follow it:\n' + lines[i].trim());
+  }
+}
+
 const transformed = new Map(); // id -> body
 for (const id of order) {
   const absPath = resolve(ROOT, id);
@@ -919,6 +935,7 @@ for (const id of order) {
     const badLine = body.split('\n').find((l) => /^[ \t]*(import|export)\b/.test(l));
     fail('module ' + id + ' still has a top-level import/export after transform:\n' + badLine);
   }
+  assertNoNativeImport(id, body);
   transformed.set(id, body);
 }
 
@@ -1123,6 +1140,13 @@ const moduleEntries = order
 // the SAME code with a different registry — a probe against a re-typed copy of
 // the loader would be a check on my transcription, not on what ships.
 function assembleRuntime(entries, rootId) {
+  // Present only when some module has a dynamic import, so a bundle without one
+  // is byte-identical to what it was before dynamic imports were supported.
+  const DYN_HELPER = `
+  var __dyn = {};
+  require.dyn = function (id) {
+    return __dyn[id] || (__dyn[id] = Promise.resolve().then(function () { return require(id); }));
+  };`;
   return `${RUNTIME_OPEN}  var __modules = {
 ${entries}
   };
@@ -1135,7 +1159,7 @@ ${entries}
     __cache[id] = module;
     ${MODULE_CALL}
     return module.exports;
-  }
+  }${entries.includes('require.dyn(') ? DYN_HELPER : ''}
   require(${JSON.stringify(rootId)});
 })();`;
 }

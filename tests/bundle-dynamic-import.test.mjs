@@ -22,6 +22,7 @@ function bundleAndRun(root) {
   const c = loadBundleCompiler({ root, indexHtml: INDEX });
   const entries = c.order.map(id => {
     const { body } = c.transformModule(id, c.sources.get(id), join(root, id));
+    c.assertNoNativeImport(id, body);
     return `${JSON.stringify(id)}: ${c.MODULE_FN}\n${c.guardScript(body)}\n}`;
   }).join(',\n');
   const context = { log: [], Promise };
@@ -81,15 +82,13 @@ test('a missing literal target fails the build', () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('the word import( in comments, strings, templates and regexes is not a call', async () => {
+test('the word import( in comments and regexes is not a call', async () => {
   const root = fixture({
     'main.js': [
       '// import(name) in a line comment',
       "/* import(`./x${n}.js`) in a block comment, with a 'quote */",
-      "const a = 'import(name)', b = \"import('./nope.js')\";",
-      'const c = `text import(x) ${1 + 1} import(y)`;',
-      "const d = /import\\(['\"]/.test(a) ? 1 : 2;",
-      'globalThis.log.push(a, c, d);',
+      "const d = /import\\(['\"]/.test('a') ? 1 : 2;",
+      'globalThis.log.push(d);',
       "globalThis.load = () => import('./dev.js');",
       '',
     ].join('\n'),
@@ -128,4 +127,45 @@ test('scanner: / after an if/while/for/with head starts a regex', () => {
 
 test('scanner: an unterminated quote does not swallow the following lines', () => {
   assert.deepEqual(scanDynamicImports("const s = 'oops\nf = () => import('./y.js');").map(c => c.spec), ['./y.js']);
+});
+
+test('scanner: import( inside strings and templates is not a call', () => {
+  const src = "const a = 'import(name)', b = \"import('./nope.js')\";\nconst c = `text import(x) ${1 + 1} import(y)`;\n";
+  assert.deepEqual(scanDynamicImports(src), []);
+});
+
+test('backstop: a raw import( left in a module body fails the build, naming file and line', () => {
+  // The scanner ignores a string literal, so it reaches the post-transform check.
+  const root = fixture({ 'main.js': "const ok = 1;\nconst s = 'see import(x) here';\n" });
+  try {
+    assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js at line 2/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('backstop: a comment-only line may mention import(', () => {
+  const root = fixture({ 'main.js': "// import(x)\n/* import(y) */\n/*\n * import(z)\n */\nconst ok = 1;\n" });
+  try { bundleAndRun(root); } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a dynamic target whose evaluation threw rejects the same way every time', async () => {
+  const root = fixture({
+    'main.js': "globalThis.load = () => import('./bad.js');\n",
+    'bad.js': "globalThis.log.push('bad');\nthrow new Error('boom');\n",
+  });
+  try {
+    const { context } = bundleAndRun(root);
+    const p1 = context.load(), p2 = context.load();
+    assert.equal(p1, p2, 'the same cached promise');
+    await assert.rejects(p1, /boom/);
+    await assert.rejects(context.load(), /boom/);
+    assert.deepEqual([...context.log], ['bad'], 'the factory ran once');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a bundle with no dynamic import carries no dynamic helper', () => {
+  const root = fixture({ 'main.js': "globalThis.log.push('m');\n" });
+  try {
+    const c = loadBundleCompiler({ root, indexHtml: INDEX });
+    assert.ok(!c.assembleRuntime('"src/main.js": function (module, exports, require) {\n}', 'src/main.js').includes('__dyn'));
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
