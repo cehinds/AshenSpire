@@ -320,7 +320,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2)
 - [ ] Move content projections (`combatExpansionCards.js`, `traitProjection.js`, `equipment.js` functions) into `src/model` (M6)
 - [ ] Load `combatTest.js`/`combatBuilds.js` and `armamentKitPreview.js` by dynamic `import()` under `shotState` only (M6)
-- [ ] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7)
+- [x] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7) — #2677
 
 ### 3. Deletions
 
