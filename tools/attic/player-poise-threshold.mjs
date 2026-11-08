@@ -1,4 +1,4 @@
-// tools/player-poise-threshold.mjs — observed-red contract for player Poise.
+// tools/attic/player-poise-threshold.mjs — observed-red contract for player Poise.
 //
 // MIGRATED 2026-08-14 with the vessel (D10.4 "poise (very skinny bar) under
 // the health bar"; D17 q5 "should also effect player too" — ruled answered
@@ -22,13 +22,13 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createRunState, createEnemyCombatEntity, createPlayerCombatEntity, stampPlayerPoiseMax } from '../src/model/state.js';
-import { dealPoiseDamage } from '../src/engine/actions.js';
-import { validateContent } from '../src/model/validate.js';
-import { PASSIVE_TYPES } from '../src/model/schemas.js';
-import * as projectionModel from '../src/model/statProjection.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createRunState, createEnemyCombatEntity, createPlayerCombatEntity, stampPlayerPoiseMax } from '../../src/model/state.js';
+import { dealPoiseDamage } from '../../src/engine/actions.js';
+import { validateContent } from '../../src/model/validate.js';
+import { PASSIVE_TYPES } from '../../src/model/schemas.js';
+import * as projectionModel from '../../src/model/statProjection.js';
 
 // DOOR. Three real doors, all of them the ones the game itself uses: the
 // content bundle by import, the engine/model modules by import (dealPoiseDamage
@@ -42,7 +42,7 @@ import * as projectionModel from '../src/model/statProjection.js';
 // made re-runnable — including one on the WAKE RED, whose whole subject is a
 // premise dying in the real tree.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'player-poise-threshold.mjs',
     plants: [
@@ -95,7 +95,7 @@ if (process.argv.includes('--selftest')) {
   }));
 }
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 let checks = 0;
 let failures = 0;
 

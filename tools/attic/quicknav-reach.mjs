@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/quicknav-reach.mjs — the shipped quick menu, checked in a browser.
+// tools/attic/quicknav-reach.mjs — the shipped quick menu, checked in a browser.
 //
 // WHY A BROWSER. Every property below is about a RENDERED RECT or a real key
 // press. tests/run-node.mjs opens no browser and says so at the foot of its own
@@ -41,15 +41,15 @@
 // measures real rects. `--selftest` plants each known-bad as BYTES in a copy of
 // the real file the defect would ship in and re-runs this whole tool against
 // the copy: same serve.mjs, same browser, same clicks and key presses.
-// Usage:  node tools/quicknav-reach.mjs [--shots DIR]
-//         node tools/quicknav-reach.mjs --selftest   (the same-door known-bad corpus)
+// Usage:  node tools/attic/quicknav-reach.mjs [--shots DIR]
+//         node tools/attic/quicknav-reach.mjs --selftest   (the same-door known-bad corpus)
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //
 // REMOVAL CONDITION: delete when the Quick Menu surface or its responsive
 // variants leave the product; this is now a production reachability gate.
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'quicknav-reach.mjs',
     args: ['--shape', '390x844-text-m'],
@@ -105,13 +105,13 @@ if (process.argv.includes('--selftest')) {
 
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const BROWSER = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const args = process.argv.slice(2);
 const ARTIFACT = args.includes('--artifact');

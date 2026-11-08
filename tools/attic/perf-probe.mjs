@@ -1,23 +1,23 @@
 #!/usr/bin/env node
-// tools/perf-probe.mjs — mobile performance, measured (docs/FINISH.md §7 "60 fps
+// tools/attic/perf-probe.mjs — mobile performance, measured (docs/FINISH.md §7 "60 fps
 // on a low-end phone profile", RELEASE-CHECKLIST G20). MEASURES ONLY: it changes
 // no game code and asserts nothing; it prints the numbers a tuning step starts from.
 //
-//   node tools/perf-probe.mjs                      all scenarios, 3 runs, median across runs
-//   node tools/perf-probe.mjs --runs 5             more runs
-//   node tools/perf-probe.mjs --certify            certification: scenarios combat,hand, 5 runs, no CPU profile,
+//   node tools/attic/perf-probe.mjs                      all scenarios, 3 runs, median across runs
+//   node tools/attic/perf-probe.mjs --runs 5             more runs
+//   node tools/attic/perf-probe.mjs --certify            certification: scenarios combat,hand, 5 runs, no CPU profile,
 //                                                  per-run rows, trimmed median (drop min and max), min-max spread
 //                                                  and PASS/FAIL against the targets (see TARGETS below)
-//   node tools/perf-probe.mjs --scenario combat,map   only these (combat, map, hand, transitions)
-//   node tools/perf-probe.mjs --seed PERF1         the fixed seed (default PERF1)
-//   node tools/perf-probe.mjs --throttle 4         CPU slowdown (default 4; 1 = none)
-//   node tools/perf-probe.mjs --out DIR            raw per-run JSON goes here (default $TMPDIR/ashen-perf)
-//   node tools/perf-probe.mjs --keep-trace         also keep each Chromium trace in DIR (large)
-//   node tools/perf-probe.mjs --no-profile         skip the CPU-profile pass
-//   node tools/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
-//   PERF_PROFILE_DIR=DIR node tools/perf-probe.mjs   also save each raw .cpuprofile there (large; prune it)
-//   node tools/perf-probe.mjs --force              start although the host is busy (load1 > cores/2 is refused otherwise)
-//   node tools/perf-probe.mjs --debug              log each step and the controls on screen
+//   node tools/attic/perf-probe.mjs --scenario combat,map   only these (combat, map, hand, transitions)
+//   node tools/attic/perf-probe.mjs --seed PERF1         the fixed seed (default PERF1)
+//   node tools/attic/perf-probe.mjs --throttle 4         CPU slowdown (default 4; 1 = none)
+//   node tools/attic/perf-probe.mjs --out DIR            raw per-run JSON goes here (default $TMPDIR/ashen-perf)
+//   node tools/attic/perf-probe.mjs --keep-trace         also keep each Chromium trace in DIR (large)
+//   node tools/attic/perf-probe.mjs --no-profile         skip the CPU-profile pass
+//   node tools/attic/perf-probe.mjs --from DIR           re-print the report from the runs-*.json saved in DIR
+//   PERF_PROFILE_DIR=DIR node tools/attic/perf-probe.mjs   also save each raw .cpuprofile there (large; prune it)
+//   node tools/attic/perf-probe.mjs --force              start although the host is busy (load1 > cores/2 is refused otherwise)
+//   node tools/attic/perf-probe.mjs --debug              log each step and the controls on screen
 //
 // Profile: Playwright Chromium, 390x844 phone (deviceScaleFactor 3, isMobile,
 // hasTouch), CDP Emulation.setCPUThrottlingRate 4, real touch input through
@@ -37,13 +37,13 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir, cpus } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { pointerTargetExpression } from './pointer-target.mjs';
+import { serve } from '../serve.mjs';
+import { pointerTargetExpression } from '../pointer-target.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const argv = process.argv.slice(2);
 const arg = (name, dflt) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : dflt);
 const CERTIFY = argv.includes('--certify');

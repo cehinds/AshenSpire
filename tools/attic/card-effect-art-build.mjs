@@ -6,7 +6,7 @@ import path from 'node:path';
 import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const require=createRequire(import.meta.url);
-let sharp;try{sharp=require('sharp')}catch{sharp=require('../build/animation-tools/node_modules/sharp')}
+let sharp;try{sharp=require('sharp')}catch{sharp=require('../../build/animation-tools/node_modules/sharp')}
 const root=fileURLToPath(new URL('../../',import.meta.url));
 export const refreshRoot='art/card-effect-refresh-2026-09-09';
 export async function applyCardEffectRefresh(manifest){

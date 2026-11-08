@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (285 tool files, plus the 8 subfolders)
+## Tools something references (272 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -177,34 +177,24 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `menufit.mjs` | menufit — the two surfaces a player manages a RUN from: the Armoury | tools mapreach, plantsites-baseline.json, release-shots +1; other src/ui/screens/equipment.js |
 | `mobileart-policy.mjs` | mobileart-policy — the one home for what "mobile art" means. | tests alternative-art, alternative-card-animation, alternative-selected-stances +3; tools art-export-plan, art-manifest, buildversion +5; docs docs/ART-EXPORT-POLICY.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/MOBILE-PERFORMANCE.md +1 |
 | `mobilefit.mjs` | mobilefit — can a finger reach the combat controls, at every shape | tools axisfit, mapreach, screenreach +2; docs docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, styles/combat.css |
-| `modal-no-reset.mjs` | Real-browser acceptance for FixModal W8: acting inside a modal never resets | tools plantsites-baseline.json |
 | `modal-shell-contract.mjs` | modal-shell-contract — the shell is the only chrome, and the count | tests wireframe-confirmation; tools textfit; other docs/architecture-handoff/source-map.json, docs/design/battlefield-options-2026-10-16/visual-preview.html +2 |
 | `motion-probe.mjs` | motion-probe — idle life and reduced motion, measured in a real | wf ci; tests motion-probe-alternative, motion-probe-boundary, motion-probe-fixed-rest +1; tools plantsites-baseline.json; docs DEVELOPER.md, docs/FINISH.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md +1; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/assets.js +1 |
-| `music-bed-gain-probe.mjs` | music-bed-gain-probe — headless proof that 'bed.gain' reaches the | other src/ui/audio.js |
 | `music-silence-probe.mjs` | music-silence-probe — headless proof that the engine can tell | tests engine.test.js; tools webaudio-stub |
 | `music-toggle-parity.mjs` | Issue #230: music-only preference and Quick Menu/Settings parity. | wf ci; tools plantsites-baseline.json; other src/ui/components/card.js |
-| `offline-play-qa.mjs` | offline-play-qa — the Download & saves screen and the game it saves, | docs docs/EXTERNAL-ASSETS-PLAN.md, docs/FINISH.md, docs/offline-play.md |
 | `og-image.mjs` | og-image — the share image every build's og:image names. | tests web-meta; tools pages-site; docs docs/EXTERNAL-ASSETS-PLAN.md |
-| `onefold.mjs` | onefold — HOW MANY PLACES IN THIS TREE BUILD A FOLD? | tools plantsites-baseline.json; other src/ui/components/disclosure.js, src/ui/components/trayComponents.js |
 | `onevocab.mjs` | onevocab — Sten, 2026-08-15. | tests run-node; tools conhp, equipment-surface-receipts, plantsites-baseline.json +2 |
 | `openrouter.mjs` | tools/openrouter.mjs — ask a model through OpenRouter from the command line. | tests openrouter; tools lib/openrouter; docs CHANGELOG.md, DEVELOPER.md; other src/content/changelog.generated.js |
-| `overlapreader.mjs` | overlapreader — the two-knob refusal, observed at the boot door: | other src/model/validate.js |
 | `pages-offline.mjs` | pages-offline — the Pages service worker in a real Chromium | wf dev-preview; tests pages-offline-entry, pages-sw; tools pages-store; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md |
 | `pages-site.mjs` | pages-site — assemble the GitHub Pages site that lists EVERY branch's | wf pages-builds; tests alternative-branches, check-feature-pages, collect-feature-previews +4; tools art-source, collect-feature-previews, offline-play-qa +4; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md +1; other .gitignore, src/model/offlineDownload.js +2 |
 | `pages-store.mjs` | pages-store — the Pages object store and the pages that read it | tests offline-zip, pages-sw; tools offline-play-qa, pages-offline, pages-site; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md; other src/model/offlineDownload.js |
 | `pages-sw.mjs` | pages-sw — the Pages service worker, as text (docs/EXTERNAL-ASSETS-PLAN.md | wf pages-builds; tests pages-sw; tools pages-offline, pages-site, pages-store; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/FINISH.md; other src/ui/offlineInstall.js |
-| `painted-book-browser.mjs` | (no header comment) | docs docs/preview/book-library/layers/painted/README.md |
-| `painted-outfits-ship.mjs` | Ship the reviewed artwork without recoloring outfit identities. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/paintedOutfits.js |
-| `painted-poses.mjs` | painted-poses — cut a painted pose sheet into single-pose frames. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other .gitignore |
 | `palette-audit.py` | tools/palette-audit.py — how far apart do the armour sets actually LOOK? | tests engine.test.js; tools equipment-blender.py, palette-check.sh, palette-probe.html |
 | `palette-check.sh` | tools/palette-check.sh — gate on tools/palette-probe.html. | wf ci; tools gatelist, pages-site, palette-audit.py +1; docs docs/EXTERNAL-ASSETS-PLAN.md; other asset-data/equipment/manifest.json |
 | `parchment.mjs` | parchment — writes the act plates: 'assets/map/parchment_actN.svg'. | tests engine.test.js; tools credits-check; docs CREDITS.md, docs/ART-REPO-PLAN.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md +1; other assets-mobile/map/parchment_act1.svg, assets-mobile/map/parchment_act2.svg +8 |
-| `perf-probe.mjs` | perf-probe — mobile performance, measured (docs/FINISH.md §7). | docs DEVELOPER.md, docs/PERF-MOBILE-BASELINE.md |
 | `placement.mjs` | placement — ANCHORED PLACEMENT HAS ONE HOME, AND THE GAP HAS ONE | tools flask-menu-cancel, flaskbox, hintstrip +1; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/flask.js +2 |
 | `plantsites.mjs` | Issue #498: 28 plant sites across 9 gates had drifted — their find-strings no | wf dev-preview; tools doorplant, placement, plantsites-baseline.json +2; docs DEVELOPER.md, docs/MOBILE-PERFORMANCE.md, docs/ai/AI-ROUTING.md +1; other package.json |
 | `player-hud-clearance-qa.mjs` | Geometry and screenshots from the real screenshot route and mountCombat. | wf player-hud-clearance; docs docs/preview/full-combat-audit/resumed/css-followup.md |
 | `player-hurt-registration.py` | Register each class's HURT outfit art onto its ready card figure. | tests player-hurt-registration-paths; other src/content/playerHurtFrames.js |
-| `player-poise-threshold.mjs` | player-poise-threshold — observed-red contract for player Poise. | tools equipment-surface-receipts, hudbars, plantsites-baseline.json |
 | `pointer-target.mjs` | Serialized into browser probes; chooses input coordinates without dispatching | tests pointer-target; tools click-impact-probe, combat-card-stability-qa, combat-layer-qa +4 |
 | `pose-cutout.mjs` | pose-cutout — cut generated full-body combat poses out of their | tools concept-cutout; docs CREDITS.md, docs/ART-REPO-PLAN.md, docs/art-evidence/2026-09-03/poses/README.md +3; other asset-data/sprites/class-sprites.manifest.json |
 | `pose-ship.mjs` | pose-ship — publish a subset of the pose sprites into assets/. | tests run-node; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other asset-data/poses/pose-sprites.manifest.json, src/content/poseSprites.js |
@@ -213,12 +203,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `pr-restamp.mjs` | pr-restamp — KEEPS AN OPEN PULL REQUEST MERGEABLE AFTER EACH dev BUILD STAMP. | wf pr-restamp; tests pr-restamp; docs CONTRIBUTING.md, DEVELOPER.md |
 | `profile-durability-probe.mjs` | profile-loss-e444d77 — Sten, 2026-08-06. | tests engine.test.js, run-node; tools buildversion, plantsites-baseline.json, saveroundtrip; docs docs/FINISH.md; other src/engine/save.js |
 | `profile-first-run.mjs` | profile-first-run — Viki, 2026-08-08 (M7). | tests engine.test.js; tools browser |
-| `profile-surface-drive.mjs` | profile-surface-drive — Rune, 2026-08-07 (#67). | tools plantsites-baseline.json |
 | `prologue-editor-save.mjs` | A local authoring bridge for the opening editor. Only the final journey | tests prologue-editor-defaults; tools displayfirst, serve |
 | `qa-sandbox.mjs` | Pre-PR browser QA sandbox: runs an acceptance spec (success and failure checks) at desktop and phone viewports, screenshots, optional before/after against `--base <ref>`; writes report.md. | tests qa-sandbox; docs CONTRIBUTING.md, docs/qa/SANDBOX-QA.md; other package.json (`qa:sandbox`) |
-| `quest-choice-contract.mjs` | Issue #257: previous event choices can unlock or exclude later quest steps. | docs SPEC.md, docs/framework-migration-checklist.md; other src/model/validate.js |
 | `quick-start-inputs.mjs` | Count real native inputs from the default Core New Game menu to its first | wf quick-start; tests quick-start-tutorial-input, quick-start; tools map-camera-persistence; docs docs/FINISH.md |
-| `quicknav-reach.mjs` | quicknav-reach — the shipped quick menu, checked in a browser. | tools plantsites-baseline.json |
 | `readiness-poses-ship.mjs` | Normalize authored sprite sheets to the existing 640px canvas / y=600 floor. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/readinessPoseArt.js |
 | `readme-sync.mjs` | readme-sync — keeps the generated parts of README.md current. | wf readme-sync; tests readme-sync |
 | `rear-player-qa.mjs` | (no header comment) | docs docs/ai/session-continuations/2026-10-08/rear-sprites-and-layering.md |
@@ -310,9 +297,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (113 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (126 files)
 
-These 113 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 126 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line | Who named it before the move |
 | --- | --- | --- |
@@ -410,11 +397,24 @@ These 113 tools were moved to `tools/attic/`, not deleted: no tracked file outsi
 | `mobile-card-check.mjs` | Touch regression checks for selection, confirmation, cancellation and detail text. |
 | `mobile-readability-qa.mjs` | (no header comment) |
 | `modal-keyboard-check.mjs` | Real keyboard regression checks for shared modal tabs and nested focus. |
+| `modal-no-reset.mjs` | Real-browser acceptance for FixModal W8: acting inside a modal never resets | tools plantsites-baseline.json |
+| `music-bed-gain-probe.mjs` | music-bed-gain-probe — headless proof that 'bed.gain' reaches the | other src/ui/audio.js |
+| `offline-play-qa.mjs` | offline-play-qa — the Download & saves screen and the game it saves, | docs docs/EXTERNAL-ASSETS-PLAN.md, docs/FINISH.md, docs/offline-play.md |
+| `onefold.mjs` | onefold — HOW MANY PLACES IN THIS TREE BUILD A FOLD? | tools plantsites-baseline.json; other src/ui/components/disclosure.js, src/ui/components/trayComponents.js |
+| `overlapreader.mjs` | overlapreader — the two-knob refusal, observed at the boot door: | other src/model/validate.js |
+| `painted-book-browser.mjs` | (no header comment) | docs docs/preview/book-library/layers/painted/README.md |
 | `painted-items-ship.mjs` | Rebuild inventory-size WebP assets from the preserved painted PNG masters. |
 | `painted-outfits-check.mjs` | Browser integration check. Start serve on port 4277 first. |
+| `painted-outfits-ship.mjs` | Ship the reviewed artwork without recoloring outfit identities. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/paintedOutfits.js |
+| `painted-poses.mjs` | painted-poses — cut a painted pose sheet into single-pose frames. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other .gitignore |
 | `pairsweep.mjs` | pairsweep — the settings door, walked: named high-risk pairs of |
+| `perf-probe.mjs` | perf-probe — mobile performance, measured (docs/FINISH.md §7). | docs DEVELOPER.md, docs/PERF-MOBILE-BASELINE.md |
+| `player-poise-threshold.mjs` | player-poise-threshold — observed-red contract for player Poise. | tools equipment-surface-receipts, hudbars, plantsites-baseline.json |
 | `pointbuy-preview-check.mjs` | Run against a rebuilt preview server; Playwright must be available to Node. |
 | `presentation-matrix.mjs` | Final phone presentation contract: source/dist x Grace/creation/Armoury x 320/390. |
+| `profile-surface-drive.mjs` | profile-surface-drive — Rune, 2026-08-07 (#67). | tools plantsites-baseline.json |
+| `quest-choice-contract.mjs` | Issue #257: previous event choices can unlock or exclude later quest steps. | docs SPEC.md, docs/framework-migration-checklist.md; other src/model/validate.js |
+| `quicknav-reach.mjs` | quicknav-reach — the shipped quick menu, checked in a browser. | tools plantsites-baseline.json |
 | `reaver-attack-playtest.mjs` | Real-browser smoke for the painted Reaver sequence: play an actual Strike, |
 | `reward-new-badge-qa.mjs` | Browser gate for the reward-card status stack: NEW sits above the card and |
 | `sfx-authority-contract.mjs` | Issue #67: played ids and authored SFX rows are one two-way authority. |

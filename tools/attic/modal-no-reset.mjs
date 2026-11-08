@@ -13,10 +13,10 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const browserPath = [
   process.env.CHROME,
@@ -28,7 +28,7 @@ const browserPath = [
 ].find((candidate) => candidate && existsSync(candidate));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const code = await doorSelftest({
     tool: 'modal-no-reset.mjs',
     timeoutMs: 120000,

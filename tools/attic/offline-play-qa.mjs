@@ -1,11 +1,11 @@
-// tools/offline-play-qa.mjs — the Download & saves screen and the game it saves,
+// tools/attic/offline-play-qa.mjs — the Download & saves screen and the game it saves,
 // played offline under file:// in a real Chromium.
 //
-//   node tools/offline-play-qa.mjs                       download the single file, then play it offline
-//   node tools/offline-play-qa.mjs --offline-only        play the local AshenSpire.html offline
-//   node tools/offline-play-qa.mjs --download-controls-check   picker timing, progress, cancel, disk errors
-//   node tools/offline-play-qa.mjs --live-release-check  the real published feed
-//   node tools/offline-play-qa.mjs --zip [--web build]
+//   node tools/attic/offline-play-qa.mjs                       download the single file, then play it offline
+//   node tools/attic/offline-play-qa.mjs --offline-only        play the local AshenSpire.html offline
+//   node tools/attic/offline-play-qa.mjs --download-controls-check   picker timing, progress, cancel, disk errors
+//   node tools/attic/offline-play-qa.mjs --live-release-check  the real published feed
+//   node tools/attic/offline-play-qa.mjs --zip [--web build]
 //       THE FOLDER COPY (docs/EXTERNAL-ASSETS-PLAN.md §5 B, step 7): publishes
 //       build/ (node tools/launch.mjs --build-only; the pack shape since step 8e) into a local copy of the
 //       Pages shape (tools/pages-store.mjs publishPack, the light single file at
@@ -20,18 +20,18 @@ import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser, serveDir } from './browser.mjs';
-import { packPinOf, publishPack } from './pages-store.mjs';
-import { objectPath } from './asset-pack.mjs';
-import { extractZip } from './zip.mjs';
-import { folderZipBytes, zipFolderName } from '../src/model/offlineDownload.js';
-import { createRegistries } from '../src/model/registries.js';
-import { contentBundle } from '../src/content/index.js';
-import { createRunState } from '../src/model/state.js';
-import { buildActMap } from '../src/engine/actmap.js';
-import { createRng } from '../src/engine/rng.js';
-import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
-import { createSaveTransfer } from '../src/engine/saveTransfer.js';
+import { launchBrowser, resolveBrowser, serveDir } from '../browser.mjs';
+import { packPinOf, publishPack } from '../pages-store.mjs';
+import { objectPath } from '../asset-pack.mjs';
+import { extractZip } from '../zip.mjs';
+import { folderZipBytes, zipFolderName } from '../../src/model/offlineDownload.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRunState } from '../../src/model/state.js';
+import { buildActMap } from '../../src/engine/actmap.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createSaveManager, createMemoryStorage } from '../../src/engine/save.js';
+import { createSaveTransfer } from '../../src/engine/saveTransfer.js';
 const out = resolve('artifacts/offline-play'); mkdirSync(out, { recursive: true });
 const offlineOnly = process.argv.includes('--offline-only');
 const liveReleaseCheck = process.argv.includes('--live-release-check');

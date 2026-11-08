@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/onefold.mjs — HOW MANY PLACES IN THIS TREE BUILD A FOLD?
+// tools/attic/onefold.mjs — HOW MANY PLACES IN THIS TREE BUILD A FOLD?
 //
 // Sunna, 2026-08-16. Constantine said "go ahead and allow the fold" (MR-151)
 // and the lane that answers him could have been written two ways. Saga named
@@ -53,10 +53,10 @@
 // makes impossible is a fourth arriving without a line in a report.
 //
 // Usage:
-//   node tools/onefold.mjs             the counts, the roster, the verdict
-//   node tools/onefold.mjs --json      the same, machine-readable
-//   node tools/onefold.mjs --root DIR  another checkout (a planted copy)
-//   node tools/onefold.mjs --selftest  the same-door known-bad corpus
+//   node tools/attic/onefold.mjs             the counts, the roster, the verdict
+//   node tools/attic/onefold.mjs --json      the same, machine-readable
+//   node tools/attic/onefold.mjs --root DIR  another checkout (a planted copy)
+//   node tools/attic/onefold.mjs --selftest  the same-door known-bad corpus
 // Exit: 0 both observed == declared · 1 one moved · 2 the harness could not read
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted with components/disclosure.js,
@@ -69,7 +69,7 @@ import { resolve, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 
-const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const argOf = (f, d = null) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 const ROOT = resolve(argOf('--root', HERE));
@@ -181,13 +181,13 @@ function run() {
   const r = scan(ROOT);
   const ref = gitShort(ROOT);
   if (r.error) {
-    if (AS_JSON) console.log(JSON.stringify({ tool: 'tools/onefold.mjs', ref, error: r.error }, null, 1));
+    if (AS_JSON) console.log(JSON.stringify({ tool: 'tools/attic/onefold.mjs', ref, error: r.error }, null, 1));
     else console.error(`onefold: ${r.error}\n  Unknown is never a pass (SOP 2's silence guard).`);
     return 2;
   }
   if (AS_JSON) {
     console.log(JSON.stringify({
-      tool: 'tools/onefold.mjs', ref,
+      tool: 'tools/attic/onefold.mjs', ref,
       declaredFold: DECLARED_FOLD, observedFold: r.foldCount, foldFiles: r.foldFiles, foldSites: r.fold,
       declaredExpand: DECLARED_EXPAND, observedExpand: r.expandCount, expandFiles: r.expandFiles, expandSites: r.expand,
       line: sentinelLine(r, ref), cite: CITE,
@@ -306,8 +306,8 @@ async function selftest() {
   // THE REFERENT GUARD, THROUGH THE REAL CLI. Not a fixture handed to scan():
   // the tool is spawned exactly as a person spawns it, at a root with no src/,
   // and must exit 2 rather than print a comfortable 0.
-  console.log('\n  referent guard: `node tools/onefold.mjs --root <a tree with no src/>` through the CLI');
-  const r = spawnSync(process.execPath, [join(HERE, 'tools/onefold.mjs'), '--root', join(HERE, 'docs')],
+  console.log('\n  referent guard: `node tools/attic/onefold.mjs --root <a tree with no src/>` through the CLI');
+  const r = spawnSync(process.execPath, [join(HERE, 'tools/attic/onefold.mjs'), '--root', join(HERE, 'docs')],
     { encoding: 'utf8', timeout: 60000 });
   const guarded = r.status === 2 && /broken read|cannot read/.test(`${r.stdout}${r.stderr}`);
   console.log(guarded

@@ -129,7 +129,7 @@ if (equipmentSurfaceReceipt) {
   // Poise meter.'`; the vessel migration (2026-08-14) rewrote the model's note
   // and left this tool failing on a sentence whose home is statProjection.js.
   // A string with two homes is Law 1 clause 2, so the copy goes and the
-  // PROPERTIES stay — which is what tools/player-poise-threshold.mjs, that
+  // PROPERTIES stay — which is what tools/attic/player-poise-threshold.mjs, that
   // sentence's own contract, already asserts. Not my card: a one-line stale
   // copy inside a file I was already opening, and it is why the baseline here
   // could not be green. Fixed in its own commit.

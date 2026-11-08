@@ -1,6 +1,6 @@
-// tools/painted-poses.mjs — cut a painted pose sheet into single-pose frames.
+// tools/attic/painted-poses.mjs — cut a painted pose sheet into single-pose frames.
 //
-//   node tools/painted-poses.mjs --sheet SHEET.png --class rogue \
+//   node tools/attic/painted-poses.mjs --sheet SHEET.png --class rogue \
 //     --poses idle,guard,attack1,attack2,attack3,hit,kneel,down [--out DIR]
 //     [--append] [--canvas 720x900] [--grid 3x3] [--mirror attack1,hit] [--grounded]
 //
@@ -22,7 +22,7 @@
 // poses do not all get glued to the same feet height.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
-import { decodePng, encodePng } from './concept-cutout.mjs';
+import { decodePng, encodePng } from '../concept-cutout.mjs';
 
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -356,7 +356,7 @@ for (let i = 0; i < poses.length; i++) {
 
 const manifest = {
   schema: 'ashenspire/lowpoly-renders/v1',
-  _: 'DERIVED — written by tools/painted-poses.mjs from painted pose sheets. Same shape as the Blender renders manifest so tools/pose-sprites.mjs can read either.',
+  _: 'DERIVED — written by tools/attic/painted-poses.mjs from painted pose sheets. Same shape as the Blender renders manifest so tools/pose-sprites.mjs can read either.',
   canvas: { ortho: null, cx: null, cz: null, w: CW, h: CH },
   // the strip names every pose in the manifest, so an appended class adds its own
   // names to the ones already there rather than replacing them

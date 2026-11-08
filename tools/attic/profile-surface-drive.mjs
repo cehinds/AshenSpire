@@ -1,4 +1,4 @@
-// tools/profile-surface-drive.mjs — Rune, 2026-08-07 (#67).
+// tools/attic/profile-surface-drive.mjs — Rune, 2026-08-07 (#67).
 //
 // Drives the RENDERED profile surfaces in a real browser at 390 px, because the
 // defect that started this round was found by rendering and could not have been
@@ -10,7 +10,7 @@
 // restore states its risk first, a failed restore does not consume the archive
 // and says so, and a readable archive really does come back.
 //
-// Run:  node tools/profile-surface-drive.mjs        (from the repo root)
+// Run:  node tools/attic/profile-surface-drive.mjs        (from the repo root)
 // Exit 0 = every check passed. Exit 1 = at least one red, each named.
 //
 // BOUNDARY: headless Chromium at one viewport (390x844). It proves behaviour and
@@ -25,7 +25,7 @@
 // `--selftest` plants each known-bad into a copy of the real screen source
 // and re-runs this whole drive against it.
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'profile-surface-drive.mjs',
     timeoutMs: 900000,
@@ -44,9 +44,9 @@ if (process.argv.includes('--selftest')) {
 
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8193, open: false });
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+const { port } = await serve({ root: fileURLToPath(new URL('../..', import.meta.url)), port: 8193, open: false });
 // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
 // Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
 // passed no `--user-data-dir` and never killed the browser at all, so every run

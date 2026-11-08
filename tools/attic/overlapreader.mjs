@@ -1,4 +1,4 @@
-// tools/overlapreader.mjs — the two-knob refusal, observed at the boot door:
+// tools/attic/overlapreader.mjs — the two-knob refusal, observed at the boot door:
 // overlap does not flatten without its reader.
 //
 // THE TRAP IT PINS (named in my 08-14 log, ruled by Sunna the same day):
@@ -36,9 +36,9 @@
 // never in doubt.
 //
 // Usage
-//   node tools/overlapreader.mjs                   source tree
-//   node tools/overlapreader.mjs --root DIR        another tree (the observed-red run)
-//   node tools/overlapreader.mjs --browser PATH    explicit Chromium
+//   node tools/attic/overlapreader.mjs                   source tree
+//   node tools/attic/overlapreader.mjs --root DIR        another tree (the observed-red run)
+//   node tools/attic/overlapreader.mjs --browser PATH    explicit Chromium
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / fixture found no row / NOTHING RAN
 //
 // OBSERVED RED (the instrument rule), same door as the real input:
@@ -63,14 +63,14 @@
 // either row (handLayoutModes, inspectHold) leaves balance.ui.
 
 import { spawn, spawnSync } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { copySourceArt } from './art-source.mjs';
+import { copySourceArt } from '../art-source.mjs';
 
-const TOOLS = resolve(fileURLToPath(new URL('.', import.meta.url)));
+const TOOLS = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const ROOT = resolve(argOf('--root') || resolve(TOOLS, '..'));

@@ -11,14 +11,14 @@ import {
   eventChoiceRequirementMet,
   hasEventChoice,
   recordEventChoice,
-} from '../src/model/quests.js';
-import { eventChoiceIds, eventChoicesWithHistory, eventHistoryRequirements, events } from '../src/content/events.js';
-import { createRegistries } from '../src/model/registries.js';
-import { contentBundle } from '../src/content/index.js';
-import { resolveUnknownNode, rollRelicReward, buildShopStock } from '../src/engine/encounters.js';
-import { executeRunEffects } from '../src/engine/actions.js';
-import { validateContent } from '../src/model/validate.js';
-import { createRng } from '../src/engine/rng.js';
+} from '../../src/model/quests.js';
+import { eventChoiceIds, eventChoicesWithHistory, eventHistoryRequirements, events } from '../../src/content/events.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { contentBundle } from '../../src/content/index.js';
+import { resolveUnknownNode, rollRelicReward, buildShopStock } from '../../src/engine/encounters.js';
+import { executeRunEffects } from '../../src/engine/actions.js';
+import { validateContent } from '../../src/model/validate.js';
+import { createRng } from '../../src/engine/rng.js';
 
 let pass = 0;
 let fail = 0;

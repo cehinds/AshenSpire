@@ -1242,7 +1242,7 @@ async function main() {
       DOM all ran as they do in play. Poise's door (?shotMaxPoise=) enters ONE STAGE HIGHER than the
       others: it writes the explicit override createCombat owns (Law 0 clause 3), the receipt's
       OUTPUT seam — so the sweep bypasses the equipment-receipt derivation itself, which is proven
-      separately, through the content door, by tools/player-poise-threshold.mjs. The default pose
+      separately, through the content door, by tools/attic/player-poise-threshold.mjs. The default pose
       (no param) walks the full path: A11 checks the entity's own derived stamp against the DOM.
 KNOWN-BAD: this tool's failing case is the SHIPPED PRE-CHANGE TREE, where the combat health bar was
       \`.topbar .hpbar { width: 19rem }\` — a constant. Run with --tree against a checkout at dev and

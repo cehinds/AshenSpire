@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/music-bed-gain-probe.mjs — headless proof that `bed.gain` reaches the
+// tools/attic/music-bed-gain-probe.mjs — headless proof that `bed.gain` reaches the
 // music the player actually hears, BY BOTH DOORS (#48, Vega's card).
 //
 // The defect, in her words: `BEDS.rest.gain = 0.34` and `BEDS.boss.gain = 0.6`
@@ -30,8 +30,8 @@
 // manifest + `music(context)` for external — the same two calls main.js makes.
 // No helper is reached into.
 //
-// Usage:   node tools/music-bed-gain-probe.mjs             # measure both doors
-//          node tools/music-bed-gain-probe.mjs --selftest  # known-bad: revert
+// Usage:   node tools/attic/music-bed-gain-probe.mjs             # measure both doors
+//          node tools/attic/music-bed-gain-probe.mjs --selftest  # known-bad: revert
 //            the routing fix in a disposable copy of the tree and prove this
 //            probe goes red through the real door (the instrument rule: a
 //            check nobody has watched fail is not green).
@@ -40,7 +40,7 @@
 // REMOVAL CONDITION: #48's own — delete when beds lose their `gain` field to a
 // successor vocabulary, or when the external-track path is removed.
 
-const { installWebAudioStub, stubGraph } = await import('./webaudio-stub.mjs');
+const { installWebAudioStub, stubGraph } = await import('../webaudio-stub.mjs');
 installWebAudioStub();
 const graph = stubGraph();
 
@@ -54,8 +54,8 @@ globalThis.fetch = async (url) => (String(url) === `${FOLDER}/manifest.json`
   ? { ok: true, json: async () => MANIFEST }
   : { ok: false, json: async () => ({}) });
 
-const { initAudio } = await import('../src/ui/audio.js');
-const { BEDS } = await import('../src/content/music.js');
+const { initAudio } = await import('../../src/ui/audio.js');
+const { BEDS } = await import('../../src/content/music.js');
 
 // BOTH EDGES OF THE TUNABLE ITSELF, set on the live table (this process only;
 // the shipped file is untouched). A zero bed must be silent by BOTH doors —
@@ -525,7 +525,7 @@ const { tmpdir } = await import('node:os');
 const { fileURLToPath } = await import('node:url');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TREE = resolve(HERE, '..');
+const TREE = resolve(HERE, '..', '..');
 
 // THREE PLANTS, EACH A REAL EDIT TO THE REAL ENGINE IN A DISPOSABLE COPY, with
 // this probe re-run INSIDE the copy so its own `../src/ui/audio.js` import
@@ -632,7 +632,7 @@ const PLANTS = [
   },
 ];
 
-const control = spawnSync(process.execPath, [resolve(TREE, 'tools/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
+const control = spawnSync(process.execPath, [resolve(TREE, 'tools/attic/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
 console.log('\n  THE REAL DOOR: each plant is an edit to src/ui/audio.js in a disposable copy of the');
 console.log('    tree, and this probe is re-run INSIDE that copy.');
 console.log(`    control (this tree, unplanted): exit ${control.status} — a red here would prove only that copying breaks it`);
@@ -655,7 +655,7 @@ for (const plant of PLANTS) {
     continue;
   }
   writeFileSync(enginePath, engineSrc.slice(0, at) + plant.to + engineSrc.slice(at + plant.from.length), 'utf8');
-  const planted = spawnSync(process.execPath, [resolve(dir, 'tools/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
+  const planted = spawnSync(process.execPath, [resolve(dir, 'tools/attic/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
   const out = (planted.stdout || '') + (planted.stderr || '');
   const missLines = out.split('\n').filter((l) => /^MISS /.test(l));
   const named = plant.expect.every((re) => missLines.some((l) => re.test(l)));

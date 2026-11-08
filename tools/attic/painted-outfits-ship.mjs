@@ -4,13 +4,13 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PAINTED_OUTFITS } from '../src/content/paintedOutfits.js';
-import { authoringNeeds } from './art-authoring.mjs';
+import { PAINTED_OUTFITS } from '../../src/content/paintedOutfits.js';
+import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
 let sharp;
-try { sharp = require('sharp'); } catch { sharp = require('../build/animation-tools/node_modules/sharp'); }
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+try { sharp = require('sharp'); } catch { sharp = require('../../build/animation-tools/node_modules/sharp'); }
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const source = 'art/painted-combat-2026-09-07';
 const manifest = JSON.parse(readFileSync(resolve(root, source, 'manifest.json')));
 const techniqueManifest=resolve(root,source,'animation-groups/frames.json');

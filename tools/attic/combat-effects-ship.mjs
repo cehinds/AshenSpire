@@ -4,7 +4,7 @@ import {applyCardEffectRefresh,writeCombatEffectManifest} from './card-effect-ar
 import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const require=createRequire(import.meta.url);let sharp;
-try{sharp=require('sharp')}catch{sharp=require('../build/animation-tools/node_modules/sharp')}
+try{sharp=require('sharp')}catch{sharp=require('../../build/animation-tools/node_modules/sharp')}
 const jobs=[
  ['projectiles',['starbolt','emberbolt','shadowbolt','sacredbolt']],
  ['effects',['ward','gorefire','heal','impact']],
