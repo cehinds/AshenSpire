@@ -459,3 +459,44 @@ test('merge refuses a file that is not JSON in the ashenspire-hud-layout/1 forma
     assert.deepEqual(snapshot(t.root), before);
   } finally { t.cleanup(); }
 });
+
+// ONE TOKEN MECHANISM (code review M9): a hex colour in a form-factor file that
+// equals a colour token in content/config/ui/tokens.json (`color`, published in
+// styles/tokens.generated.css) is emitted as var(--color-…), so the generated
+// stylesheet carries no bare hex and the colour has one home.
+test('a hex that equals a colour token is written as that token; any other value is left alone', () => {
+  const colors = [['--color-plate', '#0A0A08A6'], ['--color-edge', '#000']];
+  const { css, errors } = generateHudLayoutCss(withTokens('desktop', {
+    '--hud-text-plate-bg': '#0a0a08a6', '--hud-text-shadow': '0 1px 2px #000, 0 0 4px #000c', '--hud-tools-bg': '#123456',
+  }), { colors });
+  assert.deepEqual(errors, []);
+  assert.match(css, /--hud-text-plate-bg: var\(--color-plate\);/, 'case aside, an identical hex becomes the token');
+  assert.match(css, /--hud-text-shadow: 0 1px 2px var\(--color-edge\), 0 0 4px #000c;/, 'only the identical #000 is replaced, #000c is a different colour');
+  assert.match(css, /--hud-tools-bg: #123456;/, 'a hex no token holds stays as authored');
+  assert.equal(generateHudLayoutCss(withTokens('desktop', { '--hud-tools-bg': '#0a0a08a6' })).css.includes('var(--color'), false, 'with no tokens given nothing is replaced');
+});
+
+test('the committed stylesheet has no bare hex, and every --color-* it reads is published', () => {
+  const css = read(HUD_LAYOUT_CSS);
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-fA-F]{3,8}\b/, 'colours come from tokens.generated.css');
+  const published = read('styles/tokens.generated.css');
+  const used = [...new Set([...css.matchAll(/var\((--color-[a-z0-9-]+)\)/g)].map((m) => m[1]))];
+  assert.ok(used.length >= 7, 'the HUD colours are tokens');
+  for (const name of used) assert.match(published, new RegExp(`\\n  ${name}: #[0-9a-f]+;`), `${name} is declared in tokens.generated.css`);
+});
+
+test('the token a form-factor file resolves to is the same colour it was authored with', () => {
+  const tokens = JSON.parse(read('content/config/ui/tokens.json')).color;
+  const byName = Object.fromEntries(Object.entries(tokens).map(([k, v]) => [`--color-${k.replace(/([A-Z])/g, '-$1').toLowerCase()}`, v.toLowerCase()]));
+  const { docs } = readHudLayoutDocs(ROOT);
+  const css = read(HUD_LAYOUT_CSS);
+  for (const ff of FORM_FACTORS) {
+    const block = css.split(`:root[data-form-factor='${ff}'] {`)[1].split('}')[0];
+    for (const [name, authored] of Object.entries(docs[ff].tokens)) {
+      const line = block.split('\n').find((l) => l.trim().startsWith(`${name}:`));
+      assert.ok(line, `${ff} ${name} is emitted`);
+      const resolved = line.replace(/var\((--color-[a-z0-9-]+)\)/g, (_, n) => byName[n]).replace(/^\s*[^:]+:\s*/, '').replace(/;$/, '').toLowerCase();
+      assert.equal(resolved, String(authored).trim().toLowerCase(), `${ff} ${name} resolves to its authored value`);
+    }
+  }
+});

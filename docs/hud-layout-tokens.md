@@ -66,6 +66,14 @@ Defaults reproduce the look before this pipeline existed, so an empty file
 changes nothing. `--check` fails when the file on disk differs from the
 generated output; `tests/run-node.mjs` runs it.
 
+**Colours are tokens, not repeated hex.** A hex colour in a form-factor file that
+is identical to a `color` token in `content/config/ui/tokens.json` (published in
+`styles/tokens.generated.css` as `--color-…`) is written to the stylesheet as
+`var(--color-…)`; the content files keep the hex they were authored with, and a
+colour no token holds is written as authored. To give a new HUD colour a name,
+add it to `color` in `tokens.json`, then run `node tools/config-build.mjs`,
+`node tools/tokens-css.mjs --write` and `node tools/hud-layout-css.mjs --write`.
+
 ## Tokens
 
 Types: `shadow` (CSS shadow list or `none`), `color`, `length` (`px`/`%`/`rem`/`em`
