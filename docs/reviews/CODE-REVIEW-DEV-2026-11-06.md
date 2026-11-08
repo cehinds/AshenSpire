@@ -352,7 +352,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `mountCombat` → `createX({ getState, dispatch, host })` modules: card input, beat playback, enemies, preview, armoury (H3)
 - [x] `mountEquipment` → `components/armoury*` fed by models (H3) — [#2714](https://github.com/cehinds/AshenSpire/pull/2714)
 - [ ] `collectContentProblems` → one validator per bundle section (H3)
-- [ ] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3)
+- [x] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3) — #2707
 - [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
 - [ ] `runOpcode` → `OPCODE_HANDLERS` map (H3)
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
