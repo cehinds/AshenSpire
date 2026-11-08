@@ -29,4 +29,12 @@
   --touch-primary-row: 56px;
   --touch-min-gap: 8px;
   /* already declared where they live, not repeated: --tap-floor (styles/base.css), --iconbtn-size (styles/base.css) */
+  /* colours the generated stylesheets (styles/hud-layout.generated.css) read by name instead of repeating the hex */
+  --color-hud-shadow-edge: #000;
+  --color-hud-shadow-glow: #000c;
+  --color-hud-text-plate: #0a0a08a6;
+  --color-hud-panel-shadow: #000b;
+  --color-hud-player-border: #66b8ff;
+  --color-hud-details-label: #d6af68;
+  --color-hud-tools-plate: #0c0b08a0;
 }

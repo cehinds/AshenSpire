@@ -48,7 +48,7 @@ export const GROUPS = ['scenes', 'components', 'screens', 'presentation'];
 // ui/tokens.json holds `vars` plus these published design-token groups. They are
 // plain values (no "$" references) and reach the game as uiConfig.tokens.<group>;
 // tools/tokens-css.mjs also publishes them as CSS custom properties.
-export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch'];
+export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch', 'color'];
 export const FOOTER_ACTIONS = ['back', 'skipSpeech', 'continue'];
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
@@ -276,6 +276,7 @@ const isNameKey = (k) => /^[a-z][A-Za-z0-9]*$/.test(k);
  *   layer.<name>        integer z-index, strictly increasing in the order written
  *   motion.<name>       non-negative integer milliseconds
  *   touch.<name>        { px?, css?, home? }   (px may be left out only when homed)
+ *   color.<name>        a hex colour string (#rgb, #rgba, #rrggbb or #rrggbbaa)
  *
  * `css` names the custom property the entry publishes; `home` says that property
  * is already declared in that stylesheet (one home per fact), so the generated
@@ -355,6 +356,11 @@ export function tokenGroupProblems(rel, data) {
   }
   if ('touch' in data) {
     named(data.touch, 'touch', (k, v, path) => { entry(v, path, [], { pxOptionalWhenHomed: true }); });
+  }
+  if ('color' in data) {
+    named(data.color, 'color', (k, v, path) => {
+      if (typeof v !== 'string' || !/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(v)) out.push(at(`${path} must be a hex colour like "#0a0a08a6"`));
+    });
   }
   return out;
 }

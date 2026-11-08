@@ -143,3 +143,15 @@ test('index.html links the generated sheet straight after base.css', () => {
   const links = [...read('index.html').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(links[links.indexOf('styles/base.css') + 1], 'styles/tokens.generated.css');
 });
+
+test('colour tokens publish as --color-<name> with the hex as authored, and a bad colour is refused by name', () => {
+  const t = tokens();
+  const { css } = generateTokensCss(t, { stylesheets: BASE });
+  for (const [key, hex] of Object.entries(t.color)) {
+    assert.ok(css.includes(`  --color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${hex};`), `${key} is published`);
+  }
+  t.color.hudShadowEdge = 'black';
+  const bad = generateTokensCss(t, { stylesheets: BASE });
+  assert.equal(bad.css, null);
+  assert.ok(bad.errors.some((e) => e.includes('color.hudShadowEdge must be a hex colour')), bad.errors.join('\n'));
+});

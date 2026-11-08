@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json
-// (type, layer, motion, touch) as CSS custom properties in
+// (type, layer, motion, touch, color) as CSS custom properties in
 // styles/tokens.generated.css.
 //
 //   node tools/tokens-css.mjs            validate and write (same as --write)
@@ -20,7 +20,8 @@
 // Naming: type.scale.<k> → --t-<kebab k> in rem (the root is 10px at Text M, so
 // 16px is 1.6rem); layer.<k> → --layer-<kebab k>; motion.<k> → --motion-<kebab k>
 // in ms; touch.<kFooPx> → --touch-<kebab foo> in px (a finger does not grow with
-// Text size). An entry's `css` overrides the derived name.
+// Text size); color.<k> → --color-<kebab k> (a hex colour, written as authored).
+// An entry's `css` overrides the derived name.
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -97,7 +98,13 @@ export function tokenEntries(data) {
   for (const [key, entry] of Object.entries(data.touch ?? {})) {
     add('touch', key, `touch.${key}`, `--touch-${kebab(key.replace(/Px$/, ''))}`, entry.px == null ? null : `${num(entry.px)}px`, entry);
   }
+  for (const [key, hex] of Object.entries(data.color ?? {})) add('color', key, `color.${key}`, `--color-${kebab(key)}`, hex);
   return out;
+}
+
+/** The colour tokens as [custom property, hex] pairs, in tokens.json order. */
+export function colorTokenPairs(data) {
+  return tokenEntries(data).filter((e) => e.group === 'color').map((e) => [e.name, e.value]);
 }
 
 const GROUP_TITLES = {
@@ -105,6 +112,7 @@ const GROUP_TITLES = {
   layer: 'stacking layers (z-index), bottom to top',
   motion: 'motion durations',
   touch: 'touch sizes (px: a finger does not grow with Text size)',
+  color: 'colours the generated stylesheets (styles/hud-layout.generated.css) read by name instead of repeating the hex',
 };
 
 /**
@@ -152,7 +160,7 @@ export function generateTokensCss(data, { stylesheets = {}, file = TOKENS_JSON }
   if (errors.length) return { css: null, errors };
 
   const lines = [HEADER, ':root {'];
-  for (const group of ['type', 'layer', 'motion', 'touch']) {
+  for (const group of ['type', 'layer', 'motion', 'touch', 'color']) {
     const own = entries.filter((e) => e.group === group && !e.home);
     const homed = entries.filter((e) => e.group === group && e.home);
     if (!own.length && !homed.length) continue;
