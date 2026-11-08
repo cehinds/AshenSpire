@@ -16,16 +16,18 @@ test('protection badges are independent, Defense (Block) is first, then Ward, an
   assert.deepEqual(combatHealthModel({ defense: NaN, ward: -3 }).badges, []);
 });
 
-test('the compact row preserves health facts and the original total trough length', () => withKitDom(() => {
+test('the compact row preserves health facts; its width is a layout token, not the max-HP trough length', () => withKitDom(() => {
   const hp = meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true });
   const row = combatHealthRow(hp, { defense: 12, ward: 8 }, { tooltips: false });
-  assert.equal(row.style.width, '72.000%');
-  assert.equal(hp.querySelector('.m-track').style.width, '100%');
+  assert.ok(!row.style.width, 'no inline width on the row');
+  assert.ok(!hp.querySelector('.m-track').style.width, 'no max-HP width on the track');
   assert.equal(hp.querySelector('.m-fill').style.width, '80.00%');
   assert.equal(hp.querySelector('.m-value').textContent, '64/80');
-  assert.equal(row.children.length, 3);
+  const badges = row.querySelector('.combat-health-badges');
+  assert.equal(row.children.length, 3, 'shield, HP bar, badge row');
   assert.equal(row.children[0].dataset.defenseKind, 'shield');
-  assert.equal(row.children[1].dataset.defenseKind, 'ward');
+  assert.equal(badges.children.length, 1);
+  assert.equal(badges.children[0].dataset.defenseKind, 'ward');
   assert.equal(hp.dataset.protected, 'true');
   assert.equal(hp.dataset.warded, 'true');
 }));
@@ -35,10 +37,11 @@ test('Ward alone keeps its border while health returns to red', () => withKitDom
   const row = combatHealthRow(hp, { defense: 0, ward: 8 }, { tooltips: false });
   assert.equal(hp.dataset.protected, 'false');
   assert.equal(hp.dataset.warded, 'true');
-  assert.equal(row.children.length, 2);
+  assert.equal(row.children.length, 2, 'HP bar and badge row');
+  assert.equal(row.querySelector('.combat-health-badges').children.length, 1, 'Ward alone');
 }));
 
-test('Poise is hidden on the HP row: no badge, no trim, no accessible poise label (owner 2026-11-07)', () => withKitDom(() => {
+test('Poise is not a badge or trim on the HP row: no badge, no trim, no accessible poise label (owner 2026-11-07; the bar row is separate)', () => withKitDom(() => {
   const hp = meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true });
   const row = combatHealthRow(hp, { defense: 0, ward: 0, poise: 7, poiseMax: 10 }, { tooltips: false });
   assert.equal(row.querySelectorAll('.combat-health-badge').length, 0);

@@ -110,6 +110,12 @@
             "maximum": 100
           }
         },
+        "floor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99,
+          "description": "Every enemy attribute starts at this value (owner, 2026-11-07: 1) before the remaining budget is filled by priority. Variance never moves a stat below max(floor, authored)."
+        },
         "caps": {
           "type": "object",
           "properties": {
@@ -151,7 +157,7 @@
     },
     "attributeOffset": {
       "type": "object",
-      "description": "Added to each enemy attribute after gear and relic bonuses, floored at 0. The tier budget check ignores it.",
+      "description": "Optional (no default since 2026-11-07). Added to each enemy attribute after gear and relic bonuses, floored at 0. The budget check ignores it.",
       "properties": {
         "strength": { "type": "integer", "minimum": -20, "maximum": 20 },
         "dexterity": { "type": "integer", "minimum": -20, "maximum": 20 },

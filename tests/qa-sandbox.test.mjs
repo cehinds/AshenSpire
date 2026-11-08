@@ -8,6 +8,13 @@ const scene = (extra = {}) => ({ name: 's', url: '?shot=combat', success: [{ kin
 const spec = (extra = {}) => ({ request: 'make it so', viewports: [{ name: 'desktop', width: 1280, height: 800 }], scenes: [scene()], ...extra });
 
 test('a well-formed spec is valid', () => assert.deepEqual(validateSpec(spec()), []));
+test('holds may target a body point but cannot drift outside the selected element', () => {
+  const held = position => spec({ scenes: [scene({ actions: [{ hold: { selector: '.sprite', ms: 800, position } }] })] });
+  assert.deepEqual(validateSpec(held({ x: .5, y: .6 })), []);
+  for (const position of [{ x: -1, y: .5 }, { x: .5, y: 2 }, { x: '0.5', y: .5 }, { x: .5 }, false]) {
+    assert.match(validateSpec(held(position)).join(), /hold position/);
+  }
+});
 test('a missing request is rejected', () => assert.match(validateSpec(spec({ request: '' })).join('\n'), /missing request/));
 test('an unknown check kind is rejected', () => {
   const errs = validateSpec(spec({ scenes: [scene({ failure: [{ kind: 'sparkles', label: 'x', selector: '.a' }] })] }));

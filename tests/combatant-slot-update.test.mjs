@@ -102,3 +102,19 @@ test('a class-only slot write leaves the target-HUD rack untouched', () => withK
   assert.equal(frame.querySelector('.target-hud-overhead-meters').outerHTML, rack.outerHTML);
   assert.notEqual(frame.outerHTML, html);
 }));
+
+// Review on #2709: with no rack, one render that replaces the meters AND the statuses must seat the new tray in the
+// NEW meters' badge row, not in the detached old one.
+test('no rack: meters and statuses replaced together land the tray in the new badge row', () => withKitDom(({ document }) => {
+  const el = (tag, className) => { const n = document.createElement(tag); n.className = className; return n; };
+  const metersWithRow = () => { const m = el('div', 'meters'); m.appendChild(el('div', 'combat-health-badges')); return m; };
+  const tray = () => el('div', 'statuses');
+  const first = metersWithRow(), firstTray = tray();
+  first.firstChild.appendChild(firstTray);
+  const frame = combatantFrame({ role: 'enemy', entityId: 'e1', sprite: el('div', 'art'), name: el('div', 'nm'), meters: first, trailing: [] });
+  document.body.appendChild(frame);
+  const nextMeters = metersWithRow(), nextTray = tray();
+  updateCombatantSlots(frame, { meters: nextMeters, statuses: [nextTray] });
+  assert.equal(nextTray.parentNode, nextMeters.querySelector('.combat-health-badges'));
+  assert.ok(frame.contains(nextTray), 'the new tray is on the frame');
+}));

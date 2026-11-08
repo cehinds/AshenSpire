@@ -237,6 +237,53 @@ test('disabled Core retains a custom expansion cap and explicit off overrides re
   assert.doesNotMatch(tooltip, /Attack rating ×|at the start/);
 });
 
+// Custom callers may replace the status override or the whole expansion table.
+for (const viaExpansion of [false, true]) test(`public previews refresh mutable status rules (expansion table=${viaExpansion})`, () => {
+  const { combat, reg, inst } = fixture();
+  combat.fixCoreRules.enabled = false;
+  const source = combat.combatStatusRules = structuredClone(combat.combatExpansionRules.statuses);
+  if (viaExpansion) {
+    delete combat.combatStatusRules;
+    combat.combatExpansionRules = Object.freeze({ ...combat.combatExpansionRules, statuses: source });
+  }
+  source.statuses.weak.cap = 3;
+  const first = previewCard(combat, inst.instanceId);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3);
+  source.statuses.weak.cap = 5;
+  const second = previewCard(combat, inst.instanceId);
+  assert.equal(second.combatStatusRules.statuses.weak.cap, 5);
+  assert.match(weakInfo(reg, inst, second), /stack total up to 5/);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3, 'the earlier receipt stays detached');
+  assert.throws(() => { second.combatStatusRules.statuses.weak.cap = 9; }, TypeError);
+  assert.equal(source.statuses.weak.cap, 5, 'preview readers cannot change combat rules');
+  assert.equal(Object.isFrozen(source.statuses.weak), false, 'previewing does not freeze caller-owned rules');
+});
+
+for (const viaExpansion of [false, true]) test(`a shallow-frozen status root cannot share mutable children (expansion table=${viaExpansion})`, () => {
+  const { combat, inst } = fixture();
+  const source = structuredClone(combat.combatExpansionRules.statuses);
+  source.statuses.weak.cap = 3;
+  combat.combatStatusRules = Object.freeze(source);
+  if (viaExpansion) {
+    delete combat.combatStatusRules;
+    combat.combatExpansionRules = Object.freeze({ ...combat.combatExpansionRules, statuses: source });
+  }
+  const first = previewCard(combat, inst.instanceId);
+  assert.notStrictEqual(first.combatStatusRules.statuses.weak, source.statuses.weak);
+  assert.throws(() => { first.combatStatusRules.statuses.weak.cap = 9; }, TypeError);
+  assert.equal(source.statuses.weak.cap, 3);
+  source.statuses.weak.cap = 5;
+  assert.equal(previewCard(combat, inst.instanceId).combatStatusRules.statuses.weak.cap, 5);
+  assert.equal(first.combatStatusRules.statuses.weak.cap, 3);
+});
+
+test('public previews reuse the default deeply frozen status graph', () => {
+  const { combat, inst } = fixture();
+  const source = combat.combatExpansionRules.statuses;
+  assert.strictEqual(previewCard(combat, inst.instanceId).combatStatusRules, source);
+  assert.strictEqual(previewCard(combat, inst.instanceId).combatStatusRules, source);
+});
+
 test('no-preview inspection still uses a known Core profile or actual supplied run rules', () => {
   const { combat, reg, inst } = fixture();
   const actual = cardDetailHtml(reg, inst, { rules: combat });

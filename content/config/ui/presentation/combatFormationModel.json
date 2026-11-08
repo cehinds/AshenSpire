@@ -244,9 +244,9 @@
         }
       },
       "miniHudInsetPx": 0,
-      "miniHudGroupHeightPx": 61,
+      "miniHudGroupHeightPx": 78,
       "desktopMiniHudGroupHeightPx": 96,
-      "desktopShortMiniHudGroupHeightPx": 80,
+      "desktopShortMiniHudGroupHeightPx": 84,
       "desktopMiniHudBandOverlapPx": 30,
       "miniHudSpriteGapPx": 5,
       "playerMiniHudSpriteGapPx": 10,
