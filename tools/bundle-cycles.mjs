@@ -11,24 +11,26 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scanDynamicImports } from './dynamic-imports.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Same statement grammar as tools/bundle.mjs IMPORT_RE.
 const IMPORT_RE =
-  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
+  /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?!(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\()([\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
-const idOf = (abs) => relative(ROOT, abs).split(/[\\/]/).join('/');
+const idOf = (abs, root = ROOT) => relative(root, abs).split(/[\\/]/).join('/');
 
-function parseImports(id) {
-  const abs = resolve(ROOT, id);
+function parseImports(id, root = ROOT) {
+  const abs = resolve(root, id);
   const src = readFileSync(abs, 'utf8').replace(/\r\n?/g, '\n');
   const out = [];
+  out.dynamic = [];
   IMPORT_RE.lastIndex = 0;
   let m;
   while ((m = IMPORT_RE.exec(src)) !== null) {
     const spec = m[1] ?? m[3];
     const clause = m[2] ?? '';
-    const target = idOf(resolve(dirname(abs), spec));
+    const target = idOf(resolve(dirname(abs), spec), root);
     const brace = /\{([\s\S]*?)\}/.exec(clause);
     const names = brace
       ? brace[1].split(',').map((s) => s.trim()).filter(Boolean).map((s) => s.split(/\s+as\s+/)[0])
@@ -36,20 +38,23 @@ function parseImports(id) {
     const line = src.slice(0, m.index).split('\n').length;
     out.push({ target, names, line });
   }
+  for (const call of scanDynamicImports(src)) {
+    if (call.spec !== null) out.dynamic.push(idOf(resolve(dirname(abs), call.spec), root));
+  }
   return out;
 }
 
 // Simulate the bundle's require(): run each module's imports in source order,
 // depth first; a module already on the stack returns its half-filled exports.
-export function findCycleHazards(entry = 'src/main.js') {
-  const state = new Map(); // id -> 'loading' | 'done'
+export function findCycleHazards(entry = 'src/main.js', root = ROOT) {
+  let state = new Map(); // id -> 'loading' | 'done'
   const stack = [];
   const hazards = [];
   const cache = new Map();
-  const imports = (id) => cache.get(id) ?? (cache.set(id, parseImports(id)), cache.get(id));
+  const imports = (id) => cache.get(id) ?? (cache.set(id, parseImports(id, root)), cache.get(id));
   function load(id) {
     if (state.has(id)) return;
-    if (!existsSync(resolve(ROOT, id))) return;
+    if (!existsSync(resolve(root, id))) return;
     state.set(id, 'loading');
     stack.push(id);
     for (const imp of imports(id)) {
@@ -64,6 +69,35 @@ export function findCycleHazards(entry = 'src/main.js') {
     state.set(id, 'done');
   }
   load(entry);
+  // A dynamic edge adds no evaluation order: its target runs later, on demand,
+  // after boot. Each dynamic target is analysed as its own root, from a fresh
+  // copy of the boot-loaded state, so the order of the import() calls in source
+  // (and what an earlier lazy root happened to load) cannot change the result.
+  const boot = state;
+  const roots = new Set();
+  const walked = new Set();
+  for (const queue = [entry]; queue.length;) {
+    const id = queue.shift();
+    if (walked.has(id) || !existsSync(resolve(root, id))) continue;
+    walked.add(id);
+    for (const imp of imports(id)) queue.push(imp.target);
+    for (const t of imports(id).dynamic) { roots.add(t); queue.push(t); }
+  }
+  const seenHazard = new Set(hazards.map((h) => `${h.importer}:${h.line}:${h.target}`));
+  for (const lazy of [...roots].sort()) {
+    state = new Map(boot);
+    stack.length = 0;
+    const before = hazards.length;
+    load(lazy);
+    // The same hazard reached from two roots is one finding.
+    const fresh = hazards.splice(before).filter((h) => {
+      const key = `${h.importer}:${h.line}:${h.target}`;
+      if (seenHazard.has(key)) return false;
+      seenHazard.add(key);
+      return true;
+    });
+    hazards.push(...fresh);
+  }
   return hazards;
 }
 

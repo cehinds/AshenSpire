@@ -17,7 +17,7 @@ import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIN
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 const REG = createRegistries(contentBundle);
 

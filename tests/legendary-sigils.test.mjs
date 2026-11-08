@@ -29,7 +29,7 @@ import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/s
 import { REWARD_KIND_ORDER, rewardPlan } from '../src/model/rewardplan.js';
 import { attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems } from '../src/model/sigils.js';
 import { pendingRewardCheckpoint } from './helpers/pending-reward-checkpoint.mjs';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
 const REG = createRegistries(contentBundle);

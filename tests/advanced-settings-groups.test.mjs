@@ -85,7 +85,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
   // within the call or the call does not pass one. 300 characters is longer
   // than every call site in the tree and shorter than the gap to the next one.
   let sites = 0;
-  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ProgressionInspectionModel.js']) {
+  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ArmouryStatsModel.js', '../models/ProgressionInspectionModel.js']) {
     const source = readFileSync(new URL(`../src/ui/screens/${file}`, import.meta.url), 'utf8');
     for (let at = source.indexOf('attributeCardModels(registries'); at >= 0;
       at = source.indexOf('attributeCardModels(registries', at + 1)) {
@@ -95,6 +95,14 @@ test('every screen that offers a point hands the card the run it belongs to', as
         `${file}: the attribute card at offset ${at} is priced from a run projection, not the authored table`);
     }
   }
+  // THE HANDOFF, link by link, so dropping `handRules` anywhere on it fails: the mount param,
+  // the ctx equipment.js builds, the panel's read of ctx, and the call into the model.
+  const screen = readFileSync(new URL('../src/ui/screens/equipment.js', import.meta.url), 'utf8');
+  assert.match(screen, /export function mountEquipment\([\s\S]*?\bhandRules = null\b/, 'mountEquipment takes handRules');
+  assert.match(screen, /armouryStatsPanel\(\{[^}]*\bhandRules\b/, 'equipment.js puts handRules in the stats panel ctx');
+  const panel = readFileSync(new URL('../src/ui/components/armouryStatsPanel.js', import.meta.url), 'utf8');
+  assert.match(panel, /const \{[^}]*\bhandRules\b[^}]*\} = ctx/, 'the panel reads handRules from ctx');
+  assert.match(panel, /armouryStatsModel\(\{[^}]*\bhandRules\b/, 'the panel hands handRules to the model');
   assert.equal(sites, 6, 'all six attribute-card call sites are covered (a new one must state its projection too)');
 });
 

@@ -13,7 +13,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../src/ui/models/IntentFollowUpModel.js';
 import { stanceFor, moveKind } from '../src/engine/combatRounds/stance.js';
 import { iconForStance } from '../src/ui/models/CombatRoundsScreenModel.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
 
 const POOL_STATS = { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 };

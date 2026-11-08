@@ -150,7 +150,7 @@ test('form factors follow the contract rule order at the reference viewports', (
 });
 
 test('applyUiScale derives layout and form factor from the same selected view', () => {
-  const main = read('src/main.js');
+  const main = read('src/ui/displaySettings.js');
   const body = main.slice(main.indexOf('function applyUiScale('));
   const layout = body.indexOf("setAttribute('data-layout'");
   const formFactor = body.indexOf("setAttribute('data-form-factor'");

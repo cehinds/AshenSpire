@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { renderCard } from '../src/ui/components/card.js';
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { el } from '../src/ui/kit/index.js';

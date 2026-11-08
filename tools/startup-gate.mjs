@@ -244,7 +244,7 @@ if (args.includes('--selftest')) {
       },
       {
         name: 'reduced-motion setting no longer reaches the rendered page',
-        file: 'src/main.js',
+        file: 'src/ui/displaySettings.js',
         find: "document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);",
         replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
         expectRed: /RED A10\.REDUCED-MOTION/,
