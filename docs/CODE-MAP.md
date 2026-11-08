@@ -60,13 +60,13 @@ flowchart TD
 
 ## I want to... | Go to | Then run
 
-- **Using `npm run dev`?** You can skip every `node tools/...` build command below: on save it reruns `content-build`, `config-build`, `hud-layout-css`, `tokens-css`, `game-config build` and `framework-data-build` for the file you changed, then reloads the page ([tools/serve.mjs](../tools/serve.mjs) `buildToolsFor`).
-  - **Why:** the commands are only needed without the dev server, or before you commit.
+- **Using `npm run dev`?** On save it reruns `content-build`, `config-build`, `hud-layout-css`, `tokens-css`, `game-config build` and `framework-data-build` for the file you changed, then reloads the page ([tools/serve.mjs](../tools/serve.mjs) `buildToolsFor`).
+  - Core enemy sheet edits still need `node tools/jev.mjs regen`: the watcher does not run `enemy-sheets` or `derived-tables`. Run other build and check commands below when the watcher does not cover them, and before committing.
 
 | I want to... | Go to | Then run |
 |---|---|---|
 | Change a **card** stat | [content/source/cards/](../content/source/cards), [basicCardProfiles.csv](../content/source/basicCardProfiles.csv) | `node tools/content-build.mjs` |
-| Change an **enemy** | [act1Enemies.json](../content/source/act1Enemies.json) (act2, act3 alike) | `node tools/content-build.mjs` |
+| Change a **Core enemy** | [games/ashenspire/packs/core/enemies/](../games/ashenspire/packs/core/enemies) character sheets ([Editing enemies](../DEVELOPER.md#editing-enemies)) | `node tools/jev.mjs regen` (runs `enemy-sheets --write`, `derived-tables` and the content/profile builds) |
 | Change an **item / weapon** | [weapons.csv](../content/source/weapons.csv), [relics.json](../content/source/relics.json), [equipSlots.csv](../content/source/equipSlots.csv) | `node tools/content-build.mjs` |
 | Change **balance numbers** | [content/source/balance*.json](../content/source) | `node tools/content-build.mjs` |
 | Change **combat rules** | [src/engine/combat.js](../src/engine/combat.js), [combatRules.js](../src/engine/combatRules.js), [src/content/combatRules.js](../src/content/combatRules.js) | `npm test` |
