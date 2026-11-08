@@ -595,9 +595,8 @@ jobs:
             !/art/**/*.png
             !/docs/**/*.png
 
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -632,9 +631,8 @@ jobs:
             !/art/**/*.png
             !/docs/**/*.png
 
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -859,9 +857,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # serves the source tree; reads no LFS object
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
@@ -885,9 +882,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           lfs: false # the standalone about-changelog opens is built below
-      - uses: ./.github/actions/setup-node
       # The art packs, before anything builds, serves or tests this checkout (step 12).
-      - uses: ./.github/actions/fetch-art
+      - uses: ./.github/actions/prepare
         with:
           packs: ${{ env.ART_PACKS }}
 
