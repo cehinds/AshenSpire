@@ -10,6 +10,7 @@
     "start": "node tools/launch.mjs",
     "build:standalone": "node tools/launch.mjs --build-only",
     "serve": "node tools/serve.mjs --no-open",
+    "dev": "node tools/serve.mjs --watch",
     "qa:sandbox": "node tools/qa-sandbox.mjs",
     "test": "node tests/run-node.mjs --no-selftests --no-discovered",
     "test:all": "node tests/run-node.mjs",
