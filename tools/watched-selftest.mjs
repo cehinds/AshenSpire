@@ -81,7 +81,7 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
     // ZZ9 carries a REAL read and REAL anchors (2026-08-22): the read floor is a
     // floor, so a fixture that trips it exits 2 and this plant would score the
     // wrong red — a mutation credited with a defect it did not cause.
-    pr.probes.push({ id: 'ZZ9', by: 'Bjorn', read: 'src/ui/screens/settings.js (a plant, and it must survive the read floor to reach the check it is for)',
+    pr.probes.push({ id: 'ZZ9', by: 'Bjorn', read: 'src/ui/models/SettingsRowsModel.js (a plant, and it must survive the read floor to reach the check it is for)',
       anchors: ["key: 'holdConfirm'"], screen: 'nowhere',
       reach: [{ op: 'goto', q: '' }], expect: { present: { title: '#settings' } } });
     plants.push({ name: '4 stale probe', probes: pr, only: 'S3', want: /STALE PROBES[\s\S]*ZZ9/, wantExit: 1 });
@@ -170,9 +170,9 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   {
     const tree = mkdtempSync(join(tmpdir(), 'watched-readsrc-'));
     for (const n of ['src', 'styles', 'tools', 'content']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
-    const victim = join(tree, 'src/ui/screens/settings.js');
+    const victim = join(tree, 'src/ui/models/SettingsRowsModel.js');
     const before = readFileSync(victim, 'utf8');
-    if (!before.includes("key: 'holdConfirm'")) { console.error("FLOOR: plant 14 expects S3's anchor in settings.js and did not find it"); return 2; }
+    if (!before.includes("key: 'holdConfirm'")) { console.error("FLOOR: plant 14 expects S3's anchor in SettingsRowsModel.js and did not find it"); return 2; }
     writeFileSync(victim, before.split("key: 'holdConfirm'").join("key: 'holdToCommit'"));
     let out = ''; let code = 0;
     try { out = execFileSync(process.execPath, [join(tree, 'tools/watched.mjs'), '--check-reads'], { cwd: tree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
