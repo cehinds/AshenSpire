@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { combatHeaderKeepoutBottom, targetOverheadPlacement } from '../src/ui/components/battlefieldStage.js';
 
 test('compact overhead stays centred and visible below header without touching artwork geometry', () => {

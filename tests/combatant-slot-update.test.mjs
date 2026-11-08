@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatantFrame, updateCombatantFrame, updateCombatantSlots } from '../src/ui/components/combatantFrame.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Slot-level updates must leave the frame exactly as a fresh combatantFrame() would
 // be for the same slots: same nodes, same order, same attributes.

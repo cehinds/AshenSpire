@@ -12,7 +12,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { BLACKSMITH_SERVICES, CORE_BLACKSMITH_OFFERINGS, blacksmithWithholds, blacksmithOffers, blacksmithUpgradePlan } from '../src/model/blacksmith.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
 import '../src/engine/runCombat.js';
 

@@ -6,7 +6,7 @@ import { renderCard, setHandFaceBudget, cardDetailHtml } from '../src/ui/compone
 import { clearSelection } from '../src/ui/components/cardSelection.js';
 import { mountHand } from '../src/ui/components/hand.js';
 import { applyCardArtStyle } from '../src/ui/cardArtStyle.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 
