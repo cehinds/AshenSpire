@@ -134,6 +134,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `desktop_scene_export.py` | Re-encode only reviewed desktop scene layers; phone exports stay byte-identical. | tools alternative-art-build.py (Python import) |
 | `dialogue-context-fit.mjs` | dialogue-context-fit — the W4c context band holds its responses. | tools dialogue-hud-fit |
 | `dirorder.mjs` | dirorder — the one home for "what order do we read a directory in?" | wf ci; tools art-manifest, asset-pack, buildversion +7; docs SPEC.md, docs/EXTERNAL-ASSETS-PLAN.md |
+| `dynamic-imports.mjs` | tools/dynamic-imports.mjs — find dynamic import() calls in module source, in code only (not comments or strings). | tests bundle-dynamic-import; tools bundle, bundle-cycles |
 | `disabled-reason.mjs` | disabled-reason — "A disabled Next button shows its reason as | tests disabled-reason; docs docs/COMPONENT-CATALOG.md, docs/FINISH.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv +1 |
 | `display-art-library.mjs` | Organize existing, hash-verified exports without repainting or re-encoding them. | wf alternative-sync; docs assets-display/README.md, docs/ai/session-continuations/2026-10-08/pr-integration-and-promotion.md |
 | `displayfirst.mjs` | displayfirst — FULLSCREEN IS THE FIRST THING A PLAYER MEETS UNDER | wf ci; tests advanced-settings-groups; tools flask-menu-probe, hudparity, plantsites-baseline.json; docs docs/framework-migration-checklist.md; other src/ui/components/settingsPreview.js, src/ui/screens/settings.js |
