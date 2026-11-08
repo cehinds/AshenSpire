@@ -264,7 +264,7 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
   neither result. The workflow applies them in that order, each as one
   commit, skipping any whose event id `dev` already records, so a re-run or a race
   never bumps twice.
-- **`test` events** count only after `TEST_SINCE` in the tool (`2026-11-08T00:00:00Z`): the cursor
+- **`test` events** count only after `TEST_SINCE` in the tool (`2026-11-08T03:05:00Z`): the cursor
   alone would replay every `test` push since the last release or main record the day this merged.
   Set it to the merge time of the change that enabled build bumps. A re-delivered `test` push is
   the same event id (or a copy under the lowest id), so it records once and never bumps twice.

@@ -337,7 +337,7 @@ test('build: records round-trip, and build-stamp still recognises the subject', 
 });
 
 test('planCuts: a test push is a build cut; pre-TEST_SINCE and bot-only test pushes are not', () => {
-  assert.equal(TEST_SINCE, '2026-11-08T00:00:00Z');
+  assert.equal(TEST_SINCE, '2026-11-08T03:05:00Z');
   const events = [tev(1, 'a', 'b', '2026-11-05T00:00:00Z'), tev(2, 'b', 'c', T1), tev(3, 'c', 'bot', '2026-11-09T00:00:02Z'), tev(4, 'c', 'd', '2026-11-09T00:00:03Z', 'branch_deletion')];
   const cuts = planCuts(events, null, (e) => e.after === 'bot');
   assert.deepEqual(cuts.map((c) => [c.id, c.branch]), [['2', 'test']]);

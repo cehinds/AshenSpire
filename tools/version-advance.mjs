@@ -87,7 +87,7 @@ export const SINCE = '2026-10-31T18:56:00Z';
  * Test events at or before this instant are history, never owed (the cursor alone would replay every
  * test push since the last release/main record the day this merged).
  */
-export const TEST_SINCE = '2026-11-08T00:00:00Z';
+export const TEST_SINCE = '2026-11-08T03:05:00Z';
 const CUT_TYPES = new Set(['push', 'force_push', 'pr_merge', 'merge_queue_merge', 'branch_creation']);
 const ZERO_SHA = /^0+$/;
 const SUBJECT = /^version-advance: \d+\.\d+\.\d+ after (release|main|test) [0-9a-f]{7,40}\b/;
