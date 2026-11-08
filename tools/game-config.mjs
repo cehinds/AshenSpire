@@ -18,11 +18,11 @@ function referenced(base,path) { if (typeof path !== 'string') throw new Error(`
 // browser. The generated data mirrors are derived from the canonical JSON.
 const MECHANIC_RUNTIME_SOURCES = Object.freeze([
   'content/source/fixCoreMechanics.json',
-  'src/model/mechanicsKernel.js',
+  'engine/runtime/bindings.mjs',
   'src/model/formulas.js',
   'src/model/fixCoreMechanics.js',
 ]);
-export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js';
+export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js';
 
 // Cases and guides are authoring/test evidence, not executable rules. Hash the
 // registered definitions explicitly so a JSON-only tuning or attachment-policy

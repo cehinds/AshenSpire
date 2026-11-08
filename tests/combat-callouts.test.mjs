@@ -11,7 +11,7 @@ import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, setB
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing as pinCombatPacing, calloutLifeMs, floaterStaggerMs } from '../src/ui/animationPace.js';
 import { setFloaterPolicyEnabled } from '../src/ui/models/FloaterPolicyModel.js';
 setFloaterPolicyEnabled(false); // this file tests the floater mechanics for every kind; the allowlist is tests/floater-policy.test.mjs

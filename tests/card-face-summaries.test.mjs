@@ -10,7 +10,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { cardFaceProjection, statusApplied, statusNamed } from '../src/model/cardFaceProjection.js';
 import { spellDefenseSplit } from '../src/model/spellDefense.js';
 import { tokenRe } from '../src/model/validate.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // Owner, 2026-11-01: "inspect full effect shouldn't be there all the time". A face that cannot say its
 // effect in five-word clauses carries the card's authored `faceTemplate` instead of the Inspect cue.

@@ -122,7 +122,10 @@ const plants = [
     want: 'RED', wantExit: 1, wantRe: /derived ZERO \?shot= states/, browser: false,
     // Pure whitespace. The game is unaffected and the reader goes blind — this
     // printed `0 states … 0 unaccounted` and exit 0 before the floor existed.
-    build: (t) => edit(t, 'src/main.js', (s) => s.replace(/shotState === '/g, "shotState==='")),
+    build: (t) => {
+      edit(t, 'src/main.js', (s) => s.replace(/shotState === '/g, "shotState==='"));
+      edit(t, 'src/dev/shotStates.js', (s) => s.replace(/^( {4}[a-z]+): \(\) =>/gm, '$1:() =>'));
+    },
   },
   {
     name: '3 partial blindness (ONE state, every comparison)',
@@ -139,7 +142,9 @@ const plants = [
     // the broken one, which is my own named failure mode and the reason this
     // paragraph is here instead of a bug report about release-shots. A plant
     // must kill the FACT, not some of its copies.
-    build: (t) => edit(t, 'src/main.js', (s) => s.replace(/shotState === 'map'/g, "shotState==='map'")),
+    build: (t) => {
+      edit(t, 'src/dev/shotStates.js', (s) => s.replace(/^( {4}map): \(\) =>/gm, '$1:() =>'));
+    },
   },
   {
     name: '4 empty home (settings categories)',

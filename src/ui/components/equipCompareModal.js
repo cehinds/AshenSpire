@@ -9,6 +9,7 @@ import { el, modalHead, modalFooter, button, eyebrow, statRow, stampModalSize } 
 import { renderEquipmentCard } from './equipmentCard.js';
 import { deltaNode } from './smithPaneParts.js';
 import { t } from '../strings.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 const DIR = Object.freeze({ better: 'up', worse: 'down', same: 'flat', changed: 'flat' });
 
@@ -50,7 +51,7 @@ export function mountEquipCompareModal(host, {
   modal.setAttribute('aria-modal', 'true');
   modal.setAttribute('aria-labelledby', 'equip-compare-title');
   modal.tabIndex = -1;
-  modal.dataset.component = 'armoury.equipCompareModal';
+  modal.dataset.component = UI.armouryEquipCompareModal;
 
   const head = modalHead({ title, titleId: 'equip-compare-title', closeLabel: t('common.back') });
   const face = (side, entry) => el('figure', { class: `card-upgrade-face equip-compare-face ${side}`, dataset: { compareSide: side } }, [
@@ -67,7 +68,7 @@ export function mountEquipCompareModal(host, {
   ]);
   const changed = rows.filter((row) => row.verdict !== 'same');
   const unchanged = rows.filter((row) => row.verdict === 'same');
-  const list = el('div', { class: 'equip-compare-rows', dataset: { component: 'armoury.equipCompareRows' } }, [
+  const list = el('div', { class: 'equip-compare-rows', dataset: { component: UI.armouryEquipCompareRows } }, [
     eyebrow(t('armoury.compare.title')),
     ...changed.map(compareRowNode),
     ...unchanged.map(compareRowNode),

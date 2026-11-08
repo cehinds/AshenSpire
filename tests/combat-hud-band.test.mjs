@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { combatHudBandHeight } from '../src/ui/components/combatLayout.js';
 
 test('captured375 and390 absolute captions occupy the header grid band at physical zoom', () => withKitDom(({document}) => {
