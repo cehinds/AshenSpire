@@ -1,5 +1,5 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
-import { effectiveD20Percent } from '../engine/d20Chance.js';
+import { effectiveD20Percent } from './d20Chance.js';
 
 // A chance note shows only a partial 5% step: a sure (100) or sure-failure (0) rolled chance prints nothing.
 export const partialChance = chance => effectiveD20Percent(chance) > 0 && effectiveD20Percent(chance) < 100;

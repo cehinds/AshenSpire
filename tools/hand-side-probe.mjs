@@ -429,7 +429,7 @@ if (process.argv.includes('--selftest')) {
       // the same defect the corpus is meant to catch.
       {
         name: 'P3 a slot correction is removed — either-hand pieces collapse to their authored socket',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/equipped.js',
         find: "      spec.leftMirror = piece.kind !== 'shield';",
         replace: "      spec.leftMirror = false;",
         expectRed: /WRONG .*@(left|right)/,
