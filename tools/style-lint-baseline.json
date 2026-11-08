@@ -4,16 +4,13 @@
     "font-size-below-min": {
       "styles/combat.css": 2,
       "styles/kit.css": 4,
-      "styles/map.css": 2,
-      "styles/player-polish.css": 1,
       "styles/ui.css": 1
     },
     "z-index-bare": {
       "styles/combat-layers.css": 2,
       "styles/combat-target-responsive.css": 4,
       "styles/combat.css": 13,
-      "styles/kit.css": 14,
-      "styles/map.css": 1,
+      "styles/kit.css": 13,
       "styles/responsive-combat-chrome.css": 4,
       "styles/ui.css": 1
     },
@@ -23,20 +20,19 @@
       "styles/combat-expansion.css": 4,
       "styles/combat-layers.css": 23,
       "styles/combat-poses.css": 6,
-      "styles/combat-rounds-preview.css": 15,
       "styles/combat-target-responsive.css": 22,
-      "styles/combat-visuals.css": 16,
+      "styles/combat-visuals.css": 17,
       "styles/combat.css": 144,
       "styles/corrupted-cards.css": 33,
       "styles/hud-layout.generated.css": 28,
-      "styles/illustrated-cards.css": 51,
-      "styles/kit.css": 259,
-      "styles/map.css": 95,
-      "styles/player-polish.css": 96,
+      "styles/illustrated-cards.css": 49,
+      "styles/kit.css": 249,
+      "styles/map.css": 22,
+      "styles/player-polish.css": 92,
       "styles/prologue.css": 87,
       "styles/responsive-combat-chrome.css": 6,
       "styles/shared-run-hud.css": 8,
-      "styles/ui.css": 144
+      "styles/ui.css": 133
     }
   }
 }

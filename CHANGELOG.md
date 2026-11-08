@@ -35,6 +35,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-08
 
 - **Behind the scenes: one list of screen component names** ([#2675](https://github.com/cehinds/AshenSpire/pull/2675), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. Every component name the screens stamp on their markup now comes from one registry, and a test fails any name written outside it.
+- **Behind the scenes: one stylesheet fewer at boot** ([#2671](https://github.com/cehinds/AshenSpire/pull/2671), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. The game no longer loads the retired combat rounds preview stylesheet; the enemy intent follow-up symbols keep the same look from the always-on combat visuals file.
 - **Preview builds recover after automatic updates** ([#2716](https://github.com/cehinds/AshenSpire/pull/2716), `0.7.4.40`). Automatically updated pull requests start a fresh preview build, while changes outside the build's generated metadata still fail validation.
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.38`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.38`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
