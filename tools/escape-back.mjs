@@ -42,7 +42,7 @@
 // CHROME picks the browser (tools/browser.mjs); this sandbox has
 // /opt/pw-browsers/chromium.
 
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser, connectCdp } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -151,27 +151,6 @@ export const NOT_DRIVEN = [
   ['reward detail and chooser Back', 'tests/escape-back.test.mjs — the [data-back] rule'],
   ['menu overlay, quick nav, confirmation, tutorial', 'their own window-capture Escape (overlay.js, quicknav.js, confirmationModal.js, tutorial.js); tools/confirmation-modal.mjs drives pad B'],
 ];
-
-function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl);
-  let nextId = 1;
-  const pending = new Map();
-  ws.addEventListener('message', (ev) => {
-    const msg = JSON.parse(ev.data);
-    if (!msg.id || !pending.has(msg.id)) return;
-    const { res, rej } = pending.get(msg.id);
-    pending.delete(msg.id);
-    if (msg.error) rej(new Error(`${msg.error.message} (${msg.error.code})`)); else res(msg.result);
-  });
-  return {
-    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sessionId) {
-      const id = nextId++;
-      return new Promise((res, rej) => { pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
-    },
-    close: () => ws.close(),
-  };
-}
 
 const PAD_STUB = `(() => {
   const state = { connected: false, buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };

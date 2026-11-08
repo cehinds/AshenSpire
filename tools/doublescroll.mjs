@@ -77,7 +77,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser, connectCdp } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -290,26 +290,6 @@ const PLANT = `(() => {
     return 'plant did not create two classic vertical scrollbar gutters';
   return true;
 })()`;
-
-function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
-  ws.addEventListener('message', (ev) => {
-    const m = JSON.parse(ev.data);
-    if (m.id && pending.has(m.id)) {
-      const { res, rej } = pending.get(m.id); pending.delete(m.id);
-      if (m.error) rej(new Error(`${m.error.message} (${m.error.code})`)); else res(m.result);
-    }
-  });
-  return {
-    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sessionId) {
-      const id = nextId++;
-      return new Promise((res, rej) => { pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
-    },
-    close: () => ws.close(),
-  };
-}
 
 function report(shape, where, pairs) {
   const lines = [];

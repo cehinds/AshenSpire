@@ -136,7 +136,7 @@
 // duration is reasoned from Android's long-press threshold, not observed.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser, connectCdp } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -173,17 +173,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // stacked over a free one, so a low thumb finds a curse.
 const EVENT = argOf('--event') || 'rotPriestOffer';
 const SHAPE = { w: 390, h: 844 };
-
-function cdpConnect(url) {
-  const ws = new WebSocket(url); let n = 1; const pending = new Map();
-  ws.addEventListener('message', (e) => {
-    const m = JSON.parse(e.data);
-    if (m.id && pending.has(m.id)) { const { res, rej } = pending.get(m.id); pending.delete(m.id); m.error ? rej(new Error(m.error.message)) : res(m.result); }
-  });
-  return { ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sid) { const id = n++; return new Promise((res, rej) => { pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params, ...(sid ? { sessionId: sid } : {}) })); }); },
-    close: () => ws.close() };
-}
 
 // What the PLAYER can see: are the bars still there, or has the result arrived?
 const STATE = `(() => {
@@ -397,7 +386,7 @@ async function main() {
     args: ['--allow-file-access-from-files', '--hide-scrollbars'],
     timeoutMs: 20000,
   });
-  const cdp = cdpConnect(wsUrl); await cdp.ready;
+  const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId); await cdp.send('Runtime.enable', {}, sessionId);

@@ -89,7 +89,7 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
 
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser, connectCdp } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -329,17 +329,6 @@ const READ = (sel) => `(() => {
   }));
 })()`;
 
-function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
-  ws.addEventListener('message', (e) => { const m = JSON.parse(e.data);
-    if (m.id && pending.has(m.id)) { const { res, rej } = pending.get(m.id); pending.delete(m.id);
-      if (m.error) rej(new Error(m.error.message)); else res(m.result); } });
-  return { ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sessionId) { const id = nextId++;
-      return new Promise((res, rej) => { pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
-    close: () => ws.close() };
-}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {

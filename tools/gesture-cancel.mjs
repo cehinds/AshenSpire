@@ -57,7 +57,7 @@
 // synthesis, or the gesture helper (src/ui/gesture.js) grows its own suite.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser, connectCdp } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -127,18 +127,6 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
 const useDist = args.includes('--dist');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
-  ws.addEventListener('message', (ev) => { const m = JSON.parse(ev.data);
-    if (m.id && pending.has(m.id)) { const { res, rej } = pending.get(m.id); pending.delete(m.id);
-      if (m.error) rej(new Error(m.error.message)); else res(m.result); } });
-  return { ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sessionId) { const id = nextId++;
-      return new Promise((res, rej) => { pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
-    close: () => ws.close() };
-}
 
 async function main() {
   if (!browserPath) { console.error('gesture-cancel: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }

@@ -229,7 +229,7 @@
 // counts containers, and a container count is a proxy for coverage, not coverage.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser, connectCdp } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -507,31 +507,6 @@ const SCAN = `(() => {
 })()`;
 
 // ------------------------------------------------------------------ CDP client
-function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl);
-  let nextId = 1;
-  const pending = new Map();
-  ws.addEventListener('message', (ev) => {
-    const msg = JSON.parse(ev.data);
-    if (msg.id && pending.has(msg.id)) {
-      const { res, rej } = pending.get(msg.id);
-      pending.delete(msg.id);
-      if (msg.error) rej(new Error(`${msg.error.message} (${msg.error.code})`));
-      else res(msg.result);
-    }
-  });
-  return {
-    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
-    send(method, params = {}, sessionId) {
-      const id = nextId++;
-      return new Promise((res, rej) => {
-        pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
-      });
-    },
-    close: () => ws.close(),
-  };
-}
 
 
 // ------------------------------------------------------------ the law, applied
