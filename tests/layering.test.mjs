@@ -83,7 +83,6 @@ const KNOWN_INVERSIONS = [
   'src/model/combatSnapshot.js -> src/engine/cardZones.js',
   'src/model/combatSnapshot.js -> src/engine/enemyBurdens.js',
   'src/model/equipmentCard.js -> src/engine/elementRules.js',
-  'src/model/formulas.js -> src/engine/combatCardTraitMath.js',
   'src/model/gameProfileRewards.js -> src/engine/rng.js',
   'src/model/playingCard.js -> src/engine/d20Chance.js',
   'src/model/proposalStatusRules.js -> src/engine/d20Chance.js',

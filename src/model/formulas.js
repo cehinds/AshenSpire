@@ -12,7 +12,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { counterstrikeAmount } from '../engine/combatCardTraitMath.js';
+import { counterstrikeAmount } from './counterstrike.js';
 
 export const FORMULA_OPS = Object.freeze([
   'add',

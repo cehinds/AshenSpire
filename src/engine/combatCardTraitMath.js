@@ -1,6 +1,9 @@
 // Shared arithmetic for the version-2 card traits (docs/combat-card-traits-contract.md).
 // Pure: reads entities and rules, writes nothing.
 import { CARD_TRAIT_RULES } from '../content/combatCardTraits.js';
+import { counterstrikeAmount } from '../model/counterstrike.js';
+
+export { counterstrikeAmount };
 
 const rulesOf = ctx => ctx?.reactionRules || CARD_TRAIT_RULES;
 
@@ -21,12 +24,6 @@ export function hasStanceAdvantage(ctx, playerManeuver, targetManeuver) {
 export function counterstrikePct(ctx, playerManeuver, targetManeuver) {
   const { pct, advantagedPct } = rulesOf(ctx).counterstrike;
   return hasStanceAdvantage(ctx, playerManeuver, targetManeuver) ? advantagedPct : pct;
-}
-
-/** a > 0 becomes a + max(floor(a × pct), 1); zero, negatives and non-numbers are unchanged. */
-export function counterstrikeAmount(amount, pct) {
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) return amount;
-  return amount + Math.max(Math.floor(amount * pct), 1);
 }
 
 /** Impact/Flux extra on hit: the card's own amount again (doubling it) when positive, else N. */
