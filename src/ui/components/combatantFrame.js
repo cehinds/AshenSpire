@@ -187,6 +187,9 @@ function replaceSlots({ leadingHost, widget, spriteHost, statusHost, isPlayer, l
     }
   }
   if (statuses !== undefined) {
+    // The host was picked before the meters were replaced; a new meters strip carries its own badge row.
+    const freshRow = meters?.querySelector?.('.combat-health-badges');
+    if (freshRow) statusHost = freshRow;
     for (const node of kids(statusHost)) if (isStatuses(node)) node.remove();
     const list = statuses ? [].concat(statuses).filter(Boolean) : [];
     if (statusHost.classList?.contains('combat-health-badges')) {
