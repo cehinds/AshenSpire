@@ -83,7 +83,7 @@ for (const [block, ward, expected] of [[4, 0, [7, 5, 5]], [10, 0, [7, 7, 5]], [6
 
 test('saved tactical rules price every preview hit after reload despite changed live balance', () => {
   const f = fight();
-  f.combat.combatMatchupRules.counter.incomingMultiplier = 0.25;
+  f.combat.combatMatchupRules = { ...f.combat.combatMatchupRules, counter: { ...f.combat.combatMatchupRules.counter, incomingMultiplier: 0.25 } };
   const snapshot = serializeCombatSnapshot(f.combat);
   const registries = createRegistries({ ...f.bundle, balance: { ...contentBundle.balance,
     combatMatchups: { ...contentBundle.balance.combatMatchups,
