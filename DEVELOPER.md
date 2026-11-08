@@ -59,7 +59,7 @@ Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-a
 short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
 `npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
 `npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
-`npm run test:pr` (what the PR gate runs: the core lane, then every discovered test but the slow ones, unsharded, each under `tools/verdict.mjs`), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+`npm run test:pr` (the PR gate's two test lanes in `tests.yml`: the core lane, then every discovered test but the slow ones, unsharded, each under `tools/verdict.mjs`; it stops at the first red lane and does not run the gate's receipt-order checks, `node tools/about-changelog.mjs --check-order --pending auto`, or the other PR workflows), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).
 
 **`styles/tokens.generated.css` is generated** from the design tokens in
