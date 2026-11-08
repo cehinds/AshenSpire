@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const OUT = resolve(process.env.STANCE_COMBAT_QA_OUT || 'outputs/stance-combat');
