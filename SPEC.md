@@ -2677,14 +2677,14 @@ What does change for a **new** run on an existing seed: which seat the run opens
 
 ## World Journey: authored atlas and seeded routes
 
-Run mode beside Classic Climb: authored square five-biome map; seed picks a connected route. Geography and landmarks are authored.
+Selectable run mode beside Classic Climb: authored square five-biome map; seed picks a connected route. Geography and landmarks are authored.
 
-- Initial revision: 200 candidate nodes, 20 active targeted; local points use no budget.
+- Initial revision: 200 candidate nodes, profile targets 20 active nodes; local points use no budget.
 - Ordered anchors: starting city, major city, final legacy dungeon; profiles pin IDs or filter candidates, only selected anchors guaranteed. Other landmarks and regions vary; visiting all is optional.
 - Main route and alternatives have separate configurable limits. Alternatives reconnect toward final dungeon; cross-region junctions are authored edges. Impossible profiles are rejected with an actionable reason, never by silently dropping anchors, ignoring exclusions or changing the budget.
 - Deterministic by seed, profile version, content revision. Saved manifests keep node/edge IDs, encounter outcomes, content revision; resume never regenerates; a revision mismatch must be explained.
 - Stable node IDs. Inspecting never travels; travel needs an available connection plus authored conditions. Completion, discovery, service claims and quest state belong to the run, not content.
-- Terrain starts as parchment, revealed around discovered nodes; undiscovered nodes expose no names, local maps, services or bosses. Completed encounters cannot be farmed; eligible services keep stock and one-time claims.
+- Terrain starts as parchment, revealed around discovered nodes; undiscovered nodes expose no names, local maps, services or bosses. Inactive content is unavailable for the run. Completed encounters cannot be farmed; eligible services keep stock and one-time claims.
 - Major landmarks are illustrated overlays, enlarged on hover/focus; selecting one opens one dialog: interior map plus detail pane (below map on narrow screens) for the selected fixed local point.
 - Fixed sites (availability may vary). Cities: service, quest. Dungeons: entrance, junction, objective, boss.
 - Travel/Enter and service actions are explicit and separate from inspection; only implemented actions exist. The dialog never rerolls the route or grants travel. Escape closes and restores focus. Touch needs no hover. Region/location/node bindings select combat scenery.
@@ -2694,12 +2694,12 @@ Run mode beside Classic Climb: authored square five-biome map; seed picks a conn
 - Runtime indexes, joined view models and immutable run manifests are derived read models, not sources. A content revision identifies a run's exact rules.
 
 ### Shared armor sets
-Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs stat 3.
+Four `sharedSet` outfits are in every class's Armoury after creation: one identical row per wearer class, on class-scoped armor save keys. Empty unlock means owned; excluded from starting-armour selection and exactly-one-baseline rule. Existing saves stay valid. Equip needs the listed stat at 3.
 
 Bonuses (`outfits.csv`, existing modifiers): Wayfarer Plate (STR) +2 Defend Block, +4 max HP; Nightweave (INT) +1 class-power Potency, +1 max Mana; Rite Vestments (WIS) +1 Defend Block, +6 max HP; Gutter Leathers (DEX) +1 Strike Damage, +1 max Stamina.
 
 - Tags stay in `tagging.csv`; `inventoryArtKey` picks the item illustration.
-- `sharedOutfitArt.js` picks a sprite collection per class/outfit combination (16, incl. readiness, defeat); `artClassId` plus `artKey` is the classic-rig fallback.
+- `sharedOutfitArt.js` picks a distinct sprite collection per class/outfit combination (16, incl. readiness, defeat); `artClassId` plus `artKey` is the classic-rig fallback.
 - Card review page shows all four wearers per outfit, with selectable combat poses.
 
 #### Notes and history
@@ -2720,8 +2720,8 @@ Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journ
 
 Solo new games may show a configurable prologue after creation, starting draft and map generation, before map mounting. Five shipped scenes plus four empty editor slots that stay off (`PROLOGUE_DEFAULTS.scenes`, `src/model/prologue.js`); text and presentation overrides are in the advanced configuration snapshot/export.
 - Optional `run.prologue` = `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` - 1,reason?:'completed'|'skipped'}`.
-- Pending saves resume at saved scene; absent or completed state never replays; preview writes none. `settings.prologueSeen` is a profile playback preference, not gameplay RNG.
-- Skip and Set forth each complete it exactly once, without selecting or resolving a node. Default five-second transition and per-scene holds are independent; final arrival waits for the player; Settings and hidden pages suspend playback.
+- Pending saves resume at saved scene boundary; absent or completed state never replays; preview writes none. `settings.prologueSeen` is a profile playback preference, not gameplay RNG.
+- Skip and Set forth each complete the presentation exactly once, without selecting or resolving a node. Default five-second transition and per-scene holds are independent; final arrival waits for the player; Settings and hidden pages suspend playback.
 
 #### Notes and history
 Full history: [docs/spec-history/world-journey.md](docs/spec-history/world-journey.md).
