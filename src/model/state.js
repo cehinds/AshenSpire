@@ -1290,15 +1290,8 @@ function checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent) {
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
-  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
-  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
-  checkSideboardAndCollection(run, problems);
-  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+/** Phase: skill-attribute grants, level counters and smithing/training stock. */
+function checkLevelAndSmithingCounters(run, problems) {
   // A respec withdraws what the record names (FINISH D13a), so it may never
   // name more points than the run holds.
   if (run.skillAttributeGrants !== undefined && run.skillAttributeGrants !== null && typeof run.skillAttributeGrants === 'object') {
@@ -1325,6 +1318,18 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
     problems.push('smithingStonesRefined must be a non-negative integer');
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
+  checkSideboardAndCollection(run, problems);
+  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+  checkLevelAndSmithingCounters(run, problems);
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
