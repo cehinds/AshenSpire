@@ -556,7 +556,8 @@ try {
     // Loading installs the new combat before the confirmation input shield
     // finishes closing. Wait for its actual removal before the next action.
     await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'the restored entry input shield to close');
-    await advanceTurn();
+    // Save after one ordinary turn, leaving another live turn to distinguish
+    // unsaved progress without requiring three undefended enemy rounds.
     await advanceTurn();
     await click('#combat-menu');
     await until(`!!document.querySelector('.qn-row[data-act="save"]')`, 'the Quick Menu Save Game row');
