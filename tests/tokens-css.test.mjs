@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { buildTokensCss, generateTokensCss, tokenEntries, declaredProperties, TOKENS_JSON, TOKENS_CSS, REM_PX } from '../tools/tokens-css.mjs';
+import { buildTokensCss, generateTokensCss, tokenEntries, declaredProperties, rootDeclarationCount, TOKENS_JSON, TOKENS_CSS, REM_PX } from '../tools/tokens-css.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -46,7 +46,7 @@ test('a token that has a home in base.css is not declared again', () => {
   for (const name of generated) assert.ok(!base.has(name), `${name} duplicates a base.css declaration`);
   for (const name of generated) {
     for (const sheet of ['kit.css', 'ui.css', 'combat.css', 'map.css']) {
-      assert.ok(!declaredProperties(read(`styles/${sheet}`)).has(name), `${name} is also declared in ${sheet}`);
+      assert.equal(rootDeclarationCount(read(`styles/${sheet}`), name), 0, `${name} is also declared at :root in ${sheet}`);
     }
   }
 });

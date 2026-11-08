@@ -2632,9 +2632,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 /* A grid of OptionCards: the compendium's constant grid. */
 .as-options.grid { align-content: start; }
 .as-options.grid > .as-option { width: auto; }
-/* The kit's danger tint (the kit page's rgba(212, 98, 46)); nothing in
-   base.css named it, so every `.danger` weight read an unset variable. */
-:root { --danger: #d4622e; }
 /* THE FOCUS RING, ONE TOKEN (Constantine's review, 2026-09-11). Every control
    — kit atom, repo hook class, the pad's cursor — wears this ring on
    :focus-visible and .gp-focus, from base.css's one house rule. Fourteen

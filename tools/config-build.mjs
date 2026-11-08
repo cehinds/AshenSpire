@@ -48,7 +48,7 @@ export const GROUPS = ['scenes', 'components', 'screens', 'presentation'];
 // ui/tokens.json holds `vars` plus these published design-token groups. They are
 // plain values (no "$" references) and reach the game as uiConfig.tokens.<group>;
 // tools/tokens-css.mjs also publishes them as CSS custom properties.
-export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch'];
+export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch', 'color'];
 export const FOOTER_ACTIONS = ['back', 'skipSpeech', 'continue'];
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
