@@ -574,6 +574,11 @@ export function passiveFlag(registries, relicIds, key, mounts = null) {
 
 // Cache resolved upgrade merges per registries object.
 const resolveCache = new WeakMap();
+// A run keeps resolving new keys (play counts, upgrades, mods), so the per-registries map is bounded: at the cap it
+// is emptied before the next insert. Every entry is derivable, so a clear costs a re-resolve and nothing else.
+const RESOLVE_CACHE_LIMIT = 4096;
+/** Entries held for these registries (test and diagnostics reader). */
+export const resolveCacheSize = (registries) => resolveCache.get(registries)?.size ?? 0;
 
 /**
  * resolveCard(registries, cardInstanceOrRef) → effective (frozen) card def.
@@ -605,6 +610,27 @@ function derivedActionCost(def, authored, rank = 0) {
 // rank counts from 1, so its rank above the base is rank − 1.
 const costRankOf = (usesAbilityGrade, base, rank) => (usesAbilityGrade ? Math.max(0, Number(base.abilityRank) || 0) : Math.max(0, rank - 1));
 
+// The hot path resolves the same few registry definitions thousands of times, so the two derived bases below are
+// built once per definition. Keyed on the definition's identity (frozen registry rows never change), then, for the
+// grade, on the rank; a per-call spread (`stable` false) is built fresh as before.
+const singleBreakBases = new WeakMap();
+function singleBreakBase(authored, stable) {
+  if (!stable) return deepFreeze({ ...authored, ...authored.singleBreak });
+  let base = singleBreakBases.get(authored);
+  if (!base) singleBreakBases.set(authored, (base = deepFreeze({ ...authored, ...authored.singleBreak })));
+  return base;
+}
+const gradedBases = new WeakMap();
+function gradedBase(legacyBase, abilityRank, stable) {
+  if (!stable) return deepFreeze(applyAbilityGrade(legacyBase, abilityRank));
+  let byRank = gradedBases.get(legacyBase);
+  if (!byRank) gradedBases.set(legacyBase, (byRank = new Map()));
+  const key = String(abilityRank);
+  let base = byRank.get(key);
+  if (!base) byRank.set(key, (base = deepFreeze(applyAbilityGrade(legacyBase, abilityRank))));
+  return base;
+}
+
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
 }
@@ -617,9 +643,10 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // A legacy card keeps only a summary written for its legacy face; the current card's faceTemplate describes other effects.
   const legacyResolved = instanceOrRef.legacyAbility && (definition.legacyFace ? {...definition,...definition.legacyFace,gradeProfiles:undefined} : definition !== registries.cards.get(cardId) ? definition : null);
   const authored = legacyResolved ? {...legacyResolved,faceTemplate:definition.legacyFace?.faceTemplate} : definition;
-  const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? deepFreeze({ ...authored, ...authored.singleBreak }) : authored;
+  const stable = !legacyResolved; // a legacy spread is per call; only a registry definition may be memoised on identity
+  const legacyBase = breakMeterVersion === 1 && authored.singleBreak ? singleBreakBase(authored, stable) : authored;
   const usesAbilityGrade = Array.isArray(authored.gradeProfiles) && (instanceOrRef.abilityRank !== undefined || instanceOrRef.rank === undefined);
-  const base = usesAbilityGrade ? deepFreeze(applyAbilityGrade(legacyBase, instanceOrRef.abilityRank)) : legacyBase;
+  const base = usesAbilityGrade ? gradedBase(legacyBase, instanceOrRef.abilityRank, stable) : legacyBase;
   const mods = instanceOrRef.mods;
   const profileId = instanceOrRef.profileId;
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
@@ -696,6 +723,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (!usesAbilityGrade && (rank > 1 || skillBonus > 0)) result = applyCardRank(result, rank, skillBonus);
   // Ramp lands last, after rank and upgrade growth, so the base amount it wraps is still a plain number.
   if (result.ramp) result = deepFreeze(applyRamp(result, playsEver, tagService(registries).idsOf('card', result)));
+  if (cache.size >= RESOLVE_CACHE_LIMIT) cache.clear();
   cache.set(key, result);
   return result;
 }

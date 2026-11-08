@@ -34,7 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.48`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.50`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.50`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
+- **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.48`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
+- **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.48`). Card previews and card resolution allocate about half as much memory; play is unchanged.
+- **Save checks tidied** ([#2713](https://github.com/cehinds/AshenSpire/pull/2713), `0.7.4.48`). The run-save validator and derived-stat setup are split into named steps; saves load exactly as before.
 - **Behind the scenes: code split into smaller modules, merge train** ([#2728](https://github.com/cehinds/AshenSpire/pull/2728), `0.7.4.48`). Lands #2708, #2725 and #2680 together. Nothing you play changes.
 - **Behind the scenes: dice, random numbers and stances live in the model** ([#2680](https://github.com/cehinds/AshenSpire/pull/2680), `0.7.4.46`). Three small rule modules moved beside the rest of the game rules; nothing you play changes.
 - **Content checks reorganised** ([#2725](https://github.com/cehinds/AshenSpire/pull/2725), `0.7.4.46`). The content validator is now one small check per content section; it reports exactly the same problems, and nothing you play changes.
