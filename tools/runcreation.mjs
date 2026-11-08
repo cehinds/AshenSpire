@@ -498,7 +498,7 @@ async function selftest() {
         // A home that stops reporting. Agreement and silence are the same
         // output and mean the opposite — the census is what separates them.
         name: 'max-HP home 3 stops recording, so its silence reads as agreement',
-        file: 'src/model/loadout.js',
+        file: 'src/model/loadout/cardMods.js',
         find: "    site: 'loadout.js:reconcileRunLoadoutHp',",
         replace: "    site: 'loadout.js:reconcileRunLoadoutHpNOTAHOME',",
         expectRed: /never reported in this whole run|LAST writer of maxHp/,
