@@ -1320,16 +1320,8 @@ function checkLevelAndSmithingCounters(run, problems) {
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
-  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
-  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
-  checkSideboardAndCollection(run, problems);
-  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
-  checkLevelAndSmithingCounters(run, problems);
+/** Phase: armament levels, item upgrades, mounts and smithing reward claims. */
+function checkEquipmentUpgradesAndMounts(run, problems) {
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
@@ -1376,6 +1368,19 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       seenClaims.add(rewardId);
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
+  checkSideboardAndCollection(run, problems);
+  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+  checkLevelAndSmithingCounters(run, problems);
+  checkEquipmentUpgradesAndMounts(run, problems);
   if (run.deferredProgression !== undefined) {
     const saved = run.deferredProgression;
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
