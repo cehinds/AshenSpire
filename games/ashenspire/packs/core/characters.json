@@ -2296,7 +2296,8 @@
           "effect": "stagger"
         }
       ]
-    }
+    },
+    "spFloor": 3
   },
   {
     "id": "marrowOrganist",
@@ -2829,6 +2830,9 @@
           "effect": "damage"
         }
       ]
+    },
+    "attributes": {
+      "wisdom": 2
     }
   },
   {

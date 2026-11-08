@@ -2995,7 +2995,7 @@
     },
     "pools": {
       "hp": 104,
-      "sp": 2,
+      "sp": 3,
       "mp": 2,
       "ar": 7,
       "dr": 2,
@@ -3689,7 +3689,7 @@
     "attributePoints": 9,
     "attributes": {
       "strength": {
-        "own": 3,
+        "own": 2,
         "bonuses": [
           {
             "source": "cinderAxe",
@@ -3704,7 +3704,7 @@
             "amount": 2
           }
         ],
-        "total": 7
+        "total": 6
       },
       "dexterity": {
         "own": 2,
@@ -3736,7 +3736,7 @@
         "total": 6
       },
       "wisdom": {
-        "own": 1,
+        "own": 2,
         "bonuses": [
           {
             "source": "enemy.relic.ashenBlightCore",
@@ -3745,7 +3745,7 @@
             "amount": -1
           }
         ],
-        "total": 0
+        "total": 1
       },
       "intelligence": {
         "own": 1,
@@ -3757,20 +3757,20 @@
       "terms": {
         "base": 10,
         "constitution": 60,
-        "strength": 35,
+        "strength": 30,
         "dexterity": 6,
-        "wisdom": 0,
+        "wisdom": 2,
         "intelligence": 1,
         "level": 15
       },
-      "total": 127,
-      "formula": "10+60+35+6+0+1+15 = 127"
+      "total": 124,
+      "formula": "10+60+30+6+2+1+15 = 124"
     },
     "pools": {
-      "hp": 127,
+      "hp": 124,
       "sp": 3,
       "mp": 2,
-      "ar": 7,
+      "ar": 6,
       "dr": 2,
       "hand": 4
     },
