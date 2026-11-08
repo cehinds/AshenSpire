@@ -554,6 +554,7 @@ export function receipt() {
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
     armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
+    armouryInventory: read('src/ui/components/armouryInventory.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
     hudVisibility: read('styles/hud-visibility.css'),
@@ -687,7 +688,7 @@ export function findings(r) {
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
       || !/UI\.armouryInventory/.test(r.armouryModels)
-      || !/UI\.equipmentComparison/.test(r.equipment)) {
+      || !/UI\.equipmentComparison/.test(r.armouryInventory)) {
     bad.push('C8 menu and Armoury composition lacks stable component references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
