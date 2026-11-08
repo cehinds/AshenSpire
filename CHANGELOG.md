@@ -40,6 +40,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Unused tools moved to the attic** ([#2715](https://github.com/cehinds/AshenSpire/pull/2715), `0.7.4.34`). 95 tool scripts nothing runs any more moved to the tools attic, still runnable from there, and the tools check now fails on any new unused tool; nothing you play changes.
 - **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.34`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
 - **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.34`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
 - **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
