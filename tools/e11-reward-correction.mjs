@@ -8,7 +8,7 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const OUT = resolve(ROOT, 'tools/results/e11-reward-correction');
+const OUT = resolve(ROOT, 'scratch/qa/e11-reward-correction');
 mkdirSync(OUT, { recursive: true });
 const { port } = await serve({ root: ROOT, port: 8211, open: false });
 const { close } = await launchBrowser({
