@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';

@@ -6,7 +6,7 @@ import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProf
 import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 const identities = {
