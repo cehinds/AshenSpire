@@ -8,7 +8,7 @@
 // meet a target: 'gte' with dc = the target and dcParts = the source chance.
 import { t } from './strings.js';
 import { attributes as ATTRIBUTES } from '../content/generated/attributes.js';
-import { d20ModeChance, effectiveD20Percent } from '../engine/d20Chance.js';
+import { d20ModeChance, effectiveD20Percent } from './d20Chance.js';
 
 const finite = value => Number.isFinite(Number(value)) && value !== null && value !== '';
 const num = value => (finite(value) ? Number(value) : 0);
