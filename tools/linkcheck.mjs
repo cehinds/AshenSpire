@@ -362,7 +362,9 @@ BOUNDARY — what a green from this tool does NOT mean:
   · a name that exists but is WRONG links green. This checks identity, never meaning.
   · dynamic import() targets are not followed, so a deleted dynamic target links green.
     The walk covers every in-tree module regardless of who imports it, which is why
-    that gap is narrow — but it is a gap, and no regex is buying it back.
+    that gap is narrow — but it is a gap, and no regex is buying it back here.
+    (tools/bundle.mjs now follows import('./literal.js') and fails the build on a
+    deleted target, so the shipped graph is covered there; tests/bundle-dynamic-import.test.mjs.)
   · node builtins ARE imported (there is no source text to link), so they, and only
     they, are evaluated. Nothing in src/, tools/ or tests/ is.
   · build/ and dist/ are excluded: linking the generated bundle proves nothing about
