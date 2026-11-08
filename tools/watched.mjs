@@ -114,7 +114,7 @@ const WATCH_STATES = (argOf('--states', 'shipped,already-true')).split(',').map(
 
 const LEDGER = argOf('--ledger');
 const PROBES = resolve(ROOT, argOf('--probes', 'tools/watched-probes.json'));
-const OUT = resolve(ROOT, argOf('--out', 'tools/results/watched'));
+const OUT = resolve(ROOT, argOf('--out', 'scratch/qa/watched'));
 const ONLY = argOf('--only') ? argOf('--only').split(',').map((s) => s.trim()) : null;
 const SELFTEST = has('--selftest');
 const DUMP = has('--dump');
@@ -610,7 +610,9 @@ function committedPictures() {
 
   // The declared states, read out of main.js rather than out of a list here.
   const main = readFileSync(resolve(ROOT, 'src/main.js'), 'utf8');
-  const states = [...new Set([...main.matchAll(/shotState === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  const posesFile = resolve(ROOT, 'src/dev/shotStates.js');
+  const poses = existsSync(posesFile) ? readFileSync(posesFile, 'utf8') : '';
+  const states = [...new Set([...main.matchAll(/shotState === '([a-z]+)'/g), ...poses.matchAll(/^ {4}([a-z]+): \(\) =>/gm)].map((m) => m[1]))].sort();
 
   const stale = [];
   for (const f of pics) {

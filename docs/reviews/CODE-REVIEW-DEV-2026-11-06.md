@@ -304,23 +304,23 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 1. Guards
 
-- [ ] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2)
-- [ ] Tools reachability test: fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
-- [ ] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5)
-- [ ] Test that every `data-component` id is in `UiComponentId` (Low)
+- [x] Extend `tests/layering.test.mjs` to model→engine, content→engine and the framework rank (H1, H2) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
+- [x] Tools reachability test ([#2669](https://github.com/cehinds/AshenSpire/pull/2669)): fail on a `tools/*.mjs` unreachable from package.json, workflows, `run.sh`/`run.bat`, `tests/run-node.mjs` or another tool (H5)
+- [x] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). Images under the docs evidence dirs are not gated yet: 61 tracked PNGs there exceed 256 KiB (`docs/art-evidence/2026-09-0x/`, `docs/qa/releases/`) and need a docs cleanup first.
+- [x] Test that every `data-component` id is in `UiComponentId` (Low) — [#2675](https://github.com/cehinds/AshenSpire/pull/2675)
 - [ ] Unused-export lint (M5)
-- [ ] Test that `tools/README.md` lists every tool (Low)
+- [x] Test that `tools/README.md` lists every tool (Low) — [#2672](https://github.com/cehinds/AshenSpire/pull/2672)
 
 ### 2. Relocations with re-exports
 
 - [ ] Move `src/engine/d20Chance.js`, `rng.js`, `combatRounds/stance.js` under `src/model/`, old paths re-export (H1)
 - [ ] Move the pure validators and parsers (`validateZoneEffect`, `enemyBurdenProblems`, resolver parsers, `counterstrikeAmount`) into model; pass engine functions into `attributePointPreview` as parameters (H1)
-- [ ] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low)
+- [x] ARCHITECTURE-MAP.md: rows and rank for root `engine/` and `src/framework`; add `src/services`, `src/config`, `src/dev`; drop the `src/net/lan.js` row (H2, Low) — [#2659](https://github.com/cehinds/AshenSpire/pull/2659)
 - [ ] Delete the unused `src/framework/index.js` barrel and its stale header (H2)
 - [ ] Remove the `engine/runtime/bindings.mjs` back-edge into `src/model` (H2)
 - [ ] Move content projections (`combatExpansionCards.js`, `traitProjection.js`, `equipment.js` functions) into `src/model` (M6)
 - [ ] Load `combatTest.js`/`combatBuilds.js` and `armamentKitPreview.js` by dynamic `import()` under `shotState` only (M6)
-- [ ] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7)
+- [x] Compile `sharedOutfitArt`, `paintedOutfits`, `defeatedArt`, `enemyStateArt`, `enemyBodyLandmarks` from `content/source` into `generated/` (M7) — #2677
 
 ### 3. Deletions
 
@@ -328,9 +328,9 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
 - [ ] Attic or delete the 115 orphan tools (H5)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
-- [ ] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5)
+- [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
 - [ ] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10)
-- [ ] Stop loading `combat-test.css` and `combat-rounds-preview.css` for players (M9)
+- [x] Stop loading `combat-test.css` and `combat-rounds-preview.css` for players (M9) — [#2671](https://github.com/cehinds/AshenSpire/pull/2671)
 
 ### 4. After CLEANUP-PLAN steps 3g–3m
 
@@ -341,7 +341,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 5. Splits
 
-- [ ] `main.js` → `src/dev/shotStates.js` with a `{ state: fn }` table (H4)
+- [x] `main.js` → `src/dev/shotStates.js` with a `{ state: fn }` table (H4) — #2674
 - [ ] `main.js` → `src/engine/rewardRolls.js`, pure in `(registries, run, rng, settings)` (H4)
 - [ ] `main.js` → `src/ui/displaySettings.js` (H4)
 - [ ] `main.js` → `src/engine/runPersistence.js` (H4)
@@ -350,13 +350,13 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] `main.js`: one `setRegistries()` that refreshes the debug handles (H4)
 - [ ] `main.js`: move narrative comments to docs; activity-launcher screen (`main.js:2620-2632`) → `src/ui/screens/` (H4)
 - [ ] `mountCombat` → `createX({ getState, dispatch, host })` modules: card input, beat playback, enemies, preview, armoury (H3)
-- [ ] `mountEquipment` → `components/armoury*` fed by models (H3)
+- [x] `mountEquipment` → `components/armoury*` fed by models (H3) — [#2714](https://github.com/cehinds/AshenSpire/pull/2714)
 - [ ] `collectContentProblems` → one validator per bundle section (H3)
 - [ ] `createSaveManager` → archive, meta/profile, shared-profile, space-reclaim factories (H3)
 - [ ] `loadout.js` → `loadout/*.js` behind an `index.js` barrel (H3)
 - [ ] `runOpcode` → `OPCODE_HANDLERS` map (H3)
 - [ ] `validateRunShape`, `initializeRunDerivedStats`, `previewCard`, `createCombat` → phase helpers (H3)
-- [ ] `migrateRunSchema`: `schemaVersion < N` with named constants (Low)
+- [x] `migrateRunSchema`: `schemaVersion < N` with named constants (Low) — #2657
 - [ ] `engine/combat.js`: name the `A`/`F`/`R`/`S` namespace imports (Low)
 
 ### 6. Hygiene

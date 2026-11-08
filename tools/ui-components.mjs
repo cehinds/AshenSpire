@@ -5,6 +5,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -554,6 +555,8 @@ export function receipt() {
     controls: read('src/ui/screens/controls.js'),
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
+    armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
+    armouryInventory: read('src/ui/components/armouryInventory.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
     hudVisibility: read('styles/hud-visibility.css'),
@@ -687,7 +690,7 @@ export function findings(r) {
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
       || !/UI\.armouryInventory/.test(r.armouryModels)
-      || !/UI\.equipmentComparison/.test(r.equipment)) {
+      || !/UI\.equipmentComparison/.test(r.armouryInventory)) {
     bad.push('C8 menu and Armoury composition lacks stable component references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
@@ -717,7 +720,13 @@ export function findings(r) {
       // (src/ui/kit/index.js `el`), which spells the same attribute as
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
+        || (() => {
+          // A constant spelling counts only if the registry still maps it to this exact id.
+          const key = id.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+          return UI_COMPONENTS[key] === id
+            && (r.startupGate.includes(`component: UI.${key}`) || r.startupGate.includes(`data-component="\${UI.${key}}"`));
+        })())
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
@@ -910,7 +919,7 @@ export function findings(r) {
       || !/UI\.shrineOptionCard/.test(r.rest)
       || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
       || !/attributeCardModels\(registries, values,/.test(r.rest)
-      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
+      || !/attributeCardModels\(registries, run\.attributes/.test(r.armouryStatsModel)
       || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
