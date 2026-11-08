@@ -179,7 +179,11 @@
         {
           "hold": {
             "ms": 800,
-            "selector": ".combatant[data-eid=\"e2\"] .sprite"
+            "selector": ".combatant[data-eid=\"e2\"] .sprite",
+            "position": {
+              "y": 0.6,
+              "x": 0.5
+            }
           }
         }
       ],
