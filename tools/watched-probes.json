@@ -363,10 +363,10 @@
   {
    "id": "A3",
    "by": "Codex",
-   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/main.js (shotState compendium reach state)",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/dev/shotStates.js (compendium reach state)",
    "anchors": [
     "cp-cell",
-    "shotState === 'compendium'"
+    "compendium: () =>"
    ],
    "screen": "Compendium content; former title entry retired by the owner five-entry menu requirement",
    "reach": [
@@ -775,7 +775,7 @@
   {
    "id": "G2",
    "by": "Bjorn",
-   "read": "src/ui/screens/map.js (visited / traveled classes) · src/main.js ?shotWalk leaves a trail",
+   "read": "src/ui/screens/map.js (visited / traveled classes) · src/dev/shotStates.js ?shotWalk leaves a trail",
    "anchors": [
     "shotWalk"
    ],
@@ -1112,7 +1112,7 @@
    "id": "G4b",
    "extra": true,
    "by": "Bjorn",
-   "read": "src/main.js ?shotSeed — one map is not the map (EldenSpire#28)",
+   "read": "src/dev/shotStates.js ?shotSeed — one map is not the map (EldenSpire#28)",
    "anchors": [
     "shotSeed"
    ],
@@ -1256,7 +1256,7 @@
   {
    "id": "A11",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
+   "read": "src/ui/screens/equipment.js and src/ui/components/armouryInventory.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
    "anchors": [
     "function inventoryBlock()",
     "box.dataset.filteredFor"
