@@ -221,6 +221,30 @@ export function labelStack({ label, hint = '', attrs = {} } = {}) {
     hint ? el('span', { class: 'ls-hint', text: hint }) : null,
   ]);
 }
+/**
+ * settingRowOpenHtml({ key, extraClass, modified, attrs }) → the opening tag of
+ * a Settings row, as a string: the string twin of `row({ setting: true })`
+ * (hairline, no hover, wraps) for the Settings screen, which builds whole
+ * panels with innerHTML. The caller writes the closing </div>. `key` is
+ * escaped; `attrs` is trusted markup (a leading space and ready-made attributes).
+ */
+export function settingRowOpenHtml({ key, extraClass = '', modified = false, attrs = '' } = {}) {
+  return `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}" data-row-key="${esc(key)}"${modified ? ' data-modified="true"' : ''}${attrs}>`;
+}
+/**
+ * settingLabelStackHtml({ label, lead, afterLabel, hint, hintAttrs, extra }) →
+ * the string twin of `labelStack` for a Settings row: the label line (the
+ * `lead` marker, the escaped label, then `afterLabel` such as the row's Reset
+ * button, beside the label so a long label cannot clip it), then the hint line.
+ * `label` is escaped; `lead`, `afterLabel`, `hint`, `hintAttrs` and `extra`
+ * are trusted markup the caller built.
+ */
+export function settingLabelStackHtml({ label = '', lead = '', afterLabel = '', hint = '', hintAttrs = '', extra = '' } = {}) {
+  return `<span class="as-labelstack">
+        <span class="set-label-line"><span class="ls-label">${lead}${esc(label)}</span>${afterLabel}</span>${hint ? `
+        <span class="ls-hint set-note"${hintAttrs}>${hint}</span>` : ''}${extra}
+      </span>`;
+}
 export function artWell({ glyph: g = '', src = '', alt = '', small = false, cool = false, attrs = {} } = {}) {
   return el('div', { ...attrs, class: cls('as-artwell', small ? 'sm' : '', cool ? 'cool' : '', attrs.class), 'aria-hidden': src ? null : 'true' },
     src ? el('img', { src, alt }) : (engravedIcon(engravedGlyphId(g)) || g));

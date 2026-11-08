@@ -13,6 +13,8 @@
     "--hud-details-label-color": "#d6af68",
     "--hud-tools-bg": "#0c0b08a0",
     "--hud-header-hp-max-width": "48%",
-    "--hud-tools-span": "hand"
+    "--hud-tools-span": "hand",
+    "--hud-mini-bar-width": "130px",
+    "--hud-mini-bar-height": "10px"
   }
 }
