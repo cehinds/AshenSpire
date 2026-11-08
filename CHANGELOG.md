@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
 - **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.
 - **Art manifests compiled from source** ([#2677](https://github.com/cehinds/AshenSpire/pull/2677), `0.7.4.40`). Outfit, defeated-pose, enemy-state and enemy-landmark art tables now build from the content sources like every other table; the game is 70 KB smaller and plays the same.
 - **Behind the scenes: the Armoury's panels are their own pieces** ([#2714](https://github.com/cehinds/AshenSpire/pull/2714), `0.7.4.40`). This is a tooling-only change, and nothing you play changes. The Armoury's character stats panel, equip picker and inventory are now separate components, each fed by its own model, so each can be built and tested alone.
