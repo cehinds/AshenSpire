@@ -34,15 +34,19 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.32`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
+- **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.36`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
+- **Save migration tidied** ([#2657](https://github.com/cehinds/AshenSpire/pull/2657), `0.7.4.36`). Old run saves are recognised by named schema versions instead of long version lists; every older save loads exactly as before.
+- **Tool screenshots out of the tree** ([#2673](https://github.com/cehinds/AshenSpire/pull/2673), `0.7.4.36`). 7.8 MB of committed tool screenshots were removed from the repository; tools now write them to an ignored folder or CI keeps them as a download, and a test stops large images or JSON coming back under tools/.
+- **Tool index checked** ([#2672](https://github.com/cehinds/AshenSpire/pull/2672), `0.7.4.36`). A new test fails when a tool is missing from the tools index or the index names a tool that is gone; 44 missing tools were added to it.
+- **Tools reachability test** ([#2669](https://github.com/cehinds/AshenSpire/pull/2669), `0.7.4.34`). A new test fails when a tool script is reachable from no workflow, npm script, test or other tool, so retired tools go to the attic instead of piling up.
+- **Behind the scenes: enemy level rule written down** ([#2682](https://github.com/cehinds/AshenSpire/pull/2682), `0.7.4.34`). The design spec now says Core enemies are level 1–5 and carry the same stat points a character of that level would. Nothing you play changes yet.
 
 ## 2026-11-07
 
-- **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.32`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
-- **Behind the scenes: shorter game rules, overview and legal** ([#2683](https://github.com/cehinds/AshenSpire/pull/2683), `0.7.4.32`). The rules document's opening, §1 and §2 are rewritten as short bullets with the same rules. Nothing you play changes.
-- **Behind the scenes: shorter game rules, hooks and non-goals** ([#2684](https://github.com/cehinds/AshenSpire/pull/2684), `0.7.4.32`). The rules document's §10 and §11 are rewritten as short bullets with the same rules. Nothing you play changes.
-- **Behind the scenes: shorter game rules, testing and milestones** ([#2689](https://github.com/cehinds/AshenSpire/pull/2689), `0.7.4.32`). The rules document's §8 and §9 are rewritten as short bullets with the same rules. Nothing you play changes.
-- **Tools reachability test** ([#2669](https://github.com/cehinds/AshenSpire/pull/2669), `0.7.4.32`). A new test fails when a tool script is reachable from no workflow, npm script, test or other tool, so retired tools go to the attic instead of piling up.
+- **Behind the scenes: shorter game rules, merge train B** ([#2702](https://github.com/cehinds/AshenSpire/pull/2702), `0.7.4.32`). Lands #2686, #2685 and #2688 together. Nothing you play changes.
+- **Behind the scenes: shorter game rules, planned expansion** ([#2686](https://github.com/cehinds/AshenSpire/pull/2686), `0.7.4.32`). The rules document's §12 is rewritten as short bullets with the same rules. Nothing you play changes.
+- **Behind the scenes: shorter game rules, seats and levels** ([#2685](https://github.com/cehinds/AshenSpire/pull/2685), `0.7.4.32`). The rules document's §13.1–13.4n is rewritten as short bullets with the same rules, and rules for removed systems are dropped. Nothing you play changes.
+- **Behind the scenes: shorter game rules, skill and class progression** ([#2688](https://github.com/cehinds/AshenSpire/pull/2688), `0.7.4.32`). The rules document's §13.4o–13.7 is rewritten as short bullets with the same rules, and rules for removed feat and mastery systems are dropped. Nothing you play changes.
 - **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
