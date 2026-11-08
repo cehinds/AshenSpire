@@ -16,14 +16,15 @@
 
 import { childModel } from '../models/ComponentModel.js';
 import { esc } from './tooltip.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 /** The notice's markup for a model; `text: false` leaves the live message empty, to be written in place. */
 export function artLoadNoticeHtml(model, { text = true } = {}) {
   const retry = childModel(model, 'art-load-notice-retry');
   const busy = !!retry.properties.busy;
-  return `<aside class="art-load-notice" data-component="art-load-notice" data-state="${esc(model.variant)}" aria-labelledby="art-load-notice-text">
+  return `<aside class="art-load-notice" data-component="${UI.artLoadNotice}" data-state="${esc(model.variant)}" aria-labelledby="art-load-notice-text">
       <p class="art-load-notice-text" id="art-load-notice-text" role="${esc(model.accessibility.role)}" aria-live="${esc(model.accessibility.live)}">${text ? esc(model.properties.message) : ''}</p>
-      <button type="button" class="as-btn art-load-notice-retry" data-component="art-load-notice-retry" data-art-notice-retry
+      <button type="button" class="as-btn art-load-notice-retry" data-component="${UI.artLoadNoticeRetry}" data-art-notice-retry
         aria-description="${esc(retry.accessibility.description)}"${busy ? ' aria-disabled="true" aria-busy="true"' : ''}>${esc(retry.properties.label)}</button>
     </aside>`;
 }
