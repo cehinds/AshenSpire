@@ -84,6 +84,8 @@
   flex: 0 0 var(--mh-badge) !important; width: var(--mh-badge) !important; min-width: var(--mh-badge) !important; max-width: var(--mh-badge) !important; height: var(--mh-badge) !important;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge[hidden] { display: none !important; }
+/* Any other consumer of the shared row (the target detail panel) keeps absent badges absent too. */
+:root .combat .combat-health-badges > .combat-health-badge[hidden] { display: none !important; }
 /* The status tray fills what the badges leave; the fit (components/iconTray.js) sizes its icons to the badges. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses {
   display: flex !important; flex: 1 1 0; flex-wrap: nowrap; justify-content: flex-start !important; align-items: center;
