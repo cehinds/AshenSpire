@@ -15,7 +15,7 @@ import {readLayeredArt} from './layered-art.mjs';
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
-import { scanDynamicImports } from './dynamic-imports.mjs';
+import { scanDynamicImports, commentRanges } from './dynamic-imports.mjs';
 import { cardCutoutAssets } from './card-cutout-assets.mjs';
 
 import { createHash } from 'node:crypto';
@@ -915,17 +915,17 @@ function transformModule(id, src, absPath) {
 // BACKSTOP. A native import() must never reach the shipped script (it would
 // fetch over file:// and fail at runtime). Every literal call was rewritten
 // above, so any `import(` text left in a body is one the scanner missed, or a
-// string that spells it. Fail loudly, naming file and line; only a match inside
-// an actual comment span is exempt, never the code after that comment.
+// string that spells it. Fail loudly, naming file and line. Only a match that
+// lies inside a comment is exempt (commentRanges: a mask with no regex-vs-division
+// guess, so when it is unsure the text is code and the build fails).
 function assertNoNativeImport(id, body) {
   const lines = body.split('\n');
-  const comments = [];
-  scanDynamicImports(body, { comments });
   const re = /\bimport(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)*\(/g;
+  const comments = commentRanges(body);
   let m;
   while ((m = re.exec(body)) !== null) {
+    if (comments.some(([a, b]) => m.index >= a && m.index < b)) continue;
     const line = body.slice(0, m.index).split('\n').length;
-    if (comments.some(({ start, end }) => m.index >= start && m.index < end)) continue;
     fail('native import( left in ' + id + ' at line ' + line + ' after transform — the bundler could not follow it:\n' + lines[line - 1].trim());
   }
 }

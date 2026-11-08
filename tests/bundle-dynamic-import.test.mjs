@@ -242,6 +242,26 @@ test('a comment-separated dynamic call before a static import does not break the
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('backstop: code after a block comment on the same line cannot hide a native import (Codex)', () => {
+  const root = fixture({
+    'dev.js': 'export const value = 1;\n',
+    'main.js': "/* lazy */ const x = {} / 2; globalThis.load = () => import('./dev.js');\n",
+  });
+  try {
+    // The scanner reads `} /` as a regex start and misses the call; the backstop still fails loudly.
+    assert.throws(() => bundleAndRun(root), /native import\( left in src\/main\.js at line 1/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('backstop: a mention inside a comment on a code line is exempt, one after it is not', () => {
+  const ok = fixture({ 'main.js': "const a = 1; // import(x)\nconst b = 2; /* import(y) */ const c = 3;\n" });
+  try { bundleAndRun(ok); } finally { rmSync(ok, { recursive: true, force: true }); }
+  const bad = fixture({ 'main.js': "/* c */ const s = 'import(z)';\n" });
+  try {
+    assert.throws(() => bundleAndRun(bad), /native import\( left in src\/main\.js at line 1/);
+  } finally { rmSync(bad, { recursive: true, force: true }); }
+});
+
 test('backstop: code after a block comment cannot hide a scanner miss', () => {
   for (const prefix of ['/* lazy */ ', '/* lazy\n */ ']) {
     const root = fixture({

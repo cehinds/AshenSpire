@@ -11,7 +11,7 @@
 
 const ID = /[\w$]/;
 
-export function scanDynamicImports(src, { comments } = {}) {
+export function scanDynamicImports(src) {
   const out = [];
   const n = src.length;
   let i = 0;
@@ -21,26 +21,12 @@ export function scanDynamicImports(src, { comments } = {}) {
   const braceStack = []; // template-literal ${ nesting: true when the { opened a ${
   const regexAfterWord = new Set(['return', 'typeof', 'case', 'in', 'of', 'delete', 'void', 'throw', 'new', 'else', 'do', 'yield', 'await']);
 
-  // Optional exact comment spans let the build backstop exempt prose without
-  // exempting executable code that follows a closing block-comment delimiter.
-  function skipComment(j) {
-    const start = j;
-    if (src[j] === '/' && src[j + 1] === '/') {
-      while (j < n && src[j] !== '\n') j++;
-    } else if (src[j] === '/' && src[j + 1] === '*') {
-      const end = src.indexOf('*/', j + 2);
-      j = end < 0 ? n : end + 2;
-    }
-    if (j !== start) comments?.push({ start, end: j });
-    return j;
-  }
-
   // Skip whitespace and comments from j: `import /* lazy */ ('./x.js')` is a call.
   function skipGap(j) {
     for (;;) {
       while (j < n && /\s/.test(src[j])) j++;
-      const end = skipComment(j);
-      if (end !== j) { j = end; continue; }
+      if (src[j] === '/' && src[j + 1] === '/') { while (j < n && src[j] !== '\n') j++; continue; }
+      if (src[j] === '/' && src[j + 1] === '*') { const e = src.indexOf('*/', j + 2); j = e < 0 ? n : e + 2; continue; }
       return j;
     }
   }
@@ -66,8 +52,8 @@ export function scanDynamicImports(src, { comments } = {}) {
 
   while (i < n) {
     const c = src[i];
-    const commentEnd = skipComment(i);
-    if (commentEnd !== i) { i = commentEnd; continue; }
+    if (c === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; continue; }
+    if (c === '/' && src[i + 1] === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; continue; }
     if (c === '"' || c === "'") { skipString(c); prev = 'a'; prevWord = ''; continue; }
     if (c === '`') { i++; templateText(); prev = 'a'; prevWord = ''; continue; }
     if (c === '/') {
@@ -135,6 +121,53 @@ export function scanDynamicImports(src, { comments } = {}) {
       continue;
     }
     if (!/\s/.test(c)) { prev = c; prevWord = ''; }
+    i++;
+  }
+  return out;
+}
+
+// commentRanges(src) -> [[start, end), ...] of the line and block comments.
+//
+// The backstop's mask, deliberately NOT scanDynamicImports' lexer: it has no
+// regex-versus-division guess. A `/` that is not the start of `//` or `/*` is
+// code, so when this is unsure the text counts as code and the backstop fails
+// the build rather than excusing a native import(). A backslash skips the next
+// character (so `\/*` inside a regex is not a comment), and a '…' or "…" string
+// ends at an unescaped newline, so a stray quote costs at most one line.
+export function commentRanges(src) {
+  const out = [];
+  const n = src.length;
+  let i = 0;
+  while (i < n) {
+    const c = src[i];
+    if (c === '\\') { i += 2; continue; }
+    if (c === '/' && src[i + 1] === '/') {
+      const s = i;
+      while (i < n && src[i] !== '\n') i++;
+      out.push([s, i]);
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      const s = i;
+      const e = src.indexOf('*/', i + 2);
+      i = e < 0 ? n : e + 2;
+      out.push([s, i]);
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      i++;
+      while (i < n && src[i] !== c && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+      i++;
+      continue;
+    }
+    if (c === '`') {
+      // Template text: comments are not comments here. ${…} is treated as text too,
+      // which can only hide a comment, never invent one, so it errs toward code.
+      i++;
+      while (i < n && src[i] !== '`') i += src[i] === '\\' ? 2 : 1;
+      i++;
+      continue;
+    }
     i++;
   }
   return out;
