@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: developer tools and editing guide updated** ([#2733](https://github.com/cehinds/AshenSpire/pull/2733), `0.7.4.52`). Combined developer tool fixes with a guide to the files that own each edit; normal play is unchanged.
 - **Behind the scenes: a map of where things live** ([#2732](https://github.com/cehinds/AshenSpire/pull/2732), `0.7.4.52`). A new guide, docs/CODE-MAP.md, says which file to edit for each common change and which command rebuilds it. Nothing you play changes.
 - **Behind the scenes: tools and CI tidied, merge train** ([#2729](https://github.com/cehinds/AshenSpire/pull/2729), `0.7.4.52`). Lands #2723, #2722 and #2720 together. Nothing you play changes.
 - **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.52`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
