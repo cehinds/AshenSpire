@@ -85,7 +85,7 @@ test('every screen that offers a point hands the card the run it belongs to', as
   // within the call or the call does not pass one. 300 characters is longer
   // than every call site in the tree and shorter than the gap to the next one.
   let sites = 0;
-  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ProgressionInspectionModel.js']) {
+  for (const file of ['customize.js', 'rest.js', 'equipment.js', '../models/ArmouryStatsModel.js', '../models/ProgressionInspectionModel.js']) {
     const source = readFileSync(new URL(`../src/ui/screens/${file}`, import.meta.url), 'utf8');
     for (let at = source.indexOf('attributeCardModels(registries'); at >= 0;
       at = source.indexOf('attributeCardModels(registries', at + 1)) {

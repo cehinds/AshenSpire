@@ -95,7 +95,8 @@ test('the in-combat Armoury cards read the running fight\'s own hand rules', () 
   const combat = source('combat.js');
   const mount = combat.slice(combat.indexOf('const panel = mountEquipment(document.body, {'));
   assert.match(mount.slice(0, mount.indexOf('inCombat: true')), /handRules: combat\.handRules \|\| runHandRules\(registries, run, readSettings\(\)\)/);
-  const equipment = source('equipment.js');
+  // The attribute rows (and their hand rules) are the Armoury stats model's, not the screen's, since the extraction.
+  const equipment = source('../models/ArmouryStatsModel.js');
   assert.match(equipment, /hand: handRules \|\| runHandRules\(registries, run, meta\.settings \|\| \{\}\)/);
   // The fight's own hand wins over whatever else the screen could resolve:
   // a fight dealt from the tuned Reaver row names Constitution, even beside a
