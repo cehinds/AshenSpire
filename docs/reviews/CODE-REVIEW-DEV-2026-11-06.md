@@ -371,5 +371,5 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Tests: single `helpers/dom.mjs`; replace real sleeps with events or fake timers (Low)
 - [ ] `src/ui/models/` → `models/`, `projections/`, `controllers/`; merge single-caller stubs; stop `CombatIntentProjectionModel` and `CombatRangeRankModel` mutating their input (M8)
 - [ ] CSS: split `kit.css` by section, fold tiny override files, one token mechanism, `style-lint --write-baseline` (M9)
-- [ ] `settings.js`: `ROWS` to a model, rows via kit builders, Undo label via strings (Low)
+- [x] `settings.js`: `ROWS` to a model, rows via kit builders, Undo label via strings (Low) — [#2718](https://github.com/cehinds/AshenSpire/pull/2718)
 - [ ] Import-time global listeners behind explicit `installX()` (Low)
