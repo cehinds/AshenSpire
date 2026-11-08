@@ -1,23 +1,21 @@
 import { engravedIcon } from '../components/engravedIcon.js';
 import { uiIconText } from '../../content/uiIcons.js';
-import { logicalViewport, viewViewportBox } from '../viewViewport.js';
+import { logicalViewport } from '../viewViewport.js';
 import { characterSheetModel } from '../models/CharacterSheetModel.js';
 import { skillTrackButton } from './characterSheet.js';
-import { characterStatsButton, progressionTip } from '../components/progressionCards.js';
+import { progressionTip } from '../components/progressionCards.js';
 import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
-import { levelProgress, skillProgressRows, staleSkillTracks } from '../../model/progression.js';
-import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { levelProgress } from '../../model/progression.js';
 import { equipmentRequirementReceipt } from '../../model/loadout.js';
-import { renderEquipmentCard, renderEquipmentInspection, equipmentDetails } from '../components/equipmentCard.js';
+import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { openCardInspection } from '../components/cardInspection.js';
 import { createToast } from '../components/toast.js';
 import { equipmentModLines, equipmentCompareRows } from '../../model/equipmentCompare.js';
 import { mountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
 import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
-import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
-import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
+import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
 //
@@ -45,49 +43,39 @@ import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresenta
 import { equippedTagColor } from '../../model/equipmentUi.js';
 import { relicText } from '../components/card.js';
 import {
-  renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
+  renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
-import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP, HOLD_DRAG_SETTLE_MS } from '../../framework/optionDecision.js';
+import { esc, attachTooltip, hideTooltip } from '../components/tooltip.js';
+import { armHold } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure, spritesAreEnabled } from '../assets.js';
-import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
-import { reducedMotionRequested } from '../motion.js';
 import { statProjection, pieceWeight } from '../../model/statProjection.js';
 import { resolveUpgradedEquipment } from '../../model/itemUpgrades.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
-import { mountDisclosure } from '../components/disclosure.js';
-import { primaryStatCards } from '../components/creationCards.js';
-import { runHandRules } from '../../model/handRules.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
 } from '../../model/armouryLayout.js';
 import {
   armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
-  inventoryItemCardModel, inventoryDetailCardModel,
 } from '../models/ArmouryModels.js';
 import {
   renderArmouryOverlay, renderArmouryPanel, renderEquipmentSlot,
-  renderInventoryItemCard, renderInventoryDetailCard,
 } from '../components/armouryComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
+import { armouryStatsPanel } from '../components/armouryStatsPanel.js';
+import { armouryPickerTable, thumbSrc } from '../components/armouryPicker.js';
+import { armouryInventoryBlock, isCollectibleCategory } from '../components/armouryInventory.js';
+import { inventoryRowUsable } from '../models/ArmouryInventoryModel.js';
 import { traySizeService } from '../services/TraySizeService.js';
-import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
-import { consumableText } from '../../model/consumables.js';
-import { openBookLearning } from '../components/bookLearning.js';
-import { renderBookArt } from '../components/bookArt.js';
-import { equipClassCard, learnedClassIds } from '../../model/classLibrary.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
-import { equipPickerTableRows, sortEquipPickerRows } from '../../model/equipPickerTable.js';
 import {
-  armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
+  armouryPaneSplit, inventoryComparison,
 } from '../models/ArmouryWorkspaceModel.js';
 // THE KIT (2026-09-04, the sweep): every piece inside the door is a kit builder
 // — OptionCards for the positions, the inventory faces and the card rows,
@@ -95,8 +83,7 @@ import {
 // KitLines for the facts, Flavour for the hints, a Blocker for a refusal —
 // and styles/ui.css draws nothing for this screen any more.
 import {
-  el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker, meter, meters,
+  el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid, face, button, chip, statStrip, kitLine, kitItem, blocker, meter,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -422,17 +409,6 @@ function figureFor(registries, run, cz) {
   return el;
 }
 
-/**
- * A piece's thumbnail. Armaments have a tight icon render; an armour set's
- * "icon" is the set itself — the body in its own palette — because there is no
- * separate object to photograph.
- */
-function thumbSrc(piece) {
-  return piece.kind === 'armor'
-    ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(armamentIconAsset(piece));
-}
-
 /** A piece's mods, written the way a player reads them. */
 function modSummary(registries, piece) {
   return equipmentModLines(registries, piece);
@@ -518,177 +494,8 @@ export function setPieceChipChosen(chip, chosen) {
   if (on && choose && document.activeElement === choose) face?.focus({ preventScroll: true });
 }
 
-/** Potions and relics are collectibles: the Armoury draws them with the collectible card, never the equipment one. */
-export function isCollectibleCategory(category) {
-  return category === 'Potion' || category === 'Relic';
-}
-
-function inventoryFace(registries, row, {
-  selected = false, draggable = false, actionLabel = '', classModel = null,
-} = {}) {
-  const el = renderInventoryItemCard(inventoryItemCardModel(row, {
-    selected, draggable, classModel,
-  }));
-  if (row.read) el.querySelector('.inventory-item-art')?.replaceChildren(renderBookArt(row.item));
-  if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || isCollectibleCategory(row.category)) {
-    const trail = el.querySelector('.r-trail');
-    // WC2: the metadata band ends with how many of this item the run holds.
-    // The Armoury names itself so the manifest can patch what a glance says
-    // here: the question on this screen is what goes in which slot, so the
-    // type band earns its row before anything else does
-    // (content/config/ui/components/card.json, behavior.fields.surfaces).
-    el.replaceChildren((isCollectibleCategory(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
-      // The surrounding disclosure already owns read-only inspection. A nested
-      // card inspector consumes the first touch before that disclosure opens.
-      : renderEquipmentCard(registries, row.item, { interactive: false, inspection: false, owned: row.count, surface: 'armoury' })).card);
-    if (trail) el.append(trail);
-    el.classList.add('poker-inventory-face');
-  }
-  // While a position is selected the face says what the tap will do — a StatePill, lit.
-  if (actionLabel) el.querySelector('.r-trail').appendChild(pill({ label: actionLabel, on: true, attrs: { class: 'inventory-inline-action' } }));
-  return el;
-}
-
-function inventoryReveal(registries, row, {
-  comparison = null, action = null, instruction = '', holdDuration = 0,
-  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null, facts = null,
-} = {}) {
-  const item = row.item;
-  let art;
-  if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
-    art = { kind: 'image', value: thumbSrc(item) };
-  } else if (item.artAsset) {
-    art = { kind: 'image', value: assetUrl(item.artAsset) };
-  } else {
-    art = { kind: 'icon', value: item.icon || 'skill' };
-  }
-  const description = row.category === 'Relic'
-    ? relicText(item, registries)
-    // A consumable's sentence names its live numbers (SPEC §14.3).
-    : row.category === 'Consumable'
-      ? `${consumableText(registries, item)}${row.read ? '' : ` ${t('armoury.consumable.token')}`}`
-      : (item.blurb || item.textTemplate || 'No additional information.');
-  const mods = modSummary(registries, item);
-  const detailModel = inventoryDetailCardModel({ row, art, description, mods, instruction, classModel });
-  const comparisonPresentation = comparisonConfig?.presentation || 'tooltip';
-  const comparisonHtml = comparison
-    ? `<div data-ui-component="${UI.equipmentComparison}" data-ui-variant="${comparisonPresentation}"><div class="tt-title">Compare ${esc(item.name)}</div>${renderCandidateComparison(comparison, { expanded: true })}</div>`
-    : '';
-  const el = renderInventoryDetailCard(detailModel, {
-    comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
-    action,
-  });
-  if (row.read) el.querySelector('.inventory-model')?.replaceChildren(renderBookArt(item));
-  if (['armor', 'weapon', 'shield', 'staff'].includes(item.kind) || isCollectibleCategory(row.category)) {
-    el.classList.add('poker-inventory-detail');
-    el.querySelector('.inventory-model')?.remove();
-    const info = el.querySelector('.inventory-information');
-    // Keep the comparison, equip action and instruction in their original container.
-    for (const child of [...info.children]) if (!child.matches('.inventory-instruction, [data-ui-component], .ep-equip, .inventory-card-action-label') && child !== action) child.remove();
-    el.prepend(isCollectibleCategory(row.category)
-      ? renderCollectibleInspection(registries, item, row.category, { interactive: false })
-      : renderEquipmentInspection(registries, item, { interactive: false }));
-  }
-  // W1n: what the selected item is compared with and whether it can go on
-  // stand just before the action, so the action is read with its reason.
-  if (facts) {
-    const info = el.querySelector('.inventory-information') || el;
-    info.insertBefore(facts, action && action.parentElement === info ? action : null);
-  }
-  el.dataset.inventoryItem = row.key;
-  // When the global hold-confirm dial is off, the explicit action button owns
-  // the immediate equipment change and the card keeps a short, read-only hold
-  // for comparison. A zero-duration action must never erase the only comparison
-  // path or turn a compare gesture into an equip.
-  const cardOwnsAction = classModel?.holdAction === true && holdDuration > 0 && Boolean(onClassAction);
-  let comparisonPreviewTimer = null;
-  let comparisonPreviewOpen = false;
-  let startComparisonPreview = null;
-  let endComparisonPreview = null;
-  if (comparison) {
-    el.dataset.component = UI.armouryComparisonTooltipAnchor;
-    el.tabIndex = 0;
-    const actionVerb = action?.textContent?.trim() || 'equip this item';
-    const actionInstruction = cardOwnsAction
-      ? (holdDuration > 0
-        ? ` Press and hold to ${actionVerb}.`
-        : ` Activate this card to ${actionVerb}.`)
-      : '';
-    el.setAttribute('aria-label', comparisonPresentation === 'inline'
-      ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Press and hold this card to preview comparison.${actionInstruction}`);
-    const clear = el.closest('.disc-faces') || el.parentElement;
-    const appearance = {
-      variant: 'equipment-comparison',
-      widthRem: comparisonConfig?.tooltipWidthRem,
-      maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
-    };
-    if (comparisonPresentation === 'tooltip') {
-      el.dataset.comparisonTrigger = 'hold';
-      el.dataset.comparisonPreview = 'idle';
-      el.dataset.focusable = 'true';
-      if (!cardOwnsAction) el.setAttribute('role', 'group');
-    }
-    if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
-      const disarm = armHold(el, {
-        ms: comparisonConfig?.holdPreviewDelayMs ?? 160,
-        id: 'compareEquipment',
-        onConfirm: () => {
-          showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
-          stickTooltip(el);
-          el.dataset.comparisonPreview = 'open';
-        },
-      });
-      if (registerHold) registerHold(disarm);
-    }
-    if (comparisonPresentation === 'tooltip' && cardOwnsAction) {
-      startComparisonPreview = () => {
-        clearTimeout(comparisonPreviewTimer);
-        comparisonPreviewOpen = false;
-        el.dataset.comparisonPreview = 'pending';
-        comparisonPreviewTimer = setTimeout(() => {
-          comparisonPreviewTimer = null;
-          comparisonPreviewOpen = showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
-          el.dataset.comparisonPreview = comparisonPreviewOpen ? 'open' : 'idle';
-        }, comparisonConfig?.holdPreviewDelayMs ?? 160);
-      };
-      endComparisonPreview = () => {
-        clearTimeout(comparisonPreviewTimer);
-        comparisonPreviewTimer = null;
-        if (comparisonPreviewOpen) hideTooltip();
-        comparisonPreviewOpen = false;
-        el.dataset.comparisonPreview = 'idle';
-      };
-    }
-  }
-  if (cardOwnsAction) {
-    // Expanded cards are div-based composite controls, so opt them into the
-    // same keyboard/gamepad focus cursor that already reaches folded buttons.
-    // armHold then supplies the identical gppress/gprelease action contract.
-    el.dataset.focusable = 'true';
-    el.setAttribute('role', 'button');
-    const disarm = armHold(el, {
-      ms: holdDuration,
-      id: 'equipInventory',
-      // The whole card is the control and it lives in a list that scrolls
-      // under the thumb; a scroll must not paint a hold on the way past.
-      settleMs: HOLD_DRAG_SETTLE_MS,
-      onConfirm: onClassAction,
-      onHoldStart: startComparisonPreview,
-      onHoldEnd: endComparisonPreview,
-      feedbackHosts: () => {
-        const reveal = el.closest('.disc-reveal');
-        // W1n: the face stands in the collection column, not beside its reveal.
-        const faceButton = [...(el.closest('.ep-list')?.querySelectorAll('[data-face]') || [])]
-          .find((candidate) => candidate.dataset?.face === row.key);
-        return [reveal, faceButton?.querySelector('.inventory-face')];
-      },
-    });
-    if (registerHold) registerHold(disarm);
-  }
-  return el;
-}
+// Re-exported: callers import it from here (components/armouryInventory.js owns it).
+export { isCollectibleCategory };
 
 /**
  * mountEquipment(host, opts) → { close() }
@@ -1456,467 +1263,39 @@ export function mountEquipment(host, {
   }
 
   /** While a position is picked: the candidates as an Item / Status / Actions table. */
-  function pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }) {
-    // A redraw replaces every control; put keyboard focus back on the one pressed.
-    const redrawFocus = (selector) => { draw(); wrap.querySelector(selector)?.focus({ preventScroll: true }); };
-    const all = sortEquipPickerRows(equipPickerTableRows(allRows, selectedSlot, { setIndex: picking.setIndex, loadout: run.loadout }), pickerSort);
-    const shown = pickerShowAll ? all : all.filter((r) => r.fits);
-    const slotLabel = (id) => (eq.slots || []).find((s) => s.id === id)?.label || id;
-    const root = el('div', { class: 'equip-picker', dataset: { component: UI.armouryEquipPickerTable } });
-    const filter = button({
-      label: pickerShowAll ? t('armoury.picker.fitsOnly') : t('armoury.picker.showAll'),
-      className: 'equip-picker-filter',
-      attrs: { 'aria-pressed': String(pickerShowAll) },
-    });
-    filter.addEventListener('click', () => { pickerShowAll = !pickerShowAll; redrawFocus('.equip-picker-filter'); });
-    root.append(filter);
-    if (!shown.length) {
-      root.append(flavour(`Nothing in Inventory fits ${selectedSlot.label}.`, { class: 'ep-hint' }));
-      setFooterPrimary(null);
-      return root;
-    }
-    const sortHead = (key, label) => {
-      const active = pickerSort.column === key;
-      const sortButton = el('button', { type: 'button', class: 'equip-picker-sort', dataset: { sort: key } }, [label]);
-      sortButton.addEventListener('click', () => {
-        pickerSort = pickerSort.column === key
-          ? { column: key, direction: pickerSort.direction === 'asc' ? 'desc' : 'asc' }
-          : { column: key, direction: 'asc' };
-        redrawFocus(`.equip-picker-sort[data-sort="${key}"]`);
-      });
-      return el('th', { role: 'columnheader', 'aria-sort': active ? (pickerSort.direction === 'asc' ? 'ascending' : 'descending') : 'none' }, [sortButton]);
-    };
-    const thead = el('thead', { role: 'rowgroup' }, [el('tr', { role: 'row' }, [
-      sortHead('name', t('armoury.picker.col.item')),
-      sortHead('status', t('armoury.picker.col.status')),
-      el('th', { role: 'columnheader' }, [el('span', { class: 'sr-only' }, [t('armoury.picker.col.actions')])]),
-    ])]);
-    const tbody = el('tbody', { role: 'rowgroup' });
-    for (const r of shown) {
-      const parts = pickerParts.get(r.key);
-      const first = r.elsewhere[0];
-      const metaBits = [r.category];
-      if (r.status === 'nofit') metaBits.push(t(r.reason === 'kind' ? 'armoury.picker.reason.kind' : 'armoury.picker.reason.hand', { slot: selectedSlot.label }));
-      if (r.status === 'elsewhere' && r.row.count === 1) metaBits.push(t('armoury.picker.onlyCopy', { slot: slotLabel(first.slotId), n: first.setIndex + 1 }));
-      const statusLabel = r.status === 'elsewhere'
-        ? t('armoury.picker.status.elsewhere', { slot: slotLabel(first.slotId), n: first.setIndex + 1 })
-        : t(`armoury.picker.status.${r.status}`, {});
-      const img = el('img', { class: 'equip-picker-thumb', src: thumbSrc(r.row.item), alt: '', loading: 'lazy', decoding: 'async' });
-      // The cell stays a table cell; its flex layout lives on an inner wrapper.
-      // Phones drop the Status column, so the pill also rides under the name.
-      const statusPill = () => pill({ label: statusLabel, attrs: { class: `equip-picker-pill is-${r.status}` } });
-      const itemCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-item' }, [img, el('div', {}, [
-        el('strong', { class: 'equip-picker-name' }, [r.name]),
-        el('span', { class: 'equip-picker-meta' }, [metaBits.join(' · ')]),
-        el('span', { class: 'equip-picker-inline-status' }, [statusPill()]),
-      ])])]);
-      const statusCell = el('td', { role: 'cell', class: 'equip-picker-status' }, [statusPill()]);
-      const inspect = button({
-        label: t('armoury.action.inspect'),
-        className: 'equip-picker-inspect',
-        attrs: { 'aria-haspopup': 'dialog' },
-      });
-      inspect.addEventListener('click', () => openItemInspection(r.row.item, r.row.category, { owned: r.row.count, opener: inspect }));
-      const actions = [inspect];
-      if (r.fits && parts?.target) {
-        const target = parts.target;
-        // The row already names the slot, so its button is the short verb;
-        // the full destination stays in the accessible name.
-        const act = button({
-          label: t(`armoury.picker.act.${target.kind}`),
-          weight: target.kind === 'unequip' ? 'danger' : 'primary',
-          className: 'equip-picker-act',
-          attrs: { 'aria-label': parts.actionLabel, title: parts.actionLabel },
-        });
-        act.dataset.act = target.kind;
-        if (!parts.seal.ok) { act.disabled = true; refuses(act, () => parts.seal.reason); }
-        else if (!parts.transition.ok) { act.disabled = true; refuses(act, () => parts.transition.reason); }
-        else act.addEventListener('click', () => requestEquip(target.slot.id, target.setIndex, target.pieceId, parts.actionLabel));
-        actions.push(act);
-      }
-      const actionsCell = el('td', { role: 'cell' }, [el('div', { class: 'equip-picker-actions' }, actions)]);
-      // Buttons are taps, not drag handles: keep the row's pointer capture off them.
-      actionsCell.addEventListener('pointerdown', (event) => event.stopPropagation());
-      const tr = el('tr', { role: 'row',
-        class: `equip-picker-row is-${r.status}`,
-        dataset: { itemId: r.id, rowKey: r.key, status: r.status },
-      }, [itemCell, statusCell, actionsCell]);
-      // Mouse and pen users can still drag a row onto any named position.
-      const draggableRow = draggableRows.get(r.key);
-      if (draggableRow) attachInventoryDrag(tr, draggableRow);
-      tbody.append(tr);
-    }
-    setFooterPrimary(null);
-    root.append(el('table', { role: 'table', class: 'equip-picker-table' }, [
-      el('caption', { class: 'sr-only' }, [t('armoury.picker.caption', { slot: `${selectedSlot.label} · ${picking.setIndex + 1}` })]),
-      thead,
-      tbody,
-    ]));
-    return root;
+  function pickerTable(args) {
+    return armouryPickerTable({
+      run, eq, wrap, draw, openItemInspection, requestEquip,
+      // Live: draw() rebinds setFooterPrimary, so never pass the value.
+      setFooterPrimary: (plan) => setFooterPrimary(plan),
+      getPicking: () => picking,
+      getPickerSort: () => pickerSort,
+      setPickerSort: (sort) => { pickerSort = sort; },
+      getPickerShowAll: () => pickerShowAll,
+      setPickerShowAll: (showAll) => { pickerShowAll = showAll; },
+    }, args);
   }
 
   /** An owned item with an action of its own beyond equipping: a skill book (Read). Listed in and out of combat; the action is out of combat only. */
   // A learned class card is one too (SPEC §14.3: the Inventory may equip one learned card or leave the core slot empty); it is
   // listed only when there is a choice to make (more than one learned card, or the core slot already empty), out of combat,
   // and never on a configured profile (Core 2 keeps its class fixed).
-  const classChoice = () => !inCombat && run.gameProfile?.foundation?.mode !== 'configured' && (learnedClassIds(run).length > 1 || run.classUnequipped === true);
-  const usableRow = (row) => row.read === true || (row.classCard === true && classChoice());
+  const usableRow = (row) => inventoryRowUsable(row, { inCombat, run });
 
   /** The Inventory section: the usable items normally (none, and no section, when there are none), compatible replacements while a position is selected. */
   function inventoryBlock() {
-    const box = document.createElement('div');
-    box.className = 'inventory-list ep-list armoury-split';
-    box.dataset.wireframeBody = 'W1n';
-    // W1n: the items on one side, the selected item's detail on the other. The
-    // disclosure keeps its faces in the collection and puts its reveal in the
-    // detail column; before a selection that column carries the instruction.
-    const collection = el('div', { class: 'armoury-item-collection', dataset: { component: UI.armouryItemCollection } });
-    const detail = el('div', { class: 'armoury-item-detail', dataset: { component: UI.armouryItemDetail }, 'aria-live': 'polite' });
-    const prompt = prose(t('armoury.detail.prompt'), { class: 'armoury-detail-prompt' });
-    detail.appendChild(prompt);
-    box.append(collection, detail);
-    const footerPlans = new Map();
-    const roleLabels = Object.fromEntries(layout.combatPower.cards.map((card) => [card.role, card.label]));
-    const selectedSlot = picking ? eq.slots.find((slot) => slot.id === picking.slotId) : null;
-    const allRows = inventoryRows(registries, run, meta);
-    // Owner 2026-11-06: outside a slot's picker the Armory lists only the usable non-equippable items (a skill book is
-    // Read here): compact rows, no grid, and the detail opens under the rows only once an item is chosen.
-    const rows = selectedSlot
-      ? allRows.filter((row) => row.item && fitsSlot(selectedSlot, row.item))
-      : allRows.filter(usableRow);
-    if (!selectedSlot) { box.classList.add('is-books-only'); box.dataset.detailOpen = 'false'; prompt.hidden = true; }
-    const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
-    const inventoryItemClass = layout.cardClasses.inventoryItem;
-    const faceActions = new Map();
-    const pickerParts = new Map();
-    const draggableRows = new Map();
-    // An action can still be unavailable because its destination is locked,
-    // its requirements fail, or a combat mount omitted the engine callback.
-    // Keep that refusal on the action itself so the card explains why it cannot
-    // move instead of binding a dead act.
-    const sealChip = (element, reason) => {
-      element.classList.add('locked');
-      refuses(element, () => reason);
-      return element;
-    };
-    const attachInventoryDrag = (element, row) => {
-      let pointerDrag = null;
-      let suppressClick = false;
-      const clearDropReady = () => {
-        for (const cell of wrap.querySelectorAll('.armoury-position-card.drop-ready')) cell.classList.remove('drop-ready');
-      };
-      const dropAt = (x, y) => {
-        const card = document.elementFromPoint(x, y)?.closest?.('[data-slot-position]');
-        if (!card || card.classList.contains('is-locked')) return null;
-        const [slotId, rawIndex] = String(card.dataset.slotPosition || '').split(':');
-        const setIndex = Number(rawIndex);
-        const slot = (eq.slots || []).find((candidate) => candidate.id === slotId);
-        if (!slot || !Number.isInteger(setIndex) || !fitsSlot(slot, row.item)) return null;
-        return { card, slot, setIndex };
-      };
-      const detachPointerTracking = () => {
-        document.removeEventListener('pointermove', onPointerMove, true);
-        document.removeEventListener('pointerup', onPointerUp, true);
-        document.removeEventListener('pointercancel', onPointerCancel, true);
-      };
-      const finishPointerTracking = () => {
-        detachPointerTracking();
-        pointerDrag = null;
-        element.classList.remove('dragging');
-        clearDropReady();
-      };
-      const onPointerMove = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        if (!pointerDrag.dragging
-          && Math.hypot(event.clientX - pointerDrag.x, event.clientY - pointerDrag.y) <= HOLD_POINTER_SLOP) return;
-        if (!pointerDrag.dragging) element.dispatchEvent(new CustomEvent('carddragstart'));
-        pointerDrag.dragging = true;
-        event.preventDefault();
-        element.classList.add('dragging');
-        clearDropReady();
-        pointerDrag.drop = dropAt(event.clientX, event.clientY);
-        if (pointerDrag.drop) pointerDrag.drop.card.classList.add('drop-ready');
-      };
-      const onPointerUp = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        const completed = pointerDrag.dragging;
-        const drop = pointerDrag.drop || (completed ? dropAt(event.clientX, event.clientY) : null);
-        finishPointerTracking();
-        if (!completed) return;
-        suppressClick = true;
-        event.preventDefault();
-        event.stopPropagation();
-        if (drop) {
-          openInventoryForSelection(drop.slot.id, drop.setIndex);
-          applyEquipmentChange(drop.slot.id, drop.setIndex, row.id, `Equip ${row.name} to ${drop.slot.label}`);
-        }
-      };
-      const onPointerCancel = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        finishPointerTracking();
-      };
-      element.draggable = true;
-      element.addEventListener('dragstart', (ev) => {
-        element.dispatchEvent(new CustomEvent('carddragstart'));
-        detachPointerTracking();
-        pointerDrag = null;
-        draggingItemId = row.id;
-        element.classList.add('dragging');
-        if (ev.dataTransfer) {
-          ev.dataTransfer.effectAllowed = 'move';
-          ev.dataTransfer.setData('application/x-ashenspire-item', row.id);
-          ev.dataTransfer.setData('text/plain', row.id);
-        }
-      });
-      element.addEventListener('dragend', () => {
-        draggingItemId = null;
-        element.classList.remove('dragging');
-        clearDropReady();
-      });
-      // HTML drag/drop is retained for mouse browsers. Pointer drag is the
-      // shared card path for touch and for browser surfaces that do not start
-      // an HTML DragEvent from a disclosure button. Moving beyond the hold's
-      // own slop cancels that hold and becomes a drag; a tap remains a tap.
-      element.addEventListener('pointerdown', (event) => {
-        // Touch swipes scroll the inventory. Equip uses its explicit button;
-        // mouse/pen users retain drag and drop between named positions.
-        if (event.pointerType === 'touch' || !event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
-        detachPointerTracking();
-        pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, dragging: false, drop: null };
-        try { element.setPointerCapture(event.pointerId); } catch { /* capture is a progressive enhancement */ }
-        document.addEventListener('pointermove', onPointerMove, true);
-        document.addEventListener('pointerup', onPointerUp, true);
-        document.addEventListener('pointercancel', onPointerCancel, true);
-      });
-      element.addEventListener('click', (event) => {
-        if (!suppressClick) return;
-        suppressClick = false;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }, true);
-    };
-    if (selectedSlot) {
-      box.dataset.filteredFor = `${selectedSlot.id}:${picking.setIndex}`;
-      box.setAttribute('aria-label', `Inventory items compatible with ${selectedSlot.label}`);
-
-    }
-    const entries = rows.map((row) => {
-      let lastSeal = null, lastTransition = null;
-      const target = inventoryTarget(row);
-      const armament = row.item && ['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category);
-      const cardClass = armament ? layout.cardClasses.armamentItem : inventoryItemClass;
-      const draggable = !!armament;
-      const targetLabel = target ? `${target.slot.label} · ${target.setIndex + 1}` : '';
-      const actionLabel = target
-        ? (target.kind === 'unequip'
-          ? t('armoury.action.unequipFrom', { slot: targetLabel })
-          : t(target.kind === 'move' ? 'armoury.action.moveTo' : 'armoury.action.equipTo', { slot: targetLabel }))
-        : '';
-      const face = inventoryFace(registries, row, {
-        draggable,
-        actionLabel: selectedSlot ? actionLabel : '',
-        classModel: cardClass,
-      });
-      if (draggable) draggableRows.set(row.key, row);
-      let actionButton = null;
-      let comparison = null;
-      let eligibility = null;
-      if (target) {
-        const act = () => requestEquip(target.slot.id, target.setIndex, target.pieceId, actionLabel);
-        // With the candidate named, the seal carries the grip's sentence too
-        // (model/loadout.js gripRefusal) — the player reads why before the act.
-        // EVERY INPUT THE MUTATION READS, or the seal refuses in words an act
-        // the mutation would accept: `armamentLevels` carries the smithing
-        // tiers whose `requirement` deltas lower a minimum, and leaving it out
-        // made the card say "Straight Sword requires STR 5 (you have 4)" over
-        // a +1 sword the run could legitimately hold (review, #1217).
-        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
-        const transition = equipTransitionReceipt(
-          registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
-        );
-        lastSeal = seal; lastTransition = transition;
-        const wholeCardHold = !selectedSlot && cardClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
-        // The act is a kit Button — danger for an unequip, primary for an equip.
-        // When the whole card is the hold target the act is a lit StatePill that
-        // names it, not a second control.
-        actionButton = wholeCardHold
-          ? pill({ label: actionLabel, on: true, attrs: { class: 'ep-equip inventory-card-action-label', 'aria-hidden': 'true' } })
-          : button({ label: actionLabel, weight: target.kind === 'unequip' ? 'danger' : 'primary', className: 'ep-equip' });
-        actionButton.dataset.act = target.kind;
-        if (!wholeCardHold) {
-          actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
-          actionButton.addEventListener('click', (event) => event.stopPropagation());
-        }
-        if (!seal.ok) { actionButton.disabled = true; sealChip(actionButton, seal.reason); }
-        else if (!transition.ok) {
-          actionButton.disabled = true;
-          actionButton.classList.add('locked');
-          refuses(actionButton, () => transition.reason);
-        } else if (wholeCardHold) {
-          faceActions.set(row.key, act);
-        } else if (armament) {
-          actionButton.addEventListener('click', act);
-        } else {
-          const disarm = armHold(actionButton, {
-            ms: inventoryItemClass.holdAction ? holdDuration : 0,
-            id: 'equipInventory',
-            onConfirm: act,
-          });
-          registerHold(disarm);
-          faceActions.set(row.key, act);
-        }
-        comparison = comparisonFor(target.slot.id, target.setIndex, target.pieceId);
-        eligibility = inventoryEligibility({ target, seal, transition, requirement: comparison?.requirement });
-        const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
-        // The footer runs the same act, through the same hold, as the card.
-        if (plan) footerPlans.set(row.key, { ...plan, act, explicit: !!armament, holdMs: cardClass.holdAction ? holdDuration : 0 });
-      } else if (armament && (eq.slots || []).some((slot) => fitsSlot(slot, row.item))) {
-        // Equip asks for a slot only when there is a choice (beginInventoryEquip).
-        actionButton = button({ label: t('armoury.picker.act.equip'), weight: 'primary', className: 'ep-equip' });
-        actionButton.dataset.act = 'equip';
-        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
-        actionButton.addEventListener('click', (event) => { event.stopPropagation(); beginInventoryEquip(row, actionButton); });
-      } else if (row.classCard && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
-        const equipped = !run.classUnequipped && run.class === row.id;
-        const label = equipped ? 'Unequip class' : 'Equip class';
-        const act = () => { equipClassCard(registries, run, equipped ? null : row.id, { inCombat }); commit(); };
-        actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-class-action', disabled: !!run.pendingReward });
-        actionButton.title = run.pendingReward ? 'Finish the pending reward before changing class cards.' : '';
-        actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
-        if (!run.pendingReward) footerPlans.set(row.key, { label, kind: 'class', act, holdMs: 0 });
-      } else if (row.read && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
-        // SPEC §14.3: a skill book is read here, out of combat only — one
-        // awardSkillXp on its track (model/consumables.js), then one fewer.
-        const label = t('armoury.consumable.read');
-        const act = () => {
-          openBookLearning({ registries, run, id: row.id, inCombat, settings: meta.settings, onLearn: () => commit() });
-        };
-        actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });
-        actionButton.dataset.act = 'read';
-        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
-        actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
-        footerPlans.set(row.key, { label, kind: 'read', act, holdMs: 0 });
-      }
-      const revealed = inventoryReveal(registries, row, {
-        comparison,
-        facts: target ? selectionFacts(row, target, comparison, eligibility, actionLabel, roleLabels) : null,
-        action: actionButton,
-        instruction: '',
-        holdDuration, registerHold, classModel: cardClass,
-        comparisonConfig: armament ? { ...layout.comparison, presentation: cardClass.comparisonPresentation } : layout.comparison,
-        onClassAction: armament ? null : (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
-      });
-      pickerParts.set(row.key, { revealed, target, actionLabel, seal: target ? lastSeal : null, transition: target ? lastTransition : null });
-      return {
-        key: row.key,
-        kind: 'item',
-        disclosure: 'face',
-        face: {
-          label: row.name,
-          node: face,
-          compact: true,
-          className: 'inventoryItem',
-          classModel: cardClass,
-        },
-        reveal: {
-          node: revealed,
-          sense: `${row.name}. ${row.category}. ${row.count} owned.`,
-        },
-      };
+    return armouryInventoryBlock({
+      registries, run, meta, layout, eq, inCombat, wrap,
+      draw, commit, applyEquipmentChange, beginInventoryEquip, comparisonFor, footerAction, inventoryTarget,
+      openInventoryForSelection, pickerTable, registerHold, requestEquip, responsiveMode, selectionFacts,
+      setFooterPrimary: (plan) => setFooterPrimary(plan), slotSummary,
+      getPicking: () => picking,
+      setPicking: (value) => { picking = value; },
+      getSelectedInventoryKey: () => selectedInventoryKey,
+      setSelectedInventoryKey: (key) => { selectedInventoryKey = key; },
+      setInventoryDisclosure: (disclosure) => { inventoryDisclosure = disclosure; },
+      setDraggingItemId: (id) => { draggingItemId = id; },
     });
-    if (selectedSlot) {
-      inventoryDisclosure = null;
-      collection.append(pickerTable({ selectedSlot, allRows, pickerParts, footerPlans, draggableRows, attachInventoryDrag }));
-      detail.remove();            // the table expands inline; no side column
-      box.classList.add('is-picker-table');
-    } else {
-      inventoryDisclosure = mountDisclosure(collection, entries, {
-        moreLabel: 'more items',
-        layout: 'column',
-        revealHost: detail,
-        onReveal: (key) => {
-          const changed = key && key !== selectedInventoryKey;
-          selectedInventoryKey = key;
-          // On a stacked (phone) layout the detail sits below the whole list, so
-          // a newly selected item scrolls its detail into view and lands focus
-          // there; desktop keeps its sticky detail beside the list.
-          if (changed && responsiveMode() === 'phone') {
-            requestAnimationFrame(() => {
-              if (!detail.isConnected) return;
-              // The action sits at the foot of a tall card: bring IT into view
-              // (and focus it), falling back to the detail column itself.
-              const act = [...detail.querySelectorAll('.ep-equip')].find((node) => node.getClientRects().length);
-              if (!act && !detail.hasAttribute('tabindex')) detail.tabIndex = -1;
-              const target = act || detail;
-              target.focus({ preventScroll: true });
-              target.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-            });
-          }
-          prompt.hidden = !!key;
-          // Phone rows collapse the detail track until an item is chosen (kit.css).
-          box.dataset.detailOpen = key ? 'true' : 'false';
-          setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
-        },
-        armFace: ({ button, entry, onTap }) => {
-          const draggableRow = draggableRows.get(entry.key);
-          if (draggableRow) attachInventoryDrag(button, draggableRow);
-          if (entry.face?.classModel?.holdAction !== true) return false;
-          const act = faceActions.get(entry.key);
-          if (!act) return false;
-          button.dataset.cardClass = entry.face.className;
-          button.dataset.holdCapable = 'true';
-          if (holdDuration > 0) {
-            const disarm = armHold(button, {
-              ms: holdDuration,
-              id: 'equipInventory',
-              // Same card, same scrolling list — see the whole-card hold above.
-              settleMs: HOLD_DRAG_SETTLE_MS,
-              onConfirm: act,
-              onTap: () => {
-                // The hold controller consumes its trailing click; reveal the
-                // nested card's Information control through the short-tap path.
-                button.querySelector('.card-inspection-target')?.dispatchEvent(new CustomEvent('cardinspectionrequest'));
-                onTap();
-              },
-              hintHost: button.querySelector('.inventory-face'),
-              hintBefore: button.querySelector('.inventory-category'),
-              feedbackHosts: () => {
-                // W1n: the reveal is in the detail column, not beside the face.
-                const reveal = detail.querySelector('.disc-reveal');
-                return [button.querySelector('.inventory-face'), reveal?.dataset.revealFor === entry.key ? reveal : null];
-              },
-            });
-            registerHold(disarm);
-          } else if (selectedSlot) {
-            button.addEventListener('click', (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              act();
-            });
-          } else {
-            return false;
-          }
-          return true;
-        },
-      });
-    }
-    if (selectedSlot) {
-      const clear = button({ label: t('armoury.destination.showAll') });
-      clear.addEventListener('click', () => { picking = null; draw(); });
-      const index = picking.setIndex;
-      const current = slotSummary(selectedSlot, index);
-      box.prepend(el('div', { class: 'armoury-selection-context', role: 'status' }, [
-        prose(`${selectedSlot.label} · ${index + 1} — ${t(index === run.loadout.active[selectedSlot.id] ? 'armoury.slot.active' : 'armoury.slot.reserve')} · ${current.name}`), clear]));
-    }
-    box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    // While picking, the table owns its own empty state.
-    if (!entries.length && !selectedSlot) {
-      // Nothing to select: the collection says why and takes the whole pane.
-      collection.appendChild(flavour(selectedSlot ? `Nothing in Inventory fits ${selectedSlot.label}.` : 'Inventory is empty.', { class: 'ep-hint' }));
-      if (detail.isConnected) detail.remove();
-      box.classList.add('is-empty');
-    }
-    return box;
   }
 
   function equipmentReceiptPanel(surface) {
@@ -2060,163 +1439,10 @@ export function mountEquipment(host, {
   }
 
   function characterStatsPanel() {
-    const box = document.createElement('section');
-    box.className = 'armoury-character-stats';
-    const projection = statProjection(registries, run);
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const expanded = viewMode().character === 'expanded';
-    const informationCards = [];
-    const initiallyOpen = expanded ? 'attributesCard' : null;
-    let revealFrame = 0;
-
-    function revealInformationCard(card, head) {
-      cancelAnimationFrame(revealFrame);
-      revealFrame = requestAnimationFrame(() => {
-        if (!card.isConnected || !card.open) return;
-        // Focus must not scroll before closing the old card has settled layout.
-        if (document.activeElement !== head) head.focus({ preventScroll: true });
-        let top = viewViewportBox().top;
-        let bottom = viewViewportBox().bottom;
-        for (let parent = card.parentElement; parent; parent = parent.parentElement) {
-          if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
-          const rect = parent.getBoundingClientRect();
-          top = Math.max(top, rect.top);
-          bottom = Math.min(bottom, rect.bottom);
-        }
-        const rect = card.getBoundingClientRect();
-        if (bottom <= top || (rect.top >= top && rect.bottom <= bottom)) return;
-        // A tall card cannot fit: keep its header reachable, not its bottom.
-        const tall = rect.height > bottom - top;
-        if (tall && Math.abs(rect.top - top) <= 2) return;
-        const target = tall ? head : card;
-        const behavior = reducedMotionRequested() ? 'instant' : 'smooth';
-        try {
-          target.scrollIntoView({ block: tall ? 'start' : 'nearest', inline: 'nearest', behavior });
-        } catch {
-          target.scrollIntoView(tall);
-        }
-      });
-    }
-
-    // AN INFORMATION CARD is a fold-open DetailCard: its head a Row (caret
-    // Glyph, the label as Title·S, the one-line summary as StatusText), its
-    // body the group's faces.
-    function informationCard({ id, label, summary, body }) {
-      const head = el('summary', {}, row({
-        glyph: FOLD_GLYPH.collapsed,
-        labelNode: titleS(label, { tag: 'span', class: 'r-label character-info-label' }),
-        status: summary, tag: 'div', className: 'character-info-head',
-      }));
-      head.querySelector('.as-glyph').classList.add('caret');
-      const card = detailCard({ tag: 'details', attrs: { class: `character-info-card ${id}`, dataset: { component: `armoury.${id}` } }, children: [head, body] });
-      card.open = id === initiallyOpen;
-      head.setAttribute('aria-expanded', card.open ? 'true' : 'false');
-      const entry = { card, setOpen(open) {
-        card.open = open;
-        head.setAttribute('aria-expanded', String(open));
-      } };
-      informationCards.push(entry);
-      function activate(open) {
-        cancelAnimationFrame(revealFrame);
-        for (const peer of informationCards) {
-          if (peer === entry) peer.setOpen(open);
-          else if (open && peer.card.open) peer.setOpen(false);
-        }
-        if (open) revealInformationCard(card, head);
-      }
-      // Keyboard activation of a native summary also produces click. Update
-      // siblings and ARIA together, before the asynchronous toggle events.
-      head.addEventListener('click', (event) => {
-        event.preventDefault();
-        activate(!card.open);
-      });
-      card.addEventListener('toggle', (event) => {
-        if (event.target !== card) return;
-        // Ignore initial/handled/coalesced events; support external .open writes.
-        if (head.getAttribute('aria-expanded') !== String(card.open)) activate(card.open);
-      });
-      attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
-      return card;
-    }
-
-    const powers = el('section', { class: 'character-power-cards', dataset: { component: UI.armouryCombatPowerGroup } });
-    const powerEntries = characterPowerEntries();
-    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers', layout: 'column' });
-    box.appendChild(informationCard({
-      id: 'combatPowerCard',
-      label: layout.combatPower.groupLabel,
-      summary: powerEntries.map((entry) => `${entry.face.node?.querySelector('.combat-power-label')?.textContent || entry.face.label} ${entry.face.value}`).join(' · '),
-      body: powers,
-    }));
-
-    if (inCombat) {
-      const attributes = el('section', { class: 'character-attributes' });
-      const attributeHost = el('div');
-      const attributeRows = attributeCardModels(registries, run.attributes, {
-        projection,
-        equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-        // The hand a solo fight deals: mid-fight, that fight's own snapshot
-        // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
-        // holds no hand settings, Codex #1294); otherwise the next fight's,
-        // read from the run's rows and the profile the way engine/runCombat.js
-        // reads them (`runHandRules`).
-        hand: handRules || runHandRules(registries, run, meta.settings || {}),
-      });
-      for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
-      attributeHost.replaceChildren(...primaryStatCards(attributeRows));
-      attributes.appendChild(attributeHost);
-      box.appendChild(informationCard({
-        id: 'attributesCard',
-        label: t('progression.attributes'),
-        summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
-        body: attributes,
-      }));
-    } else {
-    box.append(characterStatsButton({ registries, run, settings: meta.settings || {} }));
-    }
-
-    const relics = el('section', { class: 'character-relics' });
-    const relicHost = el('div');
-    const entries = relicEntries();
-    for (const entry of entries) entry.face = { ...entry.face, compact: true };
-    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics', layout: 'column' });
-    else relicHost.appendChild(flavour('No relics equipped.', { class: 'ep-hint' }));
-    relics.appendChild(relicHost);
-    box.appendChild(informationCard({
-      id: 'relicsCard',
-      label: 'Relics',
-      summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
-      body: relics,
-    }));
-    // A run always has its own class ladder (skillProgressRows refuses a class
-    // the registry does not know, rather than returning a list without it), so
-    // there is no empty case to draw here and none is pretended.
-    const skillRows = run.gameProfile?.foundation?.mode === 'configured' ? [] : skillProgressRows(registries, run);
-    // A ledger row whose track the content no longer declares cannot become a
-    // bar — it has no label — but it may be holding drafts, so it is SAID
-    // rather than dropped, the way a saved view the table no longer declares
-    // is said above. One line, once per draw.
-    const stale = staleSkillTracks(registries, run);
-    if (stale.length) {
-      console.warn(`[armoury] the skill ledger carries ${stale.length} track(s) no content declares`
-        + ` — ${stale.join(', ')}. They are not drawn, and any drafts they hold are not counted.`);
-    }
-    const skills = el('section', { class: 'character-skills', dataset: { component: UI.armourySkillProgressGroup } }, [
-      meters(skillRows.map(skillProgressMeter), { class: 'character-skill-meters' }),
-    ]);
-    const progression = button({ label: t('progression.skill'), className: 'character-skill-progression', attrs: { 'aria-haspopup': 'dialog' } });
-    progressionTip(progression, 'Open progression');
-    progression.addEventListener('click', () => openProgression(progression, 'skills'));
-    if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
-    const skillSection = el('section', { class: 'character-skill-section' }, run.gameProfile?.foundation?.mode === 'configured' ? [] : [progression, skills]);
-    box.querySelector('.combatPowerCard').after(skillSection);
-    box.appendChild(informationCard({
-      id: 'equipmentReceiptsCard',
-      label: 'Equipment cards',
-      summary: surface.roles.map((row) => `${row.profile.displayName} x${row.copies}`).join(' · '),
-      body: equipmentReceiptPanel(surface),
-    }));
-    return box;
+    return armouryStatsPanel({
+      registries, run, meta, layout, inCombat, handRules, onCharacterSheet,
+      viewMode, characterPowerEntries, relicEntries, skillProgressMeter, equipmentReceiptPanel, openProgression,
+    });
   }
 
   /** The character's summary is a LabelStack: Eyebrow (the case is the stylesheet's), Title·S, Subtitle. */
