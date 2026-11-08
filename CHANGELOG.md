@@ -34,9 +34,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: settings rows come from one table** ([#2718](https://github.com/cehinds/AshenSpire/pull/2718), `0.7.4.50`). This is a tooling-only change, and nothing you play changes. The Settings screen's rows now come from a data model and are built by shared kit builders, labels are escaped, and the Undo button's label comes from the strings table.
-- **Combat mini HUD redone** ([#2709](https://github.com/cehinds/AshenSpire/pull/2709), `0.7.4.50`). Every fighter now shows a tall Block shield on the left, an HP bar, an always-visible Poise bar of the same size, and one row of round badges for Precision and every status, buffs included, all at one fixed compact width.
-- **Behind the scenes: combat HUD and settings, merge train** ([#2731](https://github.com/cehinds/AshenSpire/pull/2731), `0.7.4.50`). Lands #2709 and #2718 together.
+- **Behind the scenes: settings rows come from one table** ([#2718](https://github.com/cehinds/AshenSpire/pull/2718), `0.7.4.52`). This is a tooling-only change, and nothing you play changes. The Settings screen's rows now come from a data model and are built by shared kit builders, labels are escaped, and the Undo button's label comes from the strings table.
+- **Combat mini HUD redone** ([#2709](https://github.com/cehinds/AshenSpire/pull/2709), `0.7.4.52`). Every fighter now shows a tall Block shield on the left, an HP bar, an always-visible Poise bar of the same size, and one row of round badges for Precision and every status, buffs included, all at one fixed compact width.
+- **Behind the scenes: combat HUD and settings, merge train** ([#2731](https://github.com/cehinds/AshenSpire/pull/2731), `0.7.4.52`). Lands #2709 and #2718 together.
+- **Behind the scenes: bundler and timeline tidied, merge train** ([#2730](https://github.com/cehinds/AshenSpire/pull/2730), `0.7.4.52`). Lands #2721, #2724 and #2670 together. Nothing you play changes.
+- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.50`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
+- **Developer screenshot modules load on demand** ([#2724](https://github.com/cehinds/AshenSpire/pull/2724), `0.7.4.50`). A normal start no longer loads the developer-only screenshot code; the game plays the same.
+- **On-demand build failures stay visible** ([#2721](https://github.com/cehinds/AshenSpire/pull/2721), `0.7.4.50`). Failed on-demand modules keep reporting their original error, and misleading comment text can no longer hide an unbundled import; normal play is unchanged.
 - **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.50`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.48`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.48`). Card previews and card resolution allocate about half as much memory; play is unchanged.
