@@ -11,7 +11,7 @@ import { expandedEnemyMove, primeEnemyCounter } from '../src/engine/combatCardTa
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction } from '../src/engine/actions.js';
 import { mountBestiary } from '../src/ui/screens/bestiary.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const registries = createRegistries(contentBundle);
 function fight() {

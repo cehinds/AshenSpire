@@ -74,7 +74,7 @@ test('a pending rank-up offer and its pick are checked on load', () => {
 
 test('the reward door raises the chosen card and spends the rank-up', async () => {
   const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { rewardDom } = await import('./helpers/dom.mjs');
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
