@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: spells deal plain damage, written down** ([#2706](https://github.com/cehinds/AshenSpire/pull/2706), `0.7.4.50`). This is a rules-text change, and nothing you play changes yet. The rulebook now says spell damage is ordinary damage that meets Block like any hit, spells reach by default, and each school of magic leaves its own status (Frost chills, then freezes); the change itself follows in its own update.
-- **Behind the scenes: bundler and timeline tidied, merge train** ([#2730](https://github.com/cehinds/AshenSpire/pull/2730), `0.7.4.50`). Lands #2721, #2724 and #2670 together. Nothing you play changes.
+- **Behind the scenes: spells deal plain damage, written down** ([#2706](https://github.com/cehinds/AshenSpire/pull/2706), `0.7.4.52`). This is a rules-text change, and nothing you play changes yet. The rulebook now says spell damage is ordinary damage that meets Block like any hit, spells reach by default, and each school of magic leaves its own status (Frost chills, then freezes); the change itself follows in its own update.
+- **Behind the scenes: bundler and timeline tidied, merge train** ([#2730](https://github.com/cehinds/AshenSpire/pull/2730), `0.7.4.52`). Lands #2721, #2724 and #2670 together. Nothing you play changes.
 - **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.50`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
 - **Developer screenshot modules load on demand** ([#2724](https://github.com/cehinds/AshenSpire/pull/2724), `0.7.4.50`). A normal start no longer loads the developer-only screenshot code; the game plays the same.
 - **On-demand build failures stay visible** ([#2721](https://github.com/cehinds/AshenSpire/pull/2721), `0.7.4.50`). Failed on-demand modules keep reporting their original error, and misleading comment text can no longer hide an unbundled import; normal play is unchanged.
