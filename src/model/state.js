@@ -1385,18 +1385,8 @@ function checkDeferredProgression(run, problems) {
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
-  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
-  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
-  checkSideboardAndCollection(run, problems);
-  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
-  checkLevelAndSmithingCounters(run, problems);
-  checkEquipmentUpgradesAndMounts(run, problems);
-  checkDeferredProgression(run, problems);
+/** Phase: the pending reward offer, its claims, drafts and chosen rows. */
+function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
     const pending = run.pendingReward;
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
@@ -1634,6 +1624,21 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
+  checkSideboardAndCollection(run, problems);
+  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+  checkLevelAndSmithingCounters(run, problems);
+  checkEquipmentUpgradesAndMounts(run, problems);
+  checkDeferredProgression(run, problems);
+  checkPendingReward(run, problems);
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
   // The sideboard holds the same instances (SPEC §14.1), so it is held to the
