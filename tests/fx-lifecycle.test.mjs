@@ -9,7 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { affordableCards } from '../tools/simbot.mjs';
-import { playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { withKitDom } from './helpers/dom.mjs';
 
@@ -29,7 +29,7 @@ test('ordered FX counts real watchdog expiry while normal, cancel and skip finis
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());
-  setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing();
   try {
     withKitDom((dom) => {
       for (const exit of ['normal', 'cancel', 'skip', 'watchdog']) {
@@ -52,7 +52,7 @@ test('ordered FX counts real watchdog expiry while normal, cancel and skip finis
         assert.equal(completed, 1, 'late timer work and repeated exits cannot complete twice');
       }
     });
-  } finally { setCombatPacing(); setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  } finally { setCombatPacing(); setAnimSpeed('normal'); }
 });
 
 // Preserve Maps, cycles and function identities while copying mutable state.
@@ -85,7 +85,7 @@ for (const exit of ['hidden', 'blur']) {
     t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
     // The scheduler's monotonic clock must advance with these mocked timers.
     t.mock.method(globalThis.performance, 'now', () => Date.now());
-    setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
+    setAnimSpeed('normal'); setCombatPacing();
     withKitDom((dom, _win, listeners) => {
       const page = new EventTarget(), documentListeners = new Set();
       dom.document.addEventListener = (type, handler, options) => {
