@@ -1,6 +1,8 @@
 # Enemy level budget: pools before and after
 
-Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). Before = `origin/dev` at the branch base, after = this branch. Attributes are own points as STR/DEX/CON/WIS/INT (before gear and relics). Pools are HP/SP/MP including gear and relics.
+Generated for owner backlog #9 (SPEC §17, Enemy levels and stat budget). Before = `origin/dev` at the branch base, after = this branch. Attributes are own points as STR/DEX/CON/WIS/INT (before gear and relics). Pools below are the kernel's calculated HP/SP/MP including gear and relics, without seeded attribute variance.
+
+Browser validation (2026-11-08): these are **not live combat HP measurements**. `createCombat` still rolls the registry's authored `def.hp` range; `gameProfileEnemyRatings` applies the new seeded attributes, level, SP and MP, but does not replace HP. For example, seed `4` with `wanderingSoldier,graveWisp,fellWarden` produced live HP maxima of 35, 12 and 120, rather than this table's 64, 34 and 87. Seeded own attributes may also differ while preserving the budget and floor. This change validates the specified level/attribute rule; it does not establish encounter balance or switch live HP to the calculated formula.
 
 | Enemy | Tier | Level (before > after) | Own attrs before | Own attrs after | HP before > after | SP before > after | MP before > after |
 |---|---|---|---|---|---|---|---|
