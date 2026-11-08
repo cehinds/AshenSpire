@@ -5,13 +5,15 @@ name: version-advance
 # A push to `release` (the test -> release cut) moves the CANDIDATE, the third
 # number, by one: 0.7.2.93 -> 0.7.3.0. A push to `main` (release -> main) moves
 # MINOR, the second number, by one and resets the candidate: 0.7.3.x -> 0.8.0.0.
+# A push to `test` (the review -> test promotion, owner 2026-11-07) moves only the BUILD ORDINAL,
+# the fourth number, by one and resets nothing: 0.7.4.30 -> 0.7.4.31 (kind `build`).
 # MAJOR is never touched. Until now a person did this in "the PR that follows the
 # cut"; nobody does that now, and a session must not hand-bump
 # (docs/versioning.md, "Release candidates"; CLAUDE.md, "Release numbering").
 #
 # WHAT IT COMMITS, AND WHERE. One commit on `dev` (the next candidate is built
 # from dev, not from the branch that was just cut), subject
-#   version-advance: <triple> after <release|main> <source sha> [version-advance]
+#   version-advance: <triple> after <release|main|test> <source sha> [version-advance]
 # touching src/content/index.js (the literal and its marker comment),
 # tools/release-series.mjs (minor only: the series gate) and buildordinal.json,
 # which restarts at 0 through tools/buildversion.mjs bumpOrdinal, the same function
@@ -19,7 +21,7 @@ name: version-advance
 #
 # NO LOOP, NO DOUBLE BUMP.
 #  * The commit goes to dev with GITHUB_TOKEN, which starts no push-triggered
-#    workflow; this workflow listens to release and main only, never dev.
+#    workflow; this workflow listens to release, main and test only, never dev.
 #  * build-stamp.yml also skips a [version-advance] head by author and subject prefix,
 #    in case a different token ever pushes it, and pr-restamp only follows a build-stamp
 #    run that concluded success, so neither can chain off this commit.
@@ -42,6 +44,13 @@ name: version-advance
 # feed no longer shows the cursor it fails; either way nothing is written and a rerun recovers.
 # docs/versioning.md, "Version advance: the cursor model".
 #
+# TEST EVENTS NEED THIS FILE ON THE PUSHED BRANCH. A run uses the yml of the branch that was pushed, and
+# release and main still carry the old one (its `case` exits 1 on any other branch), so `--plan` lists
+# `test` events only with `--with-test`, which only this file passes. Until release and main carry this
+# file, a `test` event can be skipped when an older-yml run records a later release/main event and so
+# moves the cursor past it: one missed build bump, accepted. A `branch_creation` on `test` is never a
+# cut: restore-test-branch.yml recreates `test` after every test -> release merge.
+#
 # This workflow's group is its own, not build-stamp's: GitHub keeps ONE pending run
 # per group, so a shared group would let a build-stamp run replace a queued bump and
 # lose it. Pushes racing build-stamp on dev are settled by the same non-fast-forward
@@ -49,7 +58,7 @@ name: version-advance
 
 on:
   push:
-    branches: [release, main]
+    branches: [release, main, test]
   workflow_dispatch:
 
 concurrency:
@@ -93,7 +102,7 @@ jobs:
 
           # The work list: every feed event after the cursor, oldest first ("id timestamp branch sha").
           # A failure (lag, lost cursor, unreadable range) fails the job before anything is written.
-          node tools/version-advance.mjs --plan > "$RUNNER_TEMP/cuts"
+          node tools/version-advance.mjs --plan --with-test > "$RUNNER_TEMP/cuts"
           echo "Cuts owed, oldest first:"; cat "$RUNNER_TEMP/cuts"
 
           pushed=0
@@ -102,7 +111,7 @@ jobs:
           # (its event is behind the cursor), so it recognises its own record by the pushed sha
           # and dispatches below (build-stamp's no-diff recovery).
           # NOT grep -q: it exits at the first match, git log dies of SIGPIPE, and pipefail reports 141.
-          if [ "$EVENT_NAME" = "push" ] && git log --format=%s | grep -E "^version-advance: [0-9.]+ after (release|main) ${EVENT_AFTER}( |$)" >/dev/null; then
+          if [ "$EVENT_NAME" = "push" ] && git log --format=%s | grep -E "^version-advance: [0-9.]+ after (release|main|test) ${EVENT_AFTER}( |$)" >/dev/null; then
             recorded=1
           fi
           # dev-preview for the tip, three tries (2 and 4 seconds of backoff), as build-stamp does.
@@ -123,7 +132,8 @@ jobs:
             case "$branch" in
               release) kind=candidate ;;
               main)    kind=minor ;;
-              *) echo "::error::source_ref must be release or main, got '$branch'."; exit 1 ;;
+              test)    kind=build ;;
+              *) echo "::error::source_ref must be release, main or test, got '$branch'."; exit 1 ;;
             esac
 
             done_here=0
@@ -137,12 +147,14 @@ jobs:
                 break
               fi
 
+              export KIND="$kind"
               node tools/version-advance.mjs --kind "$kind" --write
               next="$(node tools/version-advance.mjs --kind "$kind" --read-current)"
               # The generated changelog module is inside the digest; refresh it first, then
               # write the box ONCE, so it restarts at 0 (bumpOrdinal resets on a new release).
               node tools/about-changelog.mjs --write
-              node -e "import('./tools/buildversion.mjs').then((m) => console.log(JSON.stringify(m.bumpOrdinal())))"
+              # A build (push to test) leaves the triple alone, so the digest may not move: force +1.
+              node -e "import('./tools/buildversion.mjs').then((m) => console.log(JSON.stringify(m.bumpOrdinal(undefined, { force: process.env.KIND === 'build' }))))"
               node tools/release-series.mjs
               node tools/about-changelog.mjs --check-order
 
