@@ -2116,89 +2116,131 @@ together.
 
 ## 8. Testing
 
-**Two runners, one suite:** `tests/index.html` in a browser, `node tests/run-node.mjs`
-headless — both load `engine.test.js`. The suite is headless and needs no DOM: it asserts model and engine code plus some UI presentation models and helpers, and never mounts a screen; the suite says so in its own boundary
-block when it finishes.
+One suite, two runners; no hand-kept test list (the index is derived).
 
-**The required-coverage list that used to live here is gone, and deliberately.** It named 17
-tests against a suite that had already grown past it — **47 cases over 43 declared blocks at
-`267397a`, 48 over 44 two commits later, and it will have moved again by the time you read
-this** — and two of its entries had gone false without anybody editing them — test 7 restated Bleed's threshold as `12` with an escalating `×1.5`
-(both superseded by the constant-threshold proc vocabulary, §4.4) and test 8 named "Scarlet
-Rot", renamed at the IP scrub. **A hand-kept index of tests is a cache of `grep`**, and this
-one rotted exactly the way §3.2's file inventory did. The list has a home:
+- Runners: `tests/index.html` (browser) and `node tests/run-node.mjs` (headless); both load `engine.test.js`.
+- The suite needs no DOM.
+  - It asserts model and engine code plus some UI presentation models and helpers, and never mounts a screen.
+  - It says so in its boundary block.
 
 ```
 node tests/run-node.mjs                       # the whole suite + its boundary block
 grep -n "test('" tests/engine.test.js         # the index, derived
 ```
 
-**What this section states instead is the contract a test must meet, which cannot rot:**
+### Contract a test must meet
 
-1. **Headless.** The core suite (`engine.test.js`) needs no DOM. Other `tests/*.test.mjs` files may mount a screen on a stub DOM (`tests/card-rank.test.mjs`, `tests/blacksmith.test.mjs`); a test that needs a real browser belongs in `tools/`.
-2. **Both edges** — the empty/zero case and the cap/overflow case (Charter quality gate).
-3. **Content-driven mechanics are asserted through their data**, never against a number
-   hard-coded in the test: a status test drives `content/statuses.js` rows, so retuning a knob
-   moves the test with it instead of breaking it.
-4. **A check is trusted only after it has been watched to fail.** The observed-red idiom is
-   `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
-   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments. CI runs these gates for, among others, `tools/verify-shipped.mjs`, `tools/fullscreen-control.mjs`, `tools/dirorder.mjs` and `tools/credits-check.mjs` (`.github/workflows/ci.yml`); `tools/content-build.mjs` is not wired into CI.
-5. **Every release-gating instrument prints what it did NOT check, in its run output — not
-   only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
-   triggered by three greens that lied in one week: a screenshot harness blind to five
-   player-facing surfaces, a driver returning exit 0 against broken code, and a disclosure
-   check that covered one text of seven. Each was accurate about what it measured and silent
-   about its own hole — and a boundary in a file header is read by the author, while a
-   boundary in the output is read by whoever is about to trust the green.)*
+1. **Headless.**
+   - Other `tests/*.test.mjs` may mount a screen on a stub DOM (`tests/card-rank.test.mjs`, `tests/blacksmith.test.mjs`).
+   - A test needing a real browser belongs in `tools/`.
+2. **Both edges:** empty/zero and cap/overflow (Charter quality gate).
+3. **Content-driven mechanics are asserted through their data**, never a number hard-coded in the test.
+   - A status test drives `content/statuses.js` rows.
+4. **A check is trusted only after it has been watched to fail.**
+   - `--selftest`: known-bad corpus; each case must fail for its named reason.
+   - `--mutate`: reinstate the defect N ways; each must be caught.
+   - CI runs these gates for, among others, `tools/verify-shipped.mjs`, `tools/fullscreen-control.mjs`, `tools/dirorder.mjs` and `tools/credits-check.mjs` (`.github/workflows/ci.yml`).
+   - `tools/content-build.mjs` is not wired into CI.
+5. **Every release-gating instrument prints what it did NOT check, in its run output**, not only its header.
 
-**The release capture set is `tools/release-shots.mjs`, and it is not
-`tools/screenshot.mjs`.** The distinction is the third lying green above, so it belongs in a
-spec rather than in tribal memory:
+### Release capture set
 
-| | photographs | coverage |
-|---|---|---|
-| `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
-| `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | **two denominators, both printed.** (1) **Top-level states**, derived from `main.js`'s `?shot=` states, so a new state cannot be silently missed. (2) **Navigable sub-surfaces** — the tabs and panels reachable *inside* a state — derived from the three homes that define them (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`), one generated shot per member, each carrying an **assertion** that the surface both selected and painted. Surfaces with no `?shot=` are reached by real clicks and seeded storage; an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion all **fail before the browser starts** |
+`tools/release-shots.mjs` is the release capture set; it is not `tools/screenshot.mjs`.
 
-**The tabbed surfaces are listed in one table, `src/ui/surfaces.js`, which holds no members.** Each row points at the home that defines its set (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`) and asks it at call time. Denominator 2 enumerates the three sets the harness was told about, and prints the sets it knows exist and does not enumerate. A fifth set that no row names is still invisible to the table, and a source tree cannot show it.
+- `tools/screenshot.mjs` photographs the **source tree** over a local server.
+  - Covers only the `?shot=` states that existed when written; **structurally blind** to any surface without one.
+- `tools/release-shots.mjs` photographs the **built bundle** (`dist/AshenSpire.html`) at both shapes, with **two denominators, both printed**:
+  1. **Top-level states**, derived from `main.js`'s `?shot=` states.
+  2. **Navigable sub-surfaces** (tabs/panels inside a state), derived from `uiContent.js MENU_TABS`, `settings.js settingsCategories()` and `balance.equipment.views`.
+     - One generated shot per member, each with an **assertion** that the surface both selected and painted.
+     - Surfaces with no `?shot=` are reached by real clicks and seeded storage.
+  - It **fails before the browser starts** on an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion.
+- `src/ui/surfaces.js` is the one table of tabbed surfaces and holds no members.
+  - Each row points at the home that defines its set and asks it at call time.
+  - Denominator 2 enumerates the three sets the harness was told about, and prints the sets it knows exist and does not enumerate.
+  - A fifth set no row names is invisible to the table.
+- The artifact is **never modified** to reach a state: crisis states come from writing storage from outside and reloading.
+- Failure lines name **floats and screens separately**.
 
-The artifact is **never modified** to reach a state — crisis states are produced by writing
-storage from outside and reloading, because a shot of a patched bundle is a shot of something
-we do not ship. Failure lines name **floats and screens separately**, so a red says which
-thing broke.
+### Browser-facing gates the suite cannot reach
 
-**The browser-facing gates that the suite cannot reach**, each a command rather than a
-promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
-(map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
-(§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
-capture set — see above; it is run by hand before a release, and no CI job runs it), `node tools/ai-disclosure.mjs --check` (§2.1),
-`node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
-`tools/sfx-loudness.mjs`.
+- `node tools/verify-shipped.mjs`: bundle matches source.
+- `node tools/mapplan.mjs`: map distributions at the current shape.
+- `node tools/content-build.mjs --selftest --mutate` (§3.14).
+- `node tools/contrast-audit.mjs`: palette targets.
+- `node tools/release-shots.mjs`: run by hand before a release; no CI job runs it.
+- `node tools/ai-disclosure.mjs --check` (§2.1).
+- `node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`, `tools/sfx-loudness.mjs`.
 
-*(The previous edition of this section ended "CI-less workflow: opening `tests/index.html`
-must show all green before any milestone is called done." **CI exists** —
-`.github/workflows/ci.yml` — and the sentence had been false since it landed. What survives is
-the standard: all green before a milestone is called done, on whichever runner you used.)*
+Standard: all green before a milestone is called done, on whichever runner you used.
+
+#### Notes and history
+
+- Rule 5 is house law: a green must say what it did not check.
+- The old required-coverage list is gone; derive the index with the commands above.
+
+Full history: [docs/spec-history/08-testing-milestones.md](docs/spec-history/08-testing-milestones.md).
 
 ---
 
 ## 9. Milestones & acceptance criteria
 
+Four milestones, each with a build list and acceptance criteria (cited by CONTRIBUTING.md as "acceptance criteria (spec §9)").
+
 ### M1 — Combat vertical slice
-Build: model layer (schemas, registries, formulas, validation), engine core (queue, triggers, status-model interpreter), all statuses/stances as content data, Vagabond + 24-card set, 5 Act-1 encounters + elite + Watchful Omen boss, combat screen with full tooltips/targeting/piles, tests 1–11 + 14–17.
-**Accept when:** `index.html` → class select (Vagabond only) → a fixed 4-fight gauntlet (2 monsters → elite → boss) is winnable and losable with zero console errors; every visible number matches engine math; all listed tests green.
+- **Build:**
+  - Model layer: schemas, registries, formulas, validation.
+  - Engine core: queue, triggers, status-model interpreter.
+  - All statuses/stances as content data.
+  - Vagabond + 24-card set; 5 Act-1 encounters + elite + Watchful Omen boss.
+  - Combat screen with full tooltips/targeting/piles.
+  - Tests 1–11 + 14–17.
+- **Accept when:**
+  - `index.html` → class select (Vagabond only) → a fixed 4-fight gauntlet (2 monsters → elite → boss) is winnable and losable with zero console errors.
+  - Every visible number matches engine math.
+  - All listed tests green.
 
 ### M2 — The run
-Build: map gen + map screen, rewards (cards/runes/flasks/relics), 16 relics, 7 flasks, shrine/shop/treasure/4 events, save/continue, seed entry + display, death/victory screens, tests 12–13.
-**Accept when:** a complete seeded Act-1 run works end-to-end; reload restores exactly; same seed twice → identical map, rewards, and shuffles; abandoning mid-combat restarts that combat.
+- **Build:**
+  - Map gen + map screen.
+  - Rewards (cards/runes/flasks/relics); 16 relics; 7 flasks.
+  - Shrine/shop/treasure/4 events.
+  - Save/continue; seed entry + display; death/victory screens.
+  - Tests 12–13.
+- **Accept when:**
+  - A complete seeded Act-1 run works end-to-end.
+  - Reload restores exactly.
+  - Same seed twice → identical map, rewards, shuffles.
+  - Abandoning mid-combat restarts that combat.
 
 ### M3 — Content pass
-Build: Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1), Acts 2–3 (rosters, elites, 2 bosses incl. phase mechanics and the heal-on-hit final boss), events to 10, relics to 40, colorless pool, balance pass (instrument run history to check; no win-rate target: owner ruling D1, 2026-09-26, governs, and the earlier ~35–50% target was removed by owner decision, 2026-09-27).
-**Accept when:** all 4 classes can complete 3-act runs; every class owns its complete card/equipment/art slice; every card/relic/event is reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
+- **Build:**
+  - Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1).
+  - Acts 2–3: rosters, elites, 2 bosses incl. phase mechanics and the heal-on-hit final boss.
+  - Events to 10; relics to 40; colorless pool.
+  - Balance pass: instrument run history to check; no win-rate target (owner ruling D1 governs).
+- **Accept when:**
+  - All 4 classes complete 3-act runs.
+  - Every class owns its complete card/equipment/art slice.
+  - Every card/relic/event is reachable.
+  - No unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table in the balance notes).
+  - `scripts.js` budget still < 5%.
 
 ### M4 — Polish
-Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete).
-**Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
+- **Build:**
+  - Fx pass: floating numbers, shake, transitions.
+  - Run-history screen; keyboard shortcuts.
+  - First-run tooltip overlay (≤4 callouts).
+  - Sfx hook wiring.
+  - Asset pass replacing placeholders (CREDITS.md complete).
+- **Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs.
+  - Each is verified by actually adding a throwaway example.
+
+#### Notes and history
+
+- M3 has no win-rate target (D1).
+
+Full history: [docs/spec-history/08-testing-milestones.md](docs/spec-history/08-testing-milestones.md).
 
 ---
 
