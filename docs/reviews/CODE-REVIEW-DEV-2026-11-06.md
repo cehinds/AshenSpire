@@ -309,7 +309,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 - [ ] Widen `tests/qa-evidence-size.test.mjs` to `tools/` and image files (H5)
 - [ ] Test that every `data-component` id is in `UiComponentId` (Low)
 - [ ] Unused-export lint (M5)
-- [ ] Test that `tools/README.md` lists every tool (Low)
+- [x] Test that `tools/README.md` lists every tool (Low) — [#2672](https://github.com/cehinds/AshenSpire/pull/2672)
 
 ### 2. Relocations with re-exports
 
