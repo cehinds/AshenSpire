@@ -22,8 +22,7 @@
     },
     "hex-colour-bare": {
       "styles/base.css": 18,
-      "styles/combat-expansion.css": 4,
-      "styles/combat-layers.css": 27,
+      "styles/combat-layers.css": 31,
       "styles/combat-target-responsive.css": 22,
       "styles/combat-visuals.css": 17,
       "styles/combat.css": 150,
