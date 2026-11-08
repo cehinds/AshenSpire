@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.38`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
+- **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.40`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
+- **Preview builds recover after automatic updates** ([#2716](https://github.com/cehinds/AshenSpire/pull/2716), `0.7.4.40`). Automatically updated pull requests start a fresh preview build, while changes outside the build's generated metadata still fail validation.
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.38`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.38`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train B** ([#2702](https://github.com/cehinds/AshenSpire/pull/2702), `0.7.4.38`). Lands #2686, #2685 and #2688 together. Nothing you play changes.
