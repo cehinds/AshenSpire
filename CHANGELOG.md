@@ -34,11 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.46`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
-- **Attic tool path fixed** ([#2722](https://github.com/cehinds/AshenSpire/pull/2722), `0.7.4.46`). One retired QA tool read a source file from the wrong folder after the attic move; nothing you play changes.
-- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.46`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
-- **Behind the scenes: tools and CI tidied, merge train** ([#2729](https://github.com/cehinds/AshenSpire/pull/2729), `0.7.4.46`). Lands #2723, #2722 and #2720 together. Nothing you play changes.
-- **Behind the scenes: code split into smaller modules, merge train** ([#2728](https://github.com/cehinds/AshenSpire/pull/2728), `0.7.4.46`). Lands #2708, #2725 and #2680 together. Nothing you play changes.
+- **Behind the scenes: tools and CI tidied, merge train** ([#2729](https://github.com/cehinds/AshenSpire/pull/2729), `0.7.4.48`). Lands #2723, #2722 and #2720 together. Nothing you play changes.
+- **Behind the scenes: code split into smaller modules, merge train** ([#2728](https://github.com/cehinds/AshenSpire/pull/2728), `0.7.4.48`). Lands #2708, #2725 and #2680 together. Nothing you play changes.
 - **Behind the scenes: dice, random numbers and stances live in the model** ([#2680](https://github.com/cehinds/AshenSpire/pull/2680), `0.7.4.46`). Three small rule modules moved beside the rest of the game rules; nothing you play changes.
 - **Content checks reorganised** ([#2725](https://github.com/cehinds/AshenSpire/pull/2725), `0.7.4.46`). The content validator is now one small check per content section; it reports exactly the same problems, and nothing you play changes.
 - **Loadout code reorganised** ([#2708](https://github.com/cehinds/AshenSpire/pull/2708), `0.7.4.46`). The equipment and starting-deck rules now live in smaller files behind the same door; nothing you play changes, and old saves load exactly as before.
