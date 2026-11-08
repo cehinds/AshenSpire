@@ -810,7 +810,7 @@ Enemies act from an SP pool derived from their stats; each move has an SP price.
 - The multi-hit floor, finesse Dexterity scaling and the persistent paid Advance are Core 2 action rules version 2 (`CORE2_ACTION_RULES_VERSION`); a fight saved under version 1 keeps version 1 pricing and a temporary Advance until it ends.
 
 **Pool size**
-- SP = `ENEMY_SP_ROW` (1 + floor(0.25 × Dexterity) + floor(0.25 × Constitution) + floor(0.2 × Wisdom) + floor(0.2 × Intelligence), on the enemy's `attributes`) + `equipmentSp`, floored at 0. Enemy attributes are inflated next to a player's.
+- SP = `ENEMY_SP_ROW` (1 + floor(0.25 × Dexterity) + floor(0.25 × Constitution) + floor(0.2 × Wisdom) + floor(0.2 × Intelligence), on the enemy's `attributes`) + `equipmentSp`, floored at 0. Core enemies carry the player's stat budget at their level (§17, *Enemy levels and stat budget*); legacy profiles keep their authored attributes.
 - Bands (`ENEMY_SP_BANDS`, test-held for every shipped enemy): normal 1–2, elite 2–3, boss 3–4. A test fixture may fix a pool with `spPool`.
 - **Blight:** a `blighted` enemy's attributes shift by `ENEMY_BLIGHT_SHIFT` (−2 Intelligence, Wisdom, Dexterity; +2 Strength, Constitution; floored at 0) wherever stats are read (Blight Hound, Blighted Valkyrie).
 - **Live budget.** The pool is the enemy's actual Stamina budget and available SP at the turn-refill / pending-loss boundary used by execution.
@@ -2971,7 +2971,7 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 - Core 2 only: legacy keeps the previous formulas (Precision = 1 + mix × (stacks + 1); Evasion = 1 + DEX + Evade stacks × (1 + DEX)) and no Precision decay.
 - Hit-chance preview enumerates exact d20 outcomes (20; 400 with advantage/disadvantage), floored.
 - Versioned migration: the former default gain pair (base 1, DEX 1), or an identical custom pair, becomes (1, 0) in existing Core runs; other saved pairs and versioned overrides keep their values.
-- Enemy attributes come from their stats; enemy level is 0 unless its definition supplies one.
+- Enemy attributes come from their stats. Enemy level = its authored `level` when set, else its resolved `levelProfile` bound (`enemyLevel`), else 0; in Core every enemy's level is 1–5 (*Enemy levels and stat budget*).
 
 ### Perception and hit-chance display
 
@@ -3047,6 +3047,26 @@ Core 2 only. `reflectStacks`: whole number 0 to 10 (absent = 0) on the combat en
 - Runtime-hash checks stay: a save needing an earlier runtime keeps needing its matching build unless a tested adapter supports it.
 - Selecting or editing `ashen.core@2.0.0` affects new runs only (except the per-fight policy). No automatic migration to FixCore; any later change to this contract or migration of an existing run needs a separate SPEC change and tested migration contract.
 - The legacy preset keeps its prior rules, except Vulnerable is ×1.25 in every profile including `ashen.current@1.0.0` (D16); existing Current runs take it once loaded (no save migration).
+
+### Enemy levels and stat budget
+
+Core 2 only. Enemy levels 1–5; an enemy's stat budget follows the player's rule.
+
+- **Levels 1–5.** Every Core enemy's `stats.levelProfile` and every encounter's `targetBand` lie within 1–5; the fight uses the bound `characters.levelFrom` names (`levelProfile.min`).
+  - Exact `{min, max}` pairs, both ends:
+
+    | Act | Minion | Elite | Boss |
+    |---|---|---|---|
+    | 1 (Weald) | 1–2 | 2–3 | 3–3 |
+    | 2 (Marches) | 2–3 | 3–4 | 4–4 |
+    | 3 (Reach) | 3–4 | 4–5 | 5–5 |
+- **Budget.** The Core player's starting budget (upper bound of `tagRules["character.player"].attributeBudget`, `[6, 6]`) + `progression.attributePointsPerLevel` (1) per level after the first: a level-L enemy carries 5 + L points (6 at level 1, 10 at level 5).
+  - Both numbers are read from config, not copied.
+  - Tiers no longer set a stat budget; they still differ in pools, hand and deck.
+  - An authored `attributePoints` still wins.
+- **Floors.** Every enemy attribute starts at 1 (`characters.attributeFill.floor`); the remaining points follow `attributePriority`.
+  - The enemy `attributeOffset` (−2 Strength, Dexterity, Constitution) and the Constitution fill cap are removed, so no enemy reads 0 in a stat before gear and relics.
+- *Falsify (once built):* `tests/enemy-level-budget.test.mjs` fails a Core enemy whose `levelProfile` is not exactly its act/tier pair, an encounter `targetBand` outside 1–5, an own attribute total other than 5 + level (no authored `attributePoints`), or any own attribute below 1; raising `attributePointsPerLevel` to 2 makes a level-3 enemy carry 10.
 
 ### Core clarity, progression and editing amendment
 

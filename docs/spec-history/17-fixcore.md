@@ -43,3 +43,6 @@ Archive of provenance and superseded text moved out of SPEC.md §17. Not rules.
 ## Migration, amendments
 - D16 (2026-10-18) Vulnerable x1.25. Core clarity amendment owner 2026-10-22; card face 2026-10-28; readability 2026-10-31 and clarification 2026-10-23; reward inspection 2026-10-23. The amendment preceded its implementation and claimed no performance improvement or completed verification. Pacing: 500 ms default "supersedes the historical 1 s description".
 - Contest wording: Counter once-per-owner-cycle explicitly amended for paid manual Counters in multi-hit.
+
+## Enemy levels and stat budget (owner, 2026-11-07, #2682)
+The owner: *"enemies levels are way too high and need to be reduced to 1 through 5 level with reasonable stats per level … the enemies should follow that rule too."* Owner answers, 2026-11-07: the budget is the Core player's 6 for both; points per level follow the player's rule; the act/tier map in SPEC.
