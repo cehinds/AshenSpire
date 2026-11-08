@@ -22,7 +22,7 @@ import { tierStatus, retryOffered, retryBuiltInArt, retryRunning } from '../artT
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
-import { openModal, button } from '../kit/index.js';
+import { openModal, button, settingRowOpenHtml, settingLabelStackHtml } from '../kit/index.js';
 import { openConfirmationModal } from '../components/confirmationModal.js';
 import { t, tFull } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
@@ -968,25 +968,29 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // are feedback, and settingsRowShowsHelp always keeps them.
   const note = settingsRowShowsHelp(r) ? rowNote(settings, r) : '';
   const condition = typeof r.note === 'function'
-    ? ` data-setting-condition="${r.key}" aria-live="polite"`
+    ? ` data-setting-condition="${esc(r.key)}" aria-live="polite"`
     : '';
   const status = r.type === 'action'
-    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
+    ? ` id="set-${esc(r.key)}-status" data-fullscreen-status aria-live="polite"`
     : condition;
   // THE ROW IS THE KIT'S Row·setting: a LabelStack (what the setting does, and
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
   // The row's Reset sits beside the label, not inside it: the label ellipsises
   // (kit.css nowrap/overflow), and a long tuning label would clip the button.
-  const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="set-label-line"><span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}</span>${note ? `
-        <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
-      </span>`;
+  const stack = (extra = '') => settingLabelStackHtml({
+    label: r.label,
+    lead: '<span class="set-mod-dot" aria-hidden="true"></span>',
+    afterLabel: resetButtonHtml(settings, r),
+    hint: note,
+    hintAttrs: status,
+    extra,
+  });
   const modified = rowModified(settings, r);
-  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}" data-row-key="${esc(r.key)}"${modified ? ' data-modified="true"' : ''}${attrs}>`;
+  const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({ key: r.key, extraClass, modified, attrs });
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
-    return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+    return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)}"></span></div>`;
   }
   // ---- 'sceneList': THE OPENING AS A LIST, BECAUSE THAT IS WHAT IT IS ------
   //
@@ -1087,7 +1091,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `${rowOpen('set-row-wide')}
         ${stack()}
-        <span class="r-trail"><input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}"></span>
+        <span class="r-trail"><input type="text" class="set-text" spellcheck="false" data-key="${esc(r.key)}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}"></span>
       </div>`;
   }
   // ---- 'number': A FIELD HE TYPES INTO (Constantine, 2026-08-17). min/max
@@ -1120,7 +1124,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'button') {
     return `${rowOpen()}
         ${stack()}
-        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${r.key}">${r.btn || 'Open'}</button></span>
+        <span class="r-trail"><button type="button" class="as-btn"${r.id ? ` id="${r.id}"` : ''} data-btn="${esc(r.key)}">${r.btn || 'Open'}</button></span>
       </div>`;
   }
   if (r.type === 'choice') {
@@ -1128,10 +1132,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const cur = r.choices.includes(stored) ? stored : r.def;
     if (r.dropdown || r.choices.length > 3) {
       const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}${r.choiceDisabled?.(c) ? ' disabled' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
-      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}"${r.describedBy ? ` aria-describedby="${r.describedBy}"` : ''}>${options}</select></span></div>`;
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${esc(r.key)}" aria-label="${esc(r.label)}"${r.describedBy ? ` aria-describedby="${r.describedBy}"` : ''}>${options}</select></span></div>`;
     }
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}"${r.choiceDisabled?.(c) ? ' disabled' : ''}>${r.choiceLabels?.[c] || c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${esc(r.key)}" data-val="${c}"${r.choiceDisabled?.(c) ? ' disabled' : ''}>${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
@@ -1139,19 +1143,19 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       </div>`;
   }
   if (r.type === 'action' && !fullscreenCapability(doc).supported) {
-    return `${rowOpen('set-row-unavailable', ` data-action-row="${r.key}"`)}
+    return `${rowOpen('set-row-unavailable', ` data-action-row="${esc(r.key)}"`)}
       <span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>
+        <span class="ls-label">${esc(r.label)}</span>
         <span class="ls-hint set-note">${note}</span>
-        <span class="ls-hint set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
+        <span class="ls-hint set-note" id="set-${esc(r.key)}-status" data-fullscreen-status aria-live="polite">On iPhone, use Safari’s Share menu → Add to Home Screen, then launch the saved game icon.</span>
       </span>
-      <span class="r-trail">${switchHtml({ label: r.label, on: false, attrs: ` data-key="${r.key}" data-action="1" aria-describedby="set-${r.key}-status" disabled` })}</span>
+      <span class="r-trail">${switchHtml({ label: r.label, on: false, attrs: ` data-key="${esc(r.key)}" data-action="1" aria-describedby="set-${esc(r.key)}-status" disabled` })}</span>
     </div>`;
   }
   const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `${rowOpen()}
       ${stack()}
-      <span class="r-trail">${switchHtml({ label: r.label, on, attrs: ` data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : ''}` })}</span>
+      <span class="r-trail">${switchHtml({ label: r.label, on, attrs: ` data-key="${esc(r.key)}"${r.type === 'action' ? ` data-action="1" aria-describedby="set-${esc(r.key)}-status"` : ''}` })}</span>
     </div>`;
 }
 
