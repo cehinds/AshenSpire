@@ -134,6 +134,8 @@ export function reconcileList(parent, live, fresh, anchor = null, { morphable = 
   return reconcileChildren(parent, live, fresh, anchor, morphable, true);
 }
 
+// A live node marked data-morph-keep belongs to another writer (the status tray in the HUD's badge row): a morph of its parent never removes it.
+const kept = el => el.nodeType === 1 && el.dataset?.morphKeep === 'true';
 function reconcileChildren(parent, live, fresh, anchor, morphable, scoped) {
   let swaps = 0, at = 0;
   const after = index => (index < live.length ? live[index] : scoped ? anchor : null);
@@ -142,11 +144,11 @@ function reconcileChildren(parent, live, fresh, anchor, morphable, scoped) {
     let found = -1;
     for (let i = at; i < live.length; i++) if (roleOf(live[i], true) === role && pairs(live[i], next) && morphable(live[i], next)) { found = i; break; }
     if (found < 0) { markBuilt(next); parent.insertBefore(next, after(at)); swaps++; continue; }
-    for (let i = at; i < found; i++) { parent.removeChild(live[i]); swaps++; }
+    for (let i = at; i < found; i++) if (!kept(live[i])) { parent.removeChild(live[i]); swaps++; }
     if (next.nodeType === 1) swaps += morph(live[found], next);
     else if (live[found].nodeValue !== next.nodeValue) live[found].nodeValue = next.nodeValue;
     at = found + 1;
   }
-  for (let i = at; i < live.length; i++) { parent.removeChild(live[i]); swaps++; }
+  for (let i = at; i < live.length; i++) if (!kept(live[i])) { parent.removeChild(live[i]); swaps++; }
   return swaps;
 }

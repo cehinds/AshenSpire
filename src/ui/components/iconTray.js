@@ -26,9 +26,15 @@ import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
 import { layoutMetrics } from '../layoutMetrics.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 
 const trays = new WeakMap();
 const overflowActions = new WeakMap();
+const bridged = new WeakSet();
+// The icon size a host asked for, kept across a refit that is not handed one (refreshIconTray, a rebuilt tray's children).
+const iconSizes = new WeakMap();
+// How many things the host hid beside the tray (the HUD's squeezed defense badges): the +N tile counts them and is always drawn.
+const extras = new WeakMap();
 // Each observed tray's ResizeObserver, so a board that throws its tray away
 // (co-op, per snapshot) can stop it with unobserveIconTray (#1436 review).
 const observed = new WeakMap();
@@ -159,13 +165,20 @@ function trayMetrics() {
   return { zoom, rem };
 }
 
-export function fitIconTray(row, width) {
+// `iconPx` (viewport px, optional): the icon size the host's own stylesheet draws, for a tray that shares a row with
+// badges of a fixed size (the combat HUD's badge row). Capacity is planned from that size and the tray's custom
+// property carries it; without it the plan's size is used.
+export function fitIconTray(row, width, { iconPx = iconSizes.get(row) || 0, extraHidden = extras.get(row) || 0 } = {}) {
   if (!row) return;
+  if (iconPx > 0) iconSizes.set(row, iconPx);
+  extras.set(row, extraHidden);
   let state = trays.get(row);
   if (!state) {
     const items = [...row.children];
     for (const item of items) {
       item.tabIndex = 0;
+      if (bridged.has(item)) continue; // a refit of a kept icon must not stack another listener pair
+      bridged.add(item);
       // The tooltips listen to the game's focus events. Bridge native keyboard
       // focus so every visible or overflow icon remains readable.
       item.addEventListener('focus', () => item.dispatchEvent(new Event('gpfocus')));
@@ -201,15 +214,36 @@ export function fitIconTray(row, width) {
   // `width` arrives in viewport px; the tray is laid out in local (pre-zoom) px.
   // A reference rem is at least 16 physical px, as in the hand and footer plans.
   const { zoom, rem } = trayMetrics();
-  const plan = planIconTray({ count: items.length, width: width / zoom, rem });
+  const plan = planIconTray({ count: items.length, width: width / zoom, rem },
+    iconPx > 0 ? { ...wireframeUi.iconTray, iconRem: iconPx / zoom / rem } : wireframeUi.iconTray);
   row.style.setProperty('--icon-tray-size', `${plan.size}px`);
   row.style.setProperty('--icon-tray-gap', `${plan.gap}px`);
-  if (state.count === plan.shown) return;
-  state.count = plan.shown; row.replaceChildren(...items.slice(0, plan.shown));
-  if (plan.hidden) {
-    summary.textContent = t('iconTray.more', { count: plan.hidden });
-    summary.setAttribute('aria-label', tFull(list ? 'iconTray.more' : 'iconTray.moreOpen', { count: plan.hidden }));
-    list?.replaceChildren(...items.slice(plan.shown));
+  const shown = extraHidden > 0 ? Math.min(items.length, Math.max(0, plan.capacity - 1)) : plan.shown;
+  const hidden = items.length - shown + extraHidden;
+  const key = `${shown}/${extraHidden}`;
+  if (state.count === key) return;
+  state.count = key; row.replaceChildren(...items.slice(0, shown));
+  if (hidden) {
+    summary.textContent = t('iconTray.more', { count: hidden });
+    summary.setAttribute('aria-label', tFull(list ? 'iconTray.more' : 'iconTray.moreOpen', { count: hidden }));
+    list?.replaceChildren(...items.slice(shown));
     row.append(overflow);
   }
+}
+
+/** Fit a status tray that shares the combat HUD's badge row with the defense badges: one capacity, the row's own width. The tray
+ *  always keeps room for a whole icon or +N tile; when the visible badges leave less, the last badges are squeezed out
+ *  (data-squeezed) and counted in the +N. The icon size is the row's height, the badges' own diameter. */
+export function fitBadgeRowTray(tray) {
+  const row = tray?.closest?.('.combat-health-badges');
+  if (!row) return;
+  const iconPx = row.getBoundingClientRect().height;
+  const badges = [...row.children].filter(node => node.classList.contains('combat-health-badge'));
+  for (const badge of badges) if (badge.dataset.squeezed) delete badge.dataset.squeezed;
+  let squeezed = 0;
+  if (tray.children.length && iconPx > 0) {
+    const shown = badges.filter(badge => !badge.hidden);
+    while (tray.getBoundingClientRect().width < iconPx - 0.5 && shown.length) { const gone = shown.pop(); gone.dataset.squeezed = 'true'; squeezed += Number(gone.dataset.count) || 1; }
+  }
+  fitIconTray(tray, tray.getBoundingClientRect().width, { iconPx, extraHidden: squeezed });
 }

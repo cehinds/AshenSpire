@@ -562,7 +562,7 @@
   {
    "id": "S3",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
+   "read": "src/ui/models/SettingsRowsModel.js (the holdConfirm row, choices derived from balance.ui.holdConfirm)",
    "anchors": [
     "key: 'holdConfirm'"
    ],
@@ -684,7 +684,7 @@
   {
    "id": "T3",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
+   "read": "src/ui/models/SettingsRowsModel.js (tapFloor row) · balance.ui tap ladder 44/36/30/24",
    "anchors": [
     "key: 'tapFloor'"
    ],
@@ -871,7 +871,7 @@
   {
    "id": "G6",
    "by": "Bjorn",
-   "read": "src/ui/screens/settings.js (the mapMode A/B, ruled here and NOT on Custom Climb)",
+   "read": "src/ui/models/SettingsRowsModel.js (the mapMode A/B, ruled here and NOT on Custom Climb)",
    "anchors": [
     "mapMode"
    ],
@@ -1208,7 +1208,7 @@
   {
    "id": "A8",
    "by": "Bjorn",
-   "read": "content/source/balanceEquipment.json (swapCostKind 'energy', swapCost 2) · src/ui/screens/settings.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
+   "read": "content/source/balanceEquipment.json (swapCostKind 'energy', swapCost 2) · src/ui/models/SettingsRowsModel.js (Advanced › 'Weapon swap cost', choices are rows in balance.equipment.swapCostRules)",
    "anchors": [
     "swapCostKind",
     "swapCostRules"

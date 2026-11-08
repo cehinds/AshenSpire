@@ -57,21 +57,6 @@ export function getAnimSpeed() {
   return animSpeed;
 }
 
-// The order an attack beat plays in (owner, 2026-10-11).
-//   'sequential' (default): attacker in stance → attack → back to stance →
-//     the defender's reaction → its numbers → the bars.
-//   'impact': the reaction and numbers fire at the swing's impact frame and
-//     the bars update after the swing settles (the order before 2026-10-11).
-// Counter beats and non-attack beats always play in 'impact' order.
-export const BEAT_ORDERS = Object.freeze(['sequential', 'impact']);
-let beatOrder = 'sequential';
-export function setBeatOrder(v) {
-  beatOrder = BEAT_ORDERS.includes(v) ? v : 'sequential';
-}
-export function getBeatOrder() {
-  return beatOrder;
-}
-
 // One presentation-only multiplier for the entire ordered action. The classic
 // pace remains a compatibility choice, with ×1 preserving its relative scale.
 import { ACTION_PACING, AUTOMATION_DEFAULTS, resolveCombatAutomation } from '../model/autoCombatPolicy.js';

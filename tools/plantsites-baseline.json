@@ -48,7 +48,7 @@
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "c623c7dfccf25f64"
+      "digest": "2343e83f4eb692dd"
     },
     "tools/confirmation-modal.mjs": {
       "count": 10,
@@ -56,7 +56,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "063406fbfc09d1eb"
+      "digest": "4987c2816911a73b"
     },
     "tools/flask-action-contract.mjs": {
       "count": 9,
@@ -88,7 +88,7 @@
     },
     "tools/hand-side-probe.mjs": {
       "count": 5,
-      "digest": "e1ee0130ed5f11a3"
+      "digest": "bc41928bdca5a474"
     },
     "tools/hintstrip.mjs": {
       "count": 14,
@@ -104,7 +104,7 @@
     },
     "tools/motion-probe.mjs": {
       "count": 23,
-      "digest": "ce41eba87917728a"
+      "digest": "5878460acda90f18"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -112,7 +112,7 @@
     },
     "tools/onevocab.mjs": {
       "count": 10,
-      "digest": "a3c92f8aba7fb4f8"
+      "digest": "ccd720825a99e569"
     },
     "tools/placement.mjs": {
       "count": 10,
@@ -124,7 +124,7 @@
     },
     "tools/runcreation.mjs": {
       "count": 5,
-      "digest": "3c4b36e60ac18c68"
+      "digest": "5f79750f799be5bb"
     },
     "tools/saveroundtrip.mjs": {
       "count": 6,

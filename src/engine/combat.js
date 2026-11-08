@@ -39,7 +39,7 @@ import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './comb
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
-import { passiveMax } from '../model/registries.js';
+import { passiveMax, deepFreeze } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
@@ -177,10 +177,10 @@ export function createCombat({
   const combat = {
     ...(gameProfile ? { gameProfile: ownGameProfile(gameProfile, freezeProfile) } : {}),
     ...(combatExpansionVersion === 2 ? { combatExpansionVersion, combatKey,
-      combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
+      combatExpansionRules: deepFreeze(structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment })),
       allocatedAttributes: structuredClone(player.allocatedAttributes || player.attributes || {}) } : {}),
-    combatMatchupRules: structuredClone(registries.balance?.combatMatchups || combatMatchups),
-    combatIntentRules: structuredClone(registries.balance?.combatIntent || combatIntent),
+    combatMatchupRules: deepFreeze(structuredClone(registries.balance?.combatMatchups || combatMatchups)),
+    combatIntentRules: deepFreeze(structuredClone(registries.balance?.combatIntent || combatIntent)),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
@@ -1978,6 +1978,31 @@ export function getEntity(combat, id) {
   return findEntity(combat, id);
 }
 
+// Share only proven immutable JSON rule graphs. Custom expansion tables may be
+// mutable below a frozen root, so their preview copy must stay fresh.
+const provenFrozenStatusRules = new WeakSet();
+function deeplyFrozenStatusRules(value, visiting) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'object') return false;
+  if (provenFrozenStatusRules.has(value)) return true;
+  const proto = Object.getPrototypeOf(value);
+  if (!Object.isFrozen(value) || (Array.isArray(value) ? proto !== Array.prototype : proto !== Object.prototype && proto !== null)
+      || Object.getOwnPropertySymbols(value).length || visiting?.has(value)) return false;
+  visiting ??= new WeakSet();
+  visiting.add(value);
+  for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) {
+    // Frozen accessors and objects such as Date/Map/Set are not immutable JSON.
+    if (!Object.hasOwn(descriptor, 'value') || !deeplyFrozenStatusRules(descriptor.value, visiting)) return false;
+  }
+  visiting.delete(value);
+  provenFrozenStatusRules.add(value);
+  return true;
+}
+function frozenStatusRules(source) {
+  return deeplyFrozenStatusRules(source) ? source : deepFreeze(structuredClone(source));
+}
+
 /**
  * previewCard(combat, cardInstanceId, targetId?) → resolved numbers for UI:
  * {
@@ -2397,7 +2422,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
-    combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
+    combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
     coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,

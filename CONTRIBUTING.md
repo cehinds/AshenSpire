@@ -245,7 +245,7 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
      advances the candidate, and a push to `main` advances MINOR, both
      automatically through `version-advance.yml`; do not open a bump PR or
      hand-edit the triple ([docs/versioning.md](docs/versioning.md)).
-   - Every `dev` → `test` promotion also starts `sync-alternatives.yml`.
+   - Every `dev` → `test` promotion also starts `sync-test-to-alternatives.yml`.
      Existing named pairs such as `alternative/art/dev` → `alternative/art/test` receive
      the promoted snapshot, then the alternative dev result is merged into its
      test branch. No missing branch is created. Both updates are pushed

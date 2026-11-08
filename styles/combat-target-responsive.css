@@ -16,7 +16,10 @@
   width:var(--combat-mini-hud-width,100%); display:flex!important; flex-direction:column; align-items:center;
   gap:calc(5px / var(--ui-zoom,1)); pointer-events:none; padding:0; margin:0; transform:none; translate:none;
 }
-:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { pointer-events:auto; }
+/* Only painted meter parts own input. Transparent row padding can overlap
+   another fighter and must not redirect that fighter's click or long press. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters :is(.meters,.combat-health-row,.combat-health-meter,.m-plate) { pointer-events:none; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters :is(.m-track,.m-value,.combat-health-badge) { pointer-events:auto; }
 /* A fallen combatant takes its overhead HP bar (and intent) with it. The
    dead frame fades to .25 for the body, but the rack is not a child of the
    faded stack, so without this the 0/N bar of every dead enemy stayed on the

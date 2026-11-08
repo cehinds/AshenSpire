@@ -129,7 +129,7 @@ test('frozen root pair is a no-write no-op through the API and direct publishing
 });
 
 test('retired root writer and architecture job cannot update the historical root branch', () => {
-  const sync = readFileSync(new URL('../.github/workflows/alternative-sync.yml', import.meta.url), 'utf8');
+  const sync = readFileSync(new URL('../.github/workflows/sync-dev-to-alternative-dev.yml', import.meta.url), 'utf8');
   assert.match(sync, /policy-tests:[\s\S]*python -m unittest discover -s tests -p test_alternative_sync\.py -v/);
   assert.match(sync, /\n  sync:\s*\n    needs: policy-tests[\s\S]*?\n    if: \$\{\{ false \}\}/);
   const architecture = readFileSync(new URL('../.github/workflows/architecture-sync.yml', import.meta.url), 'utf8');

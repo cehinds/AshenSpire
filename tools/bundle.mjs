@@ -1146,6 +1146,7 @@ const moduleEntries = order
 function assembleRuntime(entries, rootId) {
   // Present only when some module has a dynamic import, so a bundle without one
   // is byte-identical to what it was before dynamic imports were supported.
+  const hasDynamicImports = entries.includes('require.dyn(');
   const DYN_HELPER = `
   var __dyn = {};
   require.dyn = function (id) {
@@ -1154,16 +1155,16 @@ function assembleRuntime(entries, rootId) {
   return `${RUNTIME_OPEN}  var __modules = {
 ${entries}
   };
-  var __cache = {};
-  function require(id) {
+  var __cache = {};${hasDynamicImports ? '\n  var __errors = Object.create(null);' : ''}
+  function require(id) {${hasDynamicImports ? '\n    if (Object.prototype.hasOwnProperty.call(__errors, id)) throw __errors[id];' : ''}
     if (Object.prototype.hasOwnProperty.call(__cache, id)) return __cache[id].exports;
     var factory = __modules[id];
     if (!factory) throw new Error("Module not found: " + id);
     var module = { exports: {} };
     __cache[id] = module;
-    ${MODULE_CALL}
+    ${hasDynamicImports ? `try { ${MODULE_CALL} } catch (error) { __errors[id] = error; throw error; }` : MODULE_CALL}
     return module.exports;
-  }${entries.includes('require.dyn(') ? DYN_HELPER : ''}
+  }${hasDynamicImports ? DYN_HELPER : ''}
   require(${JSON.stringify(rootId)});
 })();`;
 }

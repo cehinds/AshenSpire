@@ -9,7 +9,7 @@ import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
-import { fitIconTray } from './iconTray.js';
+import { fitIconTray, fitBadgeRowTray } from './iconTray.js';
 import { combatSpriteRatio } from '../models/CombatSpriteScaleModel.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects, clearFrozenSpriteGeometry } from './combatSpriteGeometry.js';
@@ -1130,7 +1130,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Position the player's visible reading widget from the final art before
     // reserving target space. Its hit-testable health row and ability badges
     // must not split the independent frame plate's complete tap area.
-    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    // The status tray shares the HUD's badge row with the defense badges: one capacity, the bar width. The tray always keeps room for a
+    // whole icon or +N tile; when the badges leave less, the last badges collapse into the tile (data-squeezed, counted in its +N).
+    for (const frame of frames) {
+      const tray = frame.querySelector('.statuses');
+      if (!tray) continue;
+      const row = tray.closest('.combat-health-badges');
+      if (!row) { fitIconTray(tray, nameWidth); continue; }
+      fitBadgeRowTray(tray);
+    }
     settledTargets = [];
     settledTargetCores = [];
     placePlayerHud();

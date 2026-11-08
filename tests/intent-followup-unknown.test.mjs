@@ -119,7 +119,7 @@ test('a stagger that lands mid-turn ends the row', () => {
 
 test('a move refused for SP is not shown', () => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 3 } } } },
   } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -196,7 +196,7 @@ test('a reload during a reaction window: the follow-up stays "?" until its own e
   // Two SP before planning fits the head and one follow-up. The reaction opens
   // before the head's enemyMoveStarted, leaving the follow-up concealed.
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 3 } } } },
   } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -263,7 +263,7 @@ test('a read buff and a read spell follow-up show the icon they would show as th
 
 test('a skipped playback flushes the un-applied receipts into the row memo once (the reducer the screen runs)', async () => {
   const { readFileSync } = await import('node:fs');
-  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
   const body = source.match(/function reduceFollowRows\(events\) \{([\s\S]*?)\n  \}\n\n  function applyBeatToDisp/)?.[1];
   assert.ok(body, 'the screen has one reducer for the follow-up receipts');
   const c = fight({ reads: [MISS, READ], plan: two(registries) });
