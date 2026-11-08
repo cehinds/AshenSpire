@@ -1,4 +1,4 @@
-// tools/actends.mjs — when the act opens, can the player SEE both ends of it?
+// tools/attic/actends.mjs — when the act opens, can the player SEE both ends of it?
 //
 // THE SENTENCE THIS EXISTS FOR is Constantine's, and it is already quoted in
 // `src/model/map/mapknowledge.js` as the reason the boss is lit at all:
@@ -31,7 +31,7 @@
 // OBSERVED RED AND OBSERVED GREEN, BOTH ON REAL TREES — nothing was mutated to
 // make this falsifiable, because the defect is live and its opposite is too
 // (the instrument rule, `commons/development.md`; in this repo, the habit
-// `mapfit.mjs` states). 12 seeds x 2 shapes, `node tools/actends.mjs`:
+// `mapfit.mjs` states). 12 seeds x 2 shapes, `node tools/attic/actends.mjs`:
 //
 //   GREEN  dev @ cd3da94                          9/24 cells show both ends
 //          390x844: 9/12 · 1200x730: 0/12, the boss 161 px off frame
@@ -50,14 +50,14 @@
 // other nodes were on screen to tell them what they were looking at.
 //
 // Usage
-//   node tools/actends.mjs                       source tree via tools/serve.mjs
-//   node tools/actends.mjs --seeds A,B,C
-//   node tools/actends.mjs --shapes 390x844,1200x730
-//   node tools/actends.mjs --mode fog|path       default: the shipping default
-//   node tools/actends.mjs --shots DIR           write each entrance frame as a PNG
-//   node tools/actends.mjs --dist                 inspect dist/AshenSpire.html
-//   node tools/actends.mjs --mutate[=end|title]  REINSTATE the defect; must go red
-//   CHROME=/path/to/chrome node tools/actends.mjs
+//   node tools/attic/actends.mjs                       source tree via tools/serve.mjs
+//   node tools/attic/actends.mjs --seeds A,B,C
+//   node tools/attic/actends.mjs --shapes 390x844,1200x730
+//   node tools/attic/actends.mjs --mode fog|path       default: the shipping default
+//   node tools/attic/actends.mjs --shots DIR           write each entrance frame as a PNG
+//   node tools/attic/actends.mjs --dist                 inspect dist/AshenSpire.html
+//   node tools/attic/actends.mjs --mutate[=end|title]  REINSTATE the defect; must go red
+//   CHROME=/path/to/chrome node tools/attic/actends.mjs
 //
 // Exit codes
 //   0  both ends wholly on screen at every cell swept · or --mutate CAUGHT
@@ -92,14 +92,14 @@
 // the climb.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { createConnection } from 'node:net';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
 const BROWSERS = [
   process.env.CHROME,

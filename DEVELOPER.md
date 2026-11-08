@@ -423,7 +423,7 @@ for content-update regressions in save restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
-`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+`node tools/attic/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
 and checks that every combatant has visible, loaded artwork that holds still at
@@ -1633,7 +1633,7 @@ presentation; dialogue keeps its existing portraits. These are idle images,
 with no action/hand anchors, pose strips or invented animation coverage.
 
 Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
-tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
+tests/alternative-formation.test.mjs`. `node tools/attic/alternative-art-qa.mjs` walks
 all 32 settings at desktop and phone sizes, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built

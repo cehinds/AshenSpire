@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/armoury-picked-up.mjs — the Armoury tells the truth about what you are
+// tools/attic/armoury-picked-up.mjs — the Armoury tells the truth about what you are
 // carrying, and every item is a card you press.
 //
 // Constantine, 2026-08-21, three asks in one message and one correction after:
@@ -54,8 +54,8 @@
 // it means nothing). `--selftest` plants each known-bad as BYTES in the file the
 // real defect would ship in and re-runs this whole tool against the copy.
 //
-// Usage:  node tools/armoury-picked-up.mjs
-//         node tools/armoury-picked-up.mjs --selftest
+// Usage:  node tools/attic/armoury-picked-up.mjs
+//         node tools/attic/armoury-picked-up.mjs --selftest
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //
 // BOUNDARY, and it is the extent of the green. One Linux container, one
@@ -191,7 +191,7 @@ const red = (code, text) => { const line = `FAIL [${known(code)}] ${text}`; FOUN
 const redRe = (code) => new RegExp(`FAIL \\[${known(code).replace('.', '\\.')}\\]`);
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   // THE GATE LINE, ONCE. Three plants edit this exact literal, and a plant
   // whose find-string has drifted from source does not fail — doorplant reports
   // NOT CAUGHT and the check underneath it goes unwatched, which is how the
@@ -535,7 +535,7 @@ if (process.argv.includes('--selftest')) {
         // token would match the plant's OWN definition first (doorplant replaces
         // the first occurrence) and arm nothing. That is the plant-editing-
         // itself trap, and it costs one line of context to close.
-        edits: [{ file: 'tools/armoury-picked-up.mjs',
+        edits: [{ file: 'tools/attic/armoury-picked-up.mjs',
           find: `?shot=combat\` }, S);\n    await until("!!document.querySelector('.combat .hand .card')", 'combat');`,
           replace: `?shot=combat\` }, S);\n    await until("!!document.querySelector('.combat .hand .card-that-cannot-exist')", 'combat');` }],
         expectRed: BOUNDARY_ANCHOR,
@@ -557,10 +557,10 @@ if (process.argv.includes('--selftest')) {
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 const browserPath = BROWSERS.find((p) => p && existsSync(p));
@@ -669,10 +669,10 @@ function connectCdp(wsUrl) {
 // ---------------------------------------------------------------------------
 async function a1Model() {
   console.log('\n  A1 · the shelf is KIT ∪ WHAT THIS RUN PICKED UP  (model door: ownership())');
-  const { contentBundle } = await import('../src/content/index.js');
-  const { createRegistries } = await import('../src/model/registries.js');
-  const { createRunState } = await import('../src/model/state.js');
-  const { ownership, carriedIds } = await import('../src/model/loadout.js');
+  const { contentBundle } = await import('../../src/content/index.js');
+  const { createRegistries } = await import('../../src/model/registries.js');
+  const { createRunState } = await import('../../src/model/state.js');
+  const { ownership, carriedIds } = await import('../../src/model/loadout.js');
   const reg = createRegistries(contentBundle);
   const cfg = reg.balance.equipment;
   const pieces = [...(reg.equipment.armaments || [])];

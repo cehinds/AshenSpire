@@ -1,7 +1,7 @@
-import { ARMOUR } from '../src/content/equipment.js';
-import { contentBundle } from '../src/content/index.js';
-import { ENEMY_POSES } from '../src/content/enemyArt.js';
-import { alternativeArtCatalog } from '../src/ui/alternativeArtCatalog.js';
+import { ARMOUR } from '../../src/content/equipment.js';
+import { contentBundle } from '../../src/content/index.js';
+import { ENEMY_POSES } from '../../src/content/enemyArt.js';
+import { alternativeArtCatalog } from '../../src/ui/alternativeArtCatalog.js';
 
 export function stanceInventory() {
   const players = ARMOUR.map(piece => ({

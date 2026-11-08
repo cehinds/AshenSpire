@@ -2,61 +2,6 @@
   "note": "Known-drifted plant sites (the #498 backlog), sites the static scan cannot read, and a per-tool count+digest over EVERY readable site. plantsites.mjs --check fails on any difference from the live tree, in either direction — regenerate with --write-baseline only alongside the change that explains it.",
   "drifted": [
     {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "0afb5288f599e996"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "22cff8988b0573de"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "22cff8988b0573de"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "43f173fc9ec16b5b"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "4b6ff8eba7de38d4"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "65d13765aa325728"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "styles/ui.css",
-      "id": "a18404a52c148e69"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "a4fc76ea6879630b"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "aa6ff22d47856d37"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "b3c17aefd8d27896"
-    },
-    {
-      "tool": "tools/armoury-picked-up.mjs",
-      "target": "src/ui/screens/equipment.js",
-      "id": "ebb60d6e25b61c32"
-    },
-    {
       "tool": "tools/confirmation-modal.mjs",
       "target": "styles/ui.css",
       "id": "638e687db59857ee"
@@ -103,7 +48,6 @@
     }
   ],
   "unreadable": {
-    "tools/armoury-picked-up.mjs": 11,
     "tools/card-drag-targeting.mjs": 6,
     "tools/displayfirst.mjs": 7,
     "tools/doorplant.mjs": 3,
@@ -117,10 +61,6 @@
     "tools/about-changelog.mjs": {
       "count": 52,
       "digest": "f94acefec937c4a5"
-    },
-    "tools/armoury-picked-up.mjs": {
-      "count": 14,
-      "digest": "46d35ca02c37a95e"
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,

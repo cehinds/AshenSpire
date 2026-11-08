@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,existsSync,readdirSync,copyFileSync,cpSync,symlinkSync,readFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
-import {serve} from './serve.mjs';
+import {serve} from '../serve.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const output=resolve(process.env.CARD_EDITOR_OUT||'scratch/qa/card-layers/save-evidence'),root=join(output,'workspace'),source=process.cwd();
 mkdirSync(join(root,'src'),{recursive:true});

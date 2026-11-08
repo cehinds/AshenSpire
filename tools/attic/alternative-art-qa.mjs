@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { serve } from './serve.mjs';
-import { launchBrowser } from './browser.mjs';
-import { alternativeArtCatalog as catalog } from '../src/ui/alternativeArtCatalog.js';
+import { serve } from '../serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { alternativeArtCatalog as catalog } from '../../src/ui/alternativeArtCatalog.js';
 
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const out = resolve(process.env.COMBAT_ART_OUT || 'outputs/combat-art');

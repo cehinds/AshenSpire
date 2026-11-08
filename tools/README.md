@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (341 tool files, plus the 9 subfolders)
+## Tools something references (327 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -27,26 +27,22 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `results/` (82 files) | (no header comment) | tools buildstamp-shot, e11-reward-correction, hud-quick-compact +3; other src/content/statuses.js |
 | `score/` (4 files) | tools/score/alt — the "alt" cut of a score (owner, 2026-09-26: "alt | tests music-score; docs CREDITS.md, DEVELOPER.md, SPEC.md +5; other music/score/_motifs.mjs, music/score/boss.mjs +13 |
 | `about-changelog.mjs` | Focused contract for #189. CHANGELOG.md is authored; the generated browser | wf alternative-sync, build-stamp, ci +2; tests build-stamp, check-order-pending; tools build-stamp, plantsites-baseline.json, pr-restamp +1; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, docs/FINISH.md +11; other src/content/changelog.generated.js, src/content/changelog.js +1 |
-| `actends.mjs` | actends — when the act opens, can the player SEE both ends of it? | other src/ui/components/mapboard.js |
 | `actionreach.mjs` | actionreach — is the way OUT of a screen on screen when the screen | tools flaskbox, mapreach, menufit +2 |
 | `advanced-config-preview.mjs` | Browser witness for Settings > Advanced configuration. | tests advanced-settings-groups |
 | `ai-disclosure.mjs` | ai-disclosure — the store surface of the AI-use acknowledgement and | docs SPEC.md, docs/SPEC-RECONCILE.md, docs/spec-audit/SPEC-AUDIT.md; other src/content/aiDisclosure.js |
 | `alternative-animation-build.py` | Build the first alternative sprite study and portable authoring projects. | (none) |
 | `alternative-animation-registry.py` | Refresh explicit authoring coverage from normalized, class-specific families. | tools alternative-animation-build.py, alternative_animation_family.py |
 | `alternative-art-build.py` | Export the reviewed idle collection; never infer animation/action anchors. | wf alternative-sync; tools bundle; docs CREDITS.md, DEVELOPER.md, docs/ART-EXPORT-POLICY.md; other src/content/sceneThemes.js, src/ui/alternativeArtCatalog.js |
-| `alternative-art-qa.mjs` | Production combat, including actual input; output belongs outside tracked source. | docs DEVELOPER.md |
 | `alternative-base-actions-build.py` | Export the scoped class-default strike/defense/power study. | tools alternative-card-actions-build.py |
 | `alternative-branches.mjs` | Shared naming rules for optional alternative development/test pairs. | wf dev-preview, receipts; tests alternative-branches, settings-revamp; tools pages-site, sync-alternatives |
 | `alternative-card-actions-build.py` | Normalize whole animation sheets and export class-default card actions. | other src/content/alternativeCardAnimations.js |
 | `alternative-herald-animation-build.py` | Rebuild this class study through the shared export pipeline. | (none) |
 | `alternative-rogue-animation-build.py` | Rebuild this class study through the shared export pipeline. | (none) |
-| `alternative-selected-stances-export.mjs`, `alternative-selected-stances-qa.mjs`, `alternative-stances-inventory.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, pose-studio/stances/README.md +1 |
 | `alternative-stances-build.py` | Normalize held stances, preserve provenance, and export portable Workshop/Pose Studio projects. | other src/content/alternativeStances.js |
 | `alternative-starseer-animation-build.py` | Rebuild this class study through the shared export pipeline. | (none) |
 | `alternative-sync.py` | Prepare a real dev merge, retaining the alternative's presentation boundary. | wf alternative-sync; tests test_alternative_sync.py; docs docs/ALTERNATIVE-SYNC.md |
 | `alternative_animation_family.py` | Shared transparent-frame and portable-project export for alternative studies. | tools alternative-herald-animation-build.py, alternative-rogue-animation-build.py, alternative-starseer-animation-build.py (Python import) |
 | `armoury-arrival-figure.mjs` | Armoury tab reachability and visible character/card geometry in a real browser. | wf ci; tools gatelist, watched-probes.json, watched; other docs/architecture-handoff/wireframe-gallery.html, src/ui/screens/equipment.js |
-| `armoury-picked-up.mjs` | armoury-picked-up — the Armoury tells the truth about what you are | tools plantsites-baseline.json |
 | `art-authoring.mjs` | art-authoring — the authoring tools that still live here, and why | tools card-effect-art-build, card-effect-art-check, card-effect-layers-check +14; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +1 |
 | `art-export-plan.mjs` | A JSON bridge for authoring tools in other languages. Pixel limits and | tests art-resolution-policy; tools alternative-art-build.py; docs docs/ART-EXPORT-POLICY.md |
 | `art-intake.mjs` | art-intake — which files in a pull request belong to the art | wf art-migrate; tests art-intake; docs CONTRIBUTING.md |
@@ -54,7 +50,6 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `art-source.mjs` | art-source — where a tool reads the art packs' files. | wf action, ci +4; tests art-source, book-art, bow-animation +18; tools art-authoring, asset-pack, buildversion +22; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md; other docs/design/class-armor-rear-2026-10-06/sources/shared-armor.test.snapshot.mjs, docs/design/combat-depth-2026-10-05/build-library.py +6 |
 | `art_authoring.py` | Mutable AI-Art authoring roots; never write verified runtime caches. | tools alternative-animation-build.py, alternative-art-build.py, alternative-stances-build.py +7 (Python import) |
 | `artifact-provenance.mjs` | artifact-provenance — WHICH TREE DID THIS MEASUREMENT ACTUALLY SEE? | tools actionreach, ai-disclosure, axisfit +22 |
-| `asks-ledger.mjs` | Keep the durable owner-ask mirror deterministic and make GitHub drift loud. | docs docs/framework-migration-checklist.md |
 | `asset-catalog.mjs` | asset-catalog - the asset catalog (engine/contracts/asset-catalog.schema.json). | tests asset-catalog, maps-json; tools build-game; other games/ashenspire/assets/catalog.summary.json |
 | `asset-css.mjs` | asset-css — the web edition's CSS assets, moved out of the inlined | tests asset-css; tools buildversion, bundle, verify-external; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md; other src/ui/assetPacks.js |
 | `asset-data.mjs` | asset-data — where the non-art files that used to sit beside the art | tools concept-cutout, equipment-blender.py, palette-audit.py +3; docs docs/ART-REPO-PLAN.md |
@@ -67,8 +62,6 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `balance-runs-check.mjs` | THE RECORDED REPORT'S CONFIGURATION, CHECKED AGAINST CONTENT. | tests balance-runs-check; tools balance; docs DEVELOPER.md |
 | `balance.mjs` | balance — headless balance analysis (SPEC §9 M3). | tests balance-doc, balance-runs-check, card-cost-fastpath +3; tools balance-intent, balance-runs-check; docs DEVELOPER.md, docs/BALANCE.md, docs/FINISH.md +2; other src/engine/runCombat.js, src/model/encounterTier.js |
 | `base-cards.mjs` | JSON is the authoring source; this projection supports import-only/file:// builds. | tests base-card-pack-source, base-card-pack, engine-export; tools content-build, engine-export, game-config; docs DEVELOPER.md, docs/ai/json-game-modules/CONTINUE.md, games/ashenspire/packs/base-cards/guide.md; other src/content/generated/baseCards.js, workbench/core/files.mjs |
-| `book-art-browser.mjs`, `book-learning-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
-| `book-art-export-preview.mjs` | Transparent composition exports from the same renderer used by the game. | docs docs/preview/book-library/layers/painted/README.md |
 | `browser.mjs` | browser — THE ONE HOME FOR "START A BROWSER AND TAKE ITS PROFILE | wf ci; tests battlefield-layout.browser, browser-launch-floor, browser-serve +12; tools about-changelog, actends, actionreach +148; docs DEVELOPER.md, docs/BOOK-ART.md, docs/BOOK-LIBRARY.md +14; other docs/preview/display-appearance-0.7.1.1163/capture.mjs, pose-studio/stances/update-stances/sequence-review/check-player.mjs +3 |
 | `build-game.mjs` | build-game - compiles every authored JSON layer into one serialized, deterministic artifact | tests build-game; tools ui-validate; docs CHANGELOG.md, docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md, engine/export/README.md +1; other .gitignore, games/ashenspire/build.summary.json +2 |
 | `build-stamp.mjs` | build-stamp — THE BUILD NUMBER IS PRODUCED AFTER THE MERGE, NOT BEFORE IT. | wf build-stamp; tests build-stamp; tools about-changelog, receipts; docs DEVELOPER.md |
@@ -81,12 +74,9 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
 | `card-art-contact-sheets.py` | QA montage of existing artwork, never an artwork-generation step. | docs docs/EXTENDED-CARD-ART.md |
 | `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
-| `card-components.mjs`, `card-layout-save-qa.mjs`, `card-layout-save.mjs`, `card-master-qa.mjs`, `card-rank-layers-qa.mjs`, `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-components.mjs`, `card-layout-save.mjs`, `card-master-qa.mjs`, `card-rank-layers-qa.mjs`, `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
 | `card-components.test.mjs` | (no header comment) | tests run-node (discovered: every *.test.mjs) |
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
-| `card-effect-art-build.mjs` | Normalize the authored six-frame refresh; preserve one scale and anchor per sheet. | tools combat-effects-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/combatEffectArt.js |
-| `card-feedback.mjs` | Real browser card feedback gate. Debug fixtures control only initial hand, | docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
-| `card-layer-editor-qa.mjs` | Compatibility entry point. The save QA uses an isolated copy of the game JSON. | tools card-layers/README.md |
 | `card-one-shape.mjs` | card-one-shape — THE PLAYING CARD HAS ONE SHAPE, MEASURED ON REAL | tests card-size-tuning; docs docs/COMPONENT-CATALOG.md, docs/COMPONENT-MODEL-ARCHITECTURE.md; other docs/component-catalog.html, docs/tag-model/tables/presentation/components.csv |
 | `card-value-index-oracle.mjs` | Record the independent pre-index implementation against today's content. | tests card-value-tag-index |
 | `catalog-json.mjs` | Encode repeated JSON string tokens, not JavaScript. Author JSON stays readable. | tests buildversion-schema-versions, catalog-json, game-profile-cli +1; tools content-build, game-config |
@@ -356,25 +346,39 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (57 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (71 files)
 
-These 57 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
+These 71 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
-| Tool | First header-comment line |
-| --- | --- |
+| Tool | First header-comment line | Who named it before the move |
+| --- | --- | --- |
+| `actends.mjs` | actends — when the act opens, can the player SEE both ends of it? | other src/ui/components/mapboard.js |
 | `actionregistry-destinations.mjs` | Focused source contract for remediation #7. The ActionRegistry owns only |
+| `alternative-art-qa.mjs` | Production combat, including actual input; output belongs outside tracked source. | docs DEVELOPER.md |
+| `alternative-selected-stances-export.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, pose-studio/stances/README.md +1 |
+| `alternative-selected-stances-qa.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, pose-studio/stances/README.md +1 |
+| `alternative-stances-inventory.mjs` | (no header comment) | tests alternative-stances; tools alternative-stances-build.py; docs CREDITS.md, pose-studio/stances/README.md +1 |
 | `arcane-exposure-ui.mjs` | Observed-red UI contract. Both combat surfaces consume host-owned snapshots; |
 | `arcane-exposure-visual.mjs` | Arcane Exposure visual truth: source/dist x solo x 320/390. |
 | `armament-equip-flow-qa.mjs` | Real Chromium pointer/touch checks of the production Armoury. |
 | `armoury-inventory-disclosure.mjs` | Focused door for Constantine's 2026-08-23 Armoury disclosure correction. |
+| `armoury-picked-up.mjs` | armoury-picked-up — the Armoury tells the truth about what you are | tools plantsites-baseline.json |
 | `art-runtime-check.mjs` | Capture real event, speaker, and combat-card screens after their art loads. |
+| `asks-ledger.mjs` | Keep the durable owner-ask mirror deterministic and make GitHub drift loud. | docs docs/framework-migration-checklist.md |
 | `attribute-phase1-boundary.mjs` | Attribute integration boundary after the approved derived/equipment slices. |
 | `bjclauses.mjs` | bjclauses — re-derive Constantine's eight D17 map clauses against |
+| `book-art-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
+| `book-art-export-preview.mjs` | Transparent composition exports from the same renderer used by the game. | docs docs/preview/book-library/layers/painted/README.md |
+| `book-learning-browser.mjs` | (no header comment) | docs docs/BOOK-ART.md, docs/BOOK-LIBRARY.md |
 | `book-library-built-browser.mjs` | (no header comment) |
 | `bow-animation-config.mjs` | Rebuild the bow presentation bindings from the authored unarmed outfit sets. |
+| `card-effect-art-build.mjs` | Normalize the authored six-frame refresh; preserve one scale and anchor per sheet. | tools combat-effects-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/combatEffectArt.js |
 | `card-effect-layers-check.mjs` | (no header comment) |
+| `card-feedback.mjs` | Real browser card feedback gate. Debug fixtures control only initial hand, | docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
+| `card-layer-editor-qa.mjs` | Compatibility entry point. The save QA uses an isolated copy of the game JSON. | tools card-layers/README.md |
+| `card-layout-save-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
 | `card-use-qa.mjs` | Actual selected-card inspection and hold-to-use flows, desktop and touch. |
 | `class-book-browser.mjs` | (no header comment) |
 | `class-material-leaks.mjs` | class-material-leaks — catch cross-class material leaks statically. |

@@ -5,9 +5,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const args = process.argv.slice(2);
 const shotIndex = args.indexOf('--shots');
 const OUT = args[shotIndex + 1] && shotIndex >= 0 ? resolve(args[shotIndex + 1]) : (process.env.ASHENSPIRE_CARD_FEEDBACK_OUT ? resolve(process.env.ASHENSPIRE_CARD_FEEDBACK_OUT) : null);

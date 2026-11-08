@@ -1,9 +1,9 @@
 import {createRequire}from'node:module';import assert from'node:assert/strict';import{readFileSync,writeFileSync,mkdirSync}from'node:fs';
-import {alternativeSelectedStances} from '../src/content/alternativeSelectedStances.js';
+import {alternativeSelectedStances} from '../../src/content/alternativeSelectedStances.js';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const out=(process.env.STANCE_QA_OUT || 'outputs/stance-qa')+'/'; mkdirSync(out,{recursive:true});
 const base=process.env.STANCE_GAME_URL || 'http://127.0.0.1:4393/index.html';
-const manifest=JSON.parse(readFileSync(new URL('../art-manifest.json',import.meta.url),'utf8'));
+const manifest=JSON.parse(readFileSync(new URL('../../art-manifest.json',import.meta.url),'utf8'));
 // Existing audio deliberately probes these optional samples before retaining
 // its procedural recipe. A newly shipped sample must pass the normal gate.
 const optionalSamples=new Set(['cardPlay','hit_light','hit_medium','block','relic'].filter(id=>!manifest.assets['assets/sfx/'+id+'.ogg']));

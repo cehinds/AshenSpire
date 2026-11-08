@@ -1,11 +1,11 @@
 import {resolve} from 'node:path';
-import {authoringRoot,authoringPath} from './art-authoring.mjs';
+import {authoringRoot,authoringPath} from '../art-authoring.mjs';
 import {createRequire} from 'node:module';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const root=fileURLToPath(new URL('../',import.meta.url));
+const root=fileURLToPath(new URL('../../',import.meta.url));
 const artRoot=authoringRoot({root,assetRoot:process.argv.includes('--asset-root')?process.argv[process.argv.indexOf('--asset-root')+1]:undefined});
 const file=rel=>rel.startsWith('src/')?resolve(root,rel):authoringPath(rel,{root,assetRoot:artRoot});
 const review='pose-studio/stances/options-20261008/';

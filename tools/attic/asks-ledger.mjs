@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Keep the durable owner-ask mirror deterministic and make GitHub drift loud.
 //
-//   node tools/asks-ledger.mjs --write   regenerate the Markdown view
-//   node tools/asks-ledger.mjs --check   validate data + committed view
-//   node tools/asks-ledger.mjs --github  also compare current issue bodies/labels
-//   node tools/asks-ledger.mjs --selftest prove the local validator catches drift
+//   node tools/attic/asks-ledger.mjs --write   regenerate the Markdown view
+//   node tools/attic/asks-ledger.mjs --check   validate data + committed view
+//   node tools/attic/asks-ledger.mjs --github  also compare current issue bodies/labels
+//   node tools/attic/asks-ledger.mjs --selftest prove the local validator catches drift
 
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DATA_PATH = resolve(ROOT, 'docs/asks/asks-ledger.json');
 const VIEW_PATH = resolve(ROOT, 'docs/asks/asks-ledger.md');
 const EXPECTED_IDS = ['C19', 'C18', 'C11', 'C6', 'C5', 'R2', 'E13', 'E12', 'E5', 'E3'];
@@ -54,8 +54,8 @@ function render(data) {
     '> Preservation mirror for [Issue #397](https://github.com/cehinds/AshenSpire/issues/397).',
     '> These entries preserve source wording and provenance; they do not resolve, approve, reprioritize, or close any ask.',
     '',
-    'Canonical data: [`asks-ledger.json`](asks-ledger.json). Regenerate with `node tools/asks-ledger.mjs --write`.',
-    'Check local drift with `node tools/asks-ledger.mjs --check`; add `--github` to compare the ten live issue bodies and labels.',
+    'Canonical data: [`asks-ledger.json`](asks-ledger.json). Regenerate with `node tools/attic/asks-ledger.mjs --write`.',
+    'Check local drift with `node tools/attic/asks-ledger.mjs --check`; add `--github` to compare the ten live issue bodies and labels.',
     '',
     `Denominator: **${data.entries.length}/${EXPECTED_IDS.length}** asks.`,
     '',
@@ -136,7 +136,7 @@ if (process.argv.includes('--write')) {
   console.log(`asks ledger: wrote ${data.entries.length} entries`);
 } else {
   const actual = readFileSync(VIEW_PATH, 'utf8');
-  if (actual !== expected) fail('asks-ledger.md drift; run node tools/asks-ledger.mjs --write');
+  if (actual !== expected) fail('asks-ledger.md drift; run node tools/attic/asks-ledger.mjs --write');
   console.log(`asks ledger: local ${data.entries.length}/${EXPECTED_IDS.length} PASS`);
 }
 

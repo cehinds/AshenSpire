@@ -71,7 +71,7 @@ regions of shared source images.
 
 ## Browser verification
 
-Run `node tools/card-layout-save-qa.mjs` (or the compatibility entry point
+Run `node tools/attic/card-layout-save-qa.mjs` (or the compatibility entry point
 `card-layer-editor-qa.mjs`) with `PLAYWRIGHT_MODULE` and `CHROME`. Set
 `CARD_EDITOR_OUT` to a D: evidence folder. This creates an isolated copy of the
 game JSON and generated data; the user's saved layout is not overwritten.
