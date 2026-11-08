@@ -217,7 +217,8 @@ commit, so a sign-off written here would sit on a commit that never ran the gate
 and a commit cannot name its own SHA. This file stays a template.
 
 The owner signs by commenting on the release pull request, or on a release issue.
-Sessions keep promoting `dev` to `test` (CONTRIBUTING.md rule 6), so a
+Sessions promote `dev` to `review`, and the review owner promotes `review` to
+`test` (CONTRIBUTING.md rule 6), so a
 `release` ← `test` pull request would advance past the RC SHA. Its head is
 instead `rc/<version>`, a branch created at the tested RC SHA and never
 moved. The comment names:

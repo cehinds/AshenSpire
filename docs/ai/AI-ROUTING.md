@@ -91,7 +91,7 @@ needs "and also", it is two briefs.
 ### Branch lifecycle
 
 ```text
-worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► review ──► test ──► release ──► main
 ```
 
 - When the parent (feature) branch merges into `dev`, the session removes its local worker

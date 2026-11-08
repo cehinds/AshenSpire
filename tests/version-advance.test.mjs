@@ -348,7 +348,7 @@ test('planCuts: a test push is a build cut; pre-TEST_SINCE and bot-only test pus
 
 test('activation: historical test activity at or before the frozen boundary is never replayed', () => {
   const historical = [
-    tev('49495690956', 'a', 'b', '2026-11-08T20:44:29Z', 'pr_merge'),
+    tev('49491527871', 'a', 'b', '2026-11-08T20:44:29Z', 'pr_merge'),
     tev('49495690958', 'b', '45b31ef1', '2026-11-08T21:40:47Z', 'pr_merge'),
     tev('49495690999', 'x', 'y', '2026-11-08T21:40:47Z'),
   ];

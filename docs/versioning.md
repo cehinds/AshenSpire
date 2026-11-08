@@ -266,7 +266,8 @@ update of those refs whether or not a workflow ran for it. `tools/version-advanc
   never bumps twice.
 - **`test` events** count only after `TEST_SINCE` in the tool (`2026-11-08T21:40:47Z`, inclusive; activity `49495690958`, captured while Test was frozen for activation): the cursor
   alone would replay every `test` push since the last release or main record the day this merged.
-  Set it to the merge time of the change that enabled build bumps. A re-delivered `test` push is
+  Capture the latest historical Test event while Test is frozen for activation, and recheck
+  that history just before merging the enabling change so the cutoff cannot drift. A re-delivered `test` push is
   the same event id (or a copy under the lowest id), so it records once and never bumps twice.
 - **Open PRs after a test bump.** Each `test` bump moves `buildordinal.json` on `dev` without a build-stamp run, so `pr-restamp.yml` does not refresh open PRs; `node tools/jev.mjs devmerge` brings a PR current.
 - **Bot-only events** (every commit in the event's own before..after is a
