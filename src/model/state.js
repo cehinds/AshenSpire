@@ -1415,6 +1415,50 @@ function checkPendingRewardEnvelope(run, problems, pending) {
   }
 }
 
+/** Phase: class milestone, skill draft and rank-up reward rows. */
+function checkPendingMilestoneAndSkillDrafts(run, problems, pending) {
+  if (pending.rewards?.classMilestoneRewards !== undefined) {
+    const rows = pending.rewards.classMilestoneRewards;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
+    else rows.forEach((row,index) => {
+      const p = `pendingReward.rewards.classMilestoneRewards[${index}]`;
+      const offer = run.classMilestoneOffers?.[row?.receiptId];
+      if (!row || !offer || ['classId','skillId','level','requiredLevel','rewardKind'].some(key => row[key] !== offer[key]) || ['options','abilityRanks','choiceIds'].some(key => JSON.stringify(row[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted milestone offer`);
+    });
+  }
+  if (pending.rewards?.skillDrafts !== undefined) {
+    const drafts = pending.rewards.skillDrafts;
+    if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
+    else drafts.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillDrafts[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+      if (d.abilityRanks !== undefined && (!Array.isArray(d.abilityRanks) || d.abilityRanks.length !== d.cardIds?.length || d.abilityRanks.some(r => !Number.isInteger(r) || r < 0 || r > 5))) problems.push(`${p}.abilityRanks must hold one grade 0..5 per card`);
+      if (d.choiceIds !== undefined && (!Array.isArray(d.choiceIds) || d.choiceIds.length !== d.cardIds?.length || new Set(d.choiceIds).size !== d.choiceIds.length || d.choiceIds.some(id => typeof id !== 'string' || !id))) problems.push(`${p}.choiceIds must identify each offered face uniquely`);
+      if (d.offerId) {
+        const offer = run.abilityOffers?.[d.offerId];
+        if (!offer || offer.skillId !== d.skillId || offer.level !== d.level || ['cardIds','abilityRanks','choiceIds'].some(key => JSON.stringify(d[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted ability offer`);
+      }
+      // Each offered card's rank (SPEC §13.4o), one per card id when present.
+      if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
+        || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
+    });
+  }
+  if (pending.rewards?.skillRankUps !== undefined) {
+    const ups = pending.rewards.skillRankUps;
+    if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
+    else ups.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillRankUps[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
+    });
+  }
+}
+
 /** Phase: the pending reward offer, its claims, drafts and chosen rows. */
 function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
@@ -1423,46 +1467,7 @@ function checkPendingReward(run, problems) {
       problems.push('pendingReward must be an object when present');
     } else {
       checkPendingRewardEnvelope(run, problems, pending);
-      if (pending.rewards?.classMilestoneRewards !== undefined) {
-        const rows = pending.rewards.classMilestoneRewards;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
-        else rows.forEach((row,index) => {
-          const p = `pendingReward.rewards.classMilestoneRewards[${index}]`;
-          const offer = run.classMilestoneOffers?.[row?.receiptId];
-          if (!row || !offer || ['classId','skillId','level','requiredLevel','rewardKind'].some(key => row[key] !== offer[key]) || ['options','abilityRanks','choiceIds'].some(key => JSON.stringify(row[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted milestone offer`);
-        });
-      }
-      if (pending.rewards?.skillDrafts !== undefined) {
-        const drafts = pending.rewards.skillDrafts;
-        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
-        else drafts.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillDrafts[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
-          if (d.abilityRanks !== undefined && (!Array.isArray(d.abilityRanks) || d.abilityRanks.length !== d.cardIds?.length || d.abilityRanks.some(r => !Number.isInteger(r) || r < 0 || r > 5))) problems.push(`${p}.abilityRanks must hold one grade 0..5 per card`);
-          if (d.choiceIds !== undefined && (!Array.isArray(d.choiceIds) || d.choiceIds.length !== d.cardIds?.length || new Set(d.choiceIds).size !== d.choiceIds.length || d.choiceIds.some(id => typeof id !== 'string' || !id))) problems.push(`${p}.choiceIds must identify each offered face uniquely`);
-          if (d.offerId) {
-            const offer = run.abilityOffers?.[d.offerId];
-            if (!offer || offer.skillId !== d.skillId || offer.level !== d.level || ['cardIds','abilityRanks','choiceIds'].some(key => JSON.stringify(d[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted ability offer`);
-          }
-          // Each offered card's rank (SPEC §13.4o), one per card id when present.
-          if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
-            || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
-        });
-      }
-      if (pending.rewards?.skillRankUps !== undefined) {
-        const ups = pending.rewards.skillRankUps;
-        if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
-        else ups.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillRankUps[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
-        });
-      }
+      checkPendingMilestoneAndSkillDrafts(run, problems, pending);
       if (pending.chosenRankUps !== undefined) {
         const chosen = pending.chosenRankUps;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
