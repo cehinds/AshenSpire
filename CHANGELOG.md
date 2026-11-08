@@ -34,11 +34,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
-- **Behind the scenes: tools and CI tidied, merge train** ([#2729](https://github.com/cehinds/AshenSpire/pull/2729), `0.7.4.48`). Lands #2723, #2722 and #2720 together. Nothing you play changes.
-- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.48`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
-- **Attic tool path fixed** ([#2722](https://github.com/cehinds/AshenSpire/pull/2722), `0.7.4.48`). One retired QA tool read a source file from the wrong folder after the attic move; nothing you play changes.
-- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.48`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
-- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.48`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
+- **Behind the scenes: tools and CI tidied, merge train** ([#2729](https://github.com/cehinds/AshenSpire/pull/2729), `0.7.4.50`). Lands #2723, #2722 and #2720 together. Nothing you play changes.
+- **Behind the scenes: two release checks aim at the current code** ([#2720](https://github.com/cehinds/AshenSpire/pull/2720), `0.7.4.50`). This is a tooling-only change, and nothing you play changes. Two release-time tool checks were looking for code that had since changed shape; they now find it again.
+- **Attic tool path fixed** ([#2722](https://github.com/cehinds/AshenSpire/pull/2722), `0.7.4.50`). One retired QA tool read a source file from the wrong folder after the attic move; nothing you play changes.
+- **CI setup shared** ([#2723](https://github.com/cehinds/AshenSpire/pull/2723), `0.7.4.50`). The heavier test jobs now share one setup step for Node and the art packs, and the two alternative-branch sync workflows are named by direction; nothing you play changes.
+- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.50`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.48`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.48`). Card previews and card resolution allocate about half as much memory; play is unchanged.
 - **Save checks tidied** ([#2713](https://github.com/cehinds/AshenSpire/pull/2713), `0.7.4.48`). The run-save validator and derived-stat setup are split into named steps; saves load exactly as before.
