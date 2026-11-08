@@ -2975,7 +2975,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils
 
-Governs when card rewards come and how often, the levelling curve and its preview and cap, armament, smithing-stone and refined-stone drops, and legendary sigils. Rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` draws only the Victory receipt and the card rank-up chooser.
+Governs when card rewards come and how often, the levelling curve and its preview and cap, armament, smithing-stone and refined-stone drops, and legendary sigils. Rewards are the configured door (`gameProfileRewards`, `rewardTransaction`, `rewardplan`); `reward.js` draws only the Victory receipt and the card rank-up chooser. Old saves carrying `run.pendingReward` or `run.deferredProgression` still load and validate (`engine/save.js`); nothing writes them.
 
 Rules from §14's preamble apply:
 - Every number is a `balance.*` leaf with a `[NOTE]`, so its `gameConfig.*` Settings row is generated and frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
@@ -3006,6 +3006,8 @@ Controls whether, when and how often a fight offers cards. Keys live in `balance
   - `REWARD_KIND_ORDER` kind `levelCard`, after `card` and `levelChoice`; row key `levelCard:<ordinal>`; taken and skipped like the card offer.
   - Each row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]` (not the single `chosenCardId`, which stays the `card` row's).
   - `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name.
+  - A save written before this section has no level-card rows and needs no migration.
+  - A saved `pendingReward` written before this section reads as "card row as rolled".
 - **October 3 owner defaults** (solo reward door; replaced where §13.4o says so).
   - Solo combat rolls its card independently of skill/class drafts.
   - Every non-class skill level queues a guaranteed card draft (class pool with the skill's rarity gate if its schools have no eligible cards); per-door draft limits still queue excess drafts.
@@ -3024,7 +3026,7 @@ Controls whether, when and how often a fight offers cards. Keys live in `balance
 | Card pick weight | tag weight (product of the card's matching `tagWeights`, else `default`) x `ownedCopyWeight`^(copies owned, deck plus sideboard) x `offeredCopyWeight`^`timesOffered` x `typeWeights[type]` x recent-offer x depth bias. One `rng.float` on the offer's stream; when all weights are equal the draw is the plain `rng.pick`. |
 | `tagWeights` | casting 1, `maneuver:smash/counter/sweep` 1.5, default 1.5 |
 | `ownedCopyWeight` | 0.05 |
-| `offeredCopyWeight` | 0.25 (range 0..1; Core 1 pinned to 1) |
+| `offeredCopyWeight` | 0.25 (range 0..1; Core 1 pinned to 1); applies to every card pick, including the reserved stance-coverage slot |
 | `typeWeights` | attack 1, skill 2, power 2 (absent = 1; no guaranteed slot) |
 | Recent offers | a card shown on one of the last `recentOfferWindow` (3) reward screens x `recentOfferWeight` 0.1; screens read from `run.gameProfileRewardOffers` (no save field) |
 | `depthBias` by `run.floor` (the reward's node) | depth 1-3: basic or cantrip cards x1.8 (basic = named by a `cardPools` entry outside `special`; cantrip = tagged `rank.cantrip`), cards with `manaCost` > 0 x0.4. Depth 4+: mana cards x1.8, rank 2+ cards x1.5. |
@@ -3034,7 +3036,7 @@ Controls whether, when and how often a fight offers cards. Keys live in `balance
 | Offer history | `run.rewardOfferHistory = { cards: { [cardId]: timesOffered } }`, bumped once per card when a combat, chest or shop offer is first created (offers cache per offerId, so a reload never counts twice); saved with the run (absent = empty). A shown-and-skipped card returns at lower chance, never a forced skip; a taken card stays under `ownedCopyWeight`. Shop card stock uses the same pick. With empty history or weight 1 the draw is the old uniform `rng.pick`. |
 | Shop prices | Each Core 2 shop offer rolls its price once with `rng.int('shop', min, max)` from `shops.priceTable` by kind and rarity (e.g. common card 34-41, rare relic 203-225 cinders) and keeps it in the saved stock; an older save falls back to the single stock `price`. Legacy rewards and the legacy merchant are unchanged. |
 
-Core 1 pins all of these neutral (`tests/core-reward-mix.test.mjs`, `tests/reward-card-weights.test.mjs`, `tests/reward-door-size-mix.test.mjs`).
+Core 1 pins the card, potion and offer weights neutral (`tests/core-reward-mix.test.mjs`, `tests/reward-card-weights.test.mjs`).
 
 #### Core 2 reward mix (owner, 2026-10-27)
 
@@ -3173,11 +3175,12 @@ Every persisted position holding a sigil id is in exactly one class; the lists a
   - Taking the row appends the id to `run.sigils`, unattuned; taking an owned id adds nothing.
   - The load door refuses a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary.
 - **Pool:** legendaries the run does not own (owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`), in authored order.
+- **Not live yet:** the configured door does not roll sigils. `rollSigilDrop` (`model/sigils.js`) and the `dropChancePct.*` keys exist, but no door calls the function or sets `rewards.sigilId`. The rules below are the model-level contract.
 - `rollSigilDrop` reads the door pool's chance:
   - chance 0 or an empty pool: none, no draw;
   - chance 100: no chance draw;
   - otherwise one `rng.chance('sigils', pct)` (a miss returns none), then one `rng.pick('sigils', pool)`.
-- Rolled per pool: a won normal or elite fight, a boss whose reward menu opens, a treasure room. The run's last boss rolls none (`finishRun(true)` runs before any reward is built).
+- Intended placement, once a door calls it, per pool: a won normal or elite fight, a boss whose reward menu opens, a treasure room. The run's last boss rolls none (`finishRun(true)` runs before any reward is built).
 - With all four chances 0, the `sigils` counter never moves; no other stream moves at any setting.
 
 #### The Armoury's Sigils panel
@@ -3193,7 +3196,7 @@ Every persisted position holding a sigil id is in exactly one class; the lists a
 - Attuning a second sigil while `attuneMax` is 1 is refused by name.
 - A DOM test opens the Sigils panel, taps **Attune** on an owned legendary, sees it listed and in `run.attunedSigils`, taps **Unattune**, sees it removed; buttons are absent in combat.
 - Market and blacksmith stock over 200 seeds never offers a legendary.
-- Defaults: no sigil drops and no stream counter moves. `dropChancePct.boss: 100`: a boss drops one unowned legendary, never a duplicate.
+- Defaults: no sigil drops and no stream counter moves. Model level (`rollSigilDrop`) only: with `dropChancePct.boss: 100` a boss-pool roll returns one unowned legendary, never a duplicate.
 - A save at §14's last schema loads with `attunedSigils: []` and `sigils` untouched.
 
 ### 15.5 Build order
@@ -3207,9 +3210,7 @@ Each item was one PR into `dev`, test-first, with a receipt and no built HTML:
 
 #### Notes and history
 
-- §15 is built; the legacy reward door is removed.
-- Core 2 offer weights, mix and cantrip families are dated owner rulings.
-- Legendary sigils ship with drops off (`dropChancePct` all 0).
+- Sigil drops are model-only; no door rolls them yet.
 
 Full history: [docs/spec-history/15-rewards-profile.md](docs/spec-history/15-rewards-profile.md).
 
@@ -3255,13 +3256,12 @@ Describes the configured Ashen profile branch. It does not change legacy game ru
 ### Status
 
 - The JSON resolver, host adapter and author CLI are implemented in slices on the feature branch. Export requires `ashen.legacy-adapter@1`; it is not a portable rules VM or complete engine-neutral gameplay package. The legacy preset stays the compatibility path. Full browser acceptance is in progress.
-- Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON supplies values.
+- Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON supplies values; they are not additional permanent product approvals.
 - Usage and checks: `games/ashenspire/guide.md`. Product rules and unresolved choices: `docs/ai/json-game-modules/CORE-SPEC.md`. Status and next acceptance work: `docs/ai/json-game-modules/README.md` and `CONTINUE.md`.
 
 #### Notes and history
 
-- The legacy preset remains the compatibility path.
-- Provisional core settings stay provisional.
+- Feature-branch status; browser acceptance in progress.
 
 Full history: [docs/spec-history/15-rewards-profile.md](docs/spec-history/15-rewards-profile.md).
 

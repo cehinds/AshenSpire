@@ -36,3 +36,6 @@ Archive of history, rationale and provenance moved out of SPEC.md §15-§16. Not
 ## §16
 - Original title: "Versioned JSON game profile (Feature/json-game-modules addendum, 2026-10-15)". Described as an addendum.
 - Class special replaced by a weapon art: owner 2026-11-01. Attribute spending beyond rests: owner 2026-10-27.
+
+## §15.3 (addendum)
+- "Until §14.4 lands they show in the inventory" (refined stones): superseded, §14.4 has landed.
