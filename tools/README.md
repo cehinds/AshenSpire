@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (313 tool files, plus the 9 subfolders)
+## Tools something references (313 tool files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -24,7 +24,6 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `combat-audit/` (16 files) | This audit found and fixed the primary Quit menu action and two measured initialization costs: the Settings card… | wf combat-audit-hosted-preview; tests combat-audit-card-condition-contracts, combat-audit-card-effect-contracts, combat-audit-cards +6; docs docs/handoffs/full-combat-audit.md, docs/preview/full-combat-audit/README.md, docs/preview/full-combat-audit/accepted-stance-followup.md +2 |
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
 | `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; other .gitignore, editor/server.mjs +12 |
-| `results/` (82 files) | (no header comment) | tools buildstamp-shot, e11-reward-correction, hud-quick-compact +3; other src/content/statuses.js |
 | `score/` (4 files) | tools/score/alt — the "alt" cut of a score (owner, 2026-09-26: "alt | tests music-score; docs CREDITS.md, DEVELOPER.md, SPEC.md +5; other music/score/_motifs.mjs, music/score/boss.mjs +13 |
 | `about-changelog.mjs` | Focused contract for #189. CHANGELOG.md is authored; the generated browser | wf alternative-sync, build-stamp, ci +2; tests build-stamp, check-order-pending; tools build-stamp, plantsites-baseline.json, pr-restamp +1; docs .claude/skills/finish/SKILL.md, DEVELOPER.md, docs/FINISH.md +11; other src/content/changelog.generated.js, src/content/changelog.js +1 |
 | `actionreach.mjs` | actionreach — is the way OUT of a screen on screen when the screen | tools flaskbox, mapreach, menufit +2 |
@@ -199,7 +198,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `maps-validate.mjs` | maps-validate - validates the JSON map layer. | tests build-game, maps-json; tools build-game; other package.json |
 | `mapspacing.mjs` | mapspacing — measure adjacent map-floor pitch on the rendered map. | tools actends; other src/model/map/mapview.js |
 | `markhome.mjs` | markhome — card text marks may not be keyed to one of their two | tests run-node |
-| `measure-classes.mjs` | measure-classes — instrumented per-class win-rate measurement | tests run-node-lanes, sim-parity, simbot-decisions +1; tools results/starseerkit-decision.md, results/sweep-bleed-threshold.md; docs docs/FINISH.md, docs/RELEASE-CHECKLIST.md; other src/engine/runCombat.js |
+| `measure-classes.mjs` | measure-classes — instrumented per-class win-rate measurement | tests run-node-lanes, sim-parity, simbot-decisions +1; docs docs/balance-sims/starseerkit-decision.md, docs/balance-sims/sweep-bleed-threshold.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md; other src/engine/runCombat.js |
 | `measure.mjs` | tools/measure.mjs — measured counts against budgets, so a performance PR can show before/after numbers instead of an argument. | tests perf-tools |
 | `mechanics-browser.mjs` | Compile authored calculation mechanics into the browser graph. | tests mechanics-bindings; tools content-build; docs engine/mechanics/combat.accuracy/guide.md, engine/mechanics/combat.actionCosts/guide.md, engine/mechanics/combat.perception/guide.md +4; other src/content/generated/fixCoreProtection.js |
 | `mechanics-generate.mjs` | mechanics-generate — one mechanic folder per behaviour tag and per status. | tests mechanics; docs engine/mechanics/README.md; other engine/contracts/mechanic.schema.json |
