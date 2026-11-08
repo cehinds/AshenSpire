@@ -30,6 +30,9 @@
   "pierce": {
     "blockBypassFraction": 0.2
   },
+  "damage": {
+    "unified": true
+  },
   "smashVsDefensive": {
     "damageMultiplier": 1.25,
     "blockFraction": 0.25,
