@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/elementRules.js",
+    "file": "src/model/elementRules.js",
     "symbol": "isLightning"
   }
 }

@@ -21,7 +21,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/engine/cardZones.js",
-    "symbol": "validateZoneEffect"
+    "file": "src/engine/combatAvoidance.js",
+    "symbol": "distancePreview"
   }
 }
