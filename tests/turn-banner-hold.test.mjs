@@ -1,5 +1,5 @@
 // A turn banner must be gone by the time the next beat starts, at every pace.
-// The timeline waits turnBannerHoldMs(pace) after a banner beat; the banner's
+// The timeline waits timing.bannerMs (turnBannerHoldMs(pace), scaled) after a banner beat; the banner's
 // display time and fade are set from that same hold (ui/fx.js banner, lifeMs).
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -49,8 +49,11 @@ for (const [name, speed] of Object.entries(ANIM_SPEEDS)) {
 const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
 assert.match(fx, /export function banner\(layer, text, cls = '', lifeMs = null\)/, 'banner takes its display time as lifeMs');
 assert.match(fx, /setTimeout\(\(\) => el\.remove\(\), lifeMs > 0 \? lifeMs : 320\)/, 'banner is removed after lifeMs');
-assert.match(fx, /banner\(ctx\.layer, beat\.banner, 'turn', hold\)/, 'the turn banner passes the timeline hold');
-assert.match(fx, /schedule\(nextBeat, hold\)/, 'the timeline waits that same hold after a turn banner');
+assert.match(fx, /banner\(ctx\.layer, beat\.banner, 'turn', timing\.bannerMs\)/, 'the turn banner passes the timeline hold (timing.bannerMs)');
+const tl = readFileSync(new URL('../src/ui/actionTimeline.js', import.meta.url), 'utf8');
+assert.match(tl, /schedule\(next, beat\.banner \? timing\.bannerMs : timing\.stepMs\)/, 'the timeline waits that same hold after a turn banner');
+const pace = readFileSync(new URL('../src/ui/animationPace.js', import.meta.url), 'utf8');
+assert.match(pace, /bannerMs: scaled\(pace \? turnBannerHoldMs\(pace\) : 0\)/, 'timing.bannerMs is the scaled turnBannerHoldMs');
 
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
 assert.match(css, /\.fx-banner \{[^}]*animation: banner-pop var\(--fx-banner-ms, 300ms\)/s, 'the banner fade follows --fx-banner-ms');

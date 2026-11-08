@@ -85,7 +85,7 @@ test('image figures draw only the held stance glow with Effects off (no casting 
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
   assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
-  assert.match(fx, /if \(effectsOff\(\)\) return;\n\s+if \(activeActorAnimation\?\.hold\)/, 'the figure is not frozen');
+  assert.match(fx, /if \(holdMs && !effectsOff\(\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs\); \}/, 'with Effects off the figure is not frozen');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {

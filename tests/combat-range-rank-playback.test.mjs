@@ -2,7 +2,7 @@
 // A committed Advance steps in as contact begins; a retreat after the damage waits for the group's HUD apply.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, setAnimSpeed, setBeatOrder, groupBeats } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, groupBeats } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { setCombatPacing } from '../src/ui/animationPace.js';
@@ -49,7 +49,7 @@ function scenario(t, { cardId = 'core.strike', weapon = null }, check) {
     }, () => completed++);
     for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
     assert.equal(completed, 1);
-    try { check({ events, marks, snap, combat, rank }); } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
+    try { check({ events, marks, snap, combat, rank }); } finally { setAnimSpeed('normal'); }
   });
 }
 const at = (marks, name) => marks.find(m => m[0] === name)?.[1];
