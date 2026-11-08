@@ -35,7 +35,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 ## 2026-11-08
 
 - **Behind the scenes: a map of where things live** ([#2732](https://github.com/cehinds/AshenSpire/pull/2732), `0.7.4.50`). A new guide, docs/CODE-MAP.md, says which file to edit for each common change and which command rebuilds it. Nothing you play changes.
-- **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.48`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Behind the scenes: combat code tidied, merge train** ([#2727](https://github.com/cehinds/AshenSpire/pull/2727), `0.7.4.50`). Lands #2678, #2679 and #2713 together. Nothing you play changes.
 - **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.48`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
 - **Lighter combat previews** ([#2678](https://github.com/cehinds/AshenSpire/pull/2678), `0.7.4.48`). Card previews and card resolution allocate about half as much memory; play is unchanged.
