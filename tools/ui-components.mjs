@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -540,6 +541,7 @@ export function receipt() {
     saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('content/source/balanceUi.json'),
     main: read('src/main.js'),
+    displaySettings: read('src/ui/displaySettings.js'),
     runHud: read('src/ui/components/runHud.js'),
     shop: read('src/ui/screens/shop.js'),
     event: read('src/ui/screens/event.js'),
@@ -553,6 +555,8 @@ export function receipt() {
     controls: read('src/ui/screens/controls.js'),
     input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
+    armouryStatsModel: read('src/ui/models/ArmouryStatsModel.js'),
+    armouryInventory: read('src/ui/components/armouryInventory.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
     hudVisibility: read('styles/hud-visibility.css'),
@@ -686,7 +690,7 @@ export function findings(r) {
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
       || !/UI\.armouryInventory/.test(r.armouryModels)
-      || !/UI\.equipmentComparison/.test(r.equipment)) {
+      || !/UI\.equipmentComparison/.test(r.armouryInventory)) {
     bad.push('C8 menu and Armoury composition lacks stable component references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
@@ -716,7 +720,13 @@ export function findings(r) {
       // (src/ui/kit/index.js `el`), which spells the same attribute as
       // `dataset: { component: '<id>' }`; the ash field and the section are
       // still template strings. Either spelling is the one attribute.
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`))
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`) || r.startupGate.includes(`component: '${id}'`)
+        || (() => {
+          // A constant spelling counts only if the registry still maps it to this exact id.
+          const key = id.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+          return UI_COMPONENTS[key] === id
+            && (r.startupGate.includes(`component: UI.${key}`) || r.startupGate.includes(`data-component="\${UI.${key}}"`));
+        })())
       || !titleParts.every((id) => mentionsId(r.title + r.saveSlotSelector, id))
       || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`['${id}'`))
@@ -726,7 +736,7 @@ export function findings(r) {
   if (!/"hudPresentation":\s*\{[\s\S]*"componentBackgroundOpacityPct":\s*0,[\s\S]*"metadataFontPx":\s*11,[\s\S]*"beltItemGapPx":\s*2,[\s\S]*"portraitScale":\s*0\.58,[\s\S]*"primaryRowGapPx":\s*4,[\s\S]*"controlGapPx":\s*0,[\s\S]*"resourceRowGapPx":\s*3,[\s\S]*"panelPadPx":\s*0,[\s\S]*"mobilePanelPadPx":\s*0,[\s\S]*"mobileControlGapPx":\s*1,[\s\S]*"mobileOuterPadPx":\s*4,[\s\S]*"mobileRowGapPx":\s*3,[\s\S]*"cindersMaxWidthPct":\s*30,[\s\S]*"metadataMaxWidthPct":\s*30,[\s\S]*"metadataShowTotals":\s*false[\s\S]*\}/.test(r.balance)
       || !/"hudQuickSettings":\s*\{[\s\S]*"places":\s*\["title", "map", "combat"\],[\s\S]*"edgeGapPx":\s*4,[\s\S]*"stackGapPx":\s*0,[\s\S]*"cardSizePx":\s*40,[\s\S]*"glyphSizePx":\s*28,[\s\S]*"stateDotPx":\s*6,[\s\S]*"activeTintPct":\s*14,[\s\S]*"showCardBackground":\s*true,[\s\S]*"showLabels":\s*false[\s\S]*\}/.test(r.balance)
       || !/\.resbars\[data-surface="main"\]\s*\{[^}]*gap:\s*calc\(var\(--hud-resource-row-gap-px\)\s*\/\s*var\(--ui-zoom, 1\)\);/.test(r.kit)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.displaySettings.includes(`'${name}'`))
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
@@ -909,7 +919,7 @@ export function findings(r) {
       || !/UI\.shrineOptionCard/.test(r.rest)
       || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
       || !/attributeCardModels\(registries, values,/.test(r.rest)
-      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
+      || !/attributeCardModels\(registries, run\.attributes/.test(r.armouryStatsModel)
       || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');

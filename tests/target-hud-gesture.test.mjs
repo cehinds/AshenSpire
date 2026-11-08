@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // Execute the production gesture handlers with a controlled clock. This fixture
 // makes no native hit-testing/capture claims; the paired browser test does that.

@@ -14,7 +14,7 @@ import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
 import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
