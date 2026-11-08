@@ -531,7 +531,7 @@ test('pad directions, profile switches and cleared volumes reach the live state'
   assert.match(input, /if \(Math\.abs\(ax\) > Math\.abs\(ay\)\) navigate\(/, 'so does the stick');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.equal((panel.match(/write\(SYNC_STORAGE\.lastSha, null\);\s*write\(SYNC_STORAGE\.lastAt, null\);/g) || []).length, 2);
-  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/ui/displaySettings.js', import.meta.url), 'utf8');
   assert.match(main, /musicVolume: settings\.musicVolume \?\? AUDIO_DEFAULTS\.musicVolume/);
   assert.match(main, /sfxVolume: settings\.sfxVolume \?\? AUDIO_DEFAULTS\.sfxVolume/);
 });

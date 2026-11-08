@@ -55,11 +55,11 @@ Authoring tools (Pose Studio, Workbench, editor, UI Studio) live on the `tools-a
 
 ## Run & test
 
-`package.json` (no dependencies, no `"type"` field) gives the common commands
+`package.json` (no dependencies, `"type": "module"`; `tools/hud-component-studio/` has its own `{"type":"commonjs"}` package.json for its UMD files) gives the common commands
 short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
 `npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
 `npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
-and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+`npm run test:pr` (the PR gate's two test lanes in `tests.yml`: the core lane, then every discovered test but the slow ones, unsharded, each under `tools/verdict.mjs`; it stops at the first red lane and does not run the gate's receipt-order checks, `node tools/about-changelog.mjs --check-order --pending auto`, or the other PR workflows), and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).
 
 **`styles/tokens.generated.css` is generated** from the design tokens in
@@ -423,7 +423,7 @@ for content-update regressions in save restoration.
 Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
 moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
-`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+`node tools/attic/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
 and checks that every combatant has visible, loaded artwork that holds still at
@@ -439,7 +439,7 @@ by its end event), and no script flipbook or tween (3+ changes to one element
 inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
 kinds. A hand with no Attack is passed with End Turn until one is drawn (the
 selftest runs one plant and its clean copy at `--seed T14`, an all-Skill opening hand). `--selftest` plants sixteen known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
-`node tools/perf-probe.mjs [--runs N] [--scenario combat,map,hand,transitions]` measures mobile performance (390x844, 4x CPU throttle, real touch input): frame times, long tasks, layout/paint totals, a CPU profile and the DOM census per scenario, median of N runs; it measures only and writes raw JSON outside the tree (baseline: docs/PERF-MOBILE-BASELINE.md).
+`node tools/attic/perf-probe.mjs [--runs N] [--scenario combat,map,hand,transitions]` measures mobile performance (390x844, 4x CPU throttle, real touch input): frame times, long tasks, layout/paint totals, a CPU profile and the DOM census per scenario, median of N runs; it measures only and writes raw JSON outside the tree (baseline: docs/PERF-MOBILE-BASELINE.md).
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
@@ -476,7 +476,7 @@ stages expose their existing authored idle bounds. The shared formation fit
 reduces all art together when space is limited, retaining per-row depth and
 ground anchors. Names, health bars and their inspection targets do not shrink.
 Run `node --test tests/combat-sprite-scale.test.mjs` and
-`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`node tools/attic/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
 `COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
 Playwright and Edge and covers elite/boss ratios, feet, health bars, card
 selection and returning from an enemy turn at desktop and narrow widths.
@@ -527,9 +527,9 @@ holds — the merchant's shelves, a mount's deck list — is authored once at
 `.card-shelf` in styles/kit.css, and checked by
 `node --test tests/card-shelf.test.mjs`. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
-Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+Combat HUD regression checks: `node tools/attic/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
-separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+separate pile tabs. `node tools/attic/ui-sweep.mjs --out docs/sweep` photographs every
 room at a desk and a phone width and asserts the facts the 2026-09-11 review's
 fixes stand on (the run band on every room, wrapped event choices, the phone
 action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
@@ -929,7 +929,7 @@ Run at least:
 ```bash
 node tools/content-build.mjs --check
 node tools/ui-components.mjs --selftest
-node tools/tray-components.mjs
+node tools/attic/tray-components.mjs
 node tests/run-node.mjs
 ```
 
@@ -975,10 +975,10 @@ Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
 
 ```bash
-node tools/combat-save.mjs
-node tools/combat-save.mjs --selftest
+node tools/attic/combat-save.mjs
+node tools/attic/combat-save.mjs --selftest
 # after the one authorized artifact regeneration:
-node tools/combat-save.mjs --artifact --screenshots
+node tools/attic/combat-save.mjs --artifact --screenshots
 ```
 
 ## HUD layout tokens (`content/hud-layout/<form-factor>.json`)
@@ -1312,7 +1312,7 @@ timeline per beat, `playEventCues` for instant playback and a fresh fight's
 opening (a boss fight's waits for its name splash to close);
 `playEventCues` stings once per turn. `node --test tests/sound-tiers.test.mjs`
 covers them, including the opening turn;
-`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+`node tools/attic/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
 a remounted one, and a fresh boss fight behind its splash
 (`?shot=boss&shotBossHold=0` lets the splash close).
 
@@ -1413,7 +1413,7 @@ Every folio has a direct `#folio-<component-id>` link. The new page heading,
 panel, choice tile, material/trim/body layers, navigation, and canonical feat
 browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
 production renderers. Feat inspection grants nothing with the current allowance
-of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+of zero. `node tools/attic/character-creation-components-qa.mjs --out /tmp/creation-components`
 captures each registered specimen at desktop and phone widths and checks DOM
 identity, layout fit, runtime errors, and interaction state. Add `--artifact`
 to check the frozen `build/download/AshenSpire.html` build after integration.
@@ -1545,7 +1545,7 @@ Combat cards select before committing. A selected card retains its fan position 
 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
 
-Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
+Combatant overhead UI: `node tools/attic/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.
 
 ## Opening sequence
 
@@ -1610,7 +1610,7 @@ Settings → Advanced → Progression controls starting stat pools, class attrib
 
 ### Combat hit-stop validation
 
-Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
+Run `node --test tests/combat-feel.test.mjs` for damage thresholds, multi-hit holds, impact haptics, skip cleanup and motion settings. Run `node tools/attic/combat-feel-probe.mjs` with an existing Playwright installation (`PLAYWRIGHT_MODULE`) for production target recoil CSS and painted frame stability at 1440x900 and 390x844. `COMBAT_FEEL_OUT` selects the screenshot directory. The browser probe uses staged production figures; physical-device and subjective visual acceptance remain separate.
 
 ### Alternative combat art
 
@@ -1633,7 +1633,7 @@ presentation; dialogue keeps its existing portraits. These are idle images,
 with no action/hand anchors, pose strips or invented animation coverage.
 
 Check `node --test tests/alternative-art.test.mjs tests/environment-art.test.mjs
-tests/alternative-formation.test.mjs`. `node tools/alternative-art-qa.mjs` walks
+tests/alternative-formation.test.mjs`. `node tools/attic/alternative-art-qa.mjs` walks
 all 32 settings at desktop and phone sizes, a mounted resize, and real
 Quick start/card/end-turn interactions. Set `PLAYWRIGHT_MODULE`, `CHROME`, and
 `COMBAT_ART_OUT` as needed; `COMBAT_ART_URL` plus `--play-only` checks a built
