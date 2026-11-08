@@ -43,8 +43,8 @@ test('a changed authored gain changes the text: nothing is hard-coded', () => {
   assert.equal(largestAttributeGain(registries, run, 'constitution').text, '+20 HP');
 });
 
-import { withKitDom } from './helpers/kit-dom.mjs';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { allocateAttributePoint, rederivePools } from '../src/model/levelup.js';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';

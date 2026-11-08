@@ -33,7 +33,7 @@ test('multi-target approach prints every engine-quoted target and chance', () =>
 
 test('route controls keep native keyboard ownership and send only the chosen id', async () => {
   const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }) => {
     const chosen = [];
     const node = combatRangeAction(quote(), { onChoose: id => chosen.push(id) });
@@ -94,7 +94,7 @@ test('paid Counter variants show their own canonical route total and return odds
 test('window capture preserves native route Enter and route Tab cannot switch a co-op seat', async () => {
   const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
   const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, Event }, _window, listeners) => {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
     const previousStyle = globalThis.getComputedStyle;
@@ -146,7 +146,7 @@ test('configured free Advance still appears for a partially uncovered mixed acti
 
 test('range attachment cleanup removes resize/transition listeners, observers and pending layout', async () => {
   const { mountCombatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
-  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { withKitDom } = await import('./helpers/dom.mjs');
   withKitDom(({ document, window, Event }) => {
     const listeners = new Map(), observers = [], frames = new Set(), cancelled = [];
     let nextFrame = 0;

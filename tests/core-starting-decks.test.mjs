@@ -131,7 +131,7 @@ test('the rank-0 badge label per source: basic reads Basic, every other source i
 
 // Mount the production screen (the rankNode call site) and read the badges it renders.
 async function renderedBadges(registries, run) {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { deckEditorCollectionRows } = await import('../src/ui/models/deckEditorCollectionRows.js');

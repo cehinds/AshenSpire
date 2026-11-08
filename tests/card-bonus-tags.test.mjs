@@ -9,7 +9,7 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { cardSideTags, cardTagRailHtml } from '../src/ui/components/cardTagSymbols.js';
 import { renderCard } from '../src/ui/components/card.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);

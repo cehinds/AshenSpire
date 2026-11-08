@@ -11,7 +11,7 @@ import { renderCard, refreshCard } from '../src/ui/components/card.js';
 import { applyCardArtStyle, resolveCardArtStyle } from '../src/ui/cardArtStyle.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { readFileSync } from 'node:fs';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
