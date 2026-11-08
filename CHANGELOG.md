@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
-- **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.30`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
+- **Card effect dispatch tidied** ([#2679](https://github.com/cehinds/AshenSpire/pull/2679), `0.7.4.32`). Card effects now run from a lookup table instead of one long switch; play is unchanged.
+- **QA sandbox** ([#2687](https://github.com/cehinds/AshenSpire/pull/2687), `0.7.4.32`). New `npm run qa:sandbox` checks a change in the browser against written success and failure criteria before a pull request.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
 - **Legacy feats removed** ([#2655](https://github.com/cehinds/AshenSpire/pull/2655), `0.7.4.28`). The old feat, skill-feat and milestone systems that Core never used are gone; older saves and exported settings still load.
 - **Tool cleanup** ([#2653](https://github.com/cehinds/AshenSpire/pull/2653), `0.7.4.26`). The HUD studio's character-creation mock-ups no longer show the retired keepsake step, and the combat audit waits for the reward screen correctly.
