@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -225,7 +225,9 @@ test('staleGenerated does not return while a builder grandchild that ignores SIG
   try { process.kill(pid, 0); state = /\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8')) ? 'zombie' : 'running'; } catch { /* gone */ }
   assert.notEqual(state, 'running', 'the grandchild is dead when staleGenerated returns');
   const atReturn = existsSync(late);
-  await new Promise((r) => setTimeout(r, 1200));
+  // The grandchild would write 700 ms after it started (its pid file's mtime); wait until that moment plus a margin, not a fixed 1.2 s.
+  const lateAt = statSync(pidFile).mtimeMs + 700 + 300;
+  await new Promise((r) => setTimeout(r, Math.max(0, lateAt - Date.now())));
   assert.equal(existsSync(late), atReturn, 'nothing was written after staleGenerated returned');
 });
 

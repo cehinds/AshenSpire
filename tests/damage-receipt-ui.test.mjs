@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 import { damageReceiptLines, damageReceiptHtml, cardDamageReceipt } from '../src/ui/components/damageReceipt.js';
 
 const first = { incoming: 20, hpLoss: 12, wardReduced: 5, blocked: 3,

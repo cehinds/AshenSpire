@@ -6,7 +6,7 @@
 // the Cancel that restores both piles, the attack-slot allocation, the guard
 // instances and the mint counter; and which doors the settings open.
 //
-// The DOM half (the production screen over tests/helpers/reward-dom.mjs): a
+// The DOM half (the production screen over tests/helpers/dom.mjs): a
 // card added and removed by tap, by the ＋/－ buttons, and by a keyboard and a
 // gamepad dispatch; Done disabled with the refusal as visible text; Cancel
 // through the screen; Armoury under `free`, with no map-header door; the
@@ -21,7 +21,7 @@ import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
 import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
 import { setKeyBindings } from '../src/ui/input.js';
-import { withModalDom as withBaseDom } from './helpers/modal-dom.mjs';
+import { withModalDom as withBaseDom } from './helpers/dom.mjs';
 
 // The shared discard confirmation owns a short input-shield timer. Keep it
 // inside this synchronous DOM fixture instead of leaking into the next test.

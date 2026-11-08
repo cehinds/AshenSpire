@@ -27,7 +27,7 @@ test('pendingRankUpRows lists queued rank-ups that have a card to raise, and not
 
 test('the reward door shows the Core card at its next rank and raises it', async () => {
   const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { rewardDom } = await import('./helpers/dom.mjs');
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -88,7 +88,7 @@ test('a Core run with queued rank-ups and ranked cards is a sound saved run', as
 
 test('a reload after a rank-up claim resumes the same door and offers no second rank-up there', async () => {
   const { mountRewards } = await import('../src/ui/screens/reward.js');
-  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const { rewardDom } = await import('./helpers/dom.mjs');
   const { validateRunShape } = await import('../src/model/state.js');
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));

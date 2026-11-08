@@ -6,7 +6,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { resolveUpgradedEquipment } from '../src/model/itemUpgrades.js';
 import { resetModalState } from '../src/ui/modalManager.js';
 import { openEquipConfirmModal } from '../src/ui/components/armouryEquipModals.js';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 const piece = registries.equipment.armaments[0];
 const item = resolveUpgradedEquipment(registries, `armament/${piece.id}`, 0);

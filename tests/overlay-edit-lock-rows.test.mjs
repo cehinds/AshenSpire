@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // D15: the Settings overlay's quick-nav (folded switcher / mirror) shares the combat edit lock with the footer.
 async function rows(lock) {

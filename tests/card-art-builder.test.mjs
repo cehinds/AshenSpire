@@ -12,7 +12,7 @@ import { renderCard } from '../src/ui/components/card.js';
 import { applyCardArtStyle, cardArtStyle } from '../src/ui/cardArtStyle.js';
 import { t, tFull } from '../src/ui/strings.js';
 import { mountProceduralBuilder } from '../src/ui/tools/cardArtProceduralBuilder.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { BUILDER_TYPES, BUILDER_ELEMENTS, BUILDER_RANK_MAX, BUILDER_PREVIEW_ID,
   normalizeBuilderInput, builderInputFromControls, createBuilderPreview, builderInputJson } from '../src/ui/tools/cardArtBuilderModel.js';
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { clearFocus, focusElement, focusFirst } from '../src/ui/input.js';
 
 test('the keyboard/gamepad cursor rejects inert fighters and their controls, then restores them on disarm', () => {
