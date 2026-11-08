@@ -287,6 +287,10 @@ artifact; a push to `test` is the playtest build. Where the ordinal comes
 from, what each branch keeps and how Pages gets its builds are in
 [docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
 
+### Sandbox QA before the PR
+
+Owner's request, 2026-11-07: test a visible or behavioural change in a real browser against the request before the PR, with a list of what failure and success look like. Write acceptance criteria, run `node tools/qa-sandbox.mjs <acceptance.json> --base origin/dev` (`npm run qa:sandbox`), and paste the *Acceptance criteria* block (it is in `.github/pull_request_template.md`) into the PR body. How, and a worked example, are in [docs/qa/SANDBOX-QA.md](docs/qa/SANDBOX-QA.md).
+
 ### QA evidence goes to CI artifacts, not the tree
 
 Owner's ruling, 2026-10-10. Bulk machine-generated evidence — full browser-run
@@ -299,9 +303,14 @@ ignored, and the local QA tools write to the ignored `scratch/qa/`. Evidence a
 document needs to show goes under one of the folders below, and
 `tests/qa-evidence-size.test.mjs` (a discovered test, so it gates a PR into
 `dev`) fails any tracked JSON over 256 KiB under `docs/qa/`,
-`docs/art-evidence/`, `docs/preview/` or a `receipts/` or
-`evidence/` folder, unless its `ALLOWED` list names the file and the tool or
-test that reads it. The oversized #1781 files were removed from the tree on
+`docs/art-evidence/`, `docs/preview/`, a `receipts/` or
+`evidence/` folder, or anywhere under `tools/`, and any tracked image
+(png, jpg, jpeg, webp, gif) over 256 KiB under `tools/`, unless its `ALLOWED`
+list names the file and the tool or test that reads it. `tools/results/` is
+ignored (H5, 2026-11-07): local runs write to `scratch/qa/<tool>/`, and a
+workflow that produces screenshots uploads them with `actions/upload-artifact`.
+Images under the `docs/` evidence folders are not gated yet; oversized ones are
+still tracked there and need their own cleanup. The oversized #1781 files were removed from the tree on
 2026-10-10; `git log --diff-filter=D -- <path>` finds the removing commit and
 `git show <commit>^:<path>` restores the bytes.
 

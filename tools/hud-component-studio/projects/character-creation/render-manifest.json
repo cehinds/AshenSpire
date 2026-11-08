@@ -35,11 +35,6 @@
     "wireframe": "exports/components/desktop--class-nav-attributes-wireframe.png"
   },
   {
-    "src": "component-desktop--class-nav-keepsake.json",
-    "preview": "exports/components/desktop--class-nav-keepsake.png",
-    "wireframe": "exports/components/desktop--class-nav-keepsake-wireframe.png"
-  },
-  {
     "src": "component-desktop--class-nav-equipment.json",
     "preview": "exports/components/desktop--class-nav-equipment.png",
     "wireframe": "exports/components/desktop--class-nav-equipment-wireframe.png"
@@ -178,61 +173,6 @@
     "src": "component-desktop--attribute-impact.json",
     "preview": "exports/components/desktop--attribute-impact.png",
     "wireframe": "exports/components/desktop--attribute-impact-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-navigation.json",
-    "preview": "exports/components/desktop--keepsake-navigation.png",
-    "wireframe": "exports/components/desktop--keepsake-navigation-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-nav-keepsake.json",
-    "preview": "exports/components/desktop--keepsake-nav-keepsake.png",
-    "wireframe": "exports/components/desktop--keepsake-nav-keepsake-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-intro.json",
-    "preview": "exports/components/desktop--keepsake-intro.png",
-    "wireframe": "exports/components/desktop--keepsake-intro-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-content.json",
-    "preview": "exports/components/desktop--keepsake-content.png",
-    "wireframe": "exports/components/desktop--keepsake-content-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-footer.json",
-    "preview": "exports/components/desktop--keepsake-footer.png",
-    "wireframe": "exports/components/desktop--keepsake-footer-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-next.json",
-    "preview": "exports/components/desktop--keepsake-next.png",
-    "wireframe": "exports/components/desktop--keepsake-next-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-choice-0.json",
-    "preview": "exports/components/desktop--keepsake-choice-0.png",
-    "wireframe": "exports/components/desktop--keepsake-choice-0-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-choice-1.json",
-    "preview": "exports/components/desktop--keepsake-choice-1.png",
-    "wireframe": "exports/components/desktop--keepsake-choice-1-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-choice-2.json",
-    "preview": "exports/components/desktop--keepsake-choice-2.png",
-    "wireframe": "exports/components/desktop--keepsake-choice-2-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-choice-3.json",
-    "preview": "exports/components/desktop--keepsake-choice-3.png",
-    "wireframe": "exports/components/desktop--keepsake-choice-3-wireframe.png"
-  },
-  {
-    "src": "component-desktop--keepsake-details.json",
-    "preview": "exports/components/desktop--keepsake-details.png",
-    "wireframe": "exports/components/desktop--keepsake-details-wireframe.png"
   },
   {
     "src": "component-desktop--equipment-navigation.json",
@@ -425,11 +365,6 @@
     "wireframe": "exports/components/desktop--review-attributes-wireframe.png"
   },
   {
-    "src": "component-desktop--review-keepsake.json",
-    "preview": "exports/components/desktop--review-keepsake.png",
-    "wireframe": "exports/components/desktop--review-keepsake-wireframe.png"
-  },
-  {
     "src": "component-desktop--review-equipment.json",
     "preview": "exports/components/desktop--review-equipment.png",
     "wireframe": "exports/components/desktop--review-equipment-wireframe.png"
@@ -620,16 +555,6 @@
     "wireframe": "exports/components/desktop--review-attributes-edit-control-wireframe.png"
   },
   {
-    "src": "component-desktop--review-keepsake-heading.json",
-    "preview": "exports/components/desktop--review-keepsake-heading.png",
-    "wireframe": "exports/components/desktop--review-keepsake-heading-wireframe.png"
-  },
-  {
-    "src": "component-desktop--review-keepsake-body.json",
-    "preview": "exports/components/desktop--review-keepsake-body.png",
-    "wireframe": "exports/components/desktop--review-keepsake-body-wireframe.png"
-  },
-  {
     "src": "component-desktop--review-equipment-heading.json",
     "preview": "exports/components/desktop--review-equipment-heading.png",
     "wireframe": "exports/components/desktop--review-equipment-heading-wireframe.png"
@@ -710,11 +635,6 @@
     "wireframe": "exports/attributes-desktop-noncaster-wireframe.png"
   },
   {
-    "src": "page-keepsake-desktop-noncaster.json",
-    "preview": "exports/keepsake-desktop-noncaster.png",
-    "wireframe": "exports/keepsake-desktop-noncaster-wireframe.png"
-  },
-  {
     "src": "page-equipment-desktop-noncaster.json",
     "preview": "exports/equipment-desktop-noncaster.png",
     "wireframe": "exports/equipment-desktop-noncaster-wireframe.png"
@@ -763,11 +683,6 @@
     "src": "component-desktop-noncaster--attributes-navigation.json",
     "preview": "exports/components/desktop-noncaster--attributes-navigation.png",
     "wireframe": "exports/components/desktop-noncaster--attributes-navigation-wireframe.png"
-  },
-  {
-    "src": "component-desktop-noncaster--keepsake-navigation.json",
-    "preview": "exports/components/desktop-noncaster--keepsake-navigation.png",
-    "wireframe": "exports/components/desktop-noncaster--keepsake-navigation-wireframe.png"
   },
   {
     "src": "component-desktop-noncaster--equipment-navigation.json",
@@ -855,11 +770,6 @@
     "wireframe": "exports/attributes-mobile-wireframe.png"
   },
   {
-    "src": "page-keepsake-mobile.json",
-    "preview": "exports/keepsake-mobile.png",
-    "wireframe": "exports/keepsake-mobile-wireframe.png"
-  },
-  {
     "src": "page-equipment-mobile.json",
     "preview": "exports/equipment-mobile.png",
     "wireframe": "exports/equipment-mobile-wireframe.png"
@@ -898,11 +808,6 @@
     "src": "component-mobile--class-nav-attributes.json",
     "preview": "exports/components/mobile--class-nav-attributes.png",
     "wireframe": "exports/components/mobile--class-nav-attributes-wireframe.png"
-  },
-  {
-    "src": "component-mobile--class-nav-keepsake.json",
-    "preview": "exports/components/mobile--class-nav-keepsake.png",
-    "wireframe": "exports/components/mobile--class-nav-keepsake-wireframe.png"
   },
   {
     "src": "component-mobile--class-nav-equipment.json",
@@ -1043,61 +948,6 @@
     "src": "component-mobile--attribute-impact.json",
     "preview": "exports/components/mobile--attribute-impact.png",
     "wireframe": "exports/components/mobile--attribute-impact-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-navigation.json",
-    "preview": "exports/components/mobile--keepsake-navigation.png",
-    "wireframe": "exports/components/mobile--keepsake-navigation-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-nav-keepsake.json",
-    "preview": "exports/components/mobile--keepsake-nav-keepsake.png",
-    "wireframe": "exports/components/mobile--keepsake-nav-keepsake-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-intro.json",
-    "preview": "exports/components/mobile--keepsake-intro.png",
-    "wireframe": "exports/components/mobile--keepsake-intro-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-content.json",
-    "preview": "exports/components/mobile--keepsake-content.png",
-    "wireframe": "exports/components/mobile--keepsake-content-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-footer.json",
-    "preview": "exports/components/mobile--keepsake-footer.png",
-    "wireframe": "exports/components/mobile--keepsake-footer-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-next.json",
-    "preview": "exports/components/mobile--keepsake-next.png",
-    "wireframe": "exports/components/mobile--keepsake-next-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-choice-0.json",
-    "preview": "exports/components/mobile--keepsake-choice-0.png",
-    "wireframe": "exports/components/mobile--keepsake-choice-0-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-choice-1.json",
-    "preview": "exports/components/mobile--keepsake-choice-1.png",
-    "wireframe": "exports/components/mobile--keepsake-choice-1-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-choice-2.json",
-    "preview": "exports/components/mobile--keepsake-choice-2.png",
-    "wireframe": "exports/components/mobile--keepsake-choice-2-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-choice-3.json",
-    "preview": "exports/components/mobile--keepsake-choice-3.png",
-    "wireframe": "exports/components/mobile--keepsake-choice-3-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-details.json",
-    "preview": "exports/components/mobile--keepsake-details.png",
-    "wireframe": "exports/components/mobile--keepsake-details-wireframe.png"
   },
   {
     "src": "component-mobile--equipment-navigation.json",
@@ -1290,11 +1140,6 @@
     "wireframe": "exports/components/mobile--review-attributes-wireframe.png"
   },
   {
-    "src": "component-mobile--review-keepsake.json",
-    "preview": "exports/components/mobile--review-keepsake.png",
-    "wireframe": "exports/components/mobile--review-keepsake-wireframe.png"
-  },
-  {
     "src": "component-mobile--review-equipment.json",
     "preview": "exports/components/mobile--review-equipment.png",
     "wireframe": "exports/components/mobile--review-equipment-wireframe.png"
@@ -1425,16 +1270,6 @@
     "wireframe": "exports/components/mobile--attributes-current-step-wireframe.png"
   },
   {
-    "src": "component-mobile--keepsake-expanded-navigation.json",
-    "preview": "exports/components/mobile--keepsake-expanded-navigation.png",
-    "wireframe": "exports/components/mobile--keepsake-expanded-navigation-wireframe.png"
-  },
-  {
-    "src": "component-mobile--keepsake-current-step.json",
-    "preview": "exports/components/mobile--keepsake-current-step.png",
-    "wireframe": "exports/components/mobile--keepsake-current-step-wireframe.png"
-  },
-  {
     "src": "component-mobile--equipment-expanded-navigation.json",
     "preview": "exports/components/mobile--equipment-expanded-navigation.png",
     "wireframe": "exports/components/mobile--equipment-expanded-navigation-wireframe.png"
@@ -1560,16 +1395,6 @@
     "wireframe": "exports/components/mobile--review-attributes-edit-control-wireframe.png"
   },
   {
-    "src": "component-mobile--review-keepsake-heading.json",
-    "preview": "exports/components/mobile--review-keepsake-heading.png",
-    "wireframe": "exports/components/mobile--review-keepsake-heading-wireframe.png"
-  },
-  {
-    "src": "component-mobile--review-keepsake-body.json",
-    "preview": "exports/components/mobile--review-keepsake-body.png",
-    "wireframe": "exports/components/mobile--review-keepsake-body-wireframe.png"
-  },
-  {
     "src": "component-mobile--review-equipment-heading.json",
     "preview": "exports/components/mobile--review-equipment-heading.png",
     "wireframe": "exports/components/mobile--review-equipment-heading-wireframe.png"
@@ -1645,11 +1470,6 @@
     "wireframe": "exports/attributes-mobile-noncaster-wireframe.png"
   },
   {
-    "src": "page-keepsake-mobile-noncaster.json",
-    "preview": "exports/keepsake-mobile-noncaster.png",
-    "wireframe": "exports/keepsake-mobile-noncaster-wireframe.png"
-  },
-  {
     "src": "page-equipment-mobile-noncaster.json",
     "preview": "exports/equipment-mobile-noncaster.png",
     "wireframe": "exports/equipment-mobile-noncaster-wireframe.png"
@@ -1698,11 +1518,6 @@
     "src": "component-mobile-noncaster--attributes-navigation.json",
     "preview": "exports/components/mobile-noncaster--attributes-navigation.png",
     "wireframe": "exports/components/mobile-noncaster--attributes-navigation-wireframe.png"
-  },
-  {
-    "src": "component-mobile-noncaster--keepsake-navigation.json",
-    "preview": "exports/components/mobile-noncaster--keepsake-navigation.png",
-    "wireframe": "exports/components/mobile-noncaster--keepsake-navigation-wireframe.png"
   },
   {
     "src": "component-mobile-noncaster--equipment-navigation.json",
@@ -1793,16 +1608,6 @@
     "src": "component-mobile-noncaster--attributes-current-step.json",
     "preview": "exports/components/mobile-noncaster--attributes-current-step.png",
     "wireframe": "exports/components/mobile-noncaster--attributes-current-step-wireframe.png"
-  },
-  {
-    "src": "component-mobile-noncaster--keepsake-expanded-navigation.json",
-    "preview": "exports/components/mobile-noncaster--keepsake-expanded-navigation.png",
-    "wireframe": "exports/components/mobile-noncaster--keepsake-expanded-navigation-wireframe.png"
-  },
-  {
-    "src": "component-mobile-noncaster--keepsake-current-step.json",
-    "preview": "exports/components/mobile-noncaster--keepsake-current-step.png",
-    "wireframe": "exports/components/mobile-noncaster--keepsake-current-step-wireframe.png"
   },
   {
     "src": "component-mobile-noncaster--equipment-expanded-navigation.json",

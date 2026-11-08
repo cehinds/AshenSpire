@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { isSwitchInput, isTypingTarget } from '../src/ui/input.js';
 
 test('a checkbox switch is not a typing target; text fields still are', () => {

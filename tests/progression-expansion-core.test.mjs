@@ -7,8 +7,8 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape, initializeRunDerivedStats } from '../src/model/state.js';
-import { awardSkillXp, bankSkillXp, claimBankedSkillLevel, activateAbilitySkill, pendingSkillLevelCount, xpToNext } from '../src/model/skills.js';
-import { classRewardBudget, pendingClassMilestones } from '../src/model/classMilestones.js';
+import { awardSkillXp, activateAbilitySkill, xpToNext } from '../src/model/skills.js';
+import { classRewardBudget } from '../src/model/classMilestones.js';
 import { rollAbilityOffer, abilityOfferPool } from '../src/model/abilityOffers.js';
 import { createRng } from '../src/engine/rng.js';
 import { recordSkillXp, skillXpReceipt } from '../src/engine/skillXp.js';
@@ -23,9 +23,6 @@ function fresh(meta = {}) {
   
   return {run,reg:source};
 }
-function fund(reg,run,amount) {
-  bankSkillXp(reg,run,'class:reaver',amount);
-}
 function lessons(reg) {
   const defs = new Map();
   for (const [kind,ids] of Object.entries({spell:['cometFragment','crystalBarrier','scholarsInsight','ashenMote'],maneuver:['quickstep','backstep','stomp']})) for (const id of ids) defs.set(id,{
@@ -34,26 +31,6 @@ function lessons(reg) {
   });
   return {...reg,masterySource:null,cards:{get:id=>defs.get(id)||source.cards.get(id),has:id=>defs.has(id),all:()=>[...defs.values()]}};
 }
-
-test('overlapping class milestones grant every earned budget and exactly four 25-XP awards',()=>{
-  const {run,reg}=fresh();
-  let total=0;
-  for(let level=1;level<=20;level++) {
-    fund(reg,run,xpToNext(reg,'class',level-1));
-    const claim=claimBankedSkillLevel(reg,run,'class:reaver');
-    assert.equal(claim.after,level);
-    assert.equal(claim.skillAwards.length,4);
-    assert.ok(claim.skillAwards.every(award=>award.gained===25));
-    total+=claim.skillAwards.reduce((sum,award)=>sum+award.gained,0);
-  }
-  assert.equal(total,2000);
-  assert.deepEqual(Object.keys(run.classMilestones['class:reaver:12'].grants).sort(),['armory','cards','feat']);
-  assert.deepEqual(Object.keys(run.classMilestones['class:reaver:20'].grants).sort(),['attribute','cards','feat','relic']);
-  assert.deepEqual(classRewardBudget(reg,20),{cards:10,feat:6,armory:6,relic:6,attribute:4});
-  const copy=deserializeRun(serializeRun(run));
-  assert.equal(claimBankedSkillLevel(reg,copy,'class:reaver'),null);
-  assert.equal(copy.skills.combatManeuvers.xp,run.skills.combatManeuvers.xp);
-});
 
 test('ability offers persist three current-grade families and one bounded INT option, with no reroll',()=>{
   const {run,reg:base}=fresh();const reg=lessons(base),rng=createRng(3);

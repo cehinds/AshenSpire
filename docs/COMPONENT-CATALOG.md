@@ -577,7 +577,7 @@ confirmation-modal
 ```
 
 Both lifecycle controls enter the same `commitCombatSnapshot` boundary. The
-focused rendered contract (`node tools/combat-save.mjs`) advances beyond combat
+focused rendered contract (`node tools/attic/combat-save.mjs`) advances beyond combat
 entry, saves in place, uses Save and Quit, loads through the occupied-slot
 review action, and proves exact snapshot identity at 1200×730 and 390×844.
 Its `--selftest` corpus plants a restarted encounter, a missing commit, and a

@@ -9,15 +9,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rewardProgress, combatXpGains } from '../src/model/rewardprogress.js';
-import { awardSkillXp, bankSkillXp, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext as skillXpToNext } from '../src/model/skills.js';
-import { awardLevelXp, claimBankedLevel, xpToNext as levelXpToNext } from '../src/model/levelup.js';
+import { awardSkillXp, xpToNext as skillXpToNext } from '../src/model/skills.js';
+import { awardLevelXp, xpToNext as levelXpToNext } from '../src/model/levelup.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
 import { orderedXpRows, xpFillDurations } from '../src/model/rewardXpPresentation.js';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // These tests drive the reward door's flow, not the curve: they pin the
 // October 2 curves (base 100, ×1.75 for the character, skills and class) their
@@ -133,10 +133,6 @@ test('the receipt sums the combat\'s tracks with the owner\'s own awards', () =>
   // A lost fight, an award that paid nothing, and a caller that hands none.
   assert.deepEqual(combatXpGains({ awards: [{ skillId: 'class:reaver', gained: 0 }], levelGained: -5 }), { level: 0, tracks: {} });
   assert.deepEqual(combatXpGains(), { level: 0, tracks: {} });
-  assert.deepEqual(combatXpGains({ awards: [{ skillId: 'class:reaver', gained: 10,
-    skillAwards: [{ skillId: 'item:blade', gained: 25 }, { skillId: 'armour:heavy', gained: 25 }],
-  }] }), { level: 0, tracks: { 'class:reaver': 10, 'item:blade': 25, 'armour:heavy': 25 } },
-  'an automatic class award includes its already-paid associated skills in the receipt');
 });
 
 test('the receipt crosses the save door on a real run and comes back whole', () => {

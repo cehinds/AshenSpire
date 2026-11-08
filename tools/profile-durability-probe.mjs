@@ -60,7 +60,7 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'E2: a NEWER schemaVersion is accepted blind instead of refused',
-        file: 'src/engine/save.js',
+        file: 'src/engine/saveMeta.js',
         find: 'if (typeof v === \'number\' && v > META_SCHEMA_VERSION) {',
         replace: 'if (false && typeof v === \'number\' && v > META_SCHEMA_VERSION) {',
         expectRed: /FAIL\s+(E2 a newer schemaVersion is refused|P1 NEWER profile)/,

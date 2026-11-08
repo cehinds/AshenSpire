@@ -113,3 +113,13 @@ test('an old export carrying the retired Level Up feat and class-upgrade rows st
   assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
   assert.ok(warnings.includes(RETIRED_LEGACY_GROUPS_WARNING) || warnings.length >= 1, 'the drop is named');
 });
+
+test('an old export carrying a class book feat chance still imports, dropping only that key', () => {
+  const old = JSON.stringify({ game: 'Ashen Spire', schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: { 'gameConfig.consumables.starseerClassBook.featChance': 5, 'settings.deckEditing': true } });
+  const warnings = [];
+  const changes = parseAdvancedConfigFile(old, contentBundle, {}, settingsRows(), warnings, { dropRetiredLegacy: true });
+  assert.ok(!Object.keys(changes).some((key) => key.includes('featChance')), 'the retired feat chance is dropped');
+  assert.equal(changes.deckEditing, true, 'live settings in the same file still apply');
+  assert.ok(warnings.length >= 1, 'the drop is named');
+});

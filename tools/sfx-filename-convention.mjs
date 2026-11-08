@@ -4,7 +4,7 @@
 //
 // Usage:
 //   node tools/sfx-filename-convention.mjs
-//   node tools/sfx-filename-convention.mjs --receipt tools/results/...json
+//   node tools/sfx-filename-convention.mjs --receipt scratch/qa/sfx-filename-convention/...json
 //   node tools/sfx-filename-convention.mjs --artifact AshenSpire.html
 //   node tools/sfx-filename-convention.mjs --selftest
 //

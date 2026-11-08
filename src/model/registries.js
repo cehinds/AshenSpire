@@ -629,11 +629,10 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
     || Number.isFinite(instanceOrRef.magicShare) || typeof instanceOrRef.physicalDamageType === 'string';
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
-  const passiveBlock = cardPassiveBlock(instanceOrRef);
   // Ramp (SPEC §4.3): a card whose base or upgrade grows with its uses; the run-wide count rides on the instance.
   const hasRamp = mayRamp(definition);
   const playsEver = rampsByRun(definition) ? playsEverOf(instanceOrRef) : 0;
-  if (!hasRamp && !upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
+  if (!hasRamp && !upgradeCount(instanceOrRef) && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -643,7 +642,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${upgradeSignature(instanceOrRef)}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|pe${playsEver}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -695,8 +694,6 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   // bonus, adds 1 to the card's primary number, so the play, the preview and
   // the card face all read the same value.
   if (!usesAbilityGrade && (rank > 1 || skillBonus > 0)) result = applyCardRank(result, rank, skillBonus);
-  // A passive tag's Block (SPEC §13.4o) lands on the finished face too.
-  if (passiveBlock > 0) result = applyPassiveBlock(result, passiveBlock);
   // Ramp lands last, after rank and upgrade growth, so the base amount it wraps is still a plain number.
   if (result.ramp) result = deepFreeze(applyRamp(result, playsEver, tagService(registries).idsOf('card', result)));
   cache.set(key, result);
@@ -711,33 +708,6 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
 export function cardSkillBonus(instance) {
   const bonus = instance && instance.skillBonus;
   return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
-}
-
-/**
- * cardPassiveBlock(instance) → the Block the run's passive tags add to the
- * instance (SPEC §13.4o), 0 when absent. Derived, never chosen: `skills.js
- * stampSkillBonuses` writes it from the run's skill feats.
- */
-export function cardPassiveBlock(instance) {
-  const bonus = instance && instance.passiveBlock;
-  return Number.isInteger(bonus) && bonus > 0 ? bonus : 0;
-}
-
-/**
- * passiveBlockIndex(card) → the effect a passive Block lands on: the card's
- * first unconditional Block with a numeric amount, or -1. Once per card, so a
- * card with two Blocks gains it once.
- */
-export function passiveBlockIndex(card) {
-  return ((card && card.effects) || []).findIndex((effect) => effect && !effect.if && effect.op === 'block' && typeof effect.amount === 'number');
-}
-
-/** applyPassiveBlock(card, amount) → the face with `amount` added to that Block. */
-export function applyPassiveBlock(card, amount) {
-  const index = passiveBlockIndex(card);
-  if (index === -1 || !amount) return card;
-  const effects = card.effects.map((effect, i) => (i === index ? { ...effect, amount: effect.amount + amount } : effect));
-  return deepFreeze({ ...card, effects });
 }
 
 /**

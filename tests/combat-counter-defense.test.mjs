@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { persistedEventLog } from '../src/model/runStorage.js';
 import { contentBundle } from '../src/content/index.js';
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
@@ -83,27 +82,4 @@ test('older unprimed Counter intent still resolves its ordinary Block payload', 
   finishTurn(combat);
   assert.equal(combat.enemies[0].block, 9);
   assert.deepEqual(blockEvents(combat).map(event => event.amount), [9, 2, 9]);
-});
-
-test('capture conditional Counter values after payment, before their own support', () => {
-  const registries = createRegistries(legacyContentBundle);
-  for (const cardId of ['guardCounter', 'riposte']) for (const block of [0, 2]) {
-    const actor = { ...player(), deck: [{ instanceId: 'counter', cardId }] };
-    const options = { registries, rng: createRng(340), enemyIds: ['wanderingSoldier'] };
-    const combat = createCombat({ ...options, player: actor });
-    const entity = combat.player;
-    const actionsBefore = entity.energy;
-    entity.block = block;
-    dispatch(combat, { type: 'playCard', cardInstanceId: 'counter' });
-    const label = `solo ${cardId} Block${block}`;
-    // Both counters cost 1 SP under the cost formula (SPEC §4.3a), so their numbers are the authored ones.
-    assert.equal(entity.combatCounter.damage, cardId === 'guardCounter' ? (block ? 10 : 4) : 6, label);
-    assert.equal(entity.combatCounter.poiseDamage, cardId === 'riposte' ? (block ? 4 : 0) : 1, label);
-    assert.equal(entity.energy, actionsBefore - resolveCard(registries, { cardId }).cost, label);
-    assert.equal(entity.block, block + 6, `${label}: protection resolves after conditional capture`);
-    const paid = combat.eventLog.findIndex(event => event.type === 'energySpent');
-    const armed = combat.eventLog.findIndex(event => event.type === 'combatCounterArmed' && event.sourceId === entity.id);
-    const support = combat.eventLog.findIndex(event => event.type === 'blockGained' && event.targetId === entity.id);
-    assert.ok(paid >= 0 && armed > paid && support > armed, `${label}: payment, capture, support order`);
-  }
 });

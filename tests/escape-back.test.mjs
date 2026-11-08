@@ -13,7 +13,7 @@
 //   node --test tests/escape-back.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 
 // ---- the fixture: a browser's keydown path over the kit DOM -----------------
 let dom = null;

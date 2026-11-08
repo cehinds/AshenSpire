@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { rewardDom } from './helpers/reward-dom.mjs';
+import { rewardDom } from './helpers/dom.mjs';
 
 // The quick menu carries a Console row in every context; its action is the session console viewer.
 test('menuRows offers Console in the map, combat and overlay menus, in the comfort band before the armoury rows', async () => {

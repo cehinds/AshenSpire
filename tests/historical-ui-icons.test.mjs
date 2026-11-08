@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { withKitDom } from './helpers/kit-dom.mjs';
+import { withKitDom } from './helpers/dom.mjs';
 import { HISTORICAL_UI_GLYPHS, uiIconId, uiIconGlyph } from '../src/content/uiIcons.js';
 import { engravedIcon, engravedIconHtml, engravedIconUrl, engravedMaskUrl } from '../src/ui/components/engravedIcon.js';
 import { glyph, html } from '../src/ui/kit/index.js';

@@ -3,10 +3,10 @@ import { el, button } from '../kit/index.js';
 import { modalHead, modalFooter, bindModalDismiss } from './modalShell.js';
 import { renderCard } from './card.js';
 import { t } from '../strings.js';
-import { renderBookArt, bookSymbolUrl } from './bookArt.js';
-import { featById } from '../../model/feats.js';
+import { renderBookArt } from './bookArt.js';
 import { bookLessonCard } from '../../model/bookLearning.js';
 import { learnedClassIds } from '../../model/classLibraryState.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 let activeClose = null;
 
@@ -16,7 +16,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   let choice = plan.def?.learnClass ? plan.lessons[0] : null;
   let release = null;
   const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: 'book-learning' } });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-learning-title', tabindex: '-1', dataset: { component: UI.bookLearning } });
   const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
   activeClose = close;
   const head = modalHead({ title: t('book.read.title', { name: plan.def?.name || id }), titleId: 'book-learning-title', onClose: close });
@@ -43,7 +43,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
   };
   const draw = () => {
     summary.textContent = plan.def?.learnClass
-      ? t(plan.xp === 0 ? 'book.read.masteryClassSummary' : 'book.read.classSummary', { xp: plan.xp, card: plan.def.combatCardChance || 0, feat: plan.def.featChance || 0 })
+      ? t(plan.xp === 0 ? 'book.read.masteryClassSummary' : 'book.read.classSummary', { xp: plan.xp, card: plan.def.combatCardChance || 0 })
       : t(plan.xp === 0 ? 'book.read.masterySummary' : 'book.read.summary', { xp: plan.xp });
     choices.replaceChildren();
     const query = search.value.trim().toLowerCase();
@@ -94,7 +94,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, settin
 function showClassBookReceipt({ registries, def, receipt }) {
   activeClose?.();
   const veil = el('div', { class: 'modal-veil book-learning-veil' });
-  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: 'book-receipt' } });
+  const panel = el('section', { class: 'modal book-learning-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'book-receipt-title', tabindex: '-1', dataset: { component: UI.bookReceipt } });
   let release;
   const close = () => { release?.(); veil.remove(); if (activeClose === close) activeClose = null; };
   activeClose = close;
@@ -108,12 +108,7 @@ function showClassBookReceipt({ registries, def, receipt }) {
     body.append(renderCard(registries, { cardId: receipt.bonuses.card.id, upgraded: false }, { inspectReadOnly: true }));
     if (receipt.bonuses.card.destination === 'sideboard') body.append(el('p', { text: t('book.read.sideboard') }));
   }
-  if (receipt.bonuses.feat) body.append(
-    el('img', { src: bookSymbolUrl('feat'), alt: '', width: 72, height: 72 }),
-    el('p', { text: t('book.read.featAwarded', { name: receipt.bonuses.feat.name }) }),
-    el('p', { text: featById(receipt.bonuses.feat.id).description }),
-  );
-  if (!receipt.bonuses.card && !receipt.bonuses.feat) body.append(el('p', { text: t('book.read.noBonus') }));
+  if (!receipt.bonuses.card) body.append(el('p', { text: t('book.read.noBonus') }));
   const done = button({ label: t('book.read.done') }); done.addEventListener('click', close);
   panel.append(modalHead({ title: t('book.read.complete'), titleId: 'book-receipt-title', onClose: close }), body, modalFooter({ primary: done }));
   veil.append(panel); document.body.append(veil);

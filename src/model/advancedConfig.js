@@ -187,11 +187,14 @@ const RETIRED_LEGACY_ROW_KEYS = new Set([
   'rewardTreasureArmaments', 'rewardTreasureRelics',
   'rewardLevelFeats', 'rewardLevelClassTree',
 ]);
+// A class book's feat chance (`gameConfig.consumables.<book>.featChance`) went
+// with the feats: the key is per book, so it is matched by shape.
+const RETIRED_BOOK_FEAT_CHANCE = /^(?:settings\.)?gameConfig\.consumables\.[A-Za-z0-9_]+\.featChance$/;
 const RETIRED_LEGACY_ROWS_WARNING = 'Settings for the removed legacy reward and shop menus were left out. Everything else was kept.';
 
 /** withoutRetiredLegacyRows(entries, warnings) → the entries without the removed reward and shop rows, one warning. */
 function withoutRetiredLegacyRows(entries, warnings = null) {
-  const kept = entries.filter(([key]) => !RETIRED_LEGACY_ROW_KEYS.has(bareSetting(key)));
+  const kept = entries.filter(([key]) => !RETIRED_LEGACY_ROW_KEYS.has(bareSetting(key)) && !RETIRED_BOOK_FEAT_CHANCE.test(key));
   if (kept.length !== entries.length && Array.isArray(warnings)) warnings.push(RETIRED_LEGACY_ROWS_WARNING);
   return kept;
 }

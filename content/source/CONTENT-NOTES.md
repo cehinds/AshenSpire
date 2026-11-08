@@ -87,7 +87,7 @@ Starstone combo engine (SPEC §5.1 identity) · Herald: blood economy powers (SP
 
 - (section) Constantine's words, 2026-08-06: build-up to a threshold → percent-based damage as ITS OWN PROC → the build-up resets to zero → tag-gated resistance for a period. EVERY number in the proc, resist and exposure rows is PROVISIONAL — a first pick made against the sim (falsifier: `--policy=reaverkit n=1000`), marked so his hands can reach it. Readings stated where a word allowed more than one: `burstPercent` is percent of the PROC TARGET'S max HP (the reading the old meter already shipped); `poiseDamage` is a fixed amount PER PROC (the per-application alternative is a knob away if his intent differs).
 - (section) DELTA vs the shipped meter, stated: the old bleed carried overflow and escalated its threshold ×1.5 per burst; the proc vocabulary resets the build-up to zero (overflow dropped) at a CONSTANT threshold — "then the threshold resets to zero", his words.
-- **bleed** — `proc.threshold` 7 is PROVISIONAL: Rune's sim pick at Constantine's word ("let rune pick the threshold against the sim"): the smallest value whose reaverkit n=1000 CI fully clears the [1.4, 3.2] datum band; sweep table in tools/results/sweep-bleed-threshold.md. Was 12 (carried from the shipped meter) — his hands stay free. `burstPercent` 15 (% of target max HP), `burstMin` 8 and `burstMax` 35 are carried from the old meter (PROVISIONAL); `poiseDamage` 3 is a fixed poise damage per proc (new, his direction). `resistance.tags` (beast, humanoid): flesh clots; undead/construct/spirit don't (PROVISIONAL).
+- **bleed** — `proc.threshold` 7 is PROVISIONAL: Rune's sim pick at Constantine's word ("let rune pick the threshold against the sim"): the smallest value whose reaverkit n=1000 CI fully clears the [1.4, 3.2] datum band; sweep table in docs/balance-sims/sweep-bleed-threshold.md. Was 12 (carried from the shipped meter) — his hands stay free. `burstPercent` 15 (% of target max HP), `burstMin` 8 and `burstMax` 35 are carried from the old meter (PROVISIONAL); `poiseDamage` 3 is a fixed poise damage per proc (new, his direction). `resistance.tags` (beast, humanoid): flesh clots; undead/construct/spirit don't (PROVISIONAL).
 - **frost** — `tint` `#7fa8c9` is the frost swatch already in balance.palette. `threshold` 10, `burstMin` 4, `burstMax` 20 are PROVISIONAL; `burstPercent` 8 is smaller than bleed, his direction. `effects`: his direction is damage debuff + vulnerability/weakness to tagged (non-physical) attacks; Weak is the shipped damage debuff, the `frostExposed` row carries the tag-scoped vulnerability. `resistance.tags` (beast, humanoid): warm-blooded shake it off (PROVISIONAL).
 - **insanity** — NOT `madness`: madness is a player economy drawback (relic cost — lose HP, gain Energy, clears); insanity is an enemy-affliction threshold proc. Two words, two mechanics, on purpose — binding them would break the madness relics. Flagged for the collapse check at review. `tint` `#a06bd0` is deliberately NOT `var(--gold)`: the poise bar is gold, and an insanity meter sitting beside it read as a second poise bar (Sunna's PX flag). `threshold` 14 is the hardest to fill of the three; `burstPercent` 18 is the highest percent and `poiseDamage` 8 the highest poise damage, his direction (all PROVISIONAL, as are `burstMin` 10 and `burstMax` 40). `stagger: true` is a direct stagger on proc — guaranteed, bypasses the bar. `resistance.tags` (humanoid, spirit): minds harden; beasts/constructs have none to break (PROVISIONAL).
 - **bleedResist**, **frostResist**, **insanityResist** — `decay.duration` 2 (turns of resistance) and `resists.percent` 50 (blocks half of incoming points) are PROVISIONAL.
@@ -1980,7 +1980,7 @@ _No comments were written beside these numbers in the old balance.js._
   but the under-model track is 84.6 px at 390x844, so most of the roster
   lands on the 16 px floor and stops encoding anything.
   
-  MEASURED, all 19 enemies, `node tools/hudbars.mjs --model-scale`:
+  MEASURED, all 19 enemies, `node tools/attic/hudbars.mjs --model-scale`:
   15 of 38 bars (39 %) sit ON the floor, and 13 of the 19 HP bars (68 %) do
   — every enemy at or under 60 HP renders the same length as every other.
   A scale two thirds of whose values are pinned to its minimum is not a
@@ -2475,3 +2475,13 @@ _No comments were written beside these numbers in the old balance.js._
 _No comments were written beside these numbers in the old balance.js._
 
 - **`gearRequirements`** — not in the JSON: `balance.js` puts the shared `progression/gear.js` table second, after `version`, and writes the `gearRequirements.<i>.level` sentences (computed from each row) right after the `version` note.
+
+## enemyBodyLandmarks.json
+
+The old `src/content/enemyBodyLandmarks.js` header, kept here because JSON has no comments.
+The data has no generator; it is hand-reviewed, so edit `content/source/enemyBodyLandmarks.json`
+directly and re-run `node tools/content-build.mjs`.
+
+- Semantic head/body and authored floor landmarks in source raster pixels.
+- Per-pose visual estimates reviewed on source-raster grids; no alpha/idle fallback.
+- Head anchors exclude weapons, smoke, halos, puppet bars and decorative crests.

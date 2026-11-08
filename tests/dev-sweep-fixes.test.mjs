@@ -20,7 +20,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 // Historical defect receipts retain their original character/combat contract.
-import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
+import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';

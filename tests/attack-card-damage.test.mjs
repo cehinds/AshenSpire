@@ -1,4 +1,3 @@
-import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -269,12 +268,12 @@ test('a malformed status or bonus container is reported by name', () => {
 // review): a staff that listed Stomp would deal it magical, so Stomp needs its
 // magical face, and a row on the magical side, like the staff's own Strike.
 test('a card a staff package deals resolves through the magical formulas', () => {
-  const staff = legacyContentBundle.equipment.armaments.find((piece) => piece.attackProfile === 'staffMagicAttack');
-  const armaments = legacyContentBundle.equipment.armaments.map((piece) => (piece === staff ? {
+  const staff = contentBundle.equipment.armaments.find((piece) => piece.attackProfile === 'staffMagicAttack');
+  const armaments = contentBundle.equipment.armaments.map((piece) => (piece === staff ? {
     ...piece,
     weaponCardPackage: { compatibility: 'attack-v1', fillerAttackProfileId: 'staffMagicAttack', priorityAttackRefs: ['stomp'] },
   } : piece));
-  const bundle = { ...legacyContentBundle, equipment: { ...legacyContentBundle.equipment, armaments } };
+  const bundle = { ...contentBundle, equipment: { ...contentBundle.equipment, armaments } };
   const registries = createRegistries(bundle);
   const dealt = resolveCard(registries, { cardId: 'stomp', legacyAbility: true, profileId: 'staffMagicAttack' });
   assert.equal(cardIsMagical(dealt), true);

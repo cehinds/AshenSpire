@@ -4,23 +4,20 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { openCharacterSheet } from '../src/ui/screens/characterSheet.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { t } from '../src/ui/strings.js';
 
 const registries = createRegistries(contentBundle);
 
-test('Progression renders owned feats, keeps allocation separate from expansion, and commits only Done', () => {
+test('Progression keeps allocation separate from expansion, and commits only Done', () => {
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
     awardLevelXp(registries, run, xpToNext(registries, 1), { pointsPerLevel: 2 });
-    run.feats = ['fieldStudy'];
-    let changes = 0;
+        let changes = 0;
     const sheet = openCharacterSheet({ registries, run, onChange: () => changes++ });
-    const ownedFeat = sheet.panel.querySelector('[data-feat="fieldStudy"]');
-    assert.equal(ownedFeat.querySelector('.progression-feat-effect').textContent, 'Gain 10% more character XP from combat.');
-    assert.equal(ownedFeat.getAttribute('data-feat-owned'), 'true');
+    assert.equal(sheet.panel.querySelector('.progression-feats'), null, 'the Feats section is retired');
     const before = { ...run.attributes };
     const expand = sheet.panel.querySelector('.progression-attributes-toggle');
     expand.click();
@@ -53,18 +50,14 @@ test('Progression renders owned feats, keeps allocation separate from expansion,
   });
 });
 
-test('Skill and feat inspection render real card references and leave progression untouched', () => {
+test('Skill inspection renders real card references and leave progression untouched', () => {
   withModalDom(() => {
     const run = createRunState({ seed: 4242, classId: 'reaver', registries });
     const before = structuredClone(run);
     const sheet = openCharacterSheet({ registries, run, tab: 'skills' });
     sheet.panel.querySelector('[data-skill="item:blade"]').click();
     assert.ok(document.querySelector('.progression-associated-cards .card'));
-    const feat = document.querySelector('.progression-inspection .progression-feat-list button');
-    assert.ok(feat.querySelector('.progression-feat-effect').textContent.includes('critical hit'));
-    assert.ok(feat.querySelector('.progression-feat-tag'));
-    feat.click();
-    assert.ok(document.querySelectorAll('.progression-inspection').length >= 2);
+    assert.equal(document.querySelector('.progression-feat-list'), null, 'skill feats are retired');
     assert.deepEqual(run, before);
     for (const close of [...document.querySelectorAll('.modal-close')].reverse()) close.click();
   });
