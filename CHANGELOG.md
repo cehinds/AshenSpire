@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: the old impact beat order is gone** ([#2670](https://github.com/cehinds/AshenSpire/pull/2670), `0.7.4.40`). Removed an unused combat-playback order and its legacy timeline code; combat plays exactly as before.
 - **Preview builds recover after automatic updates** ([#2716](https://github.com/cehinds/AshenSpire/pull/2716), `0.7.4.40`). Automatically updated pull requests start a fresh preview build, while changes outside the build's generated metadata still fail validation.
 - **Behind the scenes: shorter game rules, merge train A** ([#2700](https://github.com/cehinds/AshenSpire/pull/2700), `0.7.4.38`). Lands #2683, #2684 and #2689 together. Nothing you play changes.
 - **Behind the scenes: shorter game rules, merge train D** ([#2704](https://github.com/cehinds/AshenSpire/pull/2704), `0.7.4.38`). Lands #2698, #2695 and #2699 together. Nothing you play changes.
