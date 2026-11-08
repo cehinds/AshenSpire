@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Content checks reorganised** ([#2725](https://github.com/cehinds/AshenSpire/pull/2725), `0.7.4.46`). The content validator is now one small check per content section; it reports exactly the same problems, and nothing you play changes.
 - **Loadout code reorganised** ([#2708](https://github.com/cehinds/AshenSpire/pull/2708), `0.7.4.40`). The equipment and starting-deck rules now live in smaller files behind the same door; nothing you play changes, and old saves load exactly as before.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
 - **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.44`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.

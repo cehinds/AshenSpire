@@ -756,7 +756,7 @@ if (SELFTEST) {
       {
         // One door learns a word the other does not.
         name: 'the boot door learns a resource the resolver never heard of',
-        file: 'src/model/validate.js',
+        file: 'src/model/validate/schemaWalks.js',
         find: "const resourceIds = new Set(['hp', 'mana', 'stamina']);",
         replace: "const resourceIds = new Set(['hp', 'mana', 'stamina', 'poise']);",
         expectRed: /TWO RESOURCE VOCABULARIES/,
@@ -853,7 +853,7 @@ if (SELFTEST) {
       {
         // A dispatch site quietly stops handling one tag.
         name: 'a dispatch site drops one tag and lets it fall through',
-        file: 'src/model/validate.js',
+        file: 'src/model/validate/tokenBindings.js',
         find: `else if (row.tag === '${SCHOOL}') add(`,
         replace: 'else if (false) add(',
         expectRed: /PARTIAL DISPATCH/,
