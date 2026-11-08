@@ -449,6 +449,13 @@ function jsPrintedRefs(clean) {
       out.push({ tool, said: flat, commandForm: isCommandForm(flat, tool) });
     }
   }
+  // A `hint: '...'` field is printed text too: tests/run-node.mjs keeps each
+  // check's hint in its table row and prints it from one console.log, so the
+  // literal is held to the same rule as the call that used to carry it.
+  for (const m of clean.matchAll(/\bhint:\s*('[^'\n]*'|"[^"\n]*"|`[^`]*`)/g)) {
+    const flat = m[0].replace(/\s+/g, ' ');
+    for (const tool of flat.match(TOOL_REF) || []) out.push({ tool, said: flat, commandForm: isCommandForm(flat, tool) });
+  }
   return out;
 }
 
