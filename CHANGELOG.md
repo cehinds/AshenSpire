@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-07
 
+- **Behind the scenes: shorter game rules, merge train E** ([#2705](https://github.com/cehinds/AshenSpire/pull/2705), `0.7.4.30`). Lands #2701 and #2696 together, and drops the rules for the removed World Journey and legacy dungeons. Nothing you play changes.
 - **Behind the scenes: shorter game rules, world journey** ([#2696](https://github.com/cehinds/AshenSpire/pull/2696), `0.7.4.30`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: shorter game rules, interface** ([#2701](https://github.com/cehinds/AshenSpire/pull/2701), `0.7.4.30`). Part of the rules document is rewritten as short bullets with the same rules. Nothing you play changes.
 - **Behind the scenes: a layer-rank guard** ([#2659](https://github.com/cehinds/AshenSpire/pull/2659), `0.7.4.30`). A test now fails any new import that points up the layer order, and the architecture map lists every layer. Nothing you play changes.
