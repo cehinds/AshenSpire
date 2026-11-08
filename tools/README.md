@@ -115,6 +115,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `displayfirst.mjs` | displayfirst — FULLSCREEN IS THE FIRST THING A PLAYER MEETS UNDER | wf ci; tests advanced-settings-groups; tools flask-menu-probe, hudparity, plantsites-baseline.json; docs docs/framework-migration-checklist.md; other src/ui/components/settingsPreview.js, src/ui/screens/settings.js |
 | `doorplant.mjs` | doorplant — the same-door selftest harness: plant a known-bad in a | wf ci, dev-preview; tests doorplant-shard, doorplant-source-roots, motion-probe-alternative +1; tools about-changelog, actionreach, armoury-picked-up +59; docs DEVELOPER.md, docs/FINISH.md |
 | `doublescroll.mjs` | doublescroll — TWO THUMBS SIDE BY SIDE IN ONE DOOR. Constantine, | wf ci |
+| `dynamic-imports.mjs` | tools/dynamic-imports.mjs — find dynamic import() calls in module source, in code only (not comments or strings). | tests bundle-dynamic-import; tools bundle, bundle-cycles |
 | `enemy-back-motion-normalize.py` | Conservative grid-aware export. Never redraw, mask or overwrite master artwork. | (none) |
 | `enemy-back-normalize.py` | Mechanical proposal export: fixed cells, one scale, no inferred pixels. | (none) |
 | `enemy-decks-convert.mjs` | Re-runnable conversion: legacy weighted 'moves' enemies (src/content/enemies/act1-3.js) -> enemies-module | docs docs/plans/enemy-decks.md, engine/modules/characters/guide.md, engine/modules/enemies/guide.md |

@@ -36,6 +36,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **Unused tools moved to the attic** ([#2715](https://github.com/cehinds/AshenSpire/pull/2715), `0.7.4.40`). 95 tool scripts nothing runs any more moved to the tools attic, still runnable from there, and the tools check now fails on any new unused tool; nothing you play changes.
 - **Shot states moved out of the boot file** ([#2674](https://github.com/cehinds/AshenSpire/pull/2674), `0.7.4.40`). Developer screenshot poses now live in their own module; the game plays the same.
+- **Build follows on-demand imports** ([#2710](https://github.com/cehinds/AshenSpire/pull/2710), `0.7.4.40`). The standalone build can now load a module only when it is first needed; the game plays the same.
 - **Display settings moved out of the boot file** ([#2690](https://github.com/cehinds/AshenSpire/pull/2690), `0.7.4.40`). Interface scale, tap size and card size now apply from their own module; the game looks and plays the same.
 - **Faster, steadier tests** ([#2711](https://github.com/cehinds/AshenSpire/pull/2711), `0.7.4.40`). The tests share one fake page instead of four copies, and two slow tests wait for what they check instead of sleeping, so they finish sooner; nothing you play changes.
 - **Two dead CI workflows removed** ([#2712](https://github.com/cehinds/AshenSpire/pull/2712), `0.7.4.40`). Two automated checks that could never run (their branches are gone) were deleted, and the three tools only they ran moved to the attic; nothing you play changes.
