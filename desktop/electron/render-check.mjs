@@ -46,8 +46,9 @@ const launchEnv = {
   SPIKE_MODE: '',
   SPIKE_USERDATA: '',
 };
+/** @type {import('node:child_process').SpawnOptions} */
 const launchOptions = {
-  stdio: /** @type {'ignore'} */ ('ignore'),
+  stdio: 'ignore',
   env: launchEnv,
 };
 const proc = spawn('xvfb-run', launchArgs, launchOptions);
@@ -145,7 +146,9 @@ function send(method, params = {})
   const messageId = ++lastMessageId;
   const message = { id: messageId, method, params };
   socket.send(JSON.stringify(message));
-  return new Promise((resolve) => pendingReplies.set(messageId, { resolve }));
+  /** @type {Promise<any>} */
+  const reply = new Promise((resolve) => pendingReplies.set(messageId, { resolve }));
+  return reply;
 }
 
 /**
@@ -155,6 +158,7 @@ function send(method, params = {})
 async function evaluateInPage(expression)
 {
   const params = { expression, returnByValue: true };
+  /** @type {any} */
   const reply = await send('Runtime.evaluate', params);
   return reply.result.value;
 }
