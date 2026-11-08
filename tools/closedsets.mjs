@@ -289,7 +289,7 @@ function selftest() {
   // values as an inline literal instead. Take the live reader out of the
   // validator and put the literal back exactly as it stood at cd3da94.
   {
-    const rel = 'src/model/validate.js';
+    const rel = 'src/model/validate/effectGrammar.js';
     const original = read(rel);
     write(rel, original
       .replace('!PILES.includes(eff.pile)', "!['draw', 'hand', 'discard', 'exhaust'].includes(eff.pile)")

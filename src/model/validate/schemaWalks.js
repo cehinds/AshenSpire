@@ -155,7 +155,9 @@ export function schemaWalkProblems(b, err, ctx) {
         ? ['tag', 'resource', 'amount']
         : row.tag === 'resource.attributeTier'
           ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
-          : ['tag', 'school', 'amount'];
+          : row.tag === 'damage.school.flat'
+            ? ['tag', 'school', 'amount']
+            : [];
       // `pointsPerTier` is ALLOWED and no longer REQUIRED on an attributeTier
       // row: omitted, it inherits the derived rule it folds into
       // (model/relicModifiers.js). It stayed required while the tier size was a
