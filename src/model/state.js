@@ -1192,12 +1192,8 @@ function checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentP
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
-  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+/** Phase: attribute mode, seats, zones, skills, sigils, consumables and per-card upgrade steps. */
+function checkAttributeModeAndInventories(run, problems) {
   problems.push(...collectedCardProblems(run));
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
@@ -1216,6 +1212,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   for (const zone of ['deck', 'sideboard', 'collection']) {
     if (Array.isArray(run[zone])) run[zone].forEach((card, i) => { if (card && typeof card === 'object') problems.push(...upgradeStepsProblems(card, `${zone}[${i}]`)); });
   }
+  return attributesAbsent;
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
