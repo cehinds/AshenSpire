@@ -1545,6 +1545,63 @@ function checkPendingLevelRewards(run, problems, pending) {
   }
 }
 
+/** Phase: card-missed flag, sigil drop, class drafts and the chosen draft card and node maps. */
+function checkPendingDraftChoices(run, problems, pending) {
+  if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+    problems.push('pendingReward.rewards.cardMissed must be a boolean');
+  }
+  // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
+  if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
+    problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
+  }
+  {
+    // The map may be absent (a save written before it existed); the rule
+    // that a Taken draft or level card (SPEC §15.1) names its card holds
+    // all the same, as the class-draft rule below does.
+    const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
+    else {
+      const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
+      for (const [key, cardId] of Object.entries(chosen)) {
+        const draft = drafts.find((d) => d.key === key);
+        if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
+      }
+      for (const draft of drafts) {
+        if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
+      }
+    }
+  }
+  if (pending.rewards?.classDrafts !== undefined) {
+    const drafts = pending.rewards.classDrafts;
+    if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
+    else drafts.forEach((d, i) => {
+      const p = `pendingReward.rewards.classDrafts[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
+      if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
+    });
+  }
+  {
+    // The map may be absent (a save written before it existed); the rule
+    // that a Taken draft names its node holds all the same.
+    const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
+    else {
+      const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
+      for (const [key, nodeId] of Object.entries(chosen)) {
+        const draft = drafts.find((d) => d.key === key);
+        if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
+      }
+      for (const draft of drafts) {
+        if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
+      }
+    }
+  }
+}
+
 /** Phase: the pending reward offer, its claims, drafts and chosen rows. */
 function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
@@ -1556,59 +1613,7 @@ function checkPendingReward(run, problems) {
       checkPendingMilestoneAndSkillDrafts(run, problems, pending);
       checkPendingRankUpsFeatsAttributes(run, problems, pending);
       checkPendingLevelRewards(run, problems, pending);
-      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
-        problems.push('pendingReward.rewards.cardMissed must be a boolean');
-      }
-      // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
-      if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
-        problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
-      }
-      {
-        // The map may be absent (a save written before it existed); the rule
-        // that a Taken draft or level card (SPEC §15.1) names its card holds
-        // all the same, as the class-draft rule below does.
-        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
-        else {
-          const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
-          for (const [key, cardId] of Object.entries(chosen)) {
-            const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
-          }
-          for (const draft of drafts) {
-            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
-          }
-        }
-      }
-      if (pending.rewards?.classDrafts !== undefined) {
-        const drafts = pending.rewards.classDrafts;
-        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
-        else drafts.forEach((d, i) => {
-          const p = `pendingReward.rewards.classDrafts[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
-          if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
-        });
-      }
-      {
-        // The map may be absent (a save written before it existed); the rule
-        // that a Taken draft names its node holds all the same.
-        const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
-        else {
-          const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
-          for (const [key, nodeId] of Object.entries(chosen)) {
-            const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
-          }
-          for (const draft of drafts) {
-            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
-          }
-        }
-      }
+      checkPendingDraftChoices(run, problems, pending);
       if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
           && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
         problems.push('pendingReward.chosenCardId must be null or a non-empty string');
