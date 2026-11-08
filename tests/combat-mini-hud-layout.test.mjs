@@ -74,3 +74,13 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
     assert.match(tokens['--hud-mini-bar-height'], /^\d+px$/, `${form} bar height`);
   }
 });
+
+// Codex on #2709: a squeezed +N defense overflow must carry how many effects it stands for, so the tray's +N counts them all.
+test('the +N defense overflow badge carries the number of effects it hides', () => withKitDom(() => {
+  const row = combatHealthRow(hpBar(40, 100), { defense: 0, evasion: 2, ward: 4, precision: 3, counterStacks: 2, reflectStacks: 1 },
+    { tooltips: false, persistent: true, poise: poiseBar(0, 0), statuses: null });
+  const overflow = row.querySelector('.combat-health-overflow');
+  assert.ok(overflow && !overflow.hidden, 'five defense badges overflow');
+  // Evade and Ward show; Precision, Counter and Reflect fold into +3.
+  assert.equal(overflow.dataset.count, '3');
+}));

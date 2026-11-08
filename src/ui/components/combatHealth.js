@@ -61,6 +61,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     node.className = `combat-health-badge combat-health-${badge.kind}${badge.ward ? ' combat-health-poise-ward' : ''}`;
     if (badge.ward) node.dataset.ward = String(badge.wardStacks);
     node.dataset.defenseKind = badge.kind;
+    // The +N overflow stands for several effects; a squeezed row counts all of them, not the one node.
+    if (badge.kind === 'overflow') node.dataset.count = String(badge.count || 0);
     // Only an empty persistent slot is hidden. (`badge.hidden` on the +N overflow is its list of summarized badges.)
     if (badge.placeholder) node.hidden = true;
     node.setAttribute('aria-label', badge.kind === 'overflow' ? badge.text : `${badge.label} ${badge.value}`);

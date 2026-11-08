@@ -243,7 +243,7 @@ export function fitBadgeRowTray(tray) {
   let squeezed = 0;
   if (tray.children.length && iconPx > 0) {
     const shown = badges.filter(badge => !badge.hidden);
-    while (tray.getBoundingClientRect().width < iconPx - 0.5 && shown.length) { shown.pop().dataset.squeezed = 'true'; squeezed++; }
+    while (tray.getBoundingClientRect().width < iconPx - 0.5 && shown.length) { const gone = shown.pop(); gone.dataset.squeezed = 'true'; squeezed += Number(gone.dataset.count) || 1; }
   }
   fitIconTray(tray, tray.getBoundingClientRect().width, { iconPx, extraHidden: squeezed });
 }
