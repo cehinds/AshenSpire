@@ -93,7 +93,7 @@ test('the painted Reaver swing obeys the same cap, and an uncapped call is uncha
 test('a screen with onLeadApplied gets the lead\'s display at the swing, and the rest after, each once', () => {
   // Drive the shipped timeline headlessly with a stand-in window and DOM.
   const src = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(leadApplied\) safe\(\(\) => ctx\.onLeadApplied\(\{ \.\.\.beat, events: beat\.lead \}\)\)/);
-  assert.match(src, /ctx\.onBeatApplied\(leadApplied \? \{ \.\.\.beat, events: beat\.events\.filter\(\(e\) => !lead\.has\(e\)\) \} : beat\)/,
+  assert.match(src, /visualSafe\(\(\) => ctx\.onLeadApplied\?\.\(\{ \.\.\.beat, events: costOf\(beat\) \}\)\)/, 'the lead (cost) events are applied at the swing');
+  assert.match(src, /ctx\.onBeatApplied\?\.\(costOf\(beat\)\.length && typeof ctx\.onLeadApplied === 'function' \? \{ \.\.\.beat, events: beat\.events\.filter\(e => !costOf\(beat\)\.includes\(e\)\) \} : beat\)/,
     'the rest of the beat excludes the lead only when the lead was already applied');
 });

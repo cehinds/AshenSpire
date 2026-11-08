@@ -11,7 +11,7 @@
 
 const ID = /[\w$]/;
 
-export function scanDynamicImports(src) {
+export function scanDynamicImports(src, { comments } = {}) {
   const out = [];
   const n = src.length;
   let i = 0;
@@ -52,8 +52,18 @@ export function scanDynamicImports(src) {
 
   while (i < n) {
     const c = src[i];
-    if (c === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; continue; }
-    if (c === '/' && src[i + 1] === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; continue; }
+    if (c === '/' && src[i + 1] === '/') {
+      const start = i;
+      while (i < n && src[i] !== '\n') i++;
+      comments?.push([start, i]);
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      const start = i, e = src.indexOf('*/', i + 2);
+      i = e < 0 ? n : e + 2;
+      comments?.push([start, i]);
+      continue;
+    }
     if (c === '"' || c === "'") { skipString(c); prev = 'a'; prevWord = ''; continue; }
     if (c === '`') { i++; templateText(); prev = 'a'; prevWord = ''; continue; }
     if (c === '/') {
@@ -128,10 +138,10 @@ export function scanDynamicImports(src) {
 
 // commentRanges(src) -> [[start, end), ...] of the line and block comments.
 //
-// The backstop's mask, deliberately NOT scanDynamicImports' lexer: it has no
-// regex-versus-division guess. A `/` that is not the start of `//` or `/*` is
-// code, so when this is unsure the text counts as code and the backstop fails
-// the build rather than excusing a native import(). A backslash skips the next
+// The backstop intersects this simple mask with the scanner's comment spans.
+// This mask has no regex-versus-division guess, while the scanner understands
+// regex character classes and nested templates. Only spans both agree on are
+// exempt: uncertainty counts as code and fails the build. A backslash skips the next
 // character (so `\/*` inside a regex is not a comment), and a '…' or "…" string
 // ends at an unescaped newline, so a stray quote costs at most one line.
 export function commentRanges(src) {
@@ -170,5 +180,8 @@ export function commentRanges(src) {
     }
     i++;
   }
-  return out;
+  const recognized = [];
+  scanDynamicImports(src, { comments: recognized });
+  const spans = new Set(recognized.map(([start, end]) => `${start}:${end}`));
+  return out.filter(([start, end]) => spans.has(`${start}:${end}`));
 }
