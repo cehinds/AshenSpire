@@ -1256,7 +1256,7 @@
   {
    "id": "A11",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
+   "read": "src/ui/screens/equipment.js and src/ui/components/armouryInventory.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
    "anchors": [
     "function inventoryBlock()",
     "box.dataset.filteredFor"
