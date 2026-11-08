@@ -341,7 +341,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 5. Splits
 
-- [ ] `main.js` → `src/dev/shotStates.js` with a `{ state: fn }` table (H4)
+- [x] `main.js` → `src/dev/shotStates.js` with a `{ state: fn }` table (H4) — #2674
 - [ ] `main.js` → `src/engine/rewardRolls.js`, pure in `(registries, run, rng, settings)` (H4)
 - [ ] `main.js` → `src/ui/displaySettings.js` (H4)
 - [ ] `main.js` → `src/engine/runPersistence.js` (H4)

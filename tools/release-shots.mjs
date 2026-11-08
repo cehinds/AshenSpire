@@ -77,7 +77,7 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -122,9 +122,19 @@ const SHAPES = [
 const EXCLUDED_STATES = {};
 
 /** The states the APP actually has, read from src/main.js — never retyped. */
+// The ?shot= states are declared in two places: the comparisons left in
+// src/main.js, and the table keys of src/dev/shotStates.js (the pose ladder
+// moved there; its entries read `    map: () => poseRunState('map'),`).
+function shotStateNames(mainSrc) {
+  const poses = resolve(ROOT, 'src', 'dev', 'shotStates.js');
+  const posesSrc = existsSync(poses) ? readFileSync(poses, 'utf8') : '';
+  const names = [...mainSrc.matchAll(/shotState === '([a-z]+)'/g), ...posesSrc.matchAll(/^ {4}([a-z]+): \(\) =>/gm)];
+  return [...new Set(names.map((m) => m[1]))].sort();
+}
+
 function appShotStates() {
   const src = readFileSync(resolve(ROOT, 'src', 'main.js'), 'utf8');
-  return [...new Set([...src.matchAll(/shotState === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  return shotStateNames(src);
 }
 
 // Each screen: how to reach it on the BUILT artifact, and the landmark that
