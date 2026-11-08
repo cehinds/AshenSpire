@@ -655,7 +655,7 @@ function selftest() {
     pushCount >= 3 && unwired.length === 0,
     unwired.length ? `unwired: ${unwired.join(', ')}` : `${pushCount} sites, all wired`);
   contract('equipment.js commit() re-syncs the chain (the talisman door)',
-    /function commit\(\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
+    /function commit\([^)]*\) \{[\s\S]{0,400}syncFlaskGrowth\(registries, run\)/.test(src('src/ui/screens/equipment.js')));
   contract('relicText derives the growth clause (card.js calls flaskGrowthClause — the tooltip cannot silently omit a live row)',
     /flaskGrowthClause\(/.test(src('src/ui/components/card.js')));
   // Every relicText CALL in the tree passes its registries — the wire that
