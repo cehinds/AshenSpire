@@ -1,7 +1,7 @@
 // Reaction rules version 2: the card trait projection (docs/combat-card-traits-contract.md).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyCardTraits, cardTier } from '../src/content/traitProjection.js';
+import { applyCardTraits, cardTier } from '../src/model/cardTraitProjection.js';
 import { CARD_TRAIT_RULES } from '../src/content/combatCardTraits.js';
 import { armamentCards } from '../src/content/cards/armaments.js';
 import { colorlessCards } from '../src/content/cards/colorless.js';

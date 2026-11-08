@@ -5,7 +5,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { playingCardModel, playingCardClasses } from '../src/model/playingCard.js';
 import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
-import { applyCardTraits } from '../src/content/traitProjection.js';
+import { applyCardTraits } from '../src/model/cardTraitProjection.js';
 
 const card = (maneuver, rank = 1, extra = {}) => ({ id: 'taxonomy-fixture', type: 'skill', rank,
   tags: ['camp:physical', `maneuver:${maneuver}`], effects: [], ...extra });

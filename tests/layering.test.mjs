@@ -62,8 +62,6 @@ const KNOWN_INVERSIONS = [
   'src/content/progression/cards.js -> src/model/combatCardProfile.js',
   'src/content/progression/feats.js -> src/model/classSkillFeatDescription.js',
   'src/content/progression/lessons.js -> src/model/combatCardProfile.js',
-  'src/content/traitProjection.js -> src/model/cardClassification.js',
-  'src/content/traitProjection.js -> src/model/combatCardProfile.js',
   // H2: framework optionDecision imports ui components; the ui side must import the framework instead
   'src/framework/optionDecision.js -> src/ui/components/holdconfirm.js',
   'src/framework/optionDecision.js -> src/ui/components/optionDecision.js',

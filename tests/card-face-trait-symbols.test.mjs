@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
-import { applyCardTraits } from '../src/content/traitProjection.js';
+import { applyCardTraits } from '../src/model/cardTraitProjection.js';
 import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 
 // The game draws a projected definition (reaction rules v2 traitValues) through the preview.

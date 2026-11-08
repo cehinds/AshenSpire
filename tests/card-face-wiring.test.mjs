@@ -5,7 +5,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard, cardDetailHtml, setHandFaceBudget } from '../src/ui/components/card.js';
 import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
-import { applyCardTraits } from '../src/content/traitProjection.js';
+import { applyCardTraits } from '../src/model/cardTraitProjection.js';
 import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { withKitDom } from './helpers/dom.mjs';
 

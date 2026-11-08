@@ -34,7 +34,7 @@ import { coreSmashClause } from './smashClause.js';
 import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from './combatExpansionCardProjection.js';
-import { applyCardTraits } from '../content/traitProjection.js';
+import { applyCardTraits } from './cardTraitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';

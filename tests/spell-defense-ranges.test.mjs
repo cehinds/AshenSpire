@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyCombatExpansionCard } from '../src/model/combatExpansionCardProjection.js';
 import { combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
-import { applyCardTraits } from '../src/content/traitProjection.js';
+import { applyCardTraits } from '../src/model/cardTraitProjection.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';

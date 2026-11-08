@@ -1,10 +1,11 @@
+// (Moved from src/content/traitProjection.js, M6.)
 // Reaction rules version 2: the card trait projection (docs/combat-card-traits-contract.md,
 // "Tags" and "Card picks"). A pure function of a card definition. It is applied
 // only when reaction rules version 2 is active; version 1 never sees these tags.
-import { actualCardRank } from '../model/cardClassification.js';
-import { combatProfileFor } from '../model/combatCardProfile.js';
-import { objectTagIds } from './tags.js';
-import { CARD_TRAIT_RULES } from './combatCardTraits.js';
+import { actualCardRank } from './cardClassification.js';
+import { combatProfileFor } from './combatCardProfile.js';
+import { objectTagIds } from '../content/tags.js';
+import { CARD_TRAIT_RULES } from '../content/combatCardTraits.js';
 
 // Tier T: the authored ability rank for graded (progression) cards, otherwise
 // min(5, floor(rank / 2)) of the card's resolved rank (1 when unranked, so T 0).

@@ -4,7 +4,7 @@ import { projectGameCard } from '../model/gameProfile.js';
 import { resolveCard } from '../model/registries.js';
 import { upcastCard } from '../model/upcasting.js';
 import { applyCombatExpansionCard } from '../model/combatExpansionCardProjection.js';
-import { applyCardTraits } from '../content/traitProjection.js';
+import { applyCardTraits } from '../model/cardTraitProjection.js';
 import { corruptedCardProjection } from './ashenBlight.js';
 
 export function resolveCombatCard(ctx, instance, { upcastTier, upcastRanks } = {}) {
