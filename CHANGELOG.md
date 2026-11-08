@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-08
 
+- **Behind the scenes: a map of where things live** ([#2732](https://github.com/cehinds/AshenSpire/pull/2732), `0.7.4.46`). A new guide, docs/CODE-MAP.md, says which file to edit for each common change and which command rebuilds it. Nothing you play changes.
 - **Behind the scenes: Visual Studio setup and live reload** ([#2726](https://github.com/cehinds/AshenSpire/pull/2726), `0.7.4.46`). Developers can run `npm run dev` for a page that reloads on save, and Visual Studio no longer reports type errors on the plain JavaScript. Nothing you play changes.
 - **Test runner tidied** ([#2681](https://github.com/cehinds/AshenSpire/pull/2681), `0.7.4.44`). The test runner's numbered checks are now one table run by one loop, and its fixture loading is shared; the same checks run and nothing you play changes.
 - **Save code reorganised** ([#2707](https://github.com/cehinds/AshenSpire/pull/2707), `0.7.4.44`). The save manager is now built from four smaller parts (archive, profile, shared profile copies, space reclaim). Saves, old saves and exported settings load exactly as before.
