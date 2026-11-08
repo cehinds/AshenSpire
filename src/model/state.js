@@ -465,11 +465,8 @@ export function characterLevelOf(run) {
   return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }
 
-export function initializeRunDerivedStats(run, registries, {
-  snapshot = undefined,
-  derivedStatOptions = {},
-  preserveDeficits = true,
-} = {}) {
+/** Phase: the inputs every initializeRunDerivedStats phase reads (and the run's equipment-profile snapshot). */
+function derivedStatContext(run, registries, snapshot, derivedStatOptions) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
   const effectiveAttributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
@@ -498,7 +495,12 @@ export function initializeRunDerivedStats(run, registries, {
   const existingIsCurrent = existing && existing.rulesetVersion >= 3 && existing.rulesetVersion <= currentRuleset;
   let restoredExisting = null;
   if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries, effectiveDerivedStatOptions));
+  return { effectiveAttributes, blightStaminaPenalty, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef, liveEquipmentMods };
+}
 
+/** Phase: equipment pool bonuses and deficits, inferred once for saves that predate them. */
+function inferEquipmentPools(run, ctx) {
+  const { effectiveAttributes, classDef, restoredExisting, liveEquipmentMods } = ctx;
   // Schema v4 and older persisted the resulting pools but not the equipment
   // contribution that produced them. Infer that contribution once from the
   // run's own immutable rule snapshot. A later content edit therefore cannot
@@ -552,7 +554,12 @@ export function initializeRunDerivedStats(run, registries, {
       throw new Error(`Persisted equipmentPoolDeficits.${field} must be a non-negative integer`);
     }
   }
+  return { hpEquipmentBonus, equipmentDeficitsAbsent };
+}
 
+/** Phase: the permanent max-HP residual, inferred once for saves that predate it. */
+function inferMaxHpAdjustment(run, ctx, hpEquipmentBonus) {
+  const { effectiveAttributes, classDef, restoredExisting } = ctx;
   // Schema v3 and older had no explanation for permanent max-HP reductions.
   // Infer the exact residual once from the old authoritative rule plus current
   // equipment. This preserves event curses instead of healing them away when
@@ -576,7 +583,11 @@ export function initializeRunDerivedStats(run, registries, {
   if (!Number.isInteger(run.maxHpAdjustment)) {
     throw new Error(`Persisted maxHpAdjustment must be an integer (got ${JSON.stringify(run.maxHpAdjustment)})`);
   }
+}
 
+/** Phase: persisted pools checked against the run's own derived-stat snapshot. */
+function validateDerivedSnapshot(run, ctx, hpEquipmentBonus) {
+  const { effectiveAttributes, blightStaminaPenalty, existingIsCurrent, restoredExisting, classDef } = ctx;
   if (existingIsCurrent && run.derivedStatRuleSnapshot) {
     const restored = restoredExisting;
     const expectedByKey = [
@@ -624,14 +635,11 @@ export function initializeRunDerivedStats(run, registries, {
       }
     }
   }
-  if (existingIsCurrent && run.derivedStatRuleSnapshot
-    && run.maxHp !== undefined && run.hp !== undefined
-    && run.maxMana !== undefined && run.mana !== undefined
-    && run.maxStamina !== undefined && run.stamina !== undefined
-    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
-    return run;
-  }
+}
 
+/** Phase: the host derived-stat receipt (tier-size resolution folded into the relic modifier receipt). */
+function resolveDerivedReceipt(run, registries, ctx) {
+  const { effectiveAttributes, effectiveDerivedStatOptions, existingIsCurrent, restoredExisting, classDef } = ctx;
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
   // THE HOST'S RESOLVED TIER SIZE, HANDED TO THE RECEIPT THAT HAS TO FOLD INTO
@@ -663,6 +671,12 @@ export function initializeRunDerivedStats(run, registries, {
       classDef,
       relicModifierReceipt,
     });
+  return receipt;
+}
+
+/** Phase: write the derived maxima onto the run and carry (or reset) the current pools. */
+function applyDerivedPools(run, receipt, ctx, hpEquipmentBonus, equipmentDeficitsAbsent, preserveDeficits) {
+  const { effectiveAttributes, blightStaminaPenalty, classDef } = ctx;
   const rules = receipt.rules;
   const hp = deriveStat(rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
   const mana = deriveStat(rules, 'mana', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
@@ -731,6 +745,31 @@ export function initializeRunDerivedStats(run, registries, {
       stamina: Math.max(0, run.maxStamina - run.stamina),
     };
   }
+}
+
+export function initializeRunDerivedStats(run, registries, {
+  snapshot = undefined,
+  derivedStatOptions = {},
+  preserveDeficits = true,
+} = {}) {
+  const ctx = derivedStatContext(run, registries, snapshot, derivedStatOptions);
+  const { existingIsCurrent } = ctx;
+
+  const { hpEquipmentBonus, equipmentDeficitsAbsent } = inferEquipmentPools(run, ctx);
+
+  inferMaxHpAdjustment(run, ctx, hpEquipmentBonus);
+
+  validateDerivedSnapshot(run, ctx, hpEquipmentBonus);
+  if (existingIsCurrent && run.derivedStatRuleSnapshot
+    && run.maxHp !== undefined && run.hp !== undefined
+    && run.maxMana !== undefined && run.mana !== undefined
+    && run.maxStamina !== undefined && run.stamina !== undefined
+    && run.energyMax !== undefined && run.drawPerTurn !== undefined) {
+    return run;
+  }
+
+  const receipt = resolveDerivedReceipt(run, registries, ctx);
+  applyDerivedPools(run, receipt, ctx, hpEquipmentBonus, equipmentDeficitsAbsent, preserveDeficits);
   return run;
 }
 
@@ -1032,8 +1071,68 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
+/** Phase: a saved fight snapshot must agree with the run's expanded-combat state. */
+function checkExpandedSnapshot(run, problems, snapshot, path, terminal = false) {
+  if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+  // An absent rangeState is an old active fight; never adopt the run policy here.
+  if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
+    && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
+  if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+  if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
+  else if (run.reactionRulesVersion === 2) {
+    // Core contact policy belongs to the fight: historical active fights keep
+    // their whole-root plan, while newly created fights use per-hit contacts.
+    // The run still owns every tuning field; snapshot validation separately
+    // restricts contactPolicy to the known optional value.
+    const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
+      && snapshot.gameProfile?.hash === run.gameProfile.hash
+      && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
+    const tuning = rules => {
+      if (!localContactPolicy) return rules;
+      const { contactPolicy, ...rest } = rules || {};
+      return rest;
+    };
+    if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
+  }
+  problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
+  const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
+  if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
+    && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
+  if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
+}
+
+/** Phase: a saved fight snapshot must agree with the run's enemy-knowledge state. */
+function checkKnowledgeSnapshot(run, problems, snapshot, path) {
+  if (!typeOk(snapshot, 'object')) return;
+  const knowledge = snapshot.enemyKnowledge;
+  if (!run.enemyKnowledgeRules) {
+    // Configured FixCore fights own their cached reads locally. They do not
+    // open the legacy run learning/Perception ledger or bank any knowledge.
+    // The caller still validates the complete combat snapshot above.
+    const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
+      && gameModule(run, 'effects')?.fixCoreVersion === 1
+      && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
+      && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
+      && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
+      && knowledge?.bankable === false && knowledge.encounter === null;
+    if (battleLocal) return;
+    if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
+    return;
+  }
+  if (!knowledge) {
+    problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
+    return;
+  }
+  if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
+  if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
+  if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
+  const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
+  const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
+  if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
+}
+
+/** Phase: the pinned profile, defeat notice and expanded-combat rule fields. */
+function checkProfileAndCombatRules(run, problems) {
   if (run.gameProfile) {
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
@@ -1065,62 +1164,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!Number.isSafeInteger(pools[field]) || pools[field] < (field === 'maxHp' ? 1 : 0)) problems.push(`ashenBlightBasePools.${field} must be a valid unboosted maximum`);
     }
   }
-  const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
-    if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
-    // An absent rangeState is an old active fight; never adopt the run policy here.
-    if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
-      && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
-    if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
-    if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
-    else if (run.reactionRulesVersion === 2) {
-      // Core contact policy belongs to the fight: historical active fights keep
-      // their whole-root plan, while newly created fights use per-hit contacts.
-      // The run still owns every tuning field; snapshot validation separately
-      // restricts contactPolicy to the known optional value.
-      const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
-        && snapshot.gameProfile?.hash === run.gameProfile.hash
-        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
-      const tuning = rules => {
-        if (!localContactPolicy) return rules;
-        const { contactPolicy, ...rest } = rules || {};
-        return rest;
-      };
-      if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
-    }
-    problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
-    const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
-    if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
-      && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
-    if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
-  };
-  const validateKnowledgeSnapshot = (snapshot, path) => {
-    if (!typeOk(snapshot, 'object')) return;
-    const knowledge = snapshot.enemyKnowledge;
-    if (!run.enemyKnowledgeRules) {
-      // Configured FixCore fights own their cached reads locally. They do not
-      // open the legacy run learning/Perception ledger or bank any knowledge.
-      // The caller still validates the complete combat snapshot above.
-      const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
-        && gameModule(run, 'effects')?.fixCoreVersion === 1
-        && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
-        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
-        && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
-        && knowledge?.bankable === false && knowledge.encounter === null;
-      if (battleLocal) return;
-      if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
-      return;
-    }
-    if (!knowledge) {
-      problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
-      return;
-    }
-    if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
-    if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
-    if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
-    const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
-    const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
-    if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
-  };
+}
+
+/** Phase: a pending combat outcome must hold the matching ended fight. */
+function checkPendingCombatOutcome(run, problems) {
   if (run.combatPendingOutcome !== undefined) {
     const pending = run.combatPendingOutcome;
     if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
@@ -1129,11 +1176,15 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       for (const field of ['nodeId', 'encounterId']) if (typeof pending[field] !== 'string' || !pending[field]) problems.push(`combatPendingOutcome.${field} must identify its fight`);
       for (const problem of combatSnapshotProblems(pending.snapshot)) problems.push(`combatPendingOutcome.snapshot.${problem}`);
       if (pending.snapshot?.phase !== 'ended' || pending.snapshot?.result !== pending.result) problems.push('combatPendingOutcome.snapshot must contain the matching ended fight');
-      validateExpandedSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot', true);
-      validateKnowledgeSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot');
+      checkExpandedSnapshot(run, problems, pending.snapshot, 'combatPendingOutcome.snapshot', true);
+      checkKnowledgeSnapshot(run, problems, pending.snapshot, 'combatPendingOutcome.snapshot');
       if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
     }
   }
+}
+
+/** Phase: class milestone, ability draft, reward-level, retired-feature and shop-stock ledgers. */
+function checkClassAndShopLedgers(run, problems, preShopKinds) {
   problems.push(...classMilestoneProblems(run));
   problems.push(...abilityDraftClaimProblems(run));
   if (run.classRewardLevels !== undefined) {
@@ -1146,6 +1197,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.journey !== undefined) problems.push('journey: World Journey runs are no longer supported');
   problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
+}
+
+/** Phase: every RUN_SHAPE field is present, nullable or typed as declared (minus fields a legacy save predates). */
+function checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils }) {
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
@@ -1172,6 +1227,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
   }
+}
+
+/** Phase: attribute mode, seats, zones, skills, sigils, consumables and per-card upgrade steps. */
+function checkAttributeModeAndInventories(run, problems) {
   problems.push(...collectedCardProblems(run));
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
@@ -1190,6 +1249,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   for (const zone of ['deck', 'sideboard', 'collection']) {
     if (Array.isArray(run[zone])) run[zone].forEach((card, i) => { if (card && typeof card === 'object') problems.push(...upgradeStepsProblems(card, `${zone}[${i}]`)); });
   }
+  return attributesAbsent;
+}
+
+/** Phase: set-aside and collected card instances, and the edit mint counter. */
+function checkSideboardAndCollection(run, problems) {
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1217,6 +1281,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     });
   }
+}
+
+/** Phase: attribute integers, map terrain and view, and the entered-combat record. */
+function checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent) {
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -1253,10 +1321,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
-      validateExpandedSnapshot(entered.snapshot, 'combatEntered.snapshot');
-      validateKnowledgeSnapshot(entered.snapshot, 'combatEntered.snapshot');
+      checkExpandedSnapshot(run, problems, entered.snapshot, 'combatEntered.snapshot');
+      checkKnowledgeSnapshot(run, problems, entered.snapshot, 'combatEntered.snapshot');
     }
   }
+}
+
+/** Phase: skill-attribute grants, level counters and smithing/training stock. */
+function checkLevelAndSmithingCounters(run, problems) {
   // A respec withdraws what the record names (FINISH D13a), so it may never
   // name more points than the run holds.
   if (run.skillAttributeGrants !== undefined && run.skillAttributeGrants !== null && typeof run.skillAttributeGrants === 'object') {
@@ -1283,6 +1355,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
     problems.push('smithingStonesRefined must be a non-negative integer');
   }
+}
+
+/** Phase: armament levels, item upgrades, mounts and smithing reward claims. */
+function checkEquipmentUpgradesAndMounts(run, problems) {
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
       if (!pieceId || !Number.isInteger(level) || level < 0) {
@@ -1329,6 +1405,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       seenClaims.add(rewardId);
     }
   }
+}
+
+/** Phase: deferred progression is validated as a pending reward. */
+function checkDeferredProgression(run, problems) {
   if (run.deferredProgression !== undefined) {
     const saved = run.deferredProgression;
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) problems.push('deferredProgression must be an object');
@@ -1340,208 +1420,237 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         .filter(problem => problem.startsWith('pendingReward')).map(problem => problem.replace('pendingReward', 'deferredProgression')));
     }
   }
+}
+
+/** Phase: the pending reward's own fields, claims, rewards object and states. */
+function checkPendingRewardEnvelope(run, problems, pending) {
+  if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
+  if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
+  if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+  if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+  if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+  if (pending.skillClaims !== undefined) {
+    if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+    else for (const [id, count] of Object.entries(pending.skillClaims)) {
+      if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+    }
+  }
+  if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
+    problems.push('pendingReward.rewards must be an object');
+  }
+  if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
+    problems.push('pendingReward.states must be an object');
+  } else {
+    const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
+    const draftKeys = new Set(pendingDraftKeys(pending));
+    for (const [key, state] of Object.entries(pending.states)) {
+      // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
+      if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
+        problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
+      }
+    }
+  }
+}
+
+/** Phase: class milestone, skill draft and rank-up reward rows. */
+function checkPendingMilestoneAndSkillDrafts(run, problems, pending) {
+  if (pending.rewards?.classMilestoneRewards !== undefined) {
+    const rows = pending.rewards.classMilestoneRewards;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
+    else rows.forEach((row,index) => {
+      const p = `pendingReward.rewards.classMilestoneRewards[${index}]`;
+      const offer = run.classMilestoneOffers?.[row?.receiptId];
+      if (!row || !offer || ['classId','skillId','level','requiredLevel','rewardKind'].some(key => row[key] !== offer[key]) || ['options','abilityRanks','choiceIds'].some(key => JSON.stringify(row[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted milestone offer`);
+    });
+  }
+  if (pending.rewards?.skillDrafts !== undefined) {
+    const drafts = pending.rewards.skillDrafts;
+    if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
+    else drafts.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillDrafts[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+      if (d.abilityRanks !== undefined && (!Array.isArray(d.abilityRanks) || d.abilityRanks.length !== d.cardIds?.length || d.abilityRanks.some(r => !Number.isInteger(r) || r < 0 || r > 5))) problems.push(`${p}.abilityRanks must hold one grade 0..5 per card`);
+      if (d.choiceIds !== undefined && (!Array.isArray(d.choiceIds) || d.choiceIds.length !== d.cardIds?.length || new Set(d.choiceIds).size !== d.choiceIds.length || d.choiceIds.some(id => typeof id !== 'string' || !id))) problems.push(`${p}.choiceIds must identify each offered face uniquely`);
+      if (d.offerId) {
+        const offer = run.abilityOffers?.[d.offerId];
+        if (!offer || offer.skillId !== d.skillId || offer.level !== d.level || ['cardIds','abilityRanks','choiceIds'].some(key => JSON.stringify(d[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted ability offer`);
+      }
+      // Each offered card's rank (SPEC §13.4o), one per card id when present.
+      if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
+        || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
+    });
+  }
+  if (pending.rewards?.skillRankUps !== undefined) {
+    const ups = pending.rewards.skillRankUps;
+    if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
+    else ups.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillRankUps[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
+    });
+  }
+}
+
+/** Phase: chosen rank-ups, skill feats and skill attribute reward rows. */
+function checkPendingRankUpsFeatsAttributes(run, problems, pending) {
+  if (pending.chosenRankUps !== undefined) {
+    const chosen = pending.chosenRankUps;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
+    else {
+      const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
+      for (const [key, instanceId] of Object.entries(chosen)) {
+        if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
+        if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
+      }
+    }
+  }
+  for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
+    if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
+  }
+  if (pending.rewards?.skillFeats !== undefined) {
+    const picks = pending.rewards.skillFeats;
+    if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillFeats must be an array');
+    else picks.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillFeats[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, featIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.featIds) || !d.featIds.length || d.featIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.featIds must be a non-empty array of feat ids`);
+    });
+  }
+  if (pending.rewards?.skillAttributes !== undefined) {
+    const picks = pending.rewards.skillAttributes;
+    if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
+    else picks.forEach((d, i) => {
+      const p = `pendingReward.rewards.skillAttributes[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
+      if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
+    });
+  }
+}
+
+/** Phase: required levels, level cards, level choices and their sources. */
+function checkPendingLevelRewards(run, problems, pending) {
+  for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
+    for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
+      if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
+    }
+  }
+  if (pending.rewards?.levelCards !== undefined) {
+    // SPEC §15.1: absent on an offer written before the schedule.
+    const rows = pending.rewards.levelCards;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+    else {
+      const ordinals = new Set();
+      rows.forEach((d, i) => {
+        const p = `pendingReward.rewards.levelCards[${i}]`;
+        if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+        if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+        ordinals.add(d.ordinal);
+        if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+      });
+    }
+  }
+  if (pending.rewards?.levelChoices !== undefined) {
+    const rows = pending.rewards.levelChoices;
+    if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+    else rows.forEach((d, i) => {
+      const p = `pendingReward.rewards.levelChoices[${i}]`;
+      if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+        problems.push(`${p} must have an ordinal and choices`); return;
+      }
+      for (const option of d.options) {
+        if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+      }
+    });
+  }
+  for (const key of ['levelChoices', 'levelCards']) {
+    for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
+      if (!row || row.source === undefined) continue;
+      const path = `pendingReward.rewards.${key}[${i}]`;
+      if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
+      if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
+    }
+  }
+}
+
+/** Phase: card-missed flag, sigil drop, class drafts and the chosen draft card and node maps. */
+function checkPendingDraftChoices(run, problems, pending) {
+  if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+    problems.push('pendingReward.rewards.cardMissed must be a boolean');
+  }
+  // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
+  if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
+    problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
+  }
+  {
+    // The map may be absent (a save written before it existed); the rule
+    // that a Taken draft or level card (SPEC §15.1) names its card holds
+    // all the same, as the class-draft rule below does.
+    const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
+    else {
+      const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
+      for (const [key, cardId] of Object.entries(chosen)) {
+        const draft = drafts.find((d) => d.key === key);
+        if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
+      }
+      for (const draft of drafts) {
+        if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
+      }
+    }
+  }
+  if (pending.rewards?.classDrafts !== undefined) {
+    const drafts = pending.rewards.classDrafts;
+    if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
+    else drafts.forEach((d, i) => {
+      const p = `pendingReward.rewards.classDrafts[${i}]`;
+      if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
+      if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
+      if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+      if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
+    });
+  }
+  {
+    // The map may be absent (a save written before it existed); the rule
+    // that a Taken draft names its node holds all the same.
+    const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
+    if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
+    else {
+      const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
+      for (const [key, nodeId] of Object.entries(chosen)) {
+        const draft = drafts.find((d) => d.key === key);
+        if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
+        if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
+      }
+      for (const draft of drafts) {
+        if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
+      }
+    }
+  }
+}
+
+/** Phase: the pending reward offer, its claims, drafts and chosen rows. */
+function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
     const pending = run.pendingReward;
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
       problems.push('pendingReward must be an object when present');
     } else {
-      if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
-      if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
-      if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
-      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
-      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
-      if (pending.skillClaims !== undefined) {
-        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
-        else for (const [id, count] of Object.entries(pending.skillClaims)) {
-          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
-        }
-      }
-      if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
-        problems.push('pendingReward.rewards must be an object');
-      }
-      if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
-        problems.push('pendingReward.states must be an object');
-      } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
-        const draftKeys = new Set(pendingDraftKeys(pending));
-        for (const [key, state] of Object.entries(pending.states)) {
-          // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
-          if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
-            problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
-          }
-        }
-      }
-      if (pending.rewards?.classMilestoneRewards !== undefined) {
-        const rows = pending.rewards.classMilestoneRewards;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
-        else rows.forEach((row,index) => {
-          const p = `pendingReward.rewards.classMilestoneRewards[${index}]`;
-          const offer = run.classMilestoneOffers?.[row?.receiptId];
-          if (!row || !offer || ['classId','skillId','level','requiredLevel','rewardKind'].some(key => row[key] !== offer[key]) || ['options','abilityRanks','choiceIds'].some(key => JSON.stringify(row[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted milestone offer`);
-        });
-      }
-      if (pending.rewards?.skillDrafts !== undefined) {
-        const drafts = pending.rewards.skillDrafts;
-        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
-        else drafts.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillDrafts[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
-          if (d.abilityRanks !== undefined && (!Array.isArray(d.abilityRanks) || d.abilityRanks.length !== d.cardIds?.length || d.abilityRanks.some(r => !Number.isInteger(r) || r < 0 || r > 5))) problems.push(`${p}.abilityRanks must hold one grade 0..5 per card`);
-          if (d.choiceIds !== undefined && (!Array.isArray(d.choiceIds) || d.choiceIds.length !== d.cardIds?.length || new Set(d.choiceIds).size !== d.choiceIds.length || d.choiceIds.some(id => typeof id !== 'string' || !id))) problems.push(`${p}.choiceIds must identify each offered face uniquely`);
-          if (d.offerId) {
-            const offer = run.abilityOffers?.[d.offerId];
-            if (!offer || offer.skillId !== d.skillId || offer.level !== d.level || ['cardIds','abilityRanks','choiceIds'].some(key => JSON.stringify(d[key]) !== JSON.stringify(offer[key]))) problems.push(`${p} must retain its persisted ability offer`);
-          }
-          // Each offered card's rank (SPEC §13.4o), one per card id when present.
-          if (d.ranks !== undefined && (!Array.isArray(d.ranks) || d.ranks.length !== (Array.isArray(d.cardIds) ? d.cardIds.length : -1)
-            || d.ranks.some((r) => !Number.isInteger(r) || r < 1 || r > MAX_CARD_RANK))) problems.push(`${p}.ranks must hold one rank from 1 to ${MAX_CARD_RANK} per card id`);
-        });
-      }
-      if (pending.rewards?.skillRankUps !== undefined) {
-        const ups = pending.rewards.skillRankUps;
-        if (!Array.isArray(ups)) problems.push('pendingReward.rewards.skillRankUps must be an array');
-        else ups.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillRankUps[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (d.claimOrdinal !== undefined && (!Number.isInteger(d.claimOrdinal) || d.claimOrdinal < 0)) problems.push(`${p}.claimOrdinal must be a non-negative integer`);
-        });
-      }
-      if (pending.chosenRankUps !== undefined) {
-        const chosen = pending.chosenRankUps;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenRankUps must be an object keyed by rank-up row');
-        else {
-          const keys = new Set(pendingDraftRows(pending).filter((d) => d.rankUp).map((d) => d.key));
-          for (const [key, instanceId] of Object.entries(chosen)) {
-            if (!keys.has(key)) problems.push(`pendingReward.chosenRankUps.${key} must name a rank-up the offer carries`);
-            if (typeof instanceId !== 'string' || !instanceId) problems.push(`pendingReward.chosenRankUps.${key} must be a card instance id`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenRankUps.${key} requires the rank-up's Taken state`);
-          }
-        }
-      }
-      for (const { key } of pendingDraftRows(pending).filter((d) => d.rankUp)) {
-        if (pending.states?.[key] === 'taken' && !(pending.chosenRankUps && pending.chosenRankUps[key])) problems.push(`pendingReward ${key} Taken state requires its chosen card`);
-      }
-      if (pending.rewards?.skillFeats !== undefined) {
-        const picks = pending.rewards.skillFeats;
-        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillFeats must be an array');
-        else picks.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillFeats[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, featIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.featIds) || !d.featIds.length || d.featIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.featIds must be a non-empty array of feat ids`);
-        });
-      }
-      if (pending.rewards?.skillAttributes !== undefined) {
-        const picks = pending.rewards.skillAttributes;
-        if (!Array.isArray(picks)) problems.push('pendingReward.rewards.skillAttributes must be an array');
-        else picks.forEach((d, i) => {
-          const p = `pendingReward.rewards.skillAttributes[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, attributeIds }`); return; }
-          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.attributeIds) || !d.attributeIds.length || d.attributeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.attributeIds must be a non-empty array of attribute ids`);
-        });
-      }
-      for (const field of ['levelCards', 'levelChoices', 'skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats', 'classDrafts', 'classMilestoneRewards']) {
-        for (const row of Array.isArray(pending.rewards?.[field]) ? pending.rewards[field] : []) {
-          if (row?.requiredLevel !== undefined && (!Number.isInteger(row.requiredLevel) || row.requiredLevel < 0)) problems.push(`pendingReward.rewards.${field}.requiredLevel must be a non-negative integer`);
-        }
-      }
-      if (pending.rewards?.levelCards !== undefined) {
-        // SPEC §15.1: absent on an offer written before the schedule.
-        const rows = pending.rewards.levelCards;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
-        else {
-          const ordinals = new Set();
-          rows.forEach((d, i) => {
-            const p = `pendingReward.rewards.levelCards[${i}]`;
-            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
-            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
-            ordinals.add(d.ordinal);
-            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
-          });
-        }
-      }
-      if (pending.rewards?.levelChoices !== undefined) {
-        const rows = pending.rewards.levelChoices;
-        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
-        else rows.forEach((d, i) => {
-          const p = `pendingReward.rewards.levelChoices[${i}]`;
-          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
-            problems.push(`${p} must have an ordinal and choices`); return;
-          }
-          for (const option of d.options) {
-            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
-          }
-        });
-      }
-      for (const key of ['levelChoices', 'levelCards']) {
-        for (const [i, row] of (Array.isArray(pending.rewards?.[key]) ? pending.rewards[key] : []).entries()) {
-          if (!row || row.source === undefined) continue;
-          const path = `pendingReward.rewards.${key}[${i}]`;
-          if (!['combat', 'class'].includes(row.source) || (key === 'levelCards' && row.source !== 'class')) problems.push(`${path}.source is invalid`);
-          if (row.source === 'class' && (typeof row.skillId !== 'string' || !row.skillId.startsWith('class:') || !Number.isInteger(row.claimOrdinal) || row.claimOrdinal < 0)) problems.push(`${path} must name a class track and claim ordinal`);
-        }
-      }
-      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
-        problems.push('pendingReward.rewards.cardMissed must be a boolean');
-      }
-      // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
-      if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
-        problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
-      }
-      {
-        // The map may be absent (a save written before it existed); the rule
-        // that a Taken draft or level card (SPEC §15.1) names its card holds
-        // all the same, as the class-draft rule below does.
-        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
-        else {
-          const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
-          for (const [key, cardId] of Object.entries(chosen)) {
-            const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.ids.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${key} must name a card of that draft`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${key} requires the draft's Taken state`);
-          }
-          for (const draft of drafts) {
-            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen card`);
-          }
-        }
-      }
-      if (pending.rewards?.classDrafts !== undefined) {
-        const drafts = pending.rewards.classDrafts;
-        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.classDrafts must be an array');
-        else drafts.forEach((d, i) => {
-          const p = `pendingReward.rewards.classDrafts[${i}]`;
-          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { classId, level, nodeIds }`); return; }
-          if (typeof d.classId !== 'string' || !d.classId) problems.push(`${p}.classId must be a non-empty string`);
-          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
-          if (!Array.isArray(d.nodeIds) || !d.nodeIds.length || d.nodeIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.nodeIds must be a non-empty array of node ids`);
-        });
-      }
-      {
-        // The map may be absent (a save written before it existed); the rule
-        // that a Taken draft names its node holds all the same.
-        const chosen = pending.chosenDraftNodeIds === undefined ? {} : pending.chosenDraftNodeIds;
-        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftNodeIds must be an object keyed by draft row');
-        else {
-          const drafts = pendingDraftRows(pending).filter((d) => d.nodeIds);
-          for (const [key, nodeId] of Object.entries(chosen)) {
-            const draft = drafts.find((d) => d.key === key);
-            if (!draft || !draft.nodeIds.includes(nodeId)) problems.push(`pendingReward.chosenDraftNodeIds.${key} must name a node of that draft`);
-            if (pending.states?.[key] !== 'taken') problems.push(`pendingReward.chosenDraftNodeIds.${key} requires the draft's Taken state`);
-          }
-          for (const draft of drafts) {
-            if (pending.states?.[draft.key] === 'taken' && !chosen[draft.key]) problems.push(`pendingReward ${draft.key} Taken state requires its chosen node`);
-          }
-        }
-      }
+      checkPendingRewardEnvelope(run, problems, pending);
+      checkPendingMilestoneAndSkillDrafts(run, problems, pending);
+      checkPendingRankUpsFeatsAttributes(run, problems, pending);
+      checkPendingLevelRewards(run, problems, pending);
+      checkPendingDraftChoices(run, problems, pending);
       if (pending.chosenCardId !== null && pending.chosenCardId !== undefined
           && (typeof pending.chosenCardId !== 'string' || !pending.chosenCardId)) {
         problems.push('pendingReward.chosenCardId must be null or a non-empty string');
@@ -1577,6 +1686,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     }
   }
+}
+
+/** Phase: deck and sideboard card instances, and retired attack-slot ownership. */
+function checkDeckAndSideboardCards(run, problems) {
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
   // The sideboard holds the same instances (SPEC §14.1), so it is held to the
@@ -1624,6 +1737,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       slots.add(slot);
     });
   }
+}
+
+/** Phase: HP, mana and stamina pools stay within their maxima. */
+function checkPoolBounds(run, problems) {
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
   }
@@ -1656,6 +1773,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (Number.isFinite(run.stamina) && Number.isFinite(run.maxStamina) && (run.stamina < 0 || run.stamina > run.maxStamina)) {
     problems.push('stamina must be between 0 and maxStamina');
   }
+}
+
+/** Phase: flask charges and their capacity ledger. */
+function checkFlaskCharges(run, problems, preLedger) {
   if (run.flaskCharges !== undefined) {
     const f = run.flaskCharges;
     if (!f || !Number.isInteger(f.capacity) || f.capacity <= 0
@@ -1701,6 +1822,24 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
+  checkSideboardAndCollection(run, problems);
+  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+  checkLevelAndSmithingCounters(run, problems);
+  checkEquipmentUpgradesAndMounts(run, problems);
+  checkDeferredProgression(run, problems);
+  checkPendingReward(run, problems);
+  checkDeckAndSideboardCards(run, problems);
+  checkPoolBounds(run, problems);
+  checkFlaskCharges(run, problems, preLedger);
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
   if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
   return problems;
