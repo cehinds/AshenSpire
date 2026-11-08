@@ -57,7 +57,7 @@ The `twinSword` profile covers all 35 armor entries with 32 appearances. It sele
 
 All appearances share `STANCE-READY → ATK-01 → ATK-02 → ATK-03 → ATK-04 → ATK-05 → ATK-06 → ATK-07 → STANCE-READY`, 120ms steps, impact at 480ms. Sixteen poses include separate conversation and portrait art; all full-body poses retain two swords without baked effects. Change the profile to update every outfit. The [workshop](../art/twin-sword-reference-2026-09-19/index.html) edits sequence candidates and compares class/armor appearances.
 
-Validation: `node tests/twin-sword-animation.test.mjs`, `node tools/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
+Validation: `node tests/twin-sword-animation.test.mjs`, `node tools/attic/twin-sword-animation-browser.mjs`, and the pack's `validate.py` and `test_extraction.py`. Screenshots and browser results live in the pack's `qa/` directory.
 
 ## Unarmed bindings
 
@@ -81,4 +81,4 @@ The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) covers all appea
 
 The greatsword suites for all class/armor entries are activated. The catalog currently reports the legacy `one` grip for a lone native greatsword; its two-handed visual does not alter that mechanical rule. Both native and prototype two-handed grips select the suite, while an occupied opposite hand does not. New art and synchronized previews are in `art/greatsword-outfits-2026-09-19/`. The four-class review pack at `art/webp-pack-2026-09-19/` remains available for labeled pose feedback. Its other combinations are not implicitly approved or activated. Starseer ATK-02/ATK-03 have a separate known anatomy/staff-occlusion review.
 
-Unit checks: `node tests/equipment-animation.test.mjs` (also in `tests/run-node.mjs`). Browser checks: serve the repository, set `ART_TEST_URL` if needed, then run `node tools/equipment-animation-browser.mjs` with Playwright available (or `PLAYWRIGHT_MODULE` pointing to an installed module) and `CHROME` if the browser is not detected.
+Unit checks: `node tests/equipment-animation.test.mjs` (also in `tests/run-node.mjs`). Browser checks: serve the repository, set `ART_TEST_URL` if needed, then run `node tools/attic/equipment-animation-browser.mjs` with Playwright available (or `PLAYWRIGHT_MODULE` pointing to an installed module) and `CHROME` if the browser is not detected.

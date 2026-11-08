@@ -39,7 +39,7 @@ Changing a pool size, a tag's weights or a priority re-flows every item that lef
 
 `id`, `name`, `slot`, `kind`, `rarity`, `tags`, optional `points`, optional `weights`,
 optional `classes`, and `source` (the CSV row it came from). Regenerate from the CSVs with
-`node tools/gear-convert.mjs [--dry]`.
+`node tools/attic/gear-convert.mjs [--dry]`.
 
 ## Validation
 

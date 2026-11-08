@@ -326,7 +326,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 - [ ] Delete `playLegacyTimeline` and the `impact` beat order with its tests, or make it a real setting (M5)
 - [ ] Remove the dead exports listed under M5; drop `export` on file-private symbols (M5)
-- [ ] Attic or delete the 115 orphan tools (H5)
+- [x] Attic or delete the 115 orphan tools (H5) — [#2715](https://github.com/cehinds/AshenSpire/pull/2715)
 - [ ] Port the worthwhile `tests/*.browser.mjs` to `tools/browser.mjs`, delete the rest (H5)
 - [x] Untrack `tools/results/` and `tools/hud-component-studio/` evidence; publish as CI artifacts (H5) — [#2673](https://github.com/cehinds/AshenSpire/pull/2673). `hud-component-studio/` JSON is the catalog and scenes the Studio loads, not run output, so it stays; its five large files are in the gate's `ALLOWED` list.
 - [x] Delete `ward-to-block-cards.yml` and `combat-audit-hosted-preview.yml` (M10) — [#2712](https://github.com/cehinds/AshenSpire/pull/2712)
