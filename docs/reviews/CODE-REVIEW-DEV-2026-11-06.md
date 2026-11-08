@@ -361,7 +361,7 @@ and name the PR beside it, the way CLEANUP-PLAN.md does.
 
 ### 6. Hygiene
 
-- [ ] Freeze rules once in `createCombat`; stop `structuredClone` per preview; `knowledgeView` sharing default in `PreviewMemoModel`; `resolveCard` computes its cache key first; cap `resolveCache` (M1)
+- [x] Freeze rules once in `createCombat`; stop `structuredClone` per preview; `knowledgeView` sharing default in `PreviewMemoModel`; `resolveCard` computes its cache key first; cap `resolveCache` (M1) — #2678
 - [ ] One `esc` in `ui/html.js`; `model/guards.js` for `deepFreeze`/`record`/`finite`; `HOSTILE_OPS` in `schemas.js`; one `snapshotCombat` helper (M4)
 - [ ] `tools/browser.mjs` exports `connectCdp`; migrate the ~96 copies (H5)
 - [ ] `tools/lib/cli.mjs` over `parseArgs`; `tools/lib/mutants.mjs` with sidecar `*.selftest.mjs`; one shared `sandbox()` for the `mkdtempSync` tools (M4)
