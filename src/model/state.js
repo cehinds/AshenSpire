@@ -1738,21 +1738,8 @@ function checkPoolBounds(run, problems) {
   }
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
-  const problems = [];
-  checkProfileAndCombatRules(run, problems);
-  checkPendingCombatOutcome(run, problems);
-  checkClassAndShopLedgers(run, problems, preShopKinds);
-  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
-  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
-  checkSideboardAndCollection(run, problems);
-  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
-  checkLevelAndSmithingCounters(run, problems);
-  checkEquipmentUpgradesAndMounts(run, problems);
-  checkDeferredProgression(run, problems);
-  checkPendingReward(run, problems);
-  checkDeckAndSideboardCards(run, problems);
-  checkPoolBounds(run, problems);
+/** Phase: flask charges and their capacity ledger. */
+function checkFlaskCharges(run, problems, preLedger) {
   if (run.flaskCharges !== undefined) {
     const f = run.flaskCharges;
     if (!f || !Number.isInteger(f.capacity) || f.capacity <= 0
@@ -1798,6 +1785,24 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     }
   }
+}
+
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
+  const problems = [];
+  checkProfileAndCombatRules(run, problems);
+  checkPendingCombatOutcome(run, problems);
+  checkClassAndShopLedgers(run, problems, preShopKinds);
+  checkRunShapeFields(run, problems, { legacy, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
+  const attributesAbsent = checkAttributeModeAndInventories(run, problems);
+  checkSideboardAndCollection(run, problems);
+  checkAttributesMapAndEnteredCombat(run, problems, attributesAbsent);
+  checkLevelAndSmithingCounters(run, problems);
+  checkEquipmentUpgradesAndMounts(run, problems);
+  checkDeferredProgression(run, problems);
+  checkPendingReward(run, problems);
+  checkDeckAndSideboardCards(run, problems);
+  checkPoolBounds(run, problems);
+  checkFlaskCharges(run, problems, preLedger);
   if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
   if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
   return problems;
