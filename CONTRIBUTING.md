@@ -234,17 +234,18 @@ way: through review, into `dev`, then promoted to `review` (rule 6; the review s
      only when that run has succeeded and `dev`'s tip is that stamp commit, or a
      later docs-only bot commit. Its dispatched `dev-preview` run on the stamped tip
      must also have succeeded, since that artifact is the playable build for it.
-     Then open a PR from `dev` into `review` and
-     merge it yourself, with a merge commit. The pinned "Dev code review"
-     session reviews it and, when clean, merges `review` into `test` the same
-     way; a push to `test` is what runs the heavy suites. Immediately before merging,
-     check again: the PR's head must still be the `dev` tip, that tip's
-     latest `architecture-sync` run must have succeeded, and its `build-stamp`
-     run must have succeeded. If `dev` moved,
-     wait for its syncs to settle and check again. If one is
-     already open, merge that one rather than opening another. Each
-     promotion runs the full 3-OS matrix, so when several of your PRs land
-     together, promote once after the last.
+     Then open a PR from `dev` into `review` and merge it yourself, with a
+     merge commit. Immediately before merging this `dev` → `review` PR,
+     check again: its head must still be the `dev` tip, that tip's latest
+     `architecture-sync` and `build-stamp` runs must have succeeded, and its
+     dispatched `dev-preview` must have succeeded. If `dev` moved, wait for
+     its syncs to settle and check again. If a promotion PR is already open,
+     use that one rather than opening another.
+     The pinned "Dev code review" session reviews the promoted `review` tip
+     and, when clean, merges a `review` → `test` PR with a merge commit.
+     This PR must carry the reviewed `review` tip; it need not equal `dev`.
+     A push to `test` runs the full 3-OS matrix, so when several of your PRs
+     land together, promote once after the last.
    - A promotion does not advance the release candidate (the third
      component of `contentBundle.version`); a push to `test` raises only the
      build ordinal (the fourth number) by one. A push to `release` (the cut)
