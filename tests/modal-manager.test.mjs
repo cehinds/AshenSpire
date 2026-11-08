@@ -335,7 +335,7 @@ test('back: a bespoke surface above the top back-enabled entry owns the press; t
 });
 
 test('back: the shared shell pushes on open, goes back on close, and closes on browser back', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const { openModal } = await import('../src/ui/components/modalShell.js');
   withModalDom(() => {
     withHistory(({ history, settle, userBack }) => {
@@ -361,7 +361,7 @@ test('back: the shared shell pushes on open, goes back on close, and closes on b
 // key the way a browser orders it (window capture, document capture, bubble).
 
 test('Escape on a shell modal closes it through the manager, once', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const { openModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {
@@ -380,7 +380,7 @@ test('Escape on a shell modal closes it through the manager, once', async () => 
 });
 
 test('Escape closes only the top of two shell modals', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const { openModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {
@@ -397,7 +397,7 @@ test('Escape closes only the top of two shell modals', async () => {
 });
 
 test('Escape with a bespoke (no dismiss) entry on top is left alone', async () => {
-  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { withModalDom } = await import('./helpers/dom.mjs');
   const { openModal } = await import('../src/ui/components/modalShell.js');
   resetModalState();
   withModalDom((dom, win) => {

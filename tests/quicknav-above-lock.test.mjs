@@ -6,7 +6,7 @@
 //   node --test tests/quicknav-above-lock.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { withModalDom } from './helpers/modal-dom.mjs';
+import { withModalDom } from './helpers/dom.mjs';
 import { registerModal, resetModalState, openModals, modalOpen, pageLockHeld } from '../src/ui/modalManager.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen } from '../src/ui/components/quicknav.js';
 
