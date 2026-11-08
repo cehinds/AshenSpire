@@ -13,8 +13,9 @@ test('restored enemy Counter catalog uses saved coefficients and default reply o
   const combat = createCombat({ registries, rng: createRng(449), enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 500, hp: 500, energyMax: 3, drawPerTurn: 1,
       deck: [{ instanceId: 'c1', cardId: 'strike' }], relicIds: [] } });
-  Object.assign(combat.combatMatchupRules.counter, { defaultDamage: 9, incomingMultiplier: 0.25,
-    retaliationMultiplier: 1.75, retaliationFlat: 13, poiseMultiplier: 2.5 });
+  // The fight's rule tables are frozen; tune by replacing the whole table (an unfrozen table still clones and serialises).
+  combat.combatMatchupRules = { ...combat.combatMatchupRules, counter: { ...combat.combatMatchupRules.counter, defaultDamage: 9, incomingMultiplier: 0.25,
+    retaliationMultiplier: 1.75, retaliationFlat: 13, poiseMultiplier: 2.5 } };
   const snapshot = serializeCombatSnapshot(combat);
   const changed = structuredClone(contentBundle.balance);
   Object.assign(changed.combatMatchups.counter, { defaultDamage: 33, incomingMultiplier: 0.9,
