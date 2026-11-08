@@ -848,7 +848,7 @@ src/model/    schemas, registries, formulas, validation, state (headless)
 src/content/  pure data — every card/status/enemy/relic and every tuning number
 ```
 
-`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them.
+`tests/layering.test.mjs` enforces that `src/engine/`, `src/model/` and `engine/` import nothing from `src/ui/` or `src/main.js` and use no browser globals; `src/ui/strings.js` and `src/ui/sha256.js` are one-line shims over `src/model/strings.js` and `src/model/sha256.js`, so the rules layer can use them. It also checks layer rank (`docs/ARCHITECTURE-MAP.md`, *Layer rank*): a relative import may not point to a higher rank, and today's inversions sit in a shrinking `KNOWN_INVERSIONS` list that fails on any new one and on any entry that no longer occurs.
 
 Rules that keep this honest:
 

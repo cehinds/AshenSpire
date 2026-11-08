@@ -5,7 +5,8 @@
 //      figure (within 8px) with its bottom above the figure's head; the player's HUD stands right of the figure.
 //   2. Selecting cards, playing one for damage and ending the turn leave every HUD box where it was and replace no HUD node (a
 //      MutationObserver over the combat root counts node adds and removes inside the HUD subtrees).
-//   3. Every HUD is as wide as its cell (within 2px) at 390x844 and 1280x800, and no HUD text overflows its box.
+//   3. Every HUD is one fixed width (owner 2026-11-07: a layout token, not its cell's width) at 390x844 and 1280x800, neighbouring
+//      enemy HUDs do not overlap, and no HUD text overflows its box.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { serve } from '../tools/serve.mjs';
@@ -66,7 +67,7 @@ const overflow = page => page.evaluate(() => {
 });
 
 try {
-  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 3]) {
+  for (const [width, height] of [[390, 844], [1280, 800]]) for (const enemies of [1, 2, 3]) {
     const page = await board(width, height, enemies), tag = `${width}x${height} ${enemies}e`;
     let geo = await geometry(page);
     // Armed: every legal enemy's panel shows.
@@ -76,7 +77,8 @@ try {
     const player = geo.find(g => g.role === 'player');
     for (const g of geo) {
       assert.ok(g.cellWidth > 20, `${tag} ${g.id}: the cell width is published`);
-      assert.ok(Math.abs(g.rack.width - g.cellWidth) <= 2, `${tag} ${g.id}: the mini HUD is as wide as its cell (${g.rack.width.toFixed(1)} vs ${g.cellWidth.toFixed(1)})`);
+      // Owner 2026-11-07 (backlog #11): one fixed width for every combatant (a layout token), not its cell's width.
+      assert.ok(Math.abs(g.rack.width - geo[0].rack.width) <= 1, `${tag} ${g.id}: every mini HUD is the same fixed width (${g.rack.width.toFixed(1)} vs ${geo[0].rack.width.toFixed(1)})`);
       if (g.panel?.visible) assert.ok(Math.abs(g.panel.width - g.cellWidth) <= 2, `${tag} ${g.id}: the panel is as wide as its cell (${g.panel.width.toFixed(1)} vs ${g.cellWidth.toFixed(1)})`);
       if (g.role === 'enemy') {
         assert.ok(Math.abs(g.rack.x - g.figureX) <= 8, `${tag} ${g.id}: the rack is centred on its figure (${g.rack.x.toFixed(1)} vs ${g.figureX.toFixed(1)})`);
@@ -87,6 +89,9 @@ try {
         }
       }
     }
+    const enemyRacks = geo.filter(g => g.role === 'enemy').map(g => g.rack).sort((a, b) => a.x - b.x);
+    // Three enemy lanes on a phone are narrower than the fixed width (owner 2026-11-07: fixed, compact); two must clear each other.
+    if (width > 600 || enemies <= 2) for (let i = 1; i < enemyRacks.length; i++) assert.ok(enemyRacks[i].x - enemyRacks[i].width / 2 >= enemyRacks[i - 1].x + enemyRacks[i - 1].width / 2 - 1, `${tag}: neighbouring enemy HUDs do not overlap`);
     assert.ok(player.rack.x - player.rack.width / 2 >= player.spriteRight - 8 || player.rack.x >= player.figureX, `${tag}: the player mini HUD stands right of the figure (rack x ${player.rack.x.toFixed(1)}, figure ${player.figureX.toFixed(1)})`);
     assert.deepEqual(await overflow(page), [], `${tag}: no HUD text overflows`);
     // Select, play and (phone only, to bound the run) end the turn: nothing moves, nothing is replaced.
@@ -142,16 +147,31 @@ try {
     }));
     const player = rows.find(row => row.id === 'player');
     assert.ok(player?.cellWidth > 20, `${tag}: the player's cell width is published (cell ${player?.cell})`);
-    // Armed with a Strike no selected panel opens; every figure keeps its mini HUD (HP bar, plus an intent for enemies), as wide as its cell.
+    // Armed with a Strike no selected panel opens; every figure keeps its mini HUD (HP bar, plus an intent for enemies), all one fixed width.
     assert.equal(await page.locator('.target-hud-detail.visible').count(), 0, `${tag}: no selected panel once a Strike is armed`);
     assert.ok(rows.some(row => row.id !== 'player'), `${tag}: at least one enemy was checked`);
     for (const row of rows) {
       const name = `${tag} ${row.id} (${row.cell})`;
       assert.ok(row.box && row.hp, `${name}: its mini HUD (HP bar) exists`);
       if (row.id !== 'player') assert.ok(row.intent, `${name}: the enemy mini HUD shows its intent`);
-      assert.ok(Math.abs(row.box.width - row.cellWidth) <= 2, `${name}: mini HUD ${row.box.width.toFixed(1)} is as wide as its cell ${row.cellWidth.toFixed(1)}`);
+      assert.ok(Math.abs(row.box.width - rows[0].box.width) <= 1, `${name}: mini HUD ${row.box.width.toFixed(1)} is the one fixed width (${rows[0].box.width.toFixed(1)})`);
+      if (row.id !== 'player' && width > 600) assert.ok(row.box.width <= row.cellWidth + 2, `${name}: an enemy mini HUD ${row.box.width.toFixed(1)} fits its cell ${row.cellWidth.toFixed(1)}`);
       assert.ok(row.box.left >= -1 && row.box.right <= row.vw + 1 && row.box.top >= -1 && row.box.bottom <= row.vh, `${name}: mini HUD ${JSON.stringify(row.box)} is inside the field`);
     }
+    await page.close();
+  }
+  // Owner 2026-11-07: the badge row never runs past the HP bar, on any form factor; surplus statuses collapse into +N.
+  for (const [width, height] of [[390, 844], [1280, 800]]) {
+    const page = await board(width, height, 2);
+    await page.evaluate(() => { const enemy = window.__combat.enemies.find(e => e.alive); enemy.statuses = { ...(enemy.statuses || {}) }; for (const id of ['weak', 'vulnerable', 'frail', 'burn', 'dexterity', 'madness', 'frost', 'zealotry']) enemy.statuses[id] = { stacks: 1, duration: 2 }; window.__renderCombatForShot?.(); });
+    await page.waitForTimeout(1500);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.combatant > .target-hud-overhead-meters')].map(rack => {
+      const bar = rack.querySelector('.combat-health-meter .m-track').getBoundingClientRect(), badges = rack.querySelector('.combat-health-badges').getBoundingClientRect();
+      const reach = Math.max(badges.right, ...[...rack.querySelectorAll('.combat-health-badges *')].map(n => n.getBoundingClientRect().right));
+      return { bar: bar.width, badges: badges.width, right: reach, barRight: bar.right, icons: rack.querySelectorAll('.statuses .status-icon').length };
+    }));
+    assert.ok(rows.some(r => r.icons >= 2), `${width}: statuses render in the badge row`);
+    for (const r of rows) { assert.ok(r.badges <= r.bar + 1, `${width}: badge row ${r.badges.toFixed(1)} is within the bar width ${r.bar.toFixed(1)}`); assert.ok(r.right <= r.barRight + 1, `${width}: no badge past the bar right edge (${r.right.toFixed(1)} vs ${r.barRight.toFixed(1)})`); }
     await page.close();
   }
   // A panel already pushed against the top edge keeps its top on screen when a status grows it (short landscape phone).

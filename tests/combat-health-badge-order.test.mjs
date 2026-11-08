@@ -102,7 +102,7 @@ test('no Poise badge, overlay, trim or tooltip on the HP row, even warded (owner
   assert.doesNotMatch(row.querySelector('.combat-health-meter .m-value').getAttribute('aria-label'), /Poise/);
 }));
 
-test('the player Block takes the square slot before the bar; with no Block the slot is absent; enemies keep Block in the stack', () => withKitDom(() => {
+test('Block is the tall shield before the bars for the player and for enemies alike; with no Block the slot is absent (hidden when persistent); AC is not drawn', () => withKitDom(() => {
   const combat = fixture();
   const ac = acFor(combat, combat.player);
   const row = combatHealthRow(hp(), { defense: 7, evasion: 2, ac }, { tooltips: false });
@@ -111,14 +111,21 @@ test('the player Block takes the square slot before the bar; with no Block the s
   assert.equal(block.querySelector('.combat-health-badge-value').textContent, '7');
   assert.match(block.getAttribute('aria-label'), /Block 7/);
   assert.equal(block.nextSibling, [...row.children].find(c => c.classList.contains('combat-health-meter')), 'Block sits right before the bar, a sibling');
-  assert.deepEqual([...row.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['evade', 'shield', 'hp']);
+  const shape = r => [...r.children].map(c => c.dataset.defenseKind || (c.classList.contains('combat-health-badges') ? 'badges' : 'hp'));
+  assert.deepEqual(shape(row), ['shield', 'hp', 'badges']);
+  assert.deepEqual([...row.querySelector('.combat-health-badges').children].map(c => c.dataset.defenseKind), ['evade'], 'Evade is in the badge row, not beside the bar');
+  assert.equal(row.querySelector('.combat-health-ac'), null, 'AC is not drawn');
   const none = combatHealthRow(hp(), { defense: 0, evasion: 2, ac }, { tooltips: false });
   assert.equal(none.querySelector('.combat-health-block-slot'), null);
   assert.equal(none.querySelector('[data-defense-kind="shield"]'), null);
-  assert.deepEqual([...none.children].map(c => c.dataset.defenseKind || (c.dataset.acCaption === '' ? 'caption' : 'hp')), ['evade', 'hp'], 'zero Block: no square slot, the bar follows the badges');
+  assert.deepEqual(shape(none), ['hp', 'badges'], 'zero Block: no shield node (the layout still reserves its column)');
+  const reserved = combatHealthRow(hp(), { defense: 0 }, { tooltips: false, persistent: true });
+  assert.equal(reserved.querySelector('.combat-health-block-slot').hidden, true, 'a persistent row keeps the shield slot, hidden');
+  // An enemy (no `values.ac`) gets the same tall shield, not a badge in the stack.
   const enemy = combatHealthRow(hp(), { defense: 7, poise: 3 }, { tooltips: false });
-  assert.equal(enemy.querySelector('.combat-health-block-slot'), null);
+  assert.equal(enemy.querySelector('.combat-health-block-slot').dataset.defenseKind, 'shield');
   assert.deepEqual(kinds(enemy), ['shield']);
+  assert.deepEqual([...enemy.querySelector('.combat-health-badges').children], []);
 }));
 
 test('outside FixCore there is no AC badge (the hit roll is not a fixed DC there)', () => {
