@@ -1385,6 +1385,36 @@ function checkDeferredProgression(run, problems) {
   }
 }
 
+/** Phase: the pending reward's own fields, claims, rewards object and states. */
+function checkPendingRewardEnvelope(run, problems, pending) {
+  if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
+  if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
+  if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+  if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+  if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+  if (pending.skillClaims !== undefined) {
+    if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+    else for (const [id, count] of Object.entries(pending.skillClaims)) {
+      if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+    }
+  }
+  if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
+    problems.push('pendingReward.rewards must be an object');
+  }
+  if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
+    problems.push('pendingReward.states must be an object');
+  } else {
+    const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
+    const draftKeys = new Set(pendingDraftKeys(pending));
+    for (const [key, state] of Object.entries(pending.states)) {
+      // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
+      if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
+        problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
+      }
+    }
+  }
+}
+
 /** Phase: the pending reward offer, its claims, drafts and chosen rows. */
 function checkPendingReward(run, problems) {
   if (run.pendingReward !== undefined) {
@@ -1392,32 +1422,7 @@ function checkPendingReward(run, problems) {
     if (!pending || Array.isArray(pending) || typeof pending !== 'object') {
       problems.push('pendingReward must be an object when present');
     } else {
-      if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
-      if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
-      if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
-      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
-      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
-      if (pending.skillClaims !== undefined) {
-        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
-        else for (const [id, count] of Object.entries(pending.skillClaims)) {
-          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
-        }
-      }
-      if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
-        problems.push('pendingReward.rewards must be an object');
-      }
-      if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
-        problems.push('pendingReward.states must be an object');
-      } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
-        const draftKeys = new Set(pendingDraftKeys(pending));
-        for (const [key, state] of Object.entries(pending.states)) {
-          // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
-          if (!(rewardKinds.includes(key) || draftKeys.has(key)) || !['taken', 'skipped'].includes(state)) {
-            problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
-          }
-        }
-      }
+      checkPendingRewardEnvelope(run, problems, pending);
       if (pending.rewards?.classMilestoneRewards !== undefined) {
         const rows = pending.rewards.classMilestoneRewards;
         if (!Array.isArray(rows)) problems.push('pendingReward.rewards.classMilestoneRewards must be an array');
