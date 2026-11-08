@@ -1441,14 +1441,17 @@ export function check(root = REPO_ROOT) {
       const recordOnly = before !== null && now !== null && before.digest === now.digest
         && (before.ordinal !== now.ordinal || before.release !== now.release);
       // THE ONE LICENSED EXCEPTION (owner, 2026-11-07): a push to `test` raises the ordinal by one
-      // with the tree unchanged (version-advance.yml, bumpOrdinal force). Same release, parent + 1,
+      // with the tree unchanged (version-advance.yml, bumpOrdinal force). Same release, parent + N,
       // and a commit in parent..HEAD (HEAD itself, or one a promotion merge brought in, a docs-only
       // commit may sit above the bump) has a `version-advance: ... after test <sha>` subject. Nothing else.
-      const testBump = recordOnly && before.release === now.release && now.ordinal === before.ordinal + 1
-        && g('log', '--format=%s', `${parent}..HEAD`).split('\n').some((subject) => TEST_RECORD_SUBJECT.test(subject.trim()));
+      // A delayed version-advance run may write several bumps before one promotion carries them, so
+      // the rise must equal the number of test records in the range (at least one), never more.
+      const testRecords = recordOnly && before.release === now.release
+        ? g('log', '--format=%s', `${parent}..HEAD`).split('\n').filter((subject) => TEST_RECORD_SUBJECT.test(subject.trim())).length : 0;
+      const testBump = testRecords > 0 && now.ordinal === before.ordinal + testRecords;
       if (testBump) {
         add(true, 'H ORDINAL INCREASES',
-          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and a version-advance test record sits in ${parent.slice(0, 7)}..HEAD — the licensed build bump`);
+          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and ${testRecords} version-advance test record(s) sit in ${parent.slice(0, 7)}..HEAD — the licensed build bump`);
       } else if (recordOnly) {
         // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
         // moves, and the release lives inside the digest's roots, so a record

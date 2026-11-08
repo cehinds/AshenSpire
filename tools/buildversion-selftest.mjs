@@ -686,6 +686,20 @@ function historyCorpus() {
         git(dir, 'checkout', '-q', 'main');
         git(dir, 'merge', '-q', '--no-ff', '-m', 'Merge side into main', 'side');
       }],
+    [(j) => ({ ...j, ordinal: j.ordinal + 2 }), 'green',
+      'a promotion MERGE carries TWO test records (a delayed version-advance run wrote both) and the ordinal rose by two, digest unchanged — one licensed bump per record', null, false,
+      (dir) => {
+        const p = resolve(dir, ORDINAL_HOME);
+        const two = JSON.parse(readFileSync(p, 'utf8'));
+        git(dir, 'reset', '-q', '--hard', 'HEAD~1');
+        git(dir, 'checkout', '-q', '-b', 'side2');
+        writeFileSync(p, JSON.stringify({ ...two, ordinal: two.ordinal - 1 }, null, 2) + '\n', 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`);
+        writeFileSync(p, JSON.stringify(two, null, 2) + '\n', 'utf8');
+        git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', `version-advance: 0.7.4 after test ${'b'.repeat(40)} [version-advance]`);
+        git(dir, 'checkout', '-q', 'main');
+        git(dir, 'merge', '-q', '--no-ff', '-m', 'Merge side2 into main', 'side2');
+      }],
     [bump, 'red',
       'the same +1 with the digest unchanged, but HEAD is an ordinary commit and not a test record — still a hand edit', null, false,
       (dir) => git(dir, 'commit', '-q', '--amend', '-m', 'bump the ordinal by hand')],
@@ -693,7 +707,7 @@ function historyCorpus() {
       'the same +1 with the digest unchanged under a release-cut record (after release, not after test) — only a test record is licensed', null, false,
       (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after release ${'a'.repeat(40)} [version-advance]`)],
     [(j) => ({ ...j, ordinal: j.ordinal + 2 }), 'red',
-      'a test record that raises the ordinal by TWO with the digest unchanged — the licence is exactly one', null, false,
+      'one test record that raises the ordinal by TWO with the digest unchanged — the licence is one bump per record', null, false,
       (dir) => git(dir, 'commit', '-q', '--amend', '-m', `version-advance: 0.7.4 after test ${'a'.repeat(40)} [version-advance]`)],
   );
 
