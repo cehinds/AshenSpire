@@ -3,7 +3,8 @@ import { activeCombatStance } from '../../model/combatTacticsDisplay.js';
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { stanceRatingBonus } from '../../model/stanceRules.js';
 import { mechanics } from '../../framework/data/mechanics.js';
-import { reflectReduceFraction, reflectReturnFraction } from '../../engine/guardStacks.js';
+import { reflectReducePct, reflectReturnPct } from '../../engine/guardStacks.js';
+import { CounterStackPercent } from './CounterStackPercentModel.js';
 import { healthGuardTone } from '../../model/blockPresentation.js';
 // Presentation only: callers supply the live protection values. HP fill
 // always represents health, never protection added to the health numerator.
@@ -39,9 +40,9 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStac
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
-        help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
+        help: tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: mechanics.counter.decayPerTurn }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
-        help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),
+        help: tFull('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
     ],
   });
 }

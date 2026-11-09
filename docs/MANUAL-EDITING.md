@@ -316,6 +316,11 @@ the compiler before it writes any generated framework module. Live tuning
 leaves the game profile catalog and compatibility lock byte-for-byte the same.
 The standalone package still needs a rebuild to include the new values.
 
+Precision status and HUD explanations substitute the two declared live values
+from `mechanics.json`; unsupported template tokens fail framework validation.
+Counter help reads the same live stack fraction as resolution, while combat
+logs describe the recorded receipt rather than recalculating from current rules.
+
 ### Worked recipe: a real boss attack with three hits
 
 Find `stitchedKing.graspingHands` in Core `enemyCards.json`. Its damage effect

@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS05 verified locally by root. JS06–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS06 verified locally by root; JS07–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -64,7 +64,7 @@
   - **Dependencies:** JS01–JS03.
 
 - [x] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**
-  - **Status:** Verified locally by root; JS05 acceptance reviewed.
+  - **Status:** Verified locally by root; commit `29019e70df2`.
   - **Why:** A JSON setting needs one owner and a predictable effect on new runs, saved runs, and active fights.
   - **Scope:** Map Core packs, shared source, framework data, settings, generated adapters, and runtime locks. Classify values as startup/run/fight/live, validate defaults/ranges once, and document Counter/Reflect policies. Preserve current behavior absent an explicit rules change.
   - **Evidence:** `docs/MANUAL-EDITING.md:11`, `tools/game-config.mjs:17,61`, `src/model/combatTacticsRules.js:12`, `src/engine/guardStacks.js:27`.
@@ -73,11 +73,13 @@
   - **Accepted verification:** Two-profile/configuration lifetime proof passed 2/2; independent runtime/source-bundle checks passed 44/44; Sol focused suite passed 103 / skipped 5 platform cases / failed 0. `npm run code:check` and strict TypeScript checks passed. Final core gate `node tests/run-node.mjs --no-selftests --no-discovered` exited 0 (151/151); plantsites check passed (310 scanned, 5 known drifted and 35 unreadable, all counts match baseline); standalone `node tools/launch.mjs --build-only` exited 0, build `0.7.4.66` (`5a295ea013`), launcher refreshed 4/4 aliases; independent shipped check passed 12/12. This module changes no visible UI, so no new browser run was required. Detailed local command outcomes are in [`ordered-gates`](../scratch/qa/js05/ordered-gates/); `build-final.summary.txt` is a concise result record, not a raw build log.
   - **Dependencies:** JS01–JS04.
 
-- [ ] **JS06 · Render combat explanations from actual receipts — P1; Sol.**
+- [x] **JS06 · Render combat explanations from actual receipts — P1; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** Explanatory text must describe the rule contribution that actually occurred under the selected configuration.
-  - **Scope:** Fix the Counter percentage text and check related projections for the same ownership error.
-  - **Evidence:** `src/model/combatLog.js:188`, `src/engine/combatMatchups.js:786`.
+  - **Scope:** Resolve Precision tooltip/lifecycle placeholders from live mechanics values; render Counter stack percentages in health and card help from one presentation helper; use Reflect's integer percent getters in health labels; make authored Precision placeholders reject unsupported tokens. Core HUD help uses its resolved Precision definition with the legacy fallback unchanged. Make the no-revealed-attack Counter face avoid claiming a fixed fraction. Preserve historical combat-log amounts from receipts and keep the default 10% wording unchanged.
+  - **Evidence:** `content/framework/mechanics.json:76–78`, `src/model/statusPresentation.js:17,80`, `src/ui/models/CombatHealthModel.js:41–42`, `src/ui/components/card.js:930–931`, `src/engine/guardStacks.js:58–65`, `content/source/uiStrings.csv:45,782`, `src/model/combatLog.js:188`, `src/engine/combatMatchups.js:786`.
   - **Acceptance:** Non-default fractions and thin/legacy events produce truthful explanations; combat calculations and RNG do not change.
+  - **Accepted verification:** Focused suite passed 110/110 (`scratch/qa/js06/ordered-gates/focused-final.log`); `npm run code:check` passed for 932 authored modules/5 enrolled owners and strict TypeScript; framework-data and content builders plus their `--check` commands passed. The profile lock remained unchanged (SHA-256 `80F1E45E63CEAF7C543CB824C5104DF32D48A3987B2F71F454A43240827C9C82`). Ordered core passed 151/151, plantsites scanned 310 with drift/unreadable counts matching baseline, and build passed as 0.7.4.67 (`a823a303c7`), refreshing 4/4 aliases. Root's independent collection passed 56/56. Built Chromium acceptance at 1280×800 and 390×844 confirmed the paid 1 SP reaction and receipt `13 = 4 base + 7 stack share + 2 advantage`, with zero console/runtime errors and audio muted. Root reviewed the screenshots: [`desktop-1280x800-paid-reaction.png`](../scratch/qa/js06/browser-built-verified/desktop-1280x800-paid-reaction.png), [`desktop-1280x800-counter-log.png`](../scratch/qa/js06/browser-built-verified/desktop-1280x800-counter-log.png), [`phone-390x844-paid-reaction.png`](../scratch/qa/js06/browser-built-verified/phone-390x844-paid-reaction.png), [`phone-390x844-counter-log.png`](../scratch/qa/js06/browser-built-verified/phone-390x844-counter-log.png), [`results.json`](../scratch/qa/js06/browser-built-verified/results.json). An initial unmuted browser run made four optional SFX requests that returned 404; acceptance was repeated muted, so audio assets were not evaluated. Raw ordered-gate logs and exit files: [`ordered-gates`](../scratch/qa/js06/ordered-gates/).
   - **Dependencies:** JS01; follow JS05's lifetime policy.
 
 - [ ] **JS07 · Remove the Counter import cycle and reduce boundary exceptions — P1; Sol.**

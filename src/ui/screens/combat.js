@@ -2191,6 +2191,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
+      precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
@@ -2219,9 +2220,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const poiseEl = bars.querySelector('.as-meter[data-res="poise"]');
         const next = el.nextSibling === poiseEl ? poiseEl.nextSibling : el.nextSibling;
-        const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
+        const { hud, evadeHelp, precisionHelp, poiseHelp, wardHelp } = hp;
         // The Poise bar joins the HP row: bars stacked, then one badge row. The status tray is seated in that badge row by combatantFrame.js.
-        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true,
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
       }

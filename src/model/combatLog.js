@@ -184,11 +184,19 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       case 'combatCounterTriggered': {
         const { label } = causeOf();
-        // Core (SPEC §17, 2026-10-31): the return is the card's base damage plus stacks x 10% of the incoming hit (plus the stance-advantage share).
-        if (event.counterStacks !== undefined && event.amount > 0) {
-          const advantage = Math.max(0, event.amount - (event.counterBase || 0) - (event.counterStackShare || 0));
-          text = `${source} countered ${target}${label ? ` with ${label}` : ''} for ${event.amount} (base ${event.counterBase || 0} + stacks ${event.counterStacks}×10% of ${event.counterIncoming || 0}${advantage ? ` + advantage ${advantage}` : ''}).`;
-        } else text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
+        const withCard = label ? ` with ${label}` : '';
+        const { amount, counterBase: base, counterStackShare: share } = event;
+        if (event.wardOnly === true || !Number.isFinite(amount) || amount <= 0) {
+          text = `${source} counterattacked ${target}${withCard}.`;
+          break;
+        }
+        // A complete Core receipt records base and stack bonus. Advantage is the remainder.
+        let detail = '';
+        if ([amount, base, share].every(Number.isSafeInteger) && base >= 0 && share >= 0 && base + share <= amount) {
+          const advantage = amount - base - share;
+          detail = ` (base ${base} + stack bonus ${share}${advantage ? ` + advantage ${advantage}` : ''})`;
+        }
+        text = `${source} countered ${target}${withCard} for ${amount}${detail}.`;
         break;
       }
       // SPEC §17 Contests: "Read Intent contest: 9 vs 9 · success"; the full detail itemises d20 + attributes + rank vs Poise + attributes + level.

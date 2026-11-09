@@ -3,6 +3,7 @@
     "src/engine/saveTransfer.js",
     "src/engine/savedRunContext.js",
     "src/ui/models/ComponentModel.js",
+    "src/ui/models/CounterStackPercentModel.js",
     "src/ui/viewModels/RunHudViewModel.js"
   ],
   "formatProtected": [

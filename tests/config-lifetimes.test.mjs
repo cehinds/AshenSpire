@@ -67,6 +67,7 @@ test('framework validation reports the authored field and leaves generated files
     const invalid = [
         ['accuracy/evasionBase', data => { data.accuracy.evasionBase = '<overflow>'; }],
         ['accuracy/precisionDecayPerTurn', data => { delete data.accuracy.precisionDecayPerTurn; }],
+        ['accuracy/precisionTooltip', data => { data.accuracy.precisionTooltip = 'Loses {unknownRule} each turn.'; }],
         ['counter/stackFraction', data => { data.counter.stackFraction = -0.1; }],
         ['reflect/stackCap', data => { data.reflect.stackCap = 4.5; }],
         ['reflect/reduceCap', data => { data.reflect.reduceCap = 1.01; }],
