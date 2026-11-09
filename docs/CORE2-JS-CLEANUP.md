@@ -1,0 +1,132 @@
+# Core 2 JavaScript cleanup checklist
+
+**Status:** JS01 verified locally by root; JS02 is next, and JS03–JS14 remain open. Checkboxes change only after root acceptance.
+
+## Baseline and provenance
+
+- Worktree: `C:\Users\const\.codex\worktrees\js-core2-cleanup\AshenSpire`, branch `codex/js-core2-cleanup`, base `c39f9362e0d20c484dfb0003872b07a591847167`.
+- The read-only audit first inspected `88b5c5956fb2097863b0705178a086df412a4a80`; root verified live dev `c39f9362e0d20c484dfb0003872b07a591847167` adds only `buildordinal.json`. The checklist uses the latter as its implementation base.
+- The separate `feature/UpdateUI` checkout remains untouched. Its pre-existing generated-file modifications are not part of this worktree's baseline.
+- Scope is a bounded maintainability and compatibility cleanup. No push, merge, publish, release, or broad rewrite is authorized. Existing files, branches, worktrees, artifacts, and archives remain preserved.
+
+## Accepted facts and behavior distinctions
+
+- Preserve the existing composition/component architecture, immutable Component Models, headless simulation boundary, JSON/CSV data owners, profile cache, and compatibility doors. Latest dev already separates loadout, validation, settings rows, and persistence owners; do not repeat those extractions.
+- A mixed-profile backup export is a confirmed import gap. Resolve each slot using its own saved profile; do not weaken registry/hash validation.
+- Malformed combat snapshot shapes can throw raw `TypeError` during validation. This violates diagnostic behavior; the audit did not establish save loss.
+- Counter execution uses the configured stack fraction while one combat log sentence says `10%`. Use the actual recorded receipt; do not recompute historical text from current config.
+- Rules intentionally have different lifetimes: profile-pinned, fight-versioned, and explicitly live. Do not pin every value or change lifetime without an explicit rules/migration decision.
+- Counter → combat tactics → matchups has a source import cycle with bundle-order workarounds. Preview and execution action preparation overlap, but committed metadata, prospective stance, and mutation order intentionally differ; share only the proven common construction.
+- Existing tests cover current source behavior but do not yet cover the reproduced mixed-profile import or malformed-snapshot cases. JS02–JS03 must add those regressions. No full suite, production build, browser playtest, formatter pass, or implementation migration was performed for the audit.
+
+## Ordered implementation modules
+
+- [x] **JS01 · Freeze the latest-dev baseline and separate checks from writes — P0; Sol + root.**
+  - **Status:** Verified locally by root; JS02 is next.
+  - **Why:** Create a trustworthy behavioral comparison and make routine verification safe to repeat.
+  - **Scope:** Capture exact source/config identities, representative current and historical saves, seeded combat receipts and RNG positions. Make compiler `--check` non-writing; retain explicit build behavior.
+  - **Evidence:** Before JS01, `tools/build-game.mjs:482–493` wrote the artifact before comparing the summary; `tests/build-game.test.mjs:86–90` only asserted that `--check` exits successfully. The command documentation was updated in `engine/export/README.md:9–16` and `docs/MANUAL-EDITING.md:266–275`.
+  - **Acceptance:** Check mode preserves output bytes, existence, and timestamps on current and stale summaries; explicit build keeps its deterministic digest. The README and maintainer recipe describe those command semantics. Compare source and bundled compiler behavior. This is a source/bundle gate, not full browser acceptance.
+  - **Accepted evidence:** Root verified the compiler CLI check with filesystem writes denied; artifact identity was `sha256:9a625c76d83db2db32ced75988ab61c51a4e8c25bda8c73ff26e3d20886f5e9d` (2,694,438 bytes). Focused compiler tests `the build CLI` and `artifact file is build output` each passed 1/1 after the CRLF assertion correction. Root's eight-file source/bundle parity run passed 35/35. The core gate `node tests/run-node.mjs --no-selftests --no-discovered` exited 0: 151 passed, 0 failed. Root reviewed and accepted the module.
+  - **Coverage limits:** The parity scenarios run in native ESM and the production module transform; they are not full browser acceptance. Historical-profile scenarios use the saved historical profile to create a new run; they do not verify import or continuation of a saved historical run. `npm test` uses `--no-discovered`, so the new compiler/baseline tests require the discovered/full test lane.
+  - **Environment adjustment:** Windows CRLF-only diffs made generated checks falsely stale. In this worktree only, ran `node tools/hud-layout-css.mjs --write`, `node tools/base-cards.mjs`, and `node tools/mechanics-browser.mjs`; normalized diffs for the affected generated outputs are empty. `node tools/content-build.mjs --check` now passes. No authored content changed in these normalizations.
+  - **Dependencies:** None.
+
+- [ ] **JS02 · Resolve each backup slot using its saved context — P1; Sol.**
+  - **Why:** A backup containing multiple supported profiles must restore each slot under its own saved configuration.
+  - **Scope:** Restore each imported slot through the same per-save profile and override resolution as Continue; keep validation isolated, recovery backup, and rollback.
+  - **Evidence:** `src/engine/saveTransfer.js:24`, `src/main.js:978`, `src/engine/save.js:467`; mixed current/historical profile reproduction.
+  - **Acceptance:** Current, historical, and mixed-profile backups round-trip with exact combat state/RNG. Unsupported profiles or failed writes preserve recoverable data.
+  - **Dependencies:** JS01.
+
+- [ ] **JS03 · Make snapshot validation total and diagnostic — P1; Sol.**
+  - **Why:** Malformed input should return precise field errors rather than escape validation as a raw exception.
+  - **Scope:** Check collection and element shapes before iteration and references; reuse helpers only where contracts match.
+  - **Evidence:** `src/model/combatSnapshot.js:220`, `:329`, `:388`.
+  - **Acceptance:** Wrong collection types, null entries, and bad references return field-addressed problems rather than raw exceptions; supported historical snapshots and recovery behavior remain unchanged.
+  - **Dependencies:** JS01; review alongside JS02.
+
+- [ ] **JS04 · Establish naming, formatting, and typed boundary contracts — P1; Sol + Luna.**
+  - **Why:** Consistent public/private names and checked boundary shapes make routine edits easier to review safely.
+  - **Scope:** Public API PascalCase, private helpers camelCase, stable formatting, concise useful JSDoc, and focused type checking for save/config boundaries. Migrate by module with import-aware changes and temporary adapters where required.
+  - **Evidence:** `.editorconfig`, `jsconfig.json:6`, `src/ui/models/ComponentModel.js:24`, `src/ui/viewModels/RunHudViewModel.js:11`.
+  - **Acceptance:** Checks catch deliberate naming/type violations; imports, browser entry points, serialized keys, and source/bundle behavior remain intact. Remove adapters only after consumer proof.
+  - **Dependencies:** JS01–JS03.
+
+- [ ] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**
+  - **Why:** A JSON setting needs one owner and a predictable effect on new runs, saved runs, and active fights.
+  - **Scope:** Map Core packs, shared source, framework data, settings, generated adapters, and runtime locks. Classify values as startup/run/fight/live, validate defaults/ranges once, and document Counter/Reflect policies. Preserve current behavior absent an explicit rules change.
+  - **Evidence:** `docs/MANUAL-EDITING.md:11`, `tools/game-config.mjs:17,61`, `src/model/combatTacticsRules.js:12`, `src/engine/guardStacks.js:27`.
+  - **Acceptance:** Two configurations demonstrate the documented lifetime; old/new saves behave as specified; generated data and locks remain deterministic.
+  - **Dependencies:** JS01–JS04.
+
+- [ ] **JS06 · Render combat explanations from actual receipts — P1; Sol.**
+  - **Why:** Explanatory text must describe the rule contribution that actually occurred under the selected configuration.
+  - **Scope:** Fix the Counter percentage text and check related projections for the same ownership error.
+  - **Evidence:** `src/model/combatLog.js:188`, `src/engine/combatMatchups.js:786`.
+  - **Acceptance:** Non-default fractions and thin/legacy events produce truthful explanations; combat calculations and RNG do not change.
+  - **Dependencies:** JS01; follow JS05's lifetime policy.
+
+- [ ] **JS07 · Remove the Counter import cycle and reduce boundary exceptions — P1; Sol.**
+  - **Why:** Initialization-order workarounds can make bundled behavior differ from source behavior.
+  - **Scope:** Remove the Counter–Tactics–Matchups back edge through a narrow pure-data/preview seam. Address other dependency exceptions individually, preserving the layering ratchet.
+  - **Evidence:** `src/engine/counterRule.js:11`, `src/engine/combatCardTactics.js:10`, `src/engine/combatMatchups.js:4`, `tests/layering.test.mjs`.
+  - **Acceptance:** Source and production bundle agree for manual/automatic Counter, forecasts, and pending reactions; exception count only decreases.
+  - **Dependencies:** JS01, JS04.
+
+- [ ] **JS08 · Share proven action preparation between preview and execution — P2; Sol.**
+  - **Why:** One source for shared action facts reduces parallel edits without erasing intentional stage differences.
+  - **Scope:** Extract pure shared card/action construction with explicit inputs/results. Keep payment, committed metadata, prospective stance, observer filtering, and mutation order in their existing stages.
+  - **Evidence:** `src/engine/combat.js:1707,2063`.
+  - **Acceptance:** Preview/execution costs and receipts agree; inspection consumes no state/RNG; accepted actions charge once and refusals spend nothing.
+  - **Dependencies:** JS01, JS04, JS07.
+
+- [ ] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
+  - **Why:** Startup and save coordination should be understandable without navigating the entire game-flow module.
+  - **Scope:** First move profile boot/migration/storage warnings behind injected dependencies; split run/checkpoint transitions only as a later bounded step. Preserve the composition root and public launch paths.
+  - **Evidence:** `src/main.js:318,415,563,978,2338`.
+  - **Acceptance:** Startup, Continue, rejected restore, full storage, checkpoint ordering, and screen transitions retain behavior in focused headless/browser flows.
+  - **Dependencies:** JS02–JS05.
+
+- [ ] **JS10 · Extract combat display reduction and lifecycle owners — P2; Sol + Luna.**
+  - **Why:** Paced display updates and interaction lifetimes are separate responsibilities from screen composition.
+  - **Scope:** Move snapshot/follow-up/event reduction into a UI model first; then give targeting, playback, and subscription cleanup bounded interfaces. Keep existing Component Models and renderers.
+  - **Evidence:** `src/ui/screens/combat.js:204,1262,1332,1379`.
+  - **Acceptance:** Display state and event order match; intent, meters, reaction resume, teardown, keyboard/mouse/gamepad, and desktop/mobile flows remain correct.
+  - **Dependencies:** JS04, JS06, JS08.
+
+- [ ] **JS11 · Extract settings draft, reset, and undo policy — P2; Luna, Sol review.**
+  - **Why:** Settings transitions should be tested independently from HTML generation and event binding.
+  - **Scope:** Preserve `SettingsRowsModel`; move draft transitions, reset plans, and undo timing to a focused model. Leave DOM binding in the screen and persist through its explicit boundary.
+  - **Evidence:** `src/ui/screens/settings.js:725,741,966,1950`.
+  - **Acceptance:** Group/all reset, undo expiry, defaults, profile switches, invalid values, and persistence retain accepted results.
+  - **Dependencies:** JS04–JS05 and relevant JS09 interfaces.
+
+- [ ] **JS12 · Clarify enemy authoring and registry projection — P2; Sol.**
+  - **Why:** An enemy edit needs a clear source for each field and actionable diagnostics when a projection is invalid.
+  - **Scope:** Document and isolate the existing shared-definition/Core-row overlay, including `coreOffense`/`coreSp` opt-ins; improve field-level diagnostics without moving balance authority.
+  - **Evidence:** `tools/enemy-sheets.mjs:2`, `src/model/gameProfile.js:74`, `src/model/gameProfileEnemy.js:5`, `src/engine/combat.js:323`.
+  - **Acceptance:** Shared/configured enemy fixtures preserve IDs, move order, seeded HP/RNG, saved intent, and affordability.
+  - **Dependencies:** JS05, JS08.
+
+- [ ] **JS13 · Centralize only intentional presentation/gesture tunables — P2; Luna.**
+  - **Why:** Maintainers should edit intended tuning values in one validated place without turning structural constants into configuration.
+  - **Scope:** Extend existing JSON configuration for justified user-facing values such as hold timing, pointer slop, undo lifetime, or hand paging. Reuse gesture/lifecycle helpers only when semantics match. Keep algorithmic sentinels and safety ceilings in code.
+  - **Evidence:** `src/ui/screens/combat.js:656,1235`, `src/ui/screens/settings.js:725`, `tools/style-lint.mjs:30`, `content/config/ui/tokens.json`.
+  - **Acceptance:** Defaults keep screenshots/input unchanged; non-default settings propagate consistently across reduced motion, long text, touch, keyboard, and gamepad. Do not move every number mechanically.
+  - **Dependencies:** JS05, JS10–JS11.
+
+- [ ] **JS14 · Complete the solo-maintainer map and final consistency gate — P2; Luna + root.**
+  - **Why:** A solo maintainer needs a practical route from an edit to the right validator and acceptance check.
+  - **Scope:** Extend `docs/MANUAL-EDITING.md` rather than create a competing guide; cover cards, enemies, balance, screen text/layout, and save-safe rule changes. Refresh the generated architecture inventory and finish naming migration with documented exceptions.
+  - **Evidence:** `docs/MANUAL-EDITING.md`, `docs/ARCHITECTURE-CURRENT-DEV.md:8`, `tools/README.md`, component catalog.
+  - **Acceptance:** Follow recipes from an isolated checkout; links/commands work; each tunable has one owner; launch doors and source/bundle acceptance pass.
+  - **Dependencies:** Earlier modules complete.
+
+## Checkpoint rules
+
+- Root owns implementation order, integration, independent QA, and the decision to mark a module verified. A passing focused test alone does not close a checkbox.
+- Record the before-state and expected differences. Keep formatting/naming changes distinguishable from behavior changes.
+- Update guides with the module that changes their commands or ownership. Preserve generated outputs and archives; edit authored sources, not generated files.
+- JSON owns editable content/tuning; code owns algorithms, stable identities, and safety invariants. Moving existing CSV requires an explicit schema/compatibility decision.
+- Root closes each module only after its acceptance review. Full browser acceptance is still required where visible behavior changes; source/compiler checks are not a substitute.

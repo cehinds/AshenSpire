@@ -1,14 +1,15 @@
 // The build compiler (tools/build-game.mjs): one deterministic artifact from every authored JSON layer.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { createRuntime, runCases, loadMechanics } from '../engine/runtime/interpreter.mjs';
 import { evaluate } from '../src/model/formulas.js';
-import { buildGame, hashOf, summaryFile, summaryText } from '../tools/build-game.mjs';
+import { artifactFile, buildGame, hashOf, summaryFile, summaryText } from '../tools/build-game.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const readJson = f => JSON.parse(readFileSync(join(ROOT, f), 'utf8'));
@@ -83,10 +84,56 @@ test('the artifact satisfies build-artifact.schema.json', () => {
   assert.equal(artifact.game, 'ashenspire');
 });
 
-test('the committed summary is current and --check passes', () => {
+test('the committed summary is current', () => {
   assert.equal(readFileSync(join(ROOT, summaryFile('ashenspire')), 'utf8').replace(/\r\n/g, '\n'), summaryText(first.summary));
-  const run = spawnSync(process.execPath, [join(ROOT, 'tools/build-game.mjs'), '--check'], { encoding: 'utf8' });
-  assert.equal(run.status, 0, run.stderr + run.stdout);
+});
+
+test('the build CLI checks without writing and explicit builds emit the expected bytes', t => {
+  const root = mkdtempSync(join(tmpdir(), 'ashenspire-build-game-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const cli = 'tools/build-game.mjs';
+  for (const file of [
+    'art-manifest.json', 'package.json', 'content', 'engine', 'games', 'src', 'tools/lib',
+    cli, 'tools/asset-catalog.mjs', 'tools/base-cards.mjs', 'tools/catalog-json.mjs',
+    'tools/game-config.mjs', 'tools/maps-validate.mjs', 'tools/ui-validate.mjs',
+  ]) cpSync(join(ROOT, file), join(root, file), { recursive: true });
+
+  const output = join(root, artifactFile('ashenspire'));
+  const summary = join(root, summaryFile('ashenspire'));
+  const build = () => spawnSync(process.execPath, [join(root, cli)], { cwd: root, encoding: 'utf8' });
+  const check = () => spawnSync(process.execPath, ['--permission', '--allow-fs-read=*', join(root, cli), '--check'], { cwd: root, encoding: 'utf8' });
+  const expectSuccess = run => assert.equal(run.status, 0, run.error?.message || run.stderr + run.stdout);
+
+  assert.equal(existsSync(dirname(output)), false);
+  expectSuccess(check());
+  assert.equal(existsSync(dirname(output)), false, '--check left the output directory absent');
+
+  expectSuccess(build());
+  assert.equal(readFileSync(output, 'utf8'), first.text);
+  assert.equal(hashOf(JSON.parse(readFileSync(output, 'utf8'))), first.artifact.hash);
+  assert.equal(readFileSync(summary, 'utf8'), summaryText(first.summary));
+
+  // Use an old mtime so rewriting identical bytes is detectable.
+  const past = new Date('2000-01-01T00:00:00Z');
+  for (const file of [output, summary]) utimesSync(file, past, past);
+  const artifactMtime = statSync(output).mtimeMs;
+  const summaryMtime = statSync(summary).mtimeMs;
+  expectSuccess(check());
+  assert.equal(readFileSync(output, 'utf8'), first.text);
+  assert.equal(statSync(output).mtimeMs, artifactMtime);
+  assert.equal(readFileSync(summary, 'utf8'), summaryText(first.summary));
+  assert.equal(statSync(summary).mtimeMs, summaryMtime);
+
+  const stale = '{}\n';
+  writeFileSync(summary, stale);
+  utimesSync(summary, past, past);
+  const rejected = check();
+  assert.equal(rejected.status, 1, rejected.error?.message || rejected.stderr + rejected.stdout);
+  assert.match(rejected.stderr, /games\/ashenspire\/build\.summary\.json is stale; run node tools\/build-game\.mjs/);
+  assert.equal(readFileSync(output, 'utf8'), first.text);
+  assert.equal(statSync(output).mtimeMs, artifactMtime);
+  assert.equal(readFileSync(summary, 'utf8'), stale);
+  assert.equal(statSync(summary).mtimeMs, summaryMtime);
 });
 
 test('report counts match the mechanics index, the ui index and the maps', () => {
@@ -206,7 +253,7 @@ test('every portable mechanic in the artifact passes its cases through the inter
 });
 
 test('the artifact file is build output and git-ignored', () => {
-  assert.ok(readFileSync(join(ROOT, '.gitignore'), 'utf8').split('\n').includes('/dist/build/'));
+  assert.ok(readFileSync(join(ROOT, '.gitignore'), 'utf8').split(/\r?\n/).includes('/dist/build/'));
   assert.ok(existsSync(join(ROOT, 'games/ashenspire/build.summary.json')));
 });
 

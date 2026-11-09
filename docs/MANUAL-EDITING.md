@@ -266,12 +266,13 @@ and **Build game artifact** tasks run these commands.
 After pack or bundle edits run `node tools/game-config.mjs build`, then
 `node tools/game-config.mjs check`. The compiler regenerates the catalog,
 base-card projection and compatibility lock; do not hand-edit these outputs or
-relax compatibility checks to accept them. Then run `node tools/build-game.mjs`
-and `node tools/build-game.mjs --check` to refresh/check the derived game artifact
-and summary. This is separate from packaging the standalone HTML. After pacing
-edits run `node tools/config-build.mjs` and its `--check`, followed by the game
-artifact build/check. Keep generated source/lock/summary changes with their
-source edit; the full `dist/build/` artifact is ignored.
+relax compatibility checks to accept them. Run `node tools/build-game.mjs` to
+write the derived artifact and summary. `node tools/build-game.mjs --check`
+verifies the summary against the in-memory artifact without writing either file.
+This is separate from packaging the standalone HTML. After pacing edits run
+`node tools/config-build.mjs` and its `--check`, followed by the game artifact
+build/check. Keep generated source/lock/summary changes with their source edit;
+the full `dist/build/` artifact is ignored.
 
 ### Worked recipe: a real boss attack with three hits
 

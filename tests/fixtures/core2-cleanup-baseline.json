@@ -1,0 +1,387 @@
+{
+  "baseCommit": "c39f9362e0d20c484dfb0003872b07a591847167",
+  "capture": "Immutable JS01 capture from native ESM, verified against the production module transform. Hashes are SHA-256 over canonical JSON unless marked as file bytes. Arrays retain order. Run hashes omit savedAt.",
+  "historicalProfile": "tests/fixtures/dev-profile-73ef.json.gz",
+  "historicalProfileSha256": "49c1fce75f3bc3f9eadf858b470614c371a57c4d3b3a04ce3cac280ead811388",
+  "scenarios": {
+    "paid reaction": {
+      "profile": {
+        "hash": "sha256:162e21dc82bfe833f3bec3655343c206bcecf124897fc0e71c1803e433925a2c",
+        "runtimeHash": "sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "268a4b0938ee37988af9fc94b0fda43465a9e77c6a990dc4d412483d0bf44b24",
+        "events": "6133611cf5928708ddfd5741e564e658454763f78fa8dfcaa670adea30018714",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "receipt": {
+        "preview": {
+          "cost": 2,
+          "manaCost": 0,
+          "staminaCost": 2,
+          "effects": "979904e875e5160049385c76cb478723ba9f9b198cbcbac39ec157945c727c3b"
+        },
+        "payment": {
+          "sp": 1,
+          "advanceSp": 0,
+          "totalSp": 1
+        }
+      },
+      "pending": {
+        "snapshot": "5f2e39efe86951a2fd380f36d416546cb5a66a66671db356d5ce718c8a23fc0d",
+        "events": "88f3845743ca79f25d9d5ea4933289fa1652689b52d47a5b531c3702e5f054e4",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "b89fbfae2cb9b2c9ae779732c7138e56efa26c1f038182fe92c77758b3c2d901",
+        "loaded": "cf69382fc56180b655175e6bc3cb8430458f4341d2413296eb2fe6b7e7cf2f11"
+      },
+      "restored": {
+        "snapshot": "5f2e39efe86951a2fd380f36d416546cb5a66a66671db356d5ce718c8a23fc0d",
+        "events": "ced3f793efc21ae8eac3ee1c46403a22aabbdaecf59ad443dcffe1dc15a7d4e0",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "e90123ad9cccbdfb42d2c3b8f3219383d1f3ae2c3bc48702f04c8f7d52797cc8",
+        "events": "f22ea8071513fd936fa9e384722818ba037d57dc98741cb0421ca028552e10e7",
+        "rng": {
+          "hash": "474b25196add2cf048e24e45d7d7b707c837472eea9f0fe01bb7ff68b2b77d6a",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "combatAvoidance": 2,
+            "enemyIntentClue": 1
+          }
+        },
+        "continuation": "7412d62a82ab0fdbe20c798cb4d64a9a420fc1ffd0c7d9cb6cead23d084eb802"
+      },
+      "afterRestore": {
+        "snapshot": "e90123ad9cccbdfb42d2c3b8f3219383d1f3ae2c3bc48702f04c8f7d52797cc8",
+        "events": "af9cf481ed26e9b9a2ece900c46fff80f1b7c9db45f0a62917130457f994e896",
+        "rng": {
+          "hash": "474b25196add2cf048e24e45d7d7b707c837472eea9f0fe01bb7ff68b2b77d6a",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "combatAvoidance": 2,
+            "enemyIntentClue": 1
+          }
+        },
+        "continuation": "7412d62a82ab0fdbe20c798cb4d64a9a420fc1ffd0c7d9cb6cead23d084eb802"
+      }
+    },
+    "paid delayed charge": {
+      "profile": {
+        "hash": "sha256:162e21dc82bfe833f3bec3655343c206bcecf124897fc0e71c1803e433925a2c",
+        "runtimeHash": "sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "93df221c205beebb1c50eef9beb65749028afe438ed4f836c406af9b3a759468",
+        "events": "cb49b7a593317146746ddd9ac7c3c2d5441245699ed8daae3a8d2c537cc1a8ce",
+        "rng": {
+          "hash": "d77bbec9770e8be0d125033bfa876f0037d23d8f96c00a7b123626a945d6e6bf",
+          "drawn": {
+            "shuffle": 9,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "receipt": {
+        "sp": 1,
+        "advanceSp": 1,
+        "totalSp": 2
+      },
+      "pending": {
+        "snapshot": "0fa01341e6ad568329f4a897576a5bbe8b230dc65f7efb57b72f8ae29af238a0",
+        "events": "f99c2ce47369acf3f839cc92f2c8e1b012997ce28998cbe3d5bc2e0948ff1a92",
+        "rng": {
+          "hash": "1c65119ad3bdc1c264c0b920d8a6510c799cd1ae1c37fbb9a6b6126940293845",
+          "drawn": {
+            "shuffle": 18,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "e12e4a81dabe150a96379e7a76545a8281f730b3649ca1a950c5e5e3a545dbc0",
+        "loaded": "f884446ecba26d9dfc95437556b9e3d3292a5e743261aa522660bc92d0ad3429"
+      },
+      "restored": {
+        "snapshot": "0fa01341e6ad568329f4a897576a5bbe8b230dc65f7efb57b72f8ae29af238a0",
+        "events": "f99c2ce47369acf3f839cc92f2c8e1b012997ce28998cbe3d5bc2e0948ff1a92",
+        "rng": {
+          "hash": "1c65119ad3bdc1c264c0b920d8a6510c799cd1ae1c37fbb9a6b6126940293845",
+          "drawn": {
+            "shuffle": 18,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "274860e3f89bbbb6f71d6c37991e56edd13c389c95c458437c195331f78b2557",
+        "events": "813344adcd5b60dc7051b39d6d2a9f802c0069bc28f0bfc812de8098ca5ff563",
+        "rng": {
+          "hash": "123d0c94f69c20faaddef4d1b57577d1c97602706bb1a083b22163355f74d7b7",
+          "drawn": {
+            "shuffle": 27,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 2,
+            "combatAvoidance": 1,
+            "enemyIntentClue": 2
+          }
+        },
+        "continuation": "19e933ab912adcbc5c971effb75a7b97eb4a89c69acef597baf07cb76fd0f176"
+      },
+      "afterRestore": {
+        "snapshot": "274860e3f89bbbb6f71d6c37991e56edd13c389c95c458437c195331f78b2557",
+        "events": "813344adcd5b60dc7051b39d6d2a9f802c0069bc28f0bfc812de8098ca5ff563",
+        "rng": {
+          "hash": "123d0c94f69c20faaddef4d1b57577d1c97602706bb1a083b22163355f74d7b7",
+          "drawn": {
+            "shuffle": 27,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 2,
+            "combatAvoidance": 1,
+            "enemyIntentClue": 2
+          }
+        },
+        "continuation": "19e933ab912adcbc5c971effb75a7b97eb4a89c69acef597baf07cb76fd0f176"
+      }
+    },
+    "ordered enemy plan": {
+      "profile": {
+        "hash": "sha256:162e21dc82bfe833f3bec3655343c206bcecf124897fc0e71c1803e433925a2c",
+        "runtimeHash": "sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6",
+        "actionPolicy": 2
+      },
+      "start": {
+        "snapshot": "7c762ceeff37c11c9f65c649fc00eaf07baf10c3c24c92d2f02d11aa139fa8f7",
+        "events": "1ddd7a5a8245f28db79508bf67e05322a384d4eaad69590840d9a891da6ff745",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "receipt": [
+        [
+          "caneStrike",
+          1
+        ],
+        [
+          "caneStrike",
+          1
+        ],
+        [
+          "heldBlade",
+          1
+        ]
+      ],
+      "pending": {
+        "snapshot": "7c762ceeff37c11c9f65c649fc00eaf07baf10c3c24c92d2f02d11aa139fa8f7",
+        "events": "1ddd7a5a8245f28db79508bf67e05322a384d4eaad69590840d9a891da6ff745",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "327fb0504cbd41d28e40c0d02ae1e27a433de53f750f6e0eb7647a0f85356514",
+        "loaded": "262c7552e11049af3c1941204fd9162086c793d98fb6e9b201027502e08a4789"
+      },
+      "restored": {
+        "snapshot": "7c762ceeff37c11c9f65c649fc00eaf07baf10c3c24c92d2f02d11aa139fa8f7",
+        "events": "1ddd7a5a8245f28db79508bf67e05322a384d4eaad69590840d9a891da6ff745",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "f883603ad9c2fafbd8aaf6ded527270ad2877e163f1502b8982bbe41deba2df4",
+        "events": "a59f6bee9fa1d2e61d36e638fc6f64b506804d14fa6045c7686b4561b781c418",
+        "rng": {
+          "hash": "53d114d30f1170a3f17fead381b7286df1532cd83a3e430ee3a553390f1254f4",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 3,
+            "combatAvoidance": 2,
+            "enemyIntentClue": 3
+          }
+        },
+        "continuation": "ae9785eac5f9711d6d7121ed9a28aacdb4f70dd8cb7710b0cd2577cb209576c9"
+      },
+      "afterRestore": {
+        "snapshot": "f883603ad9c2fafbd8aaf6ded527270ad2877e163f1502b8982bbe41deba2df4",
+        "events": "a59f6bee9fa1d2e61d36e638fc6f64b506804d14fa6045c7686b4561b781c418",
+        "rng": {
+          "hash": "53d114d30f1170a3f17fead381b7286df1532cd83a3e430ee3a553390f1254f4",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 3,
+            "combatAvoidance": 2,
+            "enemyIntentClue": 3
+          }
+        },
+        "continuation": "ae9785eac5f9711d6d7121ed9a28aacdb4f70dd8cb7710b0cd2577cb209576c9"
+      }
+    },
+    "historical action policy": {
+      "profile": {
+        "hash": "sha256:59214dc474c262ee2e644f3c4ddbf3b94cea056c6026c5ad13002698bc263d33",
+        "runtimeHash": "sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2",
+        "actionPolicy": 1
+      },
+      "start": {
+        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
+        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "receipt": {
+        "level": 19,
+        "attributes": {
+          "strength": 2,
+          "dexterity": 1,
+          "constitution": 1,
+          "wisdom": 2,
+          "intelligence": 0
+        },
+        "stamina": 2,
+        "totalSp": 2
+      },
+      "pending": {
+        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
+        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "save": {
+        "stored": "fa6adb165ffd77889596355ac050ff44d1eacbd247cedf6c8215f402762c92ac",
+        "loaded": "9af3726b52352e4416474bb068697269911b95ad85cb77a89e4cca53754886a0"
+      },
+      "restored": {
+        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
+        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "rng": {
+          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "drawn": {
+            "shuffle": 9,
+            "enemyAI": 2,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 1,
+            "enemyIntentClue": 1
+          }
+        }
+      },
+      "live": {
+        "snapshot": "eb6dded8821bbdc44ebcf7b9aa7cbc3884eca896516bf5d8a5d22b87e5fb1bb0",
+        "events": "2f8bdd4c554d618e5e150f86925f417dafaf94d1c15e6b2fc5ed6f72fa211823",
+        "rng": {
+          "hash": "0ca3629d240d6adf3a135d8bc30ff8e85cbec2799e47421ac164625f04a96b97",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 3,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 3,
+            "enemyIntentClue": 3
+          }
+        },
+        "continuation": "d779c60fa7e688c8a106191868d3e407917b36b00d38750ef6d5e7c08088a223"
+      },
+      "afterRestore": {
+        "snapshot": "eb6dded8821bbdc44ebcf7b9aa7cbc3884eca896516bf5d8a5d22b87e5fb1bb0",
+        "events": "2f8bdd4c554d618e5e150f86925f417dafaf94d1c15e6b2fc5ed6f72fa211823",
+        "rng": {
+          "hash": "0ca3629d240d6adf3a135d8bc30ff8e85cbec2799e47421ac164625f04a96b97",
+          "drawn": {
+            "shuffle": 18,
+            "enemyAI": 3,
+            "enemyHP": 1,
+            "enemyIntentVisibility": 3,
+            "enemyIntentClue": 3
+          }
+        },
+        "continuation": "d779c60fa7e688c8a106191868d3e407917b36b00d38750ef6d5e7c08088a223"
+      }
+    }
+  }
+}
