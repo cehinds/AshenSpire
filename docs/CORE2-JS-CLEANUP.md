@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01 and JS02 verified locally by root; JS03 is in progress, and JS04–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS03 verified locally by root; JS04 is in progress, and JS05–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -42,15 +42,18 @@
   - **Accepted verification:** 52/52 focused checks and 151/151 core checks passed; the standalone build and 12/12 shipped checks passed. The source/bundle baseline stayed exact; the load-door mutation was caught and its unmodified browser control passed. Fresh-profile Chromium passed 8/8 checks across 1280×800 and 390×844: Continue resolved to `gildedKnight`, historical Load to `ashheartDragon`, version-999 backup was refused with existing Continue preserved, and both viewports had zero console/runtime errors. Results and screenshots: [`results.json`](../scratch/qa/js02/evidence/results.json), [`desktop-1280x800-continue-current.png`](../scratch/qa/js02/evidence/desktop-1280x800-continue-current.png), [`desktop-1280x800-load-historical.png`](../scratch/qa/js02/evidence/desktop-1280x800-load-historical.png), [`phone-390x844-continue-current.png`](../scratch/qa/js02/evidence/phone-390x844-continue-current.png), [`phone-390x844-load-historical.png`](../scratch/qa/js02/evidence/phone-390x844-load-historical.png), [`phone-390x844-rejected-backup.png`](../scratch/qa/js02/evidence/phone-390x844-rejected-backup.png). Root inspected the desktop and phone captures.
   - **Dependencies:** JS01.
 
-- [ ] **JS03 · Make snapshot validation total and diagnostic — P1; Sol.**
-  - **Status:** In progress.
+- [x] **JS03 · Make snapshot validation total and diagnostic — P1; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** Malformed input should return precise field errors rather than escape validation as a raw exception.
   - **Scope:** Check collection and element shapes before iteration and references; reuse helpers only where contracts match.
   - **Evidence:** `src/model/combatSnapshot.js:220`, `:329`, `:388`.
   - **Acceptance:** Wrong collection types, null entries, and bad references return field-addressed problems rather than raw exceptions; supported historical snapshots and recovery behavior remain unchanged.
+  - **Accepted evidence:** Core gate `node tests/run-node.mjs --no-selftests --no-discovered` passed 151/151; `node tools/plantsites.mjs --check` passed (310 sites, 5 known drifted/35 unreadable all match baseline); `node tools/launch.mjs --build-only` exited 0 and emitted build 0.7.4.64 (`d1cf8fa8ed`). Root reports separate JS03 gates at 49/49, 168/168, and 113/113. Ordered gate logs and exit files are in `scratch/qa/js03/ordered-gates/`.
+  - **Browser evidence:** `scratch/qa/js03/ordered-gates/browser/results.json` records 8 passing checks at desktop 1280×800 and phone 390×844: current Continue `gildedKnight`, historical Load `ashheartDragon`, malformed queue refusal names `combatEntered.snapshot.abilityQueue`, Continue remains `gildedKnight`, and zero console/runtime errors. Root reviewed screenshots/results and accepted the module. The detailed diagnostic is in the DOM result; its screenshot text extends below the modal fold. Refusal screenshots: `desktop-1280x800-rejected-backup.png`, `phone-390x844-rejected-backup.png`; continuation screenshots are `desktop-1280x800-continue-after-refusal.png` and `phone-390x844-continue-after-refusal.png`.
   - **Dependencies:** JS01; review alongside JS02.
 
 - [ ] **JS04 · Establish naming, formatting, and typed boundary contracts — P1; Sol + Luna.**
+  - **Status:** In progress; implementation brief pending.
   - **Why:** Consistent public/private names and checked boundary shapes make routine edits easier to review safely.
   - **Scope:** Public API PascalCase, private helpers camelCase, stable formatting, concise useful JSDoc, and focused type checking for save/config boundaries. Migrate by module with import-aware changes and temporary adapters where required.
   - **Evidence:** `.editorconfig`, `jsconfig.json:6`, `src/ui/models/ComponentModel.js:24`, `src/ui/viewModels/RunHudViewModel.js:11`.

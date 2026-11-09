@@ -24,9 +24,10 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
       || Object.keys(counters).some(key => !required.includes(key)) || counters.enemyIntentVisibility !== counters.enemyIntentClue
       || counters.enemyIntentVisibility < rows.reduce((sum, enemy) => sum + Object.keys(enemy?.knowledgeAction?.reads || {}).length, 0)) problems.push('Co-op read continuation requires a host-private seed and equal carried visibility/clue counters');
   }
+  const predictionXp = state.rules?.perception?.correctPredictionXp;
   for (const [ownerId, owner] of Object.entries(state.owners)) {
     if (!knowledgeKey(ownerId) || (ownerIds && !ownerIds.has(ownerId)) || !object(owner) || !count(owner.earnedXp)
-      || owner.earnedXp > state.nextSerial * (state.rules?.perception?.correctPredictionXp || 0)
+      || (count(predictionXp) && owner.earnedXp > state.nextSerial * predictionXp)
       || !Array.isArray(owner.feedback) || owner.feedback.length > 12 || !Array.isArray(owner.counterEnemyIds)
       || new Set(owner.counterEnemyIds).size !== owner.counterEnemyIds.length
       || owner.counterEnemyIds.some(id => !knowledgeKey(id) || !Array.isArray(encounter?.enemyIds) || !encounter.enemyIds.includes(id))) {
@@ -39,14 +40,15 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
       || (row.outcome === 'cancelled' ? row.correct !== null : typeof row.correct !== 'boolean')) problems.push('Combat prediction feedback is invalid');
   }
   const serials = new Set();
-  for (const enemy of rows) {
+  for (const [index, enemy] of rows.entries()) {
     if (!object(enemy)) continue;
+    const label = knowledgeKey(enemy.id) ? enemy.id : 'enemies[' + index + ']';
     const action = enemy.knowledgeAction;
     if (action === undefined) continue; // an enemy without a selected action
     if (!object(action) || !Number.isSafeInteger(action.serial) || action.serial < 1 || action.serial > state.nextSerial
       || serials.has(action.serial) || !choices.has(action.category) || typeof action.executed !== 'boolean'
       || (action.cancelled !== undefined && typeof action.cancelled !== 'boolean') || !object(action.reads)) {
-      problems.push(`enemy ${enemy.id} has invalid knowledge action state`); continue;
+      problems.push(`enemy ${label} has invalid knowledge action state`); continue;
     }
     serials.add(action.serial);
     for (const [ownerId, read] of Object.entries(action.reads)) {
@@ -59,7 +61,7 @@ export function combatEnemyKnowledgeProblems(state, enemies, { enemyIds = null, 
         || (read.correct !== null && (typeof read.correct !== 'boolean' || !read.resolved || read.prediction === null))
         || (read.resolved && !action.executed && !action.cancelled)
         || (action.executed && read.correct !== (read.prediction === null ? null : read.prediction === action.category))
-        || (action.executed && !read.resolved) || (action.cancelled && (action.executed || !read.resolved || read.correct !== null))) problems.push(`enemy ${enemy.id} observer ${ownerId} has an invalid committed read`);
+        || (action.executed && !read.resolved) || (action.cancelled && (action.executed || !read.resolved || read.correct !== null))) problems.push(`enemy ${label} observer ${ownerId} has an invalid committed read`);
     }
   }
   return problems;
