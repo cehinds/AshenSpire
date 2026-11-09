@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS10 verified locally by root. JS11–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS11 verified locally by root. JS12–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -111,7 +111,7 @@
   - **Dependencies:** JS02–JS05.
 
 - [x] **JS10 · Extract combat display reduction and lifecycle owners — P2; Sol + Luna.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `f33de49b62e`.
   - **Why:** Paced display updates and interaction lifetimes are separate responsibilities from screen composition.
   - **Scope:** Move snapshot/follow-up/event reduction into a UI model first; then give targeting, playback, and subscription cleanup bounded interfaces. Keep existing Component Models and renderers.
   - **Evidence:** `src/ui/screens/combat.js:204,1262,1332,1379`.
@@ -124,11 +124,16 @@
   - **Current-dev UI boundary:** Selected target-HUD panels are intentionally disabled on this baseline. Older browser scripts targeting those panels are stale; acceptance used the actual mini-HUD/figure controls and retained direct tests for the legacy command gate. Earlier partial or mid-animation captures are preserved but are not acceptance evidence.
   - **Dependencies:** JS04, JS06, JS08.
 
-- [ ] **JS11 · Extract settings draft, reset, and undo policy — P2; Luna, Sol review.**
+- [x] **JS11 · Extract settings draft, reset, and undo policy — P2; Luna + Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** Settings transitions should be tested independently from HTML generation and event binding.
   - **Scope:** Preserve `SettingsRowsModel`; move draft transitions, reset plans, and undo timing to a focused model. Leave DOM binding in the screen and persist through its explicit boundary.
   - **Evidence:** `src/ui/screens/settings.js:725,741,966,1950`.
   - **Acceptance:** Group/all reset, undo expiry, defaults, profile switches, invalid values, and persistence retain accepted results.
+  - **Implementation:** One `SettingsDraftModel` owns reset/Undo transactions, offer generation/order, per-key promotion ownership and numeric decisions. The screen retains row metadata through `SettingsRowsModel`, current build-promotion defaults, DOM/timers/confirmations, and compatibility adapters. The shared owner survives Settings reopen; existing persistence remains in Main. New APIs follow PascalCase/Allman/four-space conventions; private helpers use camelCase.
+  - **Intentional fixes:** Captured expired/stale offers are refused; late completions cannot replace newer valid offers or roll back a replacement profile. Overlapping successful resets publish the later-started operation's offer regardless of completion order. Failed Reset/Undo compensation preserves unrelated newer seed ownership; synchronous throws and rejected promises follow the bounded refusal path. Undo waits for its compensating write before offering retry. Each timer removes its own bar, fixing the reproduced reopened bar that remained visible after expiry. These guards do not cancel already-issued external writes or arbitrate concurrent changes to the same key.
+  - **Accepted headless/build evidence:** Root's combined settings suite passed 118/118, including 23 new regressions and the 95-check prior baseline. Six additional probes preserved absent/empty/null seed shapes and exact compensation payloads. Native and production-bundle comparisons retained ordinary frozen reset/Undo traces and all 25,767 numeric outcomes across 409 row domains; dedicated probes checked the intentional stale/order/expiry changes. Quality passed for 942 authored modules/15 enrolled owners with strict types, and bundle hazards remained zero. Ordered core passed 151/151; plantsites passed 310 with the unchanged 5 drifted/35 unreadable baseline; build `0.7.4.72` (`175f7ad25a`, 155,970,976 bytes) refreshed 4/4 aliases; shipped checks passed 12/12; frozen Core 2 source/bundle scenarios passed 5/5. Raw gates: [`ordered-gates`](../scratch/qa/js11/ordered-gates/); focused/probe records are in `scratch/qa/js11-13/`.
+  - **Accepted browser evidence:** Build .72 passed 6/6 checks on desktop mouse 1280×800 and native touch 390×844: row Reset/Undo across reopen, expiry at the original window, confirmed Reset all/Undo, local settings profile import invalidating the prior offer, refused Reset rollback, and refused Undo with successful retry. The exact .71 reopened-expiry failure became a pass at original +8.75 seconds. Each scoped storage fault rejected one primary metadata write, accepted one compensating write, and preserved byte-identical prior primary data. Both runs ended with profile digest `429a400cd14c841a7f8bd6e0d4e62a74f01a68b5a97df4793d1dbe50112ec125`; application/runtime/HTTP errors and interventions were zero, with no network stubs. Root inspected desktop refusal and phone Undo/Reset-all captures. Results: [`desktop settings`](../scratch/qa/js11-13/browser-settings-final-desktop/results.json), [`phone settings`](../scratch/qa/js11-13/browser-settings-final-phone/results.json). Multi-key/group reset is model-tested because the shipped UI exposes row and all reset, not a group-reset control.
   - **Dependencies:** JS04–JS05 and relevant JS09 interfaces.
 
 - [ ] **JS12 · Clarify enemy authoring and registry projection — P2; Sol.**

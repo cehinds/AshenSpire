@@ -13,6 +13,7 @@
     "src/ui/models/CombatTargetingModel.js",
     "src/ui/models/ComponentModel.js",
     "src/ui/models/CounterStackPercentModel.js",
+    "src/ui/models/SettingsDraftModel.js",
     "src/ui/viewModels/RunHudViewModel.js"
   ],
   "formatProtected": [
