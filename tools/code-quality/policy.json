@@ -3,6 +3,10 @@
     "src/engine/combatCounterPreview.js",
     "src/engine/saveTransfer.js",
     "src/engine/savedRunContext.js",
+    "src/services/entryCheckpoint.js",
+    "src/services/profileBoot.js",
+    "src/services/runBirth.js",
+    "src/services/runPersistence.js",
     "src/ui/models/ComponentModel.js",
     "src/ui/models/CounterStackPercentModel.js",
     "src/ui/viewModels/RunHudViewModel.js"

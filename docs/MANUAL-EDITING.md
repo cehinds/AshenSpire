@@ -266,6 +266,15 @@ Use **Serve without opening a browser** for the source game, then open the
 printed local URL. **Build standalone** creates the portable game and stamps a
 build; run it when ready to package your changes.
 
+### Run startup and save owners
+
+| Owner | Responsibility |
+| --- | --- |
+| `src/services/profileBoot.js` | Migrates stored settings, drops retired keys, and applies promoted defaults. `src/main.js` decides when each step runs for boot, archive restore, and portable import. |
+| `src/services/runBirth.js` | Builds the complete starting run and RNG, including the reviewed deck, dealt deck modes, and seat draw. If birth throws, the app retains the previous run and RNG. Slot selection, registry rebuild, and combat ownership prep happen before birth. Map generation and the first save happen after adoption. |
+| `src/services/runPersistence.js` | Stamps and writes the live run for explicit Save, reports failed autosaves without rejecting accepted play, and writes combat candidates with their committed RNG. Save and browser lock owners still control storage. |
+| `src/services/entryCheckpoint.js` | Queues the fight's entry write with frozen RNG, drops stale entries, and retries a thrown write. `src/main.js` owns page events, when the queue is used, and the save notices. |
+
 ## Core: edit the active game pack first
 
 The default player game is **Core**. Its authored selection is

@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS08 verified locally by root; JS09 is in progress. JS10–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS09 verified locally by root. JS10–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -92,20 +92,22 @@
   - **Dependencies:** JS01, JS04.
 
 - [x] **JS08 · Share proven action preparation between preview and execution — P2; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `dbdc8a09a4d`.
   - **Why:** One source for shared action facts reduces parallel edits without erasing intentional stage differences.
   - **Scope:** Extract pure shared card/action construction with explicit inputs/results. Keep payment, committed metadata, prospective stance, observer filtering, and mutation order in their existing stages.
   - **Evidence:** `src/engine/combat.js:1707,2063`.
   - **Acceptance:** Preview/execution costs and receipts agree; inspection consumes no state/RNG; accepted actions charge once and refusals spend nothing.
-  - **Accepted verification:** Domain's focused/differential suite passed 128 checks; independent reviewer passed 57/57; root's native/bundle preview suite passed 18 checks, with frozen combat JSON matching exactly apart from the source hash. Tests confirmed carrier own keys/order, references, payment, and RNG are preserved. Quality passed for 933 authored files/6 enrolled owners with strict TypeScript. Ordered core passed 151/151; plantsites scanned 310 with baseline-matching drift/unreadable counts; standalone build passed at 0.7.4.69 (`e107379aa9`), refreshing 4/4 aliases. The protected runtime hash and profile pin were unchanged. No browser rerun was needed because production-transform parity passed and visible behavior is unchanged. Raw logs and exit files: [`ordered-gates`](../scratch/qa/js08/ordered-gates/).
+  - **Accepted verification:** Domain's focused suite passed 128/128; its exact before/after differential separately confirmed frozen combat JSON matched except source hash. Independent reviewer passed 57/57; root's native/bundle preview suite passed 18 checks. Tests confirmed carrier own keys/order, references, payment, and RNG are preserved. Quality passed for 933 authored files/6 enrolled owners with strict TypeScript. Ordered core passed 151/151; plantsites scanned 310 with baseline-matching drift/unreadable counts; standalone build passed at 0.7.4.69 (`e107379aa9`), refreshing 4/4 aliases. The protected runtime hash and profile pin were unchanged. No browser rerun was needed because production-transform parity passed and visible behavior is unchanged. Raw logs and exit files: [`ordered-gates`](../scratch/qa/js08/ordered-gates/).
   - **Dependencies:** JS01, JS04, JS07.
 
-- [ ] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
-  - **Status:** Implementation and isolated browser acceptance preparation in progress.
+- [x] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** Startup and save coordination should be understandable without navigating the entire game-flow module.
-  - **Scope:** First move profile boot/migration/storage warnings behind injected dependencies; split run/checkpoint transitions only as a later bounded step. Define one app-shaped run initializer for stats, customization, path, seen events, and related creation fields now initialized across the composition-root path. Preserve the composition root and public launch paths.
+  - **Scope:** Extract profile preparation, complete run creation, distinct save outcomes, and deferred entry checkpoints. Keep storage choice, browser wiring, and visible warnings in the composition root. Preserve public launch paths.
   - **Evidence:** `src/main.js:318,415,563,798–823,978,2338`; the run initializer must match the defaults Main supplies so fixtures do not reassemble them independently.
   - **Acceptance:** Startup, Continue, rejected restore, full storage, checkpoint ordering, and screen transitions retain behavior in focused headless/browser flows.
+  - **Accepted verification:** Root accepted Sol's 264 focused checks, root's 44 checks and exact before/after run-birth/lifecycle comparisons; quality passed for 937 authored files/10 enrolled owners, and strict TypeScript passed. Ordered core passed 151/151; plantsites scan matched its baseline (310 scanned); standalone build passed at 0.7.4.70 (`66bd25e510`). Lifecycle browser acceptance passed 8/8 across desktop 1280×800 and phone 390×844, including new run/prologue, mixed current/historical restore, malformed refusal preserving Continue, and restore of local settings. Quota/retry acceptance passed in both viewports: the paid Counter cost 1 SP exactly once, the failed save preserved prior slot bytes after three run-key quota failures, and one observed successful Retry write matched persisted bytes; combat/RNG matched after reload. Both browser runs reported zero console/runtime errors. Evidence: [`lifecycle results`](../scratch/qa/js09/browser-lifecycle-accepted/results.json), [`quota/retry results`](../scratch/qa/js09/browser-quota-retry-built-final-asserted/results.json), and [`ordered gates`](../scratch/qa/js09/ordered-gates/).
+  - **Coverage limits:** The lifecycle runner stubs only the update-release manifest with local build metadata twice per viewport; profile, save and game paths remain active. Combat runs were muted through Settings; fresh creation used default audio. The supported healthy-title flow exposes no archive UI, so archive behavior was checked headlessly. The accepted completed-birth failure boundary does not claim full startup atomicity; the existing status-overwrite race remains outside this module.
   - **Dependencies:** JS02–JS05.
 
 - [ ] **JS10 · Extract combat display reduction and lifecycle owners — P2; Sol + Luna.**

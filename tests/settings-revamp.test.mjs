@@ -73,7 +73,7 @@ test('promoted defaults follow the build, never the Developer tools switch', asy
   assert.equal(promotionDebug('test'), true);
   for (const channel of ['main', 'release', 'unknown']) assert.equal(promotionDebug(channel), false, channel);
   const main = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'));
-  assert.match(main, /seedSettingsDefaults\(settings, promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\)/,
+  assert.match(main, /getPromotion: \(\) => promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)/,
     'boot seeds by the build, so hiding the tools and reloading changes no gameplay value');
   try {
     setPageDebugForTests(false);
@@ -636,7 +636,7 @@ test('−/+ ask for the button step of the value they step from', async () => {
 
 test('a Reset goes back to the promotion this build applies, never hidden tuning on release', async () => {
   const { readFileSync } = await import('node:fs');
-  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
   assert.match(screen, /if \(debug\) return PROMOTED_DEFAULTS;\n  return releasePromotion \?\?= Object\.freeze\(promotionFor\(SETTINGS_DEFAULTS, false\)\.values\);/);
   // The row's dot, its Reset button and the Changed filter read the same

@@ -548,7 +548,7 @@ test('a restored profile carrying rewardMultiplier drops it and is saved', () =>
 
 test('boot and profile restore both come through the one door', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.equal(main.match(/bringProfileForward\(/g)?.length, 1, 'main.js calls the model door once, from its helper');
+  assert.match(main, /BringStoredProfileForward: bringStoredProfileForward,[\s\S]*?= CreateProfileBoot\(/);
   assert.match(main, /let activeSettings = bringStoredProfileForward\(activeMeta\);/);
   assert.match(main, /onRestored: \(\) => \{[^}]*?const meta = saves\.loadMeta\(\);\s*const settings = bringStoredProfileForward\(meta\);\s*seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/,
     'a restore comes through the same door as boot, promotion step included');

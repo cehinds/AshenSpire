@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { CreateProfileBoot } from '../src/services/profileBoot.js';
 
 const read = relative => readFileSync(new URL('../' + relative, import.meta.url), 'utf8');
 const main = read('src/main.js');
@@ -19,7 +20,7 @@ function boot(options = {}) {
   const context = vm.createContext({ URLSearchParams, structuredClone });
   // Fixture input belongs to the VM realm, like real module-owned objects.
   context.fixtureText = JSON.stringify({
-    settings: {}, migrated: {}, promoted: {},
+    settings: {}, promoted: {},
     profiles: {
       default: { id: 'default', hash: 'default', foundation: { mode: 'configured' } },
       core: { id: 'core', hash: 'core', foundation: { mode: 'configured' } },
@@ -76,18 +77,25 @@ function boot(options = {}) {
     createMemoryStorage: () => record('memory-storage', storage),
     createSaveManager: () => record('save-manager', saves),
     createBrowserSaveManager: () => record('browser-save-manager', saves),
-    bringProfileForward(value, bundle, save) {
-      assert.equal(bundle, raw); Object.assign(value.settings, f.migrated);
-      record('migrate', value.settings);
-      if (Object.keys(f.migrated).length) save(value);
-      return value.settings;
+    CreateProfileBoot(options) {
+      assert.equal(options.contentBundle, raw);
+      const owner = CreateProfileBoot(options);
+      return {
+        ...owner,
+        BringStoredProfileForward(meta) {
+          record('migrate', plain(meta.settings));
+          return owner.BringStoredProfileForward(meta);
+        },
+        SeedPromotedDefaults(meta, settings) {
+          record('seed-defaults', f.promoted);
+          return owner.SeedPromotedDefaults(meta, settings);
+        },
+      };
     },
     BUILD_VERSION: 'fixture', SETTINGS_DEFAULTS: { values: f.promoted },
     promotionDebug: () => false, promotionFor: value => value,
     settingsRows: () => record('settings-rows', []),
     needsSettingsChoice: () => !!f.settingsChoicePending,
-    retiredStoredSettingKeys: () => [], // main.js boot cleanup of retired battlefield keys; not under test here
-    seedSettingsDefaults: () => record('seed-defaults', f.promoted),
     showSettingsNotice: (...args) => record('notice', args),
     initAudio(settings) { return record('audio', plain(settings)); },
     migrateEffectsSetting: () => false, // main.js folds the retired Rendering quality into Effects at boot; not under test here
@@ -129,16 +137,23 @@ test('default configured boot builds once and registers final vocabulary/glyphs 
   assert.equal(r.named('configure').length, 0, 'configured profiles bypass legacy settings projection');
 });
 
-test('legacy boot builds once from migrated settings plus promoted defaults, ', () => {
-  const r = boot({ search: '?gameProfile=legacy', settings: { retained: 7 }, migrated: { migrated: 8 }, promoted: { promoted: 9 } });
+test('legacy boot builds once from migrated settings plus promoted defaults', () => {
+  const r = boot({ search: '?gameProfile=legacy',
+    settings: { retained: 7, 'gameConfig.progression.rewardMultiplier': 20, 'gameConfig.world.retired': true },
+    promoted: { promoted: 9 },
+  });
   presentationReady(r);
-  assert.deepEqual(r.registries.bundle.settings, { retained: 7, migrated: 8, promoted: 9 });
+  assert.deepEqual(r.registries.bundle.settings, { retained: 7, promoted: 9, settingsDefaultsSeed: { promoted: 9 } });
+  assert.equal(r.named('save-meta').length, 3, 'migration, retired-key cleanup and promotion each save immediately');
+  assert.equal(r.named('warn').length, 1);
+  const order = r.events.map(event => event.name);
+  assert.ok(order.indexOf('save-meta') < order.indexOf('warn'), 'migration saves before emitting its warning');
   assert.equal(r.named('structural').length, 1);
   assert.equal(r.registries.gameProfile.id, 'legacy');
 });
 
 test('saved profile is chosen after migration and is the only constructed profile', () => {
-  const r = boot({ migrated: { newGameProfile: 'core' } }); presentationReady(r);
+  const r = boot({ settings: { newGameProfile: 'core', 'gameConfig.progression.rewardMultiplier': 20 } }); presentationReady(r);
   assert.equal(r.registries.gameProfile.id, 'core');
   assert.deepEqual(r.named('project-profile').map(event => event.value.profile), ['core']);
 });
@@ -192,4 +207,62 @@ test('later identical rebuild keeps existing cache behavior and refreshes presen
   const again = r.rebuildRegistries(r.activeSettings, r.selectedGameProfile);
   assert.equal(again, before); assert.equal(r.created.length, 1); assert.equal(r.named('validate').length, 1);
   assert.equal(r.glossaries.at(-1), again); assert.deepEqual(r.glyphs.at(-1), again.classes.all());
+});
+
+function restoreFlow(path, needsChoice = false) {
+  const events = [], existing = { previous: true };
+  const restored = { settings: { 'gameConfig.progression.rewardMultiplier': 20 } };
+  const record = name => () => events.push(name);
+  const getPromotion = () => ({ values: { haptics: false } });
+  const owner = CreateProfileBoot({
+    contentBundle: {},
+    saveMeta: value => { assert.equal(value, restored); events.push('save'); },
+    warn: record('warn'),
+    getPromotion,
+  });
+  const bindings = {
+    activeSettings: existing,
+    saves: { loadMeta: () => { events.push('load'); return restored; }, profileStatus: () => ({ ok: true }) },
+    bringStoredProfileForward: owner.BringStoredProfileForward,
+    seedPromotedDefaults: owner.SeedPromotedDefaults,
+    openProfileArchive: ({ onRestored }) => onRestored(),
+    needsSettingsChoice: () => { events.push('choice'); return needsChoice; },
+    BUILD_VERSION: 'fixture', settingsRows: () => [], SETTINGS_DEFAULTS: getPromotion(),
+    promotionFor: getPromotion, promotionDebug: () => false,
+    dropUndoOffer: record('undo'), applyDisplaySettings: record('display'), applyUiScale: record('scale'),
+    refreshHudQuickSettings: record('hud'), app: {},
+    resolveAskedGameProfile: () => 'core', readNewGameProfile: () => { events.push('profile'); return 'core'; },
+    rebuildRegistries: value => { assert.equal(value, existing); events.push('registries'); },
+    showTitle: args => { assert.deepEqual(args, { skipStartup: true }); events.push('title'); },
+    settingsDoor: { close: record('close') },
+  };
+  const declared = name => {
+    const start = main.indexOf(`function ${name}(`);
+    assert.ok(start >= 0, name);
+    return main.slice(start, main.indexOf('\n}', start) + 2);
+  };
+  new Function(...Object.keys(bindings), `
+    let activeMeta = {}, selectedGameProfile, settingsChoicePending, settingsChoiceChecked;
+    ${declared('applyRestoredSettings')}
+    ${declared('showProfile')}
+    ${declared('refreshAfterImport')}
+    ${path === 'archive' ? 'showProfile' : 'refreshAfterImport'}();
+  `)(...Object.values(bindings));
+  return { events, settings: existing };
+}
+
+test('archive restore migrates and seeds before applying the stored settings in place', () => {
+  const result = restoreFlow('archive');
+  assert.deepEqual(result.events, ['load', 'save', 'warn', 'save', 'undo', 'display', 'scale', 'hud']);
+  assert.deepEqual(result.settings, { haptics: false, settingsDefaultsSeed: { haptics: false } });
+});
+
+test('portable import checks the pending choice before seeding and then remounts the title', () => {
+  const tail = ['undo', 'display', 'scale', 'hud', 'profile', 'registries', 'close', 'title'];
+  const waiting = restoreFlow('portable', true);
+  assert.deepEqual(waiting.events, ['load', 'save', 'warn', 'choice', ...tail]);
+  assert.deepEqual(waiting.settings, {});
+  const seeded = restoreFlow('portable', false);
+  assert.deepEqual(seeded.events, ['load', 'save', 'warn', 'choice', 'save', ...tail]);
+  assert.deepEqual(seeded.settings, { haptics: false, settingsDefaultsSeed: { haptics: false } });
 });
