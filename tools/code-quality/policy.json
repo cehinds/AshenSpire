@@ -7,6 +7,10 @@
     "src/services/profileBoot.js",
     "src/services/runBirth.js",
     "src/services/runPersistence.js",
+    "src/ui/components/combatMount.js",
+    "src/ui/components/combatPlayback.js",
+    "src/ui/models/CombatPlaybackModel.js",
+    "src/ui/models/CombatTargetingModel.js",
     "src/ui/models/ComponentModel.js",
     "src/ui/models/CounterStackPercentModel.js",
     "src/ui/viewModels/RunHudViewModel.js"

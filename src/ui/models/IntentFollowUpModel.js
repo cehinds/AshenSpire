@@ -110,3 +110,109 @@ export function createFollowMemo() {
     clear() { rows.clear(); },
   };
 }
+
+/** Reduces each follow-up receipt once across playback and skip for this mount. */
+export function CreateFollowUpReduction(followMemo)
+{
+    const followReduced = new WeakSet();
+    return function reduceFollowRows(events, disp, followTrace)
+    {
+        for (const e of events)
+        {
+            if (followReduced.has(e))
+            {
+                continue;
+            }
+            const row = (id, symbols) =>
+            {
+                const symbolsNow = followMemo.setRow(id, symbols);
+                if (disp?.ents[id])
+                {
+                    disp.ents[id].followUps = symbolsNow;
+                }
+            };
+            switch (e.type)
+            {
+                case 'enemyMoveStarted':
+                    if (e.reaction)
+                    {
+                        continue;
+                    }
+                    // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
+                    row(
+                        e.sourceId,
+                        advanceFollowUps(
+                            disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId),
+                            followTrace?.[e.sourceId],
+                        ),
+                    );
+                    break;
+                case 'enemyBurdenBlocked':
+                case 'enemyMoveUnavailable':
+                {
+                    const id = e.sourceId ?? e.targetId;
+                    row(
+                        id,
+                        advanceFollowUps(
+                            disp?.followPlans?.[id] ?? followMemo.planFor(id),
+                            followTrace?.[id],
+                        ),
+                    );
+                    break;
+                }
+                case 'enemyPlanTrimmed':
+                {
+                    // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
+                    // The underlying plan (ids and total) shrinks too, so a later enemyMoveStarted cannot rebuild a cancelled intent.
+                    const plan = disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId);
+                    if (plan)
+                    {
+                        row(
+                            e.sourceId,
+                            trimFollowUps(plan, e.dropped?.length || 0, followTrace?.[e.sourceId]),
+                        );
+                    }
+                    else
+                    {
+                        const now = followMemo.row(e.sourceId, true)
+                            ?? disp?.ents[e.sourceId]?.followUps ?? [];
+                        row(
+                            e.sourceId,
+                            now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))),
+                        );
+                    }
+                    break;
+                }
+                case 'enemyStaggered':
+                    // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
+                    if (followMemo.row(e.targetId, true)?.length)
+                    {
+                        row(e.targetId, []);
+                    }
+                    break;
+                case 'enemyTurnEnd':
+                case 'playerTurnStart':
+                    // The turn is over: a charge or a halt that sent no event of its own leaves the row now.
+                    followMemo.clear();
+                    for (const id of Object.keys(disp?.ents || {}))
+                    {
+                        if (disp.ents[id].followUps?.length)
+                        {
+                            disp.ents[id].followUps = [];
+                        }
+                    }
+                    break;
+                case 'enemyActorTurnStarted':
+                    followMemo.clearRow(e.sourceId);
+                    if (disp?.ents[e.sourceId])
+                    {
+                        disp.ents[e.sourceId].followUps = [];
+                    }
+                    break;
+                default:
+                    continue;
+            }
+            followReduced.add(e);
+        }
+    };
+}

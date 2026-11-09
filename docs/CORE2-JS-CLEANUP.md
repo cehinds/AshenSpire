@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS09 verified locally by root. JS10–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS10 verified locally by root. JS11–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -101,7 +101,7 @@
   - **Dependencies:** JS01, JS04, JS07.
 
 - [x] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `90957d912ae`.
   - **Why:** Startup and save coordination should be understandable without navigating the entire game-flow module.
   - **Scope:** Extract profile preparation, complete run creation, distinct save outcomes, and deferred entry checkpoints. Keep storage choice, browser wiring, and visible warnings in the composition root. Preserve public launch paths.
   - **Evidence:** `src/main.js:318,415,563,798–823,978,2338`; the run initializer must match the defaults Main supplies so fixtures do not reassemble them independently.
@@ -110,11 +110,18 @@
   - **Coverage limits:** The lifecycle runner stubs only the update-release manifest with local build metadata twice per viewport; profile, save and game paths remain active. Combat runs were muted through Settings; fresh creation used default audio. The supported healthy-title flow exposes no archive UI, so archive behavior was checked headlessly. The accepted completed-birth failure boundary does not claim full startup atomicity; the existing status-overwrite race remains outside this module.
   - **Dependencies:** JS02–JS05.
 
-- [ ] **JS10 · Extract combat display reduction and lifecycle owners — P2; Sol + Luna.**
+- [x] **JS10 · Extract combat display reduction and lifecycle owners — P2; Sol + Luna.**
+  - **Status:** Verified locally by root.
   - **Why:** Paced display updates and interaction lifetimes are separate responsibilities from screen composition.
   - **Scope:** Move snapshot/follow-up/event reduction into a UI model first; then give targeting, playback, and subscription cleanup bounded interfaces. Keep existing Component Models and renderers.
   - **Evidence:** `src/ui/screens/combat.js:204,1262,1332,1379`.
   - **Acceptance:** Display state and event order match; intent, meters, reaction resume, teardown, keyboard/mouse/gamepad, and desktop/mobile flows remain correct.
+  - **Implementation:** `CombatPlaybackModel` owns display capture and beat reduction; `IntentFollowUpModel` owns per-mount receipt reduction; `CombatTargetingModel` resolves live target commands. `combatPlayback` owns overlapping timelines, repaint coalescing and terminal handoff; `combatMount` owns the exact mount/veil subscription. The screen retains rendering, dispatch, prompts and ordered release of existing components. Public APIs use PascalCase with Allman braces and four-space indentation.
+  - **Intentional fix:** Reproduced outgoing timeline cleanup touching a replacement sprite and an outgoing delayed terminal callback settling the replacement run. Cleanup now releases only its originating mount's FX resources; detached callbacks and handoffs are suppressed. Attached skip still flushes and finishes once. Existing equipment-triggered overlapping timelines remain supported and are all released on detach. The separate startup relic-only instant FX path is unchanged.
+  - **Accepted headless/build evidence:** Frozen capture, receipt, hand-reference and RNG comparisons match exactly; independent targeting comparison matched 6,144 state combinations. Independent final tests passed 74/74; root collections passed 32/32, 40/40 and 35/35. Quality passed for 941 authored modules/14 enrolled owners with strict types, and bundle cycles remained zero. Ordered core passed 151/151; plantsites passed 310 with the known 5 drifted/35 unreadable baseline; build `0.7.4.71` (`02497bcd89`, light HTML 155,968,958 bytes) refreshed 4/4 aliases, and shipped checks passed 12/12. Runtime hash inputs and profile locks have no content diff. Raw ordered-gate logs: [`ordered-gates`](../scratch/qa/js10/ordered-gates/).
+  - **Accepted browser evidence:** Built desktop mouse and keyboard plus native touch at 375×667, 390×844 and 412×915 each committed exactly one Strike and one SP payment. Each waited for actual playback completion and checked displayed SP/target HP against canonical combat state. A simulated standard gamepad exercised D-pad/A targeting, read-only Inspect, veil-blocked End Turn and B/Escape. Results: [`native targets`](../scratch/qa/js10/browser-final-071-native-settled-final/results.json), [`simulated gamepad`](../scratch/qa/js10/browser-final-071-gamepad-final/results.json). Root inspected the settled desktop/phone/controller captures. Application and HTTP errors were zero; Chrome reported one blocked pre-activation vibration per native flow and three in the pad flow, recorded separately. Physical controller hardware and haptics were not tested.
+  - **Accepted lifecycle evidence:** Desktop 1280×800 and native touch 390×844 paid one Counter for one SP, skipped active playback once, advanced the turn, then used Save & Quit and Continue in the same document with exact persisted event log, piles and RNG. Both won through normal four-turn play and recorded one victory beat, one reward door and one persisted win; the old combat snapshot cleared and the reward persisted. Root reviewed continuation/victory screenshots. Results: [`desktop lifecycle`](../scratch/qa/js10/browser-paid-desktop-run4/results.json), [`phone lifecycle`](../scratch/qa/js10/browser-paid-phone-run4/results.json). Both had zero application/HTTP errors or browser interventions. Audio was muted through Settings; only the release-manifest lookup was stubbed to the actual local build metadata. No combat state was injected.
+  - **Current-dev UI boundary:** Selected target-HUD panels are intentionally disabled on this baseline. Older browser scripts targeting those panels are stale; acceptance used the actual mini-HUD/figure controls and retained direct tests for the legacy command gate. Earlier partial or mid-animation captures are preserved but are not acceptance evidence.
   - **Dependencies:** JS04, JS06, JS08.
 
 - [ ] **JS11 · Extract settings draft, reset, and undo policy — P2; Luna, Sol review.**
