@@ -1,0 +1,40 @@
+{
+  "$id": "framework-combat-mechanics",
+  "title": "Live framework combat mechanics",
+  "type": "object",
+  "required": ["accuracy", "counter", "reflect"],
+  "properties": {
+    "accuracy": {
+      "type": "object",
+      "required": ["evasionBase", "evadePerStack", "precisionStackValue", "precisionDecayPerTurn", "precisionTooltip"],
+      "properties": {
+        "evasionBase": { "type": "number" },
+        "evadePerStack": { "type": "number", "minimum": 0 },
+        "precisionStackValue": { "type": "number", "minimum": 0 },
+        "precisionDecayPerTurn": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "precisionTooltip": { "type": "string" }
+      }
+    },
+    "counter": {
+      "type": "object",
+      "required": ["stackFraction", "decayPerTurn", "autoCounterStamina", "autoCounterTags"],
+      "properties": {
+        "stackFraction": { "type": "number", "minimum": 0 },
+        "decayPerTurn": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "autoCounterStamina": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "autoCounterTags": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "reflect": {
+      "type": "object",
+      "required": ["reducePerStack", "returnPerStack", "reduceCap", "stackCap", "unreflectableTag"],
+      "properties": {
+        "reducePerStack": { "type": "number", "minimum": 0 },
+        "returnPerStack": { "type": "number", "minimum": 0 },
+        "reduceCap": { "type": "number", "minimum": 0, "maximum": 1 },
+        "stackCap": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "unreflectableTag": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS04 verified locally by root; JS05 is next and remains open, with JS06–JS14 open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS05 verified locally by root. JS06–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -53,7 +53,7 @@
   - **Dependencies:** JS01; review alongside JS02.
 
 - [x] **JS04 · Establish naming, formatting, and typed boundary contracts — P1; Sol + Luna.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `595f98aabfd`.
   - **Why:** Consistent public/private names and checked boundary shapes make routine edits easier to review safely.
   - **Scope:** Set JS/MJS/CJS to four spaces and LF while preserving two-space layout for hash-sensitive legacy runtime files. Migrate the Component Model and Run HUD View Model APIs to PascalCase, retaining declared camelCase compatibility aliases and moving safe UI imports. Keep serialized keys stable. Document style and LF/hash identity. Add an isolated code-quality package for staged naming/format checks and focused save-boundary types.
   - **Evidence:** `.editorconfig`, `jsconfig.json:6`, `src/ui/models/ComponentModel.js:24`, `src/ui/viewModels/RunHudViewModel.js:11`.
@@ -63,11 +63,14 @@
   - **Line-ending verification:** `git check-attr` reports `text eol=lf` for engine/runtime, formula/mechanics and generated JS/CSS samples, while binary assets retain `text: unset`. `git ls-files --eol` showed the sample hash-sensitive tracked files already LF in index and worktree; no bulk renormalization was run.
   - **Dependencies:** JS01–JS03.
 
-- [ ] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**
+- [x] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**
+  - **Status:** Verified locally by root; JS05 acceptance reviewed.
   - **Why:** A JSON setting needs one owner and a predictable effect on new runs, saved runs, and active fights.
   - **Scope:** Map Core packs, shared source, framework data, settings, generated adapters, and runtime locks. Classify values as startup/run/fight/live, validate defaults/ranges once, and document Counter/Reflect policies. Preserve current behavior absent an explicit rules change.
   - **Evidence:** `docs/MANUAL-EDITING.md:11`, `tools/game-config.mjs:17,61`, `src/model/combatTacticsRules.js:12`, `src/engine/guardStacks.js:27`.
   - **Acceptance:** Two configurations demonstrate the documented lifetime; old/new saves behave as specified; generated data and locks remain deterministic.
+  - **Implementation boundary:** Required framework mechanics data now fails closed when absent, preventing `--check` from accepting a stale generated mirror. Maintainer guidance distinguishes profile-pinned rules, runtime-hashed FixCore fight rules, and live framework tuning; it warns that a run pinned to a previous FixCore runtime may need its compatible build. This slice does not change combat formulas or save schemas.
+  - **Accepted verification:** Two-profile/configuration lifetime proof passed 2/2; independent runtime/source-bundle checks passed 44/44; Sol focused suite passed 103 / skipped 5 platform cases / failed 0. `npm run code:check` and strict TypeScript checks passed. Final core gate `node tests/run-node.mjs --no-selftests --no-discovered` exited 0 (151/151); plantsites check passed (310 scanned, 5 known drifted and 35 unreadable, all counts match baseline); standalone `node tools/launch.mjs --build-only` exited 0, build `0.7.4.66` (`5a295ea013`), launcher refreshed 4/4 aliases; independent shipped check passed 12/12. This module changes no visible UI, so no new browser run was required. Detailed local command outcomes are in [`ordered-gates`](../scratch/qa/js05/ordered-gates/); `build-final.summary.txt` is a concise result record, not a raw build log.
   - **Dependencies:** JS01–JS04.
 
 - [ ] **JS06 · Render combat explanations from actual receipts — P1; Sol.**

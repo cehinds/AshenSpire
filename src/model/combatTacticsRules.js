@@ -7,11 +7,15 @@ const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
 const whole = value => Number.isSafeInteger(value) && value >= 0;
 
-/** Counter and Reflect stack counts (owner 2026-10-31): whole, capped by mechanics.counter / mechanics.reflect; absent means 0 (older saves). */
-/** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
+/** Bounds Counter counts for runtime and save restoration. */
+export const COUNTER_STACK_SAFETY_CEILING = 999;
+
+/** Clamps Counter to the safety ceiling and Reflect to its live rule cap. */
 export function clampStackCounts(entity) {
   if (!entity) return;
-  if (Number.isSafeInteger(entity.counterStacks) && entity.counterStacks > 999) entity.counterStacks = 999; // safety ceiling, not a rule
+  if (Number.isSafeInteger(entity.counterStacks) && entity.counterStacks > COUNTER_STACK_SAFETY_CEILING) {
+    entity.counterStacks = COUNTER_STACK_SAFETY_CEILING;
+  }
   if (Number.isSafeInteger(entity.reflectStacks) && entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
 }
 

@@ -298,6 +298,24 @@ This is separate from packaging the standalone HTML. After pacing edits run
 build/check. Keep generated source/lock/summary changes with their source edit;
 the full `dist/build/` artifact is ignored.
 
+### Which changes reach an existing run?
+
+| Lifetime | Source and behavior |
+| --- | --- |
+| Run profile | `games/ashenspire/game.json` selects the bundle and its packs. Module defaults and schemas live in `engine/modules/`. The resolved profile pins the selected content and module settings, such as class XP rate and the action policy. New runs use the rebuilt profile. Existing supported saves keep their pins, including when transferred between devices. |
+| Run range policy and prologue overrides | A run captures its range policy when created. Older policies without `maxRange` retain the Ranged band. Saved `gameConfig.prologue.*` overrides take precedence over current device settings and defaults. Opening values absent from the snapshot can still follow the current settings. Retired balance overrides have no effect in Core. |
+| Active fight | A combat snapshot carries its FixCore rules, reaction and range state, paid actions and RNG position. Restore uses the saved rules for that fight. Within a compatible runtime, a new fight resolves FixCore defaults when there is no carried override. Its profile and range policy stay pinned. Editing `content/source/fixCoreMechanics.json` changes the runtime identity and may make existing pins incompatible. |
+| Live framework combat tuning | Edit `content/framework/mechanics.json` for Evasion and Precision, Counter return and decay, and Reflect fractions and cap. The loaded values apply even to a resumed fight. For example, restore clamps stored Reflect stacks to the current cap. Counter has a separate code-level safety ceiling for stored counts. |
+| Presentation and device preferences | UI pacing defaults come from `content/config/ui/presentation/actionPacing.json`. Device settings can override them. |
+
+After a live framework edit, run `node tools/framework-data-build.mjs` and
+`node tools/framework-data-build.mjs --check`. Both validate the Accuracy,
+Counter and Reflect settings against
+`engine/contracts/framework-combat-mechanics.schema.json`. Invalid input stops
+the compiler before it writes any generated framework module. Live tuning
+leaves the game profile catalog and compatibility lock byte-for-byte the same.
+The standalone package still needs a rebuild to include the new values.
+
 ### Worked recipe: a real boss attack with three hits
 
 Find `stitchedKing.graspingHands` in Core `enemyCards.json`. Its damage effect
