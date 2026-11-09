@@ -171,7 +171,7 @@ jobs:
             [ "$b" = "HEAD" ] && continue
             reason=""
             case "$b" in
-              dev|test|release|main|tools-archive) reason="protected branch" ;;
+              dev|review|test|release|main|tools-archive) reason="protected branch" ;;
               alternative/*) reason="under alternative/" ;;
               worker/*) [ -z "$DELETE_BEFORE" ] && reason="owned by the worker job" ;;
             esac
