@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01 verified locally by root; JS02 is next, and JS03–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01 and JS02 verified locally by root; JS03 is in progress, and JS04–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -22,7 +22,7 @@
 ## Ordered implementation modules
 
 - [x] **JS01 · Freeze the latest-dev baseline and separate checks from writes — P0; Sol + root.**
-  - **Status:** Verified locally by root; JS02 is next.
+  - **Status:** Verified locally by root; commit `b20e4863378`.
   - **Why:** Create a trustworthy behavioral comparison and make routine verification safe to repeat.
   - **Scope:** Capture exact source/config identities, representative current and historical saves, seeded combat receipts and RNG positions. Make compiler `--check` non-writing; retain explicit build behavior.
   - **Evidence:** Before JS01, `tools/build-game.mjs:482–493` wrote the artifact before comparing the summary; `tests/build-game.test.mjs:86–90` only asserted that `--check` exits successfully. The command documentation was updated in `engine/export/README.md:9–16` and `docs/MANUAL-EDITING.md:266–275`.
@@ -32,14 +32,18 @@
   - **Environment adjustment:** Windows CRLF-only diffs made generated checks falsely stale. In this worktree only, ran `node tools/hud-layout-css.mjs --write`, `node tools/base-cards.mjs`, and `node tools/mechanics-browser.mjs`; normalized diffs for the affected generated outputs are empty. `node tools/content-build.mjs --check` now passes. No authored content changed in these normalizations.
   - **Dependencies:** None.
 
-- [ ] **JS02 · Resolve each backup slot using its saved context — P1; Sol.**
+- [x] **JS02 · Resolve each backup slot using its saved context — P1; Sol.**
+  - **Status:** Verified locally by root; JS01 baseline commit `b20e4863378`.
   - **Why:** A backup containing multiple supported profiles must restore each slot under its own saved configuration.
   - **Scope:** Restore each imported slot through the same per-save profile and override resolution as Continue; keep validation isolated, recovery backup, and rollback.
   - **Evidence:** `src/engine/saveTransfer.js:24`, `src/main.js:978`, `src/engine/save.js:467`; mixed current/historical profile reproduction.
-  - **Acceptance:** Current, historical, and mixed-profile backups round-trip with exact combat state/RNG. Unsupported profiles or failed writes preserve recoverable data.
+  - **Acceptance:** Current, historical, and mixed-profile backups round-trip with exact combat state/RNG. Unsupported profiles or failed writes preserve recoverable data. Browser exercise uses isolated fresh storage at 1280×800 and 390×844: import a backup with a current-profile Gilded Knight reaction in slot 1 and a genuine historical-profile Ashheart Dragon fight in slot 2; verify Continue loads slot 1 and Load Game loads slot 2 under the correct encounter identity. Then try a rejected backup and confirm the imported saves remain usable. Capture title/import, Continue, historical Load, and refusal states at both sizes.
+  - **Fixture boundary:** The accepted 2,588,611-byte fixture uses the app-shaped run initializer, places the current Gilded Knight save newest for Continue, and pairs it with historical profile `dev-profile-73ef`; SHA-256 `d7cbc1b5c16697b8671af582aae0b8ab98ed23081ec3cd5fea58a056f1a7e281`. Prologue values differ but are not visible mid-fight, so the browser asserts read-only enemy identity and screenshots while headless tests check profile pins, prologue values, and RNG.
+  - **Accepted verification:** 52/52 focused checks and 151/151 core checks passed; the standalone build and 12/12 shipped checks passed. The source/bundle baseline stayed exact; the load-door mutation was caught and its unmodified browser control passed. Fresh-profile Chromium passed 8/8 checks across 1280×800 and 390×844: Continue resolved to `gildedKnight`, historical Load to `ashheartDragon`, version-999 backup was refused with existing Continue preserved, and both viewports had zero console/runtime errors. Results and screenshots: [`results.json`](../scratch/qa/js02/evidence/results.json), [`desktop-1280x800-continue-current.png`](../scratch/qa/js02/evidence/desktop-1280x800-continue-current.png), [`desktop-1280x800-load-historical.png`](../scratch/qa/js02/evidence/desktop-1280x800-load-historical.png), [`phone-390x844-continue-current.png`](../scratch/qa/js02/evidence/phone-390x844-continue-current.png), [`phone-390x844-load-historical.png`](../scratch/qa/js02/evidence/phone-390x844-load-historical.png), [`phone-390x844-rejected-backup.png`](../scratch/qa/js02/evidence/phone-390x844-rejected-backup.png). Root inspected the desktop and phone captures.
   - **Dependencies:** JS01.
 
 - [ ] **JS03 · Make snapshot validation total and diagnostic — P1; Sol.**
+  - **Status:** In progress.
   - **Why:** Malformed input should return precise field errors rather than escape validation as a raw exception.
   - **Scope:** Check collection and element shapes before iteration and references; reuse helpers only where contracts match.
   - **Evidence:** `src/model/combatSnapshot.js:220`, `:329`, `:388`.
@@ -50,7 +54,7 @@
   - **Why:** Consistent public/private names and checked boundary shapes make routine edits easier to review safely.
   - **Scope:** Public API PascalCase, private helpers camelCase, stable formatting, concise useful JSDoc, and focused type checking for save/config boundaries. Migrate by module with import-aware changes and temporary adapters where required.
   - **Evidence:** `.editorconfig`, `jsconfig.json:6`, `src/ui/models/ComponentModel.js:24`, `src/ui/viewModels/RunHudViewModel.js:11`.
-  - **Acceptance:** Checks catch deliberate naming/type violations; imports, browser entry points, serialized keys, and source/bundle behavior remain intact. Remove adapters only after consumer proof.
+  - **Acceptance:** Checks catch deliberate naming/type violations; imports, browser entry points, serialized keys, and source/bundle behavior remain intact. Set LF explicitly for hash-sensitive runtime inputs so Windows checkout line endings cannot perturb generated profile identity; keep hash checks strict. Remove adapters only after consumer proof.
   - **Dependencies:** JS01–JS03.
 
 - [ ] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**
@@ -83,8 +87,8 @@
 
 - [ ] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
   - **Why:** Startup and save coordination should be understandable without navigating the entire game-flow module.
-  - **Scope:** First move profile boot/migration/storage warnings behind injected dependencies; split run/checkpoint transitions only as a later bounded step. Preserve the composition root and public launch paths.
-  - **Evidence:** `src/main.js:318,415,563,978,2338`.
+  - **Scope:** First move profile boot/migration/storage warnings behind injected dependencies; split run/checkpoint transitions only as a later bounded step. Define one app-shaped run initializer for stats, customization, path, seen events, and related creation fields now initialized across the composition-root path. Preserve the composition root and public launch paths.
+  - **Evidence:** `src/main.js:318,415,563,798–823,978,2338`; the run initializer must match the defaults Main supplies so fixtures do not reassemble them independently.
   - **Acceptance:** Startup, Continue, rejected restore, full storage, checkpoint ordering, and screen transitions retain behavior in focused headless/browser flows.
   - **Dependencies:** JS02–JS05.
 

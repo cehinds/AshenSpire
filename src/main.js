@@ -72,6 +72,7 @@ import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, isSt
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
+import { LoadSavedRunContext } from './engine/savedRunContext.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import { rollEncounter, rollRuneReward } from './engine/encounters.js';
@@ -936,27 +937,12 @@ function refusedRunLanding(slot) {
   openNewerSaveNotice({ slot });
 }
 
-// THE LIVE RUN IS SWAPPED ONLY AFTER A LOAD SUCCEEDS. Both loadRun passes
-// land in a local; `run`, `activeSlot`, the Armoury tray and the registries
-// (rebuilt for the slot's own snapshot between the passes) are the climb in
-// hand until the second pass hands back a run. A refusal restores the
-// registries and calls `onRefused` — the title by default; the in-run Load
-// door passes its own, which keeps the run on screen (confirmSlotLoad).
+// A refusal keeps the current run and registries. The title is the default
+// landing; the in-run Load door keeps the existing run on screen.
 let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
   if (terminalResume) return terminalResume;
-  const liveRegistries = registries, liveGameProfile = registryGameProfile;
-  const refused = () => {
-    // rebuildRegistries sets registryGameProfile before it can throw, so the
-    // profile is restored on every refusal, not only when the registries moved.
-    registryGameProfile = liveGameProfile;
-    if (registries !== liveRegistries) {
-      registries = liveRegistries;
-      configureTooltipGlossary(registries);
-      setClassGlyphs(registries.classes.all());
-    }
-    return onRefused(slot);
-  };
+  const refused = () => onRefused(slot);
   // A refusal lands first (the title, or the in-run Load door), then says why:
   // the Settings notice when a host is mounted, else the title's failure banner,
   // the same fallback the run-start path uses. The save is never touched.
@@ -975,21 +961,23 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     if (!showSettingsNotice(message, 'profile')) failureBanner(`run:resume:${error.message}`, 'THIS SAVE COULD NOT BE RESTORED', ` · ${error.message}`);
     return landed;
   };
-  let savedGameProfile;
-  try { savedGameProfile = saves.peekRunGameProfile(slot); }
-  catch (error) { return refuseWith(error); }
-  const retiredReason = saves.hasRun(slot) ? retiredProfileReason(savedGameProfile) : null;
-  if (retiredReason) return refuseRetired(retiredReason);
-  const loadGameProfile = savedGameProfile || resolveGameProfile('default'); // an empty slot only; loadRun reports it empty
-  let authoredRegistries;
-  try { authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile); }
-  catch (error) { return refuseWith(error); }
-  let loaded = saves.loadRun(authoredRegistries, slot);
-  if (!loaded) return saves.runStatus().reason?.startsWith('retired game mode') ? refuseRetired(saves.runStatus().reason) : refused();
-  try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, loadGameProfile); }
-  catch (error) { return refuseWith(error); }
-  loaded = saves.loadRun(registries, slot);
-  if (!loaded) return refused();
+  let context;
+  try {
+    context = LoadSavedRunContext(saves, slot, {
+      validate: (profile, configuration, authored) => cachedContentValidation(profile, configuration, authored).result,
+    });
+  } catch (error) { return refuseWith(error); }
+  if (!context.run) {
+    const retired = context.retiredReason || (context.reason?.startsWith('retired game mode') && context.reason);
+    return retired ? refuseRetired(retired) : refused();
+  }
+  const { run: loaded, gameProfile, configuration } = context;
+  registries = context.registries;
+  registryGameProfile = gameProfile;
+  const buildKey = registryBuildKey(configuration, gameProfile);
+  lastRegistryBuild = buildKey !== null ? { key: buildKey, profile: gameProfile, registries } : null;
+  configureTooltipGlossary(registries);
+  setClassGlyphs(registries.classes.all());
   // The load is certain from here; a caller that must tear down what the
   // refusal would have returned to (the in-run overlay) does it now, not before.
   onLoaded?.();
@@ -1502,7 +1490,7 @@ function refreshAfterImport() {
 }
 
 function showOfflinePlay() {
-  const transfer = createSaveTransfer(bootStorage, registries);
+  const transfer = createSaveTransfer(bootStorage);
   const ownedTransfer = { ...transfer, restore: text => saves.withProfile
     ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
   openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {

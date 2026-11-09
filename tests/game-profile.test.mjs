@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,readdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import {loadGameProfileCatalog,collectMechanicsRuntimeArtifacts,MECHANIC_RUNTIME_PATH} from '../tools/game-config.mjs';
 import {resolveGameProfile,gameModule,gameContent,projectGameCard,applyGameProfileToContent,bindGameProfileRegistries,validateGameProfileSnapshot} from '../src/model/gameProfile.js';
 import {gameDigest,canonicalGameJSON,mergeGameSettings} from '../engine/kernel/gameConfig.js';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
 import {validateContent} from '../src/model/validate.js';
+import { createMemoryStorage, createSaveManager, runKey } from '../src/engine/save.js';
+import { LoadSavedRunContext } from '../src/engine/savedRunContext.js';
+import { createRunState } from '../src/model/state.js';
 const author=modules=>({formatVersion:1,core:'ashen.core@1.0.0',modules});
 test('core class/hand/deck facts are source-owned and immutable per profile',()=>{
  const p=resolveGameProfile('core');assert.deepEqual(gameContent(p,'startingHands'),{reaver:5,starseer:6,rogue:5,herald:5});
@@ -38,14 +42,66 @@ test('run pin includes the engine and canonical mechanic runtime while excluding
  assert.equal(mechanics[0].path,MECHANIC_RUNTIME_PATH);assert.equal(mechanics[0].hash,gameDigest(collectMechanicsRuntimeArtifacts()));
  assert.equal(catalog.runtimeHash,gameDigest(catalog.runtimeArtifacts));
 });
-test('resumeRun turns a failed profile bind into a refusal instead of a throw',()=>{
- const source=readFileSync(repo+'src/main.js','utf8'),start=source.indexOf('function resumeRun(');assert.ok(start>=0);
- const next=source.indexOf('\nfunction ',start+1),body=source.slice(start,next<0?undefined:next);
- const binds=body.split('bindGameProfileRegistries(').length-1;assert.ok(binds>=1);
- const guarded=[...body.matchAll(/try\s*\{[^{}]*bindGameProfileRegistries\([^{}]*\}\s*catch\s*\((\w+)\)\s*\{\s*return refuseWith\(\1\);/g)].length;
- assert.equal(guarded,binds,'every bindGameProfileRegistries call in resumeRun sits in try/catch that hands the error to refuseWith');
- // refuseWith lands the refusal first, then says why where the player can see it: the Settings
- // notice when its host is mounted, else the title failure banner (the run-start idiom).
- const helper=body.match(/const refuseWith = error => \{[\s\S]*?\n  \};/);assert.ok(helper,'refuseWith helper present');
- assert.ok(/const landed = refused\(\);[\s\S]*if \(!showSettingsNotice\([\s\S]*failureBanner\(/.test(helper[0]),'refuseWith refuses, then notice-or-banner');
+test('actual Continue lands a failed saved-context load before presenting its error', () => {
+  const source = readFileSync(repo + 'src/main.js', 'utf8');
+  const start = source.indexOf('function resumeRun(');
+  const end = source.indexOf('function resumeTerminal(', start);
+  assert.ok(start >= 0 && end > start);
+  const events = [];
+  const fixture = new Function('LoadSavedRunContext', 'events', `
+    let terminalResume = null;
+    const saves = {};
+    const original = {}, originalProfile = {};
+    let registries = original, registryGameProfile = originalProfile;
+    const refusedRunLanding = slot => events.push(['refused', slot]);
+    const dlog = () => {};
+    const showSettingsNotice = (message, panel) => { events.push(['notice', message, panel]); return false; };
+    const failureBanner = (id, title, message) => events.push(['banner', id, title, message]);
+    ${source.slice(start, end)}
+    return { resumeRun, unchanged: () => registries === original && registryGameProfile === originalProfile };
+  `)(() => { throw new Error('invalid saved pin'); }, events);
+  fixture.resumeRun(2);
+  assert.ok(fixture.unchanged());
+  assert.deepEqual(events, [
+    ['refused', 2],
+    ['notice', 'Saved game configuration could not be restored: invalid saved pin', 'profile'],
+    ['banner', 'run:resume:invalid saved pin', 'THIS SAVE COULD NOT BE RESTORED', ' · invalid saved pin'],
+  ]);
+});
+
+test('saved Core2 context matches the previous two-pass load for current and historical pins', () => {
+  const fixture = readFileSync(new URL('./fixtures/dev-profile-73ef.json.gz', import.meta.url));
+  const old = validateGameProfileSnapshot(JSON.parse(gunzipSync(fixture)));
+  const registry = profile => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  for (const profile of [resolveGameProfile('default'), old]) {
+    const storage = createMemoryStorage();
+    const manager = createSaveManager(storage);
+    const run = createRunState({ seed: 511, classId: 'reaver', registries: registry(profile) });
+    const overrides = { 'gameConfig.prologue.sceneCount': 2, 'gameConfig.balance.xp.kill.normal': 99 };
+    run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides };
+    manager.saveRun(run);
+    const original = storage.getItem(runKey());
+
+    const savedProfile = manager.peekRunGameProfile(1);
+    const first = manager.loadRun(registry(savedProfile), 1);
+    assert.ok(first, manager.runStatus().reason);
+    const previousRegistries = registry(savedProfile);
+    const previous = manager.loadRun(previousRegistries, 1);
+    assert.ok(previous, manager.runStatus().reason);
+
+    let seenConfiguration;
+    const context = LoadSavedRunContext(manager, 1, {
+      validate(pin, configuration, authored) {
+        assert.equal(pin.hash, savedProfile.hash);
+        seenConfiguration = configuration;
+        return validateContent(authored);
+      },
+    });
+    assert.deepEqual(context.run, previous);
+    assert.deepEqual(context.configuration, first.advancedConfigSnapshot);
+    assert.deepEqual(seenConfiguration.overrides, overrides);
+    assert.deepEqual(context.registries.balance, previousRegistries.balance);
+    assert.equal(context.gameProfile.hash, savedProfile.hash);
+    assert.equal(storage.getItem(runKey()), original);
+  }
 });
