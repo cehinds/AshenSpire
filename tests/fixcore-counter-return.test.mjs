@@ -228,7 +228,7 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming (base 4
   assert.equal(receipt.hpLoss, 6);
 });
 
-import { counterPreviewAgainst } from '../src/engine/counterRule.js';
+import { CounterPreviewAgainst } from '../src/engine/combatCounterPreview.js';
 import { previewIntent } from '../src/engine/combat.js';
 test('a per-hit Counter preview covers the current contact, while saved whole-root policy covers both', () => {
   const { combat, enemy } = live('cinderMantis');
@@ -236,13 +236,13 @@ test('a per-hit Counter preview covers the current contact, while saved whole-ro
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
-  const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const row = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   // Re-pin (SPEC §17, stacks rule): no Counter armed, so no base and no stacks: only the advantage share floor(0.25 x 5) = 1 returns, Poise floor(0.5 x 1) = 0.
   assert.equal(row.hits, 1);
   assert.equal(row.incoming, 5);
   assert.equal(row.hp, 1); assert.equal(row.poise, 0); assert.equal(row.block, 1);
   delete combat.reactionRules.contactPolicy;
-  const historical = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const historical = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   assert.equal(historical.hits, 2);
   assert.equal(historical.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
   assert.equal(historical.hp, 2); assert.equal(historical.poise, 0); assert.equal(historical.block, 2);

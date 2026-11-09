@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS06 verified locally by root; JS07–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS07 verified locally by root. JS08–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -74,7 +74,7 @@
   - **Dependencies:** JS01–JS04.
 
 - [x] **JS06 · Render combat explanations from actual receipts — P1; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `e53e5ef010d`.
   - **Why:** Explanatory text must describe the rule contribution that actually occurred under the selected configuration.
   - **Scope:** Resolve Precision tooltip/lifecycle placeholders from live mechanics values; render Counter stack percentages in health and card help from one presentation helper; use Reflect's integer percent getters in health labels; make authored Precision placeholders reject unsupported tokens. Core HUD help uses its resolved Precision definition with the legacy fallback unchanged. Make the no-revealed-attack Counter face avoid claiming a fixed fraction. Preserve historical combat-log amounts from receipts and keep the default 10% wording unchanged.
   - **Evidence:** `content/framework/mechanics.json:76–78`, `src/model/statusPresentation.js:17,80`, `src/ui/models/CombatHealthModel.js:41–42`, `src/ui/components/card.js:930–931`, `src/engine/guardStacks.js:58–65`, `content/source/uiStrings.csv:45,782`, `src/model/combatLog.js:188`, `src/engine/combatMatchups.js:786`.
@@ -82,11 +82,13 @@
   - **Accepted verification:** Focused suite passed 110/110 (`scratch/qa/js06/ordered-gates/focused-final.log`); `npm run code:check` passed for 932 authored modules/5 enrolled owners and strict TypeScript; framework-data and content builders plus their `--check` commands passed. The profile lock remained unchanged (SHA-256 `80F1E45E63CEAF7C543CB824C5104DF32D48A3987B2F71F454A43240827C9C82`). Ordered core passed 151/151, plantsites scanned 310 with drift/unreadable counts matching baseline, and build passed as 0.7.4.67 (`a823a303c7`), refreshing 4/4 aliases. Root's independent collection passed 56/56. Built Chromium acceptance at 1280×800 and 390×844 confirmed the paid 1 SP reaction and receipt `13 = 4 base + 7 stack share + 2 advantage`, with zero console/runtime errors and audio muted. Root reviewed the screenshots: [`desktop-1280x800-paid-reaction.png`](../scratch/qa/js06/browser-built-verified/desktop-1280x800-paid-reaction.png), [`desktop-1280x800-counter-log.png`](../scratch/qa/js06/browser-built-verified/desktop-1280x800-counter-log.png), [`phone-390x844-paid-reaction.png`](../scratch/qa/js06/browser-built-verified/phone-390x844-paid-reaction.png), [`phone-390x844-counter-log.png`](../scratch/qa/js06/browser-built-verified/phone-390x844-counter-log.png), [`results.json`](../scratch/qa/js06/browser-built-verified/results.json). An initial unmuted browser run made four optional SFX requests that returned 404; acceptance was repeated muted, so audio assets were not evaluated. Raw ordered-gate logs and exit files: [`ordered-gates`](../scratch/qa/js06/ordered-gates/).
   - **Dependencies:** JS01; follow JS05's lifetime policy.
 
-- [ ] **JS07 · Remove the Counter import cycle and reduce boundary exceptions — P1; Sol.**
+- [x] **JS07 · Remove the Counter import cycle and reduce boundary exceptions — P1; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** Initialization-order workarounds can make bundled behavior differ from source behavior.
   - **Scope:** Remove the Counter–Tactics–Matchups back edge through a narrow pure-data/preview seam. Address other dependency exceptions individually, preserving the layering ratchet.
   - **Evidence:** `src/engine/counterRule.js:11`, `src/engine/combatCardTactics.js:10`, `src/engine/combatMatchups.js:4`, `tests/layering.test.mjs`.
   - **Acceptance:** Source and production bundle agree for manual/automatic Counter, forecasts, and pending reactions; exception count only decreases.
+  - **Accepted verification:** Core gate passed 151/151; plantsites scanned 310 with known drift/unreadable counts matching baseline; standalone build passed at 0.7.4.68 (`ecadc3c974`), with 4/4 aliases refreshed. The pre-change import graph showed the concrete Counter → Damage Preview → Actions → Counter cycle; final source and bundle checks report zero cycles for both owners. Root's independent collection passed 56/56; Domain's focused suite passed 102/102 and layering passed 5/5; quality passed for 933 authored modules/6 enrolled owners. Counter cap native/bundle probe matrix `2/1/0/0/2` passed. The source/profile hash stayed unchanged; no new layering exception was added, and the existing 26 known-rank inversions remain. No UI/browser rerun was needed because the extraction preserves behavior and production-transform parity passed. Ordered gate raw logs and exit files: [`ordered-gates`](../scratch/qa/js07/ordered-gates/).
   - **Dependencies:** JS01, JS04.
 
 - [ ] **JS08 · Share proven action preparation between preview and execution — P2; Sol.**

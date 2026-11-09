@@ -1,5 +1,6 @@
 {
   "enrolled": [
+    "src/engine/combatCounterPreview.js",
     "src/engine/saveTransfer.js",
     "src/engine/savedRunContext.js",
     "src/ui/models/ComponentModel.js",

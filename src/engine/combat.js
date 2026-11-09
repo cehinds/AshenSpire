@@ -32,7 +32,7 @@ import { enqueueExpandedAction, previewExpandedActions } from './combatExpansion
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
-import { counterPreviewAgainst } from './counterRule.js';
+import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
@@ -2152,7 +2152,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     if (coreCounterRead !== undefined) return coreCounterRead;
     const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
     return (coreCounterRead = enemyTarget
-      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection(), counterBaseHp(enemyTarget)) : null);
+      ? CounterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection(), counterBaseHp(enemyTarget)) : null);
   };
   // The return the card will deal: null when the attack is hidden/unknown (the face keeps the printed amount) or uncovered (no return).
   const coreCounterReturn = () => { const read = coreCounterReturnRead(); return read?.uncovered ? null : read; };
@@ -2178,7 +2178,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
           coreRead ??= reply && resolvedTarget?.kind === 'enemy'
-            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection(), counterBaseHp(resolvedTarget)) : null;
+            ? CounterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection(), counterBaseHp(resolvedTarget)) : null;
           const read = effectIndex === bonusIndex ? coreRead : null;
           // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
           // Counter with a known read deals nothing here: the return sits in exactly one row.

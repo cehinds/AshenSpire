@@ -1,15 +1,12 @@
 import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
-// Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
-import * as CounterRule from './counterRule.js';
+import { counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { decayCounterStacks } from './guardStacks.js';
-const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
-const counterReturnForReceipt = (ctx, receipt, options) => CounterRule.counterReturnForReceipt(ctx, receipt, options);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
-import { removeStatus } from './statuses.js';
+import { getCap, removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
@@ -25,6 +22,13 @@ import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './comba
 import * as Actions from './actions.js';
 import { spendPersistentWard } from './combatStatusControl.js';
 import * as Ratings from './combatRatings.js';
+
+/** Caps a Counter Block grant at the amount the defender can still hold. */
+export function CounterBlockGrant(ctx, entity, amount)
+{
+    const cap = getCap(ctx, entity, 'blockCap');
+    return cap == null ? amount : Math.max(0, Math.min(amount, cap - (entity.block || 0)));
+}
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -316,7 +320,7 @@ export const autoCounterCost = () => Math.max(0, Math.floor(mechanics.counter.au
 export function autoCounterAvailable(ctx, entity, unpaid = 0, stackedCards = []) {
   if (!counterRuleActive(ctx) || !combatExpansionEnabled(ctx) || entity?.kind !== 'player' || !entity.alive) return false;
   if (entity.combatStance?.maneuver !== 'counter' || entity.combatCounter?.charges > 0) return false;
-  if (CounterRule.counterReturnSpent(entity) || restrictions(ctx, entity).counterDisabled) return false;
+  if (counterReturnSpent(entity) || restrictions(ctx, entity).counterDisabled) return false;
   // A stacked card that changes stance resolves before the hit lands and would drop the Counter stance, so the arm would be wasted.
   if (stackedCards.some(card => { const next = stanceOf(card, entity); return next && next.maneuver !== 'counter'; })) return false;
   // SP already promised to cards stacked this root (they pay when the stack resolves) is not free to spend again.
@@ -747,7 +751,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
-    || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
+    || (counterReturnSpent(target) && !paidCounterContact(ctx, carrier, counter))) return queue;
   const deferredRangeReturn = ctx.rangeState?.policy.enabled === true;
   if (!deferredRangeReturn) {
     returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);

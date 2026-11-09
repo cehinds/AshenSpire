@@ -516,8 +516,6 @@
   "src/engine/counterRule.js": [
     "counterBeats",
     "counterBlockBonus",
-    "counterBlockGrant",
-    "counterPreviewAgainst",
     "counterReturn",
     "counterReturnForReceipt",
     "counterReturnSpent",

@@ -137,7 +137,7 @@ export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null)
   if (receipt && (!Counter.counterReturnSpent(ctx.player) || paid)) {
     const chance = ProfileCombat.profileDamageReceipt(state.previewCtx, enemy, state.defender, base, carrier);
     const extra = Counter.counterBlockBonus(state.previewCtx, receipt, contact ? planned.index : 0, chance.damageReceipt?.hits?.[0]?.incoming);
-    state.defender.block = (state.defender.block || 0) + Counter.counterBlockGrant(state.previewCtx, state.defender, extra);
+    state.defender.block = (state.defender.block || 0) + Matchups.CounterBlockGrant(state.previewCtx, state.defender, extra);
   }
   return state;
 }
