@@ -1595,6 +1595,46 @@ function abilityKindOf(def) {
   return def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver');
 }
 
+/** Builds the tactical carrier shared by a forecast and a committed play. */
+function actionCardCarrier(combat, source, def, inst, kind, committed = false)
+{
+    const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, source.classId));
+    const card = {
+        abilityKind: abilityKindOf(def),
+        abilityFamily: def.abilityFamily,
+        ...(committed ? { abilityRank: def.abilityRank } : {}),
+        sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+        ratingId: inst.ratingId,
+        ratingValue: inst.ratingValue,
+        ratingCap: inst.ratingCap,
+        equipmentRole: inst.equipmentRole,
+        instanceId: inst.instanceId,
+        cardId: inst.cardId,
+        upgraded: inst.upgraded,
+        ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
+        ...(inst.rank > 1 ? { rank: inst.rank } : {}),
+        ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+        type: kind,
+        tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined),
+        attack: def.attack,
+        sourceHand: inst.sourceHand,
+        derivedTags,
+        // Tactical projection can replace tags. Trigger predicates still read the authored row.
+        authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+        ...(committed && inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
+        damageSchool: inst.damageSchool ?? def.damageSchool,
+        ...(Number.isFinite(inst.magicShare ?? def.magicShare)
+            ? { magicShare: inst.magicShare ?? def.magicShare }
+            : {}),
+        ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string'
+            ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType }
+            : {}),
+        exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+        ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
+    };
+    return Object.assign(card, tacticalCarrier(def, card, combat, source));
+}
+
 // A card's maneuver (SPEC §4.7): its combat profile's, else the `maneuver:*` tag the card carries.
 function maneuverOf(def) {
   if (def.combatProfile?.maneuver) return def.combatProfile.maneuver;
@@ -1697,38 +1737,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   // from `def.type` — every reader downstream (the attack counter, the
   // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
   const kind = cardKind(def);
-  // DYNAMIC TAGS ARE READ HERE, ONCE, AND WRITTEN TO NO CARD (plan phase 3c).
-  // The grip the hands are in when the card is played (model/loadout.js
-  // gripOf) derives `equipment.dualWield` / `equipment.twoHanded`; they ride
-  // this snapshot as `derivedTags`, beside the card's own `tags`, and a
-  // predicate that asks about the card's tags reads both (triggers.js
-  // cardTagIs). The card definition and the deck instance never carry them.
-  const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
-  const cardRef = {
-    abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily, abilityRank: def.abilityRank,
-    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
-    ratingId: inst.ratingId,
-    ratingValue: inst.ratingValue,
-    ratingCap: inst.ratingCap,
-    equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
-    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
-    derivedTags,
-    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
-    // rewrites `tags` into the resolved attack tags (the weapon's inherited
-    // ones included), and cardTagIs must read what the card row says.
-    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
-    // Which piece lent this card, for the skill hooks (engine/skillXp.js).
-    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
-    damageSchool: inst.damageSchool ?? def.damageSchool,
-    ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
-    ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
-    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-    // The resolved face's Poise/Ward values: a staff's Strike resolves
-    // magical and carries Ward, which the registry def cannot (attackImpact).
-    ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
-  };
-  Object.assign(cardRef, tacticalCarrier(def, cardRef, combat, p));
+  const cardRef = actionCardCarrier(combat, p, def, inst, kind, true);
+  const { derivedTags } = cardRef;
   if (combat._reactionPlaying) cardRef.reactionDepth = 1;
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
@@ -2060,34 +2070,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const allLiving = combat.enemies.filter((e) => e.alive);
   const living = def.targetLimit===undefined ? allLiving : allLiving.slice(0,Math.max(0,evaluate(def.targetLimit,{energySpent:paidCosts.stamina,entities:{self:p,owner:p,player:p,target,enemy:target,allEnemies:allLiving}})));
 
-  // Same action shape execution uses, so formulas resolve identically.
   const action = {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    card: {
-      abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily,
-      sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
-      ratingId: inst.ratingId,
-      ratingValue: inst.ratingValue,
-      ratingCap: inst.ratingCap,
-      equipmentRole: inst.equipmentRole,
-      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
-      // The kind tag and the grip's derived tags, as the live play reads them
-      // (above) — a preview that disagreed with the play would lie.
-      type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
-      derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
-      authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
-      damageSchool: inst.damageSchool ?? def.damageSchool,
-      ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
-      ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
-      exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-      ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
-    },
+    card: actionCardCarrier(combat, p, def, inst, cardKind(def)),
     meta: { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina },
   };
 
-  Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
   // Execution enters the accepted card's stance before planning its contacts.
   // Prices above use the current stance; effect values use the prospective one.
   // This combat is already the detached preparing preview, so entry grants and

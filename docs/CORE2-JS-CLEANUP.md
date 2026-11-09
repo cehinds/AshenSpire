@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS07 verified locally by root. JS08–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS08 verified locally by root; JS09 is in progress. JS10–JS14 remain open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -83,22 +83,25 @@
   - **Dependencies:** JS01; follow JS05's lifetime policy.
 
 - [x] **JS07 · Remove the Counter import cycle and reduce boundary exceptions — P1; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `513bc22cb2e`.
   - **Why:** Initialization-order workarounds can make bundled behavior differ from source behavior.
   - **Scope:** Remove the Counter–Tactics–Matchups back edge through a narrow pure-data/preview seam. Address other dependency exceptions individually, preserving the layering ratchet.
   - **Evidence:** `src/engine/counterRule.js:11`, `src/engine/combatCardTactics.js:10`, `src/engine/combatMatchups.js:4`, `tests/layering.test.mjs`.
   - **Acceptance:** Source and production bundle agree for manual/automatic Counter, forecasts, and pending reactions; exception count only decreases.
-  - **Accepted verification:** Core gate passed 151/151; plantsites scanned 310 with known drift/unreadable counts matching baseline; standalone build passed at 0.7.4.68 (`ecadc3c974`), with 4/4 aliases refreshed. The pre-change import graph showed the concrete Counter → Damage Preview → Actions → Counter cycle; final source and bundle checks report zero cycles for both owners. Root's independent collection passed 56/56; Domain's focused suite passed 102/102 and layering passed 5/5; quality passed for 933 authored modules/6 enrolled owners. Counter cap native/bundle probe matrix `2/1/0/0/2` passed. The source/profile hash stayed unchanged; no new layering exception was added, and the existing 26 known-rank inversions remain. No UI/browser rerun was needed because the extraction preserves behavior and production-transform parity passed. Ordered gate raw logs and exit files: [`ordered-gates`](../scratch/qa/js07/ordered-gates/).
+  - **Accepted verification:** Core gate passed 151/151; plantsites scanned 310 with known drift/unreadable counts matching baseline; standalone build passed at 0.7.4.68 (`ecadc3c974`), with 4/4 aliases refreshed. The pre-change import graph showed the concrete Counter → Damage Preview → Actions → Counter cycle; final source and bundle checks report zero cycles for both owners. Root's independent collection passed 56/56; the independent reviewer passed 64/64; Domain's focused suite passed 102/102 and layering passed 5/5; quality passed for 933 authored modules/6 enrolled owners. Counter cap native/bundle probe matrix `2/1/0/0/2` passed. The runtime hash and game profile pin stayed unchanged; no new layering exception was added, and the existing 26 known-rank inversions remain. No UI/browser rerun was needed because the extraction preserves behavior and production-transform parity passed. Ordered gate raw logs and exit files: [`ordered-gates`](../scratch/qa/js07/ordered-gates/).
   - **Dependencies:** JS01, JS04.
 
-- [ ] **JS08 · Share proven action preparation between preview and execution — P2; Sol.**
+- [x] **JS08 · Share proven action preparation between preview and execution — P2; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** One source for shared action facts reduces parallel edits without erasing intentional stage differences.
   - **Scope:** Extract pure shared card/action construction with explicit inputs/results. Keep payment, committed metadata, prospective stance, observer filtering, and mutation order in their existing stages.
   - **Evidence:** `src/engine/combat.js:1707,2063`.
   - **Acceptance:** Preview/execution costs and receipts agree; inspection consumes no state/RNG; accepted actions charge once and refusals spend nothing.
+  - **Accepted verification:** Domain's focused/differential suite passed 128 checks; independent reviewer passed 57/57; root's native/bundle preview suite passed 18 checks, with frozen combat JSON matching exactly apart from the source hash. Tests confirmed carrier own keys/order, references, payment, and RNG are preserved. Quality passed for 933 authored files/6 enrolled owners with strict TypeScript. Ordered core passed 151/151; plantsites scanned 310 with baseline-matching drift/unreadable counts; standalone build passed at 0.7.4.69 (`e107379aa9`), refreshing 4/4 aliases. The protected runtime hash and profile pin were unchanged. No browser rerun was needed because production-transform parity passed and visible behavior is unchanged. Raw logs and exit files: [`ordered-gates`](../scratch/qa/js08/ordered-gates/).
   - **Dependencies:** JS01, JS04, JS07.
 
 - [ ] **JS09 · Extract application lifecycle controllers from `main.js` — P2; Sol.**
+  - **Status:** Implementation and isolated browser acceptance preparation in progress.
   - **Why:** Startup and save coordination should be understandable without navigating the entire game-flow module.
   - **Scope:** First move profile boot/migration/storage warnings behind injected dependencies; split run/checkpoint transitions only as a later bounded step. Define one app-shaped run initializer for stats, customization, path, seen events, and related creation fields now initialized across the composition-root path. Preserve the composition root and public launch paths.
   - **Evidence:** `src/main.js:318,415,563,798–823,978,2338`; the run initializer must match the defaults Main supplies so fixtures do not reassemble them independently.
