@@ -1,0 +1,15 @@
+{
+  "indentWidth": 4,
+  "lineWidth": 100,
+  "newLineKind": "lf",
+  "bracePosition": "nextLine",
+  "nextControlFlowPosition": "nextLine",
+  "singleBodyPosition": "nextLine",
+  "useBraces": "always",
+  "quoteStyle": "preferSingle",
+  "semicolons": "always",
+  "module.sortImportDeclarations": "maintain",
+  "module.sortExportDeclarations": "maintain",
+  "importDeclaration.sortNamedImports": "maintain",
+  "exportDeclaration.sortNamedExports": "maintain"
+}

@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 const finite = (value, fallback) => Number.isFinite(value) ? value : fallback;
@@ -13,7 +13,7 @@ export function battlefieldStageModel(presentation = {}) {
   // the same authored centre token so valid 25–75 configurations stay safe.
   const centerHeightRatio = Math.max(0, Math.min(1,
     (2 * Math.min(centerPct, 100 - centerPct)) / 100));
-  return componentModel(UI.battlefieldStage, {
+  return ComponentModel(UI.battlefieldStage, {
     tokens: {
       hudClearanceViewportPct: finite(presentation.hudClearanceViewportPct, 3),
       actionClearanceViewportPct: finite(presentation.actionClearanceViewportPct, 3),

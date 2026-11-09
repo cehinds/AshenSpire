@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { resolveMusicEnabled } from '../audio.js';
 
@@ -17,7 +17,7 @@ export function hudQuickSettingsModel({ place, presentation = {}, settings = {} 
   const places = Array.isArray(presentation.places) ? presentation.places : [];
   const enabled = places.includes(place);
   const music = musicQuickSettingsPlan(settings);
-  return componentModel(UI.hudQuickSettings, {
+  return ComponentModel(UI.hudQuickSettings, {
     variant: place,
     properties: {
       enabled,
@@ -32,11 +32,11 @@ export function hudQuickSettingsModel({ place, presentation = {}, settings = {} 
       showLabels: presentation.showLabels !== false,
     },
     children: [
-      componentModel(UI.fullscreenControl, {
+      ComponentModel(UI.fullscreenControl, {
         variant: place,
         accessibility: { label: 'Enter fullscreen' },
       }),
-      componentModel(UI.musicControl, {
+      ComponentModel(UI.musicControl, {
         variant: place,
         properties: { active: music.active, stateLabel: music.stateLabel },
         accessibility: { label: music.label },

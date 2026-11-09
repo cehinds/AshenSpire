@@ -163,6 +163,7 @@ function projectWeaponArtResources(bundle,profile) {
     return out;
   });
 }
+/** @param {string | object} [profileOrAuthor] */
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;

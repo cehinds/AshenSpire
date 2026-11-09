@@ -71,7 +71,7 @@ import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, isStorageFullError } from './engine/save.js';
 import { createBrowserSaveManager } from './engine/browserSave.js';
 import { createRunStartOwner } from './model/runStart.js';
-import { createSaveTransfer } from './engine/saveTransfer.js';
+import { CreateSaveTransfer } from './engine/saveTransfer.js';
 import { LoadSavedRunContext } from './engine/savedRunContext.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import { modalOpen, onModalsClosed } from './ui/modalState.js';
@@ -1490,9 +1490,9 @@ function refreshAfterImport() {
 }
 
 function showOfflinePlay() {
-  const transfer = createSaveTransfer(bootStorage);
-  const ownedTransfer = { ...transfer, restore: text => saves.withProfile
-    ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
+  const transfer = CreateSaveTransfer(bootStorage);
+  const ownedTransfer = { ...transfer, Restore: text => saves.withProfile
+    ? saves.withProfile(() => transfer.Restore(text)) : transfer.Restore(text) };
   openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;

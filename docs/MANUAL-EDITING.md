@@ -235,6 +235,30 @@ Follow [Art authoring in full Visual Studio](ART-AUTHORING.md) for separate
 game/art checkouts, source editor previews, export and release/pin steps.
 Game rules, editors, tests and generated runtime catalogs remain here.
 
+## JavaScript style and generated identity
+
+`.editorconfig` uses four spaces and LF for JavaScript modules by default, with
+two-space overrides for hash-sensitive legacy modules and JSON. New or migrated
+public APIs use PascalCase; private helpers use camelCase. Existing public APIs
+keep explicit compatibility aliases while callers move. The checked-in UI
+component models keep their serialized field names unchanged.
+
+The `engine/kernel/` and `engine/runtime/` JavaScript plus
+`src/model/formulas.js` and `src/model/fixCoreMechanics.js` are hash-sensitive
+legacy inputs. Keep their existing two-space layout and use LF line endings;
+do not reformat them as part of ordinary cleanup. `.gitattributes` enforces LF
+for text source, JSON and CSS at checkout, while binary art and receipt folders
+retain their existing `-text` rules. This policy does not itself rewrite files
+already in the worktree. Edit generated data's authored source and regenerate it
+with the source-specific compiler instead of editing generated output by hand.
+
+Install the isolated naming/format/type-check tools with
+`npm ci --prefix tools/code-quality --ignore-scripts`, then run
+`npm run code:check`. `npm run code:format` rewrites only the four enrolled
+modules; review its diff before keeping it. To check the tool's own regression
+cases, run `npm --prefix tools/code-quality run selftest`. These development
+tools live under `tools/code-quality/` and are not game runtime dependencies.
+
 Open the repository folder in Visual Studio (**File → Open → Folder**).
 No solution conversion is needed. Install Node 22.14 or newer. Right-click
 `package.json` for the **AshenSpire** tasks defined in `tasks.vs.json`.

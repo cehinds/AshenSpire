@@ -8,12 +8,12 @@
 // gate in #app; the gate's model, children and markup are unchanged.
 // Its record is src/ui/bootArt.js bootArtLine(): { state, text }.
 
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 export function bootArtStatusModel(line) {
   const state = line && typeof line === 'object' ? String(line.state || 'loading') : 'off';
-  return componentModel(UI.bootArtStatus, {
+  return ComponentModel(UI.bootArtStatus, {
     variant: state,
     properties: { text: line && typeof line === 'object' ? String(line.text || '') : '' },
     accessibility: { role: 'status', live: 'polite', busy: state === 'loading' },

@@ -13,7 +13,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const read = (rel) => readFileSync(join(root, rel), 'utf8');
+const read = (rel) => readFileSync(join(root, rel), 'utf8').replace(/\r\n/g, '\n');
 
 function walk(dir) {
   const out = [];

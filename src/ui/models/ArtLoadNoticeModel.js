@@ -11,7 +11,7 @@
 // The words are rows of content/source/uiStrings.csv (`art.*`).
 
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t, tFull } from '../strings.js';
 
@@ -21,13 +21,13 @@ export function artLoadNoticeModel({ state = 'failed' } = {}) {
   const variant = ART_NOTICE_STATES.includes(state) ? state : 'failed';
   const message = variant === 'retrying' ? t('art.loading')
     : variant === 'again' ? tFull('art.failed.again') : tFull('art.failed.notice');
-  const retry = componentModel(UI.artLoadNoticeRetry, {
+  const retry = ComponentModel(UI.artLoadNoticeRetry, {
     variant: variant === 'retrying' ? 'busy' : 'ready',
     properties: { label: t('art.retry'), busy: variant === 'retrying' },
     accessibility: { description: tFull('art.retry') },
     behaviors: [behaviorModel('retry-art', { event: 'activate', command: 'retry-art', policy: 'one-at-a-time' })],
   });
-  return componentModel(UI.artLoadNotice, {
+  return ComponentModel(UI.artLoadNotice, {
     variant,
     properties: { message },
     accessibility: { role: 'status', live: 'polite' },

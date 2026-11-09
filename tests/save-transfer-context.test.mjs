@@ -116,7 +116,7 @@ function mixedFixture() {
   assert.notEqual(slots[0].pin, slots[1].pin);
   assert.notEqual(slots[0].runtime, slots[1].runtime);
   assert.deepEqual(slots.map(row => row.actionPolicy), [2, 1]);
-  return { slots, text: native.createSaveTransfer(storage).createBackup() };
+  return { slots, text: native.CreateSaveTransfer(storage).CreateBackup() };
 }
 
 function currentStorage() {
@@ -135,16 +135,16 @@ for (const [mode, api] of Object.entries({ native, bundled })) {
   test(`${mode}: inspect, import and Continue use each slot's own Core 2 context`, () => {
     const { slots, text } = mixedBackup();
     const destination = currentStorage();
-    const transfer = api.createSaveTransfer(destination);
+    const transfer = api.CreateSaveTransfer(destination);
     const before = storageBytes(destination);
-    const previous = transfer.createBackup();
-    const inspection = transfer.inspect(text);
+    const previous = transfer.CreateBackup();
+    const inspection = transfer.Inspect(text);
     assert.equal(inspection.hasProfile, true);
     assert.equal(inspection.slots.filter(slot => slot.summary).length, 2);
     assert.deepEqual(storageBytes(destination), before, 'inspection makes no destination writes');
-    assert.deepEqual(plain(transfer.restore(text)), { ok: true });
-    assert.equal(transfer.createBackup(), text, 'import retains exact portable payloads');
-    assert.equal(transfer.previous(), previous, 'the pre-import backup remains portable');
+    assert.deepEqual(plain(transfer.Restore(text)), { ok: true });
+    assert.equal(transfer.CreateBackup(), text, 'import retains exact portable payloads');
+    assert.equal(transfer.Previous(), previous, 'the pre-import backup remains portable');
 
     const manager = api.createSaveManager(destination);
     for (const [index, expected] of slots.entries()) {
@@ -187,9 +187,9 @@ function amendPin(run, change) {
 test('unsupported, retired and newer imports preserve destination bytes and recovery', () => {
   const destination = currentStorage();
   destination.setItem(backupKey, 'previous recovery evidence');
-  const transfer = native.createSaveTransfer(destination);
+  const transfer = native.CreateSaveTransfer(destination);
   const before = storageBytes(destination);
-  const original = transfer.createBackup();
+  const original = transfer.CreateBackup();
   const cases = [
     [data => amendRun(data, run => amendPin(run, pin => { pin.lock.runtimeHash = 'sha256:' + '0'.repeat(64); })),
       /Slot 1 cannot be imported: .*unsupported runtime artifact snapshot/],
@@ -208,15 +208,15 @@ test('unsupported, retired and newer imports preserve destination bytes and reco
     const data = JSON.parse(original);
     edit(data);
     const text = JSON.stringify(data);
-    assert.throws(() => transfer.inspect(text), error);
-    assert.throws(() => transfer.restore(text), error);
+    assert.throws(() => transfer.Inspect(text), error);
+    assert.throws(() => transfer.Restore(text), error);
     assert.deepEqual(storageBytes(destination), before);
   }
 });
 
 test('Continue refuses an unsupported, retired or newer slot without altering storage', () => {
   const destination = currentStorage();
-  const original = JSON.parse(native.createSaveTransfer(destination).createBackup());
+  const original = JSON.parse(native.CreateSaveTransfer(destination).CreateBackup());
   const manager = native.createSaveManager(destination);
   const key = native.runKey(1);
   const saved = JSON.parse(original.entries[key]);
@@ -253,7 +253,7 @@ test('failed writes restore exact compact slot bytes and retain a portable recov
   const mirror = destination.getItem(native.META_BACKUP_KEY);
   destination.setItem(native.META_BACKUP_KEY, ` \n${mirror}\n `);
   const before = storageBytes(destination);
-  const previous = native.createSaveTransfer(destination).createBackup();
+  const previous = native.CreateSaveTransfer(destination).CreateBackup();
   const failing = Object.create(destination);
   let refused = false;
   failing.setItem = (key, value) => {
@@ -264,12 +264,12 @@ test('failed writes restore exact compact slot bytes and retain a portable recov
       throw new Error('injected mirror write failure');
     }
   };
-  const transfer = native.createSaveTransfer(failing);
-  assert.throws(() => transfer.restore(text), /injected mirror write failure/);
+  const transfer = native.CreateSaveTransfer(failing);
+  assert.throws(() => transfer.Restore(text), /injected mirror write failure/);
   assert.equal(refused, true);
   assert.deepEqual(storageBytes(destination), { ...before, [backupKey]: previous });
-  assert.equal(transfer.previous(), previous);
-  assert.equal(transfer.inspect(previous).slots.filter(slot => slot.summary).length, 1);
+  assert.equal(transfer.Previous(), previous);
+  assert.equal(transfer.Inspect(previous).slots.filter(slot => slot.summary).length, 1);
 });
 
 test('failure to write recovery prevents any live writes', () => {
@@ -280,6 +280,19 @@ test('failure to write recovery prevents any live writes', () => {
     assert.equal(key, backupKey);
     throw new Error('injected backup write failure');
   };
-  assert.throws(() => native.createSaveTransfer(failing).restore(mixedBackup().text), /injected backup write failure/);
+  assert.throws(() => native.CreateSaveTransfer(failing).Restore(mixedBackup().text), /injected backup write failure/);
   assert.deepEqual(storageBytes(destination), before);
+});
+test('the archived transfer adapter keeps its old method surface in native and bundled modules', () => {
+  for (const api of [native, bundled]) {
+    const storage = api.createMemoryStorage();
+    const modern = api.CreateSaveTransfer(storage);
+    const legacy = api.createSaveTransfer(storage);
+    const backup = modern.CreateBackup();
+    assert.equal(legacy.slotCount, modern.SlotCount);
+    assert.equal(legacy.createBackup(), backup);
+    assert.deepEqual(plain(legacy.inspect(backup)), plain(modern.Inspect(backup)));
+    assert.deepEqual(plain(legacy.restore(backup)), { ok: true });
+    assert.equal(legacy.previous(), modern.Previous());
+  }
 });

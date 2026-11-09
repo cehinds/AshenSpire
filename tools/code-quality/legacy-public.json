@@ -1,0 +1,5558 @@
+{
+  "src/config/authored.js": [
+    "shallowFrozen",
+    "thaw"
+  ],
+  "src/content/aiDisclosure.js": [
+    "disclosureAsText"
+  ],
+  "src/content/ashenBlight.js": [
+    "ashenBlightFeat",
+    "ashenBlightFeatChoices"
+  ],
+  "src/content/bookArt.js": [
+    "bookArtLayers",
+    "bookArtProblems",
+    "bookArtRecipe"
+  ],
+  "src/content/changelog.js": [
+    "validateChangelog"
+  ],
+  "src/content/classArtAnchors.js": [
+    "medallionAnchor",
+    "medallionDeclared"
+  ],
+  "src/content/combatCardTraits.js": [
+    "reactionRulesProblems",
+    "reactionRulesSnapshot"
+  ],
+  "src/content/combatEffectAnchors.js": [
+    "combatEffectAttachment",
+    "combatPoseAttachment"
+  ],
+  "src/content/combatEffectPresentation.js": [
+    "combatEffectOpacity",
+    "combatEffectPresentation"
+  ],
+  "src/content/combatExpansionCards.js": [
+    "applyCombatExpansionCard"
+  ],
+  "src/content/combatExpansionMartial.js": [
+    "applyCombatExpansionMartial"
+  ],
+  "src/content/combatFeel.js": [
+    "combatFeelIssues",
+    "hitStopMsFor",
+    "shakePxFor"
+  ],
+  "src/content/combatSigils.js": [
+    "cardSigilIdentity",
+    "mirrorSigil"
+  ],
+  "src/content/equipment.js": [
+    "armamentById",
+    "armamentsForSlot",
+    "armourById",
+    "armourForClass",
+    "cardForTarget",
+    "itemTypeLabel",
+    "slotById",
+    "startingArmour",
+    "weaponRangeOf"
+  ],
+  "src/content/eventArt.js": [
+    "eventArtAsset"
+  ],
+  "src/content/events.js": [
+    "eventChoicesWithHistory"
+  ],
+  "src/content/formationPositioningPresets.js": [
+    "suppliedFormationPositioning"
+  ],
+  "src/content/haptics.js": [
+    "hapticPatternIssues"
+  ],
+  "src/content/music.js": [
+    "mapMusicContext"
+  ],
+  "src/content/noteKeys.js": [
+    "withNotes"
+  ],
+  "src/content/progression/cardRecipeText.js": [
+    "recipeFace",
+    "recipeText"
+  ],
+  "src/content/progression/cards.js": [
+    "familyGrade"
+  ],
+  "src/content/propertyRules.js": [
+    "propertyRuleFor"
+  ],
+  "src/content/sfx.js": [
+    "hitTierFor",
+    "resolveRecipe"
+  ],
+  "src/content/speakerArt.js": [
+    "speakerPortraitAsset"
+  ],
+  "src/content/tags.js": [
+    "cardsWithTag",
+    "damageTagIds",
+    "domainsFor",
+    "hasTag",
+    "objectTagIds",
+    "objectsWithTag",
+    "resolve",
+    "scopeOf",
+    "tagDomain",
+    "tagFamily",
+    "tagIdsFor",
+    "tagIdsOf",
+    "tagsAllowedFor",
+    "tagsFor",
+    "tagsInDomain",
+    "tagsOf"
+  ],
+  "src/content/traitProjection.js": [
+    "applyCardTraits",
+    "cardTier"
+  ],
+  "src/content/uiIcons.js": [
+    "uiIconGlyph",
+    "uiIconId",
+    "uiIconText"
+  ],
+  "src/dev/armamentKitPreview.js": [
+    "configureArmamentKitPreview",
+    "drawArmamentKitPreview"
+  ],
+  "src/dev/shotStates.js": [
+    "createShotStates"
+  ],
+  "src/engine/abilityRiders.js": [
+    "abilityChargedEffects",
+    "abilityEntityKey",
+    "abilityMetric",
+    "abilityResolved",
+    "abilitySnapshot",
+    "allowAbilityOnce",
+    "assertNoAbilityChoice",
+    "attachAbilityCharges",
+    "beforeAbilityPlay",
+    "beginAbilityTurn",
+    "cardTargetsAllEnemies",
+    "chooseAbilityDiscard",
+    "consumeAbilityCharges",
+    "discardCandidates",
+    "grantAbilityCharge",
+    "matchingAbilityCharges",
+    "priorAbilityEntity",
+    "recordAbilityCard",
+    "recordAbilityEvent",
+    "recordAbilityOffering",
+    "requestAbilityDiscard"
+  ],
+  "src/engine/actions.js": [
+    "addArcaneExposure",
+    "applyAttackDamage",
+    "applyHeal",
+    "applyLoseHp",
+    "attackTagsFor",
+    "breakEnemy",
+    "cardRatingDamage",
+    "computeAttackDamage",
+    "computeBlockGain",
+    "computeMeterGuardGain",
+    "computeSpellDefenseGain",
+    "contactMagicShare",
+    "createRunContext",
+    "critChance",
+    "dealPoiseDamage",
+    "discardFromHand",
+    "drainFixCorePoise",
+    "drainRunContext",
+    "drawCards",
+    "executeAction",
+    "executeRunEffects",
+    "fixCoreStagger",
+    "formulaCtxFor",
+    "gainBarrier",
+    "gainBlock",
+    "gainMeterGuard",
+    "growPoiseMeter",
+    "preflightCardHp",
+    "prepareExpandedDefense",
+    "ratingBonusPart",
+    "reshuffleDiscardIntoDraw",
+    "resolveTargets",
+    "restoreExpandedWard",
+    "returnDiscardInOrder",
+    "rollCrit",
+    "silencedForceContacts",
+    "spellDamageDealtMultiplier",
+    "spendSilencedStack",
+    "staggerEnemy",
+    "staggerPlayer",
+    "syncPoiseMaximum",
+    "syncRunContext",
+    "syncWardMaximum",
+    "useRunChargeFlask"
+  ],
+  "src/engine/actmap.js": [
+    "bossEncounterForNode",
+    "buildActMap",
+    "buildGameProfileActMap",
+    "buildGameProfileActivities",
+    "drawSeatOrder"
+  ],
+  "src/engine/ashenBlight.js": [
+    "ashenBlightBonuses",
+    "ashenBlightMartialPoise",
+    "ashenBlightRestorationPercent",
+    "ashenBlightSpellBuildup",
+    "beginAshenBlightCycle",
+    "chooseAshenBlightFeat",
+    "claimAshenBlightProc",
+    "corruptedCardProjection",
+    "effectiveAshenBlightAttributes",
+    "modulateAshenBlightRestoration",
+    "payAshenBlight",
+    "rollAshenBlightEncounter"
+  ],
+  "src/engine/browserSave.js": [
+    "createBrowserSaveManager"
+  ],
+  "src/engine/cardBehavior.js": [
+    "projectCardBehavior",
+    "selectCardVariant",
+    "weaponDamageBasis"
+  ],
+  "src/engine/cardZones.js": [
+    "cardChoiceForSeat",
+    "chooseZoneCards",
+    "hasCardChoice",
+    "moveCards",
+    "returnHiddenCards",
+    "validateZoneEffect",
+    "zoneCandidates"
+  ],
+  "src/engine/combat.js": [
+    "cardChoicePlan",
+    "cardNeedsEnemyTargetNow",
+    "cardPlayCosts",
+    "cardTimelineViewFor",
+    "createCombat",
+    "dispatch",
+    "getEntity",
+    "playerWeightClass",
+    "previewCard",
+    "previewCardHit",
+    "previewIntent",
+    "resolvedCardPlayCosts",
+    "trimEnemyPlanDuringTurn"
+  ],
+  "src/engine/combatAvoidance.js": [
+    "chanceMode",
+    "distancePreview",
+    "effectiveChance",
+    "evadeRollPreview",
+    "previewAvoidance",
+    "resolveAvoidance",
+    "rollChanceDie"
+  ],
+  "src/engine/combatCardTactics.js": [
+    "counterEffectPreview",
+    "enemyCounterDefensePrimed",
+    "enemyMoveCarrier",
+    "enqueueCounterWard",
+    "expandedEnemyMove",
+    "prepareTacticalCard",
+    "previewTacticalEffects",
+    "primeEnemyCounter",
+    "tacticalCarrier",
+    "wieldedArmament"
+  ],
+  "src/engine/combatCardTraitMath.js": [
+    "counterstrikeAmount",
+    "counterstrikePct",
+    "hasStanceAdvantage",
+    "stanceManeuverOf",
+    "traitHitAmount"
+  ],
+  "src/engine/combatDamagePreview.js": [
+    "applyReceiptToPreviewTarget",
+    "cloneDetachedAttacker",
+    "damagePreviewState",
+    "previewAttackerView",
+    "previewDamageHits",
+    "previewPoiseDrain",
+    "previewReflectReturn"
+  ],
+  "src/engine/combatEngagement.js": [
+    "acceptRangeActions",
+    "addRangeCosts",
+    "assertRangeCardEnabled",
+    "authorizeCounterRange",
+    "discardCounterRangeReservation",
+    "executeEngagementMovement",
+    "incomingRangeScope",
+    "initializeCombatRange",
+    "paidCounterRange",
+    "previewRangeRoutes",
+    "quoteRangeActions",
+    "rangeCardSourceSnapshots",
+    "rangeHitContact",
+    "rangeSourceContact"
+  ],
+  "src/engine/combatExpansion.js": [
+    "resolveCombatCard"
+  ],
+  "src/engine/combatExpansionActions.js": [
+    "activateCombatContact",
+    "applyTraitImpact",
+    "beginExpandedAction",
+    "completeExpandedAction",
+    "effectCarrier",
+    "enqueueExpandedAction",
+    "expansionEntity",
+    "expansionSeatConnected",
+    "expansionTargetPresent",
+    "previewExpandedActions"
+  ],
+  "src/engine/combatExpansionCombos.js": [
+    "dispatchCombatCombos",
+    "mountCombatCombo"
+  ],
+  "src/engine/combatExpansionEquipment.js": [
+    "expandedEnemyProjection",
+    "expandedEquipmentProjection",
+    "expansionCarrierTraits",
+    "typedDefenseAmount"
+  ],
+  "src/engine/combatExpansionProjection.js": [
+    "combatEquipmentPoolProjection",
+    "refreshExpandedLoadout",
+    "settleExpandedPools"
+  ],
+  "src/engine/combatExpansionSave.js": [
+    "commitExpansionCandidate"
+  ],
+  "src/engine/combatMatchups.js": [
+    "allocateTacticalDamage",
+    "armAutoCounter",
+    "armCombatCounter",
+    "assertSingleActionCamp",
+    "autoCounterAvailable",
+    "autoCounterCarrier",
+    "autoCounterCost",
+    "beginTacticalAction",
+    "clearCombatCounter",
+    "combatExpansionEnabled",
+    "combatProfileOf",
+    "completeGuardBreak",
+    "completeMatchupHit",
+    "completeTacticalAction",
+    "counterCoverageMatches",
+    "decayStanceRoundStart",
+    "expansionMatchupRules",
+    "hitRiders",
+    "isSmashGuardBreak",
+    "liveCounterCovers",
+    "matchupPoiseMultiplier",
+    "matchupRiderEffects",
+    "matchupRules",
+    "prepareCombatEvade",
+    "prepareMatchupHit",
+    "previewTacticalAction",
+    "recordTacticalContact",
+    "recordTacticalStatus",
+    "riderGuardBypass",
+    "setCombatStance",
+    "stancePressureMultiplier",
+    "startTacticalTurn",
+    "stripCombatWard",
+    "tagRidersFor"
+  ],
+  "src/engine/combatPools.js": [
+    "syncPoiseMaximum",
+    "syncWardMaximum"
+  ],
+  "src/engine/combatRangeLineage.js": [
+    "acceptIndependentTrigger",
+    "assertPreparingRangeSupported",
+    "bindReservedRootSites",
+    "eventRangeOrigin",
+    "extendRangeEnvelope",
+    "inheritedContactId",
+    "inheritedRangeAction",
+    "rangeTargetsFor"
+  ],
+  "src/engine/combatRatings.js": [
+    "absorbMeterGuard",
+    "cardRatingBonus",
+    "clearMeterGuards",
+    "meterGuardReceipt",
+    "spellDefenseRatingBonuses"
+  ],
+  "src/engine/combatReactions.js": [
+    "answerReaction",
+    "beforeReactionAction",
+    "cardTraitsActive",
+    "counterCoversAttack",
+    "deferRootPlay",
+    "finishReactions",
+    "reactionPaused",
+    "resolveReactionStack",
+    "restoreReactionQueue",
+    "revealActor",
+    "setReactionsEnabled",
+    "stackedReactions",
+    "startQueuedEnemy",
+    "usesReactions"
+  ],
+  "src/engine/combatRounds/resolver.js": [
+    "accuracyFor",
+    "attributeBonus",
+    "clampStage",
+    "evasionFor",
+    "parseEvasionArmor",
+    "parseStanceAdvantage",
+    "stanceBonus",
+    "stanceOutline"
+  ],
+  "src/engine/combatRounds/stance.js": [
+    "moveKind",
+    "playerKind",
+    "stanceFor"
+  ],
+  "src/engine/combatRoundsAdapter.js": [
+    "commitEnemySp",
+    "enemyAvailableSp",
+    "enemyMoveHasMultipleHits",
+    "enemyMoveHitCount",
+    "enemyMoveHitFloor",
+    "enemyMoveQuote",
+    "enemyMoveSp",
+    "enemyPool",
+    "enemyTimelineCard",
+    "enemyTurnSp",
+    "extendEnemyQueue",
+    "moveKind",
+    "moveSp",
+    "playerKind",
+    "stanceFor",
+    "takePlannedMove",
+    "trimEnemyPlan"
+  ],
+  "src/engine/combatRules.js": [
+    "candidateState",
+    "cardActions",
+    "foundationTransaction",
+    "playRefusal"
+  ],
+  "src/engine/combatSnapshot.js": [
+    "commitCombatSnapshot",
+    "restoreCombatSnapshot",
+    "serializeCombatSnapshot"
+  ],
+  "src/engine/combatStatusControl.js": [
+    "afterStatusGrant",
+    "applyExpansionActiveStatus",
+    "applyStatusPressure",
+    "backfillPersistentPoise",
+    "beforeStatusAction",
+    "breakPersistentWard",
+    "completeStatusAction",
+    "consumeControlActionLoss",
+    "controlGate",
+    "controlRestrictions",
+    "effectiveChance",
+    "electricalTraits",
+    "emitBreak",
+    "endControlTurn",
+    "groundStatusPressure",
+    "initializePersistentPoise",
+    "initializePersistentWard",
+    "interruptForBreak",
+    "manualRecovery",
+    "prepareBreakInterrupt",
+    "recoverStatusesAtOwnerStart",
+    "recoveryChance",
+    "recoveryControls",
+    "restorePersistentPoise",
+    "restorePersistentWard",
+    "rollStatusChance",
+    "sleepRestoration",
+    "spendPersistentWard",
+    "statusIncomingModifier"
+  ],
+  "src/engine/concurrentStances.js": [
+    "activeCombatStances",
+    "defensiveCombatStance",
+    "isStaggered",
+    "rememberCombatStance",
+    "stanceCapacity",
+    "statusStacksWithStance",
+    "trimCombatStances"
+  ],
+  "src/engine/contest.js": [
+    "contestKindOf",
+    "contestPreview",
+    "contestRules",
+    "currentPoise",
+    "previewCarrierContest",
+    "rollCarrierContest",
+    "rollContest"
+  ],
+  "src/engine/counterReturn.js": [
+    "attackAccuracy",
+    "attributesOf",
+    "counterAttackPreview",
+    "counterBaseEvasion",
+    "levelOf",
+    "resolveCounterAttack",
+    "timelineAttrs"
+  ],
+  "src/engine/counterRule.js": [
+    "counterBeats",
+    "counterBlockBonus",
+    "counterBlockGrant",
+    "counterPreviewAgainst",
+    "counterReturn",
+    "counterReturnForReceipt",
+    "counterReturnSpent",
+    "counterRuleActive",
+    "counterStacksAfterCard",
+    "paidCounterContact"
+  ],
+  "src/engine/d20Chance.js": [
+    "chanceToD20Steps",
+    "chanceToD20Target",
+    "d20Mode",
+    "d20ModeChance",
+    "effectiveD20Percent",
+    "rollD20Check"
+  ],
+  "src/engine/elementLightning.js": [
+    "beginLightningHit",
+    "dealElementalHit",
+    "finishLightningHit",
+    "fireDriesDamp",
+    "isFireHit",
+    "isLightning",
+    "isMetalPiece",
+    "lightningPrecisionBonus",
+    "seedElementStatuses",
+    "shockContestPreview",
+    "wearsMetal",
+    "wornPieces"
+  ],
+  "src/engine/elementRules.js": [
+    "affinityTags",
+    "carrierElement",
+    "dampBurnStacks",
+    "elementOf",
+    "elementRules",
+    "isLightning",
+    "isMetalPiece",
+    "lightningPrecisionBonus",
+    "lightningRules",
+    "ownElementAmount",
+    "scaleOwnElementActions",
+    "shockedPenalty",
+    "statusStacks",
+    "wearsMetal",
+    "withAffinity",
+    "wornPieces"
+  ],
+  "src/engine/encounters.js": [
+    "applyGraceRefill",
+    "buildShopStock",
+    "cardRewardRarityWeights",
+    "eligibleEventIds",
+    "resolveUnknownNode",
+    "rollArmamentDrop",
+    "rollCardRewardIds",
+    "rollCombatCardOffer",
+    "rollEncounter",
+    "rollFlaskDrop",
+    "rollRelicChoices",
+    "rollRelicReward",
+    "rollRuneReward",
+    "rollSkillDraftIds"
+  ],
+  "src/engine/enemyActionPreview.js": [
+    "previewEnemyAction"
+  ],
+  "src/engine/enemyBurdens.js": [
+    "addEnemyBurden",
+    "allowBurdenMove",
+    "beginEnemyBurdens",
+    "endEnemyBurdens",
+    "enemyBurdenProblems"
+  ],
+  "src/engine/enemyIntentProjection.js": [
+    "enemyIntentDamageState",
+    "projectEnemyIntentDamage"
+  ],
+  "src/engine/enemyIntentReceipt.js": [
+    "captureEnemyIntent"
+  ],
+  "src/engine/enemyKnowledge.js": [
+    "addKnowledgeObserver",
+    "attachEnemyKnowledge",
+    "cancelKnowledgeAction",
+    "creditKnowledgeBenefit",
+    "creditKnowledgeImpact",
+    "creditKnowledgeResponse",
+    "initializeCombatKnowledge",
+    "knowledgeIntentProjection",
+    "knowledgePredictionModel",
+    "predictEnemyIntent",
+    "reconcileCombatKnowledge",
+    "recordKnowledgeEvent",
+    "resolveKnowledgeAction",
+    "rollEnemyKnowledge"
+  ],
+  "src/engine/enemyKnowledgeSave.js": [
+    "bankRunEnemyKnowledge"
+  ],
+  "src/engine/enemyReactions.js": [
+    "clearEnemyReactionRolls",
+    "decideEnemyReaction",
+    "enemyEntryHalt",
+    "enemyReactionsActive",
+    "fightReacts",
+    "incomingAgainst",
+    "openEnemyWindow",
+    "playerRootSeat",
+    "pushEnemyReaction",
+    "reactionMovesOf",
+    "relinkEnemyPlan",
+    "runEnemyPlan",
+    "seatGone"
+  ],
+  "src/engine/gameProfileCombat.js": [
+    "armsAsCoreCounter",
+    "configuredCombat",
+    "configuredModule",
+    "configuredStance",
+    "freezeProfile",
+    "isPierceHit",
+    "isSpellCounter",
+    "mirroredStance",
+    "profileCardCosts",
+    "profileDamageReceipt",
+    "profileFallbackDamage",
+    "profileHandSize",
+    "refreshProfileRound",
+    "setProfileStance"
+  ],
+  "src/engine/guardStacks.js": [
+    "counterStackCount",
+    "counterStackReturn",
+    "decayCounterStacks",
+    "gainCounterStacks",
+    "gainReflectStacks",
+    "reflectCut",
+    "reflectReduceFraction",
+    "reflectReducePct",
+    "reflectReturnFraction",
+    "reflectReturnPct",
+    "reflectReturned",
+    "reflectStackCount",
+    "spendReflectStacks"
+  ],
+  "src/engine/handRules.js": [
+    "applyDiscardChoice",
+    "discardChoicePlan",
+    "endTurnCardFate",
+    "returnUnplayedCards",
+    "turnDrawCount",
+    "validateDiscardChoice"
+  ],
+  "src/engine/locations.js": [
+    "arriveAt",
+    "createLocationVisit",
+    "leaveLocation",
+    "locationCarrier",
+    "previewRest",
+    "refreshRestDenied",
+    "restAt"
+  ],
+  "src/engine/mapgen.js": [
+    "assignBossDestinations",
+    "generateActMap",
+    "sampleActShape"
+  ],
+  "src/engine/normalPreview.js": [
+    "enemyIntentStance",
+    "enemyPlanActions",
+    "multiActionOn",
+    "normalStanceTable"
+  ],
+  "src/engine/profileStorageOwner.js": [
+    "createProfileStorageOwner"
+  ],
+  "src/engine/properties.js": [
+    "classCarrier",
+    "companionCarrier",
+    "loadoutCarriers",
+    "mountProperties",
+    "propertyMountsOf",
+    "propertySourceKey",
+    "relicCarrier",
+    "sigilCarrier",
+    "syncClassProperties",
+    "syncCompanionProperties",
+    "syncConfiguredEnemyProperties",
+    "syncLoadoutProperties",
+    "syncRelicProperties",
+    "syncSigilProperties",
+    "unmountProperties"
+  ],
+  "src/engine/proposalStatusRuntime.js": [
+    "applyProposalPlan",
+    "proposalActor",
+    "proposalActors",
+    "proposalAfterHit",
+    "proposalAllies",
+    "proposalCardPlan",
+    "proposalContext",
+    "proposalDamageType",
+    "proposalHealingPlan",
+    "proposalHitPlan",
+    "proposalRetained",
+    "proposalTargetPlan",
+    "proposalThreshold",
+    "proposalTurn"
+  ],
+  "src/engine/quests.js": [
+    "choiceAffordable",
+    "commitEventChoice",
+    "completeQuest"
+  ],
+  "src/engine/reactionState.js": [
+    "reactionPaused"
+  ],
+  "src/engine/rng.js": [
+    "createRng",
+    "mulberry32",
+    "seedFromString",
+    "seedProblem",
+    "seedToString",
+    "sweepSeed"
+  ],
+  "src/engine/runCombat.js": [
+    "createRunCombat",
+    "enemyLevelsForFight",
+    "runCombatEnd",
+    "runCombatPlayer"
+  ],
+  "src/engine/save.js": [
+    "createMemoryStorage",
+    "createSaveManager",
+    "inlineRunJson",
+    "isStorageFullError",
+    "profileCopyKey",
+    "runKey"
+  ],
+  "src/engine/saveArchive.js": [
+    "createArchiveStore",
+    "runKey"
+  ],
+  "src/engine/saveMeta.js": [
+    "createMetaStore"
+  ],
+  "src/engine/saveReclaim.js": [
+    "createSpaceReclaimer"
+  ],
+  "src/engine/saveSharedProfile.js": [
+    "createSharedProfileStore",
+    "profileCopyKey"
+  ],
+  "src/engine/shopKinds.js": [
+    "blacksmithVisitStock",
+    "buildBlacksmithStock"
+  ],
+  "src/engine/skillXp.js": [
+    "applySkillXp",
+    "attachSkillXp",
+    "recordSkillXp",
+    "settleConfiguredSkillProgression",
+    "skillXpReceipt"
+  ],
+  "src/engine/stanceHit.js": [
+    "accuracyRules",
+    "attackHitPreview",
+    "effectiveEvasion",
+    "evadeStackGain",
+    "hitReadExact",
+    "precisionEntryGrant",
+    "precisionStatMix",
+    "precisionStatParts",
+    "previewCardAttackHit",
+    "previewTargetFor",
+    "resolveAttackHit",
+    "rollContestFor"
+  ],
+  "src/engine/stanceMitigation.js": [
+    "stanceMitigation"
+  ],
+  "src/engine/statuses.js": [
+    "anyCombatantFlag",
+    "applyStatus",
+    "decayAtTurnEnd",
+    "decayAtTurnStart",
+    "getAdd",
+    "getCap",
+    "getFlag",
+    "getMult",
+    "getStacks",
+    "getStatusInstance",
+    "hasStatus",
+    "removeStatus",
+    "statusDefinition"
+  ],
+  "src/engine/triggers.js": [
+    "checkPhases",
+    "emitEvent",
+    "evalPredicate",
+    "findEntity",
+    "fireOwnerHooks",
+    "hasEventTriggers",
+    "rangeHookSources",
+    "triggerOwnerKey"
+  ],
+  "src/engine/weaknesses.js": [
+    "hitWeaknessTriggers",
+    "matchingHitWeaknesses",
+    "refillWeaknesses",
+    "startingWeaknesses",
+    "weaknessLabel",
+    "weaknessStackBonus",
+    "weaknessTickMultiplier",
+    "weaknessesActive"
+  ],
+  "src/framework/bridge.js": [
+    "createFrameworkBridge",
+    "sharedFrameworkBridge"
+  ],
+  "src/framework/candidate.js": [
+    "buildReplacementCandidate",
+    "captureCurrentBehavior",
+    "compareBaseline",
+    "createReplacementCandidate",
+    "hasProperty"
+  ],
+  "src/framework/compiler.js": [
+    "compileEntity",
+    "deepFreeze",
+    "hasProperty",
+    "propertyParameters"
+  ],
+  "src/framework/confirmationRule.js": [
+    "bindingReasons",
+    "failClosedOps",
+    "isBindingChoice"
+  ],
+  "src/framework/costs.js": [
+    "compileCosts",
+    "payAlternativeCost",
+    "repeatLimiters"
+  ],
+  "src/framework/deck.js": [
+    "buildEquippedWeaponCardPlan",
+    "composeCombatDeck",
+    "splitAuthoredWeaponArts",
+    "validEquippedWeapons"
+  ],
+  "src/framework/deckComposition.js": [
+    "applyEquippedWeaponCardPlan",
+    "buildEquippedWeaponCardPlan",
+    "reconcileGrantedCards",
+    "reconcileGrantedCardsInCombat",
+    "stampDeck",
+    "startingDeckRefs"
+  ],
+  "src/framework/importer.js": [
+    "cardPropertyInstances",
+    "expectedCounts",
+    "importLegacyContent",
+    "isPureDodge",
+    "legacyEntityKey"
+  ],
+  "src/framework/inheritance.js": [
+    "filterInheritable"
+  ],
+  "src/framework/lifecycle.js": [
+    "destinationAfterPlay",
+    "endTurnCleanup",
+    "forcedDiscardDestination"
+  ],
+  "src/framework/optionDecision.js": [
+    "armHold",
+    "armInspect",
+    "armOptionDecision",
+    "beatArmer",
+    "holdMs"
+  ],
+  "src/framework/presentation/components.js": [
+    "walkComponents"
+  ],
+  "src/framework/presentation/confirmation.js": [
+    "requestAction"
+  ],
+  "src/framework/presentation/fitText.js": [
+    "clampExpression",
+    "fitText"
+  ],
+  "src/framework/presentation/tooltip.js": [
+    "compileTooltip",
+    "placeTooltip"
+  ],
+  "src/framework/registries.js": [
+    "createFrameworkRegistries"
+  ],
+  "src/framework/resources.js": [
+    "createResourceState",
+    "manaAtCombatEnd",
+    "manaDeficitAtCombatEnd",
+    "maximumMana",
+    "onRestSpot",
+    "onTurnEndStamina",
+    "onTurnStartMana",
+    "recoverMana",
+    "refundStamina",
+    "spendStamina",
+    "staminaAtCombatStart",
+    "staminaDeficitAtCombatStart"
+  ],
+  "src/framework/schema.js": [
+    "assertStableId",
+    "checkAssetDefinition",
+    "checkConfirmationAction",
+    "checkConfirmationPolicy",
+    "checkContentEntity",
+    "checkPropertyDefinition",
+    "checkPropertyInstance",
+    "checkPropertyRelation",
+    "checkTermDefinition"
+  ],
+  "src/framework/statusSemantics.js": [
+    "anyCombatantFlag",
+    "applyStatus",
+    "applyStatusPressure",
+    "controlGate",
+    "controlRestrictions",
+    "decayAtTurnEnd",
+    "decayAtTurnStart",
+    "getAdd",
+    "getCap",
+    "getFlag",
+    "getMult",
+    "getStacks",
+    "getStatusInstance",
+    "hasStatus",
+    "manualRecovery",
+    "recoveryControls",
+    "removeStatus",
+    "statusDefinition"
+  ],
+  "src/framework/termOverlay.js": [
+    "createEntityTermOverlay"
+  ],
+  "src/framework/validate.js": [
+    "contrastRatio",
+    "validateAllContent"
+  ],
+  "src/framework/weight.js": [
+    "attributeModifier",
+    "carryCapacity",
+    "computeWeightClass",
+    "dodgeRollCheck",
+    "equipLoad",
+    "loadPercent",
+    "weightClassFor"
+  ],
+  "src/model/abilityDraftReceipts.js": [
+    "abilityDraftChoice",
+    "abilityDraftClaimProblems",
+    "abilityDraftId",
+    "initializeAbilityDraftClaims",
+    "pendingAbilityDraftLevels",
+    "spendAbilityDraft"
+  ],
+  "src/model/abilityGrades.js": [
+    "abilityKindForSkill",
+    "abilityRankAt",
+    "abilityRules",
+    "applyAbilityGrade",
+    "isAbilitySkill",
+    "migrateAbilityGrades"
+  ],
+  "src/model/abilityOffers.js": [
+    "abilityOfferPool",
+    "rollAbilityOffer",
+    "rollPendingAbilityOffers"
+  ],
+  "src/model/abilitySkillActivation.js": [
+    "activateAbilitySkill"
+  ],
+  "src/model/actionAnimation.js": [
+    "resolveActionAnimation"
+  ],
+  "src/model/actionCosts.js": [
+    "actionStance",
+    "applyActionCosts",
+    "branchHitCount",
+    "cardCostBudget",
+    "enemyAttributesOf",
+    "enemyMoveSpOf",
+    "enemyPoolOf",
+    "enemySpOf",
+    "isCostOptOut",
+    "multiHitFloorFor",
+    "multiHitSpFloor",
+    "ownRestoreFunds",
+    "stanceCost",
+    "validateActionCostTable",
+    "validateCostConfig"
+  ],
+  "src/model/advancedConfig.js": [
+    "advancedConfigExport",
+    "advancedConfigOwns",
+    "advancedConfigProblemRows",
+    "advancedConfigProblems",
+    "advancedConfigRows",
+    "advancedConfigSettings",
+    "advancedConfigSnapshot",
+    "advancedConfigStructuralProblems",
+    "appliedXpMultiplier",
+    "bringProfileForward",
+    "bringRunSnapshotForward",
+    "configuredContentBundle",
+    "coreAdvancedConfigSnapshot",
+    "currentAdvancedKey",
+    "isRetiredLegacySettingKey",
+    "liveAdvancedConfigRows",
+    "normalizeAdvancedSettings",
+    "parseAdvancedConfigFile",
+    "presentationConfig",
+    "retiredStoredSettingKeys",
+    "withoutRetiredLegacyGroups"
+  ],
+  "src/model/alternativeCardAnimation.js": [
+    "cardActionFor",
+    "cardActionPlan",
+    "durationFor",
+    "hitFlashOpacity",
+    "hitRecoilX",
+    "hurtClipFrame",
+    "sampleSequence"
+  ],
+  "src/model/alternativeStance.js": [
+    "createStanceLedger",
+    "holdsChosenStance",
+    "kindForCard",
+    "stanceArtFor",
+    "stanceForCard",
+    "stanceForPublicIntent"
+  ],
+  "src/model/armamentTrading.js": [
+    "armamentPurchasePlan",
+    "armamentSalePlan",
+    "commitArmamentPurchase",
+    "commitArmamentSale",
+    "eligibleWeaponArts"
+  ],
+  "src/model/armouryLayout.js": [
+    "equipmentPositionCardState",
+    "inventorySelectionAction",
+    "normalizeArmouryLayout",
+    "orderArmouryPositions",
+    "orderArmourySlots",
+    "trayPresentationState"
+  ],
+  "src/model/armouryPages.js": [
+    "armouryPageOf",
+    "armouryReopenTarget",
+    "armouryRoute"
+  ],
+  "src/model/armouryRules.js": [
+    "armouryHasNew",
+    "armouryOpensDeckEditor",
+    "editingLocked",
+    "markArmourySeen",
+    "newArmouryItems",
+    "noncombatEditing",
+    "profileOpensDeckEditor"
+  ],
+  "src/model/ashenBlight.js": [
+    "ashenBlightBonuses",
+    "ashenBlightCombatProblems",
+    "ashenBlightProblems",
+    "createAshenBlightCombatState",
+    "createAshenBlightState",
+    "effectiveAshenBlightAttributes"
+  ],
+  "src/model/attackCardDamage.js": [
+    "attackCardBaseDamage",
+    "attackCardDamageConfigProblems",
+    "cardForSchool",
+    "cardIsMagical",
+    "materializeCardValueBonuses",
+    "projectAttackCardDamageBundle"
+  ],
+  "src/model/attackTags.js": [
+    "attackDescriptor",
+    "dominantDamageType",
+    "resolvedAttackTags",
+    "weaponDamageComponents",
+    "weaponDamageType"
+  ],
+  "src/model/attributePointPreview.js": [
+    "attributeGainSummary",
+    "attributePointGains",
+    "largestAttributeGain",
+    "sortedAttributeGains"
+  ],
+  "src/model/attributes.js": [
+    "allocationTotal",
+    "attributeAllocationProblems",
+    "attributeContentProblems",
+    "baselineAttributeAllocation",
+    "classAttributePreset",
+    "creationMode",
+    "creationModeHasPoints",
+    "creationModeSnapshot",
+    "defaultCreationModeId",
+    "grantedAttributePoints",
+    "migrateRetiredAttributeNames",
+    "normalizeRunAttributes",
+    "orderedAttributes",
+    "presetGearProblems"
+  ],
+  "src/model/autoCombatPolicy.js": [
+    "chooseCardPlay",
+    "chooseReaction",
+    "combatPacingChanges",
+    "manualReactionPicks",
+    "perceivedManeuver",
+    "reactionAnswer",
+    "recordManualReaction",
+    "resolveCombatAutomation"
+  ],
+  "src/model/balanceNotes.js": [
+    "balanceNote",
+    "noteMatches"
+  ],
+  "src/model/basicCardRule.js": [
+    "basicCardKind"
+  ],
+  "src/model/blacksmith.js": [
+    "blacksmithOffers",
+    "blacksmithRevision",
+    "blacksmithUpgradePlan",
+    "blacksmithWithholds",
+    "commitBlacksmithUpgrade",
+    "commitRankUp",
+    "commitUpgradeArt",
+    "coreCardUpgrades",
+    "plural",
+    "rankUpCards",
+    "rankUpPlan",
+    "serviceCandidates",
+    "serviceIdleReason",
+    "upgradeArtPlan",
+    "upgradeableArts"
+  ],
+  "src/model/blacksmithConfig.js": [
+    "blacksmithPrices",
+    "blacksmithRules",
+    "blacksmithStoneDiscount",
+    "restSmithMaxTier",
+    "tierUpgradePrice",
+    "uiSentence"
+  ],
+  "src/model/blacksmithStock.js": [
+    "commitCoreArmament",
+    "commitCoreWeaponArt",
+    "coreArmamentPlan",
+    "coreBlacksmithShelves",
+    "coreBlacksmithStock",
+    "coreWeaponArtPlan",
+    "rollTier"
+  ],
+  "src/model/blockPresentation.js": [
+    "blockPresentation",
+    "healthGuardTone",
+    "protectionPresentation",
+    "reconcileWardBlock",
+    "wardBlockReceipt"
+  ],
+  "src/model/bookBonusRewards.js": [
+    "classBookBonuses"
+  ],
+  "src/model/bookLearning.js": [
+    "bookLessonCard",
+    "bookLessons",
+    "bookTags",
+    "bookTracks"
+  ],
+  "src/model/bossDestinationLabels.js": [
+    "bossDestinationLabel",
+    "refreshBossDestinationLabels"
+  ],
+  "src/model/breakMeter.js": [
+    "breakMeterIds",
+    "breakPropertyRule",
+    "breakPropertyText",
+    "usesSingleBreakMeter"
+  ],
+  "src/model/cardAnimationFamily.js": [
+    "alternativeCardAnimationFamily",
+    "cardSequenceTiming"
+  ],
+  "src/model/cardAppearance.js": [
+    "validateCardAppearance"
+  ],
+  "src/model/cardBonusTags.js": [
+    "cardBonusTags"
+  ],
+  "src/model/cardChoices.js": [
+    "assertCardChoice",
+    "cardChoice"
+  ],
+  "src/model/cardClassification.js": [
+    "actualCardRank",
+    "cardClassification",
+    "cardPreparationCategory"
+  ],
+  "src/model/cardExtraction.js": [
+    "commitExtraction",
+    "commitInstall",
+    "extractionPlan",
+    "extractionRefusal",
+    "installPlan",
+    "mountRows",
+    "ownedMountItems",
+    "smithServiceRules",
+    "smithServicesAt",
+    "validateLastMountReceipt"
+  ],
+  "src/model/cardFaceBudget.js": [
+    "faceBudget",
+    "roomyBudgetFor"
+  ],
+  "src/model/cardFaceProjection.js": [
+    "cardFaceProjection",
+    "statusApplied",
+    "statusNamed"
+  ],
+  "src/model/cardFaceText.js": [
+    "cardFaceLines",
+    "partialChance",
+    "withChargedEffects"
+  ],
+  "src/model/cardFields.js": [
+    "cardFields",
+    "fieldManifest",
+    "levelForView",
+    "promote",
+    "regionOrder",
+    "resolveCardLevel"
+  ],
+  "src/model/cardGroups.js": [
+    "cardVariantKey",
+    "groupCardVariants"
+  ],
+  "src/model/cardInstanceIdentity.js": [
+    "unusedInstanceId"
+  ],
+  "src/model/cardLayoutDocument.js": [
+    "cardLayoutDocumentWithChanges"
+  ],
+  "src/model/cardManaPolicy.js": [
+    "applyBaseManaPolicy",
+    "cardManaCategory",
+    "validateCardManaPolicy"
+  ],
+  "src/model/cardMounts.js": [
+    "applyMountOverrides",
+    "cardMountRules",
+    "extraMountInstances",
+    "isExtraMountKey",
+    "itemMountEntries",
+    "normalizeCardMountRules",
+    "openExtraMountKey",
+    "ownerItemRef",
+    "resolveFallbackCard"
+  ],
+  "src/model/cardRamp.js": [
+    "applyRamp",
+    "mayRamp",
+    "playsEverOf",
+    "rampParts",
+    "rampsByRun"
+  ],
+  "src/model/cardRank.js": [
+    "cardRank",
+    "primaryEffectIndex",
+    "rankBonus",
+    "rankedEffects",
+    "rankedEffectsCapped"
+  ],
+  "src/model/cardRemoval.js": [
+    "canRemoveDeckCard",
+    "dealtAttackSlotCount",
+    "hasRemovableCard",
+    "isPoolDeckMode",
+    "isPoolDeckRun",
+    "removeDeckCard",
+    "retiredAttackSlots"
+  ],
+  "src/model/cardTagExplanation.js": [
+    "cardTagExplanation"
+  ],
+  "src/model/cardTargets.js": [
+    "assertCardTarget",
+    "cardTargetPlan",
+    "forbiddenCardDrop",
+    "immediateCardEffects",
+    "upcastNextStep"
+  ],
+  "src/model/cardUpgrade.js": [
+    "applyUpgradeSteps",
+    "currentHits",
+    "firstPlainIndex",
+    "hitFloor",
+    "isPlainEffect",
+    "isPlainStatus",
+    "paidUpgradeCount",
+    "upgradeCount",
+    "upgradeSignature",
+    "upgradeStepsOf",
+    "upgradeStepsProblems",
+    "upgradedDefinition"
+  ],
+  "src/model/cardUpgradeLimits.js": [
+    "canUpgrade",
+    "freeAllowance",
+    "nextUpgradeOptions",
+    "nextUpgradeStep",
+    "upgradeBasic",
+    "upgradeChoiceCount",
+    "upgradeCost"
+  ],
+  "src/model/cardUpgradeService.js": [
+    "applyFreeCardUpgrade",
+    "cardUpgradeStepsOn",
+    "commitCardUpgrade",
+    "freeCardUpgradeStep",
+    "planCardUpgrade"
+  ],
+  "src/model/cardUpgradeSteps.js": [
+    "rollUpgradeOptions",
+    "rollUpgradeStep",
+    "upgradeSeed",
+    "upgradeStepRng"
+  ],
+  "src/model/catalogJson.js": [
+    "decodeCatalogJSON",
+    "decodeCatalogJSONText"
+  ],
+  "src/model/characterCreation.js": [
+    "characterCreationProblems",
+    "classCreationConfig",
+    "creationArmourChoices",
+    "creationEquipmentSectionViews",
+    "creationHandChoices",
+    "creationModeViews",
+    "creationRelicChoices",
+    "quickStartRunConfig",
+    "resolveCreationHands",
+    "resolveCreationRelic",
+    "selectStartingHand"
+  ],
+  "src/model/classCard.js": [
+    "classCard",
+    "favoredGroups",
+    "runClassIdentity"
+  ],
+  "src/model/classLibrary.js": [
+    "equipClassCard",
+    "learnedClassIds"
+  ],
+  "src/model/classLibraryState.js": [
+    "classLibraryProblems",
+    "learnClassCard",
+    "learnedClassIds"
+  ],
+  "src/model/classMastery.js": [
+    "masteryRowId"
+  ],
+  "src/model/classMilestones.js": [
+    "classMilestoneProblems",
+    "classRewardBudget",
+    "expandedProgression",
+    "milestoneReceiptId"
+  ],
+  "src/model/classRewardProvenance.js": [
+    "classRewardGrants",
+    "classRewardPresent",
+    "removeOwnedRelic",
+    "spendClassRewardItem"
+  ],
+  "src/model/classSkillFeatDescription.js": [
+    "getFeatDescription"
+  ],
+  "src/model/classSmashAnimations.js": [
+    "classSmashProfileFor",
+    "classSmashSequence"
+  ],
+  "src/model/classSwap.js": [
+    "peakClassLevel",
+    "swapRunClass",
+    "swappedClassTrack"
+  ],
+  "src/model/classTree.js": [
+    "awardClassXp",
+    "classTreeRows",
+    "coreTagsProblems",
+    "coreTagsTreeProblems",
+    "staleCoreTags"
+  ],
+  "src/model/collectedCards.js": [
+    "collectedCardProblems",
+    "hasCollectedCardPolicy",
+    "knownCollectedCardIds",
+    "looseCollectedCard",
+    "recordCollectedCards"
+  ],
+  "src/model/combatAnimation.js": [
+    "combatRestAfterEvent",
+    "resolveCombatAnimation"
+  ],
+  "src/model/combatCardEffects.js": [
+    "immediateCardEffects"
+  ],
+  "src/model/combatCardProfile.js": [
+    "combatCardRange",
+    "combatProfileFor",
+    "combatProfileTags",
+    "defaultRangeFor",
+    "isSpellCard",
+    "numberedTraitRow",
+    "silencedStacks",
+    "spellCardCostSurcharge",
+    "spellCostSurcharge",
+    "traitLine"
+  ],
+  "src/model/combatEffectEvents.js": [
+    "combatEffectForEvent",
+    "combatEffectReceipt",
+    "decorateCombatEffects",
+    "presentationTargetIds"
+  ],
+  "src/model/combatEffects.js": [
+    "combatEffectFor",
+    "combatEffectPlan",
+    "combatEffectTags",
+    "combatEffectTargetIds"
+  ],
+  "src/model/combatEngagement.js": [
+    "actorRangeKey",
+    "advancedEngagementState",
+    "bandCap",
+    "createRangeState",
+    "engagementBand",
+    "movedEngagementState",
+    "opposingRangeKeys",
+    "rangeActionPlan",
+    "rangeBand",
+    "rangePairKey",
+    "rangePlanProblems",
+    "rangePolicyProblems",
+    "rangeStateProblems",
+    "snapshotRangePolicy"
+  ],
+  "src/model/combatExpansionRules.js": [
+    "backfillCombatStatusRuleRows",
+    "bringCombatExpansionRulesForward",
+    "combatExpansionRulesProblems",
+    "createCombatExpansionRuleSnapshot"
+  ],
+  "src/model/combatExpansionStarter.js": [
+    "ensureExpandedStarterCoverage"
+  ],
+  "src/model/combatIntentVisibility.js": [
+    "combatIntentStance",
+    "concealIntent",
+    "hiddenIntentChance"
+  ],
+  "src/model/combatLimits.js": [
+    "enemySlotFree",
+    "limitEnemyIds"
+  ],
+  "src/model/combatLog.js": [
+    "combatLogEntries",
+    "hitAsLayered",
+    "reactionUnavailableNote"
+  ],
+  "src/model/combatPose.js": [
+    "bloodRiteReaction",
+    "readinessAfterEvent",
+    "readinessPose",
+    "resolveCombatPose"
+  ],
+  "src/model/combatPower.js": [
+    "enemyCombatPower"
+  ],
+  "src/model/combatRangeLineageState.js": [
+    "rangeLineagePlanProblems",
+    "rangeLineageProblems",
+    "rangeOriginProblems",
+    "rangeSiteBatchesProblems"
+  ],
+  "src/model/combatRanges.js": [
+    "bringRangesForward",
+    "displayRange",
+    "isRange",
+    "normalizeRange"
+  ],
+  "src/model/combatRatings.js": [
+    "applyItemRatingConfig",
+    "authoredItemRatings",
+    "barrierPoiseBonus",
+    "canonicalDamageType",
+    "carrierHasTag",
+    "combatRatingProblems",
+    "combatRatingRows",
+    "componentPartsOf",
+    "damageTypeMagicShare",
+    "finesseRatingView",
+    "isForceHit",
+    "isMagicDamageType",
+    "isMagicalAttack",
+    "isMagicalHit",
+    "isPhysicalDamageType",
+    "isTechniqueProfile",
+    "itemRatingColumn",
+    "magicDamageTypeOf",
+    "magicShareOf",
+    "meleeSpellMagicShare",
+    "persistentPoiseMaximum",
+    "persistentWardMaximum",
+    "ratingDamageMultiplier",
+    "ratingReceipt",
+    "ratingSourceKey",
+    "ratingValue",
+    "resolveCombatRatings",
+    "schoolMagicShare",
+    "schoolOf",
+    "schoolResistanceMultiplier",
+    "sourceRatingValue",
+    "splitContactParts",
+    "splitDamageTypesOf",
+    "techniqueMagicShare",
+    "techniqueNeedsWeaponType"
+  ],
+  "src/model/combatReactionState.js": [
+    "combatRangeProblems",
+    "combatReactionProblems"
+  ],
+  "src/model/combatRules.js": [
+    "allocateInteger",
+    "assertNumber",
+    "taggedBonusFloor",
+    "validateAttack",
+    "validateCombatProfile",
+    "validateSource"
+  ],
+  "src/model/combatSnapshot.js": [
+    "assertCombatSnapshot",
+    "bringStancesForward",
+    "combatSnapshotProblems",
+    "combatSnapshotReferenceProblems"
+  ],
+  "src/model/combatStatusState.js": [
+    "statusControlProblems"
+  ],
+  "src/model/combatTacticsDisplay.js": [
+    "activeCombatStance",
+    "combatStanceRow",
+    "combatTacticsRows",
+    "preparedEvadeCharges",
+    "preparedEvadeRow"
+  ],
+  "src/model/combatTacticsRules.js": [
+    "clampStackCounts",
+    "combatCounterProblems",
+    "combatExpansionEntityProblems",
+    "combatExpansionMatchupRulesProblems",
+    "combatIntentRulesProblems",
+    "combatMatchupRulesProblems",
+    "combatTraitGuardProblems",
+    "counterCoverageProblems",
+    "expansionCounterProblems",
+    "stackCountProblems",
+    "traitValuesProblems"
+  ],
+  "src/model/combatWeaponPresentation.js": [
+    "combatWeaponProfilesFor"
+  ],
+  "src/model/combatWeight.js": [
+    "playerWeightClass"
+  ],
+  "src/model/consequence.js": [
+    "bindingReasons",
+    "cinderPremise",
+    "failClosedOps",
+    "isBindingChoice"
+  ],
+  "src/model/consumables.js": [
+    "adjustCount",
+    "cloneItems",
+    "commitConsumableSale",
+    "commitSkillBookRead",
+    "companionTableProblems",
+    "companionsProblems",
+    "consumableBuyPrice",
+    "consumableConfigRows",
+    "consumableSalePlan",
+    "consumableSettingsProblems",
+    "consumableTableProblems",
+    "consumableText",
+    "consumablesProblems",
+    "heldCount",
+    "reviveHp",
+    "reviveTokenFor",
+    "settleFightConsumables",
+    "skillBookReadPlan",
+    "tickCompanions",
+    "unknownCompanionId",
+    "unknownConsumableId"
+  ],
+  "src/model/contentValidationCache.js": [
+    "createContentValidationCache"
+  ],
+  "src/model/core2ActionPolicy.js": [
+    "core2ActionPolicyEnabled",
+    "core2MultiHitRulesEnabled",
+    "enemySpPaymentValid"
+  ],
+  "src/model/coreEvasionCompatibility.js": [
+    "coreEvasionCompatibleRuntime"
+  ],
+  "src/model/creationBrief.js": [
+    "attributeCardModels",
+    "creationBrief"
+  ],
+  "src/model/customRun.js": [
+    "isCustomRun"
+  ],
+  "src/model/d20Chance.js": [
+    "chanceToD20Steps",
+    "chanceToD20Target",
+    "d20Mode",
+    "d20ModeChance",
+    "effectiveD20Percent",
+    "rollD20Check"
+  ],
+  "src/model/deckCopyLimit.js": [
+    "activeAdeptTraining",
+    "collectedAdeptCardIds",
+    "configuredDeckCopyLimit",
+    "deckCopyLimit"
+  ],
+  "src/model/deckRules.js": [
+    "addBasicCard",
+    "basicCardIds",
+    "beginDeckEdit",
+    "cancelDeckEdit",
+    "commitDeckEditDraft",
+    "deckCardEquipmentEligible",
+    "deckCopyLimit",
+    "deckEditBounds",
+    "deckEditRefusal",
+    "deckEditingOn",
+    "deckEditingWhere",
+    "deckSettingsProblems",
+    "isBasicCard",
+    "isEquippedRun",
+    "isSetAsideBasic",
+    "isUnlimitedBasic",
+    "moveFromSideboard",
+    "moveToSideboard",
+    "orderedDrawPile",
+    "orderedReturn",
+    "ownedCopies",
+    "playInDeckOrder",
+    "unlimitedCardIds",
+    "unusedInstanceId"
+  ],
+  "src/model/deferredProgression.js": [
+    "deferredOtherClassRewardCount",
+    "deferredProgressionCount"
+  ],
+  "src/model/derivedStats.js": [
+    "createDerivedStatRuleSnapshot",
+    "deriveAttributeTierReceipt",
+    "deriveStat",
+    "deriveStatIncrease",
+    "derivedStatIdsFor",
+    "derivedStatPresentationProblems",
+    "derivedStatRuleProblems",
+    "isStatRowRuleset",
+    "isUnifiedRuleset",
+    "levelBonus",
+    "relicAttributeTierFoldProblems",
+    "relicFoldTarget",
+    "resolveDerivedStatRules",
+    "resolveSnapshotNumbers",
+    "resolvedRuleRow",
+    "restoreDerivedStatRuleSnapshot",
+    "rowForClass",
+    "ruleTierSize",
+    "ruleWeights",
+    "statRowValue",
+    "storedStatRowProblems"
+  ],
+  "src/model/disclosure.js": [
+    "disclosureProblem",
+    "splitByDisclosure"
+  ],
+  "src/model/displayAppearance.js": [
+    "resolveDisplayAppearance"
+  ],
+  "src/model/encounterTier.js": [
+    "encounterTier",
+    "enemyTier",
+    "lastTier",
+    "seatTiers"
+  ],
+  "src/model/enemyActionPose.js": [
+    "enemyActionPose"
+  ],
+  "src/model/enemyIntentKnowledge.js": [
+    "broadIntentLabel",
+    "concealKnowledgeIntent",
+    "identificationChance",
+    "predictionCategory",
+    "rollKnowledgeRead"
+  ],
+  "src/model/enemyKnowledgeCombat.js": [
+    "combatEnemyKnowledgeProblems"
+  ],
+  "src/model/enemyKnowledgeProfile.js": [
+    "bankEnemyKnowledgeProfile",
+    "emptyEnemyKnowledge",
+    "enemyKnowledgeProblems",
+    "knowledgeKey",
+    "knowledgePoints",
+    "knowledgeProgress",
+    "knowledgeThresholds",
+    "mergeEnemyKnowledge"
+  ],
+  "src/model/enemyKnowledgeRules.js": [
+    "enemyKnowledgeRuleProblems",
+    "enemyMasteryTarget",
+    "snapshotEnemyKnowledgeRules"
+  ],
+  "src/model/enemyKnowledgeRun.js": [
+    "acknowledgeKnowledgeBank",
+    "addKnowledgeCounterBonus",
+    "enemyKnowledgeRunProblems",
+    "knowledgeEncounterId",
+    "openKnowledgeEncounter",
+    "openRunEnemyKnowledge",
+    "reconcilePerception"
+  ],
+  "src/model/enemyKnowledgeView.js": [
+    "learnedEnemyMoveCards",
+    "projectEnemyKnowledge"
+  ],
+  "src/model/enemyMoveCards.js": [
+    "enemyActionEffectText",
+    "enemyMoveCards"
+  ],
+  "src/model/enemyMoveSources.js": [
+    "deriveEnemyMoves",
+    "resolveEnemyMoveSources"
+  ],
+  "src/model/enemyStancePose.js": [
+    "enemyStanceCategory"
+  ],
+  "src/model/enemyWeaknessRules.js": [
+    "describeWeakness",
+    "weaknessAmount",
+    "weaknessProblems",
+    "weaknessTraitRows"
+  ],
+  "src/model/environmentArt.js": [
+    "actRegionId",
+    "combatEnvironment",
+    "mapTerrainSetting",
+    "regionForRun",
+    "worldMapForRun"
+  ],
+  "src/model/equipPickerTable.js": [
+    "equipPickerTableRows",
+    "sortEquipPickerRows"
+  ],
+  "src/model/equipmentAnimation.js": [
+    "animationArt",
+    "animationClip",
+    "animationTiming",
+    "animationView",
+    "combatEquipmentAnimationForLoadout",
+    "equipmentAnimationForLoadout",
+    "resolvedAnimationSet",
+    "selectEquipmentAnimation",
+    "validateEquipmentAnimations"
+  ],
+  "src/model/equipmentArt.js": [
+    "armamentIconAsset"
+  ],
+  "src/model/equipmentCard.js": [
+    "equipmentCardModel",
+    "equipmentCardTokens"
+  ],
+  "src/model/equipmentCombatProfile.js": [
+    "deriveEquipmentCombatProfile"
+  ],
+  "src/model/equipmentCompare.js": [
+    "equipmentCompareRows",
+    "equipmentModLines",
+    "weaponArtName"
+  ],
+  "src/model/equipmentPresentation.js": [
+    "armamentIntrinsicReceipt",
+    "equipmentSurfaceReceipt"
+  ],
+  "src/model/equipmentUi.js": [
+    "armouryUiProblems",
+    "equippedTagColor"
+  ],
+  "src/model/fixCoreMechanics.js": [
+    "damageReceipt",
+    "evadeGrantOnlyCard",
+    "evadeStackGainPhrase",
+    "fixCoreAttachments",
+    "fixCoreCounterRules",
+    "fixCoreEnabled",
+    "fixCoreModuleParameters",
+    "fixCorePierceRules",
+    "fixCorePoiseRules",
+    "fixCoreProtectionDescription",
+    "fixCoreReactionRules",
+    "fixCoreRules",
+    "fixCoreSmashVsDefensiveRules",
+    "fixCoreStaggeredRules",
+    "fixCoreStaggeredStance",
+    "fixCoreStatusDefinition",
+    "fixCoreWardDisabled",
+    "fixCoreWardEnabled",
+    "normalizeFixCoreRules",
+    "protectionBindings",
+    "protectionReceipt",
+    "snapshotFixCoreRules",
+    "validateFixCoreRules"
+  ],
+  "src/model/fixCoreRulesCache.js": [
+    "clearFixCoreRulesCache",
+    "fixCoreRules",
+    "fixCoreRulesCacheSize",
+    "keyFor"
+  ],
+  "src/model/flaskActions.js": [
+    "flaskActionPlan"
+  ],
+  "src/model/flaskgrowth.js": [
+    "flaskGrowthClause",
+    "flaskGrowthMax",
+    "flaskGrowthPlan",
+    "flaskGrowthRefusals",
+    "flaskGrowthTable",
+    "syncFlaskGrowth"
+  ],
+  "src/model/floorplan.js": [
+    "applyRunShape",
+    "describePlan",
+    "minViableFloors",
+    "resolveAnchor",
+    "resolveFloorPlan",
+    "rollableFloors"
+  ],
+  "src/model/focusMana.js": [
+    "applyFocusManaDiscount",
+    "cardIsMagicTagged",
+    "focusManaDiscount",
+    "inPreparedStance"
+  ],
+  "src/model/formationGroups.js": [
+    "applyFormationGroups",
+    "formationGroupContains",
+    "formationGroupOptions",
+    "formationGroups",
+    "formationMember",
+    "positioningConfiguration",
+    "snapFormationTranslation"
+  ],
+  "src/model/formationLayout.js": [
+    "formationDimensions",
+    "formationLayoutConfig",
+    "formationSpawn",
+    "isFormationCell",
+    "perspectiveEnemyCellOrder",
+    "playerFormationCell"
+  ],
+  "src/model/formationMovement.js": [
+    "formationMovePlan"
+  ],
+  "src/model/formationOccupancy.js": [
+    "formationOccupancy",
+    "formationOccupancyProblems",
+    "formationPolicyFor",
+    "initializeFormationOccupancy"
+  ],
+  "src/model/formulas.js": [
+    "constantFormulaValue",
+    "describeFormula",
+    "evaluate",
+    "evaluateRaw",
+    "isFormula"
+  ],
+  "src/model/friendlyTargets.js": [
+    "assertFriendlyTarget",
+    "cardNeedsEnemyTarget",
+    "friendlyTargetMode",
+    "friendlyTargetPlan"
+  ],
+  "src/model/gameAnimationPolicy.js": [
+    "figureAnimationsEnabled"
+  ],
+  "src/model/gameProfile.js": [
+    "applyGameProfileToContent",
+    "bindGameProfileRegistries",
+    "gameContent",
+    "gameModule",
+    "isCoreProfile",
+    "projectGameCard",
+    "resolveGameProfile",
+    "validateGameProfileSnapshot"
+  ],
+  "src/model/gameProfileEnemy.js": [
+    "gameProfileEnemyRatings"
+  ],
+  "src/model/gameProfileGear.js": [
+    "gameProfileEffectiveAttributes",
+    "gameProfileEquipmentReceipt"
+  ],
+  "src/model/gameProfileProgression.js": [
+    "acknowledgeSkillLevelNotices",
+    "acknowledgeVictoryReceipt",
+    "configuredCharacterLevels",
+    "configuredCharacterXpMultiplier",
+    "configuredSkillProgression",
+    "configuredSkillXpMultiplier",
+    "silenceVictoryLevelNotices",
+    "skillLevelNotices"
+  ],
+  "src/model/gameProfileRest.js": [
+    "beginGameProfileRest",
+    "commitGameProfileRest",
+    "createGameProfileRestDraft",
+    "previewGameProfileRest",
+    "restHealedAny",
+    "restServiceSpent",
+    "restServiceUsed",
+    "restServicesAll",
+    "restSmithFree"
+  ],
+  "src/model/gameProfileRewards.js": [
+    "addPurchasedCardToDeck",
+    "artsOnOtherSide",
+    "cardPickWeight",
+    "claimGameProfileReward",
+    "claimGameProfileRewardToDeck",
+    "gameProfileRewardOffers",
+    "gameProfileRewardPools",
+    "gameProfileShopPurchasePlan",
+    "gameProfileShopStock",
+    "gameProfileWeaponArtIds",
+    "purchaseGameProfileShopOffer",
+    "rewardDeckAddRefusal",
+    "rewardInstanceId",
+    "shopCardDeckRefusal",
+    "shopOfferPrice"
+  ],
+  "src/model/gameProfileRun.js": [
+    "gameProfileAttributes",
+    "gameProfileClassAvailable",
+    "gameProfileCompletedRunMeta",
+    "gameProfileEffectiveAttributes",
+    "gameProfileEquipmentReceipt",
+    "gameProfileRatingReceipt",
+    "gameProfileServiceActive",
+    "gameProfileStarterDeck",
+    "gameProfileStatOptions",
+    "initializeGameProfileRun",
+    "isConfiguredRun",
+    "withGameProfileService"
+  ],
+  "src/model/gameProfileShopKind.js": [
+    "configuredShopBlacksmithChance",
+    "configuredShopIsBlacksmith",
+    "configuredShopKind"
+  ],
+  "src/model/gameProfileShopSales.js": [
+    "commitGameProfileShopSale",
+    "gameProfileShopSalePlan",
+    "gameProfileShopSalePlans"
+  ],
+  "src/model/gracerefill.js": [
+    "acquireFlask",
+    "chargeFlaskDefinition",
+    "chargeFlaskId",
+    "chargeKindForFlask",
+    "createFlaskCharges",
+    "firstFlaskOfKind",
+    "flaskAcquisitionPlan",
+    "flaskCapacity",
+    "flaskChargePlan",
+    "flaskKindOf",
+    "flaskSlotCap",
+    "flasksOfKind",
+    "graceRefillLadder",
+    "graceRefillPlan",
+    "graceRefillRefusals",
+    "graceRefillTable",
+    "isFlaskChargeId",
+    "moveFlaskCharge",
+    "reallocateFlaskCharges",
+    "refillFlaskCharges",
+    "utilityFlaskIds"
+  ],
+  "src/model/handRules.js": [
+    "handDrawCount",
+    "handRow",
+    "handRulesProblems",
+    "handRulesRows",
+    "handRulesSettingsProblems",
+    "handSizeReceipts",
+    "resolveHandRules",
+    "runHandRules",
+    "scaledCards",
+    "scaledCardsReceipt"
+  ],
+  "src/model/healLedger.js": [
+    "closeLedger",
+    "describeLedger",
+    "maxHpHomeValues",
+    "note",
+    "openLedger",
+    "readLedger"
+  ],
+  "src/model/hitBadge.js": [
+    "cardAffectsEnemies",
+    "hitBadgeTargetIds"
+  ],
+  "src/model/intentDamage.js": [
+    "variableIntentDamage"
+  ],
+  "src/model/inventoryPresentation.js": [
+    "inventoryItemCount",
+    "inventoryRows"
+  ],
+  "src/model/itemUpgrades.js": [
+    "applyItemCardUpgradeRows",
+    "coreGearActive",
+    "coreTierLadder",
+    "cumulativeRequirementDelta",
+    "itemRefIdentity",
+    "itemUpgradeCost",
+    "itemUpgradeCostAt",
+    "itemUpgradeRows",
+    "itemUpgradeRowsAt",
+    "itemUpgradeTagMatchesKind",
+    "itemUpgradeTiers",
+    "itemUpgradeValueReceipts",
+    "parseItemUpgradeTag",
+    "resolveUpgradedEquipment",
+    "resolveUpgradedItem",
+    "resolveUpgradedRelic"
+  ],
+  "src/model/layeredEnvironments.js": [
+    "layeredCombatScene"
+  ],
+  "src/model/levels.js": [
+    "enemyLevelProfileProblems",
+    "levelBandProblems",
+    "levelConfigProblems",
+    "levelScalingReceipt",
+    "playerLevel",
+    "resolveEnemyLevel"
+  ],
+  "src/model/levelup.js": [
+    "allocateAttributePoint",
+    "applyLevelUp",
+    "awardLevelXp",
+    "characterLevel",
+    "climbLevels",
+    "combatLevelXp",
+    "combatXpReceipt",
+    "emptyLevel",
+    "levelOf",
+    "levelPace",
+    "levelUpBudget",
+    "levelUpPlan",
+    "questLevelXp",
+    "rederivePools",
+    "xpToNext"
+  ],
+  "src/model/loadout.js": [
+    "addToStorage",
+    "applyCardMods",
+    "applyEquipTransition",
+    "applyEquippedWeaponCardPlan",
+    "armamentIntrinsicStatProblems",
+    "boundGrantCardIds",
+    "boundGrantProblems",
+    "buildEquippedWeaponCardPlan",
+    "canEquip",
+    "canSwap",
+    "cardEquipmentCompatibility",
+    "cardMods",
+    "carriedIds",
+    "createEquipmentProfileRuleSnapshot",
+    "createLoadout",
+    "cycleSet",
+    "deckMinimum",
+    "equipPiece",
+    "equipTransitionReceipt",
+    "equipmentKitPlan",
+    "equipmentKitReceipt",
+    "equipmentRequirementReceipt",
+    "equipmentRoleSource",
+    "equippedIn",
+    "equippedPieces",
+    "figureSpec",
+    "fitsSlot",
+    "fromDropPool",
+    "gripOf",
+    "gripRefusal",
+    "gripTags",
+    "healMissingSlotCells",
+    "isCurrentEquipmentGrant",
+    "isEquipmentComposedInstance",
+    "isItemOwned",
+    "itemMountInstances",
+    "loadoutLeaveRefusal",
+    "loadoutSignature",
+    "loadoutTags",
+    "modEffectLine",
+    "modEffectLines",
+    "moveEquipmentPool",
+    "normalizeArmamentLocations",
+    "openedSets",
+    "orderStartingDeck",
+    "ownerItemRef",
+    "ownership",
+    "parseMod",
+    "pieceHand",
+    "pieceItemRef",
+    "previewCompatibleHands",
+    "reconcileGrantedCards",
+    "reconcileGrantedCardsInCombat",
+    "reconcileRunLoadoutHp",
+    "resolveSwapCostRule",
+    "restoreEquipmentProfileRuleSnapshot",
+    "runMods",
+    "rungFor",
+    "setCellState",
+    "slotHand",
+    "slotRungs",
+    "sortBySourceOrder",
+    "stampDeck",
+    "startingDeckPlan",
+    "startingDeckProblems",
+    "startingDeckRefs",
+    "startingDeckWarnings",
+    "startingHandsRequirementFailure",
+    "swapCostFor",
+    "swapCostRules",
+    "trimExtraSets",
+    "validateEquipment",
+    "visibleSets"
+  ],
+  "src/model/loadout/applyCardMods.js": [
+    "applyCardMods"
+  ],
+  "src/model/loadout/applyVocab.js": [
+    "moveEquipmentPool"
+  ],
+  "src/model/loadout/cardMods.js": [
+    "cardMods",
+    "reconcileRunLoadoutHp",
+    "runMods"
+  ],
+  "src/model/loadout/deckPlan.js": [
+    "startingDeckPlan"
+  ],
+  "src/model/loadout/equipChange.js": [
+    "applyEquipTransition",
+    "canEquip",
+    "canSwap",
+    "cycleSet",
+    "deckMinimum",
+    "equipPiece",
+    "equipTransitionReceipt",
+    "healMissingSlotCells",
+    "loadoutLeaveRefusal",
+    "loadoutSignature",
+    "normalizeArmamentLocations",
+    "trimExtraSets"
+  ],
+  "src/model/loadout/equipped.js": [
+    "equippedIn",
+    "equippedPieces",
+    "figureSpec",
+    "loadoutTags"
+  ],
+  "src/model/loadout/grantSources.js": [
+    "boundGrantCardIds",
+    "boundGrantProblems",
+    "grantSourceFor",
+    "sortBySourceOrder",
+    "startingDeckConfig",
+    "startingDeckSettings"
+  ],
+  "src/model/loadout/grants.js": [
+    "desiredGrantInstances",
+    "isCurrentEquipmentGrant",
+    "isItemOwned",
+    "itemMountInstances",
+    "ownerItemRef",
+    "pieceItemRef",
+    "reconcileGrantedCards",
+    "reconcileGrantedCardsInCombat"
+  ],
+  "src/model/loadout/grip.js": [
+    "gripOf",
+    "gripRefusal",
+    "gripTags"
+  ],
+  "src/model/loadout/hands.js": [
+    "armamentIntrinsicStatProblems",
+    "fitsSlot",
+    "pieceHand",
+    "slotHand"
+  ],
+  "src/model/loadout/index.js": [
+    "addToStorage",
+    "applyCardMods",
+    "applyEquipTransition",
+    "applyEquippedWeaponCardPlan",
+    "armamentIntrinsicStatProblems",
+    "boundGrantCardIds",
+    "boundGrantProblems",
+    "buildEquippedWeaponCardPlan",
+    "canEquip",
+    "canSwap",
+    "cardEquipmentCompatibility",
+    "cardMods",
+    "carriedIds",
+    "createEquipmentProfileRuleSnapshot",
+    "createLoadout",
+    "cycleSet",
+    "deckMinimum",
+    "equipPiece",
+    "equipTransitionReceipt",
+    "equipmentKitPlan",
+    "equipmentKitReceipt",
+    "equipmentRequirementReceipt",
+    "equipmentRoleSource",
+    "equippedIn",
+    "equippedPieces",
+    "figureSpec",
+    "fitsSlot",
+    "fromDropPool",
+    "gripOf",
+    "gripRefusal",
+    "gripTags",
+    "healMissingSlotCells",
+    "isCurrentEquipmentGrant",
+    "isEquipmentComposedInstance",
+    "isItemOwned",
+    "itemMountInstances",
+    "loadoutLeaveRefusal",
+    "loadoutSignature",
+    "loadoutTags",
+    "modEffectLine",
+    "modEffectLines",
+    "moveEquipmentPool",
+    "normalizeArmamentLocations",
+    "openedSets",
+    "orderStartingDeck",
+    "ownerItemRef",
+    "ownership",
+    "parseMod",
+    "pieceHand",
+    "pieceItemRef",
+    "previewCompatibleHands",
+    "reconcileGrantedCards",
+    "reconcileGrantedCardsInCombat",
+    "reconcileRunLoadoutHp",
+    "resolveSwapCostRule",
+    "restoreEquipmentProfileRuleSnapshot",
+    "runMods",
+    "rungFor",
+    "setCellState",
+    "slotHand",
+    "slotRungs",
+    "sortBySourceOrder",
+    "stampDeck",
+    "startingDeckPlan",
+    "startingDeckProblems",
+    "startingDeckRefs",
+    "startingDeckWarnings",
+    "startingHandsRequirementFailure",
+    "swapCostFor",
+    "swapCostRules",
+    "trimExtraSets",
+    "validateEquipment",
+    "visibleSets"
+  ],
+  "src/model/loadout/kit.js": [
+    "equipmentKitPlan",
+    "equipmentKitReceipt",
+    "equipmentRoleSource",
+    "roleAmountReceipt"
+  ],
+  "src/model/loadout/modStrings.js": [
+    "modEffectLine",
+    "modEffectLines",
+    "parseMod"
+  ],
+  "src/model/loadout/ownership.js": [
+    "addToStorage",
+    "carriedIds",
+    "fromDropPool",
+    "ownership"
+  ],
+  "src/model/loadout/requirements.js": [
+    "cardEquipmentCompatibility",
+    "equipmentRequirementReceipt",
+    "previewCompatibleHands",
+    "startingHandsRequirementFailure"
+  ],
+  "src/model/loadout/shape.js": [
+    "createEquipmentProfileRuleSnapshot",
+    "createLoadout",
+    "profileById",
+    "restoreEquipmentProfileRuleSnapshot"
+  ],
+  "src/model/loadout/slotLadder.js": [
+    "openedSets",
+    "rungFor",
+    "setCellState",
+    "slotRungs",
+    "visibleSets"
+  ],
+  "src/model/loadout/stampDeck.js": [
+    "stampDeck"
+  ],
+  "src/model/loadout/startingDeck.js": [
+    "orderStartingDeck",
+    "startingDeckProblems",
+    "startingDeckRefs",
+    "startingDeckWarnings"
+  ],
+  "src/model/loadout/swapCost.js": [
+    "resolveSwapCostRule",
+    "swapCostFor",
+    "swapCostRules"
+  ],
+  "src/model/loadout/validate.js": [
+    "validateEquipment"
+  ],
+  "src/model/loadout/weaponPackages.js": [
+    "applyEquippedWeaponCardPlan",
+    "attackProfileFor",
+    "handSource",
+    "isEquipmentComposedInstance",
+    "quotaRefs"
+  ],
+  "src/model/loadout/weaponPlan.js": [
+    "buildEquippedWeaponCardPlan"
+  ],
+  "src/model/locationPresentation.js": [
+    "hasProfile",
+    "presentationProblems",
+    "presentationScene",
+    "profileIdFor",
+    "resolveLocationPresentation"
+  ],
+  "src/model/locations.js": [
+    "locationIds",
+    "locationRestTags",
+    "locationServices",
+    "locationTaggingProblems",
+    "locationTags",
+    "resolveLocationId",
+    "resolveRestTags",
+    "restDeniedBy"
+  ],
+  "src/model/map/mapReferences.js": [
+    "assertSavedBossReferences"
+  ],
+  "src/model/map/mapknowledge.js": [
+    "litNodes",
+    "mapKnowledge",
+    "nearestShrine",
+    "nodeReading",
+    "resolveMapMode",
+    "resolveShrineGlow",
+    "rungHeight",
+    "shrineLane"
+  ],
+  "src/model/map/mapview.js": [
+    "clampZoom",
+    "deliveredNodePx",
+    "fanoutMargin",
+    "fitZoom",
+    "framingBox",
+    "geometryRefusals",
+    "mapPoint",
+    "mapZoomDefaultIsLegal",
+    "maxFanoutSpan",
+    "maxFittingColumns",
+    "maxSafeColumns",
+    "maxTapDefault",
+    "nodeRadius",
+    "nodeRadiusFor",
+    "nodeRadiusFromTap",
+    "nodeX",
+    "nodeY",
+    "pairAir",
+    "resolveMapFreePan",
+    "spanWidth",
+    "svgHeight",
+    "svgWidth",
+    "viewRefusals"
+  ],
+  "src/model/mapPaintingFrame.js": [
+    "paintingFrame",
+    "paintingFrameKey",
+    "paintingGround",
+    "paintingPointAt",
+    "terrainSettingAt"
+  ],
+  "src/model/marketStock.js": [
+    "applyShopPriceMult",
+    "blacksmithStockProblems",
+    "blacksmithTableProblems",
+    "boughtArmourProblems",
+    "companionsProblems",
+    "consumablesProblems",
+    "marketAdditionStockProblems",
+    "marketAdditionTableProblems",
+    "pruneUnknownAdditionOffers"
+  ],
+  "src/model/mechanicsKernel.js": [
+    "compileBindings",
+    "evaluateCondition",
+    "evaluateModifiers",
+    "jsonEqual",
+    "parameterDefaults",
+    "queryBinding",
+    "resolveValue",
+    "validateModifiers",
+    "validateParameterSchema",
+    "validateParameters"
+  ],
+  "src/model/nodeRefill.js": [
+    "applyNodeRefill",
+    "refillFlasksAtActChange"
+  ],
+  "src/model/offlineDownload.js": [
+    "assembleZip",
+    "coalesceSink",
+    "folderZipBytes",
+    "receiveDownload",
+    "releasedDownload",
+    "releasedZip",
+    "twinFileOf",
+    "twinString",
+    "zipArchiveBytes",
+    "zipFolderName",
+    "zipPinOf"
+  ],
+  "src/model/ownedGameProfile.js": [
+    "ownGameProfile",
+    "pinGameProfileCopy",
+    "pinGameProfileInPlace",
+    "shareableGameProfile"
+  ],
+  "src/model/paintedOutfitArt.js": [
+    "armourArtClass",
+    "armourArtKey",
+    "armourMenuAsset",
+    "paintedOutfit",
+    "sharedOutfit"
+  ],
+  "src/model/perception.js": [
+    "advancePerception",
+    "perceptionLevel",
+    "perceptionProblems"
+  ],
+  "src/model/playerAttackSprites.js": [
+    "playerAttackFamily",
+    "playerAttackPlan",
+    "playerAttackSequence"
+  ],
+  "src/model/playingCard.js": [
+    "cardSummaryContext",
+    "combatCardDamageLabel",
+    "combatCardSummary",
+    "combatCardType",
+    "playingCardClasses",
+    "playingCardDefinition",
+    "playingCardModel",
+    "splitOf",
+    "staticCardTokens"
+  ],
+  "src/model/playsEver.js": [
+    "foldCombatPlaysEver",
+    "instancePlaysEver",
+    "stampCombatPlaysEver"
+  ],
+  "src/model/presentationSequence.js": [
+    "clone",
+    "history",
+    "resolveBindings",
+    "sample",
+    "startTime",
+    "starter",
+    "title",
+    "validate"
+  ],
+  "src/model/profileModule.js": [
+    "configuredModule"
+  ],
+  "src/model/profileStance.js": [
+    "armsAsCoreCounter",
+    "configuredStance",
+    "isSpellCounter",
+    "mirroredManeuver",
+    "mirroredStance"
+  ],
+  "src/model/progression.js": [
+    "levelProgress",
+    "skillProgressRows",
+    "skillProgressSummary",
+    "staleSkillTracks"
+  ],
+  "src/model/progressionContent.js": [
+    "composeProgressionContent"
+  ],
+  "src/model/prologue.js": [
+    "isPrologueSlot",
+    "legacyPrologueSettingKey",
+    "migratePrologueEntries",
+    "migratePrologueSettingKey",
+    "migratePrologueState",
+    "pendingPrologueScene",
+    "prologueBoxBackground",
+    "prologueConfig",
+    "prologueCopy",
+    "prologueDestination",
+    "prologueFreeSlot",
+    "prologuePresetOverrides",
+    "prologueReorderChanges",
+    "prologueResumePosition",
+    "prologueRows",
+    "prologueSceneArt",
+    "prologueSceneClear",
+    "prologueSceneCopy",
+    "prologueScenePreset",
+    "prologueSequence",
+    "prologueSettingKey",
+    "prologueSlotChanges",
+    "prologueSlotPayload",
+    "prologueStagedOrder",
+    "prologueStaging",
+    "prologueTint",
+    "prologueValueIsValid",
+    "runSupportsPrologue",
+    "shouldPlayPrologue"
+  ],
+  "src/model/prologueTiming.js": [
+    "prologueSceneMs",
+    "prologueTransitionMs"
+  ],
+  "src/model/propertyRuleBindings.js": [
+    "configuredPropertyRules"
+  ],
+  "src/model/proposalIntentReveal.js": [
+    "proposalIntentRevealUntil"
+  ],
+  "src/model/proposalStatusRules.js": [
+    "proposalAfterHitRules",
+    "proposalCardRules",
+    "proposalHealingRules",
+    "proposalHitRules",
+    "proposalRetainProtection",
+    "proposalRuleEnabled",
+    "proposalTargetRules",
+    "proposalThresholdRules",
+    "proposalTurnRules"
+  ],
+  "src/model/quests.js": [
+    "availableEventChoices",
+    "availableQuestSteps",
+    "eventChoiceHistoryProblems",
+    "eventChoiceRequirementMet",
+    "eventChoiceRequirementProblems",
+    "hasEventChoice",
+    "hasQuestCompletion",
+    "questChainForEvent",
+    "questCompletionHistoryProblems",
+    "questsCompletedBy",
+    "recordEventChoice",
+    "recordQuestCompletion",
+    "validQuestId"
+  ],
+  "src/model/rangeCardAvailability.js": [
+    "pureEngagementMovement",
+    "rangeCardAvailable"
+  ],
+  "src/model/rangeCombatPolicy.js": [
+    "rangePolicyForNewCombat"
+  ],
+  "src/model/rankUpBonus.js": [
+    "rankUpBonusOn",
+    "rankUpBonusOptions",
+    "rankUpBonusScale"
+  ],
+  "src/model/ratingFormula.js": [
+    "attributeRatingReceipt",
+    "effectiveEquipmentRating",
+    "equipmentRatingBase"
+  ],
+  "src/model/recoveryRules.js": [
+    "applyAfterCombatRecovery",
+    "applyPercentRecovery",
+    "recoveryAmount",
+    "restRecoveryBonus"
+  ],
+  "src/model/registries.js": [
+    "applyCardRank",
+    "cardRank",
+    "cardSkillBonus",
+    "carrierRules",
+    "createRegistries",
+    "deepFreeze",
+    "mergeUpgrade",
+    "objectIsKind",
+    "objectKinds",
+    "passiveFlag",
+    "passiveMax",
+    "passiveMult",
+    "passiveSum",
+    "primaryEffectIndex",
+    "profileMirrors",
+    "rankBonus",
+    "relicPropertyRules",
+    "resolveCacheSize",
+    "resolveCard"
+  ],
+  "src/model/relayoutGate.js": [
+    "formationKey",
+    "isPhoneViewport",
+    "shouldRelayout",
+    "viewportKey"
+  ],
+  "src/model/relicArt.js": [
+    "relicArtAsset"
+  ],
+  "src/model/relicModifiers.js": [
+    "resolveRelicModifiers"
+  ],
+  "src/model/resources.js": [
+    "resourceBarPlan",
+    "resourceDomains",
+    "resourceLabelCeilings",
+    "resourceScale",
+    "surfaceScalesByMax"
+  ],
+  "src/model/restRevisit.js": [
+    "clearRestRevisitOnTravel",
+    "markRestLeft",
+    "openRestRecord",
+    "recordRestConsumed",
+    "restRevisitNodeId"
+  ],
+  "src/model/retiredProfile.js": [
+    "retiredProfileReason"
+  ],
+  "src/model/rewardOdds.js": [
+    "cardRewardRarityWeights"
+  ],
+  "src/model/rewardTransaction.js": [
+    "persistRewardChange"
+  ],
+  "src/model/rewardXpPresentation.js": [
+    "orderedXpRows",
+    "scopeXpProgress",
+    "xpFillDurations"
+  ],
+  "src/model/rewardplan.js": [
+    "cardRewardPlan",
+    "cardRewardSchedule",
+    "isRelicChoice",
+    "pickIds",
+    "resolveContinue",
+    "rewardClaimStatus",
+    "rewardNotes",
+    "rewardPlan",
+    "rowKey",
+    "smithingStoneNote",
+    "smithingStoneRowCopy",
+    "smithingStonesPaid",
+    "unownedRelicChoices",
+    "unseenIds"
+  ],
+  "src/model/rewardprogress.js": [
+    "characterProgress",
+    "combatXpGains",
+    "rewardProgress",
+    "skillProgress"
+  ],
+  "src/model/rng.js": [
+    "createRng",
+    "mulberry32",
+    "seedFromString",
+    "seedProblem",
+    "seedToString",
+    "sweepSeed"
+  ],
+  "src/model/rollReceipts.js": [
+    "accuracyRollReceipt",
+    "contestRollReceipt",
+    "critRollReceipt",
+    "distanceRollReceipt",
+    "dodgeRollReceipt",
+    "evadeRollReceipt",
+    "percentRollReceipt",
+    "perceptionRollReceipt",
+    "rollCompactText",
+    "rollVerdictWord"
+  ],
+  "src/model/runChangeReceipt.js": [
+    "diffRunSnapshots",
+    "snapshotRunForDiff"
+  ],
+  "src/model/runClone.js": [
+    "cloneRun"
+  ],
+  "src/model/runCompletion.js": [
+    "commitRunFinish",
+    "commitRunFinishAsync",
+    "completedRunMeta"
+  ],
+  "src/model/runStart.js": [
+    "createRunStartOwner"
+  ],
+  "src/model/runStorage.js": [
+    "compactRun",
+    "expandStoredRun",
+    "persistedEventLog",
+    "storedGameProfile",
+    "withLeanCheckpoints"
+  ],
+  "src/model/schemas.js": [
+    "relicInRewardPool"
+  ],
+  "src/model/seats.js": [
+    "bossTierScale",
+    "defaultSeatOrder",
+    "encounterFitsSeat",
+    "finalTier",
+    "seatAtTier",
+    "seatOrderProblems",
+    "seatTierHpMult",
+    "tierOf"
+  ],
+  "src/model/secondbeat.js": [
+    "assertTableSane",
+    "beatFor",
+    "beatOf",
+    "beatsOwed",
+    "enumerateBeats"
+  ],
+  "src/model/selectedWeaponSequences.js": [
+    "selectedWeaponCounterOrigins",
+    "selectedWeaponSequence",
+    "selectedWeaponSequenceTiming"
+  ],
+  "src/model/selectedWeaponStances.js": [
+    "selectedWeaponCounterFor",
+    "selectedWeaponProfileFor",
+    "selectedWeaponReactionFor",
+    "selectedWeaponStanceFor"
+  ],
+  "src/model/settingOverrides.js": [
+    "gateOpen",
+    "memberOfOwnKey",
+    "ownKey",
+    "ownOn",
+    "withoutUnowned"
+  ],
+  "src/model/settingsDefaults.js": [
+    "commitSettingsChoice",
+    "commitSettingsChoiceAsync",
+    "keepLocalSettings",
+    "needsSettingsChoice",
+    "sameSetting",
+    "seedAfterChange",
+    "seedSettingsDefaults"
+  ],
+  "src/model/settingsSync.js": [
+    "contentsUrl",
+    "fetchProfile",
+    "fromBase64",
+    "importOwnership",
+    "listProfiles",
+    "normalizeProfileName",
+    "profileChanges",
+    "profileDiff",
+    "profileKeys",
+    "profileName",
+    "profilePath",
+    "profileText",
+    "profileWebUrl",
+    "profilesListUrl",
+    "promotedValue",
+    "promotionProblem",
+    "pushProfile",
+    "syncConfig",
+    "syncConfigProblems",
+    "toBase64",
+    "validBranchName",
+    "validProfileName"
+  ],
+  "src/model/sha256.js": [
+    "createSha256",
+    "sha256Bytes",
+    "sha256Hex"
+  ],
+  "src/model/shopKinds.js": [
+    "bringShopStockForward",
+    "cloneShops",
+    "isConditionalOffering",
+    "masterStockProblems",
+    "masterTableProblems",
+    "shopConfigRows",
+    "shopOverridesSetAside",
+    "shopSentence",
+    "shopSettingsProblems",
+    "shopStockKind",
+    "shopStockOfferings",
+    "shopStockProblems",
+    "shopsTableProblems"
+  ],
+  "src/model/shopOfferPrice.js": [
+    "shopOfferPrice"
+  ],
+  "src/model/sigils.js": [
+    "attuneMaxOf",
+    "attuneSigil",
+    "attunedSigilIds",
+    "attunedSigilProblems",
+    "legendarySigilIds",
+    "ownedSigilIds",
+    "rollSigilDrop",
+    "runAttuneMax",
+    "sigilDropPool",
+    "sigilInventoryProblems",
+    "sigilRarityProblems",
+    "sigilRuleText",
+    "unattuneSigil",
+    "unknownSigilId"
+  ],
+  "src/model/skills.js": [
+    "activateAbilitySkill",
+    "armourSkillId",
+    "awardSkillXp",
+    "cardTrackLevel",
+    "classSkillId",
+    "coreCardRanks",
+    "emptySkills",
+    "levelQueuesAttributePick",
+    "levelQueuesRankUp",
+    "linkedAttributes",
+    "pendingRankUpRows",
+    "raiseCardRank",
+    "rankSchools",
+    "rankUpCandidates",
+    "rankUpKind",
+    "rarityUnlockedAt",
+    "rollDraftRank",
+    "skillBonusFor",
+    "skillKindOf",
+    "skillLevel",
+    "skillMaxLevel",
+    "skillSchools",
+    "skillTracks",
+    "skillsProblems",
+    "spendAttributePick",
+    "spendSkillDraft",
+    "stampSkillBonuses",
+    "xpToNext"
+  ],
+  "src/model/smashBlurb.js": [
+    "fill",
+    "ruleCtx",
+    "smashBeatsStances",
+    "withCoreSmashBlurb"
+  ],
+  "src/model/smashClause.js": [
+    "coreSmashCard",
+    "coreSmashClause",
+    "coreSmashHelp",
+    "smashBeatsStances",
+    "withCoreSmashBlurb"
+  ],
+  "src/model/smithing.js": [
+    "commitItemUpgrade",
+    "commitMerchantSmithing",
+    "commitSmithing",
+    "grantSmithingReward",
+    "initializeRunSmithing",
+    "normalizeSmithingRules",
+    "ownedSmithingArmaments",
+    "ownedSmithingItems",
+    "refinedStoneValue",
+    "requirementAtLevel",
+    "restampSmithingCards",
+    "smithingCardReceipt",
+    "smithingPlan",
+    "smithingRewardId",
+    "smithingRewardPays",
+    "sourceArmamentId",
+    "withSmithService"
+  ],
+  "src/model/smithingCore.js": [
+    "bindCoreSmithingEngine",
+    "coreAffectedCards",
+    "coreCardSimulationAllowed",
+    "coreCardSimulationCount",
+    "coreSmithingActive",
+    "coreSmithingCards",
+    "coreSmithingPreviewRows",
+    "coreSmithingStats",
+    "withoutCoreCardSimulation"
+  ],
+  "src/model/smithingRules.js": [
+    "normalizeSmithingRules"
+  ],
+  "src/model/spellDefense.js": [
+    "spellDefenseSplit"
+  ],
+  "src/model/stance.js": [
+    "moveKind",
+    "playerKind",
+    "stanceFor"
+  ],
+  "src/model/stanceCoverage.js": [
+    "basicOrCantripMatcher",
+    "missingBasicStances",
+    "reserveStanceCards",
+    "stanceCoverageRule"
+  ],
+  "src/model/stanceRules.js": [
+    "defensiveFamily",
+    "effectiveManeuver",
+    "enemyCounterPoiseDamage",
+    "enemySmashFallbackPoise",
+    "mirroredManeuver",
+    "sameStance",
+    "spellChain",
+    "stanceEffectiveness",
+    "stanceEntryBonuses",
+    "stanceManaCost",
+    "stanceOf",
+    "stanceRatingBonus",
+    "stanceRulesFor",
+    "stanceStaminaCost"
+  ],
+  "src/model/startingAbilities.js": [
+    "startingAbilityPlan",
+    "startingAbilityProblem",
+    "startingAbilityRef",
+    "startingAbilityRefs"
+  ],
+  "src/model/startingEquipmentPreview.js": [
+    "startingEquipmentPreview"
+  ],
+  "src/model/startingKits.js": [
+    "armourIsStartingEligible",
+    "bornClassOf",
+    "kitIsDiscovered",
+    "recordArmamentDiscovery",
+    "resolveStartingArmour",
+    "resolveStartingKit",
+    "startingArmourViews",
+    "startingKitPieceIds",
+    "startingKitProblems",
+    "startingKitSnapshot",
+    "startingKitViews",
+    "validateRunStartingKit"
+  ],
+  "src/model/startingStatConfig.js": [
+    "applyEquipmentRequirementConfig",
+    "applyStartingStatConfig",
+    "bundleWithConfiguredEquipment",
+    "derivedStatFloorProblems",
+    "equipmentRequirementProblems",
+    "equipmentRequirementRows",
+    "kitAttributeMinimums",
+    "kitMinimum",
+    "resolveEquipmentRequirements",
+    "resolveStartingStatMode",
+    "startingStatBounds",
+    "startingStatPoolProblems",
+    "startingStatRows",
+    "visibleCreationModes"
+  ],
+  "src/model/statProjection.js": [
+    "handResourceRows",
+    "pieceWeight",
+    "playerLoadReceipt",
+    "playerPoiseThresholdReceipt",
+    "startingResourceRows",
+    "statProjection",
+    "withHandResources"
+  ],
+  "src/model/statRows.js": [
+    "handStatRows",
+    "hasRetiredOpeningHand",
+    "ratingStatRows",
+    "ratingsConfigFor",
+    "statRow",
+    "statRowCount",
+    "withoutRetiredOpeningHand"
+  ],
+  "src/model/state.js": [
+    "characterLevelOf",
+    "createCardInstance",
+    "createDeck",
+    "createEnemyCombatEntity",
+    "createIdGen",
+    "createPlayerCombatEntity",
+    "createRunState",
+    "deserializeRun",
+    "enemyMoveDamage",
+    "initializeRunDerivedStats",
+    "initializeRunFlaskCharges",
+    "levelProblems",
+    "migrateRunSchema",
+    "projectZones",
+    "serializeRun",
+    "stampPlayerPoiseMax",
+    "syncZones",
+    "validateRunShape",
+    "zonesProblems"
+  ],
+  "src/model/statusPresentation.js": [
+    "clearStatusPresentationCache",
+    "coreStatusLifecycle",
+    "coreStatusPresentation",
+    "inheritStatusPresentationContext",
+    "resolveStatusPresentationDefinition",
+    "statusPresentationCacheSize",
+    "statusPresentationContext",
+    "statusPresentationDefinition"
+  ],
+  "src/model/strings.js": [
+    "has",
+    "stringIds",
+    "t",
+    "tFull",
+    "tTip"
+  ],
+  "src/model/tagService.js": [
+    "tagService"
+  ],
+  "src/model/tags.js": [
+    "asideDomainIds",
+    "asideTagIds",
+    "domainIdsFor",
+    "itemTypeLabelFrom",
+    "tagContentProblems",
+    "tagIdsAllowedFor",
+    "tagIdsInDomain",
+    "tagIndex"
+  ],
+  "src/model/tokens.js": [
+    "tokenRe"
+  ],
+  "src/model/tooltipSettings.js": [
+    "helpText",
+    "resolveTooltipSettings",
+    "tooltipSettingsRows"
+  ],
+  "src/model/tree.js": [
+    "cardKind",
+    "nodeTokens",
+    "nodeTree",
+    "nodeVariableBindings",
+    "resolveVariable",
+    "tokenForVariable",
+    "treeProblems",
+    "variableForToken"
+  ],
+  "src/model/turnStamina.js": [
+    "bindTurnStamina",
+    "turnStaminaAliasData"
+  ],
+  "src/model/unlocks.js": [
+    "classAvailable",
+    "classUnlockRow",
+    "emptyProgress",
+    "evaluateUnlocks",
+    "pieceReveal",
+    "recordProgress",
+    "revealState",
+    "unlockView"
+  ],
+  "src/model/upcasting.js": [
+    "upcastCard",
+    "upcastOptions"
+  ],
+  "src/model/validate.js": [
+    "cardTokenEffects",
+    "computeTokenBindings",
+    "deckRulesTableProblems",
+    "extractTemplateTokens",
+    "relicTokens",
+    "tokenRe",
+    "validateContent",
+    "validateEffects",
+    "validateFormula",
+    "validatePredicate",
+    "validateTriggers"
+  ],
+  "src/model/validate/balanceRows.js": [
+    "balanceRowProblems"
+  ],
+  "src/model/validate/cardCosts.js": [
+    "cardCostProblems"
+  ],
+  "src/model/validate/classTree.js": [
+    "classTreeProblems"
+  ],
+  "src/model/validate/deckRulesTable.js": [
+    "deckRulesTableProblems"
+  ],
+  "src/model/validate/effectGrammar.js": [
+    "validateEffects",
+    "validateFormula",
+    "validatePredicate",
+    "validateTriggers"
+  ],
+  "src/model/validate/entityCross.js": [
+    "entityCrossProblems"
+  ],
+  "src/model/validate/equipment.js": [
+    "equipmentProblems"
+  ],
+  "src/model/validate/handOverlap.js": [
+    "handOverlapProblems"
+  ],
+  "src/model/validate/hudResources.js": [
+    "hudResourceProblems"
+  ],
+  "src/model/validate/idSets.js": [
+    "idSetProblems"
+  ],
+  "src/model/validate/mapBalance.js": [
+    "mapBalanceProblems"
+  ],
+  "src/model/validate/progression.js": [
+    "progressionProblems"
+  ],
+  "src/model/validate/propertyRules.js": [
+    "propertyRuleProblems",
+    "relicPropertyTagIndex",
+    "usesScript"
+  ],
+  "src/model/validate/quests.js": [
+    "questProblems"
+  ],
+  "src/model/validate/rewardSchedule.js": [
+    "rewardScheduleProblems"
+  ],
+  "src/model/validate/root.js": [
+    "rootProblems"
+  ],
+  "src/model/validate/schemaWalk.js": [
+    "validateMusicBeds",
+    "validateSfxRecipes",
+    "walkSchema"
+  ],
+  "src/model/validate/schemaWalks.js": [
+    "schemaWalkProblems"
+  ],
+  "src/model/validate/scriptBudget.js": [
+    "scriptBudgetProblems"
+  ],
+  "src/model/validate/seats.js": [
+    "seatProblems"
+  ],
+  "src/model/validate/shared.js": [
+    "describe",
+    "isPlainObject"
+  ],
+  "src/model/validate/sigilRows.js": [
+    "validateSigils"
+  ],
+  "src/model/validate/tagContext.js": [
+    "tagContextProblems"
+  ],
+  "src/model/validate/templates.js": [
+    "checkTemplate",
+    "validateCardContest",
+    "validateCardRamp",
+    "validateCardTemplates",
+    "validateRelicTemplate"
+  ],
+  "src/model/validate/thresholdProcs.js": [
+    "thresholdProcProblems"
+  ],
+  "src/model/validate/tokenBindings.js": [
+    "cardTokenEffects",
+    "computeTokenBindings",
+    "extractTemplateTokens",
+    "relicModifierTokenBindings",
+    "relicTokens"
+  ],
+  "src/model/validate/uiHolds.js": [
+    "uiHoldProblems"
+  ],
+  "src/model/verifiedProfiles.js": [
+    "isVerifiedProfile",
+    "markVerifiedProfile",
+    "validateVerifiedProfile"
+  ],
+  "src/model/victoryXpPresentation.js": [
+    "victoryXpFormula",
+    "victoryXpPresentation",
+    "victoryXpTiming"
+  ],
+  "src/model/wardOffCardText.js": [
+    "poiseMergeGroups",
+    "wardOffCardText",
+    "wardReadsAsPoise"
+  ],
+  "src/model/weaknessDiscovery.js": [
+    "discoveredWeaknesses",
+    "isWeaknessDiscovered",
+    "recordWeaknessDiscoveries",
+    "weaknessDiscoveryProblems",
+    "weaknessKey",
+    "withDiscoveredWeaknessesOnly"
+  ],
+  "src/model/weaknessIcons.js": [
+    "weaknessIconId"
+  ],
+  "src/model/xpCurve.js": [
+    "xpStepCost"
+  ],
+  "src/model/zipStream.js": [
+    "crc32",
+    "createZipWriter",
+    "zipNameOk"
+  ],
+  "src/model/zones.js": [
+    "activeIn",
+    "handZoneOf",
+    "projectZones",
+    "wornZoneOf"
+  ],
+  "src/services/cardActions.js": [
+    "cardActions",
+    "primaryVerb",
+    "verbs"
+  ],
+  "src/ui/actionTimeline.js": [
+    "runActionTimeline"
+  ],
+  "src/ui/alternativeArt.js": [
+    "alternativeArtUrl",
+    "alternativeBackdropHtml",
+    "alternativeCardFadeHtml",
+    "alternativeCompanionIcon",
+    "alternativePlayerId",
+    "alternativeSprite",
+    "fitAlternativeBackdrop",
+    "wireAlternativeBackdrop"
+  ],
+  "src/ui/alternativeAuraRenderer.js": [
+    "alternativeAuraLayers",
+    "createAlternativeAuraRenderer"
+  ],
+  "src/ui/alternativeCardStage.js": [
+    "createAlternativeCardStage"
+  ],
+  "src/ui/alternativeStanceStage.js": [
+    "createAlternativeStanceStage",
+    "withAlternativeStance"
+  ],
+  "src/ui/animationPace.js": [
+    "actionPacing",
+    "calloutLifeMs",
+    "floaterLifeMs",
+    "floaterStaggerMinMs",
+    "floaterStaggerMs",
+    "frameHoldMs",
+    "getAnimSpeed",
+    "idleFrameMs",
+    "reactionPlayMs",
+    "setAnimSpeed",
+    "setCombatPacing",
+    "turnBannerHoldMs"
+  ],
+  "src/ui/artBounds.js": [
+    "imageBounds",
+    "warmImageBounds",
+    "warmImageBoundsWhenIdle"
+  ],
+  "src/ui/artFallback.js": [
+    "hideOnError",
+    "markArtPlaceholder",
+    "restoreArtPlaceholders",
+    "swapOnError"
+  ],
+  "src/ui/artTier.js": [
+    "applyArtTier",
+    "artQualityChoice",
+    "autoTier",
+    "displaySceneryTier",
+    "onRetryProgress",
+    "onTierArrived",
+    "requestedTier",
+    "resetArtTier",
+    "retryBuiltInArt",
+    "retryOffered",
+    "retryRunning",
+    "tierChoiceDisabled",
+    "tierStatus",
+    "tiersAvailable"
+  ],
+  "src/ui/assetPacks.js": [
+    "applyAssetCss",
+    "bootLine",
+    "builtInArtSettled",
+    "builtInArtStatus",
+    "cleanBase",
+    "fillAssetCss",
+    "fontFaceRules",
+    "loadBuiltInPacks",
+    "loadFontSidecar",
+    "loadIndex",
+    "loadTwinIndex",
+    "musicHold",
+    "objectUrl",
+    "packsPinned",
+    "readAssetBase",
+    "resetBuiltInArt",
+    "scriptTag",
+    "shippedScoreResolves",
+    "startBuiltInArt",
+    "tierOrder",
+    "twinOf",
+    "unmappedFaceDescriptors",
+    "whenBuiltInArtReady"
+  ],
+  "src/ui/assetmap.js": [
+    "assetTier",
+    "assetUrl",
+    "assetsAreInlined",
+    "builtInSource",
+    "setBuiltInSource",
+    "setHighResSource"
+  ],
+  "src/ui/assets.js": [
+    "classGlyph",
+    "classSprite",
+    "combatEffectFrames",
+    "enemySprite",
+    "equipmentCardArt",
+    "equippedFigure",
+    "medallionOverlay",
+    "paintedFigure",
+    "playerSprite",
+    "prologueArtwork",
+    "relicArtUrl",
+    "relicIcon",
+    "setClassGlyphs",
+    "setSpritesEnabled",
+    "shopBuyArtwork",
+    "spriteMirror",
+    "spritesAreEnabled",
+    "tintCss"
+  ],
+  "src/ui/audio.js": [
+    "initAudio",
+    "resolveMusicEnabled"
+  ],
+  "src/ui/bootArt.js": [
+    "bootArtLine",
+    "bootArtPhase",
+    "bootArtRetried",
+    "criticalIds",
+    "paintBootArt",
+    "resetBootArt",
+    "screenOrientation",
+    "startBootArt",
+    "warmCriticalSet"
+  ],
+  "src/ui/buffFeedback.js": [
+    "buffGainFor",
+    "buffPopupFor"
+  ],
+  "src/ui/buildChannel.js": [
+    "buildChannel",
+    "debugEnabled",
+    "debugSwitch",
+    "pageDebug",
+    "promotionDebug",
+    "setDebugEnabled",
+    "setPageDebugForTests"
+  ],
+  "src/ui/cardArtComposition.js": [
+    "cardArtElement",
+    "cardArtPreviewFixtures",
+    "cardArtStatuses",
+    "proceduralDefinitionArt",
+    "simpleCardArt"
+  ],
+  "src/ui/cardArtLayers.js": [
+    "bindCardComponentFailures",
+    "cardArtLayersHtml"
+  ],
+  "src/ui/cardArtStyle.js": [
+    "applyCardArtStyle",
+    "cardArtStyle",
+    "registerCardArtRefresh",
+    "resolveCardArtStyle"
+  ],
+  "src/ui/cardArtwork.js": [
+    "cardArtFallbacks",
+    "defaultCardArtFallbacks",
+    "playingCardArt",
+    "playingCardArtwork"
+  ],
+  "src/ui/cardDragEnd.js": [
+    "finishCardDrag"
+  ],
+  "src/ui/cardEffectLayers.js": [
+    "mountCardEffectLayers",
+    "playCardEffectLayers"
+  ],
+  "src/ui/catalog/creationCatalogLinks.js": [
+    "creationCatalogHref",
+    "linkCreationCatalogFolios"
+  ],
+  "src/ui/catalog/creationSpecimens.js": [
+    "mountCreationPartSpecimens"
+  ],
+  "src/ui/combatAura.js": [
+    "auraFilter",
+    "resourceAura"
+  ],
+  "src/ui/combatEffectDirection.js": [
+    "combatEffectAngle",
+    "combatEffectOrientation"
+  ],
+  "src/ui/combatEffectSprites.js": [
+    "clearCombatEffects",
+    "playCombatEffect",
+    "playCombatEffectPlan"
+  ],
+  "src/ui/combatantEffectLayers.js": [
+    "combatantEmissionBox",
+    "mountCombatantEffectLayers",
+    "playCombatantEffectLayers"
+  ],
+  "src/ui/components/actRouteStrip.js": [
+    "actRouteStripHtml"
+  ],
+  "src/ui/components/arcaneExposure.js": [
+    "arcaneExposureReceipt",
+    "renderArcaneExposure"
+  ],
+  "src/ui/components/armamentRadial.js": [
+    "closeArmamentRadial",
+    "mountArmamentRadial"
+  ],
+  "src/ui/components/armouryComponents.js": [
+    "renderArmouryOverlay",
+    "renderArmouryPanel",
+    "renderEquipmentSetCell",
+    "renderEquipmentSlot",
+    "renderInventoryDetailCard",
+    "renderInventoryItemCard"
+  ],
+  "src/ui/components/armouryEquipModals.js": [
+    "openEquipConfirmModal",
+    "openSlotChoiceModal"
+  ],
+  "src/ui/components/armouryInventory.js": [
+    "armouryInventoryBlock",
+    "inventoryFace",
+    "inventoryReveal",
+    "isCollectibleCategory"
+  ],
+  "src/ui/components/armouryPicker.js": [
+    "armouryPickerTable",
+    "thumbSrc"
+  ],
+  "src/ui/components/armouryStatsPanel.js": [
+    "armouryStatsPanel"
+  ],
+  "src/ui/components/artLoadNotice.js": [
+    "artLoadNoticeHtml",
+    "mountArtLoadNotice",
+    "resetArtLoadNotice"
+  ],
+  "src/ui/components/ashenBlight.js": [
+    "ashenBlightBarHtml",
+    "ashenBlightCardLabel",
+    "ashenBlightFeatHtml",
+    "openAshenBlightMilestone"
+  ],
+  "src/ui/components/authoredMapArt.js": [
+    "authoredMapTerrainHtml"
+  ],
+  "src/ui/components/battlefieldStage.js": [
+    "combatControlWidth",
+    "combatFrameTarget",
+    "combatHeaderKeepoutBottom",
+    "combatInspectTapBox",
+    "combatPlayerActionRect",
+    "combatPlayerInfoRect",
+    "combatTargetHudFootprints",
+    "combatantBodyMutation",
+    "hitBadgeCenter",
+    "packCombatTargetsWithHud",
+    "placePlayerIntentGlyph",
+    "syncCoreTinyTarget",
+    "targetOverheadPlacement",
+    "visibleCombatPanelRect",
+    "wireBattlefieldStage"
+  ],
+  "src/ui/components/bookArt.js": [
+    "bookSymbolUrl",
+    "renderBookArt"
+  ],
+  "src/ui/components/bookLearning.js": [
+    "openBookLearning"
+  ],
+  "src/ui/components/bootArtStatus.js": [
+    "bootArtStatusHtml",
+    "mountBootArtStatus"
+  ],
+  "src/ui/components/buildstamp.js": [
+    "buildStampHtml",
+    "wireBuildStamps"
+  ],
+  "src/ui/components/card.js": [
+    "cardDetailHtml",
+    "cardPlainText",
+    "fitCardFace",
+    "refreshCard",
+    "relicText",
+    "renderCard",
+    "scheduleCardFits",
+    "setHandFaceBudget",
+    "staticTokens",
+    "upgradePreviewHtml"
+  ],
+  "src/ui/components/cardAppearance.js": [
+    "applyCardAppearance"
+  ],
+  "src/ui/components/cardChoiceModal.js": [
+    "openCardChoiceModal"
+  ],
+  "src/ui/components/cardInspection.js": [
+    "bindCardInspection",
+    "cardInspectionLayout",
+    "openBoundCardInspection",
+    "openCardInspection",
+    "refreshCardDoorShape"
+  ],
+  "src/ui/components/cardLayout.js": [
+    "applyCardLayouts",
+    "cardLayoutDocument",
+    "cardLayoutReferences",
+    "cardPartNodes",
+    "rankAnchor",
+    "resetCardLayout"
+  ],
+  "src/ui/components/cardOptionGrid.js": [
+    "cardOptionGrid",
+    "effectLine",
+    "markCardOptions"
+  ],
+  "src/ui/components/cardSelection.js": [
+    "beatsSpent",
+    "clearSelection",
+    "countBeat",
+    "lightCard",
+    "litCard",
+    "onSelectionChange",
+    "resetSelection",
+    "spendSelectingBeat"
+  ],
+  "src/ui/components/cardShelf.js": [
+    "wireCardShelf"
+  ],
+  "src/ui/components/cardTagSymbols.js": [
+    "cardCategorySigilHtml",
+    "cardRangeChipHtml",
+    "cardSideTags",
+    "cardTagRailHtml",
+    "hasTagSymbol",
+    "tagSymbolSvg"
+  ],
+  "src/ui/components/cardUpgradeModal.js": [
+    "mountCardUpgradeModal"
+  ],
+  "src/ui/components/choiceBody.js": [
+    "mountChoiceBody",
+    "setChoiceStatus"
+  ],
+  "src/ui/components/collectibleCard.js": [
+    "openCollectibleInspection",
+    "renderCollectibleCard",
+    "renderCollectibleInspection"
+  ],
+  "src/ui/components/combatAbilities.js": [
+    "activeCombatAbilities"
+  ],
+  "src/ui/components/combatActionRow.js": [
+    "actionsTipHtml",
+    "combatActionRowHtml",
+    "combatPotionRows",
+    "disposeCombatPotionTray",
+    "drawTipHtml",
+    "openCombatPotions",
+    "paintCombatActionCounts",
+    "paintEndTurnKey",
+    "pileButton",
+    "renderCombatPotionTray",
+    "setPotionRevealTiming",
+    "spentTipHtml"
+  ],
+  "src/ui/components/combatDebugButton.js": [
+    "mountCombatDebugButton"
+  ],
+  "src/ui/components/combatHealth.js": [
+    "badgeTipHtml",
+    "combatHealthRow"
+  ],
+  "src/ui/components/combatLayout.js": [
+    "combatHudBandHeight",
+    "wireCombatLayout",
+    "wireDesktopCombatHeader"
+  ],
+  "src/ui/components/combatLogModal.js": [
+    "openCombatLogModal",
+    "renderCombatLogEntries"
+  ],
+  "src/ui/components/combatRangeAction.js": [
+    "combatRangeAction",
+    "mountCombatRangeAction"
+  ],
+  "src/ui/components/combatRoundsScreen.js": [
+    "decorateCombatRoundsScreen"
+  ],
+  "src/ui/components/combatSigilView.js": [
+    "cardSigilsHtml",
+    "compactCardRules",
+    "sigilExplanationHtml",
+    "sigilHtml"
+  ],
+  "src/ui/components/combatSpriteGeometry.js": [
+    "cachedCanvasRect",
+    "clearFrozenSpriteGeometry",
+    "combatSpriteGeometry",
+    "currentSpriteArtBounds",
+    "currentSpriteBodyBounds",
+    "frozenSpriteBox",
+    "invalidateSpriteRects",
+    "visibleArtBox"
+  ],
+  "src/ui/components/combatTargetHud.js": [
+    "mountCombatTargetHud"
+  ],
+  "src/ui/components/combatTools.js": [
+    "closeCombatFullLog",
+    "combatToolsTokens",
+    "mountCombatTools"
+  ],
+  "src/ui/components/combatantFrame.js": [
+    "adoptCombatantFrame",
+    "combatantFrame",
+    "setCombatantTargetHud",
+    "updateCombatantFrame",
+    "updateCombatantSlots"
+  ],
+  "src/ui/components/combatantInspector.js": [
+    "combatantDetailBody",
+    "combatantInspectorLayout",
+    "combatantInspectorPreview",
+    "mountCombatantInspector"
+  ],
+  "src/ui/components/combatantOverhead.js": [
+    "combatantInfo",
+    "combatantIntent",
+    "intentParts",
+    "playerActionIcon",
+    "playerActionIntent",
+    "selectCombatantInfo",
+    "setPlayerActionManeuver"
+  ],
+  "src/ui/components/compactEquipmentDetails.js": [
+    "compactEquipmentDetails"
+  ],
+  "src/ui/components/confirmationModal.js": [
+    "closeConfirmationModal",
+    "openConfirmationModal"
+  ],
+  "src/ui/components/creationCards.js": [
+    "booleanSettingToggle",
+    "characterSigilPreview",
+    "classChoiceCard",
+    "classPreviewPane",
+    "classResourceGrid",
+    "classUnfold",
+    "modeChoiceButton",
+    "primaryStatCard",
+    "primaryStatCards",
+    "relicChoiceButton",
+    "resourceStrip",
+    "selectionSectionFace",
+    "sigilChoiceButton",
+    "spriteChoiceButton",
+    "tintChoiceButton",
+    "viewModeSwitch",
+    "viewModeToggle"
+  ],
+  "src/ui/components/creationPageParts.js": [
+    "createCreationFeatBrowser",
+    "createCreationStepNavigation",
+    "creationChoiceTile",
+    "creationFeatEmblem",
+    "creationPageHeading",
+    "creationPanel",
+    "decorateCreationWorkspace"
+  ],
+  "src/ui/components/creationPreviewDetails.js": [
+    "focusCreationClassPreview",
+    "openCreationRelicDetail",
+    "openCreationStatDetail"
+  ],
+  "src/ui/components/damageReceipt.js": [
+    "bindDamageReceipt",
+    "cardDamageReceipt",
+    "damageNumberUnderLane",
+    "damageReceiptHtml",
+    "damageReceiptLines"
+  ],
+  "src/ui/components/deckCardAnimationPreview.js": [
+    "deckCardAnimationPlan",
+    "deckCardAnimationPreview"
+  ],
+  "src/ui/components/dialogueStage.js": [
+    "wireDialogueStage"
+  ],
+  "src/ui/components/discardChoiceModal.js": [
+    "openDiscardChoiceModal"
+  ],
+  "src/ui/components/disclosure.js": [
+    "mountDisclosure"
+  ],
+  "src/ui/components/enemyKnowledge.js": [
+    "renderEnemyKnowledge",
+    "renderIntentPrediction"
+  ],
+  "src/ui/components/enemyMoveCards.js": [
+    "renderEnemyMoveCards"
+  ],
+  "src/ui/components/enemyTargetPicker.js": [
+    "renderEnemyTargetPicker"
+  ],
+  "src/ui/components/engravedIcon.js": [
+    "engravedGlyphId",
+    "engravedIcon",
+    "engravedIconHtml",
+    "engravedIconId",
+    "engravedIconUrl",
+    "engravedMaskUrl",
+    "refreshEngravedIcons"
+  ],
+  "src/ui/components/environmentArt.js": [
+    "combatBackdropHtml",
+    "mapTerrainHtml",
+    "syncBackdropFlag"
+  ],
+  "src/ui/components/equipCompareModal.js": [
+    "compareRowNode",
+    "mountEquipCompareModal"
+  ],
+  "src/ui/components/equipmentCard.js": [
+    "equipmentDetails",
+    "renderEquipmentCard",
+    "renderEquipmentInspection"
+  ],
+  "src/ui/components/equipmentReceipts.js": [
+    "renderCandidateComparison",
+    "renderEquipmentRequirements",
+    "renderPlayerLoad",
+    "renderPlayerPoise",
+    "renderRoleCopies"
+  ],
+  "src/ui/components/flask.js": [
+    "closeFlaskActionMenu",
+    "flaskDetailLines",
+    "flaskIdentityHtml",
+    "flaskPresentation",
+    "flaskTooltipHtml",
+    "mountFlaskActionMenu",
+    "openFlaskInspectModal"
+  ],
+  "src/ui/components/flickPractice.js": [
+    "mountFlickPractice"
+  ],
+  "src/ui/components/footerArt.js": [
+    "fitFooterCompactLabels",
+    "installFooterArt",
+    "paintFooterArt",
+    "paintFooterOrb"
+  ],
+  "src/ui/components/formationGrid.js": [
+    "formationGridHtml",
+    "formationTileOutline"
+  ],
+  "src/ui/components/formationMovement.js": [
+    "wireFormationMovement"
+  ],
+  "src/ui/components/foundationStandin.js": [
+    "foundationStandin"
+  ],
+  "src/ui/components/friendlyTargets.js": [
+    "clearTargetSilhouettes",
+    "decorateFriendlyTarget",
+    "renderTargetSilhouette"
+  ],
+  "src/ui/components/gameProfileLevelUp.js": [
+    "mountGameProfileLevelUp"
+  ],
+  "src/ui/components/gameProfileOffers.js": [
+    "mountGameProfileOffers"
+  ],
+  "src/ui/components/gameProfileRest.js": [
+    "mountGameProfileRest"
+  ],
+  "src/ui/components/gameProfileSelector.js": [
+    "mountGameProfileSelector",
+    "mountGameProfileSettings",
+    "readNewGameProfile",
+    "resolveNewGameProfile"
+  ],
+  "src/ui/components/hand.js": [
+    "measureHandUpcastHeight",
+    "mountHand"
+  ],
+  "src/ui/components/handDiscard.js": [
+    "openHandDiscard"
+  ],
+  "src/ui/components/handInspectionOverlay.js": [
+    "mountHandInspectionOverlay",
+    "revealHandUpcastControl"
+  ],
+  "src/ui/components/hints.js": [
+    "hintBarHtml",
+    "refreshHintBars",
+    "setHintMode"
+  ],
+  "src/ui/components/holdbeat.js": [
+    "installHoldBeat"
+  ],
+  "src/ui/components/holdconfirm.js": [
+    "armConfirm",
+    "armHold",
+    "armInspect",
+    "beatArmer",
+    "beatCue",
+    "holdMs"
+  ],
+  "src/ui/components/hudQuickSettings.js": [
+    "hudQuickSettingsHtml",
+    "refreshHudQuickSettings",
+    "updateHudQuickSettingsBinding",
+    "wireHudQuickSettings"
+  ],
+  "src/ui/components/hudmeta.js": [
+    "buildMetadataTrailHtml",
+    "cindersCounterHtml",
+    "hudShellHtml",
+    "identityClusterHtml",
+    "inventoryBeltHtml",
+    "primaryHudRowHtml",
+    "quickAccessPanelHtml",
+    "runHeaderStripHtml",
+    "sharedRunHudHtml",
+    "vitalsPanelHtml"
+  ],
+  "src/ui/components/iconTray.js": [
+    "fitBadgeRowTray",
+    "fitIconTray",
+    "iconTray",
+    "observeIconTray",
+    "refreshIconTray",
+    "setIconTrayItems",
+    "setIconTrayOverflow",
+    "trayIcon",
+    "unobserveIconTray"
+  ],
+  "src/ui/components/illustratedBackground.js": [
+    "illustratedBackgroundHtml",
+    "orderedSceneLayers"
+  ],
+  "src/ui/components/illustratedCard.js": [
+    "fitIllustratedCards",
+    "illustratedArtwork",
+    "illustratedCardHtml",
+    "panelInterior",
+    "rulesBoxGrow"
+  ],
+  "src/ui/components/illustratedCardFitter.js": [
+    "fitIllustratedCards",
+    "fitRulesToBox",
+    "roomyFloor",
+    "showReading"
+  ],
+  "src/ui/components/intentFollowUps.js": [
+    "intentFollowUps"
+  ],
+  "src/ui/components/intentIcon.js": [
+    "intentIcon"
+  ],
+  "src/ui/components/intro.js": [
+    "showBossIntro"
+  ],
+  "src/ui/components/layeredEnvironment.js": [
+    "fitLayeredEnvironment",
+    "layeredEnvironmentGeometry",
+    "layeredEnvironmentHtml",
+    "wireLayeredEnvironment"
+  ],
+  "src/ui/components/loreLine.js": [
+    "loreLine",
+    "openLoreModal"
+  ],
+  "src/ui/components/mapDetail.js": [
+    "mountMapDetail",
+    "tileId",
+    "tileReachable"
+  ],
+  "src/ui/components/mapFog.js": [
+    "mapFogDefs"
+  ],
+  "src/ui/components/mapHeader.js": [
+    "applyMapHeaderLayout",
+    "readMapHeaderViewport",
+    "sizeMapHeader"
+  ],
+  "src/ui/components/mapNodeInk.js": [
+    "mapNodeInk"
+  ],
+  "src/ui/components/mapboard.js": [
+    "attachParchment",
+    "mapTravelEdgesHtml",
+    "mountMapBoard",
+    "refitCamera",
+    "savedZoom",
+    "watchViewport"
+  ],
+  "src/ui/components/menuComponents.js": [
+    "menuEyebrow",
+    "renderMenuOverlay",
+    "renderQuickMenu",
+    "updateMenuSelection"
+  ],
+  "src/ui/components/merchantOffer.js": [
+    "arrangeMerchantOffer",
+    "merchantThumbnail"
+  ],
+  "src/ui/components/modalShell.js": [
+    "bindModalDismiss",
+    "buttonRow",
+    "modalCloseButton",
+    "modalCloseButtonHtml",
+    "modalFooter",
+    "modalHead",
+    "openModal",
+    "restampModalWireframes",
+    "stampModalSize"
+  ],
+  "src/ui/components/mountServiceModal.js": [
+    "mountMountServiceModal"
+  ],
+  "src/ui/components/offlinePlay.js": [
+    "openOfflinePlay"
+  ],
+  "src/ui/components/optionDecision.js": [
+    "armOptionDecision"
+  ],
+  "src/ui/components/optionRowList.js": [
+    "markOptionRows",
+    "optionColumns",
+    "optionRowList"
+  ],
+  "src/ui/components/overlay.js": [
+    "closeOverlay",
+    "hybridStatsPlan",
+    "openOverlay",
+    "panelFor"
+  ],
+  "src/ui/components/piles.js": [
+    "openPileModal",
+    "openSpentPileModal"
+  ],
+  "src/ui/components/progressionCards.js": [
+    "attributesCard",
+    "characterStatsButton",
+    "openProgressionAllocation",
+    "openStatsInspection",
+    "progressionTip"
+  ],
+  "src/ui/components/quicknav.js": [
+    "closeQuickNav",
+    "lockEquipmentRows",
+    "openQuickNav",
+    "quickNavFolds",
+    "quickNavIsOpen",
+    "quickNavMode",
+    "resolveQuickNavMode",
+    "saveAction",
+    "setQuickNav"
+  ],
+  "src/ui/components/reactionChoiceModal.js": [
+    "collapseIdenticalOptions",
+    "committedReactionStack",
+    "openReactionChoiceModal",
+    "reactionOptionArt",
+    "reactionOptionArtwork",
+    "reactionStackEntryName",
+    "stackedCardIds"
+  ],
+  "src/ui/components/reactionNote.js": [
+    "avoidRects",
+    "createReactionNote",
+    "latestReactionNote"
+  ],
+  "src/ui/components/recoveryLedger.js": [
+    "recoveryLedgerHtml"
+  ],
+  "src/ui/components/refusal.js": [
+    "reasonNote",
+    "reasonWhenDisabled",
+    "refusalOf",
+    "refuses",
+    "refusesWhen"
+  ],
+  "src/ui/components/relicRail.js": [
+    "mountRelicRail",
+    "relicRailTile"
+  ],
+  "src/ui/components/resbars.js": [
+    "resourceBars"
+  ],
+  "src/ui/components/restFrame.js": [
+    "mountRestFrame",
+    "restPresentation"
+  ],
+  "src/ui/components/rewardDoor.js": [
+    "mountRewardDoor",
+    "replaceRewardFoot"
+  ],
+  "src/ui/components/rollReceipt.js": [
+    "rollReceiptLines"
+  ],
+  "src/ui/components/runHud.js": [
+    "runHudHtml",
+    "seatNameOf",
+    "syncArmouryNew",
+    "wireRunHud"
+  ],
+  "src/ui/components/runPotions.js": [
+    "mountRunPotions",
+    "openRunPotions"
+  ],
+  "src/ui/components/saveSlotSelector.js": [
+    "closeSaveSlotSelector",
+    "deleteSlotReview",
+    "openNewerSaveNotice",
+    "openRefusedSaveNotice",
+    "openReplaceSaveReview",
+    "openSaveSlotSelector",
+    "openSaveStatusReview",
+    "saveSlotCopyHtml",
+    "slotDecisionDoor",
+    "slotDoor",
+    "slotFacts",
+    "slotFactsSpoken",
+    "slotMeta",
+    "slotOption"
+  ],
+  "src/ui/components/sceneBackdrop.js": [
+    "fitSceneBackdrop"
+  ],
+  "src/ui/components/scenePainting.js": [
+    "scenePainting"
+  ],
+  "src/ui/components/seedfield.js": [
+    "attachSeedField"
+  ],
+  "src/ui/components/servicePortrait.js": [
+    "servicePortrait"
+  ],
+  "src/ui/components/settingsDefaultsChoice.js": [
+    "openSettingsDefaultsChoice"
+  ],
+  "src/ui/components/settingsPreview.js": [
+    "mountSettingsPreview",
+    "settingsPreviewHtml",
+    "settingsPreviewShown"
+  ],
+  "src/ui/components/settingsSync.js": [
+    "applyProfile",
+    "autoLoadEnabled",
+    "autoLoadProfile",
+    "deviceSyncConfig",
+    "includeDeviceEnabled",
+    "renderSettingsSync"
+  ],
+  "src/ui/components/shopBuyChoice.js": [
+    "openShopArmamentChoice",
+    "openShopCardChoice"
+  ],
+  "src/ui/components/smithPaneParts.js": [
+    "changeSummary",
+    "costPairNode",
+    "deltaNode",
+    "economyNode",
+    "pairSpaced"
+  ],
+  "src/ui/components/smithUpgradeModal.js": [
+    "itemAtTier",
+    "mountSmithUpgradeModal"
+  ],
+  "src/ui/components/spriteArtFlags.js": [
+    "markSpriteArt"
+  ],
+  "src/ui/components/staminaOrb.js": [
+    "paintStaminaOrb",
+    "staminaOrbHtml"
+  ],
+  "src/ui/components/startupGate.js": [
+    "mountStartupGate"
+  ],
+  "src/ui/components/statAllocationCard.js": [
+    "renderStatAllocationCard"
+  ],
+  "src/ui/components/stature.js": [
+    "statureFor"
+  ],
+  "src/ui/components/toast.js": [
+    "createToast"
+  ],
+  "src/ui/components/tooltip.js": [
+    "attachTooltip",
+    "clearControlSelection",
+    "configureTooltipSettings",
+    "ensureTooltip",
+    "esc",
+    "hideTooltip",
+    "registerTooltipDecorator",
+    "registerTooltipExpander",
+    "scheduleTooltipClose",
+    "showTooltipAt",
+    "showTooltipFor",
+    "showTooltipForRect",
+    "stickTooltip",
+    "syncHeldTriggers",
+    "watchHeldTriggers"
+  ],
+  "src/ui/components/tooltipGlossary.js": [
+    "configureTooltipGlossary",
+    "decorateKeywords",
+    "inspectionTag",
+    "keywordExplanations"
+  ],
+  "src/ui/components/trayComponents.js": [
+    "renderTray"
+  ],
+  "src/ui/components/tutorial.js": [
+    "mountTutorial"
+  ],
+  "src/ui/components/uiComponents.js": [
+    "markUiComponent",
+    "uiComponentAttrs"
+  ],
+  "src/ui/components/upcastChoice.js": [
+    "openUpcastChoice",
+    "upcastChoicePlan"
+  ],
+  "src/ui/components/upgradeConfirm.js": [
+    "upgradeConfirmNodes",
+    "upgradeFacesNode"
+  ],
+  "src/ui/components/upgradeDesk.js": [
+    "deskArt",
+    "deskRow",
+    "mountUpgradeDesk"
+  ],
+  "src/ui/components/upright.js": [
+    "updateUprightGate",
+    "uprightGateIsUp"
+  ],
+  "src/ui/components/veil.js": [
+    "announceSettingsSettled",
+    "topVeil",
+    "veilIsOpen"
+  ],
+  "src/ui/components/victoryBeat.js": [
+    "victoryBeat"
+  ],
+  "src/ui/components/w1Workspace.js": [
+    "land",
+    "markCurrent",
+    "restampWorkspaceFrames",
+    "workspaceFrame"
+  ],
+  "src/ui/components/weaknessChips.js": [
+    "weaknessChipText",
+    "weaknessChips"
+  ],
+  "src/ui/components/whatChangedModal.js": [
+    "openWhatChangedModal",
+    "showRunReceipt"
+  ],
+  "src/ui/consoleLog.js": [
+    "consoleLogText",
+    "consoleValueText",
+    "createConsoleRecorder"
+  ],
+  "src/ui/debuglog.js": [
+    "dlog",
+    "failureBanner",
+    "getEntries",
+    "isBenignPageNotice",
+    "logText",
+    "openConsoleLog",
+    "openDebugLog",
+    "registerConsoleSnapshot",
+    "registerDebugChrome"
+  ],
+  "src/ui/deckReadingArt.js": [
+    "defaultCardArtFallbacks",
+    "playingCardArt",
+    "playingCardArtwork"
+  ],
+  "src/ui/deckReadingOutlines.js": [
+    "defaultCardArtFallbacks",
+    "defaultCardArtwork"
+  ],
+  "src/ui/defaultCardArtwork.js": [
+    "defaultCardArtFallbacks",
+    "defaultCardArtwork"
+  ],
+  "src/ui/displayAppearance.js": [
+    "applyDisplayAppearance",
+    "displayAppearance"
+  ],
+  "src/ui/displaySettings.js": [
+    "applyCardSizeSettings",
+    "applyDisplaySettings",
+    "applyTapSize",
+    "applyUiScale",
+    "configureDisplaySettings",
+    "installCardSizeResize",
+    "installDisplaySettings",
+    "layoutForCap",
+    "projectHudPresentation",
+    "reflexAutoScale",
+    "resolveLayout",
+    "setRootPropertyIfChanged"
+  ],
+  "src/ui/domWrite.js": [
+    "hooks",
+    "markBuilt",
+    "morph",
+    "onLive",
+    "reconcileList",
+    "setAttr",
+    "setData",
+    "setStyle",
+    "setVar"
+  ],
+  "src/ui/enemyExpansionStage.js": [
+    "enemyExpansionSprite"
+  ],
+  "src/ui/enemyPoseStage.js": [
+    "createEnemyPoseStage"
+  ],
+  "src/ui/enemyStates.js": [
+    "enemyAuraFilter",
+    "enemyPresentation"
+  ],
+  "src/ui/floaterStack.js": [
+    "columnTop",
+    "createFloaterStack"
+  ],
+  "src/ui/frameMeasure.js": [
+    "flushMeasureJobs",
+    "invalidateMeasures",
+    "measure",
+    "measureThenMutate"
+  ],
+  "src/ui/fx.js": [
+    "anchorLocalBox",
+    "animateEvents",
+    "banner",
+    "bigHitLanded",
+    "callout",
+    "calloutForEvent",
+    "clampBox",
+    "clearCallouts",
+    "combatReadoutLayer",
+    "dmgClass",
+    "enemyPoiseBroken",
+    "floatNum",
+    "floaterLanesFit",
+    "getAnimSpeed",
+    "groupBeats",
+    "guardHitFloatParts",
+    "localTurnStart",
+    "outcomeKindForEvent",
+    "overheadCeiling",
+    "placeAnchored",
+    "placeGap",
+    "playBeatCues",
+    "playBeatHaptics",
+    "playEventCues",
+    "playHitSound",
+    "playTimeline",
+    "playerLostHp",
+    "setAnimSpeed",
+    "stackPriority",
+    "stanceState",
+    "statusPopupFor",
+    "uiZoom",
+    "viewportLocalBox"
+  ],
+  "src/ui/gesture.js": [
+    "armPress",
+    "trackGesture"
+  ],
+  "src/ui/handAxis.js": [
+    "applyHandExemption"
+  ],
+  "src/ui/haptics.js": [
+    "createHaptics",
+    "hapticsEnabled",
+    "joinPatterns"
+  ],
+  "src/ui/highResArt.js": [
+    "applyArtQuality",
+    "artQualityStatus",
+    "builtInArtArrived",
+    "builtInFor",
+    "canPickFolder",
+    "currentArtUrl",
+    "findServedHighRes",
+    "highResFromFiles",
+    "highResFromManifest",
+    "idForRelativePath",
+    "onArtSourceChange",
+    "pickHighResFolder",
+    "refreshMountedArt",
+    "resetHighResArt",
+    "wantsHighRes",
+    "watchMissingFiles",
+    "whenArtSourceChanges"
+  ],
+  "src/ui/imageHints.js": [
+    "hintImage",
+    "imageHintAttrs",
+    "imageHints"
+  ],
+  "src/ui/input.js": [
+    "actionDestination",
+    "actionDestinationForEvent",
+    "actionForButton",
+    "actionHint",
+    "actionLabel",
+    "actionShort",
+    "beginActionPress",
+    "cancelCapture",
+    "cancelKeyCapture",
+    "captureNextButton",
+    "captureNextKey",
+    "clearFocus",
+    "endActionPress",
+    "focusElement",
+    "focusFirst",
+    "getBindings",
+    "getKeyBindings",
+    "hasGamepad",
+    "hasTabRing",
+    "initInput",
+    "isEngaged",
+    "isSwitchInput",
+    "isTypingTarget",
+    "keyLabel",
+    "matchAction",
+    "padLabel",
+    "releaseActionControl",
+    "setActionControl",
+    "setBindings",
+    "setInputGate",
+    "setKeyBindings",
+    "setScreenKeyClaim",
+    "setTabRing"
+  ],
+  "src/ui/kit/categoryNav.js": [
+    "categoryNav",
+    "landControl",
+    "replanCategoryNavs"
+  ],
+  "src/ui/kit/index.js": [
+    "BUTTON_ROW_SIZES",
+    "MODAL_SIZES",
+    "applyButtonSizeTokens",
+    "artWell",
+    "band",
+    "bandRow",
+    "banner",
+    "bindModalDismiss",
+    "blocker",
+    "button",
+    "buttonRow",
+    "cardGrid",
+    "categoryNav",
+    "chip",
+    "choiceRow",
+    "cluster",
+    "decide",
+    "delta",
+    "detailCard",
+    "dock",
+    "el",
+    "esc",
+    "eyebrow",
+    "face",
+    "flavour",
+    "fold",
+    "glyph",
+    "hairline",
+    "html",
+    "iconButton",
+    "keycap",
+    "kitItem",
+    "kitLine",
+    "labelStack",
+    "landControl",
+    "logBox",
+    "meter",
+    "meters",
+    "modalCloseButton",
+    "modalCloseButtonHtml",
+    "modalFooter",
+    "modalHead",
+    "openModal",
+    "optionCard",
+    "optionGrid",
+    "optionRow",
+    "options",
+    "ornament",
+    "pageDoor",
+    "pane",
+    "pill",
+    "pip",
+    "pips",
+    "popover",
+    "prose",
+    "rail",
+    "railItem",
+    "railed",
+    "replanCategoryNavs",
+    "row",
+    "segmented",
+    "settingLabelStackHtml",
+    "settingRowOpenHtml",
+    "slot",
+    "stampModalSize",
+    "statPair",
+    "statRow",
+    "statStrip",
+    "statusText",
+    "stepper",
+    "subtitle",
+    "swatch",
+    "swatches",
+    "tab",
+    "tagChip",
+    "titleL",
+    "titleM",
+    "titleMenu",
+    "titleS",
+    "toggle",
+    "tray"
+  ],
+  "src/ui/layeredArt.js": [
+    "layeredArtUrl"
+  ],
+  "src/ui/layeredCardArt.js": [
+    "approvedCardArt",
+    "cardCutoutUrl"
+  ],
+  "src/ui/layoutFrame.js": [
+    "cancelLayoutPass",
+    "scheduleLayoutPass"
+  ],
+  "src/ui/layoutMetrics.js": [
+    "invalidateLayoutMetrics",
+    "layoutMetrics",
+    "rootCssVar"
+  ],
+  "src/ui/modalManager.js": [
+    "focusableControls",
+    "modalOpen",
+    "onModalsClosed",
+    "openModals",
+    "pageLockHeld",
+    "registerModal",
+    "registerPageChrome",
+    "resetModalState",
+    "topModal"
+  ],
+  "src/ui/modalReturn.js": [
+    "dropModalParent",
+    "flushModalReturns",
+    "modalParent",
+    "modalParentLabel",
+    "pushModalParent",
+    "resetModalParents",
+    "returnToModalParent"
+  ],
+  "src/ui/modalState.js": [
+    "modalOpen",
+    "onModalsClosed",
+    "openModals",
+    "registerModal",
+    "registerPageChrome",
+    "resetModalState",
+    "topModal"
+  ],
+  "src/ui/models/ActRouteModel.js": [
+    "actRouteModel"
+  ],
+  "src/ui/models/AdvancedSettingsGroups.js": [
+    "advancedSection",
+    "advancedSubgroups"
+  ],
+  "src/ui/models/AlternativeEnemyTargetGridModel.js": [
+    "alternativeEnemyTargetGrid"
+  ],
+  "src/ui/models/AlternativeFormationModel.js": [
+    "alternativeFormation",
+    "fitAlternativeSprites",
+    "overheadGroupHeightPx",
+    "perspectiveBandRows",
+    "perspectiveCellContains",
+    "perspectiveLanePattern",
+    "shortLandscapeProfile",
+    "validatePerspectiveGrid"
+  ],
+  "src/ui/models/ArmouryInventoryModel.js": [
+    "armouryInventoryModel",
+    "combatPowerRoleLabels",
+    "inventoryClassChoice",
+    "inventoryRowPresentation",
+    "inventoryRowUsable",
+    "inventorySelectionContextText"
+  ],
+  "src/ui/models/ArmouryModels.js": [
+    "armouryCardStripModel",
+    "armouryInventoryModel",
+    "armouryOverlayModel",
+    "armouryPanelModel",
+    "armouryStatsPanelModel",
+    "equipmentSetCellModel",
+    "equipmentSlotModel",
+    "inventoryDetailCardModel",
+    "inventoryItemCardModel"
+  ],
+  "src/ui/models/ArmouryStatsModel.js": [
+    "armouryStatsInitiallyOpen",
+    "armouryStatsModel",
+    "faceSummary",
+    "relicsSummary"
+  ],
+  "src/ui/models/ArmouryWorkspaceModel.js": [
+    "armouryPaneSplit",
+    "armouryRailItems",
+    "inventoryComparison",
+    "inventoryEligibility",
+    "inventoryFooterPlan"
+  ],
+  "src/ui/models/ArtLoadNoticeModel.js": [
+    "artLoadNoticeModel"
+  ],
+  "src/ui/models/BattlefieldStageModel.js": [
+    "battlefieldStageModel"
+  ],
+  "src/ui/models/BehaviorModel.js": [
+    "behaviorModel",
+    "isBehaviorModel"
+  ],
+  "src/ui/models/BootArtStatusModel.js": [
+    "bootArtStatusModel"
+  ],
+  "src/ui/models/ButtonSizeModel.js": [
+    "buttonSizeIds",
+    "buttonSizeTokens",
+    "planButtonGroup",
+    "resolveButtonGroupWidths",
+    "resolveButtonSize"
+  ],
+  "src/ui/models/CardOptionSummaryModel.js": [
+    "analyzeCardEffects",
+    "cardEffectHtml",
+    "cardEffectLine",
+    "summarizeCardOption"
+  ],
+  "src/ui/models/CardSizeModel.js": [
+    "cardDoorStackBelowPx",
+    "cardLevelCssProperties",
+    "cardLevelCssPropertiesFor",
+    "cardLevelWidthCss",
+    "cardLevelWidthPx",
+    "cardLevels",
+    "cardLevelsWithOverrides",
+    "cardMobileBelowPx",
+    "cardShape",
+    "cardShapeCssProperties",
+    "cardShelf",
+    "cardShelfColumnsAt",
+    "cardShelfCssProperties",
+    "cardShelfTrackPx",
+    "cardShelfWidthPx",
+    "cardSizingExport",
+    "cardWidthBounds",
+    "doorReadableMinPx",
+    "levelRestingWidthPx",
+    "normalizeTunedNumber",
+    "restingWidthPx",
+    "tunableVariantNames"
+  ],
+  "src/ui/models/CardUpgradeModel.js": [
+    "cardUpgradeChanges",
+    "cardUpgradeModel"
+  ],
+  "src/ui/models/CategoryNavModel.js": [
+    "categoryNavAfterPick",
+    "categoryNavFace",
+    "categoryNavKey",
+    "categoryNavLanding",
+    "categoryNavPlan"
+  ],
+  "src/ui/models/CharacterSheetModel.js": [
+    "characterLadder",
+    "characterSheetModel",
+    "characterSheetRegistries",
+    "rowState",
+    "trackLadder"
+  ],
+  "src/ui/models/ChoiceBodyModel.js": [
+    "choiceBodyFrameVars",
+    "eventResponseStatus",
+    "restChoiceStatus"
+  ],
+  "src/ui/models/CombatActionIdentityModel.js": [
+    "combatActionIdentity"
+  ],
+  "src/ui/models/CombatBodyModel.js": [
+    "bodyPlacement",
+    "bodyResize",
+    "bodyScaleFactor",
+    "projectBodyBounds"
+  ],
+  "src/ui/models/CombatCompositionModel.js": [
+    "alternativeCombatComposition",
+    "combatArtworkKey",
+    "combatSceneryGround",
+    "combatStandingGround",
+    "insetPerspectiveFootprint",
+    "stableCombatArtwork",
+    "stableHandAnchor"
+  ],
+  "src/ui/models/CombatDisplayReceiptModel.js": [
+    "applyCombatDisplayReceipt"
+  ],
+  "src/ui/models/CombatFormationModel.js": [
+    "combatFormation",
+    "figureCeiling"
+  ],
+  "src/ui/models/CombatHealthModel.js": [
+    "combatHealthModel",
+    "stanceBadgeFor",
+    "visibleBadges"
+  ],
+  "src/ui/models/CombatIntentModel.js": [
+    "combatIntentPresentation",
+    "intentDamageRead"
+  ],
+  "src/ui/models/CombatIntentProjectionModel.js": [
+    "announcesNextContact",
+    "applyCombatIntentReceipt",
+    "flushDeferredIntentClears",
+    "projectCombatIntent"
+  ],
+  "src/ui/models/CombatLayout.js": [
+    "allocateCombatBands",
+    "allocateSceneBands",
+    "minimumHandHeight",
+    "packCombatFooter",
+    "packCombatRails"
+  ],
+  "src/ui/models/CombatLogPaletteModel.js": [
+    "combatLogPalette",
+    "hasCombatLogColorContrast"
+  ],
+  "src/ui/models/CombatOverheadModel.js": [
+    "combatOverheadAnchorX",
+    "combatOverheadAnchors",
+    "combatOverheadRibbonShift",
+    "combatTargetAnchors",
+    "combatTargetPackSize"
+  ],
+  "src/ui/models/CombatOverlayModel.js": [
+    "intentVisible",
+    "overheadStackBottom",
+    "overlayGeometry"
+  ],
+  "src/ui/models/CombatRangeActionModel.js": [
+    "canChooseRangeRoute",
+    "combatRangeActionPlan",
+    "rangeHitLabel"
+  ],
+  "src/ui/models/CombatRangeRankModel.js": [
+    "applyRangeRankEvent",
+    "combatRangeRanks",
+    "rangeRankSnapshot",
+    "rangeRanksFromSnapshot"
+  ],
+  "src/ui/models/CombatRoundsScreenModel.js": [
+    "followUpSymbols",
+    "iconForStance",
+    "perceptionLevel",
+    "readStage"
+  ],
+  "src/ui/models/CombatSpriteScaleModel.js": [
+    "combatSpriteRatio",
+    "fitCombatSprites"
+  ],
+  "src/ui/models/CombatStatusPresentationModel.js": [
+    "combatStatusPresentationRegistries"
+  ],
+  "src/ui/models/CombatToolsModel.js": [
+    "combatLogDragScale",
+    "combatLogHeight",
+    "combatLogSnapSize",
+    "combatToolsModel"
+  ],
+  "src/ui/models/CombatViewportSizeModel.js": [
+    "bodyHeightFraction",
+    "fitViewportSprites",
+    "separateRow",
+    "statureMultiplier",
+    "targetBodyHeight"
+  ],
+  "src/ui/models/CombatantInspectorModel.js": [
+    "combatantInspectorModel"
+  ],
+  "src/ui/models/CombatantInspectorSections.js": [
+    "previewMeters",
+    "projectCombatantInspector"
+  ],
+  "src/ui/models/CombatantMeterModel.js": [
+    "combatantMeterGeometry",
+    "meterRowSelectedOnly"
+  ],
+  "src/ui/models/CombatantStackModel.js": [
+    "planCombatantStack"
+  ],
+  "src/ui/models/CombatantStatRows.js": [
+    "combatStatRows"
+  ],
+  "src/ui/models/CompendiumModel.js": [
+    "compendiumSections",
+    "compendiumView",
+    "entryDetail"
+  ],
+  "src/ui/models/ConfirmationReviewModel.js": [
+    "burnReview",
+    "deleteSaveReview",
+    "loadOverRunReview",
+    "purchaseReview",
+    "replaceSaveReview",
+    "restReview",
+    "reviewEyebrow",
+    "reviewTone",
+    "runIdentity",
+    "sellReview"
+  ],
+  "src/ui/models/ControlAppearance.js": [
+    "assertControlException",
+    "controlAppearance",
+    "resolveControlRole"
+  ],
+  "src/ui/models/CreationFeatBrowserModel.js": [
+    "creationFeatBrowserGroups"
+  ],
+  "src/ui/models/CreationWorkspaceModel.js": [
+    "creationAbilitySelection",
+    "creationAttributeColumns",
+    "creationCategories",
+    "creationChoiceLines",
+    "creationClassPreview",
+    "creationCssProperties",
+    "creationFitsChoices",
+    "creationFlowCategories",
+    "creationFooterPlan",
+    "creationHasSpells",
+    "creationPortraitRem",
+    "creationRailItems",
+    "creationStep",
+    "creationUnfoldGeometry"
+  ],
+  "src/ui/models/DeckEditorModel.js": [
+    "deckEditorDoors",
+    "deckEditorModel",
+    "deckEditorView",
+    "deckVariantKey",
+    "nextFilterPreset",
+    "openDeckEdit",
+    "rankZeroLabelId"
+  ],
+  "src/ui/models/DesktopCombatFooter.js": [
+    "desktopFieldBottom",
+    "desktopFooterEnabled",
+    "desktopFooterLayout",
+    "desktopHandLayout",
+    "mobileFieldOverlap"
+  ],
+  "src/ui/models/DialogueModel.js": [
+    "createDialogueState",
+    "dialogueBands",
+    "dialogueBeats",
+    "dialogueCompactBand",
+    "dialogueCompactHost",
+    "dialogueEntrance",
+    "dialogueFooterPlan",
+    "dialogueFrameVars",
+    "dialogueHudCompact",
+    "dialogueLanes",
+    "dialogueLayers",
+    "dialogueModel",
+    "dialogueResponsePlan",
+    "dialogueSceneConfig",
+    "dialogueStack",
+    "dialogueStep"
+  ],
+  "src/ui/models/EnemyBurdenModel.js": [
+    "projectEnemyBurdenHand"
+  ],
+  "src/ui/models/EnemyDeckInspectionModel.js": [
+    "enemyDeckInspection"
+  ],
+  "src/ui/models/EnemyIntentReadModel.js": [
+    "enemyIntentRead"
+  ],
+  "src/ui/models/FloaterPolicyModel.js": [
+    "floaterGlyphShown",
+    "floaterNumberShown",
+    "floaterWordShown",
+    "setFloaterPolicyEnabled"
+  ],
+  "src/ui/models/FooterLayoutModel.js": [
+    "footerArtHeight",
+    "footerArtWidth",
+    "footerBounds",
+    "footerLayoutModel",
+    "footerStaminaLayers",
+    "footerText"
+  ],
+  "src/ui/models/FormFactorModel.js": [
+    "formFactorFor",
+    "isWideFormFactor"
+  ],
+  "src/ui/models/FormationGridModel.js": [
+    "formationTileGeometry",
+    "perspectiveCellOutlinePath"
+  ],
+  "src/ui/models/GameProfileRestModel.js": [
+    "gameProfileRestModel",
+    "gameProfileSmithModel"
+  ],
+  "src/ui/models/GameProfileTitleModel.js": [
+    "loadableTitleSlots",
+    "profileStarterCount"
+  ],
+  "src/ui/models/HandLayout.js": [
+    "handGeometryKey",
+    "handInfoPosition",
+    "handLayout",
+    "holdPlaySlots",
+    "moveHandInstance",
+    "reconcileHandOrder",
+    "responsiveHandLayout",
+    "restingHandEnvelope"
+  ],
+  "src/ui/models/HudLayoutOffsetModel.js": [
+    "hudGeometry",
+    "offsetPlacement",
+    "offsetTargetPlate",
+    "targetPlateBox",
+    "toolsRowTop"
+  ],
+  "src/ui/models/HudPrimitiveModels.js": [
+    "actionControlModel",
+    "itemTrayModel",
+    "metadataFieldModel",
+    "panelModel"
+  ],
+  "src/ui/models/HudQuickSettingsModel.js": [
+    "hudQuickSettingsModel",
+    "musicQuickSettingsPlan"
+  ],
+  "src/ui/models/HudVisibilityModel.js": [
+    "applyHudVisibility",
+    "resolveHudVisibility"
+  ],
+  "src/ui/models/IconTrayModel.js": [
+    "planIconTray"
+  ],
+  "src/ui/models/IdentityModel.js": [
+    "artworkAnchor",
+    "metadataFooter"
+  ],
+  "src/ui/models/InspectControlModel.js": [
+    "inspectControl",
+    "inspectControlCss",
+    "inspectControlRisePx"
+  ],
+  "src/ui/models/IntentFollowUpModel.js": [
+    "advanceFollowUps",
+    "createFollowMemo",
+    "followUpPlan",
+    "remainingFollowUps",
+    "trimFollowUps"
+  ],
+  "src/ui/models/InventoryBeltModel.js": [
+    "inventoryBeltModel"
+  ],
+  "src/ui/models/LoreTypeModel.js": [
+    "applyLoreType",
+    "loreParts",
+    "resolveLoreType"
+  ],
+  "src/ui/models/MapDetailModel.js": [
+    "detailLevel",
+    "visibleTiles"
+  ],
+  "src/ui/models/MapHeaderLayout.js": [
+    "mapHeaderLayout"
+  ],
+  "src/ui/models/MapSelectionModel.js": [
+    "pickMapNode",
+    "projectMapContext"
+  ],
+  "src/ui/models/MenuModels.js": [
+    "menuOverlayModel",
+    "quickMenuPanelModel"
+  ],
+  "src/ui/models/MobileFloorModel.js": [
+    "holdFloorShadowTop",
+    "mobileFloorLayer",
+    "mobileFloorShadowTop"
+  ],
+  "src/ui/models/MountServiceModel.js": [
+    "mountServiceModel"
+  ],
+  "src/ui/models/PileViewerModel.js": [
+    "spentPileView"
+  ],
+  "src/ui/models/PlayedCombatCard.js": [
+    "resolvePlayedCombatCard"
+  ],
+  "src/ui/models/PlayerArtworkModel.js": [
+    "playerCardArtwork"
+  ],
+  "src/ui/models/PlayerDetailsPlacementModel.js": [
+    "playerDetailsPlacement"
+  ],
+  "src/ui/models/PortraitCropModel.js": [
+    "closeUpPlacement"
+  ],
+  "src/ui/models/PossessionVariantModel.js": [
+    "consumablePurposes",
+    "equipmentKind",
+    "possessionVariant",
+    "relicEffectModes",
+    "relicTriggers"
+  ],
+  "src/ui/models/PotionContentsModel.js": [
+    "potionContents",
+    "potionCountStringId"
+  ],
+  "src/ui/models/PotionInspectionModel.js": [
+    "potionInspectionView"
+  ],
+  "src/ui/models/PreviewMemoModel.js": [
+    "createPreviewMemo",
+    "fightPrewarmJobs"
+  ],
+  "src/ui/models/ProfileClassChoiceModel.js": [
+    "profileClassChoiceIds"
+  ],
+  "src/ui/models/ProfileWorkspaceModel.js": [
+    "profileCategoryOf",
+    "profileWorkspaceView"
+  ],
+  "src/ui/models/ProgressionInspectionModel.js": [
+    "progressionStats",
+    "skillInspection"
+  ],
+  "src/ui/models/QuickAccessPanelModel.js": [
+    "quickAccessPanelModel"
+  ],
+  "src/ui/models/RangeSettingsModel.js": [
+    "rangeSettingsRows"
+  ],
+  "src/ui/models/ReactionIncomingModel.js": [
+    "stackedEnemyReactionIntent"
+  ],
+  "src/ui/models/RunHeaderModel.js": [
+    "buildMetadataTrailModel",
+    "cindersCounterModel",
+    "identityClusterModel",
+    "runHeaderModel"
+  ],
+  "src/ui/models/RunHudLayerModel.js": [
+    "runHudLayers"
+  ],
+  "src/ui/models/RunPotionModel.js": [
+    "applyRunPotion",
+    "runPotionPlan",
+    "runPotionRows",
+    "runPotionVerb"
+  ],
+  "src/ui/models/SaveSlotSelectionModel.js": [
+    "saveSlotSelectionModel"
+  ],
+  "src/ui/models/SaveStatusModel.js": [
+    "saveStatusReview",
+    "savedAtLabel"
+  ],
+  "src/ui/models/SceneLayerModel.js": [
+    "battlefieldBackdropConfig",
+    "sceneLayers",
+    "sceneWindowLayers"
+  ],
+  "src/ui/models/ScreenshotFixtureModel.js": [
+    "screenshotRoutePath"
+  ],
+  "src/ui/models/SelectionEffectModel.js": [
+    "selectionEffect",
+    "selectionGlowFilter",
+    "selectionRevealDelayMs"
+  ],
+  "src/ui/models/SettingsCapabilitiesModel.js": [
+    "activeSettingsProfile",
+    "settingsRowAvailable"
+  ],
+  "src/ui/models/SettingsRowsModel.js": [
+    "bindSettingsRowHooks",
+    "resolveGraceRefill"
+  ],
+  "src/ui/models/SettingsWorkspaceModel.js": [
+    "settingsNavigationPlan",
+    "settingsRowShowsHelp",
+    "stepCategory"
+  ],
+  "src/ui/models/ShopWorkspaceModel.js": [
+    "shopOffersWidthPx",
+    "shopWorkspaceLayout"
+  ],
+  "src/ui/models/SmithSelectionModel.js": [
+    "smithSelectionModel"
+  ],
+  "src/ui/models/SmithWorkspaceModel.js": [
+    "smithCandidateRows",
+    "smithPaneSlots",
+    "smithSelectorFace",
+    "smithService",
+    "smithWorkspaceVars"
+  ],
+  "src/ui/models/StaminaOrbModel.js": [
+    "combatVitals",
+    "manaGemSize",
+    "manaRingEnabled",
+    "staminaOrbModel"
+  ],
+  "src/ui/models/StartupGateModels.js": [
+    "startupGateModel"
+  ],
+  "src/ui/models/TargetHudModel.js": [
+    "createTargetHudDwell",
+    "enemyHudPlacement",
+    "miniHudScale",
+    "playerHudPlacement",
+    "targetBodyHudPlacement",
+    "targetHudConfig",
+    "targetHudDesiredIds",
+    "targetHudEnabled",
+    "targetHudMatchup",
+    "targetHudPinnedIds",
+    "targetHudPinnedOnly",
+    "targetHudTintIds"
+  ],
+  "src/ui/models/TargetLayerModel.js": [
+    "targetLayer",
+    "targetOutline"
+  ],
+  "src/ui/models/TooltipPlacementModel.js": [
+    "tooltipArrow",
+    "tooltipArrowSize",
+    "tooltipPlacementIntent",
+    "tooltipPlacementModel",
+    "tooltipWireframe",
+    "tooltipWireframeConfig"
+  ],
+  "src/ui/models/TouchFlickModel.js": [
+    "flickPreferences",
+    "flickVerdict",
+    "nearestFlickTarget",
+    "recordFlickPoint",
+    "touchPoint"
+  ],
+  "src/ui/models/TrayModels.js": [
+    "trayModel"
+  ],
+  "src/ui/models/UiComponentId.js": [
+    "isUiComponentId"
+  ],
+  "src/ui/models/VitalsPanelModel.js": [
+    "vitalsPanelModel"
+  ],
+  "src/ui/models/WireframeChoiceModel.js": [
+    "resolveCategoryNavMode",
+    "resolveFooterSize",
+    "resolveModalRung",
+    "resolveSceneConfig",
+    "resolveWorkspaceSpec",
+    "wireframeChoice",
+    "wireframeChoiceSpec",
+    "wireframeChoices"
+  ],
+  "src/ui/models/WorkspaceModel.js": [
+    "stepCategory",
+    "workspaceFrameVars"
+  ],
+  "src/ui/models/acBadge.js": [
+    "acBadgeText",
+    "acFor"
+  ],
+  "src/ui/models/deckEditorCollectionRows.js": [
+    "deckEditorCollectionRows"
+  ],
+  "src/ui/models/deckEditorCosts.js": [
+    "deckEditorCosts",
+    "deckEditorResourceGroups"
+  ],
+  "src/ui/models/smithCandidateOrder.js": [
+    "classifySmithCandidate",
+    "defaultSmithSelection",
+    "orderSmithCandidates"
+  ],
+  "src/ui/models/targetCellAssignment.js": [
+    "assignCells"
+  ],
+  "src/ui/models/targetDirectPlacement.js": [
+    "directPlacement"
+  ],
+  "src/ui/motion.js": [
+    "reducedMotionRequested"
+  ],
+  "src/ui/offlineInstall.js": [
+    "makeAvailableOffline",
+    "offlinePacks",
+    "offlineState",
+    "offlineSupport",
+    "pageCacheKey",
+    "removeOfflineCopy",
+    "workerUrl"
+  ],
+  "src/ui/offlineZipFlow.js": [
+    "createZipFlow",
+    "megabytes",
+    "zipFailureText",
+    "zipOffer"
+  ],
+  "src/ui/paintSignature.js": [
+    "createPaintGate",
+    "paintSignature"
+  ],
+  "src/ui/paintedOutfits.js": [
+    "createPaintedStage",
+    "paintedPortraitUrl",
+    "paintedPresentation"
+  ],
+  "src/ui/performance.js": [
+    "coarsePointer",
+    "effectsEnabled",
+    "effectsOff",
+    "liteRendering",
+    "migrateEffectsSetting",
+    "motionFlags",
+    "motionOff",
+    "resolveCombatPacing",
+    "resolveMotionIdle",
+    "resolvePerformanceMode"
+  ],
+  "src/ui/poiseHelp.js": [
+    "poiseHelpText"
+  ],
+  "src/ui/presentationSequence.js": [
+    "playPresentationSequence"
+  ],
+  "src/ui/previews/tooltipReviewScene.js": [
+    "mountTooltipReview"
+  ],
+  "src/ui/proceduralCardArt.js": [
+    "proceduralCardArt"
+  ],
+  "src/ui/prologueCharacter.js": [
+    "paintPrologueCharacter",
+    "placePrologueCharacter",
+    "prologueCharacterDimensions",
+    "prologueTravellerGeometry",
+    "prologueTravellerHeightForWidth",
+    "prologueTravellerResizeScale"
+  ],
+  "src/ui/quitGame.js": [
+    "mountQuitScreen"
+  ],
+  "src/ui/reaverAttack.js": [
+    "isReaverAttackEligible",
+    "playReaverAttack",
+    "preloadReaverAttackFrames",
+    "reaverAttackFrameUrls",
+    "reaverAttackTiming"
+  ],
+  "src/ui/reviewedCardArt.js": [
+    "reviewedCardArt"
+  ],
+  "src/ui/sceneConfig.js": [
+    "w4Parent",
+    "w4cLayout"
+  ],
+  "src/ui/screens/about.js": [
+    "renderAboutSection",
+    "renderChangelogSection",
+    "shouldLinkChangelog",
+    "shouldLinkDebugVersion"
+  ],
+  "src/ui/screens/bestiary.js": [
+    "mountBestiary"
+  ],
+  "src/ui/screens/blacksmith.js": [
+    "mountBlacksmith"
+  ],
+  "src/ui/screens/characterSheet.js": [
+    "cadenceLine",
+    "grantText",
+    "openCharacterSheet",
+    "openSkillInspection",
+    "skillTrackButton"
+  ],
+  "src/ui/screens/combat.js": [
+    "cardHotkeyAction",
+    "mountCombat"
+  ],
+  "src/ui/screens/compendium.js": [
+    "mountCompendium"
+  ],
+  "src/ui/screens/controls.js": [
+    "renderControls"
+  ],
+  "src/ui/screens/customize.js": [
+    "mountCustomize"
+  ],
+  "src/ui/screens/deckEditor.js": [
+    "mountDeckEditor"
+  ],
+  "src/ui/screens/dialogue.js": [
+    "mountDialogue"
+  ],
+  "src/ui/screens/draft.js": [
+    "mountDraft"
+  ],
+  "src/ui/screens/equipment.js": [
+    "armouryDestinationPlan",
+    "authoredSubject",
+    "contextRegions",
+    "isCollectibleCategory",
+    "mountEquipment",
+    "opensCollapsed",
+    "pieceChip",
+    "regionById",
+    "regionIds",
+    "resetArmouryTraySession",
+    "setPieceChipChosen",
+    "subjectRegion",
+    "viewCells",
+    "viewCellsSay",
+    "viewIds",
+    "viewLayout"
+  ],
+  "src/ui/screens/event.js": [
+    "mountEvent"
+  ],
+  "src/ui/screens/gameover.js": [
+    "mountGameOver",
+    "slainByLine"
+  ],
+  "src/ui/screens/history.js": [
+    "mountHistory"
+  ],
+  "src/ui/screens/map.js": [
+    "flushPendingSave",
+    "mountMap",
+    "releaseMapScreen"
+  ],
+  "src/ui/screens/profileArchive.js": [
+    "openProfileArchive",
+    "renderProfileSection"
+  ],
+  "src/ui/screens/profileNotice.js": [
+    "mountProfileNotice"
+  ],
+  "src/ui/screens/prologue.js": [
+    "mountPrologue",
+    "previewPrologue"
+  ],
+  "src/ui/screens/prologueSceneEditor.js": [
+    "openPrologueSceneEditor"
+  ],
+  "src/ui/screens/rest.js": [
+    "mountRest"
+  ],
+  "src/ui/screens/reward.js": [
+    "mountRewards"
+  ],
+  "src/ui/screens/settings.js": [
+    "activeAdvancedGroup",
+    "allResettableKeys",
+    "applySeedPatch",
+    "buttonStep",
+    "captureView",
+    "categoryHandler",
+    "categoryHtml",
+    "categoryTip",
+    "clearSettingsNotice",
+    "closedGate",
+    "commitNumberRow",
+    "compactAdvancedRow",
+    "compactRowLabel",
+    "confirmResetAll",
+    "developerSwitchHtml",
+    "dropUndoOffer",
+    "filedCategories",
+    "fullscreenCapability",
+    "gateSentence",
+    "generalGroup",
+    "generalGroups",
+    "hiddenTuningKeys",
+    "isFullscreen",
+    "musicEnabledCondition",
+    "niceCeil",
+    "offerUndo",
+    "openSettings",
+    "paintConfigProblems",
+    "pendingUndo",
+    "promotionFor",
+    "refreshGates",
+    "renderSettings",
+    "resetKeys",
+    "resolveArmamentsPhonePlacement",
+    "resolveArmamentsPresentation",
+    "resolveGraceRefill",
+    "resolveLevelUpValue",
+    "resolveNumberRow",
+    "resolveTapSize",
+    "restoreView",
+    "rowDefault",
+    "rowModified",
+    "seedPatch",
+    "setSettingsControlDisabled",
+    "settingOn",
+    "settingsCategories",
+    "settingsImportRows",
+    "settingsRow",
+    "settingsRowHtml",
+    "settingsRows",
+    "settingsSearchHits",
+    "showSettingsNotice",
+    "sliderSpan",
+    "storedAdvancedTopic",
+    "toggleFullscreen",
+    "typedNumberRefusal",
+    "visibleAdvancedGroups"
+  ],
+  "src/ui/screens/shop.js": [
+    "mountConfiguredShop",
+    "wireShopLayout"
+  ],
+  "src/ui/screens/smithServices.js": [
+    "mountReceiptLine",
+    "mountServiceOffer",
+    "openMountService"
+  ],
+  "src/ui/screens/title.js": [
+    "focusTitleDefault",
+    "mountTitle"
+  ],
+  "src/ui/services/PoseAnimator.js": [
+    "createPoseStage",
+    "hasPoses",
+    "playPoseOn",
+    "poseFrame",
+    "posesFor",
+    "registerStage",
+    "stageFor"
+  ],
+  "src/ui/services/TraySizeService.js": [
+    "createTraySizeService"
+  ],
+  "src/ui/services/posePreloads.js": [
+    "clearPosePreloads",
+    "preloadPoses"
+  ],
+  "src/ui/services/saveJsonFile.js": [
+    "saveAdvancedConfigFile",
+    "saveJsonFile"
+  ],
+  "src/ui/services/saveTextFile.js": [
+    "saveTextFile"
+  ],
+  "src/ui/sha256.js": [
+    "createSha256",
+    "sha256Bytes",
+    "sha256Hex"
+  ],
+  "src/ui/statusLifecycle.js": [
+    "statusLifecycleText"
+  ],
+  "src/ui/strings.js": [
+    "has",
+    "stringIds",
+    "t",
+    "tFull",
+    "tTip"
+  ],
+  "src/ui/surfaces.js": [
+    "assertSurfaces",
+    "surfaceReport"
+  ],
+  "src/ui/tools/cardArtBuilderModel.js": [
+    "builderInputFromControls",
+    "builderInputJson",
+    "createBuilderPreview",
+    "normalizeBuilderInput"
+  ],
+  "src/ui/tools/cardArtProceduralBuilder.js": [
+    "mountProceduralBuilder"
+  ],
+  "src/ui/tools/cardArtReviewGeometry.js": [
+    "containRect"
+  ],
+  "src/ui/tools/cardArtReviewUrl.js": [
+    "gameRootURL"
+  ],
+  "src/ui/uiContent.js": [
+    "actPlate",
+    "actTitle",
+    "armamentKindLabel",
+    "backdropClass",
+    "intentBadge",
+    "intentTooltip",
+    "legendEntries",
+    "menuRows",
+    "menuTabRefs",
+    "menuTabs",
+    "nodeBlurb",
+    "nodeIcon",
+    "nodeName",
+    "padGlyph",
+    "padName",
+    "parchmentAsset",
+    "parchmentClass",
+    "statusInstancePresentation",
+    "statusInstanceSemanticAttrs",
+    "statusTooltipText"
+  ],
+  "src/ui/viewViewport.js": [
+    "applyViewViewport",
+    "logicalViewport",
+    "matchViewMedia",
+    "resolveViewViewport",
+    "viewScale",
+    "viewViewportBox"
+  ],
+  "src/ui/viewportBasis.js": [
+    "portraitPhoneViewport",
+    "stableViewportHeight"
+  ],
+  "src/ui/whenNoOverlay.js": [
+    "overlayOpen",
+    "whenNoOverlay"
+  ],
+  "src/ui/wireframeChoices.js": [
+    "activeWireframeChoice",
+    "activeWireframeChoices",
+    "applyWireframeChoices"
+  ]
+}

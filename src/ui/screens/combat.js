@@ -143,7 +143,7 @@ import { discoveredWeaknesses, recordWeaknessDiscoveries, withDiscoveredWeakness
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
-import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
+import { RunHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
@@ -260,7 +260,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     <div class="combat" data-layout="formation" data-turn="player">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
-      ${hudShellHtml(runHudViewModel({
+      ${hudShellHtml(RunHudViewModel({
         place: 'combat',
         cinders: run.cinders,
         act: run.actNumber,

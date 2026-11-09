@@ -7,7 +7,7 @@
 // the behaviour hooks the launcher and the tools read (`.qn-row`, `.qn-label`,
 // `.qn-condition`, `.qn-state`, `.ov-tab`, `#ov-*`) ride on the kit's parts.
 
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
@@ -21,7 +21,7 @@ export function renderQuickMenu(model, { onActivate }) {
   const veil = document.createElement('div');
   veil.className = 'modal-veil qn-veil';
 
-  const captionModel = childModel(model, UI.quickMenuCaption);
+  const captionModel = ChildModel(model, UI.quickMenuCaption);
   const groups = [];
   let group = [];
   for (const rowModel of model.children.filter((child) => child.component === UI.quickMenuRow)) {
@@ -75,8 +75,8 @@ export function renderQuickMenu(model, { onActivate }) {
 }
 
 export function renderMenuOverlay(model) {
-  const stripModel = childModel(model, UI.menuTabStrip);
-  const footerModel = childModel(model, UI.menuFooter);
+  const stripModel = ChildModel(model, UI.menuTabStrip);
+  const footerModel = ChildModel(model, UI.menuFooter);
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
 
@@ -130,8 +130,8 @@ export function renderMenuOverlay(model) {
   markUiComponent(strip, stripModel.component, stripModel.variant);
   markUiComponent(body, UI.menuPanel, model.properties.activeId);
   markUiComponent(footer, footerModel.component, footerModel.variant);
-  markUiComponent(save, childModel(footerModel, UI.saveGameControl).component);
-  markUiComponent(quit, childModel(footerModel, UI.saveQuitControl).component);
+  markUiComponent(save, ChildModel(footerModel, UI.saveGameControl).component);
+  markUiComponent(quit, ChildModel(footerModel, UI.saveQuitControl).component);
   return { veil, overlay, strip, body };
 }
 

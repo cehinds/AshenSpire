@@ -53,7 +53,8 @@
 
 import { spawnSync } from 'node:child_process';
 import { readdirSync, statSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, cpSync, rmSync, renameSync, existsSync } from 'node:fs';
-import { resolve, dirname, join, relative, sep } from 'node:path';
+import { resolve, dirname, basename, isAbsolute, join, relative, sep } from 'node:path';
+import { isBuiltin } from 'node:module';
 import { tmpdir } from 'node:os';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import vm from 'node:vm';
@@ -90,7 +91,7 @@ const ROOTS = ['src', 'engine', 'tools', 'tests'];
 // the self-test copy must carry them or the baseline fails with ENOENT.
 const COPIED_EXTRA = ['docs/alternative-combat-rounds'];
 const SKIP_DIRS = new Set([
-  'node_modules',   // none in this tree, and not ours to link
+  'node_modules',   // installed tool dependencies are not authored modules
   'build',          // generated bundle — linking a 2 MB single file says nothing
   'dist',           //   about the sources it was derived from
   '.git',
@@ -114,6 +115,23 @@ function walk(dir, out = []) {
     else if (isModule(name)) out.push(p);
   }
   return out;
+}
+
+// Optional tooling dependencies are linked against the owning package's
+// declared export surface. The dependency-free gate never loads vendor code.
+function declaredToolExports(root, importer, spec) {
+  const tools = join(root, 'tools');
+  const path = relative(tools, importer);
+  const parts = path.split(sep);
+  if (isAbsolute(path) || parts.length < 2 || parts[0] === '..') return null;
+  const file = join(tools, parts[0], 'package.json');
+  if (!existsSync(file)) return null;
+  const manifest = JSON.parse(readFileSync(file, 'utf8'));
+  if (!Object.hasOwn(manifest.devDependencies || {}, spec)) return null;
+  const exports = manifest.linkcheckExports?.[spec];
+  if (!Array.isArray(exports) || new Set(exports).size !== exports.length
+      || exports.some(name => typeof name !== 'string' || !/^[A-Za-z_$][\w$]*$/.test(name))) return null;
+  return exports;
 }
 
 /**
@@ -146,16 +164,18 @@ async function linkGraph(entry, root, shared) {
     return m;
   };
   const linker = async (spec, referencing) => {
-    // A NODE BUILTIN IS ACTUALLY IMPORTED. There is no source text to link, so
-    // it is wrapped in a SyntheticModule over the real namespace — which means
-    // builtins, and only builtins, are evaluated. Named in the boundary.
-    if (spec.startsWith('node:') || !/^\.{0,2}\//.test(spec)) {
-      let ns;
-      try { ns = await import(spec); }
-      catch { throw new Error(`bare specifier '${spec}' has no home — not a node builtin and this tree has no dependencies`); }
+    if (isBuiltin(spec)) {
+      // Built-ins have no source text to link. The synthetic module uses the
+      // real namespace so an invalid named import still fails instantiation.
+      const ns = await import(spec);
       const keys = Object.keys(ns);
       return new vm.SyntheticModule(keys, function () { for (const k of keys) this.setExport(k, ns[k]); },
         { identifier: spec, context: referencing.context });
+    }
+    if (!/^\.{0,2}\//.test(spec)) {
+      const keys = declaredToolExports(root, fileURLToPath(referencing.identifier), spec);
+      if (!keys) throw new Error(`bare specifier '${spec}' is neither a Node built-in nor declared by its tool package`);
+      return new vm.SyntheticModule(keys, function () {}, { identifier: spec, context: referencing.context });
     }
     const file = resolve(dirname(fileURLToPath(referencing.identifier)), spec);
     if (!existsSync(file)) { const e = new Error(`ENOENT: no such file or directory, open '${relative(root, file)}'`); e.code = 'ENOENT'; throw e; }
@@ -294,11 +314,11 @@ const PLANTS = [
 
 function copyTree() {
   const t = mkdtempSync(join(tmpdir(), 'linkcheck-'));
-  for (const d of [...ROOTS, ...COPIED_EXTRA]) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true });
+  for (const d of [...ROOTS, ...COPIED_EXTRA]) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true, filter: file => basename(file) !== 'node_modules' });
   return t;
 }
 
-console.log(`linkcheck: every named import in the tree, resolved against a real export.\n`);
+console.log(`linkcheck: authored imports resolve against module exports or declared tool dependency surfaces.\n`);
 if(Number.isFinite(batchStart)){
  console.log('BATCH_RESULT: '+JSON.stringify({...await checkTree(ROOT), parsed: PARSED.n}));process.exit(0);
 }
@@ -356,8 +376,8 @@ if (!RAW) for (const b of r.broken) console.log(`  BROKEN  ${b.file}\n          
 console.log(`\nRESULT: ${r.total - r.broken.length}/${r.total} module graphs link, ${r.broken.length} broken (${r.skipped} frozen fixture module(s) excluded by path).`);
 console.log(`
 BOUNDARY — what a green from this tool does NOT mean:
-  · LINKING IS NOT RUNNING. Every named import resolves to a real export. Not one
-    module body was executed, so nothing here says a tool WORKS — only that it starts.
+  · LINKING IS NOT RUNNING. Authored imports are linked without evaluating module
+    bodies. This checks import contracts, not that a tool works after it starts.
     release-shots must still be RUN by a person before a delivery.
   · a name that exists but is WRONG links green. This checks identity, never meaning.
   · dynamic import() targets are not followed, so a deleted dynamic target links green.
@@ -365,8 +385,8 @@ BOUNDARY — what a green from this tool does NOT mean:
     that gap is narrow — but it is a gap, and no regex is buying it back here.
     (tools/bundle.mjs now follows import('./literal.js') and fails the build on a
     deleted target, so the shipped graph is covered there; tests/bundle-dynamic-import.test.mjs.)
-  · node builtins ARE imported (there is no source text to link), so they, and only
-    they, are evaluated. Nothing in src/, tools/ or tests/ is.
+  · Node built-ins are imported. Optional tooling dependencies link against the
+    owning package's declared exports without loading or installing vendor code.
   · build/ and dist/ are excluded: linking the generated bundle proves nothing about
     the sources it came from. That is tools/verify-shipped.mjs and tools/bundle.test.mjs.`);
 process.exit(r.broken.length ? 1 : 0);

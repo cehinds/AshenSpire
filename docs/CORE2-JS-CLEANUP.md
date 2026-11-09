@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS03 verified locally by root; JS04 is in progress, and JS05–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS04 verified locally by root; JS05 is next and remains open, with JS06–JS14 open. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -43,7 +43,7 @@
   - **Dependencies:** JS01.
 
 - [x] **JS03 · Make snapshot validation total and diagnostic — P1; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `57a61557139`.
   - **Why:** Malformed input should return precise field errors rather than escape validation as a raw exception.
   - **Scope:** Check collection and element shapes before iteration and references; reuse helpers only where contracts match.
   - **Evidence:** `src/model/combatSnapshot.js:220`, `:329`, `:388`.
@@ -52,12 +52,15 @@
   - **Browser evidence:** `scratch/qa/js03/ordered-gates/browser/results.json` records 8 passing checks at desktop 1280×800 and phone 390×844: current Continue `gildedKnight`, historical Load `ashheartDragon`, malformed queue refusal names `combatEntered.snapshot.abilityQueue`, Continue remains `gildedKnight`, and zero console/runtime errors. Root reviewed screenshots/results and accepted the module. The detailed diagnostic is in the DOM result; its screenshot text extends below the modal fold. Refusal screenshots: `desktop-1280x800-rejected-backup.png`, `phone-390x844-rejected-backup.png`; continuation screenshots are `desktop-1280x800-continue-after-refusal.png` and `phone-390x844-continue-after-refusal.png`.
   - **Dependencies:** JS01; review alongside JS02.
 
-- [ ] **JS04 · Establish naming, formatting, and typed boundary contracts — P1; Sol + Luna.**
-  - **Status:** In progress; implementation brief pending.
+- [x] **JS04 · Establish naming, formatting, and typed boundary contracts — P1; Sol + Luna.**
+  - **Status:** Verified locally by root.
   - **Why:** Consistent public/private names and checked boundary shapes make routine edits easier to review safely.
-  - **Scope:** Public API PascalCase, private helpers camelCase, stable formatting, concise useful JSDoc, and focused type checking for save/config boundaries. Migrate by module with import-aware changes and temporary adapters where required.
+  - **Scope:** Set JS/MJS/CJS to four spaces and LF while preserving two-space layout for hash-sensitive legacy runtime files. Migrate the Component Model and Run HUD View Model APIs to PascalCase, retaining declared camelCase compatibility aliases and moving safe UI imports. Keep serialized keys stable. Document style and LF/hash identity. Add an isolated code-quality package for staged naming/format checks and focused save-boundary types.
   - **Evidence:** `.editorconfig`, `jsconfig.json:6`, `src/ui/models/ComponentModel.js:24`, `src/ui/viewModels/RunHudViewModel.js:11`.
   - **Acceptance:** Checks catch deliberate naming/type violations; imports, browser entry points, serialized keys, and source/bundle behavior remain intact. Set LF explicitly for hash-sensitive runtime inputs so Windows checkout line endings cannot perturb generated profile identity; keep hash checks strict. Remove adapters only after consumer proof.
+  - **Accepted verification:** `npm run code:check` passed its naming/format gate over 931 authored source modules and four enrolled owners; strict TypeScript checking passed for the two save-boundary owners. Tool selftest passed 6/6. This is a staged ratchet for new exports, not a migration of all legacy exports. The UI naming migration adds five PascalCase Component Model exports and `RunHudViewModel`, retains six explicit deprecated camelCase aliases, and moves direct imports in 26 safe UI consumer files; legacy callers are still covered by the aliases. Four enrolled modules satisfy the scoped formatter, and serialized Component Model fields remain unchanged.
+  - **Accepted QA:** Core gate passed 151/151; plantsites passed 310 sites (5 known drifted and 35 unreadable, all matching baseline); standalone build exited 0 at 0.7.4.65 and refreshed 4/4 aliases. The UI contract guard passed 22/22; its selftests passed 71/71 plants, catalog checks 72/72, and independent UI/baseline checks 69/69. Source/bundle baseline, transfer and link regression passed 15/15. Fresh Chromium passed 8/8 checks on 1280×800 and 390×844: Continue loaded `gildedKnight`, slot 2 restored `ashheartDragon`, malformed `combatEntered.snapshot.abilityQueue` was refused, Continue remained intact, and both viewports reported zero console/runtime errors. Root reviewed both refusal screenshots and the phone Continue screen. Results: `scratch/qa/js04/ordered-gates/browser/results.json`; screenshots are in the same folder.
+  - **Line-ending verification:** `git check-attr` reports `text eol=lf` for engine/runtime, formula/mechanics and generated JS/CSS samples, while binary assets retain `text: unset`. `git ls-files --eol` showed the sample hash-sensitive tracked files already LF in index and worktree; no bulk renormalization was run.
   - **Dependencies:** JS01–JS03.
 
 - [ ] **JS05 · Declare one configuration authority and lifetime per value — P1; Sol.**

@@ -1,0 +1,63 @@
+{
+  "enrolled": [
+    "src/engine/saveTransfer.js",
+    "src/engine/savedRunContext.js",
+    "src/ui/models/ComponentModel.js",
+    "src/ui/viewModels/RunHudViewModel.js"
+  ],
+  "formatProtected": [
+    "src/model/fixCoreMechanics.js",
+    "src/model/formulas.js"
+  ],
+  "aliases": [
+    {
+      "path": "src/engine/saveTransfer.js",
+      "name": "createSaveTransfer",
+      "target": "CreateSaveTransfer",
+      "kind": "adapter",
+      "reason": "Legacy tools use lowercase transfer methods."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "childModel",
+      "target": "ChildModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "componentModel",
+      "target": "ComponentModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "descendantModel",
+      "target": "DescendantModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "isComponentModel",
+      "target": "IsComponentModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "optionalChildModel",
+      "target": "OptionalChildModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/viewModels/RunHudViewModel.js",
+      "name": "runHudViewModel",
+      "target": "RunHudViewModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    }
+  ]
+}
