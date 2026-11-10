@@ -1652,5 +1652,16 @@ unique key and equals the enemy's `id`). The sheets are the source of truth for 
 - **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.
 - **References** carry a type prefix: `card:<enemyCards id>`, `gear:<gear id>`, `relic:<enemyRelics id>`, and `enemy:<id>` (reference table only). `enemies/_reference.md` and `_reference.json` (generated) list what every id means.
 
+Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
+`content/source/act<N>Enemies.json`. The Core sheets own Core stats, equipment, deck and adapter hints.
+`games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
+At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
+Each `ai` hint can reference a shared or declared range move with `legacyMove`.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
+`aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
+The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.
+Author card hints only under `ai`. The sheet checker refuses `behaviour.cardHints` so it cannot replace them.
+
 After editing, run `node tools/enemy-sheets.mjs --write` (part of `node tools/jev.mjs regen`, which then also runs `tools/derived-tables.mjs`; run that yourself if you used --write alone); `--check` runs in `jev checks --fast`
 and rejects unknown refs, duplicate ids and a stale `characters.json`. `--extract --force` rebuilds sheets from `characters.json` (use it if another tool, such as `tools/enemy-decks-convert.mjs`, rewrote the rows). Deleting a sheet and running `--write` removes that enemy.

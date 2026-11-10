@@ -7,7 +7,7 @@ import { coreEvasionCompatibleRuntime } from './coreEvasionCompatibility.js';
 import { applyUpgradeSteps, upgradeCount, upgradeStepsOf } from './cardUpgrade.js';
 import { cardRank, rankedEffectsCapped } from './cardRank.js';
 import { applyRamp, playsEverOf } from './cardRamp.js';
-import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
+import { ProjectEnemyContent } from './enemyProjection.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -70,72 +70,6 @@ function cloneLegacy(value,seen = new Map()) {
   else if(value instanceof Set)for(const item of value)out.add(cloneLegacy(item,seen));
   else for(const [key,item]of Object.entries(value))out[key]=cloneLegacy(item,seen);
   return out;
-}
-// The range adapter adds only the authored mobility capability. Existing
-// offense payloads/prices remain the shared enemy definitions' authority.
-function projectEnemyRangeContent(bundle, profile, baseBundle) {
-  if (gameModule(profile, 'effects')?.fixCoreVersion !== 1 || !Array.isArray(bundle.enemies)) return;
-  const authored = new Map((gameContent(profile, 'enemies') || []).map(row => [row.id, row]));
-  if (![...authored.values()].some(row => row.rangeClosingMove !== undefined)) return;
-  const cards = new Map((gameContent(profile, 'enemyCards') || []).map(row => [row.id, row]));
-  const flat = new Map((resolveEnemyMoveSources(baseBundle).enemyMoves || []).map(({ id, enemyId, ...move }) => [JSON.stringify([enemyId, id]), cloneLegacy(move)]));
-  const rangeOverrides = new Map(), closingKeys = new Set(), additions = [];
-  bundle.enemies = bundle.enemies.map(def => {
-    const row = authored.get(def.id);
-    if (row?.rangeClosingMove === undefined) return def;
-    const moves = Object.fromEntries(Object.entries(def.moves || {}).map(([id, move]) => [id, flat.get(JSON.stringify([def.id, id])) || move]));
-    const owned = new Set(row.defaultDeck || []);
-    const entry = Object.entries(row.cardHints || {}).find(([id, hint]) => owned.has(id) && hint.legacyMove === row.rangeClosingMove);
-    const card = entry && cards.get(entry[0]), hint = entry?.[1];
-    if (!card || !Number.isSafeInteger(card.staminaCost) || card.staminaCost < 0 || card.manaCost !== 0
-      || card.effects?.length !== 1 || card.effects[0].op !== 'moveEngagement' || card.effects[0].target !== 'enemy' || card.effects[0].bands !== -1) {
-      throw new GameConfigError(`$/content/enemies/${def.id}/rangeClosingMove`, 'requires an owned, explicitly priced one-band closing card');
-    }
-    moves[row.rangeClosingMove] = { intent: 'buff', sp: card.staminaCost, weight: hint.aiWeight ?? 0, effects: dataClone(card.effects) };
-    closingKeys.add(JSON.stringify([def.id, row.rangeClosingMove]));
-    additions.push(...[...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
-    // A retreat is the opposite one-band move: authored price (the closing price plus one), and a
-    // dynamic weight the engine applies only while the fight is closer than the enemy prefers.
-    if (row.rangeRetreatMove !== undefined) {
-      const rEntry = Object.entries(row.cardHints || {}).find(([id, h]) => owned.has(id) && h.legacyMove === row.rangeRetreatMove);
-      const rCard = rEntry && cards.get(rEntry[0]), rHint = rEntry?.[1];
-      if (!rCard || !Number.isSafeInteger(rCard.staminaCost) || rCard.staminaCost < 0 || rCard.manaCost !== 0
-        || rCard.effects?.length !== 1 || rCard.effects[0].op !== 'moveEngagement' || rCard.effects[0].target !== 'enemy' || rCard.effects[0].bands !== 1) {
-        throw new GameConfigError(`$/content/enemies/${def.id}/rangeRetreatMove`, 'requires an owned, explicitly priced one-band retreat card');
-      }
-      moves[row.rangeRetreatMove] = { intent: 'buff', sp: rCard.staminaCost, weight: 0, retreatWeight: rHint.aiWeight ?? 0,
-        ...(rHint.maxConsecutive ? { maxConsecutive: rHint.maxConsecutive } : {}), effects: dataClone(rCard.effects) };
-      closingKeys.add(JSON.stringify([def.id, row.rangeRetreatMove]));
-      additions.push(...[...(rCard.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeRetreatMove, tagId })));
-    }
-    for (const [id, metadata] of Object.entries(row.cardHints || {})) {
-      const source = cards.get(id);
-      // Core-only offense (owner, 2026-10-25): a hint with coreOffense "card" takes its move's hit count and per-hit
-      // damage from the Core card, so a multi-hit move trimmed to fit the enemy's SP pool stays in Core content only.
-      if (metadata.coreOffense === 'card' && moves[metadata.legacyMove]) {
-        const hits = (source?.effects || []).filter(effect => effect.op === 'damage');
-        if (hits.length !== 1 || !Number.isSafeInteger(hits[0].amount) || !Number.isSafeInteger(hits[0].hits ?? 1) || moves[metadata.legacyMove].damage === undefined) {
-          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreOffense`, 'requires one whole-number damage effect on the card and a move with authored damage');
-        }
-        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], damage: hits[0].amount, hits: hits[0].hits ?? 1 };
-      }
-      // Core-only price (owner, 2026-10-25): a hint with coreSp "card" prices its move at the Core card's staminaCost, so a
-      // single-hit attack is not left costing the stance-table 2 SP against a 1 SP pool. Legacy keeps the stance price.
-      if (metadata.coreSp === 'card' && moves[metadata.legacyMove]) {
-        if (!source || !Number.isSafeInteger(source.staminaCost) || source.staminaCost < 0) {
-          throw new GameConfigError(`$/content/enemies/${def.id}/cardHints/${id}/coreSp`, 'requires an owned card with a whole-number staminaCost');
-        }
-        moves[metadata.legacyMove] = { ...moves[metadata.legacyMove], sp: source.staminaCost };
-      }
-      if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
-        rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
-      }
-    }
-    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, ...(row.rangeRetreatMove === undefined ? {} : { rangeRetreatMove: row.rangeRetreatMove }), rangeRoutePolicy: row.rangeRoutePolicy };
-  });
-  bundle.enemyMoves = deriveEnemyMoves(bundle.enemies);
-  bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),
-    ...additions, ...[...rangeOverrides].map(([key, range]) => { const [scope, objectId] = JSON.parse(key); return { family: 'enemyMove', scope, objectId, tagId: `range:${range}` }; })];
 }
 // Core weapon arts (owner 2026-11-01) are the legacy default-art cards. A configured profile that
 // disables a resource pool refuses any card that still costs it (profileCardCosts), so the arts get
@@ -207,7 +141,9 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'default'
     const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
     bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
   }
-  projectEnemyRangeContent(bundle, profile, baseBundle);
+  if (gameModule(profile, 'effects')?.fixCoreVersion === 1) {
+    ProjectEnemyContent(bundle, profile.content, baseBundle, cloneLegacy);
+  }
   return bundle;
 }
 export function bindGameProfileRegistries(registries,profile) { return Object.freeze({...registries,gameProfile:resolveGameProfile(profile)}); }

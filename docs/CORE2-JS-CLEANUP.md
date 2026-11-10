@@ -125,7 +125,7 @@
   - **Dependencies:** JS04, JS06, JS08.
 
 - [x] **JS11 · Extract settings draft, reset, and undo policy — P2; Luna + Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `1512f12f90e`.
   - **Why:** Settings transitions should be tested independently from HTML generation and event binding.
   - **Scope:** Preserve `SettingsRowsModel`; move draft transitions, reset plans, and undo timing to a focused model. Leave DOM binding in the screen and persist through its explicit boundary.
   - **Evidence:** `src/ui/screens/settings.js:725,741,966,1950`.
@@ -136,11 +136,14 @@
   - **Accepted browser evidence:** Build .72 passed 6/6 checks on desktop mouse 1280×800 and native touch 390×844: row Reset/Undo across reopen, expiry at the original window, confirmed Reset all/Undo, local settings profile import invalidating the prior offer, refused Reset rollback, and refused Undo with successful retry. The exact .71 reopened-expiry failure became a pass at original +8.75 seconds. Each scoped storage fault rejected one primary metadata write, accepted one compensating write, and preserved byte-identical prior primary data. Both runs ended with profile digest `429a400cd14c841a7f8bd6e0d4e62a74f01a68b5a97df4793d1dbe50112ec125`; application/runtime/HTTP errors and interventions were zero, with no network stubs. Root inspected desktop refusal and phone Undo/Reset-all captures. Results: [`desktop settings`](../scratch/qa/js11-13/browser-settings-final-desktop/results.json), [`phone settings`](../scratch/qa/js11-13/browser-settings-final-phone/results.json). Multi-key/group reset is model-tested because the shipped UI exposes row and all reset, not a group-reset control.
   - **Dependencies:** JS04–JS05 and relevant JS09 interfaces.
 
-- [ ] **JS12 · Clarify enemy authoring and registry projection — P2; Sol.**
+- [x] **JS12 · Clarify enemy authoring and registry projection — P2; Sol.**
+  - **Status:** Verified locally by root.
   - **Why:** An enemy edit needs a clear source for each field and actionable diagnostics when a projection is invalid.
   - **Scope:** Document and isolate the existing shared-definition/Core-row overlay, including `coreOffense`/`coreSp` opt-ins; improve field-level diagnostics without moving balance authority.
   - **Evidence:** `tools/enemy-sheets.mjs:2`, `src/model/gameProfile.js:74`, `src/model/gameProfileEnemy.js:5`, `src/engine/combat.js:323`.
   - **Acceptance:** Shared/configured enemy fixtures preserve IDs, move order, seeded HP/RNG, saved intent, and affordability.
+  - **Implementation:** The enemy projection validates adapter hints and applies authored movement and explicit card opt-ins; card overlays work without a range gate. Diagnostics identify malformed hint fields, while unknown extension fields and flat move authority remain preserved. The sheet writer rejects duplicate `behaviour.cardHints` before writing.
+  - **Accepted verification:** Focused suite passed 139; reviewer passed 42 checks, and native/bundle diagnostic probes passed 15 cases each. Frozen comparison covered 33 definitions × 4 views and 24 seeded fights with exact preservation. Quality passed for 943 authored modules/16 enrolled owners with strict types; bundle cycles were zero. Core passed 151/151; plantsites passed 310 with the existing 5 drifted/35 unreadable baseline. Build 0.7.4.73 (`17b4efd025`, light HTML 155,975,448 bytes) refreshed 4/4 aliases; shipped checks passed 12/12; frozen Core 2 scenarios passed 5/5. No protected runtime/profile/content Git diff was introduced. The 36 generated enemy-sheet outputs were normalized to exact HEAD bytes/LF in this worktree; the original checkout was untouched. Browser was not rerun because the shipped projection remained exact and no UI behavior changed. Raw gate evidence: [`ordered-gates`](../scratch/qa/js12/ordered-gates/), [`independent reviewer`](../scratch/qa/js12/independent-final-accepted.log), [`focused suite`](../scratch/qa/js12/focused-final.log).
   - **Dependencies:** JS05, JS08.
 
 - [ ] **JS13 · Centralize only intentional presentation/gesture tunables — P2; Luna.**

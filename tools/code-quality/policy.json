@@ -3,6 +3,7 @@
     "src/engine/combatCounterPreview.js",
     "src/engine/saveTransfer.js",
     "src/engine/savedRunContext.js",
+    "src/model/enemyProjection.js",
     "src/services/entryCheckpoint.js",
     "src/services/profileBoot.js",
     "src/services/runBirth.js",
