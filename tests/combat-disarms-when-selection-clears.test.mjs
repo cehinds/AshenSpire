@@ -40,6 +40,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { lightCard, clearSelection, onSelectionChange, resetSelection } from '../src/ui/components/cardSelection.js';
+import { IsCurrentCombatMount } from '../src/ui/components/combatMount.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const strip = (text) => text.split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
@@ -83,8 +84,33 @@ ok(/syncCardSelection\(\);/.test(watch[1]),
   're-dressing follows, so the enemies lose `.targetable` with the arming');
 ok(!/selectedFlask/.test(watch[1]),
   'a flask is not a card in the store, so the watch leaves flask targeting alone');
-ok(/combatEl\.isConnected/.test(watch[1]),
-  'a mount whose DOM is gone re-dresses nothing');
+ok(/if \(!isCurrentMount\(\)\) return;/.test(watch[1]),
+  'the watcher refuses a mount that no longer owns combat');
+ok(/const isCurrentMount = \(\) => IsCurrentCombatMount\(app, combatEl\);/.test(combat),
+  'the screen delegates connectivity and identity to the combat mount owner');
+// Run the actual watcher against the owner, including the gap before the
+// detach observer releases an outgoing but still connected combat.
+for (const mount of ['current', 'disconnected', 'replaced']) {
+  const combatEl = { isConnected: mount !== 'disconnected' };
+  const app = { querySelector: () => mount === 'replaced' ? {} : combatEl };
+  const notice = new Function('isCurrentMount', 'lit', `
+    let selected = 'armed', selfArm = 'self', selectedFlask = 'flask';
+    const upcastPreviewRefresh = false, paints = [];
+    const renderCombatantStage = () => paints.push('stage');
+    const syncCardSelection = () => paints.push('selection');
+    const watch = lit => { ${watch[1]} };
+    watch(lit);
+    return { selected, selfArm, selectedFlask, paints };
+  `);
+  for (const lit of [null, 'another-card']) {
+    const result = notice(() => IsCurrentCombatMount(app, combatEl), lit);
+    const cleared = mount === 'current' && lit === null;
+    ok(result.selected === (cleared ? null : 'armed') && result.selfArm === (cleared ? null : 'self'),
+      `${mount}: only the current mount's empty notice disarms`);
+    ok(result.selectedFlask === 'flask' && result.paints.join(',') === (cleared ? 'stage,selection' : ''),
+      `${mount}: flask targeting survives and only the current empty notice repaints in order`);
+  }
+}
 
 // The watch has to be given up, or every past fight re-dresses on every clear.
 ok(/releaseSelectionWatch\(\);/.test(combat.replace(/const releaseSelectionWatch[\s\S]*?\n  \}\);/, '')),

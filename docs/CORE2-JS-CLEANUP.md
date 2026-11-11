@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS13 verified locally by root. Seven stale regression guards are being repaired before JS14 final acceptance. Checkboxes change only after root acceptance.
+**Status:** JS01–JS13 verified locally by root. The seven stale regression guards are repaired and verified; JS14 final acceptance is in progress. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -147,7 +147,7 @@
   - **Dependencies:** JS05, JS08.
 
 - [x] **JS13 · Centralize only intentional presentation/gesture tunables — P2; Luna.**
-  - **Status:** Verified locally by root; accepted default build 0.7.4.74 (`e920d33861`).
+  - **Status:** Verified locally by root; commit `cc386cf1a84`, pushed to origin. Accepted default build 0.7.4.74 (`e920d33861`).
   - **Why:** Maintainers should edit intended tuning values in one validated place without turning structural constants into configuration.
   - **Scope:** Add `content/config/ui/presentation/combatInspection.json` (600 ms figure hold, 8 px movement tolerance) and `settingsUndo.json` (8000 ms Undo window). Read the generated `uiConfig` directly in the existing combat and settings owners; keep structural sentinels, separate inspector/action gestures, and unrelated tuning in their current owners.
   - **Implementation:** The complete config tree requires both files. The compiler rejects absent fields, unknown behavior keys, invalid values, and timer delays above the platform limit before generated output can be written; partial pure compiler fixtures remain supported. No gameplay/runtime rules or saved data are changed.
@@ -157,6 +157,7 @@
   - **Local focused checks:** `node --test tests/ui-config.test.mjs tests/ui-presentation-tuning.test.mjs` passed 36/36; `node --test tests/settings-revamp.test.mjs tests/settings-draft-model.test.mjs` passed 100/100. `npm run code:check` passed naming across 943 authored files/16 enrolled owners and strict TypeScript; `node tools/config-build.mjs --check` passed. Root subsequently accepted the ordered gates and browser checks below.
   - **Accepted verification:** Core 151/151; shipped 12/12; frozen native/production-transform scenarios 5/5; quality passed 943 authored modules, 16 enrolled owners, and strict save-boundary types. Plantsites scanned 310 with the existing 5 drifted/35 unreadable baseline. Independent checks passed 60/60 plus 32 malformed-config probes, four legal boundaries, and two CLI no-write refusals. Default and isolated 1000 ms/16 px/2500 ms builds each passed six desktop/touch browser scenarios, including real inspection, movement cancellation, Settings Undo/expiry, keyboard and simulated gamepad. Compared combat/RNG snapshots and existing profile/runtime pins were unchanged. Application/runtime/network errors were zero; four Chrome pre-activation vibration interventions per build were recorded separately. Audio, physical controllers and haptics were not validated. Evidence: `scratch/qa/js13/ordered-gates/` and `scratch/qa/js11-13/browser-js13-review-summary.json`.
   - **Broader review:** All eight Windows discovered PR shards ran: 8,016 passed, 95 failed, 15 skipped. Seven failures are stale guards from earlier extractions; 88 are demonstrated baseline/environment failures. The raw lane remains red and is not a passing full-suite claim. Classification: `scratch/qa/current-build-review/REVIEW.md`.
+  - **Regression follow-up (2026-11-11):** Updated the seven older guards to follow the extracted owners while retaining refusal, lock cleanup, teardown, Effects-off, Ward, and stance coverage. Seven files passed 29 Node tests plus 44 selection assertions; 11 related owner files passed 79/79. Independent review passed 29/29 and save-context/malformed-snapshot checks passed 41/41. The final lock-wiring refinement passed 4/4. This repairs the seven introduced failures; the full eight-shard lane was not rerun and its 88 classified baseline/environment failures are not claimed fixed. Logs are under `scratch/qa/js14/`.
   - **Dependencies:** JS05, JS10–JS11.
 
 - [ ] **JS14 · Complete the solo-maintainer map and final consistency gate — P2; Luna + root.**

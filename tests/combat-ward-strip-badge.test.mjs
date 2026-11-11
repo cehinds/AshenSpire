@@ -2,12 +2,12 @@
 // the Ward badge with it, as they do for a damageDealt hit.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { stripCombatWard } from '../src/engine/combatMatchups.js';
+import { ApplyCombatBeat } from '../src/ui/models/CombatPlaybackModel.js';
 
 test('a Ward strip emits the Ward it leaves: value and max', () => {
   const registries = createRegistries(contentBundle);
@@ -25,9 +25,27 @@ test('a Ward strip emits the Ward it leaves: value and max', () => {
   assert.equal(strip.value, 1, 'the Ward badge reads 1 after the strip');
   assert.equal(strip.max, 3);
   assert.equal(enemy.persistentWard.value, 1);
+  const disp = { ents: { [enemy.id]: { persistentWard: { value: 3, max: 3 } } } };
+  ApplyCombatBeat(disp, [strip], { combat, registries, reduceFollowRows() {} });
+  assert.deepEqual(disp.ents[enemy.id].persistentWard, { value: 1, max: 3 }, 'the paced badge follows the actual strip receipt');
 });
 
-test('the paced reducer in combat.js applies combatWardStripped to the Ward badge', () => {
-  const combatUi = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(combatUi, /case 'persistentWardChanged':\s*case 'combatWardStripped':\s*if \(t\?\.persistentWard && Number\.isFinite\(e\.value\)\) \{ t\.persistentWard\.value = e\.value;/);
+test('the playback owner applies Ward changes and strips without inventing or corrupting a badge', () => {
+  for (const type of ['persistentWardChanged', 'combatWardStripped']) {
+    const disp = { ents: { enemy: { persistentWard: { value: 3, max: 3 } }, unwarded: {} } };
+    const apply = payload => ApplyCombatBeat(disp, [{ type, targetId: 'enemy', ...payload }], {
+      combat: { eventLog: [] }, reduceFollowRows() {},
+    });
+    apply({ value: 1, max: 5 });
+    assert.deepEqual(disp.ents.enemy.persistentWard, { value: 1, max: 5 }, `${type}: value and max follow the beat`);
+    apply({ value: 0 });
+    assert.deepEqual(disp.ents.enemy.persistentWard, { value: 0, max: 5 }, `${type}: zero Ward is displayed and an absent max is retained`);
+    apply({ value: NaN, max: 99 });
+    apply({ value: Infinity, max: 99 });
+    apply({ value: 0, max: Infinity });
+    assert.deepEqual(disp.ents.enemy.persistentWard, { value: 0, max: 5 }, `${type}: invalid receipt values cannot corrupt the badge`);
+    apply({ targetId: 'unwarded', value: 1, max: 5 });
+    apply({ targetId: 'missing', value: 1, max: 5 });
+    assert.deepEqual(disp.ents.unwarded, {}, `${type}: no Ward badge is fabricated`);
+  }
 });
