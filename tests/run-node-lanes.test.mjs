@@ -4,10 +4,11 @@ import { readFileSync, readdirSync, existsSync, mkdirSync, mkdtempSync, writeFil
 import { join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const RUNNER = readFileSync(join(ROOT, 'tests/run-node.mjs'), 'utf8');
+const RUNNER = readSourceTextSync(join(ROOT, 'tests/run-node.mjs'));
 
 test('default and old lane flags retain their complete original work', () => {
   assert.deepEqual(parseRunNodeOptions([]), { core: true, selftests: true, discovered: true, shard: null, selftestGroup: null, slow: 'include' });
@@ -199,7 +200,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     ['ci.yml', 'test-discovered', 'test-selftests', 'test'],
     ['tests.yml', 'discovered', 'selftests', 'core'],
   ]) {
-    const workflow = readFileSync(join(ROOT, '.github/workflows', file), 'utf8');
+    const workflow = readSourceTextSync(join(ROOT, '.github/workflows', file));
     const discovery = job(workflow, discovered);
     assert.match(discovery, /timeout-minutes: 20/);
     assert.match(discovery, /fail-fast: false/);
@@ -237,7 +238,7 @@ test('both workflow matrices execute all discovery shards and both selftest grou
 
 
 test('Windows fast shards and isolated slow jobs cover the real discovered corpus exactly once', () => {
-  const workflow = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
   const isolated = job(workflow, 'test-discovered-slow-windows');
   assert.match(isolated, /runs-on: windows-latest/);
   assert.match(isolated, /timeout-minutes: 20/);
@@ -273,7 +274,7 @@ test('Windows fast shards and isolated slow jobs cover the real discovered corpu
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {
-  const workflow = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  const workflow = readSourceTextSync(join(ROOT, '.github/workflows/ci.yml'));
   for (const [name, tool, count] of [
     ['browser-layout-plants', 'screenreach', 4],
     ['browser-startup-plants', 'startup-gate', 8],

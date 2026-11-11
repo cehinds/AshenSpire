@@ -16,6 +16,10 @@
 # The enemy-sheet checker compares this generated Markdown projection byte-for-byte.
 games/ashenspire/packs/core/enemies/_reference.md text eol=lf
 
+# These combat tables are embedded and compared as canonical UTF-8 text.
+docs/alternative-combat-rounds/evasion-armor.csv text eol=lf
+docs/alternative-combat-rounds/stance-advantage.csv text eol=lf
+
 # Keep the polish kit checksum records stable across Windows and Linux.
 docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.json text eol=lf

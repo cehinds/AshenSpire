@@ -2,6 +2,7 @@
 // Compile the approved review snapshot. PNGs remain separately addressable.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {sameLfCanonicalText} from './working-tree-text.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = JSON.parse(readFileSync(root+'asset-data/card-art/reviewed-library.json', 'utf8'));
 const importAt = process.argv.indexOf('--import');
@@ -53,7 +54,7 @@ const outputs = {
   'asset-data/card-art/reviewed-assets.json':JSON.stringify({schema:1,assets:Object.fromEntries(Object.entries(assets).filter(([id])=>!Object.hasOwn(existing.assets,id)))},null,2)+'\n',
 };
 for (const [file,content] of Object.entries(outputs)) {
-  if (process.argv.includes('--check')) {if(readFileSync(root+file,'utf8')!==content)throw Error(`Stale export: ${file}`);}
+  if (process.argv.includes('--check')) {if(!sameLfCanonicalText(readFileSync(root+file,'utf8'),content))throw Error(`Stale export: ${file}`);}
   else writeFileSync(root+file,content);
 }
 if (importAt !== -1) writeFileSync(root+'asset-data/card-art/reviewed-library.json',JSON.stringify(source,null,2)+'\n');

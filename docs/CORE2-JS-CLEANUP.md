@@ -179,10 +179,10 @@ five JEV fixture failures, and one checkout-inflated evidence-size failure.
 The seven cleanup extraction guards were already repaired in `091e5f721f1`.
 These counts describe the prior run, not the verdict of the upcoming rerun.
 
-- [ ] **JS15 · Make textual guards independent of checkout line endings — Luna + Sol; root QA.**
+- [x] **JS15 · Make textual guards independent of checkout line endings — Luna + Sol; root QA.**
   - **Why:** Equivalent LF and CRLF text should give the same semantic validation without weakening byte-integrity checks.
   - **Scope:** 54 reader failures outside `ui-json`, plus the evidence-size failure; preserve the size limit and real oversized-file detection.
-  - **Verification:** Reproduce affected checks, exercise LF/CRLF inputs, retain negative cases, then run all affected files.
+  - **Accepted verification:** The 54 reader failures now pass within 319 focused tests; the remaining evidence-size failure passes with 6/6 checks. Independent Sol review and focused reruns passed. Semantic source readers share a CRLF boundary helper; four generated-text tools retain content-drift refusals while accepting checkout line endings. The two byte-compared CSVs now have scoped LF attributes and were converted only after normalized working bytes matched exact HEAD blobs. Evidence size uses current tracked bytes plus explicit Git text attributes, retaining raw binary/-text bytes, unstaged-growth detection and the 256 KiB cap. No game source/profile/runtime bytes changed. Logs: `scratch/qa/js15-text/`, `scratch/qa/js15-size/`. Full-suite acceptance remains pending JS17.
 - [x] **JS16 · Remove machine-specific test and tooling assumptions — Sol; root QA.**
   - **Why:** Tests must run on the developer's actual Windows checkout without a private D: drive or administrator symlink privileges.
   - **Scope:** 19 path failures, eight symlink failures, the remaining `ui-json` text-reader failure, and five JEV failures; retain containment, refusal, merge-policy and artifact assertions.

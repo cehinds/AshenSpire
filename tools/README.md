@@ -270,6 +270,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zip.mjs` | zip — a deterministic zip writer and a small reader, no dependencies. | tests fetch-art, offline-zip; tools art-manifest, buildversion, fetch-art +1; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md; other src/model/offlineDownload.js, src/model/zipStream.js |
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
+| `working-tree-text.mjs` | Canonical LF comparisons for generated text checked out with platform line endings. | tests working-tree-text; tools asset-catalog, export-reviewed-card-art, mechanics-generate, readme-sync |
 
 ## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (155 files)
 
