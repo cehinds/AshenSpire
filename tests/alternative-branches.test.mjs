@@ -10,7 +10,7 @@ import { mergeAlternative, syncAlternatives } from '../tools/sync-alternatives.m
 import { branchIndex, rootIndex } from '../tools/pages-site.mjs';
 
 function fixture(t) {
-  const scratch = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+  const scratch = tmpdir();
   mkdirSync(scratch, { recursive: true });
   const dir = mkdtempSync(join(scratch, 'alternative-test-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));

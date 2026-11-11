@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS14 verified locally within the bounded cleanup plan. The seven introduced stale guards are repaired; the broader suite retains 88 classified baseline/environment failures and is not claimed green. Checkboxes change only after root acceptance.
+**Status:** JS01–JS14 verified locally within the bounded cleanup plan. The owner authorized repairing the remaining 88 failures and rerunning the full suite on 2026-11-11; follow-up modules below are in progress. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -170,6 +170,31 @@
   - **Accepted verification:** Exact CI install/check/selftest commands passed (943 authored modules, 16 enrolled owners, strict types, 6/6 selftests). Core passed 151/151; plantsites passed 310 with the documented 5 drifted/35 unreadable baseline; UI config check passed 52 sources; enemy-sheet check passed. Build-version and shipped checks passed (12/12 shipped); frozen native/production-transform scenarios passed 5/5. Independent isolated recipes verified card damage, UI text, geometry, pacing, live framework tuning and game-artifact build/check, with profile/lock bytes preserved for the live edit. The enemy recipe projected Dragon damage 18×2 to 17×2, while unopted Stitched King card changes left its shared move unchanged. Local links and scoped LF checkout passed. Architecture verify/check passed with explicit source `091e5f721f11a836d37e43f590734a39f3c0e876`, ref `codex/js-core2-cleanup`, 5,770 tracked files and boundary PASS; rechecks after later commits must pin that recorded metadata.
   - **Current build and limits:** The game source digest remains `e920d33861` and the accepted 0.7.4.74 HTML SHA-256 remains `1891b445fcd49af8daade338f450d13b598b2b561452bc42cece39495087c9dc`. JS14 has no game runtime change, so the JS13 browser evidence remains applicable; no new browser run or rebuilt HTML is claimed. Full discovered shards were not rerun after the targeted guard repairs. Remaining baseline/environment failures, legacy naming/format exceptions and untyped legacy code remain explicit; this closes the scoped modules, not an entire-repository rewrite or release sign-off. Logs/probes: `scratch/qa/js14/`; independent recipe evidence SHA-256 `732eef012ef7087b62a59180ea1dd923bc373548c6affb039a3563dc248066aa`.
   - **Dependencies:** Earlier modules complete.
+
+## Full-suite portability follow-up (2026-11-11)
+
+The prior run had 88 remaining failures: 55 text-reader line-ending failures,
+19 unavailable Windows-drive fixtures, eight symlink-permission failures,
+five JEV fixture failures, and one checkout-inflated evidence-size failure.
+The seven cleanup extraction guards were already repaired in `091e5f721f1`.
+These counts describe the prior run, not the verdict of the upcoming rerun.
+
+- [ ] **JS15 · Make textual guards independent of checkout line endings — Luna + Sol; root QA.**
+  - **Why:** Equivalent LF and CRLF text should give the same semantic validation without weakening byte-integrity checks.
+  - **Scope:** 54 reader failures outside `ui-json`, plus the evidence-size failure; preserve the size limit and real oversized-file detection.
+  - **Verification:** Reproduce affected checks, exercise LF/CRLF inputs, retain negative cases, then run all affected files.
+- [x] **JS16 · Remove machine-specific test and tooling assumptions — Sol; root QA.**
+  - **Why:** Tests must run on the developer's actual Windows checkout without a private D: drive or administrator symlink privileges.
+  - **Scope:** 19 path failures, eight symlink failures, the remaining `ui-json` text-reader failure, and five JEV failures; retain containment, refusal, merge-policy and artifact assertions.
+  - **Accepted verification:** All 33 failures reproduced before repair. The five affected test files now pass 114/114, zero skipped/cancelled, independently rerun by Sol. Replaced machine-specific D: paths with owned OS temporary directories, retained unsafe output refusals and shared QA locking, and exercised real outside/inside/dangling directory links without Windows symlink privileges. JEV behavior is unchanged: its disposable Git fixture now explicitly preserves LF bytes. Scoped tool cleanup checks retain temporary-directory ownership. Evidence: `scratch/qa/js15-platform/`; full-suite verification remains pending JS17.
+  - **Verification:** Diagnose fixtures versus tool defects, preserve security-boundary coverage, and run the affected files with independent review.
+- [ ] **JS17 · Rerun the complete test corpus and resolve newly exposed failures — root; Sol review.**
+  - **Why:** Focused repairs do not establish a passing full-suite result.
+  - **Scope:** Core, every discovered file (including the four slow files), both exhaustive tool-selftest groups, the separately scheduled bundler suite, and isolated quality selftests. Use deterministic partitions to avoid Windows command-length limits; run mutating selftests in an isolated QA checkout.
+  - **Verification:** Record exact source commits, selected file counts, pass/fail/skip/cancel totals, complete lane logs, and any remaining limits. No new exclusions or silent skips.
+- [ ] **JS18 · Record final verification and push verified fixes — root.**
+  - **Why:** The maintainer checklist and origin branch must reflect the same reviewed fixes and actual test verdict.
+  - **Scope:** Update this checklist and stale guide status, preserve local build metadata and artifacts, verify live origin task-branch identity. No Unity work, merge, release or publication.
 
 ## Checkpoint rules
 
