@@ -95,7 +95,7 @@ test('the build CLI checks without writing and explicit builds emit the expected
   for (const file of [
     'art-manifest.json', 'package.json', 'content', 'engine', 'games', 'src', 'tools/lib',
     cli, 'tools/asset-catalog.mjs', 'tools/base-cards.mjs', 'tools/catalog-json.mjs',
-    'tools/game-config.mjs', 'tools/maps-validate.mjs', 'tools/ui-validate.mjs',
+    'tools/game-config.mjs', 'tools/maps-validate.mjs', 'tools/ui-validate.mjs', 'tools/working-tree-text.mjs',
   ]) cpSync(join(ROOT, file), join(root, file), { recursive: true });
 
   const output = join(root, artifactFile('ashenspire'));
