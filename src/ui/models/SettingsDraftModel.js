@@ -1,8 +1,11 @@
 import { SEED_KEY, sameSetting } from '../../model/settingsDefaults.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { normalizeTunedNumber } from './CardSizeModel.js';
 
 /** Create the shared settings draft owner for reset, undo, and number commits. */
-export function CreateSettingsDraftModel({ undoMs = 8000, now = () => Date.now() } = {})
+export function CreateSettingsDraftModel(
+    { undoMs = uiConfig.presentation.settingsUndo.behavior.windowMs, now = () => Date.now() } = {},
+)
 {
     let undoOffer = null;
     let profileGeneration = 0;

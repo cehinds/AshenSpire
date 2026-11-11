@@ -1,13 +1,13 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS11 verified locally by root. JS12–JS14 remain open. Checkboxes change only after root acceptance.
+**Status:** JS01–JS13 verified locally by root. Seven stale regression guards are being repaired before JS14 final acceptance. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
 - Worktree: `C:\Users\const\.codex\worktrees\js-core2-cleanup\AshenSpire`, branch `codex/js-core2-cleanup`, base `c39f9362e0d20c484dfb0003872b07a591847167`.
 - The read-only audit first inspected `88b5c5956fb2097863b0705178a086df412a4a80`; root verified live dev `c39f9362e0d20c484dfb0003872b07a591847167` adds only `buildordinal.json`. The checklist uses the latter as its implementation base.
 - The separate `feature/UpdateUI` checkout remains untouched. Its pre-existing generated-file modifications are not part of this worktree's baseline.
-- Scope is a bounded maintainability and compatibility cleanup. No push, merge, publish, release, or broad rewrite is authorized. Existing files, branches, worktrees, artifacts, and archives remain preserved.
+- Scope is a bounded maintainability and compatibility cleanup. The owner authorized pushing this task branch to origin on 2026-11-11. Merge, publication, release, and broad rewrites remain outside this request. Existing files, branches, worktrees, artifacts, and archives remain preserved.
 
 ## Accepted facts and behavior distinctions
 
@@ -137,7 +137,7 @@
   - **Dependencies:** JS04–JS05 and relevant JS09 interfaces.
 
 - [x] **JS12 · Clarify enemy authoring and registry projection — P2; Sol.**
-  - **Status:** Verified locally by root.
+  - **Status:** Verified locally by root; commit `19f65d36525`.
   - **Why:** An enemy edit needs a clear source for each field and actionable diagnostics when a projection is invalid.
   - **Scope:** Document and isolate the existing shared-definition/Core-row overlay, including `coreOffense`/`coreSp` opt-ins; improve field-level diagnostics without moving balance authority.
   - **Evidence:** `tools/enemy-sheets.mjs:2`, `src/model/gameProfile.js:74`, `src/model/gameProfileEnemy.js:5`, `src/engine/combat.js:323`.
@@ -146,11 +146,17 @@
   - **Accepted verification:** Focused suite passed 139; reviewer passed 42 checks, and native/bundle diagnostic probes passed 15 cases each. Frozen comparison covered 33 definitions × 4 views and 24 seeded fights with exact preservation. Quality passed for 943 authored modules/16 enrolled owners with strict types; bundle cycles were zero. Core passed 151/151; plantsites passed 310 with the existing 5 drifted/35 unreadable baseline. Build 0.7.4.73 (`17b4efd025`, light HTML 155,975,448 bytes) refreshed 4/4 aliases; shipped checks passed 12/12; frozen Core 2 scenarios passed 5/5. No protected runtime/profile/content Git diff was introduced. The 36 generated enemy-sheet outputs were normalized to exact HEAD bytes/LF in this worktree; the original checkout was untouched. Browser was not rerun because the shipped projection remained exact and no UI behavior changed. Raw gate evidence: [`ordered-gates`](../scratch/qa/js12/ordered-gates/), [`independent reviewer`](../scratch/qa/js12/independent-final-accepted.log), [`focused suite`](../scratch/qa/js12/focused-final.log).
   - **Dependencies:** JS05, JS08.
 
-- [ ] **JS13 · Centralize only intentional presentation/gesture tunables — P2; Luna.**
+- [x] **JS13 · Centralize only intentional presentation/gesture tunables — P2; Luna.**
+  - **Status:** Verified locally by root; accepted default build 0.7.4.74 (`e920d33861`).
   - **Why:** Maintainers should edit intended tuning values in one validated place without turning structural constants into configuration.
-  - **Scope:** Extend existing JSON configuration for justified user-facing values such as hold timing, pointer slop, undo lifetime, or hand paging. Reuse gesture/lifecycle helpers only when semantics match. Keep algorithmic sentinels and safety ceilings in code.
-  - **Evidence:** `src/ui/screens/combat.js:656,1235`, `src/ui/screens/settings.js:725`, `tools/style-lint.mjs:30`, `content/config/ui/tokens.json`.
-  - **Acceptance:** Defaults keep screenshots/input unchanged; non-default settings propagate consistently across reduced motion, long text, touch, keyboard, and gamepad. Do not move every number mechanically.
+  - **Scope:** Add `content/config/ui/presentation/combatInspection.json` (600 ms figure hold, 8 px movement tolerance) and `settingsUndo.json` (8000 ms Undo window). Read the generated `uiConfig` directly in the existing combat and settings owners; keep structural sentinels, separate inspector/action gestures, and unrelated tuning in their current owners.
+  - **Implementation:** The complete config tree requires both files. The compiler rejects absent fields, unknown behavior keys, invalid values, and timer delays above the platform limit before generated output can be written; partial pure compiler fixtures remain supported. No gameplay/runtime rules or saved data are changed.
+  - **Evidence:** `src/ui/screens/combat.js:1235`, `src/ui/models/SettingsDraftModel.js:5`, `tools/config-build.mjs:50`, and the two authored `content/config/ui/presentation/` files.
+  - **Acceptance:** Defaults keep screenshots/input unchanged; non-default hold duration, movement tolerance, and Undo lifetime reach their existing consumers. Do not move every number mechanically.
+  - **Excluded after review:** `HAND_PAGE_THRESHOLD` remains 7 in `combat.js`. The active formation screen hides both paging arrows unconditionally (`styles/responsive-combat-chrome.css:18`), and `stepHand()` is only called by those controls (`combat.js:3848–3849`); configuring it would tune inaccessible controls and alter only reserved blank columns. The draft JSON is retained at `scratch/qa/js13/combatHand-out-of-scope.json` for provenance, not shipped.
+  - **Local focused checks:** `node --test tests/ui-config.test.mjs tests/ui-presentation-tuning.test.mjs` passed 36/36; `node --test tests/settings-revamp.test.mjs tests/settings-draft-model.test.mjs` passed 100/100. `npm run code:check` passed naming across 943 authored files/16 enrolled owners and strict TypeScript; `node tools/config-build.mjs --check` passed. Root subsequently accepted the ordered gates and browser checks below.
+  - **Accepted verification:** Core 151/151; shipped 12/12; frozen native/production-transform scenarios 5/5; quality passed 943 authored modules, 16 enrolled owners, and strict save-boundary types. Plantsites scanned 310 with the existing 5 drifted/35 unreadable baseline. Independent checks passed 60/60 plus 32 malformed-config probes, four legal boundaries, and two CLI no-write refusals. Default and isolated 1000 ms/16 px/2500 ms builds each passed six desktop/touch browser scenarios, including real inspection, movement cancellation, Settings Undo/expiry, keyboard and simulated gamepad. Compared combat/RNG snapshots and existing profile/runtime pins were unchanged. Application/runtime/network errors were zero; four Chrome pre-activation vibration interventions per build were recorded separately. Audio, physical controllers and haptics were not validated. Evidence: `scratch/qa/js13/ordered-gates/` and `scratch/qa/js11-13/browser-js13-review-summary.json`.
+  - **Broader review:** All eight Windows discovered PR shards ran: 8,016 passed, 95 failed, 15 skipped. Seven failures are stale guards from earlier extractions; 88 are demonstrated baseline/environment failures. The raw lane remains red and is not a passing full-suite claim. Classification: `scratch/qa/current-build-review/REVIEW.md`.
   - **Dependencies:** JS05, JS10–JS11.
 
 - [ ] **JS14 · Complete the solo-maintainer map and final consistency gate — P2; Luna + root.**

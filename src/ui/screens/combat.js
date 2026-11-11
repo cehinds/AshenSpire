@@ -153,6 +153,7 @@ import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { iconTray, setIconTrayOverflow, trayIcon } from '../components/iconTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
@@ -1240,10 +1241,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.addEventListener('pointerdown', event => {
         if (event.button !== 0) return;
         cancelHold(); inspected = false; origin = { x: event.clientX, y: event.clientY };
-        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, 600);
+        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, uiConfig.presentation.combatInspection.behavior.holdMs);
       });
       box.addEventListener('pointermove', event => {
-        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 8) cancelHold();
+        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > uiConfig.presentation.combatInspection.behavior.movementTolerancePx) cancelHold();
       });
       box.addEventListener('pointerup', cancelHold);
       box.addEventListener('pointercancel', cancelHold);

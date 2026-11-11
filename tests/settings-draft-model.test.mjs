@@ -54,6 +54,17 @@ test('a reset that only transfers promotion ownership remains undoable', async (
     assert.deepEqual(writes[1], { [SEED_KEY]: {} });
 });
 
+test('the configured Undo window is the default and tests may still override it', () =>
+{
+    const configured = CreateSettingsDraftModel({ now: () => 100 });
+    configured.OfferUndo('Configured', { musicVolume: 68 });
+    assert.equal(configured.PendingUndo().until, 8100);
+
+    const overridden = CreateSettingsDraftModel({ undoMs: 2500, now: () => 100 });
+    overridden.OfferUndo('Test override', { musicVolume: 68 });
+    assert.equal(overridden.PendingUndo().until, 2600);
+});
+
 test('an expired captured Undo cannot apply before the display timer or next paint runs', async () =>
 {
     let now = 100;
