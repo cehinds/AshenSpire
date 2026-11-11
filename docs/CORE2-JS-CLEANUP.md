@@ -1,6 +1,6 @@
 # Core 2 JavaScript cleanup checklist
 
-**Status:** JS01–JS13 verified locally by root. The seven stale regression guards are repaired and verified; JS14 final acceptance is in progress. Checkboxes change only after root acceptance.
+**Status:** JS01–JS14 verified locally within the bounded cleanup plan. The seven introduced stale guards are repaired; the broader suite retains 88 classified baseline/environment failures and is not claimed green. Checkboxes change only after root acceptance.
 
 ## Baseline and provenance
 
@@ -160,11 +160,15 @@
   - **Regression follow-up (2026-11-11):** Updated the seven older guards to follow the extracted owners while retaining refusal, lock cleanup, teardown, Effects-off, Ward, and stance coverage. Seven files passed 29 Node tests plus 44 selection assertions; 11 related owner files passed 79/79. Independent review passed 29/29 and save-context/malformed-snapshot checks passed 41/41. The final lock-wiring refinement passed 4/4. This repairs the seven introduced failures; the full eight-shard lane was not rerun and its 88 classified baseline/environment failures are not claimed fixed. Logs are under `scratch/qa/js14/`.
   - **Dependencies:** JS05, JS10–JS11.
 
-- [ ] **JS14 · Complete the solo-maintainer map and final consistency gate — P2; Luna + root.**
+- [x] **JS14 · Complete the solo-maintainer map and final consistency gate — P2; Luna + root.**
+  - **Status:** Verified locally by root on 2026-11-11 after Sol independent review and Luna documentation/CI implementation. Regression follow-up commit `091e5f721f1` is on origin.
   - **Why:** A solo maintainer needs a practical route from an edit to the right validator and acceptance check.
   - **Scope:** Extend `docs/MANUAL-EDITING.md` rather than create a competing guide; cover cards, enemies, balance, screen text/layout, and save-safe rule changes. Refresh the generated architecture inventory and finish naming migration with documented exceptions.
   - **Evidence:** `docs/MANUAL-EDITING.md`, `docs/ARCHITECTURE-CURRENT-DEV.md:8`, `tools/README.md`, component catalog.
   - **Acceptance:** Follow recipes from an isolated checkout; links/commands work; each tunable has one owner; launch doors and source/bundle acceptance pass.
+  - **Implementation:** Updated the existing maintainer guide with exact enemy-sheet regeneration order, shared-move versus separate damage/SP card opt-ins, save/config lifetimes, extracted owner map, staged conventions, and test-lane limits. Corrected the retired selected-HUD guide. Added the isolated quality check/selftests to the existing core CI job and one LF rule for generated enemy reference Markdown. Refreshed the architecture inventory, including five application/action services; stable architecture contracts are unchanged.
+  - **Accepted verification:** Exact CI install/check/selftest commands passed (943 authored modules, 16 enrolled owners, strict types, 6/6 selftests). Core passed 151/151; plantsites passed 310 with the documented 5 drifted/35 unreadable baseline; UI config check passed 52 sources; enemy-sheet check passed. Build-version and shipped checks passed (12/12 shipped); frozen native/production-transform scenarios passed 5/5. Independent isolated recipes verified card damage, UI text, geometry, pacing, live framework tuning and game-artifact build/check, with profile/lock bytes preserved for the live edit. The enemy recipe projected Dragon damage 18×2 to 17×2, while unopted Stitched King card changes left its shared move unchanged. Local links and scoped LF checkout passed. Architecture verify/check passed with explicit source `091e5f721f11a836d37e43f590734a39f3c0e876`, ref `codex/js-core2-cleanup`, 5,770 tracked files and boundary PASS; rechecks after later commits must pin that recorded metadata.
+  - **Current build and limits:** The game source digest remains `e920d33861` and the accepted 0.7.4.74 HTML SHA-256 remains `1891b445fcd49af8daade338f450d13b598b2b561452bc42cece39495087c9dc`. JS14 has no game runtime change, so the JS13 browser evidence remains applicable; no new browser run or rebuilt HTML is claimed. Full discovered shards were not rerun after the targeted guard repairs. Remaining baseline/environment failures, legacy naming/format exceptions and untyped legacy code remain explicit; this closes the scoped modules, not an entire-repository rewrite or release sign-off. Logs/probes: `scratch/qa/js14/`; independent recipe evidence SHA-256 `732eef012ef7087b62a59180ea1dd923bc373548c6affb039a3563dc248066aa`.
   - **Dependencies:** Earlier modules complete.
 
 ## Checkpoint rules

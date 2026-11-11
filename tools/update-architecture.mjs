@@ -69,6 +69,7 @@ const sourceBranch = process.env.ARCHITECTURE_SOURCE_REF
 const areas = [
   ['Domain models and contracts', 'src/model/'],
   ['Headless simulation/services', 'src/engine/'],
+  ['Application lifecycle and action services', 'src/services/'],
   ['Screen presenters/hosts', 'src/ui/screens/'],
   ['Presentation projections', 'src/ui/viewModels/'],
   ['Component models and behavior records', 'src/ui/models/'],

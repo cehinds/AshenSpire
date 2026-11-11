@@ -13,6 +13,9 @@
 *.json text eol=lf
 *.css text eol=lf
 
+# The enemy-sheet checker compares this generated Markdown projection byte-for-byte.
+games/ashenspire/packs/core/enemies/_reference.md text eol=lf
+
 # Keep the polish kit checksum records stable across Windows and Linux.
 docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.json text eol=lf
