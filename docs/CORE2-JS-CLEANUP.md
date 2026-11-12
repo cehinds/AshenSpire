@@ -7,7 +7,7 @@
 - Worktree: `C:\Users\const\.codex\worktrees\js-core2-cleanup\AshenSpire`, branch `codex/js-core2-cleanup`, base `c39f9362e0d20c484dfb0003872b07a591847167`.
 - The read-only audit first inspected `88b5c5956fb2097863b0705178a086df412a4a80`; root verified live dev `c39f9362e0d20c484dfb0003872b07a591847167` adds only `buildordinal.json`. The checklist uses the latter as its implementation base.
 - The separate `feature/UpdateUI` checkout remains untouched. Its pre-existing generated-file modifications are not part of this worktree's baseline.
-- Scope is a bounded maintainability and compatibility cleanup. The owner authorized pushing this task branch to origin on 2026-11-11. Merge, publication, release, and broad rewrites remain outside this request. Existing files, branches, worktrees, artifacts, and archives remain preserved.
+- Scope is a bounded maintainability and compatibility cleanup. The owner authorized pushing this task branch to origin on 2026-11-11 and merging it into `dev` on 2026-11-12. [PR #2740](https://github.com/cehinds/AshenSpire/pull/2740) records the integration checks and merge status. Publication, release, and broad rewrites remain outside this request. Existing files, branches, worktrees, artifacts, and archives remain preserved.
 
 ## Accepted facts and behavior distinctions
 
