@@ -266,7 +266,7 @@ under `tools/code-quality/` and are not game runtime dependencies. See the
 [quality tool guide](../tools/code-quality/README.md) and
 [owner policy](../tools/code-quality/policy.json).
 
-### Test lanes and current Windows baseline
+### Test lanes and current Windows verification
 
 `npm test` runs `node tests/run-node.mjs --no-selftests --no-discovered`: the
 core engine lane and its curated repository/tool verdict checks. It excludes
@@ -292,16 +292,44 @@ node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --
 node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 7/8
 ```
 
-Reviewed Windows baseline (2026-11-10): the eight shards selected 1,031 files
-and reported 8,126 tests: 8,016 passed, 95 failed, 15 skipped. Seven failures
-were stale regression guards for extracted JS02/JS09/JS10 owners; the other 88
-were classified as existing baseline or environment failures (CRLF-sensitive
-source/workflow/CSV assertions, unavailable hardcoded Windows paths,
-unprivileged symlinks, and existing JEV fixture failures). This is a red raw
-run, not a passing gate. The seven guards were repaired and passed focused
-checks on 2026-11-11; the full shards have not been rerun. See the
-[cleanup checklist](CORE2-JS-CLEANUP.md) for current verification and limits. The four deliberately slow simulation files are also excluded
-from `test:pr` and run in the heavier CI lane.
+For the complete corpus, also run core and quality as described above, then
+these remaining lanes sequentially with the required art packs available:
+
+```sh
+node --test tests/balance-doc.test.mjs
+node --test tests/runsim-report-flags.test.mjs
+node --test tests/simbot-decisions.test.mjs
+node --test tests/simrun-loop.test.mjs
+node tools/bundle.test.mjs
+node tests/run-node.mjs --selftests-only --selftest-group link
+node tests/run-node.mjs --selftests-only --selftest-group other
+```
+
+The four deliberately slow files are excluded from `test:pr`. The bundler
+file runs separately; two UI contract files are already covered by core.
+Use a disposable QA checkout for the exhaustive tool checks and retain its
+exact commit, logs and clean-tree checks.
+Prepare verified HTML artifacts from the same game source digest at
+`build/AshenSpire.html` and `build/download/AshenSpire.html` before recording
+the QA baseline; their two metadata checks otherwise add missing-artifact skips.
+
+Verified Windows corpus (2026-11-11, Node 24.16): 1,040 discovered files were
+accounted for, including 1,033 fast files and all four slow files. Fast results
+were 8,134 passed and 15 skipped; slow results were 17 passed and one skipped.
+There were zero remaining failures or cancellations. Separate gates passed:
+core 151/151, bundler 145/145, exhaustive tool selftests 18/18, and isolated
+quality selftests 6/6 plus naming and strict types. These counts overlap some
+discovered coverage and should not be added into a unique grand total.
+
+The full run used `5fc75370976`; its one missing build-fixture dependency was
+fixed at `1f8aa560118`, then the entire affected 989-test partition reran green.
+Unchanged lanes retain their original commit evidence. The original red receipt
+is preserved. The 16 skips are existing platform-dependent checks and the
+historical combat-v1 balance-report check, which does not cover the configured
+Core build; no new skip was added. This supersedes the November 10 red baseline
+of 95 failures, including the seven extraction guards and 88 portability failures.
+See [JS15–JS18 in the cleanup checklist](CORE2-JS-CLEANUP.md) for exact hashes,
+skip reasons and the accepted lane records. Browser acceptance remains separate.
 
 Open the repository folder in Visual Studio (**File → Open → Folder**).
 No solution conversion is needed. Install Node 22.14 or newer. Right-click
