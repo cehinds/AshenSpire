@@ -13,6 +13,11 @@
 *.json text eol=lf
 *.css text eol=lf
 
+# Preserve the original bytes of frozen art exports and a historical migration fixture.
+tests/fixtures/art-exports/unarmed-magic-2026-09-19/runtime-fragment.json -text
+tests/fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json -text
+tests/fixtures/uistrings-migrated-1535.json -text
+
 # The enemy-sheet checker compares this generated Markdown projection byte-for-byte.
 games/ashenspire/packs/core/enemies/_reference.md text eol=lf
 
