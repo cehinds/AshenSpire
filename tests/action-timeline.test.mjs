@@ -29,18 +29,21 @@ test('ordered actions and counters finish every stage before the next actor begi
   const expected = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), expected);
   assert.deepEqual(trace.slice(9, 18).map(row => row[0]), expected);
-  // D11: a 500 ms gap at each boundary (action, animation, result, reaction, damage, reset, next).
-  assert.deepEqual(trace.slice(0, 9).map(row => row[2]), [0, 500, 1000, 1275, 2050, 2550, 3050, 3050, 3550]);
-  assert.equal(trace[9][2], 4050, 'the next actor starts one gap after the reset');
+  // D11: a 500 ms gap before the result word, the damage numbers hold and the reset; the action word, animation,
+  // sprite reaction and damage numbers hold a fixed 100 ms (actionPacing.json fixedStageMs).
+  assert.deepEqual(trace.slice(0, 9).map(row => row[2]), [0, 100, 200, 475, 850, 1350, 1450, 1450, 1950]);
+  assert.equal(trace[9][2], 2450, 'the next actor starts one gap after the reset');
   assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
 });
 test('× speed scales every action stage and sprite while retaining receipt order', () => {
   const normal = run(), fast = run(2); normal.c.advance(20000); fast.c.advance(20000);
-  assert.deepEqual(fast.trace.map(row => [row[0], row[1], row[2] * 2]), normal.trace);
+  // The six fixed 100 ms stages do not scale; the order and the gap-driven stages do.
+  assert.deepEqual(fast.trace.map(row => [row[0], row[1]]), normal.trace.map(row => [row[0], row[1]]));
+  assert.ok(fast.trace.at(-1)[2] < normal.trace.at(-1)[2], 'a faster speed finishes the beats sooner');
   setCombatPacing();
 });
 test('cancel and repeated skips flush once and leave no late mutation or next action', () => {
-  const { c, trace, handle } = run(); c.advance(1100); handle.cancel(); handle.skip(); c.advance(20000);
+  const { c, trace, handle } = run(); c.advance(250); handle.cancel(); handle.skip(); c.advance(20000);
   assert.deepEqual(trace.map(row => row[0]), ['intent', 'action', 'sprite', 'flush', 'done']);
   assert.equal(c.pending, 0); assert.equal(handle.finished, true);
 });
@@ -122,11 +125,11 @@ test('auto-combat runs at its own multiplier, default ×1.5, and manual play kee
 
 test('D11: the default gap is 0.5 s at every stage boundary and the active speed scales it', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
-  const gaps = t => [t.wordMs, t.afterSpriteMs, t.resultMs, t.reactionMs, t.damageMs, t.resetMs];
+  const gaps = t => [t.resultMs, t.damageMs, t.resetMs];
   const normal = actionPacing();
-  assert.equal(normal.gapMs, 500); assert.equal(normal.intentMs, 500, 'the stance follows the intent word by one gap');
-  assert.deepEqual(gaps(normal), [500, 500, 500, 500, 500, 500]);
-  setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(6).fill(250));
+  assert.equal(normal.gapMs, 500); assert.equal(normal.intentMs, 100, 'the stance follows the intent word by a fixed 100 ms');
+  assert.deepEqual(gaps(normal), [500, 500, 500]);
+  setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(3).fill(250));
   setCombatPacing({ combatSpeed: 1, autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
   setCombatPacing({ combatSpeed: 1, combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
   setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
@@ -175,8 +178,8 @@ test('D11: three enemies finish by themselves at every pause and speed, with no 
     assert.ok(!trace.includes('flush'), `${name}: the watchdog must not fire`);
     measured[name] = trace.find(row => row[0] === 'done')[1];
   }
-  assert.equal(measured.default, 3 * 4050, 'three actors at 4050 ms each (seven 500 ms gaps plus the 550 ms clip), the last reset included');
-  assert.ok(Math.abs(measured['auto x1.5'] * 1.5 - measured.default) < 1, 'auto combat divides every gap and clip by x1.5');
+  assert.equal(measured.default, 3 * 2450, 'three actors at 2450 ms each (three 500 ms gaps, four 100 ms stages and the 550 ms clip), the last reset included');
+  assert.ok(measured['auto x1.5'] < measured.default, 'auto combat divides the gaps and the clip by x1.5');
   assert.ok(measured['gap 2000'] > measured.default && measured['gap 250'] < measured.default, 'the pause setting moves the whole turn');
 });
 
@@ -194,8 +197,8 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
   const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);
   assert.deepEqual(trace.slice(9, 18).map(row => row[0]), stages);
-  assert.equal(trace[3][2], 275, 'contact retains the sprite impact duration');
-  assert.equal(trace[9][2], 550 + timing.stepMs, 'the counter waits for the completed sprite and existing queue interval');
+  assert.equal(trace[3][2], 475, 'contact waits the fixed action-word and animation stages plus the sprite impact');
+  assert.equal(trace[9][2], 950 + timing.stepMs, 'the counter waits for the four fixed 100 ms stages, the completed sprite and the existing queue interval');
   assert.equal(trace.at(-1)[0], 'done');
   assert.equal(trace.some(row => row[0] === 'flush'), false);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);

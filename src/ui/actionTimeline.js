@@ -80,11 +80,13 @@ export function runActionTimeline(beats, hooks, timingIn, {
           // The actor reservation already includes its authored total. Only
           // a longer actual post-contact hold contributes new wait time.
           creditWatchdog(Math.max(0, impact + remaining - Math.max(reservedSpriteMs, total)));
+          // A telegraph beat (the strike that pauses for the reaction prompt) holds contact for at most telegraphHoldMs.
+          const holdMs = beat.telegraph && Number.isFinite(timing.telegraphHoldMs) ? Math.min(remaining, Math.max(0, timing.telegraphHoldMs)) : remaining;
           schedule(() => {
             cancelActor();
             if (beat.telegraph) {
               stage('resolution', beat, () => hooks.onResolution?.(beat));
-              schedule(next, Math.max(timing.resetMs, timing.stepMs));
+              schedule(next, Number.isFinite(timing.telegraphResetMs) ? Math.max(0, timing.telegraphResetMs) : Math.max(timing.resetMs, timing.stepMs));
               return;
             }
             schedule(() => {
@@ -116,7 +118,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
               };
               react();
             }, timing.afterSpriteMs);
-          }, remaining);
+          }, holdMs);
         }, impact);
       }, beat.prepared ? 0 : timing.wordMs);
     });
@@ -125,7 +127,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
   // upper bound; long clips never trigger the legacy short watchdog.
   const reservedSpriteMs = Math.max(0, Number(safe(() => hooks.maxSpriteMs?.(timing.spriteSpeed))) || 0);
   const perAction = timing.intentMs + timing.wordMs + timing.afterSpriteMs + timing.resultMs + timing.reactionMs
-    + timing.damageMs + timing.resetMs + timing.stepMs + 1000
+    + timing.damageMs + timing.resetMs + timing.stepMs + (Number(timing.telegraphResetMs) || 0) + 1000
     + reservedSpriteMs;
   const budget = 2000 + beats.reduce((budget, beat) => budget + Math.max(perAction + Math.max(0, (safe(() => hooks.reactionGroups?.(beat))?.length || 1) - 1) * (timing.resultMs + timing.reactionMs + timing.damageMs + timing.stepMs), timing.bannerMs + timing.stepMs), 0);
   watchdogDeadline = createdAt + budget;
