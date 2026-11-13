@@ -6,7 +6,7 @@ import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
-// Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a tall Block shield on the
+// Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a Block shield (HP and Poise rows tall) on the
 // left, then the HP bar, the Poise bar (always drawn, the HP bar's width and height) and one badge row.
 const read = rel => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 const hpBar = (max, lengthPct) => meter({ id: 'hp', value: `${max}/${max}`, cur: max, max, pct: 100, lengthPct, inset: true });
@@ -67,7 +67,7 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
   assert.match(css, /\.combat-health-poise-bar\.combat-health-poise-bar \{[^}]*width: var\(--mh-bar-w\)/, 'Poise is the HP bar\'s width');
   assert.match(css, /\.combat-health-meter > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'the HP trough is that width');
   assert.match(css, /\.combat-health-badges \{[^}]*width: var\(--mh-bar-w\); max-width: 100%[^}]*overflow: hidden/, 'the badge row is capped at the bar width (the browser test counts 8 statuses)');
-  assert.match(css, /grid-row: 1 \/ 4/, 'the shield spans the HP, Poise and badge rows');
+  assert.match(css, /grid-row: 1 \/ 3/, 'the shield spans the HP and Poise rows only');
   for (const form of FORM_FACTORS) {
     const { tokens } = JSON.parse(read(`content/hud-layout/${form}.json`));
     assert.match(tokens['--hud-mini-bar-width'], /^\d+px$/, `${form} bar width`);
