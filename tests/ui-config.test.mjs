@@ -247,7 +247,7 @@ test('token groups refuse unknown keys, bad values and unordered layers by name'
   refusedWith(planted('ui/tokens.json', (d) => { d.touch.minGapPx.home = 'styles/base.css'; }),
     tk + 'touch.minGapPx.home needs a css name');
   refusedWith(planted('ui/tokens.json', (d) => { d.sizing = {}; }),
-    tk + 'tokens.json holds only "vars" and the token groups type, layer, motion, touch, not "sizing"');
+    tk + 'tokens.json holds only "vars" and the token groups type, layer, motion, touch, color, not "sizing"');
   refusedWith(planted('ui/tokens.json', (d) => { d.vars.layer = 1; }),
     tk + 'vars.layer: "layer" is a token group name — rename the variable');
 });
