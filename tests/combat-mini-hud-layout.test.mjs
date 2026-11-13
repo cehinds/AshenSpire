@@ -6,7 +6,7 @@ import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { resourceBars } from '../src/ui/components/resbars.js';
 import { RESOURCE_SOURCES } from '../src/model/resources.js';
-import { poiseBarRemaining, poiseNearBreak, poiseLeftRow } from '../src/ui/models/CombatHealthModel.js';
+import { poiseBarRemaining, poiseNearBreak, poiseLeft } from '../src/ui/models/CombatHealthModel.js';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
 // Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a Block shield (HP and Poise rows tall) on the
@@ -141,6 +141,6 @@ test('poiseBarRemaining leaves a draining bar as it is; the pulse and inspector 
   assert.equal(poiseNearBreak({ id: 'poise', cur: 9, max: 12 }), true);
   assert.equal(poiseNearBreak({ id: 'poise', cur: 8, max: 12 }), false);
   assert.equal(poiseNearBreak({ id: 'poise', cur: 0, max: 0, drains: true }), false);
-  assert.deepEqual(poiseLeftRow({ persistentPoise: { value: 5, max: 12 } }, {}), { label: 'Poise', value: 5, max: 12 });
-  assert.deepEqual(poiseLeftRow({ poiseMeter: { value: 4, max: 10 } }, {}), { label: 'Poise', value: 6, max: 10 });
+  assert.deepEqual(poiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
+  assert.deepEqual(poiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
 });

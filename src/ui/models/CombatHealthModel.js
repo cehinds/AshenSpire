@@ -16,12 +16,12 @@ export const poiseBarRemaining = bar => bar.drains
   : { ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0, shownCur: Math.max(0, bar.max - bar.cur) };
 /** The near-break pulse: a fill-up bar at 75% or more, a draining bar at 25% or less. */
 export const poiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
-/** Poise left for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
-export const poiseLeftRow = (v, entity) => {
+/** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
+export const poiseLeft = (v, entity) => {
   const pool = v?.persistentPoise || entity?.persistentPoise;
-  if (pool && Number.isFinite(pool.max) && pool.max > 0) return { label: 'Poise', value: Math.max(0, pool.value || 0), max: pool.max };
+  if (pool && Number.isFinite(pool.max) && pool.max > 0) return { value: Math.max(0, pool.value || 0), max: pool.max };
   const max = v?.poiseMeter?.max || entity?.poiseMeter?.max || 0;
-  return { label: 'Poise', value: Math.max(0, max - (v?.poiseMeter?.value || 0)), max };
+  return { value: Math.max(0, max - (v?.poiseMeter?.value || 0)), max };
 };
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
