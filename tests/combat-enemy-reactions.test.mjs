@@ -447,3 +447,23 @@ test('a reaction move start leaves the telegraphed knowledge action unresolved',
   recordKnowledgeEvent(combat, { type: 'enemyMoveStarted', sourceId: 'e1' });
   assert.equal(enemy.knowledgeAction.executed, true);
 });
+
+test('a hit-back reaction answers only what a melee Counter would cover (owner 2026-11-13)', () => {
+  const moves = {
+    hitBack: { intent: 'attack', damage: 3, reaction: { on: ['playerAction'], chance: 1 } },
+    guardOnly: { intent: 'defend', block: 6, reaction: { on: ['playerAction'], chance: 1 } },
+  };
+  const args = incomingProfile => ({ groupKey: 'g', windowIndex: 0, incoming: 5, incomingProfile });
+  const profile = (maneuver, extra = {}) => ({ camp: 'physical', maneuver, damageType: 'slashing', ...extra });
+  const decide = (combat, p) => decideEnemyReaction(combat, first, 'playerAction', args(p));
+  const combat = fixture({ moves });
+  assert.equal(decide(combat, profile('attack')), 'hitBack');
+  assert.equal(decide(combat, profile('smash')), 'hitBack');
+  for (const miss of [profile('sweep'), profile('attack', { damageType: 'force' }), profile('attack', { damageType: 'piercing' }),
+    profile('ranged'), profile('attack', { delivery: 'projectile' }), { camp: 'spell', maneuver: 'attack', damageType: 'fire' }]) {
+    assert.equal(decide(combat, miss), 'guardOnly', JSON.stringify(miss));
+  }
+  // A damage-free reaction move is unchanged by the incoming profile.
+  const guard = fixture({ moves: { guardOnly: moves.guardOnly } });
+  assert.equal(decide(guard, profile('sweep')), 'guardOnly');
+});

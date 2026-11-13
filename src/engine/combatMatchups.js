@@ -67,6 +67,14 @@ function counterEligible(ctx, target, carrier, profile) {
   if (profile.maneuver === 'sweep') return false;
   if (mode === 'spell' || mode === 'magic') return isSpell(profile) || physicalProjectile(profile);
   if (mode === 'ranged') return physicalProjectile(profile);
+  return meleeCounterCovers(ctx, profile);
+}
+
+/** True when a melee Counter would cover this incoming profile: physical Attack/Smash, not Force/Piercing, not a projectile. */
+export function meleeCounterCovers(ctx, profile) {
+  if (!profile) return false;
+  const rules = matchupRules(ctx);
+  const cfg = rules.counter;
   return profile.camp === 'physical'
     && cfg.meleeIncomingManeuvers.includes(profile.maneuver)
     && !physicalProjectile(profile)

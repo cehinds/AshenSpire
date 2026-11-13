@@ -14,6 +14,7 @@ import { enqueueExpandedAction } from './combatExpansionActions.js';
 // dependency as a bare side-effect line (nothing here reads it) so the production
 // bundle's module order is unchanged.
 import './normalPreview.js';
+import { meleeCounterCovers, combatProfileOf } from './combatMatchups.js';
 import { reactionPaused } from './reactionState.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
@@ -38,6 +39,9 @@ export function incomingAgainst(source, id) {
   return best;
 }
 
+// A reaction move that deals damage (hit-back): damage or counterDamage above zero.
+export const reactionDealsDamage = move => Number(move?.damage) > 0 || Number(move?.counterDamage) > 0;
+
 // The move this enemy takes for one window, or null. Eligibility first (alive, not
 // staggered, not control-locked, one reaction per combat turn). Then each reaction move
 // in authored order: it qualifies when the incoming damage against this enemy is positive
@@ -46,13 +50,16 @@ export function incomingAgainst(source, id) {
 // otherwise one draw on the enemyReaction stream decides it, memoised per window in
 // ctx.enemyReactionRolls. A candidate state (ctx._reactionPlaying) reads the memo only:
 // an unmemoised roll there is "does not react" and never draws.
-export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, windowIndex, incoming }) {
+export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, windowIndex, incoming, incomingProfile }) {
   if (!enemyReactionsActive(ctx) || !enemy?.alive || enemy.skipNextTurn) return null;
   if (enemy.combatReactionTurn === ctx.turn) return null;
   if (controlRestrictions(ctx, enemy).locked) return null;
   for (const [moveId, move] of reactionMovesOf(ctx, enemy, reactionWindow)) {
     if (core2ActionPolicyEnabled(ctx) && Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx }).totalSp > Rounds.enemyAvailableSp(enemy)) continue;
     const { minIncoming = 1, chance = 1 } = move.reaction;
+    // Owner 2026-11-13: a hit-back move answers only what a melee Counter would cover. An unknown
+    // incoming profile (no incomingProfile passed) leaves the old behaviour.
+    if (incomingProfile !== undefined && reactionDealsDamage(move) && !meleeCounterCovers(ctx, incomingProfile)) continue;
     if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
     if (chance <= 0) continue;
@@ -225,7 +232,9 @@ export function openEnemyWindow(ctx, group, reactionWindow, pushed, hooks) {
     // The window opens for enemies the root card targets, or (playerReaction) that own the
     // root or that the root card targets (contract); the decision then qualifies on `incoming`.
     if (reactionWindow === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incomingAgainst(group, enemy.id) > 0)) continue;
-    const moveId = decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey: group.key, windowIndex: index, incoming });
+    // R5 covers the playerAction window (the root card is the incoming action); a playerReaction push is not an attack.
+    const incomingProfile = reactionWindow === 'playerAction' ? combatProfileOf(group.carrier) || undefined : undefined;
+    const moveId = decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey: group.key, windowIndex: index, incoming, incomingProfile });
     if (moveId) {
       const entry = pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks);
       if (entry) pushedEntries.push(entry);
