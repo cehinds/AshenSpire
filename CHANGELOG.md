@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-12
 
+- **Combat mini HUD: centred stance icon, shorter Block shield, Poise bar drains** ([#2741](https://github.com/cehinds/AshenSpire/pull/2741), `0.7.4.63`). The stance and intent icon now sits centred over the health bar. The Block shield is only as tall as the health and Poise bars. The Poise bar starts full and drains as Poise is lost.
 - **Behind the scenes: safer saves, settings and portable checks** ([#2740](https://github.com/cehinds/AshenSpire/pull/2740), `0.7.4.63`). Each saved run now validates against its own game profile. Settings Reset and Undo reject stale offers and handle reopened expiry timers. Core 2's save, combat, targeting and enemy-display code now has clearer owners; its checks no longer rely on machine-specific paths or Windows line endings. Default combat and random results are unchanged.
 
 ## 2026-11-08
