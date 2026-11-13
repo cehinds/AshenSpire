@@ -1176,8 +1176,8 @@ export function stanceState(stage) {
 
 // Ordered FixCore presentation (the sequential beat order, SPEC §7.4).
 export function playTimeline(events, ctx, done) {
-  const timing = actionPacing({ reduced: reducedMotionRequested() });
-  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true });
+  const timing = actionPacing({ reduced: reducedMotionRequested(), reaction: !!ctx.reactionPlayback });
+  const enemyTiming = actionPacing({ reduced: reducedMotionRequested(), enemy: true, reaction: !!ctx.reactionPlayback });
   const beats = groupBeats(events);
   const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
   const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
