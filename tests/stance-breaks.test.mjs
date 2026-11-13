@@ -92,3 +92,26 @@ test('the same break applies to a player target and never to a staggered stance'
   c.player.combatStance = { maneuver: 'staggered' };
   assert.equal(breakStanceOnHit(c, enemy, c.player, carrier('sweep'), { blockBefore: 0, incoming: 9 }), null);
 });
+
+test('a broken Counter move leaves the enemy intent at once: the next planned follow-up becomes the intent', () => {
+  const { c, enemy, play } = fight({ maneuver: 'sweep', amount: 5, block: 0, stance: 'counter', armCounter: true });
+  assert.equal(enemy.intent.moveId, 'parry');
+  enemy.plannedMoves = [{ moveId: 'thrust', sp: 1 }];
+  const ai = c.rng.getCounters().enemyAI || 0;
+  play();
+  assert.equal(enemy.intent.moveId, 'thrust');
+  assert.deepEqual(enemy.plannedMoves, []);
+  const gone = c.eventLog.find(event => event.type === 'enemyMoveUnavailable' && event.sourceId === enemy.id);
+  assert.deepEqual([gone.moveId, gone.resource, gone.reason], ['parry', 'stance', 'stanceBroken']);
+  assert.equal(c.rng.getCounters().enemyAI || 0, ai, 'no enemyAI draw');
+});
+
+test('a broken Counter move with no follow-up leaves the enemy with no move', () => {
+  const { c, enemy, play } = fight({ maneuver: 'sweep', amount: 5, block: 0, stance: 'counter', armCounter: true });
+  enemy.plannedMoves = [];
+  play();
+  assert.equal(enemy.intent.moveId, null);
+  assert.equal(enemy.intent.kind, 'idle');
+  assert.equal(enemy.combatStance, undefined);
+  assert.equal(c.eventLog.filter(event => event.type === 'enemyMoveUnavailable').length, 1);
+});

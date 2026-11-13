@@ -19,7 +19,7 @@ import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.j
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit, previewTargetFor, precisionEntryGrant } from './stanceHit.js';
-import { stanceStaminaCost, stanceManaCost, stanceEffectiveness, stanceEntryBonuses } from '../model/stanceRules.js';
+import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness, stanceEntryBonuses } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
@@ -447,6 +447,30 @@ export function createCombat({
 // returns to the UI)
 // ---------------------------------------------------------------------------
 
+// Owner 2026-11-13: an enemy whose Counter or Defend stance a Sweep or Smash broke during the player's turn loses that move.
+// The intent drops at once (enemyMoveUnavailable, resource 'stance'), its next planned follow-up becomes the intent, and
+// with none the enemy has no move (kind 'idle'). Nothing is picked: no enemyAI draw and no new roll.
+function settleBrokenEnemyStances(combat) {
+  for (const enemy of combat.enemies || []) {
+    const from = enemy.stanceBrokenFrom;
+    if (!from) continue;
+    delete enemy.stanceBrokenFrom;
+    const moveId = enemy.intent?.moveId;
+    if (combat.phase !== 'player' || !enemy.alive || enemy.pendingMove || !moveId || enemy.intent.resolved) continue;
+    const def = combat.registries.enemies.get(enemy.enemyId);
+    if (stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId })?.maneuver !== from) continue;
+    combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, resource: 'stance', reason: 'stanceBroken', from });
+    const next = enemy.plannedMoves?.shift();
+    if (next) {
+      enemy.intent = buildIntent(def.moves[next.moveId], next.moveId, enemy, combat);
+      primeEnemyCounter(combat, enemy, def.moves[next.moveId], next.moveId);
+    } else {
+      enemy.intent = { kind: 'idle', moveId: null, combatProfile: {}, damage: null, hits: null, block: null, delayed: false, pending: false };
+      enemy.planDue = false;
+    }
+  }
+}
+
 function drainQueue(combat) {
   let guard = 0;
   while (combat.queue.length) {
@@ -457,6 +481,7 @@ function drainQueue(combat) {
     const action = combat.queue.shift();
     Reactions.startQueuedEnemy(combat, action);
     A.executeAction(combat, action);
+    settleBrokenEnemyStances(combat);
     const group = action.meta?.expansionGroup;
     if (action.effect?.op === 'completeCombatAction' && !action.meta?.contactCompletion
       && action.source?.kind === 'enemy' && group?.enemyMoveStart) {
