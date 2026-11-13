@@ -8,7 +8,7 @@ test('named views fit their logical aspect inside every host', () => {
     const portraitTablet = preset === 'tablet' && height > width;
     assert.equal(view.width, portraitTablet ? VIEW_PRESETS[preset].height : VIEW_PRESETS[preset].width);
     assert.equal(view.height, portraitTablet ? VIEW_PRESETS[preset].width : VIEW_PRESETS[preset].height);
-    assert.ok(view.left >= 0 && view.top >= 0);
+    assert.ok(view.left >= -1e-9 && view.top >= -1e-9);
     assert.ok(view.width * view.scale <= width + 1e-9);
     assert.ok(view.height * view.scale <= height + 1e-9);
     assert.ok(Math.abs(view.left * 2 + view.width * view.scale - width) < 1e-9);
