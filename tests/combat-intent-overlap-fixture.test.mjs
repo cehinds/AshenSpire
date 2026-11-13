@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 
 const source = readFileSync(new URL('../tools/screenreach.mjs', import.meta.url), 'utf8');
 const begin = source.indexOf('  const visible = node => {', source.indexOf('const INTENT_OVERLAP ='));
-const end = source.indexOf('  const a = intent.getBoundingClientRect()', begin);
+const end = source.indexOf('  // The mini HUD centres the intent with a CSS translate', begin);
 assert.ok(begin > 0 && end > begin);
 const selection = source.slice(begin, end);
 
