@@ -277,7 +277,7 @@ export function setCombatCanvas(on) {
   if (on === combatCanvas) return;
   combatCanvas = on;
   if (!saves) return;
-  const settings = saves.loadMeta().settings || {};
+  const settings = getActiveSettings() || {};
   applyUiScale(settings);
   applyCardSizeSettings(settings);
 }
@@ -393,7 +393,7 @@ export function reflexAutoScale() {
   // zoom stays put, so the local width crosses narrowMax with nothing else
   // changing. Gating this on Auto left the attribute stale at exactly the
   // shapes a fixed size is most likely to be small in (#24).
-  applyUiScale((saves.loadMeta().settings) || {});
+  applyUiScale(getActiveSettings() || {});
 }
 
 // A resize fires many times a second; most of the card-size properties come out
@@ -422,11 +422,15 @@ export function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  const resting = restingWidthPx(resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, window.innerHeight), window.innerWidth, window.innerHeight).width, levels);
+  // The same visible height applyUiScale used, so both pick one preset.
+  const cardViewport = window.visualViewport;
+  const cardHeight = cardViewport && cardViewport.scale === 1 ? cardViewport.height : window.innerHeight;
+  const cardView = resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, cardHeight), window.innerWidth, cardHeight);
+  const resting = restingWidthPx(cardView.width, levels);
   setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // Focus and inspect rest the same way: the phone keeps its `mobile` variant, a desktop gets the authored (20% larger) width.
   for (const level of ['focus', 'inspect']) {
-    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, window.innerHeight), window.innerWidth, window.innerHeight).width, levels)}px`);
+    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, cardView.width, levels)}px`);
   }
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
