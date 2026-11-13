@@ -20,6 +20,11 @@ name: restore-test-branch
 # `release` itself is missing, `dev` is the fallback — the branch `test` is
 # cut from in CONTRIBUTING.md's branch model.
 #
+# `review` (added 2026-11-07) has the same problem: the review → test promotion uses `review` as
+# the pull request's head, so the setting deletes it when that merges. A deleted `review` is
+# recreated at the tip of `test`: after a review → test merge, `test` contains everything `review`
+# held, plus the merge. The existing `test` restore is unchanged.
+#
 # BOUNDARY — this restores a branch pointer. It does not re-run any gate,
 # rebuild any artifact, or claim the restored `test` is playable; every one of
 # those is the promotion's job, not this file's.
@@ -36,14 +41,15 @@ concurrency:
 
 jobs:
   restore:
-    # `delete` fires for every branch and tag; only `test` is ours to put back.
-    if: github.event.ref_type == 'branch' && github.event.ref == 'test'
+    # `delete` fires for every branch and tag; only `test` and `review` are ours to put back.
+    if: github.event.ref_type == 'branch' && (github.event.ref == 'test' || github.event.ref == 'review')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Recreate test from release (or dev)
+        if: github.event.ref == 'test'
         run: |
           set -euo pipefail
           if git ls-remote --exit-code --heads origin test >/dev/null 2>&1; then
@@ -62,3 +68,23 @@ jobs:
           git push origin "$sha:refs/heads/test"
           echo "restored test at $sha (from $source)"
           echo "::warning title=test branch restored::test was deleted (auto-delete of a merged head branch) and recreated at $sha from $source — turn off 'Automatically delete head branches' or add a ruleset restricting deletion of test to stop this recurring"
+      - name: Recreate review from test
+        if: github.event.ref == 'review'
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin review >/dev/null 2>&1; then
+            echo "review already exists on origin — nothing to restore"
+            exit 0
+          fi
+          if git fetch --no-tags origin test 2>/dev/null; then
+            source=test
+          elif git fetch --no-tags origin dev 2>/dev/null; then
+            source=dev
+          else
+            echo "::error title=Cannot restore review::neither test nor dev exists on origin"
+            exit 1
+          fi
+          sha="$(git rev-parse "origin/$source")"
+          git push origin "$sha:refs/heads/review"
+          echo "restored review at $sha (from $source)"
+          echo "::warning title=review branch restored::review was deleted (auto-delete of a merged head branch) and recreated at $sha from $source — turn off 'Automatically delete head branches' or add a ruleset restricting deletion of review to stop this recurring"

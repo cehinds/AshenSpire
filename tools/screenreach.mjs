@@ -374,6 +374,9 @@ const INTENT_OVERLAP = `(async () => {
   }
   const intent = low.querySelector('.intent');
   const sprite = high.querySelector('.combatant-card > .sprite');
+  // The mini HUD centres the intent with a CSS translate of -50%. The fixture
+  // computes its own translate from the untranslated box, so clear that first.
+  intent.style.setProperty('translate', '0px 0px', 'important');
   const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
   const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
   // Authored formations can make this neighbour narrower than an XL badge.
@@ -409,8 +412,8 @@ const INTENT_OVERLAP = `(async () => {
   const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
   high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
   high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
-  // Compact Core intent layout resets translate with !important. The fixture
-  // must override that placement to stage the same measured overlap.
+  // Compact Core intent layout sets translate with !important (the mini HUD
+  // centres with -50%). The fixture must override that placement to stage the same measured overlap.
   intent.style.setProperty('translate', ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
     + ((b.top + 8 - a.top) / intentScale) + 'px', 'important');
   const moved = intent.getBoundingClientRect();

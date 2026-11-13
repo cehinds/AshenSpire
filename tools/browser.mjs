@@ -807,8 +807,14 @@ async function serveChecks() {
     for (let i = 0; i < big.length; i++) big[i] = i % 251;
     writeFileSync(join(td, 'pack', 'objects', 'ab', 'ab01.mp3'), big);
     // KNOWN-BAD: a symlink inside the folder that points outside it.
-    symlinkSync(join(td, 'secret.txt'), join(td, 'pack', 'escape.txt'));
-    symlinkSync(td, join(td, 'pack', 'up'));
+    // Windows file symlinks require privileges; a directory junction still
+    // exercises the realpath guard on a genuine linked file outside the root.
+    const directoryLinkType = process.platform === 'win32' ? 'junction' : 'dir';
+    const escapePath = process.platform === 'win32' ? 'escape.txt/secret.txt' : 'escape.txt';
+    symlinkSync(process.platform === 'win32' ? td : join(td, 'secret.txt'), join(td, 'pack', 'escape.txt'), process.platform === 'win32' ? 'junction' : 'file');
+    symlinkSync(td, join(td, 'pack', 'up'), directoryLinkType);
+    symlinkSync(join(td, 'pack', 'sub'), join(td, 'pack', 'inside'), directoryLinkType);
+    symlinkSync(join(td, 'missing'), join(td, 'pack', 'dangling'), directoryLinkType);
     const inline = join(td, 'inline', 'AshenSpire.html');
     const pack = join(td, 'pack', 'AshenSpire.html');
     const named = join(td, 'named', 'AshenSpire-test-0.7.1.9.html');
@@ -873,10 +879,14 @@ async function serveChecks() {
     // an encoded slash reaches the guard, which must answer 403.
     const esc = [await at('/unknown/latest/../secret.txt'), await at('/unknown/latest/..%2f..%2fsecret.txt'), await at('/unknown/latest/%2e%2e/secret.txt')].map((r) => r.status);
     check(esc.every((c) => c === 403 || c === 404) && esc[1] === 403, `a path outside the folder is never served (${esc.join(', ')})`);
-    const link = await at('/unknown/latest/escape.txt');
+    const link = await at(`/unknown/latest/${escapePath}`);
     const linkDir = await at('/unknown/latest/up/secret.txt');
     check(link.status === 403 && linkDir.status === 403 && !link.body.toString().includes('outside'),
       `a symlink inside the folder that points outside it is refused (${link.status}, ${linkDir.status})`);
+    const containedLink = await at('/unknown/latest/inside/index.html');
+    check(containedLink.status === 200 && containedLink.body.toString() === 'sub index', 'a directory link that stays inside the folder serves its real file');
+    const danglingLink = await at('/unknown/latest/dangling/index.html');
+    check(danglingLink.status === 404, 'a dangling directory link is missing rather than served');
     const dirNoSlash = await at('/unknown/latest/sub?x=1');
     const dirSlash = await at('/unknown/latest/sub/');
     const mountNoSlash = await at('/unknown/latest');

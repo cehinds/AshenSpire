@@ -73,22 +73,13 @@ const KNOWN_INVERSIONS = [
   'src/framework/statusSemantics.js -> src/engine/combatStatusControl.js',
   'src/framework/statusSemantics.js -> src/engine/statuses.js',
   // H1: d20Chance/rng/stance/cardZones/enemyBurdens/elementRules/combatCardTraitMath move to src/model
-  'src/model/actionCosts.js -> src/engine/combatRounds/stance.js',
   'src/model/attributePointPreview.js -> src/engine/gameProfileCombat.js',
   'src/model/attributePointPreview.js -> src/engine/stanceHit.js',
-  'src/model/bookBonusRewards.js -> src/engine/rng.js',
-  'src/model/cardFaceProjection.js -> src/engine/d20Chance.js',
-  'src/model/cardFaceText.js -> src/engine/d20Chance.js',
-  'src/model/cardUpgradeSteps.js -> src/engine/rng.js',
   'src/model/combatSnapshot.js -> src/engine/cardZones.js',
   'src/model/combatSnapshot.js -> src/engine/enemyBurdens.js',
   'src/model/equipmentCard.js -> src/engine/elementRules.js',
   'src/model/formulas.js -> src/engine/combatCardTraitMath.js',
-  'src/model/gameProfileRewards.js -> src/engine/rng.js',
-  'src/model/playingCard.js -> src/engine/d20Chance.js',
-  'src/model/proposalStatusRules.js -> src/engine/d20Chance.js',
-  'src/model/rollReceipts.js -> src/engine/d20Chance.js',
-  'src/model/validate.js -> src/engine/cardZones.js',
+  'src/model/validate/effectGrammar.js -> src/engine/cardZones.js',
 ];
 
 function walk(dir, out = []) {
@@ -275,4 +266,34 @@ test('rank checker flags upward imports and allows peers, downward and comments'
   assert.deepEqual(at('src/engine/x.js', "import '../services/a.js'; import '../model/a.js';"), []);
   assert.deepEqual(at('src/ui/x.js', "import '../engine/a.js';"), []);
   assert.deepEqual(at('src/model/x.js', "// import '../engine/rng.js'\nconst s = \"import '../engine/rng.js'\";"), []);
+});
+
+test('Counter arithmetic and forecast have no static dependency path back to themselves', () => {
+  const owners = ['src/engine/counterRule.js', 'src/engine/combatCounterPreview.js'];
+  const dependencies = new Map();
+  function importsOf(id) {
+    if (dependencies.has(id)) return dependencies.get(id);
+    const file = join(ROOT, id);
+    const { noComments, code } = scan(readFileSync(file, 'utf8'));
+    const imports = [];
+    for (const match of noComments.matchAll(/(?:\bfrom\s*|\bimport\s*)(['"])([^'"\n]+)\1/g)) {
+      if (code[match.index] !== noComments[match.index] || !match[2].startsWith('.')) continue;
+      const target = relative(ROOT, resolve(dirname(file), match[2])).split(sep).join('/');
+      if (/\.(js|mjs)$/.test(target)) imports.push(target);
+    }
+    dependencies.set(id, imports);
+    return imports;
+  }
+
+  for (const owner of owners) {
+    const visited = new Set();
+    const pending = importsOf(owner).map(id => [owner, id]);
+    for (const path of pending) {
+      const id = path.at(-1);
+      assert.notEqual(id, owner, path.join(' -> '));
+      if (visited.has(id)) continue;
+      visited.add(id);
+      for (const next of importsOf(id)) pending.push([...path, next]);
+    }
+  }
 });

@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pullFromEnv, ownReceipt, receiptStamp, stampVerdict } from '../tools/receipts.mjs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TOOL = join(ROOT, 'tools', 'receipts.mjs');
@@ -134,7 +135,7 @@ test('--check --pr auto reads the event payload, and exits 2 when there is none'
 // whether receipts.yml actually runs the --pr path on a pull request, so pin
 // the trigger, the event split, and the event-conditional clone here.
 test('receipts.yml runs --check --pr auto on pull_request into dev, and the range check on push', () => {
-  const yml = readFileSync(join(ROOT, '.github', 'workflows', 'receipts.yml'), 'utf8');
+  const yml = readSourceTextSync(join(ROOT, '.github', 'workflows', 'receipts.yml'));
   const on = /\non:\n([\s\S]*?)\n\S/.exec(yml)?.[1] || '';
   for (const event of ['pull_request', 'push']) {
     const branches = new RegExp(`(?:^|\\n) {2}${event}:\\n {4}branches: \\[([^\\]]+)\\]`).exec(on)?.[1]

@@ -2,9 +2,10 @@
 // `reflectStacks`), not statuses: absent means 0, the cap and fractions are data (content/framework/mechanics.json
 // `counter` / `reflect`), and they clear only when the fight ends (a fresh entity carries none). Pure helpers.
 import { mechanics } from '../framework/data/mechanics.js';
+import { COUNTER_STACK_SAFETY_CEILING } from '../model/combatTacticsRules.js';
 
 /** Safety ceiling for a stack count in memory and in a save; not a game rule. */
-export const STACK_CEILING = 999;
+export const STACK_CEILING = COUNTER_STACK_SAFETY_CEILING;
 const whole = value => Math.max(0, Math.floor(Number(value) || 0));
 
 export const counterStackCount = entity => whole(entity?.counterStacks);

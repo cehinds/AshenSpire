@@ -14,7 +14,11 @@ function present(ctx, id, definition, holder) {
   // Core 2 accuracy (owner, 2026-10-31): the locked FixCore override still words Precision/Evade by the old multiplier formulas, so the badge shows the
   // accuracy.precisionTooltip text (mechanics.json; the statuses.json row feeds a locked manifest and stays as is) and a tooltip built from the editable accuracy constants for Evade.
   if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
-    if (id === 'precision') resolved = { ...resolved, tooltip: mechanics.accuracy.precisionTooltip, description: mechanics.accuracy.precisionTooltip };
+    if (id === 'precision') {
+      const text = mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
+        (_, key) => String(mechanics.accuracy[key]));
+      resolved = { ...resolved, tooltip: text, description: text };
+    }
     else if (id === 'evade') {
       const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };
@@ -81,8 +85,13 @@ function presentationKey(ctx, id, definition, holder) {
   try {
     const rules = fixCoreRulesKey(ctx, holder, null), base = plain(definition);
     if (rules === null || base === null) return null;
+    const accuracy = fixCoreEnabled(ctx)
+      ? id === 'precision'
+        ? [mechanics.accuracy.precisionStackValue, mechanics.accuracy.precisionDecayPerTurn, mechanics.accuracy.precisionTooltip]
+        : id === 'evade' ? [mechanics.accuracy.evadePerStack] : null
+      : null;
     return JSON.stringify([ctx?.combatExpansionVersion ?? 0, ctx?.fixCoreRules?.version ?? 0,
-      ctx?.gameProfile?.modules?.effects?.fixCoreVersion ?? 0, rules, String(id), base]);
+      ctx?.gameProfile?.modules?.effects?.fixCoreVersion ?? 0, rules, String(id), base, accuracy]);
   } catch { return null; }
 }
 

@@ -9,16 +9,31 @@ done until it is merged and promoted](CONTRIBUTING.md#a-pull-request-is-not-done
 the owner's standing rule for every session: reviewed by another agent or
 session, conflicts resolved by you, fast checks green, then you merge it
 into `dev` yourself (the owner gets the preview and screenshots but no longer
-gates the merge), and you promote `dev` to `test`, where the long suites run.
+gates the merge), and you promote `dev` to `review` (the pinned "Dev code review" session carries `review` to `test`, where the long suites run).
 
 **Standing merge approval** (owner, 2026-10-13). The owner no longer approves
 each pull request; this replaced the 2026-10-11 per-PR review gate. A
 `feature/*`, `chore/*` or `fix/*` pull request, in any letter case, merges into
 `dev` once it has been reviewed by another agent or session, its conflicts are
 resolved, and the fast checks are green. The session merges it itself with a
-merge commit, then promotes `dev` to `test` as before. It still sends the owner
+merge commit, then promotes `dev` to `review` (see *Review branch* below). It still sends the owner
 the PR link, the preview link and screenshots of visible changes, but does not
 stop and wait. `main` stays owner-only.
+
+**Review branch** (owner, 2026-11-07). The pipeline is `feature/*`, `chore/*`,
+`fix/*` → `dev` → `review` → `test` → `release` → `main`. `review` is a
+long-lived branch owned by the pinned "Dev code review" Claude Code session
+(`session_01YN4Tdzu86M9f2RnGK78rX6`), which is read-only on code: it reviews what
+each `dev` → `review` promotion brought in and, when clean, promotes `review` →
+`test` with a PR it merges (merge commit). Sessions that merge a PR into `dev`
+promote `dev` → `review` (same wait rules: architecture-sync and build-stamp
+settled), never `dev` → `test`; per-PR review into `dev` stays. Nothing is fixed
+on `review`: a finding goes to a `chore/*` branch cut from `dev`, a PR into
+`dev`, a new promotion to `review`, review, then `test`. Heavy CI stays on
+`test`; no CI workflows run on `review`. Version bumps: `release` raises the
+third number (fourth reset to 0), `main` the second (third and fourth reset),
+and a push to `test` raises the fourth number (the build ordinal) by one and
+resets nothing (`version-advance.yml`, docs/versioning.md).
 
 **Combine a long merge queue** (owner, 2026-11-01). When more than 5 reviewed
 pull requests are waiting to merge, combine them into merge branches of at
@@ -108,7 +123,7 @@ other worktree; ask the owner before discarding unmerged work. Worker branches
 are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
 for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
 the parent branch merges into `dev`; origin worker branches are deleted by
-`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
+`worker-branch-cleanup.yml` on a push to `test` (unchanged by the review branch). Before handing
 work to a worker, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
 the key lines yourself, measure before tuning, one owner per file per wave,
 numbered steps with the design already decided, named traps, an acceptance

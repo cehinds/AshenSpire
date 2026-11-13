@@ -30,11 +30,84 @@ test('confirmSlotLoad closes the overlay only through resumeRun\'s success hook'
     'the load confirmation must not close the overlay before the load outcome is known');
 });
 
-test('resumeRun calls onLoaded after both loads succeed and before the live run is swapped', () => {
+test('resumeRun calls onLoaded after saved-run context validation and before the live run is swapped', () => {
   const body = functionBody('resumeRun');
-  const lastRefusal = body.lastIndexOf('if (!loaded) return refused();');
+  const load = body.indexOf('context = LoadSavedRunContext(');
+  const lastRefusal = body.indexOf('if (!context.run)');
   const hook = body.indexOf('onLoaded?.()');
   const swap = body.indexOf('run = loaded;');
-  assert.ok(lastRefusal >= 0 && hook > lastRefusal, 'onLoaded runs only after the last refusal point');
+  assert.ok(load >= 0 && lastRefusal > load && hook > lastRefusal, 'onLoaded runs only after the context is validated and contains a run');
   assert.ok(swap > hook, 'onLoaded runs before the live run is replaced');
+});
+
+// Execute the actual load door through adoption. Later rendering is unrelated
+// to whether a refused load leaves its launcher and live run in place.
+function loadDoor(context, error = null) {
+  const body = functionBody('resumeRun');
+  const end = body.indexOf('\n  rng = createRng(');
+  assert.ok(end > body.indexOf('run = loaded;'), 'the probe includes run adoption');
+  const loadThroughAdoption = body.slice(0, end) + '\n  return "adopted";\n}';
+  return new Function('contextResult', 'loadError', `
+    const original = {}, originalCombat = {}, originalRegistries = {};
+    let run = original, xpCombat = originalCombat, registries = originalRegistries;
+    let activeSlot = 1, registryGameProfile, lastRegistryBuild, terminalResume = null;
+    let overlayOpen = true;
+    const trace = [];
+    const saves = {};
+    const refusedRunLanding = slot => { trace.push(['refused', slot]); return 'refused'; };
+    const LoadSavedRunContext = (manager, slot, options) => {
+      trace.push(['load', slot]);
+      if (loadError) throw loadError;
+      options.validate('profile', 'configuration', 'authored');
+      return contextResult;
+    };
+    const cachedContentValidation = (...args) => { trace.push(['validate', ...args]); return { result: true }; };
+    const t = key => key, dlog = () => {};
+    const showSettingsNotice = () => true;
+    const registryBuildKey = () => null;
+    const configureTooltipGlossary = () => {}, setClassGlyphs = () => {};
+    const resetArmouryTraySession = () => {};
+    ${loadThroughAdoption}
+    return {
+      start: () => resumeRun(2, { onLoaded: () => {
+        trace.push(['loaded', run === original, overlayOpen]);
+        overlayOpen = false;
+      } }),
+      state: () => ({ run, xpCombat, registries, activeSlot, overlayOpen, trace, original, originalCombat, originalRegistries }),
+    };
+  `)(context, error);
+}
+
+test('missing, retired and invalid saved-run contexts keep the overlay launcher and original run', () => {
+  for (const [context, error] of [
+    [{ run: null }, null],
+    [{ run: null, retiredReason: 'retired game mode' }, null],
+    [null, new Error('invalid saved configuration')],
+  ]) {
+    const door = loadDoor(context, error);
+    assert.equal(door.start(), 'refused');
+    const state = door.state();
+    assert.equal(state.overlayOpen, true, 'the refusal can restore focus to its still-mounted launcher');
+    assert.equal(state.run, state.original);
+    assert.equal(state.xpCombat, state.originalCombat);
+    assert.equal(state.registries, state.originalRegistries);
+    assert.equal(state.activeSlot, 1);
+    assert.equal(state.trace.some(([name]) => name === 'loaded'), false, 'the overlay success hook never runs');
+    assert.deepEqual(state.trace.at(-1), ['refused', 2]);
+  }
+});
+
+test('a validated context closes the overlay before adoption and clears the previous combat lock', () => {
+  const loaded = {}, registries = { classes: { all: () => [] } };
+  const door = loadDoor({ run: loaded, registries, gameProfile: 'profile', configuration: {} });
+  assert.equal(door.start(), 'adopted');
+  const state = door.state();
+  assert.deepEqual(state.trace, [
+    ['load', 2], ['validate', 'profile', 'configuration', 'authored'], ['loaded', true, true],
+  ]);
+  assert.equal(state.overlayOpen, false);
+  assert.equal(state.run, loaded);
+  assert.equal(state.registries, registries);
+  assert.equal(state.xpCombat, null);
+  assert.equal(state.activeSlot, 2);
 });

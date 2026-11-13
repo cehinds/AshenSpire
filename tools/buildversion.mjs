@@ -123,6 +123,8 @@ export const SINGLE_FILE_BUNDLE = 'build/download/AshenSpire.html';
 
 /** Where the ORDERING half lives. Outside the digest roots, and see below. */
 export const ORDINAL_HOME = 'buildordinal.json';
+/** The subject of a push-to-`test` record (tools/version-advance.mjs advanceSubject): the one commit that may raise the ordinal under an unchanged digest (row H). */
+export const TEST_RECORD_SUBJECT = /^version-advance: \d+\.\d+\.\d+ after test [0-9a-f]{7,40} \[version-advance\]$/;
 /**
  * UNPADDED, AND THE GUARANTEE IT COSTS IS NAMED RATHER THAN DROPPED QUIETLY.
  *
@@ -816,8 +818,12 @@ export function today(now = new Date()) {
  * a reset is only legitimate if the release moved, and a reader that cannot see
  * WHICH release the number was counted under cannot tell a reset from a
  * hand-edit that lowered it. Row H asks exactly that question.
+ *
+ * `opts.force` (version-advance.yml, a push to `test`, owner 2026-11-07) skips the digest-equality
+ * early return so the ordinal rises by one although the tree did not change; the rest is unchanged
+ * (same release: recorded + 1, no reset). The default never forces.
  */
-export function bumpOrdinal(root = REPO_ROOT) {
+export function bumpOrdinal(root = REPO_ROOT, opts = {}) {
   const digest = sourceDigest(root).digest;
   const rec = readOrdinal(root);
   // THE DATE IS WRITTEN IN THIS ACT AND NOWHERE ELSE, under the same condition,
@@ -825,7 +831,7 @@ export function bumpOrdinal(root = REPO_ROOT) {
   // digest has not moved this returns the RECORDED date rather than today's —
   // that is what keeps a rebuild of an unchanged tree byte-identical, and it is
   // also the truth: the artifact was built on the day it was built.
-  if (rec.digest === digest) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
+  if (rec.digest === digest && !opts.force) return { ordinal: rec.ordinal, bumped: false, digest, built: rec.built };
 
   const rel = release(root);
   // A release the recorded number was NOT counted under restarts the count.
@@ -1435,7 +1441,19 @@ export function check(root = REPO_ROOT) {
         || before.ordinal !== now.ordinal || before.release !== now.release;
       const recordOnly = before !== null && now !== null && before.digest === now.digest
         && (before.ordinal !== now.ordinal || before.release !== now.release);
-      if (recordOnly) {
+      // THE ONE LICENSED EXCEPTION (owner, 2026-11-07): a push to `test` raises the ordinal by one
+      // with the tree unchanged (version-advance.yml, bumpOrdinal force). Same release, parent + N,
+      // and a commit in parent..HEAD (HEAD itself, or one a promotion merge brought in, a docs-only
+      // commit may sit above the bump) has a `version-advance: ... after test <sha>` subject. Nothing else.
+      // A delayed version-advance run may write several bumps before one promotion carries them, so
+      // the rise must equal the number of test records in the range (at least one), never more.
+      const testRecords = recordOnly && before.release === now.release
+        ? g('log', '--format=%s', `${parent}..HEAD`).split('\n').filter((subject) => TEST_RECORD_SUBJECT.test(subject.trim())).length : 0;
+      const testBump = testRecords > 0 && now.ordinal === before.ordinal + testRecords;
+      if (testBump) {
+        add(true, 'H ORDINAL INCREASES',
+          `${ORDINAL_HOME} rose ${before.release}.${before.ordinal} → ${now.release}.${now.ordinal} with the digest unchanged, and ${testRecords} version-advance test record(s) sit in ${parent.slice(0, 7)}..HEAD — the licensed build bump`);
+      } else if (recordOnly) {
         // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
         // moves, and the release lives inside the digest's roots, so a record
         // whose number changed under an unchanged digest was edited by hand (or

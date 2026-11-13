@@ -24,15 +24,21 @@ function play(t, effects) {
     actor.className = target.className = 'sprite';
     const oldSink = haptic.sink; haptic.sink = () => {};
     registerStage(target, { play: () => true, hold() {}, settle() {} });
+    const actorHolds = [];
     const ctx = { layer, combatEl, anchorFor: (id) => id === 'enemy' ? actor : target,
-      animateActor: () => ({ impactMs: 100, totalMs: 800, hold() {}, cancel() {} }),
+      animateActor: () => ({ impactMs: 100, totalMs: 800, hold: ms => actorHolds.push(ms), cancel() {} }),
       onFlush() {}, onBeatApplied() {}, maxHpFor: () => 50 };
     try {
       playTimeline([{ type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
         { type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount: 20 }], ctx, () => {});
       const seen = new Set();
-      for (let i = 0; i < 6000; i++) { t.mock.timers.tick(1); for (const c of layer.children) seen.add(String(c.className)); }
-      out = { classes: [...seen], shaken: combatEl.classList.contains('shake') };
+      let held = false;
+      for (let i = 0; i < 6000; i++) {
+        t.mock.timers.tick(1);
+        held ||= actor.classList.contains('hit-stop');
+        for (const c of layer.children) seen.add(String(c.className));
+      }
+      out = { classes: [...seen], shaken: combatEl.classList.contains('shake'), held, actorHolds };
     } finally { haptic.sink = oldSink; setAnimSpeed('normal'); dom.document.documentElement = priorRoot; }
   });
   t.mock.timers.reset();
@@ -42,10 +48,14 @@ function play(t, effects) {
 test('Effects off drops the sparks and the shake; Effects on plays them', (t) => {
   const off = play(t, false);
   assert.equal(off.shaken, false, 'no screen shake with Effects off');
+  assert.equal(off.held, false, 'Effects off never freezes the figure');
+  assert.deepEqual(off.actorHolds, [], 'Effects off never holds its action animation');
   assert.ok(!off.classes.some(c => /fx-(slash|spark|shatter|glyph)/.test(c)), 'no impact particles');
   const on = play(t, true);
   assert.ok(on.classes.some(c => /fx-slash/.test(c)), 'Effects on spawns the slash: ' + on.classes.join('|'));
   assert.equal(on.shaken, true, 'and shakes');
+  assert.equal(on.held, true, 'Effects on still applies earned figure hit-stop');
+  assert.ok(on.actorHolds.some(ms => ms > 0), 'Effects on still holds the action animation');
 });
 
 test('Effects off still shows the damage number', (t) => {
@@ -85,7 +95,7 @@ test('image figures draw only the held stance glow with Effects off (no casting 
   const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
   assert.doesNotMatch(fx, /timing\.scale === 0 \|\| effectsOff\(\)/, 'the hit-stop duration still flows into the timeline with Effects off');
   assert.doesNotMatch(fx, /holdFor = \(event\) => \(!effectsOff\(\)/);
-  assert.match(fx, /if \(effectsOff\(\)\) return;\n\s+if \(activeActorAnimation\?\.hold\)/, 'the figure is not frozen');
+  assert.match(fx, /if \(holdMs && !effectsOff\(\)\) \{ actor\?\.hold\?\.\(holdMs\); hold\(ctx\.anchorFor\(beat\.actorId\), holdMs, ctx\.combatEl\); \}/, 'figure holds remain Effects-gated and belong to their originating combat mount');
 });
 
 test('idle motion off stops resting swaps but lets every action pose through', async () => {

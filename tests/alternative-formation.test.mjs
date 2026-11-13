@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeFormation, perspectiveBandRows, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
@@ -316,14 +316,14 @@ test('the overhead group height is config only: phone, desktop and short desktop
   assert.equal(overheadGroupHeightPx(grid, { wide: false }), grid.miniHudGroupHeightPx);
   assert.equal(overheadGroupHeightPx(grid, { wide: false, shortWindow: true }), grid.miniHudGroupHeightPx, 'phones ignore the short-window rule');
   assert.equal(overheadGroupHeightPx(grid, { wide: true }), 96);
-  assert.equal(overheadGroupHeightPx(grid, { wide: true, shortWindow: true }), 80);
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, shortWindow: true }), 84);
   assert.ok(overheadGroupHeightPx(grid, { wide: true }) > overheadGroupHeightPx(grid, { wide: true, shortWindow: true }));
   // Desktop form factor at 1101-1199 wide: the tall health row (min-width 1200) is not drawn, so the group is the phone's.
   assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false }), grid.miniHudGroupHeightPx, '1150 wide');
-  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false, shortWindow: false }), 61);
+  assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false, shortWindow: false }), 78);
   // The stage's helper takes no frame and reads no layout: a selected frame hides its meters, so any DOM
   // measurement here would change with selection and refit the settled artwork on every click.
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   const helper = source.slice(source.indexOf('const miniHudGroupHeight ='), source.indexOf('\n\n', source.indexOf('const miniHudGroupHeight =')));
   assert.ok(helper.length > 40, 'helper found');
   assert.doesNotMatch(helper, /offsetHeight|getBoundingClientRect|clientHeight|querySelector|classList/);

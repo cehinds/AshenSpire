@@ -32,14 +32,14 @@ import { enqueueExpandedAction, previewExpandedActions } from './combatExpansion
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
-import { counterPreviewAgainst } from './counterRule.js';
+import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
-import { passiveMax } from '../model/registries.js';
+import { passiveMax, deepFreeze } from '../model/registries.js';
 import { formationMovePlan } from '../model/formationMovement.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
@@ -177,10 +177,10 @@ export function createCombat({
   const combat = {
     ...(gameProfile ? { gameProfile: ownGameProfile(gameProfile, freezeProfile) } : {}),
     ...(combatExpansionVersion === 2 ? { combatExpansionVersion, combatKey,
-      combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
+      combatExpansionRules: deepFreeze(structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment })),
       allocatedAttributes: structuredClone(player.allocatedAttributes || player.attributes || {}) } : {}),
-    combatMatchupRules: structuredClone(registries.balance?.combatMatchups || combatMatchups),
-    combatIntentRules: structuredClone(registries.balance?.combatIntent || combatIntent),
+    combatMatchupRules: deepFreeze(structuredClone(registries.balance?.combatMatchups || combatMatchups)),
+    combatIntentRules: deepFreeze(structuredClone(registries.balance?.combatIntent || combatIntent)),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
@@ -1595,6 +1595,46 @@ function abilityKindOf(def) {
   return def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver');
 }
 
+/** Builds the tactical carrier shared by a forecast and a committed play. */
+function actionCardCarrier(combat, source, def, inst, kind, committed = false)
+{
+    const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, source.classId));
+    const card = {
+        abilityKind: abilityKindOf(def),
+        abilityFamily: def.abilityFamily,
+        ...(committed ? { abilityRank: def.abilityRank } : {}),
+        sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+        ratingId: inst.ratingId,
+        ratingValue: inst.ratingValue,
+        ratingCap: inst.ratingCap,
+        equipmentRole: inst.equipmentRole,
+        instanceId: inst.instanceId,
+        cardId: inst.cardId,
+        upgraded: inst.upgraded,
+        ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
+        ...(inst.rank > 1 ? { rank: inst.rank } : {}),
+        ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
+        type: kind,
+        tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined),
+        attack: def.attack,
+        sourceHand: inst.sourceHand,
+        derivedTags,
+        // Tactical projection can replace tags. Trigger predicates still read the authored row.
+        authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+        ...(committed && inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
+        damageSchool: inst.damageSchool ?? def.damageSchool,
+        ...(Number.isFinite(inst.magicShare ?? def.magicShare)
+            ? { magicShare: inst.magicShare ?? def.magicShare }
+            : {}),
+        ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string'
+            ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType }
+            : {}),
+        exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+        ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
+    };
+    return Object.assign(card, tacticalCarrier(def, card, combat, source));
+}
+
 // A card's maneuver (SPEC §4.7): its combat profile's, else the `maneuver:*` tag the card carries.
 function maneuverOf(def) {
   if (def.combatProfile?.maneuver) return def.combatProfile.maneuver;
@@ -1697,38 +1737,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   // from `def.type` — every reader downstream (the attack counter, the
   // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
   const kind = cardKind(def);
-  // DYNAMIC TAGS ARE READ HERE, ONCE, AND WRITTEN TO NO CARD (plan phase 3c).
-  // The grip the hands are in when the card is played (model/loadout.js
-  // gripOf) derives `equipment.dualWield` / `equipment.twoHanded`; they ride
-  // this snapshot as `derivedTags`, beside the card's own `tags`, and a
-  // predicate that asks about the card's tags reads both (triggers.js
-  // cardTagIs). The card definition and the deck instance never carry them.
-  const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
-  const cardRef = {
-    abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily, abilityRank: def.abilityRank,
-    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
-    ratingId: inst.ratingId,
-    ratingValue: inst.ratingValue,
-    ratingCap: inst.ratingCap,
-    equipmentRole: inst.equipmentRole,
-    instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
-    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
-    derivedTags,
-    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
-    // rewrites `tags` into the resolved attack tags (the weapon's inherited
-    // ones included), and cardTagIs must read what the card row says.
-    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
-    // Which piece lent this card, for the skill hooks (engine/skillXp.js).
-    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
-    damageSchool: inst.damageSchool ?? def.damageSchool,
-    ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
-    ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
-    exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-    // The resolved face's Poise/Ward values: a staff's Strike resolves
-    // magical and carries Ward, which the registry def cannot (attackImpact).
-    ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
-  };
-  Object.assign(cardRef, tacticalCarrier(def, cardRef, combat, p));
+  const cardRef = actionCardCarrier(combat, p, def, inst, kind, true);
+  const { derivedTags } = cardRef;
   if (combat._reactionPlaying) cardRef.reactionDepth = 1;
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
@@ -1978,6 +1988,31 @@ export function getEntity(combat, id) {
   return findEntity(combat, id);
 }
 
+// Share only proven immutable JSON rule graphs. Custom expansion tables may be
+// mutable below a frozen root, so their preview copy must stay fresh.
+const provenFrozenStatusRules = new WeakSet();
+function deeplyFrozenStatusRules(value, visiting) {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'object') return false;
+  if (provenFrozenStatusRules.has(value)) return true;
+  const proto = Object.getPrototypeOf(value);
+  if (!Object.isFrozen(value) || (Array.isArray(value) ? proto !== Array.prototype : proto !== Object.prototype && proto !== null)
+      || Object.getOwnPropertySymbols(value).length || visiting?.has(value)) return false;
+  visiting ??= new WeakSet();
+  visiting.add(value);
+  for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) {
+    // Frozen accessors and objects such as Date/Map/Set are not immutable JSON.
+    if (!Object.hasOwn(descriptor, 'value') || !deeplyFrozenStatusRules(descriptor.value, visiting)) return false;
+  }
+  visiting.delete(value);
+  provenFrozenStatusRules.add(value);
+  return true;
+}
+function frozenStatusRules(source) {
+  return deeplyFrozenStatusRules(source) ? source : deepFreeze(structuredClone(source));
+}
+
 /**
  * previewCard(combat, cardInstanceId, targetId?) → resolved numbers for UI:
  * {
@@ -2035,34 +2070,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const allLiving = combat.enemies.filter((e) => e.alive);
   const living = def.targetLimit===undefined ? allLiving : allLiving.slice(0,Math.max(0,evaluate(def.targetLimit,{energySpent:paidCosts.stamina,entities:{self:p,owner:p,player:p,target,enemy:target,allEnemies:allLiving}})));
 
-  // Same action shape execution uses, so formulas resolve identically.
   const action = {
     source: p,
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
-    card: {
-      abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily,
-      sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
-      ratingId: inst.ratingId,
-      ratingValue: inst.ratingValue,
-      ratingCap: inst.ratingCap,
-      equipmentRole: inst.equipmentRole,
-      instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded, ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}), ...(inst.rank > 1 ? { rank: inst.rank } : {}), ...(inst.skillBonus > 0 ? { skillBonus: inst.skillBonus } : {}),
-      // The kind tag and the grip's derived tags, as the live play reads them
-      // (above) — a preview that disagreed with the play would lie.
-      type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
-      derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
-      authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
-      damageSchool: inst.damageSchool ?? def.damageSchool,
-      ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
-      ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
-      exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
-      ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
-    },
+    card: actionCardCarrier(combat, p, def, inst, cardKind(def)),
     meta: { energySpent:paidCosts.stamina,manaSpent:paidCosts.mana,staminaSpent:paidCosts.stamina },
   };
 
-  Object.assign(action.card, tacticalCarrier(def, action.card, combat, p));
   // Execution enters the accepted card's stance before planning its contacts.
   // Prices above use the current stance; effect values use the prospective one.
   // This combat is already the detached preparing preview, so entry grants and
@@ -2127,7 +2142,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     if (coreCounterRead !== undefined) return coreCounterRead;
     const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
     return (coreCounterRead = enemyTarget
-      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection(), counterBaseHp(enemyTarget)) : null);
+      ? CounterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection(), counterBaseHp(enemyTarget)) : null);
   };
   // The return the card will deal: null when the attack is hidden/unknown (the face keeps the printed amount) or uncovered (no return).
   const coreCounterReturn = () => { const read = coreCounterReturnRead(); return read?.uncovered ? null : read; };
@@ -2153,7 +2168,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
           coreRead ??= reply && resolvedTarget?.kind === 'enemy'
-            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection(), counterBaseHp(resolvedTarget)) : null;
+            ? CounterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection(), counterBaseHp(resolvedTarget)) : null;
           const read = effectIndex === bonusIndex ? coreRead : null;
           // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
           // Counter with a known read deals nothing here: the return sits in exactly one row.
@@ -2397,7 +2412,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     resolvedDefinition: def, chargedEffects: preparedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     // Information travels with this preview, including custom saved status
     // caps. Clone presentation metadata so a UI reader cannot alter combat.
-    combatStatusRules: structuredClone(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
+    combatStatusRules: frozenStatusRules(combat.combatStatusRules || combat.combatExpansionRules?.statuses || combatStatusRules),
     coreStatusAuthority: coreStatusPresentation(combat, def, preparedEffects),
     cardId: inst.cardId,
     upgraded: inst.upgraded,

@@ -2,7 +2,7 @@
 // Reusable UI component contract: stable semantic ids, one shared Map/Combat
 // HUD composition, one player/enemy Combatant Frame, and no simulation state
 // imported into component modules.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { UI_COMPONENTS } from '../src/ui/models/UiComponentId.js';
@@ -545,7 +545,8 @@ export function receipt() {
     runHud: read('src/ui/components/runHud.js'),
     shop: read('src/ui/screens/shop.js'),
     event: read('src/ui/screens/event.js'),
-    validate: read('src/model/validate.js'),
+    // validate.js is an orchestrator now; its section validators live in src/model/validate/.
+    validate: [read('src/model/validate.js'), ...readdirSync(resolve(ROOT, 'src/model/validate')).sort().map((f) => read(`src/model/validate/${f}`))].join('\n'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
     // The combat action row's one home since 2026-10-01.
@@ -584,13 +585,13 @@ export function findings(r) {
       || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
-  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(runHudViewModel({…}))`
+  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(RunHudViewModel({…}))`
   // itself; the map and the three rooms (merchant, Shrine, event) render it
   // through components/runHud.js, which is the same call behind one function.
   // Each consumer is named so a room that grows its own band goes red here.
   const composes = (text) => /import \{ hudShellHtml \}/.test(text)
-    && /import \{ runHudViewModel \}/.test(text)
-    && /hudShellHtml\(runHudViewModel\(\{/.test(text);
+    && /import \{ RunHudViewModel \}/.test(text)
+    && /hudShellHtml\(RunHudViewModel\(\{/.test(text);
   const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
   // The configured shop builds its band from a detached node (`band.innerHTML = runHudHtml({…})`), not a template string.
@@ -633,7 +634,7 @@ export function findings(r) {
   if (/buildStampHtml/.test(r.hud)
       || !/class: 'as-chip hud-class'/.test(r.hud)
       || !/class: 'hud-run-meta as-statstrip trail'/.test(r.hud)
-      || !/childModel\(model, UI\.metadataField, 'act'\)[\s\S]*childModel\(model, UI\.metadataField, 'floor'\)/.test(r.hud)
+      || !/ChildModel\(model, UI\.metadataField, 'act'\)[\s\S]*ChildModel\(model, UI\.metadataField, 'floor'\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
       || !/\.as-statstrip, \.as-kitline \{ display: flex; flex-wrap: wrap;/.test(r.kit)
       || /\.hud-run-meta[^{]*\{/.test(r.css + r.uiCss)) {
@@ -713,7 +714,7 @@ export function findings(r) {
     'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
   ];
   if (!/export function startupGateModel/.test(r.startupGateModel)
-      || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
+      || !/ComponentModel\(UI\.startupGate/.test(r.startupGateModel)
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
       // The gate's lockup is built by the kit's element factory now
@@ -792,10 +793,10 @@ export function findings(r) {
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
-  if (!/export function componentModel/.test(r.componentModel)
+  if (!/export function ComponentModel/.test(r.componentModel)
       || !/Object\.freeze\(\{[\s\S]*component,[\s\S]*properties:[\s\S]*tokens:[\s\S]*accessibility:[\s\S]*behaviors:[\s\S]*children:/.test(r.componentModel)
       || !/export function behaviorModel/.test(r.behaviorModel)
-      || !/export function runHudViewModel/.test(r.hudViewModel)
+      || !/export function RunHudViewModel/.test(r.hudViewModel)
       // The composition is four children since 2026-09-05, not five: the
       // fullscreen/music pair left the band ("the full screen and music buttons
       // don't need to be there since we have it in the quick and main menu
@@ -961,9 +962,9 @@ export function findings(r) {
   }
   if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
+      || !/ComponentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
       || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
       || !/command: kind === 'new' \|\| !selected\.hasSave \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
       || !/import \{ saveSlotSelectionModel \}/.test(r.title)
@@ -999,11 +1000,11 @@ function selftest() {
     ['detach Rest from the shared room frame', 'C3 ', (r) => ({ ...r, rest: r.rest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['detach configured Rest from the shared room frame', 'C3 ', (r) => ({ ...r, configuredRest: r.configuredRest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
     ['give the shared Rest frame its own HUD', 'C3 ', (r) => ({ ...r, restFrame: r.restFrame.replace('wireRunHud(app, {', 'wireRestBand(app, {') })],
-    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
+    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(RunHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? record.box : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['import run state into the Armoury models beside their art resolvers', 'C5 ', (r) => ({ ...r, armouryModels: `import { resourceBarPlan } from '../../model/resources.js';\n${r.armouryModels}` })],
-    ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
+    ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("ChildModel(model, UI.metadataField, 'floor')", "ChildModel(model, UI.metadataField, 'seed')") })],
     // Substitutes the declaration whatever its authored value, so this plant
     // site cannot drift out from under the corpus the way the check above did.
     ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/--hud-quick-tile-size:[^;]+;/, '--hud-quick-tile-size: var(--iconbtn-size);') })],

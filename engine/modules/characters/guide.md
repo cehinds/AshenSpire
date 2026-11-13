@@ -17,13 +17,15 @@ Shared: `id`, `name` (`_` for spaces), `tags`, `attributes` (points you set; kep
 ## Algorithm
 
 Base rule = the sum of every tag's `tagRules` entry (pools HP/SP/MP and hand); the last tag that sets
-`attributeBudget`, `deckSize`, `deckDefault` or `spRange` wins. Then:
+`deckSize`, `deckDefault` or `spRange` wins. Then:
 
-- attributes: set points kept, the rest filled by `attributePriority` × rank weights, capped
-  (CON ≤ 1), with seeded `variance` for tags that allow it (`character.enemy`)
+- attributes: every attribute starts at `attributeFill.floor` (1) or its authored points, if more; the rest of the
+  level budget (player starting budget 6 + `progression.attributePointsPerLevel` × (level − 1), so 5 + level; an authored
+  `attributePoints` wins) is filled by `attributePriority` × rank weights, capped per `attributeFill.caps` (none by default),
+  with seeded `variance` for tags that allow it (`character.enemy`)
 - stats: `statRules` (HP = 10 + CON×10 + STR×5 + DEX×3 + WIS×2 + INT×1 + 5/level; SP/MP from the
   player's derived-stat rows; AR = STR, DR = DEX, hand + INT), plus gear and relic points
-- `attributeOffset` (optional) is added to each enemy attribute after gear and relic bonuses and floored at 0; the tier budget check ignores it
+- `attributeOffset` (optional, none by default since 2026-11-07) is added to each enemy attribute after gear and relic bonuses and floored at 0; the budget check ignores it
 - penalties floor at `penaltyFloor` (SP never below 1)
 
 Class tags (`class.reaver`…) carry each class's base HP, calibrated so legacy max HP is unchanged

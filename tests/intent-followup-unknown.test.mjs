@@ -10,7 +10,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewIntent } from '../src/engine/combat.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { advanceFollowUps, createFollowMemo, followUpPlan } from '../src/ui/models/IntentFollowUpModel.js';
+import { advanceFollowUps, createFollowMemo, CreateFollowUpReduction, followUpPlan } from '../src/ui/models/IntentFollowUpModel.js';
 import { stanceFor, moveKind } from '../src/engine/combatRounds/stance.js';
 import { iconForStance } from '../src/ui/models/CombatRoundsScreenModel.js';
 import { withKitDom } from './helpers/dom.mjs';
@@ -119,7 +119,7 @@ test('a stagger that lands mid-turn ends the row', () => {
 
 test('a move refused for SP is not shown', () => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 3 } } } },
   } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -196,7 +196,7 @@ test('a reload during a reaction window: the follow-up stays "?" until its own e
   // Two SP before planning fits the head and one follow-up. The reaction opens
   // before the head's enemyMoveStarted, leaving the follow-up concealed.
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
-    characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+    characters: { tagRules: { 'tier.minion': { pools: { sp: 3 } } } },
   } });
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
@@ -261,11 +261,7 @@ test('a read buff and a read spell follow-up show the icon they would show as th
   assert.deepEqual(advanceFollowUps(plan, read).map((s) => s.icon), ['buff', 'cast']);
 });
 
-test('a skipped playback flushes the un-applied receipts into the row memo once (the reducer the screen runs)', async () => {
-  const { readFileSync } = await import('node:fs');
-  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  const body = source.match(/function reduceFollowRows\(events\) \{([\s\S]*?)\n  \}\n\n  function applyBeatToDisp/)?.[1];
-  assert.ok(body, 'the screen has one reducer for the follow-up receipts');
+test('a skipped playback flushes the un-applied receipts into the row memo once', () => {
   const c = fight({ reads: [MISS, READ], plan: two(registries) });
   const e = c.enemies[0], def = registries.enemies.get('wanderingSoldier'), [, read] = planIcons(c);
   const memo = createFollowMemo();
@@ -274,13 +270,11 @@ test('a skipped playback flushes the un-applied receipts into the row memo once 
   while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
   const events = c.eventLog.filter((ev) => ev.type === 'enemyMoveStarted' && !ev.reaction && ev.sourceId === e.id);
   assert.ok(events.length >= 1);
-  const reduced = new WeakSet();
-  const run = new Function('events', 'followReduced', 'followMemo', 'advanceFollowUps', 'disp', 'combat',
-    `for (const e of events) {${body.replace(/^\s*for \(const e of events\) \{/, '').replace(/\n    \}\s*$/, '')}\n}`);
+  const reduce = CreateFollowUpReduction(memo);
   // The flush path: no playback state (disp is null), the head's receipt only (the pause came before the follow-up).
-  run(events.slice(0, 1), reduced, memo, advanceFollowUps, null, c);
+  reduce(events.slice(0, 1), null, c.followTrace);
   assert.deepEqual((memo.row(e.id, true) || []).map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['?', read], 'the row is in the memo for the reaction window');
-  run(events.slice(0, 1), reduced, memo, advanceFollowUps, null, c);
+  reduce(events.slice(0, 1), null, c.followTrace);
   assert.equal(memo.row(e.id, true).length, 2, 'a receipt already reduced is not reduced twice');
 });
 

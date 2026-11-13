@@ -1,0 +1,116 @@
+/* The combat mini HUD: one layout for every combatant, player and enemies (owner, 2026-11-07, backlog #11/#4/#5/#6).
+
+     [intent]                        the intent row, centred over the HP bar
+   [BLOCK] [==== HP bar ====] 19/19  a Block shield on the left, as tall as the HP and Poise rows
+   [ 7   ] [==== Poise bar ==]       the Poise bar: always drawn, the HP bar's width and height
+   [      ] (o)(o)(o)                one badge row: Precision, Evade, Ward, Counter, Reflect and the status tray
+
+   The shield's slot is reserved at Block 0 (hidden, not removed). The bars' width and height are layout tokens
+   (content/hud-layout/<form-factor>.json: --hud-mini-bar-width, --hud-mini-bar-height), never a function of max HP,
+   Block or badge count. Badges and status icons share one diameter. The DOM is built in components/combatHealth.js.
+   This sheet loads after the older combat sheets, whose rules for the row it replaces it overrides. */
+
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters {
+  --mh-bar-w: var(--hud-mini-bar-width, 150px);
+  --mh-bar-h: var(--hud-mini-bar-height, 10px);
+  --mh-badge: calc(17.6px / var(--ui-zoom, 1));
+  --mh-gap: calc(3px / var(--ui-zoom, 1));
+  --mh-shield-w: calc(var(--mh-badge) * 1.15);
+  --mh-value-w: calc(var(--mh-bar-h) * 5);
+  --mh-w: calc(var(--mh-shield-w) + var(--mh-gap) * 2 + var(--mh-bar-w) + var(--mh-value-w));
+  /* Centred where the lane-wide rack was, at the fixed width. */
+  left: calc(var(--combat-mini-hud-left, 0px) + (var(--combat-mini-hud-width, var(--mh-w)) - var(--mh-w)) / 2) !important;
+  width: var(--mh-w) !important;
+  align-items: flex-start !important;
+}
+/* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
+   width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
+  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: -50% 0 !important; justify-content: center !important;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > .meters {
+  width: 100% !important; min-width: 0 !important;
+}
+
+/* The row: [shield | bars], three rows. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row.combat-health-row {
+  display: grid !important; grid-template-columns: var(--mh-shield-w) minmax(0, 1fr); grid-template-rows: auto auto auto;
+  column-gap: var(--mh-gap); row-gap: calc(var(--mh-bar-h) * .25); align-content: start;
+  width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 !important; --health-row-h: var(--mh-bar-h); --combatant-hp-h: var(--mh-bar-h);
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row.combat-health-row::after { content: none !important; display: none !important; }
+
+/* Block: the shield, the height of the HP and Poise rows (the badge row's first column stays empty); empty it keeps its room. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot.combat-health-block-slot {
+  grid-column: 1; grid-row: 1 / 3; align-self: stretch; justify-self: stretch; margin: 0 !important; zoom: 1 !important;
+  position: relative !important; display: grid !important; place-items: center; aspect-ratio: auto !important; flex: none !important; order: 0 !important;
+  width: auto !important; min-width: 0 !important; max-width: none !important; height: auto !important;
+  /* The shield is 2.25 bar-heights tall (two rows and the gap), so the value is capped by that height: 8px bars (mobile) give 18px, 10px bars 22.5px, and the 320px small view about 13.3px. One text line, never taller than the shield. */
+  font-size: min(calc(var(--mh-badge) * .55), calc(var(--mh-bar-h) * 1.8)); line-height: 1;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot .combat-health-badge-value { line-height: 1; transform: translateY(-.1em); }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot[hidden] { visibility: hidden; pointer-events: none; }
+
+/* HP: the bar, then its number on the right. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-meter.combat-health-meter {
+  grid-column: 2; grid-row: 1; display: flex !important; align-items: center; flex: none !important; order: 0 !important; gap: 0; /* The plate supplies the one budgeted bar-to-value gap. */
+  width: 100% !important; min-width: 0 !important; height: var(--mh-bar-h); margin: 0 !important; zoom: 1;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter > .m-well { flex: 0 0 var(--mh-bar-w); width: var(--mh-bar-w) !important; order: 1; min-width: 0; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter > .m-plate.m-plate {
+  position: static !important; inset: auto !important; order: 2; flex: 1 1 auto; width: auto !important; height: auto !important; min-width: 0;
+  display: block; padding: 0 0 0 var(--mh-gap); background: transparent; justify-content: flex-start; pointer-events: none;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-meter .m-value.m-value {
+  font-size: max(calc(9px / var(--ui-zoom, 1)), calc(var(--mh-bar-h) * 1.3)) !important; line-height: 1; white-space: nowrap; padding-inline: 0; /* The plate already supplies the gap; extra padding overflows the fixed value slot on narrow screens. */
+}
+
+/* Poise: a plain bar, the HP bar's width and height, no number. It is an empty trough at 0/0. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-poise-bar.combat-health-poise-bar {
+  grid-column: 2; grid-row: 2; display: block !important; width: var(--mh-bar-w) !important; min-width: 0 !important; max-width: var(--mh-bar-w);
+  height: var(--mh-bar-h); margin: 0 !important; zoom: 1; flex: none !important; order: 0 !important;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar > .m-plate { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters :is(.combat-health-meter, .combat-health-poise-bar) > .m-well { display: block; height: var(--mh-bar-h); }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters :is(.combat-health-meter, .combat-health-poise-bar) .m-track.m-track {
+  display: block !important; width: 100% !important; min-width: 0 !important; height: var(--mh-bar-h) !important; border-radius: calc(var(--mh-bar-h) * .5);
+}
+
+/* The badge row: every badge kind and the status tray, one size, one row. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
+  grid-column: 2; grid-row: 3; display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap;
+  gap: var(--mh-gap); width: var(--mh-bar-w); max-width: 100%; min-width: 0; height: var(--mh-badge); margin: 0; padding: 0; overflow: hidden;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge {
+  position: relative !important; inset: auto !important; margin: 0 !important; zoom: 1 !important; transform: none !important;
+  flex: 0 0 var(--mh-badge) !important; width: var(--mh-badge) !important; min-width: var(--mh-badge) !important; max-width: var(--mh-badge) !important; height: var(--mh-badge) !important;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge[hidden] { display: none !important; }
+/* Any other consumer of the shared row (the target detail panel) keeps absent badges absent too. */
+:root .combat .combat-health-badges > .combat-health-badge[hidden] { display: none !important; }
+/* The status tray fills what the badges leave; the fit (components/iconTray.js) sizes its icons to the badges. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses {
+  display: flex !important; flex: 1 1 0; flex-wrap: nowrap; justify-content: flex-start !important; align-items: center;
+  min-width: 0; min-height: 0 !important; height: var(--mh-badge); margin: 0 !important; padding: 0; gap: var(--icon-tray-gap, var(--mh-gap)); pointer-events: auto;
+}
+/* The player's empty tray can overlap another fighter. Only painted controls own input. */
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-badges > .statuses { pointer-events: none; }
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-badges > .statuses :is(.as-pip, .status-overflow) { pointer-events: auto; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses .as-pip {
+  box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
+  font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .55);
+}
+/* The +N tile is one icon wide, so a full row never runs past the bar. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses > .status-overflow {
+  box-sizing: border-box; flex: 0 0 var(--icon-tray-size, var(--mh-badge)) !important; width: var(--icon-tray-size, var(--mh-badge)) !important; min-width: 0 !important; height: var(--icon-tray-size, var(--mh-badge)) !important;
+  padding: 0; font-size: calc(var(--icon-tray-size, var(--mh-badge)) * .5);
+}
+/* A badge the stage squeezed out to leave the status tray room is counted in the tray's +N tile. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .combat-health-badge[data-squeezed] { display: none !important; }
+/* A status pip's count sits inside the pip's lower-right corner, like Precision's, never below it where the row would clip it. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-badges > .statuses .status-icon > :is(.as-pip-count, .stk) {
+  position: absolute !important; left: auto !important; top: auto !important; right: 0 !important; bottom: 0 !important;
+  width: auto; height: auto; min-width: calc(var(--icon-tray-size, var(--mh-badge)) * .38); padding: 0 calc(1px / var(--ui-zoom, 1));
+  font-size: max(calc(7px / var(--ui-zoom, 1)), calc(var(--icon-tray-size, var(--mh-badge)) * .4)) !important; line-height: 1.1; transform: none;
+}

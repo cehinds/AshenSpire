@@ -83,9 +83,12 @@ export function digest(combat) {
 // Logs, event counts, turns and RNG are identical; putting `foundation: null` back at its old position reproduces the previous state hashes exactly.
 // Re-pinned 2026-11-07 for the skill-feat removal (cleanup P4b): combat state no longer carries the always-empty `skillFeats` list.
 // Logs, event counts, turns and RNG are identical; only the state hashes move.
+// Re-pinned 2026-11-08 for the enemy level budget (owner, 2026-11-07, SPEC 17): enemies are level 1-5 and carry 5 + level attribute
+// points with a floor of 1 and no STR/DEX/CON offset, so their pools, Evasion and Precision differ. PERF1 198 -> 201 events; 4242
+// keeps 235 events; turns are unchanged. The two plays of one seed still agree.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '9ccfbdb41ed2f0ad', state: '8519442f511e0c91', events: 198, turn: 6 }],
-  [[4242, 'reaver'], { log: '3ac47e4b5a03e967', state: '185b4ac725e0da51', events: 235, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '171b2290e0e5728c', state: '30419cc524dfe0b2', events: 201, turn: 6 }],
+  [[4242, 'reaver'], { log: '3b5d5f1e6bff1a0b', state: '17b2a175fd3bcb97', events: 235, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

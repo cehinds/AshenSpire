@@ -17,6 +17,7 @@
 // else is regenerated from the sources, so a re-run changes nothing.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { normalizeLfText, sameLfCanonicalText } from './working-tree-text.mjs';
 import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -30,7 +31,7 @@ const CLASSIFICATION_ATTACH = {
 };
 const ATTACH_TO_MODEL = { card: 'card', status: 'entity', character: 'entity', entity: 'entity', gear: 'entity', relic: 'run', run: 'run', combat: 'combat', map: 'run', none: 'none' };
 
-const read = path => readFileSync(join(ROOT, path), 'utf8');
+const read = path => normalizeLfText(readFileSync(join(ROOT, path), 'utf8'));
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const ascii = text => String(text ?? '')
   .replace(/[‒-―−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/×/g, 'x').replace(/…/g, '...')
@@ -70,7 +71,9 @@ function findReader(patterns) {
       if (isComment(lines[i]) || !patterns.some(p => p.test(lines[i]))) continue;
       let symbol;
       for (let j = i; j >= 0 && !symbol; j--) {
-        const m = lines[j].match(/^(?:export\s+)?(?:async\s+)?function\s+\*?\s*(\w+)/) || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/);
+        const m = lines[j].match(/^(?:export\s+)?(?:async\s+)?function\s+\*?\s*(\w+)/) || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*=>/)
+          // A frozen dispatch table (actions.js OPCODE_HANDLERS) owns the handlers written inside it.
+          || lines[j].match(/^(?:export\s+)?const\s+(\w+)\s*=\s*Object\.freeze\(\{\s*$/);
         if (m) symbol = m[1];
       }
       return { file, ...(symbol ? { symbol } : {}) };
@@ -206,7 +209,7 @@ writes.set(join(OUT, 'index.json'), json(index));
 
 // ---- apply ---------------------------------------------------------------------
 const check = process.argv.includes('--check');
-const changed = [...writes].filter(([path, content]) => !existsSync(path) || readFileSync(path, 'utf8') !== content);
+const changed = [...writes].filter(([path, content]) => !existsSync(path) || !sameLfCanonicalText(readFileSync(path, 'utf8'), content));
 if (check) {
   if (changed.length) {
     console.error(`mechanics-generate --check: ${changed.length} file(s) would change`);

@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { balance } from '../../content/balance.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
@@ -23,7 +23,7 @@ const clampPct = (value, fallback) => Math.max(0, Math.min(TT.limits.maxBandPct,
 // anchor and whether the current composition is narrow; the model decides which
 // side points toward the readable centre of the glass.
 export function tooltipPlacementModel(presentation = {}) {
-  return componentModel(UI.tooltip, {
+  return ComponentModel(UI.tooltip, {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, balance.ui.tooltipPlacement.hoverDelayMs)),

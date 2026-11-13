@@ -159,9 +159,9 @@ function textSizesFromTree() {
 // applyDisplaySettings (a documented restatement of the settings row's
 // choices). Read the settings row, which is the authored home.
 function fadeValuesFromTree() {
-  const src = readFileSync(resolve(TREE, 'src/ui/screens/settings.js'), 'utf8');
+  const src = readFileSync(resolve(TREE, 'src/ui/models/SettingsRowsModel.js'), 'utf8');
   const m = /key:\s*'walkedFade'[\s\S]{0,200}?choices:\s*\[([^\]]+)\]/.exec(src);
-  if (!m) throw new Error('walkedFade row not found in src/ui/screens/settings.js — nothing to sweep');
+  if (!m) throw new Error('walkedFade row not found in src/ui/models/SettingsRowsModel.js — nothing to sweep');
   return m[1].split(',').map((s) => s.trim().replace(/^'|'$/g, '')).filter(Boolean);
 }
 

@@ -100,7 +100,7 @@ pull requests that landed, regenerates `src/content/changelog.generated.js`, and
 commits those three files to `dev` as `build: stamp <release>.<ordinal>
 [build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
 rebuild that changes only those two derived files; test, release and main still
-require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+require the rebuild to change nothing. Promotion from `dev` to `review` (and so on to `test`) waits for
 the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
 commit or a later docs-only bot commit, since `test`'s strict check would otherwise
 refuse the promotion. After a successful stamp push, build-stamp dispatches
@@ -176,10 +176,10 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AI-Art` on branch `ashenspire`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
 | `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
-| `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
+| `sync-dev-to-alternative-dev.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
 | `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
 | `readme-sync.yml` → refreshes the README generated regions with `--write` (not a gate) | — | yes (push to `dev`) | — | — |
-| `sync-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
+| `sync-test-to-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
 | `worker-branch-cleanup.yml` → deletes origin `worker/**` branches merged into `test` (not a gate) | — | — | yes | — |
 | `restore-test-branch.yml` → recreates `test` from `release` when it is deleted (not a gate) | — | — | — | — |
 
@@ -788,7 +788,7 @@ node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(c
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
 Every merged pull request must be named by an entry in
-[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `review`.
 The changelog you can read inside the game is a projection of that file (#189),
 so a merge with no receipt is missing for a **player**, not only for the
 repository.
@@ -1651,6 +1651,17 @@ unique key and equals the enemy's `id`). The sheets are the source of truth for 
 - **Deck:** `deck` is the current deck, one reference per copy (repeat a ref for more copies). `reserve` is the cards it gains mid-fight (`enemy.unlockCards`); each reserve card must also be listed in a `behaviour.phases[].unlockCards` (and the reverse), or `--check` fails, because only a phase brings a reserve card into play. `ai` holds the planner hints per card.
 - **Everything else:** `behaviour` (weaknesses, range fields, phases, firstCard, arcaneExposure, blighted, presentation). Unknown keys anywhere else (top level, `stats`) are rejected by `--check`. Unknown fields under `behaviour` pass straight through to the row, so new enemy fields (for example `element`, `startStatuses`) live there. `keyOrder` only keeps the row's key order stable; leave it.
 - **References** carry a type prefix: `card:<enemyCards id>`, `gear:<gear id>`, `relic:<enemyRelics id>`, and `enemy:<id>` (reference table only). `enemies/_reference.md` and `_reference.json` (generated) list what every id means.
+
+Shared enemy IDs, HP ranges, legacy move payloads and AI weights live in
+`content/source/act<N>Enemies.json`. The Core sheets own Core stats, equipment, deck and adapter hints.
+`games/ashenspire/packs/core/enemyCards.json` owns the referenced cards’ effects and prices.
+At registry creation, the Core profile overlays the authored closing and retreat cards and their range data.
+Each `ai` hint can reference a shared or declared range move with `legacyMove`.
+`coreOffense: "card"` takes damage and hit count from one integer damage effect on an owned card.
+`coreSp: "card"` takes its nonnegative integer stamina cost. Either opt-in works without a closing move.
+`aiWeight` is a finite nonnegative weight and `maxConsecutive` is a positive integer when supplied.
+The sheet checker names invalid hint fields and the runtime adapter checks the resolved card payload.
+Author card hints only under `ai`. The sheet checker refuses `behaviour.cardHints` so it cannot replace them.
 
 After editing, run `node tools/enemy-sheets.mjs --write` (part of `node tools/jev.mjs regen`, which then also runs `tools/derived-tables.mjs`; run that yourself if you used --write alone); `--check` runs in `jev checks --fast`
 and rejects unknown refs, duplicate ids and a stale `characters.json`. `--extract --force` rebuilds sheets from `characters.json` (use it if another tool, such as `tools/enemy-decks-convert.mjs`, rewrote the rows). Deleting a sheet and running `--write` removes that enemy.

@@ -56,7 +56,7 @@ const ALLOWED = [
   ['src/ui/components/smithUpgradeModal.js', 'None', 'the Smith requirement row when an item has no stat requirement; not the builder optional art-cue choice'],
   ['src/ui/components/combatantInspector.js', 'None', 'absence of a combatant current action; not the builder optional art-cue choice'],
   ['src/ui/screens/customize.js', 'None', 'absence of a starting relic or slot selection; not the builder optional art-cue choice'],
-  ['src/ui/screens/settings.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
+  ['src/ui/models/SettingsRowsModel.js', 'Utility', 'restoration resource kind beside HP and Mana; not the builder action-type choice'],
   ['src/ui/screens/rest.js', 'Heal', 'rest-site HP restoration sentence with its live amount; not the builder healing art cue'],
   // The status decay row starts with The {value}; these bounded matches share
   // only its article, not its lifecycle sentence or meaning.
@@ -68,10 +68,11 @@ const ALLOWED = [
   ['src/ui/screens/equipment.js', 'Effects', 'the equipment detail fact name for authored item modifiers, a different meaning from the Effects settings switch'],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Export', 'stable advanced-section key compared for topic routing; its displayed heading reads settings.group.Export'],
   ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
+  ['src/ui/models/SettingsRowsModel.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Deck', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Progression', `legacy advanced-group capability key; ${ID}`],
-  ['src/ui/screens/settings.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
+  ['src/ui/models/SettingsRowsModel.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
   ['src/ui/screens/settings.js', 'Game rules', 'category key and selected-category comparison; CATEGORY_LABELS renders gameProfile.settings.title'],
 
   ['src/ui/components/card.js', 'Evade', 'the Evade stat granted on a stance change; not the Evade stance name row'],
@@ -92,6 +93,7 @@ const ALLOWED = [
   ['src/ui/screens/settings.js', 'enabled', 'stored prologue property key; not reaction switch copy'],
   ['src/ui/components/friendlyTargets.js', 'Target', 'friendly-target accessibility prefix; not the numbered enemy target label row'],
   ['src/ui/screens/settings.js', 'Progression', `advanced-group id; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Progression', `advanced-group id; ${ID}`],
   ['src/ui/components/combatantInspector.js', 'Skills', 'combatant active abilities section, separate from the player progression tab'],
   ['src/ui/components/overlay.js', 'Class', 'combat HUD identity field, separate from the progression tab'],
@@ -100,10 +102,14 @@ const ALLOWED = [
   ['src/ui/components/engravedIcon.js', 'Inter', 'CSS font-family identifier for standalone historical-glyph SVGs, not the lore font-selection label'],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
   ['src/ui/screens/settings.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
+  ['src/ui/models/SettingsRowsModel.js', 'Deck', `advancedGroup id and RELEASE_ADVANCED_GROUP_IDS; ${ID}`],
   ['src/ui/screens/settings.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
+  ['src/ui/models/SettingsRowsModel.js', 'Rewards', 'settings advancedGroup id, not displayed copy (the face reads t(\'settings.group.*\'))'],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Rewards', 'settings advancedGroup id in HIDDEN_LEGACY_SETTING_GROUPS, not displayed copy'],
   ['src/ui/screens/settings.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
+  ['src/ui/models/SettingsRowsModel.js', 'Interface', `advancedGroup id; and General › Display's own "Interface" subgroup, a different heading from Advanced › Interface`],
   ['src/ui/screens/settings.js', 'Changelog', `advanced-group id and a stored category value; ${ID}`],
   ['src/ui/screens/settings.js', 'About', `advanced-group id and a stored category value; ${ID}`],
   ['src/ui/screens/settings.js', 'Move', 'the opening-scene reorder buttons\' aria ("Move <scene> up"), not the formation Move confirm'],
@@ -125,7 +131,6 @@ const ALLOWED = [
   ['src/ui/components/combatantOverhead.js', 'Inspect', 'combatant overhead inspection names a combatant, not the Reading Desk card inspection action'],
   ['src/ui/components/offlinePlay.js', 'All', 'the save-import replacement warning begins with All slots; it is not the collection filter'],
   ['src/ui/input.js', 'Inspect', 'global input binding label, separate from the Reading Desk card action'],
-  ['src/ui/screens/settings.js', 'Undo', 'settings change undo, separate from the deck transaction undo'],
   ['src/ui/screens/equipment.js', 'Hand', 'the Armoury Resources table\'s hand-size line, not the Stats preview "Hand" topic title'],
   ['src/ui/components/formationMovement.js', 'Move to', 'formation cell movement confirmation and action cost, not the Armoury action that moves an item to an equipment slot'],
   ['src/ui/screens/equipment.js', 'Poise', '"Poise <n>" is an item\'s poise threshold, not the Stats preview line'],
@@ -347,10 +352,10 @@ test('Reviewed allowance permits only the persisted style enum and rejects displ
 
 
 test('Export exceptions permit only stored section keys and reject visible labels', () => {
-  const files = ['src/ui/screens/settings.js', 'src/ui/models/AdvancedSettingsGroups.js'];
+  const files = ['src/ui/screens/settings.js', 'src/ui/models/SettingsRowsModel.js', 'src/ui/models/AdvancedSettingsGroups.js'];
   const assertSemanticOnly = (file, source) => {
     const code = stripComments(source);
-    const remaining = file.endsWith('/settings.js')
+    const remaining = file.endsWith('/settings.js') || file.endsWith('/SettingsRowsModel.js')
       ? code.replace(/\b(?:advancedGroup|id):\s*'Export'/g, '')
       : code.replace(/\bsection\s*===\s*'Export'/g, '');
     assert.deepEqual(remaining.match(/(?<=['"`>])Export(?=['"`<]| ?\$\{| ['"`])/g) || [], [], `${file}: Export is allowed only as a semantic section key`);

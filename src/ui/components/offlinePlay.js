@@ -146,14 +146,14 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         zipBox, zipNone,
         ...(keep ? [keep] : []),
         el('h3', { text: 'Move your saves' }),
-        el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.slotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
+        el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.SlotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
         el('div', { class: 'offline-actions' }, [exportSave, importSave, recovery, reload]), file, status);
     }, primary: done });
   done.addEventListener('click', door.close);
   // An import changes the profile under the open game. The panel closes first, so the
   // caller's refresh (or the default reload) never runs with this modal still registered.
   const imported = () => { door.close(); onImported(); };
-  recovery.hidden = !transfer.previous();
+  recovery.hidden = !transfer.Previous();
   const showRelease = data => {
     const size = data.bytes === null ? 'Size available after preparation' : `${(data.bytes / 1024 / 1024).toFixed(1)} MB`;
     release.textContent = `${offlinePlay.branches.find(item => item.id === branch.value).label} build: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
@@ -249,8 +249,8 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     finally { busy = false; download.disabled = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zip.plan; }
   });
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
-  exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
-  recovery.addEventListener('click', () => { try { exportText(transfer.previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
+  exportSave.addEventListener('click', () => { try { exportText(transfer.CreateBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });
+  recovery.addEventListener('click', () => { try { exportText(transfer.Previous(), 'AshenSpire-previous-saves.json'); } catch (error) { status.textContent = error.message; } });
   importSave.addEventListener('click', () => {
     try { assertImportAllowed(); file.value = ''; file.click(); }
     catch (error) { status.textContent = error.message; }
@@ -259,7 +259,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     const selected = file.files?.[0]; if (!selected) return;
     try {
       if (selected.size > offlinePlay.maxSaveBytes) throw new Error('Save file is too large.');
-      const text = await selected.text(); const preview = transfer.inspect(text);
+      const text = await selected.text(); const preview = transfer.Inspect(text);
       const count = preview.slots.filter(slot => slot.summary).length;
       openConfirmationModal({ title: 'Replace this browser’s saves?',
         message: `This backup contains ${count} saved run${count === 1 ? '' : 's'}${preview.hasProfile ? ' and a profile' : ' and no profile'}.`,
@@ -267,11 +267,11 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         confirmLabel: 'Import saves', onConfirm: async () => {
           try {
             assertImportAllowed();
-            await transfer.restore(text); status.textContent = 'Saves imported.';
+            await transfer.Restore(text); status.textContent = 'Saves imported.';
             reload.hidden = false; importSave.disabled = true; reload.focus();
             imported();
           } catch (error) { status.textContent = error.message; }
-          recovery.hidden = !transfer.previous();
+          recovery.hidden = !transfer.Previous();
         } });
     } catch (error) { status.textContent = error.message; }
   });

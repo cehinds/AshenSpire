@@ -9,9 +9,10 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { affordableCards } from '../tools/simbot.mjs';
-import { playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { setCombatPacing } from '../src/ui/animationPace.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { registerStage } from '../src/ui/services/PoseAnimator.js';
 
 const PageEvent = globalThis.Event;
 
@@ -29,7 +30,7 @@ test('ordered FX counts real watchdog expiry while normal, cancel and skip finis
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   // The scheduler's monotonic clock must advance with these mocked timers.
   t.mock.method(globalThis.performance, 'now', () => Date.now());
-  setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
+  setAnimSpeed('normal'); setCombatPacing();
   try {
     withKitDom((dom) => {
       for (const exit of ['normal', 'cancel', 'skip', 'watchdog']) {
@@ -52,7 +53,7 @@ test('ordered FX counts real watchdog expiry while normal, cancel and skip finis
         assert.equal(completed, 1, 'late timer work and repeated exits cannot complete twice');
       }
     });
-  } finally { setCombatPacing(); setAnimSpeed('normal'); setBeatOrder('sequential'); }
+  } finally { setCombatPacing(); setAnimSpeed('normal'); }
 });
 
 // Preserve Maps, cycles and function identities while copying mutable state.
@@ -85,7 +86,7 @@ for (const exit of ['hidden', 'blur']) {
     t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
     // The scheduler's monotonic clock must advance with these mocked timers.
     t.mock.method(globalThis.performance, 'now', () => Date.now());
-    setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
+    setAnimSpeed('normal'); setCombatPacing();
     withKitDom((dom, _win, listeners) => {
       const page = new EventTarget(), documentListeners = new Set();
       dom.document.addEventListener = (type, handler, options) => {
@@ -119,6 +120,46 @@ for (const exit of ['hidden', 'blur']) {
       for (const event of ['pointerdown', 'pointerup', 'pointercancel', 'blur']) assert.equal(listeners.get(event)?.length, 0, `${event} listener removed`);
       assert.equal(documentListeners.size, 0, 'document lifecycle listener removed');
       assert.deepEqual(snapshot({ run, combat, receipts }), before, 'HP, piles, intents, resources and committed receipts are unchanged');
+    });
+  });
+}
+
+for (const trigger of ['explicit cancel', 'pointerdown before observer']) {
+  test(`outgoing FX ${trigger} settles only the originating combat sprites`, () => {
+    withKitDom(({ document }, _, listeners) => {
+      const app = document.createElement('main');
+      document.body.append(app);
+      function mount() {
+        const combat = document.createElement('section');
+        const sprite = document.createElement('div');
+        const original = combat.querySelectorAll.bind(combat);
+        combat.querySelectorAll = selector => selector === '.combatant .sprite' ? [sprite] : original(selector);
+        combat.append(sprite);
+        return { combat, sprite };
+      }
+      const outgoing = mount(), replacement = mount();
+      app.append(outgoing.combat);
+      const original = document.querySelectorAll.bind(document);
+      document.querySelectorAll = selector => selector === '.combatant .sprite' ?
+        [outgoing.sprite, replacement.sprite].filter(sprite => sprite.isConnected) : original(selector);
+      let current = true, own = 0, unrelated = 0, flushed = 0, finished = 0;
+      registerStage(outgoing.sprite, { endReaction: () => own++ });
+      registerStage(replacement.sprite, { endReaction: () => unrelated++ });
+      const handle = playTimeline([{ type: 'cardPlayed', cardType: 'skill', targetId: 'player' }], {
+        combatEl: outgoing.combat, layer: outgoing.combat, anchorFor: () => null,
+        isCurrent: trigger === 'explicit cancel' ? undefined : () => current,
+        figureAnimations: false, onFlush: () => flushed++,
+      }, () => finished++);
+      app.replaceChildren(replacement.combat);
+      current = false;
+      if (trigger === 'explicit cancel') handle.cancel();
+      else for (const listener of [...listeners.get('pointerdown')]) listener(new PageEvent('pointerdown'));
+      assert.equal(unrelated, 0);
+      assert.equal(own, 1);
+      assert.equal(flushed, trigger === 'explicit cancel' ? 1 : 0);
+      assert.equal(handle.finished, true);
+      assert.equal(finished, 1);
+      assert.equal(listeners.get('pointerdown').length, 0);
     });
   });
 }

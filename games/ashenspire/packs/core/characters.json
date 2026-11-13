@@ -311,7 +311,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 4
+      "max": 2
     },
     "defaultDeck": [
       "wanderingSoldier.slash",
@@ -406,7 +406,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 3
+      "max": 2
     },
     "defaultDeck": [
       "blightHound.bite",
@@ -482,8 +482,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     },
     "defaultDeck": [
       "huskBrute.club",
@@ -570,7 +570,7 @@
     ],
     "levelProfile": {
       "min": 1,
-      "max": 4
+      "max": 2
     },
     "defaultDeck": [
       "graveWisp.curse",
@@ -652,8 +652,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 4,
-      "max": 6
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "wyrmAspirant.consecrate",
@@ -742,8 +742,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     },
     "defaultDeck": [
       "fellWarden.caneStrike",
@@ -879,8 +879,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     },
     "defaultDeck": [
       "lanternMoth.lanternDust",
@@ -963,8 +963,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     },
     "defaultDeck": [
       "briarHermit.rootShelter",
@@ -1051,8 +1051,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 2,
-      "max": 5
+      "min": 1,
+      "max": 2
     },
     "defaultDeck": [
       "chainScavenger.hookCast",
@@ -1142,8 +1142,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     },
     "defaultDeck": [
       "bellKeeper.bronzeToll",
@@ -1260,8 +1260,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 5,
-      "max": 7
+      "min": 3,
+      "max": 3
     },
     "defaultDeck": [
       "thornMatriarch.rootCrown",
@@ -1377,8 +1377,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 6,
-      "max": 9
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "gildedKnight.thrust",
@@ -1462,8 +1462,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 6,
-      "max": 9
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "courtSurgeon.scalpel",
@@ -1551,8 +1551,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 6,
-      "max": 8
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "stitchedHound.maul",
@@ -1627,8 +1627,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 6,
-      "max": 9
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "courtMarionette.dart",
@@ -1702,8 +1702,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 7,
-      "max": 10
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "livingArmor.slam",
@@ -1794,8 +1794,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 10,
-      "max": 11
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "courtDuelist.enGarde",
@@ -1890,8 +1890,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 11,
-      "max": 12
+      "min": 4,
+      "max": 4
     },
     "defaultDeck": [
       "stitchedKing.scepterBlow",
@@ -2014,8 +2014,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 7,
-      "max": 10
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "mirrorScribe.silverScript",
@@ -2104,8 +2104,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 7,
-      "max": 10
+      "min": 2,
+      "max": 3
     },
     "defaultDeck": [
       "stitchCrab.shellFold",
@@ -2188,8 +2188,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 11,
-      "max": 12
+      "min": 4,
+      "max": 4
     },
     "defaultDeck": [
       "glassRegent.prismGuard",
@@ -2296,7 +2296,8 @@
           "effect": "stagger"
         }
       ]
-    }
+    },
+    "spFloor": 3
   },
   {
     "id": "marrowOrganist",
@@ -2313,8 +2314,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 11,
-      "max": 12
+      "min": 4,
+      "max": 4
     },
     "defaultDeck": [
       "marrowOrganist.bonePrelude",
@@ -2414,7 +2415,8 @@
           "effect": "damage"
         }
       ]
-    }
+    },
+    "spFloor": 3
   },
   {
     "id": "ashRevenant",
@@ -2431,8 +2433,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 13,
-      "max": 16
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "ashRevenant.cinderSlash",
@@ -2509,8 +2511,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 13,
-      "max": 15
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "emberStarvedPilgrim.desperateClaw",
@@ -2585,8 +2587,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 14,
-      "max": 17
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "valkyrieShade.spiralLance",
@@ -2660,8 +2662,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 15,
-      "max": 18
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "charredColossus.smash",
@@ -2750,8 +2752,8 @@
     ],
     "spFloor": 3,
     "levelProfile": {
-      "min": 18,
-      "max": 19
+      "min": 4,
+      "max": 5
     },
     "defaultDeck": [
       "wyrmLord.consecration",
@@ -2828,6 +2830,9 @@
           "effect": "damage"
         }
       ]
+    },
+    "attributes": {
+      "wisdom": 2
     }
   },
   {
@@ -2845,8 +2850,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 19,
-      "max": 20
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "blightedValkyrie.spiralThrust",
@@ -2976,7 +2981,8 @@
           "effect": "damage"
         }
       ]
-    }
+    },
+    "spFloor": 2
   },
   {
     "id": "cinderMantis",
@@ -2993,8 +2999,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 14,
-      "max": 17
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "cinderMantis.scythePair",
@@ -3080,8 +3086,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 14,
-      "max": 17
+      "min": 3,
+      "max": 4
     },
     "defaultDeck": [
       "eclipseCantor.darkHymn",
@@ -3169,8 +3175,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 19,
-      "max": 20
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "furnaceSaint.openFurnace",
@@ -3285,8 +3291,8 @@
       "constitution"
     ],
     "levelProfile": {
-      "min": 19,
-      "max": 20
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "hollowAstronomer.starChart",
@@ -3404,8 +3410,8 @@
       "intelligence"
     ],
     "levelProfile": {
-      "min": 19,
-      "max": 20
+      "min": 5,
+      "max": 5
     },
     "defaultDeck": [
       "ashheartDragon.obsidianClaws",
@@ -3526,6 +3532,7 @@
           "effect": "damage"
         }
       ]
-    }
+    },
+    "spFloor": 2
   }
 ]

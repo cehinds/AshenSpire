@@ -10,7 +10,7 @@
 //   its effects   the same Rows, or one disabled Row saying there are none
 //
 // It owns no shape: the host's edge and width are tokens the model carries.
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
@@ -115,6 +115,7 @@ function factRows(section) {
   }
   return section.rows.map((r) => row({
     label: r.label, status: [r.value, r.detail].filter(Boolean).join(' · '), tag: 'div', className: 'combatant-inspector-row',
+    attrs: r.id ? { dataset: { fact: r.id } } : {},
   }));
 }
 
@@ -181,7 +182,7 @@ export function combatantInspectorLayout(subject, { sprite = null, previewFracti
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   if (!host) throw new Error('Combatant inspector requires a host');
   if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
-  const tray = childModel(model, UI.foldingTray);
+  const tray = ChildModel(model, UI.foldingTray);
   host.innerHTML = '';
   host.hidden = false;
   host.className = `combatant-inspector-host ${model.properties.edge}`;

@@ -88,6 +88,8 @@ list), `keyword` (listed values).
 | `--hud-details-value-size` | length | Its HP / Poise / Ward values |
 | `--hud-details-label-color` | color | Its POISE / WARD labels |
 | `--hud-details-min-width` | length | Its minimum width |
+| `--hud-mini-bar-width` | length | The combat mini HUD's HP and Poise bar width, the same for every combatant (not a function of max HP, Block or badge count) |
+| `--hud-mini-bar-height` | length | Their height; the badges, shield and number scale from it |
 | `--hud-tools-bg` | color | Backing behind the Combat log / Reaction row (`transparent` = off) |
 | `--hud-header-hp-max-width` | length or `none` | Header HP bar maximum width |
 | `--hud-tools-span` | keyword `field` \| `hand` | Combat log / Reaction row spans the whole field width or only the card band |

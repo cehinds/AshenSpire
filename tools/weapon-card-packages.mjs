@@ -203,14 +203,14 @@ function sameCombatProjection(left, right) {
 }
 
 async function runKnownBadPlant() {
-  const sourcePath = resolve(root, 'src/model/loadout.js');
+  const sourcePath = resolve(root, 'src/model/loadout/weaponPlan.js');
   const source = readFileSync(sourcePath, 'utf8');
   const anchor = 'const eligible = [right, left].filter((source) => source.package);';
   if (!source.includes(anchor)) {
     check(false, 'known-bad right-only plant is armed', 'source anchor drifted');
     return;
   }
-  const mutantPath = resolve(root, `src/model/.weapon-card-package-mutant-${process.pid}.mjs`);
+  const mutantPath = resolve(root, `src/model/loadout/.weapon-card-package-mutant-${process.pid}.mjs`);
   writeFileSync(mutantPath, source.replace(anchor, 'const eligible = [right].filter((source) => source.package);'));
   try {
     const mutant = await import(`${pathToFileURL(mutantPath).href}?mutant=${Date.now()}`);
@@ -497,9 +497,14 @@ const invalidDuplicateLoad = loadStoredRun(baseRegistries, invalidDuplicateSnaps
 check(invalidDuplicateLoad.loaded === null && /duplicate equipped armament/.test(invalidDuplicateLoad.saves.runStatus().reason || ''), 'invalid duplicate snapshot loadout fails closed by name');
 
 const danglingSnapshotRun = activeSnapshotRun(baseRegistries, null, 'dagger');
-snapshotAttackRows(danglingSnapshotRun.combatEntered.snapshot)[0].card.cardId = 'removedByContentPatch';
+const danglingSnapshot = danglingSnapshotRun.combatEntered.snapshot;
+const danglingAttack = snapshotAttackRows(danglingSnapshot)[0];
+const danglingIndex = danglingSnapshot.piles[danglingAttack.pile].indexOf(danglingAttack.card);
+danglingAttack.card.cardId = 'removedByContentPatch';
 const danglingSnapshotLoad = loadStoredRun(baseRegistries, danglingSnapshotRun);
-check(danglingSnapshotLoad.loaded === null && /piles\.draw\.cardId/.test(danglingSnapshotLoad.saves.runStatus().reason || ''), 'existing d163 snapshot reference validation runs before composition can mask an unknown card');
+const danglingPath = `piles.${danglingAttack.pile}[${danglingIndex}].cardId 'removedByContentPatch' is unknown`;
+check(danglingSnapshotLoad.loaded === null && danglingSnapshotLoad.saves.runStatus().reason?.includes(danglingPath),
+  'existing d163 snapshot reference validation names the exact pile row and missing card before composition');
 
 const unknownArmamentSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
 unknownArmamentSnapshot.combatEntered.snapshot.loadout.sets.rightHand[0] = 'noSuchArmament';

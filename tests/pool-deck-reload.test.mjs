@@ -16,9 +16,8 @@
 // an Armoury change, a mid-fight swap, a resumed fight.
 // A Standard run keeps the composed rule: a deck missing its slots is refused.
 //
-// main.js cannot be imported headless, so `deal` mirrors newRun's non-UI half
-// for these modes line for line (sealedDeckIds, draftBaseIds, the draft
-// screen's pick), and the last test reads main.js as text to hold that mirror.
+// The reload fixtures can still write the old dealt-deck shape. The birth test
+// exercises the current service directly, before the host stamps the deck.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -33,6 +32,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { commitExtraction, commitInstall, mountRows, ownedMountItems } from '../src/model/cardExtraction.js';
+import { CreatePreparedRun } from '../src/services/runBirth.js';
 import { withWeaponRack } from './withWeaponRack.mjs';
 
 const registries = createRegistries(withWeaponRack(contentBundle));
@@ -514,24 +514,28 @@ test('sealed: a malformed attack slot is refused, not renumbered', () => {
   }
 });
 
-test('main.js newRun writes the dealt deck\'s quota after the deal, and startClimb stamps it', () => {
+test('prepared Sealed and Draft runs carry their dealt quota before the host stamps them', () => {
+  for (const deckMode of ['sealed', 'draft']) {
+    const { run, rng } = CreatePreparedRun({
+      seed: SEED, classId: 'reaver', registries, profileMeta: {},
+      configSnapshot: { schemaVersion: 1, overrides: {}, breakMeterVersion: 2 },
+      custom: { deckMode },
+    });
+    assert.deepEqual(run.deck.slice(0, BASE.length).map(card => card.cardId), BASE);
+    const dealt = deckMode === 'sealed' ? 3 : 0;
+    assert.equal(run.deck.length, BASE.length + dealt);
+    assert.deepEqual(run.deck.map(card => card.instanceId), run.deck.map((_, i) => `rc${i + 1}`));
+    assert.equal(run.equipmentAttackSlotCount, dealtAttackSlotCount(run.deck));
+    assert.equal(run.poolDeckRule, POOL_DECK_RULE);
+    assert.equal(rng.getCounters().misc, dealt);
+    assert.equal(rng.getCounters().map, 0);
+  }
   const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  const sealed = src.indexOf("run.deck = createDeck(sealedDeckIds(classId), createIdGen('rc'));");
-  const draft = src.indexOf("run.deck = createDeck(draftBaseIds(), createIdGen('rc'));");
-  const quota = src.indexOf('run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);\n    run.poolDeckRule = POOL_DECK_RULE;');
-  const showDraft = src.indexOf("if (deckMode === 'draft') return showDraft();");
-  assert.ok(sealed > 0 && draft > sealed, 'the deal this test mirrors moved');
-  assert.ok(quota > draft && quota < showDraft, 'the quota must follow the deal and precede the draft and the first persist');
-  // Matched up to the open paren, so a parameter list (Quick start's
-  // `{ skipOpening }`, #1518) does not empty the slice; a missing anchor fails
-  // by name instead of slicing from -1.
+  assert.match(src, /const prepared = CreatePreparedRun\(/);
   const climbAt = src.indexOf('function startClimb(');
   const climbEnd = src.indexOf('function showPrologue()');
-  assert.ok(climbAt > 0 && climbEnd > climbAt, 'startClimb or showPrologue moved: re-anchor this mirror');
+  assert.ok(climbAt > 0 && climbEnd > climbAt);
   const climb = src.slice(climbAt, climbEnd);
   const stamp = climb.indexOf('if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
-  assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb must stamp a dealt deck before its first persist');
-  const body = src.slice(src.indexOf('function sealedDeckIds'), src.indexOf('function draftBaseIds'));
-  assert.match(body, /\['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'\]/);
-  assert.match(body, /rng\.pick\('misc', pool\)/);
+  assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb stamps a dealt deck before its first save');
 });

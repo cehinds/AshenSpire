@@ -27,6 +27,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, extname } from 'node:path';
 import { canonicalGameJSON } from '../engine/kernel/gameConfig.js';
+import { sameLfCanonicalText } from './working-tree-text.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const GAME = 'ashenspire';
@@ -129,7 +130,7 @@ export function checkCatalog(root = ROOT) {
   const problems = [];
   const file = join(root, write.file);
   if (!existsSync(file)) problems.push(`${write.file} is missing`);
-  else if (readFileSync(file, 'utf8') !== write.text) problems.push(`${write.file} is not current`);
+  else if (!sameLfCanonicalText(readFileSync(file, 'utf8'), write.text)) problems.push(`${write.file} is not current`);
   if (existsSync(join(root, stale))) problems.push(`${stale} should not exist next to ${write.file}`);
   return problems;
 }

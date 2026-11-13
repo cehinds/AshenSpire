@@ -3,10 +3,10 @@
 // panels) leave it where it is; only a new layout pass moves it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 test('the stage places the player HUD from the figure once per layout pass', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   const begin = source.indexOf('  function placePlayerHud('), end = source.indexOf('  function trackPlayerHud()', begin);
   assert.ok(begin >= 0 && end > begin);
   const body = source.slice(begin, end);
@@ -16,12 +16,12 @@ test('the stage places the player HUD from the figure once per layout pass', () 
   assert.doesNotMatch(body, /playerDetailsPlacement\(|previous:/, 'no avoid/previous-position relocation');
 });
 test('the layout epoch advances only on a real layout pass', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   assert.equal((source.match(/layoutEpoch\+\+/g) || []).length, 1);
   assert.doesNotMatch(source, /addEventListener\('handlayoutchange'/);
 });
 test('opening the info panel re-places only the intent glyph, with no relayout', () => {
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   const early = source.slice(source.indexOf('seats.every(player => player.hudEpoch === layoutEpoch)'), source.indexOf('seats.every(player => player.hudEpoch === layoutEpoch)') + 700);
   assert.match(early, /expanded === player\.glyphExpanded/);
   assert.match(early, /placePlayerIntentGlyph\(glyph\.leading[^)]*avoid: expanded \? glyph\.infoRect : null/);

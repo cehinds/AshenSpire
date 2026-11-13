@@ -10,6 +10,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { holdForCli } from './lib/build-lock.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,16 +18,14 @@ const srcDir = resolve(root, 'content/framework');
 const outDir = resolve(root, 'src/framework/data');
 
 const check = process.argv.includes('--check');
+const mechanicsName = 'mechanics.json';
 
-/** JSON.parse that rejects duplicate keys the way opsctl's strict parser does. */
-function parseStrict(text, name) {
-  let value;
+function parseSource(text, name) {
   try {
-    value = JSON.parse(text);
+    return JSON.parse(text);
   } catch (e) {
     throw new Error(`framework data: ${name} is not valid JSON — ${e.message}`);
   }
-  return value;
 }
 
 // Compact generated JS data keeps the standalone pack small; authored sources stay readable.
@@ -41,17 +40,26 @@ function generate(name, data) {
   ].join('\n');
 }
 
-const sources = readdirSync(srcDir).filter((f) => f.endsWith('.json')).sort();
-if (sources.length === 0) throw new Error(`framework data: no sources in ${srcDir}`);
 // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
 if (!check) await holdForCli(root, 'framework-data-build');
-if (!check) mkdirSync(outDir, { recursive: true });
+const sources = readdirSync(srcDir).filter((f) => f.endsWith('.json')).sort();
+if (sources.length === 0) throw new Error(`framework data: no sources in ${srcDir}`);
+if (!sources.includes(mechanicsName)) throw new Error(`framework data: missing required source content/framework/${mechanicsName}`);
 
+const planned = sources.map(name => {
+  const sourcePath = `content/framework/${name}`;
+  const data = parseSource(readFileSync(resolve(srcDir, name), 'utf8'), sourcePath);
+  if (name === mechanicsName) {
+    const schemaPath = 'engine/contracts/framework-combat-mechanics.schema.json';
+    const schema = parseSource(readFileSync(resolve(root, schemaPath), 'utf8'), schemaPath);
+    validateGameSchema(data, schema, sourcePath);
+  }
+  return { name, generated: generate(name, data), outPath: resolve(outDir, basename(name, '.json') + '.js') };
+});
+
+if (!check) mkdirSync(outDir, { recursive: true });
 let stale = 0;
-for (const name of sources) {
-  const data = parseStrict(readFileSync(resolve(srcDir, name), 'utf8'), name);
-  const generated = generate(name, data);
-  const outPath = resolve(outDir, basename(name, '.json') + '.js');
+for (const { name, generated, outPath } of planned) {
   if (check) {
     const current = existsSync(outPath) ? readFileSync(outPath, 'utf8') : null;
     if (current !== generated) {
