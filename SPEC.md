@@ -851,12 +851,17 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
 | Maneuver | Implemented matchup contract | Answer and limit |
 |---|---|---|
 | Attack | Against prepared Smash, delayed/charging action or spellcasting, multiply listed and ordinary Poise pressure by 1.5; HP damage gets no automatic bonus | Guard and eligible melee Counter answer Attack. The bonus does not itself cancel or stun; normal break rules decide that |
-| Defend | Resolve printed protection/support normally | Smash rewards attacking physical Guard. No automatic immunity or free retaliation |
-| Counter | Prepare one deferred reaction plus Guard/Ward support (below) | Sweep, Force, Piercing and physical Ranged bypass melee Counter; bypass does not consume it |
-| Sweep | Windmill-style attack bypasses melee Counter | Guard can absorb it. Ranged cards avoid melee replies, not the damage of every enemy melee move |
+| Defend | Resolve printed protection/support normally | Smash rewards attacking physical Guard. No automatic immunity or free retaliation. **Stance break (owner, 2026-11-13):** a Smash whose damage (the hit before matchup and defense) is greater than the positive Block the Defend-stance target held before the hit ends that stance (it becomes Idle); equal or less, or no Block, and the stance holds (19 Block: Smash 21 breaks, 19 or 17 holds) |
+| Counter | Prepare one deferred reaction plus Guard/Ward support (below) | Sweep, Force, Piercing and physical Ranged bypass melee Counter; bypass does not consume it. A Sweep that lands (positive, not avoided) breaks a Counter stance (below) |
+| Sweep | Windmill-style attack bypasses melee Counter | Guard can absorb it. Ranged cards avoid melee replies, not the damage of every enemy melee move. **Stance break (owner, 2026-11-13):** a landed Sweep clears the target's armed Counter (no reply) and its stance becomes Idle |
 | Ranged | Physical projectiles do not trigger melee Counter | Ranged Counter or Spell Counter can intercept them. Defensive Alteration uses its printed Ward/Guard effects |
-| Smash | If physical Guard is positive before the hit, multiply HP damage by 1.5. Breaking that Guard adds 3 Poise damage | Fast Attack pressures preparation; eligible melee Counter halves and may return the hit. Ward alone does not grant the Smash multiplier |
+| Smash | If physical Guard is positive before the hit, multiply HP damage by 1.5. Breaking that Guard adds 3 Poise damage. Breaks a Defend stance it overpowers (see Defend) | Fast Attack pressures preparation; eligible melee Counter halves and may return the hit. Ward alone does not grant the Smash multiplier |
 
+- **Stance breaks (owner, 2026-11-13).** Sweep breaks Counter and Smash breaks Defend, for players and enemies alike.
+  - Idle means no stance: the Counter charge (if any) is cleared and the entity holds no stance until a card or move sets one. The break emits `combatStanceBroken { targetId, from: 'counter' | 'defend', by: 'sweep' | 'smash' }`. A hit that also staggers leaves the Staggered stance and is not broken twice.
+  - An enemy broken during the player's turn loses the Counter or Defend move it was showing: `enemyMoveUnavailable { resource: 'stance', reason: 'stanceBroken' }` is emitted, its next planned follow-up (if any) becomes its intent (primed as at turn start), and with none its intent is `idle` (no move). Nothing is picked and no `enemyAI` draw is made (§4.6b).
+  - Previews apply the same break to a card's later hits without mutating state.
+- **Same-stance streak (owner, 2026-11-13).** Each consecutive offensive card (Attack, Smash, Sweep or Ranged) a player plays in the same stance as the previous one adds `stanceRules.sameStancePrecisionPerRepeat` (1) Precision to its hit per repeat: first card +0, second +1, third +2. A stance change or a non-offensive stance card resets the streak. It stacks with the existing matching-stance ×1.25 effectiveness (§17) and shows as a "same-stance streak" part of the Precision receipt.
 - Tactical multipliers apply after normal damage / typed-defense calculation and critical resolution, before Block absorption; floor the nonnegative result. Preview uses the same calculation without consuming charges, draining Ward, applying statuses or advancing random streams.
 
 **Counter**
@@ -872,6 +877,7 @@ Shipped values live in `content/actionCosts.js` (stance table, 1.8 multiplier, c
   - Full absorption (`HP loss = 0` and blocked amount covers the reduced positive hit) queues retaliation against the attacker: `floor(baseReplyDamage × 1.5) + 5 + explicitBonus`. Partial absorption or a zero reduced hit gives no reply.
   - Listed positive reply Poise damage = `floor(baseReplyPoise × 1.5)`; an absent listed value creates none.
   - Reaction actions carry an explicit reaction marker and cannot start another Counter or damage-rider chain.
+- Enemy reaction coverage (owner, 2026-11-13): an enemy reaction move that deals damage (`damage` or `counterDamage` above 0, e.g. Gilded Guard) answers only an incoming action a melee Counter would cover (below); damage-free reaction moves are unchanged.
 - Coverage:
   - Melee Counter: physical Attack/Smash except physical projectiles, Sweep and Force/Piercing.
   - Ranged Counter: physical projectiles only; suppresses Piercing's Guard bypass for the intercepted hit.

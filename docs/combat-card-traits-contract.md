@@ -112,6 +112,13 @@ version-2 snapshot without the key has no enemy reactions.
   - `playerReaction`: a player pushed a reaction onto a stack whose root is this
     enemy's own (non-Counter-return) action, or whose root is a player card that
     targets this enemy.
+- **Hit-back coverage (owner, 2026-11-13).** A reaction move that deals damage
+  (`damage` or `counterDamage` above 0) is eligible in `playerAction` only when
+  the incoming root action is one a melee Counter would cover: physical Attack
+  or Smash, not Sweep, not Force or Piercing, not a physical projectile or
+  Ranged. Reaction moves that deal no damage are unchanged. An unknown incoming
+  profile leaves the old behaviour; `playerReaction` pushes are not attacks and
+  are not filtered.
 - **Order.** Eligible enemies decide in roster order, each at most once per
   window. After every enemy has decided, the seat is offered: on the player's
   turn only the seat that played the root card; on an enemy turn the seats in
