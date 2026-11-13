@@ -128,6 +128,7 @@ test('the Poise reader prefers the Core pool (Poise left, drains) and falls back
   assert.deepEqual(read(null, { persistentPoise: { value: 0, max: 12 } }), { cur: 0, max: 12, drains: true });
   assert.deepEqual(read({ poiseMeter: { value: 3, max: 10 } }, null), { cur: 3, max: 10 });
   assert.equal(read({ persistentPoise: { value: 3, max: 0 } }, {}), null);
+  assert.equal(read({ persistentPoise: { value: 0, max: 0 }, poiseMeter: { value: 0, max: 10 } }, null), null, 'an empty pool is authoritative: no full bar from the legacy meter');
   assert.equal(read({}, {}), null);
 });
 
@@ -144,4 +145,5 @@ test('PoiseBarRemaining leaves a draining bar as it is; the pulse and inspector 
   assert.equal(PoiseNearBreak({ ...drain, cur: 0 }), false, 'a broken pool at 0 does not pulse');
   assert.deepEqual(PoiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
   assert.deepEqual(PoiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
+  assert.deepEqual(PoiseLeft({ persistentPoise: { value: 0, max: 0 }, poiseMeter: { value: 0, max: 10 } }, {}), { value: 0, max: 0 }, 'an empty pool beats the legacy meter');
 });

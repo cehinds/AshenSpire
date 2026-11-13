@@ -115,7 +115,9 @@ export const RESOURCE_SOURCES = Object.freeze({
   poise: Object.freeze({
     read: (view, entity) => {
       const pool = (view && view.persistentPoise) || (entity && entity.persistentPoise);
-      if (pool && Number.isFinite(pool.max) && pool.max > 0) return { cur: Math.max(0, pool.value || 0), max: pool.max, drains: true };
+      // An existing pool is authoritative, even at max 0 (a configured fight with no Poise creates it empty on purpose): no bar,
+      // never the legacy meter, which that fight never fills.
+      if (pool && typeof pool === 'object') return Number.isFinite(pool.max) && pool.max > 0 ? { cur: Math.max(0, pool.value || 0), max: pool.max, drains: true } : null;
       const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
       if (!pm || !Number.isFinite(pm.max) || pm.max <= 0) return null;
       return { cur: Math.max(0, pm.value || 0), max: pm.max };

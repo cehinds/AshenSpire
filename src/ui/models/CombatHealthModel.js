@@ -19,7 +19,7 @@ export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.d
 /** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
 export const PoiseLeft = (v, entity) => {
   const pool = v?.persistentPoise || entity?.persistentPoise;
-  if (pool && Number.isFinite(pool.max) && pool.max > 0) return { value: Math.max(0, pool.value || 0), max: pool.max };
+  if (pool && typeof pool === 'object') return Number.isFinite(pool.max) && pool.max > 0 ? { value: Math.max(0, pool.value || 0), max: pool.max } : { value: 0, max: 0 };
   const max = v?.poiseMeter?.max || entity?.poiseMeter?.max || 0;
   return { value: Math.max(0, max - (v?.poiseMeter?.value || 0)), max };
 };
