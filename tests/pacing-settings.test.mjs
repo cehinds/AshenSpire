@@ -185,3 +185,17 @@ test('a saved stage value overrides its stage only, ignoring speed and the pause
   setAnimSpeed('instant'); assert.equal(actionPacing().intentMs, 0);
   setAnimSpeed('normal'); setCombatPacing();
 });
+
+test('nine stage rows follow Pause between steps in play order, 0 to 1000 ms in steps of 10', () => {
+  const keys = settingsRows().map(r => r.key), at = keys.indexOf('combatStepPause');
+  const expected = ['IntentMs', 'WordMs', 'AfterSpriteMs', 'ResultMs', 'ReactionMs', 'DamageMs', 'ResetMs', 'TelegraphHoldMs', 'TelegraphResetMs'].map(n => `combatStage${n}`);
+  assert.deepEqual(keys.slice(at + 1, at + 10), expected);
+  const labels = ['Cost → action word', 'Action word → swing', 'Hit → result word', 'Result word → reaction', 'Reaction → damage numbers',
+    'Damage numbers → next step', 'Between actions', 'Strike hold before a reaction prompt', 'Pause before a reaction prompt'];
+  expected.forEach((key, i) => {
+    const r = row(key);
+    assert.deepEqual([r.label, r.cat, r.type, r.min, r.max, r.step, r.def], [labels[i], 'Combat', 'number', 0, 1000, 10, key === 'combatStageReactionMs' ? 0 : 100], key);
+    assert.ok(profileKeys(settingsRows()).includes(key), `${key} persists with the profile`);
+  });
+  assert.match(row('combatStepPause').note, /auto combat only/i);
+});

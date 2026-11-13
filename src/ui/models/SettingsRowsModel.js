@@ -19,7 +19,7 @@ import { flasks } from '../../content/flasks.js';
 import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
-import { AUTOMATION_DEFAULTS, ACTION_PACING } from '../../model/autoCombatPolicy.js';
+import { AUTOMATION_DEFAULTS, ACTION_PACING, STAGE_KEYS, stageSettingKey } from '../../model/autoCombatPolicy.js';
 import { resolveMotionIdle } from '../performance.js';
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
@@ -285,6 +285,10 @@ export const SETTINGS_ROWS = [
   { cat: 'Combat', key: 'combatStepPause', type: 'number', def: ACTION_PACING.stageGapMs,
     min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
     note: tFull('settings.row.combatStepPause') },
+  // Owner 2026-11-13: every stage of a combat action is its own wait (0-1000 ms, default fixedStageMs), in the order they play.
+  ...STAGE_KEYS.map(stage => ({ cat: 'Combat', key: stageSettingKey(stage), type: 'number', def: ACTION_PACING.fixedStageMs[stage],
+    min: AUTOMATION_DEFAULTS.stageMsMinimum, max: AUTOMATION_DEFAULTS.stageMsMaximum, step: AUTOMATION_DEFAULTS.stageMsStep,
+    label: t(`settings.row.${stageSettingKey(stage)}`), note: tFull(`settings.row.${stageSettingKey(stage)}`) })),
   { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },
