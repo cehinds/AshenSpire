@@ -48,14 +48,63 @@ export const GROUPS = ['scenes', 'components', 'screens', 'presentation'];
 // ui/tokens.json holds `vars` plus these published design-token groups. They are
 // plain values (no "$" references) and reach the game as uiConfig.tokens.<group>;
 // tools/tokens-css.mjs also publishes them as CSS custom properties.
-export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch'];
+export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch', 'color'];
 export const FOOTER_ACTIONS = ['back', 'skipSpeech', 'continue'];
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
+const maxTimerDelayMs = 2_147_483_647;
+const interactionConfigContracts = new Map([
+  ['ui/presentation/combatInspection.json', {
+    keys: ['holdMs', 'movementTolerancePx'],
+    validate(values, at, errors) {
+      if (Object.hasOwn(values, 'holdMs')) validateTimer(values.holdMs, 'holdMs', at, errors);
+      if (Object.hasOwn(values, 'movementTolerancePx')) validateNonnegativeNumber(values.movementTolerancePx, 'movementTolerancePx', at, errors);
+    },
+  }],
+  ['ui/presentation/settingsUndo.json', {
+    keys: ['windowMs'],
+    validate(values, at, errors) {
+      if (Object.hasOwn(values, 'windowMs')) validateTimer(values.windowMs, 'windowMs', at, errors);
+    },
+  }],
+]);
 
 const lf = (text) => text.replace(/\r\n/g, '\n');
 const hashOf = (text) => createHash('sha256').update(lf(text)).digest('hex').slice(0, 16);
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+function validateTimer(value, key, at, errors) {
+  if (!Number.isSafeInteger(value) || value <= 0 || value > maxTimerDelayMs) {
+    errors.push(at(`behavior.${key} must be a positive safe integer number of milliseconds no greater than ${maxTimerDelayMs}`));
+  }
+}
+
+function validateNonnegativeNumber(value, key, at, errors) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    errors.push(at(`behavior.${key} must be a finite nonnegative number`));
+  }
+}
+
+function interactionConfigProblems(rel, data) {
+  const contract = interactionConfigContracts.get(rel);
+  if (!contract) return [];
+  const errors = [];
+  const at = (message) => `${CONFIG_DIR}/${rel}: ${message}`;
+  if (!isObject(data.behavior)) {
+    errors.push(at('behavior must be an object'));
+    return errors;
+  }
+  for (const key of Object.keys(data.behavior)) {
+    if (!contract.keys.includes(key)) {
+      errors.push(at(`behavior.${key} is unknown — allowed keys are ${contract.keys.join(', ')}`));
+    }
+  }
+  for (const key of contract.keys) {
+    if (!Object.hasOwn(data.behavior, key)) errors.push(at(`behavior.${key} is required`));
+  }
+  contract.validate(data.behavior, at, errors);
+  return errors;
+}
 
 /** Duplicate keys in one object are refused: JSON.parse silently keeps the last. */
 function duplicateKeys(text) {
@@ -105,7 +154,7 @@ function groupOf(rel) {
  * entries: [{ rel: 'ui/scenes/w4.json', text }] — rel is relative to content/config.
  * Pure: no filesystem, so tests can plant any tree.
  */
-export function compileEntries(entries) {
+export function compileEntries(entries, { requireInteractionConfigs = false } = {}) {
   const errors = [];
   const files = [];
   const sorted = [...entries].sort((a, b) => (a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0));
@@ -137,6 +186,13 @@ export function compileEntries(entries) {
     }
     if ('vars' in data && !isObject(data.vars)) errors.push(`${CONFIG_DIR}/${rel}: "vars" must be an object`);
     files.push({ rel, text, data, ...where });
+  }
+
+  if (requireInteractionConfigs) {
+    const presentFiles = new Set(entries.map((entry) => entry.rel));
+    for (const rel of interactionConfigContracts.keys()) {
+      if (!presentFiles.has(rel)) errors.push(`${CONFIG_DIR}/${rel}: required presentation interaction config is missing`);
+    }
   }
 
   const tokenFiles = files.filter((f) => f.group === 'tokens');
@@ -230,6 +286,7 @@ export function compileEntries(entries) {
     config[f.group][f.key] = out;
     if (f.group === 'scenes') errors.push(...sceneProblems(f.rel, out));
     if (f.group === 'presentation' && f.key === 'deckEditorCosts') errors.push(...deckEditorCostProblems(f.rel, out));
+    errors.push(...interactionConfigProblems(f.rel, out));
   }
 
   // Tokens: resolved inside their own scope and exported as plain values.
@@ -276,6 +333,11 @@ const isNameKey = (k) => /^[a-z][A-Za-z0-9]*$/.test(k);
  *   layer.<name>        integer z-index, strictly increasing in the order written
  *   motion.<name>       non-negative integer milliseconds
  *   touch.<name>        { px?, css?, home? }   (px may be left out only when homed)
+ *
+ *   color.palette       { <camelName>: colour }   hex, rgb(), rgba(), hsl(), hsla() or var(--other)
+ *   color.notes         { <paletteName>: text }   a note per palette colour (a CSS comment)
+ *   color.themes.<k>    { selector, colors: { <paletteName>: colour }, notes? }
+ *                       every theme colour must also be in the palette (it overrides it)
  *
  * `css` names the custom property the entry publishes; `home` says that property
  * is already declared in that stylesheet (one home per fact), so the generated
@@ -356,7 +418,49 @@ export function tokenGroupProblems(rel, data) {
   if ('touch' in data) {
     named(data.touch, 'touch', (k, v, path) => { entry(v, path, [], { pxOptionalWhenHomed: true }); });
   }
+  if ('color' in data) colorProblems(data.color, at, only, out);
   return out;
+}
+
+const COLOUR_VALUE = /^(?:#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|(?:rgba?|hsla?)\([^()]*\)|var\(--[a-z0-9-]+\))$/;
+
+/** The color group of ui/tokens.json (see tokenGroupProblems). */
+function colorProblems(color, at, only, out) {
+  if (!isObject(color)) { out.push(at('color must be an object')); return; }
+  only(color, ['palette', 'notes', 'themes'], 'color');
+  const colours = (obj, path) => {
+    if (!isObject(obj) || Object.keys(obj).length === 0) { out.push(at(`${path} must be a non-empty object`)); return false; }
+    for (const [k, v] of Object.entries(obj)) {
+      if (!isNameKey(k)) out.push(at(`${path}.${k}: name must be camelCase letters and digits`));
+      if (typeof v !== 'string' || !COLOUR_VALUE.test(v)) out.push(at(`${path}.${k} must be a hex, rgb(), rgba(), hsl() or var(--name) colour, got ${JSON.stringify(v)}`));
+    }
+    return true;
+  };
+  const notes = (obj, path, owner, ownerPath) => {
+    if (!isObject(obj)) { out.push(at(`${path} must be an object`)); return; }
+    for (const [k, v] of Object.entries(obj)) {
+      if (!(k in owner)) out.push(at(`${path}.${k}: no colour of that name in ${ownerPath}`));
+      if (typeof v !== 'string' || !v.trim() || v.includes('*/')) out.push(at(`${path}.${k} must be a non-empty string without "*/"`));
+    }
+  };
+  if (!('palette' in color)) { out.push(at('color.palette is missing')); return; }
+  const paletteOk = colours(color.palette, 'color.palette');
+  const palette = paletteOk ? color.palette : {};
+  if ('notes' in color) notes(color.notes, 'color.notes', palette, 'color.palette');
+  if (!('themes' in color)) return;
+  if (!isObject(color.themes)) { out.push(at('color.themes must be an object')); return; }
+  for (const [k, theme] of Object.entries(color.themes)) {
+    const path = `color.themes.${k}`;
+    if (!isNameKey(k)) { out.push(at(`${path}: name must be camelCase letters and digits`)); continue; }
+    if (!isObject(theme)) { out.push(at(`${path} must be an object`)); continue; }
+    only(theme, ['selector', 'colors', 'notes'], path);
+    if (typeof theme.selector !== 'string' || !theme.selector.trim() || /[{};]|\/\*/.test(theme.selector)) out.push(at(`${path}.selector must be a CSS selector like "body.hi-contrast"`));
+    if (!colours(theme.colors, `${path}.colors`)) continue;
+    for (const name of Object.keys(theme.colors)) {
+      if (!(name in palette)) out.push(at(`${path}.colors.${name}: not in color.palette — a theme only overrides a palette colour`));
+    }
+    if ('notes' in theme) notes(theme.notes, `${path}.notes`, theme.colors, `${path}.colors`);
+  }
 }
 
 /** Cost presentation may regroup pools, but cannot hide or double-count one. */
@@ -532,7 +636,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.error(`config-build: no JSON under ${CONFIG_DIR}/`);
     process.exit(1);
   }
-  const result = compileEntries(entries);
+  const result = compileEntries(entries, { requireInteractionConfigs: true });
   if (result.errors.length) {
     console.error(`config-build: REFUSED — ${result.errors.length} problem(s):\n  ${result.errors.join('\n  ')}`);
     process.exit(1);

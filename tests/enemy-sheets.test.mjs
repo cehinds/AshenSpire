@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { DEFAULT_PACK, check, write, extract, plan } from '../tools/enemy-sheets.mjs';
 
 const clone = () => {
@@ -140,5 +142,19 @@ test('reserve and phase unlocks must agree', () => {
     assert.match(plan(dir).problems.join('\n'), /reserve card "card:fellWarden\.twinDaggers" is not listed in any behaviour\.phases\[\]\.unlockCards/);
     edit(dir, 'fellWarden', s => { s.behaviour.phases[0].unlockCards = ['card:fellWarden.twinDaggers']; s.reserve = []; });
     assert.match(plan(dir).problems.join('\n'), /phase unlocks "card:fellWarden\.twinDaggers" but it is not in reserve/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the write command refuses cardHints shadowed under behaviour and leaves the pack bytes intact', () => {
+  const dir = clone();
+  try {
+    edit(dir, 'ashheartDragon', sheet => { sheet.behaviour.cardHints = { 'ashheartDragon.ashBreath': null }; });
+    const files = ['characters.json', ...readdirSync(join(dir, 'enemies')).map(file => join('enemies', file))];
+    const bytes = files.map(file => readFileSync(join(dir, file)));
+    const tool = fileURLToPath(new URL('../tools/enemy-sheets.mjs', import.meta.url));
+    const result = spawnSync(process.execPath, [tool, '--write', '--pack', dir], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stderr, /ashheartDragon\.json behaviour\/cardHints: author card hints under ai/);
+    assert.deepEqual(files.map(file => readFileSync(join(dir, file))), bytes);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

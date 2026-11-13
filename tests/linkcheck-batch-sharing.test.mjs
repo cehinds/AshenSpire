@@ -74,3 +74,26 @@ test('a broken entry is still named, the others stay green, and the batch stays 
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('tool packages declare their optional dependency exports without installing them', () => {
+  const root = mkdtempSync(join(tmpdir(), 'linkcheck-dependency-'));
+  try {
+    write(root, 'tools/fixture/package.json', JSON.stringify({
+      devDependencies: { 'fixture-dependency': '1.0.0', 'missing-surface': '1.0.0' },
+      linkcheckExports: { 'fixture-dependency': ['default', 'Read'] },
+    }));
+    write(root, 'tools/fixture/ok.mjs', "import value, { Read } from 'fixture-dependency';");
+    write(root, 'tools/fixture/bad-name.mjs', "import { Missing } from 'fixture-dependency';");
+    write(root, 'tools/fixture/bad-surface.mjs', "import value from 'missing-surface';");
+    write(root, 'src/consumer.js', "import value from 'fixture-dependency';");
+    const result = batch(root);
+    assert.equal(result.total, 4);
+    const failures = Object.fromEntries(result.broken.map(({ file, err }) => [file, err]));
+    assert.equal(Object.keys(failures).length, 3);
+    assert.match(failures['tools/fixture/bad-name.mjs'], /does not provide an export named 'Missing'/);
+    assert.match(failures['tools/fixture/bad-surface.mjs'], /neither a Node built-in nor declared/);
+    assert.match(failures['src/consumer.js'], /neither a Node built-in nor declared/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

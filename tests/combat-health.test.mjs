@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { tagSymbolSvg } from '../src/ui/components/cardTagSymbols.js';
 import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { mechanics } from '../src/framework/data/mechanics.js';
+import { CounterStackPercent } from '../src/ui/models/CounterStackPercentModel.js';
 
 test('protection badges are independent, Defense (Block) is first, then Ward, and broken protection disappears', () => {
   for (const [defense, ward, kinds] of [[12, 8, ['shield', 'ward']], [12, 0, ['shield']], [0, 8, ['ward']], [0, 0, []]]) {
@@ -75,6 +78,39 @@ test('spent Evasion stacks disappear from the PIP instead of showing a zero rati
   assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
 });
 
+test('Counter explanation preserves the configured fractional percent in health and shared display values', () => {
+  assert.equal(CounterStackPercent(0.1), 10);
+  assert.equal(CounterStackPercent(0.29), 29);
+  assert.equal(CounterStackPercent(0.304), 30.4);
+  assert.equal(CounterStackPercent(0.005), 0.5);
+  const original = mechanics.counter.stackFraction;
+  try {
+    mechanics.counter.stackFraction = 0.29;
+    const badge = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
+    assert.match(badge.help, /returns 1×29% of incoming/);
+    mechanics.counter.stackFraction = 0.304;
+    const fractional = combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter');
+    assert.match(fractional.help, /returns 1×30\.4% of incoming/);
+  } finally {
+    mechanics.counter.stackFraction = original;
+  }
+});
+
+test('Reflect labels use the engine integer percentage points, not rounded raw fractions', () => {
+  const original = {
+    perStack: mechanics.reflect.reducePerStack,
+    returnPerStack: mechanics.reflect.returnPerStack,
+    cap: mechanics.reflect.reduceCap,
+  };
+  try {
+    Object.assign(mechanics.reflect, { reducePerStack: 0.304, returnPerStack: 0.304, reduceCap: 0.9 });
+    const badge = combatHealthModel({ reflectStacks: 2 }).badges.find(row => row.kind === 'reflect');
+    assert.match(badge.help, /Cuts each hit by 60% and sends 60%/);
+  } finally {
+    Object.assign(mechanics.reflect, { reducePerStack: original.perStack, returnPerStack: original.returnPerStack, reduceCap: original.cap });
+  }
+});
+
 test('the Evade badge tooltip shows the holder text when given and the generic line otherwise, and combatHealthRow accepts evadeHelp', () => withKitDom(() => {
   const badge = combatHealthModel({ evasion: 2 }).badges.find(b => b.kind === 'evade');
   const helps = { blockHelp: 'b', poiseHelp: 'p', wardHelp: 'w' };
@@ -84,6 +120,17 @@ test('the Evade badge tooltip shows the holder text when given and the generic l
   for (const options of [{ tooltips: true }, { tooltips: true, evadeHelp: 'holder text' }, { tooltips: true, evadeHelp: null }])
     assert.doesNotThrow(() => combatHealthRow(hp, { evasion: 2 }, options));
 }));
+
+test('the Precision badge uses supplied Core wording and keeps the legacy fallback when absent', () => {
+  const badge = combatHealthModel({ precision: 2 }).badges.find(row => row.kind === 'precision');
+  const coreHelp = 'Each stack adds 2 Precision. Loses 5 stacks at the start of your turn.';
+  assert.match(badgeTipHtml(badge, { precisionHelp: coreHelp }), /Each stack adds 2 Precision\. Loses 5 stacks/);
+  assert.match(badgeTipHtml(badge, {}), /Each stack adds 1 Accuracy\./, 'non-Core surfaces keep the authored legacy wording');
+
+  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(screen, /precisionHelp: fixCoreEnabled\(combat\) \? registries\.statuses\.get\('precision', entity\)\?\.tooltip : undefined/);
+  assert.match(screen, /const \{ hud, evadeHelp, precisionHelp, poiseHelp, wardHelp \} = hp/);
+});
 
 test('the Precision badge glyph is the reticle, not the ranged arrow the card-rail alias gives status:precision', () => withKitDom(() => {
   const reticle = tagSymbolSvg('effect:precision').outerHTML;

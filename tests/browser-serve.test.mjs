@@ -23,7 +23,7 @@ test('browser.mjs check S holds (buildPageUrl / serveDir, no browser)', () => {
   assert.match(out, /^PASS {2}S {2}buildPageUrl \/ serveDir \((\d+) checks, no browser\)/m, out);
   assert.doesNotMatch(out, /RED /, out);
   // The checks that answer the review findings must still be among them.
-  for (const name of [/reads the file's channel/, /stale packs\/ folder stays on file/, /invalid range/, /sent to the slash/, /symlink inside the folder/, /HEAD sends the length and no body/, /byte range answers 206/]) {
+  for (const name of [/reads the file's channel/, /stale packs\/ folder stays on file/, /invalid range/, /sent to the slash/, /symlink inside the folder/, /directory link that stays inside/, /dangling directory link/, /HEAD sends the length and no body/, /byte range answers 206/]) {
     assert.match(out, name, `check S no longer covers ${name}`);
   }
 });

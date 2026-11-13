@@ -88,8 +88,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'resumeRun swaps the live run before the load succeeds',
         file: 'src/main.js',
-        find: '  let loaded = saves.loadRun(authoredRegistries, slot);',
-        replace: '  let loaded = run = saves.loadRun(authoredRegistries, slot); // slot-load-door selftest plant',
+        find: '  if (!context.run) {',
+        replace: '  run = context.run; // slot-load-door selftest plant\n  if (!context.run) {',
         expectRed: /RED SLOT-LOAD-REFUSED-KEEPS-RUN/,
       },
       {

@@ -26,12 +26,16 @@ import { openModal, button, settingRowOpenHtml, settingLabelStackHtml } from '..
 import { openConfirmationModal } from '../components/confirmationModal.js';
 import { t, tFull } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
-import { cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, normalizeTunedNumber } from '../models/CardSizeModel.js';
+import { cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
+import {
+  ApplySeedPatch, BuildSeedPatch, CommitNumberRow, CreateSettingsDraftModel,
+  ResolveNumberRow, TypedNumberRefusal,
+} from '../models/SettingsDraftModel.js';
 import { contentBundle } from '../../content/index.js';
 import { pageDebug, promotionDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
-import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen } from '../../model/settingOverrides.js';
@@ -42,6 +46,17 @@ import {
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
   prologueFreeSlot, prologueStagedOrder, PROLOGUE_PREFIX, PROLOGUE_DEFAULTS,
 } from '../../model/prologue.js';
+
+const settingsDraft = CreateSettingsDraftModel();
+export const offerUndo = (label, snapshot, seed = null) => settingsDraft.OfferUndo(label, snapshot, seed);
+export const dropUndoOffer = () => settingsDraft.DropUndoOffer();
+export const pendingUndo = (now = Date.now()) => settingsDraft.PendingUndo(now);
+export const resetKeys = (settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) => settingsDraft.ResetKeys(settings, onChange, keys, label, { promoted });
+export const seedPatch = BuildSeedPatch;
+export const applySeedPatch = ApplySeedPatch;
+export const resolveNumberRow = ResolveNumberRow;
+export const typedNumberRefusal = TypedNumberRefusal;
+export const commitNumberRow = CommitNumberRow;
 
 // A CLIPBOARD WRITE OUTLIVES THE PANEL THAT STARTED IT, so the guard against a
 // second export cannot live inside `renderSettings`. It did, and closing and
@@ -718,135 +733,6 @@ export function rowDefault(row, promoted = buildPromotion()) {
   return row?.def;
 }
 
-// ---- UNDO for anything that changes many values at once ---------------------
-// A row Reset, a group or results reset, Reset all, clearing hidden tuning and
-// a profile load each leave one "… · Undo" bar for UNDO_MS. The snapshot is the
-// value every touched key held before (undefined = was not stored).
-const UNDO_MS = 8000;
-let undoOffer = null;
-// Which profile an offer belongs to. Not the settings object: every save
-// reloads the profile into a new one (main.js persistSettingsChange), so an
-// identity check dropped a still-valid Undo when Settings was reopened within
-// the window. The generation moves only when the profile itself is replaced —
-// a restore, a profile load, a configuration import — via dropUndoOffer().
-let profileGeneration = 0;
-/**
- * offerUndo(label, snapshot, seed) — the next paint shows "label · Undo". The
- * offer belongs to the current profile generation, so a profile replaced in
- * between never receives another profile's values. `seed` (from seedPatch) is
- * the ownership the change moved, key by key: Undo puts back only those keys'
- * ownership, merged into the record as it stands then, so a key the player
- * took over inside the window stays theirs.
- */
-export function offerUndo(label, snapshot, seed = null) {
-  const hasSeed = seed && Object.keys(seed).length > 0;
-  if ((!snapshot || !Object.keys(snapshot).length) && !hasSeed) return;
-  undoOffer = { label, snapshot: snapshot || {}, seed: hasSeed ? seed : null, generation: profileGeneration, until: Date.now() + UNDO_MS };
-}
-
-/**
- * seedPatch(before, after) → { key: { value } | null } for each key whose
- * promotion ownership differs between two seed records: what `before` held
- * for it (null = not the promotion's). Only the keys a change moved.
- */
-export function seedPatch(before, after) {
-  const a = before && typeof before === 'object' ? before : {};
-  const b = after && typeof after === 'object' ? after : {};
-  const patch = {};
-  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || !sameSetting(a[key], b[key])) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
-  }
-  return patch;
-}
-
-/** applySeedPatch(record, patch) → `record` with each patched key's ownership put back. */
-export function applySeedPatch(record, patch) {
-  const next = { ...(record && typeof record === 'object' ? record : {}) };
-  for (const [key, entry] of Object.entries(patch || {})) {
-    if (entry) next[key] = entry.value; else delete next[key];
-  }
-  return next;
-}
-
-/**
- * dropUndoOffer() — the profile was replaced (restored, loaded or imported):
- * start a new generation and forget any pending Undo, which was taken from the
- * profile that is gone.
- */
-export function dropUndoOffer() { profileGeneration += 1; undoOffer = null; }
-
-/**
- * pendingUndo(now) → the offer the next paint shows, or null. An offer past its
- * window or taken from a profile since replaced is forgotten here.
- */
-export function pendingUndo(now = Date.now()) {
-  if (undoOffer && (now > undoOffer.until || undoOffer.generation !== profileGeneration)) undoOffer = null;
-  return undoOffer;
-}
-
-/**
- * resetKeys(settings, onChange, keys, label) → the snapshot taken. Each key goes
- * back to its promoted default when there is one, else is cleared so the row's
- * own default applies; an Undo is offered.
- */
-export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) {
-  const snapshot = {};
-  const changed = {};
-  const seedBefore = settings[SEED_KEY];
-  for (const key of keys) {
-    snapshot[key] = settings[key];
-    if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
-    else { delete settings[key]; changed[key] = undefined; }
-  }
-  // Resetting one pacing control is a manual customization too. Keep it in
-  // the same transaction and undo snapshot; full/group resets own the preset
-  // explicitly and retain their normal defaults behavior.
-  if (!keys.includes('combatPacingPreset') && keys.some(key => ['combatStepPause', 'animationStepDuration'].includes(key))) {
-    snapshot.combatPacingPreset = settings.combatPacingPreset;
-    settings.combatPacingPreset = 'custom';
-    changed.combatPacingPreset = 'custom';
-  }
-  const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
-  // A key reset to its promoted value is the promotion's again: say so in the
-  // seed record, so a later promotion may move it along.
-  const back = keys.filter((key) => Object.hasOwn(promoted, key));
-  if (back.length) {
-    const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
-    const next = { ...record };
-    for (const key of back) next[key] = promoted[key];
-    for (const key of keys) if (!Object.hasOwn(promoted, key)) delete next[key];
-    settings[SEED_KEY] = next;
-    changed[SEED_KEY] = next;
-  }
-  const result = onChange(changed);
-  const settle = result => {
-  if (result?.ok === false) {
-    // Not saved, so not reset: put every value (and the seed record) back —
-    // here and, through the same onChange, in the game and its live state.
-    const back = {};
-    for (const [key, value] of Object.entries(snapshot)) {
-      back[key] = value;
-      if (value === undefined) delete settings[key]; else settings[key] = value;
-    }
-    if (Object.hasOwn(changed, SEED_KEY)) {
-      back[SEED_KEY] = seedBefore;
-      if (seedBefore === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = seedBefore;
-    }
-    onChange(back);
-    return snapshot;
-  }
-  const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
-  // Undo puts back which values the promotion owned, as well as the values —
-  // also when only that moved (every key already sat at its promoted value
-  // but was the player's): that reset is saved, so it can be undone.
-  const seedMoved = Object.hasOwn(changed, SEED_KEY)
-    && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
-  offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
-  return snapshot;
-  };
-  return result?.then ? result.then(settle, () => settle({ ok: false })) : settle(result);
-}
-
 /**
  * allResettableKeys(stored) → every stored key Reset all puts back, inert retired ones included.
  * With the stored settings it also takes every key of the retired legacy groups (the import door's
@@ -1218,96 +1104,6 @@ function appliedSlot(settings, r) {
  * points per tier" dial, was retired with ruleset 6: every stat now states its
  * own decimal weight per attribute.)
  */
-/**
- * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
- *
- * THE ONE GATE. Every road into a `number` setting runs through here: the markup
- * that renders it, the handler that commits it, the resolver the game reads it
- * with, and a hand-edited profile arriving from disk. So the model can only ever
- * receive an integer inside the row's own domain, whatever is stored — which is
- * the property `tests/engine.test.js` 60d asserts over a table of rubbish.
- *
- * A TYPED FIELD IS A DOOR A LADDER NEVER OPENED, and every one of these answers
- * had no reason to exist an hour ago:
- *
- *   ''  ·  null  ·  undefined      the DEFAULT. An empty field is not a zero.
- *   'lots'  ·  NaN  ·  Infinity    the DEFAULT. Unreadable is unset — the same
- *                                  rule `savedZoom` and `resolveMapMode` use.
- *   0  ·  -3                       CLAMPED UP to `min`. A level that grants
- *                                  nothing is a purchase that does nothing, and
- *                                  a negative one would take points away.
- *   1e9                            CLAMPED DOWN to `max`.
- *   2.7                            FLOORED. `validateRunShape` requires integer
- *                                  attributes, so a fractional grant would break
- *                                  the run's shape three files downstream. It
- *                                  never gets to leave this function.
- *   '  7  '                        7. Trimmed, because a field lets him type it.
- *
- * FLOOR, NOT ROUND, and it is the tree's own rule rather than my preference:
- * `derivedStatRules.defaults.rounding` is 'floor' and Constantine settled it in
- * his own words on the HP formula — "CON 14 gives +2, not +3".
- */
-export function resolveNumberRow(settings, row) {
-  if (!row) throw new Error('resolveNumberRow: no row');
-  const fallback = row.defaultFor ? row.defaultFor(settings) : row.def;
-  const raw = (settings || {})[row.key];
-  // The rule itself lives in CardSizeModel so the card-size model and this row
-  // cannot disagree about what a stored number means — they did, by a floor
-  // against a round.
-  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(fallback) });
-  const numeric = raw === '' || raw === null || raw === undefined ? Number(fallback) : Number(raw);
-  if (!Number.isFinite(numeric)) return Number(fallback);
-  const clamped = Math.min(row.max, Math.max(row.min, numeric));
-  const step = Number(row.step) || 0.01;
-  const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
-  return Number(clamped.toFixed(precision));
-}
-
-/**
- * typedNumberRefusal(row, raw) → the sentence for a number HE TYPED that the
- * row's domain will not take, or null.
- *
- * THE CLAMP IS NOT A REFUSAL HE CAN SEE. `resolveNumberRow` is the one gate and
- * it clamps: type 8 into a row whose floor is 12 and 12 is what gets stored,
- * displayed, and handed to `advancedConfigProblemRows` — which then finds a
- * perfectly legal number and says nothing. The refusal naming the Starseer's
- * kit was reachable only by injecting a bad value past the field.
- *
- * AND IT CANNOT BORROW THE EXISTING SENTENCE. `startingStatPoolProblems` ends
- * "The value in use is 35" — true when the bad value was STORED and the
- * authored default stood, and a lie here, where the clamp means 12 is in use.
- * So this says what the clamp actually did: what was typed, the bound, why the
- * bound is there (the row's own `boundsNote`, which names the class and kit),
- * and the number the game is now using.
- *
- * Null the moment the typed value is legal — the message must LEAVE, which is
- * the same rule `numberAppliedHtml` and `paintConfigProblems` live by.
- */
-export function typedNumberRefusal(row, raw) {
-  if (!row || row.type !== 'number') return null;
-  const text = String(raw ?? '').trim();
-  if (text === '') return null;                        // an empty field is not a zero
-  const typed = Number(text);
-  if (!Number.isFinite(typed)) return null;            // unreadable is unset, as everywhere else
-  const wanted = row.integer !== false ? Math.floor(typed) : typed;
-  if (wanted >= row.min && wanted <= row.max) return null;
-  const used = resolveNumberRow({ [row.key]: raw }, row);
-  return `${row.label}: ${JSON.stringify(typed)} is outside ${row.min}\u2013${row.max} and was refused.`
-    + `${row.boundsNote ? ` ${row.boundsNote}` : ''}`
-    + ` The value in use is ${used}; every other setting you changed is still applied.`;
-}
-
-/**
- * commitNumberRow(settings, row, raw) → { value, refusal }
- *
- * WHAT A TYPED NUMBER BECOMES, as one answer. The handler below wires it to the
- * field and the slider; this holds the decision, so the node suite can drive the
- * SAME code the screen runs instead of a second copy of its rules.
- */
-export function commitNumberRow(settings, row, raw) {
-  return { value: resolveNumberRow({ [row.key]: raw }, row), refusal: typedNumberRefusal(row, raw) };
-}
-
 /**
  * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
  * than its value. Exported so a test asserts against the row the screen actually
@@ -2075,6 +1871,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // ---- the Undo bar ------------------------------------------------------
   let undoTimer = null;
   function paintUndo() {
+    clearTimeout(undoTimer);
+    undoTimer = null;
     container.querySelector(':scope > .set-undo')?.remove();
     const offer = pendingUndo();
     if (!offer) return;
@@ -2083,37 +1881,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     bar.setAttribute('role', 'status');
     bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>${esc(t('settings.undo'))}</button>`;
     bar.querySelector('[data-undo]').onclick = async () => {
-      const restore = {};
-      // The seed record too, even when the Undo does not carry it: the save
-      // path may prune it for the keys this Undo moves.
-      const now = { [SEED_KEY]: settings[SEED_KEY] };
-      for (const [key, value] of Object.entries(offer.snapshot)) {
-        now[key] = settings[key];
-        if (value === undefined) delete settings[key]; else settings[key] = value;
-        restore[key] = value;
-      }
-      // Ownership only for the keys the change moved, merged into the record
-      // as it is now: a key the player took over since stays theirs.
-      if (offer.seed) {
-        restore[SEED_KEY] = applySeedPatch(now[SEED_KEY], offer.seed);
-        settings[SEED_KEY] = restore[SEED_KEY];
-      }
-      undoOffer = null;
-      if ((await onChange(restore))?.ok === false) {
-        // Not saved, so not undone: put the state the Undo replaced back, here
-        // and through onChange, so the live display and audio follow it — and
-        // keep the offer, so the player can try again.
-        for (const [key, value] of Object.entries(now)) {
-          if (value === undefined) delete settings[key]; else settings[key] = value;
-        }
-        await onChange(now);
-        undoOffer = offer;
-      }
-      repaintPanel({ keepScroll: true });
+      const button = bar.querySelector('[data-undo]');
+      button.disabled = true;
+      await settingsDraft.Undo(settings, onChange, offer);
+      if (lifecycleSentinel.isConnected) repaintPanel({ keepScroll: true });
     };
     container.insertBefore(bar, container.querySelector(':scope > .set-railed') || container.firstChild);
-    clearTimeout(undoTimer);
-    undoTimer = setTimeout(() => { if (undoOffer === offer) { undoOffer = null; bar.remove(); } }, Math.max(0, offer.until - Date.now()));
+    undoTimer = setTimeout(() => {
+      settingsDraft.ExpireUndoOffer(offer);
+      bar.remove();
+    }, Math.max(0, offer.until - Date.now()));
   }
   const wire = () => {
   const profileHost = container.querySelector('[data-game-profile-settings]');
@@ -2530,6 +2307,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
       typedRefusals.delete(key);
       await resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+      if (!lifecycleSentinel.isConnected) return;
       repaintPanel({ keepScroll: true });
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
     });
@@ -2550,6 +2328,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
     btn.addEventListener('click', () => confirmResetAll(async () => {
       await resetKeys(settings, onChange, allResettableKeys(settings), 'All settings reset');
+      if (!lifecycleSentinel.isConnected) return;
       renderSettings(container, { settings, onChange, grouped, saves, onOffline, previewAttributes, previewLevel, previewClassId, gameProfile });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));

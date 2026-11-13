@@ -42,7 +42,7 @@ combat.card.splitBlock,,"{verb} {block} Block and {ward} Ward",,
 combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
-combat.protection.counter,,Counter,"Counter {stacks} · returns {stacks}×10% of incoming · −{decay} per turn",Counter
+combat.protection.counter,,Counter,"Counter {stacks} · returns {stacks}×{stackPercent}% of incoming · −{decay} per turn",Counter
 combat.protection.reflect,,Reflect,"Cuts each hit by {reduce}% and sends {back}% of it back at the attacker; every reflected hit costs one stack. Stacks last until the fight ends.",Reflect
 combat.protection.ac,,AC,Enemies hit when d20 + their Precision ≥ {value}.,AC {value} (Evasion)
 combat.protection.acEvade,,Evade stacks +{value},,
@@ -779,8 +779,8 @@ deckEditor.rank,,Rank {rank},Card rank {rank}.,
 deckEditor.rank.cantrip,,Cantrip,"Rank 0 spell, a cantrip.",
 deckEditor.rank.basic,,Basic,Rank 0 combat maneuver.,
 card.counter.help.legacy,,Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.,Legacy Counter help.,
-card.counter.help.core,,"Prepare counter until next player turn. A covered hit returns the card's damage plus 10% of the incoming damage per Counter stack (more with stance advantage), plus Poise damage; the Block you hold becomes Counter stacks.",Core Counter help.,
-card.counter.face.core,,Return half incoming damage and Poise,Core Counter face line while no attack is revealed.,
+card.counter.help.core,,"Prepare counter until next player turn. A covered hit returns the card's damage plus {stackPercent}% of the incoming damage per Counter stack (more with stance advantage), plus Poise damage; the Block you hold becomes Counter stacks.",Core Counter help.,
+card.counter.face.core,,Return damage and Poise,Core Counter face line while no attack is revealed.,
 deckEditor.range.melee,,Melee,Melee range: reaches the enemy in front.,
 deckEditor.range.reach,,Reach,Reach range: reaches past the front enemy.,
 deckEditor.range.ranged,,Ranged,Ranged: reaches any enemy.,
@@ -1740,7 +1740,7 @@ cardUpgrade.row.chip,,Rank {rank} · {n} upgrades,Rank {rank} · {n} upgrades,
 cardUpgrade.row.chipOne,,Rank {rank} · {n} upgrade,Rank {rank} · {n} upgrade,
 status.lifecycle.coreDecay,,,The {value} decreases by {amount} at the {clock}; removed at zero.,
 status.lifecycle.coreTimer,,,Turn timer: {duration} ticks at the {clock}. Successful reapplication resets the timer.,
-status.lifecycle.corePrecision,,,Temporary stacks lose 3 at the start of the owner's turn; Persistent stacks remain.,
+status.lifecycle.corePrecision,,,Temporary stacks lose {decay} at the start of the owner's turn; Persistent stacks remain.,
 cardArtBuilder.modeReviewed,,Reviewed,,
 cardArtBuilder.reviewedCard,,,Reviewed {name},
 cardArtBuilder.modeLabel,,Card art workflow,,

@@ -25,7 +25,11 @@ test('combat.js restores the target-HUD layout mode right after releasing the HU
 
 test('the target HUD still drops its own layout mode on a full release (screen unmount)', () => {
   assert.match(hudSource, /release\(\) \{[\s\S]{0,900}delete combat\.dataset\.targetHud;/);
-  assert.ok(combat.indexOf('targetHud.release();\n        battlefieldStage.release();') > 0, 'the unmount still releases the target HUD');
+  const release = combat.match(/function releaseCombatMount\(\) \{([\s\S]*?)\n  \}/);
+  assert.ok(release, 'the screen has an explicit combat-mount teardown');
+  assert.match(release[1], /targetHud\.release\(\);\s*battlefieldStage\.release\(\);/, 'unmount releases the HUD and battlefield stage');
+  assert.doesNotMatch(release[1], /combatEl\.dataset\.targetHud\s*=/, 'a full unmount does not restore the released layout mode');
+  assert.match(combat, /ObserveCombatMount\(app, combatEl, \{[\s\S]*?onDetach: releaseCombatMount,\s*\}\);/, 'the mount owner invokes that teardown on detach');
 });
 
 test('a fallen combatant takes its overhead HP bar with it under the target HUD', () => {

@@ -7,12 +7,16 @@ const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
 const whole = value => Number.isSafeInteger(value) && value >= 0;
 
-/** Counter and Reflect stack counts (owner 2026-10-31): whole, capped by mechanics.counter / mechanics.reflect; absent means 0 (older saves). */
-/** Clamps saved stack counts to the live caps (load-time companion of stackCountProblems). */
+/** Bounds Counter counts for runtime and save restoration. */
+export const COUNTER_STACK_SAFETY_CEILING = 999;
+
+/** Clamps Counter to the safety ceiling and Reflect to its live rule cap. */
 export function clampStackCounts(entity) {
   if (!entity) return;
-  if (entity.counterStacks > 999) entity.counterStacks = 999; // safety ceiling, not a rule
-  if (entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
+  if (Number.isSafeInteger(entity.counterStacks) && entity.counterStacks > COUNTER_STACK_SAFETY_CEILING) {
+    entity.counterStacks = COUNTER_STACK_SAFETY_CEILING;
+  }
+  if (Number.isSafeInteger(entity.reflectStacks) && entity.reflectStacks > mechanics.reflect.stackCap) entity.reflectStacks = mechanics.reflect.stackCap;
 }
 
 export function stackCountProblems(entity, path = 'entity') {
@@ -29,7 +33,7 @@ export function combatIntentRulesProblems(rules, path = 'combatIntentRules') {
   const keys = ['baseHiddenChance', 'wisdomReduction', 'intelligenceReduction', 'minimumHiddenChance', 'maximumHiddenChance'];
   const problems = Object.keys(rules).filter(key => !keys.includes(key)).map(key => `${path}.${key} is unknown`);
   for (const key of keys) if (!nonNegative(rules[key]) || rules[key] > 1) problems.push(`${path}.${key} must be a probability from 0 to 1`);
-  if (rules.minimumHiddenChance > rules.maximumHiddenChance) problems.push(`${path}.minimumHiddenChance cannot exceed maximumHiddenChance`);
+  if (nonNegative(rules.minimumHiddenChance) && nonNegative(rules.maximumHiddenChance) && rules.minimumHiddenChance > rules.maximumHiddenChance) problems.push(`${path}.minimumHiddenChance cannot exceed maximumHiddenChance`);
   return problems;
 }
 
@@ -221,7 +225,7 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   numbers('distance', ['reachChance', 'rangedChance', 'maximumBaseChance']);
   if (rules.evade?.die !== 20) problems.push(`${path}.evade.die must be 20`);
   if (rules.counter?.maxReturnsPerCycle !== 1) problems.push(`${path}.counter.maxReturnsPerCycle must be 1`);
-  if (rules.distance?.maximumBaseChance > 50) problems.push(`${path}.distance.maximumBaseChance cannot exceed 50`);
+  if (nonNegative(rules.distance?.maximumBaseChance) && rules.distance.maximumBaseChance > 50) problems.push(`${path}.distance.maximumBaseChance cannot exceed 50`);
   for (const [group, keys] of [['armorPenalty', ['light', 'medium', 'heavy']], ['areaDifficulty', RANGES]]) {
     for (const key of keys) if (!nonNegative(rules.evade?.[group]?.[key])) problems.push(`${path}.evade.${group}.${key} must be finite and non-negative`);
   }

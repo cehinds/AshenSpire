@@ -45,11 +45,5 @@
     drop-shadow(0 calc(1px / var(--ui-zoom,1)) 0 #ef4949) drop-shadow(0 calc(-1px / var(--ui-zoom,1)) 0 #ef4949) !important;
 }
 
-
-
-/* Intent box follow-ups: smaller symbols in the same box, shown whatever the layout's compact rule says. */
-.cr-followups { display: inline-flex !important; align-items: center; gap: calc(2px / var(--ui-zoom,1)); margin-inline-start: calc(4px / var(--ui-zoom,1)); }
-.cr-followup { display: inline-flex; align-items: center; justify-content: center; width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); font: bold calc(11px / var(--ui-zoom,1))/1 Georgia, serif; opacity: .85; }
-/* Follow-up wrappers own their small size even under target-HUD primary-icon rules. */
-.cr-followup .intent-icon { width: 100% !important; height: 100% !important; }
-.cr-followup[data-unknown='true'] { color: #c88aeb; }
+/* An unread follow-up (?) keeps its purple, in both phases. */
+:root .combat .intent .intent-followup[data-unknown='true'] { color: #c88aeb; }

@@ -12,7 +12,7 @@ import { assetUrl } from '../assetmap.js';
 // of facts; a set cell is an OptionCard with an ArtWell. `.armoury-*`,
 // `.inventory-*`, `.equip-slot`, `.es-*` stay on the kit elements because the
 // tools read them; styles/kit.css draws nothing for those names.
-import { childModel, descendantModel } from '../models/ComponentModel.js';
+import { ChildModel, DescendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
@@ -31,11 +31,11 @@ export function renderArmouryOverlay(model) {
 }
 
 export function renderArmouryPanel(model, wrap, { back = null, primary = null, tabs = null, onTab = null } = {}) {
-  const header = childModel(model, UI.armouryHeader);
-  const body = descendantModel(model, UI.armouryBody);
-  const inventory = descendantModel(model, UI.armouryInventory);
-  const cards = descendantModel(model, UI.armouryCardStrip);
-  const stats = descendantModel(model, UI.armouryStatsPanel);
+  const header = ChildModel(model, UI.armouryHeader);
+  const body = DescendantModel(model, UI.armouryBody);
+  const inventory = DescendantModel(model, UI.armouryInventory);
+  const cards = DescendantModel(model, UI.armouryCardStrip);
+  const stats = DescendantModel(model, UI.armouryStatsPanel);
   // The shared header holds Character / Armory / Edit Deck; there is no second
   // view switcher under it (the dropdown was retired 2026-11-05). The Armory
   // page is one scrolling body: equipment on top, the Inventory below.

@@ -6,6 +6,25 @@
 # LFS budget; they were removed with the files. release/ and main keep their own
 # copies of this file until the owner promotes this change.
 
+# Keep authored and generated source/data line endings stable across platforms.
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+
+# Preserve the original bytes of frozen art exports and a historical migration fixture.
+tests/fixtures/art-exports/unarmed-magic-2026-09-19/runtime-fragment.json -text
+tests/fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json -text
+tests/fixtures/uistrings-migrated-1535.json -text
+
+# The enemy-sheet checker compares this generated Markdown projection byte-for-byte.
+games/ashenspire/packs/core/enemies/_reference.md text eol=lf
+
+# These combat tables are embedded and compared as canonical UTF-8 text.
+docs/alternative-combat-rounds/evasion-armor.csv text eol=lf
+docs/alternative-combat-rounds/stance-advantage.csv text eol=lf
+
 # Keep the polish kit checksum records stable across Windows and Linux.
 docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf
 docs/design/player-polish-asset-kit-2026-10-02/**/*.json text eol=lf

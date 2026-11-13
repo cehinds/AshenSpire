@@ -1,6 +1,6 @@
 import { viewViewportBox } from '../viewViewport.js';
 import { button, el } from '../kit/index.js';
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { t } from '../strings.js';
@@ -287,8 +287,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   // formatted only when a reader (drawer, full log) is open or opens, so a play
   // with the log closed formats nothing. The model itself stays serializable.
   function update(model, { auto: autoOn = false, entries: lazyEntries = null } = {}) {
-    const toggle = childModel(model, UI.reactionToggle).properties;
-    const log = childModel(model, UI.combatLogDrawer).properties;
+    const toggle = ChildModel(model, UI.reactionToggle).properties;
+    const log = ChildModel(model, UI.combatLogDrawer).properties;
     reaction.disabled = toggle.disabled;
     reaction.setAttribute('aria-checked', String(toggle.enabled));
     const stateLabel = t(toggle.enabled ? 'combat.reactions.enabled' : 'combat.reactions.disabled');

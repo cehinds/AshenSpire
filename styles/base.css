@@ -1,61 +1,7 @@
 /* styles/base.css — palette, reset, typography (GDD §7, sprite style guide) */
 
 :root {
-  --bg: #0d0b08;
-  --bg-raise: #171310;
-  --environment-backdrop: #17130f;
-  --panel: #241d15;
-  --line: #3a3226;
-  --line-soft: #4a4034;
-  /* Map STRUCTURE — the roads and plain rings a player reads to plan a run
-     (#45, Sunna's ruling: 3:1 on each glyph's identifying boundary against each
-     adjacent rendered colour). --line-soft's atmospheric value measures 1.93
-     (edge vs field) / 1.72 (ring vs its own fill) from rendered pixels — below
-     every defensible floor — but its 27 other consumers are text-adjacent soft
-     lines that keep the atmospheric look ("atmospheric elsewhere"). So the map
-     graph rides its own token: #7a6b54 clears both adjacencies with margin
-     (rendered 3.78 vs field, 3.36 worst adjacency) while staying the visibly
-     dimmer sibling of high contrast's 4.19 — two settings, two looks.
-     Evidence: tools/contrast-audit.mjs --profile hi-contrast-off;
-     the former atmospheric map-structure proposal (R2; removed 2026-10-11, see git history). */
-  --map-structure: #7a6b54;
-  --parchment: #e8dcc0;
-  --muted: #8e826a;
-  --gold: #c9a227;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
-  --blood: #8a1a1a;
-  /* The HP resource fill — the approved hybrid's owner pixel (2026-08-13,
-     claude-family falk-family hybrid-confirmation, F1-resource-health.png),
-     minted as its OWN token so the accent themes keep owning the palette
-     (cb-safe swaps it below). Before this token the hp row wore var(--blood)
-     and the conflict was recorded, not resolved: token vs owner hex. Now both
-     hold — the value is the owner's, the swap is the theme's. --blood keeps
-     its 16 other consumers (map rings, danger buttons, enemy hpbars) and is
-     NOT this token. */
-  --res-hp: #a43c35;
-  --rot: #b5541c;
-  --frost: #7fa8c9;
-  --grace: #9fc3e8;
-  --ember: #e46a44;
-  --green: #7fd97f;
-  /* THE KEYWORD TINT CARD TEXT USES, and it is a token because it is a fact
-     about a WORD, not about a container. It had no token, so the one palette
-     that wanted a different answer had nowhere to put it and put it in a
-     SELECTOR instead (`body.cb-safe .card .ctext .st-bleed`, deleted below).
-     When the five mark rules re-keyed `.card .ctext` → `.ctext` so the Smith
-     preview could wear them too, every token-based rule came through for free
-     and that one hardcoded hex stayed behind on the old container — so under
-     Colorblind-friendly the SAME WORD read reddish-purple on a card face and
-     vermillion in the preview. The hex was the reason it could not follow.
-     Derived from --ember, not restated: in the default palette Bleed wears the
-     ember hue TODAY, and that is a derivation, not a copy — one home for the
-     value. Colorblind-friendly overrides it once, below, which is the only
-     place the two diverge.
-     OPEN, AND FREJA'S, NOT MINE: whether the DEFAULT palette should diverge
-     too. It does not today — a Bleed keyword and a number the upgrade made
-     WORSE both render rgb(201,80,46) on every screen, one hue doing two jobs
-     on one line. Colorblind-friendly already answers that question `yes`. */
-  --bleed: var(--ember);
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
      Sunna's ruling under Law 4 (#37): "a floor of N device px measured after
      zoom; a floor is not a ceiling." The whole app is scaled by `zoom:
@@ -184,14 +130,8 @@
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
 
-/* Accessibility: high contrast raises text/line contrast by swapping tokens. */
-body.hi-contrast {
-  --parchment: #fdf6e6;
-  --muted: #a89571;
-  --line: #6a5b43;
-  --line-soft: #85714f;
-  --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */
-}
+/* Accessibility: high contrast raises text/line contrast by swapping colour tokens (body.hi-contrast in
+   styles/tokens.generated.css, from tokens.json color.themes.hiContrast). */
 body.hi-contrast .set-note, body.hi-contrast .card .ctext { color: #cdbf9e; }
 
 /* Accessibility: Text size is set on the root element (main.js
@@ -202,23 +142,8 @@ body.hi-contrast .set-note, body.hi-contrast .card .ctext { color: #cdbf9e; }
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
-   heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). */
-body.cb-safe {
-  --blood: #d55e00;
-  --res-hp: #d55e00; /* the hp fill keeps tracking the danger hue (Okabe-Ito vermillion) */
-  --ember: #d55e00;
-  --green: #009e73;
-  --frost: #56b4e9;
-  --grace: #56b4e9;
-  --rot: #e69f00;
-  --danger: #d55e00; /* danger buttons track the same vermillion as --blood */
-  /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
-     moved out of a selector and into the token block where a palette decision
-     belongs. It now reaches card text wherever card text is drawn, which is
-     the whole change: the card face is byte-identical and the Smith
-     upgrade preview stops calling a keyword by the danger hue. */
-  --bleed: #cc79a7;
-}
+   heal→bluish-green, frost→sky, blight→orange, bleed→reddish-purple). The swap is body.cb-safe in
+   styles/tokens.generated.css (tokens.json color.themes.cbSafe). */
 
 /* Accessibility: readable headings swap the decorative serif for the UI sans. */
 body.readable-ui { --font-display: var(--font-body); }

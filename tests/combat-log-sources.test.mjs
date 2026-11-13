@@ -13,6 +13,39 @@ const registries = createRegistries(contentBundle);
 const enemies = [{ id: 'e1', enemyId: 'wyrmLord' }, { id: 'e2', enemyId: 'wanderingSoldier' }];
 const log = events => combatLogEntries(events, { registries, enemies }).map(row => row.text);
 
+test('Counter lines use the recorded damage shares instead of current stack tuning', () => {
+  const counter = { type: 'combatCounterTriggered', sourceId: 'player', targetId: 'e2', cardId: 'strike' };
+  assert.deepEqual(log([
+    { ...counter, amount: 14, counterBase: 7, counterStackShare: 4, counterStacks: 4, counterIncoming: 25 },
+    { ...counter, amount: 4, counterBase: 0, counterStackShare: 4 },
+    { ...counter, amount: 4, counterBase: 4, counterStackShare: 0 },
+  ]), [
+    'Forsaken countered Wandering Soldier with Strike for 14 (base 7 + stack bonus 4 + advantage 3).',
+    'Forsaken countered Wandering Soldier with Strike for 4 (base 0 + stack bonus 4).',
+    'Forsaken countered Wandering Soldier with Strike for 4 (base 4 + stack bonus 0).',
+  ]);
+});
+
+test('Counter lines keep valid totals when details are thin and omit unusable totals', () => {
+  const counter = { type: 'combatCounterTriggered', sourceId: 'player', targetId: 'e2' };
+  const thin = [
+    {},
+    { counterStacks: 7, counterIncoming: 8 },
+    { counterBase: 4, counterStackShare: 2 },
+    { counterBase: -1, counterStackShare: 2 },
+    { counterBase: 0, counterStackShare: Infinity },
+    { counterBase: 0.5, counterStackShare: 2 },
+    { counterBase: 0, counterStackShare: '2' },
+  ];
+  for (const details of thin) {
+    assert.deepEqual(log([{ ...counter, ...details, amount: 5 }]), ['Forsaken countered Wandering Soldier for 5.']);
+  }
+  for (const amount of [undefined, null, 0, -1, Infinity, NaN, '5']) {
+    assert.deepEqual(log([{ ...counter, amount }]), ['Forsaken counterattacked Wandering Soldier.']);
+  }
+  assert.deepEqual(log([{ ...counter, amount: 5, wardOnly: true }]), ['Forsaken counterattacked Wandering Soldier.']);
+});
+
 test('public log carries semantic identity spans without matching names in card text', () => {
   const entries = combatLogEntries([{ type: 'cardPlayed', sourceId: 'player', targetId: 'e1', cardId: 'strike' }], {
     registries, players: [{ id: 'player', name: 'Strike' }], enemies,

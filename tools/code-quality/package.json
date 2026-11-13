@@ -1,0 +1,27 @@
+{
+  "name": "@ashenspire/code-quality",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "check": "node check.mjs && npm run types",
+    "naming": "node check.mjs naming",
+    "format": "node check.mjs format --write",
+    "inventory": "node check.mjs inventory",
+    "types": "tsc --project tsconfig.json",
+    "selftest": "node --test selftest.mjs"
+  },
+  "linkcheckExports": {
+    "@dprint/formatter": ["createContext"],
+    "@dprint/typescript": ["getPath"],
+    "typescript": ["default"]
+  },
+  "devDependencies": {
+    "@dprint/formatter": "0.6.0",
+    "@dprint/typescript": "0.99.1",
+    "typescript": "5.9.3"
+  }
+}

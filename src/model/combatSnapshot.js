@@ -67,9 +67,33 @@ function nonEmptyString(value) {
   return typeof value === 'string' && value.length > 0;
 }
 
+function arrayRows(value, path, problems, { optional = false } = {}) {
+  if (Array.isArray(value)) return value;
+  if (!optional || value != null) problems.push(`${path} must be an array`);
+  return [];
+}
+
+function playerReferenceFields(player, problems, checkId = () => {}) {
+  for (const [index, id] of arrayRows(player?.relicIds, 'player.relicIds', problems, { optional: true }).entries()) {
+    const path = `player.relicIds[${index}]`;
+    if (!nonEmptyString(id)) problems.push(`${path} must be a non-empty string`);
+    else checkId('relics', id, path);
+  }
+  for (const [index, flask] of arrayRows(player?.flasks, 'player.flasks', problems, { optional: true }).entries()) {
+    const path = `player.flasks[${index}]`;
+    if (!record(flask)) problems.push(`${path} must be an object`);
+    else if (!nonEmptyString(flask.flaskId)) problems.push(`${path}.flaskId must be a non-empty string`);
+    else checkId('flasks', flask.flaskId, `${path}.flaskId`);
+  }
+}
+
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  for (const key of ['intent', 'pendingMove']) {
+    if (entity[key] != null && !record(entity[key])) problems.push(`${path}.${key} must be an object or null`);
+  }
+  if (player) playerReferenceFields(entity, problems);
   if (entity.pendingMove?.spPayment !== undefined && !enemySpPaymentValid(entity.pendingMove.spPayment)) problems.push(`${path}.pendingMove.spPayment must be a valid committed SP payment`);
   if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
@@ -104,7 +128,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
   }
-  if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
+  if (entity.wardBlock !== undefined && (!Number.isInteger(entity.wardBlock) || entity.wardBlock < 0 || !finite(entity.block) || entity.wardBlock > entity.block)) problems.push(`${path}.wardBlock must be a whole number between 0 and block`);
   for (const key of ['poiseGuard', 'wardGuard']) {
     if (entity[key] !== undefined && (!Number.isInteger(entity[key]) || entity[key] < 0)) problems.push(`${path}.${key} must be a whole number of at least 0`);
   }
@@ -112,7 +136,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (finite(entity.hp) && finite(entity.maxHp) && (entity.hp < 0 || entity.hp > entity.maxHp)) {
     problems.push(`${path}.hp must be between 0 and maxHp`);
   }
-  problems.push(...enemyBurdenProblems(entity));
+  problems.push(...enemyBurdenProblems(entity, undefined, path));
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
   const precision = entity.statuses?.precision;
   if (precision?.persistentStacks !== undefined && (!Number.isInteger(precision.persistentStacks)
@@ -147,6 +171,64 @@ function cardProblems(card, path) {
   if (card.skillBonus !== undefined && !(Number.isInteger(card.skillBonus) && card.skillBonus >= 1 && card.skillBonus <= MAX_SKILL_BONUS)) problems.push(`${path}.skillBonus must be a whole number from 1 to ${MAX_SKILL_BONUS}`);
   if (card.playsEver !== undefined && !(Number.isInteger(card.playsEver) && card.playsEver >= 0)) problems.push(`${path}.playsEver must be a non-negative whole number`);
   return problems;
+}
+
+function pendingCardChoiceProblems(choice, piles, problems) {
+  if (!record(choice)) {
+    problems.push('pendingCardChoice must be an object');
+    return;
+  }
+  if (choice.kind !== 'moveCards') problems.push('pendingCardChoice.kind must be moveCards');
+  const validCount = Number.isInteger(choice.count) && choice.count >= 1 && choice.count <= 100;
+  if (!validCount) problems.push('pendingCardChoice.count must be an integer from 1 to 100');
+
+  const ids = arrayRows(choice.candidateIds, 'pendingCardChoice.candidateIds', problems);
+  if (Array.isArray(choice.candidateIds) && (ids.some(id => !nonEmptyString(id)) || new Set(ids).size !== ids.length
+      || (validCount && ids.length < choice.count))) {
+    problems.push('pendingCardChoice.candidateIds must contain enough unique card instance ids');
+  }
+
+  try { validateZoneEffect(choice.effect); }
+  catch (error) {
+    problems.push(`pendingCardChoice.effect: ${error.message}`);
+    return;
+  }
+  const { from, look, amount } = choice.effect;
+  const pile = piles?.[from];
+  if (!Array.isArray(pile)) return; // the pile shape check names the field
+  if (validCount && (choice.count > pile.length || (typeof amount === 'number' && choice.count > amount))) {
+    problems.push('pendingCardChoice.count exceeds the available selection');
+  }
+  const eligible = new Set(pile.slice(0, look ?? 100000).filter(record).map(card => card.instanceId));
+  if (ids.some(id => !eligible.has(id))) problems.push('pendingCardChoice.candidateIds contains ineligible cards');
+}
+
+function cardChoiceProblems(snapshot, problems) {
+  const { pendingAbilityDiscard: discard, pendingCardChoice: choice } = snapshot;
+  const hasChoice = discard !== undefined || choice !== undefined;
+  if (hasChoice) {
+    // A legacy null alongside the other pending record is an absent alternative.
+    if (discard !== undefined && (discard !== null || !record(choice))) {
+      if (!record(discard)) problems.push('pendingAbilityDiscard must be an object');
+      else if (!Number.isInteger(discard.count) || discard.count < 1
+        || (Array.isArray(snapshot.piles?.hand) && discard.count > snapshot.piles.hand.length)) {
+        problems.push('pendingAbilityDiscard.count requires a valid hand count');
+      }
+    }
+    if (choice !== undefined && (choice !== null || !record(discard))) pendingCardChoiceProblems(choice, snapshot.piles, problems);
+    if (record(discard) && record(choice)) problems.push('pendingAbilityDiscard and pendingCardChoice cannot both be pending');
+    if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityPlay requires its paid card');
+    else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
+  } else if ((snapshot.abilityQueue !== undefined && !snapshot.pendingReaction) || snapshot.pendingAbilityPlay !== undefined) {
+    problems.push('saved ability queue requires a pending choice');
+  }
+  if (hasChoice || snapshot.abilityQueue !== undefined) {
+    for (const [index, action] of arrayRows(snapshot.abilityQueue, 'abilityQueue', problems).entries()) {
+      if (!record(action) || !record(action.effect) || !nonEmptyString(action.effect.op)) {
+        problems.push(`abilityQueue[${index}] must contain a queued effect`);
+      }
+    }
+  }
 }
 
 /** Return field-addressed problems; an empty array means the stored shape is sound. */
@@ -217,19 +299,7 @@ export function combatSnapshotProblems(snapshot) {
   if(snapshot.proposalRewards?.byPlayer!==undefined && (!record(snapshot.proposalRewards.byPlayer) || Object.values(snapshot.proposalRewards.byPlayer).some(v=>!Number.isSafeInteger(v) || v<0 || v>1e9)))problems.push('proposalRewards.byPlayer invalid');
   if(snapshot.proposalRewards!==undefined && (!record(snapshot.proposalRewards) || !Number.isSafeInteger(snapshot.proposalRewards.cinders) || snapshot.proposalRewards.cinders<0 || snapshot.proposalRewards.cinders>1e9 || snapshot.proposalRewards.settled!==undefined && typeof snapshot.proposalRewards.settled!=='boolean')) problems.push('proposalRewards invalid');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
-  if (snapshot.pendingAbilityDiscard !== undefined || snapshot.pendingCardChoice !== undefined) {
-    const pending = snapshot.pendingAbilityDiscard || snapshot.pendingCardChoice;
-    if (!record(pending) || !Number.isInteger(pending.count) || pending.count < 1 || pending.count > (snapshot.pendingCardChoice ? (snapshot.piles?.[pending.effect?.from]?.length || 0) : (snapshot.piles?.hand?.length || 0))) problems.push('pendingAbilityDiscard requires a valid hand count');
-    if (snapshot.pendingCardChoice) {
-      try { validateZoneEffect(pending.effect); } catch(error) {problems.push(`pendingCardChoice: ${error.message}`);}
-      const candidates=(snapshot.piles?.[pending.effect?.from] || []).slice(0,pending.effect?.look ?? 100000).map(c=>c.instanceId);
-      if (!['moveCards','modifyCards'].includes(pending.effect?.op) || pending.kind!=='moveCards' || pending.count>100 || (typeof pending.effect?.amount==='number' && pending.count>pending.effect.amount) || pending.candidateIds?.some(id=>!candidates.includes(id))) problems.push('pendingCardChoice has invalid selection bounds');
-    }
-    if (snapshot.pendingCardChoice && (!Array.isArray(pending.candidateIds) || pending.candidateIds.length < pending.count || new Set(pending.candidateIds).size !== pending.candidateIds.length || pending.candidateIds.some(id => !(snapshot.piles?.[pending.effect?.from] || []).some(c => c.instanceId === id)))) problems.push('pendingCardChoice requires eligible unique cards');
-    if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
-    else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
-    if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
-  } else if ((snapshot.abilityQueue !== undefined && !snapshot.pendingReaction) || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending choice');
+  cardChoiceProblems(snapshot, problems);
   problems.push(...combatReactionProblems(snapshot), ...combatRangeProblems(snapshot));
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
@@ -326,28 +396,31 @@ export function combatSnapshotProblems(snapshot) {
     problems.push(...statusControlProblems(entity, path, { required: snapshot.combatExpansionVersion === 2, rules: snapshot.combatStatusRules || snapshot.combatExpansionRules?.statuses }));
   }
 
-  if (!record(snapshot.piles)) problems.push('piles must be an object');
-  else {
-    const seen = new Set();
-    for (const row of snapshot.hiddenCards || []) {
-      if (!record(row) || !Number.isSafeInteger(row.returnTurn) || row.returnTurn < snapshot.turn || row.returnTurn > snapshot.turn+10) problems.push('hiddenCards requires bounded return turn');
-      problems.push(...cardProblems(row?.card,'hiddenCards.card'));
-      if (seen.has(row?.card?.instanceId)) problems.push('duplicate hidden card');
-      seen.add(row?.card?.instanceId);
+  const seen = new Set();
+  for (const [index, row] of arrayRows(snapshot.hiddenCards, 'hiddenCards', problems, { optional: true }).entries()) {
+    const path = `hiddenCards[${index}]`;
+    if (!record(row)) {
+      problems.push(`${path} must be an object`);
+      continue;
     }
-    for (const pile of SNAPSHOT_PILES) {
-      const cards = snapshot.piles[pile];
-      if (!Array.isArray(cards)) {
-        problems.push(`piles.${pile} must be an array`);
-        continue;
+    if (!Number.isSafeInteger(row.returnTurn) || !Number.isSafeInteger(snapshot.turn)
+      || row.returnTurn < snapshot.turn || row.returnTurn > snapshot.turn + 10) {
+      problems.push(`${path}.returnTurn requires a bounded return turn`);
+    }
+    problems.push(...cardProblems(row.card, `${path}.card`));
+    if (record(row.card) && nonEmptyString(row.card.instanceId)) {
+      if (seen.has(row.card.instanceId)) problems.push(`${path}.card.instanceId duplicates another hidden card`);
+      seen.add(row.card.instanceId);
+    }
+  }
+  if (!record(snapshot.piles)) problems.push('piles must be an object');
+  else for (const pile of SNAPSHOT_PILES) {
+    for (const [index, card] of arrayRows(snapshot.piles[pile], `piles.${pile}`, problems).entries()) {
+      problems.push(...cardProblems(card, `piles.${pile}[${index}]`));
+      if (record(card) && nonEmptyString(card.instanceId)) {
+        if (seen.has(card.instanceId)) problems.push(`card instance '${card.instanceId}' appears in more than one pile position`);
+        seen.add(card.instanceId);
       }
-      cards.forEach((card, index) => {
-        problems.push(...cardProblems(card, `piles.${pile}[${index}]`));
-        if (record(card) && nonEmptyString(card.instanceId)) {
-          if (seen.has(card.instanceId)) problems.push(`card instance '${card.instanceId}' appears in more than one pile position`);
-          seen.add(card.instanceId);
-        }
-      });
     }
   }
   return problems;
@@ -370,7 +443,13 @@ function slotCanHoldAnything(slot, equipment) {
 
 export function combatSnapshotReferenceProblems(snapshot, registries) {
   if (snapshot == null) return [];
+  if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
+  let gameProfile = null;
+  if (snapshot.gameProfile !== undefined) {
+    try { gameProfile = validateGameProfileSnapshot(snapshot.gameProfile); }
+    catch (error) { problems.push(`gameProfile: ${error.message}`); }
+  }
   const has = (registry, id, path) => {
     if (nonEmptyString(id) && !registry.has(id)) problems.push(`${path} '${id}' is unknown`);
   };
@@ -382,38 +461,55 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
         ? (registries.equipment.armour || []).some((row) => row.classId === identity.classId && row.id === identity.itemId)
         : identity?.itemKind === 'relic' && registries.relics.has(identity.itemId);
     if (!known) problems.push(`itemUpgradeLevels.${itemRef} is unknown`);
+    else if (!Number.isInteger(level) || level < 0) problems.push(`itemUpgradeLevels.${itemRef} must be a non-negative integer tier`);
     else if (level > (itemUpgradeTiers(registries, itemRef, snapshot).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
-  if (snapshot.pendingCardChoice?.effect?.transformTo) has(registries.cards,snapshot.pendingCardChoice.effect.transformTo,'pendingCardChoice.transformTo');
-  for (const row of snapshot.hiddenCards || []) has(registries.cards,row.card?.cardId,'hiddenCards.cardId');
+  has(registries.cards, snapshot.pendingCardChoice?.effect?.transformTo, 'pendingCardChoice.effect.transformTo');
+  for (const [index, row] of arrayRows(snapshot.hiddenCards, 'hiddenCards', problems, { optional: true }).entries()) {
+    const path = `hiddenCards[${index}]`;
+    if (!record(row)) problems.push(`${path} must be an object`);
+    else if (!record(row.card)) problems.push(`${path}.card must be an object`);
+    else has(registries.cards, row.card.cardId, `${path}.card.cardId`);
+  }
   has(registries.classes, snapshot.player?.classId, 'player.classId');
-  for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
+  playerReferenceFields(snapshot.player, problems, (kind, id, path) => has(registries[kind], id, path));
   // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.
   for (const id of Array.isArray(snapshot.attunedSigils) ? snapshot.attunedSigils : []) {
     if (!nonEmptyString(id)) continue;
     if (!registries.sigils || !registries.sigils.has(id)) problems.push(`attunedSigils '${id}' is unknown`);
     else if (registries.sigils.get(id).rarity !== 'legendary') problems.push(`attunedSigils '${id}' is not a legendary sigil`);
   }
-  for (const flask of snapshot.player?.flasks || []) has(registries.flasks, flask?.flaskId, 'player.flasks.flaskId');
   if (snapshot.player?.stanceId != null) has(registries.stances, snapshot.player.stanceId, 'player.stanceId');
   for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');
-  for (let index = 0; index < (snapshot.enemies || []).length; index++) {
-    const enemy = snapshot.enemies[index];
-    problems.push(...enemyBurdenProblems(enemy,registries));
-    has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
-    for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
+  const enemies = arrayRows(snapshot.enemies, 'enemies', problems);
+  for (const [index, enemy] of enemies.entries()) {
+    const path = `enemies[${index}]`;
+    if (!record(enemy)) {
+      problems.push(`${path} must be an object`);
+      continue;
+    }
+    problems.push(...enemyBurdenProblems(enemy, registries, path));
+    has(registries.enemies, enemy.enemyId, `${path}.enemyId`);
+    for (const id of Object.keys(enemy.statuses || {})) has(registries.statuses, id, `${path}.statuses`);
   }
-  if (snapshot.enemyKnowledge) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies || [], {
+  if (snapshot.enemyKnowledge) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, enemies, {
     enemyIds: new Set(registries.enemies.ids()), ownerIds: new Set(['player']),
   }));
-  for (const pile of SNAPSHOT_PILES) {
-    for (const card of snapshot.piles?.[pile] || []) {
-      if (snapshot.gameProfile && projectGameCard(snapshot, card)) continue;
-      has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
+  if (!record(snapshot.piles)) problems.push('piles must be an object');
+  else for (const pile of SNAPSHOT_PILES) {
+    const path = `piles.${pile}`;
+    for (const [index, card] of arrayRows(snapshot.piles[pile], path, problems).entries()) {
+      if (!record(card)) {
+        problems.push(`${path}[${index}] must be an object`);
+        continue;
+      }
+      if (gameProfile && projectGameCard(gameProfile, card)) continue;
+      has(registries.cards, card.cardId, `${path}[${index}].cardId`);
     }
   }
   const loadout = snapshot.loadout;
-  if (loadout !== null) {
+  if (loadout !== null && !record(loadout)) problems.push('loadout must be an object or null');
+  if (record(loadout)) {
     const equipment = registries.equipment || {};
     const slots = equipment.slots || [];
     if (!record(loadout.sets)) problems.push('loadout.sets must be an object');

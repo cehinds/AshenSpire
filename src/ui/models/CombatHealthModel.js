@@ -3,12 +3,26 @@ import { activeCombatStance } from '../../model/combatTacticsDisplay.js';
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { stanceRatingBonus } from '../../model/stanceRules.js';
 import { mechanics } from '../../framework/data/mechanics.js';
-import { reflectReduceFraction, reflectReturnFraction } from '../../engine/guardStacks.js';
+import { reflectReducePct, reflectReturnPct } from '../../engine/guardStacks.js';
+import { CounterStackPercent } from './CounterStackPercentModel.js';
 import { healthGuardTone } from '../../model/blockPresentation.js';
 // Presentation only: callers supply the live protection values. HP fill
 // always represents health, never protection added to the health numerator.
 // Defense badges read Block (the Defense badge, owner 2026-10-18), Poise, Evade, Ward, Precision, Counter and Reflect before HP. Poise also
 // retains its gold HP trim and value/max accessible label.
+/** The Poise bar shows Poise LEFT. A `drains` bar (the Core pool) already is Poise left; a fill-up meter is inverted so the bar starts full and drains. Display only: cur and max are untouched, a 0/0 bar stays an empty trough. */
+export const PoiseBarRemaining = bar => bar.drains
+  ? { ...bar, shownCur: bar.cur }
+  : { ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0, shownCur: Math.max(0, bar.max - bar.cur) };
+/** The near-break pulse: a fill-up bar at 75% or more, a draining bar at 25% or less. */
+export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur > 0 && bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
+/** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
+export const PoiseLeft = (v, entity) => {
+  const pool = v?.persistentPoise || entity?.persistentPoise;
+  if (pool && typeof pool === 'object') return Number.isFinite(pool.max) && pool.max > 0 ? { value: Math.max(0, pool.value || 0), max: pool.max } : { value: 0, max: 0 };
+  const max = v?.poiseMeter?.max || entity?.poiseMeter?.max || 0;
+  return { value: Math.max(0, max - (v?.poiseMeter?.value || 0)), max };
+};
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
 export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0 } = {}) {
@@ -39,9 +53,9 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStac
       ...(Number.isFinite(precision) && count(precision) > 0 ? [{ kind: 'precision', label: t('card.tags.precision'), value: count(precision) }] : []),
       // Counter and Reflect stacks (owner 2026-10-31): plain counts on the entity, shown only while above zero.
       ...(count(counterStacks) > 0 ? [{ kind: 'counter', glyph: 'riposte', label: t('combat.protection.counter'), value: count(counterStacks),
-        help: tFull('combat.protection.counter', { stacks: count(counterStacks), decay: mechanics.counter.decayPerTurn }) }] : []),
+        help: tFull('combat.protection.counter', { stacks: count(counterStacks), stackPercent: CounterStackPercent(), decay: mechanics.counter.decayPerTurn }) }] : []),
       ...(count(reflectStacks) > 0 ? [{ kind: 'reflect', label: t('combat.protection.reflect'), value: count(reflectStacks),
-        help: tFull('combat.protection.reflect', { reduce: Math.round(100 * reflectReduceFraction(count(reflectStacks))), back: Math.round(100 * reflectReturnFraction(count(reflectStacks))) }) }] : []),
+        help: tFull('combat.protection.reflect', { reduce: reflectReducePct(count(reflectStacks)), back: reflectReturnPct(count(reflectStacks)) }) }] : []),
     ],
   });
 }

@@ -41,7 +41,19 @@ test('the overlay and main.js route the combat edit lock into the overlay switch
 
 test('every place main.js swaps or drops the run also clears the live combat, so the lock cannot leak into the next run', () => {
   const lines = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8').split('\n');
-  const swaps = lines.map((line, at) => [line, at]).filter(([line]) => /^\s*run = (null|loaded|createRunState)\b/.test(line));
+  const swaps = lines.map((line, at) => [line, at]).filter(([line]) => /^\s*run\s*=\s*[^=]/.test(line));
   assert.ok(swaps.length >= 5);
-  for (const [line, at] of swaps) assert.match(lines[at - 1] + (lines[at - 2] || ''), /xpCombat = null/, `line ${at + 1}: ${line.trim()}`);
+  assert.ok(swaps.some(([line]) => /run = prepared\.run;/.test(line)), 'prepared-run adoption is included in the lock guard');
+  for (const [line, at] of swaps) {
+    const before = lines.slice(0, at).map(line => line.replace(/;\s*\/\/.*$/, ';').trim())
+      .filter(line => line && !line.startsWith('//'));
+    if (/run\s*=\s*prepared\.run\s*;/.test(line)) {
+      const start = before.findLastIndex(line => /^const\s+prepared\s*=\s*CreatePreparedRun\(\{\s*$/.test(line));
+      assert.ok(start > 0, 'prepared adoption has an explicit construction');
+      assert.match(before[start - 1], /^xpCombat\s*=\s*null\s*;$/, 'combat is cleared immediately before preparing the new run');
+      assert.match(before.slice(start).join('\n'), /^const\s+prepared\s*=\s*CreatePreparedRun\(\{(?:(?!\n\s*\}\);)[\s\S])*\n\s*\}\);$/, 'the prepared run is adopted immediately after construction');
+    } else {
+      assert.match(before.at(-1), /^xpCombat\s*=\s*null\s*;$/, `line ${at + 1}: ${line.trim()} clears combat immediately before swapping or dropping the run`);
+    }
+  }
 });

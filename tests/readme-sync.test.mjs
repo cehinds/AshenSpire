@@ -4,9 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import {
   README,
   REGIONS,
@@ -17,7 +17,7 @@ import {
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = resolve(ROOT, 'tools/readme-sync.mjs');
-const committed = readFileSync(README, 'utf8');
+const committed = readSourceTextSync(README);
 
 test('committed README is current with its generated regions', () => {
   const { text, problems } = syncText(committed);

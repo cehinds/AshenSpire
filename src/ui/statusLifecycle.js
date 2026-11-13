@@ -1,6 +1,7 @@
 import { t, tFull } from './strings.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
 import { resolveStatusPresentationDefinition, coreStatusLifecycle, statusPresentationContext } from '../model/statusPresentation.js';
+import { mechanics } from '../framework/data/mechanics.js';
 
 /** Explain the registered rules without inferring a buff's lifetime from its name. */
 export function statusLifecycleText(def, context = {}) {
@@ -46,7 +47,9 @@ export function statusLifecycleText(def, context = {}) {
 }
 
 function coreDecayText(def, core, value) {
-  if (core.clock === 'precisionOwnerTurnStart') return tFull('status.lifecycle.corePrecision');
+  if (core.clock === 'precisionOwnerTurnStart') return tFull('status.lifecycle.corePrecision', {
+    decay: mechanics.accuracy.precisionDecayPerTurn,
+  });
   if (core.clock === 'stackOwnerTurnStart') return tFull('status.lifecycle.coreDecay', {
     value, amount: core.decayAmount, clock: t('status.lifecycle.turnStart'),
   });

@@ -8,6 +8,7 @@ import { runCombatEnd } from '../src/engine/runCombat.js';
 import { createBrowserSaveManager } from '../src/engine/browserSave.js';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { CreateRunPersistence } from '../src/services/runPersistence.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
@@ -83,24 +84,48 @@ function sliceBlock(startMarker, endMarker) {
   assert.ok(start >= 0 && end > start, startMarker);
   return mainSource.slice(start, end);
 }
-const doorSource = sliceBlock('const SAVE_WARNING_REPEAT_MS', '// The run the way its save slot names it');
+const warningSource = sliceBlock('const SAVE_WARNING_REPEAT_MS', 'const {\n  Persist: persist');
 
-function door({ saveRun }) {
+function door({ saveRun, readCurrent = () => ({ slot: 1 }), stampSkillBonuses = () => {} }) {
   const logs = [], banners = [], warns = [];
   const context = {
-    saves: { saveRun }, activeSlot: 1, isStorageFullError, Date,
+    isStorageFullError, Date,
     dlog: (...args) => logs.push(args), console: { warn: (...a) => warns.push(a) },
     failureBanner: (key, title, body) => { const el = { key, title, body, dataset: { failureKey: key }, remove() { this.removed = true; } }; banners.push(el); return el; },
     setTimeout: () => 0,
   };
-  runInNewContext(`${doorSource}\nthis.saveCombatCandidate = saveCombatCandidate; this.reportAutosaveFailure = reportAutosaveFailure;`, context);
-  return { context, logs, banners, warns };
+  runInNewContext(`${warningSource}\nthis.reportAutosaveFailure = reportAutosaveFailure;`, context);
+  const persistence = CreateRunPersistence({ saveRun, readCurrent, stampSkillBonuses, reportFailure: context.reportAutosaveFailure });
+  return { persistence, reportAutosaveFailure: context.reportAutosaveFailure, logs, banners, warns };
 }
+
+test('live save stamps skills first, while candidate save writes the supplied state and RNG directly', () => {
+  const first = freshRun(7), later = freshRun(11);
+  const calls = [];
+  let live = { ...first, registries, slot: 1 };
+  const owner = CreateRunPersistence({
+    readCurrent: () => live,
+    stampSkillBonuses: (registry, run) => calls.push(['stamp', registry, run]),
+    saveRun: (run, rng, slot) => calls.push(['save', run, rng, slot]),
+    reportFailure: error => assert.fail(error.message),
+  });
+  assert.equal(owner.Persist(), undefined);
+  live = { ...later, registries, slot: 2 };
+  assert.deepEqual(owner.SaveCombatCandidate(first.run, first.rng), { ok: true });
+  assert.equal(owner.PersistOrWarn(), true);
+  assert.deepEqual(calls, [
+    ['stamp', registries, first.run],
+    ['save', first.run, first.rng, 1],
+    ['save', first.run, first.rng, 2],
+    ['stamp', registries, later.run],
+    ['save', later.run, later.rng, 2],
+  ]);
+});
 
 test('a refused combat checkpoint is reported once per window and never refuses the move', () => {
   const h = door({ saveRun: () => { throw quotaError(); } });
-  assert.deepEqual({ ...h.context.saveCombatCandidate({}, null) }, { ok: true, durable: false });
-  h.context.saveCombatCandidate({}, null);
+  assert.deepEqual(h.persistence.SaveCombatCandidate({}, null), { ok: true, durable: false });
+  h.persistence.SaveCombatCandidate({}, null);
   assert.equal(h.logs.length, 2, 'every failure reaches the Command log');
   assert.equal(h.logs[0][0], 'save');
   assert.equal(h.banners.length, 1, 'the player-facing warning is throttled');
@@ -108,12 +133,12 @@ test('a refused combat checkpoint is reported once per window and never refuses 
   assert.match(h.banners[0].body, /Your game continues/);
   assert.match(h.banners[0].body, /delete an old save slot/);
   assert.match(h.banners[0].body, /returns you to your last saved point/, 'the player is told what a reload does');
-  assert.equal(h.context.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
+  assert.equal(h.reportAutosaveFailure(quotaError(), Date.now() + 31000), true, 'warns again after the window');
 });
 
 test('a non-quota save error is also non-blocking', () => {
   const h = door({ saveRun: () => { throw new Error('SecurityError: denied'); } });
-  assert.equal(h.context.saveCombatCandidate({}, null).ok, true);
+  assert.equal(h.persistence.SaveCombatCandidate({}, null).ok, true);
   assert.equal(h.banners[0].key, 'save:failed');
   assert.match(h.banners[0].body, /Your game continues/);
 });
@@ -125,7 +150,7 @@ test('with a full store, a real card play and End Turn still apply and warn', ()
   const save = createSaveManager(store);
   const h = door({ saveRun: (next, r) => save.saveRun(next, r, 1) });
   const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
-  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.context.saveCombatCandidate });
+  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.persistence.SaveCombatCandidate });
   const energyBefore = combat.player.energy;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
   assert.ok(combat.player.energy < energyBefore || combat.piles.exhaust.some(c => c.instanceId === 'save-native') || combat.piles.discard.some(c => c.instanceId === 'save-native'), 'the card was played');
@@ -141,24 +166,18 @@ test('a full victory with a quota-throwing store still reaches the reward screen
   const { run, rng } = freshRun(11);
   const store = limitedStorage({ budget: 10 }); // nothing fits
   const save = createSaveManager(store);
-  const h = door({ saveRun: (next, r) => save.saveRun(next, r, 1) });
+  const h = door({ saveRun: save.saveRun, readCurrent: () => ({ run, rng, registries, slot: 1 }) });
   const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
-  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.context.saveCombatCandidate });
+  combat.beforeCombatCommit = candidate => commitExpansionCandidate({ run, candidate, nodeId: 'n1_4', encounterId: 'patrol', saveCandidate: h.persistence.SaveCombatCandidate });
   combat.enemies[0].hp = 1;
   for (const card of [...combat.piles.hand]) {
     if (combat.phase === 'ended') break;
     dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
   }
   assert.equal(combat.result, 'victory', 'the winning action applied despite the full store');
-  // The persist helpers, sliced from the shipped source (the reward door's own persist is persistOrWarn).
-  const context = {
-    ...h.context, run, rng,
-    persist: () => save.saveRun(run, rng, 1),
-  };
-  runInNewContext(`${doorSource}\nthis.persistOrWarn = persistOrWarn; this.persistContinuing = persistContinuing;`, context);
-  assert.equal(context.persistOrWarn(), false);
+  assert.equal(h.persistence.PersistOrWarn(), false);
   assert.ok(h.banners.length >= 1, 'the player was told that the save failed');
-  assert.equal(context.persistContinuing(), undefined, 'reward doors read a return of false as a refusal; this never returns it');
+  assert.equal(h.persistence.PersistContinuing(), undefined, 'reward doors read false as a refusal');
 });
 
 test('an old-format save (no savedAt stamp) still loads, and a refused re-save leaves the slot readable', () => {

@@ -5,20 +5,20 @@ import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { mkdir, writeFile, readFile, readdir, rm, cp, access, rename } from 'node:fs/promises';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const options = {};
 for (let i = 0; i < args.length; i += 2) {
-  if (!['--suite', '--output', '--ref'].includes(args[i]) || !args[i + 1]) throw new Error('Use --suite combat|core|tools|build --output <new D: directory> [--ref <commit>]');
+  if (!['--suite', '--output', '--ref'].includes(args[i]) || !args[i + 1]) throw new Error('Use --suite combat|core|tools|build --output <new absolute directory> [--ref <commit>]');
   options[args[i].slice(2)] = args[i + 1];
 }
 const suite = options.suite || 'combat';
 if (!['combat', 'core', 'tools', 'build'].includes(suite)) throw new Error('Unknown suite');
 if (!options.output || !path.isAbsolute(options.output)) throw new Error('An absolute, new output directory is required');
 const output = path.resolve(options.output);
-if (process.platform === 'win32' && !/^D:[\\/]/i.test(output)) throw new Error('Local QA storage must stay on D:');
 const normalized = value => process.platform === 'win32' ? value.toLowerCase() : value;
 if (normalized(output) === normalized(root) || normalized(output).startsWith(normalized(root + path.sep))) throw new Error('Outputs must be outside the checkout');
 await mkdir(path.dirname(output), { recursive: true });
@@ -94,7 +94,7 @@ try {
   // Self-tests can own Chromium. Keep them serialized across sessions; do not
   // remove unknown/stale locks automatically. Source/core checks need no lock.
   if (suite === 'tools') {
-    nativeLock = process.platform === 'win32' ? 'D:/repos/.codex/tmp/shared-native-qa.lock' : path.join(path.dirname(output), 'shared-native-qa.lock');
+    nativeLock = path.join(tmpdir(), 'ashen-shared-native-qa.lock');
     await mkdir(path.dirname(nativeLock), { recursive: true });
     await mkdir(nativeLock);
     ownsNativeLock = true;

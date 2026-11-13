@@ -724,7 +724,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 No `frostbite` status ships; the frost identity is the **Frost** proc row and its `frostExposed` exposure.
 
 **Poise / Stagger**
-- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). Poise does not decay by default.
+- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). The bar under HP shows Poise left in both modes: full when untouched and draining (the Core `persistentPoise` pool already counts down; the legacy fill-up meter is drawn inverted). Poise does not decay by default.
 - When full the enemy becomes **Staggered**: its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up).
 - A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter.
 - Every enemy break (Insanity's and a status-gauge Poise break alike) also applies the `staggered` status: +50% attack damage taken until the end of the *player's* next turn.
@@ -810,7 +810,7 @@ Enemies act from an SP pool derived from their stats; each move has an SP price.
 
 **Plan and intent box**
 - At the start of the player's turn each enemy plans the actions that fit its live SP. The first planned move is the intent; committed moves play in plan order in the enemy phase, each revealed as it plays. The plan is saved with the fight.
-- The intent box shows the first move as the main intent and every committed follow-up as a smaller symbol under the per-slot concealment rule (§4.9). An unrevealed move shows `?` until it plays or is cancelled; its fate is never shown before its own event.
+- The intent box shows the first move as the main intent and every committed follow-up as a symbol beside it at the same size, on the player's turn and through the enemy phase, under the per-slot concealment rule (§4.9). An unrevealed move shows `?` until it plays or is cancelled; its fate is never shown before its own event.
 - The intent's damage number sits left of the stance icon; the hit-% badge is centered on the target's sprite in white text with a black outline.
 
 **Other rules**
@@ -979,7 +979,7 @@ Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expa
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
 - **Read Intent** reveal is an insight contest, not a hit roll, not range-gated: d20 + INT + WIS + rank vs the target's current Poise + WIS + level, ties pass (§17 Contests).
-- **Intent box follow-ups**. In a Core 2 fight the intent box shows the planned follow-up actions after the current one as smaller symbols.
+- **Intent box follow-ups**. In a Core 2 fight the intent box shows the planned follow-up actions after the current one as symbols shown beside the main intent at the same size, on the player's turn and through the enemy phase; the intent node itself carries them, so a rebuilt node never loses them.
   - The first 1 + Perception follow-ups show their icon when the intent read is exact; the rest, and every follow-up while the read is hidden, show `?`.
   - The read is the one §4.7 already rolls for the enemy; Perception adds no roll.
 - **Always on, in every fight** (`styles/combat-visuals.css`):
@@ -1965,7 +1965,7 @@ Player animations:
 - **HUD and floaters, all form factors**:
   - Every combatant, player included, shows only the overhead mini HUD (HP bar, action intent), never a selected panel (`ui/models/TargetHudModel.js`). Double click, double tap or hold on a non-target figure opens the inspect panel.
   - Poise is drawn as an always-visible bar under HP (an empty trough at 0/0), with no Poise badge or HP-bar overlay; AC is not drawn. The inspect panel still lists both.
-  - Mini HUD layout, every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): intent row above, its left edge on the HP bar's; a tall Block shield on the left (value inside, slot reserved at Block 0) spanning the HP bar (number to its right), the Poise bar (same width and height) and one badge row.
+  - Mini HUD layout, every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): intent row above, centred over the HP bar; a Block shield on the left (value inside, slot reserved at Block 0) as tall as the HP and Poise bars, then the HP bar and the Poise bar (same width and height) with the badge row below; the Poise bar shows Poise left (full when untouched, draining) in both modes.
   - Badge row: small round count badges for Precision, Evade, Ward, Counter, Reflect and every status and buff, fitted within the bar width; the rest collapse into +N, which opens the inspector.
   - Bar width and height are per-form-factor HUD layout tokens (`--hud-mini-bar-width`, `--hud-mini-bar-height`), never a function of max HP, Block or badge count.
   - Floaters are an allowlist (`ui/models/FloaterPolicyModel.js`):

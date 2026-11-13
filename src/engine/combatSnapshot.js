@@ -197,8 +197,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   bringRangesForward(saved);
   bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
-  for (const entity of [saved.player, ...(saved.enemies || [])]) clampStackCounts(entity);
-  if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
+  const enemies = Array.isArray(saved?.enemies) ? saved.enemies : [];
+  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity);
+  if (saved?.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');

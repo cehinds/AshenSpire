@@ -14,7 +14,7 @@ const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries
 const { createRunState } = require('src/model/state.js');
 const { createRunCombat } = require('src/engine/runCombat.js');
 const { previewCard, previewIntent } = require('src/engine/combat.js');
-const { counterPreviewAgainst } = require('src/engine/counterRule.js');
+const { CounterPreviewAgainst } = require('src/engine/combatCounterPreview.js');
 
 function coreCounterFixture() {
   const profile = resolveGameProfile('core');
@@ -68,9 +68,9 @@ test('bundled Core Counter keeps hidden and uncovered reads distinct', () => {
   const { combat, enemy } = coreCounterFixture();
   const card = combat.registries.cards.get('core.counter');
   const intent = previewIntent(combat, enemy.id);
-  assert.equal(counterPreviewAgainst(combat, enemy, { ...intent, hidden: true }, card), null);
-  assert.equal(counterPreviewAgainst(combat, enemy, { ...intent, revealed: false }, card), null);
-  const uncovered = counterPreviewAgainst(combat, enemy, { ...intent,
+  assert.equal(CounterPreviewAgainst(combat, enemy, { ...intent, hidden: true }, card), null);
+  assert.equal(CounterPreviewAgainst(combat, enemy, { ...intent, revealed: false }, card), null);
+  const uncovered = CounterPreviewAgainst(combat, enemy, { ...intent,
     profile: { ...intent.profile, targeting: 'area', maneuver: 'sweep' } }, card);
   assert.equal(uncovered.uncovered, true);
   assert.equal(uncovered.hp, undefined);

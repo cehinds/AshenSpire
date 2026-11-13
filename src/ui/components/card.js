@@ -9,6 +9,7 @@ import {applyCardAppearance} from './cardAppearance.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
+import { CounterStackPercent } from '../models/CounterStackPercentModel.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
 // All numbers shown come from the engine: in combat, previewCard tokens
@@ -927,8 +928,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const c = def.counterCoverage;
       const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
-      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(t('card.counter.help.core')) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
-    } else html += `<div class="combat-rule-hint">${esc(t(coreCounter ? 'card.counter.help.core' : 'card.counter.help.legacy'))}</div>`;
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
+    } else html += `<div class="combat-rule-hint">${esc(coreCounter ? t('card.counter.help.core', { stackPercent: CounterStackPercent() }) : t('card.counter.help.legacy'))}</div>`;
   }
   if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {
