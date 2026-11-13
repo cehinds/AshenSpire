@@ -187,10 +187,10 @@ test('legal slow four-hit Fell Warden reactions finish every group without watch
       onDone: () => { done++; doneAt = clock.time; },
     }, timing, options(clock));
     const expectedDone = timing.intentMs + timing.wordMs + timing.spriteSpeed.lungeMs + timing.afterSpriteMs
-      + groups.reduce((sum, group) => sum + timing.resultMs + Math.max(timing.reactionMs + timing.damageMs, reactionLife(group)), 0)
+      + groups.length * (timing.resultMs + timing.reactionMs + timing.damageMs)
       + Math.max(timing.resetMs, timing.stepMs);
     clock.runUntil(expectedDone - 1);
-    assert.equal(done, 0, 'authored final reset is not cut short');
+    assert.equal(done, 0, 'the nominal waits are all the timeline holds; the long pose is not waited for');
     clock.runUntil(expectedDone);
     assert.equal(done, 1);
     assert.equal(doneAt, expectedDone);

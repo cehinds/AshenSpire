@@ -98,15 +98,15 @@ export function runActionTimeline(beats, hooks, timingIn, {
                 const group = groups[groupIndex++];
                 stage('result', group, () => hooks.onResult?.(group));
                 schedule(() => {
-                  const reactionLife = Number(stage('reaction', group, () => hooks.onReaction?.(group))) || 0;
-                  // Nominal reaction and damage waits were reserved per group.
-                  creditWatchdog(Math.max(0, reactionLife - timing.reactionMs - timing.damageMs));
+                  // The pose keeps playing under the numbers; nothing waits for it, so the watchdog needs no credit for it.
+                  stage('reaction', group, () => hooks.onReaction?.(group));
                   schedule(() => {
                     stage('damage', group, () => hooks.onNumbers?.(group));
                     // Yield a task so numbers paint before replacement of the HUD.
                     schedule(() => {
                       stage('hud', group, () => hooks.onApply?.(group));
-                      const rest = Math.max(timing.damageMs, reactionLife - timing.reactionMs);
+                      // Numbers to action end: damageMs alone (owner, 2026-11-13); the defender's pose is not waited for.
+                      const rest = timing.damageMs;
                       if (groupIndex < groups.length) { schedule(react, rest); return; }
                       schedule(() => {
                         stage('resolution', beat, () => hooks.onResolution?.(beat));

@@ -234,3 +234,22 @@ test('a telegraph beat keeps the contact hold when the clip finishes sooner than
   const at = stage => trace.find(row => row[0] === stage)[2];
   assert.equal(at('resolution') - at('contact'), 40, 'a shorter remaining clip is not stretched to the cap');
 });
+
+test('a long reaction pose does not delay the next beat beyond the damage numbers wait', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const c = clock(), trace = [], timing = actionPacing();
+  runActionTimeline([{ actorId: 'enemy', kind: 'attack' }, { actorId: 'player', kind: 'attack' }], {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
+    onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
+    maxSpriteMs: speed => speed.lungeMs,
+    onReaction: () => 1500,
+    onWatchdog: () => trace.push(['watchdog', '', c.now]),
+    onDone: () => trace.push(['done', '', c.now]),
+  }, timing, timerOptions(c));
+  c.advance(20000);
+  const at = (stage, actor) => trace.find(row => row[0] === stage && row[1] === actor)[2];
+  assert.equal(at('resolution', 'enemy') - at('hud', 'enemy'), timing.damageMs, 'the action ends damageMs after the numbers');
+  assert.equal(at('intent', 'player') - at('resolution', 'enemy'), Math.max(timing.resetMs, timing.stepMs));
+  assert.ok(!trace.some(row => row[0] === 'watchdog'), 'no watchdog flush');
+  assert.equal(trace.at(-1)[0], 'done');
+});
