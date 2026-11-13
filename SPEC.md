@@ -1639,6 +1639,7 @@ Full playability with mouse only. Keyboard (nice-to-have, M4): 1–9 select card
 **Action pacing**
 - Each action plays: action word → animation → result (hit, miss, blocked, countered) → sprite reaction → damage and bars → reset → next action, one gap per step.
 - The gap is **Pause between steps**: default 1000 ms, range 250–2000 ms; Instant and Reduced motion make it 0. **Auto combat speed** divides it during auto combat (default ×1.5).
+- Playback that follows a reaction answer (the reaction's own beat and the resumed enemy beats) uses the gap × `reactionGapScale` (`content/config/ui/presentation/actionPacing.json`, default 0.5).
 
 **Defeat and Victory** (`src/ui/screens/gameover.js:58-65`)
 - Defeat: dark fade, gold serif text, then stats card; title "Defeat", aria-label "You perished". Victory: title "Victory", aria-label "Ember restored".
