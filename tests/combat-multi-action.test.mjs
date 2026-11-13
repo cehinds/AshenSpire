@@ -150,6 +150,8 @@ test('the rounds layer no longer appends follow-ups; the intent node draws them 
   assert.doesNotMatch(layer, /cr-followup|decorateFollowUps|followUpSymbols/);
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(screen, /function followUpsFor\(enemy\)/);
+  assert.match(screen, /if \(live \|\| enemyPlayback\) return disp\?\.ents/, 'the enemy-phase row serves only enemy phase or enemy playback');
+  assert.doesNotMatch(screen, /kept != null \|\| live \|\| disp/, 'the player card playback (disp) no longer short-circuits the plan');
   assert.match(screen, /const followUps = followUpsFor\(enemy\);/, 'the intent node takes its follow-ups from the helper');
   assert.match(screen, /followUps = showIntent \? followUpsFor\(enemy\)/, 'the leading-slot key includes them, so a plan change rebuilds the node');
 });

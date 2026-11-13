@@ -2206,8 +2206,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // the node draws them and nothing is added afterwards.
   function followUpsFor(enemy) {
     const live = combat.phase === 'enemy' || !!combat.reactionCursor;
-    const kept = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, live);
-    if (kept != null || live || disp || !enemy.alive || !multiActionOn(combat)) return kept;
+    // The enemy-phase row serves only the enemy phase and enemy playback; the player's own card playback (disp set) still draws the plan.
+    if (live || enemyPlayback) return disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, live);
+    if (!enemy.alive || !multiActionOn(combat)) return null;
     const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
     const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
     return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
