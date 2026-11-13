@@ -724,7 +724,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 No `frostbite` status ships; the frost identity is the **Frost** proc row and its `frostExposed` exposure.
 
 **Poise / Stagger**
-- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). Poise does not decay by default.
+- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). The bar under HP shows Poise left: full when untouched, draining as the meter fills. Poise does not decay by default.
 - When full the enemy becomes **Staggered**: its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up).
 - A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter.
 - Every enemy break (Insanity's and a status-gauge Poise break alike) also applies the `staggered` status: +50% attack damage taken until the end of the *player's* next turn.

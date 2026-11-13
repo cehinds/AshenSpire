@@ -10,6 +10,8 @@ import { healthGuardTone } from '../../model/blockPresentation.js';
 // always represents health, never protection added to the health numerator.
 // Defense badges read Block (the Defense badge, owner 2026-10-18), Poise, Evade, Ward, Precision, Counter and Reflect before HP. Poise also
 // retains its gold HP trim and value/max accessible label.
+/** The Poise bar shows Poise LEFT: the meter fills toward a break, so the bar starts full and drains (display only; cur and max are untouched, a 0/0 bar stays an empty trough). */
+export const poiseBarRemaining = bar => ({ ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0 });
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
 export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0 } = {}) {

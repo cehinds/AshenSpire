@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { combatHealthRow } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { poiseBarRemaining } from '../src/ui/models/CombatHealthModel.js';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
 // Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a Block shield (HP and Poise rows tall) on the
@@ -85,3 +86,15 @@ test('the +N defense overflow badge carries the number of effects it hides', () 
   // Evade and Ward show; Precision, Counter and Reflect fold into +3.
   assert.equal(overflow.dataset.count, '3');
 }));
+
+// Owner 2026-11-12: the bar under HP shows Poise LEFT. The meter counts damage toward a break, so the display inverts it.
+test('poiseBarRemaining inverts the fill: full when untouched, empty at the break, empty trough at 0/0', () => {
+  const bar = (cur, max) => ({ id: 'poise', cur, max, pct: max ? (cur / max) * 100 : 0 });
+  assert.equal(poiseBarRemaining(bar(0, 10)).pct, 100);
+  assert.equal(poiseBarRemaining(bar(5, 10)).pct, 50);
+  assert.equal(poiseBarRemaining(bar(10, 10)).pct, 0);
+  assert.equal(poiseBarRemaining(bar(0, 0)).pct, 0);
+  const shown = poiseBarRemaining(bar(3, 10));
+  assert.equal(shown.cur, 3, 'cur and max stay the meter own (tooltips keep value/max)');
+  assert.equal(shown.max, 10);
+});

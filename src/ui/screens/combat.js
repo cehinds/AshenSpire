@@ -3,6 +3,7 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
+import { poiseBarRemaining } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
@@ -1898,6 +1899,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const row = registries.resources.get('poise');
       plan.push({ id: 'poise', name: row.name, glyph: row.glyph || '', tint: row.tint, weight: row.weight, band: row.band || null, cur: 0, max: 0, pct: 0, lengthPct: 100, domain: 0, labelMax: 0 });
     }
+    // Owner 2026-11-12: the bar under HP shows Poise left (full when untouched, draining as the meter fills); cur/max stay the meter's own.
+    const poiseAt = plan.findIndex((bar) => bar.id === 'poise');
+    plan[poiseAt] = poiseBarRemaining(plan[poiseAt]);
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
@@ -1946,7 +1950,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const bar of plan) {
       if (bar.id === 'poise' && bar.max > 0 && bar.cur >= bar.max * 0.75) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
-        if (el) el.classList.add('pulse', 'full');
+        if (el) el.classList.add('pulse');
       }
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
