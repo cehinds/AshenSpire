@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Geometry and screenshots from the real screenshot route and mountCombat.
-// Measures the player's overhead mini HUD (owner, 2026-11-07: tall Block, matching HP/Poise bars, then badges; no AC): its bars, defense
+// Measures the player's overhead mini HUD (owner, 2026-11-07: Block as tall as HP and Poise, matching HP/Poise bars, then badges; no AC): its bars, defense
 // badges and the clearance between the rack's bottom edge and the top of the player's visible artwork (SPEC: fixed 10 px gap).
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,7 @@ const out = resolve(process.env.HUD_QA_OUT || 'outputs/player-hud');
 mkdirSync(out, { recursive: true });
 const server = await serve({ root: process.cwd(), port: 0, open: false });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with fixed Block, Evasion, Ward and Precision values, measured on the overhead mini HUD of the player (tall Block, matching HP/Poise bars, then badges; no selected panel or AC). Not a recorded playthrough.', views: [], failures: [] };
+const report = { head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), fixtureBoundary: 'Production screenshot route and renderer; authored Core 2 with fixed Block, Evasion, Ward and Precision values, measured on the overhead mini HUD of the player (Block as tall as the HP and Poise bars, matching HP/Poise bars, then badges; no selected panel or AC). Not a recorded playthrough.', views: [], failures: [] };
 const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tablet',820,1180],['small',320,740]];
 // Expected values are independent fixture facts, not the UI protection model.
 const fixtures = [
@@ -111,8 +111,12 @@ try {
         assert.ok(badge.label?.toLowerCase().includes({ shield:'block', overflow:'ward' }[badge.kind] || badge.kind), name+': accessible defense label '+badge.kind);
         assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': '+badge.kind+' value is visible');
         if (badge.kind === 'shield') {
-          assert.ok(badge.box.height > badge.box.width, name+': Block retains its tall shield aspect');
-          assert.ok(badge.box.right <= hpTrack.left && Math.abs(badge.box.top-hpTrack.top) < 1 && Math.abs(badge.box.bottom-badgeRow.bottom) < 1, name+': Block spans all three rows on the left');
+          // Owner 2026-11-12: the shield is as tall as the HP and Poise bars, left of them, with the badge row below the bars.
+          assert.ok(Math.abs(badge.box.top-hpTrack.top) <= 1 && Math.abs(badge.box.bottom-poiseTrack.bottom) <= 1, name+': Block is as tall as the HP and Poise bars');
+          assert.ok(badge.box.right <= hpTrack.left, name+': Block sits left of the bars');
+          assert.ok(badgeRow.top >= poiseTrack.bottom, name+': the badge row sits below the bars');
+          const v = badge.valueBox, b = badge.box;
+          assert.ok(v.top >= b.top-0.5 && v.bottom <= b.bottom+0.5 && v.left >= b.left-0.5 && v.right <= b.right+0.5, name+': the Block value sits inside the shield');
         } else {
           assert.ok(Math.abs(badge.box.width-badge.box.height) < 1, name+': '+badge.kind+' retains its round badge bounds');
           assert.ok(badge.box.left >= badgeRow.left && badge.box.right <= badgeRow.right && badge.box.top >= badgeRow.top && badge.box.bottom <= badgeRow.bottom, name+': '+badge.kind+' fits the badge row');
@@ -128,7 +132,7 @@ try {
       assert.ok(geometry.art.top - geometry.rack.bottom >= 10 - 0.5, name+': overhead HUD bottom sits at least 10px above the art top (gap '+(geometry.art.top - geometry.rack.bottom).toFixed(2)+')');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
-      assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': tall Block precedes the HP and Poise bars');
+      assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');
       assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
