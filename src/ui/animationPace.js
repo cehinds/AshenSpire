@@ -120,6 +120,11 @@ function spriteSpeedFor(pace, spriteScale, minFrameMs) {
   if (minFrameMs > 0) for (const key of ['lungeMs', 'reactionMs']) speed[key] = Math.max(speed[key], minFrameMs);
   return { ...speed, minFrameMs };
 }
+// The reaction gap scale clamped to [0,1]; anything that is not a number counts as 1 (no shortening).
+export function clampGapScale(raw) {
+  const value = raw === null || raw === '' ? NaN : Number(raw);
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 1;
+}
 export function actionPacing({ reduced = false, enemy = false, reaction = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
@@ -127,15 +132,14 @@ export function actionPacing({ reduced = false, enemy = false, reaction = false 
   const spriteScale = scale / ACTION_PACING.spritePlaybackRate
     * (enemy ? enemyAnimationMs() : combatPacing.animationMs) / ACTION_PACING.animationStepDurationMs;
   // Playback that follows a reaction answer waits a shorter gap (actionPacing.json reactionGapScale, [0,1]).
-  const rawScale = Number(ACTION_PACING.reactionGapScale);
-  const gapScale = reaction ? (Number.isFinite(rawScale) ? Math.min(1, Math.max(0, rawScale)) : 1) : 1;
+  const gapScale = reaction ? clampGapScale(ACTION_PACING.reactionGapScale) : 1;
   const gapMs = scaled(combatPacing.gapMs) * gapScale;
-  // Six stages hold a fixed time (actionPacing.json fixedStageMs): not the gap, the speed or reactionGapScale; 0 on Instant and Reduced motion.
+  // Every stage named in actionPacing.json fixedStageMs holds a fixed time: not the gap, the speed or reactionGapScale; 0 on Instant and Reduced motion.
   const fixedMs = key => {
     const raw = ACTION_PACING.fixedStageMs?.[key];
     return Number.isFinite(raw) ? (scale > 0 ? Math.max(0, raw) : 0) : undefined;
   };
-  const fixed = Object.fromEntries(['intentMs', 'wordMs', 'afterSpriteMs', 'reactionMs', 'telegraphHoldMs', 'telegraphResetMs']
+  const fixed = Object.fromEntries(Object.keys(ACTION_PACING.fixedStageMs || {})
     .map(key => [key, fixedMs(key)]).filter(([, value]) => value !== undefined));
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
