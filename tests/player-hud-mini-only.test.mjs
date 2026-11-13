@@ -38,7 +38,7 @@ test('the HUD meter plan always carries the Poise bar (an empty trough at 0/0); 
   assert.doesNotMatch(js, /bar\.id !== 'poise' && !stackHidden/, 'meterInputs no longer filters poise out of the plan');
   assert.match(js, /!stackHidden\.has\(bar\.id\) && \(!expanded \|\| bar\.id === 'hp' \|\| bar\.id === 'poise'\)/, 'the expanded rules keep HP and Poise');
   assert.match(js, /if \(!plan\.some\(\(bar\) => bar\.id === 'poise'\)\)/, 'meterInputs adds an empty Poise bar when the entity has no meter');
-  assert.match(js, /label: 'Poise', value: v\.poiseMeter/, 'combatantSubject resources keep Poise');
+  assert.match(js, /label: 'Poise', \.\.\.PoiseLeft\(v, entity\)/, 'combatantSubject resources keep Poise (Poise left)');
 });
 
 test('inspect is the existing figure-hold / mini-HUD-click door only; the target HUD adds no second gesture', () => {
