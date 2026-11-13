@@ -724,7 +724,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 No `frostbite` status ships; the frost identity is the **Frost** proc row and its `frostExposed` exposure.
 
 **Poise / Stagger**
-- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). The bar under HP shows Poise left: full when untouched, draining as the meter fills. Poise does not decay by default.
+- Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). The bar under HP shows Poise left in both modes: full when untouched and draining (the Core `persistentPoise` pool already counts down; the legacy fill-up meter is drawn inverted). Poise does not decay by default.
 - When full the enemy becomes **Staggered**: its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up).
 - A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter.
 - Every enemy break (Insanity's and a status-gauge Poise break alike) also applies the `staggered` status: +50% attack damage taken until the end of the *player's* next turn.
@@ -1965,7 +1965,7 @@ Player animations:
 - **HUD and floaters, all form factors**:
   - Every combatant, player included, shows only the overhead mini HUD (HP bar, action intent), never a selected panel (`ui/models/TargetHudModel.js`). Double click, double tap or hold on a non-target figure opens the inspect panel.
   - Poise is drawn as an always-visible bar under HP (an empty trough at 0/0), with no Poise badge or HP-bar overlay; AC is not drawn. The inspect panel still lists both.
-  - Mini HUD layout, every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): intent row above, centred over the HP bar; a Block shield on the left (value inside, slot reserved at Block 0) as tall as the HP and Poise bars, then the HP bar and the Poise bar (same width and height) with the badge row below; the Poise bar shows Poise left (full when untouched, draining).
+  - Mini HUD layout, every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): intent row above, centred over the HP bar; a Block shield on the left (value inside, slot reserved at Block 0) as tall as the HP and Poise bars, then the HP bar and the Poise bar (same width and height) with the badge row below; the Poise bar shows Poise left (full when untouched, draining) in both modes.
   - Badge row: small round count badges for Precision, Evade, Ward, Counter, Reflect and every status and buff, fitted within the bar width; the rest collapse into +N, which opens the inspector.
   - Bar width and height are per-form-factor HUD layout tokens (`--hud-mini-bar-width`, `--hud-mini-bar-height`), never a function of max HP, Block or badge count.
   - Floaters are an allowlist (`ui/models/FloaterPolicyModel.js`):

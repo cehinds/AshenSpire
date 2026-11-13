@@ -60,6 +60,12 @@ export function resourceScale(v) {
  * present and empty at a real threshold, and ABSENT — not an empty trough —
  * at threshold 0.
  *
+ * POISE has two readers' worth of truth. A configured/Core fight keeps Poise in
+ * `persistentPoise { value, max }`, where `value` is Poise LEFT and drains; the
+ * reader prefers that pool and flags it `drains: true`. A legacy fight keeps a
+ * fill-up `poiseMeter` (value = impact taken), read with no flag. The UI uses
+ * the flag to draw Poise left from either.
+ *
  * `domain(pop)` derives the largest max this resource reaches, over the
  * population the surface can display — DERIVED from content, never typed, so it
  * cannot drift when content is added (Law 0 clause 1). A row may override with
@@ -108,6 +114,8 @@ export const RESOURCE_SOURCES = Object.freeze({
   }),
   poise: Object.freeze({
     read: (view, entity) => {
+      const pool = (view && view.persistentPoise) || (entity && entity.persistentPoise);
+      if (pool && Number.isFinite(pool.max) && pool.max > 0) return { cur: Math.max(0, pool.value || 0), max: pool.max, drains: true };
       const pm = (view && view.poiseMeter) || (entity && entity.poiseMeter);
       if (!pm || !Number.isFinite(pm.max) || pm.max <= 0) return null;
       return { cur: Math.max(0, pm.value || 0), max: pm.max };
@@ -275,6 +283,7 @@ export function resourceBarPlan(registries, surface, view, entity, domains) {
       band: row.band || null,
       cur: val.cur,
       max: val.max,
+      drains: !!val.drains,
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
       lengthPct: scaleByMax ? Math.max(0, Math.min(100, raw * 100)) : 100,
       domain,

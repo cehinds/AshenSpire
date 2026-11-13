@@ -5,7 +5,8 @@ import { combatHealthRow } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { resourceBars } from '../src/ui/components/resbars.js';
-import { poiseBarRemaining } from '../src/ui/models/CombatHealthModel.js';
+import { RESOURCE_SOURCES } from '../src/model/resources.js';
+import { poiseBarRemaining, poiseNearBreak, poiseLeftRow } from '../src/ui/models/CombatHealthModel.js';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
 // Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a Block shield (HP and Poise rows tall) on the
@@ -119,4 +120,27 @@ test('resbars print shownCur in the value, tooltip and aria text while data-cur 
 test('meterInputs applies poiseBarRemaining to the plan', () => {
   const src = read('src/ui/screens/combat.js');
   assert.match(src, /plan\[poiseAt\] = poiseBarRemaining\(plan\[poiseAt\]\)/);
+});
+
+test('the Poise reader prefers the Core pool (Poise left, drains) and falls back to the fill-up meter', () => {
+  const read = RESOURCE_SOURCES.poise.read;
+  assert.deepEqual(read({ persistentPoise: { value: 7, max: 12 }, poiseMeter: { value: 0, max: 10 } }, null), { cur: 7, max: 12, drains: true });
+  assert.deepEqual(read(null, { persistentPoise: { value: 0, max: 12 } }), { cur: 0, max: 12, drains: true });
+  assert.deepEqual(read({ poiseMeter: { value: 3, max: 10 } }, null), { cur: 3, max: 10 });
+  assert.equal(read({ persistentPoise: { value: 3, max: 0 } }, {}), null);
+  assert.equal(read({}, {}), null);
+});
+
+test('poiseBarRemaining leaves a draining bar as it is; the pulse and inspector row follow each kind', () => {
+  const drain = { id: 'poise', cur: 3, max: 12, pct: 25, drains: true };
+  const shown = poiseBarRemaining(drain);
+  assert.equal(shown.pct, 25);
+  assert.equal(shown.shownCur, 3);
+  assert.equal(poiseNearBreak(drain), true);
+  assert.equal(poiseNearBreak({ ...drain, cur: 4 }), false);
+  assert.equal(poiseNearBreak({ id: 'poise', cur: 9, max: 12 }), true);
+  assert.equal(poiseNearBreak({ id: 'poise', cur: 8, max: 12 }), false);
+  assert.equal(poiseNearBreak({ id: 'poise', cur: 0, max: 0, drains: true }), false);
+  assert.deepEqual(poiseLeftRow({ persistentPoise: { value: 5, max: 12 } }, {}), { label: 'Poise', value: 5, max: 12 });
+  assert.deepEqual(poiseLeftRow({ poiseMeter: { value: 4, max: 10 } }, {}), { label: 'Poise', value: 6, max: 10 });
 });
