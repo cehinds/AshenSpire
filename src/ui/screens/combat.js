@@ -18,7 +18,7 @@ import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMo
 import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { createFollowMemo, CreateFollowUpReduction } from '../models/IntentFollowUpModel.js';
+import { createFollowMemo, CreateFollowUpReduction, promoteFollowUpRow } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
@@ -3469,7 +3469,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
         },
         onResolution: () => {
-          if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears)) renderCombatantStage({ fit: false });
+          // A move that resolved with another announced for its actor promotes the next planned move into the head slot.
+          if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears,
+            id => promoteFollowUpRow({ disp, followMemo, followTrace: combat.followTrace }, id))) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts. Core 2 plays
