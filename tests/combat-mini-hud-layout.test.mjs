@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { combatHealthRow } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { resourceBars } from '../src/ui/components/resbars.js';
 import { poiseBarRemaining } from '../src/ui/models/CombatHealthModel.js';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
@@ -95,6 +96,27 @@ test('poiseBarRemaining inverts the fill: full when untouched, empty at the brea
   assert.equal(poiseBarRemaining(bar(10, 10)).pct, 0);
   assert.equal(poiseBarRemaining(bar(0, 0)).pct, 0);
   const shown = poiseBarRemaining(bar(3, 10));
-  assert.equal(shown.cur, 3, 'cur and max stay the meter own (tooltips keep value/max)');
+  assert.equal(shown.cur, 3, 'cur and max stay the meter own (data-cur, probes and the pulse keep reading them)');
   assert.equal(shown.max, 10);
+  // The shown number follows the bar: Poise left, floored at 0.
+  assert.equal(poiseBarRemaining(bar(0, 10)).shownCur, 10);
+  assert.equal(poiseBarRemaining(bar(5, 10)).shownCur, 5);
+  assert.equal(poiseBarRemaining(bar(10, 10)).shownCur, 0);
+  assert.equal(poiseBarRemaining(bar(0, 0)).shownCur, 0);
+  assert.equal(poiseBarRemaining(bar(12, 10)).shownCur, 0);
+});
+
+test('resbars print shownCur in the value, tooltip and aria text while data-cur stays cur', () => withKitDom(() => {
+  const plan = [{ id: 'poise', name: 'Poise', glyph: '', tint: '#c9a23f', weight: 'skinny', band: null, cur: 0, max: 12, shownCur: 12, pct: 100, lengthPct: 100, domain: 12, labelMax: 12 }];
+  const wrap = resourceBars(plan, { surface: 'model', tooltips: false, showLabels: true });
+  const html = wrap.outerHTML;
+  assert.match(html, /12\/12/, 'the printed value is Poise left');
+  assert.doesNotMatch(html, /0\/12/);
+  assert.match(html, /Poise 12 of 12/);
+  assert.match(wrap.outerHTML, /data-cur="0"/, 'data-cur is the source value');
+}));
+
+test('meterInputs applies poiseBarRemaining to the plan', () => {
+  const src = read('src/ui/screens/combat.js');
+  assert.match(src, /plan\[poiseAt\] = poiseBarRemaining\(plan\[poiseAt\]\)/);
 });

@@ -1094,7 +1094,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Poise', value: Math.max(0, (v.poiseMeter?.max || entity.poiseMeter?.max || 0) - (v.poiseMeter?.value || 0)), max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
@@ -1145,7 +1145,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
-        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        { label: 'Poise', value: Math.max(0, (v.poiseMeter?.max || entity.poiseMeter?.max || 0) - (v.poiseMeter?.value || 0)), max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
         ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
           value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
