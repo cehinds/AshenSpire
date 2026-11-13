@@ -597,6 +597,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
   let heldTurnHand = null;
   let enemyPlayback = false;
+  let reactionPlayback = false; // the playback now running follows a reaction answer: its gaps use reactionGapScale
   const playback = CreateCombatPlayback({
     playTimeline, isCurrentMount, renderBeat,
     requestFrame: typeof requestAnimationFrame === 'function' ? callback => requestAnimationFrame(callback) : null,
@@ -3357,8 +3358,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const out = dispatch(combat, { type: 'chooseReaction', ...intent });
       if (kind) recordManualReaction(run, owner || ownSeat(), kind);
       enemyPlayback = enemyTurnReaction || combat.phase === 'enemy' || !!combat.reactionCursor;
+      reactionPlayback = true;
       setBusy(true); afterDispatch(out.events);
-    } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
+    } catch (error) { disp = null; reactionPlayback = false; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
   function showPendingDiscard() {
     if (!hasCardChoice(combat)) { showPendingReaction(); return; }
@@ -3438,6 +3440,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       disp = null;
       heldTurnHand = null;
       enemyPlayback = false;
+      reactionPlayback = false;
       setBusy(false);
       finishRender();
       showPendingDiscard();
@@ -3464,6 +3467,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       events,
       {
         ...fxCtx,
+        reactionPlayback,
         onIntent: beat => {
           const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
