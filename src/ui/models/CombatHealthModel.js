@@ -15,7 +15,7 @@ export const PoiseBarRemaining = bar => bar.drains
   ? { ...bar, shownCur: bar.cur }
   : { ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0, shownCur: Math.max(0, bar.max - bar.cur) };
 /** The near-break pulse: a fill-up bar at 75% or more, a draining bar at 25% or less. */
-export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
+export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur > 0 && bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
 /** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
 export const PoiseLeft = (v, entity) => {
   const pool = v?.persistentPoise || entity?.persistentPoise;
