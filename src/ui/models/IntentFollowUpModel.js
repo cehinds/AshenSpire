@@ -203,11 +203,9 @@ export function CreateFollowUpReduction(followMemo)
                     }
                     break;
                 case 'enemyActorTurnStarted':
+                    // Only the memo's stale row goes: the snapshot's seeded row stays until the head move (or a stagger) speaks,
+                    // so "??" does not blink out and back between the two events.
                     followMemo.clearRow(e.sourceId);
-                    if (disp?.ents[e.sourceId])
-                    {
-                        disp.ents[e.sourceId].followUps = [];
-                    }
                     break;
                 default:
                     continue;

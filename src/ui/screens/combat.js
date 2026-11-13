@@ -1271,10 +1271,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // proc bar blinked out at play time — which reads as "bleed broke" — and
   // the drain animation targeted a bar the re-render had already removed).
   // Statuses and poise ride along; applyBeatToDisp advances them per beat.
-  function takeSnapshot(seedFollowUps = true) {
-    // A player action's playback: each live enemy's follow-up marks are frozen here, before the dispatch, so a card
-    // that breaks Poise or trims the plan changes them only when its own beat plays (SPEC 4.9), like the main intent.
-    const seed = seedFollowUps && combat.phase === 'player' && !combat.reactionCursor && !combat.pendingReaction && !enemyPlayback
+  function takeSnapshot() {
+    // Every dispatch that captures `disp` (a card, flask, move, End Turn): each live enemy's follow-up marks are frozen
+    // here, before the dispatch, so a card that breaks Poise or trims the plan changes them only when its own beat plays,
+    // and an enemy that has not acted yet keeps its row through the others' beats (SPEC 4.9).
+    const seed = combat.phase === 'player' && !combat.reactionCursor && !combat.pendingReaction && !enemyPlayback
       ? new Map(combat.enemies.filter(enemy => enemy.alive).map(enemy => [enemy.id, playerTurnFollowUps(enemy)])) : null;
     const snapshot = CaptureCombatDisplay(combat, {
       registries, projectCombatIntent, previewCard, followMemo, upcastRanksByCard,
@@ -2211,11 +2212,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // the planned follow-ups under the Perception rule (SPEC 4.9), read from the memoised preview, so every rebuild of
   // the node draws them and nothing is added afterwards.
   function followUpsFor(enemy) {
+    // A row on the snapshot (seeded before the dispatch, then advanced by the reducer) is what is on screen, in every phase.
+    const shown = disp?.ents[enemy.id]?.followUps;
+    if (shown != null) return shown;
     const live = combat.phase === 'enemy' || !!combat.reactionCursor;
-    // The enemy-phase row serves only the enemy phase and enemy playback; the player's own card playback (disp set) still draws the plan.
-    if (live || enemyPlayback) return disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, live);
+    if (live || enemyPlayback) return followMemo.row(enemy.id, live);
     if (!enemy.alive) return null;
-    return disp?.ents[enemy.id]?.followUps ?? playerTurnFollowUps(enemy);
+    return playerTurnFollowUps(enemy);
   }
   function playerTurnFollowUps(enemy) {
     if (!multiActionOn(combat)) return null;
@@ -3798,7 +3801,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selectedFlask = null;
       hideTooltip();
-      disp = takeSnapshot(false);
+      disp = takeSnapshot();
       let out;
       try {
         heldTurnHand = [...disp.hand];

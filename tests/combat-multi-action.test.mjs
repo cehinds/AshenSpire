@@ -151,8 +151,8 @@ test('the rounds layer no longer appends follow-ups; the intent node draws them 
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(screen, /function followUpsFor\(enemy\)/);
   assert.match(screen, /seed\) for \(const \[id, symbols\] of seed\)/, 'a player action snapshot freezes the follow-up rows before the dispatch');
-  assert.match(screen, /disp = takeSnapshot\(false\);\s*let out;\s*try \{\s*heldTurnHand/, 'the end-turn snapshot does not seed player-turn rows');
-  assert.match(screen, /if \(live \|\| enemyPlayback\) return disp\?\.ents/, 'the enemy-phase row serves only enemy phase or enemy playback');
+  assert.doesNotMatch(screen, /takeSnapshot\(false\)/, 'End Turn seeds the rows too, so enemies that have not acted keep their marks');
+  assert.match(screen, /const shown = disp\?\.ents\[enemy\.id\]\?\.followUps;\s*if \(shown != null\) return shown;/, 'a row on the snapshot is what is shown, in every phase');
   assert.doesNotMatch(screen, /kept != null \|\| live \|\| disp/, 'the player card playback (disp) no longer short-circuits the plan');
   assert.match(screen, /const followUps = followUpsFor\(enemy\);/, 'the intent node takes its follow-ups from the helper');
   assert.match(screen, /followUps = showIntent \? followUpsFor\(enemy\)/, 'the leading-slot key includes them, so a plan change rebuilds the node');
