@@ -141,6 +141,7 @@ test('PoiseBarRemaining leaves a draining bar as it is; the pulse and inspector 
   assert.equal(PoiseNearBreak({ id: 'poise', cur: 9, max: 12 }), true);
   assert.equal(PoiseNearBreak({ id: 'poise', cur: 8, max: 12 }), false);
   assert.equal(PoiseNearBreak({ id: 'poise', cur: 0, max: 0, drains: true }), false);
+  assert.equal(PoiseNearBreak({ ...drain, cur: 0 }), false, 'a broken pool at 0 does not pulse');
   assert.deepEqual(PoiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
   assert.deepEqual(PoiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
 });

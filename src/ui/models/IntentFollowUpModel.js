@@ -185,7 +185,7 @@ export function CreateFollowUpReduction(followMemo)
                 }
                 case 'enemyStaggered':
                     // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
-                    if (followMemo.row(e.targetId, true)?.length)
+                    if (followMemo.row(e.targetId, true)?.length || disp?.ents[e.targetId]?.followUps?.length)
                     {
                         row(e.targetId, []);
                     }

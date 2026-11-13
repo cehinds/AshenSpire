@@ -1271,11 +1271,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // proc bar blinked out at play time — which reads as "bleed broke" — and
   // the drain animation targeted a bar the re-render had already removed).
   // Statuses and poise ride along; applyBeatToDisp advances them per beat.
-  function takeSnapshot() {
-    return CaptureCombatDisplay(combat, {
+  function takeSnapshot(seedFollowUps = true) {
+    // A player action's playback: each live enemy's follow-up marks are frozen here, before the dispatch, so a card
+    // that breaks Poise or trims the plan changes them only when its own beat plays (SPEC 4.9), like the main intent.
+    const seed = seedFollowUps && combat.phase === 'player' && !combat.reactionCursor && !combat.pendingReaction && !enemyPlayback
+      ? new Map(combat.enemies.filter(enemy => enemy.alive).map(enemy => [enemy.id, playerTurnFollowUps(enemy)])) : null;
+    const snapshot = CaptureCombatDisplay(combat, {
       registries, projectCombatIntent, previewCard, followMemo, upcastRanksByCard,
       paintedHandQuotes: handPreviewCache.cards,
     });
+    if (seed) for (const [id, symbols] of seed) if (symbols != null && snapshot.ents[id]) snapshot.ents[id].followUps = symbols;
+    return snapshot;
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -2208,7 +2214,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const live = combat.phase === 'enemy' || !!combat.reactionCursor;
     // The enemy-phase row serves only the enemy phase and enemy playback; the player's own card playback (disp set) still draws the plan.
     if (live || enemyPlayback) return disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, live);
-    if (!enemy.alive || !multiActionOn(combat)) return null;
+    if (!enemy.alive) return null;
+    return disp?.ents[enemy.id]?.followUps ?? playerTurnFollowUps(enemy);
+  }
+  function playerTurnFollowUps(enemy) {
+    if (!multiActionOn(combat)) return null;
     const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
     const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
     return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
@@ -3788,7 +3798,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selectedFlask = null;
       hideTooltip();
-      disp = takeSnapshot();
+      disp = takeSnapshot(false);
       let out;
       try {
         heldTurnHand = [...disp.hand];
