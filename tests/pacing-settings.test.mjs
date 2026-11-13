@@ -110,7 +110,7 @@ test('zero pause is a valid committed value and preserves normal sprite duration
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: committed.value });
   const timing = actionPacing();
   assert.equal(timing.gapMs, 0);
-  for (const key of ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 100, `${key} is fixed, not the pause`);
+  for (const key of ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 100, `${key} is fixed, not the pause`);
   assert.equal(timing.spriteSpeed.lungeMs, 550, 'turning pauses off retains normal animation');
   setCombatPacing();
 });
@@ -165,8 +165,8 @@ test('every stage has a combatStage<Name>Ms setting that defaults to the fixedSt
   const pace = actionPacing();
   assert.deepEqual(STAGE_KEYS, ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'telegraphHoldMs', 'telegraphResetMs']);
   assert.equal(stageSettingKey('afterSpriteMs'), 'combatStageAfterSpriteMs');
-  for (const key of STAGE_KEYS) assert.equal(pace[key], 100, `${key} defaults to 100 ms (an old save has no key)`);
-  assert.deepEqual(resolveCombatAutomation({ combatStepPause: 500 }).stageMs, Object.fromEntries(STAGE_KEYS.map(key => [key, 100])));
+  for (const key of STAGE_KEYS) assert.equal(pace[key], key === 'reactionMs' ? 0 : 100, `${key} defaults to its fixedStageMs value (an old save has no key)`);
+  assert.deepEqual(resolveCombatAutomation({ combatStepPause: 500 }).stageMs, Object.fromEntries(STAGE_KEYS.map(key => [key, key === 'reactionMs' ? 0 : 100])));
 });
 
 test('a stage setting is clamped to 0..1000 ms and bad values fall back to the default', () => {
