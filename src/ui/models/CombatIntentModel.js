@@ -17,6 +17,14 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
+  // A promoted follow-up (IntentFollowUpModel.promoteFollowUp) is the next move shown in the head slot before its
+  // own event: its icon only if the observer's read of it passed (no value, no stance beyond the icon's), else "?".
+  if (intent.promoted) {
+    const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;
+    if (!icon) return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
+    const family = icon === 'attack' || icon === 'smash' ? 'attacking' : ['defend', 'counter', 'evade'].includes(icon) ? 'defending' : 'preparing';
+    return { visibility: 'partial', title: partialTitle(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
+  }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
