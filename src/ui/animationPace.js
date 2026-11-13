@@ -130,11 +130,19 @@ export function actionPacing({ reduced = false, enemy = false, reaction = false 
   const rawScale = Number(ACTION_PACING.reactionGapScale);
   const gapScale = reaction ? (Number.isFinite(rawScale) ? Math.min(1, Math.max(0, rawScale)) : 1) : 1;
   const gapMs = scaled(combatPacing.gapMs) * gapScale;
+  // Six stages hold a fixed time (actionPacing.json fixedStageMs): not the gap, the speed or reactionGapScale; 0 on Instant and Reduced motion.
+  const fixedMs = key => {
+    const raw = ACTION_PACING.fixedStageMs?.[key];
+    return Number.isFinite(raw) ? (scale > 0 ? Math.max(0, raw) : 0) : undefined;
+  };
+  const fixed = Object.fromEntries(['intentMs', 'wordMs', 'afterSpriteMs', 'reactionMs', 'telegraphHoldMs', 'telegraphResetMs']
+    .map(key => [key, fixedMs(key)]).filter(([, value]) => value !== undefined));
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
   // boundary. The cost and the action word open the beat; the stance follows the word by one gap (intentMs), then the animation.
   return {
     gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
+    ...fixed,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),
