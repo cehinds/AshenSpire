@@ -193,7 +193,7 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
     maxSpriteMs: speed => speed.lungeMs,
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
   }, timing, timerOptions(c));
-  c.advance(2000);
+  c.advance(4000);
   const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);
   assert.deepEqual(trace.slice(9, 18).map(row => row[0]), stages);
@@ -203,4 +203,35 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
   assert.equal(trace.some(row => row[0] === 'flush'), false);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
   setCombatPacing();
+});
+
+test('a telegraph beat holds contact at most 100 ms and resets 100 ms after its resolution', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: 2000 });
+  const c = clock(), trace = [], timing = actionPacing();
+  runActionTimeline([{ actorId: 'enemy', kind: 'attack', telegraph: true }, { actorId: 'enemy2', kind: 'attack' }], {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
+    // A long clip: 2000 ms of it remains after contact, far over the cap.
+    onSprite: () => ({ impactMs: 300, totalMs: 2300, cancel() {} }),
+    maxSpriteMs: () => 2300,
+    onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
+  }, timing, timerOptions(c));
+  c.advance(60000); setCombatPacing();
+  const at = (stage, actor) => trace.find(row => row[0] === stage && row[1] === actor)[2];
+  assert.equal(at('resolution', 'enemy') - at('contact', 'enemy'), 100, 'contact to resolution is the 100 ms hold');
+  assert.equal(at('intent', 'enemy2') - at('resolution', 'enemy'), 100, 'resolution to the next beat is 100 ms');
+  assert.ok(!trace.some(row => row[0] === 'flush'), 'the watchdog never fires early');
+  assert.equal(trace.at(-1)[0], 'done');
+});
+
+test('a telegraph beat keeps the contact hold when the clip finishes sooner than the cap', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const c = clock(), trace = [], timing = { ...actionPacing(), telegraphHoldMs: 100 };
+  runActionTimeline([{ actorId: 'enemy', kind: 'attack', telegraph: true }], {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
+    onSprite: () => ({ impactMs: 300, totalMs: 340, cancel() {} }),
+    onDone: () => trace.push(['done', '', c.now]),
+  }, timing, timerOptions(c));
+  c.advance(60000); setCombatPacing();
+  const at = stage => trace.find(row => row[0] === stage)[2];
+  assert.equal(at('resolution') - at('contact'), 40, 'a shorter remaining clip is not stretched to the cap');
 });
