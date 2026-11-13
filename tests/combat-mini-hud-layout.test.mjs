@@ -68,6 +68,7 @@ test('the layout sheet sizes the bars from the HUD layout tokens and the tokens 
   assert.match(css, /\.combat-health-meter > \.m-well \{[^}]*width: var\(--mh-bar-w\)/, 'the HP trough is that width');
   assert.match(css, /\.combat-health-badges \{[^}]*width: var\(--mh-bar-w\); max-width: 100%[^}]*overflow: hidden/, 'the badge row is capped at the bar width (the browser test counts 8 statuses)');
   assert.match(css, /grid-row: 1 \/ 3/, 'the shield spans the HP and Poise rows only');
+  assert.match(css, /> :is\(\.intent, \.player-action-intent\) \{[^}]*margin: 0 0 0 calc\(var\(--mh-shield-w\) \+ var\(--mh-gap\) \+ var\(--mh-bar-w\) \/ 2\) !important; translate: -50% 0 !important; justify-content: center/, 'the intent control is centred over the HP bar');
   for (const form of FORM_FACTORS) {
     const { tokens } = JSON.parse(read(`content/hud-layout/${form}.json`));
     assert.match(tokens['--hud-mini-bar-width'], /^\d+px$/, `${form} bar width`);

@@ -1,6 +1,6 @@
 /* The combat mini HUD: one layout for every combatant, player and enemies (owner, 2026-11-07, backlog #11/#4/#5/#6).
 
-     [intent]                        the intent row, its left edge on the HP bar's left edge
+     [intent]                        the intent row, centred over the HP bar
    [BLOCK] [==== HP bar ====] 19/19  a Block shield on the left, as tall as the HP and Poise rows
    [ 7   ] [==== Poise bar ==]       the Poise bar: always drawn, the HP bar's width and height
    [      ] (o)(o)(o)                one badge row: Precision, Evade, Ward, Counter, Reflect and the status tray
@@ -23,9 +23,10 @@
   width: var(--mh-w) !important;
   align-items: flex-start !important;
 }
-/* The intent row stands over the bars, not over the Block shield. */
+/* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
+   width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
-  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap)) !important; justify-content: flex-start !important;
+  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: -50% 0 !important; justify-content: center !important;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > .meters {
   width: 100% !important; min-width: 0 !important;
