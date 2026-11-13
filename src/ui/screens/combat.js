@@ -58,9 +58,11 @@ import { createToast } from '../components/toast.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo, fightPrewarmJobs } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
+import { enemyPlanActions, multiActionOn } from '../../engine/normalPreview.js';
+import { followUpSymbols, perceptionLevel, readStage } from '../models/CombatRoundsScreenModel.js';
 import { discardCandidates } from '../../engine/abilityRiders.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
@@ -2199,9 +2201,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
+  // The follow-up symbols an enemy's intent node carries: the enemy phase / playback row as ever; on the player's turn
+  // the planned follow-ups under the Perception rule (SPEC 4.9), read from the memoised preview, so every rebuild of
+  // the node draws them and nothing is added afterwards.
+  function followUpsFor(enemy) {
+    const live = combat.phase === 'enemy' || !!combat.reactionCursor;
+    const kept = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, live);
+    if (kept != null || live || disp || !enemy.alive || !multiActionOn(combat)) return kept;
+    const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
+    const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
+    return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+  }
   function intentEl(enemy) {
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
-    const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
+    const followUps = followUpsFor(enemy);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const currentRead = (busy || enemyPlayback || combat.pendingReaction) && disp?.ents[enemy.id]?.intentPreview
         || projectCombatIntent(combat, enemy.id);
@@ -2244,11 +2257,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // by syncHitChances, not drawn here.
       const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
       const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      const followUps = showIntent ? followUpsFor(enemy) : null;
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, followUps, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const settings = settingsStamp();
       const idx = living.indexOf(enemy);
-      const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
