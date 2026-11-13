@@ -120,13 +120,16 @@ function spriteSpeedFor(pace, spriteScale, minFrameMs) {
   if (minFrameMs > 0) for (const key of ['lungeMs', 'reactionMs']) speed[key] = Math.max(speed[key], minFrameMs);
   return { ...speed, minFrameMs };
 }
-export function actionPacing({ reduced = false, enemy = false } = {}) {
+export function actionPacing({ reduced = false, enemy = false, reaction = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
   const scaled = value => Math.max(0, Number(value) || 0) * scale;
   const spriteScale = scale / ACTION_PACING.spritePlaybackRate
     * (enemy ? enemyAnimationMs() : combatPacing.animationMs) / ACTION_PACING.animationStepDurationMs;
-  const gapMs = scaled(combatPacing.gapMs);
+  // Playback that follows a reaction answer waits a shorter gap (actionPacing.json reactionGapScale, [0,1]).
+  const rawScale = Number(ACTION_PACING.reactionGapScale);
+  const gapScale = reaction ? (Number.isFinite(rawScale) ? Math.min(1, Math.max(0, rawScale)) : 1) : 1;
+  const gapMs = scaled(combatPacing.gapMs) * gapScale;
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
   // boundary. The cost and the action word open the beat; the stance follows the word by one gap (intentMs), then the animation.
