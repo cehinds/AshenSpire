@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json
-// (type, layer, motion, touch) as CSS custom properties in
+// (type, layer, motion, touch, color) as CSS custom properties in
 // styles/tokens.generated.css.
 //
 //   node tools/tokens-css.mjs            validate and write (same as --write)
