@@ -2,6 +2,7 @@
   "motion": {
     "spritePlaybackRate": 0.5,
     "stageGapMs": 500,
+    "reactionGapScale": 0.5,
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
     "enemyAttackDefaultMs": 750,
