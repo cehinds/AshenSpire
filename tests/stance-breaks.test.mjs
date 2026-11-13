@@ -4,6 +4,13 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from './withoutWeaknesses.mjs';
+import { setCombatStance } from '../src/engine/combatMatchups.js';
+import { attackHitPreview, previewCardAttackHit } from '../src/engine/stanceHit.js';
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { stanceRules } from '../src/content/stanceRules.js';
 
 // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend (damage greater than the Block held before the hit).
 function fight({ maneuver = 'smash', amount = 21, block = 19, stance = 'defend', armCounter = false } = {}) {
@@ -62,15 +69,14 @@ test('a Sweep does not break a Defend stance and a Smash does not break a Counte
 });
 
 test('the Block comparison is strict: more breaks, equal or less holds (21 vs 20, 21 vs 21, 21 vs 23)', () => {
-  // The fixture's Smash lands 21 on the Block pool; the pool the hit meets is read back from the receipt.
+  // The fixture's Smash has 21 damage before matchups; the pool the hit meets is read back from the receipt.
   const seen = {};
   for (const block of [14, 15, 17]) {
-    const f = fight({ amount: 14, block }); f.play();
+    const f = fight({ amount: 21, block }); f.play();
     const d = f.c.eventLog.find(e => e.type === 'damageDealt' && e.sourceId === 'player');
     const held = d.blocked + d.blockRemaining;
-    assert.equal(d.incoming, 21);
     seen[held] = f.enemy.combatStance === undefined;
-    assert.equal(f.broken().length, d.incoming > held ? 1 : 0, `Block ${held}`);
+    assert.equal(f.broken().length, 21 > held ? 1 : 0, `Block ${held}`);
   }
   assert.deepEqual(seen, { 20: true, 21: false, 23: false });
 });
@@ -114,4 +120,64 @@ test('a broken Counter move with no follow-up leaves the enemy with no move', ()
   assert.equal(enemy.intent.kind, 'idle');
   assert.equal(enemy.combatStance, undefined);
   assert.equal(c.eventLog.filter(event => event.type === 'enemyMoveUnavailable').length, 1);
+});
+
+
+// Owner 2026-11-13: same-stance Precision streak (stanceRules.sameStancePrecisionPerRepeat), Core 2 fight.
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const card = maneuver => ({ skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver, range: 'melee', damageType: 'slashing' } });
+function core2() {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  delete combat.player.combatStance; delete combat.player.stanceStreak;
+  return { combat, target: combat.enemies[0] };
+}
+const streakPart = hit => hit.precisionParts?.find(part => part.label === 'same-stance streak')?.value ?? 0;
+const matching = (combat, target, carrier) => profileDamageReceipt(combat, combat.player, target, 10, carrier).damageReceipt.hits[0].sources.some(row => row.id === 'matching-stance');
+
+test('the streak amount is data', () => {
+  assert.equal(stanceRules.sameStancePrecisionPerRepeat, 1);
+});
+
+test('three Sweeps in a row: Precision +0, +1, +2 and x1.25 from the second; the preview equals the live hit', () => {
+  const { combat, target } = core2();
+  const seen = [];
+  for (const carrier of [card('sweep'), card('sweep'), card('sweep')]) {
+    const preview = previewCardAttackHit(combat, combat.player, target, carrier);
+    setCombatStance(combat, combat.player, carrier);
+    const live = attackHitPreview(combat, combat.player, target, carrier);
+    assert.equal(streakPart(preview), streakPart(live), 'preview streak = live streak');
+    assert.equal(preview.accuracy, live.accuracy, 'preview Precision = live Precision');
+    seen.push([streakPart(live), matching(combat, target, carrier)]);
+  }
+  assert.deepEqual(seen, [[0, false], [1, true], [2, true]]);
+});
+
+test('changing stance, or a non-offensive card, resets the streak', () => {
+  const { combat, target } = core2();
+  for (const maneuver of ['sweep', 'sweep']) setCombatStance(combat, combat.player, card(maneuver));
+  assert.equal(combat.player.stanceStreak, 2);
+  setCombatStance(combat, combat.player, card('smash'));
+  assert.equal(combat.player.stanceStreak, 1);
+  assert.equal(streakPart(attackHitPreview(combat, combat.player, target, card('smash'))), 0);
+  setCombatStance(combat, combat.player, card('smash'));
+  assert.equal(streakPart(attackHitPreview(combat, combat.player, target, card('smash'))), 1);
+  setCombatStance(combat, combat.player, card('defend'));
+  assert.equal(combat.player.stanceStreak, 0);
+  setCombatStance(combat, combat.player, card('smash'));
+  assert.equal(combat.player.stanceStreak, 1);
+});
+
+test('played through dispatch, each repeat counts once (not once per stance call)', () => {
+  const { combat, target } = core2();
+  combat.player.energy = combat.player.stamina = combat.player.energyMax = combat.player.maxStamina = 30;
+  const strikes = combat.piles.hand.filter(row => row.cardId === 'core.strike');
+  assert.ok(strikes.length >= 2, 'the opening hand holds repeats of one Attack');
+  const parts = [];
+  for (const row of strikes.slice(0, 3)) {
+    dispatch(combat, { type: 'playCard', cardInstanceId: row.instanceId, targetId: target.id });
+    parts.push(streakPart(combat.eventLog.filter(e => e.type === 'attackHit' || e.type === 'attackMissed').at(-1)));
+  }
+  assert.deepEqual(parts, parts.map((_, i) => i));
 });

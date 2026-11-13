@@ -7,7 +7,7 @@ import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
 import { getCap, removeStatus } from './statuses.js';
-import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
+import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor, acceptedStanceStreak } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
@@ -383,6 +383,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (!next) return entity.combatStance || null;
   const previous=entity.combatStance;
   const changed = !sameStance(entity, { combatProfile: profile });
+  entity.stanceStreak = acceptedStanceStreak(entity, carrier, { combatProfile: profile });
   const provenance = { ...(entity.kind === 'enemy' ? { preparing: true } : {}),
     triggeredBy: { kind: 'stance', id: entity.kind === 'enemy' ? 'combatStance' : next.maneuver, ownerId: entity.id } };
   // A fresh non-Counter card cannot retain an older hybrid Counter just because both are Evade.
@@ -610,7 +611,9 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
   const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
     ...(physicalHit ? tagRidersFor(cfg, carrier, ctx) : [])]);
+  // rawAmounts: each contact's damage before the stance multiplier (the figure a stance break compares with Block).
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
+    rawAmounts: contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)),
     guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,

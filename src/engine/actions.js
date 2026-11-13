@@ -421,7 +421,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
-  if (!receipt.evaded) Matchups.breakStanceOnHit(ctx, source, target, carrier, { blockBefore: before, incoming: receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount });
+  if (!receipt.evaded) Matchups.breakStanceOnHit(ctx, source, target, carrier, { blockBefore: before, incoming: receipt.raw });
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
   const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
   if (poiseBroke) fixCorePoiseBreak(ctx, source, target);
@@ -869,8 +869,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     else ctx.emit(type, payload);
   }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
-  // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend (after any stagger this hit caused, so a stagger is not double-handled).
-  Matchups.breakStanceOnHit(ctx, source, target, carrier, { blockBefore, incoming: blockable });
+  // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend; the Smash's damage is the hit before matchup and defense (after any stagger this hit caused, so a stagger is not double-handled).
+  Matchups.breakStanceOnHit(ctx, source, target, carrier, { blockBefore, incoming: tactical.rawAmounts?.[contactIndex] ?? raw });
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {

@@ -55,6 +55,29 @@ export function stanceOf(carrier, entity = null) {
   if (maneuver === 'ranged') maneuver = 'attack';
   return { maneuver, camp, ...(mirrored ? { mirrored: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
 }
+// Owner 2026-11-13: the same-stance Precision streak (stanceRules.sameStancePrecisionPerRepeat). The streak is the number of
+// consecutive offensive cards played in the current stance, this one included; the hit gains per-repeat x (streak - 1) Precision.
+const STREAK_MANEUVERS = ['attack', 'smash', 'sweep'];
+/** The streak count after `carrier` is accepted: 1 for a first offensive card, one more for a repeat in the same stance, 0 for any other stance card. */
+export function nextStanceStreak(entity, carrier) {
+  if (!entity || entity.kind === 'enemy') return 0;
+  const next = stanceOf(carrier, entity);
+  if (!next) return entity.stanceStreak || 0;
+  if (!STREAK_MANEUVERS.includes(next.maneuver)) return 0;
+  return sameStance(entity, carrier) && entity.stanceStreak > 0 ? entity.stanceStreak + 1 : 1;
+}
+/** The streak for an accepted card. A card is accepted through setCombatStance more than once; the first result is kept on the carrier. */
+export function acceptedStanceStreak(entity, carrier, probe) {
+  if (carrier && carrier.stanceStreakCount !== undefined) return carrier.stanceStreakCount;
+  const count = nextStanceStreak(entity, probe);
+  if (carrier && typeof carrier === 'object' && !Object.isFrozen(carrier)) carrier.stanceStreakCount = count;
+  return count;
+}
+/** Precision a hit gains from the entity's current streak. */
+export function stanceStreakPrecision(ctx, entity) {
+  if (!entity || entity.kind === 'enemy' || !entity.combatStance || !STREAK_MANEUVERS.includes(entity.combatStance.maneuver)) return 0;
+  return Math.max(0, (entity.stanceStreak || 0) - 1) * (stanceRulesFor(ctx).sameStancePrecisionPerRepeat || 0);
+}
 export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);

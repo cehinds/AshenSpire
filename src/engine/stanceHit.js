@@ -11,7 +11,7 @@ import { shockedPenalty, lightningPrecisionBonus } from './elementRules.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
+import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses, nextStanceStreak, stanceStreakPrecision } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
   const pending = eligibleEvadeMode(target), prepared = eligiblePreparedEvade(target);
@@ -122,19 +122,22 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const maneuver = effectiveManeuver({ combatProfile: profile, mirrors: carrier?.mirrors });
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
+  // Owner 2026-11-13: the same-stance streak adds Precision to this hit (not a status; it never decays or stacks).
+  const streak = stanceStreakPrecision(ctx, source);
   const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Precision and fixed Evasion are whole numbers, rounded down.
   const statMix = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) : 0;
-  const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + precision * accuracyRules().precisionStackValue : 0;
+  const precisionMultiplier = fixCoreEnabled(ctx) ? statMix + (precision + streak) * accuracyRules().precisionStackValue : 0;
   // Lightning (SPEC 4.7): +1 against a target using metal; each Shocked stack on the attacker is -1.
   const elementDelta = fixCoreEnabled(ctx) ? lightningPrecisionBonus(ctx, target, carrier) - shockedPenalty(source) : 0;
   // Itemised Precision for the combat log's roll receipt (parts sum to the floored accuracy; zero-valued optional parts are omitted).
   const precisionParts = fixCoreEnabled(ctx) ? [{ label: 'base', value: cfg.precisionBase }, ...precisionStatParts(ctx, source, carrier), { label: 'stacks', value: precision * accuracyRules().precisionStackValue },
+    ...(streak ? [{ label: 'same-stance streak', value: streak * accuracyRules().precisionStackValue }] : []),
     ...[['gear', Number(source.basePrecisionBonus) || 0], ['maneuver', cfg.maneuverPrecision[maneuver] || 0], ['read', Math.floor(proposal.accuracyDelta / 5)], ['range', rangeContact?.precisionDelta || 0], ['lightning / Shocked', elementDelta]].filter(([, v]) => v).map(([label, value]) => ({ label, value }))] : undefined;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + elementDelta + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
-    : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
+    : attackAccuracy(ctx, source, carrier) + precision + streak + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options)) : effectiveEvasion(ctx, target, options);
   const need = fixCoreEnabled(ctx) ? evasion - accuracy : Math.max(2, Math.min(20, 8 + evasion - accuracy));
@@ -186,7 +189,7 @@ export function previewCardAttackHit(ctx, source, target, carrier, options = {})
   if (!next) return attackHitPreview(ctx, source, target, carrier, options);
   const grants = !sameStance(source, selected) ? stanceEntryBonuses(selected, ctx) : { precision: 0 };
   if (fixCoreEnabled(ctx)) grants.precision = precisionEntryGrant(ctx, source, grants.precision, selected);
-  const projected = { ...source, combatStance: next, statuses: { ...source.statuses } };
+  const projected = { ...source, combatStance: next, stanceStreak: nextStanceStreak(source, selected), statuses: { ...source.statuses } };
   if (grants.precision > 0) projected.statuses.precision = { ...source.statuses?.precision, stacks: stacks(source, 'precision') + grants.precision };
   const entity = value => value === projected ? source : value;
   const local = { ...ctx, ...(ctx.player === source ? { player: projected } : {}),

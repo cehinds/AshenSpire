@@ -2,7 +2,7 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
+import { sameStance, acceptedStanceStreak, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
@@ -37,6 +37,7 @@ export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
   if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx, entity, carrier).stance.effectivenessMultiplier - 1 : 0;
+  entity.stanceStreak = acceptedStanceStreak(entity, carrier, carrier);
   const previous=entity.combatStance;
   const grants = fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
   const rule = configuredModule(ctx, 'stances');
