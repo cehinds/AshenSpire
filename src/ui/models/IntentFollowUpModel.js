@@ -185,7 +185,7 @@ export function CreateFollowUpReduction(followMemo)
                 }
                 case 'enemyStaggered':
                     // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
-                    if (followMemo.row(e.targetId, true)?.length)
+                    if (followMemo.row(e.targetId, true)?.length || disp?.ents[e.targetId]?.followUps?.length)
                     {
                         row(e.targetId, []);
                     }
@@ -203,11 +203,8 @@ export function CreateFollowUpReduction(followMemo)
                     }
                     break;
                 case 'enemyActorTurnStarted':
-                    followMemo.clearRow(e.sourceId);
-                    if (disp?.ents[e.sourceId])
-                    {
-                        disp.ents[e.sourceId].followUps = [];
-                    }
+                    // Nothing goes: the seeded row (snapshot and memo) stays until the head move or a stagger speaks, so "??" does
+                    // not blink out and back. Rows of an earlier turn are already gone (enemyTurnEnd / playerTurnStart clear them).
                     break;
                 default:
                     continue;

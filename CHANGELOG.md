@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-12
 
+- **Combat HUD: Poise bar drains, steady enemy follow-up marks, centred stance icon** ([#2741](https://github.com/cehinds/AshenSpire/pull/2741), `0.7.4.63`). The Poise bar now starts full and drains as you take hits, and its numbers show Poise left. An enemy's planned follow-up actions now always show beside its intent on your turn, at full size, instead of sometimes appearing only during the enemy turn. The stance icon sits centred over the health bar, and the Block shield is only as tall as the health and Poise bars.
 - **Behind the scenes: safer saves, settings and portable checks** ([#2740](https://github.com/cehinds/AshenSpire/pull/2740), `0.7.4.63`). Each saved run now validates against its own game profile. Settings Reset and Undo reject stale offers and handle reopened expiry timers. Core 2's save, combat, targeting and enemy-display code now has clearer owners; its checks no longer rely on machine-specific paths or Windows line endings. Default combat and random results are unchanged.
 
 ## 2026-11-08

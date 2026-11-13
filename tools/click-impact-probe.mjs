@@ -158,6 +158,50 @@ async function main() {
   };
 
 
+  // The hand fans and lifts cards under the pointer, and neighbours overlap, so a cold press at a
+  // point measured earlier can land on the neighbour. Hover the point, let the hand settle, re-measure,
+  // and require the hit to be inside the intended card before pressing; then require that card to be
+  // the selected one (or already played), deselecting a wrong pick and retrying a bounded number of times.
+  const clickCard = async (sel, label, expectedInstanceId, playedBefore) => {
+    const debug = args.includes('--debug');
+    const measureCard = () => evalIn(`(() => {
+      const card = document.querySelector(${JSON.stringify(sel)});
+      if (!card) return null;
+      const { x, y } = ${pointerTargetExpression(sel)};
+      const hit = document.elementFromPoint(x, y);
+      return { x, y, ok: !!hit && card.contains(hit), hit: hit?.outerHTML.slice(0, 160) || null, card: card.outerHTML.slice(0, 160) };
+    })()`);
+    const settleHand = () => evalIn(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => resolve(true), 150))))`);
+    const escape = async () => {
+      for (const type of ['keyDown', 'keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27 }, S);
+    };
+    for (let attempt = 0; attempt <= 2; attempt += 1) {
+      let pt = await measureCard();
+      if (!pt) throw new Error(`no element for ${label} (${sel})`);
+      let stable = false;
+      for (let tries = 0; tries < 4 && !stable; tries += 1) {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
+        await settleHand();
+        const again = await measureCard();
+        if (!again) throw new Error(`no element for ${label} (${sel})`);
+        pt = again;
+        if (again.ok) stable = true;
+        else if (debug) console.log('    input', label, 'hit is off the card, re-measuring', JSON.stringify(again));
+      }
+      if (!stable) throw new Error(`${label}: the point (${pt.x}, ${pt.y}) hits ${pt.hit} instead of the intended card ${pt.card}`);
+      if (debug) console.log('    input', label, sel, JSON.stringify(pt));
+      await clickAt(pt.x, pt.y);
+      await wait(150);
+      const state = await evalIn(`({ played: window.__combat?.player?.counters?.cardsPlayedThisCombat || 0, selected: [...document.querySelectorAll('.hand .card.selected')].map(c => c.dataset.instanceId) })`);
+      if (state.played > playedBefore || (state.selected.length === 1 && state.selected[0] === expectedInstanceId)) return;
+      if (debug) console.log('    input', label, `selection is [${state.selected}], not ${expectedInstanceId}; deselecting and retrying (${attempt + 1}/2)`);
+      if (attempt === 2) break;
+      if (state.selected.length) await escape();
+      await wait(200);
+    }
+    throw new Error(`${label}: the intended card ${expectedInstanceId} never became the selected one`);
+  };
+
   const measure = async () => {
     await openPage();
     await cdp.send('Page.navigate', { url: base }, S);
@@ -338,7 +382,7 @@ async function main() {
       // play does not cover the next card.
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 700, y: 120 }, S);
       await wait(250);
-      await click('[data-ci-card="true"]', 'an immediate-impact card', false);
+      await clickCard('[data-ci-card="true"]', 'an immediate-impact card', picked.instanceId, before);
       const t0 = Date.now();
       while (Date.now() - t0 < 3000 && (await played()) === before) {
         if (await evalIn(`!!document.querySelector('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])')`)) { await click('.enemy-target-picker:not([hidden]) .enemy-target-button:not([disabled])', 'its legal enemy target', false); break; }

@@ -3,6 +3,7 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
@@ -57,9 +58,11 @@ import { createToast } from '../components/toast.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo, fightPrewarmJobs } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
+import { enemyPlanActions, multiActionOn } from '../../engine/normalPreview.js';
+import { followUpSymbols, perceptionLevel, readStage } from '../models/CombatRoundsScreenModel.js';
 import { discardCandidates } from '../../engine/abilityRiders.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
@@ -1093,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Poise', ...PoiseLeft(v, entity) },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
@@ -1144,7 +1147,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
-        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        { label: 'Poise', ...PoiseLeft(v, entity) },
         // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
         ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
           value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
@@ -1268,11 +1271,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // proc bar blinked out at play time — which reads as "bleed broke" — and
   // the drain animation targeted a bar the re-render had already removed).
   // Statuses and poise ride along; applyBeatToDisp advances them per beat.
-  function takeSnapshot() {
-    return CaptureCombatDisplay(combat, {
+  function takeSnapshot({ enemyPhase = false } = {}) {
+    // Every dispatch that captures `disp` (a card, flask, move, End Turn): each live enemy's follow-up marks are frozen
+    // here, before the dispatch, so a card that breaks Poise or trims the plan changes them only when its own beat plays,
+    // and an enemy that has not acted yet keeps its row through the others' beats (SPEC 4.9).
+    const seed = combat.phase === 'player' && !combat.reactionCursor && !combat.pendingReaction && !enemyPlayback
+      ? new Map(combat.enemies.filter(enemy => enemy.alive).map(enemy => [enemy.id, playerTurnFollowUps(enemy)])) : null;
+    const snapshot = CaptureCombatDisplay(combat, {
       registries, projectCombatIntent, previewCard, followMemo, upcastRanksByCard,
       paintedHandQuotes: handPreviewCache.cards,
     });
+    if (seed) for (const [id, symbols] of seed) {
+      if (symbols == null || !snapshot.ents[id]) continue;
+      snapshot.ents[id].followUps = symbols;
+      // End Turn: the memo outlives `disp`, which a reaction pause clears, so the rows also live there until the turn ends.
+      if (enemyPhase) followMemo.setRow(id, symbols);
+    }
+    return snapshot;
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -1898,6 +1913,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const row = registries.resources.get('poise');
       plan.push({ id: 'poise', name: row.name, glyph: row.glyph || '', tint: row.tint, weight: row.weight, band: row.band || null, cur: 0, max: 0, pct: 0, lengthPct: 100, domain: 0, labelMax: 0 });
     }
+    // Owner 2026-11-12: the bar under HP shows Poise left (full when untouched, draining as the meter fills); cur/max stay the meter's own.
+    const poiseAt = plan.findIndex((bar) => bar.id === 'poise');
+    plan[poiseAt] = PoiseBarRemaining(plan[poiseAt]);
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
@@ -1941,12 +1959,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
-    // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
+    // The near-break pulse (PoiseNearBreak) is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
-      if (bar.id === 'poise' && bar.max > 0 && bar.cur >= bar.max * 0.75) {
+      if (PoiseNearBreak(bar)) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
-        if (el) el.classList.add('pulse', 'full');
+        if (el) el.classList.add('pulse');
       }
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
@@ -2195,9 +2213,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
+  // The follow-up symbols an enemy's intent node carries: the enemy phase / playback row as ever; on the player's turn
+  // the planned follow-ups under the Perception rule (SPEC 4.9), read from the memoised preview, so every rebuild of
+  // the node draws them and nothing is added afterwards.
+  function followUpsFor(enemy) {
+    // A row on the snapshot (seeded before the dispatch, then advanced by the reducer) is what is on screen, in every phase.
+    const shown = disp?.ents[enemy.id]?.followUps;
+    if (shown != null) return shown;
+    const live = combat.phase === 'enemy' || !!combat.reactionCursor;
+    if (live || enemyPlayback) return followMemo.row(enemy.id, live);
+    if (!enemy.alive) return null;
+    return playerTurnFollowUps(enemy);
+  }
+  function playerTurnFollowUps(enemy) {
+    if (!multiActionOn(combat)) return null;
+    const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
+    const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
+    return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+  }
   function intentEl(enemy) {
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
-    const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
+    const followUps = followUpsFor(enemy);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const currentRead = (busy || enemyPlayback || combat.pendingReaction) && disp?.ents[enemy.id]?.intentPreview
         || projectCombatIntent(combat, enemy.id);
@@ -2240,11 +2276,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // by syncHitChances, not drawn here.
       const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
       const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      const followUps = showIntent ? followUpsFor(enemy) : null;
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, followUps, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const settings = settingsStamp();
       const idx = living.indexOf(enemy);
-      const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
@@ -3770,7 +3806,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selectedFlask = null;
       hideTooltip();
-      disp = takeSnapshot();
+      disp = takeSnapshot({ enemyPhase: true });
       let out;
       try {
         heldTurnHand = [...disp.hand];

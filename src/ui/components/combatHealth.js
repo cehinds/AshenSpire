@@ -4,8 +4,8 @@ import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
-// The combat HUD's one layout for every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): a tall Block shield on the
-// left (its slot is reserved at Block 0), then three stacked rows: the HP bar (number to its right), the Poise bar (the
+// The combat HUD's one layout for every combatant (owner, 2026-11-07, backlog #11/#4/#5/#6): a Block shield on the
+// left, as tall as the HP and Poise rows (its slot is reserved at Block 0), then three stacked rows: the HP bar (number to its right), the Poise bar (the
 // same width and height) and one badge row. The badge row holds every badge kind and the combatant's status tray, so
 // buffs, Precision, Evade, Ward, Counter and Reflect are one family of round count badges. The row's width is a layout
 // token (`--hud-mini-bar-width`), never a function of max HP, Block or badge count.

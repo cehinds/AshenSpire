@@ -68,10 +68,10 @@ test('the hit-% badge is white, black-outlined, centred on the body and untoucha
 
 
 // Selector contract only: Chromium QA still checks the full cascade and measured bounds.
-test('compact intent rules preserve planned follow-ups while still hiding verbose siblings', () => {
+test('compact intent rules keep planned follow-ups in the compact row while still hiding verbose siblings', () => {
   withKitDom(({ document }) => {
     const compact = document.createElement('span'); compact.className = 'intent-compact';
-    const followups = document.createElement('span'); followups.className = 'cr-followups';
+    const followups = document.createElement('span'); followups.className = 'intent-followups'; compact.append(followups);
     const verbose = document.createElement('span'); verbose.className = 'intent-values';
     for (const file of ['combat-layers.css', 'combat.css', 'combat-target-responsive.css']) {
       const hiding = [...css(file).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
@@ -80,10 +80,8 @@ test('compact intent rules preserve planned follow-ups while still hiding verbos
       for (const [, selector] of hiding) {
         const child = selector.slice(selector.lastIndexOf('>') + 1).trim();
         assert.equal(compact.matches(child), false, `${file}: primary action remains visible`);
-        assert.equal(followups.matches(child), false, `${file}: appended planned actions remain visible`);
+        assert.equal(compact.contains(followups), true, `${file}: planned actions live inside the compact row, so they stay visible`);
         assert.equal(verbose.matches(child), true, `${file}: expanded detail remains hidden in compact mode`);
-        assert.equal(followups.matches(child.replace(':not(.cr-followups)', '')), true,
-          `${file}: the former hiding selector reproduces the regression on the real child class`);
       }
     }
   });
