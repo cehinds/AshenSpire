@@ -3471,7 +3471,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       {
         ...fxCtx,
         onIntent: beat => {
-          const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
+          // The head shows a move's real intent when that move starts (its intent / action-word stage), not when the beat is
+          // applied after the animation: an enemy's non-reaction announcing receipts are applied early too. Applying them
+          // again in onBeatApplied is harmless (the follow-up reducer dedupes per event; the intent receipt and the
+          // stance write set the same values).
+          const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted'
+            || ['enemyMoveStarted', 'combatContactPrepared', 'combatHitStarted'].includes(event.type)
+            && !event.reaction && event.intentPreview && disp?.ents?.[event.sourceId]?.kind === 'enemy');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
         },
         onResolution: () => {
