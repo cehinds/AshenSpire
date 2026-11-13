@@ -285,9 +285,14 @@ export function setCombatCanvas(on) {
 export function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  const view = applyViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight), window.innerWidth, visibleHeight);
+  const effective = effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight);
+  const view = applyViewViewport(effective, window.innerWidth, visibleHeight);
+  // A canvas picked by combat Auto is a layout frame, not the player's screen:
+  // the short-screen / turn-your-phone gate is still decided from the real window.
+  const gateFromWindow = !VIEW_PRESETS[String(settings.viewPreset || 'auto').toLowerCase()] && view.preset !== 'auto';
   document.documentElement.style.setProperty('--visible-height', view.height + 'px');
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
+  const { zoom, narrow, compact, short: canvasShort } = resolveLayout(settings.uiScale, view.width, view.height);
+  const short = gateFromWindow ? resolveLayout(settings.uiScale, window.innerWidth, visibleHeight).short : canvasShort;
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -320,6 +325,7 @@ export function applyUiScale(settings) {
   // a gate nobody believes the second time.
   const turned = typeof window === 'undefined'
     ? { short: true }
+    : gateFromWindow ? resolveLayout(settings.uiScale, visibleHeight, window.innerWidth)
     : resolveLayout(settings.uiScale, view.height, view.width);
   // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
   // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
