@@ -7,7 +7,7 @@
 // No import-time side effects: the global listeners register from
 // installDisplaySettings() / installCardSizeResize(), which main.js calls at the
 // spots the inline registrations used to sit.
-import { applyViewViewport, resolveViewViewport } from './viewViewport.js';
+import { applyViewViewport, resolveViewViewport, VIEW_PRESETS } from './viewViewport.js';
 import { formFactorFor } from './models/FormFactorModel.js';
 import { applyHudVisibility } from './models/HudVisibilityModel.js';
 import { cardLevelsWithOverrides, cardLevelCssPropertiesFor, cardShelfCssProperties, restingWidthPx, levelRestingWidthPx } from './models/CardSizeModel.js';
@@ -261,10 +261,31 @@ export function resolveLayout(uiScale, vw, vh) {
   return layoutForCap(named != null ? named : Infinity, vw, vh);
 }
 
+// While the combat screen is mounted, View = Auto lays out on the form
+// factor's fixed canvas (docs/design/fixed-form-factor-layouts.md). Outside
+// combat Auto is native; a manual View preset wins everywhere.
+let combatCanvas = false;
+
+export function effectiveViewPreset(viewPreset, combatOn, width, height) {
+  const key = String(viewPreset || 'auto').toLowerCase();
+  if (VIEW_PRESETS[key]) return key;
+  return combatOn ? formFactorFor(width, height, UI.uiScale.formFactor) : 'auto';
+}
+
+export function setCombatCanvas(on) {
+  on = !!on;
+  if (on === combatCanvas) return;
+  combatCanvas = on;
+  if (!saves) return;
+  const settings = saves.loadMeta().settings || {};
+  applyUiScale(settings);
+  applyCardSizeSettings(settings);
+}
+
 export function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  const view = applyViewViewport(settings.viewPreset, window.innerWidth, visibleHeight);
+  const view = applyViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight), window.innerWidth, visibleHeight);
   document.documentElement.style.setProperty('--visible-height', view.height + 'px');
   const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
   // Set as a CSS var so base.css can compensate the body's width/height for the
@@ -395,11 +416,11 @@ export function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
+  const resting = restingWidthPx(resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, window.innerHeight), window.innerWidth, window.innerHeight).width, levels);
   setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // Focus and inspect rest the same way: the phone keeps its `mobile` variant, a desktop gets the authored (20% larger) width.
   for (const level of ['focus', 'inspect']) {
-    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels)}px`);
+    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, window.innerHeight), window.innerWidth, window.innerHeight).width, levels)}px`);
   }
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
