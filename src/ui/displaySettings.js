@@ -637,6 +637,15 @@ export function installDisplaySettings() {
     });
     window.addEventListener('load', reflexAutoScale);
     setTimeout(reflexAutoScale, 300);
+    // The combat canvas follows the combat screen: it mounts as a direct child
+    // of #app and every other screen replaces it. Observed here so no screen
+    // file has to announce itself.
+    const app = document.getElementById('app');
+    if (app && typeof MutationObserver === 'function') {
+      const sync = () => setCombatCanvas(!!app.querySelector(':scope > .combat'));
+      new MutationObserver(sync).observe(app, { childList: true });
+      sync();
+    }
   }
 }
 
