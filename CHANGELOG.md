@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-13
+
+- **Behind the scenes: theme colours live in one settings file** ([#2743](https://github.com/cehinds/AshenSpire/pull/2743), `0.7.4.65`). The game's main colours, including the high-contrast and colour-blind variants, are now edited in content/config/ui/tokens.json instead of the stylesheet. Nothing you see changes.
+
 ## 2026-11-12
 
 - **Combat HUD: Poise bar drains, steady enemy follow-up marks, centred stance icon** ([#2741](https://github.com/cehinds/AshenSpire/pull/2741), `0.7.4.65`). The Poise bar now starts full and drains as you take hits, and its numbers show Poise left. An enemy's planned follow-up actions now always show beside its intent on your turn, at full size, instead of sometimes appearing only during the enemy turn. The stance icon sits centred over the health bar, and the Block shield is only as tall as the health and Poise bars.
