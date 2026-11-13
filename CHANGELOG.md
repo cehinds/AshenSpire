@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-13
 
-- **Behind the scenes: theme colours live in one settings file** ([#2743](https://github.com/cehinds/AshenSpire/pull/2743), `0.7.4.65`). The game's main colours, including the high-contrast and colour-blind variants, are now edited in content/config/ui/tokens.json instead of the stylesheet. Nothing you see changes.
+- **Behind the scenes: theme colours live in one settings file** ([#2743](https://github.com/cehinds/AshenSpire/pull/2743), `0.7.4.67`). The game's main colours, including the high-contrast and colour-blind variants, are now edited in content/config/ui/tokens.json instead of the stylesheet. Nothing you see changes.
 
 ## 2026-11-12
 
