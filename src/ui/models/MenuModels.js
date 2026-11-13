@@ -1,17 +1,17 @@
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t } from '../strings.js';
 
 function quickMenuCaptionModel({ mode, label }) {
-  return componentModel(UI.quickMenuCaption, {
+  return ComponentModel(UI.quickMenuCaption, {
     variant: mode,
     properties: { label },
   });
 }
 
 function quickMenuRowModel(row) {
-  return componentModel(UI.quickMenuRow, {
+  return ComponentModel(UI.quickMenuRow, {
     variant: row.act,
     properties: {
       act: row.act,
@@ -41,7 +41,7 @@ function quickMenuRowModel(row) {
 }
 
 export function quickMenuPanelModel({ context, mode, caption, rows }) {
-  return componentModel(UI.quickMenuPanel, {
+  return ComponentModel(UI.quickMenuPanel, {
     variant: context,
     properties: { context, mode },
     accessibility: { role: 'menu', label: t('settings.row.quickNav') },
@@ -50,7 +50,7 @@ export function quickMenuPanelModel({ context, mode, caption, rows }) {
 }
 
 function menuTabModel(tab, active = false) {
-  return componentModel(UI.menuTab, {
+  return ComponentModel(UI.menuTab, {
     variant: tab.id,
     properties: { id: tab.id, label: tab.label, active },
     accessibility: { role: 'tab', label: tab.label, selected: active },
@@ -63,7 +63,7 @@ function menuTabModel(tab, active = false) {
 }
 
 function menuTabStripModel({ tabs, activeId = '', folded = false }) {
-  return componentModel(UI.menuTabStrip, {
+  return ComponentModel(UI.menuTabStrip, {
     variant: folded ? 'folded' : 'visible',
     properties: { folded },
     accessibility: { role: 'tablist', label: 'Run menu' },
@@ -72,7 +72,7 @@ function menuTabStripModel({ tabs, activeId = '', folded = false }) {
 }
 
 function menuPanelModel(id = '') {
-  return componentModel(UI.menuPanel, {
+  return ComponentModel(UI.menuPanel, {
     variant: id,
     properties: { id },
     accessibility: { role: 'tabpanel', label: id || 'Menu panel' },
@@ -80,14 +80,14 @@ function menuPanelModel(id = '') {
 }
 
 function menuFooterModel() {
-  return componentModel(UI.menuFooter, {
+  return ComponentModel(UI.menuFooter, {
     accessibility: { role: 'contentinfo', label: 'Run actions' },
     children: [
-      componentModel(UI.saveGameControl, {
+      ComponentModel(UI.saveGameControl, {
         accessibility: { role: 'button', label: 'Save Game' },
         behaviors: [behaviorModel('save-game', { event: 'click', command: 'save-game' })],
       }),
-      componentModel(UI.saveQuitControl, {
+      ComponentModel(UI.saveQuitControl, {
         accessibility: { role: 'button', label: 'Save and Quit' },
         behaviors: [behaviorModel('save-quit', { event: 'click', command: 'save-quit-to-title' })],
       }),
@@ -96,7 +96,7 @@ function menuFooterModel() {
 }
 
 export function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored = false }) {
-  return componentModel(UI.menuOverlay, {
+  return ComponentModel(UI.menuOverlay, {
     variant: folded ? 'folded' : (mirrored ? 'mirrored' : 'tabs'),
     properties: { folded, mirrored, activeId },
     accessibility: { role: 'dialog', label: 'Run menu', modal: true },

@@ -1,0 +1,75 @@
+{
+  "enrolled": [
+    "src/engine/combatCounterPreview.js",
+    "src/engine/saveTransfer.js",
+    "src/engine/savedRunContext.js",
+    "src/model/enemyProjection.js",
+    "src/services/entryCheckpoint.js",
+    "src/services/profileBoot.js",
+    "src/services/runBirth.js",
+    "src/services/runPersistence.js",
+    "src/ui/components/combatMount.js",
+    "src/ui/components/combatPlayback.js",
+    "src/ui/models/CombatPlaybackModel.js",
+    "src/ui/models/CombatTargetingModel.js",
+    "src/ui/models/ComponentModel.js",
+    "src/ui/models/CounterStackPercentModel.js",
+    "src/ui/models/SettingsDraftModel.js",
+    "src/ui/viewModels/RunHudViewModel.js"
+  ],
+  "formatProtected": [
+    "src/model/fixCoreMechanics.js",
+    "src/model/formulas.js"
+  ],
+  "aliases": [
+    {
+      "path": "src/engine/saveTransfer.js",
+      "name": "createSaveTransfer",
+      "target": "CreateSaveTransfer",
+      "kind": "adapter",
+      "reason": "Legacy tools use lowercase transfer methods."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "childModel",
+      "target": "ChildModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "componentModel",
+      "target": "ComponentModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "descendantModel",
+      "target": "DescendantModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "isComponentModel",
+      "target": "IsComponentModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/models/ComponentModel.js",
+      "name": "optionalChildModel",
+      "target": "OptionalChildModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    },
+    {
+      "path": "src/ui/viewModels/RunHudViewModel.js",
+      "name": "runHudViewModel",
+      "target": "RunHudViewModel",
+      "kind": "binding",
+      "reason": "Existing consumers can retain the old import during migration."
+    }
+  ]
+}

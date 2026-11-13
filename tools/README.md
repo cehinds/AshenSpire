@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (243 tool files, plus the 8 subfolders)
+## Tools something references (243 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -21,6 +21,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `card-layers/` (7 files) | Open '/tools/card-layers/index.html#editor' on the existing source-preview server. | tools card-layout-save-qa, card-master-qa, card-rank-layers/preview.html; other workbench/tools.json |
 | `card-rank-layers/` (2 files) | Open '/tools/card-rank-layers/preview.html' on the repository preview server. | tools card-layout-save-qa, card-rank-layers-qa; other workbench/tools.json |
 | `card-solid-bb/` (2 files) | Implementation notes for 'feature/card-solid-bb'. The screenshots and 'report.json' | tools card-layers/index.html; other workbench/tools.json |
+| `code-quality/` | Checks callable names across authored source and formatting and types at enrolled boundaries. | npm code:check, code:format |
 | `combat-audit/` (16 files) | This audit found and fixed the primary Quit menu action and two measured initialization costs: the Settings card… | tests combat-audit-card-condition-contracts, combat-audit-card-effect-contracts, combat-audit-cards +6; docs docs/handoffs/full-combat-audit.md, docs/preview/full-combat-audit/README.md, docs/preview/full-combat-audit/accepted-stance-followup.md +2 |
 | `hud-component-studio/` (1295 files) | From this directory, run 'python -m http.server 8360 --bind 127.0.0.1' and open http://localhost:8360/. On Windows,… | docs CREDITS.md, docs/ai/CHARACTER-CREATION-HANDOFF.md, docs/design/character-creation/README.md +1; other docs/component-catalog.html, workbench/tools.json |
 | `lib/` (7 files) | tools/lib/build-lock — one writer of the generated trees across processes. | tests build-lock, build-steps, class-smash-qa-notices +4; tools config-build, content-build, engine-export +2; other .gitignore, editor/server.mjs +12 |
@@ -269,6 +270,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `zip.mjs` | zip — a deterministic zip writer and a small reader, no dependencies. | tests fetch-art, offline-zip; tools art-manifest, buildversion, fetch-art +1; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/offline-play.md; other src/model/offlineDownload.js, src/model/zipStream.js |
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
+| `working-tree-text.mjs` | Canonical LF comparisons for generated text checked out with platform line endings. | tests working-tree-text; tools asset-catalog, export-reviewed-card-art, mechanics-generate, readme-sync |
 
 ## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (155 files)
 

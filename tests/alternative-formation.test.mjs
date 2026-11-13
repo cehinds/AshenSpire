@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeFormation, perspectiveBandRows, fitAlternativeSprites, overheadGroupHeightPx, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
@@ -323,7 +323,7 @@ test('the overhead group height is config only: phone, desktop and short desktop
   assert.equal(overheadGroupHeightPx(grid, { wide: true, tall: false, shortWindow: false }), 78);
   // The stage's helper takes no frame and reads no layout: a selected frame hides its meters, so any DOM
   // measurement here would change with selection and refit the settled artwork on every click.
-  const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url));
   const helper = source.slice(source.indexOf('const miniHudGroupHeight ='), source.indexOf('\n\n', source.indexOf('const miniHudGroupHeight =')));
   assert.ok(helper.length > 40, 'helper found');
   assert.doesNotMatch(helper, /offsetHeight|getBoundingClientRect|clientHeight|querySelector|classList/);

@@ -843,7 +843,7 @@ export function banner(layer, text, cls = '', lifeMs = null) {
 // recoil held and lengthens it by the same amount (never cut short).
 let hitStop = 0;
 const heldFigures = new Map();
-function hold(el, ms) {
+function hold(el, ms, combatEl) {
   if (!el || !(ms > 0) || effectsOff()) return;
   const swing = flashTimers.get(el)?.get('act-attack');
   if (swing) {
@@ -852,21 +852,23 @@ function hold(el, ms) {
       el.classList.remove('act-attack'); flashTimers.get(el)?.delete('act-attack');
     }, Math.max(0, swing.due - Date.now()));
   }
-  clearTimeout(heldFigures.get(el));
+  clearTimeout(heldFigures.get(el)?.timer);
   el.classList.add('hit-stop');
-  heldFigures.set(el, setTimeout(() => {
+  const timer = setTimeout(() => {
     el.classList.remove('hit-stop');
     heldFigures.delete(el);
-  }, ms));
+  }, ms);
+  heldFigures.set(el, { timer, combatEl });
 }
 
-function clearHeldFigures() {
-  for (const [el, timer] of heldFigures) {
-    clearTimeout(timer);
+function clearHeldFigures(combatEl) {
+  for (const [el, hold] of heldFigures) {
+    if (combatEl && hold.combatEl !== combatEl) continue;
+    clearTimeout(hold.timer);
     el.classList.remove('hit-stop');
     stageFor(el)?.settle?.({ reaction: true });
+    heldFigures.delete(el);
   }
-  heldFigures.clear();
 }
 
 // A smaller hit does not cut a bigger shake short: while one plays, only a
@@ -1217,18 +1219,28 @@ export function playTimeline(events, ctx, done) {
     callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
   };
   let handle, skippedPointer = false;
+  const isCurrent = () => ctx.isCurrent?.() ?? true;
   const skip = event => {
+    if (!isCurrent()) { handle?.cancel(); return; }
     if (event?.target?.closest?.('[data-combat-read-only], dialog, [role="dialog"]')) return;
     dlog('input', 'tap skipped animation');
     skippedPointer = true;
     handle?.pauseForSkip();
     // Keep the screen busy through pointer release, so the same click cannot
     // activate a newly rendered card after it skipped this action.
-    clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+    clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
   };
-  const release = () => { if (skippedPointer) handle?.skip(); };
-  const blur = () => { clearCallouts(ctx.layer); handle?.skip(); };
-  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') { clearCallouts(ctx.layer); handle?.skip(); } };
+  const release = () => {
+    if (!isCurrent()) { handle?.cancel(); return; }
+    if (skippedPointer) handle?.skip();
+  };
+  const blur = () => {
+    if (!isCurrent()) { handle?.cancel(); return; }
+    clearCallouts(ctx.layer); handle?.skip();
+  };
+  const visibility = () => {
+    if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') blur();
+  };
   addEventListener('pointerdown', skip, { capture: true });
   addEventListener('pointerup', release, { capture: true });
   addEventListener('pointercancel', release, { capture: true });
@@ -1291,7 +1303,7 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      if (holdMs && !effectsOff()) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs, ctx.combatEl); }
       if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
@@ -1369,10 +1381,12 @@ export function playTimeline(events, ctx, done) {
     },
     onWatchdog: () => { dbg.watchdog = (dbg.watchdog || 0) + 1; },
     onFlush: () => {
-      for (const beat of beats) cue(beat, false);
-      clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
-      for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
-      ctx.onFlush?.();
+      const current = isCurrent();
+      if (current) for (const beat of beats) cue(beat, false);
+      const mount = ctx.combatEl ?? globalThis.document;
+      clearHeldFigures(ctx.combatEl); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+      for (const sprite of mount?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
+      if (current) ctx.onFlush?.();
     },
     onDone: () => {
       removeEventListener('pointerdown', skip, { capture: true });
@@ -1716,7 +1730,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
             if (held) stageFor(anchor)?.hold?.(held);
           }
           if (heavy) flash(anchor, 'hit-heavy', 380 + held);
-          hold(anchor, held);
+          hold(anchor, held, ctx.combatEl);
           // Every HP hit shakes, by the share of the target's max HP it cost (SPEC §7.4).
           shake(ctx.combatEl, shakePxFor(parts.residual, typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0));
         },

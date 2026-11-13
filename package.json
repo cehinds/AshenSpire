@@ -24,6 +24,8 @@
     "plantsites": "node tools/plantsites.mjs --check",
     "tokens:css": "node tools/tokens-css.mjs --write",
     "lint:style": "node tools/style-lint.mjs --check",
+    "code:check": "npm --prefix tools/code-quality run check",
+    "code:format": "npm --prefix tools/code-quality run format",
     "art:fetch": "node tools/fetch-art.mjs --pack light,common",
     "receipts": "node tools/receipts.mjs --check"
   }

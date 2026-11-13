@@ -1,7 +1,7 @@
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { armouryRailItems } from './ArmouryWorkspaceModel.js';
 import { t } from '../strings.js';
@@ -16,7 +16,7 @@ const DEFAULT_REGIONS = Object.freeze([
 // W1e: the views are the workspace's category rail. The ids are the saved
 // `equipView` values (grid, rack, hybrid, cards) and are never renamed.
 function armouryViewSwitcherModel({ views, activeView, viewLabels = {}, railLabel }) {
-  return componentModel(UI.armouryViewSwitcher, {
+  return ComponentModel(UI.armouryViewSwitcher, {
     variant: activeView,
     properties: {
       views: armouryRailItems({ views, activeView, labels: viewLabels })
@@ -32,7 +32,7 @@ function armouryViewSwitcherModel({ views, activeView, viewLabels = {}, railLabe
 }
 
 function armouryHeaderModel({ views, activeView, viewLabels = {}, title, closeLabel, railLabel }) {
-  return componentModel(UI.armouryHeader, {
+  return ComponentModel(UI.armouryHeader, {
     properties: { title, closeLabel },
     behaviors: [behaviorModel('close-armoury', { event: 'click', command: 'close-armoury' })],
     children: [armouryViewSwitcherModel({ views, activeView, viewLabels, railLabel })],
@@ -40,26 +40,26 @@ function armouryHeaderModel({ views, activeView, viewLabels = {}, title, closeLa
 }
 
 function armouryBodyModel({ view, figure, slots }) {
-  return componentModel(UI.armouryBody, {
+  return ComponentModel(UI.armouryBody, {
     variant: view,
     properties: { view, figure: !!figure, slots },
   });
 }
 
 export function armouryInventoryModel() {
-  return componentModel(UI.armouryInventory, {
+  return ComponentModel(UI.armouryInventory, {
     accessibility: { role: 'region', label: t('armoury.tab.inventory') },
   });
 }
 
 export function armouryStatsPanelModel() {
-  return componentModel(UI.armouryStatsPanel, {
+  return ComponentModel(UI.armouryStatsPanel, {
     accessibility: { role: 'region', label: 'Attributes and resources' },
   });
 }
 
 export function armouryCardStripModel() {
-  return componentModel(UI.armouryCardStrip, {
+  return ComponentModel(UI.armouryCardStrip, {
     accessibility: { role: 'region', label: 'Equipment cards' },
   });
 }
@@ -79,7 +79,7 @@ export function armouryPanelModel({
     if (!item) throw new Error(`Unknown Armoury region model: ${region.id}`);
     return item;
   });
-  return componentModel(UI.armouryPanel, {
+  return ComponentModel(UI.armouryPanel, {
     variant: view,
     properties: {
       view,
@@ -98,7 +98,7 @@ export function armouryPanelModel({
 }
 
 export function armouryOverlayModel({ panel, equippedTagColor = '' }) {
-  return componentModel(UI.armouryOverlay, {
+  return ComponentModel(UI.armouryOverlay, {
     properties: { equippedTagColor },
     accessibility: { role: 'presentation' },
     children: [panel],
@@ -106,7 +106,7 @@ export function armouryOverlayModel({ panel, equippedTagColor = '' }) {
 }
 
 export function equipmentSetCellModel({ slotId, index, state, active = false, piece = null, rung = null }) {
-  return componentModel(UI.equipmentSetCell, {
+  return ComponentModel(UI.equipmentSetCell, {
     variant: state === 'next' ? `${slotId}-locked` : slotId,
     properties: {
       slotId,
@@ -125,7 +125,7 @@ export function equipmentSetCellModel({ slotId, index, state, active = false, pi
 }
 
 export function equipmentSlotModel({ slotId, label, rule, cells }) {
-  return componentModel(UI.equipmentSlot, {
+  return ComponentModel(UI.equipmentSlot, {
     variant: slotId,
     properties: { slotId, label, rule: { ok: !!rule.ok, word: rule.word || '', reason: rule.reason || '' } },
     children: cells,
@@ -133,7 +133,7 @@ export function equipmentSlotModel({ slotId, label, rule, cells }) {
 }
 
 export function inventoryItemCardModel(row, { selected = false, draggable = false, classModel = null } = {}) {
-  return componentModel(UI.inventoryItemCard, {
+  return ComponentModel(UI.inventoryItemCard, {
     variant: row.category,
     properties: {
       key: row.key,
@@ -161,7 +161,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
 }
 
 export function inventoryDetailCardModel({ row, art, description, mods, instruction = '', classModel = null }) {
-  return componentModel(UI.inventoryDetailCard, {
+  return ComponentModel(UI.inventoryDetailCard, {
     variant: row.category,
     properties: {
       name: row.item.name,

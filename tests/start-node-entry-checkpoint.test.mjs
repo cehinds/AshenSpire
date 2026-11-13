@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
+import { CreateRunPersistence } from '../src/services/runPersistence.js';
 
 const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
 const refill = readFileSync(new URL('../src/model/nodeRefill.js', import.meta.url), 'utf8');
@@ -40,13 +41,20 @@ function fixture({ full = false, refillEnabled = true } = {}) {
     setTimeout: callback => tasks.push(callback),
     recordEntered: () => entered.push(run.combatEntered.encounterId),
   });
+  const persistence = CreateRunPersistence({
+    readCurrent: () => ({ run, rng: context.rng, registries: context.registries, slot: context.activeSlot }),
+    stampSkillBonuses: context.stampSkillBonuses,
+    saveRun: context.saves.saveRun,
+    reportFailure: context.reportAutosaveFailure,
+  });
+  context.persist = persistence.Persist;
+  context.persistOrWarn = persistence.PersistOrWarn;
   const entry = declaration(main, 'enterCombat');
   const checkpointEnd = entry.indexOf('  const enc = registries.encounters.get(');
   assert.ok(checkpointEnd > 0, 'real encounter receipt and guarded checkpoint boundary');
   vm.runInContext([
     declaration(grace, 'refillFlaskCharges'),
     declaration(refill, 'applyNodeRefill'),
-    declaration(main, 'persist'), declaration(main, 'persistOrWarn'),
     declaration(main, 'enterNode'), declaration(main, 'startFight'),
     declaration(main, 'startFightNow'),
     entry.slice(0, checkpointEnd) + '  recordEntered();\n}',

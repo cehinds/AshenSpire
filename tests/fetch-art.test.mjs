@@ -16,6 +16,7 @@ import { createServer } from 'node:http';
 import { artVersionForTag, zipNameFor, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, setAside, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, checkManifest, commonSources, releaseDocsFromCache, releaseDocsFromZips, releaseManifest, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const tmp = () => mkdtempSync(join(tmpdir(), 'fetch-art-'));
@@ -1035,7 +1036,7 @@ function jobsRunningToolsBeforeFetch(yml) {
 }
 
 test('every ci.yml checkout fetches art before tools or matches the reviewed headless declaration', () => {
-  const yml = readFileSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)), 'utf8');
+  const yml = readSourceTextSync(fileURLToPath(new URL('../.github/workflows/ci.yml', import.meta.url)));
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
   assert.ok(checked >= 10, `the job split found the checkout jobs (${checked})`);
   assert.deepEqual(missing, [], `these jobs run a tool on a checkout with no fetched art: ${missing.join(', ')}`);

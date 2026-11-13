@@ -1,11 +1,11 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { behaviorModel } from './BehaviorModel.js';
 import { panelModel } from './HudPrimitiveModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 export function vitalsPanelModel() {
   return panelModel(UI.vitalsPanel, 'vitals', [
-    componentModel(UI.resourceMeter, {
+    ComponentModel(UI.resourceMeter, {
       variant: 'main',
       accessibility: { label: 'Health and mana' },
       behaviors: [behaviorModel('mount-resource-meters')],

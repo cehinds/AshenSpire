@@ -1,4 +1,4 @@
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { behaviorModel } from './BehaviorModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
@@ -26,12 +26,12 @@ export function combatLogDragScale({ heights, viewportHeight, handleBottom }) {
   return Math.max(1, (heights.Large - heights.Small) / travel);
 }
 export function combatToolsModel({ supported, enabled, disabled = false, open = false, size = COMBAT_LOG_DEFAULT_SIZE, entries = [] }) {
-  return componentModel(UI.combatTools, { children: [
-    componentModel(UI.combatLogDrawer, { properties: { open, size, entries }, behaviors: [
+  return ComponentModel(UI.combatTools, { children: [
+    ComponentModel(UI.combatLogDrawer, { properties: { open, size, entries }, behaviors: [
       behaviorModel('toggleLog', { event: 'activate', policy: 'Read-only public receipts, grouped by round' }),
       behaviorModel('resizeLog', { event: 'activate', policy: 'Small, Medium, Large; bounded below actual menu buttons' }),
     ] }),
-    componentModel(UI.reactionToggle, { properties: { enabled: !!supported && enabled, disabled: !supported || disabled, supported: !!supported }, behaviors: [
+    ComponentModel(UI.reactionToggle, { properties: { enabled: !!supported && enabled, disabled: !supported || disabled, supported: !!supported }, behaviors: [
       behaviorModel('setReactions', { event: 'activate', policy: 'Owned optional prompts only; armed Counters remain active' }),
     ] }),
   ] });

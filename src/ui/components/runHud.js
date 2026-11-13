@@ -27,7 +27,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { hudShellHtml } from './hudmeta.js';
-import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
+import { RunHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from './hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from './resbars.js';
@@ -71,7 +71,7 @@ export function seatNameOf(registries, run) {
 export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '' }) {
   const map = run.mapGraph;
   const className = runClassIdentity(registries, run).name;
-  return hudShellHtml(runHudViewModel({
+  return hudShellHtml(RunHudViewModel({
     place,
     headerClass,
     // W4b: the map opts into its 10 vh header ('map-compact', sized by

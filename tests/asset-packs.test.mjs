@@ -14,6 +14,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { assetUrl, builtInSource, setBuiltInSource, setHighResSource } from '../src/ui/assetmap.js';
 import { sha256Bytes, sha256Hex } from '../src/ui/sha256.js';
 import { objectPath, indexText, twinText } from '../tools/asset-pack.mjs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 const A = 'a'.repeat(64);
@@ -711,7 +712,7 @@ function fakeDoc(baseURI = 'https://example.com/AshenSpire/dev/0001/index.html')
 
 test('the source tree carries no ASSET_CSS; the bundler stamps it in memory', () => {
   assert.equal(ASSET_CSS, null);
-  const src = readFileSync(new URL('../src/ui/assetPacks.js', import.meta.url), 'utf8');
+  const src = readSourceTextSync(new URL('../src/ui/assetPacks.js', import.meta.url));
   assert.match(src, /\/\* ASSET_CSS_START \*\/\nexport const ASSET_CSS = null;\n\/\* ASSET_CSS_END \*\//, 'the bundler anchors on these markers');
 });
 

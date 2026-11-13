@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readSourceTextSync} from './helpers/read-source.mjs';
 import {runInNewContext} from 'node:vm';
-const screen=readFileSync(new URL('../src/ui/screens/map.js',import.meta.url),'utf8');
-const component=readFileSync(new URL('../src/ui/components/mapboard.js',import.meta.url),'utf8');
+const screen=readSourceTextSync(new URL('../src/ui/screens/map.js',import.meta.url));
+const component=readSourceTextSync(new URL('../src/ui/components/mapboard.js',import.meta.url));
 function section(text,start,end){const a=text.indexOf(start),b=text.indexOf(end,a);assert.ok(a>=0&&b>a,`actual source boundary ${start}`);return text.slice(a,b);}
 const traySource=section(screen,'  function trayViewport(', '  function closeTray(');
 const centerSource=section(component,'  function centerOnNode(', '  // ⊙');

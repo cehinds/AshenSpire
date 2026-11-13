@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 import {
   CRITICAL_SET, CRITICAL_WAIT_MS, RETRY_WAIT_MS, criticalIds, bootArtLine, bootArtPhase, warmCriticalSet, startBootArt, bootArtRetried, resetBootArt,
 } from '../src/ui/bootArt.js';
@@ -74,7 +75,7 @@ test('the critical set is content/config’s: the title backdrops and the faces,
   for (const e of CRITICAL_SET) assert.ok(['any', 'portrait', 'landscape'].includes(e.orientation), e.id);
   assert.equal(CRITICAL_WAIT_MS, config.behavior.artLoading.criticalWaitMs);
   const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8')).assets;
-  const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const kit = readSourceTextSync(new URL('../styles/kit.css', import.meta.url));
   const fonts = ids.filter((id) => id.startsWith('assets/fonts/'));
   const backdrops = CRITICAL_SET.filter((e) => e.id.startsWith('assets/bg/'));
   assert.equal(fonts.length + backdrops.length, ids.length, 'only faces and backdrops');

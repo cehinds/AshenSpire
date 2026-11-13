@@ -17,6 +17,7 @@ import { autoCounterAvailable } from '../src/engine/combatMatchups.js';
 import { counterStackReturn } from '../src/engine/guardStacks.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -81,6 +82,9 @@ test('the return is the card\'s base damage + floor(stacks x 0.1 x incoming) (+ 
   assert.equal(triggered.amount, 4 + Math.floor(7 * 0.1 * 8) + 2);
   assert.equal(triggered.amount, 11);
   assert.equal(triggered.counterBase, 4); assert.equal(triggered.counterStacks, 7); assert.equal(triggered.counterIncoming, 8);
+  assert.equal(triggered.counterStackShare, 5);
+  const [line] = combatLogEntries([triggered], { registries: reg, enemies: combat.enemies });
+  assert.match(line.text, /for 11 \(base 4 \+ stack bonus 5 \+ advantage 2\)\.$/);
 });
 
 test('counterReturn units: base once, stacks floor per hit, no return from a zero hit', () => {

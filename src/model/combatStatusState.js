@@ -25,12 +25,15 @@ export function statusControlProblems(entity, path, { required = false, rules = 
   for (const key of Object.keys(s)) if (!keys.includes(key)) problems.push(`${prefix}.${key} is unknown`);
   if (s.version !== 1) problems.push(`${prefix}.version must be 1`);
   for (const key of ['sleepWardGranted', 'resolveNextTurn', 'resolveActive']) if (typeof s[key] !== 'boolean') problems.push(`${prefix}.${key} must be boolean`);
-  if (!whole(s.sleepHpRestored) || s.sleepHpRestored > (rules?.sleep?.hpCombatCap ?? 6)) problems.push(`${prefix}.sleepHpRestored exceeds its whole combat budget`);
-  if (!nonnegative(s.sleepWardContribution) || s.sleepWardContribution > (rules?.sleep?.wardCombatCap ?? 1)) problems.push(`${prefix}.sleepWardContribution exceeds its combat budget`);
+  const sleepHpCap = rules?.sleep?.hpCombatCap ?? 6;
+  if (!whole(s.sleepHpRestored) || (nonnegative(sleepHpCap) && s.sleepHpRestored > sleepHpCap)) problems.push(`${prefix}.sleepHpRestored exceeds its whole combat budget`);
+  const sleepWardCap = rules?.sleep?.wardCombatCap ?? 1;
+  if (!nonnegative(s.sleepWardContribution) || (nonnegative(sleepWardCap) && s.sleepWardContribution > sleepWardCap)) problems.push(`${prefix}.sleepWardContribution exceeds its combat budget`);
   for (const key of ['wardRestoreCarry', 'wardDamageCarry']) if (!nonnegative(s[key]) || s[key] >= 1) problems.push(`${prefix}.${key} must be a fractional carry in [0, 1)`);
-  if (!whole(s.ownerCycle)) problems.push(`${prefix}.ownerCycle must be a whole owner cycle`);
-  if (!Number.isSafeInteger(s.lastRecoveryCycle) || s.lastRecoveryCycle < -1 || s.lastRecoveryCycle > s.ownerCycle) problems.push(`${prefix}.lastRecoveryCycle must be between -1 and ownerCycle`);
-  if (s.lastSleepCycle !== undefined && (!whole(s.lastSleepCycle) || s.lastSleepCycle > s.ownerCycle)) problems.push(`${prefix}.lastSleepCycle must be within ownerCycle`);
+  const validOwnerCycle = whole(s.ownerCycle);
+  if (!validOwnerCycle) problems.push(`${prefix}.ownerCycle must be a whole owner cycle`);
+  if (!Number.isSafeInteger(s.lastRecoveryCycle) || s.lastRecoveryCycle < -1 || (validOwnerCycle && s.lastRecoveryCycle > s.ownerCycle)) problems.push(`${prefix}.lastRecoveryCycle must be between -1 and ownerCycle`);
+  if (s.lastSleepCycle !== undefined && (!whole(s.lastSleepCycle) || (validOwnerCycle && s.lastSleepCycle > s.ownerCycle))) problems.push(`${prefix}.lastSleepCycle must be within ownerCycle`);
   for (const key of ['wardAllowances', 'completedActions']) if (!record(s[key]) || Object.entries(s[key]).some(([id, value]) => !id || typeof value !== 'boolean')) problems.push(`${prefix}.${key} must map non-empty ids to booleans`);
   if (!record(s.gauges)) problems.push(`${prefix}.gauges must be an object`);
   else for (const [id, gauge] of Object.entries(s.gauges)) {

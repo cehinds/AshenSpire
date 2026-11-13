@@ -1,5 +1,5 @@
 import { behaviorModel } from './BehaviorModel.js';
-import { componentModel } from './ComponentModel.js';
+import { ComponentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { thaw } from '../../config/authored.js';
@@ -34,7 +34,7 @@ export function startupGateModel({
   settings = {},
 } = {}) {
   const family = Object.hasOwn(prompts, inputFamily) ? inputFamily : 'keyboard';
-  return componentModel(UI.startupGate, {
+  return ComponentModel(UI.startupGate, {
     variant: family,
     properties: {
       wordmark,

@@ -1,0 +1,6 @@
+{
+  "behavior": {
+    "holdMs": 600,
+    "movementTolerancePx": 8
+  }
+}
