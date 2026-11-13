@@ -1,6 +1,7 @@
 // Pure policy over an explicitly public candidate list. No combat state,
 // intents, preview execution or RNG enters the chooser.
 import { uiConfig } from '../config/generated/ui.js';
+import { resolveTimelineSetting } from './combatTimelinePolicy.js';
 export const ACTION_PACING = uiConfig.presentation.actionPacing.motion;
 export const AUTOMATION_DEFAULTS = uiConfig.presentation.actionPacing.behavior;
 const bounded = (value, fallback, minimum, maximum) => Number.isFinite(Number(value)) && value !== null && value !== ''
@@ -27,6 +28,7 @@ export function resolveCombatAutomation(settings = {}) {
     enemyFloaterIntervalMs: bounded(settings.enemyFloaterIntervalMs, ACTION_PACING.enemyFloaterIntervalDefaultMs, AUTOMATION_DEFAULTS.enemyPacingMinimumMs, AUTOMATION_DEFAULTS.enemyPacingMaximumMs),
     delayMs: bounded(settings.combatStepPause, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
     stageMs: resolveStageMs(settings),
+    timeline: resolveTimelineSetting(settings.combatTimeline),
   };
 }
 // Auto-combat answers the player's REACTION choices (owner ruling D12, 2026-10-18) and, since the owner's
