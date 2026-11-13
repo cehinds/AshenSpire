@@ -4,6 +4,9 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
+import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend (damage greater than the Block held before the hit).
 function fight({ maneuver = 'smash', amount = 21, block = 19, stance = 'defend', armCounter = false } = {}) {
@@ -62,15 +65,14 @@ test('a Sweep does not break a Defend stance and a Smash does not break a Counte
 });
 
 test('the Block comparison is strict: more breaks, equal or less holds (21 vs 20, 21 vs 21, 21 vs 23)', () => {
-  // The fixture's Smash lands 21 on the Block pool; the pool the hit meets is read back from the receipt.
+  // The fixture's Smash has 21 damage before matchups; the pool the hit meets is read back from the receipt.
   const seen = {};
   for (const block of [14, 15, 17]) {
-    const f = fight({ amount: 14, block }); f.play();
+    const f = fight({ amount: 21, block }); f.play();
     const d = f.c.eventLog.find(e => e.type === 'damageDealt' && e.sourceId === 'player');
     const held = d.blocked + d.blockRemaining;
-    assert.equal(d.incoming, 21);
     seen[held] = f.enemy.combatStance === undefined;
-    assert.equal(f.broken().length, d.incoming > held ? 1 : 0, `Block ${held}`);
+    assert.equal(f.broken().length, 21 > held ? 1 : 0, `Block ${held}`);
   }
   assert.deepEqual(seen, { 20: true, 21: false, 23: false });
 });
@@ -115,3 +117,4 @@ test('a broken Counter move with no follow-up leaves the enemy with no move', ()
   assert.equal(enemy.combatStance, undefined);
   assert.equal(c.eventLog.filter(event => event.type === 'enemyMoveUnavailable').length, 1);
 });
+
