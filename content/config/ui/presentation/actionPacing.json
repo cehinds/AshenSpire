@@ -3,6 +3,7 @@
     "spritePlaybackRate": 0.5,
     "stageGapMs": 500,
     "reactionGapScale": 0.5,
+    "fixedStageMs": { "intentMs": 100, "wordMs": 100, "afterSpriteMs": 100, "reactionMs": 100, "telegraphHoldMs": 100, "telegraphResetMs": 100 },
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
     "enemyAttackDefaultMs": 750,
