@@ -5,8 +5,9 @@ import { VIEW_PRESETS, resolveViewViewport, matchViewMedia, logicalViewport, vie
 test('named views fit their logical aspect inside every host', () => {
   for (const preset of Object.keys(VIEW_PRESETS)) for (const [width, height] of [[1440, 900], [390, 844], [1920, 1080], [320, 568]]) {
     const view = resolveViewViewport(preset, width, height);
-    assert.equal(view.width, VIEW_PRESETS[preset].width);
-    assert.equal(view.height, VIEW_PRESETS[preset].height);
+    const portraitTablet = preset === 'tablet' && height > width;
+    assert.equal(view.width, portraitTablet ? VIEW_PRESETS[preset].height : VIEW_PRESETS[preset].width);
+    assert.equal(view.height, portraitTablet ? VIEW_PRESETS[preset].width : VIEW_PRESETS[preset].height);
     assert.ok(view.left >= 0 && view.top >= 0);
     assert.ok(view.width * view.scale <= width + 1e-9);
     assert.ok(view.height * view.scale <= height + 1e-9);
@@ -42,4 +43,14 @@ test('headless coordinate helpers retain zero origin and unit scale without a wi
   assert.equal(viewScale(), 1);
   assert.deepEqual(viewViewportBox(), { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 });
   assert.deepEqual(logicalViewport({ innerWidth: 390, innerHeight: 844 }), { width: 390, height: 844 });
+});
+
+test('the tablet canvas follows orientation and logicalViewport reads it', () => {
+  assert.deepEqual(VIEW_PRESETS.tablet, { width: 1180, height: 820 });
+  assert.deepEqual(VIEW_PRESETS.widescreen, { width: 2560, height: 1080 });
+  const portrait = resolveViewViewport('tablet', 820, 1180);
+  assert.equal(portrait.preset, 'tablet');
+  assert.deepEqual([portrait.width, portrait.height], [820, 1180]);
+  const root = { dataset: { viewPreset: 'tablet', viewWidth: '820', viewHeight: '1180' } };
+  assert.deepEqual(logicalViewport({ document: { documentElement: root } }), { width: 820, height: 1180 });
 });
