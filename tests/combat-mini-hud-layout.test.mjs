@@ -6,7 +6,7 @@ import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { resourceBars } from '../src/ui/components/resbars.js';
 import { RESOURCE_SOURCES } from '../src/model/resources.js';
-import { poiseBarRemaining, poiseNearBreak, poiseLeft } from '../src/ui/models/CombatHealthModel.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../src/ui/models/CombatHealthModel.js';
 import { FORM_FACTORS } from '../tools/hud-layout-tokens.mjs';
 
 // Owner 2026-11-07 (backlog #11/#4/#5/#6): every combatant's mini HUD is one fixed-width layout: a Block shield (HP and Poise rows tall) on the
@@ -90,21 +90,21 @@ test('the +N defense overflow badge carries the number of effects it hides', () 
 }));
 
 // Owner 2026-11-12: the bar under HP shows Poise LEFT. The meter counts damage toward a break, so the display inverts it.
-test('poiseBarRemaining inverts the fill: full when untouched, empty at the break, empty trough at 0/0', () => {
+test('PoiseBarRemaining inverts the fill: full when untouched, empty at the break, empty trough at 0/0', () => {
   const bar = (cur, max) => ({ id: 'poise', cur, max, pct: max ? (cur / max) * 100 : 0 });
-  assert.equal(poiseBarRemaining(bar(0, 10)).pct, 100);
-  assert.equal(poiseBarRemaining(bar(5, 10)).pct, 50);
-  assert.equal(poiseBarRemaining(bar(10, 10)).pct, 0);
-  assert.equal(poiseBarRemaining(bar(0, 0)).pct, 0);
-  const shown = poiseBarRemaining(bar(3, 10));
+  assert.equal(PoiseBarRemaining(bar(0, 10)).pct, 100);
+  assert.equal(PoiseBarRemaining(bar(5, 10)).pct, 50);
+  assert.equal(PoiseBarRemaining(bar(10, 10)).pct, 0);
+  assert.equal(PoiseBarRemaining(bar(0, 0)).pct, 0);
+  const shown = PoiseBarRemaining(bar(3, 10));
   assert.equal(shown.cur, 3, 'cur and max stay the meter own (data-cur, probes and the pulse keep reading them)');
   assert.equal(shown.max, 10);
   // The shown number follows the bar: Poise left, floored at 0.
-  assert.equal(poiseBarRemaining(bar(0, 10)).shownCur, 10);
-  assert.equal(poiseBarRemaining(bar(5, 10)).shownCur, 5);
-  assert.equal(poiseBarRemaining(bar(10, 10)).shownCur, 0);
-  assert.equal(poiseBarRemaining(bar(0, 0)).shownCur, 0);
-  assert.equal(poiseBarRemaining(bar(12, 10)).shownCur, 0);
+  assert.equal(PoiseBarRemaining(bar(0, 10)).shownCur, 10);
+  assert.equal(PoiseBarRemaining(bar(5, 10)).shownCur, 5);
+  assert.equal(PoiseBarRemaining(bar(10, 10)).shownCur, 0);
+  assert.equal(PoiseBarRemaining(bar(0, 0)).shownCur, 0);
+  assert.equal(PoiseBarRemaining(bar(12, 10)).shownCur, 0);
 });
 
 test('resbars print shownCur in the value, tooltip and aria text while data-cur stays cur', () => withKitDom(() => {
@@ -117,9 +117,9 @@ test('resbars print shownCur in the value, tooltip and aria text while data-cur 
   assert.match(wrap.outerHTML, /data-cur="0"/, 'data-cur is the source value');
 }));
 
-test('meterInputs applies poiseBarRemaining to the plan', () => {
+test('meterInputs applies PoiseBarRemaining to the plan', () => {
   const src = read('src/ui/screens/combat.js');
-  assert.match(src, /plan\[poiseAt\] = poiseBarRemaining\(plan\[poiseAt\]\)/);
+  assert.match(src, /plan\[poiseAt\] = PoiseBarRemaining\(plan\[poiseAt\]\)/);
 });
 
 test('the Poise reader prefers the Core pool (Poise left, drains) and falls back to the fill-up meter', () => {
@@ -131,16 +131,16 @@ test('the Poise reader prefers the Core pool (Poise left, drains) and falls back
   assert.equal(read({}, {}), null);
 });
 
-test('poiseBarRemaining leaves a draining bar as it is; the pulse and inspector row follow each kind', () => {
+test('PoiseBarRemaining leaves a draining bar as it is; the pulse and inspector row follow each kind', () => {
   const drain = { id: 'poise', cur: 3, max: 12, pct: 25, drains: true };
-  const shown = poiseBarRemaining(drain);
+  const shown = PoiseBarRemaining(drain);
   assert.equal(shown.pct, 25);
   assert.equal(shown.shownCur, 3);
-  assert.equal(poiseNearBreak(drain), true);
-  assert.equal(poiseNearBreak({ ...drain, cur: 4 }), false);
-  assert.equal(poiseNearBreak({ id: 'poise', cur: 9, max: 12 }), true);
-  assert.equal(poiseNearBreak({ id: 'poise', cur: 8, max: 12 }), false);
-  assert.equal(poiseNearBreak({ id: 'poise', cur: 0, max: 0, drains: true }), false);
-  assert.deepEqual(poiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
-  assert.deepEqual(poiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
+  assert.equal(PoiseNearBreak(drain), true);
+  assert.equal(PoiseNearBreak({ ...drain, cur: 4 }), false);
+  assert.equal(PoiseNearBreak({ id: 'poise', cur: 9, max: 12 }), true);
+  assert.equal(PoiseNearBreak({ id: 'poise', cur: 8, max: 12 }), false);
+  assert.equal(PoiseNearBreak({ id: 'poise', cur: 0, max: 0, drains: true }), false);
+  assert.deepEqual(PoiseLeft({ persistentPoise: { value: 5, max: 12 } }, {}), { value: 5, max: 12 });
+  assert.deepEqual(PoiseLeft({ poiseMeter: { value: 4, max: 10 } }, {}), { value: 6, max: 10 });
 });

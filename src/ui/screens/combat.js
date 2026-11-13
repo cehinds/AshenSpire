@@ -3,7 +3,7 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
-import { poiseBarRemaining, poiseNearBreak, poiseLeft } from '../models/CombatHealthModel.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
@@ -1096,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', ...poiseLeft(v, entity) },
+          { label: 'Poise', ...PoiseLeft(v, entity) },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
@@ -1147,7 +1147,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
-        { label: 'Poise', ...poiseLeft(v, entity) },
+        { label: 'Poise', ...PoiseLeft(v, entity) },
         // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
         ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
           value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
@@ -1903,7 +1903,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     // Owner 2026-11-12: the bar under HP shows Poise left (full when untouched, draining as the meter fills); cur/max stay the meter's own.
     const poiseAt = plan.findIndex((bar) => bar.id === 'poise');
-    plan[poiseAt] = poiseBarRemaining(plan[poiseAt]);
+    plan[poiseAt] = PoiseBarRemaining(plan[poiseAt]);
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
@@ -1947,10 +1947,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
-    // The near-break pulse (poiseNearBreak) is a per-row display rule, not a resource fact; it stays
+    // The near-break pulse (PoiseNearBreak) is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
-      if (poiseNearBreak(bar)) {
+      if (PoiseNearBreak(bar)) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
         if (el) el.classList.add('pulse');
       }

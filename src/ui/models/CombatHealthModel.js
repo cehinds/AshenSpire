@@ -11,13 +11,13 @@ import { healthGuardTone } from '../../model/blockPresentation.js';
 // Defense badges read Block (the Defense badge, owner 2026-10-18), Poise, Evade, Ward, Precision, Counter and Reflect before HP. Poise also
 // retains its gold HP trim and value/max accessible label.
 /** The Poise bar shows Poise LEFT. A `drains` bar (the Core pool) already is Poise left; a fill-up meter is inverted so the bar starts full and drains. Display only: cur and max are untouched, a 0/0 bar stays an empty trough. */
-export const poiseBarRemaining = bar => bar.drains
+export const PoiseBarRemaining = bar => bar.drains
   ? { ...bar, shownCur: bar.cur }
   : { ...bar, pct: bar.max > 0 ? Math.max(0, Math.min(100, 100 - bar.pct)) : 0, shownCur: Math.max(0, bar.max - bar.cur) };
 /** The near-break pulse: a fill-up bar at 75% or more, a draining bar at 25% or less. */
-export const poiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
+export const PoiseNearBreak = bar => bar.id === 'poise' && bar.max > 0 && (bar.drains ? bar.cur <= bar.max * 0.25 : bar.cur >= bar.max * 0.75);
 /** Poise left { value, max } for the inspector rows: the Core pool when present, else the fill-up meter inverted. */
-export const poiseLeft = (v, entity) => {
+export const PoiseLeft = (v, entity) => {
   const pool = v?.persistentPoise || entity?.persistentPoise;
   if (pool && Number.isFinite(pool.max) && pool.max > 0) return { value: Math.max(0, pool.value || 0), max: pool.max };
   const max = v?.poiseMeter?.max || entity?.poiseMeter?.max || 0;
