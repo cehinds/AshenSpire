@@ -112,6 +112,7 @@ test('the always-on rules are not scoped to the preview attribute, and the shado
   assert.ok(visuals > 0, 'the always-on stylesheet is linked');
   assert.ok(!html.includes('combat-rounds-preview.css'), 'the retired preview stylesheet is not linked');
   assert.match(css, /\.cr-followup\[data-unknown='true'\]/, 'the live follow-up rules live in the always-on file');
+  assert.match(css, /\.cr-followup \{[^}]*font: 700 var\(--intent-value-size\)/, 'the player-turn follow-up marks are the enemy-phase size (owner 2026-11-12)');
   assert.ok(visuals < html.indexOf('styles/hud-layout.generated.css'), 'and it loads before the generated layout, as the follow-up rules did');
 });
 

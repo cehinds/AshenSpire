@@ -810,7 +810,7 @@ Enemies act from an SP pool derived from their stats; each move has an SP price.
 
 **Plan and intent box**
 - At the start of the player's turn each enemy plans the actions that fit its live SP. The first planned move is the intent; committed moves play in plan order in the enemy phase, each revealed as it plays. The plan is saved with the fight.
-- The intent box shows the first move as the main intent and every committed follow-up as a smaller symbol under the per-slot concealment rule (§4.9). An unrevealed move shows `?` until it plays or is cancelled; its fate is never shown before its own event.
+- The intent box shows the first move as the main intent and every committed follow-up as a symbol the same size as the main intent's number, beside it, under the per-slot concealment rule (§4.9). An unrevealed move shows `?` until it plays or is cancelled; its fate is never shown before its own event.
 - The intent's damage number sits left of the stance icon; the hit-% badge is centered on the target's sprite in white text with a black outline.
 
 **Other rules**
@@ -979,7 +979,7 @@ Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expa
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
 - **Read Intent** reveal is an insight contest, not a hit roll, not range-gated: d20 + INT + WIS + rank vs the target's current Poise + WIS + level, ties pass (§17 Contests).
-- **Intent box follow-ups**. In a Core 2 fight the intent box shows the planned follow-up actions after the current one as smaller symbols.
+- **Intent box follow-ups**. In a Core 2 fight the intent box shows the planned follow-up actions after the current one as symbols the same size as the main intent's number, shown beside it.
   - The first 1 + Perception follow-ups show their icon when the intent read is exact; the rest, and every follow-up while the read is hidden, show `?`.
   - The read is the one §4.7 already rolls for the enemy; Perception adds no roll.
 - **Always on, in every fight** (`styles/combat-visuals.css`):
