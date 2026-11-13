@@ -203,9 +203,8 @@ export function CreateFollowUpReduction(followMemo)
                     }
                     break;
                 case 'enemyActorTurnStarted':
-                    // Only the memo's stale row goes: the snapshot's seeded row stays until the head move (or a stagger) speaks,
-                    // so "??" does not blink out and back between the two events.
-                    followMemo.clearRow(e.sourceId);
+                    // Nothing goes: the seeded row (snapshot and memo) stays until the head move or a stagger speaks, so "??" does
+                    // not blink out and back. Rows of an earlier turn are already gone (enemyTurnEnd / playerTurnStart clear them).
                     break;
                 default:
                     continue;

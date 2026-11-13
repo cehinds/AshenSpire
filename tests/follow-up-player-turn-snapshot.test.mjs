@@ -55,3 +55,22 @@ test('End Turn: a stagger on the waiting enemy clears its seeded row, and the tu
   reduceRows({ type: 'enemyTurnEnd' });
   assert.deepEqual(disp.ents.e1.followUps, []);
 });
+
+test('a reaction pause drops disp but the memo keeps every seeded row; the resumed actor advances without a blink', () => {
+  const plan = (id) => ({ ids: ['m1', 'm2'], def: null, enemyId: id, combat: null, offset: 0, total: 2, cursor: 0, headDone: false });
+  const memo = createFollowMemo();
+  const disp = { ents: { e1: { followUps: [unknown, unknown] }, e2: { followUps: [unknown, unknown] } }, followPlans: { e1: plan('e1'), e2: plan('e2') } };
+  for (const id of ['e1', 'e2']) { memo.setRow(id, disp.ents[id].followUps); memo.plan(id, { build: () => disp.followPlans[id] }); }
+  // Playback up to the pause: e1's actor turn starts, then combatReactionOffered; the screen drops disp.
+  CreateFollowUpReduction(memo)([{ type: 'enemyActorTurnStarted', sourceId: 'e1' }], disp, {});
+  assert.deepEqual(memo.row('e1', true), [unknown, unknown], 'the actor-turn start does not wipe the memo row');
+  assert.deepEqual(memo.row('e2', true), [unknown, unknown]);
+  // Resume: a fresh snapshot keeps the plan (resuming) and has no seeded row, so the memo row is what shows.
+  const resumed = { ents: { e1: {}, e2: {} }, followPlans: { e1: memo.plan('e1', { resuming: true }), e2: memo.plan('e2', { resuming: true }) } };
+  const reduceRows = CreateFollowUpReduction(memo);
+  reduceRows([{ type: 'enemyMoveStarted', sourceId: 'e1' }], resumed, {});
+  assert.deepEqual(memo.row('e1', true), [unknown, unknown], 'the head move yields the same two marks as the seed');
+  reduceRows([{ type: 'enemyMoveStarted', sourceId: 'e1' }], resumed, {});
+  assert.equal(memo.row('e1', true).length, 1, 'the second move consumes one slot');
+  assert.deepEqual(memo.row('e2', true), [unknown, unknown], 'enemy 2 is untouched');
+});

@@ -1271,7 +1271,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // proc bar blinked out at play time — which reads as "bleed broke" — and
   // the drain animation targeted a bar the re-render had already removed).
   // Statuses and poise ride along; applyBeatToDisp advances them per beat.
-  function takeSnapshot() {
+  function takeSnapshot({ enemyPhase = false } = {}) {
     // Every dispatch that captures `disp` (a card, flask, move, End Turn): each live enemy's follow-up marks are frozen
     // here, before the dispatch, so a card that breaks Poise or trims the plan changes them only when its own beat plays,
     // and an enemy that has not acted yet keeps its row through the others' beats (SPEC 4.9).
@@ -1281,7 +1281,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       registries, projectCombatIntent, previewCard, followMemo, upcastRanksByCard,
       paintedHandQuotes: handPreviewCache.cards,
     });
-    if (seed) for (const [id, symbols] of seed) if (symbols != null && snapshot.ents[id]) snapshot.ents[id].followUps = symbols;
+    if (seed) for (const [id, symbols] of seed) {
+      if (symbols == null || !snapshot.ents[id]) continue;
+      snapshot.ents[id].followUps = symbols;
+      // End Turn: the memo outlives `disp`, which a reaction pause clears, so the rows also live there until the turn ends.
+      if (enemyPhase) followMemo.setRow(id, symbols);
+    }
     return snapshot;
   }
   function findInst(instanceId) {
@@ -3801,7 +3806,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selectedFlask = null;
       hideTooltip();
-      disp = takeSnapshot();
+      disp = takeSnapshot({ enemyPhase: true });
       let out;
       try {
         heldTurnHand = [...disp.hand];
