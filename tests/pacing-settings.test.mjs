@@ -108,7 +108,8 @@ test('zero pause is a valid committed value and preserves normal sprite duration
   assert.deepEqual(committed, { value: 0, refusal: null });
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: committed.value });
   const timing = actionPacing();
-  for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 0, key);
+  for (const key of ['gapMs', 'resultMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 0, key);
+  for (const key of ['intentMs', 'wordMs', 'afterSpriteMs', 'reactionMs']) assert.equal(timing[key], 100, `${key} is fixed, not the pause`);
   assert.equal(timing.spriteSpeed.lungeMs, 550, 'turning pauses off retains normal animation');
   setCombatPacing();
 });
