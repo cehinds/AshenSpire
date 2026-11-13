@@ -87,7 +87,7 @@ export function meleeCounterCovers(ctx, profile) {
  * players and enemies. `incoming` is the damage that met Block; `blockBefore` is the Block held before this hit.
  * Returns { from, by } or null. A stagger that already replaced the stance is not broken twice.
  */
-export function breakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0, incoming = 0 } = {}) {
+export function breakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0, incoming = 0, silent = false } = {}) {
   const profile = combatProfileOf(carrier);
   const stance = target?.combatStance;
   if (!profile || !stance || !(incoming > 0) || !(target.hp > 0)) return null;
@@ -95,10 +95,11 @@ export function breakStanceOnHit(ctx, source, target, carrier, { blockBefore = 0
   if (profile.maneuver === 'sweep' && stance.maneuver === 'counter') from = 'counter';
   else if (profile.maneuver === 'smash' && stance.maneuver === 'defend' && blockBefore > 0 && incoming > blockBefore) from = 'defend';
   if (!from) return null;
-  if (from === 'counter') clearCombatCounter(target, ctx);
+  if (from === 'counter') clearCombatCounter(target, silent ? null : ctx);
   const rest = (target.concurrentStances || []).filter(row => row && row.maneuver !== from);
   if (rest.length) target.concurrentStances = rest; else delete target.concurrentStances;
   delete target.combatStance;
+  if (silent) return { from, by: profile.maneuver };
   const event = { targetId: target.id, sourceId: source?.id, from, by: profile.maneuver,
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}) };
   if (target.kind === 'enemy') target.stanceBrokenFrom = from;

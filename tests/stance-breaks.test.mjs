@@ -10,6 +10,9 @@ import { createRunCombat } from './withoutWeaknesses.mjs';
 import { setCombatStance } from '../src/engine/combatMatchups.js';
 import { attackHitPreview, previewCardAttackHit } from '../src/engine/stanceHit.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { applyAttackDamage } from '../src/engine/actions.js';
+import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { stanceRules } from '../src/content/stanceRules.js';
 
 // Owner 2026-11-13: Sweep breaks Counter, Smash breaks Defend (damage greater than the Block held before the hit).
@@ -180,4 +183,23 @@ test('played through dispatch, each repeat counts once (not once per stance call
     parts.push(streakPart(combat.eventLog.filter(e => e.type === 'attackHit' || e.type === 'attackMissed').at(-1)));
   }
   assert.deepEqual(parts, parts.map((_, i) => i));
+});
+
+test('preview equals live for a three-hit Smash on a Defend stance, and the preview mutates nothing', () => {
+  for (const block of [10, 40]) {
+    const { combat, target } = core2();
+    Object.assign(target, { hp: 500, maxHp: 500, block, statuses: {}, persistentPoise: { value: 200, max: 200 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
+    delete target.combatCounter;
+    target.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+    // The round's one advantage stagger is already spent, so only the stance break changes later hits.
+    (combat.gameProfileInterrupts ||= {})[`${combat.turn}:${target.id}`] = 99;
+    const carrier = card('smash');
+    const before = structuredClone({ stance: target.combatStance, block: target.block, hp: target.hp });
+    const preview = previewDamageHits(combat, combat.player, target, 12, [], carrier, 3);
+    assert.deepEqual({ stance: target.combatStance, block: target.block, hp: target.hp }, before, 'no state change');
+    for (let i = 0; i < 3; i++) { primeAccuracyRolls(combat); applyAttackDamage(combat, combat.player, target, 12, [], carrier); }
+    assert.equal(500 - target.hp, preview.hpLoss, `Block ${block}: preview hp loss = live hp loss`);
+    // Block 10 is beaten by the first 12-damage hit, so the stance bonus ends; Block 40 is not, so the stance holds.
+    assert.equal(target.combatStance?.maneuver, block === 10 ? undefined : 'defend');
+  }
 });
