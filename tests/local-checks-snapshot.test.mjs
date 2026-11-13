@@ -2,15 +2,37 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir, mkdtemp, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, writeFile, copyFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 const exec = promisify(execFile);
 
+test('local QA rejects relative, checkout-owned and existing output paths before touching their contents', async () => {
+  const fixture = await mkdtemp(path.join(tmpdir(), 'local-checks-path-'));
+  const author = path.join(fixture, 'author'), existing = path.join(fixture, 'owned');
+  await mkdir(path.join(author, 'tools'), { recursive: true });
+  await mkdir(existing);
+  await copyFile(new URL('../tools/local-checks.mjs', import.meta.url), path.join(author, 'tools/local-checks.mjs'));
+  const marker = path.join(existing, 'keep.txt');
+  await writeFile(marker, 'another owner\n');
+  for (const [output, reason] of [
+    ['relative-output', /absolute, new output directory/],
+    [author, /outside the checkout/],
+    [path.join(author, 'nested-output'), /outside the checkout/],
+    [existing, /EEXIST/],
+  ]) {
+    await assert.rejects(exec(process.execPath, ['tools/local-checks.mjs', '--suite', 'combat', '--output', output],
+      { cwd: author, windowsHide: true }), error => reason.test(error.stderr));
+    assert.equal(await readFile(marker, 'utf8'), 'another owner\n');
+  }
+  await assert.rejects(access(path.join(author, 'relative-output')), { code: 'ENOENT' });
+  await assert.rejects(access(path.join(author, 'nested-output')), { code: 'ENOENT' });
+});
+
 for (const variant of ['committed shared host', 'legacy', 'unsafe tag']) {
   test(`actual core runner accepts safe art pins before fetch: ${variant}`, async () => {
-    const storage = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+    const storage = tmpdir();
     await mkdir(storage, { recursive: true });
     const fixture = await mkdtemp(path.join(storage, 'local-checks-art-pin-'));
     const author = path.join(fixture, 'author'), output = path.join(fixture, 'result');
@@ -45,7 +67,7 @@ for (const variant of ['committed shared host', 'legacy', 'unsafe tag']) {
 }
 
 test('shared local QA freezes committed LF source despite global Windows CRLF conversion', async () => {
-  const storage = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+  const storage = tmpdir();
   await mkdir(storage, { recursive: true });
   // Retain the tiny fixture and report as failure evidence; never edit global Git settings.
   const fixture = await mkdtemp(path.join(storage, 'local-checks-snapshot-'));
@@ -92,7 +114,7 @@ test('shared local QA freezes committed LF source despite global Windows CRLF co
 for (const present of [true, false]) {
   test(present ? 'actual local runner retains upstream dev/test rather than stale local branch aliases'
     : 'actual local runner preserves absent upstream refs despite local dev/test branches', async () => {
-    const storage = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+    const storage = tmpdir();
     await mkdir(storage, { recursive: true });
     const fixture = await mkdtemp(path.join(storage, 'local-checks-origin-'));
     const author = path.join(fixture, 'author'), output = path.join(fixture, 'result');

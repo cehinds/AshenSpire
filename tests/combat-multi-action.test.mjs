@@ -1,6 +1,6 @@
 // Multi-action preview (SPEC §4.9; owner decision 2026-10-12). An enemy plans its next moves with the same weighted
 // pick, seeded from the enemyAI stream, so the plan is the moves it plays. In a Core fight the intent box shows the
-// current action and its follow-ups as smaller symbols; the old per-run toggle went with the combat-rounds system
+// current action and its follow-ups as symbols beside it at the same size; the old per-run toggle went with the combat-rounds system
 // (cleanup 3i-A), so a legacy fight shows none.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +16,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions, multiActionOn } from '../src/engine/normalPreview.js';
-import { decorateCombatRoundsScreen } from '../src/ui/components/combatRoundsScreen.js';
+import { readFileSync } from 'node:fs';
 import * as Screen from '../src/ui/models/CombatRoundsScreenModel.js';
 
 // The fixture soldier carries stats for a pool of 3 (SPEC §4.6a: base 1, +1 Dexterity 4, +1 Constitution 4), so its plan
@@ -129,36 +129,34 @@ test('a save keeps the plan: the restored enemy plays the same next move', () =>
   assert.deepEqual(restored.enemies[0].plannedMoves, c.enemies[0].plannedMoves);
 });
 
-// --- The decorator: follow-up symbols in the intent box, by mode -------------------------------
+// --- The intent node carries its own follow-up symbols (combat.js followUpsFor), by mode and Perception -------------
 
-function fakeDom(combat) {
-  const made = [];
-  const intentEl = { children: [], append(n) { this.children.push(n); } };
-  const box = { querySelector: (sel) => (sel === '.intent' ? intentEl : null), querySelectorAll: () => [] };
-  const root = {
-    dataset: {},
-    querySelectorAll: () => [],
-    querySelector: (sel) => (sel.startsWith('.combatant.enemy') ? box : null),
-  };
-  globalThis.CSS = { escape: (s) => String(s) };
-  globalThis.document = { createElement: () => { const node = { children: [], dataset: {}, className: '', textContent: '', append(n) { this.children.push(n); }, setAttribute() {} }; made.push(node); return node; } };
-  return { root, intentEl, made, combat };
-}
-function decorate(combat) {
-  const dom = fakeDom(combat);
-  decorateCombatRoundsScreen(dom.root, combat);
-  return dom;
-}
-const followUpCount = (dom) => {
-  const wrap = dom.intentEl.children.find((n) => n.className === 'cr-followups');
-  return wrap ? wrap.children.length : 0;
-};
-
-test('the decorator draws the follow-ups of a Core fight, and nothing in a legacy fight', () => {
+test('the player-turn follow-up symbols follow the plan and the Perception rule, and a legacy fight has none', () => {
   const on = coreFight();
-  assert.equal(followUpCount(decorate(on)), on.enemies[0].plannedMoves.length);
-  const off = fight({});
-  assert.equal(followUpCount(decorate(off)), 0, 'legacy: no follow-up symbols');
+  const enemy = on.enemies[0];
+  const actions = enemyPlanActions(on, enemy);
+  assert.ok(actions.length >= 2, 'the fixture plans at least one follow-up');
+  const unknown = actions.slice(1).map(() => ({ kind: 'unknown' }));
+  assert.deepEqual(Screen.followUpSymbols(actions, 0, Screen.READ_EXACT), unknown, 'Perception 0: every follow-up is a ?');
+  const one = Screen.followUpSymbols(actions, 1, Screen.READ_EXACT);
+  assert.equal(one[0].kind, 'action', 'Perception 1 with an exact read: the first follow-up shows its icon');
+  assert.deepEqual(one.slice(1), unknown.slice(1));
+  assert.deepEqual(Screen.followUpSymbols(actions, 2, Screen.READ_HIDDEN), unknown, 'a hidden read: every follow-up is a ?');
+  assert.equal(multiActionOn(fight({})), false, 'legacy: no follow-up symbols');
+});
+
+test('the rounds layer no longer appends follow-ups; the intent node draws them from the screen helper', () => {
+  const layer = readFileSync(new URL('../src/ui/components/combatRoundsScreen.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(layer, /cr-followup|decorateFollowUps|followUpSymbols/);
+  const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(screen, /function followUpsFor\(enemy\)/);
+  assert.match(screen, /seed\) for \(const \[id, symbols\] of seed\)/, 'a player action snapshot freezes the follow-up rows before the dispatch');
+  assert.doesNotMatch(screen, /takeSnapshot\(false\)/, 'End Turn seeds the rows too, so enemies that have not acted keep their marks');
+  assert.match(screen, /takeSnapshot\(\{ enemyPhase: true \}\)/, 'End Turn also seeds the memo, which outlives a reaction pause');
+  assert.match(screen, /const shown = disp\?\.ents\[enemy\.id\]\?\.followUps;\s*if \(shown != null\) return shown;/, 'a row on the snapshot is what is shown, in every phase');
+  assert.doesNotMatch(screen, /kept != null \|\| live \|\| disp/, 'the player card playback (disp) no longer short-circuits the plan');
+  assert.match(screen, /const followUps = followUpsFor\(enemy\);/, 'the intent node takes its follow-ups from the helper');
+  assert.match(screen, /followUps = showIntent \? followUpsFor\(enemy\)/, 'the leading-slot key includes them, so a plan change rebuilds the node');
 });
 
 // --- PR #1953 review: a stagger or Control lock that lands mid-turn ends the plan for that turn ---------------

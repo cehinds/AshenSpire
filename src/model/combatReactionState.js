@@ -12,7 +12,7 @@ const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(ent
 // An enemy entry: its enemy, move, target seat and the committed plan (id references
 // to entities plus the one planned group they share).
 const ref = value => value === null || (record(value) && text(value.id) && (value.playerId === undefined || text(value.playerId)));
-const enemyEntry = (entry, state, ownerIds, stack) => (state.enemies || []).some(enemy => enemy.id === entry.ownerId)
+const enemyEntry = (entry, enemies, ownerIds, stack) => enemies.some(enemy => record(enemy) && enemy.id === entry.ownerId)
   && (entry.spPayment === undefined || enemySpPaymentValid(entry.spPayment))
   && text(entry.moveId) && ownerIds.has(entry.targetPlayerId) && record(entry.plan) && record(entry.plan.group)
   && text(entry.plan.group.key) && entry.plan.group.key !== stack.groupKey && record(entry.plan.group.targets)
@@ -30,12 +30,17 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   if (![1, 2].includes(state.reactionRulesVersion) || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
   if (state.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(state.reactionRules).map(problem => `Reaction rules: ${problem}`));
   else if (state.reactionRules !== undefined) problems.push('Reaction rules tuning requires reaction rules version 2');
+  const enemies = Array.isArray(state.enemies) ? state.enemies : [];
   if (state.reactionCursor !== undefined && (!record(state.reactionCursor) || !Number.isSafeInteger(state.reactionCursor.index)
-    || state.reactionCursor.index < 0 || state.reactionCursor.index >= state.enemies.length
+    || state.reactionCursor.index < 0 || state.reactionCursor.index >= enemies.length
     || !['start', 'payload', 'drain'].includes(state.reactionCursor.stage))) problems.push('Invalid enemy reaction cursor');
   if (state.reactionHandCleanup !== undefined && !record(state.reactionHandCleanup)) problems.push('Invalid pending hand cleanup');
   const paused = state.pendingReaction || state.reactionResume;
-  const incoming = [...queue, ...(Array.isArray(state.reactionResume?.queue) ? state.reactionResume.queue : [])];
+  const resumeQueue = state.reactionResume?.queue;
+  const incoming = [
+    ...(Array.isArray(queue) ? queue.filter(record) : []),
+    ...(Array.isArray(resumeQueue) ? resumeQueue.filter(record) : []),
+  ];
   const groups = new Set(incoming.filter(action => action.meta?.expansionGroup)
     .map(action => action.meta.expansionGroup));
   for (const group of groups) {
@@ -81,12 +86,14 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     const stackCap = () => {
       const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
       const caps = state.reactionRules?.stack || {};
-      return state.reactionRules?.contactPolicy === 'perHit' ? 1 : group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
+      if (state.reactionRules?.contactPolicy === 'perHit') return 1;
+      const cap = group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
+      return Number.isSafeInteger(cap) ? cap : 0;
     };
     if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
       || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
-        || (entry.side === 'player' ? !playerEntry(entry, ownerIds) : !enemyEntry(entry, state, ownerIds, stack)))
+        || (entry.side === 'player' ? !playerEntry(entry, ownerIds) : !enemyEntry(entry, enemies, ownerIds, stack)))
       || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)
       || (stack.counterSeats !== undefined && (!Array.isArray(stack.counterSeats) || new Set(stack.counterSeats).size !== stack.counterSeats.length
         || stack.counterSeats.some(seatId => !ownerIds.has(seatId))))) problems.push('Invalid reaction stack');
@@ -95,14 +102,15 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
       const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
       const caps = state.reactionRules?.stack || {};
       const cap = stackCap();
+      const maxEnemyDepth = !group.counterReturn && Number.isSafeInteger(caps.maxDepth) ? caps.maxDepth : 0;
       const players = stack.entries.filter(entry => entry.side === 'player');
       return [...new Set(players.map(entry => entry.ownerId))].some(seatId => stacked(seatId) > cap
         || players.filter(entry => entry.ownerId === seatId && entry.maneuver === 'counter').length > 1)
         // Enemy entries: none on a Counter-return root, at most maxDepth in total otherwise.
-        || stack.entries.filter(entry => entry.side === 'enemy').length > (group.counterReturn ? 0 : caps.maxDepth);
+        || stack.entries.filter(entry => entry.side === 'enemy').length > maxEnemyDepth;
     })()) problems.push('Reaction stack exceeds its per-seat limits');
     else if (state.pendingReaction !== undefined && (!record(state.pendingReaction) || state.pendingReaction.groupKey !== stack.groupKey
-      || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {
+      || !ownerIds.has(state.pendingReaction.ownerId) || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {
       problems.push('Reaction choice does not match its stack depth');
     } else if (state.pendingReaction !== undefined && stacked(state.pendingReaction.ownerId) >= stackCap()) {
       // The live engine stops offering at the cap; a saved offer past it would push entry cap + 1.
@@ -112,18 +120,30 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   const pending = state.pendingReaction;
   if (pending !== undefined) {
     if (!record(pending) || !text(pending.id) || !text(pending.groupKey) || !ownerIds.has(pending.ownerId)
-      || !state.enemies.some(enemy => enemy.id === pending.sourceId)
+      || !enemies.some(enemy => record(enemy) && enemy.id === pending.sourceId)
       || !Array.isArray(pending.options) || !pending.options.length
       // The card-less auto-Counter option (owner 2026-10-31) has no card instance: {id:'autoCounter', cardId:null, autoCounter:true}.
       || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play)
         || !(option.autoCounter === true ? option.id === 'autoCounter' && option.cardId === null && option.play.autoCounter === true : text(option.play.cardInstanceId))
         || !Number.isFinite(option.staminaCost) || option.staminaCost < 0 || !Number.isFinite(option.manaCost) || option.manaCost < 0)
-      || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('Invalid pending reaction choice');
-    if (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun)) problems.push('Reaction choice requires its unstarted contact plan');
+      || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('pendingReaction: Invalid pending reaction choice');
+    if (!record(pending) || !queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun)) problems.push('Reaction choice requires its unstarted contact plan');
     if (!['enemy', 'player', 'suspended'].includes(state.phase)) problems.push('Reaction choice is outside combat');
   }
-  if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)
-    || !(state.pendingAbilityDiscard || state.pendingCardChoice) || !state.pendingAbilityPlay)) problems.push('Paid reaction continuation requires its nested choice');
+  if (state.reactionResume !== undefined) {
+    if (!record(state.reactionResume) || !queued(resumeQueue)
+      || !(state.pendingAbilityDiscard || state.pendingCardChoice) || !state.pendingAbilityPlay) {
+      problems.push('Paid reaction continuation requires its nested choice');
+    }
+    if (record(state.reactionResume)) {
+      if (!Array.isArray(resumeQueue)) problems.push('reactionResume.queue must be an array');
+      else for (const [index, action] of resumeQueue.entries()) {
+        if (!record(action) || !record(action.effect) || !text(action.effect.op)) {
+          problems.push(`reactionResume.queue[${index}] must contain a queued effect`);
+        }
+      }
+    }
+  }
   return problems;
 }
 
@@ -137,7 +157,9 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   const actors = state.players instanceof Map
     ? [...state.players].map(([id, seat]) => [seat?.entity, `player:${id}`])
     : [[state.player, 'player:player']];
-  actors.push(...(Array.isArray(state.enemies) ? state.enemies : []).map(entity => [entity, `enemy:${entity?.id}`]));
+  for (const entity of Array.isArray(state.enemies) ? state.enemies : []) {
+    if (record(entity) && text(entity.id)) actors.push([entity, `enemy:${entity.id}`]);
+  }
   const actorKeys = actors.map(([, key]) => key);
   const hasRange = state.rangeState !== undefined;
   if (state._rangeContext !== undefined || state._rangeIncoming !== undefined) problems.push('Transient range context cannot cross a save boundary');

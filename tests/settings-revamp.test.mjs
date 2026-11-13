@@ -73,7 +73,7 @@ test('promoted defaults follow the build, never the Developer tools switch', asy
   assert.equal(promotionDebug('test'), true);
   for (const channel of ['main', 'release', 'unknown']) assert.equal(promotionDebug(channel), false, channel);
   const main = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'));
-  assert.match(main, /seedSettingsDefaults\(settings, promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\)/,
+  assert.match(main, /getPromotion: \(\) => promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)/,
     'boot seeds by the build, so hiding the tools and reloading changes no gameplay value');
   try {
     setPageDebugForTests(false);
@@ -636,8 +636,8 @@ test('−/+ ask for the button step of the value they step from', async () => {
 
 test('a Reset goes back to the promotion this build applies, never hidden tuning on release', async () => {
   const { readFileSync } = await import('node:fs');
-  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+  assert.match(screen, /export const resetKeys = \(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\) => settingsDraft\.ResetKeys/);
   assert.match(screen, /if \(debug\) return PROMOTED_DEFAULTS;\n  return releasePromotion \?\?= Object\.freeze\(promotionFor\(SETTINGS_DEFAULTS, false\)\.values\);/);
   // The row's dot, its Reset button and the Changed filter read the same
   // promotion boot seeds, so they cannot disagree with it (#1457 review).
@@ -705,7 +705,7 @@ test('Save drops an older preview, and Undo gives promotion ownership back', asy
   resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
+  assert.match(screen, /settingsDraft\.ResetKeys\(settings, onChange, keys, label, \{ promoted \}\)/);
 });
 
 test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
@@ -753,7 +753,7 @@ test('a profile load hands omitted promoted keys back to the promotion', async (
 test('a refused Undo is rolled back; a restored profile is seeded like boot; a dotted name is refused', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(\(await onChange\(restore\)\)\?\.ok === false\) \{[\s\S]*?await onChange\(now\);/, 'Undo puts the state it replaced back when the owned save is refused');
+  assert.match(screen, /await settingsDraft\.Undo\(settings, onChange, offer\)/, 'Undo delegates refusal and compensation to the model');
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /onRestored: \(\) => \{[\s\S]*?seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/, 'a restore runs the promotion step');
   assert.match(main, /if \(!settingsChoicePending\) \{\s*seedPromotedDefaults\(activeMeta, activeSettings\);/, 'boot uses the same seeding step after allowing a device with preferences to choose first');
@@ -780,7 +780,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
   assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before, seedMoved\);/);
   assert.match(panel, /if \(carriedStatus\) \{ status\(carriedStatus\); carriedStatus = ''; \}/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
+  assert.match(screen, /await settingsDraft\.Undo\(settings, onChange, offer\)/);
   assert.match(screen, /<span class="set-label-line"><span class="ls-label">/, 'label and Reset share one line');
 });
 
@@ -828,7 +828,7 @@ test('an Undo is painted only over the profile it was taken from; a seed-only re
   const settings = { musicVolume: 40 };
   resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
-  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
+  assert.match(screen, /settingsDraft\.ResetKeys\(settings, onChange, keys, label, \{ promoted \}\)/);
 });
 
 test('a mistyped sync location is refused by name, never swapped for the default', async () => {
@@ -1043,7 +1043,7 @@ test('an Undo puts back ownership only for the keys its change moved', async () 
   assert.deepEqual(seedPatch({ a: 1, b: 2 }, { a: 1, c: 3 }), { b: { value: 2 }, c: null });
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(offer\.seed\) \{\s*restore\[SEED_KEY\] = applySeedPatch\(now\[SEED_KEY\], offer\.seed\);/, 'the bar merges, never replaces, the record');
+  assert.match(screen, /await settingsDraft\.Undo\(settings, onChange, offer\)/, 'the bar delegates seed ownership merging to the model');
   assert.match(screen, /const \{ \[SEED_KEY\]: seedBefore, \.\.\.values \} = before \|\| \{\};\s*offerUndo\([^;]*values, seedPatch\(seedBefore, settings\[SEED_KEY\]\)\);/, 'a profile load\'s Undo is per key too');
   assert.doesNotMatch(screen, /undo\[SEED_KEY\] = seedBefore/, 'no Undo carries the whole record');
 });

@@ -1933,7 +1933,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   padding: 0 !important; margin: 0; border: 0 !important; background: transparent !important; box-shadow: none !important;
   font-size: calc(16px / var(--ui-zoom,1)); color: #ffe7ab;
 }
-:root .combat[data-target-hud='true'] .combatant .intent > :not(.intent-compact):not(.cr-followups) { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant .intent > :not(.intent-compact) { display: none !important; }
 :root .combat[data-target-hud='true'] .combatant .intent .intent-compact { display: inline-flex !important; align-items: center; gap: calc(5px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .combatant-leading .intent-icon { width: calc(28px / var(--ui-zoom,1)); height: calc(28px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row { margin: 0; padding-bottom: calc(13px / var(--ui-zoom,1)); --health-row-h: calc(7px / var(--ui-zoom,1)); }
@@ -2227,7 +2227,7 @@ body.motion-idle-off .combat-pose-aura svg { animation: none; opacity: .28; }
    queue of follow-ups), filling the panel's width; the scope and stance notes stay out of the narrow panel. */
 :root .combat .target-hud-detail .target-hud-name-intent { min-width: 0; width: 100%; }
 :root .combat .target-hud-detail .target-hud-name-intent .intent { max-width: 100%; min-width: 0; box-sizing: border-box; }
-:root .combat .target-hud-detail .target-hud-name-intent .intent > :not(.intent-compact):not(.cr-followups) { display: none !important; }
+:root .combat .target-hud-detail .target-hud-name-intent .intent > :not(.intent-compact) { display: none !important; }
 :root .combat .target-hud-detail .target-hud-name-intent .intent .intent-compact { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; min-width: 0; }
 :root .combat .target-hud-detail .target-hud-name-intent .intent-damage-scope { display: none; }
 

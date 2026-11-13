@@ -3,7 +3,7 @@
 // (engine/contracts/build-artifact.schema.json) that web, mobile/desktop apps and Unity load.
 //
 //   node tools/build-game.mjs            write dist/build/<game>.build.json and games/<game>/build.summary.json
-//   node tools/build-game.mjs --check    build, then fail when games/<game>/build.summary.json is not current
+//   node tools/build-game.mjs --check    verify games/<game>/build.summary.json without writing files
 //   node tools/build-game.mjs --game=<id>
 //
 // The full artifact is build output (dist/build/, git-ignored); the summary is committed.
@@ -481,16 +481,18 @@ async function main(argv) {
   if (problems.length || uiErrors.length) throw new Error(`build refused:\n  ${[...problems, ...uiErrors].join('\n  ')}`);
   const check = argv.includes('--check');
   const { text, summary } = buildGame({ game });
-  const out = path.join(ROOT, artifactFile(game));
-  mkdirSync(path.dirname(out), { recursive: true });
-  writeFileSync(out, text);
   const file = path.join(ROOT, summaryFile(game));
   if (check) {
     if (!existsSync(file) || readFileSync(file, 'utf8').replace(/\r\n/g, '\n') !== summaryText(summary)) {
       console.error(`error: ${summaryFile(game)} is stale; run node tools/build-game.mjs and commit it`);
       process.exit(1);
     }
-  } else writeFileSync(file, summaryText(summary));
+  } else {
+    const out = path.join(ROOT, artifactFile(game));
+    mkdirSync(path.dirname(out), { recursive: true });
+    writeFileSync(out, text);
+    writeFileSync(file, summaryText(summary));
+  }
   const r = summary.report;
   console.log(`${check ? 'build ok (summary current)' : 'built'}: ${artifactFile(game)} ${summary.bytes} bytes ${summary.hash}`);
   console.log(`  ${r.mechanics} mechanics (${r.portable} portable, ${r.legacy} legacy, ${r.data} data), ${r.components} components, ${r.screens} screens, ${r.maps} maps, ${r.assets} assets, ${r.unboundTags} unbound tags, ${r.missingIcons} mechanic icons missing, ${r.unresolvedAssets} unresolved ui asset slots`);

@@ -14,13 +14,13 @@
 // the message says so. The view owns no state: the composition root hands it a
 // model (ArtLoadNoticeModel) and the one command.
 
-import { childModel } from '../models/ComponentModel.js';
+import { ChildModel } from '../models/ComponentModel.js';
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 /** The notice's markup for a model; `text: false` leaves the live message empty, to be written in place. */
 export function artLoadNoticeHtml(model, { text = true } = {}) {
-  const retry = childModel(model, 'art-load-notice-retry');
+  const retry = ChildModel(model, 'art-load-notice-retry');
   const busy = !!retry.properties.busy;
   return `<aside class="art-load-notice" data-component="${UI.artLoadNotice}" data-state="${esc(model.variant)}" aria-labelledby="art-load-notice-text">
       <p class="art-load-notice-text" id="art-load-notice-text" role="${esc(model.accessibility.role)}" aria-live="${esc(model.accessibility.live)}">${text ? esc(model.properties.message) : ''}</p>
@@ -58,7 +58,7 @@ export function mountArtLoadNotice(root, { model, onRetry, announceDelayMs = 80,
   if (!el) return null;
   el.ashenOnRetry = onRetry;
   el.dataset.state = model.variant;
-  const retry = childModel(model, 'art-load-notice-retry');
+  const retry = ChildModel(model, 'art-load-notice-retry');
   const button = el.querySelector('[data-art-notice-retry]');
   if (button) {
     if (retry.properties.busy) { button.setAttribute('aria-disabled', 'true'); button.setAttribute('aria-busy', 'true'); }

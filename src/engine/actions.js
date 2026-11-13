@@ -15,7 +15,7 @@ import { configuredCombat, configuredModule, profileDamageReceipt } from './game
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
-import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
+import { counterBlockBonus, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { rollD20Check } from './d20Chance.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
@@ -383,7 +383,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
   if (counterBlock > 0) {
     // The same blockCap (Unbreakable) clamp gainBlock applies.
-    const gained = counterBlockGrant(ctx, target, counterBlock);
+    const gained = Matchups.CounterBlockGrant(ctx, target, counterBlock);
     target.block = (target.block || 0) + gained;
     if (gained > 0) ctx.emit('blockGained', { targetId: target.id, amount: gained, total: target.block, source: 'counter', ...seatOf(ctx, target) });
   }

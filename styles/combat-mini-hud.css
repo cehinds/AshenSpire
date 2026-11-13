@@ -1,9 +1,9 @@
 /* The combat mini HUD: one layout for every combatant, player and enemies (owner, 2026-11-07, backlog #11/#4/#5/#6).
 
-     [intent]                        the intent row, its left edge on the HP bar's left edge
-   [BLOCK] [==== HP bar ====] 19/19  a tall Block shield on the left, spanning all three rows
+     [intent]                        the intent row, centred over the HP bar
+   [BLOCK] [==== HP bar ====] 19/19  a Block shield on the left, as tall as the HP and Poise rows
    [ 7   ] [==== Poise bar ==]       the Poise bar: always drawn, the HP bar's width and height
-   [shield] (o)(o)(o)                one badge row: Precision, Evade, Ward, Counter, Reflect and the status tray
+   [      ] (o)(o)(o)                one badge row: Precision, Evade, Ward, Counter, Reflect and the status tray
 
    The shield's slot is reserved at Block 0 (hidden, not removed). The bars' width and height are layout tokens
    (content/hud-layout/<form-factor>.json: --hud-mini-bar-width, --hud-mini-bar-height), never a function of max HP,
@@ -23,9 +23,10 @@
   width: var(--mh-w) !important;
   align-items: flex-start !important;
 }
-/* The intent row stands over the bars, not over the Block shield. */
+/* The intent row is centred over the HP bar (not the Block shield): its left edge sits on the bar's centre, then translate pulls it back half its own
+   width. It keeps its max-content width so its hit area does not grow (combat-target-responsive.css zeroes translate with a less specific selector). */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > :is(.intent, .player-action-intent) {
-  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap)) !important; justify-content: flex-start !important;
+  margin: 0 0 0 calc(var(--mh-shield-w) + var(--mh-gap) + var(--mh-bar-w) / 2) !important; translate: -50% 0 !important; justify-content: center !important;
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters > .meters {
   width: 100% !important; min-width: 0 !important;
@@ -40,13 +41,15 @@
 }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row.combat-health-row::after { content: none !important; display: none !important; }
 
-/* Block: the tall shield, the full height of the three rows; empty it keeps its room. */
+/* Block: the shield, the height of the HP and Poise rows (the badge row's first column stays empty); empty it keeps its room. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot.combat-health-block-slot {
-  grid-column: 1; grid-row: 1 / 4; align-self: stretch; justify-self: stretch; margin: 0 !important; zoom: 1 !important;
+  grid-column: 1; grid-row: 1 / 3; align-self: stretch; justify-self: stretch; margin: 0 !important; zoom: 1 !important;
   position: relative !important; display: grid !important; place-items: center; aspect-ratio: auto !important; flex: none !important; order: 0 !important;
   width: auto !important; min-width: 0 !important; max-width: none !important; height: auto !important;
-  font-size: calc(var(--mh-badge) * .55);
+  /* The shield is 2.25 bar-heights tall (two rows and the gap), so the value is capped by that height: 8px bars (mobile) give 18px, 10px bars 22.5px, and the 320px small view about 13.3px. One text line, never taller than the shield. */
+  font-size: min(calc(var(--mh-badge) * .55), calc(var(--mh-bar-h) * 1.8)); line-height: 1;
 }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot .combat-health-badge-value { line-height: 1; transform: translateY(-.1em); }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-block-slot[hidden] { visibility: hidden; pointer-events: none; }
 
 /* HP: the bar, then its number on the right. */

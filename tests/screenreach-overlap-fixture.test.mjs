@@ -57,7 +57,7 @@ test('overlap fixture keeps a visible player frame fitted and leaves artwork-onl
 
 test('overlap fixture selects distinct paint-ordered enemies at tied and unequal depths', () => {
   const start = tool.indexOf('  const visible = node => {', tool.indexOf('const INTENT_OVERLAP ='));
-  const end = tool.indexOf('  const a = intent.getBoundingClientRect()', start);
+  const end = tool.indexOf('  // The mini HUD centres the intent with a CSS translate', start);
   assert.ok(start >= 0 && end > start, 'execute only the canonical enemy-pair selection');
   const selection = tool.slice(start, end);
   for (const depths of [[200, 200, 200], [203, 201, 202], [200]]) {
@@ -179,4 +179,10 @@ test('overlap artwork growth composes with an already scaled fighter', () => {
     assert.ok(160 * factor >= 101);
     assert.ok(100 * factor <= 100, 'a previously small actor grows only enough for the intended overlap');
   }
+});
+
+test('overlap fixture clears the mini HUD intent translate before measuring the untranslated box', () => {
+  const clear = tool.indexOf("intent.style.setProperty('translate', '0px 0px', 'important');");
+  const measure = tool.indexOf('  const a = intent.getBoundingClientRect()');
+  assert.ok(clear > 0 && measure > clear, 'the centring translate is neutralised before the intent is measured');
 });

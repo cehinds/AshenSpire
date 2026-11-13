@@ -5,12 +5,13 @@ import {readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync}
 import {tmpdir} from 'node:os';
 import {join, dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
+import { readSourceTextSync } from './helpers/read-source.mjs';
 
 // Source-art authoring and its Python schema dependencies moved to AshenSpire-art.
 // Game discovery still owns the Pillow conversion checks and shipped runtime layers;
 // its sparse checkout must exclude the original PNGs rather than re-import that work.
 for (const [workflow, job] of [['tests', 'discovered'], ['ci', 'test-discovered']]) {
-  const source = readFileSync(new URL(`../.github/workflows/${workflow}.yml`, import.meta.url), 'utf8');
+  const source = readSourceTextSync(new URL(`../.github/workflows/${workflow}.yml`, import.meta.url));
   const body = source.split(`\n  ${job}:`)[1]?.split(/\n  [\w-]+:/)[0];
   test(`${workflow} discovery retains its card encoder without depending on migrated authoring requirements`, () => {
     assert.ok(body, 'the discovery job exists');

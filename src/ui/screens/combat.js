@@ -3,21 +3,25 @@ import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
+import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
-import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
+import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
+import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseReaction, chooseCardPlay, AUTOMATION_DEFAULTS, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
+import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMount.js';
+import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
-import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { advanceFollowUps, createFollowMemo, followUpPlan, trimFollowUps } from '../models/IntentFollowUpModel.js';
+import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
+import { createFollowMemo, CreateFollowUpReduction } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
-import { combatRangeRanks, rangeRankSnapshot, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
+import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
@@ -31,7 +35,6 @@ import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
-import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, setPlayerActionManeuver, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -55,9 +58,11 @@ import { createToast } from '../components/toast.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo, fightPrewarmJobs } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
+import { enemyPlanActions, multiActionOn } from '../../engine/normalPreview.js';
+import { followUpSymbols, perceptionLevel, readStage } from '../models/CombatRoundsScreenModel.js';
 import { discardCandidates } from '../../engine/abilityRiders.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
@@ -130,7 +135,7 @@ import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { protectionPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
+import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
@@ -143,7 +148,7 @@ import { discoveredWeaknesses, recordWeaknessDiscoveries, withDiscoveredWeakness
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
-import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
+import { RunHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame, updateCombatantSlots } from '../components/combatantFrame.js';
 import { statureFor } from '../components/stature.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
@@ -151,6 +156,7 @@ import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { iconTray, setIconTrayOverflow, trayIcon } from '../components/iconTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
@@ -249,7 +255,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // a `let` that reads null rather than a `const` in its temporal dead zone —
   // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
   let endTurnBeat = null;
-  let timelinePlayback = null;
   let autoCombatTimer = null;
   let autoCombatPausedUntil = 0;
   let autoArmedReaction = null;
@@ -260,7 +265,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     <div class="combat" data-layout="formation" data-turn="player">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
-      ${hudShellHtml(runHudViewModel({
+      ${hudShellHtml(RunHudViewModel({
         place: 'combat',
         cinders: run.cinders,
         act: run.actNumber,
@@ -317,6 +322,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  const isCurrentMount = () => IsCurrentCombatMount(app, combatEl);
   syncBackdropFlag(combatEl);
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
@@ -339,7 +345,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Debug mode: a Console button that lives outside the combat input pipeline.
   const debugButton = mountCombatDebugButton(combatEl, { readSettings });
   // Menu > Settings can change Auto combat behind this screen; repaint the footer switch when the overlay closes.
-  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) { renderCombatTools(); scheduleAutoCombat(); } else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
+  const repaintAutoSwitch = () => { if (isCurrentMount()) { renderCombatTools(); scheduleAutoCombat(); } else { window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch); } };
   window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
   window.addEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch);
 
@@ -443,11 +449,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
     },
     combatEl,
-    anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
+    anchorFor: (id) => combatEl.querySelector(`[data-eid="${id}"] .sprite`) || combatEl.querySelector(`[data-eid="${id}"]`),
     // A damage float sizes by the hit's share of this max HP (ui/fx.js dmgClass).
     maxHpFor: (id) => (getEntity(combat, id) || {}).maxHp || 0,
-    relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
-    orb: () => app.querySelector('.energy-orb'),
+    relicAnchor: (relicId) => combatEl.querySelector(`[data-relic-id="${relicId}"]`),
+    orb: () => combatEl.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
@@ -591,7 +597,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
   let heldTurnHand = null;
   let enemyPlayback = false;
-  const beatDirty = { on: false, geometry: false, hand: false, frame: 0 };
+  const playback = CreateCombatPlayback({
+    playTimeline, isCurrentMount, renderBeat,
+    requestFrame: typeof requestAnimationFrame === 'function' ? callback => requestAnimationFrame(callback) : null,
+    cancelFrame: typeof cancelAnimationFrame === 'function' ? frame => cancelAnimationFrame(frame) : null,
+    setTimer: (callback, delay) => setTimeout(callback, delay),
+    clearTimer: timer => clearTimeout(timer),
+    reportStartFailure: error => console.warn('[combat] timeline failed to start:', error && error.message),
+  });
   let pileReceivedFrame = 0;
   let busy = false; // animating / resolving (written only through setBusy)
   // Plays the player queued while an earlier card's animations resolve (owner, 2026-11-02): each left the hand at once
@@ -848,7 +861,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // A later fight's mount empties the store, and this mount's watch is not
     // released until its observer runs — so an outgoing mount can be notified
     // once after its own DOM is gone. It has nothing left to re-dress.
-    if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
+    if (!isCurrentMount()) return;
     if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
@@ -871,9 +884,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function pendingTargetPlan(instanceId = selected || selfArm) {
-    return selectedFlask != null && !instanceId
-      ? { mode: 'enemy', legalIds: combat.enemies.filter(enemy => enemy.alive).map(enemy => enemy.id) }
-      : cardTargets(instanceId);
+    return PendingCombatTargetPlan(instanceId, selectedFlask, combat.enemies, cardTargets);
   }
 
   function applyTargetLayer(dragInstanceId = null) {
@@ -1024,6 +1035,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The "?" row survives the playback record: a reaction window opens mid-turn with `disp` cleared, and the resumed
   // dispatch snapshots again. The plan and the row on screen stay here, per enemy, until the turn ends.
   const followMemo = createFollowMemo();
+  const reduceFollowRows = CreateFollowUpReduction(followMemo);
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
   const enemySpriteState = enemy => ({ ...dv(enemy), maxHp: enemy.maxHp,
@@ -1084,7 +1096,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Poise', ...PoiseLeft(v, entity) },
           ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
           // Poise / Ward guards (the Dodge Roll): absorb impact until your next turn.
           ...(entity.poiseGuard > 0 ? [{ label: t('combat.protection.poiseGuard'), tipId: 'poiseGuard', value: entity.poiseGuard }] : []),
@@ -1135,7 +1147,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
-        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        { label: 'Poise', ...PoiseLeft(v, entity) },
         // Own points (the level budget, SPEC §17) first, then the signed gear and relic bonus when it is not zero.
         ...(entity.attributes && typeof entity.attributes === 'object' ? [{ id: 'attributes', label: t('combat.inspector.attributes'), always: true,
           value: ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'].map((id) => {
@@ -1232,10 +1244,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       box.addEventListener('pointerdown', event => {
         if (event.button !== 0) return;
         cancelHold(); inspected = false; origin = { x: event.clientX, y: event.clientY };
-        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, 600);
+        holdTimer = setTimeout(() => { if (box.isConnected) { inspected = true; inspectTarget(); } }, uiConfig.presentation.combatInspection.behavior.holdMs);
       });
       box.addEventListener('pointermove', event => {
-        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 8) cancelHold();
+        if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > uiConfig.presentation.combatInspection.behavior.movementTolerancePx) cancelHold();
       });
       box.addEventListener('pointerup', cancelHold);
       box.addEventListener('pointercancel', cancelHold);
@@ -1259,65 +1271,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // proc bar blinked out at play time — which reads as "bleed broke" — and
   // the drain animation targeted a bar the re-render had already removed).
   // Statuses and poise ride along; applyBeatToDisp advances them per beat.
-  function snapEnt(e, alive) {
-    const statuses = {};
-    for (const [sid, inst] of Object.entries(e.statuses || {})) {
-      statuses[sid] = {
-        stacks: inst.stacks,
-        duration: inst.duration,
-        meter: inst.meter ? { value: inst.meter.value, max: inst.meter.max } : null,
-      };
+  function takeSnapshot({ enemyPhase = false } = {}) {
+    // Every dispatch that captures `disp` (a card, flask, move, End Turn): each live enemy's follow-up marks are frozen
+    // here, before the dispatch, so a card that breaks Poise or trims the plan changes them only when its own beat plays,
+    // and an enemy that has not acted yet keeps its row through the others' beats (SPEC 4.9).
+    const seed = combat.phase === 'player' && !combat.reactionCursor && !combat.pendingReaction && !enemyPlayback
+      ? new Map(combat.enemies.filter(enemy => enemy.alive).map(enemy => [enemy.id, playerTurnFollowUps(enemy)])) : null;
+    const snapshot = CaptureCombatDisplay(combat, {
+      registries, projectCombatIntent, previewCard, followMemo, upcastRanksByCard,
+      paintedHandQuotes: handPreviewCache.cards,
+    });
+    if (seed) for (const [id, symbols] of seed) {
+      if (symbols == null || !snapshot.ents[id]) continue;
+      snapshot.ents[id].followUps = symbols;
+      // End Turn: the memo outlives `disp`, which a reaction pause clears, so the rows also live there until the turn ends.
+      if (enemyPhase) followMemo.setRow(id, symbols);
     }
-    return {
-      id: e.id,
-      kind: e.kind,
-      tags: e.tags ? [...e.tags] : undefined,
-      mechanicTags: e.mechanicTags ? [...e.mechanicTags] : undefined,
-      mechanicBindings: e.mechanicBindings ? structuredClone(e.mechanicBindings) : undefined,
-      ratingSources: e.ratingSources ? structuredClone(e.ratingSources) : undefined,
-      ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
-      hp: e.hp, maxHp: e.maxHp,
-      energy: e.energy, energyMax: e.energyMax, stamina: e.stamina, maxStamina: e.maxStamina, maxMana: e.maxMana,
-      mana: e.mana,
-      block: e.block,
-      persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
-      persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
-      combatStance: e.combatStance ? { ...e.combatStance } : null,
-      combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
-      combatOwnerCycle: e.combatOwnerCycle,
-      ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
-      alive,
-      statuses,
-      stanceId: e.stanceId,
-      poiseMeter: e.poiseMeter ? { value: e.poiseMeter.value, max: e.poiseMeter.max } : null,
-      wardMeter: e.wardMeter ? { value: e.wardMeter.value, max: e.wardMeter.max } : null,
-      arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
-    };
-  }
-  function takeSnapshot() {
-    const ents = { player: snapEnt(combat.player, true) };
-    for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    // The "?" rule (IntentFollowUpModel.js): each planned move shows by its own read, which the engine records per move
-    // (combat.followTrace). A reaction pause resumes the same turn, so its plan is kept, not rebuilt from what is left.
-    const followPlans = {};
-    for (const e of combat.enemies) {
-      const plan = followMemo.plan(e.id, { resuming: !!combat.reactionCursor,
-        build: () => e.alive && e.plannedMoves?.length ? followUpPlan({ queue: e.plannedMoves, def: registries.enemies.get(e.enemyId), enemyId: e.id, combat,
-          offset: combat.reactionCursor ? combat.followTrace?.[e.id]?.length || 0 : 0 }) : null });
-      if (plan) followPlans[e.id] = plan;
-    }
-    const handPreviews = new Map();
-    // Answering a reaction offer snapshots a hand that is inert until the turn resumes: its faces
-    // keep the quotes already painted instead of quoting every card again for each answer.
-    const paintedQuotes = combat.pendingReaction ? handPreviewCache.cards : null;
-    for (const inst of combat.piles.hand) {
-      const painted = paintedQuotes?.get(inst.instanceId)?.plain?.pv;
-      if (painted) { handPreviews.set(inst.instanceId, painted); continue; }
-      try { handPreviews.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId))); } catch {}
-    }
-    return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
-      pileCounts: { draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length },
-      arcaneEvents: [], logLength: combat.eventLog.length, rangeRanks: typeof rangeRankSnapshot === 'function' ? rangeRankSnapshot(combat) : null };
+    return snapshot;
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -1326,265 +1296,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return null;
   }
-  // The "?" row follows the enemy's own events (IntentFollowUpModel.js). Each receipt is reduced once, whether its beat
-  // played or a skipped playback flushes it, so the row and the memo agree with the cursor at a pending reaction.
-  const followReduced = new WeakSet();
-  function reduceFollowRows(events) {
-    for (const e of events) {
-      if (followReduced.has(e)) continue;
-      const row = (id, symbols) => { const symbolsNow = followMemo.setRow(id, symbols); if (disp?.ents[id]) disp.ents[id].followUps = symbolsNow; };
-      switch (e.type) {
-        case 'enemyMoveStarted':
-          if (e.reaction) continue;
-          // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
-          row(e.sourceId, advanceFollowUps(disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId), combat.followTrace?.[e.sourceId]));
-          break;
-        case 'enemyBurdenBlocked':
-        case 'enemyMoveUnavailable': {
-          const id = e.sourceId ?? e.targetId;
-          row(id, advanceFollowUps(disp?.followPlans?.[id] ?? followMemo.planFor(id), combat.followTrace?.[id]));
-          break;
-        }
-        case 'enemyPlanTrimmed': {
-          // The right-most planned moves leave the row; the row only shrinks during the enemy turn.
-          // The underlying plan (ids and total) shrinks too, so a later enemyMoveStarted cannot rebuild a cancelled intent.
-          const plan = disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId);
-          if (plan) row(e.sourceId, trimFollowUps(plan, e.dropped?.length || 0, combat.followTrace?.[e.sourceId]));
-          else {
-            const now = followMemo.row(e.sourceId, true) ?? disp?.ents[e.sourceId]?.followUps ?? [];
-            row(e.sourceId, now.slice(0, Math.max(0, now.length - (e.dropped?.length || 0))));
-          }
-          break;
-        }
-        case 'enemyStaggered':
-          // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
-          if (followMemo.row(e.targetId, true)?.length) row(e.targetId, []);
-          break;
-        case 'enemyTurnEnd':
-        case 'playerTurnStart':
-          // The turn is over: a charge or a halt that sent no event of its own leaves the row now.
-          followMemo.clear();
-          for (const id of Object.keys(disp?.ents || {})) if (disp.ents[id].followUps?.length) disp.ents[id].followUps = [];
-          break;
-        case 'enemyActorTurnStarted':
-          followMemo.clearRow(e.sourceId);
-          if (disp?.ents[e.sourceId]) disp.ents[e.sourceId].followUps = [];
-          break;
-        default: continue;
-      }
-      followReduced.add(e);
-    }
-  }
-
   function applyBeatToDisp(beat) {
-    if (!disp) return;
-    // An acting enemy's intent stays up until its beat resolves: clears park in disp.intentClears and
-    // flushDeferredIntentClears applies them from onResolution (playTimeline call below).
-    reduceFollowRows(beat.events);
-    if (disp.rangeRanks && typeof applyRangeRankEvent === 'function') for (const e of beat.events) applyRangeRankEvent(disp.rangeRanks, e);
-    for (const e of beat.events) {
-      const eventIndex = combat.eventLog.indexOf(e);
-      if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
-      const t = e.targetId && disp.ents[e.targetId];
-      // Read defensively: display-only callers (and the tests that slice this function) run outside the playback closure.
-      const queued = typeof playbackEvents !== 'undefined' ? playbackEvents : null;
-      const at = queued ? queued.indexOf(e) : -1;
-      applyCombatIntentReceipt(disp.ents, e, (disp.intentClears ||= new Map()), at >= 0 ? queued.slice(at + 1) : null);
-      if (applyCombatDisplayReceipt(disp.ents, e)) continue;
-      switch (e.type) {
-        case 'enemyMoveStarted': {
-          // Reactions return to the planned hold; pooled follow-ups replace it.
-          if (e.reaction) break;
-          const actor = disp.ents[e.sourceId];
-          const enemy = combat.enemies.find(row => row.id === e.sourceId);
-          const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
-          if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
-            kind: e.kind || move.intent,
-            combatProfile: enemyMoveCarrier(enemy, move, e.moveId, combat).combatProfile,
-          });
-          break;
-        }
-        case 'enemyActorTurnStarted': {
-          const actor = disp.ents[e.sourceId];
-          if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
-          break;
-        }
-        case 'playerTurnStart':
-          // Unused Evade charges expire as the player's turn starts.
-          if (disp.ents.player) disp.ents.player.combatEvade = null;
-          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
-            disp.ents[enemy.id].intentPreview = projectCombatIntent(combat, enemy.id);
-            disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
-          }
-          break;
-        case 'persistentWardChanged':
-        case 'combatWardStripped':
-          if (t?.persistentWard && Number.isFinite(e.value)) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
-          break;
-        case 'persistentPoiseChanged':
-          if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
-          break;
-        case 'arcaneExposureChanged':
-          if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
-          disp.arcaneEvents.push(e);
-          break;
-        case 'arcaneBreak':
-          if (t && t.arcaneExposure) t.arcaneExposure.value = 0;
-          disp.arcaneEvents.push(e);
-          break;
-        case 'arcaneExposureRefused':
-          disp.arcaneEvents.push(e);
-          break;
-        case 'damageDealt':
-          if (t) {
-            t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
-            if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
-            if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
-            if (e.wardRemaining !== undefined && t.persistentWard) t.persistentWard.value = e.wardRemaining;
-            reconcileWardBlock(t);
-          }
-          break;
-        case 'impactDealt':
-          if (t && e.poiseMeter) t.poiseMeter = { ...e.poiseMeter };
-          break;
-        case 'ratingImpact':
-          if (t) t[e.meter + 'Meter'] = { value: e.value, max: e.max };
-          break;
-        case 'hpLost':
-          if (t) t.hp = Math.max(0, t.hp - e.amount);
-          break;
-        case 'healed':
-          if (t) t.hp = Math.min(t.hp + e.amount, (getEntity(combat, e.targetId) || {}).maxHp || t.hp + e.amount);
-          break;
-        case 'blockGained':
-          if (t) {
-            t.block += e.amount;
-            if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
-            reconcileWardBlock(t);
-          }
-          break;
-        case 'energySpent':
-          if (disp.ents.player) disp.ents.player.energy = Math.max(0, disp.ents.player.energy - e.amount);
-          break;
-        case 'energyGained':
-          if (disp.ents.player) disp.ents.player.energy = Math.min(disp.ents.player.energyMax, disp.ents.player.energy + e.amount);
-          break;
-        case 'enemyStaminaSpent':
-          // The enemy's SP meter follows the payment (shown from fixCoreStaminaRemaining ?? stamina, see the SP row).
-          if (t === undefined && disp.ents[e.sourceId]) { disp.ents[e.sourceId].fixCoreStaminaRemaining = e.remaining; disp.ents[e.sourceId].stamina = e.remaining; }
-          break;
-        case 'staminaSpent':
-          if (disp.ents.player && Number.isFinite(disp.ents.player.stamina)) disp.ents.player.stamina = Math.max(0, disp.ents.player.stamina - e.amount);
-          break;
-        case 'manaSpent':
-          if (disp.ents.player) disp.ents.player.mana = Math.max(0, disp.ents.player.mana - e.amount);
-          break;
-        case 'manaRestored':
-          if (disp.ents.player) disp.ents.player.mana = Math.min(combat.player.maxMana, disp.ents.player.mana + e.amount);
-          break;
-        case 'enemyDied':
-          if (t) {
-            t.alive = false;
-            t.hp = 0;
-          }
-          break;
-        // ---- meter/status playback (#61, Sunna's PX gate) -------------------
-        // Each beat moves the snapshot the way the engine moved the entity, so
-        // the bar the player watches fills and drains ON the beat that caused
-        // it — not one frame ahead of the whole cascade.
-        case 'statusApplied':
-          if (t) {
-            const cur = t.statuses[e.status] || (t.statuses[e.status] = { stacks: 0, duration: undefined, meter: null });
-            const live = getEntity(combat, e.targetId);
-            const liveInst = live && live.statuses && live.statuses[e.status];
-            if (liveInst && liveInst.meter) {
-              // Meter row: `total` is the meter value (getStacks), and the max
-              // is whatever the live row carries (constant for proc rows).
-              cur.meter = cur.meter || { value: 0, max: liveInst.meter.max };
-              cur.meter.max = liveInst.meter.max;
-              cur.meter.value = e.total;
-            } else {
-              cur.stacks = e.total;
-              if (liveInst && liveInst.duration != null) cur.duration = liveInst.duration;
-            }
-          }
-          break;
-        case 'procBurst':
-          // M2b: the drain happens HERE, on the burst beat — the fx code
-          // animates the bar to empty and the next render agrees with it.
-          if (t && t.statuses[e.status] && t.statuses[e.status].meter) {
-            t.statuses[e.status].meter.value = 0;
-          }
-          // M7: the poise chunk visibly comes FROM the burst. Per-point poise
-          // has no event of its own, so the burst's own payload moves it here;
-          // any other poise source catches up when playback ends.
-          if (t && t.poiseMeter && e.poiseDamage > 0) {
-            t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.poiseDamage);
-          }
-          break;
-        case 'meterFilled':
-          if (t && e.meter === 'poise' && t.poiseMeter) t.poiseMeter.value = 0;
-          break;
-        case 'stanceEntered':
-          if (disp.ents.player) disp.ents.player.stanceId = e.stance;
-          break;
-        case 'evadeGained': {
-          // Only the expansion's prepared Evade; the foundation Evade has its own row.
-          if (!e.combatEvade) break;
-          const actor = disp.ents[e.sourceId];
-          const live = e.sourceId === 'player' ? combat.player : combat.enemies.find(enemy => enemy.id === e.sourceId);
-          if (actor) actor.combatEvade = { ...(live?.combatEvade || {}), charges: e.charges,
-            expiresOnOwnerCycle: live?.combatEvade?.expiresOnOwnerCycle ?? (actor.combatOwnerCycle || 0) + 1 };
-          break;
-        }
-        case 'combatAvoidanceResolved':
-          if (t?.combatEvade && e.evade) t.combatEvade = { ...t.combatEvade, charges: Math.max(0, t.combatEvade.charges - 1) };
-          break;
-        case 'statusExpired':
-          if (t) delete t.statuses[e.status];
-          break;
-        case 'cardDrawn': {
-          disp.pileCounts.draw = Math.max(0, disp.pileCounts.draw - 1);
-          // End Turn freezes the old hand's face through the enemy beats (heldTurnHand). The draw is where the new
-          // hand starts arriving, so the freeze ends here: before this, renderHand returned early on every draw beat
-          // and the whole new hand swapped in at once when playback ended. Cards still held keep their place; each
-          // drawn card is appended in draw order (disp.hand) and the discards have already left it.
-          heldTurnHand = null;
-          const inst = findInst(e.cardInstanceId);
-          if (inst && !disp.hand.some((c) => c.instanceId === inst.instanceId)) disp.hand.push(inst);
-          break;
-        }
-        case 'cardPlayed':
-        case 'cardDiscarded':
-        case 'cardExhausted': {
-          if (e.type === 'cardDiscarded') disp.pileCounts.discard++;
-          if (e.type === 'cardExhausted') disp.pileCounts.exhaust++;
-          const i = disp.hand.findIndex((c) => c.instanceId === e.cardInstanceId);
-          if (i >= 0) disp.hand.splice(i, 1);
-          break;
-        }
-      }
-    }
+    if (ApplyCombatBeat(disp, beat.events, {
+      combat, registries, projectCombatIntent, findInst, playbackEvents, reduceFollowRows,
+    })) heldTurnHand = null;
   }
 
   // Detail presentation consumes the exact paced values used by the overhead
   // HUD. Eligibility comes from the real card plan, not a living-enemy shortcut.
   function activateTargetHud(id) {
-    // Read live state: a paced panel can outlive the selection that showed it.
-    if (inputBusy() || enemyPlayback || combat.result || combat.phase !== 'player'
-        || combat.pendingReaction || hasCardChoice(combat) || veilIsOpen()
-        || !(selected || selfArm || selectedFlask != null)
-        || !pendingTargetPlan().legalIds.includes(id)) {
-      if (selected || selfArm || selectedFlask != null) {
-        const why = busy ? 'busy' : enemyPlayback ? 'enemy playback' : combat.result ? 'combat over' : combat.phase !== 'player' ? `phase ${combat.phase}`
-          : combat.pendingReaction ? 'pending reaction' : hasCardChoice(combat) ? 'pending card choice' : veilIsOpen() ? 'veil open' : 'not a legal target';
-        dlog('ignored', `target hud ${id}`, why);
-      }
-      return;
-    }
-    if (selected) playCard(selected, id);
-    else if (selfArm) playCard(selfArm, null);
-    else if (selectedFlask != null) useFlask(selectedFlask, id);
+    const action = ResolveTargetHudAction(id, {
+      combat, busy, inputBusy, enemyPlayback, hasCardChoice, veilIsOpen,
+      selected, selfArm, selectedFlask, readTargetPlan: pendingTargetPlan,
+    });
+    if (!action) return;
+    if (action.type === 'refused') dlog('ignored', `target hud ${id}`, action.reason);
+    else if (action.type === 'playCard') playCard(action.cardInstanceId, action.targetId);
+    else useFlask(action.slot, action.targetId);
   }
 
   function updateTargetHud(eligibleIds = null) {
@@ -2185,12 +1913,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const row = registries.resources.get('poise');
       plan.push({ id: 'poise', name: row.name, glyph: row.glyph || '', tint: row.tint, weight: row.weight, band: row.band || null, cur: 0, max: 0, pct: 0, lengthPct: 100, domain: 0, labelMax: 0 });
     }
+    // Owner 2026-11-12: the bar under HP shows Poise left (full when untouched, draining as the meter fills); cur/max stay the meter's own.
+    const poiseAt = plan.findIndex((bar) => bar.id === 'poise');
+    plan[poiseAt] = PoiseBarRemaining(plan[poiseAt]);
     const hp = {
       hud: { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null,
         ac: acFor(combat, entity),
         counterStacks: v.counterStacks ?? entity.counterStacks ?? 0, reflectStacks: v.reflectStacks ?? entity.reflectStacks ?? 0 },
       // The holder's own numbers (its gear Evasion), not the player's.
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
+      precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
@@ -2219,20 +1951,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const poiseEl = bars.querySelector('.as-meter[data-res="poise"]');
         const next = el.nextSibling === poiseEl ? poiseEl.nextSibling : el.nextSibling;
-        const { hud, evadeHelp, poiseHelp, wardHelp } = hp;
+        const { hud, evadeHelp, precisionHelp, poiseHelp, wardHelp } = hp;
         // The Poise bar joins the HP row: bars stacked, then one badge row. The status tray is seated in that badge row by combatantFrame.js.
-        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, poiseHelp, wardHelp, persistent: true,
+        const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
-    // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
+    // The near-break pulse (PoiseNearBreak) is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
-      if (bar.id === 'poise' && bar.max > 0 && bar.cur >= bar.max * 0.75) {
+      if (PoiseNearBreak(bar)) {
         const el = bars.querySelector('.as-meter[data-res="poise"]');
-        if (el) el.classList.add('pulse', 'full');
+        if (el) el.classList.add('pulse');
       }
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
@@ -2481,9 +2213,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
+  // The follow-up symbols an enemy's intent node carries: the enemy phase / playback row as ever; on the player's turn
+  // the planned follow-ups under the Perception rule (SPEC 4.9), read from the memoised preview, so every rebuild of
+  // the node draws them and nothing is added afterwards.
+  function followUpsFor(enemy) {
+    // A row on the snapshot (seeded before the dispatch, then advanced by the reducer) is what is on screen, in every phase.
+    const shown = disp?.ents[enemy.id]?.followUps;
+    if (shown != null) return shown;
+    const live = combat.phase === 'enemy' || !!combat.reactionCursor;
+    if (live || enemyPlayback) return followMemo.row(enemy.id, live);
+    if (!enemy.alive) return null;
+    return playerTurnFollowUps(enemy);
+  }
+  function playerTurnFollowUps(enemy) {
+    if (!multiActionOn(combat)) return null;
+    const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
+    const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
+    return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+  }
   function intentEl(enemy) {
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
-    const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
+    const followUps = followUpsFor(enemy);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const currentRead = (busy || enemyPlayback || combat.pendingReaction) && disp?.ents[enemy.id]?.intentPreview
         || projectCombatIntent(combat, enemy.id);
@@ -2526,11 +2276,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // by syncHitChances, not drawn here.
       const showIntent = enemy.alive && (run.gameProfile?.foundation?.mode !== 'configured' || gameModule(run, 'intent')) && intentVisible('enemy');
       const shownIntent = showIntent ? (disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id)) : null;
-      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
+      const followUps = showIntent ? followUpsFor(enemy) : null;
+      const renderKey = JSON.stringify([artKey, enemy, dv(enemy), targeting, selectedCombatantId, living.map(e => e.id), shownIntent, followUps, disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const settings = settingsStamp();
       const idx = living.indexOf(enemy);
-      const followUps = showIntent ? (disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor)) : null;
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
       const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
@@ -3382,7 +3132,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const keyHandler = (ev) => {
     // Self-clean if the combat screen was torn down (e.g. Save & Quit mid-fight)
     // — the listener lives on window, so it must detach when its DOM is gone.
-    if (!app.querySelector('.combat')) {
+    if (!isCurrentMount()) {
       removeEventListener('keydown', keyHandler);
       return;
     }
@@ -3635,6 +3385,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
+    if (!isCurrentMount()) return;
     // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
@@ -3681,63 +3432,35 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } catch (e) {
       console.warn('[combat] post-dispatch render failed:', e && e.message);
     }
-    // The timeline's finish is the only thing that releases busy, so it runs
-    // once, and also when the timeline throws before it could start.
-    let playbackFinished = false;
     const finishPlayback = () => {
-        if (playbackFinished) return;
-        playbackFinished = true;
-        timelinePlayback = null;
-        if (!combatEl.isConnected) return;
-        try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
-        discardBeatRender(); // the render below paints what a coalesced beat still owed
-        disp = null;
-        heldTurnHand = null;
-        enemyPlayback = false;
-        setBusy(false);
-        finishRender();
-        showPendingDiscard();
-        if (combat.result) {
-          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
-          //
-          // The keydown handler already comes off here. The quick-navigation button did NOT,
-          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
-          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
-          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
-          // Quit were all one tap away on a fight that had ALREADY ENDED.
-          //
-          // Save called commitCombatSnapshot on a combat whose `result` was
-          // 'victory': a checkpoint that resumes INTO a won fight, where no
-          // dispatch will ever reach the branch that calls onEnd — the run is
-          // stuck at a battlefield with nothing left to kill. Quit tore the run
-          // down while main.js's continuation was still suspended on the beat,
-          // so the spoils were then granted against a null run.
-          //
-          // There is nothing here a player can usefully ask the menu for: the
-          // only thing that happens next is the spoils door. Close it, disable
-          // it, and refuse the actions even if something re-opens it.
-          // release() drops data-target-hud from the root. Left off, the whole
-          // battlefield re-lays out in the legacy HUD (field re-fit, every health bar
-          // jumping to the top strip) for the ~0.8 s until the spoils veil mounts.
-          // The screen is torn down by main.js next, so keep the layout mode it was drawn in.
-          playQueue.length = 0; endTurnAfterQueue = false; renderPlayQueue(); // a decided fight plays nothing more
-          const hudMode = combatEl.dataset.targetHud;
-          fightOver = true;
-          targetHud.release();
-          closeQuickNav();
-          if (hudMode != null) combatEl.dataset.targetHud = hudMode;
-          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
-          removeEventListener('keydown', keyHandler);
-          releaseRangeAction();
-          handStrip.teardown();
-          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
-        } else {
-          focusHandDefault(); // land on the leftmost playable card for kb/pad
-          drainPlayQueue();
-        }
+      try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
+      playback.DiscardBeatRender(); // the render below paints what a coalesced beat still owed
+      disp = null;
+      heldTurnHand = null;
+      enemyPlayback = false;
+      setBusy(false);
+      finishRender();
+      showPendingDiscard();
+      if (combat.result) {
+        // Close the menu before handoff so a decided fight cannot be saved or interrupted.
+        // Keep the battlefield layout stable until the result screen mounts.
+        playQueue.length = 0; endTurnAfterQueue = false; renderPlayQueue(); // a decided fight plays nothing more
+        const hudMode = combatEl.dataset.targetHud;
+        fightOver = true;
+        targetHud.release();
+        closeQuickNav();
+        if (hudMode != null) combatEl.dataset.targetHud = hudMode;
+        if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
+        removeEventListener('keydown', keyHandler);
+        releaseRangeAction();
+        handStrip.teardown();
+        playback.ScheduleHandoff(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
+      } else {
+        focusHandDefault(); // land on the leftmost playable card for kb/pad
+        drainPlayQueue();
+      }
     };
-    try {
-    timelinePlayback = playTimeline(
+    playback.Start(
       events,
       {
         ...fxCtx,
@@ -3775,13 +3498,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Repaint once per frame, and fit the battlefield only when a figure
           // can have moved or resized. The flush and the terminal callback
           // still render the whole board.
-          beatDirty.on = true;
-          if (beat.events.some((event) => GEOMETRY_BEAT_EVENT.test(event.type))) beatDirty.geometry = true;
-          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) beatDirty.hand = true;
-          // Spawns, deaths and moves reshape the board the beat's own effects
-          // aim at, so those beats paint before the effects start.
-          if (beatDirty.geometry || typeof requestAnimationFrame !== 'function') flushBeatRender();
-          else if (!beatDirty.frame) beatDirty.frame = requestAnimationFrame(flushBeatRender);
+          playback.QueueBeatRender({
+            geometry: beat.events.some(event => GEOMETRY_BEAT_EVENT.test(event.type)),
+            hand: beat.events.some(event => HAND_BEAT_EVENTS.has(event.type)),
+          });
           for (const event of beat.events) {
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
@@ -3789,10 +3509,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           showPileFeedback(beat.events);
         },
         onFlush: () => {
-          discardBeatRender(); // the full render below paints what a coalesced beat still owed
+          playback.DiscardBeatRender(); // the full render below paints what a coalesced beat still owed
           applyVisualEvents(events);
           // A skipped playback never applied the remaining beats: reduce their receipts into the row memo first.
-          reduceFollowRows(events);
+          reduceFollowRows(events, disp, combat.followTrace);
           disp = null;
           render();
           clearCardFeedback();
@@ -3801,24 +3521,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       },
       finishPlayback
     );
-    } catch (e) {
-      console.warn('[combat] timeline failed to start:', e && e.message);
-      finishPlayback();
-    }
   }
 
-  // Beats that land within one frame share one repaint of the pieces they touch.
-  function discardBeatRender() {
-    if (beatDirty.frame) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(beatDirty.frame); beatDirty.frame = 0; }
-    beatDirty.on = beatDirty.geometry = beatDirty.hand = false;
-  }
-  function flushBeatRender() {
-    if (beatDirty.frame) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(beatDirty.frame); beatDirty.frame = 0; }
-    if (!beatDirty.on) return;
+  function renderBeat({ geometry, hand }) {
     globalThis.__perfCount?.('beatFlush');
-    const { geometry, hand } = beatDirty;
-    beatDirty.on = beatDirty.geometry = beatDirty.hand = false;
-    if (!combatEl.isConnected) return;
     renderTopbar();
     renderCombatantStage({ fit: geometry });
     // The displayed hand (disp.hand) moves only on the four card events
@@ -3836,8 +3542,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     pileReceivedFrame = 0;
     for (const animation of cardFlights) animation.cancel();
     cardFlights.clear();
-    app.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
-    $('.pile.spent')?.classList.remove('pile-received');
+    combatEl.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
+    combatEl.querySelector('.pile.spent')?.classList.remove('pile-received');
   }
   function showPileFeedback(events, animate = true) {
     // Ordinary plays enter discard without a separate cardDiscarded receipt.
@@ -4100,7 +3806,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selectedFlask = null;
       hideTooltip();
-      disp = takeSnapshot();
+      disp = takeSnapshot({ enemyPhase: true });
       let out;
       try {
         heldTurnHand = [...disp.hand];
@@ -4358,56 +4064,41 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
   });
 
-  // Veils mount beside #app, not inside it. Watch that ownership boundary plus
-  // the originating combat mount itself: #app is reused across screens and
-  // fights, so finding *a* later `.combat` must never keep this mount's captured
-  // pager nodes alive. The marker is a focused lifecycle probe, not a styling
-  // hook; teardown removes it before a fresh combat creates its own owner.
-  if (document.body && typeof MutationObserver !== 'undefined') {
-    const isVeilNode = (node) => node.nodeType === 1 && (node.classList.contains('modal-veil') || !!node.querySelector?.('.modal-veil'));
-    const touchesVeil = (record) => [...record.addedNodes, ...record.removedNodes].some(isVeilNode);
-    const pagerVeilObserver = new MutationObserver((records) => {
-      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
-        if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
-        autoCombatTimer = null;
-        document.removeEventListener('pointerdown', pauseAutoCombat, true);
-        document.removeEventListener('keydown', pauseAutoCombat, true);
-        timelinePlayback?.cancel?.(); timelinePlayback = null;
-        reactionShell?.dismiss();
-        releaseRangeAction();
-        handStrip.teardown();
-        endTurnBeat?.(); endTurnBeat = null; // its window keydown door would otherwise outlive the detached button
-        stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
-        for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
-        enemyFrames.clear();
-        removeEventListener('keydown', keyHandler);
-        targetHud.release();
-        battlefieldStage.release();
-        formationMovement?.release();
-        combatLayout.release();
-        closeCombatFullLog(combatToolsState);
-        combatTools.release();
-        debugButton.release();
-        releaseConsoleSnapshot();
-        reactionNote.clear();
-        aimObserver?.disconnect();
-        releaseSelectionWatch();
-        expansionChoiceShell?.close?.(); expansionChoiceShell = null;
-        clearCardFeedback();
-        pagerVeilObserver.disconnect();
-        window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
-        window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch);
-        document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
-        delete combatEl.dataset.handPagerOwner;
-        return;
-      }
-      // The pager only depends on whether a veil stands (veilIsOpen), so a mutation that neither adds nor removes
-      // one is ignored (every damage number, tooltip and effect node used to re-run the sync).
-      if (records.some(touchesVeil)) syncHandPager([...app.querySelectorAll('.hand .card')]);
-    });
-    combatEl.dataset.handPagerOwner = 'active';
-    pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
+  function releaseCombatMount() {
+    if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
+    autoCombatTimer = null;
+    document.removeEventListener('pointerdown', pauseAutoCombat, true);
+    document.removeEventListener('keydown', pauseAutoCombat, true);
+    playback.Dispose();
+    reactionShell?.dismiss();
+    releaseRangeAction();
+    handStrip.teardown();
+    endTurnBeat?.(); endTurnBeat = null; // its window keydown door would otherwise outlive the detached button
+    stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
+    for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
+    enemyFrames.clear();
+    removeEventListener('keydown', keyHandler);
+    targetHud.release();
+    battlefieldStage.release();
+    formationMovement?.release();
+    combatLayout.release();
+    closeCombatFullLog(combatToolsState);
+    combatTools.release();
+    debugButton.release();
+    releaseConsoleSnapshot();
+    reactionNote.clear();
+    aimObserver?.disconnect();
+    releaseSelectionWatch();
+    expansionChoiceShell?.close?.(); expansionChoiceShell = null;
+    clearCardFeedback();
+    window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
+    window.removeEventListener(SETTINGS_SETTLED_EVENT, repaintAutoSwitch);
+    document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
   }
+  ObserveCombatMount(app, combatEl, {
+    onVeilChange: () => syncHandPager([...combatEl.querySelectorAll('.hand .card')]),
+    onDetach: releaseCombatMount,
+  });
 
   // THE ART ARRIVED AFTER A FAILED LOAD (step 5, ART_REDRAW_EVENT): a sprite
   // whose image failed was replaced by its placeholder (enemySprite), which
@@ -4415,7 +4106,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // from this combat's own state: no roll, no turn change, only the art.
   const ART_REDRAW_RETRY_MS = 250;
   function redrawArt() {
-    if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+    if (!isCurrentMount()) {
       document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
       return;
     }

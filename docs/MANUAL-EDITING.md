@@ -16,8 +16,8 @@ then run `node tools/game-config.mjs build` and `node tools/game-config.mjs chec
 | The cards in a Core deck (ids starting `core.`, such as `core.strike` and the class specials) | `cards.json`, costs in `resourceVariants.json`, pools in `cardPools.json` |
 | A class's starting attributes, deck, equipment, special card and description | `characters.json` (and `starterDeck.json`) |
 | How attributes turn into HP, draw and the rest in Core | `stats.json` |
-| Enemy attributes, decks, behavior, boss phases and starting Poise | `characters.json` |
-| Enemy attacks and per-hit damage | `enemyCards.json` |
+| Enemy attributes, decks, behavior, boss phases and starting Poise | `enemies/<id>.json` (authored sheet; enemy rows in `characters.json` are generated) |
+| Core enemy card data and overlays | `enemyCards.json`; an enemy sheet's `ai["card:<id>"].legacyMove` maps a card to a shared move. `coreOffense: "card"` opts damage/hits into Core; `coreSp: "card"` separately opts stamina cost. Otherwise the shared move values stay authoritative. |
 | Base reward cards and their statuses | `games/ashenspire/packs/base-cards/cards.json`, `statuses.json` |
 | Map routes, rest services, shop offers, victory reward offers, class unlocks | `routes.json`, `rests.json`, `shops.json`, `rewards.json`, `classUnlocks.json` |
 | Minimum stats to equip gear | none: Core switches equipment requirements off |
@@ -58,7 +58,7 @@ Paths are inside `content/source/` unless they start with `src/`.
 
 | To change... | Edit this file | Notes |
 | --- | --- | --- |
-| An enemy's HP, attributes, moves | `act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json` | One file per act, eleven enemies each. Core's enemy decks, attacks and Poise are in the pack. |
+| An enemy's HP, attributes, deck, behavior and boss phases | `games/ashenspire/packs/core/enemies/<id>.json` | Core enemy sheets are the source; generated enemy rows in `characters.json` and `_reference` files are checked by `node tools/enemy-sheets.mjs --check`. |
 | Which enemies appear together, per region | `wealdEncounters.json`, `marchesEncounters.json`, `reachEncounters.json` | One row per fight: enemies, weight, pool, floor band. |
 | Boss tougher or easier by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | See the balance table below. |
 | Event text and choices | `events.json` | Choice ids go in `eventChoiceIds.json`, same length as the choices. |
@@ -235,12 +235,131 @@ Follow [Art authoring in full Visual Studio](ART-AUTHORING.md) for separate
 game/art checkouts, source editor previews, export and release/pin steps.
 Game rules, editors, tests and generated runtime catalogs remain here.
 
+## JavaScript style and generated identity
+
+`.editorconfig` uses four spaces and LF for JavaScript modules by default, with
+two-space overrides for hash-sensitive legacy modules and JSON. New or migrated
+public APIs use PascalCase; private helpers use camelCase. Existing public APIs
+keep explicit compatibility aliases while callers move. The checked-in UI
+component models keep their serialized field names unchanged.
+
+The `engine/kernel/` and `engine/runtime/` JavaScript plus
+`src/model/formulas.js` and `src/model/fixCoreMechanics.js` are hash-sensitive
+legacy inputs. Keep their existing two-space layout and use LF line endings;
+do not reformat them as part of ordinary cleanup. `.gitattributes` enforces LF
+for text source, JSON and CSS at checkout, while binary art and receipt folders
+retain their existing `-text` rules. This policy does not itself rewrite files
+already in the worktree. Edit generated data's authored source and regenerate it
+with the source-specific compiler instead of editing generated output by hand.
+
+Install the isolated naming/format/type-check tools with
+`npm ci --prefix tools/code-quality --ignore-scripts`, then run
+`npm run code:check`. `npm run code:format` rewrites only modules explicitly
+listed in `tools/code-quality/policy.json`; review its diff before keeping it.
+The naming ratchet checks authored exports broadly and records existing
+lowercase callable exports in `tools/code-quality/legacy-public.json`. Private
+method naming, public class/factory methods and formatting are checked only for
+enrolled owners, so migration is staged rather than a mass rename or reformat.
+To check the tool's own regression cases, run
+`npm --prefix tools/code-quality run selftest`. These development tools live
+under `tools/code-quality/` and are not game runtime dependencies. See the
+[quality tool guide](../tools/code-quality/README.md) and
+[owner policy](../tools/code-quality/policy.json).
+
+### Test lanes and current Windows verification
+
+`npm test` runs `node tests/run-node.mjs --no-selftests --no-discovered`: the
+core engine lane and its curated repository/tool verdict checks. It excludes
+discovered `*.test.mjs` files, browser doors and the isolated quality-package
+selftests. `npm run test:all` runs the full runner;
+`npm run test:pr` runs core followed by discovered tests with
+`--discovered-only --no-slow`. Neither command includes the isolated quality
+tool selftests; run them explicitly as above. Browser checks are separate and
+must be selected by their current UI door and viewport. Do not treat old
+selected-target-panel browser scripts as acceptance for the current HUD.
+
+On Windows, the unsharded discovered command can fail before starting tests
+with `ENAMETOOLONG`. Use all eight shards, preserving the same no-slow corpus:
+
+```sh
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 0/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 1/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 2/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 3/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 4/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 5/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 6/8
+node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow --shard 7/8
+```
+
+For the complete corpus, also run core and quality as described above, then
+these remaining lanes sequentially with the required art packs available:
+
+```sh
+node --test tests/balance-doc.test.mjs
+node --test tests/runsim-report-flags.test.mjs
+node --test tests/simbot-decisions.test.mjs
+node --test tests/simrun-loop.test.mjs
+node tools/bundle.test.mjs
+node tests/run-node.mjs --selftests-only --selftest-group link
+node tests/run-node.mjs --selftests-only --selftest-group other
+```
+
+The four deliberately slow files are excluded from `test:pr`. The bundler
+file runs separately; two UI contract files are already covered by core.
+Use a disposable QA checkout for the exhaustive tool checks and retain its
+exact commit, logs and clean-tree checks.
+Prepare verified HTML artifacts from the same game source digest at
+`build/AshenSpire.html` and `build/download/AshenSpire.html` before recording
+the QA baseline; their two metadata checks otherwise add missing-artifact skips.
+
+Verified Windows corpus (2026-11-11, Node 24.16): 1,040 discovered files were
+accounted for, including 1,033 fast files and all four slow files. Fast results
+were 8,134 passed and 15 skipped; slow results were 17 passed and one skipped.
+There were zero remaining failures or cancellations. Separate gates passed:
+core 151/151, bundler 145/145, exhaustive tool selftests 18/18, and isolated
+quality selftests 6/6 plus naming and strict types. These counts overlap some
+discovered coverage and should not be added into a unique grand total.
+
+The full run used `5fc75370976`; its one missing build-fixture dependency was
+fixed at `1f8aa560118`, then the entire affected 989-test partition reran green.
+Unchanged lanes retain their original commit evidence. The original red receipt
+is preserved. The 16 skips are existing platform-dependent checks and the
+historical combat-v1 balance-report check, which does not cover the configured
+Core build; no new skip was added. This supersedes the November 10 red baseline
+of 95 failures, including the seven extraction guards and 88 portability failures.
+See [JS15–JS18 in the cleanup checklist](CORE2-JS-CLEANUP.md) for exact hashes,
+skip reasons and the accepted lane records. Browser acceptance remains separate.
+
 Open the repository folder in Visual Studio (**File → Open → Folder**).
 No solution conversion is needed. Install Node 22.14 or newer. Right-click
 `package.json` for the **AshenSpire** tasks defined in `tasks.vs.json`.
 Use **Serve without opening a browser** for the source game, then open the
 printed local URL. **Build standalone** creates the portable game and stamps a
 build; run it when ready to package your changes.
+
+### Run startup and save owners
+
+| Owner | Responsibility |
+| --- | --- |
+| `src/services/profileBoot.js` | Migrates stored settings, drops retired keys, and applies promoted defaults. `src/main.js` decides when each step runs for boot, archive restore, and portable import. |
+| `src/services/runBirth.js` | Builds the complete starting run and RNG, including the reviewed deck, dealt deck modes, and seat draw. If birth throws, the app retains the previous run and RNG. Slot selection, registry rebuild, and combat ownership prep happen before birth. Map generation and the first save happen after adoption. |
+| `src/services/runPersistence.js` | Stamps and writes the live run for explicit Save, reports failed autosaves without rejecting accepted play, and writes combat candidates with their committed RNG. Save and browser lock owners still control storage. |
+| `src/services/entryCheckpoint.js` | Queues the fight's entry write with frozen RNG, drops stale entries, and retries a thrown write. `src/main.js` owns page events, when the queue is used, and the save notices. |
+| `src/engine/savedRunContext.js` | Resolves a saved slot's profile and validates its run snapshot with field-addressed errors before the caller adopts the run. |
+| `src/engine/saveTransfer.js` | Imports and exports portable backups; profile resolution and recovery are handled per slot so one unusable entry need not block other recoverable slots. |
+
+### Extracted combat and settings owners
+
+| Owner | Responsibility |
+| --- | --- |
+| `src/ui/models/CombatPlaybackModel.js` | Captures observer-projected combat display state and applies ordered playback receipts to that view. |
+| `src/ui/models/CombatTargetingModel.js` | Builds the active card/flask target plan and rechecks legality before a target action is dispatched. |
+| `src/ui/models/IntentFollowUpModel.js` | Tracks planned enemy follow-ups and reveals each move symbol only when that move's recorded Perception read succeeded. |
+| `src/ui/components/combatMount.js` | Owns combat mount identity, detach cleanup and veil observation. |
+| `src/ui/components/combatPlayback.js` | Owns active timelines, queued repaint and terminal playback handoff for a combat mount. |
+| `src/ui/models/SettingsDraftModel.js` | Owns reset snapshots and generation-bound Settings Undo offers. |
+| `src/model/enemyProjection.js` | Applies validated Core enemy movement and opted-in card overlays to shared enemy moves. |
 
 ## Core: edit the active game pack first
 
@@ -255,35 +374,69 @@ Edit these source files for the Core player flow:
 | Basic player card costs, effects, text and named icons | `games/ashenspire/packs/core/cards.json` |
 | Base reward cards and statuses | `games/ashenspire/packs/base-cards/cards.json` (`definition`), `statuses.json`; preserve each frozen `provenance.sourceProposal` |
 | Equipment and its modifiers | `games/ashenspire/packs/core/gear.json` |
-| Enemy attacks and per-hit damage | `games/ashenspire/packs/core/enemyCards.json` |
-| Player/enemy attributes, decks, behavior and boss phase hooks | `games/ashenspire/packs/core/characters.json` |
+| Core enemy card data and overlays | `games/ashenspire/packs/core/enemyCards.json`; each enemy sheet maps `ai["card:<id>"].legacyMove` to the shared move, `coreOffense: "card"` opts damage/hits into Core, and `coreSp: "card"` separately opts stamina cost |
+| Player attributes, decks and behavior | `games/ashenspire/packs/core/characters.json` |
+| Enemy attributes, decks, behavior and boss phase hooks | `games/ashenspire/packs/core/enemies/<id>.json` (authored source); enemy rows in `characters.json` are generated |
 | Card pools, starting hands, routes, rewards, shops and rests | Matching JSON in `games/ashenspire/packs/core/` |
 | Class and weapon XP rates | `games/ashenspire/bundles/core/bundle.json` → `modules.progression.settings.classXpMultiplier` / `weaponXpMultiplier` |
 | Step gaps, animation duration and playback | `content/config/ui/presentation/actionPacing.json` → `motion` and `behavior` |
 
 The Visual Studio **Compile Core game profiles**, **Check Core game profiles**
 and **Build game artifact** tasks run these commands.
-After pack or bundle edits run `node tools/game-config.mjs build`, then
-`node tools/game-config.mjs check`. The compiler regenerates the catalog,
+After an authored enemy-sheet edit, run `node tools/enemy-sheets.mjs --write`
+to regenerate its projections, then `node tools/derived-tables.mjs` and
+`node tools/enemy-sheets.mjs --check`. `--check` alone only reports stale
+projections. For an `enemyCards.json`-only edit, no enemy-sheet write or
+derived-table regeneration is needed. Then run `node tools/game-config.mjs build` and
+`node tools/game-config.mjs check`. The game-config compiler regenerates the catalog,
 base-card projection and compatibility lock; do not hand-edit these outputs or
-relax compatibility checks to accept them. Then run `node tools/build-game.mjs`
-and `node tools/build-game.mjs --check` to refresh/check the derived game artifact
-and summary. This is separate from packaging the standalone HTML. After pacing
-edits run `node tools/config-build.mjs` and its `--check`, followed by the game
-artifact build/check. Keep generated source/lock/summary changes with their
-source edit; the full `dist/build/` artifact is ignored.
+relax compatibility checks to accept them. Run `node tools/build-game.mjs` to
+write the derived artifact and summary. `node tools/build-game.mjs --check`
+verifies the summary against the in-memory artifact without writing either file.
+This is separate from packaging the standalone HTML. After pacing edits run
+`node tools/config-build.mjs` and its `--check`, followed by the game artifact
+build/check. Keep generated source/lock/summary changes with their source edit;
+the full `dist/build/` artifact is ignored.
 
-### Worked recipe: a real boss attack with three hits
+### Which changes reach an existing run?
 
-Find `stitchedKing.graspingHands` in Core `enemyCards.json`. Its damage effect
-has `amount: 5` and `hits: 3`: three base hits of five, before modifiers. To
-retune this attack to four per hit, change only its `amount` to `4`, keeping
-`hits: 3` and its parameterized `textTemplate`. Recompile as above and inspect
-the boss card plus a real hit receipt. The Stitched King's phase hook in
-`characters.json` grants Strength below 50% HP, and gear, ratings, defenses and
-statuses can further change each hit. A displayed base 5 × 3 is not a promise
-of fifteen HP lost: use the receipt's base/modifier/defense breakdown before
-changing the authored base to compensate for an active modifier.
+| Lifetime | Source and behavior |
+| --- | --- |
+| Run profile | `games/ashenspire/game.json` selects the bundle and its packs. Module defaults and schemas live in `engine/modules/`. The resolved profile pins selected content and module settings, such as class XP rate and action policy. New runs use the rebuilt profile; existing supported saves keep their pins across devices. Backup import resolves the pinned profile independently for each slot, so one incompatible slot does not prevent other recoverable slots from importing. |
+| Saved run snapshots | Serialized fields retain their authored compatibility contract. Malformed snapshots are rejected with a field-addressed reason; other recoverable slots remain usable. Use saved-profile and snapshot tests when changing serialization or import behavior. A compiler `--check` validates generated output, not continuation of an existing historical run. |
+| Run range policy and prologue overrides | A run captures its range policy when created. Older policies without `maxRange` retain the Ranged band. Saved `gameConfig.prologue.*` overrides take precedence over current device settings and defaults. Opening values absent from the snapshot can still follow current settings. Retired balance overrides have no effect in Core. |
+| Active fight | A combat snapshot carries its FixCore rules, reaction and range state, paid actions and RNG position. FixCore rules are runtime-hashed; restore uses the saved rules for that fight, and a changed runtime identity may make existing pins incompatible. Within a compatible runtime, a new fight resolves FixCore defaults when there is no carried override. Its profile and range policy stay pinned. |
+| Live framework combat tuning | Edit `content/framework/mechanics.json` for Evasion and Precision, Counter return and decay, and Reflect fractions and cap. The loaded values apply even to a resumed fight. For example, restore clamps stored Reflect stacks to the current cap. Counter has a separate code-level safety ceiling for stored counts. |
+| Presentation and device preferences | UI pacing defaults come from `content/config/ui/presentation/actionPacing.json`; inspection hold/tolerance and Settings Undo duration have their own `combatInspection.json` and `settingsUndo.json` owners. Supported device settings can override pacing defaults; the new hold/tolerance and Undo values have no device override. These values are not gameplay profile pins. |
+
+After a live framework edit, run `node tools/framework-data-build.mjs` and
+`node tools/framework-data-build.mjs --check`. Both validate the Accuracy,
+Counter and Reflect settings against
+`engine/contracts/framework-combat-mechanics.schema.json`. Invalid input stops
+the compiler before it writes any generated framework module. Live tuning
+leaves the game profile catalog and compatibility lock byte-for-byte the same.
+The standalone package still needs a rebuild to include the new values.
+
+Precision status and HUD explanations substitute the two declared live values
+from `mechanics.json`; unsupported template tokens fail framework validation.
+Counter help reads the same live stack fraction as resolution, while combat
+logs describe the recorded receipt rather than recalculating from current rules.
+
+### Worked recipe: a Core boss card overlay with two hits
+
+Find `ashheartDragon.ashBreath` in Core `enemyCards.json`. Its damage effect
+has `amount: 18` and `hits: 2`, and the matching card entry in
+`games/ashenspire/packs/core/enemies/ashheartDragon.json` opts in with
+`coreOffense: "card"`. Change the damage `amount` from `18` to `17`, keeping
+`hits: 2` and the parameterized `textTemplate`. Run the enemy-sheet check,
+`node tools/game-config.mjs build`, and `node tools/game-config.mjs check`, then
+inspect the projected card and a real hit receipt. The Stitched King's
+`graspingHands` is not an equivalent recipe: its card entry has no
+`coreOffense: "card"` opt-in, so editing that card effect does not retune the
+Core move. Equipment, ratings, defenses and statuses can further change each
+hit; base 17 × 2 does not promise 34 HP lost. Use the receipt's
+base/modifier/defense breakdown before changing an authored base to compensate
+for an active modifier.
 
 ### Worked recipe: XP and pacing defaults
 

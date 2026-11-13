@@ -8,6 +8,7 @@ import { createCombat, dispatch, previewCard, getEntity } from '../src/engine/co
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { createRng } from '../src/engine/rng.js';
 import { groupBeats } from '../src/ui/fx.js';
+import { ApplyCombatBeat } from '../src/ui/models/CombatPlaybackModel.js';
 import { withKitDom } from './helpers/dom.mjs';
 
 // Owner 2026-11-05: "When drawing cards, my hand would change." Run the shipped renderHand and applyBeatToDisp over the
@@ -40,7 +41,7 @@ function fixture(document, { retain = false } = {}) {
     resolveCombatCard, previewCard, getEntity, esc: String, $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
     stackedCardIds: () => new Set(), isUnplayable: () => false, playAvailability: () => true, inspectionPlayAction: () => ({}),
     syncHandPager() {}, syncHitChances() {}, inputBusy: () => false, cardTargets: () => ({ legalIds: [] }),
-    reduceFollowRows() {}, applyCombatIntentReceipt() {}, applyCombatDisplayReceipt: () => false,
+    ApplyCombatBeat, reduceFollowRows() {}, projectCombatIntent: () => null,
     handStrip: { render({ cards }) {
       // The strip keeps an existing card's element and order, and appends a new one (reconcileHandOrder).
       const have = new Map(hand.children.map(c => [c.dataset.instanceId, c]));

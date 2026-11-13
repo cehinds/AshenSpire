@@ -8244,8 +8244,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
     const danglingSaves = createSaveManager(danglingStorage);
     eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
+    assert(danglingSaves.runStatus().reason?.includes("piles.hand[0].cardId 'removedByContentPatch' is unknown"),
+      'the dangling exact-snapshot refusal names the exact pile row and missing card');
 
     const checkpointRun = createRunState({ combatExpansionVersion: 1, enemyKnowledgeVersion: null, seed, classId: 'reaver', registries: REG });
     checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };

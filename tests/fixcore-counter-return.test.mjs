@@ -228,7 +228,7 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming (base 4
   assert.equal(receipt.hpLoss, 6);
 });
 
-import { counterPreviewAgainst } from '../src/engine/counterRule.js';
+import { CounterPreviewAgainst } from '../src/engine/combatCounterPreview.js';
 import { previewIntent } from '../src/engine/combat.js';
 test('a per-hit Counter preview covers the current contact, while saved whole-root policy covers both', () => {
   const { combat, enemy } = live('cinderMantis');
@@ -236,13 +236,13 @@ test('a per-hit Counter preview covers the current contact, while saved whole-ro
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
-  const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const row = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   // Re-pin (SPEC §17, stacks rule): no Counter armed, so no base and no stacks: only the advantage share floor(0.25 x 5) = 1 returns, Poise floor(0.5 x 1) = 0.
   assert.equal(row.hits, 1);
   assert.equal(row.incoming, 5);
   assert.equal(row.hp, 1); assert.equal(row.poise, 0); assert.equal(row.block, 1);
   delete combat.reactionRules.contactPolicy;
-  const historical = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  const historical = CounterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
   assert.equal(historical.hits, 2);
   assert.equal(historical.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
   assert.equal(historical.hp, 2); assert.equal(historical.poise, 0); assert.equal(historical.block, 2);
@@ -259,15 +259,33 @@ test('the Counter preview carries the return\'s Poise damage and the Block it ad
 
 import { cardDetailHtml } from '../src/ui/components/card.js';
 import { t } from '../src/ui/strings.js';
+import { mechanics } from '../src/framework/data/mechanics.js';
+import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
+import { CounterStackPercent } from '../src/ui/models/CounterStackPercentModel.js';
 test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Guard or Ward absorption', () => {
   const core = cardDetailHtml(reg, { cardId: 'core.counter' });
-  assert.ok(core.includes(t('card.counter.help.core')) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
+  assert.ok(core.includes(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
   assert.doesNotMatch(core, /after full Guard or Ward absorption/);
-  assert.match(t('card.counter.help.core'), /10% of the incoming damage per Counter stack/);
+  assert.match(t('card.counter.help.core', { stackPercent: CounterStackPercent() }), /10% of the incoming damage per Counter stack/);
   assert.match(t('card.counter.help.legacy'), /after full Guard or Ward absorption/);
   const legacyReg = createRegistries(contentBundle);
   const legacyCounter = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
   if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Guard or Ward absorption/);
+});
+
+test('Core card and health Counter copy share the configured percentage without float artifacts', () => {
+  const original = mechanics.counter.stackFraction;
+  try {
+    mechanics.counter.stackFraction = 0.29;
+    const help = cardDetailHtml(reg, { cardId: 'core.counter' });
+    assert.match(help, /29% of the incoming damage per Counter stack/);
+    assert.match(combatHealthModel({ counterStacks: 1 }).badges.find(row => row.kind === 'counter').help, /29%/);
+    mechanics.counter.stackFraction = 0.304;
+    assert.equal(CounterStackPercent(), 30.4);
+    assert.match(cardDetailHtml(reg, { cardId: 'core.counter' }), /30\.4% of the incoming damage per Counter stack/);
+  } finally {
+    mechanics.counter.stackFraction = original;
+  }
 });
 
 test('the Counter face token reads the return (13), not the post-protection HP loss', () => {
@@ -666,13 +684,13 @@ test('an armed spell Counter survives save: snapshot validates, restores armed, 
   assert.ok(combatSnapshotProblems(old).some(p => p.includes('armedAtCardCount')));
 });
 
-test('Core: a spell Counter face with no revealed attack reads the half-incoming rule, not the authored 1 Poise / 2 Ward', () => {
+test('Core: a spell Counter face with no revealed attack describes a return without inventing a fixed fraction', () => {
   const { combat } = live();
   combat.piles.hand.push({ instanceId: 'cq1', cardId: 'frostCounter' });
   combat.enemies[0].intent.damage = null;
   const view = previewCard(combat, 'cq1');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-  assert.match(text, /Return half incoming damage and Poise/);
+  assert.match(text, /Return damage and Poise/);
   assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
 });
 
@@ -696,10 +714,10 @@ for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'count
     assert.ok(view.counterReturn?.uncovered === true || !view.counterReturn, 'no computed return promised');
     assert.ok(!(view.counterReturn?.hp > 0), 'preview promises no return');
     const text = (cardFaceLines(view.resolvedDefinition, view, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-    assert.doesNotMatch(text, /Return half incoming damage and Poise/);
+    assert.doesNotMatch(text, /Return damage and Poise/);
     enemy.intent.damage = null;
     const bare = previewCard(combat, 'co1');
-    assert.doesNotMatch((cardFaceLines(bare.resolvedDefinition, bare, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, ''), /Return half incoming damage and Poise/);
+    assert.doesNotMatch((cardFaceLines(bare.resolvedDefinition, bare, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, ''), /Return damage and Poise/);
     enemy.intent.damage = 8;
     dispatch(combat, { type: 'playCard', cardInstanceId: 'co1' });
     Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
