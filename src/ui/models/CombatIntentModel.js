@@ -22,8 +22,9 @@ export function combatIntentPresentation(intent = {}) {
   if (intent.promoted) {
     const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;
     if (!icon) return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
-    const family = icon === 'attack' || icon === 'smash' ? 'attacking' : ['defend', 'counter', 'evade'].includes(icon) ? 'defending' : 'preparing';
-    return { visibility: 'partial', title: partialTitle(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
+    // The family and title the real (known) presentation gives that maneuver: sweeps and ranged attacks read as Attacking.
+    const family = PROMOTED_FAMILY[icon] || 'preparing';
+    return { visibility: 'partial', title: capitalize(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
   }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
@@ -64,6 +65,8 @@ export function combatIntentPresentation(intent = {}) {
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
+const PROMOTED_FAMILY = Object.freeze({ attack: 'attacking', smash: 'smashing', counter: 'countering', defend: 'defending',
+  evade: 'defending', buff: 'buffing', cast: 'casting', prepare: 'preparing' });
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });
 const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);

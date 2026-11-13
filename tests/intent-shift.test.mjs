@@ -94,6 +94,29 @@ test('the later hits of one move never promote', () => {
   assert.equal(r.row().length, 1);
 });
 
+for (const [icon, family, real] of [
+  ['attack', 'attacking', { kind: 'attack', stance: 'attacking' }],
+  ['smash', 'smashing', { kind: 'attack', stance: 'smashing' }],
+  ['counter', 'countering', { kind: 'block', stance: 'countering', block: 5 }],
+  ['defend', 'defending', { kind: 'block', stance: 'defending', block: 5 }],
+  ['evade', 'defending', { kind: 'block', stance: 'defending', profile: { maneuver: 'evade' }, dodgeCharges: 1 }],
+  ['buff', 'buffing', { kind: 'buff', stance: 'preparing' }],
+  ['cast', 'casting', { kind: 'cast', stance: 'preparing', profile: { camp: 'spell' } }],
+  ['prepare', 'preparing', null],
+]) {
+  test(`a promoted ${icon} head reads as the ${family} family, like its real intent`, () => {
+    const shown = combatIntentPresentation({ kind: 'unknown', promoted: true, icon, revealed: true, hidden: false });
+    assert.equal(shown.stance, family);
+    assert.equal(shown.title, family[0].toUpperCase() + family.slice(1));
+    assert.deepEqual(shown.parts, [{ icon, value: null }]);
+    if (real) {
+      const actual = combatIntentPresentation({ moveId: 'x', damage: 4, hits: 1, revealed: true, hidden: false, profile: {}, ...real });
+      assert.equal(shown.stance, actual.stance, 'the same family as the real intent');
+      assert.equal(shown.title, actual.title, 'and the same title');
+    }
+  });
+}
+
 test('early application: the promoted head becomes the real intent at the move\'s start; applying the beat again changes nothing', () => {
   const r = rig(['m2', 'm3'], [true, false]);
   r.beat([started('m1'), ended('m1')], [started('m2')]);
