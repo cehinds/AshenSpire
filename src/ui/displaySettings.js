@@ -637,6 +637,13 @@ export function installDisplaySettings() {
     });
     window.addEventListener('load', reflexAutoScale);
     setTimeout(reflexAutoScale, 300);
+    // A fixed canvas wider than the window leaves untransformed layout overflow,
+    // and focus / scrollIntoView will scroll the viewport even at overflow:hidden.
+    // While a view preset is active the viewport stays at 0,0.
+    window.addEventListener('scroll', () => {
+      if (document.documentElement.dataset.viewPreset === 'auto') return;
+      if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
+    }, { passive: true });
     // The combat canvas follows the combat screen: it mounts as a direct child
     // of #app and every other screen replaces it. Observed here so no screen
     // file has to announce itself.
