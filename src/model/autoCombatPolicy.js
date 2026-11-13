@@ -5,6 +5,14 @@ export const ACTION_PACING = uiConfig.presentation.actionPacing.motion;
 export const AUTOMATION_DEFAULTS = uiConfig.presentation.actionPacing.behavior;
 const bounded = (value, fallback, minimum, maximum) => Number.isFinite(Number(value)) && value !== null && value !== ''
   ? Math.min(maximum, Math.max(minimum, Number(value))) : fallback;
+// The per-stage waits (Settings > Combat, owner 2026-11-13): one persisted key per fixedStageMs stage,
+// combatStage<Name>Ms (intentMs -> combatStageIntentMs). A missing or invalid value is the fixedStageMs default.
+export const stageSettingKey = stage => `combatStage${stage[0].toUpperCase()}${stage.slice(1)}`;
+export const STAGE_KEYS = Object.freeze(Object.keys(ACTION_PACING.fixedStageMs || {}));
+function resolveStageMs(settings) {
+  return Object.fromEntries(STAGE_KEYS.map(stage => [stage, bounded(settings[stageSettingKey(stage)], ACTION_PACING.fixedStageMs[stage],
+    AUTOMATION_DEFAULTS.stageMsMinimum, AUTOMATION_DEFAULTS.stageMsMaximum)]));
+}
 export function resolveCombatAutomation(settings = {}) {
   return {
     enabled: settings.autoCombat === true,
@@ -18,6 +26,7 @@ export function resolveCombatAutomation(settings = {}) {
     enemyAttackMs: bounded(settings.enemyAttackMs, ACTION_PACING.enemyAttackDefaultMs, AUTOMATION_DEFAULTS.enemyPacingMinimumMs, AUTOMATION_DEFAULTS.enemyPacingMaximumMs),
     enemyFloaterIntervalMs: bounded(settings.enemyFloaterIntervalMs, ACTION_PACING.enemyFloaterIntervalDefaultMs, AUTOMATION_DEFAULTS.enemyPacingMinimumMs, AUTOMATION_DEFAULTS.enemyPacingMaximumMs),
     delayMs: bounded(settings.combatStepPause, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
+    stageMs: resolveStageMs(settings),
   };
 }
 // Auto-combat answers the player's REACTION choices (owner ruling D12, 2026-10-18) and, since the owner's

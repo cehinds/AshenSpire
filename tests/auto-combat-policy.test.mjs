@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as policy from '../src/model/autoCombatPolicy.js';
-import { resolveCombatAutomation } from '../src/model/autoCombatPolicy.js';
+import { resolveCombatAutomation, STAGE_KEYS } from '../src/model/autoCombatPolicy.js';
 import { settingsRows } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
 
 test('policy defaults are off, ×1.25, offense, 550 ms animation and a half-second delay', () => {
-  assert.deepEqual(resolveCombatAutomation(), { enabled: false, speed: 1.25, preference: 'offense', autoSpeed: 1.5, animationMs: 550, enemyAttackMs: 750, enemyFloaterIntervalMs: 750, delayMs: 500 });
+  assert.deepEqual(resolveCombatAutomation(), { enabled: false, speed: 1.25, preference: 'offense', autoSpeed: 1.5, animationMs: 550, enemyAttackMs: 750, enemyFloaterIntervalMs: 750, delayMs: 500, stageMs: Object.fromEntries(STAGE_KEYS.map(key => [key, 100])) });
   assert.equal(resolveCombatAutomation({ combatSpeed: NaN }).speed, 1.25);
   assert.equal(resolveCombatAutomation({ combatSpeed: 999 }).speed, 8);
 });

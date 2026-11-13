@@ -135,8 +135,9 @@ export function actionPacing({ reduced = false, enemy = false, reaction = false 
   const gapScale = reaction ? clampGapScale(ACTION_PACING.reactionGapScale) : 1;
   const gapMs = scaled(combatPacing.gapMs) * gapScale;
   // Every stage named in actionPacing.json fixedStageMs holds a fixed time: not the gap, the speed or reactionGapScale; 0 on Instant and Reduced motion.
+  // The player's per-stage settings (Settings > Combat) override the fixedStageMs defaults.
   const fixedMs = key => {
-    const raw = ACTION_PACING.fixedStageMs?.[key];
+    const raw = combatPacing.stageMs?.[key] ?? ACTION_PACING.fixedStageMs?.[key];
     return Number.isFinite(raw) ? (scale > 0 ? Math.max(0, raw) : 0) : undefined;
   };
   const fixed = Object.fromEntries(Object.keys(ACTION_PACING.fixedStageMs || {})

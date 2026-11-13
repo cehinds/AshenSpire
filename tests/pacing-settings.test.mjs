@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { settingsRows, resetKeys, commitNumberRow } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
 import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
+import { STAGE_KEYS, stageSettingKey, resolveCombatAutomation } from '../src/model/autoCombatPolicy.js';
 
 const row = key => settingsRows().find(r => r.key === key);
 
@@ -157,4 +158,30 @@ test('the enemy pacing rows are persisted Combat settings with 750 ms defaults',
     assert.ok(keys.includes(key), key);
     assert.deepEqual([row(key).def, row(key).min, row(key).max, row(key).cat], [750, 100, 3000, 'Combat']);
   }
+});
+
+test('every stage has a combatStage<Name>Ms setting that defaults to the fixedStageMs value', () => {
+  setAnimSpeed('normal'); setCombatPacing({});
+  const pace = actionPacing();
+  assert.deepEqual(STAGE_KEYS, ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'telegraphHoldMs', 'telegraphResetMs']);
+  assert.equal(stageSettingKey('afterSpriteMs'), 'combatStageAfterSpriteMs');
+  for (const key of STAGE_KEYS) assert.equal(pace[key], 100, `${key} defaults to 100 ms (an old save has no key)`);
+  assert.deepEqual(resolveCombatAutomation({ combatStepPause: 500 }).stageMs, Object.fromEntries(STAGE_KEYS.map(key => [key, 100])));
+});
+
+test('a stage setting is clamped to 0..1000 ms and bad values fall back to the default', () => {
+  const stage = value => resolveCombatAutomation({ combatStageDamageMs: value }).stageMs.damageMs;
+  assert.deepEqual([stage(-50), stage(5000), stage(250), stage(0), stage('300')], [0, 1000, 250, 0, 300]);
+  assert.deepEqual([stage(undefined), stage(null), stage(''), stage('x'), stage(NaN)], [100, 100, 100, 100, 100]);
+});
+
+test('a saved stage value overrides its stage only, ignoring speed and the pause, and Instant or Reduced motion zero it', () => {
+  setAnimSpeed('normal');
+  setCombatPacing({ combatSpeed: 4, combatStepPause: 2000, combatStageIntentMs: 400, combatStageResetMs: 0, combatStageTelegraphHoldMs: 1000 });
+  const pace = actionPacing(), after = actionPacing({ reaction: true });
+  assert.deepEqual([pace.intentMs, pace.resetMs, pace.telegraphHoldMs, pace.wordMs], [400, 0, 1000, 100]);
+  assert.deepEqual([after.intentMs, after.resetMs, after.telegraphHoldMs], [400, 0, 1000], 'not shortened after a reaction');
+  assert.equal(actionPacing({ reduced: true }).intentMs, 0);
+  setAnimSpeed('instant'); assert.equal(actionPacing().intentMs, 0);
+  setAnimSpeed('normal'); setCombatPacing();
 });
