@@ -93,3 +93,43 @@ test('the later hits of one move never promote', () => {
   assert.equal(r.ents[ID].intentPreview.promoted, undefined);
   assert.equal(r.row().length, 1);
 });
+
+test('early application: the promoted head becomes the real intent at the move\'s start; applying the beat again changes nothing', () => {
+  const r = rig(['m2', 'm3'], [true, false]);
+  r.beat([started('m1'), ended('m1')], [started('m2')]);
+  r.resolve();
+  assert.equal(r.ents[ID].intentPreview.promoted, true);
+  assert.equal(r.row().length, 1);
+  // The onIntent hook applies the announcing receipt before the animation.
+  const second = started('m2');
+  r.beat([second], [ended('m2')]);
+  assert.equal(r.ents[ID].intentPreview.moveId, 'm2', 'the real intent shows at the start of the move');
+  assert.equal(r.ents[ID].intentPreview.promoted, undefined);
+  assert.equal(r.row().length, 1, 'no second advance');
+  // onBeatApplied then applies the whole beat, the same receipt object included.
+  r.beat([second, ended('m2')], [started('m3')]);
+  assert.equal(r.ents[ID].intentPreview.moveId, 'm2', 'the repeat is idempotent');
+  assert.equal(r.row().length, 1, 'still no second advance');
+  r.resolve();
+  assert.equal(r.ents[ID].intentPreview.promoted, true, 'the next promotion still happens at resolution');
+  assert.equal(r.row().length, 0);
+});
+
+test('the engine gives every non-reaction move of a plan an intentPreview (a buff or defend move too)', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const { createRunCombat } = await import('../src/engine/runCombat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const { dispatch } = await import('../src/engine/combat.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries: regs, classId: 'reaver', seed: 4, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const c = createRunCombat({ registries: regs, run, rng: createRng(4), enemyIds: ['ashheartDragon', 'wyrmAspirant', 'fellWarden'] });
+  dispatch(c, { type: 'endTurn' });
+  for (let i = 0; c.pendingReaction && i < 20; i++) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  const starts = c.eventLog.filter(e => e.type === 'enemyMoveStarted' && !e.reaction);
+  assert.ok(starts.length >= 4);
+  assert.ok(starts.every(e => e.intentPreview), 'the dragon\'s second (buff) move announces its intent');
+});
