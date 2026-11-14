@@ -38,8 +38,11 @@ function restRecover(run) {
   if (recovery.sp === 'full') run.stamina = run.maxStamina;
   const flasks = run.flaskCharges;
   if (flasks) {
-    if (recovery.healingFlasks === 'full') flasks.hpCurrent = flasks.hp;
-    if (recovery.mpFlasks === 'full') flasks.manaCurrent = flasks.mana;
+    if (recovery.healingFlasks === 'full' && recovery.mpFlasks === 'full') refillFlaskCharges(flasks); // the helper healFull uses
+    else {
+      if (recovery.healingFlasks === 'full') flasks.hpCurrent = flasks.hp;
+      if (recovery.mpFlasks === 'full') flasks.manaCurrent = flasks.mana;
+    }
   }
 }
 function healFull(run) {
