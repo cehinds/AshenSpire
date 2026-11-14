@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BUFF_STATUS_IDS, buffGainFor, buffPopupFor } from '../src/ui/buffFeedback.js';
-import { playTimeline, setAnimSpeed, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
+import { BUFF_STATUS_IDS, WordedStatusIds, buffGainFor, buffPopupFor } from '../src/ui/buffFeedback.js';
+import { playTimeline, setAnimSpeed, clearCallouts, statusPopupFor, STATUS_WORDS } from '../src/ui/fx.js';
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
@@ -27,9 +27,11 @@ test('positive feedback catalog resolves authored definitions and covers powers,
 test('only actual positive gains earn floats; meters, bookkeeping and hostile effects do not', () => {
   for (const overrides of [{ stacks: 0 }, { stacks: -1 }, { total: 2 }, { total: 1 }, { targetId: null },
     { previousTotal: undefined }, { total: Infinity }, { type: 'statusPressure' }, { status: 'stanceShifted' },
-    { status: 'burn' }, { status: 'unknown' }, { status: 'bleed' }]) {
+    { status: 'burn' }, { status: 'bleed' }, { status: 'staggered' }, { status: 'ward' }]) {
     assert.equal(buffGainFor(grant('precision', overrides)), 0, JSON.stringify(overrides));
   }
+  // A status with no authored definition has no name to show, so it earns no word whatever the receipt says.
+  assert.equal(buffPopupFor(grant('unknown'), undefined), null);
   for (const definition of [undefined, { name: '' }, { name: 'Precision', meter: {} }, { name: 'Precision', proc: {} }])
     assert.equal(buffPopupFor(grant(), definition), null);
   assert.equal(buffPopupFor(grant('precision', { stacks: 99, previousTotal: 4, total: 5 }), definitions.get('precision')).word, '+1 Precision');
@@ -173,3 +175,14 @@ test('missing status context safely omits gains while hostile words, heal and Bl
   });
 });
 
+
+// Owner, 2026-11-14: "enemy buffs and status effects need to be shown." Every status a fighter gains that has no word of its own earns "+N Name".
+test('a status with no hostile word of its own is announced as +N Name, on an enemy as on the player', () => {
+  assert.deepEqual([...WordedStatusIds].sort(), Object.keys(STATUS_WORDS).sort(), 'the worded list is fx.js STATUS_WORDS');
+  for (const id of ['silenced', 'confused', 'entombed', 'necroticBlight', 'strength']) {
+    const popup = buffPopupFor(grant(id, { targetId: 'e1', sourceId: 'player' }), definitions.get(id));
+    assert.equal(popup.word, `+3 ${definitions.get(id).name}`, id);
+    assert.equal(popup.targetId, 'e1');
+  }
+  for (const id of WordedStatusIds) assert.equal(buffGainFor(grant(id)), 0, `${id} keeps its word, not a second callout`);
+});
