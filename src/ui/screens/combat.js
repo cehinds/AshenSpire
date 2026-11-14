@@ -1860,7 +1860,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Owner, 2026-11-14: in a Core 2 fight the badge is the per-target quote (the HP this enemy loses, its cause word or refusal, and the
     // Stamina or Mana it costs when that differs from the face); a fight that still rolls to hit keeps its hit chance beside it.
     const quote = targetQuoteFor(enemy, preview);
-    if (quote) return targetQuoteBadge(quote, label, preview);
+    if (quote) return targetQuoteBadge(quote, FixCoreHitRollOff(combat.fixCoreRules || combat.gameProfile?.fixCoreRules) ? null : label, preview);
     if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
