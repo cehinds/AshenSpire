@@ -11,6 +11,15 @@ import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRul
 // Presentation ownership stays outside the serializable run and offer data.
 const rewardDoorOwners = new WeakMap();
 
+/** The string keys for a reward door's note and group label. A door with no card on it (Elite spoils: relics only) must not talk about cards or the deck. */
+export function RewardDoorCopy(offer, run, settings) {
+  const anyCard = offer.options.some(option => ['combatCards', 'weaponArts'].includes(option.kind));
+  return {
+    aria: anyCard ? 'reward.card.aria' : 'reward.choice.aria',
+    note: !anyCard ? 'reward.configured.noteItems' : !noncombatEditing(run) ? 'reward.configured.note' : armouryOpensDeckEditor(run, settings) ? 'reward.configured.noteArmoury' : 'reward.configured.noteNoEditor',
+  };
+}
+
 // Configured mixed rewards share the full-game reward door, option columns,
 // card faces and explicit selection/confirmation. Claims remain host-owned.
 export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null, onEditEquipment = null, canEditEquipment = false }) {
@@ -20,11 +29,12 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     presentation = { offerId: offer.id, owner: {} };
     rewardDoorOwners.set(run, presentation);
   }
-  const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t('reward.card.aria') });
+  const copy = RewardDoorCopy(offer, run, settings);
+  const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t(copy.aria) });
   strip.style.setProperty('--choice-count', String(offer.options.length));
   // The copy follows the cards module's whole editor policy (not the rest services): the Armoury when it opens the deck editor,
   // no editing promise when non-combat editing is on but the editor is disabled, otherwise Strategize.
-  const note = el('p', { class: 'reward-note', text: t(!noncombatEditing(run) ? 'reward.configured.note' : armouryOpensDeckEditor(run, settings) ? 'reward.configured.noteArmoury' : 'reward.configured.noteNoEditor', { count: offer.takeCount }) });
+  const note = el('p', { class: 'reward-note', text: t(copy.note, { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   const inspect = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true });
