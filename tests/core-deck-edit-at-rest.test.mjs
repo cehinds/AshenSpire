@@ -7,7 +7,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { noncombatEditing, armouryOpensDeckEditor, restOpensDeckEditor } from '../src/model/armouryRules.js';
+import { noncombatEditing, armouryOpensDeckEditor, RestOpensDeckEditor } from '../src/model/armouryRules.js';
 import { unlimitedCardIds } from '../src/model/deckRules.js';
 import { configuredDeckCopyLimit } from '../src/model/deckCopyLimit.js';
 import { openDeckEdit } from '../src/ui/models/DeckEditorModel.js';
@@ -31,7 +31,7 @@ test('shipped Core: noncombat equipment rules, no Armoury deck door, a rest deck
   const run = make(core, coreRegistries);
   assert.equal(noncombatEditing(run), true);
   assert.equal(armouryOpensDeckEditor(run, {}), false);
-  assert.equal(restOpensDeckEditor(run), true);
+  assert.equal(RestOpensDeckEditor(run), true);
 });
 
 test('shipped Core Reaver: no unlimited basics; a card has only the copies the run owns', () => {
@@ -49,7 +49,7 @@ test('shipped Core Reaver: no unlimited basics; a card has only the copies the r
 test('legacy fixture (noncombat + the old unlimited rules): Armoury door, Strike unlimited, as before', () => {
   const run = make(legacy, legacyRegistries);
   assert.equal(armouryOpensDeckEditor(run, {}), true);
-  assert.equal(restOpensDeckEditor(run), false);
+  assert.equal(RestOpensDeckEditor(run), false);
   assert.equal(configuredDeckCopyLimit(run, 'core.strike'), Infinity);
   assert.ok(unlimitedCardIds(run).includes('core.strike'));
 });
@@ -58,7 +58,7 @@ test('the Core rest component offers the deck-opt door, which is not a service a
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const component = readFileSync(new URL('../src/ui/components/gameProfileRest.js', import.meta.url), 'utf8');
   assert.match(main, /deckEditor: deckDoors\(\)\.rest \? \{ onOpen: \(\) => showDeckEditor\(\(\) => showRest\(\), true, null, 'shrine'\) \} : null/);
-  assert.match(main, /if \(restOpensDeckEditor\(run\)\) return Object\.freeze\(\{ armoury: false, rest: deckEditingOn\(settings\) \}\)/);
+  assert.match(main, /if \(RestOpensDeckEditor\(run\)\) return Object\.freeze\(\{ armoury: false, rest: deckEditingOn\(settings\) \}\)/);
   assert.match(component, /id: 'deck-opt'/);
   // The door calls only deckEditor.onOpen: no commit, no visit write.
   const door = component.slice(component.indexOf("id: 'deck-opt'"));

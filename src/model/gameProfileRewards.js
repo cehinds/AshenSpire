@@ -253,7 +253,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
  * on the reward stream. Returns null (nothing stored) when the key is absent or no relic qualifies. Its own source ('elite'), so the combat
  * offer's relic strip (eligibility.relics.combatIds) never applies. */
-export function gameProfileEliteRelicOffer(registries, run, rng, { offerId } = {}) {
+export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {}) {
   if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
   if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
   const rules = gameContent(run, 'rewards'), rule = rules?.eliteRelic;

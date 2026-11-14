@@ -28,6 +28,6 @@ export function markArmourySeen(run) { if (run?.loadout) run.armorySeen = snapsh
 /** Core opens the deck editor from the Armoury at will, unless the cards module disables manual editing. */
 export const profileOpensDeckEditor = run => !!run && gameModule(run, 'cards')?.editorWhere === 'noncombat' && gameModule(run, 'cards')?.editorEnabled !== false;
 /** Core 2 edits the deck only at a rest site (editorWhere 'rest'), unless the cards module disables manual editing. */
-export const restOpensDeckEditor = run => !!run && gameModule(run, 'cards')?.editorWhere === 'rest' && gameModule(run, 'cards')?.editorEnabled !== false;
+export const RestOpensDeckEditor = run => !!run && gameModule(run, 'cards')?.editorWhere === 'rest' && gameModule(run, 'cards')?.editorEnabled !== false;
 /** The one predicate for 'the Armoury opens the deck editor': the profile allows it and the player's Deck editing setting is on. */
 export const armouryOpensDeckEditor = (run, settings) => profileOpensDeckEditor(run) && deckEditingOn(settings);

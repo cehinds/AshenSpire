@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { restServicesAll, restServiceUsed, restChoiceMode } from '../../model/gameProfileRest.js';
+import { restServicesAll, restServiceUsed, RestChoiceMode } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -25,7 +25,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const icons = { rest: 'rest', strategize: 'deck', smith: 'smith', levelUp: 'progression', upgradeCard: 'deck' };
   const optionIds = { rest: 'rest-opt', strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt', upgradeCard: 'upgrade-card-opt' };
   const all = restServicesAll(run); // Core: heal on arrival, every service once, only Continue leaves
-  const pick = restChoiceMode(run); // one pick per visit; only the Rest card restores
+  const pick = RestChoiceMode(run); // one pick per visit; only the Rest card restores
   const usedOf = id => all ? restServiceUsed(visit, id) : visit.service === id;
   const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: usedOf(service.id) })));
   const layout = restPresentation(registries).optionLayout;

@@ -272,9 +272,9 @@ function settleVictory(ctx, run, rng, combat, enc, stats) {
   if (takeOffer(ctx, run, offerId, isNewCard)) stats.cardsTaken++;
   // Elite spoils (rewards.json eliteRelic), then one level card per level bought, as the Continue chain does.
   let chain = offerId;
-  if (enc.pool === 'elite' && gameContent(run, 'rewards')?.eliteRelic && Rewards.gameProfileEliteRelicOffer) {
+  if (enc.pool === 'elite' && gameContent(run, 'rewards')?.eliteRelic && Rewards.GameProfileEliteRelicOffer) {
     const eliteId = `${chain}:elite`;
-    if (Rewards.gameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
+    if (Rewards.GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
       if (takeOffer(ctx, run, eliteId, (o) => o.kind === 'relics')) stats.relicsTaken++;
       chain = eliteId;
     }
@@ -293,7 +293,7 @@ function visitRest(ctx, run, stats) {
   if (!gameModule(run, 'rest') || gameModule(run, 'rest').mode !== 'configured') return null;
   Rest.beginGameProfileRest(run, `${run.actNumber}:${node.id}`);
   stats.rests++;
-  const choice = Rest.restChoiceMode ? Rest.restChoiceMode(run) : false;
+  const choice = Rest.RestChoiceMode ? Rest.RestChoiceMode(run) : false;
   const upgrade = () => {
     const ids = [...run.deck].sort((a, b) => Number(isBasic(a.cardId)) - Number(isBasic(b.cardId)));
     for (const card of ids) {

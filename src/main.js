@@ -1,6 +1,6 @@
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, gameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -102,7 +102,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, armouryOpensDeckEditor, restOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { armouryHasNew, armouryOpensDeckEditor, RestOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -1447,7 +1447,7 @@ function deckDoors(services = null) {
   const settings = saves.loadMeta().settings || {};
   const doors = deckEditorDoors({ settings, inCombat: false, services });
   // Core 2 (editorWhere 'rest'): the deck is edited only at a rest site, whatever the player's location setting says.
-  if (restOpensDeckEditor(run)) return Object.freeze({ armoury: false, rest: deckEditingOn(settings) });
+  if (RestOpensDeckEditor(run)) return Object.freeze({ armoury: false, rest: deckEditingOn(settings) });
   // D10/D15: an older Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
@@ -2531,7 +2531,7 @@ function showGameProfileReward() {
         delete run.gameProfilePendingReward;
         // Elite spoils (rewards.json eliteRelic): a relic choice after the combat door, before any level offers; an empty pool skips it.
         const eliteId = pending.eliteRelic ? `${pending.offerId}:elite` : '';
-        if (eliteId && gameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
+        if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
           run.gameProfilePendingReward = { ...pending, offerId: eliteId, source: 'elite', eliteRelic: false };
         } else if (pending.levelOffers > 0) {
           const offerId = `${pending.offerId}:level:${pending.levelOffers}`;

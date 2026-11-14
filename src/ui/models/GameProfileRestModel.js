@@ -1,6 +1,6 @@
 import { configuredCharacterLevels } from '../../model/gameProfileProgression.js';
 import { gameContent } from '../../model/gameProfile.js';
-import { previewGameProfileRest, restServiceSpent, restServicesAll, restSmithFree, restChoiceMode, restHpGain, restHpFraction } from '../../model/gameProfileRest.js';
+import { previewGameProfileRest, restServiceSpent, restServicesAll, restSmithFree, RestChoiceMode, RestHpGain, RestHpFraction } from '../../model/gameProfileRest.js';
 import { restSmithMaxTier } from '../../model/blacksmithConfig.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from './SmithSelectionModel.js';
@@ -26,11 +26,11 @@ export function gameProfileRestModel(registries, run, visit) {
     const def = registries.attributes.get(id);
     return { id, label: def.label || def.name || id, shortLabel: def.shortLabel || id, value: run.attributes[id], ...attempt('levelUp', { attributeId: id }) };
   });
-  const pick = restChoiceMode(run); // one pick per visit: only the Rest card restores, so no other card may promise a restore
+  const pick = RestChoiceMode(run); // one pick per visit: only the Rest card restores, so no other card may promise a restore
   const describe = id => {
     if (id === 'rest') {
-      const fraction = restHpFraction(run);
-      return fraction >= 1 ? t('gameProfile.rest.description.restFull') : t('gameProfile.rest.description.rest', { hp: restHpGain(run), percent: Math.round(fraction * 100) });
+      const fraction = RestHpFraction(run);
+      return fraction >= 1 ? t('gameProfile.rest.description.restFull') : t('gameProfile.rest.description.rest', { hp: RestHpGain(run), percent: Math.round(fraction * 100) });
     }
     if (pick && (id === 'smith' || id === 'upgradeCard')) return t(`gameProfile.rest.description.${id}Pick`);
     return t(restServicesAll(run) ? `gameProfile.rest.description.${id === 'smith' && !restSmithFree(run) ? 'smithAllPaid' : `${id}All`}` : `gameProfile.rest.description.${id}`);
