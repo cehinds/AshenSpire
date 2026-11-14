@@ -112,7 +112,15 @@ const PAGE_SCAN = `(() => {
     }
     return opacity > 0.05;
   };
-  const zoomOf = (el) => chain(el).reduce((z, n) => z * (parseFloat(getComputedStyle(n).zoom) || 1), 1);
+  // CSS zoom and any transform scale on the element or an ancestor (a fanned hand card is drawn at one size and scaled to its slot).
+  const scaleOf = (n) => {
+    const cs = getComputedStyle(n);
+    let k = parseFloat(cs.zoom) || 1;
+    if (cs.transform && cs.transform !== 'none') { const m = new DOMMatrixReadOnly(cs.transform); k *= Math.hypot(m.a, m.b) || 1; }
+    if (cs.scale && cs.scale !== 'none') k *= parseFloat(cs.scale.split(' ')[0]) || 1;
+    return k;
+  };
+  const zoomOf = (el) => chain(el).reduce((z, n) => z * scaleOf(n), 1);
   const items = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let t = walker.nextNode(); t; t = walker.nextNode()) {
