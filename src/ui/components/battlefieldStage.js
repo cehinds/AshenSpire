@@ -375,10 +375,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const rackHeight = (read ? read.rackBox : rack.getBoundingClientRect()).height || 0; // one read per rack: the intent's skip key shares it
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
           groupHeight: Math.max(miniHudGroupHeight(config) * fit, rackHeight), intentHeight,
-          // SPEC: the player's rack keeps a fixed 10 SCREEN-pixel gap above the art, so that one gap is
-          // not scaled with the canvas (it is the one HUD distance that follows the window's scale; an
-          // open question against the 2026-11-14 canvas ruling). Enemies keep the configured canvas gap.
-          gap: frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx * fit : config.miniHudSpriteGapPx * fit, zoom }) });
+          // SPEC: the player's rack keeps a fixed 10 px gap above the art, measured on the form factor's
+          // canvas (it scales with the canvas, like every authored px here); enemies keep the configured gap.
+          gap: (frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx) * fit, zoom }) });
         centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
