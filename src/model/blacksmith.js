@@ -98,7 +98,7 @@ export function upgradeableArts(registries, run) {
  * The owned items the Blacksmith's item upgrade could act on now (Core 2): one row per weapon, shield, armour and
  * relic that still has an upgrade slot and an option to roll. A short purse still lists it; the quote says why.
  */
-export function smithUpgradeItems(registries, run) {
+export function SmithUpgradeItems(registries, run) {
   return ownedSmithingItems(registries, run).map((row) => {
     const smith = PlanSmithUpgrade(run, row.itemRef);
     return { itemRef: row.itemRef, itemKind: row.itemKind, itemId: row.itemId, itemName: row.item?.name || '', used: smith.used, slots: smith.slots, nextLevel: smith.n, code: smith.code };
@@ -164,14 +164,14 @@ export function commitBlacksmithUpgrade(registries, run, quote, { priceMult = 1 
 // ---------------------------------------------------------------------------
 
 /** Whether the item is a weapon the Blacksmith can give another category (it offers an upgrade service and the item has one). */
-export const canChangeCategory = (registries, run, itemRef) => coreSmithingActive(run) && blacksmithOffers(run, 'upgrade') && CategoryChoices(run, itemRef).length > 0;
+export const CanChangeCategory = (registries, run, itemRef) => coreSmithingActive(run) && blacksmithOffers(run, 'upgrade') && CategoryChoices(run, itemRef).length > 0;
 
 /** The quote for turning `itemRef` into `category`, keeping the properties named by `keepKeys`. */
-export function categoryChangePlan(registries, run, itemRef, category, keepKeys = [], { priceMult = 1 } = {}) {
+export function CategoryChangePlan(registries, run, itemRef, category, keepKeys = [], { priceMult = 1 } = {}) {
   const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
   const plan = PlanCategoryChange(run, itemRef, category, keepKeys, { priceMult });
   let reason = '';
-  if (!canChangeCategory(registries, run, itemRef)) reason = say('blacksmith.refuse.categoryNone', { name });
+  if (!CanChangeCategory(registries, run, itemRef)) reason = say('blacksmith.refuse.categoryNone', { name });
   else if (plan.code === 'category') reason = say('blacksmith.refuse.categoryNone', { name });
   else if (plan.code === 'keep') reason = say('shop.refuse.stale');
   else if (plan.code === 'keepMany') reason = say('blacksmith.refuse.keepMany', { max: plan.keepLimit });
@@ -181,8 +181,8 @@ export function categoryChangePlan(registries, run, itemRef, category, keepKeys 
   return { ...plan, ok: !reason, reason, name, cost: plan.cinders, revision: blacksmithRevision(run) };
 }
 
-export function commitCategoryChange(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = categoryChangePlan(registries, run, quote.itemRef, quote.category, quote.keep, { priceMult });
+export function CommitCategoryChange(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = CategoryChangePlan(registries, run, quote.itemRef, quote.category, quote.keep, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   // The properties rolled are the ones the quote showed, or the quote is stale.
@@ -197,7 +197,7 @@ export function commitCategoryChange(registries, run, quote, { priceMult = 1 } =
 // ---------------------------------------------------------------------------
 
 /** Quote for ranking `itemRef` up: +1 upgrade slot for the rank-up price (cinders and stones), until the slot ceiling. */
-export function itemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {}) {
+export function ItemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {}) {
   const rules = blacksmithRules(run);
   const name = ownedSmithingItems(registries, run).find((row) => row.itemRef === itemRef)?.item?.name || armamentName(registries, itemRef);
   const price = cinders(blacksmithPrices(run).rankUp, priceMult);
@@ -211,8 +211,8 @@ export function itemRankUpPlan(registries, run, itemRef, { priceMult = 1 } = {})
   return { ok: !reason, reason, itemRef, name, from: ItemRank(run, itemRef), to: ItemRank(run, itemRef) + 1, slots, used: ItemUpgradeCount(run, itemRef), stones: need, cost: price, revision: blacksmithRevision(run) };
 }
 
-export function commitItemRankUp(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = itemRankUpPlan(registries, run, quote.itemRef, { priceMult });
+export function CommitItemRankUp(registries, run, quote, { priceMult = 1 } = {}) {
+  const plan = ItemRankUpPlan(registries, run, quote.itemRef, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   const receipt = withSmithService(registries, run, () => {
@@ -249,7 +249,7 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
  * Whether Blacksmith work on this card also raises its rank (W25 step 3): `blacksmith.upgradeRankChance` percent,
  * rolled on the run's seed, the card and its upgrade number, so it is the same however often it is asked.
  */
-export function upgradeGrantsRank(run, instance) {
+export function UpgradeGrantsRank(run, instance) {
   return upgradeGrantsRankAt(run, instance, Array.isArray(instance?.upgradeSteps) ? instance.upgradeSteps.length : 0);
 }
 function upgradeGrantsRankAt(run, instance, steps) {
@@ -332,7 +332,7 @@ export function commitRankUp(registries, run, quote, { priceMult = 1 } = {}) {
  */
 export function serviceCandidates(registries, run, id) {
   switch (id) {
-    case 'upgrade': return coreSmithingActive(run) ? smithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
+    case 'upgrade': return coreSmithingActive(run) ? SmithUpgradeItems(registries, run) : smithingPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
     case 'rankUp': return rankUpCards(registries, run);
     default: return [];

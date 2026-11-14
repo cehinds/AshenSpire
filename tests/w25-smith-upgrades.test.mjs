@@ -10,7 +10,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
-import { blacksmithUpgradePlan, commitBlacksmithUpgrade, smithUpgradeItems, serviceCandidates } from '../src/model/blacksmith.js';
+import { blacksmithUpgradePlan, commitBlacksmithUpgrade, SmithUpgradeItems, serviceCandidates } from '../src/model/blacksmith.js';
 import { SmithUpgradeCost, SmithUpgradeSlots, RollSmithOptions, SmithOptionPool } from '../src/model/smithUpgrade.js';
 import { ItemFamily, ItemCategory, ItemUpgradeCount, ItemPropertyIds } from '../src/model/itemPicks.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
@@ -65,7 +65,7 @@ test('a martial weapon rolls AR / DR / a related attribute; a magic weapon rolls
 
 test('the blacksmith quote prices upgrade n and commit applies the chosen option', () => {
   const run = smithRun();
-  assert.ok(smithUpgradeItems(registries, run).some((row) => row.itemRef === GS));
+  assert.ok(SmithUpgradeItems(registries, run).some((row) => row.itemRef === GS));
   assert.ok(serviceCandidates(registries, run, 'upgrade').some((row) => row.itemRef === GS));
   const arBefore = gameProfileRatingReceipt(registries, run).totals;
   let quote = blacksmithUpgradePlan(registries, run, GS);
@@ -113,19 +113,19 @@ test('picks count as the weapon\'s smith level for card slots, and an old save (
 });
 
 test('item rank-up: +1 upgrade slot for the rank-up price; slots never pass the ceiling', async () => {
-  const { itemRankUpPlan, commitItemRankUp } = await import('../src/model/blacksmith.js');
+  const { ItemRankUpPlan, CommitItemRankUp } = await import('../src/model/blacksmith.js');
   const run = smithRun();
   assert.equal(SmithUpgradeSlots(run, GS), 6);
-  const quote = itemRankUpPlan(registries, run, GS);
+  const quote = ItemRankUpPlan(registries, run, GS);
   assert.deepEqual([quote.ok, quote.stones, quote.cost], [true, 1, 120], quote.reason);
   const [stonesBefore, cindersBefore] = [run.smithingStones, run.cinders];
-  commitItemRankUp(registries, run, quote);
+  CommitItemRankUp(registries, run, quote);
   assert.equal(SmithUpgradeSlots(run, GS), 7);
   assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, cindersBefore - 120]);
-  assert.throws(() => commitItemRankUp(registries, run, quote), /changed|Inspect/);
+  assert.throws(() => CommitItemRankUp(registries, run, quote), /changed|Inspect/);
   run.itemRanks[GS] = 99;
   assert.equal(SmithUpgradeSlots(run, GS), 12);
-  assert.equal(itemRankUpPlan(registries, run, GS).ok, false);
+  assert.equal(ItemRankUpPlan(registries, run, GS).ok, false);
 });
 
 test('an upgrade can roll a property, and the property it picks is held by the item and counted as an upgrade', () => {
@@ -154,11 +154,11 @@ test('the blacksmith card upgrade offers 2 or 3 options at random, the same ever
 });
 
 test('Blacksmith card work raises the rank on a seeded 20% chance, never on an equipment card', async () => {
-  const { upgradeGrantsRank } = await import('../src/model/blacksmith.js');
+  const { UpgradeGrantsRank } = await import('../src/model/blacksmith.js');
   const run = smithRun();
   let ranked = 0;
-  for (let i = 0; i < 2000; i += 1) if (upgradeGrantsRank(run, { instanceId: `c${i}`, cardId: 'core.strike' })) ranked += 1;
+  for (let i = 0; i < 2000; i += 1) if (UpgradeGrantsRank(run, { instanceId: `c${i}`, cardId: 'core.strike' })) ranked += 1;
   assert.ok(ranked > 300 && ranked < 500, `about 20% of 2000: ${ranked}`);
-  assert.equal(upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }), upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }));
-  assert.equal(upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike', sourceArmamentId: 'greatsword' }), false);
+  assert.equal(UpgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }), UpgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }));
+  assert.equal(UpgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike', sourceArmamentId: 'greatsword' }), false);
 });

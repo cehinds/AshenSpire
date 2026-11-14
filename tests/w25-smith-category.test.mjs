@@ -10,7 +10,7 @@ import { applyGameProfileToContent, bindGameProfileRegistries, resolveGameProfil
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
-import { categoryChangePlan, commitCategoryChange, canChangeCategory } from '../src/model/blacksmith.js';
+import { CategoryChangePlan, CommitCategoryChange, CanChangeCategory } from '../src/model/blacksmith.js';
 import { KeepableProperties, KeepLimit, NewPropertyMax, CategoryChoices } from '../src/model/smithCategory.js';
 import { ItemCategory, ItemFamily, ItemPropertyIds, ItemUpgradeCount } from '../src/model/itemPicks.js';
 import { ITEM_PROPERTIES } from '../src/content/itemProperties.js';
@@ -32,12 +32,12 @@ const AR = { id: 'ar', k: 'stat', stat: 'ar', n: 1 }, DR = { id: 'dr', k: 'stat'
 
 test('only weapons change category, to any other category; the quote costs 1 stone and 75 cinders', () => {
   const run = smithRun();
-  assert.equal(canChangeCategory(registries, run, GS), true);
-  assert.equal(canChangeCategory(registries, run, `armor/reaver/${run.loadout.sets.armor[0]}`), false);
-  assert.equal(canChangeCategory(registries, run, 'relic/forsakenMedallion'), false);
+  assert.equal(CanChangeCategory(registries, run, GS), true);
+  assert.equal(CanChangeCategory(registries, run, `armor/reaver/${run.loadout.sets.armor[0]}`), false);
+  assert.equal(CanChangeCategory(registries, run, 'relic/forsakenMedallion'), false);
   const choices = CategoryChoices(run, GS);
   assert.ok(choices.includes('sword') && choices.includes('staff') && !choices.includes('greatsword'));
-  const plan = categoryChangePlan(registries, run, GS, 'katana');
+  const plan = CategoryChangePlan(registries, run, GS, 'katana');
   assert.deepEqual([plan.ok, plan.stones, plan.cinders, plan.cost], [true, 1, 75, 75], plan.reason);
 });
 
@@ -48,23 +48,23 @@ test('the keep limit is the upgrade count (at least 1) and at least 1 old proper
   assert.equal(NewPropertyMax(run, GS), 4);
   const keys = KeepableProperties(run, GS).map((row) => row.key);
   assert.deepEqual(keys, ['pick:0', 'pick:1', 'pick:2']);
-  assert.match(categoryChangePlan(registries, run, GS, 'katana', []).reason, /at least one/);
-  assert.equal(categoryChangePlan(registries, run, GS, 'katana', ['pick:0', 'pick:2']).ok, true);
-  assert.match(categoryChangePlan(registries, run, GS, 'katana', ['pick:9']).reason, /changed|Inspect/);
+  assert.match(CategoryChangePlan(registries, run, GS, 'katana', []).reason, /at least one/);
+  assert.equal(CategoryChangePlan(registries, run, GS, 'katana', ['pick:0', 'pick:2']).ok, true);
+  assert.match(CategoryChangePlan(registries, run, GS, 'katana', ['pick:9']).reason, /changed|Inspect/);
   const one = withPicks(smithRun(), [AR]);
   assert.equal(KeepLimit(one, GS), 1);
-  assert.match(categoryChangePlan(registries, one, GS, 'katana', ['pick:0', 'pick:0']).reason || 'ok', /ok|/);
+  assert.match(CategoryChangePlan(registries, one, GS, 'katana', ['pick:0', 'pick:0']).reason || 'ok', /ok|/);
   const fresh = smithRun();
   assert.equal(KeepLimit(fresh, GS), 1, 'a never-upgraded weapon still allows 1');
-  assert.equal(categoryChangePlan(registries, fresh, GS, 'katana', []).ok, true, 'and, holding nothing, has nothing it must keep');
+  assert.equal(CategoryChangePlan(registries, fresh, GS, 'katana', []).ok, true, 'and, holding nothing, has nothing it must keep');
 });
 
 test('commit: category set, kept picks stay, the rest are spent, new properties are added, the price is paid, the count holds', () => {
   const run = withPicks(smithRun(), [AR, DR, STR]);
-  const quote = categoryChangePlan(registries, run, GS, 'staff', ['pick:1']);
+  const quote = CategoryChangePlan(registries, run, GS, 'staff', ['pick:1']);
   assert.equal(quote.ok, true, quote.reason);
   assert.ok(quote.newProperties.length >= 1 && quote.newProperties.length <= 4);
-  const receipt = commitCategoryChange(registries, run, quote);
+  const receipt = CommitCategoryChange(registries, run, quote);
   assert.equal(ItemCategory(run, GS), 'staff');
   assert.equal(ItemFamily(run, GS), 'magic');
   assert.deepEqual(run.itemUpgradePicks[GS].map((p) => p.k), ['spent', 'stat', 'spent']);
@@ -75,14 +75,14 @@ test('commit: category set, kept picks stay, the rest are spent, new properties 
   assert.equal(receipt.kept, 1);
   // the new properties come from the new category's pool, none already held
   for (const id of ItemPropertyIds(run, GS)) assert.ok(ITEM_PROPERTIES.find((row) => row.id === id).weights.magic > 0, id);
-  assert.throws(() => commitCategoryChange(registries, run, quote), /cannot change category|changed|Inspect/, 'the same quote commits once');
+  assert.throws(() => CommitCategoryChange(registries, run, quote), /cannot change category|changed|Inspect/, 'the same quote commits once');
 });
 
 test('the number of new properties is 1..1+N and weighted to the lower numbers (seeded, 2000 rolls)', () => {
   const histogram = {};
   for (let seed = 1; seed <= 2000; seed += 1) {
     const run = withPicks(smithRun(seed), [AR, DR]);
-    const plan = categoryChangePlan(registries, run, GS, 'katana', ['pick:0']);
+    const plan = CategoryChangePlan(registries, run, GS, 'katana', ['pick:0']);
     histogram[plan.newProperties.length] = (histogram[plan.newProperties.length] || 0) + 1;
   }
   assert.deepEqual(Object.keys(histogram).map(Number).sort(), [1, 2, 3], JSON.stringify(histogram));
@@ -91,19 +91,19 @@ test('the number of new properties is 1..1+N and weighted to the lower numbers (
 
 test('a quote is the same every time it is asked; a different keep set may roll differently', () => {
   const run = withPicks(smithRun(), [AR, DR]);
-  const a = categoryChangePlan(registries, run, GS, 'axe', ['pick:0']);
-  assert.deepEqual(categoryChangePlan(registries, run, GS, 'axe', ['pick:0']).newProperties, a.newProperties);
+  const a = CategoryChangePlan(registries, run, GS, 'axe', ['pick:0']);
+  assert.deepEqual(CategoryChangePlan(registries, run, GS, 'axe', ['pick:0']).newProperties, a.newProperties);
 });
 
 test('a change refused for a short purse keeps both purses; an old save loads and a changed weapon survives a save round trip', () => {
   const poor = withPicks(smithRun(), [AR]); poor.cinders = 10;
-  const quote = categoryChangePlan(registries, poor, GS, 'axe', ['pick:0']);
+  const quote = CategoryChangePlan(registries, poor, GS, 'axe', ['pick:0']);
   assert.equal(quote.ok, false);
   assert.match(quote.reason, /cinders/i);
-  assert.throws(() => commitCategoryChange(registries, poor, quote));
+  assert.throws(() => CommitCategoryChange(registries, poor, quote));
   assert.deepEqual([poor.smithingStones, poor.cinders], [5, 10]);
   const run = withPicks(smithRun(), [AR, DR]);
-  commitCategoryChange(registries, run, categoryChangePlan(registries, run, GS, 'axe', ['pick:0']));
+  CommitCategoryChange(registries, run, CategoryChangePlan(registries, run, GS, 'axe', ['pick:0']));
   assert.deepEqual(validateRunShape(run, registries) || [], []);
   const back = deserializeRun(serializeRun(run), registries);
   assert.equal(ItemCategory(back, GS), 'axe');
