@@ -115,7 +115,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-08: enemy-level budgets on the integrated dev runtime; old saves keep their own rules.
   // Re-pinned 2026-11-14: exact hits and intents (hitRoll, evadeStacksPerCard, perception.roll) move the runtime hash (63e8... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-14: the one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp) moves the runtime hash (9808... is now in PREVIOUS_RUNTIMES, so a save from it still resumes).
-  assert.equal(profile.lock.runtimeHash, 'sha256:87f11fa361a1f7e53035c62face2a2d98f1829c5516e1235c4c2da60697cfd4c');
+  assert.equal(profile.lock.runtimeHash, 'sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

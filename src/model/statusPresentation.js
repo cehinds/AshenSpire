@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreStatusDefinition } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreHitRollOff } from './fixCoreMechanics.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
 
@@ -20,7 +20,9 @@ function present(ctx, id, definition, holder) {
       resolved = { ...resolved, tooltip: text, description: text };
     }
     else if (id === 'evade') {
-      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      // Owner, 2026-11-14: with no hit roll a stack of Evade cancels the next attack, whatever the Evasion numbers say.
+      const fixed = FixCoreHitRollOff(fixCoreRules(ctx, holder)) ? 'The next attack against you misses.' : `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll.`;
+      const text = `${fixed} Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };
     }
   }

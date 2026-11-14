@@ -6,21 +6,19 @@
   "scenarios": {
     "paid reaction": {
       "profile": {
-        "hash": "sha256:a9995b8a9c44f542e9d42f589e16685cf0563ee787809a92962ee7c73b7750cf",
-        "runtimeHash": "sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034",
+        "hash": "sha256:c5a025375e7967407fda31106a40bb0c2d196682f136ab68cf422a1d5097049e",
+        "runtimeHash": "sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "ffdb178e3689462ac4a00057fb6531c527e235ceaacc16a27339d8b87625306f",
-        "events": "7db321486295be2bc785e8cb5a3c83ce8d096e49baeec6a8c799d561d0c39246",
+        "snapshot": "58d6b6dbbe5b86e8ee7b8ff32d895729f367278828dff1379edc41dcbf54efbe",
+        "events": "08a311bf029b51c30ce7cc28764d8a6c48df78575d27c5705bf9b9adfd3a730f",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
@@ -38,86 +36,74 @@
         }
       },
       "pending": {
-        "snapshot": "520d9adc90bd9c762118113cd71a1d3a6fb357fcaae42c5361f942acec13b7fc",
-        "events": "a285d20dc5127358c5983df52f9aa4310946992c6b87ef4446700a6bccee6820",
+        "snapshot": "32c3145506e766e10ccb383cd28bd27d696a3d65273751977d66f102f94b27b8",
+        "events": "cd5d1dd0ba70e2bf97e9543d62aaf08d0d5c2f790b8476ea73ef6cdc8dd67236",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "save": {
-        "stored": "c44b9567256e3ca84063f48687ab3219ab0847a71e5a162f2e48354cd5b6bd99",
-        "loaded": "20cdba1f30f7b2dddb8bbf4e6331140c57c586c9ec7df261d18b276d5ac6b2c1"
+        "stored": "811256aea354e5d80495bb52387d85250894ebad9e3a6b6e71e8752118292f46",
+        "loaded": "828e7e184a4860ce706509d7d4f1ba7807fe34d5b7fc45deeeec2740928978a4"
       },
       "restored": {
-        "snapshot": "520d9adc90bd9c762118113cd71a1d3a6fb357fcaae42c5361f942acec13b7fc",
-        "events": "4d4be1c9e89459c1827c4c2bc0df397d07284abfd27866055e8f6957b4f9f298",
+        "snapshot": "32c3145506e766e10ccb383cd28bd27d696a3d65273751977d66f102f94b27b8",
+        "events": "b77361daf33e340e16c0b02b9e7fc7c2328a2d1376f26248dadd2b12342dba61",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "live": {
-        "snapshot": "4b413631d5dceb9ac3db537b6ce70b39acc165ac46256dd6cb47053b6e9f1573",
-        "events": "9912a1783b8760d6e7606afdf46c28b05d342d96bec203e9b9510ca2cd0a38dc",
+        "snapshot": "2b5f121e474291746deeeac83a842178a5d64bc02ccb11134a8de7f365ec0070",
+        "events": "85eb7fdf2d19e5a76be6b025838e29a28fff7c7692eee5024b9a05a06629f292",
         "rng": {
-          "hash": "0e2d88ca9b16d577d2aea242b81127d9deea1ccac2f95f689420d6597cb261c1",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "combatAvoidance": 2,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         },
-        "continuation": "7412d62a82ab0fdbe20c798cb4d64a9a420fc1ffd0c7d9cb6cead23d084eb802"
+        "continuation": "1e52b05d83e7932d809027485362d3cbab62deec9f4e5349c995d00a0d87e436"
       },
       "afterRestore": {
-        "snapshot": "4b413631d5dceb9ac3db537b6ce70b39acc165ac46256dd6cb47053b6e9f1573",
-        "events": "65d15b36cac8da53b8caaacf8a0a28c0c5d051fc4251547712c998693953db35",
+        "snapshot": "2b5f121e474291746deeeac83a842178a5d64bc02ccb11134a8de7f365ec0070",
+        "events": "234ef1b602abae8741f5fe6c501f47a2481b182b8dbdaa5958828f23cfba1c58",
         "rng": {
-          "hash": "0e2d88ca9b16d577d2aea242b81127d9deea1ccac2f95f689420d6597cb261c1",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "combatAvoidance": 2,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         },
-        "continuation": "7412d62a82ab0fdbe20c798cb4d64a9a420fc1ffd0c7d9cb6cead23d084eb802"
+        "continuation": "1e52b05d83e7932d809027485362d3cbab62deec9f4e5349c995d00a0d87e436"
       }
     },
     "paid delayed charge": {
       "profile": {
-        "hash": "sha256:a9995b8a9c44f542e9d42f589e16685cf0563ee787809a92962ee7c73b7750cf",
-        "runtimeHash": "sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034",
+        "hash": "sha256:c5a025375e7967407fda31106a40bb0c2d196682f136ab68cf422a1d5097049e",
+        "runtimeHash": "sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "0247af2548712fde29fc22aab2091a74f047ba17f38cab1b00219c4659df33d1",
-        "events": "e1afe2a042116fc486772cc2d89dedea31ff5f6828d1be98ce55b332b56b07be",
+        "snapshot": "4c49250f4d910cfcc97469e24848b915560f08f62d55037fd2c8b71618938ad0",
+        "events": "6710825bbd6d523355a033259baf6a0429548ec0c45df67f5c215867076e4075",
         "rng": {
-          "hash": "b0d6b0a41d88e375784347c6de3e90f57d7518c017fcdbdec12f7940a4a8e196",
+          "hash": "6c0f0fdb9eb81cb667534c8d4c460ed2fd542e05becef8cdea5846c74a0813ca",
           "drawn": {
             "shuffle": 10,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
@@ -127,85 +113,73 @@
         "totalSp": 2
       },
       "pending": {
-        "snapshot": "ca63d63308441af8666dfea2f3dcce2d9480ff8d3174ace15a473b4508ff6045",
-        "events": "669d46f5086e9a8fda7e154db15b93cc1e3ac3cc4b1b4c74dba0ddef74f20754",
+        "snapshot": "bfb86b7ade2ca7537737ae5dcf7f23beca7c98a17b93e98490f0949082c6fb58",
+        "events": "b705185265a298275df02fdf1ba2ae942f965466a300df661140bf991c9d6c4f",
         "rng": {
-          "hash": "c2b71e1620987c71ab52c0854f1a8b3ea1878e9d2304aa499df69cc9b21280f5",
+          "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
           "drawn": {
             "shuffle": 20,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "save": {
-        "stored": "b2e426ade8b282a71ffb63b991886356d2b13f2972164a287a1a090f12576e75",
-        "loaded": "e825731b36c5125c44922e3e6a83579c2a33329724f5bf2dc71d39b859c1b7c5"
+        "stored": "c8cefe3d95c23ff66fb4bd3bfe8678eac506d67da84dcd6683a951a3541719d3",
+        "loaded": "1988afeb32cbe2142251e2ae44efeb5b9ad06ba4946e67c3bfd2219f26d3f152"
       },
       "restored": {
-        "snapshot": "ca63d63308441af8666dfea2f3dcce2d9480ff8d3174ace15a473b4508ff6045",
-        "events": "669d46f5086e9a8fda7e154db15b93cc1e3ac3cc4b1b4c74dba0ddef74f20754",
+        "snapshot": "bfb86b7ade2ca7537737ae5dcf7f23beca7c98a17b93e98490f0949082c6fb58",
+        "events": "b705185265a298275df02fdf1ba2ae942f965466a300df661140bf991c9d6c4f",
         "rng": {
-          "hash": "c2b71e1620987c71ab52c0854f1a8b3ea1878e9d2304aa499df69cc9b21280f5",
+          "hash": "2a3b026908c8f02a73887385c397b06b2657af0d8606e8083cf6f72793d36b3c",
           "drawn": {
             "shuffle": 20,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "live": {
-        "snapshot": "757de0045ca4944d4b5f355da7bcbc665f5cd9b962fa016f52967d7523625790",
-        "events": "dd017e99c880f9f1be785c8acb8ed6f4a446cb92cc179094a689311045b0b728",
+        "snapshot": "0ef7d23abd79feb08319598f8c2783a10d571a3ef34f47351312c785b10b9fc5",
+        "events": "3b7f2175df32829153f28d47f45c4b799da1e17f9b944d56787c6b394040ada9",
         "rng": {
-          "hash": "a29cbb8df055fff1926dc0ed5f52a5ee4a15975894e72d5e05c3c57633a7e083",
+          "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
           "drawn": {
             "shuffle": 30,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 2,
-            "combatAvoidance": 1,
-            "enemyIntentClue": 2
+            "enemyHP": 1
           }
         },
-        "continuation": "b726ccaf6f9624ccb692d36727ac4a1dcebd5b90a92183309cc9c2755692a01f"
+        "continuation": "1ae7f8f3e26a408d419af6d35076b52a836c9ceb1bcfba2154067c0db1ef3fd1"
       },
       "afterRestore": {
-        "snapshot": "757de0045ca4944d4b5f355da7bcbc665f5cd9b962fa016f52967d7523625790",
-        "events": "dd017e99c880f9f1be785c8acb8ed6f4a446cb92cc179094a689311045b0b728",
+        "snapshot": "0ef7d23abd79feb08319598f8c2783a10d571a3ef34f47351312c785b10b9fc5",
+        "events": "3b7f2175df32829153f28d47f45c4b799da1e17f9b944d56787c6b394040ada9",
         "rng": {
-          "hash": "a29cbb8df055fff1926dc0ed5f52a5ee4a15975894e72d5e05c3c57633a7e083",
+          "hash": "55fd3d0a163182878cc2c760e00ebe1984605635ab3881d79a43d3a4b241cd53",
           "drawn": {
             "shuffle": 30,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 2,
-            "combatAvoidance": 1,
-            "enemyIntentClue": 2
+            "enemyHP": 1
           }
         },
-        "continuation": "b726ccaf6f9624ccb692d36727ac4a1dcebd5b90a92183309cc9c2755692a01f"
+        "continuation": "1ae7f8f3e26a408d419af6d35076b52a836c9ceb1bcfba2154067c0db1ef3fd1"
       }
     },
     "ordered enemy plan": {
       "profile": {
-        "hash": "sha256:a9995b8a9c44f542e9d42f589e16685cf0563ee787809a92962ee7c73b7750cf",
-        "runtimeHash": "sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034",
+        "hash": "sha256:c5a025375e7967407fda31106a40bb0c2d196682f136ab68cf422a1d5097049e",
+        "runtimeHash": "sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843",
         "actionPolicy": 2
       },
       "start": {
-        "snapshot": "2890bb474c9c57031f6e69037ea27c1028aeb6c6ab15227ac7f69fb048beebba",
-        "events": "b26fd50c87113abf91455f552ab2a4f8eaa2c78f25c271e65ab2916c9abd00ca",
+        "snapshot": "f86eb73eca108e5080ded8bddf683fba218f1a0c957b7bda438041f96f9e30d9",
+        "events": "51e6cba7bb03bbf55020c63f328a16d106b263e2e106f4b69b2dfceb0895e52b",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
@@ -224,68 +198,58 @@
         ]
       ],
       "pending": {
-        "snapshot": "2890bb474c9c57031f6e69037ea27c1028aeb6c6ab15227ac7f69fb048beebba",
-        "events": "b26fd50c87113abf91455f552ab2a4f8eaa2c78f25c271e65ab2916c9abd00ca",
+        "snapshot": "f86eb73eca108e5080ded8bddf683fba218f1a0c957b7bda438041f96f9e30d9",
+        "events": "51e6cba7bb03bbf55020c63f328a16d106b263e2e106f4b69b2dfceb0895e52b",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "save": {
-        "stored": "edc070482a6b692dcd454d2c2ebdfdbfb4d2ca99a0ec20595942b2634c5a054b",
-        "loaded": "9af99fc105694441cb9a3b0f51a912280b6c17878326c7ac70ef7a18f87b125e"
+        "stored": "b338eb9188eae76fc7978b5543456c894dccb467d9254950cb1394f5de9a8cd4",
+        "loaded": "180f0e6fdc8d86d531b07c1dd2744628ec7285c77d7324c13528d6fab859d02b"
       },
       "restored": {
-        "snapshot": "2890bb474c9c57031f6e69037ea27c1028aeb6c6ab15227ac7f69fb048beebba",
-        "events": "b26fd50c87113abf91455f552ab2a4f8eaa2c78f25c271e65ab2916c9abd00ca",
+        "snapshot": "f86eb73eca108e5080ded8bddf683fba218f1a0c957b7bda438041f96f9e30d9",
+        "events": "51e6cba7bb03bbf55020c63f328a16d106b263e2e106f4b69b2dfceb0895e52b",
         "rng": {
-          "hash": "3d70454a864ec2a8a302c0426a6b53d1beedea6b7bf732984206a8cfe2a5ca89",
+          "hash": "fee1788f4dde33253f848cc2323491001ad055c4163863aa420a948cbd9da870",
           "drawn": {
             "shuffle": 10,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "live": {
-        "snapshot": "993ad51c9ade12fa2432fd0f8000fd189559150ce4744a12af3775a4e4185983",
-        "events": "b356c669f92b4d9db0292ece66471fd14846affa6b48e45042c5ac14e37b809a",
+        "snapshot": "209d36301d98504e6f1f7068c1c0c72f05ff87ec3cda467a07e1bf015771df8f",
+        "events": "d9730abf2ed7db045989f8c3b8e5092c62a57afe170465739789428a2b82bfd0",
         "rng": {
-          "hash": "907a78f27eef38cdce4f85467690d266fe45e2256e9e9872f72804164f85e94c",
+          "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",
           "drawn": {
             "shuffle": 20,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 3,
-            "combatAvoidance": 2,
-            "enemyIntentClue": 3
+            "enemyHP": 1
           }
         },
-        "continuation": "c24407828b0f54bb4dd0229358293204ca24d35b3af80606be16931825b76972"
+        "continuation": "cc96a6c5ca57ce4a5724e4c9bffeacfdfd69081a7ba0f2ab536c87d04de72276"
       },
       "afterRestore": {
-        "snapshot": "993ad51c9ade12fa2432fd0f8000fd189559150ce4744a12af3775a4e4185983",
-        "events": "b356c669f92b4d9db0292ece66471fd14846affa6b48e45042c5ac14e37b809a",
+        "snapshot": "209d36301d98504e6f1f7068c1c0c72f05ff87ec3cda467a07e1bf015771df8f",
+        "events": "d9730abf2ed7db045989f8c3b8e5092c62a57afe170465739789428a2b82bfd0",
         "rng": {
-          "hash": "907a78f27eef38cdce4f85467690d266fe45e2256e9e9872f72804164f85e94c",
+          "hash": "9767f7358ba9ef05df08c9f41d71c0fdc890b8b64617ff8377b370e2f18c1655",
           "drawn": {
             "shuffle": 20,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 3,
-            "combatAvoidance": 2,
-            "enemyIntentClue": 3
+            "enemyHP": 1
           }
         },
-        "continuation": "c24407828b0f54bb4dd0229358293204ca24d35b3af80606be16931825b76972"
+        "continuation": "cc96a6c5ca57ce4a5724e4c9bffeacfdfd69081a7ba0f2ab536c87d04de72276"
       }
     },
     "historical action policy": {
@@ -295,16 +259,14 @@
         "actionPolicy": 1
       },
       "start": {
-        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
-        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "snapshot": "47a73082e6e270aed7ad946a34b87eb320ee4b6caea57cfcd0f30d2a7daa8055",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
         "rng": {
-          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
           "drawn": {
             "shuffle": 9,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
@@ -321,68 +283,60 @@
         "totalSp": 2
       },
       "pending": {
-        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
-        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "snapshot": "47a73082e6e270aed7ad946a34b87eb320ee4b6caea57cfcd0f30d2a7daa8055",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
         "rng": {
-          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
           "drawn": {
             "shuffle": 9,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "save": {
-        "stored": "fa6adb165ffd77889596355ac050ff44d1eacbd247cedf6c8215f402762c92ac",
-        "loaded": "9af3726b52352e4416474bb068697269911b95ad85cb77a89e4cca53754886a0"
+        "stored": "81f4f0438392a12af68028dbf103f0c011c2d724c3d40d0c26fb577698e8af79",
+        "loaded": "e0ccbd042c3512062b0b76004956347166d08698f613e307827bbe12edbc40b7"
       },
       "restored": {
-        "snapshot": "ff69f3e3388f8d612f5d68612882cedeab0450a6856cdaf9f3806040b723c9e1",
-        "events": "93d4ba95e7747edb60692eac5bb6ee7e9f974d57a4cdbb175e88140244d675d9",
+        "snapshot": "47a73082e6e270aed7ad946a34b87eb320ee4b6caea57cfcd0f30d2a7daa8055",
+        "events": "b5f7eee68639e2e61e568414e7af53f149f0f1e128b7f0bfb515244c881c0ded",
         "rng": {
-          "hash": "36442a622d5c5013bc2ec85fc1fe749a6f41556c4321a16ee2b437d0d9ebb582",
+          "hash": "fc484943a4043b0bcee39f44a9830082e6271483782593be0f576ddc094dc177",
           "drawn": {
             "shuffle": 9,
             "enemyAI": 2,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 1,
-            "enemyIntentClue": 1
+            "enemyHP": 1
           }
         }
       },
       "live": {
-        "snapshot": "eb6dded8821bbdc44ebcf7b9aa7cbc3884eca896516bf5d8a5d22b87e5fb1bb0",
-        "events": "2f8bdd4c554d618e5e150f86925f417dafaf94d1c15e6b2fc5ed6f72fa211823",
+        "snapshot": "ad0a49667b92db2166df2a5f794199bab170763de35773f51446aed697260839",
+        "events": "85bffba6595fd3b4a60a3e5bbee2ea647f4b9977781e39309704e3a3a97585f8",
         "rng": {
-          "hash": "0ca3629d240d6adf3a135d8bc30ff8e85cbec2799e47421ac164625f04a96b97",
+          "hash": "e256db0dd97d3be03db67ffa7beb9dd3444651285206eb292bdf75ccacae1e89",
           "drawn": {
             "shuffle": 18,
             "enemyAI": 3,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 3,
-            "enemyIntentClue": 3
+            "enemyHP": 1
           }
         },
-        "continuation": "d779c60fa7e688c8a106191868d3e407917b36b00d38750ef6d5e7c08088a223"
+        "continuation": "b3bd1ea4badd0c010d3801963b4764128570bbc85e7393a991378bca3b31a3dd"
       },
       "afterRestore": {
-        "snapshot": "eb6dded8821bbdc44ebcf7b9aa7cbc3884eca896516bf5d8a5d22b87e5fb1bb0",
-        "events": "2f8bdd4c554d618e5e150f86925f417dafaf94d1c15e6b2fc5ed6f72fa211823",
+        "snapshot": "ad0a49667b92db2166df2a5f794199bab170763de35773f51446aed697260839",
+        "events": "85bffba6595fd3b4a60a3e5bbee2ea647f4b9977781e39309704e3a3a97585f8",
         "rng": {
-          "hash": "0ca3629d240d6adf3a135d8bc30ff8e85cbec2799e47421ac164625f04a96b97",
+          "hash": "e256db0dd97d3be03db67ffa7beb9dd3444651285206eb292bdf75ccacae1e89",
           "drawn": {
             "shuffle": 18,
             "enemyAI": 3,
-            "enemyHP": 1,
-            "enemyIntentVisibility": 3,
-            "enemyIntentClue": 3
+            "enemyHP": 1
           }
         },
-        "continuation": "d779c60fa7e688c8a106191868d3e407917b36b00d38750ef6d5e7c08088a223"
+        "continuation": "b3bd1ea4badd0c010d3801963b4764128570bbc85e7393a991378bca3b31a3dd"
       }
     }
   },
-  "recapture": "Re-captured 2026-11-14 for the three current-profile scenarios only, after the 11-card Core starter decks (shuffle counters and event/snapshot hashes move with the deck). Old content (7b6ac01016) reproduced the previous capture exactly; historical action policy is unchanged."
+  "recapture": "Re-captured 2026-11-14 for the three current-profile scenarios only, after the 11-card Core starter decks (shuffle counters and event/snapshot hashes move with the deck). Old content (7b6ac01016) reproduced the previous capture exactly; historical action policy is unchanged. Re-captured again 2026-11-14 for exact hits and intents (accuracy.hitRoll, perception.roll): the same three scenarios built with those keys absent (withLegacyDefaults in tests/legacyHitRules.mjs) reproduced the previous capture on every behavioural field; only profile.hash, profile.runtimeHash and the snapshot digests that embed them moved. The historical action policy scenario moved too, because a fight made from an old profile (which carries no fixCoreRules block) takes the current default rules; with the keys absent it reproduces the previous capture exactly."
 }

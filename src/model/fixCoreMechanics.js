@@ -44,6 +44,7 @@ const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeig
 // Pure v1 -> current migration for persisted rules: a perception block saved
 // before bonuses[] keeps baseDC, drops the four retired fields and gets
 // bonuses: []. Current-shape rules are returned untouched (same object).
+// A snapshot older than the 2026-11-14 ruling lacks hitRoll / evadeStacksPerCard / perception.roll; migration must leave them missing (keep rolling), never fill the shipped values.
 const OLD_ACCURACY_FIELDS = ['evasionPerStack','precisionPerStack'];
 export function normalizeFixCoreRules(rules) {
   let out = rules;
@@ -61,7 +62,7 @@ export function normalizeFixCoreRules(rules) {
     const accuracy = { ...a };
     if (OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
       for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
-      for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+      for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus','hitRoll','evadeStacksPerCard'].includes(key)) accuracy[key] = structuredClone(value);
     }
     if (a.evasionVersion === undefined) {
       if (a.evadeStackBase === 1 && a.evadeStackDex === 1) accuracy.evadeStackDex = 0;

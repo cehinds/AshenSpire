@@ -342,11 +342,11 @@ test('Fire damage that costs HP dries a Damp target', () => {
   assert.equal(getStacks(f.enemy, 'damp'), 0);
 });
 
-// A Spark whose Accuracy die is pinned to a natural 1: it misses.
+// A Spark that misses: the enemy holds a stack of Evade, which cancels the next attack (owner, 2026-11-14: attacks no longer roll a d20).
 function missSpark(f, ...dice) {
   const hand = f.combat.piles.hand[0];
   hand.cardId = 'core.spark'; hand.upgraded = false;
-  primeAccuracyRolls(f.combat, { die: 1 });
+  f.enemy.statuses.evade = { stacks: 1 };
   primeContestDice(f.combat, ...dice);
   const hp = [f.player.hp, f.enemy.hp];
   dispatch(f.combat, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: f.enemy.id });
