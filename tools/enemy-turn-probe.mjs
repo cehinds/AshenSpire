@@ -29,9 +29,9 @@ import { serve } from './serve.mjs';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 // Seeds whose fight opens on a lone enemy, on two enemies, and on an enemy that opens with a non-damaging move.
-const SEEDS = ['5', 'W2B', '23', '12', '8', '20', '24', '6', '1'];
-// Budgets in seconds: { median, max } per group (owner's Wave 2 targets: one action 2.6 s, two actions 4.0 s median and 4.5 s max, a non-damaging action 1.2 s).
-const BUDGET = { one: { median: 2.6, max: 3.5 }, twoAttacks: { median: 4.0, max: 4.5 }, twoMixed: { median: 4.0, max: 4.5 }, guard: { median: 1.2, max: 1.6 } };
+const SEEDS = ['5', 'W2B', '23', '12', '8', '20', '24', '6', '1', '2', '3', '4', '7', '9', '10', '11', '13', '14', '15', '16'];
+// Budgets in seconds: { median, max } per group (Wave 2 targets: one action 2.2 s / 3.0 s, two attacks 3.2 s / 3.95 s, two actions with one that deals no damage 2.8 s / 3.5 s, a non-damaging action 1.2 s / 1.6 s).
+const BUDGET = { one: { median: 2.2, max: 3.0 }, twoAttacks: { median: 3.2, max: 3.95 }, twoMixed: { median: 2.8, max: 3.5 }, guard: { median: 1.2, max: 1.6 } };
 const args = process.argv.slice(2);
 const argOf = (flag, fallback) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : fallback; };
 const MIN_TURNS = Number(argOf('--turns', 8));
