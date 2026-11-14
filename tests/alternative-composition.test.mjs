@@ -269,7 +269,9 @@ test('composed feet stand footInCellFraction above the drawn cell bottom for a s
     for (const size of fit) {
       const { top, height: strip } = actors.find(a => a.slot.id === size.id).slot.box;
       assert.ok(size.ground > top + 1 && size.ground < top + strip - 1, `${width}x${height} ${size.id} foot ${size.ground} inside cell ${top}..${top + strip}`);
-      assert.ok(Math.abs(top + strip - size.ground - grid.footInCellFraction * strip) < 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at the configured fraction or the hand top`);
+      // Owner 2026-11-13's thinner phone strips (doubled team gap) let the shadow's inset clamp raise a foot a few px
+      // above the configured fraction; it may raise it (still inside the cell, asserted above), never lower it.
+      assert.ok(size.ground <= top + strip - grid.footInCellFraction * strip + 1e-6 || (size.id === 'p' && size.ground <= handTop), `${width}x${height} ${size.id} foot at or above the configured fraction, or at the hand top`);
       if (size.id === 'p') assert.ok(size.ground <= handTop + 1e-6, 'the player never stands inside the hand');
     }
   }

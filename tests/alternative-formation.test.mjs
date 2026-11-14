@@ -417,8 +417,8 @@ test('phone field extension keeps every ground at or above the resting cards', (
 
 test('desktop and phone profiles stand the back rank lower and keep the player strips above the hand', () => {
   const grid = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.41, 0.12]);  // retuned 2026-11-05: the team gap (0.8 rows) and the second player strip need the room
-  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.5, 0.095]);  // retuned 2026-11-05: the phone's 1.0-row gap; feet of the player front strip stay near 88%
+  assert.deepEqual([grid.profiles.desktop.top, grid.profiles.desktop.rowHeight], [0.44, 0.091]);  // owner 2026-11-13: double the team gap (2.08 rows) and lower the field slightly
+  assert.deepEqual([grid.profiles.mobile.top, grid.profiles.mobile.rowHeight], [0.53, 0.07]);  // owner 2026-11-13: the phone's gap doubled to 2.71 rows and the field lowered slightly
   for (const key of ['desktop', 'mobile']) {
     const p = grid.profiles[key];
     assert.ok(p.top >= 0.4, `${key}: the back rank starts at or below 40% of the field`);
@@ -444,5 +444,5 @@ test('desktop and phone profiles stand the back rank lower and keep the player s
   // 390x844 / 360x740 shots own that check; the player front strip ends at 89% of the field here, the back strip at 99%.
   const formation = alternativeFormation(plan(3), 1280, 516, false, { formFactor: 'desktop' });
   const [back] = formation.visualBands;
-  assert.ok(Math.abs(back.top - 516 * 0.41) < 1e-6 && Math.abs(back.height - 516 * 0.12) < 1e-6);
+  assert.ok(Math.abs(back.top - 516 * 0.44) < 1e-6 && Math.abs(back.height - 516 * 0.091) < 1e-6);
 });
