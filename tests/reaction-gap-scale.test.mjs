@@ -1,13 +1,13 @@
-// Pacing: the reaction gap scale, and the nine fixed stages (100 ms each, 0 ms for the reaction) (actionPacing.json fixedStageMs).
+// Pacing: the reaction gap scale, and the two telegraph waits (actionPacing.json fixedStageMs).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
 import { actionPacing, clampGapScale, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
 
-const FIXED = ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'telegraphHoldMs', 'telegraphResetMs'];
-const DEFAULT = Object.fromEntries(FIXED.map(key => [key, key === 'reactionMs' ? 0 : 100]));
+const FIXED = ['telegraphHoldMs', 'telegraphResetMs'];
+const DEFAULT = { telegraphHoldMs: 0, telegraphResetMs: 100 };
 
-test('the nine fixed stages hold their defaults at normal, with and without a reaction answer', () => {
+test('the two telegraph waits hold their defaults at normal, with and without a reaction answer', () => {
   setAnimSpeed('normal');
   setCombatPacing({ combatStepPause: 1000, combatSpeed: 2 });
   for (const reaction of [false, true]) {
@@ -16,7 +16,7 @@ test('the nine fixed stages hold their defaults at normal, with and without a re
   }
 });
 
-test('the fixed stages are 0 under Reduced motion and Instant', () => {
+test('the telegraph waits are 0 under Reduced motion and Instant', () => {
   setCombatPacing({ combatStepPause: 1000, combatSpeed: 1 });
   setAnimSpeed('normal');
   const reduced = actionPacing({ reduced: true });
@@ -27,7 +27,7 @@ test('the fixed stages are 0 under Reduced motion and Instant', () => {
   setAnimSpeed('normal');
 });
 
-test('the gap alone is halved after a reaction; no fixed stage follows it', () => {
+test('the gap alone is halved after a reaction; no telegraph wait follows it', () => {
   setAnimSpeed('normal');
   setCombatPacing({ combatStepPause: 1000, combatSpeed: 1 });
   const plain = actionPacing();

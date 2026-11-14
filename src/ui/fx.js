@@ -1266,6 +1266,9 @@ export function playTimeline(events, ctx, done) {
         traceBeat('cost', beat.actorId);
       }
       ctx.onIntent?.(beat);
+    },
+    // The action word is its own timeline event (Settings > Combat > Action timeline), after the cost.
+    onActionWord: beat => {
       if (!beat.prepared && beat.actorId && !beat.banner && beat.kind !== 'reveal') sayAction(beat);
     },
     onAction: beat => {

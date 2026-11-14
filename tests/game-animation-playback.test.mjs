@@ -100,7 +100,7 @@ test('on/off keeps contact, numbers and completion clocks under sequential pacin
     assert.deepEqual(off, on.filter(row => !/^(actor|target):/.test(row.what)));
     const pacing = actionPacing();
     const spriteSpeed = pacing.spriteSpeed;
-    const lead = pacing.intentMs + pacing.wordMs;
+    const lead = 200; // the default timeline: the swing starts 200 ms into the beat
     assert.equal(off.find(row => row.what === 'contact').at, lead + selectedWeaponSequenceTiming(selectedWeaponSequence('smash'), spriteSpeed).impactMs);
   } finally { setAnimSpeed('normal'); }
 });

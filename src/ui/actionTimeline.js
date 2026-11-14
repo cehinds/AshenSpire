@@ -1,5 +1,17 @@
 // Presentation scheduler. Engine state is already committed; hooks consume
-// receipts only. A single timer owns each stage and every exit finishes once.
+// receipts only. One timer drives a queue of events, and every exit finishes once.
+//
+// Each actor beat is a set of events (cost, actionWord, stance, swing, contact, result, reaction, numbers, bars, end)
+// that start where the combat timeline puts them (timing.timeline, ui/combatTimeline.js). Events that share a start fire
+// in list order within one task. The swing's impact time is only known once its clip is made, so the starts that depend
+// on it are armed then. The next beat starts after `end` has fired, every other event of the beat has fired, and the
+// actor's own recovery (the clip's remainder and any hit-stop) is over; the defender's reaction pose is never waited for.
+import { computeBeatSchedule, SWING_SCALE } from './combatTimeline.js';
+import { defaultTimeline, sanitizeTimeline } from '../model/combatTimelinePolicy.js';
+
+const TELEGRAPH_EVENTS = new Set(['cost', 'actionWord', 'stance', 'swing', 'contact']);
+const scaleSpeed = (speed, factor) => speed && Object.fromEntries(Object.entries(speed).map(([key, value]) => [key, typeof value === 'number' ? value * factor : value]));
+
 export function runActionTimeline(beats, hooks, timingIn, {
   setTimer = setTimeout,
   clearTimer = clearTimeout,
@@ -7,25 +19,39 @@ export function runActionTimeline(beats, hooks, timingIn, {
 } = {}) {
   const createdAt = now();
   // Waits a caller leaves out are zero, so a partial timing object still runs.
-  const timing = { intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0, stepMs: 0, bannerMs: 0, ...timingIn };
-  let timer = null, watchdog = null, watchdogDeadline = 0, finished = false, actor = null, index = 0;
+  const timing = { stepMs: 0, bannerMs: 0, ...timingIn };
+  const timeline = sanitizeTimeline(timing.timeline ?? defaultTimeline());
+  let timer = null, watchdog = null, watchdogDeadline = 0, finished = false, actor = null, index = 0, sequence = 0;
+  let queue = [];
   const safe = fn => { try { return fn?.(); } catch (error) { hooks.onError?.(error); } };
   const stage = (name, beat, fn) => { safe(() => hooks.onStage?.(name, beat)); return safe(fn); };
-  const schedule = (fn, ms = 0) => {
-    clearTimer(timer);
-    timer = setTimer(() => {
-      timer = null;
-      if (finished) return;
-      // Timers can run late after a long main-thread task. Their original
-      // deadline still wins; a delayed phase must not renew the watchdog.
+  const enqueue = (at, run, defer = false) => { queue.push({ at, run, defer, sequence: sequence++ }); };
+  const onTimer = () => {
+    timer = null;
+    if (finished) return;
+    // Timers can run late after a long main-thread task. Their original
+    // deadline still wins; a delayed phase must not renew the watchdog.
+    if (now() >= watchdogDeadline) { finish(true, true); return; }
+    pump();
+  };
+  const pump = () => {
+    clearTimer(timer); timer = null;
+    while (!finished && queue.length) {
+      queue.sort((a, b) => a.at - b.at || a.sequence - b.sequence);
+      const head = queue[0], wait = head.at - now();
+      if (wait > 0) { timer = setTimer(onTimer, wait); return; }
       if (now() >= watchdogDeadline) { finish(true, true); return; }
-      fn();
-    }, Math.max(0, Number(ms) || 0));
+      // A deferred entry yields one task first, so one beat's paint lands before the next beat begins.
+      if (head.defer) { head.defer = false; timer = setTimer(onTimer, 0); return; }
+      queue.shift();
+      safe(head.run);
+    }
   };
   const cancelActor = () => { safe(() => actor?.cancel?.()); actor = null; };
   const finish = (flush = false, watchdogExpired = false) => {
     if (finished) return;
     finished = true;
+    queue = [];
     clearTimer(timer); clearTimer(watchdog); cancelActor();
     if (watchdogExpired) safe(() => hooks.onWatchdog?.());
     if (flush) safe(() => hooks.onFlush?.());
@@ -41,6 +67,10 @@ export function runActionTimeline(beats, hooks, timingIn, {
       armWatchdog();
     }
   };
+  // A recovery that runs past the budget (a long hit-stop) moves the deadline out to cover it.
+  const extendWatchdog = to => {
+    if (now() < watchdogDeadline && to > watchdogDeadline) { watchdogDeadline = to; armWatchdog(); }
+  };
   const next = () => {
     if (now() >= watchdogDeadline) { finish(true, true); return; }
     if (index >= beats.length) { finish(); return; }
@@ -50,88 +80,131 @@ export function runActionTimeline(beats, hooks, timingIn, {
       stage('damage', beat, () => hooks.onNumbers?.(beat));
       stage('hud', beat, () => hooks.onApply?.(beat));
       stage('resolution', beat, () => hooks.onResolution?.(beat));
-      schedule(next, beat.banner ? timing.bannerMs : timing.stepMs);
+      enqueue(now() + (beat.banner ? timing.bannerMs : timing.stepMs), next);
       return;
     }
-    stage('intent', beat, () => hooks.onIntent?.(beat));
-    // The action word belongs to the same stage as the intent: no gap when intentMs is 0.
-    const act = fn => timing.intentMs > 0 ? schedule(fn, timing.intentMs) : fn();
-    act(() => {
-      stage('action', beat, () => hooks.onAction?.(beat));
-      schedule(() => {
-        actor = stage('sprite', beat, () => hooks.onSprite?.(beat, timing.spriteSpeed));
-        const spriteStart = now();
-        const impact = Math.max(0, Number(actor?.impactMs) || 0);
-        const total = Math.max(impact, Number(actor?.totalMs) || 0);
-        // Authored handles are the final timing authority. A longer real clip
-        // may extend the original deadline only by the part not already
-        // reserved by maxSpriteMs. Re-adding the full duration here made each
-        // actor's clip extra slack on top of the per-beat reservation.
-        const spriteExcess = Math.max(0, total - reservedSpriteMs);
-        creditWatchdog(spriteExcess);
-        schedule(() => {
-          // Not a reported stage: the stage order is a contract (tools/click-impact-probe.mjs). The hook runs just before contact.
-          safe(() => hooks.onEngagement?.(beat));
-          const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
-          // Some sprite services extend their recovery after contact (hit-stop).
-          const reportedRemaining = Number(safe(() => actor?.remainingMs?.()));
-          const remaining = Math.max(0, total + (Number(contactHold) || 0) - (now() - spriteStart),
-            Number.isFinite(reportedRemaining) ? reportedRemaining : 0);
-          // The actor reservation already includes its authored total. Only
-          // a longer actual post-contact hold contributes new wait time.
-          creditWatchdog(Math.max(0, impact + remaining - Math.max(reservedSpriteMs, total)));
-          // A telegraph beat (the strike that pauses for the reaction prompt) holds contact for at most telegraphHoldMs.
-          const holdMs = beat.telegraph && Number.isFinite(timing.telegraphHoldMs) ? Math.min(remaining, Math.max(0, timing.telegraphHoldMs)) : remaining;
-          schedule(() => {
-            cancelActor();
-            if (beat.telegraph) {
-              stage('resolution', beat, () => hooks.onResolution?.(beat));
-              schedule(next, Number.isFinite(timing.telegraphResetMs) ? Math.max(0, timing.telegraphResetMs) : Math.max(timing.resetMs, timing.stepMs));
-              return;
-            }
-            schedule(() => {
-              const groups = safe(() => hooks.reactionGroups?.(beat)) || [beat];
-              let groupIndex = 0;
-              // D11 order, one gap at every boundary: result word, sprite
-              // reaction, damage numbers and bars, reset, then the next item.
-              const react = () => {
-                const group = groups[groupIndex++];
-                stage('result', group, () => hooks.onResult?.(group));
-                schedule(() => {
-                  // The pose keeps playing under the numbers; nothing waits for it, so the watchdog needs no credit for it.
-                  stage('reaction', group, () => hooks.onReaction?.(group));
-                  schedule(() => {
-                    stage('damage', group, () => hooks.onNumbers?.(group));
-                    // Yield a task so numbers paint before replacement of the HUD.
-                    schedule(() => {
-                      stage('hud', group, () => hooks.onApply?.(group));
-                      // Numbers to action end: damageMs alone (owner, 2026-11-13); the defender's pose is not waited for.
-                      const rest = timing.damageMs;
-                      if (groupIndex < groups.length) { schedule(react, rest); return; }
-                      schedule(() => {
-                        stage('resolution', beat, () => hooks.onResolution?.(beat));
-                        schedule(next, Math.max(timing.resetMs, timing.stepMs));
-                      }, rest);
-                    });
-                  }, timing.reactionMs);
-                }, timing.resultMs);
-              };
-              react();
-            }, timing.afterSpriteMs);
-          }, holdMs);
-        }, impact);
-      }, beat.prepared ? 0 : timing.wordMs);
-    });
+    runBeat(beat);
   };
-  // Budget derives from every added wait and the caller's real authored clip
-  // upper bound; long clips never trigger the legacy short watchdog.
+
+  const runBeat = beat => {
+    const beatStart = now();
+    const groups = safe(() => hooks.reactionGroups?.(beat)) || [beat];
+    const telegraph = !!beat.telegraph;
+    const armed = new Set();
+    let pending = 0, spriteStart = 0, recoveryDeadline = 0, impact = 0;
+    let swingFired = false, contactFired = false, endFired = false, handedOff = false, teleDone = false;
+    const handOff = () => {
+      if (telegraph || handedOff || !endFired || pending > 0) return;
+      handedOff = true;
+      // The actor's own recovery (clip remainder, hit-stop) is the only thing the next beat waits for.
+      enqueue(Math.max(now(), recoveryDeadline), () => { cancelActor(); next(); }, true);
+    };
+    const telegraphCheck = () => {
+      if (!telegraph || teleDone || !swingFired || !contactFired) return;
+      teleDone = true;
+      // A telegraph beat (the strike that pauses for the reaction prompt) plays its clip to the end, never cut short, then
+      // waits telegraphHoldMs (default 0) before the prompt. No result, number or bar shows before the prompt.
+      const remaining = Math.max(0, recoveryDeadline - now());
+      const holdMs = remaining + (Number.isFinite(timing.telegraphHoldMs) ? Math.max(0, timing.telegraphHoldMs) : 0);
+      enqueue(now() + holdMs, () => {
+        cancelActor();
+        stage('resolution', beat, () => hooks.onResolution?.(beat));
+        enqueue(now() + (Number.isFinite(timing.telegraphResetMs) ? Math.max(0, timing.telegraphResetMs) : timing.stepMs), next, true);
+      });
+    };
+    const fireSwing = () => {
+      const speed = timing.spriteSpeed;
+      actor = stage('sprite', beat, () => hooks.onSprite?.(beat, speed));
+      spriteStart = now(); swingFired = true;
+      impact = Math.max(0, Number(actor?.impactMs) || 0);
+      const schedule = computeBeatSchedule(timeline, { impactMs: impact, groups: groups.length });
+      // Contact moved off the clip's own impact frame: play this beat's clip faster or slower so the frame lands on it
+      // (only the acting clip, only this beat; outside the clamp the clip keeps its speed and contact still fires on time).
+      if (schedule.swingScale !== 1 && actor && speed && schedule.swingScale >= SWING_SCALE.min && schedule.swingScale <= SWING_SCALE.max) {
+        cancelActor();
+        actor = safe(() => hooks.onSprite?.(beat, scaleSpeed(speed, schedule.swingScale)));
+      }
+      const total = Math.max(impact, Number(actor?.totalMs) || 0);
+      // Authored handles are the final timing authority. A longer real clip may extend the original deadline only by
+      // the part not already reserved by maxSpriteMs.
+      creditWatchdog(Math.max(0, total - reservedSpriteMs));
+      arm(schedule);
+      telegraphCheck();
+    };
+    const fireContact = () => {
+      // Not a reported stage: the stage order is a contract (tools/click-impact-probe.mjs). The hook runs just before contact.
+      safe(() => hooks.onEngagement?.(beat));
+      const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
+      contactFired = true;
+      if (swingFired) {
+        // Some sprite services extend their recovery after contact (hit-stop).
+        const total = Math.max(impact, Number(actor?.totalMs) || 0);
+        const reported = Number(safe(() => actor?.remainingMs?.()));
+        const remaining = Math.max(0, total + (Number(contactHold) || 0) - (now() - spriteStart), Number.isFinite(reported) ? reported : 0);
+        recoveryDeadline = now() + remaining;
+        extendWatchdog(recoveryDeadline + 1000);
+      }
+      telegraphCheck();
+    };
+    let reactionFreeAt = 0, draining = false;
+    const reactionQueue = [];
+    const scheduleDrain = () => {
+      if (draining) return;
+      draining = true;
+      extendWatchdog(reactionFreeAt + 1000);
+      enqueue(Math.max(now(), reactionFreeAt), () => {
+        draining = false; pending--;
+        react(reactionQueue.shift());
+        if (reactionQueue.length) scheduleDrain();
+        handOff();
+      });
+    };
+    const react = group => { reactionFreeAt = now() + (Number(stage('reaction', group, () => hooks.onReaction?.(group))) || 0); };
+    const fire = ({ id, group: groupIndex }) => {
+      const group = groups[Math.min(groupIndex, groups.length - 1)];
+      switch (id) {
+        case 'cost': stage('intent', beat, () => hooks.onIntent?.(beat)); break;
+        case 'actionWord': safe(() => hooks.onActionWord?.(beat)); break;
+        case 'stance': stage('action', beat, () => hooks.onAction?.(beat)); break;
+        case 'swing': fireSwing(); break;
+        case 'contact': fireContact(); break;
+        case 'result': stage('result', group, () => hooks.onResult?.(group)); break;
+        case 'reaction': {
+          // A later group's pose waits for the one still playing, so it never replaces an unfinished clip; the numbers,
+          // the bars and the beat's end do not wait for it (the beat just cannot hand off before this pose has started).
+          if (reactionFreeAt > now() || reactionQueue.length) { reactionQueue.push(group); pending++; scheduleDrain(); break; }
+          react(group); break;
+        }
+        case 'numbers': stage('damage', group, () => hooks.onNumbers?.(group)); break;
+        case 'bars': stage('hud', group, () => hooks.onApply?.(group)); break;
+        case 'end': stage('resolution', beat, () => hooks.onResolution?.(beat)); endFired = true; break;
+        default: break;
+      }
+    };
+    const arm = schedule => {
+      for (const entry of schedule.entries) {
+        const key = `${entry.id}:${entry.group}`;
+        if (armed.has(key) || (telegraph && !TELEGRAPH_EVENTS.has(entry.id))) continue;
+        armed.add(key); pending++;
+        enqueue(beatStart + entry.at, () => { pending--; fire(entry); handOff(); });
+      }
+    };
+    arm(computeBeatSchedule(timeline, { impactMs: null, groups: groups.length }));
+  };
+
+  // Budget derives from the computed schedule and the caller's real authored clip upper bound (a clip may be retimed
+  // up to 4x); long clips never trigger the legacy short watchdog.
   const reservedSpriteMs = Math.max(0, Number(safe(() => hooks.maxSpriteMs?.(timing.spriteSpeed))) || 0);
-  const perAction = timing.intentMs + timing.wordMs + timing.afterSpriteMs + timing.resultMs + timing.reactionMs
-    + timing.damageMs + timing.resetMs + timing.stepMs + (Number(timing.telegraphResetMs) || 0) + 1000
-    + reservedSpriteMs;
-  const budget = 2000 + beats.reduce((budget, beat) => budget + Math.max(perAction + Math.max(0, (safe(() => hooks.reactionGroups?.(beat))?.length || 1) - 1) * (timing.resultMs + timing.reactionMs + timing.damageMs + timing.stepMs), timing.bannerMs + timing.stepMs), 0);
+  const span = groups => Math.max(0, ...computeBeatSchedule(timeline, { impactMs: reservedSpriteMs, groups }).entries.map(entry => entry.at));
+  const budget = 2000 + beats.reduce((sum, beat) => {
+    if (beat.banner || !beat.actorId || beat.kind === 'reveal') return sum + timing.bannerMs + timing.stepMs + 100;
+    const groups = safe(() => hooks.reactionGroups?.(beat))?.length || 1;
+    return sum + span(groups) + reservedSpriteMs * SWING_SCALE.max + (Number(timing.telegraphHoldMs) || 0) + (Number(timing.telegraphResetMs) || 0)
+      + timing.stepMs + 1000;
+  }, 0);
   watchdogDeadline = createdAt + budget;
   armWatchdog();
   next();
-  return { pauseForSkip: () => { clearTimer(timer); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
+  pump();
+  return { pauseForSkip: () => { clearTimer(timer); timer = null; cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
 }

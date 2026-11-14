@@ -61,6 +61,7 @@ export function getAnimSpeed() {
 // pace remains a compatibility choice, with ×1 preserving its relative scale.
 import { ACTION_PACING, AUTOMATION_DEFAULTS, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
 import { FLOATER_STACK } from './floaterStack.js';
+import { flattenTimeline } from './combatTimeline.js';
 // The speed multiplier in force: the manual one, or the auto-combat one while
 // auto-combat is on (owner, D11, 2026-10-18). The gap between stages is the
 // player's "Pause between steps" row (combatStepPause, ms).
@@ -134,20 +135,23 @@ export function actionPacing({ reduced = false, enemy = false, reaction = false 
   // Playback that follows a reaction answer waits a shorter gap (actionPacing.json reactionGapScale, [0,1]).
   const gapScale = reaction ? clampGapScale(ACTION_PACING.reactionGapScale) : 1;
   const gapMs = scaled(combatPacing.gapMs) * gapScale;
-  // Every stage named in actionPacing.json fixedStageMs holds a fixed time: not the gap, the speed or reactionGapScale; 0 on Instant and Reduced motion.
-  // The player's per-stage settings (Settings > Combat) override the fixedStageMs defaults.
+  // The telegraph pair (the strike hold and the pause before a reaction prompt) are plain waits: fixedStageMs, or the player's
+  // combatStage<Name>Ms setting; 0 on Instant and Reduced motion.
   const fixedMs = key => {
     const raw = combatPacing.stageMs?.[key] ?? ACTION_PACING.fixedStageMs?.[key];
     return Number.isFinite(raw) ? (scale > 0 ? Math.max(0, raw) : 0) : undefined;
   };
   const fixed = Object.fromEntries(Object.keys(ACTION_PACING.fixedStageMs || {})
     .map(key => [key, fixedMs(key)]).filter(([, value]) => value !== undefined));
-  // D11: the actor's action, its animation, the result word, the sprite
-  // reaction, the damage, the reset, then the next item, with one gap at each
-  // boundary. The cost and the action word open the beat; the stance follows the word by one gap (intentMs), then the animation.
+  // The action's events (cost, action word, stance, swing, contact, result, reaction, numbers, bars, end) follow the
+  // combat timeline: the player's, or the reaction override after a reaction answer. Instant and Reduced motion keep the
+  // order and drop every offset.
+  const chosen = reaction && combatPacing.timeline?.reaction ? combatPacing.timeline.reaction : combatPacing.timeline?.shared;
+  const timeline = scale > 0 ? chosen : flattenTimeline(chosen);
   return {
-    gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
+    gapMs,
     ...fixed,
+    timeline,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),

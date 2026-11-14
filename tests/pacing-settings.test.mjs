@@ -41,7 +41,8 @@ test('saved values reach the pacing, and a cleared value falls back to the defau
 test('reduced motion and the Instant pace still drop every pause', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 2000 });
   const reduced = actionPacing({ reduced: true });
-  assert.equal(reduced.gapMs + reduced.wordMs + reduced.resultMs + reduced.damageMs + reduced.resetMs, 0);
+  assert.equal(reduced.gapMs + reduced.telegraphHoldMs + reduced.telegraphResetMs, 0);
+  assert.ok(reduced.timeline.every(event => event.offsetMs === 0));
   setAnimSpeed('instant'); assert.equal(actionPacing().gapMs, 0);
   setAnimSpeed('normal'); setCombatPacing();
 });
@@ -110,7 +111,8 @@ test('zero pause is a valid committed value and preserves normal sprite duration
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatStepPause: committed.value });
   const timing = actionPacing();
   assert.equal(timing.gapMs, 0);
-  for (const key of ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 100, `${key} is fixed, not the pause`);
+  assert.equal(timing.telegraphResetMs, 100, 'a telegraph wait is fixed, not the pause');
+  assert.equal(timing.timeline.find(event => event.id === 'end').offsetMs, 100, 'the timeline offsets are not the pause');
   assert.equal(timing.spriteSpeed.lungeMs, 550, 'turning pauses off retains normal animation');
   setCombatPacing();
 });
@@ -160,41 +162,40 @@ test('the enemy pacing rows are persisted Combat settings with 750 ms defaults',
   }
 });
 
-test('every stage has a combatStage<Name>Ms setting that defaults to the fixedStageMs value', () => {
+test('the two telegraph waits have a combatStage<Name>Ms setting that defaults to the fixedStageMs value', () => {
   setAnimSpeed('normal'); setCombatPacing({});
   const pace = actionPacing();
-  assert.deepEqual(STAGE_KEYS, ['intentMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'telegraphHoldMs', 'telegraphResetMs']);
-  assert.equal(stageSettingKey('afterSpriteMs'), 'combatStageAfterSpriteMs');
-  for (const key of STAGE_KEYS) assert.equal(pace[key], key === 'reactionMs' ? 0 : 100, `${key} defaults to its fixedStageMs value (an old save has no key)`);
-  assert.deepEqual(resolveCombatAutomation({ combatStepPause: 500 }).stageMs, Object.fromEntries(STAGE_KEYS.map(key => [key, key === 'reactionMs' ? 0 : 100])));
+  assert.deepEqual(STAGE_KEYS, ['telegraphHoldMs', 'telegraphResetMs']);
+  assert.equal(stageSettingKey('telegraphHoldMs'), 'combatStageTelegraphHoldMs');
+  assert.deepEqual([pace.telegraphHoldMs, pace.telegraphResetMs], [0, 100], 'an old save has no key');
+  assert.deepEqual(resolveCombatAutomation({ combatStepPause: 500 }).stageMs, { telegraphHoldMs: 0, telegraphResetMs: 100 });
 });
 
-test('a stage setting is clamped to 0..1000 ms and bad values fall back to the default', () => {
-  const stage = value => resolveCombatAutomation({ combatStageDamageMs: value }).stageMs.damageMs;
+test('a telegraph setting is clamped to 0..1000 ms and bad values fall back to the default', () => {
+  const stage = value => resolveCombatAutomation({ combatStageTelegraphResetMs: value }).stageMs.telegraphResetMs;
   assert.deepEqual([stage(-50), stage(5000), stage(250), stage(0), stage('300')], [0, 1000, 250, 0, 300]);
   assert.deepEqual([stage(undefined), stage(null), stage(''), stage('x'), stage(NaN)], [100, 100, 100, 100, 100]);
 });
 
-test('a saved stage value overrides its stage only, ignoring speed and the pause, and Instant or Reduced motion zero it', () => {
+test('a saved telegraph value overrides it only, ignoring speed, the pause and a reaction answer; Instant and Reduced motion zero it', () => {
   setAnimSpeed('normal');
-  setCombatPacing({ combatSpeed: 4, combatStepPause: 2000, combatStageIntentMs: 400, combatStageResetMs: 0, combatStageTelegraphHoldMs: 1000 });
+  setCombatPacing({ combatSpeed: 4, combatStepPause: 2000, combatStageTelegraphHoldMs: 400, combatStageTelegraphResetMs: 0 });
   const pace = actionPacing(), after = actionPacing({ reaction: true });
-  assert.deepEqual([pace.intentMs, pace.resetMs, pace.telegraphHoldMs, pace.wordMs], [400, 0, 1000, 100]);
-  assert.deepEqual([after.intentMs, after.resetMs, after.telegraphHoldMs], [400, 0, 1000], 'not shortened after a reaction');
-  assert.equal(actionPacing({ reduced: true }).intentMs, 0);
-  setAnimSpeed('instant'); assert.equal(actionPacing().intentMs, 0);
+  assert.deepEqual([pace.telegraphHoldMs, pace.telegraphResetMs], [400, 0]);
+  assert.deepEqual([after.telegraphHoldMs, after.telegraphResetMs], [400, 0], 'not shortened after a reaction');
+  assert.equal(actionPacing({ reduced: true }).telegraphHoldMs, 0);
+  setAnimSpeed('instant'); assert.equal(actionPacing().telegraphHoldMs, 0);
   setAnimSpeed('normal'); setCombatPacing();
 });
 
-test('nine stage rows follow Pause between steps in play order, 0 to 1000 ms in steps of 10', () => {
+test('the telegraph rows follow Pause between steps, 0 to 1000 ms in steps of 10', () => {
   const keys = settingsRows().map(r => r.key), at = keys.indexOf('combatStepPause');
-  const expected = ['IntentMs', 'WordMs', 'AfterSpriteMs', 'ResultMs', 'ReactionMs', 'DamageMs', 'ResetMs', 'TelegraphHoldMs', 'TelegraphResetMs'].map(n => `combatStage${n}`);
-  assert.deepEqual(keys.slice(at + 1, at + 10), expected);
-  const labels = ['Cost → action word', 'Action word → swing', 'Hit → result word', 'Result word → reaction', 'Reaction → damage numbers',
-    'Damage numbers → next step', 'Between actions', 'Strike hold before a reaction prompt', 'Pause before a reaction prompt'];
+  const expected = ['combatStageTelegraphHoldMs', 'combatStageTelegraphResetMs'];
+  assert.deepEqual(keys.slice(at + 1, at + 3), expected);
+  const labels = ['Strike hold before a reaction prompt', 'Pause before a reaction prompt'];
   expected.forEach((key, i) => {
     const r = row(key);
-    assert.deepEqual([r.label, r.cat, r.type, r.min, r.max, r.step, r.def], [labels[i], 'Combat', 'number', 0, 1000, 10, key === 'combatStageReactionMs' ? 0 : 100], key);
+    assert.deepEqual([r.label, r.cat, r.type, r.min, r.max, r.step, r.def], [labels[i], 'Combat', 'number', 0, 1000, 10, i ? 100 : 0], key);
     assert.ok(profileKeys(settingsRows()).includes(key), `${key} persists with the profile`);
   });
   assert.match(row('combatStepPause').note, /auto combat only/i);

@@ -55,19 +55,19 @@ test('a painted outfit caught in a hurt pose settles before the intent and actio
   const { swing, settled, settledAt } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'hit', transition: null }; } });
   assert.equal(settled, 1);
   assert.equal(settledAt, 0, 'the stance is restored before either wait begins');
-  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs);
+  assert.equal(swing, 200);
 });
 
 test('a painted outfit at rest retains the same ordered waits', (t) => {
   const { swing, settled } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'idle', transition: null }; } });
   assert.equal(settled, 0);
-  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs);
+  assert.equal(swing, 200);
 });
 
 test('an expansion stage with only settle/play settles before the ordered waits', (t) => {
   const { swing, settled } = swingAt(t, {});
   assert.equal(settled, 1, 'settle() is still called');
-  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs, 'no additional lead for an unknown stage');
+  assert.equal(swing, 200, 'no additional lead for an unknown stage');
 });
 
 

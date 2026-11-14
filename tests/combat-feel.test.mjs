@@ -14,10 +14,15 @@ import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack, REAVER_ATTACK } from '../src/ui/reaverAttack.js';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
+import { flattenTimeline } from '../src/ui/combatTimeline.js';
+import { defaultTimeline } from '../src/model/combatTimelinePolicy.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
+// The default timeline starts the swing 200 ms into the beat (cost 0, action word +100, swing +100); contact is on its impact frame,
+// the reaction pose and the numbers 200 ms after contact (result +100, reaction +100).
+const LEAD = 200;
 setCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -196,7 +201,7 @@ function drive(t, fn, { maxHp } = {}) {
 test('with Effects off the figure is not held but the timeline spacing is unchanged', (t) => {
   drive(t, ({ dom, start, tick, holds, reactions, stats }) => {
     const timing = actionPacing();
-    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs;
+    const reactionAt = LEAD + 100 + 200;
     const root = dom.document.documentElement;
     dom.document.documentElement = { dataset: { effects: 'off' } };
     try { start([6, 10]); tick(reactionAt); } finally { dom.document.documentElement = root; }
@@ -208,7 +213,7 @@ test('with Effects off the figure is not held but the timeline spacing is unchan
 test('with Effects on the same contact still holds', (t) => {
   drive(t, ({ start, tick, holds }) => {
     const timing = actionPacing();
-    start([6, 10]); tick(timing.intentMs + timing.wordMs + 100);
+    start([6, 10]); tick(LEAD + 100);
     assert.equal(holds.length, 1, 'Effects on still holds');
   });
 });
@@ -218,8 +223,8 @@ test('with Effects on the same contact still holds', (t) => {
 test('multi-hit contact holds the attacker and buzzes once with the first number', (t) => {
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     const timing = actionPacing();
-    const contactAt = timing.intentMs + timing.wordMs + 100;
-    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs;
+    const contactAt = LEAD + 100;
+    const reactionAt = LEAD + 100 + 200;
     start([6, 10]); tick(contactAt - 1);
     assert.deepEqual(holds, [], 'no hold before the authored contact frame');
     tick(1);
@@ -227,10 +232,8 @@ test('multi-hit contact holds the attacker and buzzes once with the first number
     assert.deepEqual(reactions, [], 'the target has not reacted mid-swing');
     assert.deepEqual(buzzes, [], 'no buzz at contact');
     tick(reactionAt - contactAt);
-    assert.deepEqual(reactions, [['hit', 220]], 'reaction follows the settled swing and configured wait');
-    assert.deepEqual(buzzes, [], 'no buzz at reaction');
-    tick(timing.reactionMs);
-    assert.deepEqual(buzzes, [['damageTaken', 10000 + reactionAt + timing.reactionMs]], 'buzz comes with the first number');
+    assert.deepEqual(reactions, [['hit', 220]], 'the reaction lands 200 ms after contact, not after the swing settles');
+    assert.deepEqual(buzzes, [['damageTaken', 10000 + reactionAt]], 'buzz comes with the first number, which lands with the reaction');
     tick(5000);
     assert.equal(reactions.length, 2, 'the second hit reacts too');
     assert.ok(holds.every(([who]) => who === 'actor'), 'the target is never held');
@@ -242,7 +245,7 @@ test('skipping after the first multi-hit number does not replay its damage hapti
   drive(t, ({ start, tick, buzzes, fire, stats }) => {
     const timing = actionPacing();
     start([6, 10]);
-    tick(timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs + timing.reactionMs);
+    tick(LEAD + 100 + 200);
     assert.equal(buzzes.length, 1, 'the first number has sounded');
     fire('pointerdown'); fire('pointerup'); tick(1000);
     assert.equal(buzzes.length, 1, 'flushing the remaining hit cannot buzz this beat again');
@@ -257,7 +260,7 @@ for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
       const shakes = [];
       const setProperty = combatEl.style.setProperty.bind(combatEl.style);
       combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
-      start([amount]); tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+      start([amount]); tick(LEAD + 100);
       assert.deepEqual(holds.map(([who, hold]) => [who, hold]), [['actor', ms]], 'the attacker holds at contact, by the target max HP share');
       for (let i = 0; i < 400; i++) tick(20);
       assert.deepEqual(shakes, [px]);
@@ -267,7 +270,7 @@ for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
 
 test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
-    start([6]); tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+    start([6]); tick(LEAD + 100);
     assert.ok(actor.classList.contains('hit-stop'), 'the attacker holds at impact');
     assert.ok(!target.classList.contains('hit-stop'), 'the target is not held at impact (sequential)');
     fire('pointerdown');
@@ -284,7 +287,7 @@ test('a click during hit-stop clears the held attacker and flushes once without 
 test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([6], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    const contactAt = actionPacing().intentMs + actionPacing().wordMs + 100; tick(contactAt);
+    const contactAt = LEAD + 100; tick(contactAt);
     assert.deepEqual(holds, [['actor', 60, 10000 + contactAt]], 'a counter holds contact before its separate target reaction');
     for (let i = 0; i < 100; i++) tick(20);
   });
@@ -293,7 +296,7 @@ test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
 test('a counter beat does not hold on an HP hit under 6', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([5], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+    tick(LEAD + 100);
     assert.equal(holds.length, 0, 'a counter hit of 5 HP does not hold');
     for (let i = 0; i < 100; i++) tick(20);
   });
@@ -304,7 +307,7 @@ for (const mode of ['instant', 'reduced-motion', 'no-shake']) {
     drive(t, ({ dom, start, tick, holds, combatEl }) => {
       if (mode === 'instant') setAnimSpeed('instant');
       else dom.document.body.classList.add(mode);
-      start([6]); tick(mode === 'instant' || mode === 'reduced-motion' ? 1 : actionPacing().intentMs + actionPacing().wordMs + 100);
+      start([6]); tick(mode === 'instant' || mode === 'reduced-motion' ? 1 : LEAD + 100);
       // Ordered playback holds only the attacker at contact.
       assert.equal(holds.length, mode === 'no-shake' ? 1 : 0);
       assert.equal(combatEl.classList.contains('shake'), mode === 'instant');
@@ -388,7 +391,7 @@ test('ordered delayed Reaver contact preserves every timer-driven frame and its 
       onContact() { contactAt = Date.now(); sequence.hold(60); return 60; },
       onDone() { done++; },
       onWatchdog() { watchdog++; },
-    }, {});
+    }, { timeline: flattenTimeline(defaultTimeline()) }); // every offset 0: the swing starts at once
     t.mock.timers.tick(0); // Start the actual painted actor on time.
     t.mock.timers.tick(300); // One frame callback and contact arrive late together.
     assert.equal(contactAt, 10300);

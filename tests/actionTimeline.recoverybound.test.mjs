@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runActionTimeline } from '../src/ui/actionTimeline.js';
 import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
+import { computeBeatSchedule, flattenTimeline } from '../src/ui/combatTimeline.js';
+import { defaultTimeline } from '../src/model/combatTimelinePolicy.js';
 import { act1Enemies } from '../src/content/enemies/act1.js';
 import { selectedWeaponProfileFor, selectedWeaponReactionFor } from '../src/model/selectedWeaponStances.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
@@ -52,9 +54,11 @@ const makeHooks = (clock, overrides = {}) => ({
   ...overrides,
 });
 
-// One beat reserves 100ms for its sprite; the 100ms word wait, fixed slack,
-// and 1,000ms per-action safety allowance make the creation deadline 3,200ms.
-const oneBeatDeadline = 3_200;
+// A timeline with every offset 0: the events fire together, so a beat lasts as long as its sprite.
+const ZERO = { timeline: flattenTimeline(defaultTimeline()) };
+// One beat reserves 100ms for its sprite: the schedule's 100ms span (contact lands on the clip's impact), four times
+// the reservation for a retimed clip, the 1,000ms per-action allowance and 2,000ms fixed slack make the deadline 3,500ms.
+const oneBeatDeadline = 3_500;
 
 test('late phase callbacks cannot renew the creation-time watchdog deadline', () => {
   const clock = new FakeClock();
@@ -64,7 +68,7 @@ test('late phase callbacks cannot renew the creation-time watchdog deadline', ()
     onError() { errors++; },
     onWatchdog() { watchdog++; },
     onDone() { done++; },
-  }), { wordMs: 100 }, options(clock));
+  }), ZERO, options(clock));
   clock.blockUntil(oneBeatDeadline + 250);
   assert.equal(done, 1, 'late phase does not renew the absolute watchdog');
   assert.equal(watchdog, 1);
@@ -78,13 +82,13 @@ test('the initial reservation covers every beat and is not restarted when the se
     onSprite() { spriteStarts++; return { impactMs: 0, totalMs: 100, cancel() {} }; },
     onWatchdog() { watchdog++; },
     onDone() { done++; },
-  }), {}, options(clock));
+  }), ZERO, options(clock));
   clock.runUntil(100);
   assert.equal(spriteStarts, 2, 'both sprite hooks started before the deliberate pause');
   handle.pauseForSkip();
-  clock.runUntil(4_199);
+  clock.runUntil(4_999);
   assert.equal(done, 0, 'both beats retain their original sprite reservation');
-  clock.runUntil(4_200); // 2,000 slack + 2 × (1,000 base + 100 sprite)
+  clock.runUntil(5_000); // 2,000 slack + 2 x (100 span + 400 retime + 1,000 base)
   assert.equal(done, 1);
   assert.equal(watchdog, 1);
 });
@@ -97,13 +101,13 @@ test('excess actor time extends only the unreserved amount, cumulatively across 
     onSprite() { spriteStarts++; return { impactMs: 0, totalMs: 250, cancel() { actorCancelled++; } }; },
     onWatchdog() { watchdog++; },
     onDone() { done++; },
-  }), {}, options(clock));
+  }), ZERO, options(clock));
   clock.runUntil(250); // Each 250ms actor starts after the prior one's recovery.
   assert.equal(spriteStarts, 2);
   handle.pauseForSkip();
-  clock.runUntil(4_499);
+  clock.runUntil(5_299);
   assert.equal(done, 0, 'each actor contributes only 250 - 100ms beyond its reservation');
-  clock.runUntil(4_500); // 4,200ms base + 2 × 150ms excess
+  clock.runUntil(5_300); // 5,000ms base + 2 x 150ms excess
   assert.equal(done, 1);
   assert.equal(watchdog, 1);
   assert.equal(actorCancelled, 2);
@@ -117,7 +121,7 @@ test('a hook that returns after the absolute deadline cannot restart the schedul
     onSprite() { spriteStarts++; return { impactMs: 0, totalMs: 100, cancel() {} }; },
     onDone() { done++; },
     onWatchdog() { watchdog++; },
-  }), { wordMs: 100 }, options(clock));
+  }), ZERO, options(clock));
   clock.blockUntil(oneBeatDeadline + 1);
   assert.equal(done, 1);
   assert.equal(watchdog, 1);
@@ -134,7 +138,7 @@ test('deadline includes time spent evaluating watchdog-budget hooks before the f
     onFlush() { flushed++; },
     onDone() { done++; },
     onWatchdog() { watchdog++; },
-  }), { wordMs: 100 }, options(clock));
+  }), ZERO, options(clock));
   assert.equal(intents, 0, 'budget hooks cannot consume the deadline and still start a beat');
   assert.equal(actions, 0);
   assert.equal(done, 1);
@@ -148,7 +152,7 @@ test('skip and cancel still settle once and clear the watchdog', () => {
   const handle = runActionTimeline([attack()], makeHooks(clock, {
     onDone() { done++; },
     onWatchdog() { watchdog++; },
-  }), { wordMs: 100 }, options(clock));
+  }), ZERO, options(clock));
   handle.skip();
   handle.cancel();
   clock.blockUntil(oneBeatDeadline + 1);
@@ -174,7 +178,7 @@ test('legal slow four-hit Fell Warden reactions finish every group without watch
     }] }));
     const reactionLife = group => selectedWeaponSequenceTiming(selectedWeaponSequence(selectedWeaponReactionFor(group.events[0], profile)), timing.spriteSpeed).totalMs;
     assert.ok(groups.every(group => selectedWeaponReactionFor(group.events[0], profile) === 'fully-defended'));
-    assert.ok(reactionLife(groups[0]) > timing.reactionMs + timing.damageMs, 'actual authored reaction exceeds nominal waits');
+    assert.ok(reactionLife(groups[0]) > 100, 'actual authored reaction is longer than the timeline waits');
     const clock = new FakeClock(), applied = [], reactions = [];
     let done = 0, doneAt = null, watchdog = 0;
     runActionTimeline([{ actorId: enemy.id, kind: 'attack', events: groups.flatMap(group => group.events) }], {
@@ -186,9 +190,12 @@ test('legal slow four-hit Fell Warden reactions finish every group without watch
       onWatchdog: () => { watchdog++; },
       onDone: () => { done++; doneAt = clock.time; },
     }, timing, options(clock));
-    const expectedDone = timing.intentMs + timing.wordMs + timing.spriteSpeed.lungeMs + timing.afterSpriteMs
-      + groups.length * (timing.resultMs + timing.reactionMs + timing.damageMs)
-      + Math.max(timing.resetMs, timing.stepMs);
+    const schedule = computeBeatSchedule(timing.timeline, { impactMs: timing.spriteSpeed.lungeMs / 2, groups: groups.length });
+    // The beat ends when its last event has fired and its own clip has finished; the long reaction pose is not waited for.
+    // A later group's pose starts only after the pose still playing is over (it never replaces an unfinished clip); nothing else waits for it.
+    let poseFree = 0, lastPoseStart = 0;
+    for (const entry of schedule.entries.filter(row => row.id === 'reaction')) { lastPoseStart = Math.max(entry.at, poseFree); poseFree = lastPoseStart + reactionLife(groups[0]); }
+    const expectedDone = Math.max(schedule.entries.find(entry => entry.id === 'end').at, schedule.starts.swing + timing.spriteSpeed.lungeMs, lastPoseStart);
     clock.runUntil(expectedDone - 1);
     assert.equal(done, 0, 'the nominal waits are all the timeline holds; the long pose is not waited for');
     clock.runUntil(expectedDone);
@@ -211,7 +218,7 @@ test('post-contact hit-stop and remainingMs holds finish without consuming the w
       onContact: () => { contacts++; return row.hold; },
       onWatchdog: () => { watchdog++; },
       onDone: () => { done++; doneAt = clock.time; },
-    }), {}, options(clock));
+    }), ZERO, options(clock));
     clock.runUntil(row.expected - 1);
     assert.equal(done, 0, 'the legitimate contact hold stays visible');
     clock.runUntil(row.expected);
@@ -238,7 +245,7 @@ test('hooks that return after expiry cannot buy a fresh deadline with excess dur
       onReaction: () => phase === 'reaction' ? crossDeadline() : 0,
       onWatchdog: () => { watchdog++; },
       onDone: () => { done++; },
-    }), {}, options(clock));
+    }), ZERO, options(clock));
     clock.runUntil(10_000);
     assert.equal(done, 1, phase + ': overdue hook must not renew the watchdog');
     assert.equal(watchdog, 1, phase + ': overdue hook is watchdog recovery');
@@ -257,7 +264,7 @@ test('a delayed CSS contact does not replay animation recovery that already elap
       onContact: () => { contacts++; },
       onDone: () => { done++; },
       onWatchdog: () => { watchdog++; },
-    }), {}, options(clock));
+    }), ZERO, options(clock));
     clock.runUntil(0); // Start the actor, but leave its 40ms contact pending.
     clock.blockUntil(300);
     assert.equal(contacts, 1);
@@ -277,7 +284,7 @@ test('a delayed contact-cued actor retains its finite reported recovery and hold
     onContact: () => 80,
     onDone: () => { done++; },
     onWatchdog: () => { watchdog++; },
-  }), {}, options(clock));
+  }), ZERO, options(clock));
   clock.runUntil(0);
   clock.blockUntil(300);
   assert.equal(done, 0, 'contact-cued recovery starts at actual contact');
