@@ -19,7 +19,7 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
-  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 4 });
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 8 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -179,7 +179,9 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
   if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
     && !effects.some((e) => e.op === 'damage' && e.target === 'randomEnemy')) set('target');
-  if (attack && !spell && !tags.includes('trait:reaction')) set('reaction');
+  // Owner, 2026-11-14: Reaction is open to every stance (attack, smash, sweep, spells, skills). A card that already reacts (Defense, Counter,
+  // or `trait:reaction`) and an X-cost card are left out; Powers never reach this menu.
+  if (!tags.includes('trait:reaction') && !['defend', 'counter'].includes(maneuver) && !tags.includes('maneuver:defend') && !tags.includes('maneuver:counter') && current.cost !== 'X' && base.cost !== 'X') set('reaction');
 }
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
