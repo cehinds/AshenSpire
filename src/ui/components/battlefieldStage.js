@@ -1049,7 +1049,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
       }
-      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      // plan boxes are in real px at this fit; keep the fit so a later scale-only resize (which skips relayout) can convert pointers.
+      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height, fit: planFit };
       wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
@@ -1744,9 +1745,11 @@ function enemyFrameAtCell(field, x, y) {
   const plan = field.formationPlan?.plan;
   if (!grid || !plan) return null;
   const rect = field.getBoundingClientRect();
+  // Cached boxes are in real px at the fit the plan was laid out at; the pointer is at the current fit.
+  const toPlan = (field.formationPlan.fit || 1) / CanvasBox().scale;
   const occupied = new Set(plan.slots.filter(slot => slot.side === 'enemy').map(slot => slot.cell));
   const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
-    && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
+    && perspectiveCellContains(cell.box, (x - rect.left) * toPlan, (y - rect.top) * toPlan));
   if (!cell) return null;
   // Past the grid's capacity two enemies can share a cell; take a living one.
   return [...field.querySelectorAll(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`)]
