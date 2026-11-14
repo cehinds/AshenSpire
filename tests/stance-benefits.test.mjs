@@ -167,3 +167,19 @@ test('Poise: a Smash costs the pool 50% more, a Defend target 25% less; HP lost 
   const taken = bothOld.pool, extra = Math.floor(0.5 * taken);
   assert.equal(both.pool, taken + extra - Math.floor(0.25 * (taken + extra)));
 });
+
+test('Counter: a hit that costs HP returns 25% of that HP to the attacker; a fully blocked hit returns nothing; the old rules return nothing', () => {
+  const trial = ({ benefits = true, block = 0, attacker = 'player' } = {}) => {
+    const { combat, target } = live({ benefits, stance: 'counter', block });
+    const [from, to] = attacker === 'player' ? [combat.player, target] : [target, combat.player];
+    if (attacker === 'enemy') { to.combatStance = stanceOf('counter'); to.block = block; }
+    strike(combat, from, to, 40, carrierOf('sweep'));
+    return { lost: (to === target ? 500 - to.hp : 500 - to.hp), back: 500 - from.hp };
+  };
+  const hit = trial();
+  assert.ok(hit.lost > 0);
+  assert.equal(hit.back, Math.floor(0.25 * hit.lost), 'player attacks a Counter enemy: 25% of the HP it lost comes back');
+  assert.equal(trial({ attacker: 'enemy' }).back, Math.floor(0.25 * trial({ attacker: 'enemy' }).lost), 'a Counter player returns it to the enemy too');
+  assert.equal(trial({ block: 1000 }).back, 0, 'a fully blocked hit returns nothing');
+  assert.equal(trial({ benefits: false }).back, 0, 'a fight created before the ruling');
+});

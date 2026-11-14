@@ -12,7 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { BlockGainMultiplier } from './stanceBenefits.js';
+import { BlockGainMultiplier, CounterReturnAmount } from './stanceBenefits.js';
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
@@ -435,7 +435,20 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
   if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
+  if (receipt.hpLoss > 0 && fixCoreEnabled(ctx)) stanceCounterBack(ctx, source, target, carrier, receipt);
   return receipt.amount;
+}
+
+// Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returns 25% of the HP a hit cost it (nothing when Block took it all) to the attacker.
+// It travels as the same flagged return hit Reflect sends, so it needs no hit roll and can neither reflect, counter nor return again.
+function stanceCounterBack(ctx, source, target, carrier, receipt) {
+  const amount = CounterReturnAmount(ctx, receipt.defenseStance, receipt.hpLoss, carrier);
+  if (!(amount > 0) || !source?.alive || source === target || source.kind === target.kind) return;
+  ctx.emit('stanceCounterReturn', { sourceId: target.id, targetId: source.id, amount, original: receipt.hpLoss, ...seatOf(ctx, target) });
+  const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
+  applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
+    ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}), ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}) });
 }
 
 // Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
