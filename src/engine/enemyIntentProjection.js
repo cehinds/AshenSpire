@@ -6,7 +6,7 @@ import * as Tactics from './combatCardTactics.js';
 import * as Control from './combatStatusControl.js';
 import * as Proposal from './proposalStatusRuntime.js';
 import { knowledgeIntentProjection } from './enemyKnowledge.js';
-import { decayAtTurnStart } from './statuses.js';
+import { decayAtTurnStart as decayStatuses } from './statuses.js';
 
 import * as Counter from './counterRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
@@ -31,6 +31,14 @@ function detached(combat, enemy, neutral) {
     queue: [], eventLog: [], emit() {}, enqueue() {},
     rng: { float() { throw new Error('Intent projection must not roll RNG'); }, int() { throw new Error('Intent projection must not roll RNG'); } } };
   return { ctx, player, source };
+}
+
+// The status tick of an enemy's own turn start on a detached copy. The pools (Poise, Ward, Block) are read as they stand: the tick re-syncs their
+// maxima, which the real turn does too, but a forecast must not refill what the enemy holds now.
+function decayAtTurnStart(ctx, enemy) {
+  const held = { persistentPoise: enemy.persistentPoise && { ...enemy.persistentPoise }, persistentWard: enemy.persistentWard && { ...enemy.persistentWard }, block: enemy.block, barrier: enemy.barrier };
+  decayStatuses(ctx, enemy);
+  for (const [key, value] of Object.entries(held)) { if (value === undefined) delete enemy[key]; else enemy[key] = value; }
 }
 
 // Each living enemy ahead of `source` whose next move is a readable attack hits the previewed player state once, as it will when the turn runs.

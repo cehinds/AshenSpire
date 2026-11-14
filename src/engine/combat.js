@@ -1003,8 +1003,7 @@ function revalidateEnemyPlans(combat) {
     if (!kept.length) {
       clearCombatCounter(enemy);
       delete enemy.intentRevealed;
-      // Owner, 2026-11-14: a Poise break that cancels the whole plan reads Staggered (no number), never "?".
-      enemy.intent = { kind: enemy.combatStance?.staggered ? 'staggered' : 'unknown', moveId: null };
+      enemy.intent = { kind: 'unknown', moveId: null };
       enemy.planDue = false;
       continue;
     }
@@ -2499,6 +2498,9 @@ export function previewIntent(combat, enemyInstanceId) {
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
+  // Owner, 2026-11-14: an enemy whose whole plan a Poise break cancelled reads Staggered (no number), never "?". Presentation only: the stored
+  // intent, the events and the saved state are unchanged.
+  if (enemy.alive && enemy.combatStance?.staggered && !intent.moveId && intent.kind === 'unknown') return { kind: 'staggered', moveId: null, revealed: true, hidden: false, label: 'Staggered' };
   const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   if (concealed) return concealIntent(intent, profile);

@@ -146,9 +146,9 @@ test('Core Block and rating modifiers distinguish base payload from projected an
   assert.ok(open.totalDamage > unmodified.totalDamage, 'the base payload has not included live AR');
   combat.player.block = 3;
   const blocked = previewIntent(combat, enemy.id);
-  // Owner, 2026-11-03: the quoted hit is the raw hit, so Block no longer lowers it; it still lowers the resolved hpLoss.
-  assert.equal(blocked.totalDamage, open.totalDamage, 'Core preview quotes the raw hit, ignoring Block');
-  assert.ok(blocked.hpLoss < open.hpLoss, 'while Block still cuts the forecast HP loss');
+  // Owner, 2026-11-14: the quoted hit is the HP lost, so Block lowers it, and it is the same figure as the forecast hpLoss.
+  assert.equal(blocked.totalDamage, open.totalDamage - 3, 'Core preview quotes the HP lost: Block 3 takes 3 off');
+  assert.equal(blocked.totalDamage, blocked.hpLoss, 'and it is the forecast HP loss');
   const cards = enemyMoveCards(registries.enemies.get(enemy.enemyId), { enemy, registries,
     preview: blocked, actionPreviews: { slash: actionPreview } });
   const shown = cards.find(row => row.moveId === 'slash');
