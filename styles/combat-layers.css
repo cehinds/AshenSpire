@@ -546,7 +546,7 @@
 }
 .combat-action-row[data-footer-art]:not([data-footer-compact='true']) :is(.pile, .combat-potions) > .footer-compact-label .footer-compact-line { display: block; }
 /* The enemy's HP reads at a size of its own, smaller than the two focus numbers and never under the floor. */
-:root .combat[data-layout] article.combatant.enemy .combat-health-row .as-meter .m-value { font-size: calc(14px / var(--ui-zoom, 1)) !important; }
+:root .combat[data-layout] article.combatant.enemy .combat-health-row .as-meter .m-value { font-size: calc(12.5px / var(--ui-zoom, 1)) !important; }
 :root .combat .combat-tools label .combat-grid-toggle-text, :root .combat .combat-tools .combat-grid-toggle > span { font-size: var(--text-floor) !important; }
 /* Phone tap targets (Wave 2, sizes): every control is at least --tap-floor (44 px) in both directions. The relic and flask
    pips keep their drawn size and take the floor as an invisible hit area; the tool row and the intent buttons take it outright. */
