@@ -1867,7 +1867,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (label.length > 6) node.dataset.rangeDetail = 'true';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
     node.textContent = label;
-    node.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + node.textContent);
+    node.setAttribute('aria-label', t(preview?.contest ? 'combat.quote.contestAria' : 'combat.quote.chanceAria', { chance: node.textContent }));
     return node;
   }
 
@@ -1904,7 +1904,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const spoken = [quote.label];
     if (quote.stamina != null) spoken.push(t('combat.quote.staminaAria', { amount: quote.stamina }));
     if (quote.mana != null) spoken.push(t('combat.quote.manaAria', { amount: quote.mana }));
-    if (chanceLabel) spoken.push('Chance to hit ' + chanceLabel);
+    if (chanceLabel) spoken.push(t('combat.quote.chanceAria', { chance: chanceLabel }));
     node.setAttribute('aria-label', spoken.join('. '));
     return node;
   }
