@@ -609,7 +609,7 @@ dialogue.continue.done,common.continue,,Leave this conversation.,
 dialogue.continue.combat,,Steel yourself,The conversation leads into a fight.,Steel yourself
 dialogue.cannotAfford,,Cannot afford,You cannot pay for this response yet.,Cannot afford
 dialogue.respond.question,,Choose {label}?,,
-dialogue.respond.confirm,,Choose,Give this response.,Choose
+dialogue.respond.confirm,,Confirm,Give this response.,Confirm
 dialogue.respond.hold,,Hold to answer,A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.,Hold to answer
 # ---- the quest board (plan phase 10b) ---------------------------------------
 questBoard.eyebrow,,Quest board,The quests offered in this town and the ones you carry.,Quest board
@@ -1583,7 +1583,7 @@ deckEditor.preview.card,,Show card,Show card,Show card
 deckEditor.preview.animation,,Show animation,Show animation,Show animation
 deckEditor.keywordExplanations,,Keyword explanations,Keyword explanations,Keyword explanations
 deckEditor.rulesAndKeywords,,Rules and keywords,Rules and keywords,Rules and keywords
-deckEditor.accept,,Accept,Save this deck.,Accept
+deckEditor.accept,,Confirm,Save this deck.,Confirm
 deckEditor.closeUnsaved.title,,Discard deck changes?,Discard deck changes?,Discard deck changes?
 deckEditor.closeUnsaved.message,,Close without saving your deck edits?,Close without saving your deck edits?,Close without saving your deck edits?
 deckEditor.closeUnsaved.discard,,Discard changes,Discard changes,Discard changes

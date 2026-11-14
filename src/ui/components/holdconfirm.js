@@ -944,7 +944,7 @@ function reveal(panel, actions) {
  * wrong object — and a pad player picks objects exactly like everyone else.
  * Same mistake, same beat.
  */
-export function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONFIRM', onConfirm, id = null }) {
+export function armConfirm(el, { question, detailHtml = '', confirmLabel = t('common.confirm'), onConfirm, id = null }) {
   let panel = null;
 
   function close(phase) {
