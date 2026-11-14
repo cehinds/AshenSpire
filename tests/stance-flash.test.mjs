@@ -246,3 +246,50 @@ test('the idle sigil colour is a CSS custom property backed by a neutral token',
   const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
   assert.match(css, /\.stance-flash \{ --stance-sigil-idle: var\(--muted\); \}/);
 });
+
+// ---- the figure previews the selected card's stance (owner, 2026-11-13) ----
+import { previewPose } from '../src/ui/stanceFlash.js';
+function figure() {
+  const poses = [];
+  return { poses, stage: { setStance: pose => { if (poses.at(-1) !== pose) poses.push(pose); } } };   // setStance on the same stance repaints nothing
+}
+test('selecting a stance-changing card poses the figure in it; deselecting or a same-stance card returns it; another stance switches', () => {
+  const { poses, stage } = figure();
+  const sync = state => { const pose = previewPose({ armedPose: () => state.armed, currentPose: () => 'attack', ...state }); if (pose !== undefined) stage.setStance(pose); };
+  sync({ changing: false });                              // at rest in Attack
+  sync({ changing: true, armed: 'sweep' });               // a Sweep card selected
+  sync({ changing: true, armed: 'defend' });              // a Defend card instead
+  sync({ changing: false });                              // deselected
+  sync({ changing: true, armed: 'sweep' });
+  sync({ changing: false });                              // a same-stance card is selected: no change
+  assert.deepEqual(poses, ['attack', 'sweep', 'defend', 'attack', 'sweep', 'attack']);
+});
+test('play commits the pose the figure is already in: no second stance pose, and no flicker back while the play is in flight', () => {
+  const { poses, stage } = figure();
+  const apply = state => { const pose = previewPose({ armedPose: () => 'sweep', currentPose: () => state.current, ...state }); if (pose !== undefined) stage.setStance(pose); };
+  apply({ changing: true, current: 'attack' });
+  assert.deepEqual(poses, ['sweep']);
+  apply({ changing: false, inFlight: true, current: 'attack' });   // the selection clears at commit; the display's stance is still stale
+  assert.deepEqual(poses, ['sweep'], 'left alone');
+  stage.setStance('sweep');                                         // the played card's stance event
+  assert.deepEqual(poses, ['sweep'], 'no entry pose is replayed');
+  apply({ changing: false, current: 'sweep' });                     // after the play
+  assert.deepEqual(poses, ['sweep']);
+});
+test('a refused or cancelled play reverts the figure', () => {
+  const { poses, stage } = figure();
+  stage.setStance(previewPose({ changing: true, armedPose: () => 'sweep', currentPose: () => 'attack' }));
+  stage.setStance(previewPose({ changing: false, currentPose: () => 'attack' }));   // revertPlayerPose after a refusal
+  assert.deepEqual(poses, ['sweep', 'attack']);
+});
+test('the overlay reports a play in flight until its stance event consumes it', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    rig.overlay.hold();
+    assert.equal(rig.overlay.pending, true);
+    assert.equal(rig.overlay.held, true);
+    rig.overlay.consumePlayed();
+    assert.equal(rig.overlay.pending, false);
+  });
+});

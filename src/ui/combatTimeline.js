@@ -14,7 +14,7 @@ export const SWING_SCALE = Object.freeze({ min: 0.25, max: 4 });
  * group starts one segment length plus the result's own spacing after the previous one, and events listed after the
  * segment move out by the groups' total.
  */
-export function computeBeatSchedule(fullTimeline, { impactMs = null, groups = 1, skip = null } = {}) {
+export function computeBeatSchedule(fullTimeline, { impactMs = null, groups = 1, skip = null, stanceMs = 0 } = {}) {
   // An event that does not apply to the beat (no card played, no stance change) takes no time: it is left out of the chain.
   // The wait that followed a left-out event goes with it: the next event starts where the left-out one would have.
   const timeline = [];
@@ -34,7 +34,8 @@ export function computeBeatSchedule(fullTimeline, { impactMs = null, groups = 1,
     else start = previous.start === null || previous.duration === null ? null : previous.start + previous.duration + offset;
     if (start !== null) start = Math.max(0, start);
     starts[row.id] = start;
-    previous = { start, duration: row.id === 'swing' ? (Number.isFinite(impactMs) ? Math.max(0, impactMs) : null) : 0 };
+    // The swing's natural duration is its clip's impact time; the stance event's is the stance lead (only when it is in the beat).
+    previous = { start, duration: row.id === 'stance' ? Math.max(0, Number(stanceMs) || 0) : row.id === 'swing' ? (Number.isFinite(impactMs) ? Math.max(0, impactMs) : null) : 0 };
   }
   const segment = timeline.filter(row => SEGMENT_IDS.includes(row.id));
   const segStarts = segment.map(row => starts[row.id]);

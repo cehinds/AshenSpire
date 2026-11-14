@@ -32,8 +32,8 @@ test('ordered actions and counters finish every stage before the next actor begi
   assert.deepEqual(trace.slice(9, 18).map(row => row[0]), expected);
   // The default timeline (actionPacing.json timeline): word and stance +100, swing +100, contact on the impact frame,
   // result +100, reaction +100 with the numbers and bars, end +100. Only the sprite clip scales with speed.
-  assert.deepEqual(trace.slice(0, 9).map(row => row[2]), [0, 100, 200, 475, 575, 675, 675, 675, 775]);
-  assert.equal(trace[9][2], 775, 'the next actor starts when the first action ends');
+  assert.deepEqual(trace.slice(0, 9).map(row => row[2]), [0, 100, 110, 385, 485, 585, 585, 585, 685]);
+  assert.equal(trace[9][2], 685, 'the next actor starts when the first action ends');
   assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
 });
 test('× speed scales every action stage and sprite while retaining receipt order', () => {
@@ -108,7 +108,7 @@ test('watchdog extends to the real authored handle when its estimate is too shor
 });
 
 test('a lost pointer release retains a bounded completion fallback', () => {
-  const { c, trace, handle } = run(); c.advance(600); handle.pauseForSkip(); c.advance(100000);
+  const { c, trace, handle } = run(); c.advance(450); handle.pauseForSkip(); c.advance(100000);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
   assert.equal(trace.filter(row => row[0] === 'flush').length, 1);
   assert.equal(trace.filter(row => row[0] === 'done').length, 1);
@@ -180,7 +180,7 @@ test('D11: three enemies finish by themselves at every pause and speed, with no 
     assert.ok(!trace.includes('flush'), `${name}: the watchdog must not fire`);
     measured[name] = trace.find(row => row[0] === 'done')[1];
   }
-  assert.equal(measured.default, 3 * 775, 'three actors at 775 ms each: the default timeline ends 775 ms after the beat starts, after the 550 ms clip');
+  assert.equal(measured.default, 3 * 685, 'three actors at 685 ms each: the default timeline ends 685 ms after the beat starts, after the 550 ms clip');
   assert.ok(measured['auto x1.5'] < measured.default, 'auto combat divides the clip by x1.5');
   assert.equal(measured['gap 2000'], measured.default, 'the pause setting no longer moves a timeline: every stage is fixed');
 });
@@ -199,8 +199,8 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
   const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
   assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);
   assert.deepEqual(trace.slice(9, 18).map(row => row[0]), stages);
-  assert.equal(trace[3][2], 475, 'contact waits the fixed action-word and animation stages plus the sprite impact');
-  assert.equal(trace[9][2], 775, 'the counter waits for the timeline end');
+  assert.equal(trace[3][2], 385, 'contact waits the fixed action-word and animation stages plus the sprite impact');
+  assert.equal(trace[9][2], 685, 'the counter waits for the timeline end');
   assert.equal(trace.at(-1)[0], 'done');
   assert.equal(trace.some(row => row[0] === 'flush'), false);
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
@@ -223,8 +223,8 @@ test('a telegraph beat plays its whole clip, shows no result, number or bar, the
   const enemy = trace.filter(row => row[1] === 'enemy').map(row => row[0]);
   assert.equal(enemy.join(' '), 'intent action sprite contact resolution', 'no result, reaction, damage or hud before the prompt');
   assert.equal(timing.telegraphHoldMs, 0, 'the hold after the clip defaults to 0');
-  assert.equal(cancelledAt, 200 + 2300 + timing.telegraphHoldMs, 'the clip is never cut: it is cancelled only after it completes');
-  assert.equal(at('resolution', 'enemy'), 200 + 2300, 'the prompt opens when the clip is done');
+  assert.equal(cancelledAt, 110 + 2300 + timing.telegraphHoldMs, 'the clip is never cut: it is cancelled only after it completes');
+  assert.equal(at('resolution', 'enemy'), 110 + 2300, 'the prompt opens when the clip is done');
   assert.equal(at('intent', 'enemy2') - at('resolution', 'enemy'), 100, 'resolution to the next beat is telegraphResetMs');
   assert.ok(!trace.some(row => row[0] === 'flush'), 'the watchdog never fires early');
   assert.equal(trace.at(-1)[0], 'done');
@@ -240,7 +240,7 @@ test('telegraphHoldMs is the wait after the clip completes', () => {
   }, timing, timerOptions(c));
   c.advance(60000); setCombatPacing();
   const at = stage => trace.find(row => row[0] === stage)[2];
-  assert.equal(at('resolution'), 200 + 340 + 150);
+  assert.equal(at('resolution'), 110 + 340 + 150);
 });
 
 test('a long reaction pose does not delay the next beat beyond the damage numbers wait', () => {
@@ -284,44 +284,44 @@ test('the default timeline fires the action word with the cost 100 ms later, num
   const { trace } = play([{ actorId: 'p', kind: 'attack' }], actionPacing());
   assert.equal(names(trace), 'intent word action sprite contact result reaction damage hud resolution done');
   const t = Object.fromEntries(trace.map(row => [row[0], row[2]]));
-  assert.deepEqual([t.intent, t.word, t.action, t.sprite, t.contact, t.result, t.reaction, t.damage, t.hud, t.resolution], [0, 100, 100, 200, 475, 575, 675, 675, 675, 775]);
+  assert.deepEqual([t.intent, t.word, t.action, t.sprite, t.contact, t.result, t.reaction, t.damage, t.hud, t.resolution], [0, 100, 100, 110, 385, 485, 585, 585, 585, 685]);
 });
 test('a reordered timeline fires its hooks in the new order, at the new times', () => {
   const list = moveTimelineEvent(moveTimelineEvent(defaultTimeline(), 'numbers', -1), 'numbers', -1); // numbers right after contact
   const { trace } = play([{ actorId: 'p', kind: 'attack' }], withTimeline(list));
   assert.equal(names(trace), 'intent word action sprite contact damage result reaction hud resolution done');
   const t = Object.fromEntries(trace.map(row => [row[0], row[2]]));
-  assert.deepEqual([t.contact, t.damage, t.result, t.reaction, t.hud], [475, 475, 575, 675, 675]);
+  assert.deepEqual([t.contact, t.damage, t.result, t.reaction, t.hud], [385, 385, 485, 585, 585]);
 });
 test('numbers and bars can be offset from the reaction, before or after it', () => {
   const list = setTimelineEvent(setTimelineEvent(defaultTimeline(), 'numbers', { offsetMs: -50 }), 'bars', { with: 'numbers', offsetMs: 80 });
   const { trace } = play([{ actorId: 'p', kind: 'attack' }], withTimeline(list));
   const t = Object.fromEntries(trace.map(row => [row[0], row[2]]));
-  assert.deepEqual([t.damage, t.reaction, t.hud], [625, 675, 705]);
+  assert.deepEqual([t.damage, t.reaction, t.hud], [535, 585, 615]);
   assert.equal(names(trace.filter(row => ['damage', 'reaction', 'hud'].includes(row[0]))), 'damage reaction hud');
 });
 test('contact moved later retimes the clip for that beat only and still fires on time', () => {
   const list = setTimelineEvent(defaultTimeline(), 'contact', { offsetMs: 275 });
   const { trace, spriteCalls } = play([{ actorId: 'p', kind: 'attack' }, { actorId: 'q', kind: 'attack' }], withTimeline(list));
   const contact = trace.find(row => row[0] === 'contact');
-  assert.equal(contact[2], 750, 'contact fires at the scheduled time');
+  assert.equal(contact[2], 660, 'contact fires at the scheduled time');
   assert.equal(spriteCalls.length, 4, 'each beat makes its clip and remakes it once at the new speed');
-  assert.equal(spriteCalls[1] / spriteCalls[0], (750 - 200) / 275);
+  assert.equal(spriteCalls[1] / spriteCalls[0], (660 - 110) / 275);
 });
 test('the reaction timeline is used for playback after a reaction answer', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1, combatTimeline: { reaction: setTimelineEvent(defaultTimeline(), 'end', { offsetMs: 400 }) } });
   assert.equal(actionPacing().timeline.find(row => row.id === 'end').offsetMs, 100);
   assert.equal(actionPacing({ reaction: true }).timeline.find(row => row.id === 'end').offsetMs, 400);
   const { trace } = play([{ actorId: 'p', kind: 'attack' }], actionPacing({ reaction: true }));
-  assert.equal(trace.find(row => row[0] === 'resolution')[2], 1075);
+  assert.equal(trace.find(row => row[0] === 'resolution')[2], 985);
   setCombatPacing();
 });
 test('several reaction groups repeat the result, reaction, numbers and bars before the beat ends', () => {
   const groups = [{ actorId: 'p', hit: 0, kind: 'attack' }, { actorId: 'p', hit: 1, kind: 'attack' }];
   const { trace } = play([{ actorId: 'p', kind: 'attack' }], actionPacing(), { reactionGroups: () => groups });
   assert.equal(names(trace.filter(row => ['result', 'reaction', 'damage', 'hud'].includes(row[0]))), 'result reaction damage hud result reaction damage hud');
-  assert.deepEqual(trace.filter(row => row[0] === 'result').map(row => [row[2], row[3]]), [[575, 0], [775, 1]]);
-  assert.equal(trace.find(row => row[0] === 'resolution')[2], 975);
+  assert.deepEqual(trace.filter(row => row[0] === 'result').map(row => [row[2], row[3]]), [[485, 0], [685, 1]]);
+  assert.equal(trace.find(row => row[0] === 'resolution')[2], 885);
 });
 test('Reduced motion keeps the order with every event together', () => {
   setAnimSpeed('normal');
@@ -339,7 +339,7 @@ test('cardPlayed fires first, then cost +100, the action word +100, and the swin
   assert.deepEqual(cards, ['card']);
   assert.equal(names(trace), 'intent word action sprite contact result reaction damage hud resolution done');
   const t = Object.fromEntries(trace.map(row => [row[0], row[2]]));
-  assert.deepEqual([t.intent, t.word, t.action, t.sprite], [100, 200, 200, 300]);
+  assert.deepEqual([t.intent, t.word, t.action, t.sprite], [100, 200, 200, 210]);
 });
 test('a beat with no card played has no cardPlayed event and starts at once', () => {
   const calls = [];
@@ -354,7 +354,7 @@ test('the stance event is skipped on a beat that repeats the stance and fires on
   assert.equal(change.trace.some(row => row[0] === 'action'), true);
   const swing = trace => trace.find(row => row[0] === 'sprite')[2], word = trace => trace.find(row => row[0] === 'word')[2];
   assert.equal(swing(same.trace) - word(same.trace), 0, 'the swing follows the action word directly');
-  assert.equal(swing(change.trace) - word(change.trace), 100);
+  assert.equal(swing(change.trace) - word(change.trace), 10, 'a stance change adds the 10 ms stance lead');
 });
 
 test('onSwingEnd fires when the swing clip completes, not at contact', () => {
@@ -367,8 +367,8 @@ test('onSwingEnd fires when the swing clip completes, not at contact', () => {
     onSwingEnd: () => { marks.end = c.now; },
   }, actionPacing(), timerOptions(c));
   c.advance(10000); setCombatPacing();
-  assert.equal(marks.contact, 475, 'contact on the impact frame (swing at 200)');
-  assert.equal(marks.end, 750, 'the clip ends 550 ms after the swing started');
+  assert.equal(marks.contact, 385, 'contact on the impact frame (swing at 110)');
+  assert.equal(marks.end, 660, 'the clip ends 550 ms after the swing started');
 });
 
 test('onSwingStart reports the clip length as the swing begins', () => {
@@ -379,5 +379,5 @@ test('onSwingStart reports the clip length as the swing begins', () => {
     onSwingStart: (beat, ms) => seen.push([beat.actorId, ms, c.now]),
   }, actionPacing(), timerOptions(c));
   c.advance(10000); setCombatPacing();
-  assert.deepEqual(seen, [['p', 550, 200]]);
+  assert.deepEqual(seen, [['p', 550, 110]]);
 });

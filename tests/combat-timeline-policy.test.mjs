@@ -8,7 +8,7 @@ const ids = list => list.map(row => row.id);
 test('the default timeline lists every event once, in the owner order', () => {
   assert.deepEqual(TIMELINE_EVENT_IDS, ['cardPlayed', 'cost', 'actionWord', 'stance', 'swing', 'contact', 'result', 'reaction', 'numbers', 'bars', 'end']);
   assert.deepEqual(defaultTimeline().map(row => [row.id, row.with, row.offsetMs].join(':')), [
-    'cardPlayed:previous:0', 'cost:previous:100', 'actionWord:previous:100', 'stance:actionWord:0', 'swing:previous:100', 'contact:previous:0',
+    'cardPlayed:previous:0', 'cost:previous:100', 'actionWord:previous:100', 'stance:actionWord:0', 'swing:previous:0', 'contact:previous:0',
     'result:previous:100', 'reaction:previous:100', 'numbers:reaction:0', 'bars:reaction:0', 'end:previous:100']);
   assert.deepEqual([TIMELINE_OFFSET.min, TIMELINE_OFFSET.max, TIMELINE_OFFSET.step], [-500, 1000, 10]);
 });
@@ -21,7 +21,7 @@ test('offsets are clamped and a non-number takes the default', () => {
   const list = sanitizeTimeline([{ id: 'cost', with: 'previous', offsetMs: -9000 }, { id: 'actionWord', with: 'previous', offsetMs: 9000 },
     { id: 'swing', with: 'previous', offsetMs: 'x' }, { id: 'result', with: 'previous', offsetMs: 12.4 }]);
   const by = id => list.find(row => row.id === id);
-  assert.deepEqual([by('cost').offsetMs, by('actionWord').offsetMs, by('swing').offsetMs, by('result').offsetMs], [-500, 1000, 100, 12]);
+  assert.deepEqual([by('cost').offsetMs, by('actionWord').offsetMs, by('swing').offsetMs, by('result').offsetMs], [-500, 1000, 0, 12]);
 });
 test('unknown and repeated ids are dropped and missing ids come back from the defaults', () => {
   const list = sanitizeTimeline([{ id: 'bars' }, { id: 'nope' }, { id: 'bars' }, { id: 'cost' }]);

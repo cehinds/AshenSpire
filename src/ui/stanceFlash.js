@@ -48,6 +48,18 @@ export function overlayStanceFor({ armed = null, pending = null, engine = null, 
   return next !== current ? next : null;
 }
 
+/**
+ * previewPose({ changing, inFlight, armedPose, currentPose }) -> the stance to give the player's figure, or undefined to leave it.
+ * Selecting or arming a card of another stance (`changing`) previews that card's stance; deselecting, a same-stance card or a
+ * refused play returns the figure to its actual stance (`currentPose`); while a play that had the sigil up is in flight
+ * (`inFlight`) the figure is left alone, so the played card's own stance event commits the pose it is already in. `armedPose` and
+ * `currentPose` are functions so nothing is resolved unless used.
+ */
+export function previewPose({ changing = false, inFlight = false, armedPose, currentPose } = {}) {
+  if (inFlight) return undefined;
+  return changing && typeof armedPose === 'function' ? armedPose() : typeof currentPose === 'function' ? currentPose() : undefined;
+}
+
 /** The sigil id a stance change shows: the maneuver it enters (attack, defend, counter, smash, sweep, evade...). */
 export const stanceFlashIcon = event => {
   const id = event?.maneuver || event?.stance;
@@ -119,6 +131,8 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
     bind(fn) { getAnchor = typeof fn === 'function' ? fn : () => null; },
     get active() { return !!el; },
     get held() { return held; },
+    // A play that had the sigil up is in flight (until its stance event or the swing's end): the sprite keeps its previewed pose.
+    get pending() { return played; },
     // True once, after a play that had the sigil up: the stance event then only updates the small icon (no second flash).
     consumePlayed() { const was = played; played = false; return was; },
     select(stance) {

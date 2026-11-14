@@ -9,7 +9,7 @@
       { "id": "cost", "with": "previous", "offsetMs": 100 },
       { "id": "actionWord", "with": "previous", "offsetMs": 100 },
       { "id": "stance", "with": "actionWord", "offsetMs": 0 },
-      { "id": "swing", "with": "previous", "offsetMs": 100 },
+      { "id": "swing", "with": "previous", "offsetMs": 0 },
       { "id": "contact", "with": "previous", "offsetMs": 0 },
       { "id": "result", "with": "previous", "offsetMs": 100 },
       { "id": "reaction", "with": "previous", "offsetMs": 100 },
@@ -17,6 +17,7 @@
       { "id": "bars", "with": "reaction", "offsetMs": 0 },
       { "id": "end", "with": "previous", "offsetMs": 100 }
     ],
+    "stanceLeadMs": 10,
     "stanceOverlay": { "style": "outline", "opacity": 0.6, "fadeInMs": 80, "playExitMs": 75, "outlineScale": 2.5, "fadeOutMs": 80 },
     "stanceFlash": { "fadeInMs": 80, "holdMs": 90, "fadeOutMs": 80, "opacity": 0.6 },
     "animationStepDurationMs": 390,

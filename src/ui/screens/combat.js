@@ -100,7 +100,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { playerStanceOverlay, overlayStanceFor } from '../stanceFlash.js';
+import { playerStanceOverlay, overlayStanceFor, previewPose } from '../stanceFlash.js';
 import { cardMotifGlow } from '../cardArtComposition.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
@@ -595,6 +595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let upcastPreviewRefresh = false;
   let expansionChoiceShell = null;
   let selectedFlask = null; // flask slot index awaiting a target
+  let previewsStanceChange = false; // the selected card changes the player's stance: the figure previews it
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
   let heldTurnHand = null;
@@ -980,9 +981,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The figure's glyph and stance: the armed card's, else the held ones.
   function syncPlayerPreview(player, inst, def) {
     syncPlayerActionIntent(player, inst, heldKinds.get());
-    // Owner (2026-11-06): static figure. Arming, hovering or targeting a card never changes the pose; only a played
-    // card's action or a resolved stance change does, so the preview shows the held stance.
-    stageFor(player?.querySelector('.sprite'))?.setStance?.(playerStance(null));
+    // (Owner 2026-11-06 kept the figure static while arming; superseded 2026-11-13 below. Hovering still never changes the pose.)
+    // Owner 2026-11-13: selecting or arming a card of another stance poses the figure in it now (preview only: the engine's
+    // stance changes when the card is played); deselecting, a same-stance card or a refused play returns it to the held stance.
+    // While a play that had the sigil up is in flight the previewed pose stays, so the figure never flickers back before the
+    // played card's own stance event commits it (setStance on the same stance repaints nothing: no entry pose replays).
+    const pose = previewPose({ changing: previewsStanceChange && !!def, inFlight: playerStanceOverlay.held || playerStanceOverlay.pending,
+      armedPose: () => playerStance(def), currentPose: () => playerStance(null) });
+    if (pose !== undefined) stageFor(player?.querySelector('.sprite'))?.setStance?.(pose);
+  }
+  // A refused or cancelled play: the figure goes back to the stance it actually holds.
+  function revertPlayerPose() {
+    previewsStanceChange = false;
+    stageFor($('.combatant.player .sprite'))?.setStance?.(playerStance(null));
   }
 
   // An armed card's kind shows while it is armed; otherwise the last confirmed
@@ -997,8 +1008,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // through the play (held in commitPlay) and fx.js fades it when the swing ends.
     playerStanceOverlay.bind(() => player?.querySelector('.sprite'));
     // Compared with the stance the player will be in when this card resolves, not the display's held stance (see overlayStanceFor).
-    playerStanceOverlay.select(overlayStanceFor({ armed: armed?.maneuver, pending: pendingStanceManeuver(), engine: combat.player?.combatStance?.maneuver,
-      held: (held ?? RESTING_PLAYER_ACTION).maneuver }));
+    const changing = overlayStanceFor({ armed: armed?.maneuver, pending: pendingStanceManeuver(), engine: combat.player?.combatStance?.maneuver,
+      held: (held ?? RESTING_PLAYER_ACTION).maneuver });
+    playerStanceOverlay.select(changing);
+    previewsStanceChange = !!changing;
     const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
     const maneuver = profile.maneuver || 'prepare';
     const previous = player.querySelector('.player-action-intent');
@@ -3708,6 +3721,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function refusePlay(instanceId, line, tip) {
     logIgnored(`playCard ${instanceId}`, line);
     playerStanceOverlay.clear();
+    revertPlayerPose();
     if (!tip) return;
     const cardEl = combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`);
     if (cardEl) showTooltipFor(cardEl, '<p>' + esc(tip) + '</p>');
@@ -3789,6 +3803,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
       disp = null;
       playerStanceOverlay.clear();
+      revertPlayerPose();
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }

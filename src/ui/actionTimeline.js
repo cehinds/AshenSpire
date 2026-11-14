@@ -121,7 +121,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
       actor = stage('sprite', beat, () => hooks.onSprite?.(beat, speed));
       spriteStart = now(); swingFired = true;
       impact = Math.max(0, Number(actor?.impactMs) || 0);
-      const schedule = computeBeatSchedule(timeline, { impactMs: impact, groups: groups.length, skip });
+      const schedule = computeBeatSchedule(timeline, { impactMs: impact, groups: groups.length, skip, stanceMs: timing.stanceLeadMs });
       // Contact moved off the clip's own impact frame: play this beat's clip faster or slower so the frame lands on it
       // (only the acting clip, only this beat; outside the clamp the clip keeps its speed and contact still fires on time).
       if (schedule.swingScale !== 1 && actor && speed && schedule.swingScale >= SWING_SCALE.min && schedule.swingScale <= SWING_SCALE.max) {
@@ -197,13 +197,13 @@ export function runActionTimeline(beats, hooks, timingIn, {
         enqueue(beatStart + entry.at, () => { pending--; fire(entry); handOff(); });
       }
     };
-    arm(computeBeatSchedule(timeline, { impactMs: null, groups: groups.length, skip }));
+    arm(computeBeatSchedule(timeline, { impactMs: null, groups: groups.length, skip, stanceMs: timing.stanceLeadMs }));
   };
 
   // Budget derives from the computed schedule and the caller's real authored clip upper bound (a clip may be retimed
   // up to 4x); long clips never trigger the legacy short watchdog.
   const reservedSpriteMs = Math.max(0, Number(safe(() => hooks.maxSpriteMs?.(timing.spriteSpeed))) || 0);
-  const span = groups => Math.max(0, ...computeBeatSchedule(timeline, { impactMs: reservedSpriteMs, groups }).entries.map(entry => entry.at));
+  const span = groups => Math.max(0, ...computeBeatSchedule(timeline, { impactMs: reservedSpriteMs, groups, stanceMs: timing.stanceLeadMs }).entries.map(entry => entry.at));
   const budget = 2000 + beats.reduce((sum, beat) => {
     if (beat.banner || !beat.actorId || beat.kind === 'reveal') return sum + timing.bannerMs + timing.stepMs + 100;
     const groups = safe(() => hooks.reactionGroups?.(beat))?.length || 1;

@@ -151,6 +151,8 @@ export function actionPacing({ reduced = false, enemy = false, reaction = false 
   return {
     gapMs,
     ...fixed,
+    // The wait between a stance change and the swing (the stance event's own duration); 0 on Instant and Reduced motion.
+    stanceLeadMs: scale > 0 ? Math.max(0, Number(ACTION_PACING.stanceLeadMs) || 0) : 0,
     timeline,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
