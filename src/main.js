@@ -99,10 +99,10 @@ import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
-import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
+import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
+import { armouryHasNew, armouryOpensDeckEditor, restOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { armouryRoute } from './model/armouryPages.js';
 import { mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -1446,7 +1446,9 @@ function showCharacterSheet(opener, options = {}) {
 function deckDoors(services = null) {
   const settings = saves.loadMeta().settings || {};
   const doors = deckEditorDoors({ settings, inCombat: false, services });
-  // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
+  // Core 2 (editorWhere 'rest'): the deck is edited only at a rest site, whatever the player's location setting says.
+  if (restOpensDeckEditor(run)) return Object.freeze({ armoury: false, rest: deckEditingOn(settings) });
+  // D10/D15: an older Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
@@ -2368,6 +2370,8 @@ function showRest(openPanel = null, locationId = null) {
     };
     return mountRest(app, { registries, run, meta: saves.loadMeta(), onDone: leave, hud: roomHud(() => showRest()),
       gameProfileRest: { visit, onStrategize: strategize,
+        // Core 2: the deck door is free and is not a service, so it never touches the visit's one pick.
+        deckEditor: deckDoors().rest ? { onOpen: () => showDeckEditor(() => showRest(), true, null, 'shrine') } : null,
         onCommit: commit, onLeave: leave } });
   }
   if (locationId) restLocationId = locationId;

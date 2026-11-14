@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun, syncZones } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -11,8 +12,9 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { unlimitedCardIds, addBasicCard, commitDeckEditDraft, moveToSideboard, deckCopyLimit } from '../src/model/deckRules.js';
 import { deckEditorModel, openDeckEdit } from '../src/ui/models/DeckEditorModel.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// Pinned to the pre-rest Core (Armoury deck door, unlimited Basics/Cantrips): a saved run keeps that pinned profile. The shipped Core mints nothing (tests/core-deck-edit-at-rest.test.mjs).
+const profile = legacyCoreProfile();
+const registries = legacyCoreRegistries(profile);
 const live = (classId = 'reaver') => createRunState({ registries, seed: 511, classId,
   profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 const collect = (run, card) => executeRunEffects({ run, registries, rng: createRng(run.seed) }, [{ op: 'addCardToDeck', card }]);
