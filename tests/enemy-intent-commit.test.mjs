@@ -17,9 +17,11 @@ import { rangePairKey } from '../src/model/combatEngagement.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fight(id, seed = 511) {
+// `legacy` is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); the default is the shipped Broken rule.
+function fight(id, seed = 511, { legacy = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed });
   const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [id] });
+  if (legacy) combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } };
   combat.player.hp = combat.player.maxHp = 100000;
   return combat;
 }
@@ -58,8 +60,8 @@ test('shown intent and plan equal what the enemy plays, over a seeded multi-roun
   }
 });
 
-test('a Poise break that takes the head move\'s SP changes the intent during the player turn', () => {
-  const combat = fight('wanderingSoldier');
+test('a Poise break that takes the head move\'s SP changes the intent during the player turn (legacy Staggered rule)', () => {
+  const combat = fight('wanderingSoldier', 511, { legacy: true });
   const enemy = combat.enemies[0];
   assert.equal(enemy.intent.moveId, 'slash');
   assert.equal(enemy.maxStamina, 1);
@@ -68,6 +70,20 @@ test('a Poise break that takes the head move\'s SP changes the intent during the
   assert.ok(enemy.pendingStaminaLoss > 0, 'the Poise break owes SP');
   assert.equal(enemy.intent.moveId, null, 'the intent no longer promises a move it cannot pay for');
   assert.equal(enemy.intent.kind, 'unknown');
+  assert.deepEqual(enemy.plannedMoves, []);
+  const { started, refused } = endTurn(combat);
+  assert.deepEqual([started, refused], [[], []], 'nothing is attempted and then refused');
+});
+
+test('a Poise break makes the enemy Broken: the head is cancelled, not owed SP, and the intent reads Broken', () => {
+  const combat = fight('wanderingSoldier');
+  const enemy = combat.enemies[0];
+  assert.equal(enemy.intent.moveId, 'slash');
+  const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  play(combat, strike);
+  assert.ok(enemy.broken, 'the Poise break made the enemy Broken');
+  assert.ok(!(enemy.pendingStaminaLoss > 0), 'Broken cancels the head instead of owing SP');
+  assert.equal(enemy.intent.kind, 'staggered', 'the intent reads Broken');
   assert.deepEqual(enemy.plannedMoves, []);
   const { started, refused } = endTurn(combat);
   assert.deepEqual([started, refused], [[], []], 'nothing is attempted and then refused');
