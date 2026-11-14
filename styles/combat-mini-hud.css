@@ -114,3 +114,12 @@
   width: auto; height: auto; min-width: calc(var(--icon-tray-size, var(--mh-badge)) * .38); padding: 0 calc(1px / var(--ui-zoom, 1));
   font-size: max(calc(7px / var(--ui-zoom, 1)), calc(var(--icon-tray-size, var(--mh-badge)) * .4)) !important; line-height: 1.1; transform: none;
 }
+
+/* The player's HP number is the largest on the screen (SPEC 17 rule 8), so its slot is sized for it, not for the bar height: the HUD grows to hold it,
+   and the number hangs from the top of the bar rather than centring on it, so it never rises over the enemy lane above (owner, 2026-11-14). */
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters {
+  --mh-value-w: calc(var(--focus-number-size, 27px) * 3.1);
+  /* Grow to the right from the bars' own left edge: centring on the figure would push the wider HUD off the left of a phone. */
+  left: var(--combat-mini-hud-left, 0px) !important;
+}
+:root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-row > .combat-health-meter.combat-health-meter { align-items: flex-start; }
