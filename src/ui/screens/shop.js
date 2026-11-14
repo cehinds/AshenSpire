@@ -15,7 +15,6 @@ import { modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, railItem } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
-import { sellReview } from '../models/ConfirmationReviewModel.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { shopOfferPrice } from '../../model/shopOfferPrice.js';
@@ -94,7 +93,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
     const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
     const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }), visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
-    if (available) arm(buy, 'shopBuy', { question: t('shop.configured.buy'), target: def?.name || option.id, message: t('shop.configured.buy.message', { cost: price, cinders: run.cinders, left: run.cinders - price }), confirmLabel: t('shop.buy.confirm'), policyAction: 'action.purchase', onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
+    if (available) arm(buy, 'shopBuy', { onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
     shelves.get(option.kind).append(tile);
   }
   if (sellEnabled) {
@@ -110,11 +109,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
       const sell = arrangeMerchantOffer({ tile, name: def.name, desc: configuredOfferText(registries, run, kind, def, saleRef) || def.blurb || '', visual,
         price: t('shop.price.back', { price }), avail: { available: quote.ok, reason: quote.reason || null },
         action: { kind: 'sell', label: t('shop.action.sell', { price }), enabled: quote.ok } });
-      const reviewKind = { relics: 'relic', potions: 'flask', consumables: 'consumable' }[kind];
-      const review = reviewKind ? sellReview({ kind: reviewKind, name: def.name, price })
-        : { question: t('shop.bar.sell'), target: def.name, message: t('shop.review.sell.message', { price }), confirmLabel: t('shop.sell.confirm'), policyAction: null };
-      if (['weapons', 'armor'].includes(kind)) review.message += ` Smithing tier ${quote.tier}. Attached cards: ${quote.mounts.map(mount => mount.cardName).join(', ') || 'none'}. Tier and mounted cards stay with this item if you reacquire it. Discovery is retained.`;
-      if (quote.ok) arm(sell, 'shopSell', { ...review, onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } } });
+      if (quote.ok) arm(sell, 'shopSell', { onConfirm: () => { try { onSell(quote); } catch (error) { status.textContent = error.message; } } });
       shelves.get('sell').append(tile);
     }
     if (!sales.length) shelves.get('sell').append(statusText(t('shop.status.nothingWanted')));

@@ -179,7 +179,6 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
       use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
       if (action.enabled) disarmers.push(arm(use, 'useFlask', {
         ctx: { targeted: !!def.targeted },
-        question: t('combat.potions.use.question', { name: def.name, remaining }), confirmLabel: t('combat.potions.use.confirm'),
         onConfirm: () => {
           // Recheck the live fight before committing a menu snapshot.
           if (!stillUsable(row)) return;
