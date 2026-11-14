@@ -254,7 +254,7 @@ export function rollCrit(ctx, source, tags, info = {}) {
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if(!target?.alive)return 0;
   const resolved=carrier || {};
-  if(resolved.expansionContact?.receipt?.avoided)return 0;
+  if(resolved.expansionContact?.receipt?.avoided || resolved.expansionContact?.receipt?.contactHits?.[resolved.expansionContact.index]===false)return 0;
   const decisionKey=ctx.playerIdForEntity?.(target) || target.id,decisions=resolved.proposalTargetDecisions;
   const cached=decisions?.[decisionKey],targetPlan=cached || proposalTargetPlan(ctx,source,target,resolved,{resolve:true});
   if(!cached) {if(decisions)decisions[decisionKey]=targetPlan;applyProposalPlan(ctx,{statusChanges:targetPlan.statusChanges},source,target,resolved);}
@@ -757,7 +757,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const split = { splitBase: Math.max(0, Math.floor(base)), ratingBonus: cardRatingDamage(ctx, source, carrier, base), ratingPart: ratingBonusPart(ctx, carrier) };
   const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, ...split, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
-  if (tactical.avoided) return 0;
+  if (tactical.avoided || tactical.contactHits?.[planned?.index || 0] === false) return 0;
   if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
   prepareExpandedDefense(ctx, target, tactical, carrier);
   const contactIndex = planned?.index || 0;
