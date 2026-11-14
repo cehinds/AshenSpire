@@ -15,14 +15,16 @@ import { statusInstancePresentation } from '../src/ui/uiContent.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { legacyRolls } from './legacyHitRules.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const unlocks = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+// Precision and Evasion only price the d20, so these fights carry the rules of one saved before the 2026-11-14 ruling (no hitRoll key).
 function live(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: unlocks });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: [enemyId] });
+  const combat = legacyRolls(createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: [enemyId] }));
   return { combat, player: combat.player, enemy: combat.enemies[0] };
 }
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, ''));
@@ -102,8 +104,19 @@ test('Persistent Precision stacks are exempt from decay', () => {
   assert.deepEqual(player.statuses.precision, { stacks: 2, persistentStacks: 2 });
 });
 
+// Owner, 2026-11-14: Precision does nothing without the roll, so Glimpse, Warding Glance, Steady Guard and Palm Flame no longer grant it;
+// Guiding Whisper keeps its definition for saved decks.
+test('the cards that granted Precision no longer do, and the one left still prints and grants it', () => {
+  for (const id of ['core.glimpse', 'core.wardingGlance', 'core.steadyGuard', 'core.palmFlame']) {
+    const def = reg.cards.get(id);
+    assert.ok(![...def.effects, ...(def.upgrade?.effects || [])].some(e => e.status === 'precision'), id);
+    // The stance-entry grant (Entry: +1 Precision) is a separate rule and is left alone; the authored effect is what was removed.
+    assert.ok(!plain(cardFaceLines(def, null, reg)).join(' | ').replace(/(?:, |\. )?Entry:[^|]*/g, '').includes('Precision'), `${id} face`);
+  }
+});
+
 test('buff cards grant their authored Precision, the face prints +N Precision, and the badge shows N', () => {
-  const grants = { 'core.glimpse': 2, 'core.wardingGlance': 1, 'core.steadyGuard': 1 };
+  const grants = { 'core.guidingWhisper': 3 };
   for (const [id, n] of Object.entries(grants)) {
     const def = reg.cards.get(id);
     assert.ok(def.effects.some(e => e.op === 'applyStatus' && e.status === 'precision' && e.target === 'self' && e.stacks === n), id);

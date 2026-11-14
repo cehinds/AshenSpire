@@ -20,3 +20,9 @@ export function legacyPerceptionRoll(combat) {
   return combat;
 }
 export const legacyRolls = combat => legacyPerceptionRoll(legacyHitRoll(combat));
+/** The same, for a bare rules object: no hitRoll, no evadeStacksPerCard, no perception.roll. Returns a copy. */
+export function legacyRules(rules) {
+  const out = structuredClone(rules);
+  delete out.accuracy.hitRoll; delete out.accuracy.evadeStacksPerCard; delete out.perception.roll;
+  return out;
+}
