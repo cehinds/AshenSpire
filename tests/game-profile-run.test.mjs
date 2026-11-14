@@ -20,11 +20,11 @@ const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'u
 const restId=(run,floor)=>Object.values(run.mapGraph.nodes).find(n=>n.type==='shrine'&&n.floor===floor).id;
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
 
-test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
+test('fixed classes, eleven starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
- assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,10);
+ assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,11);
  assert.equal(run.loadout.sets.rightHand[0],'greatsword');assert.equal(run.loadout.sets.leftHand[0],null);
- stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,4);
+ stampDeck(reg,run);assert.equal(run.deck.length,11);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,2);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
  const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);
@@ -150,7 +150,7 @@ test('two CON increases add one authored SP, and Smith commits an equipment tier
 test('actual core loadRun validates pinned birth gear instead of legacy baseline and preserves deck',()=>{
  const run=fresh();visit(run);const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
  const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
- assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,10);assert.equal(restored.gameProfile.hash,profile.hash);
+ assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,11);assert.equal(restored.gameProfile.hash,profile.hash);
 });
 
 
@@ -222,8 +222,8 @@ test('all four unlocked core classes instantiate exact kits and decks, construct
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
  const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
- // Sceptre classes author nine cards plus granted Mana Surge: every class starts with ten.
- const sizes={reaver:10,starseer:10,rogue:10,herald:10};
+ // Every class starts with eleven (authored list plus weapon-granted cards).
+ const sizes={reaver:11,starseer:11,rogue:11,herald:11};
  for(const [classId,expected] of Object.entries(hands)){
   const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,sizes[classId],classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);
