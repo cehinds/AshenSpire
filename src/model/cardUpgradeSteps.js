@@ -140,7 +140,8 @@ function options(base, current, applied, limits) {
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
-const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash', 'ranged'].some((x) => x === m));
+// The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
+const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
 // Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
 const basicDef = (def) => {
   const tags = def.tags || [];
@@ -159,17 +160,19 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   const tagged = (predicate) => applied.some((s) => s.k === 'tag' && predicate(s));
 
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
-  if (poiseIndex >= 0 && !counterReturn) {
+  // A Smash card's Poise damage is derived from the hit it lands (gameProfileCombat smashRule), so its printed Poise number
+  // never reaches the engine: a Poise step on it would change a shown number and nothing else (W25 upgrades, step 1).
+  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash') {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.poise = { n };
   }
   if (attacking && !counterReturn) {
     const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
-    const next = { melee: 'reach', reach: 'ranged' }[raw];
+    const next = { melee: 'reach', reach: 'melee' }[raw];
     // Owner, 2026-11-05: a fight capped at Reach never offers Reach to Ranged (limits.maxRange, from the run's range policy).
     const cap = RANGES.indexOf(limits.maxRange);
-    if (next && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
+    if (next && applied.filter((t) => t.tag?.startsWith('range:')).length < 2 && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
   }
   if (hitsEnemy && maneuver !== 'sweep' && !counterReturn && !tagged((s) => s.retarget)) {
     const [SINGLE, AREA] = TARGETING;
@@ -185,14 +188,12 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     const tags2 = ATTACK_MANEUVERS.filter((m) => m !== maneuver && (m !== 'smash' || sp >= 2));
     if (tags2.length) found.maneuver = { tags: tags2.map((m) => `maneuver:${m}`) };
   }
-  if (camp === 'spell' && !tagged((t) => t.tag?.startsWith('school:'))) {
-    const own = familyValue(tags, 'school:');
-    const schools = TAG_FAMILIES['school:'].filter((school) => school !== own);
-    if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
-  }
-  if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
+  // No `school` swap option: a school change alone changes no play (the riders that read it belong to the elements work),
+  // and `add elemental damage` (step 2) is how a card gains an element.
+  if (hitsEnemy && !counterReturn && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
   // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
-  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0
+  // ...and only a card that pays Mana: on a 0-Mana card the step would change a tag and nothing else.
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0 && current.manaCost > 0
     // zeroing Mana drops the multi-hit Stamina offset: never offer it when the floor would then exceed the printed SP
     && hitFloor({ ...current, manaCost: 0 }, currentHits(current.effects || [])) <= (current.staminaCost || 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
