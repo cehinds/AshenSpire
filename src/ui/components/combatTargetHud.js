@@ -4,6 +4,7 @@ import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, cre
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { anchorLocalBox } from '../fx.js';
+import { CanvasBox } from '../viewViewport.js';
 import { reducedMotionRequested } from '../motion.js';
 import { refreshIconTray } from './iconTray.js';
 import { setVar, setStyle, setData, setAttr, markBuilt, morph } from '../domWrite.js';
@@ -297,30 +298,34 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     if (!record.node.isConnected) return;
     const panel = record.node.querySelector('.target-hud-panel').getBoundingClientRect(), rootBox = combat.getBoundingClientRect();
     if (!panel.width) return;
-    const info = anchorLocalBox(rootBox, { left: panel.right - 20 - 5, top: panel.top + 5, width: 20, height: 20 });
+    const fit = CanvasBox().scale; // the 20 px Inspect mark and its 5 px inset are canvas px
+    const info = anchorLocalBox(rootBox, { left: panel.right - (20 + 5) * fit, top: panel.top + 5 * fit, width: 20 * fit, height: 20 * fit });
     setStyle(record.info, 'left', `${info.left}px`); setStyle(record.info, 'top', `${info.top}px`);
     setStyle(record.info, 'width', `${info.width}px`); setStyle(record.info, 'height', `${info.height}px`);
   }
   function place(fieldBox, rootBox, zoom, bounds, epoch) {
-    const gap = config.positioning.gapPx, sizing = config.sizing;
+    // The rects are scaled real px; the authored sizes (gap, fonts, icon and panel heights) and the stage's cached cell
+    // widths are canvas px, so they are scaled by the canvas fit (owner, 2026-11-14: one layout per form factor).
+    const fit = CanvasBox().scale;
+    const gap = config.positioning.gapPx * fit, sizing = config.sizing;
     const rows = [];
     for (const [id, record] of panels) {
       const frame = frameFor(id), entry = entries.get(id); if (!frame || !entry) continue;
-      const cellWidth = Number(frame.dataset.cellWidth) || rect(frame).width;
-      rows.push({ id, record, frame, entry, cellWidth, ...miniHudScale({ cellWidth }) });
+      const canvasCell = Number(frame.dataset.cellWidth) || rect(frame).width / fit;
+      rows.push({ id, record, frame, entry, cellWidth: canvasCell * fit, ...miniHudScale({ cellWidth: canvasCell }) });
     }
     // Writes: the panel is exactly as wide as its cell, its contents scaled to it (never below the minimum font).
     for (const { record, cellWidth, scale, fontPx } of rows) {
       const node = record.node;
       setVar(node, '--mini-hud-scale', String(scale));
-      setVar(node, '--target-hud-font', `${fontPx / zoom}px`);
-      setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale / zoom}px`);
+      setVar(node, '--target-hud-font', `${fontPx * fit / zoom}px`);
+      setVar(node, '--target-hud-status-size', `${sizing.statusIconPx * scale * fit / zoom}px`);
       setStyle(node, 'width', `${anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width: cellWidth, height: 0 }, { zoom }).width}px`);
     }
     // Reads: each panel's height (after its font and width), each enemy's rack.
     let ready = true;
     for (const row of rows) {
-      row.height = row.record.node.getBoundingClientRect().height || sizing.panelHeightPx;
+      row.height = row.record.node.getBoundingClientRect().height || sizing.panelHeightPx * fit;
       const rack = row.frame.querySelector(':scope > .target-hud-overhead-meters'), box = rack ? rack.getBoundingClientRect() : null;
       if (!box || !box.height) { ready = false; continue; }
       row.rack = { centerX: box.left + box.width / 2, top: box.top };
@@ -349,7 +354,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const fieldBox = rect(field), zoom = fieldBox.width / field.clientWidth || 1;
     const hand = combat.querySelector('.hand'), handTop = hand?.getBoundingClientRect().top;
     const rootBox = combat.getBoundingClientRect();
-    const bottom = Math.min(fieldBox.top + fieldBox.height, Number.isFinite(handTop) ? handTop - config.positioning.gapPx : rootBox.bottom);
+    const bottom = Math.min(fieldBox.top + fieldBox.height, Number.isFinite(handTop) ? handTop - config.positioning.gapPx * CanvasBox().scale : rootBox.bottom);
     // Clamp against what is visible: the field, the combat root and the viewport, then the hand-top cut.
     const vw = window.innerWidth || rootBox.right, vh = window.innerHeight || rootBox.bottom;
     const visLeft = Math.max(fieldBox.left, rootBox.left, 0), visTop = Math.max(fieldBox.top, rootBox.top, 0);
@@ -373,7 +378,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const path = tile?.querySelector('[data-perspective-outline]');
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
-    const viewBox = `0 0 ${fieldBox.width} ${fieldBox.height}`;
+    // The stage writes the cell polygons in field-relative canvas px, so the viewBox is the field in canvas px
+    // (the same at every scale of one canvas); the tile fallback below places in the same units.
+    const fit = CanvasBox().scale;
+    const viewBox = `0 0 ${fieldBox.width / fit} ${fieldBox.height / fit}`;
     if (cells.getAttribute('viewBox') !== viewBox) cells.setAttribute('viewBox', viewBox);
     const drawn = [];
     for (const id of tintIds()) {
@@ -401,8 +409,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
         cells.append(shape); continue;
       }
       const svg = document.createElementNS(cells.namespaceURI, 'svg');
-      svg.setAttribute('x', item.box.left - fieldBox.left); svg.setAttribute('y', item.box.top - fieldBox.top);
-      svg.setAttribute('width', item.box.width); svg.setAttribute('height', item.box.height); svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('x', (item.box.left - fieldBox.left) / fit); svg.setAttribute('y', (item.box.top - fieldBox.top) / fit);
+      svg.setAttribute('width', item.box.width / fit); svg.setAttribute('height', item.box.height / fit); svg.setAttribute('viewBox', '0 0 100 100');
       const shape = item.path.cloneNode();
       shape.setAttribute('fill', item.fill);
       shape.setAttribute('fill-opacity', item.opacity);
@@ -420,7 +428,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const frame = frameFor(hover), panel = panels.get(hover).node;
       const a = frame && rect(frame.querySelector('.sprite')), b = rect(panel);
       if (a && (contains(a, event.clientX, event.clientY, 5) || contains(b, event.clientX, event.clientY, 5)
-        || corridor(a, b, event.clientX, event.clientY, config.positioning.gapPx * 1.5))) return;
+        || corridor(a, b, event.clientX, event.clientY, config.positioning.gapPx * 1.5 * CanvasBox().scale))) return;
     }
     if (hover != null) { hover = null; refreshDesired(); paint(); }
   }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stableViewportHeight } from '../src/ui/viewportBasis.js';
+import { stableViewportHeight, portraitPhoneViewport } from '../src/ui/viewportBasis.js';
 
 function windowAt(width, height, dataset)
 {
@@ -24,4 +24,18 @@ test('under a canvas the basis is canvas height times fit, never the window heig
 test('without a preset the basis is the large viewport height', () =>
 {
   assert.equal(stableViewportHeight(windowAt(1280, 800, { viewPreset: 'auto' })), 800);
+});
+
+test('portraitPhoneViewport reads the window without a canvas', () =>
+{
+  assert.equal(portraitPhoneViewport(true, windowAt(390, 844, { viewPreset: 'auto' })), true);
+  assert.equal(portraitPhoneViewport(true, windowAt(844, 390, { viewPreset: 'auto' })), false);
+  assert.equal(portraitPhoneViewport(false, windowAt(390, 844, { viewPreset: 'auto' })), false);
+});
+
+test('portraitPhoneViewport reads the canvas, not the window, under a preset', () =>
+{
+  const phoneCanvas = { viewPreset: 'mobile', viewWidth: '390', viewHeight: '844', viewScale: '0.47' };
+  assert.equal(portraitPhoneViewport(true, windowAt(600, 400, phoneCanvas)), true);
+  assert.equal(portraitPhoneViewport(false, windowAt(600, 400, phoneCanvas)), false);
 });

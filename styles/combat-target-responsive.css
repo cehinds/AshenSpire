@@ -171,8 +171,9 @@
 /* Owner 2026-10-28, desktop and widescreen (1200px and up): the enemy and party HP bars were hair-thin with tiny
    numbers. The bar is now 16px thick, its value 16px and the badges 1.6x, all in physical px (the width cap and the
    centring on the body are the profile's hudWidthFraction and hudCenterOnBody). Badges stay flush left and the value
-   flush right. Phones and tablets keep the rules above. */
-@media (min-width: 1200px) {
+   flush right. Phones and tablets keep the rules above. A container query on the game viewport, not a media query:
+   in combat it reads the form factor's canvas, never the real window (owner, 2026-11-14). */
+@container game-viewport (min-width: 1200px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(16px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(15px / var(--ui-zoom,1));
     height: calc(54px / var(--ui-zoom,1))!important; min-height: calc(54px / var(--ui-zoom,1))!important;
@@ -197,7 +198,7 @@
 
 /* A short desktop window (1280x720) cannot spare 96px above every head: the bar and badges step down to the
    first approved sizes so the bodies keep their height (the stage's group height is config: desktopShortMiniHudGroupHeightPx, matched to this rule). */
-@media (min-width: 1200px) and (max-height: 800px) {
+@container game-viewport (min-width: 1200px) and (max-height: 800px) {
   :root:is([data-form-factor='desktop'], [data-form-factor='widescreen']) .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
     --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(12px / var(--ui-zoom,1));
     height: calc(38px / var(--ui-zoom,1))!important; min-height: calc(38px / var(--ui-zoom,1))!important;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Geometry and screenshots from the real screenshot route and mountCombat.
 // Measures the player's overhead mini HUD (owner, 2026-11-07: Block as tall as HP and Poise, matching HP/Poise bars, then badges; no AC): its bars, defense
-// badges and the clearance between the rack's bottom edge and the top of the player's visible artwork (SPEC: fixed 10 px gap).
+// badges and the clearance between the rack's bottom edge and the top of the player's visible artwork (SPEC: fixed 10 canvas px gap).
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -75,10 +75,15 @@ try {
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
       });
       // The visible artwork: the battlefield publishes its ground line and visible height in screen px; the sprite box is a cross-check.
-      const groundY = Number(frame.dataset.groundY), visibleHeight = Number(frame.dataset.spriteVisibleHeight);
+      // groundY and spriteVisibleHeight are field-relative canvas px; this measures in screen px, so they are scaled
+      // by the canvas fit and placed on the field's box.
+      const fit = Number(document.documentElement.dataset.viewScale) || 1, fieldTop = frame.closest('.field').getBoundingClientRect().top;
+      const groundY = fieldTop + Number(frame.dataset.groundY) * fit, visibleHeight = Number(frame.dataset.spriteVisibleHeight) * fit;
       const sprite = frame.querySelector('.sprite');
       const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
-      return { panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
+      // The combat canvas's fit scale (1 without one): the gap is measured in canvas px.
+      const viewScale = Number(document.documentElement.dataset.viewScale) || 1;
+      return { viewScale, panel:box(meters), rack:box(rack), art, hp:box(hp), hpText:hp.textContent, badges, acCaptions:hpRow.querySelectorAll('[data-ac-caption]').length,
         hpTrack:box(hpTrack), poiseTrack:box(poiseTrack), badgeRow:box(badgeRow),
         resourceKinds:[...rack.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
         statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:!!hpRow.querySelector('.combat-health-ac'),
@@ -87,6 +92,17 @@ try {
     });
     await page.screenshot({path:resolve(out,name+'.png')});
     await page.screenshot({path:resolve(out,name+'.jpg'),type:'jpeg',quality:85});
+    // SPEC: the gap holds including selection growth. Selecting the player (after the screenshots,
+    // which show the unselected HUD) must keep the rack's bottom the same canvas distance above the art.
+    await page.locator('.combatant.player .sprite').first().click({ force:true });
+    await page.waitForFunction(() => document.querySelector('.combatant.player')?.classList.contains('context-selected'), null, { timeout:10000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    geometry.selected = await page.evaluate(() => {
+      const frame = document.querySelector('.combatant.player'), rack = frame.querySelector('.target-hud-overhead-meters');
+      return { selected:frame.classList.contains('context-selected'),
+        artTop:frame.closest('.field').getBoundingClientRect().top + (Number(frame.dataset.groundY) - Number(frame.dataset.spriteVisibleHeight)) * (Number(document.documentElement.dataset.viewScale) || 1),
+        rackBottom:rack.getBoundingClientRect().bottom };
+    });
     report.views.push({name,width,height,profile:fixture.profile,facts,geometry,errors});
     try {
       assert.equal(facts.fixCore, fixture.fixCore, name+': the authored ruleset is active');
@@ -127,9 +143,14 @@ try {
       for (const t of text) assert.ok(geometry.hp.bottom + 1 <= t.box.top || geometry.hp.right <= t.box.left || t.box.right <= geometry.hp.left, name+': HP value overlaps '+t.text);
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits the overhead HUD');
       assert.ok(geometry.rack.left >= 0 && geometry.rack.right <= width && geometry.rack.top >= 0 && geometry.rack.bottom <= height, name+': overhead HUD fits viewport');
-      // SPEC: the mini HUD sits above the visible artwork with a fixed 10 screen-pixel bottom-to-art-top gap.
+      // SPEC: the mini HUD sits above the visible artwork with a fixed 10 px bottom-to-art-top gap measured on the
+      // form factor's canvas (including selection growth): screen px divided by the canvas scale.
       assert.ok(Number.isFinite(geometry.art.top), name+': the battlefield publishes the player art top');
-      assert.ok(geometry.art.top - geometry.rack.bottom >= 10 - 0.5, name+': overhead HUD bottom sits at least 10px above the art top (gap '+(geometry.art.top - geometry.rack.bottom).toFixed(2)+')');
+      const canvasGap = (geometry.art.top - geometry.rack.bottom) / geometry.viewScale;
+      assert.ok(canvasGap >= 10 - 0.5, name+': overhead HUD bottom sits at least 10 canvas px above the art top (gap '+canvasGap.toFixed(2)+')');
+      assert.ok(geometry.selected.selected, name+': the player can be selected');
+      const selectedGap = (geometry.selected.artTop - geometry.selected.rackBottom) / geometry.viewScale;
+      assert.ok(selectedGap >= 10 - 0.5, name+': selected, the overhead HUD bottom still sits at least 10 canvas px above the art top (gap '+selectedGap.toFixed(2)+')');
       // Ward sits behind the +N now, so Barrier provenance is pinned on the badge itself in tests/combat-health.test.mjs.
       assert.equal(geometry.badges.some(badge=>badge.barrier), false, name+': no visible badge claims Barrier provenance');
       assert.deepEqual(geometry.order, ['shield','hp','poise'], name+': Block precedes the HP and Poise bars');
