@@ -251,17 +251,8 @@ export function mountDialogue(app, options) {
       return btn;
     }
     if (!entered) return btn;
-    if (tooltipHints && response.binding) {
-      const held = t('dialogue.respond.hold');
-      btn.title = `${response.label} — ${held}`;
-      btn.setAttribute('aria-description', held);
-    }
     disarmers.push(arm(btn, 'eventChoice', {
       ctx: { binding: response.binding },
-      showHint: !tooltipHints,
-      question: t('dialogue.respond.question', { label: response.label }),
-      detailHtml: response.resultText ? `<p>${esc(response.resultText)}</p>` : '',
-      confirmLabel: t('dialogue.respond.confirm'),
       onConfirm: () => dispatch({ type: 'respond', choiceId: response.choiceId }),
     }));
     return btn;
