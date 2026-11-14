@@ -135,7 +135,7 @@ function indexNodes(nodes) {
 
 // Journey pairs, not visited nodes: revisiting a junction must retain every
 // actually traversed edge without exposing its untraveled branches.
-export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), px, py }) {
+export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), allRoutes = false, px, py }) {
   const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
   const pairs = new Set();
   const key = (a, b) => JSON.stringify([a, b]);
@@ -146,12 +146,17 @@ export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, aut
     for (const toId of node.next || []) {
       const to = byId[toId];
       if (!to || !isDrawn(toId)) continue;
-      if (!pairs.has(key(node.id, toId)) && !(authoredMap && pairs.has(key(toId, node.id)))) continue;
+      const travelled = pairs.has(key(node.id, toId)) || !!(authoredMap && pairs.has(key(toId, node.id)));
+      if (!travelled && !allRoutes) continue;
       const route = authoredMap?.routes.find(row => row.a === node.id && row.b === toId || row.b === node.id && row.a === toId);
       if (route && route.a !== node.id) continue;
       const isLane = laneEdge.has(`${node.id}>${toId}`) || (authoredMap && laneEdge.has(`${toId}>${node.id}`));
       const tag = route ? 'polyline' : 'line';
       const coords = route ? `points="${route.points.map(point => point.join(',')).join(' ')}"` : `x1="${px(node)}" y1="${py(node)}" x2="${px(to)}" y2="${py(to)}"`;
+      if (!travelled) {
+        html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+        continue;
+      }
       html += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
       html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge traveled${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
     }
@@ -341,7 +346,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
   // hidden, so their edges are not drawn either — the line stops where the light
   // does. In `path` mode nothing is hidden and this filter is the identity.
-  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, px, py });
+  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, allRoutes: !!viewer.allRoutes && !act.authoredMap, px, py });
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
