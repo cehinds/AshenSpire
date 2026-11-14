@@ -793,7 +793,8 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // hit before Block, Poise, Ward or Barrier. `damage` stays null for a hit that cost no HP, which shows its outcome word instead;
     // `fullHit` is the unsigned pre-layer figure a guarded hit that cost no HP carries (beside BLOCKED or Pierced; the policy hides it).
     full,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
+    // A hit on a Broken target pops in the critical size: the payoff of the break is seen, not only read (Wave 3).
+    damage: residual > 0 ? { text: `-${residual}`, cls: event?.targetBroken ? 'dmg crit' : dmgClass(residual, targetMaxHp) } : null,
     // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
     fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
@@ -1653,7 +1654,7 @@ export function calloutForEvent(e = {}) {
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
     case 'enemyStaggered': if (!e.cause || e.cause === 'weakness') kind = 'staggered'; break;
     case 'weaknessTriggered': kind = 'weak'; break;
-    case 'playerStaggered': kind = 'staggered'; break;
+    case 'playerStaggered': if (!e.broken) kind = 'staggered'; break; // a Broken player already got the BREAK word from poiseBroken
     case 'enemyInterrupted': kind = 'interrupted'; break;
     // A Smash's Block break is the BLOCK BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
     case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
@@ -1788,7 +1789,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp));
+            floatNum(ctx.layer, anchor, parts.damage.text, e.targetBroken ? 'dmg crit' : dmgClass(parts.residual, maxHp));
           }
         },
       };

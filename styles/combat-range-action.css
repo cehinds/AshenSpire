@@ -52,3 +52,6 @@
 .target-quote-cost[data-resource='stamina'] { color: var(--green); }
 .target-quote-cost[data-resource='mana'] { color: var(--frost); }
 .target-quote-chance { font-size: .8em; }
+/* Wave 3: the Poise the play removes, beside the HP it takes; a play that empties the bar says BREAK, in the Broken colour. */
+.target-quote-poise { font-size: .8em; color: var(--gold); white-space: nowrap; }
+.target-quote-poise[data-break='true'] { color: var(--danger); font-weight: 700; letter-spacing: .04em; }

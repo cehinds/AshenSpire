@@ -21,6 +21,22 @@ export function TargetQuoteHits(preview, targetId) {
   return hits;
 }
 
+/**
+ * TargetQuotePoise(preview, targetId) → { removed, breaks }: the Poise the play takes from that enemy and whether it empties the bar (Wave 3: a break is
+ * the payoff, so the quote says so). The previews carry it per target; rows that hit nobody add nothing.
+ */
+export function TargetQuotePoise(preview, targetId) {
+  let removed = 0, breaks = false;
+  for (const row of preview?.values || []) {
+    if (row.op !== 'damage' || !ENEMY_DAMAGE_TARGETS.has(row.target)) continue;
+    const entry = row.perTargetPoise?.[targetId];
+    if (!entry) continue;
+    removed += Math.max(0, Math.floor(Number(entry.removed) || 0));
+    breaks = breaks || !!entry.breaks;
+  }
+  return { removed, breaks };
+}
+
 /** The sequence in the card face's form: `N`, `N × M` when the hits are equal, else each hit in order. */
 export function TargetQuoteHitsText(hits) {
   const list = hits.map(String);
@@ -68,5 +84,8 @@ export function TargetQuote({ preview, combat, instanceId, targetId, reference =
     return { kind: 'cause', hits, text: word, label: word, ...cost };
   }
   const text = TargetQuoteHitsText(hits);
-  return { kind: 'hp', hits, text, label: t('combat.quote.hpAria', { hits: hits.join(', ') }), ...cost };
+  const { removed, breaks } = TargetQuotePoise(quote, targetId);
+  const poise = breaks ? t('combat.callout.poiseBreak') : removed > 0 ? t('combat.quote.poise', { amount: removed }) : null;
+  const poiseLabel = breaks ? t('combat.quote.breakAria') : removed > 0 ? t('combat.quote.poiseAria', { amount: removed }) : null;
+  return { kind: 'hp', hits, text, label: [t('combat.quote.hpAria', { hits: hits.join(', ') }), poiseLabel].filter(Boolean).join('. '), poise, poiseBreaks: breaks, ...cost };
 }

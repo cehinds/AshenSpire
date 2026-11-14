@@ -43,6 +43,8 @@ function captureEntity(combat, e, alive, projectCombatIntent)
         persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
         persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
         combatStance: e.combatStance ? { ...e.combatStance } : null,
+        // Wave 3: a Poise break makes the owner Broken (poise.breakRule "broken") until `brokenEnded`.
+        broken: !!e.broken,
         combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
         combatOwnerCycle: e.combatOwnerCycle,
         ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
@@ -245,6 +247,12 @@ export function ApplyCombatBeat(disp, events, {
                         t.persistentPoise.max = e.max;
                     }
                 }
+                break;
+            case 'combatStanceChanged':
+                if (t && e.broken) t.broken = true;
+                break;
+            case 'brokenEnded':
+                if (t) t.broken = false;
                 break;
             case 'arcaneExposureChanged':
                 if (t && t.arcaneExposure)

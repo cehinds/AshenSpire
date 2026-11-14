@@ -1898,6 +1898,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       node.append(span);
     };
     part('target-quote-text', quote.text);
+    if (quote.poise) part('target-quote-poise', quote.poise, { break: String(!!quote.poiseBreaks) });
     if (quote.stamina != null) part('target-quote-cost', String(quote.stamina), { resource: 'stamina' });
     if (quote.mana != null) part('target-quote-cost', String(quote.mana), { resource: 'mana' });
     if (chanceLabel) part('target-quote-chance', chanceLabel);
@@ -1978,6 +1979,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
+      broken: !!v.broken, // Wave 3: re-render the Poise bar and the fighter when Broken starts or ends
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
@@ -2010,6 +2012,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
+        if (poiseEl) {
+          poiseEl.dataset.broken = String(!!v.broken);
+          // The player's HP number is larger than its bar row: the Poise number starts after it, not under it.
+          if (entity.kind === 'player') poiseEl.style.setProperty('--hp-chars', String((el.querySelector('.m-value')?.textContent || '').length));
+          // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
+          const poiseValue = poiseEl.querySelector('.m-value');
+          if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
+        }
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
@@ -2162,7 +2172,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const nameLabel = `${CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
     const statusIn = statusRows(p);
-    const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
+    const classNames = () => [selfArm ? 'armed' : '', dv(combat.player).broken ? 'broken' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
     const keys = {
       classes: JSON.stringify(classNames()),
       leading: JSON.stringify([playerName, settings]),
@@ -2337,7 +2347,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const idx = living.indexOf(enemy);
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
-      const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
+      const classNames = () => [dv(enemy).alive ? '' : 'dead', dv(enemy).broken ? 'broken' : '', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
         leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, !!targeting, settings]),
