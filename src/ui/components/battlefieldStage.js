@@ -1104,13 +1104,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         setVar(frame, '--combat-mini-hud-left', `${(slot.miniHudLeft - x + nameWidth / 2) / pageZoom}px`);
         setVar(frame, '--combat-mini-hud-top', `${groupTop / pageZoom}px`);
         setVar(frame, '--combat-mini-hud-width', `${slot.miniHudWidth / pageZoom}px`);
-        setData(frame, 'miniHudLeft', slot.miniHudLeft);
-        setData(frame, 'miniHudTop', groupTop);
-        setData(frame, 'miniHudWidth', slot.miniHudWidth);
+        // Cached for readers after the pass: field-relative canvas px (a scale-only resize runs no relayout).
+        setData(frame, 'miniHudLeft', slot.miniHudLeft / CanvasBox().scale);
+        setData(frame, 'miniHudTop', groupTop / CanvasBox().scale);
+        setData(frame, 'miniHudWidth', slot.miniHudWidth / CanvasBox().scale);
       }
       setData(frame, 'baseSpriteScale', fitted.scale);
       setData(frame, 'presentationScale', multiplier);
-      setData(frame, 'formationX', slot.x);
+      setData(frame, 'formationX', slot.x / CanvasBox().scale); // field-relative canvas px
       // The ground anchor, field-relative in canvas px (readers add the field's own box): a scale-only resize runs no
       // relayout, so a cached real-px value would go stale (enemyTargetPicker, the HUD clearance QA).
       setData(frame, 'groundY', ground / CanvasBox().scale);
@@ -1557,7 +1558,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
-    field.dataset.groundY = String(fieldRect.top + plan.ground);
+    field.dataset.groundY = String(plan.ground / CanvasBox().scale); // field-relative canvas px, like each frame's groundY
     field.dispatchEvent(new Event('battlefieldgeometrychange'));
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(() => refresh()); };
