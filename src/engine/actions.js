@@ -1387,7 +1387,7 @@ function livingEnemies(ctx) {
 
 /**
  * resolveTargets(ctx, action, targetSpec) → entity array for one application.
- * Closed target set (SPEC §3.4): self | enemy | allEnemies | randomEnemy |
+ * Closed target set (SPEC §3.4): self | enemy | allEnemies | randomEnemy | otherEnemy |
  * player | owner. An omitted target falls back to the action's contextual
  * target, then its source.
  */
@@ -1427,6 +1427,11 @@ function resolveRawTargets(ctx, action, targetSpec) {
       // action's own target): a break's ripple reaches the others.
       const named = action.meta && action.meta.event ? action.meta.event.targetId : null;
       return livingEnemies(ctx).filter((e) => e !== action.target && e.id !== named);
+    }
+    case 'otherEnemy': {
+      // One living enemy other than the action's target (the upgrade's second target at half damage); none when the target fights alone.
+      const other = livingEnemies(ctx).find((e) => e !== action.target);
+      return other ? [other] : [];
     }
     case 'randomEnemy': {
       const living = livingEnemies(ctx);

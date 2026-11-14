@@ -253,9 +253,10 @@ function applyFx(card, step) {
     case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
     case 'boost': effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true }); break;
+    // A step rolled from 2026-11-14 carries `other`: one OTHER enemy, never the main target. A step saved before it keeps a random enemy.
     case 'target': {
       const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
-      if (index >= 0) effects.push({ op: 'damage', target: 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
+      if (index >= 0) effects.push({ op: 'damage', target: step.other ? 'otherEnemy' : 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
       break;
     }
     case 'reaction': addTag(reactionTag); break;

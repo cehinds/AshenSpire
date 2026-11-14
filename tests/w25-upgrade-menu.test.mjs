@@ -7,7 +7,7 @@ import { nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const strike = () => registries.cards.get('core.strike');
@@ -76,7 +76,7 @@ test('Block, draw, copy, shuffle and cull do what the card says', () => {
   assert.equal(c.piles.hand.length, 2, 'the other card left; two drawn');
 });
 
-test('target hits a second enemy; a temporary boost leaves at the end of the turn', () => {
+test('target (a step saved before `other`) hits a second enemy; a temporary boost leaves at the end of the turn', () => {
   const c = fight([inst('p', 'core.strike', [{ k: 'fx', fx: 'target' }])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
   Object.assign(c.enemies[1], { hp: 500, maxHp: 500, block: 0, persistentPoise: { value: 80, max: 80 } });
   play(c, 'p');
@@ -87,6 +87,30 @@ test('target hits a second enemy; a temporary boost leaves at the end of the tur
   assert.equal(b.player.statuses.strength?.stacks, 2);
   dispatch(b, { type: 'endTurn' });
   assert.ok(!b.player.statuses.strength || b.player.statuses.strength.stacks === 0, 'gone at turn end');
+});
+
+test('target with `other` hits one OTHER enemy at half damage, never the main target again, and nothing extra against a lone enemy', () => {
+  const step = { k: 'fx', fx: 'target', other: true };
+  const plain = fight([inst('p', 'core.strike')], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  play(plain, 'p');
+  const main = 500 - plain.enemies[0].hp;
+  const c = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  play(c, 'p');
+  assert.equal(500 - c.enemies[0].hp, main, 'the main target takes only the card\'s own hit');
+  assert.ok(c.enemies[1].hp < 500 && 500 - c.enemies[1].hp < main, 'the other enemy takes the half hit');
+  const lone = fight([inst('p', 'core.strike', [step])]);
+  play(lone, 'p');
+  assert.equal(500 - lone.enemies[0].hp, main, 'a lone enemy takes one hit, not a second');
+  assert.match(JSON.stringify(applyUpgradeSteps(strike(), [step]).effects), /otherEnemy/);
+  const q = fight([inst('p', 'core.strike', [step])], { enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const half = (aimed) => previewCard(q, 'p', aimed.id).values.find((row) => row.target === 'otherEnemy');
+  for (const [aimed, other] of [[q.enemies[0], q.enemies[1]], [q.enemies[1], q.enemies[0]]]) {
+    const row = half(aimed);
+    assert.deepEqual(Object.keys(row.perTarget), [other.id], 'the half hit is quoted only on the other enemy');
+    assert.ok(row.perTarget[other.id] > 0);
+  }
+  const alone = fight([inst('p', 'core.strike', [step])]);
+  assert.deepEqual(Object.keys(previewCard(alone, 'p', alone.enemies[0].id).values.find((row) => row.target === 'otherEnemy').perTarget), [], 'a lone enemy is quoted no half hit');
 });
 
 test('Retain keeps the card at end of turn; holdOne keeps another; Exhaust removal drops Exhaust; Innate opens in hand', () => {

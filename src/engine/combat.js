@@ -2237,7 +2237,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         // so what it would have done to the target (Poise, Block, a break) must not reach the rows after it: its detached state is put back.
         const skipped = eff.if && !evalPredicate(combat, eff.if, { owner: p, source: p, target: primary, card: action.card, meta: action.meta });
         const restore = skipped ? living.map(e => [e.id, PreviewStateSnapshot(damagePreviewStates.get(e.id))]) : [];
-        for (const e of living) {
+        // The upgrade's second target (`otherEnemy`) reaches one enemy other than the aimed one, so only it is quoted.
+        const reached = eff.target === 'otherEnemy' ? (primary ? [primary] : []) : living;
+        for (const e of reached) {
           const result = isCounterReply
             ? previewCounter(e, i)
             : !configuredCombat(combat) && combat.combatExpansionVersion === 2 ? expandedPreview(e, i)

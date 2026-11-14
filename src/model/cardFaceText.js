@@ -38,7 +38,7 @@ const fail = () => { throw UNPHRASEABLE; };
 const LINE_ORDER = ['cost', 'damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
-const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
+const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
 // Statuses whose name is not their effect: the face adds the status's own tooltip line.
 const MECHANIC_STATUSES = ['concealed', 'bulwarkEcho', 'stoneskin', 'entombed'];
@@ -149,7 +149,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     return (service ? service.resolve(list) : resolveTags(list)).map(tag => tag.label).join('');
   };
   const typed = (amountHtml, label) => (label ? `${amountHtml} ${esc(label)}` : amountHtml);
-  const areaOf = target => target === 'allEnemies' ? ' to all enemies' : target === 'randomEnemy' ? ' to a random enemy' : '';
+  const areaOf = target => target === 'allEnemies' ? ' to all enemies' : target === 'randomEnemy' ? ' to a random enemy' : target === 'otherEnemy' ? ' to another enemy' : '';
   const durationOf = effect => {
     if (effect.duration === undefined) return '';
     if (typeof effect.duration !== 'number') fail();

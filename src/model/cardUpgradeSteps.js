@@ -178,7 +178,7 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   if (!spell && dmgIndex >= 0 && !boosted('strength')) set('boost', { stat: 'strength', n: 2 });
   else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
   if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
-    && !effects.some((e) => e.op === 'damage' && e.target === 'randomEnemy')) set('target');
+    && !effects.some((e) => e.op === 'damage' && (e.target === 'randomEnemy' || e.target === 'otherEnemy'))) set('target', { other: true });
   // Owner, 2026-11-14: Reaction is open to every stance (attack, smash, sweep, spells, skills). A card that already reacts (Defense, Counter,
   // or `trait:reaction`) and an X-cost card are left out; Powers never reach this menu.
   if (!tags.includes('trait:reaction') && !['defend', 'counter'].includes(maneuver) && !tags.includes('maneuver:defend') && !tags.includes('maneuver:counter') && current.cost !== 'X' && base.cost !== 'X') set('reaction');

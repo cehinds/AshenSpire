@@ -121,6 +121,7 @@ export const TARGETS = Object.freeze([
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
   'otherEnemies',
+  'otherEnemy',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).

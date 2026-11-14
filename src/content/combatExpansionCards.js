@@ -91,7 +91,7 @@ function withSpellOffenseStance(def) {
     || tags.some(tag => tag.startsWith('maneuver:'))) return def;
   const range = def.range || def.combatProfile?.range || tags.find(tag => tag.startsWith('range:'))?.slice(6) || 'reach';
   const hostile = [...(def.effects || []), ...(def.upgrade?.effects || [])].some(effect =>
-    ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'target'].includes(effect.target));
+    ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'otherEnemy', 'target'].includes(effect.target));
   if (range === 'melee' || !hostile) return def;
   const nextTags = [...tags, 'maneuver:casting'];
   return { ...def, tags: nextTags, cardTags: nextTags,

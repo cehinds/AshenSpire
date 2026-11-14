@@ -3,7 +3,7 @@
 // effect on that target. Perception does not gate it; it only governs intent
 // knowledge. A self-only card, or no selection, shows nothing.
 import { immediateCardEffects } from './combatCardEffects.js';
-const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
+const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemy'];
 export function cardAffectsEnemies(definition) {
   if (!definition) return false;
   // A deferred reply (counterPayload, or a counter's stored damage/poiseDamage) fires later;

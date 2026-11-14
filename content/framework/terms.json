@@ -63,6 +63,7 @@
     { "id": "term.targetEnemy", "canonicalText": "Enemy", "pluralText": "Enemies" },
     { "id": "term.targetAllEnemies", "canonicalText": "All Enemies" },
     { "id": "term.targetRandomEnemy", "canonicalText": "Random Enemy" },
+    { "id": "term.targetOtherEnemy", "canonicalText": "Another Enemy" },
     { "id": "term.targetAlly", "canonicalText": "Ally", "pluralText": "Allies" },
 
     { "id": "term.weightLight", "canonicalText": "Light" },
@@ -133,6 +134,7 @@
     { "id": "term.tooltip.targetEnemy", "canonicalText": "Affects one chosen enemy." },
     { "id": "term.tooltip.targetAllEnemies", "canonicalText": "Affects every enemy." },
     { "id": "term.tooltip.targetRandomEnemy", "canonicalText": "Affects a random enemy." },
+    { "id": "term.tooltip.targetOtherEnemy", "canonicalText": "Affects one enemy other than the target." },
     { "id": "term.tooltip.targetAlly", "canonicalText": "Affects one ally." },
 
     { "id": "term.desc.unarmedStrike", "canonicalText": "A last resort, still yours. Strikes with bare hands; scales with Strength and grants no attack-rating bonus." },
