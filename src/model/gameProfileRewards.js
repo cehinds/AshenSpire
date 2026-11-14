@@ -41,9 +41,9 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
   const cardRule = rules?.eligibility?.combatCards;
   const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
-  // Owner 2026-11-14: eligibility.combatCards.playableOnly never offers a card the class cannot pay for: a mana cost above the
+  // Owner 2026-11-14: eligibility.playableOnly never offers a card the class cannot pay for: a mana cost above the
   // class's mana pool base of 0 (stats.poolBasesByClass) or above the run's max mana. Claims keep accepting every card.
-  const unpayable = !claim && cardRule?.playableOnly
+  const unpayable = !claim && rules?.eligibility?.playableOnly
     ? (card => (card.manaCost || 0) > 0 && (gameContent(run, 'stats')?.poolBasesByClass?.[run.class]?.mana === 0 || card.manaCost > (run.maxMana ?? 0)))
     : () => false;
   const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'

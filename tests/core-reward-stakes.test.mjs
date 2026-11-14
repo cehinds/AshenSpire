@@ -76,7 +76,7 @@ test('the shipped elite relic pool for a new Reaver (list)', () => {
 test('a legacy rewards fixture (old weights, no eliteRelic, no playableOnly) keeps the old mix and makes no elite offer', () => {
   const legacy = rules => {
     delete rules.eliteRelic;
-    delete rules.eligibility.combatCards.playableOnly;
+    delete rules.eligibility.playableOnly;
     const weights = { cards: 66, weaponArts: 4, potions: 18, flaskRelic: 2, weapons: 10, retired: 0 };
     for (const group of rules.rewardGroups) group.weight = weights[group.id];
   };

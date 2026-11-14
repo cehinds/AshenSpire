@@ -716,7 +716,7 @@ export function resolveGameAuthor(author, catalog) {
   }
   appendBaseCardContent(content, modules, bundle.manifest.foundationMode);
   deriveCharacterContent(content, modules);
-  if (modules['reward-ranks'] && record(content.rewards)) { const { mode: _m, ...rule } = modules['reward-ranks']; content.rewards = { ...content.rewards, eligibility: { ...(content.rewards.eligibility || {}), combatCards: { ...(content.rewards.eligibility?.combatCards || {}), ...rule } } }; }
+  if (modules['reward-ranks'] && record(content.rewards)) { const { mode: _m, ...rule } = modules['reward-ranks']; content.rewards = { ...content.rewards, eligibility: { ...(content.rewards.eligibility || {}), combatCards: rule } }; }
   for (const binding of bundle.manifest.policyBindings || []) {
     if (!modules[binding.module]) continue;
     const policy = content[binding.content];
