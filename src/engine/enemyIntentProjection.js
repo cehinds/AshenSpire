@@ -248,7 +248,7 @@ export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null,
 // `enemy.plannedMoves` is priced as the HP the player loses when it lands after the head and the follow-ups before it have resolved
 // (their Block spent, Poise broken, the attacker's own stance and statuses carried). null when it has no number: it is not an attack, a
 // delayed move ends the plan before it, a reaction, or something in front of it cannot be known.
-export function projectPlannedMoveDamage(combat, enemy, index) {
+export function ProjectPlannedMoveDamage(combat, enemy, index) {
   const planned = enemy.plannedMoves || [], head = enemy.intent;
   const defs = combat.registries.enemies.get(enemy.enemyId)?.moves;
   if (!head?.moveId || !defs || !planned[index] || head.kind === 'staggered') return null;

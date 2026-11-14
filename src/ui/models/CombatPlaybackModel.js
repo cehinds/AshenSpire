@@ -162,13 +162,24 @@ export function RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard)
     const next = new Map(disp.handPreviews);
     for (const inst of disp.hand)
     {
-        if (disp.leftHand?.has(inst.instanceId) || !combat.piles.hand.some(card => card.instanceId === inst.instanceId))
+        if (
+            disp.leftHand?.has(inst.instanceId)
+            || !combat.piles.hand.some(card => card.instanceId === inst.instanceId)
+        )
         {
             continue;
         }
         try
         {
-            next.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)));
+            next.set(
+                inst.instanceId,
+                previewCard(
+                    combat,
+                    inst.instanceId,
+                    undefined,
+                    upcastRanksByCard.get(inst.instanceId),
+                ),
+            );
         }
         catch
         {

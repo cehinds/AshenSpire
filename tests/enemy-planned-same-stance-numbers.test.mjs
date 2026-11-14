@@ -11,7 +11,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
-import { projectPlannedMoveDamage } from '../src/engine/enemyIntentProjection.js';
+import { ProjectPlannedMoveDamage } from '../src/engine/enemyIntentProjection.js';
 import { SameStanceNumbers } from '../src/ui/models/CombatIntentModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -33,7 +33,7 @@ test('every same-stance attack in the plan shows the HP the player loses from it
   for (const block of [0, 3, 6, 10, 13, 20]) {
     const { combat, enemy } = fight(block);
     const head = projectCombatIntent(combat, enemy.id).projectedDamage;
-    const shown = [head.max, projectPlannedMoveDamage(combat, enemy, 0)?.max, projectPlannedMoveDamage(combat, enemy, 1)?.max];
+    const shown = [head.max, ProjectPlannedMoveDamage(combat, enemy, 0)?.max, ProjectPlannedMoveDamage(combat, enemy, 1)?.max];
     assert.ok(shown.every(Number.isFinite), `block ${block}: every action has a number (${shown})`);
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });

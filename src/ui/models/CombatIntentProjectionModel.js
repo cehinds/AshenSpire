@@ -1,6 +1,6 @@
 import { previewIntent } from '../../engine/combat.js';
 import { captureEnemyIntent } from '../../engine/enemyIntentReceipt.js';
-import { projectEnemyIntentDamage, projectPlannedMoveDamage } from '../../engine/enemyIntentProjection.js';
+import { projectEnemyIntentDamage, ProjectPlannedMoveDamage } from '../../engine/enemyIntentProjection.js';
 import { EnemyChargingState } from '../../engine/enemyCharging.js';
 
 // Apply the production observer gate before inspecting the queued payload.
@@ -33,7 +33,7 @@ function projectUncharged(combat, enemyInstanceId) {
 // The caller has already passed the observer gate for that slot (a follow-up symbol that reads as an action).
 export function ProjectPlannedFollowUpDamage(combat, enemyInstanceId, index) {
   const enemy = combat.enemies.find(row => row.id === enemyInstanceId);
-  return enemy?.alive ? projectPlannedMoveDamage(combat, enemy, index) : null;
+  return enemy?.alive ? ProjectPlannedMoveDamage(combat, enemy, index) : null;
 }
 
 // Playback advances only on public receipts. Clear a consumed contact before
