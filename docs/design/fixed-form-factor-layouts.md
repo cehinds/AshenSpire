@@ -83,6 +83,15 @@ configuration that's relative".
   - The battlefield relays out when its inputs change (the canvas size and the
     field's and hand's local boxes), not on window thresholds, and the fit scale and
     offset vars no longer force a refit.
+  - The battlefield plans on the field's canvas box (`ScaleFormationPlan` scales the plan
+    into real px), and the composition models take the fit as `unit`, so the models'
+    thresholds (the short-strip profile, body caps, insets) are canvas px.
+  - A scale-only resize runs no relayout, so nothing the stage caches holds scaled real
+    px: cell polygons, cell widths, ground anchors and the mini HUD datasets are
+    field-relative canvas px, converted by their readers.
+  - Geometric rules for elements on the combat screen are `@container game-viewport`
+    queries (the canvas in combat, the window elsewhere), not `@media`; JS asks
+    `matchViewMedia`. With a fixed canvas the short-desktop step no longer applies in Auto.
 - Check: `node tools/combat-canvas-qa.mjs` (`npm run qa:combat-canvas`) compares
   canvas-px rects across same-form-factor windows, a resize chain and a drag.
 - The player rack's 10 px gap above the art (SPEC.md) is canvas px too: it scales with
