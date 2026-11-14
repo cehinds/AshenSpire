@@ -191,7 +191,9 @@ async function armedFacts(page) {
     const box = node => { const r = node.getBoundingClientRect(); return [(r.left - left) / scale, (r.top - top) / scale, r.width / scale, r.height / scale]; };
     const cells = document.querySelector('.target-hud-cells');
     return { cells: cells ? [...cells.querySelectorAll('path, polygon')].map(box).filter(r => r[2] > 0) : [],
-      picker: [...document.querySelectorAll('.enemy-target-picker:not([hidden]) .enemy-target-button:not([hidden])')].map(box) };
+      picker: [...document.querySelectorAll('.enemy-target-picker:not([hidden]) .enemy-target-button:not([hidden])')].map(box),
+      // The armed card's range chooser and the hit-chance badges.
+      range: [...document.querySelectorAll('.combat-range-action, .combat-hit-chance')].filter(node => node.getBoundingClientRect().width).map(box) };
   });
 }
 function compareBoxes(a, b) {
@@ -220,11 +222,24 @@ try {
     const freshArmed = await armedFacts(reference.page);
     if (out) await reference.page.screenshot({ path: resolve(out, 'armed-fresh-2000x1225.png') });
     await reference.context.close();
-    check('armed: a Strike is in the three-enemy hand', !!resized && !!freshArmed);
+    // The same form factor at scale 1: armed, the picture must match the 2000x1225 one too.
+    const desk = await openFight(1440, 900, THREE);
+    await settled(desk.page);
+    const deskArmed = await armedFacts(desk.page);
+    await desk.context.close();
+    check('armed: a Strike is in the three-enemy hand', !!resized && !!freshArmed && !!deskArmed);
+    if (freshArmed && deskArmed) for (const part of ['cells', 'range']) {
+      const same = compareBoxes(freshArmed[part], deskArmed[part]);
+      check(`armed same form factor: ${part} at fresh 2000x1225 equal fresh 1440x900 (${deskArmed[part].length} boxes)`,
+        deskArmed[part].length > 0 && same.worst <= TOLERANCE, same.worst <= TOLERANCE ? `max diff ${same.worst.toFixed(2)}` : `max diff ${same.worst.toFixed(1)} at ${same.where}`);
+    }
     if (resized && freshArmed) {
       const cells = compareBoxes(resized.cells, freshArmed.cells);
       check(`armed after a scale-only resize: target tint cells equal a fresh 2000x1225 load (${resized.cells.length} cells)`,
         resized.cells.length > 0 && cells.worst <= TOLERANCE, cells.worst <= TOLERANCE ? `max diff ${cells.worst.toFixed(2)}` : `max diff ${cells.worst.toFixed(1)} at ${cells.where}`);
+      const range = compareBoxes(resized.range, freshArmed.range);
+      check(`armed after a scale-only resize: range chooser and hit-chance badges equal a fresh load (${resized.range.length} boxes)`,
+        resized.range.length > 0 && range.worst <= TOLERANCE, range.worst <= TOLERANCE ? `max diff ${range.worst.toFixed(2)}` : `max diff ${range.worst.toFixed(1)} at ${range.where}`);
       const picker = compareBoxes(resized.picker, freshArmed.picker);
       check(`armed after a scale-only resize: enemy target picker equals a fresh load (${resized.picker.length} boxes${resized.picker.length ? '' : '; the target HUD replaces the picker on every form factor'})`,
         picker.worst <= TOLERANCE, picker.worst <= TOLERANCE ? `max diff ${picker.worst.toFixed(2)}` : `max diff ${picker.worst.toFixed(1)} at ${picker.where}`);
