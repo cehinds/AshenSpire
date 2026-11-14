@@ -12,6 +12,7 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { readFileSync } from 'node:fs';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 const rows=settingsRows(), core=resolveGameProfile('core');
 const available=(key,profile)=>settingsRowAvailable(rows.find(row=>row.key===key),profile);
 test('Core hides legacy-only mechanics in groups, topics and search while retaining real controls',()=>{
@@ -38,16 +39,19 @@ test('disabled configured resources/equipment/routes remove their dependent opti
   const display=categoryHtml('General',{settingsGeneralCategory:'Display','settingsGeneralTopic.Display':'Map'},null,null,null,null,'',false,profile);
   assert(!display.includes('data-key="mapZoom"'));assert(display.includes('data-key="viewPreset"'));
 });
-test('Core authors fog, and stored eligible choices remain explicit (owner, 2026-10-19)',()=>{
-  assert.equal(core.modules.routes.mapMode,'fog');
-  assert.equal(resolveMapMode({}, {gameProfile:core}),'fog');
-  assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:core}),'fog');
+test('Core authors the path map, and a pinned fog profile keeps fog over a stale viewer setting (owner, 2026-10-19)',()=>{
+  assert.equal(core.modules.routes.mapMode,'path');
+  assert.equal(resolveMapMode({}, {gameProfile:core}),'path');
+  const oldCore=legacyCoreProfile();
+  assert.equal(oldCore.modules.routes.mapMode,'fog');
+  assert.equal(resolveMapMode({}, {gameProfile:oldCore}),'fog');
+  assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:oldCore}),'fog');
   // The legacy adapter reads its authored fallback rather than a second UI constant.
   const changed={gameProfile:{modules:{routes:{mode:'legacy',mapMode:'path'}}}};
   assert.equal(resolveMapMode({},changed),'path');
 });
-test('a clean real Core map starts partially hidden under fog',()=>{
-  for(const profile of [core]) {
+test('a clean real Core map starts partially hidden under fog (legacy routes content)',()=>{
+  for(const profile of [legacyCoreProfile()]) {
     const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
     const run=createRunState({seed:3,classId:'reaver',registries});
     run.mapGraph=buildActMap(registries,createRng(3),run.seatOrder[0],1);

@@ -85,6 +85,90 @@
     "requirePrebossRest": {
       "type": "boolean",
       "description": "Require the last preboss depth to be a mandatory rest on every route."
+    },
+    "typeWeights": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          },
+          "propertyNames": {
+            "enum": [
+              "fight",
+              "event",
+              "treasure",
+              "shop",
+              "elite"
+            ]
+          }
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Present: a free node (not rest, not forced, not a guaranteed slot) is a weighted draw over the listed types permitted at its depth (elite only at or past minimumThreatFloor); shopShare is ignored. Only the branched generator reads it. null means absent."
+    },
+    "variedNeighbours": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "True: a free node may not repeat the type of the node already made in the neighbouring lane of the same branch and depth, when another permitted type has positive weight. null means absent."
+    },
+    "shopsPerBranch": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "1: each branch gets one guaranteed shop slot on a non-rest depth 4-8 where one of its lanes exists, never on a guaranteed elite slot. null means absent."
+    },
+    "forkPercent": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Chance per boundary node per depth that a branch widens outward. Absent keeps 40. null means absent."
+    },
+    "crossLinkPercent": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "Present: for every gap between two in-branch depths and every pair of neighbouring lanes present on both, one draw at this percentage adds one diagonal edge (direction 50/50, never crossing another edge). Replaces the single remerge draw per branch and gap. null means absent."
     }
   },
   "required": [
