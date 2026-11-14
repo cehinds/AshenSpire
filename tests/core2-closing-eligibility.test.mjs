@@ -16,7 +16,9 @@ const restrictions = { locked: { locked: true }, reaction: { reaction: { on: ['p
 function live(flags, weapon = 'straightSword', seed = 511) {
   const native = base.enemies.get('wanderingSoldier');
   const definition = { ...native, moves: { ...native.moves, advance: { ...native.moves.advance, ...flags } } };
-  const registries = { ...base, enemies: { ...base.enemies, get: id => id === definition.id ? definition : base.enemies.get(id) } };
+  // The shipped shortbow reaches the Reach band (owner, 2026-11-14); this fixture keeps the three-band save it models with a legacy Ranged bow.
+  const equipment = { ...base.equipment, armaments: base.equipment.armaments.map(piece => piece.id === 'shortbow' ? { ...piece, range: 'ranged' } : piece) };
+  const registries = { ...base, equipment, enemies: { ...base.enemies, get: id => id === definition.id ? definition : base.enemies.get(id) } };
   const run = createRunState({ registries, classId: 'reaver', seed });
   delete run.rangePolicy.maxRange; // three-band mechanics: the policy shape of a pre-cap save
   run.loadout.sets.rightHand[0] = weapon;
