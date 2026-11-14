@@ -72,7 +72,7 @@ test('Core act 1 map shape measurement', () => {
   assert.equal(m.hiddenShare, 0, 'no node is hidden');
   // Best reached with forkPercent/crossLinkPercent alone: geometry (one extra diagonal per lane pair) caps the fork share below the 0.70 aim.
   assert.ok(m.forkShare >= 0.5, `fork share ${m.forkShare}`);
-  assert.ok(m.fightMean >= 4.7, `fights per walk ${m.fightMean}`);
+  assert.ok(m.fightMean >= 4.9, `fights per walk ${m.fightMean}`);
   assert.ok(m.exits >= 1.4, `exits ${m.exits}`);
 });
 

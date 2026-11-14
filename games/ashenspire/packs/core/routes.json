@@ -27,10 +27,10 @@
   "maxBranches": 3,
   "startNodeRefills": false,
   "typeWeights": {
-    "fight": 60,
-    "event": 20,
-    "treasure": 8,
-    "shop": 12
+    "fight": 70,
+    "event": 16,
+    "treasure": 5,
+    "shop": 9
   },
   "variedNeighbours": true,
   "shopsPerBranch": 1,
