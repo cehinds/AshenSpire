@@ -3,6 +3,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { alternativeEnemyTargetGrid as enemyTargetGrid } from '../models/AlternativeEnemyTargetGridModel.js';
 import { clearFocus, focusElement } from '../input.js';
+import { CanvasBox } from '../viewViewport.js';
 
 // Placement follows fitted figures without intercepting inspection controls.
 function watchTargetPlacement(host, picker) {
@@ -45,11 +46,12 @@ function watchTargetPlacement(host, picker) {
       // The stage trims .sprite to the painted ink (its marginTop drops the
       // transparent canvas); the img inside keeps that padding, so centre on .sprite.
       const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
-      // The box's bottom sits on the foe's ground anchor (its shadow point, groundY).
-      const groundY = parseFloat(figure?.dataset.groundY);
+      // The box's bottom sits on the foe's ground anchor (its shadow point, groundY): field-relative canvas px, so it
+      // is scaled by the canvas fit into this pass's real px (the host is the field).
+      const groundY = parseFloat(figure?.dataset.groundY) * CanvasBox().scale;
       return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
         y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2,
-        ...(Number.isFinite(groundY) ? { ground: groundY - box.top } : {}) };
+        ...(Number.isFinite(groundY) ? { ground: groundY } : {}) };
     });
     const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
     const placed = new Set(placements.map(placement => placement.id));

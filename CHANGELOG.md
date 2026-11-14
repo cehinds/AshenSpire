@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-14
 
+- **Combat: one layout per screen size, only scaled by the window** ([#2748](https://github.com/cehinds/AshenSpire/pull/2748), `0.7.4.74`). Combat keeps one layout per form factor: resizing the window only scales it, and the battlefield, health bars, highlights and hand no longer drift, shrink or grow after a resize. Two windows of the same kind (two desktop sizes, say) now show exactly the same picture. The gap between your bars and your character now scales with the layout too.
 - **Combat: fixed layouts per screen size, floor at 75%, steady battlefield after a win** ([#2746](https://github.com/cehinds/AshenSpire/pull/2746), `0.7.4.72`). Combat no longer rescales as you resize the window: desktop, widescreen, tablet and phone each have one fixed layout that grows or shrinks as a whole. The ground now starts a quarter of the way down the screen in every scene, the sky and side scenery are drawn smaller and the ground sharper, the space between your side and the enemy's is three times wider, and the battlefield no longer shifts when the last enemy falls.
 
 ## 2026-11-13

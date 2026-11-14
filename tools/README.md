@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (243 tool files, plus the 9 subfolders)
+## Tools something references (244 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -91,6 +91,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `click-impact-stages.mjs` | Independent acceptance policy: the current ordered presentation owes one gap at each stage boundary and half-rate sprites. | tests click-impact-stages; tools click-impact-probe |
 | `closedsets.mjs` | closedsets — Viki, 2026-08-08. | tests closedsets, run-node, spell-damage-dealt-mult; tools doorplant, onevocab; docs docs/plan-progression-and-property-system.md; other src/buildversion.js, src/content/encounters/weald.js +2 |
 | `collect-feature-previews.mjs` | Trusted Pages collector: download data only; never run a feature checkout. | wf pages-builds; tests art-migrate-trigger, collect-feature-previews; tools combat-audit/hosted-preview |
+| `combat-canvas-qa.mjs` | Combat canvas layout probe: inside a form factor every combat element is laid out in the fixed canvas, so fresh loads and resize chains agree in canvas px. | npm qa:combat-canvas; docs docs/design/fixed-form-factor-layouts.md |
 | `combat-expansion-smoke.mjs`, `combat-layer-qa.mjs` | (no header comment) | tests combat-expansion-bot, battlefield-stage-threads; tools card-effect-art-build, balance; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md +8; other src/content/combatEffectArt.js |
 | `combat-formation-extra-qa.cjs` | (no header comment) | tests fetch-art |
 | `combat-layer-contract.mjs` | Shared by the rendered-layer probe and its source-side known-bad regression. | tests combat-fade-order; tools combat-layer-qa |

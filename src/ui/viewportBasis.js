@@ -28,7 +28,9 @@ export function stableViewportHeight(win = globalThis.window) {
   return Math.max(win.innerHeight || 0, logicalViewport(win).height || 0);
 }
 
-// A phone in portrait takes the smaller body share (config: bodyHeightFraction).
+// A phone in portrait takes the smaller body share (config: bodyHeightFraction). Under a canvas the
+// logical viewport decides, not the window: a phone canvas shown in a wide window is still portrait.
 export function portraitPhoneViewport(narrow, win = globalThis.window) {
-  return Boolean(narrow) && (win?.innerWidth ?? 0) <= (win?.innerHeight ?? 0);
+  const { width, height } = logicalViewport(win);
+  return Boolean(narrow) && width <= height;
 }

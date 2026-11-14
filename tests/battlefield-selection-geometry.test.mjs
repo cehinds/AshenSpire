@@ -9,12 +9,16 @@ test('rebuilding detailed HUD racks preserves reserved artwork headroom', () => 
   const end = source.indexOf('\n      return { slot,', start);
   assert.ok(start >= 0 && end > start, 'the actor headroom calculation exists');
   let rackMounted = true;
-  const scope = { hudWide: true, targetHud: true,
+  const scope = { hudWide: true, targetHud: true, fit: 1,
     frame: { classList: { contains: () => false }, querySelector: () => rackMounted ? {} : null },
     miniHudGroupHeight: () => 70,
     hudGrid: { miniHudSpriteGapPx: 8, desktopMiniHudBandOverlapPx: 7 } };
   const reserve = () => runInNewContext(source.slice(start, end) + '\nracked', { ...scope });
   assert.equal(reserve(), 77);
+  // The reserve is authored canvas px; under a canvas fit it is scaled into the pass's real px.
+  scope.fit = 2;
+  assert.equal(reserve(), 154, 'the reserve follows the canvas fit');
+  scope.fit = 1;
   rackMounted = false;
   assert.equal(reserve(), 77, 'a rack removed during frame rendering retains its artwork envelope');
   rackMounted = true;
