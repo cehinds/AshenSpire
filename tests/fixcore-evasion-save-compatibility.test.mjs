@@ -118,7 +118,7 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-14: Ward Poise and the Poise break rule merged together (batch 1); 1551ec... and e4f237... are each branch's own hash, now in PREVIOUS_RUNTIMES.
   // Re-pinned 2026-11-14: Ward as a Poise effect (ward.poisePerStack in fixCoreMechanics.json, src/model/combatRatings.js) moves the runtime hash (68d4... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-14: the batch-1 fix pass (the card preview skips an unmet conditional row; the Reaction upgrade on any stance) moves the runtime hash (6c4dab... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:e6c9b9af71d93d0662ca2e9c06266a59a059ec112c3f2e7fd75eb8fb4a27c0d4');
+  assert.equal(profile.lock.runtimeHash, 'sha256:668f10ab6f6139504fbe7e63a661d203bc487eebaadfea604d4deab63ff7364e');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
