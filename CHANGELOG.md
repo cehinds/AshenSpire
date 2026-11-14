@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-13
 
-- **Enemy intents slide forward as each action ends** ([#2745](https://github.com/cehinds/AshenSpire/pull/2745), `0.7.4.68`). When an enemy finishes a move, its intent clears and its next planned move slides left into the main slot and grows into place, showing `?` until you have read it; the real move is revealed as soon as it starts, not after its animation.
+- **Enemy intents slide forward as each action ends** ([#2745](https://github.com/cehinds/AshenSpire/pull/2745), `0.7.4.70`). When an enemy finishes a move, its intent clears and its next planned move slides left into the main slot and grows into place, showing `?` until you have read it; the real move is revealed as soon as it starts, not after its animation.
 - **Behind the scenes: theme colours live in one settings file** ([#2743](https://github.com/cehinds/AshenSpire/pull/2743), `0.7.4.67`). The game's main colours, including the high-contrast and colour-blind variants, are now edited in content/config/ui/tokens.json instead of the stylesheet. Nothing you see changes.
 
 ## 2026-11-12
