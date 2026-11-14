@@ -13,6 +13,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage, drainFixCorePoise } from '../src/engine/actions.js';
+import { syncPoiseMaximum } from '../src/engine/combatPools.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription } from '../src/model/fixCoreMechanics.js';
@@ -108,7 +109,7 @@ test('every hit on a Broken enemy takes x1.5, replacing Vulnerable, and only whi
   assert.equal(hit(combat, enemy, 10), 10, 'not Broken any more: x1');
 });
 
-test('Broken does not stack with Vulnerable', () => {
+test('Broken multiplies with Vulnerable from other sources (x1.5 x1.25), the break grants none itself', () => {
   const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1);
   hit(combat, enemy, 10);
   enemy.statuses.vulnerable = { stacks: 2 };
@@ -125,6 +126,21 @@ test('a Broken enemy cannot be broken again and its Poise cannot be refilled unt
   assert.equal(enemy.broken, brokenAt, 'the same Broken record');
   restorePersistentPoise(combat, enemy, 4, { source: 'block-card' });
   assert.equal(enemy.persistentPoise.value, 0, 'Block does not refill a Broken bar');
+});
+
+test('Ward or Barrier gained while Broken raises the maximum but does not refill the bar, so it cannot break twice', () => {
+  for (const status of ['ward', 'barrier']) {
+    const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 8);
+    drainFixCorePoise(combat, combat.player, enemy, 99);
+    assert.ok(enemy.broken); assert.equal(enemy.persistentPoise.value, 0);
+    enemy.statuses[status] = { stacks: 1 };
+    syncPoiseMaximum(combat, enemy);
+    assert.equal(enemy.persistentPoise.barrierBonus, 5, `${status}: +5 maximum, kept as the bonus`);
+    assert.ok(enemy.persistentPoise.max >= 5, `${status}: +5 maximum`);
+    assert.equal(enemy.persistentPoise.value, 0, `${status}: Broken Poise is not refilled`);
+    drainFixCorePoise(combat, combat.player, enemy, 99);
+    assert.equal(combat.eventLog.filter(row => row.type === 'poiseBroken').length, 1, `${status}: one break only`);
+  }
 });
 
 test('after Broken ends the full bar must be broken again for a second break', () => {
