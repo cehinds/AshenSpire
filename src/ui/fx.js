@@ -798,10 +798,11 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
-    poise: poise > 0 ? { text: String(poise), cls: 'poise small hitpart' } : null,
+    // One yellow number for all the Poise the hit removed (Poise absorbed plus a spell's magic Poise).
+    poise: poise + magicPoise > 0 ? { text: String(poise + magicPoise), cls: 'poise small hitpart' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
     // Magic hits Poise first, 1:1 (owner, 2026-10-31).
-    magicPoise: magicPoise > 0 ? { text: String(magicPoise), cls: 'poise small hitpart' } : null,
+    magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small hitpart' } : null,
@@ -1805,9 +1806,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
             // A hit fully absorbed floats its white (Block) and yellow (Poise) numbers; the word stays screen-reader text only.
-            if (outcome === 'blocked' && parts.guard) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.guard.text, parts.guard.cls);
-            if (parts.poise && outcome === 'blocked') floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.poise.text, parts.poise.cls);
-            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls);
+            if (outcome === 'blocked' && parts.guard) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+            if (parts.poise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.poise.text, parts.poise.cls, undefined, { immediate: true });
             return;
           }
           const anchor = ctx.anchorFor(e.targetId);
@@ -1816,10 +1816,10 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls);
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls);
           // The three parts of the hit, each its own number (owner, 2026-11-14): the damage Block absorbed (white), the Poise
-          // it removed (yellow) and the HP it took (red, below, spawned first so it sits on top of the column).
-          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls);
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls);
-          if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls);
+          // it removed (yellow) and the HP it took (red, below, spawned last: nearest the HP bar).
+          // They spawn together (immediate), the red one last so it sits nearest the HP bar: the hit is read at a glance, not over 2 s.
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, undefined, { immediate: true });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls);
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls);
           // A pierced hit that cost no HP has no outcome word, so its full number floats here.

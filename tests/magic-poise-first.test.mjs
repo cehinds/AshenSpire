@@ -93,8 +93,10 @@ test('the numeric Barrier pool is gone: the magic left after Poise and Block mee
 
 test('the float splits magic Poise from absorbed Poise', () => {
   const parts = guardHitFloatParts({ amount: 10, poiseAbsorbed: 6, magicPoise: 6, blocked: 4 });
-  assert.equal(parts.magicPoise.text, 'Poise 6');
-  assert.equal(parts.poise, null);
+  assert.equal(parts.magicPoise.text, 'Poise 6', 'the receipt keeps the magic share');
+  // Owner, 2026-11-14: the screen floats ONE yellow number for all the Poise the hit removed.
+  assert.equal(parts.poise.text, '6');
+  assert.equal(parts.poise.cls, 'poise small hitpart');
 });
 
 test('a pierce hit spends the same Block as the same mixed hit without pierce (arcane 10, Block 10, Poise 5)', () => {
@@ -126,10 +128,12 @@ test('the Poise tooltip composes the locked physical text with the spell sentenc
   assert.match(text, /Spells spend Poise one for one before Block\./);
 });
 
-test('a spell Poise absorbed with the rest blocked keeps the BLOCKED callout and the Poise N float part', () => {
+test('a spell Poise absorbed with the rest blocked keeps the BLOCKED word (screen reader) and floats the Block and Poise numbers', () => {
   const event = { type: 'damageDealt', amount: 4, blocked: 4, poiseAbsorbed: 6, magicPoise: 6 };
   assert.equal(outcomeKindForEvent(event), 'blocked');
   assert.equal(guardHitFloatParts(event).magicPoise.text, 'Poise 6');
+  assert.equal(guardHitFloatParts(event).poise.text, '6');
+  assert.equal(guardHitFloatParts(event).guard.text, '4');
 });
 
 // The floater is the HP lost (owner, 2026-11-14); the combat log's "for N" still names the whole hit as it met the layers.
