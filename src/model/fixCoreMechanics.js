@@ -182,7 +182,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   const facts = {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
-    staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
+    staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} Stamina next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
     evade: FixCoreHitRollOff(rules) ? 'The next attack against you misses.' : `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };

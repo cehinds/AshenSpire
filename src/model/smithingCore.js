@@ -24,7 +24,7 @@ const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 const STAT_ORDER = ['ar', 'dr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'MP', sp: 'SP', evasion: 'Evasion', precision: 'Precision',
+  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [
@@ -147,7 +147,7 @@ export function coreSmithingStats(run, itemRef, currentLevel, nextLevel) {
   const before = itemAtTier(run, item, currentLevel), after = itemAtTier(run, item, nextLevel);
   const stats = [];
   if (item.kind === 'armor' || item.kind === 'shield') {
-    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armor budget' : 'Stat points',
+    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armour budget' : 'Stat points',
       before: before.budget ?? before.points, after: after.budget ?? after.points });
   }
   for (const id of STAT_ORDER) if (before.values[id] !== after.values[id]) {

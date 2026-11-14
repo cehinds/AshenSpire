@@ -184,14 +184,14 @@ export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = t('comm
  * `title-modal-heading` is the door's one heading.
  */
 const SLOT_DECISIONS = {
-  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
-  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
-  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
+  'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: t('common.back'), confirm: 'Load Save', action: 'review-load', card: true, danger: false },
+  'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: t('common.back'), confirm: 'New Game', action: 'review-new', card: false, danger: false },
+  'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: t('common.back'), confirm: 'Start', action: 'review-new', card: false, danger: false },
   // W1l (owner, FRONTEND-WIREFRAMES): selecting a slot never deletes or
   // overwrites it. An occupied destination is carried through creation, and the
   // W2c Replace review is asked at the write boundary — Begin the climb — where
   // the replacement can be named. This door only says that.
-  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-occupied', title: (n) => t('title.slots.start.occupied', { slot: n }), prompt: t('title.slots.start.occupied.prompt'), back: 'Back to Slots', confirm: t('common.continue'), action: 'review-new', card: true, danger: false },
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-occupied', title: (n) => t('title.slots.start.occupied', { slot: n }), prompt: t('title.slots.start.occupied.prompt'), back: t('common.back'), confirm: t('common.continue'), action: 'review-new', card: true, danger: false },
 };
 
 /**

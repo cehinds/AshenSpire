@@ -3,7 +3,7 @@
   "tag": "from:armor",
   "version": "1.0.0",
   "family": "from",
-  "label": "Armor",
+  "label": "Armour",
   "description": "Bound to the outfit the run begins wearing.",
   "attaches": [
     "card"

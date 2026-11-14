@@ -2509,7 +2509,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `a relabelled item type is refused by name — said ${JSON.stringify(said.slice(0, 160))}`);
     const piece = (createRegistries(renamed).equipment.armour || [])
       .find((p) => (p.itemTypes || []).some((t) => t.tag === 'item:armor'));
-    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armor',
+    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armour',
       'and the stamp is what it was refused for disagreeing with');
     // Two derivations of one label, held to each other directly rather than
     // through the rows that happen to be shipped.
@@ -7360,7 +7360,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     const quick = display.find((r) => r.key === 'quickNav');
     eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
-    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
+    eq(quick.choices.join(','), 'off,mirror,switcher', 'Menu navigation exposes legacy Off plus Mirror and Switcher');
     eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
       'the internal row order is not exposed as a redundant second setting');
 

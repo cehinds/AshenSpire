@@ -92,7 +92,7 @@ test('a summary that replaces the cue keeps every downside the computed face res
 test('an upgraded card summary never states a base-only number', () => withKitDom(dom => {
   const reg = createRegistries(contentBundle), rules = { combatExpansionVersion: 2 };
   const up = id => facesOf(dom, reg, { cardId: id, upgraded: true }, rules).join(' | ');
-  assert.match(up('crimsonRite'), /Heal 3 per SP spent/);
+  assert.match(up('crimsonRite'), /Heal 3 per Stamina spent/);
   assert.doesNotMatch(up('blightNova'), /twice|\b2\b/);
   assert.doesNotMatch(up('warSurgeon'), /per 4/);
   for (const abilityRank of [4, 5]) {

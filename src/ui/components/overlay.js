@@ -1,3 +1,4 @@
+import { CharacterDisplayName } from '../../model/characterName.js';
 import { engravedIcon } from './engravedIcon.js';
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
@@ -74,7 +75,7 @@ export function hybridStatsPlan(ctx) {
     ...(row.note ? [[`${row.label} note`, row.note]] : []),
   ]);
   return [
-    ['Forsaken', (ctx.run.customization && ctx.run.customization.name) || cls.name],
+    ['Forsaken', CharacterDisplayName(ctx.run.customization && ctx.run.customization.name, cls.name)],
     ['Class', cls.name],
     ...attributes,
     ['Seed', ctx.run.seedString],

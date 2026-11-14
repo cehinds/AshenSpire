@@ -180,7 +180,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, c
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: t('settings.row.quickNav'),
+    caption: t('common.menu'),
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {

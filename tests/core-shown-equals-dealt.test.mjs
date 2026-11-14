@@ -387,7 +387,7 @@ test('the reaction prompt states the incoming action and each option as the HP t
       assert.ok(Number.isFinite(option.incomingHp), `option ${option.id} carries its result`);
       assert.ok(option.incomingHp <= declinedLoss, 'a reaction never raises the HP lost');
       // The label names the SP the option pays, and that is what choosing it pays.
-      assert.ok(summarizeCardOption(reg, c, option).costs.includes(`${option.staminaCost} SP`), `the label shows ${option.staminaCost} SP`);
+      assert.ok(summarizeCardOption(reg, c, option).costs.includes(`${option.staminaCost} Stamina`), `the label shows ${option.staminaCost} Stamina`);
     }
     const option = offer.options[0];
     const hp = c.player.hp, start = c.eventLog.length;

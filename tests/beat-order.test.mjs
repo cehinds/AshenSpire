@@ -395,7 +395,7 @@ test('the enemy-turn order: reveal, SP payment, move word, animation, hit word, 
     ], { onLeadApplied: () => mark('cost-applied') });
     finish();
     const all = [...trace, ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))].sort((a, b) => a.at - b.at).map(e => e.what);
-    const wanted = ['float:−2 SP', 'cost-applied', 'word:action:Attack', 'swing', 'word:hit', 'reaction:player', 'float:-6'];
+    const wanted = ['float:−2 Stamina', 'cost-applied', 'word:action:Attack', 'swing', 'word:hit', 'reaction:player', 'float:-6'];
     const seen = all.filter(n => wanted.includes(n));
     assert.deepEqual(seen, wanted);
   });
@@ -422,7 +422,7 @@ test('a card with two distinct costs (SP and MP) shows both cost floaters before
     ], { onStanceLead: () => trace.push({ what: 'stance', at: Date.now() }) });
     finish();
     const word = words.find(w => w.kind === 'action:Strike');
-    const sp = trace.find(e => e.what === 'float:\u22121 SP'), mp = trace.find(e => e.what === 'float:\u22122 MP'), stance = trace.find(e => e.what === 'stance');
+    const sp = trace.find(e => e.what === 'float:\u22121 Stamina'), mp = trace.find(e => e.what === 'float:\u22122 Mana'), stance = trace.find(e => e.what === 'stance');
     assert.ok(sp && mp && word && stance, 'both costs, the word and the stance all appear');
     assert.ok(sp.at <= word.at && mp.at <= word.at, `both cost floaters (${sp.at}, ${mp.at}) precede the word (${word.at})`);
     assert.ok(word.at < stance.at);
@@ -440,7 +440,7 @@ test('one aliased Core 2 payment (energySpent + staminaSpent) shows exactly one 
     ], { onLeadApplied: beat => applied.push(...beat.events.map(e => e.type)) });
     finish();
     const floats = trace.filter(e => /^float:\u2212/.test(e.what)).map(e => e.what);
-    assert.deepEqual(floats, ['float:\u22121 SP']);
+    assert.deepEqual(floats, ['float:\u22121 Stamina']);
     assert.deepEqual(applied, ['energySpent', 'staminaSpent'], 'both receipts still reach the HUD');
   });
 });
@@ -452,7 +452,7 @@ test('the enemy SP payment floater precedes the enemy move word', t => {
       { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack' },
     ]);
     finish();
-    const cost = trace.find(e => e.what === 'float:\u22122 SP'), word = words.find(w => w.kind.startsWith('action:'));
+    const cost = trace.find(e => e.what === 'float:\u22122 Stamina'), word = words.find(w => w.kind.startsWith('action:'));
     assert.ok(cost && word && cost.at <= word.at);
   });
 });

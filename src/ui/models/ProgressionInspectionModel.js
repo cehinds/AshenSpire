@@ -20,7 +20,7 @@ export function progressionStats(registries, run, settings = {}) {
   const handReceipts = handSizeReceipts(hand, run.attributes, run.level?.level);
   const resources = handResourceRows(registries, run, settings);
   const derived = (id, label) => ({ ...projection.derived.find(row => row.id === id), faceLabel: label });
-  const rows = [derived('hp', 'HP'), derived('stamina', 'SP'), derived('mana', 'MP'),
+  const rows = [derived('hp', 'HP'), derived('stamina', 'Stamina'), derived('mana', 'Mana'),
     ...['ar', 'pr', 'dr'].map(id => ({ id, label: id.toUpperCase(), faceLabel: id.toUpperCase(), value: ratings.totals[id],
       formula: ratings.sources.map(source => `${source.name}: ${source[id] || 0}`).join(' + ') })),
     { id: 'handSize', label: t('statsPreview.overview.handSize'), faceLabel: 'HandSize', value: handReceipts.capacity.value,

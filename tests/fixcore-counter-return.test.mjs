@@ -262,15 +262,15 @@ import { t } from '../src/ui/strings.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { CounterStackPercent } from '../src/ui/models/CounterStackPercentModel.js';
-test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Guard or Ward absorption', () => {
+test('the Counter help is profile-aware: Core 2 says 10% of the incoming hit per Counter stack, legacy keeps Block or Ward absorption', () => {
   const core = cardDetailHtml(reg, { cardId: 'core.counter' });
   assert.ok(core.includes(t('card.counter.help.core', { stackPercent: CounterStackPercent() })) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
-  assert.doesNotMatch(core, /after full Guard or Ward absorption/);
+  assert.doesNotMatch(core, /after full Block or Ward absorption/);
   assert.match(t('card.counter.help.core', { stackPercent: CounterStackPercent() }), /10% of the incoming damage per Counter stack/);
-  assert.match(t('card.counter.help.legacy'), /after full Guard or Ward absorption/);
+  assert.match(t('card.counter.help.legacy'), /after full Block or Ward absorption/);
   const legacyReg = createRegistries(contentBundle);
   const legacyCounter = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
-  if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Guard or Ward absorption/);
+  if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Block or Ward absorption/);
 });
 
 test('Core card and health Counter copy share the configured percentage without float artifacts', () => {

@@ -14,7 +14,7 @@ const freeze = (value) => Object.freeze(value);
 function changeLabel(change) {
   const labels = {
     damage: 'Damage',
-    block: 'Guard',
+    block: 'Block',
     draw: 'Draw',
     discard: 'Discard',
     'cost:action': 'Stamina Cost',
@@ -106,7 +106,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       artAsset,
       artGlyph: itemKind === 'relic' ? (piece.icon || '') : '',
       rarity: piece.rarity || 'common',
-      kindLabel: itemKind === 'armor' ? 'Armor' : itemKind === 'relic' ? 'Relic' : 'Armament',
+      kindLabel: itemKind === 'armor' ? 'Armour' : itemKind === 'relic' ? 'Relic' : 'Armament',
       itemTypes: freeze(itemTypes),
       tags: freeze([...(piece.tags || [])]),
       // Core item ratings come from the tier receipt below, not the legacy

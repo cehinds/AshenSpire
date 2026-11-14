@@ -75,7 +75,7 @@ test('temporary tier options keep nonzero base separate and never offer locked t
   const plan = upcastChoicePlan({name:'Tiered fixture',upcast:{baseTier:2,unlockedTiers:[3,5],maximumTier:5}});
   assert.deepEqual(plan.options.map(option => option.id), ['2','3','5']);
   assert.match(plan.options[1].name, /tier 3 \(\+1\)/);
-  assert.match(plan.options[2].tooltip, /\+3 SP and \+3 Mana/);
+  assert.match(plan.options[2].tooltip, /\+3 Stamina and \+3 Mana/);
 });
 
 test('compact Counter face leaves complete delivery coverage in inspection', async () => {

@@ -1,4 +1,5 @@
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
+import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
@@ -609,7 +610,7 @@ const {
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
 function runIdentityParts() {
   return {
-    className: run && registries.classes.has(run.class) ? registries.classes.get(run.class).name : run?.class,
+    className: run && registries.classes.has(run.class) ? CharacterDisplayName(run.customization?.name, registries.classes.get(run.class).name) : run?.class,
     slot: activeSlot,
     facts: run ? slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }) : '',
   };
@@ -912,7 +913,7 @@ function saveSlotRecords() {
     slot,
     summary: summary && {
       ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+      className: registries.classes.has(summary.class) ? CharacterDisplayName(summary.customization?.name, registries.classes.get(summary.class).name) : summary.class,
     },
   }));
 }

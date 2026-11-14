@@ -23,7 +23,7 @@ export function enemyActionEffectText(effect, registries) {
   if (effect.op === 'wardDamage') return `${value(effect.amount)} Ward damage to ${target}`;
   if (effect.op === 'buildup') return `Build ${value(effect.amount)} ${registries?.statuses?.get(effect.status)?.name || words(effect.status)} on ${target}`;
   if (effect.op === 'removeStatus') return `Remove ${registries?.statuses?.get(effect.status)?.name || words(effect.status)} from ${target}`;
-  if (effect.op === 'restoreMana' || effect.op === 'restoreStamina') return `Restore ${value(effect.amount)} ${effect.op === 'restoreMana' ? 'MP' : 'SP'} to ${target}`;
+  if (effect.op === 'restoreMana' || effect.op === 'restoreStamina') return `Restore ${value(effect.amount)} ${effect.op === 'restoreMana' ? 'Mana' : 'Stamina'} to ${target}`;
   // Unsupported future operations stay named without exposing executable source.
   return `${words(effect.op)}${effect.amount == null ? '' : ` ${value(effect.amount)}`} (${target})`;
 }

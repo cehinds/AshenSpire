@@ -233,7 +233,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
       case 'applyReflect': return frag('gain', `${num(n, base)} Reflect`);
       case 'restoreStamina':
-      case 'gainEnergy': return frag('gain', `${num(n, base)} SP`);
+      case 'gainEnergy': return frag('gain', `${num(n, base)} Stamina`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
       case 'buildup': {
         // The face names the status and amount; a partial chance is kept for the detail line.

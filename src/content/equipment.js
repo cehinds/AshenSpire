@@ -47,6 +47,7 @@ export function itemTypeLabel(tag) {
     .split('-')
     .filter(Boolean)
     .map((word) => word[0].toUpperCase() + word.slice(1))
+    .map((word) => (word === 'Armor' ? 'Armour' : word)) // British spelling: the id stays item:armor
     .join(' ');
 }
 

@@ -639,7 +639,7 @@ function showFloater(rec, item, entry) {
 
 // ---------------------------------------------------------------------------
 // On-character callouts (owner, 2026-10-11): one short word that rises from
-// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK.
+// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, BLOCK BREAK.
 // Larger than a damage float and coloured per kind; the words are UI strings.
 // Two on one fighter stack (never overlap) and at most two show at once; the
 // same word already showing on that fighter is not repeated.
@@ -1190,7 +1190,7 @@ export function playTimeline(events, ctx, done) {
   // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
   // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
   const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
-  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'Stamina', manaSpent: 'Mana', enemyStaminaSpent: 'Stamina' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
@@ -1653,7 +1653,7 @@ export function calloutForEvent(e = {}) {
     case 'weaknessTriggered': kind = 'weak'; break;
     case 'playerStaggered': kind = 'staggered'; break;
     case 'enemyInterrupted': kind = 'interrupted'; break;
-    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    // A Smash's Block break is the BLOCK BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
     case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
@@ -1738,7 +1738,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Guard') ? 'Guard' : undefined); // the spark stays; its word follows the floater policy
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, floaterGlyphShown('Block') ? 'Block' : undefined); // the spark stays; its word follows the floater policy
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -1898,7 +1898,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
         },
       };
-    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    // A Smash's Block break shows as BLOCK BREAK alone: no burst and no sound for it here.
     case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
     case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
     case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');

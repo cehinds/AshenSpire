@@ -46,7 +46,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
     push(label, base(from, a), text);
   };
   stat('damage', 'damage', 'DAMAGE');
-  stat('block', 'block', 'GUARD');
+  stat('block', 'block', 'BLOCK');
   push('HITS', hitsOf(before), hitsOf(after));
   push('STAMINA', num(before.staminaCost), num(after.staminaCost));
   push('MANA', num(before.manaCost), num(after.manaCost));

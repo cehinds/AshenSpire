@@ -1,4 +1,4 @@
-# Astral Armor (`status.astralArmor`)
+# Astral Armour (`status.astralArmor`)
 At the end of your turn, gain 4 Block per stack.
 - Carried by: statuses on any entity.
 - Lives in: `src/content/statuses.js`.

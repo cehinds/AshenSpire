@@ -2272,8 +2272,8 @@
   },
   {
     "id": "livingArmor",
-    "name": "Living_Armor",
-    "displayName": "Living Armor",
+    "name": "Living_Armour",
+    "displayName": "Living Armour",
     "tags": [
       "character.enemy",
       "tier.minion"

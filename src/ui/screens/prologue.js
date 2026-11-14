@@ -147,7 +147,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !(shortLandscape.matches && !root.closest('.pse-phone'))));
   function measureFit() {
     const scenes = order.map(index => config.scenes[index])
-      .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
+      .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name,location:destination.name})}))
       .filter(({stage}) => fixedCaption(stage));
     if (!scenes.length) return 1;
     // The probe stands in a hidden copy of the FRAME, so each scene's wireframe
@@ -418,7 +418,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const token = ++serial; loading = true; next.disabled = true;
     position = Math.max(0,Math.min(order.length-1,at)); sceneIndex = order[position]; elapsed = resumeAt; last = 0;
     const scene = config.scenes[sceneIndex], layout = forceLayout || (portrait.matches ? 'mobile' : 'desktop');
-    const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
+    const copy = prologueCopy(scene,config,{classId,name:run.customization?.name,location:destination.name});
     if (notify) onScene(sceneIndex);
     const stage_ = prologueStaging(config,scene);
     const plate = el('div',{class:'prologue-plate'});

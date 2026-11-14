@@ -1,3 +1,4 @@
+import { CharacterDisplayName } from './characterName.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { SEATS } from '../content/seats.js';
 import { isCoreProfile } from './gameProfile.js';
@@ -663,9 +664,9 @@ export function prologuePresetOverrides(preset) {
   return changes;
 }
 
-export function prologueCopy(scene, config, {classId = 'reaver', name = 'Forsaken', location = 'Crownfall'} = {}) {
+export function prologueCopy(scene, config, {classId = 'reaver', name = '', location = 'Crownfall'} = {}) {
   const cls = config.classes[classId] || config.classes.reaver;
-  const tokens = {name,location,class:cls.name,classLine:cls.line};
+  const tokens = {name: CharacterDisplayName(name, cls.name),location,class:cls.name,classLine:cls.line};
   const resolve = value => String(value || '').replace(/\{(name|location|class|classLine)\}/g,(_,key)=>tokens[key]);
   return {title:scene.name,speaker:resolve(scene.speaker),text:resolve(scene.text),location:resolve(scene.location)};
 }
