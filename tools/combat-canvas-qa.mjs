@@ -25,7 +25,7 @@ if (out) mkdirSync(out, { recursive: true });
 const TOLERANCE = 1.5;
 const ONLY = process.env.CANVAS_QA_ONLY || '';
 const ROUTE = '/?gameProfile=core&shot=combat&shotHand=2';
-const KEYS = ['player', 'enemy', 'card', 'endTurn', 'sky', 'groundTop'];
+const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop'];
 
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const base = 'http://127.0.0.1:' + server.server.address().port;
@@ -43,7 +43,7 @@ function canvasFacts() {
   const scale = matrix.a || 1, left = matrix.e, top = matrix.f;
   const canvas = { width: root.offsetWidth, height: root.offsetHeight, scale, left, top, preset: root.dataset.viewPreset };
   const rect = selector => {
-    const node = document.querySelector(selector);
+    const node = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!node) return null;
     const r = node.getBoundingClientRect();
     if (!(r.width > 0 && r.height > 0)) return null;
@@ -52,6 +52,10 @@ function canvasFacts() {
   const ground = rect('.layered-environment-layer[data-role="ground"]:not([data-mirror]), .alternative-backdrop image[data-layer$="-ground"]');
   return { win: [innerWidth, innerHeight], canvas,
     player: rect('.combatant.player .sprite'), enemy: rect('.combatant.enemy .sprite'),
+    // The overhead HUDs above each fighter and the combat header band.
+    playerHud: rect('.combatant.player .target-hud-overhead-meters'),
+    enemyHud: rect([...document.querySelectorAll('.target-hud-overhead-meters')].find(node => !node.closest('.combatant.player')) || null),
+    header: rect('.combat > .topbar'),
     card: rect('.hand .card'), endTurn: rect('.end-turn'),
     // The sky: the layered backdrop plate, or the painted scene's SVG frame.
     sky: rect('.layered-environment-layer[data-role="backdrop"], .alternative-backdrop svg'),
@@ -112,11 +116,11 @@ const fmt = f => KEYS.map(key => `${key}=${f[key] ? '[' + f[key].map(n => n.toFi
 
 function visibleChecks(label, facts, errors) {
   const { width, height } = facts.canvas;
-  const outside = ['player', 'enemy', 'card', 'endTurn'].filter(key => {
+  const outside = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn'].filter(key => {
     const r = facts[key];
     return !r || r[0] < -TOLERANCE || r[1] < -TOLERANCE || r[0] + r[2] > width + TOLERANCE || r[1] + r[3] > height + TOLERANCE;
   });
-  check(`${label}: player, enemy, first card and End Turn sit inside the ${width}x${height} canvas`, !outside.length, outside.length ? 'outside or missing: ' + outside.join(', ') : '');
+  check(`${label}: fighters, their overhead HUDs, first card and End Turn sit inside the ${width}x${height} canvas`, !outside.length, outside.length ? 'outside or missing: ' + outside.join(', ') : '');
   check(`${label}: the hand has its cards`, facts.handCards > 0, `${facts.handCards} cards`);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
 }
