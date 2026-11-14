@@ -7,11 +7,14 @@
 // icon at stage 3, a hidden read shows `?`. Actions beyond the read count always show `?`.
 
 // Stage 3 is the whole action; stage 0 is hidden. Today's read is all-or-nothing.
+import { FixCorePerceptionRollOff } from '../../model/fixCoreMechanics.js';
+
 export const READ_EXACT = 3;
 export const READ_HIDDEN = 0;
 
-/** perceptionLevel(combat) → the player's perception level (0 when none). */
+/** perceptionLevel(combat) → the player's perception level (0 when none). With the perception roll off (owner, 2026-11-14) every action is read, so no level caps the row. */
 export function perceptionLevel(combat) {
+  if (FixCorePerceptionRollOff(combat?.fixCoreRules || combat?.gameProfile?.fixCoreRules)) return Infinity;
   const level = Number(combat?.skills?.perception?.level);
   return Number.isFinite(level) && level > 0 ? Math.floor(level) : 0;
 }

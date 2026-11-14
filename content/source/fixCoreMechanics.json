@@ -45,6 +45,8 @@
     "baseAC": 1,
     "evadeStackBase": 3,
     "evadeStackDex": 0,
+    "hitRoll": false,
+    "evadeStacksPerCard": 1,
     "precisionBase": 1,
     "evasionBase": 1,
     "precisionWeights": {
@@ -63,6 +65,7 @@
     "stanceAdvantageBonus": 0.25
   },
   "perception": {
+    "roll": false,
     "baseDC": 5,
     "bonuses": []
   },

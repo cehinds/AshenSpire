@@ -1331,7 +1331,8 @@ export function playTimeline(events, ctx, done) {
       if (beat.resultSaid && !beat.events.some(announces)) return;
       const saidTargets = new Set();
       for (const event of beat.events) {
-        const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
+        const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' && event.missReason === 'evaded' ? 'evaded'
+          : event.type === 'attackMissed' || event.type === 'attackEvaded'
           || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed'
           : event.type === 'contestPassed' || event.type === 'contestFailed' ? event.type : null;
         if (!kind || saidTargets.has(event.targetId)) continue;
@@ -1615,7 +1616,8 @@ export function calloutForEvent(e = {}) {
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
     case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
-    case 'attackMissed': kind = 'missed'; break;
+    // Owner, 2026-11-14: a hit an Evade stack cancelled reads Evaded; every other miss (out of range) reads Missed.
+    case 'attackMissed': kind = e.missReason === 'evaded' ? 'evaded' : 'missed'; break;
     case 'contestPassed': kind = 'contestPassed'; break;
     case 'contestFailed': kind = 'contestFailed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;

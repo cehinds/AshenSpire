@@ -9,17 +9,27 @@ import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+// Rules of a profile made before the 2026-11-14 ruling: no hitRoll key, so Evade grants evadeStackBase stacks.
+const legacyAccuracy = (r, accuracy) => { const out = { ...r, accuracy: { ...r.accuracy, ...accuracy } }; delete out.accuracy.hitRoll; delete out.accuracy.evadeStacksPerCard; return out; };
 const bind = p => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
 
-test('shipped compact Evade wording is exactly Gain 3 Evade', () => {
-  assert.equal(cardPlainText(bind(profile), { cardId: 'core.evade' }), 'Gain 3 Evade.');
+// Owner, 2026-11-14: with no hit roll one Evade card is one stack (accuracy.evadeStacksPerCard).
+test('shipped compact Evade wording is exactly Gain 1 Evade', () => {
+  assert.equal(cardPlainText(bind(profile), { cardId: 'core.evade' }), 'Gain 1 Evade.');
 });
 
-test('compact Evade text follows a profile evadeStackBase/evadeStackDex override', () => {
+test('compact Evade text follows a profile evadeStacksPerCard override', () => {
+  const reg = bind(profile);
+  const over = Object.create(reg, { gameProfile: { value: null, writable: true } });
+  over.gameProfile = { ...profile, fixCoreRules: (r => ({ ...r, accuracy: { ...r.accuracy, evadeStacksPerCard: 4 } }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
+  assert.equal(cardPlainText(over, { cardId: 'core.evade' }), 'Gain 4 Evade.');
+});
+
+test('compact Evade text follows a legacy profile evadeStackBase/evadeStackDex override', () => {
   const reg = bind(profile);
   const base = cardPlainText(reg, { cardId: 'core.evade' });
   const over = Object.create(reg, { gameProfile: { value: null, writable: true } });
-  over.gameProfile = { ...profile, fixCoreRules: (r => ({ ...r, accuracy: { ...r.accuracy, evadeStackBase: 5, evadeStackDex: 0 } }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
+  over.gameProfile = { ...profile, fixCoreRules: (r => legacyAccuracy(r, { evadeStackBase: 5, evadeStackDex: 0 }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
   const text = cardPlainText(over, { cardId: 'core.evade' });
   assert.match(text, /\b5\b/);
   assert.notEqual(text, base);
@@ -27,7 +37,7 @@ test('compact Evade text follows a profile evadeStackBase/evadeStackDex override
 
 test('a run snapshot (opts.rules.gameProfile) wins over the current registries profile for Evade text and the Entry line', () => {
   const reg = bind(profile);
-  const snapshot = { ...profile, fixCoreRules: (r => ({ ...r, accuracy: { ...r.accuracy, evadeStackBase: 5, evadeStackDex: 0 } }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
+  const snapshot = { ...profile, fixCoreRules: (r => legacyAccuracy(r, { evadeStackBase: 5, evadeStackDex: 0 }))(structuredClone(fixCoreRules({ combatExpansionVersion: 2 }))) };
   const rules = { combatExpansionVersion: 2, gameProfile: snapshot };
   const current = cardPlainText(reg, { cardId: 'core.evade' }, { rules: { combatExpansionVersion: 2, gameProfile: profile } });
   const text = cardPlainText(reg, { cardId: 'core.evade' }, { rules });

@@ -4,7 +4,7 @@ import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
 import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
-import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
@@ -1850,7 +1850,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
     // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
-    const label = rangeHitLabel(preview, { targetId: enemy.id });
+    const label = rangeHitLabel(preview, { targetId: enemy.id, certainHits: FixCoreHitRollOff(combat.fixCoreRules || combat.gameProfile?.fixCoreRules) });
     if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';

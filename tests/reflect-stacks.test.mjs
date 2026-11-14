@@ -9,6 +9,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { legacyRolls } from './legacyHitRules.mjs';
 import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage } from '../src/engine/actions.js';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -227,6 +228,7 @@ test('a solo player preview binds its detached attacker, so level-keyed Precisio
   const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single', traits: [] } };
   for (const stacks of [0, 2]) {
     const { combat, enemy } = live();
+    legacyRolls(combat); // the roll's Evasion math only prices a fight that still rolls (saved before the 2026-11-14 ruling)
     combat.player.basePrecisionBonus = 0; // the real value, not live()'s auto-hit helper
     Object.assign(enemy, { baseEvasionBonus: 0, reflectStacks: stacks || undefined });
     const liveChance = profileDamageReceipt(combat, combat.player, enemy, 20, carrier).hitChance;

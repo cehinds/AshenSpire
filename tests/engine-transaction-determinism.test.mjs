@@ -14,6 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
+import { withLegacyDefaults } from './legacyHitRules.mjs';
 
 function fight([seed, classId]) {
   const profile = resolveGameProfile('default');
@@ -91,9 +92,23 @@ export function digest(combat) {
 // Verified the engine did not move: with the content files of 7b6ac01016 (the starter decks, card costs and generated catalog
 // from before that change) laid over this tree, the previous digests (171b2290e0e5728c/30419cc524dfe0b2 and
 // 3b5d5f1e6bff1a0b/17b2a175fd3bcb97) reproduce exactly. The new values are this test's own digest() on the shipped content.
-const PINNED = [
+// Re-pinned 2026-11-14 for exact hits and intents (accuracy.hitRoll false, perception.roll false): no d20 is drawn for any attack and no
+// perception check is made, so the combatAvoidance and intent streams stay at their start and the logs lose their roll receipts.
+// Verified the engine only changed through those two keys: the same fights built with the keys absent (a fight saved before the ruling,
+// LEGACY_PINNED below, built through withLegacyDefaults) reproduce the previous digests exactly. The new values are this test's own digest().
+const LEGACY_PINNED = [
   [['PERF1', 'reaver'], { log: '4d2fb53e38d46c35', state: 'bbc2249ca776d1be', events: 218, turn: 6 }],
   [[4242, 'reaver'], { log: '10f5a41a88d703ff', state: 'f7cb6297ec6132d1', events: 215, turn: 6 }],
+];
+for (const [setup, expected] of LEGACY_PINNED) {
+  test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
+    const first = digest(play(withLegacyDefaults(() => fight(setup)), 5));
+    assert.deepEqual(first, expected);
+  });
+}
+const PINNED = [
+  [['PERF1', 'reaver'], { log: '190a9383a441bf40', state: '9f93d8374e77c01b', events: 216, turn: 6 }],
+  [[4242, 'reaver'], { log: '77558eb51e806df9', state: 'b326cfd73e799b59', events: 211, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

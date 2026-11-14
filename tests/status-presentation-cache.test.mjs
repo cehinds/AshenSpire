@@ -5,7 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
-import { fixCoreEnabled, fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreHitRollOff } from '../src/model/fixCoreMechanics.js';
+import { legacyRules } from './legacyHitRules.mjs';
 import { fixCoreRules } from '../src/model/fixCoreRulesCache.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
 import { statusPresentationDefinition as cached, statusPresentationCacheSize, clearStatusPresentationCache } from '../src/model/statusPresentation.js';
@@ -15,7 +16,8 @@ const thorn = { id: 'thorn', name: 'Thorn', tooltip: 'Thorny.', modifiers: { dam
 const evade = { id: 'evade', name: 'Evasion', tooltip: 'Legacy 3 Evasion per stack.', effects: [{ op: 'noop' }] };
 const precision = { id: 'precision', name: 'Precision', tooltip: 'Legacy precision.' };
 const registries = { statuses: { get: id => [weak, evade, precision].find(row => row.id === id), all: () => [weak, evade, precision] } };
-const ctxWith = (rules = structuredClone(fixCoreMechanics)) => ({ combatExpansionVersion: 2, fixCoreRules: rules, registries });
+// The Evasion wording below belongs to a fight that still rolls (saved before the 2026-11-14 ruling); `shipped` builds the new rules.
+const ctxWith = (rules = legacyRules(fixCoreMechanics)) => ({ combatExpansionVersion: 2, fixCoreRules: rules, registries });
 // The reference: what the code did before the cache.
 const uncached = (ctx, id, definition, holder = null) => {
   let resolved = fixCoreStatusDefinition(ctx, id, definition, holder);
@@ -27,7 +29,7 @@ const uncached = (ctx, id, definition, holder = null) => {
       resolved = { ...resolved, tooltip: text, description: text };
     }
     else if (id === 'evade') {
-      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      const text = `${FixCoreHitRollOff(fixCoreRules(ctx, holder)) ? 'The next attack against you misses.' : `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll.`} Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };
     }
   }
@@ -163,4 +165,12 @@ test('callers cannot corrupt a later caller: fresh top level, frozen nested valu
   const before = statusPresentationCacheSize();
   try { cached(bad, 'evade', evade); } catch { /* the uncached path throws too */ }
   assert.equal(statusPresentationCacheSize(), before, 'a failing call stores nothing');
+});
+
+test('the shipped rules word Evade as a cancelled next attack, and the cache keeps both wordings apart', () => {
+  clearStatusPresentationCache();
+  const shipped = ctxWith(structuredClone(fixCoreMechanics)), legacy = ctxWith();
+  agree(shipped, 'evade', evade); agree(legacy, 'evade', evade);
+  assert.match(cached(shipped, 'evade', evade).tooltip, /^The next attack against you misses\./);
+  assert.match(cached(legacy, 'evade', evade).tooltip, /^Each stack adds \d+ Evasion\./);
 });

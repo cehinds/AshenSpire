@@ -7,15 +7,16 @@ import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-test('the allowlist is Hit, Hit - Evade Failed, Missed, Blocked and Countered', () => {
-  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'blocked', 'countered']);
+test('the allowlist is Hit, Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
+  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
   assert.ok(Object.isFrozen(FLOATER_WORDS_SHOWN));
   for (const kind of FLOATER_WORDS_SHOWN) assert.equal(floaterWordShown(kind), kind);
 });
 
-test('Dodged and Evaded are misses and draw as Missed', () => {
+// Owner, 2026-11-14: an Evade stack that cancels a hit reads Evaded; a dodge is still a miss.
+test('Dodged draws as Missed and Evaded keeps its own word', () => {
   assert.equal(floaterWordShown('dodged'), 'missed');
-  assert.equal(floaterWordShown('evaded'), 'missed');
+  assert.equal(floaterWordShown('evaded'), 'evaded');
 });
 
 test('every other word is hidden', () => {

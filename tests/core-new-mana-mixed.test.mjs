@@ -148,13 +148,14 @@ test('every class sees its new cards more often at depth 4+ than at depth 1-3 (6
 
 test('offers never cross classes: class cards only reach their own class, colorless reach everyone', () => {
   for (const classId of CLASSES) {
-    const seen = new Set();
-    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    const seen = new Set(), counts = new Map();
+    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     // The Core 2 starter decks hold one of the class's own mana cards (Rogue: Venomed Edge); a basic the class already owns is never offered again.
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
       if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
-      else if (starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
+      // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): far rarer than a card the class does not own.
+      else if (starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other) && payable(classId, other)).map(other => counts.get(other) || 0), Infinity), `${classId} was offered ${id} from its own starter deck as often as a card it does not own`);
       else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }

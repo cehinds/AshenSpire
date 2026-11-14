@@ -121,12 +121,13 @@ test('Magic classes see their new spells more often at depth 4+ than at depth 1-
 test('offers never cross classes: Magic spells only reach their own class, colorless reach everyone, Martial never sees a Magic card', () => {
   const magic = { starseer: BY_CLASS.starseer, herald: BY_CLASS.herald };
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
-    const seen = new Set();
-    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    const seen = new Set(), counts = new Map();
+    for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) { seen.add(id); counts.set(id, (counts.get(id) || 0) + 1); }
     const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
       // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
-      if (owner === classId && starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
+      // An owned copy is not forbidden, only weighed at rewards.json ownedCopyWeight (0.05): it stays far rarer than an unowned class card.
+      if (owner === classId && starter.has(id)) assert.ok((counts.get(id) || 0) * 3 < Math.min(...list.filter(other => !starter.has(other)).map(other => counts.get(other) || 0)), `${classId} was offered ${id} as often as a card it does not own`);
       else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }

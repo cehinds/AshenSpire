@@ -16,11 +16,14 @@ import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 import { attackHitPreview } from '../src/engine/stanceHit.js';
 import { chargeFlaskId,utilityFlaskIds } from '../src/model/gracerefill.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { withLegacyDefaults } from './legacyHitRules.mjs';
 const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 function live(classId='reaver') {
  const run=createRunState({registries:reg,classId,seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
- const combat=createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']});
+ // These suites price the d20, the perception check and the three-stack Evade, so the fight is created with the rules of one saved before the
+ // 2026-11-14 ruling (no hitRoll / perception.roll keys); tests/core-attacks-hit.test.mjs and core-intents-exact.test.mjs cover the shipped rules.
+ const combat=withLegacyDefaults(()=>createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']}));
  // Ward is toggled off in shipped data (owner, 2026-10-18); these tests exercise the Ward path, so switch it on.
  combat.fixCoreRules={...structuredClone(combat.fixCoreRules||combat.gameProfile.fixCoreRules),ward:{enabled:true}};
  combat.player.persistentWard={value:20,max:20};
@@ -269,13 +272,15 @@ test('fractional offense reaches final rounding without a fabricated status modi
 test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
  const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- assert.equal(staticCardTokens(def).evade,'3');
- assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'3');
+ // Owner, 2026-11-14: with no hit roll one Evade card is one stack.
+ assert.equal(staticCardTokens(def).evade,'1');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1');
 });
 test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
  const {staticCardTokens}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:base,evadeStackDex:dex}}]});
+ const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{hitRoll:true,evadeStackBase:base,evadeStackDex:dex}}]});
+ assert.equal(staticCardTokens({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStacksPerCard:4}}]},reg).evade,'4','the shipped per-card grant is configurable');
  assert.equal(staticCardTokens(scoped(1,1),reg).evade,'1 plus DEX');
  assert.equal(staticCardTokens(scoped(3,2),reg).evade,'3 plus 2× DEX');
  assert.equal(staticCardTokens(scoped(2,0),reg).evade,'2');
