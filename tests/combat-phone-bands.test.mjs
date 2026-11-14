@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import { allocateCombatBands, packCombatFooter } from '../src/ui/models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../src/ui/models/FooterLayoutModel.js';
 
-// Phone compact bands are pinned. They last moved on 2026-10-25 (owner: more battlefield, hand band 31% -> 30.5% (255px cap, 192px floor): the lifted card clears the battlefield at 390x844).
+// Phone compact bands are pinned. Wave 2 (sizes) moved the hand band to 34% (290px cap) so a 160px card fits it: hand 285.6 -> 318.8 and
+// battlefield 465.6 -> 432.3 at 390x844 (with the old 30.5% / 257px rule switched back on, these pins held to the digit).
+// They previously moved on 2026-10-25 (owner: more battlefield, hand band 31% -> 30.5% (255px cap, 192px floor): the lifted card clears the battlefield at 390x844).
 // Values were captured on the pre-desktop tree for the same inputs that
 // combatLayout.js derives from a 360x620 and a 390x844 viewport.
 const PHONE = [
-  { w: 360, h: 620, zoom: 0.79, bands: { hud: 70.63291139240506, battlefield: 354.6835443037975, hand: 243.0379746835443, footer: 116.45569620253164 },
+  { w: 360, h: 620, zoom: 0.79, bands: { hud: 70.63291139240506, battlefield: 330.88607594936707, hand: 266.8354430379747, footer: 116.45569620253164 },
     footer: { diameter: 81.01265822784809, pileWidth: 63.291139240506325, endWidth: 121.51898734177215 },
     artW: 455.69620253164555, artH: 81.01265822784809 },
-  { w: 390, h: 844, zoom: 0.9, bands: { hud: 84.39999999999999, battlefield: 465.59999999999997, hand: 285.55555555555554, footer: 102.22222222222221 },
+  { w: 390, h: 844, zoom: 0.9, bands: { hud: 84.39999999999999, battlefield: 432.3111111111111, hand: 318.8444444444445, footer: 102.22222222222221 },
     footer: { diameter: 71.11111111111111, pileWidth: 55.55555555555556, endWidth: 106.66666666666666 },
     artW: 433.3333333333333, artH: 71.11111111111111 },
 ];

@@ -7,15 +7,16 @@ import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-test('the allowlist is Hit, Hit - Evade Failed, Missed, Blocked and Countered', () => {
-  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'blocked', 'countered']);
+test('the allowlist is Hit, Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
+  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
   assert.ok(Object.isFrozen(FLOATER_WORDS_SHOWN));
   for (const kind of FLOATER_WORDS_SHOWN) assert.equal(floaterWordShown(kind), kind);
 });
 
-test('Dodged and Evaded are misses and draw as Missed', () => {
+// Owner, 2026-11-14: an Evade stack that cancels a hit reads Evaded; a dodge is still a miss.
+test('Dodged draws as Missed and Evaded keeps its own word', () => {
   assert.equal(floaterWordShown('dodged'), 'missed');
-  assert.equal(floaterWordShown('evaded'), 'missed');
+  assert.equal(floaterWordShown('evaded'), 'evaded');
 });
 
 test('every other word is hidden', () => {
@@ -85,8 +86,15 @@ test('buff-gain popups are hidden words too', async () => {
 });
 
 test('glyph words (Cast, Guard, Stun) are hidden; allowlisted words still show', () => {
-  for (const word of ['Cast', 'Guard', 'Stun']) assert.equal(floaterGlyphShown(word), false, word);
+  for (const word of ['Cast', 'Block', 'Stun']) assert.equal(floaterGlyphShown(word), false, word);
   assert.equal(floaterGlyphShown('blocked'), true);
   setFloaterPolicyEnabled(false);
   try { assert.equal(floaterGlyphShown('Cast'), true); } finally { setFloaterPolicyEnabled(true); }
+});
+
+// Owner, 2026-11-14: a hit's floating number is the HP it cost, never the hit before Block, Poise, Ward or Barrier.
+test('the damage floater is the HP lost: Block and Poise never add to it, and a hit that cost no HP floats no number', () => {
+  assert.equal(guardHitFloatParts({ amount: 12, blocked: 3, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'amount is the HP lost plus the Block spent; Poise is already out of it');
+  assert.equal(guardHitFloatParts({ amount: 9, blocked: 0, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'Poise absorbed 3 of a 12 hit: -9, not -12');
+  assert.equal(guardHitFloatParts({ amount: 5, blocked: 5, poiseAbsorbed: 4 }, 100).damage, null, 'fully absorbed: no number');
 });

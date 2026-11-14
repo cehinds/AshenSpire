@@ -59,7 +59,14 @@ test('configured choices stage review, return to selection, commit once, and pre
       app.remove();
       const skipApp = document.createElement('main'); document.body.append(skipApp);
       mountGameProfileOffers(skipApp, { registries, run, offer: { ...offer, id: `${cardId}:skip`, taken: [], claimed: null }, title: 'Reward', onTake() { throw new Error('Skip must never take'); }, onContinue() { exits++; } });
-      skipApp.querySelector('#reward-continue').click(); assert.equal(run.cinders, 37); assert.equal(exits, 2); skipApp.remove();
+      // Skip with a choice still open and nothing taken asks once (owner, 2026-11-14): the modal's default answer goes back.
+      skipApp.querySelector('#reward-continue').click(); assert.equal(exits, 1, 'Skip asks before leaving');
+      assert.equal(document.querySelector('.confirmation-modal h2, .confirmation-modal [id=confirmation-modal-title]')?.textContent, 'Leave without taking a reward?');
+      assert.equal(document.querySelector('.confirmation-cancel').textContent, 'Take a reward');
+      document.querySelector('.confirmation-confirm').click();
+      assert.equal(run.cinders, 37); assert.equal(exits, 2); skipApp.remove();
+      // The confirmed modal holds a short input shield; let its timers finish while the DOM globals still stand.
+      await new Promise((resolve) => setTimeout(resolve, 800));
     }
   } finally {
     for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }

@@ -108,7 +108,7 @@ export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
   installFooterArt(row);
   if (!row) return;
-  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'SP', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
+  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'Stamina', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
   states.set(row, next);
   const textNodes = new Map([...row.querySelectorAll('[data-footer-text]')].map(node => [node.dataset.footerText, node]));
   for (const group of Object.values(plan.groups)) for (const item of group.items) {
@@ -121,7 +121,7 @@ export function paintFooterArt(row, values = {}) {
     }
   }
   scheduleCaps();
-  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
+  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnAria || (next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn));
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
   // The key sits on its own line under the words, as the full label's key does.

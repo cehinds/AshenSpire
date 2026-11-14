@@ -3261,8 +3261,7 @@
     "isWeaknessDiscovered",
     "recordWeaknessDiscoveries",
     "weaknessDiscoveryProblems",
-    "weaknessKey",
-    "withDiscoveredWeaknessesOnly"
+    "weaknessKey"
   ],
   "src/model/weaknessIcons.js": [
     "weaknessIconId"

@@ -1,4 +1,5 @@
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
+import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
@@ -98,6 +99,9 @@ import { executeRunEffects, drawCards, discardFromHand, executeAction } from './
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
+// After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
+import { VictorySpoils } from './ui/components/victorySpoils.js';
+import { SyncHudCinders } from './ui/components/hudmeta.js';
 import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
@@ -606,7 +610,7 @@ const {
 // The run the way its save slot names it (W2e's target line, W1r's, W2d's).
 function runIdentityParts() {
   return {
-    className: run && registries.classes.has(run.class) ? registries.classes.get(run.class).name : run?.class,
+    className: run && registries.classes.has(run.class) ? CharacterDisplayName(run.customization?.name, registries.classes.get(run.class).name) : run?.class,
     slot: activeSlot,
     facts: run ? slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }) : '',
   };
@@ -909,7 +913,7 @@ function saveSlotRecords() {
     slot,
     summary: summary && {
       ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+      className: registries.classes.has(summary.class) ? CharacterDisplayName(summary.customization?.name, registries.classes.get(summary.class).name) : summary.class,
     },
   }));
 }
@@ -1873,7 +1877,7 @@ function enterNode(nodeId) {
     if (res.kind === 'event') {
       run.seenEvents.push(res.eventId);
       persist();
-      return showEvent(res.eventId);
+      return afterEntryPaint(() => showEvent(res.eventId));
     }
     kind = res.kind; // fight | shrine | treasure
   }
@@ -1890,13 +1894,13 @@ function enterNode(nodeId) {
       persist();
       // An Unknown node's rest outcome is the field camp (proposal §7.4): a
       // small rest and no services. A shrine node is the Shrine.
-      return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
+      return afterEntryPaint(() => showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine'));
     case 'merchant': {
       if (!gameModule(run, 'shops')) { persist(); return showMap(); }
-      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
+      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return afterEntryPaint(() => showShop());
     }
     case 'treasure': {
-      return beginGameProfileReward({ source: 'treasure', after: 'map' });
+      return afterEntryPaint(() => beginGameProfileReward({ source: 'treasure', after: 'map' }));
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -1929,9 +1933,8 @@ function combatMods(pool, encounter = null) {
 // (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
 // states stay synchronous.
 let fightEntryPending = false;
-function startFight(pool, nodeId) {
-  if (fightEntryPending) return;
-  if (shotState || typeof requestAnimationFrame !== 'function') return startFightNow(pool, nodeId);
+function afterEntryPaint(action) {
+  if (shotState || typeof requestAnimationFrame !== 'function') return action();
   const owner = run;
   fightEntryPending = true;
   app.setAttribute('aria-busy', 'true');
@@ -1939,8 +1942,13 @@ function startFight(pool, nodeId) {
     fightEntryPending = false;
     app.removeAttribute('aria-busy');
     if (run !== owner) return;
-    startFightNow(pool, nodeId);
+    action();
   }, 0));
+  return undefined;
+}
+function startFight(pool, nodeId) {
+  if (fightEntryPending) return;
+  return afterEntryPaint(() => startFightNow(pool, nodeId));
 }
 
 function startFightNow(pool, nodeId) {
@@ -2304,9 +2312,13 @@ async function onCombatEnd(result, combat, enc) {
   // losing either the Stone or the other spoils.
 
   // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
+  // The cinders won are paid here and written into the receipt with the new total, so the spoils line (and a reload of it)
+  // shows the number that was paid and never a live recomputation.
+  const cindersGained = Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
+  run.cinders += cindersGained;
   const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
+    cinders: { gained: cindersGained, total: run.cinders },
     xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
-  run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
@@ -2477,6 +2489,14 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
+  // Cinders are paid at combat resolution, before this door opens: the header behind it shows the purse the strip's total shows.
+  SyncHudCinders(app, run.cinders);
+  // ONE SCREEN FOR A WON FIGHT (owner requirement: victory to map in two clicks). A combat reward that carries both a victory
+  // receipt and its offer opens the offer door with the spoils strip above the choice: no receipt screen, no Continue first.
+  // Receipt-only cases (the final boss, a profile with no rewards module, a receipt with no offer) keep the receipt screen.
+  const combined = !!(pending.victoryReceipt && !pending.noticeOnly && !pending.offerDone && pending.source === 'combat'
+    && run.gameProfileRewardOffers?.[pending.offerId]);
+  if (combined) return mountGameProfileOfferDoor(pending, { combined: true });
   if (pending.victoryReceipt) return mountRewards(app, { registries, run,
     rewards: pending.victoryReceipt, saves, receiptOnly: true,
     // Owner, 2026-10-27: earned attribute points are spent here too; each spend is saved at once.
@@ -2512,9 +2532,48 @@ function showGameProfileReward() {
       // Rows and claims are saved at once; Continue marks the door done.
       onDone: () => { pending.rankUpsOffered = true; persistOrWarn(); showGameProfileReward(); } });
   }
+  // The combined door already took its choice (offerDone): what is left of it is the exit chain, with no second door.
+  if (pending.offerDone) return leaveRewardDoor(pending);
+  return mountGameProfileOfferDoor(pending, { combined: false });
+}
+
+// What follows a taken (or skipped) offer: Elite spoils, then level offers, then the map or the next act. Offer ids and order are fixed.
+function leaveRewardDoor(pending) {
+  const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
+  persistRewardChange(() => {
+    const live = run.gameProfilePendingReward || pending;
+    const { offerDone, ...rest } = live;
+    void offerDone;
+    delete run.gameProfilePendingReward;
+    // Elite spoils (rewards.json eliteRelic): a relic choice after the combat door, before any level offers; an empty pool skips it.
+    const eliteId = rest.eliteRelic ? `${rest.offerId}:elite` : '';
+    if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
+      run.gameProfilePendingReward = { ...rest, offerId: eliteId, source: 'elite', eliteRelic: false };
+    } else if (rest.levelOffers > 0) {
+      const offerId = `${rest.offerId}:level:${rest.levelOffers}`;
+      gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
+      run.gameProfilePendingReward = { ...rest, offerId, source: 'level', levelOffers: rest.levelOffers - 1 };
+    }
+  });
+  if (run.gameProfilePendingReward) return showGameProfileReward();
+  if (pending.after === 'advanceAct') return advanceAct();
+  showMap();
+}
+
+// The offers door. `combined` heads it with the victory title and the spoils strip (cinders, stone, XP, points to spend).
+// The receipt is acknowledged in the same save that leaves the door, so a reload on it shows the same strip and nothing is paid twice
+// (XP, cinders and stones are paid at combat resolution, before any door opens; the receipt is only their record).
+function mountGameProfileOfferDoor(pending, { combined }) {
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
-  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
+  const settings = saves.loadMeta().settings || {};
+  const receipt = combined ? pending.victoryReceipt : null;
+  const spoils = receipt ? VictorySpoils(registries, run, receipt, {
+    settings, onPersist: persistContinuing,
+    onAllocateStat: attributeId => allocateAttributePoint(registries, run, attributeId),
+  }) : null;
+  mountGameProfileOffers(app, { registries, run, settings, offer, spoils,
+    title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
     // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
@@ -2527,21 +2586,14 @@ function showGameProfileReward() {
     // Owner 2026-11-06: the Armoury opened from a reward carries the item, so choosing a slot equips THAT item (no second picker).
     onEditEquipment: (index, back) => showArmoury({ equipItemId: run.gameProfileRewardOffers[pending.offerId]?.options?.[index]?.id || '' }, back),
     onContinue: () => {
+      if (!combined) return leaveRewardDoor(pending);
+      // The choice is made: drop the receipt and mark the door done in one save, then run what follows (level notices, rank-ups, exit chain).
       persistRewardChange(() => {
-        delete run.gameProfilePendingReward;
-        // Elite spoils (rewards.json eliteRelic): a relic choice after the combat door, before any level offers; an empty pool skips it.
-        const eliteId = pending.eliteRelic ? `${pending.offerId}:elite` : '';
-        if (eliteId && GameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
-          run.gameProfilePendingReward = { ...pending, offerId: eliteId, source: 'elite', eliteRelic: false };
-        } else if (pending.levelOffers > 0) {
-          const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
-          gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
-          run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
-        }
+        const live = run.gameProfilePendingReward || pending;
+        delete live.victoryReceipt;
+        live.offerDone = true;
       });
-      if (run.gameProfilePendingReward) return showGameProfileReward();
-      if (pending.after === 'advanceAct') return advanceAct();
-      showMap();
+      showGameProfileReward();
     } });
 }
 

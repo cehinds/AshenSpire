@@ -195,6 +195,7 @@ test('configured equipment requirements default none across six families and fou
  const old=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{equipment:{requirementsPolicy:'legacy'}}});const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old),legacy=createRunState({seed:1,classId:'reaver',registries:r});assert.equal(equipmentRequirementReceipt(r,r.equipment.armaments.find(row=>row.id==='greatsword'),legacy.attributes).ok,false);
 });
 
+ // Owner, 2026-11-14: the quote is the HP lost after the target's Poise; the AR bonus is read off the receipt's incoming hit.
 test('Smith tier bonuses share UI combat preview and real damage/block, and disappear on swapping gear',async()=>{
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const {ratingReceipt}=await import('../src/model/combatRatings.js');
@@ -208,10 +209,10 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  for(const cardId of ['core.counter','core.strike'])if(!combat.piles.hand.some(card=>card.cardId===cardId))combat.piles.hand.push({cardId,instanceId:`fx-${cardId}`,upgraded:false});return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
  const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.counter'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
- const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.value]));
+ const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.damageReceipt?.hits?.[0]?.incoming]));
  commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'});
  const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
- const damaging=after.piles.hand.find(card=>card.cardId==='core.strike'&&(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'a real Strike gains damage after the weapon upgrade');
+ const damaging=after.piles.hand.find(card=>card.cardId==='core.strike'&&(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.damageReceipt?.hits?.[0]?.incoming||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'a real Strike gains damage after the weapon upgrade');
  const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').damageReceipt.totalDamage,hp=after.enemies[0].hp;primeAccuracyRolls(after);dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
  // Core 2 smiths weapons only (no armour candidate), so the armour DR/Block step of the old Core 1 test is gone.
  run.loadout.sets.rightHand[0]='straightSword';const swapped=gameProfileRatingReceipt(reg,run).totals;delete run.itemUpgradeLevels['armament/greatsword'];assert.equal(swapped.ar,gameProfileRatingReceipt(reg,run).totals.ar,'the greatsword tier bonus does not follow a swapped-in weapon');

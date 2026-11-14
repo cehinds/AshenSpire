@@ -72,6 +72,9 @@ export function creationFooterPlan({ categories, current }) {
     back: at === 0 ? 'leave' : 'previous',
     previous: at === 0 ? null : categories[at - 1],
     primary: last ? 'begin' : 'next',
+    // The fixed-class Core flow is Class then Review: the Class step carries
+    // Begin itself, and Next stays beside it as the secondary "Customise" door.
+    quickBegin: categories.length === 2 && categories[0] === 'class' && categories[1] === 'review' && current === 'class',
     next: last ? null : categories[at + 1],
     actions: 2,
   });

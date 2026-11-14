@@ -91,6 +91,18 @@ export function paintEndTurnKey(endTurn, key) {
 }
 
 /**
+ * PaintEndTurnWarning(button, text) — the accessible name End Turn wears while a card is still playable
+ * ("End turn (you can still play a card)"); an empty text puts the plain name back. The footer art repaints the
+ * name on every count paint, so the text is kept in its state and not only set on the button.
+ */
+export function PaintEndTurnWarning(endTurn, text = '') {
+  const row = endTurn?.closest?.('.combat-action-row');
+  if (row) paintFooterArt(row, { endTurnAria: text });
+  if (text) endTurn?.setAttribute?.('aria-label', text);
+  else if (!row?.dataset?.footerArt) endTurn?.removeAttribute?.('aria-label');
+}
+
+/**
  * Fill the Actions, Draw and Discard/Exhaust cells from plain counts. The
  * accessible labels follow the values (#1436 review): Actions reads "Actions
  * 2 of 3" as solo's renderControls writes it.
@@ -179,7 +191,6 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
       use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
       if (action.enabled) disarmers.push(arm(use, 'useFlask', {
         ctx: { targeted: !!def.targeted },
-        question: t('combat.potions.use.question', { name: def.name, remaining }), confirmLabel: t('combat.potions.use.confirm'),
         onConfirm: () => {
           // Recheck the live fight before committing a menu snapshot.
           if (!stillUsable(row)) return;

@@ -454,3 +454,20 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
   }
   :root:not([data-layout='narrow']) .map-frame > .map-zoom .zbtn { width: var(--tap-floor, 44px); height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); min-height: var(--tap-floor, 44px); }
 }
+
+/* The Enter press is taken at once: a spinner and "Entering…" paint before the
+   long task that builds the next screen (the turning is compositor-driven, so
+   it keeps going while the main thread is busy). */
+.map-enter[data-busy='true']::before {
+  content: '';
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5em;
+  border: 0.15em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -0.15em;
+  animation: map-enter-spin 0.8s linear infinite;
+}
+@keyframes map-enter-spin { to { transform: rotate(360deg); } }

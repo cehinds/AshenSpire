@@ -1,4 +1,4 @@
-import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, FixCorePerceptionRollOff } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 // The authority creates a read once. UI/preview callers only project it.
 export const PREDICTION_CHOICES = Object.freeze(['Attack', 'Smash', 'Sweep', 'Ranged', 'Defend', 'Counter', 'Spell', 'Casting', 'Preparing']);
@@ -30,6 +30,8 @@ export function broadIntentLabel(category) {
 export function rollKnowledgeRead(rng, rules, observer, category, { ctx = null, target = {} } = {}) {
   if (fixCoreEnabled(ctx)) {
     const cfg = fixCoreRules(ctx, observer.entity).perception;
+    // Owner, 2026-11-14: every intent is exact. No die is drawn from either intent stream, and no perception check is logged.
+    if (FixCorePerceptionRollOff({ perception: cfg })) return { visibility: 'exact', label: null, prediction: null, resolved: false, correct: null, credited: false };
     const roll = 1 + Math.floor(rng.float('enemyIntentVisibility') * 20);
     // Keep the legacy clue stream deterministic without exposing a failed exact check.
     rng.float('enemyIntentClue');

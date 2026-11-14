@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { live as cappedLive } from './helpers/fixcore-combat-rules.mjs';
 import { uncappedCombat } from './helpers/uncapped-range.mjs';
-const live = () => uncappedCombat(cappedLive());
+const live = ({ legacy = false } = {}) => uncappedCombat(cappedLive({ legacy }));
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { rangeSourceContact, quoteRangeActions, previewRangeRoutes } from '../src/engine/combatEngagement.js';
@@ -178,7 +178,8 @@ test('a paid Counter return reuses the accepted quote after movement and source 
 });
 test('a missed incoming contact neither refunds nor preserves its paid Counter reservation', async () => {
   const { primeAccuracyRolls }=await import('./accuracyFixture.mjs');
-  const ctx=live(); distantUnclosingIncoming(ctx);
+  // A natural-1 miss needs the d20: the fight carries the rules of one saved before the 2026-11-14 ruling.
+  const ctx=live({legacy:true}); distantUnclosingIncoming(ctx);
   ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
   ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
   ctx.player.stamina=2;

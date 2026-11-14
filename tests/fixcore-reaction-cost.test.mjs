@@ -8,8 +8,9 @@ import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { live, registries, baseRegistries } from './helpers/fixcore-combat-rules.mjs';
 
+// Each contact owns one attacker roll only in a fight that still rolls (saved before the 2026-11-14 ruling).
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
-  const ctx = live(), enemy = ctx.enemies[0];
+  const ctx = live({ legacy: true }), enemy = ctx.enemies[0];
   // The contact fixture needs the three SP its repeated-hit move now costs.
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' };

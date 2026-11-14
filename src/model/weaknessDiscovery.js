@@ -38,10 +38,11 @@ export function recordWeaknessDiscoveries(ledger, events, enemies) {
   return changed;
 }
 
-/** Run `preview(target, ...args)` with only the discovered weaknesses on the target's enemies, then restore every row.
- *  A card preview must not use or name an undiscovered weakness; real resolution never goes through here. */
-export function withDiscoveredWeaknessesOnly(preview, target, ledger, ...args) {
+/** Run `preview(target, ...args)` with every undiscovered weakness on the target's enemies marked `hidden`, then restore every row.
+ *  Owner, 2026-11-14: a card preview uses every term the play will use, an undiscovered weakness included, so the number is true;
+ *  the breakdown row for a hidden weakness reads "Unknown weakness" and never names its type. Real resolution never goes through here. */
+export function PreviewWithUnknownWeaknessesMarked(preview, target, ledger, ...args) {
   const held = (target.enemies || []).filter(enemy => Array.isArray(enemy.weaknesses)).map(enemy => [enemy, enemy.weaknesses]);
-  for (const [enemy] of held) enemy.weaknesses = discoveredWeaknesses(enemy.weaknesses, ledger, enemy.enemyId);
+  for (const [enemy, rows] of held) enemy.weaknesses = rows.map(row => isWeaknessDiscovered(ledger, enemy.enemyId, row) ? row : { ...row, hidden: true });
   try { return preview(target, ...args); } finally { for (const [enemy, rows] of held) enemy.weaknesses = rows; }
 }

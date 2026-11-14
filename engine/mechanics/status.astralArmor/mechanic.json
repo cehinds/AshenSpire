@@ -3,7 +3,7 @@
   "tag": "status.astralArmor",
   "version": "1.0.0",
   "family": "status",
-  "label": "Astral Armor",
+  "label": "Astral Armour",
   "description": "At the end of your turn, gain 4 Block per stack.",
   "attaches": [
     "status"

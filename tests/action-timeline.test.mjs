@@ -201,3 +201,31 @@ test('zero pauses preserve complete ordered actions and counters without watchdo
   assert.equal(handle.finished, true); assert.equal(c.pending, 0);
   setCombatPacing();
 });
+
+// The enemies' turn: a beat may run on its own pacing (hooks.timingFor), and a wind-up is held for its telegraph length.
+function runMixed({ telegraphMs = 0 } = {}) {
+  setAnimSpeed('normal'); setCombatPacing();
+  const c = clock(), trace = [], player = actionPacing(), enemy = { ...actionPacing({ enemy: true }), telegraphMs };
+  runActionTimeline([{ actorId: 'player', kind: 'attack' }, { actorId: 'enemy', kind: 'attack', telegraph: true }, { actorId: 'enemy', kind: 'attack', prepared: true }], {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId + (beat.telegraph ? '*' : ''), c.now]),
+    onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
+    maxSpriteMs: () => 1000,
+    timingFor: beat => beat.actorId === 'enemy' ? enemy : null,
+  }, player, timerOptions(c));
+  c.advance(30000);
+  return { trace, player, enemy };
+}
+test('a beat runs on the pacing timingFor gives it; the other beats keep the timeline pacing', () => {
+  const { trace, player, enemy } = runMixed();
+  const at = (actor, stage) => trace.find(row => row[1] === actor && row[0] === stage)[2];
+  assert.equal(at('player', 'action') - at('player', 'intent'), player.intentMs, 'the player beat waits the player gap');
+  const enemyStart = at('enemy*', 'intent');
+  assert.equal(at('enemy*', 'action') - enemyStart, enemy.intentMs, 'the enemy beat waits the (shorter) enemy gap');
+  assert.ok(enemy.intentMs < player.intentMs);
+});
+test('a telegraph beat is held for at most the pacing\'s telegraph length', () => {
+  const held = runMixed({ telegraphMs: 40 }), whole = runMixed();
+  const span = ({ trace }) => trace.find(row => row[1] === 'enemy*' && row[0] === 'resolution')[2] - trace.find(row => row[1] === 'enemy*' && row[0] === 'contact')[2];
+  assert.equal(span(held), 40, 'the wind-up ends at its telegraph length');
+  assert.ok(span(whole) > 40, 'with no telegraph length the whole clip plays');
+});

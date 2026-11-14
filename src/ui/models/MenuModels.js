@@ -44,7 +44,7 @@ export function quickMenuPanelModel({ context, mode, caption, rows }) {
   return ComponentModel(UI.quickMenuPanel, {
     variant: context,
     properties: { context, mode },
-    accessibility: { role: 'menu', label: t('settings.row.quickNav') },
+    accessibility: { role: 'menu', label: t('common.menu') },
     children: [quickMenuCaptionModel({ mode, label: caption }), ...rows.map(quickMenuRowModel)],
   });
 }

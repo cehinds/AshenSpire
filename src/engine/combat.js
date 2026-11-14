@@ -2225,7 +2225,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
           const d = shared.defender;
           faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
-            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, wardBlock: 0,
+            defender: { ...d, statuses: structuredClone(d.statuses || {}),
               persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
               ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
               ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
@@ -2266,6 +2266,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
               attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
             entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
             entry.faceHitDamages = faceHits.map(Math.floor);
+            // Owner, 2026-11-14: the number on the face is the HP the reference target loses from each hit, after its defensive stance, Reflect,
+            // Block, Poise and Evade; a card that strikes every enemy states each living enemy's hits so the face can show one number or min-max.
+            entry.value = entry.faceValue;
+            entry.hitDamages = entry.faceHitDamages;
+            entry.totalDamage = entry.faceHitDamages.reduce((sum, amount) => sum + amount, 0);
+            if (eff.target === 'allEnemies') entry.faceTargetHitDamages = living.map(e => (entry.perTargetHitDamages[e.id] || []).map(Math.floor));
           }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
@@ -2405,7 +2411,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const rangeActions = F.cardActions(combat, { ...def, effects: preparedEffects }, p, action.target, action.card,
     action.meta || {}, null);
   const range = previewRangeRoutes(combat, p, rangeActions, paidCosts, { rangeRoute, hitPreview: previewCardAttackHit });
-  const rangeCosts = range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
+  // Owner, 2026-11-14: the cost on the face is the cost the play pays. Preparing a Counter pays no Advance (its range cost is the reaction's,
+  // quoted on the prompt when the return fires), so the face of a Counter in hand carries none.
+  const advanceOnPlay = action.card.combatProfile?.maneuver === 'counter' ? 0 : range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0;
+  const rangeCosts = advanceOnPlay === 0 && range ? paidCosts : range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
   return {
     ...(range ? { range, costs: rangeCosts } : {}),
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
@@ -2419,7 +2428,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
     name: def.name,
     type: def.type,
-    cost: shownCost + (range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0),
+    cost: shownCost + advanceOnPlay,
     costIsX: isX,
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),
@@ -2489,6 +2498,9 @@ export function previewIntent(combat, enemyInstanceId) {
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
+  // Owner, 2026-11-14: an enemy whose whole plan a Poise break cancelled reads Staggered (no number), never "?". Presentation only: the stored
+  // intent, the events and the saved state are unchanged.
+  if (enemy.alive && enemy.combatStance?.staggered && !intent.moveId && intent.kind === 'unknown') return { kind: 'staggered', moveId: null, revealed: true, hidden: false, label: 'Staggered' };
   const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   if (concealed) return concealIntent(intent, profile);

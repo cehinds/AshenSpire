@@ -37,12 +37,23 @@ function faceFixture(lengths, { width = 120, height = 25.66 } = {}) {
 }
 
 // Owner 2026-11-02: no Inspect replacement. Every clause stays on the face; the font shrinks to the floor.
-test('an overflowing primary keeps every clause and shrinks below 11px, down to the configured minimum', () => {
+// Wave 2 (sizes): the floor is 13 px (rulesText.minPx), so a face that cannot fit its words at 13 px keeps them all, at 13 px,
+// and says so (rulesOverflow) for the Inspect cue instead of shrinking to an unreadable size.
+test('an overflowing primary keeps every clause and shrinks down to the 13px floor, never under it', () => {
   const f = faceFixture([80, 10]);
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''), 'no clause is hidden');
-  assert.ok(parseFloat(f.text.style.fontSize) < 11 && parseFloat(f.text.style.fontSize) >= 6, 'shrinks past the old 11px floor to fit, never under the configured 6px');
-  assert.equal(f.face.dataset.rulesOverflow, 'false', 'the smaller font now fits the bay whole');
+  assert.equal(parseFloat(f.text.style.fontSize), 13, 'shrinks to the configured 13px floor and stops there');
+  assert.equal(f.face.dataset.rulesOverflow, 'true', 'it does not fit at the floor, so the face says so');
+  assert.equal(f.text.dataset.rulesComplete, 'false');
+});
+
+test('a primary that fits at the 13px floor keeps every clause and reports no overflow', () => {
+  const f = faceFixture([20, 10], { width: 240, height: 80 });
+  fitIllustratedCards([f.card]);
+  assert.ok(f.clauses.every(clause => clause.style.display === ''));
+  assert.ok(parseFloat(f.text.style.fontSize) >= 13, 'never under the 13px floor');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
   assert.equal(f.text.dataset.rulesComplete, 'true');
 });
 
@@ -53,7 +64,7 @@ test('three physical lines in a short bay keep their words', () => {
 });
 
 test('a secondary clause stays when the font can shrink to fit both', () => {
-  const f = faceFixture([15, 15]);
+  const f = faceFixture([15, 15], { width: 240, height: 60 });
   fitIllustratedCards([f.card]);
   assert.ok(f.clauses.every(clause => clause.style.display === ''));
   assert.equal(f.face.dataset.rulesOverflow, 'false');

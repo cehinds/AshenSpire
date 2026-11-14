@@ -118,7 +118,7 @@ export function resourceStrip(rows, poise, { compact = false } = {}) {
     entries.set(id, { ...entries.get(id), id, value: poise.ratings[id],
       formula: `${id.toUpperCase()} ${poise.ratings[id]} · Includes attributes and equipment.` });
   }
-  const labels = { hp: 'HP', stamina: 'SP', mana: 'MP', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
+  const labels = { hp: 'HP', stamina: 'Stamina', mana: 'Mana', ar: 'AR', pr: 'PR', dr: 'DR', poise: 'Poise', ward: 'Ward', handSize: 'Hand Size', draw: 'Draw', openingHand: 'Opening Hand' };
   const groups = [['hp', 'stamina', 'mana'], ['ar', 'pr'], ['dr', 'poise', 'ward'], ['handSize', 'draw'], ['openingHand']];
   const known = new Set(groups.flat());
   if (compact) {

@@ -33,7 +33,7 @@ function previewAndPlay(poise) {
   const f = fight(poise);
   primeAccuracyRolls(f.combat);
   const rows = damageRows(f.combat, f.id, f.enemy);
-  // Owner, 2026-11-03: hitDamages is the raw hit; the receipt's hpLoss is what live must deal.
+  // Owner, 2026-11-14: hitDamages is the HP lost per hit, the same as the receipt's hpLoss, which is what live must deal.
   const shown = rows.map(v => v.damageReceipt.hits.map(hit => hit.hpLoss));
   const shownRaw = rows.map(v => v.hitDamages);
   const poiseBefore = f.enemy.persistentPoise.value;
@@ -49,7 +49,8 @@ test('Poise broken by a mid-card Poise payload: later hits preview with the Stag
   const r = previewAndPlay(10);
   assert.equal(r.enemy.combatStance?.maneuver, 'staggered', 'live play broke Poise');
   assert.deepEqual(r.shown.flat(), r.dealt, 'preview HP loss equals live hit for hit');
-  assert.deepEqual(r.shownRaw.flat(), r.incoming, 'and the raw quote equals the live full hit, Staggered Vulnerable included');
+  assert.deepEqual(r.shownRaw.flat(), r.dealt, 'and the quote equals the live HP loss, Staggered Vulnerable included');
+  assert.ok(r.incoming[1] > 5, 'the live full hit of the second hit carries the Staggered Vulnerable');
   assert.equal(r.dealt.length, 2);
   assert.ok(r.dealt[1] > 5, 'the second hit carries the Staggered Vulnerable (x1.25), not the unbroken 5');
 });
@@ -58,7 +59,7 @@ test('Poise that survives the payload: preview unchanged and equal to live', () 
   const r = previewAndPlay(60);
   assert.notEqual(r.enemy.combatStance?.maneuver, 'staggered');
   assert.deepEqual(r.shown.flat(), r.dealt);
-  assert.deepEqual(r.shownRaw.flat(), r.incoming);
+  assert.deepEqual(r.shownRaw.flat(), r.dealt);
 });
 test('Current profile: no Core Poise pool, so the preview drain does nothing', () => {
   const ctx = { turn: 1 }, enemy = { id: 'e', kind: 'enemy', alive: true, hp: 10, statuses: {}, persistentPoise: { value: 3, max: 3 } };

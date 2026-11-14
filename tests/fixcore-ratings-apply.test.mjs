@@ -48,10 +48,11 @@ function damage(w, cardId) {
   const hp = target.hp;
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: target.id });
   const live = combat.eventLog.filter(row => row.type === 'damageDealt').at(-1).damageReceipt;
-  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-03: totalDamage is the raw quote; the receipt total is the resolved HP loss.
+  const out = { incoming: value.damageReceipt.hits[0].incoming, liveIncoming: live.hits[0].incoming, preview: value.damageReceipt.totalDamage, liveLoss: hp - target.hp }; // Owner, 2026-11-14: totalDamage is the HP quote; the receipt total is the resolved HP loss.
   assert.equal(out.liveIncoming, out.incoming, `${cardId}: live incoming matches the preview`);
   assert.equal(out.liveLoss, out.preview, `${cardId}: live HP loss matches the preview`);
-  assert.equal(value.hitDamages[0], out.liveIncoming, `${cardId}: the raw quote is the full hit that lands`);
+  // Owner, 2026-11-14: the quote is the HP the first hit costs; the full incoming hit is the receipt's `incoming`.
+  assert.equal(value.hitDamages[0], live.hits[0].hpLoss, `${cardId}: the quote is the HP the first hit costs`);
   return out;
 }
 // One Block card (Defend, or Counter's Block): preview value against the Block actually gained live.

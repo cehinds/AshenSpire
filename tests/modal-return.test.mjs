@@ -36,9 +36,9 @@ test('the parent closing on its own forgets it and its children: nothing reopens
 });
 
 test('the Back label names the place that opened the flow', () => {
-  assert.equal(modalParentLabel({ place: t('common.place.blacksmith') }), 'Back to Blacksmith');
-  assert.equal(modalParentLabel({ place: t('common.place.shrine') }), 'Back to Shrine');
-  assert.equal(modalParentLabel({ place: t('common.place.merchant') }), 'Back to Merchant');
+  assert.equal(modalParentLabel({ place: t('common.place.blacksmith') }), 'Back');
+  assert.equal(modalParentLabel({ place: t('common.place.shrine') }), 'Back');
+  assert.equal(modalParentLabel({ place: t('common.place.merchant') }), 'Back');
   assert.equal(modalParentLabel(null), t('common.back'));
 });
 
@@ -66,7 +66,7 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
       return door;
     };
     open(null);
-    assert.equal(host.querySelector('.smith-back').textContent.trim(), 'Back to Blacksmith');
+    assert.equal(host.querySelector('.smith-back').textContent.trim(), 'Back');
     // The row's own review confirms: the list closes, commits, and reopens.
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
     dom.document.querySelector('.confirmation-modal .confirmation-confirm').click();

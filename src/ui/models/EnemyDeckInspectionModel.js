@@ -26,14 +26,14 @@ export function enemyDeckInspection(combat, enemy, moves, preview) {
     const last = moveId === lastMoveId;
     const state = [active && 'Current action', last && 'Last played', move.locked && 'Locked'].filter(Boolean).join(' · ');
     return { ...move, id: cardId, cardId, copies: count, name: card.name, active, last,
-      meta: [state || t('settings.group.Deck'), count > 1 ? `${count} copies` : '', `Action cost: ${cost} SP`, `Card base: ${card.staminaCost || 0} SP + ${card.manaCost || 0} MP`, move.meta].filter(Boolean).join(' · '),
+      meta: [state || t('settings.group.Deck'), count > 1 ? `${count} copies` : '', `Action cost: ${cost} Stamina`, `Card base: ${card.staminaCost || 0} Stamina + ${card.manaCost || 0} Mana`, move.meta].filter(Boolean).join(' · '),
       // Execution uses the shared runtime move projection, whose formulas and
       // tier scaling may differ from the printed base card definition.
       detail: move.detail };
   }).filter(Boolean);
   const last = rows.find(row => row.last) || null;
   const receipt = [...(combat.eventLog || [])].reverse().find(event => event.type === 'enemyMoveStarted' && event.sourceId === enemy.id && event.moveId === lastMoveId)?.actionPreview;
-  const played = last && receipt ? { ...last, meta: `Last played · Paid ${receipt.totalSp ?? receipt.spCost} SP · ${last.cardId}`,
+  const played = last && receipt ? { ...last, meta: `Last played · Paid ${receipt.totalSp ?? receipt.spCost} Stamina · ${last.cardId}`,
     detail: receipt.actionEffects.map(effect => `${enemyActionEffectText(effect, combat.registries)}${effect.conditionMet === false ? ' (condition not met)' : ''}`).join(' · ') || last.detail } : last;
   return { cards: rows, current: preview?.hidden ? null : rows.find(row => row.active) || null,
     last: played, currentHidden: !!preview?.hidden };

@@ -224,3 +224,11 @@
 
 /* Owner (2026-11-06): the mini HUD is as wide as its cell and its contents scale with it (--mini-hud-scale, set once per layout pass). */
 :root .combat .combatant { --intent-content-scale: calc(.8 * var(--mini-hud-scale, 1)); }
+
+/* Wave 2 (sizes): the two numbers a player plans a turn around, their own HP and the incoming damage, are the largest numbers on
+   the combat screen (24 px effective each); every other number stays under 20. Specificity beats the per-form-factor rows above. */
+:root .combat { --focus-number-size: calc(27px / var(--ui-zoom, 1)); }
+:root[data-layout='narrow'] .combat { --focus-number-size: calc(24px / var(--ui-zoom, 1)); }
+:root .combat[data-layout] .combatant.player .combat-health-row { --combatant-value-text: var(--focus-number-size); }
+:root .combat[data-layout] article.combatant.player .combat-health-row .as-meter .m-value { font-size: var(--focus-number-size) !important; line-height: 1; }
+:root .combat .intent .intent-action-value, :root .combat .intent .intent-followup { --intent-value-size: var(--focus-number-size); }

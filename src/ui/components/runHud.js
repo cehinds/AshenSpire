@@ -288,3 +288,20 @@ export function wireRunHud(app, {
 
   return { hud, armouryBtn: armouryBtn && onArmoury ? armouryBtn : null, menuBtn };
 }
+
+/**
+ * RefreshRunHud(app, { registries, run, meta, place, headerClass, layout, hud, remount }) — draw the band again from
+ * the run as it stands now and wire it, in place of the one `runHudHtml` drew inside `app`. A room whose choice moves
+ * cinders or HP (an event, a dialogue) calls it after the commit so the header never shows the old amount.
+ * Returns wireRunHud's handles, or null when the screen has no band.
+ */
+export function RefreshRunHud(app, { registries, run, meta, place, headerClass = 'map-header', layout = '', hud = {}, remount = null }) {
+  const old = app.querySelector('.shared-hud');
+  if (!old) return null;
+  const holder = document.createElement('div');
+  holder.innerHTML = runHudHtml({ registries, run, meta, place, headerClass, layout });
+  const fresh = holder.firstElementChild;
+  if (!fresh) return null;
+  old.replaceWith(fresh);
+  return wireRunHud(app, { ...hud, registries, run, meta, remount });
+}

@@ -9,9 +9,10 @@ import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
-import { knowledgeIntentProjection } from '../src/engine/enemyKnowledge.js';
+import { knowledgeIntentProjection, rollEnemyKnowledge } from '../src/engine/enemyKnowledge.js';
 import { proposalTurn } from '../src/engine/proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens } from '../src/engine/enemyBurdens.js';
+import { legacyPerceptionRoll } from './legacyHitRules.mjs';
 
 // Exercise the real aggregated catalog and profile adapter, not replacement definitions.
 function fight(profileId = 'current', expanded = false, { intentRoll = null } = {}) {
@@ -31,6 +32,9 @@ function fight(profileId = 'current', expanded = false, { intentRoll = null } = 
   for (const actor of [combat.player, ...combat.enemies]) {
     actor.hp = actor.maxHp = 200; actor.block = 0; actor.statuses = {};
   }
+  // A forced failed read needs the perception check, which a fight saved before the exact-reads ruling (2026-11-14) still rolls:
+  // give the fight those rules and read every enemy again with the forced roll.
+  if (intentRoll !== null) { legacyPerceptionRoll(combat); for (const enemy of combat.enemies) rollEnemyKnowledge(combat, enemy); }
   return combat;
 }
 function drain(c) {

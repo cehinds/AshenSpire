@@ -69,17 +69,23 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
   let settled = false;
   let dismissed = false;
   const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
-  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.back'), role: 'exit' });
+  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), role: 'exit' });
   let bodyHost = null;
   const shell = openModal({
     title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
     className: 'reaction-choice', deferFocus: true,
     initialFocus: () => bodyHost?.querySelector('[data-reaction-option]') || null,
-    closeLabel: t('common.back'), secondary: [decline], primary: play,
+    closeLabel: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), secondary: [decline], primary: play,
     body(host) {
       bodyHost = host;
       const incoming = intentDamageRead(pending.intentPreview);
-      if (incoming) host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
+      // Owner, 2026-11-14: the incoming action reads as the HP the player will lose, and each option as the HP lost after it.
+      // That one line is also the price of Skip, so the separate skip-cost line shows only when the HP figure is unknown.
+      if (Number.isFinite(pending.incomingHp)) host.append(el('p', { class: 'reaction-incoming-damage', text: t('combat.reaction.loseHp', { amount: pending.incomingHp }) }));
+      else if (incoming) {
+        host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
+        if (!stacked) host.append(el('p', { class: 'reaction-skip-cost', text: t('combat.reaction.skipCost', { amount: incoming.label }) }));
+      }
       if (stacked) {
         host.append(el('p', { className: 'reaction-stack-label', text: t('combat.reaction.stack') }));
         const list = el('ol', { className: 'reaction-stack', 'data-reaction-stack': String(stack.length) });
@@ -89,7 +95,9 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
       const summaries = collapseIdenticalOptions(pending.options.map(option => {
         let summary = null;
         try { summary = summarize?.(option) ?? null; } catch { summary = null; }
-        return { option, fallback: !summary, row: { ...(summary || summarizeCardOption(null, null, option)), id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
+        const base = summary || summarizeCardOption(null, null, option);
+        const result = Number.isFinite(option.incomingHp) ? [t('combat.reaction.loseHp', { amount: option.incomingHp })] : [];
+        return { option, fallback: !summary, row: { ...base, costs: [...(base.costs || []), ...result], id: option.id, artAsset: reactionOptionArt(option, registries), artComposition: reactionOptionArtwork(option, registries), chip: t('combat.reactions.label') } };
       }));
       const grid = optionRowList(summaries, { idAttr: 'data-reaction-option', onSelect: (id, row) => {
         selected = id;

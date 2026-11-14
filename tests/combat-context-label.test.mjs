@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { withKitDom } from './helpers/dom.mjs';
+import { CharacterDisplayName } from '../src/model/characterName.js';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 function shipped(name) {
@@ -13,13 +14,13 @@ function shipped(name) {
 
 test('frame names match inspector identity without constructing inspection data', () => {
   const run = { class: 'reaver', customization: {} };
-  const context = { run, runClassIdentity: (_registries, state) => ({ name: state.classUnequipped ? 'Classless' : 'Reaver' }), registries: { classes: { get: () => ({ name: 'Reaver' }) }, enemies: { get: () => ({ name: 'Wandering Soldier' }) } } };
+  const context = { run, CharacterDisplayName, runClassIdentity: (_registries, state) => ({ name: state.classUnequipped ? 'Classless' : 'Reaver' }), registries: { classes: { get: () => ({ name: 'Reaver' }) }, enemies: { get: () => ({ name: 'Wandering Soldier' }) } } };
   runInNewContext(shipped('combatantName') + '\nglobalThis.nameFor = combatantName;', context);
-  assert.equal(context.nameFor('player', {}), 'REAVER');
+  assert.equal(context.nameFor('player', {}), 'Reaver');
   run.classUnequipped = true;
-  assert.equal(context.nameFor('player', {}), 'CLASSLESS');
+  assert.equal(context.nameFor('player', {}), 'Classless');
   run.customization.name = 'Élan';
-  assert.equal(context.nameFor('player', {}), 'ÉLAN');
+  assert.equal(context.nameFor('player', {}), 'Élan');
   assert.equal(context.nameFor('enemy', { enemyId: 'soldier' }), 'Wandering Soldier');
 });
 

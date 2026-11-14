@@ -32,7 +32,8 @@ test('compact hand leaves the footer tool and Grid rows below its resting cards'
   assert.match(hand, /const toolsHeight = 0;/, 'the toolbar is outside the fan, so no row is reserved above it');
   assert.match(tools, /const footerControls = combatEl.querySelector\('\.combat-action-row'\)/, 'tools dock against the footer rather than the hand top');
   for (const zoom of [.74, 1, 1.2]) for (const count of [3, 5, 7]) {
-    const input = { width: 390 / zoom, height: 250 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
+    // Wave 2 (sizes): the phone hand band is 34% of the screen up to 290px (compactCombat.handMaximumPx) so a 160px face fits.
+    const input = { width: 390 / zoom, height: 290 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
     const plan = responsiveHandLayout(input, handLayout(input));
     const bottom = Math.max(...plan.cards.map(card => {
       const radians = card.angle * Math.PI / 180;

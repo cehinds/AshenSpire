@@ -3,10 +3,10 @@
 // sounds and haptics play as before. ui/fx.js gates its two spawn primitives (callout, floatNum) through this.
 
 // The words that still show. `evadeFailed` is the "Hit - Evade Failed" variant of Hit (docs/STANCE-COMBAT-RULES.md).
-export const FLOATER_WORDS_SHOWN = Object.freeze(['hit', 'evadeFailed', 'missed', 'blocked', 'countered']);
+export const FLOATER_WORDS_SHOWN = Object.freeze(['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
 
-// Dodged and Evaded are misses, so they draw as the Missed word.
-const MISS_KINDS = Object.freeze(['dodged', 'evaded']);
+// Dodged is a miss, so it draws as the Missed word. Evaded keeps its own word (owner, 2026-11-14): an Evade stack cancelled the hit.
+const MISS_KINDS = Object.freeze(['dodged']);
 
 // On by default. Tests of the floater column's mechanics (spawn order, stagger, lift, cap) switch it off so they can
 // exercise every kind of floater; nothing in the game calls this.

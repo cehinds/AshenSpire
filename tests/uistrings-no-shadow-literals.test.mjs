@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile', 'effects-toggle', 'card-art-builder-lifecycle', 'modal-return', 'wording'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,31 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/components/creationCards.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/creationCards.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/footerArt.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/holdconfirm.js', 'Confirm', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/modalShell.js', 'Menu', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/optionDecision.js', 'Confirm', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/overlay.js', 'Menu', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/components/runHud.js', 'Menu', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/fx.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/fx.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/input.js', 'Confirm', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/input.js', 'Menu', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/ArmouryModels.js', 'Armoury', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/CombatantInspectorSections.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/CombatantInspectorSections.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/ConfirmationReviewModel.js', 'Confirm', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/ProgressionInspectionModel.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/ProgressionInspectionModel.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/QuickAccessPanelModel.js', 'Armoury', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/models/SettingsRowsModel.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/screens/combat.js', 'Confirm', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/screens/combat.js', 'Menu', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/screens/customize.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/screens/customize.js', 'Stamina', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
+  ['src/ui/screens/rest.js', 'Mana', 'the same plain word as a migrated row by coincidence (Wave 2 one-word wording); a role-specific label, not a repaint of that row'],
   ['src/ui/cardArtStyle.js', 'Reviewed', 'persisted CARD_ART_REVIEWED style identifier; the authoring tab and review checkbox read their own uiStrings rows'],
   ['src/ui/components/combatActionRow.js', 'Draw', 'opens the Draw pile; not the procedural builder draw-effect art cue'],
   ['src/ui/components/creationCards.js', 'Draw', 'character resource stat label for cards drawn per turn; not the builder draw-effect art cue'],

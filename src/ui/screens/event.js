@@ -21,7 +21,7 @@ import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
@@ -166,21 +166,17 @@ export function mountEvent(app, opts) {
         const before = snapshotRunForDiff(run);
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
+        // The header shows the cinders and HP the choice just paid or took, on this same screen.
+        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
         // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
         showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };
-      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
-      // CHARACTERISTIC of the choice, derived from its own ops
-      // (model/consequence.js); the beat is derived from that characteristic
-      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
-      // position all moved into the machinery with it — a bar that cannot be
-      // pressed still never gets armed, because this branch is the affordable
-      // one and always was.
+      // A choice commits on one tap (the eventChoice row in model/secondbeat.js
+      // says `tap: true`; owner, 2026-11-14). Whether a choice binds is still a
+      // characteristic derived from its ops (model/consequence.js) and rides in
+      // the ctx so the audit record keeps it; it no longer picks a hold.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
-        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
-        confirmLabel: 'CHOOSE',
         onConfirm: commit,
       }));
     }

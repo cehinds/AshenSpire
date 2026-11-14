@@ -16,6 +16,10 @@ export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'histo
 // MP and Poise only when the combatant actually has that pool (max > 0).
 export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'SP', 'MP', 'Poise', 'Ward']);
 
+// The inspector's resource rows carry the engine's short labels (they key the meter tone); the player reads the word.
+const RESOURCE_WORDS = Object.freeze({ SP: 'Stamina', MP: 'Mana' });
+export function ResourceWord(label) { return RESOURCE_WORDS[label] || label; }
+
 export function previewMeters(resources = []) {
   return INSPECTOR_PREVIEW_METERS
     .map((label) => resources.find((r) => r.label === label))
@@ -45,7 +49,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   } : subject.intent;
   const summary = [
     hp && { label: text('inspector.summary.hp'), value: `${hp.value} / ${hp.max}` },
-    ...resources.filter(r => r.label === 'SP').map(r => ({ label: 'SP', value: `${r.value} / ${r.max}` })),
+    ...resources.filter(r => r.label === 'SP').map(r => ({ label: ResourceWord('SP'), value: `${r.value} / ${r.max}` })),
     intent && { label: text('inspector.summary.intent'), value: intent.name, detail: intent.detail || '' },
     { label: text('inspector.summary.defense'), value: text('inspector.summary.block', { amount: block?.value ?? 0 }) },
     // The player's AC (SPEC: the combat HUD hides it, the inspect panel still lists it): the Evasion DC an enemy hit roll must reach.
@@ -59,7 +63,7 @@ export function projectCombatantInspector(subject, text = (id) => id) {
   const state = [
     ...resources
     .filter((r) => r.label !== 'HP' && r.label !== t('combat.protection.block') && (r.always || (r.max == null ? r.value > 0 : r.max > 0)))
-      .map((r) => ({ ...(r.id ? { id: r.id } : {}), label: r.label, value: r.max == null ? String(r.value) : `${r.value} / ${r.max}` })),
+      .map((r) => ({ ...(r.id ? { id: r.id } : {}), label: ResourceWord(r.label), value: r.max == null ? String(r.value) : `${r.value} / ${r.max}` })),
     ...(subject.abilities ? [] : (subject.statuses || []).map((s) => ({ label: s.name, detail: s.detail || '' }))),
   ];
   const abilityList = subject.abilities ?? subject.moveCards ?? subject.skills ?? null;

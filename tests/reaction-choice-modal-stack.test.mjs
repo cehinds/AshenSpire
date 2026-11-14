@@ -169,13 +169,13 @@ function installDom() {
   return { document, restore };
 }
 
-async function openWith(extra) {
+async function openWith(extra, pendingExtra = {}) {
   const { document, restore } = installDom();
   try {
     const { openReactionChoiceModal } = await import('../src/ui/components/reactionChoiceModal.js');
     const answers = [];
     const shell = openReactionChoiceModal({
-      pending: { id: 'root:e1:0', options: OPTIONS },
+      pending: { id: 'root:e1:0', options: OPTIONS, ...pendingExtra },
       onAnswer: (intent) => answers.push(intent),
       ...extra,
     });
@@ -200,7 +200,7 @@ test('committedReactionStack returns this root\'s entries, top first', async () 
   }
 });
 
-test('no stack renders the version 1 modal with a Back button', async () => {
+test('no stack renders the version 1 modal with a Skip button', async () => {
   const opened = await openWith({});
   try {
     const { shell } = opened;
@@ -208,10 +208,21 @@ test('no stack renders the version 1 modal with a Back button', async () => {
     assert.equal(body.querySelector('[data-reaction-stack]'), null, 'no stack list without entries');
     assert.equal(body.querySelector('.reaction-stack-label'), null);
     assert.equal(body.querySelector('p'), null, 'no help paragraph: the body holds only the damage line and the option rows');
-    const exits = opened.document.querySelectorAll('button').filter((node) => node.textContent === 'Back');
-    assert.ok(exits.length >= 1, 'a button reads Back');
+    const exits = opened.document.querySelectorAll('button').filter((node) => node.textContent === 'Skip');
+    assert.ok(exits.length >= 1, 'a button reads Skip');
     assert.equal(opened.document.querySelectorAll('button').filter((node) => node.textContent === 'Resolve').length, 0, 'no Resolve label without a stack');
     assert.equal(body.querySelectorAll('[data-reaction-option]').length, 1);
+  } finally {
+    opened.restore();
+  }
+});
+
+test('the Skip button says what skipping costs when the incoming amount is known', async () => {
+  const opened = await openWith({}, { intentPreview: { damage: 12, hits: 1, totalDamage: 12, damageBasis: 'hp' } });
+  try {
+    const costs = opened.shell.body.querySelectorAll('.reaction-skip-cost');
+    assert.equal(costs.length, 1, 'one skip-cost line under the incoming amount');
+    assert.match(costs[0].textContent, /^Skip: take 12/);
   } finally {
     opened.restore();
   }
@@ -238,7 +249,7 @@ test('a stack of two lists the top first and labels the exit Resolve', async () 
     assert.equal(shell.body.querySelector('[data-reaction-stack]').getAttribute('data-reaction-stack'), '2');
     assert.deepEqual(shell.body.querySelectorAll('p').map((node) => node.textContent), ['On the stack'], 'only the stack label, no help paragraph');
     assert.equal(document.querySelectorAll('button').filter((node) => node.textContent === 'Resolve').length, 1, 'exit reads Resolve');
-    assert.equal(document.querySelectorAll('button').filter((node) => node.textContent === 'Back').length, 0, 'Back is replaced on the exit');
+    assert.equal(document.querySelectorAll('button').filter((node) => node.textContent === 'Skip').length, 0, 'Skip is replaced on the exit');
     assert.equal(shell.body.querySelectorAll('[data-reaction-option]').length, 1, 'options are still offered');
   } finally {
     opened.restore();
@@ -333,8 +344,8 @@ test('several options are rows of one list; arrows move focus, selecting enables
     assert.deepEqual(rows.map(row => row.getAttribute('aria-pressed')), ['false', 'true', 'false']);
     const play = opened.document.querySelectorAll('button').find(node => node.textContent === 'Play');
     assert.equal(play.disabled, false);
-    opened.document.querySelectorAll('button').find(node => node.textContent === 'Back').click();
-    assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: null }], 'Back answers null even with a row selected');
+    opened.document.querySelectorAll('button').find(node => node.textContent === 'Skip').click();
+    assert.deepEqual(opened.answers, [{ offerId: 'root:e1:0', optionId: null }], 'Skip answers null even with a row selected');
   } finally {
     opened.restore();
   }

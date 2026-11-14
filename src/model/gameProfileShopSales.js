@@ -40,8 +40,8 @@ export function gameProfileShopSalePlan(registries, run, shopId, kind, identity)
       const itemRef = pieceItemRef(def);
       detail = { itemRef, tier: run.itemUpgradeLevels?.[itemRef] || 0, mounts: mountRows(registries, run, { itemRef, piece: def }).filter(row => row.cardId) };
     }
-    if (def?.classId === run.class && Object.values(run.loadout?.sets || {}).some(ids => ids.includes(def.id))) reason = 'Unequip this armor from every set before selling.';
-    if (!item) reason = 'This armor is no longer in your inventory.';
+    if (def?.classId === run.class && Object.values(run.loadout?.sets || {}).some(ids => ids.includes(def.id))) reason = 'Unequip this armour from every set before selling.';
+    if (!item) reason = 'This armour is no longer in your inventory.';
   } else if (kind === 'relics') {
     def = registries.relics.has(identity) ? registries.relics.get(identity) : null;
     item = run.relics?.includes(identity) ? identity : null;

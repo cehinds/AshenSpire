@@ -17,7 +17,7 @@
 // `saves` and `rng` are optional: stubs get a deterministic pick, never Math.random.
 
 import { uiIconText } from '../../content/uiIcons.js';
-import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../../model/attributePointPreview.js';
+import { StatAllocationSection } from '../components/statAllocation.js';
 import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
@@ -28,13 +28,13 @@ import { isEngaged, focusFirst } from '../input.js';
 import { rewardPlan, rewardClaimStatus, rewardNotes, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations, scopeXpProgress } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
-import { levelUpPlan } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { skillTracks, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
 import { el, modalFooter, button } from '../kit/index.js';
 import { t, tFull, tTip } from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
+import { openConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
 import { cardUpgradeChanges } from '../models/CardUpgradeModel.js';
 import { projectGameCard } from '../../model/gameProfile.js';
@@ -163,38 +163,8 @@ export function mountRewards(app, {
   }
 
   function statAllocationSection() {
-    if (!receiptOnly || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
-    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
-    const draw = () => {
-      const points = run.level?.unspentPoints || 0;
-      const attrs = levelUpPlan(registries, run).attributes;
-      // The largest thing one more point buys, from the live formulas (model/attributePointPreview.js).
-      const gainChip = (attrId) => {
-        const gains = attributePointGains(registries, run, attrId, { settings });
-        const top = largestAttributeGain(registries, run, attrId, { settings });
-        return top ? el('span', { class: 'reward-stat-gain', text: top.text, title: attributeGainSummary(gains) }) : null;
-      };
-      host.replaceChildren(
-        el('h3', { text: `Assign stats · ${points} point${points === 1 ? '' : 's'} available` }),
-        ...attrs.map((attr) => {
-          const id = attr.id;
-          const add = button({ label: '+', className: 'reward-stat-add', disabled: points < 1, attrs: { 'aria-label': `Increase ${attr.label}` } });
-          add.addEventListener('click', () => {
-            if (!run.level?.unspentPoints) return;
-            onAllocateStat(id);
-            persistProgress();
-            draw();
-          });
-          return el('div', { class: 'reward-stat-row' }, [
-            el('span', { class: 'reward-stat-name' }, [attr.label, gainChip(attr.id)]),
-            el('span', { text: String(run.attributes?.[id] ?? 0) }),
-            add,
-          ]);
-        }),
-      );
-    };
-    draw();
-    return host;
+    if (!receiptOnly) return null;
+    return StatAllocationSection(registries, run, { settings, onAllocateStat, onChange: persistProgress });
   }
 
   async function playXpAnimation(host) {
@@ -285,6 +255,7 @@ export function mountRewards(app, {
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
         receiptOnly ? statAllocationSection() : null,
+        receiptOnly && rewards.cinders ? el('p', { class: 'spoils-line spoils-cinders', text: t('reward.spoils.cinders', { gained: rewards.cinders.gained, total: rewards.cinders.total }) }) : null,
       ]),
       foot,
     });
@@ -308,22 +279,29 @@ export function mountRewards(app, {
       onDone();
       disarmContinue?.(); disarmContinue = null;
     };
-    // The action is registered in secondbeat's enumerable table, so native
-    // keyboard/gamepad presses enter the same shared armPress door as pointer
-    // and touch; the configured dial remains the one duration authority.
+    // Continue commits on one tap (the rewardContinue row in model/secondbeat.js
+    // says `tap: true`) and asks exactly once, in the shared confirmation modal,
+    // while something claimable is still unclaimed. The row stays registered so
+    // keyboard and pad presses enter the same door as pointer and touch.
+    const leave = () => {
+      if (!receiptOnly) return finish();
+      if (receiptContinued || !xpAnimationDone) return;
+      receiptContinued = true;
+      try { finish(); }
+      catch (error) {
+        receiptContinued = false;
+        note.textContent = error.message;
+      }
+    };
     disarmContinue?.();
     disarmContinue = beatArmer(meta, registries)(cont, 'rewardContinue', {
-      question: t('reward.leave.question'),
-      confirmLabel: t('reward.leave.confirm'),
       onConfirm: () => {
-        if (!receiptOnly) return finish();
-        if (receiptContinued || !xpAnimationDone) return;
-        receiptContinued = true;
-        try { finish(); }
-        catch (error) {
-          receiptContinued = false;
-          note.textContent = error.message;
-        }
+        if (!hasUnclaimedReward()) return leave();
+        openConfirmationModal({
+          title: t('reward.leave.question'), message: t('reward.leave.message'),
+          confirmLabel: t('reward.leave.confirm'), cancelLabel: t('reward.leave.take'),
+          returnFocusElement: cont, onConfirm: leave,
+        });
       },
     });
 
@@ -379,6 +357,9 @@ export function mountRewards(app, {
       });
     }
   }
+
+  // A row the player could still take: not taken, not skipped, not blocked.
+  const hasUnclaimedReward = () => plan.rows.some((row) => !states[row.key] && !row.blockedBy);
 
   // The menu's foot note: what Continue does from here.
   function holdNote() {

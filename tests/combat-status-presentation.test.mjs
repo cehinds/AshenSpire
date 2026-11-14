@@ -4,13 +4,14 @@ import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatu
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { createEntityTermOverlay } from '../src/framework/termOverlay.js';
 import { activeCombatAbilities } from '../src/ui/components/combatAbilities.js';
+import { legacyRules } from './legacyHitRules.mjs';
 
 const weak = {id:'weak',name:'Weak',tooltip:'Legacy damage reduction.',modifiers:{damageDealtMult:.75}};
 const vulnerable = {id:'vulnerable',name:'Vulnerable',tooltip:'Legacy 25% extra damage.'};
 const evade = {id:'evade',name:'Evasion',tooltip:'Legacy 3 Evasion per stack.'};
 const registries = {statuses:{get:id=>[weak,vulnerable,evade].find(row=>row.id===id),all:()=>[weak,vulnerable,evade]}};
 test('Core 2 PIPs and card glossary share effective status tooltips without mutating legacy definitions', () => {
-  const combat = {combatExpansionVersion:2,fixCoreRules:fixCoreMechanics,registries};
+  const combat = {combatExpansionVersion:2,fixCoreRules:legacyRules(fixCoreMechanics),registries};
   const view = combatStatusPresentationRegistries(registries,combat);
   assert.match(view.statuses.get('weak').tooltip,/Attack rating.*0\.75/);
   assert.match(view.statuses.get('vulnerable').tooltip,/1\.25/);
@@ -35,7 +36,7 @@ test('Core 2 PIPs and card glossary share effective status tooltips without muta
 test('player and enemy inspectors retain Core Evade wording after the real terminology overlay', () => {
   const terms = createEntityTermOverlay({statuses:[evade]});
   const source = {...registries,frameworkTerms:terms};
-  const combat = {combatExpansionVersion:2,fixCoreRules:fixCoreMechanics,registries:source};
+  const combat = {combatExpansionVersion:2,fixCoreRules:legacyRules(fixCoreMechanics),registries:source};
   const view = combatStatusPresentationRegistries(source,combat);
   const player = {id:'player',attributes:{dexterity:7},statuses:{evade:{stacks:1}}};
   const enemy = {id:'e1',attributes:{dexterity:5},statuses:{evade:{stacks:2}},
@@ -51,4 +52,13 @@ test('player and enemy inspectors retain Core Evade wording after the real termi
   assert.equal(terms.withStatusWords(evade).tooltip,evade.tooltip,'the shared overlay remains unchanged');
   const legacy = combatStatusPresentationRegistries(source,{combatExpansionVersion:2,registries:source});
   assert.equal(legacy.frameworkTerms.withStatusWords(legacy.statuses.get('evade',enemy)).tooltip,evade.tooltip);
+});
+
+// Owner, 2026-11-14: the shipped rules (no hit roll) word Evade as a cancelled next attack, on the PIP, the glossary and both inspectors.
+test('the shipped rules word Evade as the next attack missing', () => {
+  const combat = {combatExpansionVersion:2,fixCoreRules:fixCoreMechanics,registries};
+  const view = combatStatusPresentationRegistries(registries,combat);
+  assert.match(view.statuses.get('evade').tooltip,/^The next attack against you misses\./);
+  assert.match(view.statuses.get('evade',{id:'e1'}).tooltip,/^The next attack against you misses\./);
+  assert.doesNotMatch(view.statuses.get('evade').tooltip,/Evasion/);
 });

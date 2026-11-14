@@ -118,6 +118,8 @@ export const ACTIONS = Object.freeze({
   // ---- wired to the shared machinery ---------------------------------------
   eventChoice: {
     of: 'taking an event choice',
+    // COMMITS ON A TAP (owner, 2026-11-14): a choice is a choice; the player pointed at it. No hold, no review.
+    tap: true,
     lives: 'src/ui/screens/event.js',
     surface: 'event',
     // WHETHER A CHOICE BINDS IS ITSELF DERIVED, from the entry's own ops —
@@ -131,24 +133,17 @@ export const ACTIONS = Object.freeze({
   },
   endTurn: {
     of: 'ending your turn',
+    // COMMITS ON A TAP (owner, 2026-11-14): one activation ends the turn, always. The button wears a warning while a card is still playable (combat.js).
+    tap: true,
     lives: 'src/ui/screens/combat.js',
     surface: 'combat',
-    // HIS SENTENCE, AND THE HALF OF IT THAT WAS DROPPED: "same with ending
-    // turn." The ruling is literal and state-independent: End Turn always
-    // hands the enemy the turn, even when the current hand is spent, so the
-    // same configured second beat guards every press. The pulse may still
-    // report playable resources; it does not decide whether the safety step
-    // exists.
-    // THE EXCEPTION (owner, 2026-10-18): ruled state-independent 2026-08-17;
-    // 2026-10-18 the owner made the spent hand the exception. "End Turn is a
-    // single tap when no card is playable; the hold/confirm stays when a card is
-    // still affordable." `playable` is the same fact the pulse reports (combat.js
-    // endTurnHasPlayable), read at the moment of the press. With a play still in
-    // hand, ending the turn throws it away and the configured beat guards it;
-    // with none, there is nothing to lose and the press is a single tap.
-    // FAIL-OPEN: only an explicit `false` takes the beat off. Anything else a
-    // caller could hand in (undefined, null, a stale value) keeps the hold, so
-    // the way this goes wrong is a safety step that stays, never one that goes.
+    // SUPERSEDED (owner, 2026-11-14, Wave 2): the 2026-08-17 "always a beat" and
+    // 2026-10-18 "a beat only while a card is playable" rulings are replaced by
+    // `tap: true` above. End Turn ends the turn on one activation; while a card
+    // is still playable the button wears the `end-turn--cards-left` warning
+    // instead of asking. `playable` stays an edge so the stakes record still
+    // says what is at risk. Fail-open reading of `playable` is kept: only an
+    // explicit `false` lowers the recorded stakes.
     stakes: (c) => (c.playable === false ? 'nothing' : 'turn'),
     undo: 'none',
     hazard: 'pointing',
@@ -157,6 +152,8 @@ export const ACTIONS = Object.freeze({
   },
   useFlask: {
     of: 'drinking a flask',
+    // COMMITS ON A TAP (owner, 2026-11-14): one tap drinks it. A targeted flask still enters aim mode, which is its own abort.
+    tap: true,
     lives: 'src/ui/screens/combat.js',
     surface: 'combat',
     // A flask is a charge, and a drunk one does not come back this climb.
@@ -172,6 +169,8 @@ export const ACTIONS = Object.freeze({
   },
   shrineRest: {
     of: 'resting at the shrine',
+    // COMMITS ON A TAP (owner, 2026-11-14): one tap rests. Smith and Rest are labelled panels, not a neighbouring-thumb risk.
+    tap: true,
     lives: 'src/ui/screens/rest.js',
     surface: 'rest',
     // Resting is not "gaining HP" — it is SPENDING THE SHRINE, and the shrine
@@ -254,6 +253,8 @@ export const ACTIONS = Object.freeze({
   },
   shopSell: {
     of: 'selling a possession back to the merchant',
+    // COMMITS ON A TAP (owner, 2026-11-14): one tap sells; the row names the item and the cinders it returns.
+    tap: true,
     lives: 'src/ui/screens/shop.js',
     surface: 'shop',
     // THE REMOVE'S MIRROR (E2 / #247): a relic or flask gone for good, one tap
@@ -381,6 +382,8 @@ export const ACTIONS = Object.freeze({
   },
   rewardContinue: {
     of: 'leaving the reward screen and resolving the remaining offer',
+    // COMMITS ON A TAP (owner, 2026-11-14): Continue commits at once. Leaving a reward unclaimed asks once inside the reward screens (reward.js, gameProfileOffers.js), not here.
+    tap: true,
     lives: 'src/ui/screens/reward.js',
     surface: 'reward',
     // Continue closes the offer. In auto mode it also applies every pending
@@ -403,6 +406,8 @@ export const ACTIONS = Object.freeze({
   },
   shopBuy: {
     of: 'buying from the merchant',
+    // COMMITS ON A TAP (owner, 2026-11-14): the price is on the face and the cinders come back.
+    tap: true,
     lives: 'src/ui/screens/shop.js',
     surface: 'shop',
     stakes: 'tempo',
@@ -460,17 +465,25 @@ export function beatFor(id, ctx = {}) {
         + `${Object.keys(LEGAL[f]).join(' | ')}.`);
     }
   }
-  const form = beatOf(c);
+  // `tap: true` on a row is the owner's ruling that the action commits on one
+  // activation (tap, click, Enter, pad A, a press-and-hold counts as one tap).
+  // The stakes/undo/hazard record stays so the audit still reads what the
+  // action costs; only the FORM changes. The list of actions that still ask is
+  // therefore every row whose form is not 'none', readable in this one place.
+  const form = row.tap ? 'none' : beatOf(c);
   return {
     id,
     form,
     ...c,
     handledBy: row.handledBy || null,
+    tap: !!row.tap,
     of: row.of,
     lives: row.lives,
     surface: row.surface || null,
     why: form === 'none'
-      ? (c.hazard === 'deliberate'
+      ? (row.tap
+        ? `no beat: commits on one tap (stakes '${c.stakes}', undo '${c.undo}')`
+        : c.hazard === 'deliberate'
         ? `no beat: ${HAZARD.deliberate} (${row.gesture || 'gesture unnamed'})`
         : `no beat: stakes '${c.stakes}' (${STAKES[c.stakes].of}), undo '${c.undo}'`)
       : `${form}: stakes '${c.stakes}' (${STAKES[c.stakes].of}) and ${UNDO[c.undo]}; ${HAZARD[c.hazard]}`,

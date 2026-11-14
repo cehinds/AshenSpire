@@ -58,9 +58,9 @@ test('authored dynamic formula descriptions preserve supported clamps and reject
     statuses: ['weak'], per: 2, max: 5 }),
   '2 per distinct negative status (maximum 5)');
   assert.equal(describeFormula({ f: 'energySpent', per: 2, min: 1, max: 5 }),
-    '2 per SP spent (minimum 1) (maximum 5)');
+    '2 per Stamina spent (minimum 1) (maximum 5)');
   assert.equal(describeFormula({ f: 'energySpent', per: 0.5 }),
-    '0.5 per SP spent (rounded down)');
+    '0.5 per Stamina spent (rounded down)');
   assert.equal(describeFormula({ f: 'energySpent', per: 2, max: Infinity }), undefined);
   assert.equal(describeFormula({ f: 'energySpent', per: 2, min: 5, max: 1 }), undefined);
 });
