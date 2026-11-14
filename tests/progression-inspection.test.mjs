@@ -18,7 +18,7 @@ const fresh = () => createRunState({ seed: 4242, classId: 'reaver', registries }
 test('compact sheet contains exactly eight resources and all five attributes without modifying the run', () => {
   const run = fresh(), before = structuredClone(run);
   const result = progressionStats(registries, run);
-  assert.deepEqual(result.rows.map(row => row.faceLabel), ['HP', 'SP', 'MP', 'AR', 'PR', 'DR', 'HandSize', 'Draw']);
+  assert.deepEqual(result.rows.map(row => row.faceLabel), ['HP', 'Stamina', 'Mana', 'AR', 'PR', 'DR', 'HandSize', 'Draw']);
   assert.equal(result.attributes.length, 5);
   assert.ok(result.rows.every(row => Number.isFinite(row.value)));
   assert.deepEqual(run, before);

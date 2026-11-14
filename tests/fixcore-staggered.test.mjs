@@ -186,7 +186,7 @@ test('the Poise tooltip and the Core Staggered definition describe the stance ru
   assert.match(text, /takes 25% off each hit \(you take the rest, rounded down\) and loses what it absorbed/);
   assert.match(text, /Staggered/);
   const def = fixCoreStatusDefinition(combat, 'staggered', { id: 'staggered', name: 'Staggered' });
-  assert.match(def.tooltip, /1 SP next turn.*1 Vulnerable.*only extend/);
+  assert.match(def.tooltip, /1 Stamina next turn.*1 Vulnerable.*only extend/);
   assert.doesNotMatch(def.tooltip, /Weak|Interrupt|stacks/i);
 });
 
@@ -243,7 +243,7 @@ test('the Staggered row carries the profile\'s costs, hiding a zero clause', () 
   combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), staggered: { stance: true, staminaLoss: 2, vulnerableStacks: 0, extendOnly: true } };
   hit(combat, target, 10);
   const row = combatStanceRow(target);
-  assert.match(row.detail, /Loses 2 SP next turn/);
+  assert.match(row.detail, /Loses 2 Stamina next turn/);
   assert.doesNotMatch(row.detail, /Vulnerable/);
   assert.equal(target.pendingStaminaLoss, 2);
 });

@@ -338,7 +338,7 @@ export const UI_ICON_LABELS = Object.freeze({
   poise: 'Poise', profile: 'Hero', progression: 'Rank', quest: 'Quest', regen: 'Regen', relic: 'Relic',
   reset: 'Reset', rest: 'Rest', reward: 'Loot', save: 'Save', search: 'Find', seed: 'Seed',
   settings: 'Setup', shield: 'Block', skill: 'Skill', smith: 'Smith', staggered: 'Stun',
-  stamina: 'Stamina', strength: 'STR', sword: 'Blade', target: 'Aim', touch: 'Touch', unknown: '?',
+  stamina: 'Stam', strength: 'STR', sword: 'Blade', target: 'Aim', touch: 'Touch', unknown: '?',
   vulnerable: 'Vuln', warning: 'Warn', weak: 'Weak', weight: 'Weight', world: 'World',
   'historic-crossed-swords': 'Swords', 'historic-comet': 'Comet', 'historic-dagger': 'Dagger',
   'historic-sun': 'Sun', 'historic-skull': 'Skull', 'historic-eye': 'Eye',
