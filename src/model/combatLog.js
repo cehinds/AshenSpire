@@ -380,7 +380,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       // `poise` is the nominal break bonus before Poise Guard absorbs any of it: pressure, not damage taken.
       case 'combatGuardBroken': {
         const who = event.sourceId || event.sourcePlayerId ? `${attackText()} broke ` : 'Broke ';
-        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Guard!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
+        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Block!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
         break;
       }
       case 'impactDealt':

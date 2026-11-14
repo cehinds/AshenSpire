@@ -337,7 +337,7 @@ export const UI_ICON_LABELS = Object.freeze({
   madness: 'Mad', mana: 'MP', map: 'Map', menu: 'Menu', merchant: 'Shop', motion: 'Move', next: 'Next',
   poise: 'Poise', profile: 'Hero', progression: 'Rank', quest: 'Quest', regen: 'Regen', relic: 'Relic',
   reset: 'Reset', rest: 'Rest', reward: 'Loot', save: 'Save', search: 'Find', seed: 'Seed',
-  settings: 'Setup', shield: 'Guard', skill: 'Skill', smith: 'Smith', staggered: 'Stun',
+  settings: 'Setup', shield: 'Block', skill: 'Skill', smith: 'Smith', staggered: 'Stun',
   stamina: 'SP', strength: 'STR', sword: 'Blade', target: 'Aim', touch: 'Touch', unknown: '?',
   vulnerable: 'Vuln', warning: 'Warn', weak: 'Weak', weight: 'Weight', world: 'World',
   'historic-crossed-swords': 'Swords', 'historic-comet': 'Comet', 'historic-dagger': 'Dagger',

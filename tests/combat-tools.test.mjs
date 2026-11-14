@@ -44,7 +44,7 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
     'No reaction: Reactions are off.',
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",
-    "Reaver's attack broke Soldier's Guard! (+3 Poise pressure)"]);
+    "Reaver's attack broke Soldier's Block! (+3 Poise pressure)"]);
 });
 
 test('three log heights use physical card, visible viewport and actual menu clearance', () => {

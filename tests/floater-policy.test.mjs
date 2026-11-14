@@ -86,7 +86,7 @@ test('buff-gain popups are hidden words too', async () => {
 });
 
 test('glyph words (Cast, Guard, Stun) are hidden; allowlisted words still show', () => {
-  for (const word of ['Cast', 'Guard', 'Stun']) assert.equal(floaterGlyphShown(word), false, word);
+  for (const word of ['Cast', 'Block', 'Stun']) assert.equal(floaterGlyphShown(word), false, word);
   assert.equal(floaterGlyphShown('blocked'), true);
   setFloaterPolicyEnabled(false);
   try { assert.equal(floaterGlyphShown('Cast'), true); } finally { setFloaterPolicyEnabled(true); }

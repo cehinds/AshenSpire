@@ -693,8 +693,8 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
 
 /**
  * THE ONE SMASH GUARD-BREAK TEST: a Smash that connects and leaves the target
- * with no Block. GUARD BREAK (combatGuardBroken) and the Block's blockBroken
- * both read it, so the Block break a Smash makes is shown as GUARD BREAK alone.
+ * with no Block. BLOCK BREAK (combatGuardBroken) and the Block's blockBroken
+ * both read it, so the Block break a Smash makes is shown as BLOCK BREAK alone.
  */
 export function isSmashGuardBreak(receipt, target) {
   return !!receipt && receipt.smash === true && (receipt.connected ?? true) && number(receipt.guardBefore) > 0 && number(target?.block) <= 0;

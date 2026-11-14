@@ -23,7 +23,7 @@ test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
     assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
-  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'BLOCK BREAK');
   assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
   assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
   assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
@@ -196,7 +196,7 @@ const CASES = [
   ['CRITICAL on the target, with its hurt pose', enemyAttack({ type: 'critHit', sourceId: 'e1', targetId: 'player', multiplier: 2 }, hit('e1', 'player')), 'critical@player', 'hit@player'],
   ['Dodged on the evader (attackEvaded)', enemyAttack({ type: 'attackEvaded', sourceId: 'e1', targetId: 'player', charges: 0 }), 'dodged@player', 'missed@player'],
   ['Dodged on the evader (combatAvoidanceResolved)', enemyAttack({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, evade: { success: true } }), 'dodged@player', 'missed@player'],
-  ['GUARD BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
+  ['BLOCK BREAK on the target', playerAttack(hit('player', 'e1'), { type: 'combatGuardBroken', sourceId: 'player', targetId: 'e1', poise: 2 }), 'guardBreak@e1', 'hit@e1'],
   ['STAGGERED on an enemy', playerAttack(hit('player', 'e1'), { type: 'enemyStaggered', targetId: 'e1', enemyId: 'x' }), 'staggered@e1', 'hit@e1'],
   ['STAGGERED on the player', enemyAttack(hit('e1', 'player'), { type: 'playerStaggered', targetId: 'player', actionLoss: 1 }), 'staggered@player', 'hit@player'],
   ['STAGGERED on a co-op seat', enemyAttack(hit('e1', 'seatB'), { type: 'playerStaggered', targetId: 'seatB', actionLoss: 1 }), 'staggered@seatB', 'hit@seatB'],

@@ -14,7 +14,7 @@ const freeze = (value) => Object.freeze(value);
 function changeLabel(change) {
   const labels = {
     damage: 'Damage',
-    block: 'Guard',
+    block: 'Block',
     draw: 'Draw',
     discard: 'Discard',
     'cost:action': 'Stamina Cost',
