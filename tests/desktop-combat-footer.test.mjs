@@ -19,7 +19,9 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
     // Owner (2026-10-31): desktop cards net 20% smaller than the measured ~121px (before), so the cap was 97 viewport px
     // (first asked 30% smaller, 85px; then "about 10% larger, so net 20% smaller"). Owner (2026-11-01): another 10% larger, 106.7px.
     // Owner (2026-11-02): desktop and laptop cards 20% larger again, so the cap is 128.04 viewport px (1.2 x 106.7).
-    assert.ok(hand.cardWidth*zoom>=127.9 && hand.cardWidth*zoom<=128.2, "desktop cards sit at the 128.04px cap (1.2 x the previous 106.7px)");
+    // Wave 2 (sizes): the cap is 172 canvas px (cardMaxViewportPx), which the combat canvas's fit scale draws at about 152 on a
+    // 1280x800 screen, so the face's rules type reads at 13 px or more.
+    assert.ok(hand.cardWidth*zoom>=171.9 && hand.cardWidth*zoom<=172.2, "desktop cards sit at the 172px cap (13px rules type)");
     assert.ok(Math.abs(hand.cardWidth/hand.cardHeight-2/3)<1e-9);
     assert.ok(hand.cards[0].x>=0);
     assert.ok(hand.cards.at(-1).x+hand.cardWidth<=width/zoom);
