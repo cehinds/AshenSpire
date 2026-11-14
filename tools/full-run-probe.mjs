@@ -12,7 +12,7 @@
 // THE DOOR. A normal boot of the SOURCE tree (no `?shot=`, so durable
 // localStorage, the startup gate and the real title), served the way
 // `node tools/launch.mjs` serves local play: tools/serve.mjs. Every step is a trusted CDP pointer press on the control a player
-// presses (a hold where the control owes one: End Turn, Continue):
+// presses (every confirm that survives is a destructive one the walk never meets, so all are one tap):
 //
 //   TITLE      the startup gate, then the title's New Game door (slot 1).
 //   CLASS      character creation walked step by step (Class, Character,
@@ -370,15 +370,16 @@ async function enterNode(node) {
 // ---- combat -------------------------------------------------------------------
 const COMBAT_READY = `!!window.__combat && !!document.querySelector('.combat .end-turn') && !document.querySelector('.end-turn').disabled && window.__combat.phase === 'player'`;
 const combatOver = `!document.querySelector('.combat') || !!document.querySelector('.reward-veil') || !!document.querySelector('#to-title')`;
-// End Turn owes a hold (secondbeat.js). A hold that lands while a card is
-// still selected for targeting is spent on the selection, so a turn that has
-// not moved on after the hold is held again (at most END_TURN_HOLDS times).
+// End Turn commits on one tap (secondbeat.js `tap: true`, owner 2026-11-14). A
+// press that lands while a card is still selected for targeting is spent on
+// the selection, so a turn that has not moved on is pressed again (at most
+// END_TURN_HOLDS times).
 const END_TURN_HOLDS = 3;
 async function endTurn() {
   const turn = await ev('window.__combat.turn');
   const moved = `(${combatOver}) || window.__combat.turn > ${turn} || window.__combat.phase !== 'player'`;
   for (let i = 0; i < END_TURN_HOLDS; i++) {
-    await press('.end-turn', { hold: true, ms: 1000 });
+    await press('.end-turn');
     if (await ev(`(async () => { const end = Date.now() + 4000; while (Date.now() < end) { if (${moved}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`)) break;
   }
   // The enemy turn can pause for an optional defensive reaction. Decline via
@@ -432,7 +433,7 @@ async function resolveFight() {
   await until(`(${combatOver}) || (${COMBAT_READY})`, 'the player turn', 30000);
   await skipTutorial();
   await ev(`(() => { for (const e of window.__combat.enemies) { e.hp = 0; e.alive = false; } return true; })()`);
-  await press('.end-turn', { hold: true });
+  await press('.end-turn');
   await until(combatOver, 'the fight to end', 40000);
 }
 
@@ -487,16 +488,16 @@ function pickDoor(d) {
     // The victory card's Continue opens the spoils once its XP has counted;
     // the spoils' Continue (a hold) collects and leaves.
     if (d.rewardExpand) return { press: DOORS.rewardExpand };
-    if (d.rewardContinue) return { press: DOORS.rewardContinue, hold: true };
+    if (d.rewardContinue) return { press: DOORS.rewardContinue };
     return { wait: 'the reward (XP count, refill, or a disabled Continue)' };
   }
   // A dialogue room (a legacy dungeon's rooms): the first response it offers
-  // (held: a binding one owes a hold), then Continue.
-  if (d.dialogueResponse) return { press: DOORS.dialogueResponse, hold: true, ms: 1000 };
+  // (one tap), then Continue.
+  if (d.dialogueResponse) return { press: DOORS.dialogueResponse };
   if (d.dialogueContinue) return { press: DOORS.dialogueContinue };
   // An Event's Continue is disabled until a response is taken (event.js).
-  if (d.eventContinue) return { press: DOORS.eventContinue, hold: true };
-  if (d.choice) return { press: DOORS.choice, hold: true };
+  if (d.eventContinue) return { press: DOORS.eventContinue };
+  if (d.choice) return { press: DOORS.choice };
   if (d.leaveShop) return { press: DOORS.leaveShop, hold: true };
   if (d.shrineLeave) return { press: DOORS.shrineLeave, hold: true };
   if (d.confirm) return { press: DOORS.confirm };
