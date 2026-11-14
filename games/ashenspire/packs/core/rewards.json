@@ -223,7 +223,7 @@
         "core2"
       ],
       "weights": {
-        "brimmingGourd": 20
+        "brimmingGourd": 1
       },
       "combatIds": [
         "brimmingGourd"
