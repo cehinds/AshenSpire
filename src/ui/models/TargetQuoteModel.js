@@ -15,7 +15,8 @@ export function TargetQuoteHits(preview, targetId) {
   const hits = [];
   for (const row of preview?.values || []) {
     if (row.op !== 'damage' || !ENEMY_DAMAGE_TARGETS.has(row.target)) continue;
-    const sequence = row.target === 'allEnemies' ? row.perTargetHitDamages?.[targetId] : (row.hitDamages ?? row.perTargetHitDamages?.[targetId]);
+    // The quote is the HP THIS enemy loses (owner, 2026-11-14): the row's own per-enemy hits, not the face figure, which is the attacker side.
+    const sequence = row.perTargetHitDamages?.[targetId] ?? (row.target === 'allEnemies' ? undefined : row.hitDamages);
     for (const amount of sequence || []) hits.push(Math.floor(Number(amount) || 0));
   }
   return hits;

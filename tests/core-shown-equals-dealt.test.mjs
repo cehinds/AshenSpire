@@ -331,6 +331,8 @@ test('an undiscovered weakness counts in the number shown and in the hit dealt',
   const plain = faceOf(none, none.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
   const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1')[0];
   assert.ok(shown > plain, `the weakness is in the number: ${shown} > ${plain}`);
+  const faceOnly = row => row.preview.values.find(v => v.op === 'damage').faceValue;
+  assert.ok(faceOnly(faceOf(combat, card.instanceId, 'e1')) > faceOnly(faceOf(none, none.piles.hand[0].instanceId, 'e1')), 'the weakness (undiscovered too) is in the face');
   check(combat, card, 'e1', 'weakness');
 });
 
@@ -343,7 +345,7 @@ test('a multi-hit card shows each hit and each hit lands for it', () => {
   assert.ok(check(combat, card, 'e1', 'multi-hit').hits >= 2);
 });
 
-test('an ALL card with unequal targets shows one number or min-max, and each enemy loses what it was shown', async () => {
+test('an ALL card with unequal targets: the face is one number (yours); each enemy quote is what that enemy loses', async () => {
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const { combat, card } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier', 'wanderingSoldier'], hand: 'core.sweep' });
   combat.enemies[1].block = 5; combat.enemies[2].persistentPoise = { value: 8, max: 20 };
@@ -351,7 +353,9 @@ test('an ALL card with unequal targets shows one number or min-max, and each ene
   const lines = cardFaceLines(face.preview.resolvedDefinition, face.preview, reg).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
   const perEnemy = [...face.perEnemy.values()].map(hits => hits[0]);
   assert.ok(new Set(perEnemy).size > 1, `the enemies lose different amounts: ${perEnemy}`);
-  assert.match(lines, new RegExp(`${Math.min(...perEnemy)}-${Math.max(...perEnemy)}`), `the face reads min-max: ${lines}`);
+  assert.doesNotMatch(lines, /\d+-\d+/, `the face is one number, not min-max: ${lines}`);
+  const faceRow = face.preview.values.find(row => row.op === 'damage');
+  assert.ok(faceRow.faceValue > Math.min(...perEnemy), 'the face is the attacker-side figure, above what the defended enemies lose');
   const events = [];
   const start = combat.eventLog.length;
   const tally = { hits: 0, costs: 0 };
@@ -728,4 +732,16 @@ test('an X-cost card: the face says X and the play pays everything the player ho
 test('an upcast card cannot be played in the shipped Core profile (spell ranks are off), so no upcast face exists to compare', () => {
   const { combat } = fixture({ classId: 'starseer', hand: 'starSpark' });
   assert.throws(() => previewCard(combat, combat.piles.hand[0].instanceId, 'e1', 1), /Spell ranks are disabled/);
+});
+
+// Owner, 2026-11-14: the hand FACE is the attacker-side figure (the same whichever enemy is aimed); the QUOTE (perTarget, TargetQuoteHits) is the HP lost.
+test('the face is the same for every aimed enemy while each quote is the HP that enemy loses', async () => {
+  const { TargetQuoteHits } = await import('../src/ui/models/TargetQuoteModel.js');
+  const { combat, card } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier', 'wanderingSoldier'] });
+  combat.enemies[1].block = 5; combat.enemies[2].persistentPoise = { value: 8, max: 20 };
+  const faces = ['e1', 'e2', 'e3', undefined].map(id => faceOf(combat, card.instanceId, id).preview.values.find(row => row.op === 'damage').faceValue);
+  assert.equal(new Set(faces).size, 1, `one face whatever is aimed: ${faces}`);
+  const quotes = ['e1', 'e2', 'e3'].map(id => TargetQuoteHits(faceOf(combat, card.instanceId, id).preview, id)[0]);
+  assert.ok(new Set(quotes).size > 1, `the quotes differ: ${quotes}`);
+  assert.deepEqual(quotes, ['e1', 'e2', 'e3'].map(id => faceOf(combat, card.instanceId, id).perEnemy.get(id)[0]));
 });
