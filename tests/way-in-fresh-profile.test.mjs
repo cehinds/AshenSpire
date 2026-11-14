@@ -51,9 +51,9 @@ test('the Class step of the Class-then-Review flow carries Begin; longer flows a
 
 test('the start node is preselected only when it is the single reachable node of a new run', () => {
   const map = source('src/ui/screens/map.js');
-  assert.match(map, /const soleStartId = !selectedId && !mapAdapter && !current && reachable\.size === 1/);
+  assert.match(map, /else if \(!selectedId && !mapAdapter && !current && reachable\.size === 1\)/);
   const expr = (reachable, current = null, selectedId = null, mapAdapter = null) => runInNewContext(
-    'const soleStartId = !selectedId && !mapAdapter && !current && reachable.size === 1 ? [...reachable][0] : null; soleStartId',
+    '(!selectedId && !mapAdapter && !current && reachable.size === 1) ? [...reachable][0] : null',
     { reachable: new Set(reachable), current, selectedId, mapAdapter });
   assert.equal(expr(['a']), 'a');
   assert.equal(expr(['a', 'b']), null);
