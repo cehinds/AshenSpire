@@ -59,8 +59,8 @@ test('actual card dispatch matches selected target receipt and card face after e
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- // Owner, 2026-11-03: the quote is the raw hit (before Block 3 and Poise); the receipt's totalDamage is the resolved HP loss.
- assert.ok(preview.totalDamage>preview.damageReceipt.totalDamage,'the raw quote is not cut by Block or Poise');
+ // Owner, 2026-11-14: the quote is the HP the hit will cost (after Block 3 and Poise), the same as the receipt's totalDamage.
+ assert.equal(preview.totalDamage,preview.damageReceipt.totalDamage,'the quote is already cut by Block and Poise');
  const hp=target.hp;dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
  assert.equal(hp-combat.enemies[0].hp,preview.damageReceipt.totalDamage);
  const receipt=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt;
@@ -73,11 +73,11 @@ test('mixed multihit receipt spends Block Ward and Poise sequentially (no numeri
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- // Owner, 2026-11-03: hitDamages is the raw hit; the resolved HP loss per hit is the receipt's hpLoss.
- assert.deepEqual(preview.hitDamages,[20,20,25]);assert.equal(preview.totalDamage,65);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3
- assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);// hit 2 meets 1 Poise (capped)
+ // Owner, 2026-11-14: hitDamages is the HP lost per hit (the receipt's hpLoss); the incoming hit before defences is the receipt's `incoming`.
+ assert.deepEqual(preview.hitDamages,[6,19,25]);assert.equal(preview.totalDamage,50);// the Poise break after hit 2 leaves Vulnerable x1.25 for hit 3; hit 2 meets 1 Poise (capped)
+ assert.deepEqual(preview.damageReceipt.hits.map(row=>row.hpLoss),[6,19,25]);assert.equal(preview.hpLoss,50);
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),preview.hitDamages);assert.equal(500-target.hp,50);
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.damageReceipt.hits.map(row=>row.hpLoss));assert.deepEqual(receipts.map(row=>row.incoming),[20,20,25]);assert.equal(500-target.hp,50);
  assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[12,0,2,0],[0,0,0,1],[0,0,0,0]]);
 });
 test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{

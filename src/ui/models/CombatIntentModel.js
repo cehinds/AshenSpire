@@ -41,7 +41,8 @@ export function combatIntentPresentation(intent = {}) {
   }
   // Interrupted turns retain their status in the tooltip; their badge simply
   // reports that the enemy is preparing, rather than claiming an attack.
-  if (intent.kind === 'staggered') return { visibility: 'partial', title: partialTitle('preparing'), stance: 'preparing',
+  // A staggered enemy's action was cancelled: it reads Staggered, with no number and no "?" (owner, 2026-11-14).
+  if (intent.kind === 'staggered') return { visibility: 'partial', title: t('combat.intent.staggered'), stance: 'preparing',
     parts: [{ icon: 'prepare', value: null }], damageClass: null };
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;

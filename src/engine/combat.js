@@ -1003,7 +1003,8 @@ function revalidateEnemyPlans(combat) {
     if (!kept.length) {
       clearCombatCounter(enemy);
       delete enemy.intentRevealed;
-      enemy.intent = { kind: 'unknown', moveId: null };
+      // Owner, 2026-11-14: a Poise break that cancels the whole plan reads Staggered (no number), never "?".
+      enemy.intent = { kind: enemy.combatStance?.staggered ? 'staggered' : 'unknown', moveId: null };
       enemy.planDue = false;
       continue;
     }

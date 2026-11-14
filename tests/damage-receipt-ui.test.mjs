@@ -207,6 +207,15 @@ test('routed damage hover leaves preserve the actual tooltip or outside destinat
     move(outside, 200, 200);
     assert.equal(leaves.length, 2);
     assert.equal(leaves[1].relatedTarget, outside, 'leaving to unrelated content still names the actual outside target');
+    // Owner, 2026-11-14: a click or press on the damage number is a press on the card; nothing swallows it and no click opens the inspector.
+    assert.equal(listeners.get('pointerdown'), undefined, 'no document pointerdown swallows a press on a number');
+    assert.equal(listeners.get('click'), undefined, 'no document click swallows a click on a number');
+    const reached = [];
+    for (const type of ['pointerdown', 'click']) {
+      card.addEventListener(type, () => reached.push(type));
+      number.dispatchEvent(new dom.Event(type, { bubbles: true, cancelable: true }));
+    }
+    assert.deepEqual(reached, ['pointerdown', 'click'], 'both reach the card, which selects itself');
   } finally {
     hideTooltip();
     for (const [key, value] of Object.entries(previous)) {
