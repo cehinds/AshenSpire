@@ -81,7 +81,7 @@ function applyMoveEffects(ctx, other, move, carrier, moveId, prepared) {
 
 // 'stop' ends the whole advance (an action that cannot be known), 'delay' ends this enemy's plan, 'ok' goes on.
 function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
-  const advance = (other, moveId, damage, hits) => {
+  const advance = (other, moveId, damage, hits, followUp = false) => {
     const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
     if (!authored) return 'stop';
     const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
@@ -89,9 +89,12 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
     // player's Block and Poise nor applies its effects in the forecast (its charging badge shows no damage either).
     if (move.delay) return 'delay';
     const carrier = Tactics.enemyMoveCarrier(other, move, moveId, ctx);
-    // The move enters its stance before its hit lands, as the live move does: a second move in the same stance carries the matching-stance bonus.
     try {
-      prepared.attackerSource = null; // a second move of the same enemy meets a fresh copy of it, in the stance the move before entered
+      // Live (combat.js presentIntent -> primeEnemyCounter) a planned follow-up is presented just before it plays, and presenting it enters its stance
+      // from a carrier of its own: the stance and its entry grants (Precision, Evade) are in place before the hit, and the hit's own carrier then finds
+      // the enemy already in that stance, so it carries the matching-stance bonus. A head was presented earlier (its stance is already on the enemy).
+      if (followUp) ProfileCombat.setProfileStance(ctx, other, Tactics.enemyMoveCarrier(other, move, moveId, ctx));
+      prepared.attackerSource = null; // each move meets a fresh copy of its enemy, with the stance and buffs the moves before it left
       if (damage != null) Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared);
       ProfileCombat.setProfileStance(ctx, other, carrier);
     } catch { return 'stop'; }
@@ -101,7 +104,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
   for (const other of ctx.enemies) {
     if (other.id === source.id) {
       // The enemy's own earlier moves this turn (a follow-up is priced after its head and the follow-ups before it).
-      for (const own of ownMoves) if (advance(source, own.moveId, own.damage, own.hits) !== 'ok') return 'stop';
+      for (const [i, own] of ownMoves.entries()) if (advance(source, own.moveId, own.damage, own.hits, i > 0) !== 'ok') return 'stop';
       return;
     }
     const intent = other.intent;
@@ -116,7 +119,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
       if (!authored || authored.reaction) continue;
       const move = Tactics.expandedEnemyMove(other, authored, planned.moveId, ctx);
       if (move.delay) break;
-      const step = advance(other, planned.moveId, move.damage == null ? null : enemyMoveDamage(other, move), move.hits ?? 1);
+      const step = advance(other, planned.moveId, move.damage == null ? null : enemyMoveDamage(other, move), move.hits ?? 1, true);
       if (step === 'stop') return 'stop';
       if (step === 'delay') break;
     }
