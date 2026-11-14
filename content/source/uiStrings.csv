@@ -1329,8 +1329,8 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "knowledge.progress","","{label} · {points} / {target}","",""
 "knowledge.lifetime","","Lifetime enemy knowledge grows through real encounters and successful tactical responses.","",""
 "knowledge.next","","Next: {label} at {points} points.","",""
-"knowledge.mastered","","Mastered. Hidden current actions still require an intent read.","",""
-"knowledge.perception","","Run Perception: level {level}. Perception improves intent reads and starts fresh on each new run.","",""
+"knowledge.mastered","","Mastered.","",""
+"knowledge.perception","","Run Perception: level {level}. It starts fresh on each new run.","",""
 "knowledge.resources","","Base resources and defenses","",""
 "knowledge.resources.locked","","Locked · Studied at {points} points.","",""
 "knowledge.resources.empty","","No base resource facts recorded.","",""
@@ -1398,7 +1398,7 @@ debugChrome.consoleExportBoundary,,Captured game output,Includes game console ca
 debugChrome.consoleExportPrivacy,,Review before sharing,No save or profile is attached. Review console messages before sharing.,
 
 card.tags.evade,,Evade,Evade or dodge an incoming action.,
-card.tags.precision,,Precision,Each stack adds 1 Accuracy.,
+card.tags.precision,,Precision,Adds Accuracy only where a roll decides whether an attack lands. Under the current rules every attack lands unless the target has Evade.,
 creation.category.attributes,,Attributes,,
 creation.category.feats,,Feats,,
 creation.category.spells,,Spells,,
@@ -1819,7 +1819,7 @@ cardArtBuilder.noComposition,,,These tags do not identify a supported compositio
 cardArtBuilder.invalidRank,,,Choose a whole rank from 1 to {max}.,
 cardArtBuilder.invalidInput,,,Use a supported type and valid canonical tags.,
 cardArtBuilder.previewFailed,,,Could not render the preview: {reason},
-combat.stat.precision,,Precision,Each stack adds 1 Accuracy to your attacks.,Precision
+combat.stat.precision,,Precision,Adds Accuracy only where a roll decides whether an attack lands. Under the current rules every attack lands unless the target has Evade.,Precision
 combat.stat.evasion,,Evasion,Each stack helps avoid incoming attacks.,Evasion
 combat.stat.critChance,,Crit,Crit chance: the best chance one of your attacks has to land a critical hit.,Crit chance
 whatChanged.eyebrow,,What has changed,A receipt of what a choice or purchase changed.,

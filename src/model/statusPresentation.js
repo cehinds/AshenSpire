@@ -15,7 +15,10 @@ function present(ctx, id, definition, holder) {
   // accuracy.precisionTooltip text (mechanics.json; the statuses.json row feeds a locked manifest and stays as is) and a tooltip built from the editable accuracy constants for Evade.
   if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
     if (id === 'precision') {
-      const text = mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
+      // Owner, 2026-11-14: with no hit roll Precision changes nothing; say so instead of promising Accuracy.
+      const text = FixCoreHitRollOff(fixCoreRules(ctx, holder))
+        ? `Precision does nothing under the current rules: every attack lands unless the target has Evade. Loses ${mechanics.accuracy.precisionDecayPerTurn} stacks at the start of the owner's turn.`
+        : mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
         (_, key) => String(mechanics.accuracy[key]));
       resolved = { ...resolved, tooltip: text, description: text };
     }
