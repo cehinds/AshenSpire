@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { gameProfileRewardOffers, gameProfileEliteRelicOffer, claimGameProfileReward } from '../src/model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileEliteRelicOffer, claimGameProfileReward, gameProfileShopStock } from '../src/model/gameProfileRewards.js';
 
 const build = () => {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -21,6 +21,7 @@ const legacyRun = (seed, patch) => {
   return run;
 };
 const fresh = (seed, classId = 'reaver', registries = reg) => createRunState({ seed, classId, registries, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+const allow = fresh(1).gameProfile.content.rewards.eligibility.relics.allow;
 const manaOf = (run, id) => (run.gameProfile.content.cards.find(card => card.id === id)?.manaCost || 0);
 
 test('a Reaver combat offer is 3-5 cards or weapon arts over 300 seeds', () => {
@@ -50,7 +51,7 @@ test('an elite pending reward yields a two-relic choice that claims into run.rel
   const offer = gameProfileEliteRelicOffer(reg, run, createRng(1), { offerId: id });
   assert.equal(offer.source, 'elite'); assert.equal(offer.options.length, 2);
   assert.equal(new Set(offer.options.map(o => o.id)).size, 2);
-  for (const o of offer.options) { assert.equal(o.kind, 'relics'); assert.ok(['common', 'uncommon', 'rare'].includes(reg.relics.get(o.id).rarity)); assert.ok(!run.relics.includes(o.id)); }
+  for (const o of offer.options) { assert.equal(o.kind, 'relics'); assert.ok(allow.includes(o.id), o.id); assert.ok(!run.relics.includes(o.id)); }
   assert.equal(gameProfileEliteRelicOffer(reg, run, createRng(99), { offerId: id }), offer, 'cached');
   const taken = offer.options[0].id;
   claimGameProfileReward(reg, run, id, 0);
@@ -59,8 +60,8 @@ test('an elite pending reward yields a two-relic choice that claims into run.rel
 });
 
 test('an elite relic offer is skipped when every eligible relic is owned', () => {
-  const run = fresh(4), rarities = ['common', 'uncommon', 'rare'];
-  for (const row of reg.relics.all()) if (rarities.includes(row.rarity)) run.relics.push(row.id);
+  const run = fresh(4);
+  for (const id of allow) run.relics.push(id);
   assert.equal(gameProfileEliteRelicOffer(reg, run, createRng(1), { offerId: 'x:elite' }), null);
   assert.equal(run.gameProfileRewardOffers?.['x:elite'], undefined);
 });
@@ -87,4 +88,28 @@ test('a legacy rewards fixture (old weights, no eliteRelic, no playableOnly) kee
   }
   assert.ok(kinds.has('potions') && kinds.has('weapons'), [...kinds].join());
   assert.ok(manaForReaver > 0, 'legacy still offers mana cards to a Reaver');
+});
+
+test('every allowed relic id exists in the relic registry (no build-time check exists for relic ids)', () => {
+  assert.equal(allow.length, 28);
+  for (const id of allow) assert.ok(reg.relics.all().some(row => row.id === id), id);
+});
+
+test('new treasure, shop and elite offers only hold allowed relics; a saved offer outside the list stays claimable', () => {
+  const outside = reg.relics.all().find(row => !allow.includes(row.id) && row.pool !== 'core2' && !fresh(7).relics.includes(row.id)).id;
+  let relicsSeen = 0;
+  for (let i = 0; i < 300; i++) {
+    const run = fresh(i + 1);
+    run.cinders = 9999;
+    const offers = [gameProfileRewardOffers(reg, run, createRng(i), { offerId: 't', source: 'treasure' }), gameProfileEliteRelicOffer(reg, run, createRng(i), { offerId: 'e' })];
+    for (const offer of offers) for (const o of offer.options) if (o.kind === 'relics') { relicsSeen++; assert.ok(allow.includes(o.id), `${offer.source}: ${o.id}`); }
+    const stock = gameProfileShopStock(reg, run, createRng(i), { shopId: 's' });
+    for (const offer of [run.gameProfileRewardOffers['shop:s']].filter(Boolean)) for (const o of offer.options) if (o.kind === 'relics') { relicsSeen++; assert.ok(allow.includes(o.id), `shop: ${o.id}`); }
+    void stock;
+  }
+  assert.ok(relicsSeen > 0);
+  const run = fresh(7);
+  run.gameProfileRewardOffers = { old: { id: 'old', source: 'treasure', options: [{ kind: 'relics', id: outside }], takeCount: 1, taken: [], claimed: null } };
+  claimGameProfileReward(reg, run, 'old', 0);
+  assert.ok(run.relics.includes(outside));
 });

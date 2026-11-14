@@ -191,6 +191,36 @@
       ]
     },
     "relics": {
+      "allow": [
+        "goldenSprout",
+        "whetstoneFragment",
+        "cinderPouch",
+        "goldleafCharm",
+        "crackedLantern",
+        "sacrificialKnife",
+        "curedHide",
+        "ivoryComb",
+        "emberwickCharm",
+        "carrionMorsel",
+        "crackedTear",
+        "fellWardenBrand",
+        "twinnedArmor",
+        "blightTouchedIdol",
+        "pearlOfSagacity",
+        "blessedDew",
+        "azureSigil",
+        "saltedRelic",
+        "hollowedHorn",
+        "gildedTear",
+        "goldboughSapling",
+        "flayersCenser",
+        "vigilantHalo",
+        "carrionTalon",
+        "emberIdol",
+        "forsakenWarflag",
+        "wrathCoil",
+        "brimmingGourd"
+      ],
       "pools": [
         "core2"
       ],
@@ -203,9 +233,7 @@
     }
   },
   "eliteRelic": {
-    "choices": 2,
-    "rarities": ["common", "uncommon", "rare"],
-    "exclude": []
+    "choices": 2
   },
   "rewardGroups": [
     {

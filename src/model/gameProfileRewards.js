@@ -57,7 +57,7 @@ function pools(registries, run, { claim = false } = {}) {
   const carried = new Set([...run.loadout.storage,...Object.values(run.loadout.sets).flat()]);
   return {
     weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
-    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
+    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(claim||!Array.isArray(rules.eligibility?.relics?.allow)||rules.eligibility.relics.allow.includes(row.id))&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
@@ -250,7 +250,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
-/** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics of the listed rarities, built once per offerId
+/** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
  * on the reward stream. Returns null (nothing stored) when the key is absent or no relic qualifies. Its own source ('elite'), so the combat
  * offer's relic strip (eligibility.relics.combatIds) never applies. */
 export function gameProfileEliteRelicOffer(registries, run, rng, { offerId } = {}) {
@@ -258,8 +258,7 @@ export function gameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
   const rules = gameContent(run, 'rewards'), rule = rules?.eliteRelic;
   if (!rule) return null;
-  const rarities = new Set(rule.rarities || []), exclude = new Set(rule.exclude || []);
-  let ids = pools(registries, run).relics.filter(id => rarities.has(registries.relics.get(id)?.rarity) && !exclude.has(id));
+  let ids = pools(registries, run).relics;
   const options = [];
   for (let n = Number.isInteger(rule.choices) ? rule.choices : 1; n > 0 && ids.length; n--) {
     const id = weightedRelicPick(rules.eligibility?.relics?.weights, rng, 'cardRewards', ids);
