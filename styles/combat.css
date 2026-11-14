@@ -1398,7 +1398,7 @@
 /* While the enemies act, a pointer press skips their playback (ui/fx.js); the hint says so and is gone with the turn. */
 .turn-skip-hint {
   position: absolute; top: calc(30px / var(--ui-zoom,1)); left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
-  font: calc(12px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .06em; white-space: nowrap; color: var(--muted);
+  font: calc(12px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .06em; white-space: nowrap; color: var(--parchment); text-shadow: var(--hud-text-shadow, none);
   opacity: 0; transition: opacity 160ms ease;
 }
 [data-turn='enemy'] .turn-skip-hint { opacity: .8; }

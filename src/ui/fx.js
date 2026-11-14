@@ -1227,13 +1227,15 @@ export function playTimeline(events, ctx, done) {
   const enemyEvents = new Set([...enemyBeats].flatMap(beat => beat.events));
   const inEnemyTurn = beat => beat.events.some(event => enemyEvents.has(event));
   // A beat that hits or misses owes the player the contact and the number, so it keeps every stage gap. A wind-up is
-  // held for its telegraph length alone, and an action that deals nothing (a Guard, a Warcry) walks no result, reaction
-  // or damage stage, since it has none to say.
+  // held for its telegraph length alone, and an action that deals nothing (a Guard, a Warcry) says its word as it
+  // moves and walks no result, reaction or damage stage, since it has none to say.
   const OUTCOME = new Set(['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'combatAvoidanceResolved', 'hpLost']);
   const enemyTimingFor = beat => {
     if (beat.telegraph) return { ...enemyTiming, intentMs: 0, wordMs: 0, resetMs: 0 };
-    if (beat.actorId && !beat.banner && beat.kind !== 'reveal' && !beat.events.some(event => OUTCOME.has(event.type)))
-      return { ...enemyTiming, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
+    // The reveal of whose turn it is and the refill of the hand follow the banner without a pause of their own.
+    if (beat.kind === 'reveal' || beat.kind === 'draw') return { ...enemyTiming, stepMs: 0 };
+    if (beat.actorId && !beat.banner && !beat.events.some(event => OUTCOME.has(event.type)))
+      return { ...enemyTiming, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
     return enemyTiming;
   };
   // The pacing a beat runs on (its banner shows for the same hold the timeline waits).
