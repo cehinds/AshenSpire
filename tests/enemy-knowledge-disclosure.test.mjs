@@ -31,7 +31,7 @@ assert.equal(concealed.resources, null); assert.equal(concealed.traits, null);
 assert.ok(!JSON.stringify(concealed).includes('conductive'));
 const studied = projectEnemyKnowledge(def, record(6), { equipmentRules });
 assert.ok(studied.resources.some(row => row.label === 'Base Ward rating' && row.value === '43'));
-assert.ok(studied.resources.some(row => row.label === 'Base armor class' && row.value === 'Heavy'));
+assert.ok(studied.resources.some(row => row.label === 'Base armour class' && row.value === 'Heavy'));
 assert.ok(studied.resources.some(row => row.label === 'Slashing flat resistance' && row.value === '1 point'));
 assert.ok(studied.resources.some(row => row.label === 'Frost weakness' && row.value === '25%'));
 assert.ok(studied.traits.some(row => row.name === 'Conductive'));

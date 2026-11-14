@@ -56,7 +56,7 @@ test('a chosen reaction plays after the Hit word and before the damage number', 
   const events = [...reaction, move, { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
     { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5, blocked: 0 }, { type: 'enemyMoveEnded', sourceId: 'e1' }];
   drive(t, events, timeline => {
-    const hit = when(timeline, 'word:hit'), anim = when(timeline, 'anim:player'), dmg = when(timeline, 'float:−5') ?? timeline.find(r => /^float:.*5$/.test(r.what) && r.what !== 'float:−1 SP')?.at;
+    const hit = when(timeline, 'word:hit'), anim = when(timeline, 'anim:player'), dmg = when(timeline, 'float:−5') ?? timeline.find(r => /^float:.*5$/.test(r.what) && r.what !== 'float:−1 Stamina')?.at;
     assert.ok(hit != null && anim != null && dmg != null, JSON.stringify(timeline));
     assert.ok(hit < anim, `Hit word (${hit}) precedes the reaction animation (${anim})`);
     assert.ok(anim < dmg, `the reaction animation (${anim}) precedes the damage number (${dmg})`);
@@ -72,7 +72,7 @@ test('a dodge turning the hit into a Miss: Miss word, then the reaction animatio
     assert.ok(miss != null && anim != null && dodged != null, JSON.stringify(timeline));
     assert.ok(miss < anim && anim < dodged, `Miss ${miss} < animation ${anim} < Dodged ${dodged}`);
     assert.equal(timeline.filter(r => r.what === 'word:missed').length, 1);
-    assert.ok(!timeline.some(r => /^float:/.test(r.what) && !/SP/.test(r.what) && !/14/.test(r.what)), 'no damage number');
+    assert.ok(!timeline.some(r => /^float:/.test(r.what) && !/Stamina/.test(r.what) && !/14/.test(r.what)), 'no damage number');
   });
 });
 
@@ -84,8 +84,8 @@ test('a declined reaction (no card played) keeps the attack beat whole', () => {
   assert.ok(!beats.some(beat => beat.resultSaid));
 });
 
-const floatsOf = timeline => timeline.filter(r => /^float:/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
-const kinds = timeline => timeline.filter(r => /^(word:(hit|missed|dodged)|anim:player|float:)/.test(r.what) && !/SP|\+14/.test(r.what)).map(r => r.what);
+const floatsOf = timeline => timeline.filter(r => /^float:/.test(r.what) && !/Stamina|\+14/.test(r.what)).map(r => r.what);
+const kinds = timeline => timeline.filter(r => /^(word:(hit|missed|dodged)|anim:player|float:)/.test(r.what) && !/Stamina|\+14/.test(r.what)).map(r => r.what);
 const hitOf = amount => [{ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount, blocked: 0 }];
 
 test('a multi-hit attack: every landed hit keeps its Hit word after the reaction animation', t => {
