@@ -26,13 +26,15 @@ const tagIds = carrier => [...(carrier?.cardTags || []), ...(carrier?.tags || []
  * fire, lightning, divine, necrotic, frost, force (null for physical, earth, poison and the rest).
  * An explicit element or `damage:` tag wins, then the school, then the damage type.
  */
+const notDefaultArcane = type => (type === 'arcane' ? null : type);
 export function ElementOfHit(carrier) {
   const profile = carrier?.combatProfile || {};
   const named = raw => (raw && ELEMENT_OF[raw] ? ELEMENT_OF[raw] : null);
   const tagged = kind => tagIds(carrier).map(tag => String(tag || '').split(':')).filter(([k]) => k === kind).map(([, id]) => named(id)).find(Boolean) || null;
-  // An authored element, then an explicit `damage:` tag, then the school; a spell's default damage type (arcane) is the last resort, so a fire spell is fire.
+  // An authored element, then an explicit `damage:` tag, then the school, then the damage type. A spell's DEFAULT damage type (arcane) is not an element:
+  // an unschooled spell carries none, and a fire spell is fire. Force comes from `school:force` or an explicit `damage:arcane` / `damage:force` tag.
   return named(carrier?.element) || named(profile.element) || tagged('damage') || tagged('element') || named(carrier?.school) || named(profile.school) || tagged('school')
-    || named(carrier?.damageType) || named(profile.damageType);
+    || named(notDefaultArcane(carrier?.damageType)) || named(notDefaultArcane(profile.damageType));
 }
 
 /** True when the card or move already hits every enemy (target allEnemies, or the area tag). */
@@ -48,7 +50,7 @@ export function ElementStatusTooltip(ctx, id) {
   if (!rules) return null;
   const pct = value => `${Math.round(value * 100)}%`;
   if (id === 'burn') {
-    return `Each stack: +${pct(rules.burn.damageTakenPerStack)} damage taken and 1 HP lost at the start of its turn (ignores Block); each turn start it has a ${rules.burn.explodeChancePerStack * 1}% chance per stack to explode (a chance, never previewed), hurting its allies for its stacks and clearing the Burn. One stack burns out each turn. At most ${rules.burn.cap}.`;
+    return `Each stack: +${pct(rules.burn.damageTakenPerStack)} damage taken and 1 HP lost at the start of its turn (ignores Block); each turn start it has a ${rules.burn.explodeChancePerStack}% chance per stack to explode (a chance, never previewed), hurting its allies for its stacks and clearing the Burn. One stack burns out each turn. Burn has no maximum.`;
   }
   return null;
 }

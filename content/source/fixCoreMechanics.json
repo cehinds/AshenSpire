@@ -120,7 +120,7 @@
     "burn": {
       "damageTakenPerStack": 0.05,
       "explodeChancePerStack": 5,
-      "cap": 10
+      "cap": null
     },
     "lightning": {
       "chainMultiplier": 0.5,

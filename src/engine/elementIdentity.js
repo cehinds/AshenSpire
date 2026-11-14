@@ -35,10 +35,10 @@ export function ElementHasTag(ctx, entity, tag) {
 const livingOpponents = (ctx, source) => (source?.kind === 'enemy' ? [ctx.player] : ctx.enemies || []).filter(entity => entity?.alive);
 const sameSide = (ctx, entity) => (entity?.kind === 'enemy' ? ctx.enemies || [] : [...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : []), ctx.player].filter((e, i, all) => e && all.indexOf(e) === i));
 
-/** A status cap this ruleset raises above the engine's (Burn: 3 -> 10); the engine cap otherwise. */
+/** A status cap this ruleset lifts (Burn has none for fights with element rules, owner 2026-11-14; the engine cap is 3); the engine cap otherwise. */
 export function ElementStatusCap(ctx, id, engineCap) {
   const rules = ElementRulesOf(ctx);
-  return rules && id === 'burn' ? Math.max(engineCap, rules.burn.cap) : engineCap;
+  return rules && id === 'burn' && !Number.isFinite(rules.burn.cap) ? Infinity : engineCap;
 }
 function addCapped(ctx, target, id, stacks, source, cap) {
   if (!target?.alive || !(stacks > 0)) return 0;
@@ -156,11 +156,11 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
     const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
     applyStatus(ctx, target, 'chill', stacks, source);
   }
-  if (element === 'force' && target.alive && !carrier?.elementChain) pushOrPull(ctx, source, target, carrier);
+  if (element === 'force' && target.alive && !carrier?.elementChain) ElementPushPull(ctx, source, target, carrier);
 }
 
 /** Force: a hit that lands moves the pair one band apart (melee to reach), or together when the card says pull (reach to melee). */
-function pushOrPull(ctx, source, target, carrier) {
+export function ElementPushPull(ctx, source, target, carrier) {
   if (!ctx.rangeState?.policy?.enabled || !source || !target) return;
   const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
   if (!sourceKey || !targetKey) return;
@@ -182,7 +182,7 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
   const source = attacker;
   if (hit.element === 'fire') {
     const stacks = Math.max(rules.fire.burnMin, ElementAttribute(ctx, source, rules.fire.burnAttribute));
-    addCapped(ctx, target, 'burn', stacks, source, rules.burn.cap);
+    addCapped(ctx, target, 'burn', stacks, source, Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
   } else if (hit.element === 'lightning') {
     const stacks = Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0);
     addCapped(ctx, target, 'shock', stacks, source, rules.shock.cap);
@@ -195,7 +195,7 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
     applyStatus(ctx, target, 'knockback', 1, source);
     if (ctx.rangeState?.policy?.enabled && source && target.alive) {
       const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
-      if (sourceKey && targetKey && engagementBand(ctx.rangeState, sourceKey, targetKey) === 0) pushOrPull(ctx, source, target, {});
+      if (sourceKey && targetKey && engagementBand(ctx.rangeState, sourceKey, targetKey) === 0) ElementPushPull(ctx, source, target, {});
     }
   }
 }

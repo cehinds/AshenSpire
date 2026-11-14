@@ -15,7 +15,9 @@ const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row =>
 
 test('the element of a hit is its school or damage type: a fire spell is fire even though spells default to arcane damage', () => {
   assert.equal(ElementOfHit(FIRE), 'fire');
-  assert.equal(ElementOfHit({ combatProfile: { damageType: 'arcane' } }), 'force');
+  assert.equal(ElementOfHit({ combatProfile: { damageType: 'arcane' } }), null, 'a spell default damage type is not an element');
+  assert.equal(ElementOfHit({ combatProfile: { school: 'force', damageType: 'arcane' } }), 'force');
+  assert.equal(ElementOfHit({ tags: ['damage:arcane'] }), 'force');
   assert.equal(ElementOfHit({ combatProfile: { damageType: 'slashing' } }), null);
 });
 
@@ -91,10 +93,15 @@ test('Burn ticks 1 HP per stack at turn start and explodes on the owner allies; 
   assert.equal(calm.enemies[1].hp, 500);
 });
 
-test('Burn caps at 10 under the element rules and at 3 in an old fight; a unit with no Burn draws no random number', () => {
+test('Burn has no cap under the element rules (its explosion chance clamps at 100%) and caps at 3 in an old fight; a unit with no Burn draws no random number', () => {
   const now = fight({ enemies: 1 });
   applyStatus(now.combat, now.enemy, 'burn', 15, now.player);
-  assert.equal(getStacks(now.enemy, 'burn'), 10);
+  assert.equal(getStacks(now.enemy, 'burn'), 15);
+  now.enemy.statuses.burn.stacks = 25;
+  const pcts = []; now.combat.rng.chance = (stream, pct) => { pcts.push(pct); return false; };
+  ElementTurnStart(now.combat, now.enemy);
+  assert.deepEqual(pcts, [100], '5% x 25 clamps at 100%');
+  now.enemy.statuses = {};
   const old = fight({ enemies: 1, legacy: true });
   applyStatus(old.combat, old.enemy, 'burn', 15, old.player);
   assert.equal(getStacks(old.enemy, 'burn'), 3);
