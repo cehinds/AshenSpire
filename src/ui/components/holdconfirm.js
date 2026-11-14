@@ -1097,8 +1097,12 @@ export function beatArmer(meta, registries) {
     const initial = beatFor(actionId, ctxOf());
     el.dataset.beat = initial.form;
     el.dataset.optionDecision = actionId;
-    el.dataset.optionTap = 'modal';
-    el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
+    // A row that says `tap: true` (model/secondbeat.js) commits on one activation:
+    // no review, no hold, whatever the dial says. A press-and-hold is still one
+    // activation, because a zero-length press commits once on release.
+    const tapRow = () => beatFor(actionId, ctxOf()).tap === true;
+    el.dataset.optionTap = tapRow() ? 'commit' : 'modal';
+    el.dataset.optionHold = tapRow() || dialMs <= 0 ? 'disabled' : 'commit';
 
     // (Owner, 2026-10-18: a control that opts in with `tapWhenNone` and whose
     // form is 'none' owes no review at all — see `owesNoBeat` below. The
@@ -1155,7 +1159,7 @@ export function beatArmer(meta, registries) {
     // every other control: an event bar whose choice owes no beat is still an
     // option bar that offers the hold and reviews on a tap (tools/holdconfirm.mjs
     // "every option bar offers the hold shortcut").
-    const owesNoBeat = () => tapWhenNone && formNow() === 'none';
+    const owesNoBeat = () => (tapWhenNone || tapRow()) && formNow() === 'none';
     const disarm = armHold(el, {
       ms: () => (owesNoBeat() ? 0 : dialMs),
       onConfirm,
