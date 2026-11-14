@@ -123,8 +123,11 @@ test('offers never cross classes: Magic spells only reach their own class, color
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
+      // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
+      if (owner === classId && starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
+      else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
     for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);

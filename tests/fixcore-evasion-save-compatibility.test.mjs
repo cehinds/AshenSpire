@@ -110,7 +110,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-07: the mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: the stance move (src/engine/combatRounds/stance.js → src/model/stance.js) repoints the maneuver_smash manifest, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: enemy-level budgets on the integrated dev runtime; old saves keep their own rules.
-  assert.equal(profile.lock.runtimeHash, 'sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6');
+  // Re-pinned 2026-11-14: the one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp) moves the runtime hash (9808... is now in PREVIOUS_RUNTIMES, so a save from it still resumes).
+  assert.equal(profile.lock.runtimeHash, 'sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

@@ -13,12 +13,15 @@ import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { planCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { snapshotRunForDiff, diffRunSnapshots } from '../src/model/runChangeReceipt.js';
+import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 
-test('a rest card upgrade diffs to an upgraded card row with before and after faces', () => {
+// The shipped one-pick rest heals nothing on a service; a run pinned to the pre-one-pick rests (full recovery on every service) heals.
+for (const legacy of [false, true]) test(`a rest card upgrade diffs to an upgraded card row with before and after faces (${legacy ? 'pre-one-pick rests' : 'shipped rests'})`, () => {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-receipt' });
+  if (legacy) pinLegacyRests(run);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
   run.mapNodeId = Object.values(run.mapGraph.nodes).find((n) => n.type === 'shrine' && n.floor === 3).id;
   beginGameProfileRest(run, `1:${run.mapNodeId}`);
@@ -31,7 +34,7 @@ test('a rest card upgrade diffs to an upgraded card row with before and after fa
   const row = diff.rows.find((r) => r.kind === 'card');
   assert.equal(row.change, 'upgraded'); assert.equal(row.instanceId, card.instanceId);
   assert.ok(row.faces && row.faces.before !== row.faces.after);
-  assert.ok(diff.rows.some((r) => r.label === 'HP'), 'the rest heal is part of the receipt');
+  assert.equal(diff.rows.some((r) => r.label === 'HP'), legacy, legacy ? 'the rest heal is part of the receipt' : 'a service heals nothing, so no HP row');
 });
 
 test('main.js shows the receipt for smith and upgradeCard and skips level-up', () => {
