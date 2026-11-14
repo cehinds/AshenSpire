@@ -18,7 +18,8 @@ import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMo
 import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { createFollowMemo, CreateFollowUpReduction } from '../models/IntentFollowUpModel.js';
+import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '../models/IntentFollowUpModel.js';
+import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot, rangeRankSnapshot, stageRangeRanks } from '../models/CombatRangeRankModel.js';
@@ -2363,7 +2364,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         trailing: [build.statuses(), ...build.chips()],
       };
       const box = record ? record.box : combatantFrame(slots);
+      // A promotion (a resolved move's successor moving into the head slot) is drawn as a shift: the old row is measured
+      // before the rebuild replaces it, then the new nodes animate from there. Presentation only, nothing waits on it.
+      const promotedNow = !!shownIntent?.promoted;
+      const shiftFrom = record && promotedNow && !record.promoted ? SnapshotIntentShift(box.querySelector('.intent')) : null;
       const rowWrote = record ? writeSlots(box, record, keys, build) : true;
+      if (shiftFrom) AnimateIntentShift(shiftFrom, box.querySelector('.intent'));
       if (rowWrote) wrote = true;
       stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
@@ -2401,7 +2407,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.removeAttribute('aria-disabled');
       }
       if (!record) row.appendChild(box);
-      enemyFrames.set(enemy.id, { key: artKey, renderKey, box, slotKeys: record ? record.slotKeys : keys });
+      enemyFrames.set(enemy.id, { key: artKey, renderKey, box, slotKeys: record ? record.slotKeys : keys, promoted: promotedNow });
     }
     // `data-wide-enemy-row` stands in for `.field:has(.enemy-row > .combatant:nth-child(4))`
     // in combat.css. One frame per enemy, dead ones included, and nothing else lives in the row.
@@ -3469,11 +3475,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       {
         ...fxCtx,
         onIntent: beat => {
-          const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
+          // The head shows a move's real intent when that move starts (its intent / action-word stage), not when the beat is
+          // applied after the animation: an enemy's non-reaction announcing receipts are applied early too. Applying them
+          // again in onBeatApplied is harmless (the follow-up reducer dedupes per event; the intent receipt and the
+          // stance write set the same values).
+          const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted'
+            || ['enemyMoveStarted', 'combatContactPrepared', 'combatHitStarted'].includes(event.type)
+            && !event.reaction && event.intentPreview && disp?.ents?.[event.sourceId]?.kind === 'enemy');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
         },
         onResolution: () => {
-          if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears)) renderCombatantStage({ fit: false });
+          // A move that resolved with another announced for its actor promotes the next planned move into the head slot.
+          if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears,
+            id => PromoteFollowUpRow({ disp, followMemo, followTrace: combat.followTrace }, id))) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts. Core 2 plays
