@@ -18,9 +18,10 @@ export const LEGACY_ROUTES = {
   restFloors: [3, 6, 9], branchColumns: 3, minimumThreatFloor: 3, mapMode: 'fog', firstFloor: 'fight',
   shopShare: 0.15, requirePrebossRest: true, maxBranches: 3, startNodeRefills: true,
 };
+// The bundle binds every routes key; null means absent, so the old content re-resolves with the new keys switched off.
 const { catalog, authors } = compileGameProfiles();
 const changed = structuredClone(catalog);
-changed.packs['ashen.core-content@2.0.0'].content.routes = structuredClone(LEGACY_ROUTES);
+changed.packs['ashen.core-content@2.0.0'].content.routes = { ...structuredClone(LEGACY_ROUTES), typeWeights: null, variedNeighbours: null, shopsPerBranch: null, forkPercent: null, crossLinkPercent: null };
 const profile = resolveGameAuthor(authors.core, changed);
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });

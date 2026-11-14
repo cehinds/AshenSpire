@@ -247,7 +247,12 @@
         "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",
-        "startNodeRefills": "startNodeRefills"
+        "startNodeRefills": "startNodeRefills",
+        "typeWeights": "typeWeights",
+        "variedNeighbours": "variedNeighbours",
+        "shopsPerBranch": "shopsPerBranch",
+        "forkPercent": "forkPercent",
+        "crossLinkPercent": "crossLinkPercent"
       }
     },
     {

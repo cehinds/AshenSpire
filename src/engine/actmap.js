@@ -223,7 +223,7 @@ const REMERGE_PERCENT = 18;
 const FORK_PERCENT = 40;
 const NARROW_PERCENT = 25;
 // Per-branch lane occupancy: { [floor]: { lo, hi } } (contiguous lanes, branch-local), plus the fork/narrow edges that make the tree.
-function drawBranchShape(rng, lanes, count) {
+function drawBranchShape(rng, lanes, count, forkPercent = FORK_PERCENT) {
   const active = {}, edges = []; // edges: [floor, fromLane, toLane] join floor -> floor + 1, branch-local lanes
   if (count < 2) return { active, edges };
   const width = lanes >= 3 && rng.chance('map', 50) ? 2 : 1;
@@ -233,7 +233,7 @@ function drawBranchShape(rng, lanes, count) {
   for (let floor = 2; floor < count; floor++) {
     const { lo, hi } = active[floor], next = { lo, hi };
     if (floor < fillBy) {
-      const left = rng.chance('map', FORK_PERCENT), right = rng.chance('map', FORK_PERCENT);
+      const left = rng.chance('map', forkPercent), right = rng.chance('map', forkPercent);
       const left0 = lo, right0 = hi, remaining = fillBy - floor;
       if (lo > 0 && (left || lo >= remaining)) { next.lo = lo - 1; edges.push([floor, left0, lo - 1]); }
       if (hi < lanes - 1 && (right || lanes - 1 - hi >= remaining)) { next.hi = hi + 1; edges.push([floor, right0, hi + 1]); }
@@ -251,6 +251,23 @@ function drawBranchShape(rng, lanes, count) {
 function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const { rules, count, columns, minimumThreatFloor, restFloors, firstFloor, shopShare, displayTypes, hidden, alternatives, hideUnknown, history } = ctx;
   const maxBranches = rules.maxBranches;
+  // Visible-fork keys (owner, 2026-11-14). Each is read only when present, so older pinned profiles keep today's draws exactly.
+  const percent = (key, fallback) => {
+    if (rules[key] == null) return fallback;
+    if (typeof rules[key] !== 'number' || !(rules[key] >= 0 && rules[key] <= 100)) throw new Error(`Invalid configured ${key}`);
+    return rules[key];
+  };
+  const forkPercent = percent('forkPercent', FORK_PERCENT);
+  const crossLinkPercent = percent('crossLinkPercent', null);
+  const typeWeights = rules.typeWeights ?? null;
+  if (typeWeights !== null) {
+    const entries = typeof typeWeights === 'object' && !Array.isArray(typeWeights) ? Object.entries(typeWeights) : [];
+    if (!entries.length || entries.some(([type, weight]) => !alternatives.includes(type) || typeof weight !== 'number' || !(weight >= 0) || !Number.isFinite(weight)) || !entries.some(([, weight]) => weight > 0)) throw new Error('Invalid configured typeWeights');
+  }
+  if (rules.variedNeighbours != null && typeof rules.variedNeighbours !== 'boolean') throw new Error('Invalid configured variedNeighbours');
+  const variedNeighbours = rules.variedNeighbours === true;
+  const shopsPerBranch = rules.shopsPerBranch ?? 0;
+  if (!Number.isInteger(shopsPerBranch) || shopsPerBranch < 0 || shopsPerBranch > 1 || (shopsPerBranch > 0 && !alternatives.includes('shop'))) throw new Error('Invalid configured shopsPerBranch');
   if (!Number.isInteger(maxBranches) || maxBranches < 1 || maxBranches > 5) throw new Error('Invalid configured maxBranches');
   const pool = registries.encounters.all().filter(enc => enc.pool === 'boss' && encounterFitsSeat(enc, { seat, tier, finalTier: rules.acts }));
   if (!pool.length) throw new Error(`Configured route has no boss for ${seat}/${tier}`);
@@ -261,7 +278,7 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
   const restSet = new Set(restFloors);
   const nodeId = (floor, globalLane) => `n${floor}_${globalLane}`;
   // Every branch's tree shape is drawn first, so what a lane holds cannot depend on how its nodes roll.
-  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count));
+  const shapes = Array.from({ length: branchCount }, () => drawBranchShape(rng, lanes, count, forkPercent));
   const laneAt = (k, floor, lane) => { const a = shapes[k].active[floor]; return !!a && lane >= a.lo && lane <= a.hi; };
   // One guaranteed elite slot per lane (owner, 2026-10-27): drawn from the depths where that lane exists, before any node rolls.
   const guaranteed = new Set();
@@ -270,7 +287,24 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     for (let floor = Math.max(2, minimumThreatFloor); floor <= count; floor++) if (!restSet.has(floor) && laneAt(k, floor, lane)) floors.push(floor);
     if (floors.length) guaranteed.add(`${rng.pick('map', floors)}:${k * lanes + lane}`);
   }
+  // One guaranteed shop slot per branch (shopsPerBranch): a non-rest depth 4-8 where the branch has a lane, never an elite slot.
+  const guaranteedShop = new Set();
+  if (shopsPerBranch > 0) for (let k = 0; k < branchCount; k++) {
+    const slots = [];
+    for (let floor = 4; floor <= Math.min(8, count); floor++) if (!restSet.has(floor)) for (let lane = 0; lane < lanes; lane++) {
+      if (laneAt(k, floor, lane) && !guaranteed.has(`${floor}:${k * lanes + lane}`)) slots.push(`${floor}:${k * lanes + lane}`);
+    }
+    if (slots.length) guaranteedShop.add(rng.pick('map', slots));
+  }
   const nodes = {}, layers = [], seenEvents = [];
+  const weightedType = (types, skip) => {
+    const rows = types.filter(type => type !== skip && typeWeights[type] > 0);
+    if (!rows.length) return skip;
+    const total = rows.reduce((sum, type) => sum + typeWeights[type], 0);
+    let roll = rng.float('map') * total;
+    for (const type of rows) { roll -= typeWeights[type]; if (roll < 0) return type; }
+    return rows[rows.length - 1];
+  };
   const makeNode = (id, floor, col, branch, rest, lane) => {
     const choices = alternatives.filter(type => type !== 'elite' || floor >= minimumThreatFloor);
     if (!rest && !choices.length) throw new Error(`Configured route has no permitted node types at depth ${floor}`);
@@ -279,6 +313,15 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     if (rest) actual = 'rest';
     else if (forced) actual = firstFloor;
     else if (guaranteed.has(`${floor}:${lane}`)) actual = 'elite';
+    else if (guaranteedShop.has(`${floor}:${lane}`)) actual = 'shop';
+    else if (typeWeights !== null) {
+      // typeWeights: a weighted draw over the listed types permitted at this depth; shopShare is ignored. variedNeighbours keeps a
+      // lane from repeating the type of the lane beside it (made just before, in the same branch and depth) when another type can roll.
+      const permitted = choices.filter(type => typeWeights[type] > 0);
+      if (!permitted.length) throw new Error(`Configured route has no permitted node types at depth ${floor}`);
+      const beside = variedNeighbours && branch != null && lane % lanes > 0 ? nodes[nodeId(floor, lane - 1)] : null;
+      actual = weightedType(permitted, beside && beside.actualType !== 'rest' ? beside.actualType : null);
+    }
     else {
       actual = rng.pick('map', choices);
       if (shopShare != null && alternatives.includes('shop') && actual !== 'elite') {
@@ -329,7 +372,23 @@ function buildBranchedActMap(registries, rng, seat, tier, ctx) {
     if (count >= 2) for (let j = 0; j < lanes; j++) if (laneAt(k, count, j)) link(nodeId(count, base + j), bossIds[k]);
   }
   const crossings = new Map(); // `${floor}:${branch}` -> [fromId, toId]
-  for (let floor = 2; floor < count; floor++) {
+  if (crossLinkPercent !== null) {
+    // crossLinkPercent: for every gap between two in-branch depths and every pair of neighbouring lanes present on both, one draw adds
+    // ONE diagonal edge (direction 50/50). An edge that would swap column order with one already in the gap is dropped, so edges never cross.
+    for (let floor = 2; floor < count; floor++) for (let k = 0; k < branchCount; k++) for (let j = 0; j + 1 < lanes; j++) {
+      if (![floor, floor + 1].every(f => laneAt(k, f, j) && laneAt(k, f, j + 1))) continue;
+      const hit = rng.chance('map', crossLinkPercent), forward = hit && rng.chance('map', 50);
+      if (!hit) continue;
+      const g = k * lanes + j;
+      const [fromId, toId] = forward ? [nodeId(floor, g), nodeId(floor + 1, g + 1)] : [nodeId(floor, g + 1), nodeId(floor + 1, g)];
+      const swaps = Object.values(nodes).some(a => a.floor === floor && a.branch === k && a.next.some(t => {
+        const b = nodes[t];
+        return (a.col - nodes[fromId].col) * (b.col - nodes[toId].col) < 0;
+      }));
+      if (!swaps) link(fromId, toId);
+    }
+  }
+  else for (let floor = 2; floor < count; floor++) {
     for (let k = 0; k < branchCount; k++) {
       const hit = rng.chance('map', REMERGE_PERCENT), pick = rng.int('map', 0, Math.max(0, lanes - 2)), forward = rng.chance('map', 50);
       const pairs = [];

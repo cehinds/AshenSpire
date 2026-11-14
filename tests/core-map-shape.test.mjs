@@ -18,7 +18,7 @@ const mapFor = seed => buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
 
 function measure() {
   let walks = 0, fightSum = 0, fightMin = Infinity, fightMax = 0, stepsIn = 0, forkSteps = 0, exitSum = 0, exitN = 0, shopMaps = 0, nodesAll = 0, hiddenAll = 0;
-  const bad = { crossings: 0, unreachable: 0, deadWalks: 0 };
+  const bad = { crossings: 0, unreachable: 0, deadWalks: 0, restMisplaced: 0, laneNoElite: 0 };
   for (let seed = 1; seed <= SEEDS; seed++) {
     const map = mapFor(seed), rng = createRng(90000 + seed);
     const ids = Object.keys(map.nodes);
@@ -31,6 +31,16 @@ function measure() {
     const stack = [...map.startIds];
     while (stack.length) for (const t of map.nodes[stack.pop()].next) if (!seen.has(t)) { seen.add(t); stack.push(t); }
     bad.unreachable += ids.length - seen.size;
+    // No two edges in one gap swap column order, rests fill depths 3, 6, 9 in every lane, and every lane that could hold an elite does.
+    for (const floor of new Set(ids.map(id => map.nodes[id].floor))) {
+      const edges = ids.filter(id => map.nodes[id].floor === floor).flatMap(id => map.nodes[id].next.map(t => [map.nodes[id].col, map.nodes[t].col]));
+      for (const a of edges) for (const b of edges) if ((a[0] - b[0]) * (a[1] - b[1]) < 0) bad.crossings++;
+    }
+    for (const id of ids) { const n = map.nodes[id]; if ([3, 6, 9].includes(n.floor) !== (n.actualType === 'rest') && n.actualType !== 'boss') bad.restMisplaced++; }
+    for (const b of branches) for (let col = 0; col < map.columns; col++) {
+      const lane = ids.map(id => map.nodes[id]).filter(n => n.branch === b && n.col === col && n.floor >= 3 && n.actualType !== 'rest' && n.actualType !== 'boss');
+      if (lane.length && !lane.some(n => n.actualType === 'elite')) bad.laneNoElite++;
+    }
     for (let w = 0; w < WALKS; w++) {
       let node = map.nodes[map.startIds[0]], fights = FIGHTS.has(node.actualType) ? 1 : 0;
       while (node.next.length) {
@@ -53,7 +63,15 @@ test('Core act 1 map shape measurement', () => {
   console.log(`MEASURE exits mean=${m.exits.toFixed(3)}`);
   console.log(`MEASURE shopReachable share=${m.shopShare.toFixed(3)}`);
   console.log(`MEASURE hiddenNodes share=${m.hiddenShare.toFixed(3)}`);
-  assert.equal(m.unreachable, 0);
-  assert.equal(m.deadWalks, 0);
-  assert.ok(m.fightMean > 0 && m.exits >= 1);
+  assert.equal(m.unreachable, 0, 'every node is reachable from the start');
+  assert.equal(m.deadWalks, 0, 'every walk ends at a boss');
+  assert.equal(m.crossings, 0, 'no crossing edges');
+  assert.equal(m.restMisplaced, 0, 'rests exactly on depths 3, 6, 9');
+  assert.equal(m.laneNoElite, 0, 'every lane with an eligible depth holds an elite');
+  assert.equal(m.shopShare, 1, 'every branch has a shop on depths 2-8');
+  assert.equal(m.hiddenShare, 0, 'no node is hidden');
+  // Best reached with forkPercent/crossLinkPercent alone: geometry (one extra diagonal per lane pair) caps the fork share below the 0.70 aim.
+  assert.ok(m.forkShare >= 0.5, `fork share ${m.forkShare}`);
+  assert.ok(m.fightMean >= 4.7, `fights per walk ${m.fightMean}`);
+  assert.ok(m.exits >= 1.4, `exits ${m.exits}`);
 });
