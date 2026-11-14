@@ -214,13 +214,10 @@ async function main() {
     }
     await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'New Game');
     await click('.title-menu .slot-new', 'New Game');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the slot picker');
-    await click('[data-title-action="modal-continue"]', 'Create character');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the slot review');
-    await click('[data-title-action="review-new"]', 'Start');
+    // A fresh profile opens creation directly: no slot picker or slot review.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'Core class creation');
     await click('#cz-classes .cz-class', 'Reaver');
-    await click('#cz-next', 'Review');
+    await click('#cz-next', 'Customise');
     await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'review'`, 'Core review');
     await click('#seed-input', 'seed field');
     for (const type of ['keyDown','keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'a', code: 'KeyA', modifiers: 2, windowsVirtualKeyCode: 65 }, S);
