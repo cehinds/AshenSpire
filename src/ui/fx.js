@@ -1097,7 +1097,7 @@ export function groupBeats(events) {
 // splits the attack beat at its first accuracy receipt: [move + Hit/Miss word] [the reaction card's beats] [the rest,
 // already announced]. Presentation only: no event is added, dropped or reordered in the engine's log.
 const isDodge = event => event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
-  || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive;
+  || event.type === 'attackMissed' && (event.missReason === 'accuracy' || event.missReason === 'evaded') && event.evadeActive;
 // A receipt that announces an outcome (onResult says Hit or Miss for it); combatAvoidanceResolved announces one only when avoided.
 const announces = event => ['attackHit', 'attackMissed', 'attackEvaded'].includes(event.type) || event.type === 'combatAvoidanceResolved' && event.avoided === true;
 const reactionCardBeat = beat => beat.actorId === 'player' && beat.events.some(e => e.type === 'cardPlayed');

@@ -231,7 +231,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.opposed || event.fixedDefense) {
           // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
-          const why = event.missReason === 'range' ? 'out of range' : event.bypass ? 'Evasion bypassed' : 'automatic';
+          const why = event.missReason === 'range' ? 'out of range' : event.missReason === 'evaded' ? 'evaded' : event.bypass ? 'Evasion bypassed' : 'automatic';
           text = `${source} ${outcome} ${target}: ${why} · Precision ${event.accuracy ?? 0} · ${event.hitChance ?? 100}% chance.`;
         }
         else text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
