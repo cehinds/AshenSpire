@@ -62,7 +62,7 @@ export function cardUpgradeChanges(registries, before, after, playsEver = 0, max
   push(t('cardUpgrade.change.rank'), cantrip(before), cantrip(after));
   // Effects the menu adds (W25): draw, discard, exhaust, a copy, a shuffle, Retain, a temporary boost, a second target, and the keywords / traits.
   const extras = (def) => [...new Set((def?.effects || []).flatMap((e) => (e.op === 'draw' || e.op === 'discard' || e.op === 'exhaust' || e.op === 'addCard' || e.op === 'shuffleDiscardIntoDraw' || e.op === 'retain'
-    ? [e.op] : e.op === 'applyStatus' && e.thisTurn ? [`${e.status} this turn`] : e.op === 'changeAttribute' ? [`${e.attribute} ${e.thisTurn ? 'this turn' : 'for the fight'}`] : e.op === 'damage' && e.target === 'randomEnemy' ? ['extra target'] : [])))].sort().join(', ') || 'none';
+    ? [e.op] : e.op === 'applyStatus' && e.thisTurn ? [`${e.status} this turn`] : e.op === 'changeAttribute' ? [`${e.attribute} ${e.thisTurn ? 'this turn' : 'for the fight'}`] : e.op === 'damage' && e.target === 'randomEnemy' ? ['extra target'] : []))), ...Object.entries(def?.runAttributeBonus || {}).map(([stat, n]) => `+${n} ${stat} for the run`)].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.effects'), extras(before), extras(after));
   const words = (def) => [...(def?.keywords || []), ...((def?.tags || []).includes('trait:reaction') ? ['reaction'] : [])].sort().join(', ') || 'none';
   push(t('cardUpgrade.change.keywords'), words(before), words(after));

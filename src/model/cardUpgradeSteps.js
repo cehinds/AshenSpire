@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, RUN_ATTRIBUTE_STATS, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
@@ -19,7 +19,9 @@ const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 1
   poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
   // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
   'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
-  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 4 });
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 4,
+  // A run-long +1 INT / WIS, about a fifth of a normal step (W25-L); offered on spells only.
+  attr: 2 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -140,9 +142,11 @@ function options(base, current, applied, limits) {
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
   addMenuOptions(base, current, found, dmgIndex, counterReturn);
+  if (!counterReturn && isSpellCard(current) && !applied.some((s) => s.k === 'attr')) found.attr = { stats: RUN_ATTRIBUTE_STATS };
   return found;
 }
 
+const isSpellCard = (card) => familyValue(tagsOf(card), 'camp:') === 'spell' || tagsOf(card).includes('source:spell');
 const hasOp = (effects, op) => effects.some((effect) => effect.op === op);
 const FX_OF = (id) => `fx:${id}`;
 
@@ -272,6 +276,7 @@ const stepOf = (kind, option, choice) => {
       return option.by?.[pool] > 1 ? { k: 'cost', pool, n: option.by[pool] } : { k: 'cost', pool };
     }
     case 'poise': return { k: 'poise', n: option.n };
+    case 'attr': return { k: 'attr', stat: pickOf(option.stats), n: 1 };
     case 'range': case 'rankDown': return { k: 'tag', tag: option.tag };
     case 'targeting': return { k: 'tag', tag: option.tag, retarget: option.retarget };
     case 'maneuver': case 'school': return { k: 'tag', tag: pickOf(option.tags) };

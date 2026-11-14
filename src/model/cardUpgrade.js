@@ -41,7 +41,7 @@ export function upgradedDefinition(base) {
 //                                  authored card of that school carries (balance.exposure.buildupPerManaSpell)
 //   fx { fx, ... }                 an effect-menu step (W25, owner 2026-11-14), see FX_KINDS below
 //   combo { steps }                two effects in one upgrade slot (a later upgrade's 20% roll): every inner step is an fx or a basic step
-export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo']);
+export const UPGRADE_STEP_KINDS = Object.freeze(['authored', 'dmg', 'blk', 'stk', 'addStatus', 'cost', 'hits', 'poise', 'tag', 'fx', 'combo', 'attr']);
 // The tag vocabulary a `tag` step may write: ranges from combatRanges.js, the rest mirrors combatCardProfile.js
 // (tests/core-card-upgrade-choices-tags.test.mjs pins the mirror to the exported sets).
 // The words are split from one string on purpose: tools/mechanics-generate.mjs takes a file that quotes a bare
@@ -76,6 +76,8 @@ export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle 
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
+// The run-long attribute upgrade (`{ k: 'attr', stat, n }`) offers only these two, and only on a spell.
+export const RUN_ATTRIBUTE_STATS = Object.freeze(words('intelligence wisdom'));
 export const BOOST_DURATIONS = Object.freeze(words('turn fight'));
 
 
@@ -110,6 +112,20 @@ export function upgradeSignature(instance) {
   if (!steps.length) return '0';
   if (steps.length === 1 && steps[0].k === 'authored') return '1';
   return steps.map((s) => Object.entries(s).map(([key, value]) => `${key}=${value}`).join(',')).join(';');
+}
+
+/**
+ * DeckAttributeBonuses(deck) -> `{ intelligence, wisdom }` the run gains from the run-long attribute upgrades on the cards in the deck.
+ * Read from the deck every time, so a card that leaves it takes its bonus along.
+ */
+export function DeckAttributeBonuses(deck) {
+  const out = {};
+  for (const card of deck || []) {
+    for (const step of FlatSteps(upgradeStepsOf(card))) {
+      if (step && step.k === 'attr' && RUN_ATTRIBUTE_STATS.includes(step.stat) && Number.isInteger(step.n) && step.n > 0) out[step.stat] = (out[step.stat] || 0) + step.n;
+    }
+  }
+  return out;
 }
 
 const CONDITION_KEYS = ['when', 'if', 'condition', 'unless', 'repeat'];
@@ -175,6 +191,8 @@ function applyStep(card, step) {
       }
       break;
     }
+    // A run-long attribute (W25-L): +n INT or WIS for the run while this card is in the deck (DeckAttributeBonuses). It changes no play of the card itself.
+    case 'attr': out.runAttributeBonus = { ...(card.runAttributeBonus || {}), [step.stat]: ((card.runAttributeBonus || {})[step.stat] || 0) + step.n }; break;
     case 'poise': {
       const index = firstPlainIndex(effects, 'poiseDamage');
       if (index >= 0) effects[index].amount += step.n;
@@ -335,6 +353,10 @@ export function upgradeStepsProblems(instance, path) {
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
       if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
       if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');
+    }
+    if (step.k === 'attr') {
+      if (!RUN_ATTRIBUTE_STATS.includes(step.stat)) bad('stat');
+      if (!isCount(step.n, 3)) bad('n');
     }
     if (step.k === 'combo') {
       const inner = step.steps;

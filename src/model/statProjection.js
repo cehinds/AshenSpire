@@ -8,6 +8,7 @@ import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
+import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { handStatRows, ratingStatRows, ratingsConfigFor, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { handSizeReceipts, resolveHandRules } from './handRules.js';
@@ -209,6 +210,12 @@ export function playerLoadReceipt(registries, run, { capacityBonus = 0 } = {}) {
   };
 }
 
+/** The attributes the sheet reads: the run's own plus the run-long INT / WIS upgrades on the cards in its deck (W25-L). */
+export function SheetAttributes(run) {
+  const deck = DeckAttributeBonuses(run?.deck);
+  return Object.keys(deck).length ? Object.fromEntries(Object.entries(run.attributes || {}).map(([id, value]) => [id, value + (deck[id] || 0)])) : run.attributes;
+}
+
 export function statProjection(registries, run) {
   const snapshot = run && run.derivedStatRuleSnapshot;
   if (!snapshot || !snapshot.rules) throw new Error('statProjection requires a run with a derived-stat rules snapshot');
@@ -216,7 +223,7 @@ export function statProjection(registries, run) {
   const attributes = registries.attributes.all()
     .slice()
     .sort((a, b) => a.order - b.order)
-    .map((def) => ({ ...def, value: run.attributes[def.id] }));
+    .map((def) => ({ ...def, value: SheetAttributes(run)[def.id] }));
   // A ROW THE RUN'S SNAPSHOT NEVER HAD IS NOT PROJECTED. The presentation
   // table is the LIVE one and grows with the content — Poise joined it in
   // ruleset 5 (plan phase 9) — while a run keeps the rules it was born
@@ -233,7 +240,7 @@ export function statProjection(registries, run) {
     && snapshot.rules && snapshot.rules.rules && Object.hasOwn(snapshot.rules.rules, presentation.id)
   )).map((presentation) => {
     const id = presentation.id;
-    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
+    const receipt = deriveStat(snapshot.rules, id, { attributes: SheetAttributes(run), classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
     const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
     const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;
@@ -282,7 +289,7 @@ export function handResourceRows(registries, run, settings = {}) {
   // engine/runCombat.js hands its next fight (model/statRows.js).
   const rules = resolveHandRules(settings, handStatRows(registries, run, { settings }));
   const level = run.level && Number.isInteger(run.level.level) ? run.level.level : undefined;
-  const { opening, turn } = handSizeReceipts(rules, run.attributes, level);
+  const { opening, turn } = handSizeReceipts(rules, SheetAttributes(run), level);
   const short = (id) => registries.attributes.get(id)?.shortLabel || id;
   const terms = (receipt) => `${receipt.base} base${Object.entries(receipt.terms).filter(([, term]) => term).map(([id, term]) => ` + ${term} ${short(id)}`).join('')}${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`;
   const limits = (receipt) => (Number.isFinite(receipt.min) && receipt.raw < receipt.min ? `, raised to the minimum ${receipt.min}`

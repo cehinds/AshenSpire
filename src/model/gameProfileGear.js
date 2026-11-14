@@ -1,4 +1,5 @@
 import { gameModule, gameContent } from './gameProfile.js';
+import { DeckAttributeBonuses } from './cardUpgrade.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','ar','dr','poise','ward','evasion','precision',...ATTRIBUTES];
@@ -24,5 +25,7 @@ export function gameProfileEquipmentReceipt(registries, run) {
 }
 export function gameProfileEffectiveAttributes(registries, run, attributes = run.allocatedAttributes ?? run.player?.allocatedAttributes ?? run.attributes) {
   const gear = gameProfileEquipmentReceipt(registries,run);
-  return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)]));
+  // Run-long INT / WIS upgrades on the cards in the deck (W25-L), read here so the sheet, the ratings and a fight all price the same attributes.
+  const deck = DeckAttributeBonuses(run.deck);
+  return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)+(deck[id] || 0)]));
 }
