@@ -5,44 +5,69 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
+import { gameProfileStarterDeck } from '../src/model/gameProfileRun.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from './withoutWeaknesses.mjs';
+import { dispatch } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const counts = (cards) => cards.reduce((m, c) => (m[c.cardId] = (m[c.cardId] || 0) + 1, m), {});
 const start = (classId) => createRunState({ registries: reg, classId, seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
 
-test('Core Reaver starts with exactly 4 Strike, 4 Defend, 1 Counter and its weapon art', () => {
-  const run = start('reaver');
-  assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.strike': 4, 'core.defend': 4, 'core.counter': 1, 'greatswordSunderingHew': 1 });
-  assert.deepEqual(run.sideboard, []);
-});
+const DECKS = {
+  reaver: { 'core.strike': 2, 'core.defend': 3, 'core.counter': 1, 'core.smash': 1, 'core.sweep': 1, 'core.ironbreaker': 1, 'core.rallyingRoar': 1, 'greatswordSunderingHew': 1 },
+  rogue: { 'core.strike': 2, 'core.defend': 2, 'core.counter': 1, 'core.evade': 1, 'core.smash': 1, 'core.sweep': 1, 'core.feint': 1, 'core.venomedEdge': 1, 'twinFang': 1 },
+  starseer: { 'core.cantrip': 2, 'core.starseerSpecial': 1, 'core.astralBolt': 1, 'base.ethereal': 3, 'core.smash': 1, 'core.sweep': 1, 'core.manaSurge': 1, blightTouch: 1 },
+  herald: { 'base.paid-resource-variant': 2, 'base.ethereal': 2, 'base.exhaust': 1, 'core.smash': 1, 'core.sweep': 1, 'core.smite': 1, 'core.sanctifiedWard': 1, 'core.manaSurge': 1, blightTouch: 1 },
+};
 
-test('Core Rogue starts with exactly 2 Strike, 2 Defend, 2 Counter, 2 Evade, 1 Draw and its weapon art', () => {
-  const run = start('rogue');
-  assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.strike': 2, 'core.defend': 2, 'core.counter': 2, 'core.evade': 2, 'base.draw': 1, 'twinFang': 1 });
-  assert.deepEqual(run.sideboard, []);
-});
+for (const [classId, expected] of Object.entries(DECKS)) {
+  test(`Core ${classId} starts with its exact 11-card deck (owner stance-starter design, Wave 1)`, () => {
+    const run = start(classId);
+    assert.equal(run.deck.length, 11);
+    assert.deepEqual(counts(run.deck), expected);
+    assert.deepEqual(run.sideboard, []);
+    // The ledger is seeded from the authored list; weapon-granted arts (Sundering Hew, Mana Surge ...) are not in it.
+    for (const id of gameProfileStarterDeck(run, classId)) assert.ok(run.collectedCardIds.includes(id), `${id} is in the collection ledger`);
+  });
 
-test('Core Starseer starts with 3 Arcane Spark, 1 Star Spark, 4 Ethereal, a Bone Sceptre-granted Mana Surge and its weapon art (Blight Touch)', () => {
-  const run = start('starseer');
-  assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 1, 'base.ethereal': 4, 'core.manaSurge': 1, blightTouch: 1 });
-  assert.deepEqual(run.sideboard, []);
-});
+  test(`Core ${classId} starter has a Smash, a Sweep and two cards of its own class, none costing more MP than it starts with`, () => {
+    const run = start(classId);
+    const defs = run.deck.map(c => reg.cards.get(c.cardId));
+    assert.ok(defs.some(d => d.tags.includes('maneuver:smash')), 'a Smash');
+    assert.ok(defs.some(d => d.tags.includes('maneuver:sweep')), 'a Sweep');
+    assert.ok(defs.filter(d => d.class === classId).length >= 2, 'two cards of its own class');
+    const maxMana = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }).player.maxMana;
+    for (const d of defs) assert.ok((d.manaCost || 0) <= maxMana, `${d.id} costs ${d.manaCost} MP, class starts with ${maxMana}`);
+  });
 
-test('Core Herald starts with 4 Resource Echo, 2 Ethereal, 1 Smash, 1 Exhaust, a Bone Sceptre-granted Mana Surge and its weapon art (Blight Touch)', () => {
-  const run = start('herald');
-  assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 2, 'core.smash': 1, 'base.exhaust': 1, 'core.manaSurge': 1, blightTouch: 1 });
-  assert.deepEqual(run.sideboard, []);
-});
+  test(`Core ${classId} can play every starter card at combat start with its weapon and full SP and MP`, () => {
+    for (const cardId of Object.keys(expected)) {
+      const attempt = withTarget => {
+        const run = start(classId);
+        const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+        const p = combat.player;
+        assert.equal(p.stamina, p.maxStamina); assert.equal(p.mana, p.maxMana);
+        combat.piles.hand.push({ cardId, instanceId: 'probe', upgraded: false });
+        dispatch(combat, { type: 'playCard', cardInstanceId: 'probe', ...(withTarget ? { targetId: combat.enemies[0].id } : {}) });
+        return combat;
+      };
+      let combat;
+      try { combat = attempt(true); } catch (error) {
+        // Self-targeted cards refuse an enemy target; any other refusal fails here too.
+        assert.match(error.message, /friendly target/, `${classId} ${cardId}: ${error.message}`);
+        combat = attempt(false);
+      }
+      assert.ok(combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardId === cardId) || !combat.piles.hand.some(c => c.instanceId === 'probe'), `${classId} ${cardId} left the hand`);
+    }
+  });
+}
 
 test('Core editor offers only collected definitions under the matching Adept (owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
-  const expected = { reaver: ['core.strike', 'core.defend', 'core.counter'],
-    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.evade'], starseer: ['core.cantrip'], herald: [] };
+  const expected = { reaver: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep'],
+    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'], starseer: ['core.cantrip'], herald: [] };
   for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(start(id)), expected[id]);
 });
 
@@ -52,7 +77,7 @@ test('Core owned basics are sourced basic and the Basic filter is non-empty, wit
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
   const run = start('reaver');
-  assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend', 'core.counter'], 'policy: only collected trained basics can be minted');
+  assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep'], 'policy: only collected trained basics can be minted');
   for (const id of ['core.strike', 'core.defend', 'core.counter']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
   for (const c of run.deck.filter((x) => ['core.strike', 'core.defend', 'core.counter'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
   const model = deckEditorModel({ registries: reg, run });
