@@ -20,6 +20,7 @@ import { COMBAT_LOG_PALETTE_DEFAULTS } from './CombatLogPaletteModel.js';
 import { rangeSettingsRows } from './RangeSettingsModel.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { AUTOMATION_DEFAULTS, ACTION_PACING, STAGE_KEYS, stageSettingKey } from '../../model/autoCombatPolicy.js';
+import { defaultTimeline } from '../../model/combatTimelinePolicy.js';
 import { resolveMotionIdle } from '../performance.js';
 import { TITLE_ENTRANCE_TIMING } from './StartupGateModels.js';
 import { MAP_ZOOM_DEFAULT, ZOOM_STEPS, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
@@ -289,6 +290,9 @@ export const SETTINGS_ROWS = [
   ...STAGE_KEYS.map(stage => ({ cat: 'Combat', key: stageSettingKey(stage), type: 'number', def: ACTION_PACING.fixedStageMs[stage],
     min: AUTOMATION_DEFAULTS.stageMsMinimum, max: AUTOMATION_DEFAULTS.stageMsMaximum, step: AUTOMATION_DEFAULTS.stageMsStep,
     label: t(`settings.row.${stageSettingKey(stage)}`), note: tFull(`settings.row.${stageSettingKey(stage)}`) })),
+  // Owner 2026-11-13: the order and timing of every step of an action; a saved { shared, reaction } (model/combatTimelinePolicy.js).
+  { cat: 'Combat', key: 'combatTimeline', type: 'timeline', def: { shared: defaultTimeline(), reaction: null },
+    label: t('settings.row.combatTimeline'), note: tFull('settings.row.combatTimeline') },
   { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDefaultMs,
     min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
     label: t('settings.row.animationStepDuration'), note: tFull('settings.row.animationStepDuration') },

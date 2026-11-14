@@ -1562,7 +1562,8 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
     let valid = false;
-    if (row.type === 'choice') valid = row.choices.includes(value);
+    if (row.type === 'timeline') valid = !!value && typeof value === 'object' && Array.isArray(value.shared) && (value.reaction === null || Array.isArray(value.reaction));
+    else if (row.type === 'choice') valid = row.choices.includes(value);
     else if (['color', 'colorSwatch'].includes(row.type)) valid = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
     else if (typeof row.def === 'boolean') valid = typeof value === 'boolean';
     else if (['number', 'range'].includes(row.type) || typeof row.def === 'number') {

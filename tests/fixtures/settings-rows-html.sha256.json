@@ -19,6 +19,7 @@
  "Combat/combatStepPause": "e0bb4d4d13a3779a5f64433bfabafbf1ed9af31441e829efb81ee2e288406549",
  "Combat/combatStageTelegraphHoldMs": "2d71ee583fc976426081f9021b94e1eb3611defb737baf4d89521488f1406254",
  "Combat/combatStageTelegraphResetMs": "06819999c5f50e30a20a25201c952229e9273cae8e8b1c0403e69bf4765a352c",
+ "Combat/combatTimeline": "e07ad33b2fc352ef5086f1b949db81d0dc246b3656f401309fb29d47bc4a9d5f",
  "Combat/animationStepDuration": "22a3cb0151f913ec1a098e53ef8f592b89f8802ca4bfe0d2ed1c5adb7ddcdc9e",
  "Combat/enemyAttackMs": "77f1362bf9597fa290f7224e70a0f23e95e9bb69f3c2c8067e329b904e5f1c6a",
  "Combat/enemyFloaterIntervalMs": "28e836ddaae05d6339dc20e9bdbd8d8bf38c31118461d8ebfa08e6787c169a1f",

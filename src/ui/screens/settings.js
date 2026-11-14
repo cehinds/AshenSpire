@@ -25,6 +25,7 @@ import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { openModal, button, settingRowOpenHtml, settingLabelStackHtml } from '../kit/index.js';
 import { openConfirmationModal } from '../components/confirmationModal.js';
 import { t, tFull } from '../strings.js';
+import { timelineEditorHtml, bindTimelineEditor } from './settingsTimeline.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
 import {
@@ -874,6 +875,9 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   });
   const modified = rowModified(settings, r);
   const rowOpen = (extraClass = '', attrs = '') => settingRowOpenHtml({ key: r.key, extraClass, modified, attrs });
+  if (r.type === 'timeline') {
+    return `${rowOpen('set-row-wide set-row-timeline')}${stack()}<div class="r-trail set-timeline-wrap">${timelineEditorHtml(settings)}</div></div>`;
+  }
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${esc(r.key)}" value="${value}" aria-label="${esc(r.label)}"></span></div>`;
@@ -1456,7 +1460,7 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|combatStage|animationStepDuration|enemyAttackMs|enemyFloaterIntervalMs|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : /^(autoCombat|combatSpeed|combatPreference|combatStepPause|combatStage|combatTimeline|animationStepDuration|enemyAttackMs|enemyFloaterIntervalMs|combatPacingPreset|animSpeed)/.test(key) ? t('settings.topic.autoCombat') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
@@ -2134,6 +2138,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const config = prologueConfig(settings);
     return prologueStagedOrder(config).map(index => config.scenes[index].id);
   };
+  bindTimelineEditor(container, { settings, apply: value => applyPrologue({ combatTimeline: value }, '[data-timeline]') });
   container.querySelectorAll('[data-scene-list]').forEach(list => {
     list.querySelectorAll('[data-scene-move]').forEach(btn => btn.addEventListener('click', () => {
       const ids = stagedIds();
