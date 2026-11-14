@@ -202,7 +202,7 @@
   "rewardGroups": [
     {
       "id": "cards",
-      "weight": 66,
+      "weight": 96,
       "categories": [
         "combatCards"
       ]
@@ -216,21 +216,21 @@
     },
     {
       "id": "potions",
-      "weight": 18,
+      "weight": 0,
       "categories": [
         "potions"
       ]
     },
     {
       "id": "flaskRelic",
-      "weight": 2,
+      "weight": 0,
       "categories": [
         "relics"
       ]
     },
     {
       "id": "weapons",
-      "weight": 10,
+      "weight": 0,
       "categories": [
         "weapons"
       ]
