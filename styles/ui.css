@@ -2019,3 +2019,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 
 /* The selected-card stance sigil is a neutral grey until the card is played (then the motif colour and glow). */
 .stance-flash { --stance-sigil-idle: var(--muted); }
+
+/* The sigil's paths take the overlay's colour (grey while selected, the motif colour once played), with a thick stroke; the
+   shared combat symbol palette is not applied (no data-intent, no intent-icon class). A solid shape is filled. */
+.stance-flash .stance-sigil, .stance-flash .stance-sigil * { stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.stance-flash .stance-sigil[data-solid='true'], .stance-flash .stance-sigil[data-solid='true'] * { fill: currentColor; }

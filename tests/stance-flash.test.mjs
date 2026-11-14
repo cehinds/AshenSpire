@@ -293,3 +293,27 @@ test('the overlay reports a play in flight until its stance event consumes it', 
     assert.equal(rig.overlay.pending, false);
   });
 });
+
+// ---- visibility: the shared combat symbol palette must not paint the sigil near-black ----
+import { sigilSizePx } from '../src/ui/stanceFlash.js';
+test('the sigil is not an .intent-icon, so the dark symbol-palette outline never applies; its paths take currentColor', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    const svg = live(rig).querySelector('svg');
+    assert.equal(svg.getAttribute('class'), 'stance-sigil');
+    assert.equal(svg.hasAttribute('data-intent') || svg.dataset.intent !== undefined, false, 'combat-symbol-colors.css keys on [data-intent]');
+    assert.equal(svg.style.width, '72px', 'at least 72 px');
+    const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
+    assert.match(css, /\.stance-flash \.stance-sigil, \.stance-flash \.stance-sigil \* \{ stroke: currentColor; fill: none; stroke-width: 2\.2;/);
+    assert.match(css, /\.stance-sigil\[data-solid='true'\] \* \{ fill: currentColor; \}/);
+    const palette = readFileSync(new URL('../styles/combat-symbol-colors.css', import.meta.url), 'utf8');
+    assert.ok(!/stance-sigil/.test(palette));
+  });
+});
+test('the sigil is sized from the figure: about 70% of its height, never under 72 px', () => {
+  const figure = height => ({ offsetHeight: 90, querySelectorAll: () => [{ offsetHeight: height }] });
+  assert.equal(sigilSizePx(figure(60)), 72);
+  assert.equal(sigilSizePx(figure(200)), 140);
+  assert.equal(sigilSizePx(null), 72);
+});

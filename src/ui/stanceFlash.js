@@ -66,7 +66,13 @@ export const stanceFlashIcon = event => {
   return typeof id === 'string' && Object.hasOwn(INTENT_ICON_SHAPES, id) ? id : null;
 };
 
-function buildOverlay(icon, transitionMs) {
+// The overlay is sized from the player's FIGURE, not the small sprite box: about 70% of the figure's height, never under 72 px.
+export function sigilSizePx(anchor) {
+  const heights = [anchor?.offsetHeight, ...Array.from(anchor?.querySelectorAll?.('img, canvas, .class-sprite') || [], node => node.offsetHeight)]
+    .map(value => Number(value) || 0);
+  return Math.max(72, Math.round(0.7 * Math.max(0, ...heights)));
+}
+function buildOverlay(icon, transitionMs, anchor) {
   const el = document.createElement('div');
   el.className = 'stance-flash';
   el.setAttribute('aria-hidden', 'true');
@@ -74,14 +80,20 @@ function buildOverlay(icon, transitionMs) {
   el.dataset.tone = 'idle';
   Object.assign(el.style, {
     position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    pointerEvents: 'none', opacity: '0', zIndex: '6', color: 'var(--stance-sigil-idle)', transformOrigin: '50% 50%', transform: 'scale(1)', transition: `opacity ${transitionMs}ms linear`,
+    pointerEvents: 'none', opacity: '0', zIndex: '6', color: 'var(--stance-sigil-idle)',
+    transformOrigin: '50% 50%', transform: 'scale(1)', transition: `opacity ${transitionMs}ms linear`,
   });
-  el.appendChild(sigil(icon));
+  el.appendChild(sigil(icon, anchor));
   return el;
 }
-function sigil(icon) {
+// The shared intent glyph, minus the class and data-intent the combat symbol palette keys its dark outline and trim on (those
+// rules paint the paths near-black): the paths take currentColor (grey while selected, the motif colour once played).
+function sigil(icon, anchor) {
   const svg = intentIcon(icon);
-  Object.assign(svg.style, { width: '60%', height: '60%', maxWidth: '160px', maxHeight: '160px', fill: 'none', stroke: 'currentColor', strokeWidth: '1.4' });
+  svg.removeAttribute('data-intent'); delete svg.dataset.intent;
+  svg.setAttribute('class', 'stance-sigil');
+  const size = sigilSizePx(anchor);
+  Object.assign(svg.style, { width: `${size}px`, height: `${size}px`, flex: 'none' });
   return svg;
 }
 
@@ -93,7 +105,7 @@ export function showStanceFlash(anchor, event, { reduced = false, config = ACTIO
   const plan = stanceFlashPlan(config, { reduced });
   const icon = stanceFlashIcon(event);
   if (!plan || !icon || !anchor?.appendChild) return null;
-  const el = buildOverlay(icon, plan.fadeInMs);
+  const el = buildOverlay(icon, plan.fadeInMs, anchor);
   anchor.appendChild(el);
   setTimeout(() => { el.style.opacity = String(plan.opacity); }, 0);
   setTimeout(() => { el.style.transition = `opacity ${plan.fadeOutMs}ms linear`; el.style.opacity = '0'; }, plan.fadeInMs + plan.holdMs);
@@ -142,8 +154,8 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
       const anchor = getAnchor();
       if (!id || !plan || !anchor?.appendChild) { drop(!!plan); return; }
       if (el && icon === id) { if (el.parentNode !== anchor) anchor.appendChild(el); return; }
-      if (el) { el.replaceChildren(sigil(id)); el.dataset.stance = id; icon = id; if (el.parentNode !== anchor) anchor.appendChild(el); return; }
-      el = buildOverlay(id, plan.fadeInMs); icon = id;
+      if (el) { el.replaceChildren(sigil(id, anchor)); el.dataset.stance = id; icon = id; if (el.parentNode !== anchor) anchor.appendChild(el); return; }
+      el = buildOverlay(id, plan.fadeInMs, anchor); icon = id;
       anchor.appendChild(el);
       const node = el;
       setTimeout(() => { if (el === node) node.style.opacity = String(plan.opacity); }, 0);
