@@ -12,7 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { BlockGainMultiplier, CounterReturnAmount } from './stanceBenefits.js';
+import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
@@ -449,6 +449,12 @@ function stanceCounterBack(ctx, source, target, carrier, receipt) {
   applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
     damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
     ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}), ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}) });
+}
+
+// The side a Sweep's splash can reach: the primary target's own side (every living enemy, or every living player seat).
+function splashSide(ctx, primary) {
+  if (primary?.kind === 'enemy') return livingEnemies(ctx);
+  return ctx.players ? [...ctx.players.values()].map(row => row.entity) : [ctx.player].filter(Boolean);
 }
 
 // Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
@@ -1720,6 +1726,9 @@ export const OPCODE_HANDLERS = Object.freeze({
           dealElementalHit(ctx, action.source, t, base, carrier, (from, to, amount) => applyAttackDamage(ctx, from, to, amount, attackTags, carrier),
             (to, amount) => applyLoseHp(ctx, to, amount, 'lightning backlash', { targetStatusesBefore: structuredClone(to.statuses || {}), sourceId: to.id })); // lightning, Bedrock, Damp (SPEC 4.7)
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
+          // Owner, 2026-11-14 (Wave 2.5): a Sweep also strikes every other enemy in range at half this hit's damage (a card that already strikes everyone needs none).
+          if (configuredCombat(ctx) && targets.length === 1 && eff.target !== 'allEnemies') for (const other of SweepSplashTargets(ctx, action.source, t, carrier, splashSide(ctx, t)))
+            applyAttackDamage(ctx, action.source, other, base, attackTags, SplashCarrier(ctx, action.source, carrier));
           // An enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k).

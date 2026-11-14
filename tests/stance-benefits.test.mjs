@@ -183,3 +183,44 @@ test('Counter: a hit that costs HP returns 25% of that HP to the attacker; a ful
   assert.equal(trial({ block: 1000 }).back, 0, 'a fully blocked hit returns nothing');
   assert.equal(trial({ benefits: false }).back, 0, 'a fight created before the ruling');
 });
+
+// ---- Sweep: played through the engine, with cleavingBlow (a Sweep card) retargeted to ONE enemy so the splash is what reaches the others ----
+import { dispatch } from '../src/engine/combat.js';
+import { rangePairKey, actorRangeKey } from '../src/model/combatEngagement.js';
+const singleBundle = { ...contentBundle, cards: contentBundle.cards.map(card => card.id !== 'cleavingBlow' ? card
+  : { ...card, effects: card.effects.map(effect => effect.op === 'damage' ? { ...effect, target: 'enemy' } : effect) }) };
+const singleReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(singleBundle, profile)), profile);
+function sweepFight({ benefits = true, enemies = 3 } = {}) {
+  const run = createRunState({ registries: singleReg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: singleReg, run, rng: createRng(511), enemyIds: Array.from({ length: enemies }, () => 'wanderingSoldier') });
+  if (!benefits) { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; }
+  for (const enemy of combat.enemies) Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 0, max: 20 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 0 } });
+  Object.assign(combat.player, { hp: 500, maxHp: 500, statuses: {} });
+  return combat;
+}
+function playCleave(combat, targetId) {
+  const ref = { instanceId: 'sweep-test', cardId: 'cleavingBlow', upgraded: false };
+  combat.piles.hand.push(ref);
+  combat.player.energy = combat.player.stamina = 20; combat.player.mana = combat.player.maxMana;
+  primeAccuracyRolls(combat);
+  dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId });
+}
+
+test('Sweep: a single-target Sweep also hits every other enemy in range at 50% of its damage', () => {
+  const combat = sweepFight();
+  playCleave(combat, combat.enemies[0].id);
+  const lost = combat.enemies.map(enemy => 500 - enemy.hp);
+  assert.ok(lost[0] > 0, 'the aimed enemy is hit');
+  assert.equal(lost[1], Math.floor(lost[0] / 2), 'the second enemy takes 50% of the hit');
+  assert.equal(lost[2], lost[1], 'and so does the third');
+  // Range: an enemy the Sweep cannot reach is not splashed (the same contact the hit itself uses).
+  const far = sweepFight();
+  const sweepCarrier = { ...carrierOf('sweep'), resolvedRangeSource: { sourceType: 'unarmed' } };
+  assert.deepEqual(Benefits.SweepSplashTargets(far, far.player, far.enemies[0], sweepCarrier, far.enemies).map(e => e.id), [far.enemies[1].id, far.enemies[2].id].map(String));
+  far.rangeState.engagements[rangePairKey(actorRangeKey(far, far.player), actorRangeKey(far, far.enemies[2]))] = 1;
+  assert.deepEqual(Benefits.SweepSplashTargets(far, far.player, far.enemies[0], sweepCarrier, far.enemies).map(e => e.id), [far.enemies[1].id], 'the enemy at Reach is out of a melee Sweep');
+  assert.deepEqual(Benefits.SweepSplashTargets(far, far.player, far.enemies[0], carrierOf('attack'), far.enemies), [], 'only a Sweep splashes');
+  const old = sweepFight({ benefits: false });
+  playCleave(old, old.enemies[0].id);
+  assert.deepEqual(old.enemies.map(enemy => 500 - enemy.hp).slice(1), [0, 0], 'a fight created before the ruling hits only the aimed enemy');
+});
