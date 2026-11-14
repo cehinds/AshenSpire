@@ -75,3 +75,17 @@ test('Core act 1 map shape measurement', () => {
   assert.ok(m.fightMean >= 4.7, `fights per walk ${m.fightMean}`);
   assert.ok(m.exits >= 1.4, `exits ${m.exits}`);
 });
+
+// Entering a visible node (src/main.js enterNode, ~1852-1900) dispatches on node.type: monster, elite, boss, shrine, merchant and
+// treasure need no `resolved`; an event node is the only one that does, and the generator still attaches it.
+test('every visible Core node type is one enterNode opens, events keep their resolved event', () => {
+  const handled = new Set(['monster', 'elite', 'boss', 'shrine', 'merchant', 'treasure', 'event']);
+  const seen = new Set();
+  for (let seed = 1; seed <= 60; seed++) for (const node of Object.values(mapFor(seed).nodes)) {
+    assert.ok(handled.has(node.type), `${node.id} has type ${node.type}`);
+    seen.add(node.type);
+    if (node.type === 'event') assert.equal(node.resolved?.kind, 'event');
+    else assert.equal(node.resolved, undefined, `${node.id} (${node.type}) carries no resolved field`);
+  }
+  assert.deepEqual([...seen].sort(), [...handled].sort());
+});
