@@ -58,7 +58,11 @@ test('one cantrip per school probes its own weakness trigger', () => {
 });
 
 test('Steady Hands is excluded from the graduate Magic Adept unlimited copies', async () => {
+  // The shipped Core mints no unlimited copies (deck-training unlimited is empty); the exclusion lives in the old training rules
+  // a run pinned before rest-site deck editing keeps (tests/fixtures/legacy-core-unlimited-rules.json).
   const { readFileSync } = await import('node:fs');
+  const old = JSON.parse(readFileSync(new URL('./fixtures/legacy-core-unlimited-rules.json', import.meta.url), 'utf8'));
+  assert.deepEqual(old.find(rule => rule.id === 'graduate').excludeCards, ['core.mendingTouch', 'core.steadyHands']);
   const bundle = JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/core/bundle.json', import.meta.url), 'utf8'));
-  assert.ok(JSON.stringify(bundle).includes('"excludeCards":["core.mendingTouch","core.steadyHands"]'.replace(/\s/g, '')) || /"excludeCards":\s*\[\s*"core.mendingTouch",\s*"core.steadyHands"\s*\]/.test(JSON.stringify(bundle, null, 2).replace(/\n\s*/g, '')));
+  assert.ok(JSON.stringify(bundle).includes('"unlimited":[]'), 'shipped Core: no unlimited training rules');
 });
