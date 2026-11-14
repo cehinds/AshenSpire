@@ -2041,7 +2041,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .co-chip { flex: 0 0 auto; padding: 0 0.4rem; border: 1px solid var(--line-soft); border-radius: 999px; font-size: 0.75em; white-space: nowrap; }
 .card-option .co-order { position: absolute; top: 0.3rem; right: 0.4rem; font-weight: 700; color: var(--gold); }
 .option-row-detail { grid-column: 1 / -1; box-sizing: border-box; margin: 0 0 4px; padding: 0.5rem 0.6rem; border: 1px solid var(--line); border-top: 0; background: var(--panel); }
-.card-upgrade-modal .option-row-list { max-height: min(62vh, 36rem); }
+.modal.option-choice.card-upgrade-modal .option-row-list, .modal.option-choice.mount-service-modal .option-row-list, .mount-service-list, .card-upgrade-list { flex: 0 0 auto; height: auto; max-height: none; overflow: visible; }
+.mount-service-modal .mount-service-outcome { flex-wrap: wrap; gap: 0.6rem; }
+.mount-service-modal .smith-card-sprite { flex: 0 0 auto; min-width: max-content; }
 .card-upgrade-modal .smith-header-stones { margin: 0 0 0.5rem; }
 .option-row .co-order { flex: 0 0 auto; font-weight: 700; color: var(--gold); }
 .card-option .val.up { color: var(--green); font-weight: 700; }

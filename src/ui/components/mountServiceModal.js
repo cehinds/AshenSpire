@@ -160,7 +160,7 @@ export function mountMountServiceModal(host, initialModel, {
       id: card.instanceId, name: card.cardName ? `${card.cardName}${card.upgraded ? '+' : ''}` : card.cardId, className: 'mount-card-row', costs: [], line: [], text: '',
       artAsset: cardRowArt(card.cardId)?.path || null, artGlyph: cardRowArt(card.cardId) ? null : 'attack',
       detail: card.selected ? el('div', { class: 'mount-service-outcome mount-install-preview' }, [
-        renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded }, { small: true, tooltip: false, inspectReadOnly: true }),
+        el('div', { class: 'smith-card-sprite' }, renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded }, { small: true, tooltip: false, inspectReadOnly: true })),
         prose(t('smith.preview.install', { card: card.cardName, item: p.selected.name })),
       ]) : null,
     }));
@@ -173,7 +173,7 @@ export function mountMountServiceModal(host, initialModel, {
   function extractOutcome(p) {
     const mount = p.selectedMount;
     return el('div', { class: 'mount-service-outcome mount-extract-preview' }, [
-      mount.cardId ? renderCard(registries, { cardId: mount.cardId, upgraded: mount.upgraded }, { small: true, tooltip: false, inspectReadOnly: true }) : null,
+      mount.cardId ? el('div', { class: 'smith-card-sprite' }, renderCard(registries, { cardId: mount.cardId, upgraded: mount.upgraded }, { small: true, tooltip: false, inspectReadOnly: true })) : null,
       el('div', { class: 'smith-card-facts' }, [
         prose(t('smith.preview.extract', { card: mount.cardName, item: p.selected.name })),
         flavour(mount.fallbackCardId ? t('smith.preview.fallback', { card: cardName(mount.fallbackCardId) }) : t('smith.preview.fallbackNone')),
