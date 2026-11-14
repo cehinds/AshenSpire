@@ -6,15 +6,17 @@ import { createRunState } from '../src/model/state.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { deckEditorModel, openDeckEdit } from '../src/ui/models/DeckEditorModel.js';
 import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
+import { legacyCoreProfile } from './helpers/legacy-core-profile.mjs';
+// 'legacy-core' is the pre-rest Core (unlimited trained Basics); 'core' is the shipped one (owned copies only).
 const fixture = id => {
-  const profile = resolveGameProfile(id);
+  const profile = id === 'legacy-core' ? legacyCoreProfile() : resolveGameProfile(id);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 7, classId: 'reaver', registries });
   const rows = () => deckEditorCollectionRows({ registries, run, collection: deckEditorModel({ registries, run }).collection });
   return { registries, run, rows };
 };
 test('the ten-card core starter retains owned counts and exposes trained basics', () => {
-  const { run, rows } = fixture('core');
+  const { run, rows } = fixture('legacy-core');
   assert.equal(run.deck.length, 10);
   assert.deepEqual(rows().filter(row => row.inDeck > 0).map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
   assert.equal(rows().reduce((sum, row) => sum + row.inDeck, 0), 10);

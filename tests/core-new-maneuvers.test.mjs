@@ -8,13 +8,15 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { createRng } from '../src/engine/rng.js';
+import { legacyCoreProfile, legacyCoreRegistries } from './helpers/legacy-core-profile.mjs';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { deckCopyLimit } from '../src/model/deckRules.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { reserveStanceCards } from '../src/model/stanceCoverage.js';
 
-const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// Pinned to the pre-rest Core (Armoury deck door, unlimited Basics/Cantrips): a saved run keeps that pinned profile. The shipped Core mints nothing (tests/core-deck-edit-at-rest.test.mjs).
+const profile = legacyCoreProfile();
+const registries = legacyCoreRegistries(profile);
 const live = (classId, ids, seed = 611) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   executeRunEffects({ run, registries, rng: createRng(run.seed) }, ids.map(card => ({ op: 'addCardToDeck', card })));
