@@ -157,9 +157,9 @@ test('the frame vars refuse a config that cannot draw, by name', () => {
 
 test('the dialogue floor is the layout\'s floorPercent of its scene window; combat keeps its own', () => {
   const config = dialogueSceneConfig(W4C_LAYOUT, W4_PARENT, wireframeUi.scene);
-  assert.equal(config.floorFraction, 0.6);
+  assert.equal(config.floorFraction, 0.75);
   assert.equal(config.bleedFraction, W4_PARENT.layering.plate.bleedFraction);
-  assert.equal(wireframeUi.scene.floorFraction, 0.8, 'combat\'s battlefield is untouched');
+  assert.equal(wireframeUi.scene.floorFraction, 0.75, 'combat\'s battlefield is untouched');
   assert.deepEqual({ ...config, floorFraction: wireframeUi.scene.floorFraction }, { ...wireframeUi.scene });
 });
 
@@ -174,8 +174,8 @@ test('the plate is fitted to the scene window and runs on behind the frame\'s ot
     const [x, y, w] = window.skyline.viewBox;
     const scale = window.skyline.scale;
     assert.ok(framed.aligned, `${width}x${height} aligns the ground line`);
-    assert.ok(near(framed.frame.floorLine, bands.hud + bands.scene * (1 - 0.6)), 'floor line: window top + 40% of the window');
-    if (width === 1280) assert.ok(near(framed.frame.floorLine, 208), 'y 208 at 1280x800');
+    assert.ok(near(framed.frame.floorLine, bands.hud + bands.scene * (1 - 0.75)), 'floor line: window top + 25% of the window');
+    if (width === 1280) assert.ok(near(framed.frame.floorLine, 160), 'y 160 at 1280x800');
     const [fx, fy, fw, fh] = framed.frame.viewBox;
     assert.ok(near(fx, x) && near(fw, w), 'the same horizontal crop and scale as the window fit');
     assert.ok(near(fy, y - bands.hud / scale), 'extended up behind the HUD');

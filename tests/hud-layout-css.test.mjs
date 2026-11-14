@@ -155,7 +155,7 @@ test('applyUiScale derives layout and form factor from the same selected view', 
   const layout = body.indexOf("setAttribute('data-layout'");
   const formFactor = body.indexOf("setAttribute('data-form-factor'");
   assert.ok(layout > 0 && formFactor > layout && formFactor < body.indexOf('updateUprightGate('), 'written in applyUiScale, after data-layout');
-  assert.match(body, /const view = applyViewViewport\(settings\.viewPreset, window\.innerWidth, visibleHeight\)/);
+  assert.match(body, /const view = applyViewViewport\(effective, window\.innerWidth, visibleHeight\)/);
   assert.match(body, /resolveLayout\(settings\.uiScale, view\.width, view\.height\)/);
   assert.match(body.slice(formFactor, formFactor + 240), /view\.preset === 'auto' \? formFactorFor\(view\.width, view\.height, UI\.uiScale\.formFactor\) : view\.preset/,
     'Auto uses the native logical view with balance thresholds; named views select their HUD composition');

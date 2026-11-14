@@ -119,7 +119,7 @@ test('the W4 parent and combat scene carry the contract values', () => {
     layering: { plate: { bleedFraction: 0.02 } },
   });
   assert.deepEqual(w4a.sizing.bands, { hud: 6, scene: 61, context: 20, footer: 13 });
-  assert.equal(w4a.sizing.floorPercent, 80);
+  assert.equal(w4a.sizing.floorPercent, 75);
   assert.deepEqual(w4a.layering.layers.map((l) => [l.id, l.z, l.enabled]), [
     ['skyline', 1, true], ['floor', 2, true], ['actors', 3, true], ['targets', 4, true],
     ['context', 5, true], ['hud', 6, true], ['footer', 6, true], ['effects', 7, true],
@@ -131,7 +131,7 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
     sizing: {
       bands: { hud: 10, scene: 40, context: 35, footer: 15 },
       bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
-      floorPercent: 60,
+      floorPercent: 75,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
       context: {
         widthVw: 95, captionLines: 3, captionLineHeight: 1.45,

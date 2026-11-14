@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-11-14
+
+- **Combat: fixed layouts per screen size, floor at 75%, steady battlefield after a win** ([#2746](https://github.com/cehinds/AshenSpire/pull/2746), `0.7.4.70`). Combat no longer rescales as you resize the window: desktop, widescreen, tablet and phone each have one fixed layout that grows or shrinks as a whole. The ground now starts a quarter of the way down the screen in every scene, the sky and side scenery are drawn smaller and the ground sharper, the space between your side and the enemy's is three times wider, and the battlefield no longer shifts when the last enemy falls.
+
 ## 2026-11-13
 
 - **Enemy intents slide forward as each action ends** ([#2745](https://github.com/cehinds/AshenSpire/pull/2745), `0.7.4.70`). When an enemy finishes a move, its intent clears and its next planned move slides left into the main slot and grows into place, showing `?` until you have read it; the real move is revealed as soon as it starts, not after its animation.

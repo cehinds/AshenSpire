@@ -20,7 +20,7 @@ export const W4C_LAYOUT = freeze({
   sizing: {
     bands: { hud: 10, scene: 40, context: 35, footer: 15 },
     bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
-    floorPercent: 60,
+    floorPercent: 75,
     portraitSlot: { widthVw: 20, compactWidthVw: 30 },
     context: {
       widthVw: 95, captionLines: 3, captionLineHeight: 1.35,
