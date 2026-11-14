@@ -9,7 +9,15 @@ export function intentFollowUps(symbols = []) {
   for (const symbol of symbols) {
     const item = document.createElement('span');
     item.className = 'intent-followup';
-    if (symbol.kind === 'action') item.append(intentIcon(symbol.icon));
+    if (symbol.kind === 'action') {
+      // A follow-up of the head's own stance carries the HP its action costs (owner, 2026-11-14), beside its icon as the head's number is.
+      if (symbol.value != null) {
+        item.dataset.hasValue = 'true';
+        const value = document.createElement('strong'); value.className = 'intent-followup-value'; value.textContent = String(symbol.value);
+        item.append(value);
+      }
+      item.append(intentIcon(symbol.icon));
+    }
     else { item.dataset.unknown = 'true'; item.textContent = '?'; }
     row.append(item);
   }

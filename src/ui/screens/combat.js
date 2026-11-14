@@ -19,6 +19,8 @@ import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMo
 import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
+import { ProjectPlannedFollowUpDamage } from '../models/CombatIntentProjectionModel.js';
+import { combatIntentPresentation, SameStanceNumbers } from '../models/CombatIntentModel.js';
 import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '../models/IntentFollowUpModel.js';
 import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
@@ -2293,7 +2295,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!multiActionOn(combat)) return null;
     const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
     const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
-    return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+    const symbols = followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+    if (!symbols.some(symbol => symbol.kind === 'action')) return symbols;
+    // Owner, 2026-11-14: follow-ups of the head's own stance show their own number too (the HP each costs after the ones before it).
+    const head = combatIntentPresentation(projectCombatIntent(combat, enemy.id)).parts[0];
+    return SameStanceNumbers(head, symbols, index => previewMemo.memo(`followDamage:${enemy.id}:${index}`, () => ProjectPlannedFollowUpDamage(combat, enemy.id, index)));
   }
   function intentEl(enemy) {
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);

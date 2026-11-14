@@ -45,11 +45,13 @@ test('every same-stance attack in the plan shows the HP the player loses from it
 
 test('only the unbroken run of the head\'s own stance gets a number', () => {
   const symbols = [{ kind: 'action', icon: 'attack' }, { kind: 'action', icon: 'defend' }, { kind: 'action', icon: 'attack' }];
-  const values = SameStanceNumbers({ icon: 'attack' }, symbols, i => ({ label: String([12, 5, 7][i]) }));
+  const values = SameStanceNumbers({ icon: 'attack', value: '8' }, symbols, i => ({ label: String([12, 5, 7][i]) }));
   assert.deepEqual(values.map(symbol => symbol.value ?? null), ['12', null, null]);
   assert.deepEqual(values.map(symbol => symbol.icon ?? null), ['attack', 'defend', 'attack']);
-  const hidden = SameStanceNumbers({ icon: 'attack' }, [{ kind: 'unknown' }, { kind: 'action', icon: 'attack' }], () => ({ label: '9' }));
+  const spell = SameStanceNumbers({ icon: 'cast', value: '16' }, symbols, i => ({ label: String([12, 5, 7][i]) }));
+  assert.equal(spell[0].value, '12', 'a damaging spell head is an attack stance');
+  const hidden = SameStanceNumbers({ icon: 'attack', value: '8' }, [{ kind: 'unknown' }, { kind: 'action', icon: 'attack' }], () => ({ label: '9' }));
   assert.equal(hidden.every(symbol => symbol.value == null), true, 'an unread follow-up shows no number, and ends the run');
-  const charging = SameStanceNumbers({ icon: 'attack', valueKind: 'later' }, symbols, () => ({ label: '9' }));
+  const charging = SameStanceNumbers({ icon: 'attack', value: '8', valueKind: 'later' }, symbols, () => ({ label: '9' }));
   assert.equal(charging.every(symbol => symbol.value == null), true, 'a Charging head keeps its presentation');
 });

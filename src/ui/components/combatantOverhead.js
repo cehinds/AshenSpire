@@ -65,7 +65,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   const followUps = Array.isArray(intent?.followUps) ? intent.followUps : [];
   if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
-  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? symbol.icon : 'unknown').join(', ')}.` : '';
+  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? `${symbol.icon}${symbol.value != null ? ` ${symbol.value}` : ''}` : 'unknown').join(', ')}.` : '';
   node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}`).join('. ')}${followLabel}`);
   {
     const stanceNode = document.createElement('span');

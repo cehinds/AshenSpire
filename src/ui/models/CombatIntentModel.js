@@ -115,10 +115,11 @@ export function intentDamageRead(intent) {
 // each, given the actions before it). `priceAt(i)` quotes follow-up i ({ label } or null). The run ends at the first follow-up that is a
 // different stance, unread, or unpriced; a Charging head keeps its presentation. Returns copies of the symbols, never the originals.
 export function SameStanceNumbers(headPart, symbols = [], priceAt) {
-  const damaging = headPart && ['attack', 'smash'].includes(headPart.icon) && headPart.valueKind !== 'later';
-  let run = !!damaging;
+  // A damaging spell is drawn with the cast icon at the head, but its stance row reads as an attack (iconForStance).
+  const icon = headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
+  let run = ['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null;
   return symbols.map((symbol, i) => {
-    if (!run || symbol.kind !== 'action' || symbol.icon !== headPart.icon) { run = false; return { ...symbol }; }
+    if (!run || symbol.kind !== 'action' || symbol.icon !== icon) { run = false; return { ...symbol }; }
     const price = priceAt(i);
     if (price?.label == null) { run = false; return { ...symbol }; }
     return { ...symbol, value: String(price.label) };
