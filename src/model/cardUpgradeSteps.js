@@ -16,7 +16,10 @@ export { STACK_CAPS };
 // pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
 // several never offers the same thing twice.
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
-  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3 });
+  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
+  // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
+  'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 4 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -135,7 +138,47 @@ function options(base, current, applied, limits) {
     if (counts.length) found.hits = { per, counts };
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
+  addMenuOptions(base, current, found, dmgIndex, counterReturn);
   return found;
+}
+
+const hasOp = (effects, op) => effects.some((effect) => effect.op === op);
+const FX_OF = (id) => `fx:${id}`;
+
+/**
+ * The effect menu (owner, 2026-11-14): each option adds an effect the card does not already have, so it always changes
+ * what the card does. A kind is left out when the card already has what it would add (no second Draw effect past 3, no
+ * Retain on a Retain card, no Exhaust-removal on a card without Exhaust, no hit-all-style duplicate).
+ */
+function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
+  const effects = current.effects || [];
+  const tags = tagsOf(current);
+  const keywords = current.keywords || [];
+  const maneuver = familyValue(tags, 'maneuver:');
+  const hasBlock = hasOp(effects, 'block');
+  const attack = tags.includes('classification.attack') || base.type === 'attack';
+  const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
+  const spell = familyValue(tags, 'camp:') === 'spell' || tags.includes('source:spell');
+  const set = (id, option = {}) => { found[FX_OF(id)] = { fx: id, ...option }; };
+  if (!hasBlock && !counterReturn && maneuver !== 'counter') set('block', { n: sp >= 2 ? 6 : 4 });
+  const draw = effects.filter((e) => isPlainEffect(e, 'draw')).reduce((sum, e) => sum + e.amount, 0);
+  if (draw < 3) set('draw', { n: 1 });
+  if (!hasOp(effects, 'discard') && !hasOp(effects, 'draw')) set('cycle', { n: 1 });
+  if (!hasOp(effects, 'exhaust') && !keywords.includes('exhaust')) set('cull');
+  if (!hasOp(effects, 'addCard') && !keywords.includes('exhaust')) set('copy');
+  if (!hasOp(effects, 'shuffleDiscardIntoDraw')) set('shuffle');
+  if (!keywords.includes('retain') && !keywords.includes('ethereal')) set('retain');
+  if (!keywords.includes('innate')) set('innate');
+  if (keywords.includes('exhaust')) set('unexhaust');
+  if (!hasOp(effects, 'retain')) set('holdOne');
+  const boosted = (stat) => effects.some((e) => e.op === 'applyStatus' && e.thisTurn === true && e.status === stat);
+  // Temporary STR / DEX are Strength / Dexterity statuses removed at turn end. INT / WIS have no live status in combat
+  // (ratings are folded in when the fight starts), so a spell card is not offered a boost.
+  if (!spell && dmgIndex >= 0 && !boosted('strength')) set('boost', { stat: 'strength', n: 2 });
+  else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
+  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
+    && !effects.some((e) => e.op === 'damage' && e.target === 'randomEnemy')) set('target');
+  if (attack && !spell && !tags.includes('trait:reaction')) set('reaction');
 }
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
@@ -211,6 +254,7 @@ export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = 
 
 const stepOf = (kind, option, choice) => {
   const pickOf = (list) => list[Math.min(list.length - 1, Math.floor(choice * list.length))];
+  if (kind.startsWith('fx:')) return { k: 'fx', ...option };
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
     case 'blk': return { k: 'blk', n: option.n };
