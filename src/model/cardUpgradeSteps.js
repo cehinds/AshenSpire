@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, flatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
@@ -92,8 +92,9 @@ function options(base, current, applied, limits) {
     if (n) found.dmg = { n };
   }
   const blkIndex = firstPlainIndex(effects, 'block');
-  if (blkIndex >= 0) {
-    const baseTotal = totalOf(baseEffects, 'block') || totalOf(effects, 'block');
+  // Only a Block the card was printed with grows: one an `fx` step added has no printed total to cap against.
+  if (blkIndex >= 0 && totalOf(baseEffects, 'block') > 0) {
+    const baseTotal = totalOf(baseEffects, 'block');
     const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.2)), scale, (k) => effects[blkIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.blk = { n };
   }
@@ -290,7 +291,8 @@ const stepOf = (kind, option, choice) => {
  * has fewer eligible options; [] when it is fully upgraded.
  */
 export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits = {}, count = 1) {
-  const applied = appliedSteps || [];
+  // A combo is two effects in one slot: the checks below (once per card, already tagged) look through it.
+  const applied = flatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const found = options(baseDef, current, applied, limits);
   const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);

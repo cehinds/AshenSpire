@@ -82,7 +82,7 @@ test('short of stones: the plan still previews, the commit refuses and spends no
 });
 
 test('upgrading until nothing is eligible: every commit is real, then the card is maxed (or capped at 10)', () => {
-  const run = newRun(); run.smithingStones = 50;
+  const run = newRun(); run.smithingStones = 50; run.itemUpgradeLevels = { 'armament/greatsword': 9 }; // ten slots (rank + weapon level + 1)
   const card = strikeOf(run);
   let n = 0;
   for (; ; n += 1) {

@@ -22,6 +22,7 @@ const coreOut = bindGameProfileRegistries(createRegistries(configuredContentBund
 
 function smithRun(registries, stones, seed = 31, cinders = 2000) {
   const run = createRunState({ seed, classId: 'reaver', registries, runId: 'bs-cards' });
+  run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 9 }; // all ten card upgrade slots (rank + weapon level + 1)
   run.smithingStones = stones;
   run.cinders = cinders;
   run.seenEvents = [];

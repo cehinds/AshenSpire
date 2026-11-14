@@ -11,7 +11,7 @@ import { coreSmithingActive, coreSmithingCards, coreAffectedCards, withoutCoreCa
 import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
 import { commitDeckEditDraft } from './deckRules.js';
-import { commitCardUpgrade, planCardUpgrade } from './cardUpgradeService.js';
+import { commitCardUpgrade, planRestCardUpgrade } from './cardUpgradeService.js';
 
 // True when arriving restored anything, flasks included. Saves from before the flask fields count them as 0.
 export const restHealedAny = healed => !!healed && !!(healed.hp || healed.mana || healed.stamina || healed.flaskHp || healed.flaskMana);
@@ -102,7 +102,7 @@ function applyService(registries, draft, service, payload) {
   let upgraded = null;
   if (service === 'upgradeCard') {
     // One card upgrade per visit (restServiceSpent above); the service re-plans and refuses a stale quote.
-    const quote = payload.quote && payload.quote.instanceId === payload.instanceId ? payload.quote : planCardUpgrade(draft, registries, payload.instanceId);
+    const quote = payload.quote && payload.quote.instanceId === payload.instanceId ? payload.quote : planRestCardUpgrade(draft, registries, payload.instanceId);
     upgraded = commitCardUpgrade(draft, registries, quote);
   }
   if (service === 'rest') restRecover(draft);

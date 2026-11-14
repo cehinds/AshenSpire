@@ -5,7 +5,7 @@ import { planCardUpgrade } from '../../model/cardUpgradeService.js';
 import { upgradeCount, upgradeStepsOf } from '../../model/cardUpgrade.js';
 import { cardRank } from '../../model/cardRank.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
-import { upgradeChoiceCount } from '../../model/cardUpgradeLimits.js';
+import { upgradeChoiceCount, restUpgradeRule } from '../../model/cardUpgradeLimits.js';
 import { rampParts, playsEverOf } from '../../model/cardRamp.js';
 import { staticTokens } from '../components/card.js';
 import { playingCardArtwork } from '../cardArtwork.js';
@@ -94,8 +94,9 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
   const owned = [...(run.deck || []).map((instance) => ({ instance, inDeck: true })), ...(run.sideboard || []).map((instance) => ({ instance, inDeck: false }))];
   for (const { instance, inDeck } of owned) {
     if (!instance || !registries.cards.has(instance.cardId)) continue;
-    const choices = blacksmith ? upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith }) : 1;
-    const plan = planCardUpgrade(run, registries, instance.instanceId, { choices });
+    // Blacksmith: 2 or 3 options. Rest site (owner, 2026-11-14): 1 option up to the third upgrade, then 2, some with two effects.
+    const rule = blacksmith ? { choices: upgradeChoiceCount(registries.cards.get(instance.cardId), instance, { blacksmith }), combos: false } : restUpgradeRule(instance);
+    const plan = planCardUpgrade(run, registries, instance.instanceId, rule);
     if (HIDDEN_CODES.includes(plan.code)) continue;
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
     // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
