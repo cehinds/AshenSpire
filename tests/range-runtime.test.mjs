@@ -46,7 +46,14 @@ test('Advance once, attack twice, pay once; growing the distance re-charges', ()
   ctx.player.stamina = first.staminaCost;
   dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
   assert.equal(ctx.rangeState.engagements[key], 0);
-  const again = ctx.piles.hand.find(row => row.instanceId !== card.instanceId && previewCard(ctx, row.instanceId, 'e1')?.range) || ctx.piles.hand[0];
+  // The second attack is the starter's other Strike (priced like the first); it is moved into the hand when the opening draw left it behind.
+  let again = ctx.piles.hand.find(row => row.cardId === 'core.strike' && row.instanceId !== card.instanceId);
+  if (!again) {
+    const other = row => row.cardId === 'core.strike' && row.instanceId !== card.instanceId;
+    const pile = [ctx.piles.draw, ctx.piles.discard].find(list => list.some(other));
+    again = pile.splice(pile.findIndex(other), 1)[0];
+    ctx.piles.hand.push(again);
+  }
   const second = previewCard(ctx, again.instanceId, 'e1');
   assert.equal(second.range.routes[0].advanceSp, 0, 'second attack has no Advance cost');
   assert.equal(second.staminaCost, first.staminaCost - 2);
