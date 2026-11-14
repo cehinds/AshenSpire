@@ -16,7 +16,7 @@
     },
     "hex-colour-bare": {
       "styles/alternative-combat.css": 4,
-      "styles/base.css": 18,
+      "styles/base.css": 4,
       "styles/combat-expansion.css": 4,
       "styles/combat-layers.css": 23,
       "styles/combat-poses.css": 6,
@@ -26,7 +26,7 @@
       "styles/corrupted-cards.css": 33,
       "styles/hud-layout.generated.css": 28,
       "styles/illustrated-cards.css": 49,
-      "styles/kit.css": 249,
+      "styles/kit.css": 248,
       "styles/map.css": 22,
       "styles/player-polish.css": 92,
       "styles/prologue.css": 87,

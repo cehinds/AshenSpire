@@ -68,11 +68,50 @@ export function remainingFollowUps(plan, trace) {
  */
 export function advanceFollowUps(plan, trace) {
   if (!plan) return [];
-  if (!plan.headDone) plan.headDone = true;
+  // The row already advanced when the previous move resolved (PromoteFollowUp): this event only consumes that mark.
+  if (plan.promoted) plan.promoted = false;
+  else if (!plan.headDone) plan.headDone = true;
   else {
     plan.cursor = Math.min(plan.total, plan.cursor + 1);
   }
   return remainingFollowUps(plan, trace);
+}
+
+/**
+ * PromoteFollowUp(plan, trace) → { head, row } or null. Called once when an actor's move has resolved and its next planned move
+ * is announced (owner, 2026-11-13): the first remaining follow-up leaves the row and becomes the head, drawn as its own symbol
+ * ({ kind: 'action', icon } only if its Perception read passed, else { kind: 'unknown' }), never more than the row showed.
+ * The next `enemyMoveStarted` finds `plan.promoted` set and does not advance the row a second time.
+ */
+export function PromoteFollowUp(plan, trace) {
+  if (!plan || !plan.headDone || plan.promoted) return null;
+  const rest = remainingFollowUps(plan, trace);
+  if (!rest.length) return null;
+  plan.cursor = Math.min(plan.total, plan.cursor + 1);
+  plan.promoted = true;
+  return { head: rest[0], row: rest.slice(1) };
+}
+
+/** The head intent a promoted follow-up shows: only its icon (read) or "?", with no move, value or stance. */
+export function PromotedIntent(symbol) {
+  return { kind: 'unknown', promoted: true, icon: symbol?.kind === 'action' ? symbol.icon : null, revealed: true, hidden: false };
+}
+
+/**
+ * PromoteFollowUpRow({ disp, followMemo, followTrace }, id) → true when the actor's head was promoted on the display
+ * snapshot (its row, the memo row and its intentPreview). False leaves everything as it was.
+ */
+export function PromoteFollowUpRow({ disp, followMemo, followTrace }, id) {
+  const ent = disp?.ents?.[id];
+  if (!ent) return false;
+  const next = PromoteFollowUp(disp?.followPlans?.[id] ?? followMemo?.planFor(id), followTrace?.[id]);
+  if (!next) return false;
+  followMemo?.setRow(id, next.row);
+  ent.followUps = next.row;
+  ent.intentPreview = PromotedIntent(next.head);
+  ent.intentInFlight = false;
+  delete ent.intentBeforeReaction;
+  return true;
 }
 
 /**

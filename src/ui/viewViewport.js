@@ -3,13 +3,15 @@
 export const VIEW_PRESETS = Object.freeze({
   desktop: Object.freeze({ width: 1440, height: 900 }),
   mobile: Object.freeze({ width: 390, height: 844 }),
-  widescreen: Object.freeze({ width: 1920, height: 1080 }),
-  tablet: Object.freeze({ width: 1024, height: 768 }),
+  widescreen: Object.freeze({ width: 2560, height: 1080 }),
+  tablet: Object.freeze({ width: 1180, height: 820 }),
 });
 
 export function resolveViewViewport(preset, width, height) {
   const key = String(preset || 'auto').toLowerCase();
-  const dimensions = VIEW_PRESETS[key];
+  let dimensions = VIEW_PRESETS[key];
+  // The tablet canvas follows the device: 1180x820 landscape, 820x1180 portrait.
+  if (dimensions && key === 'tablet' && height > width) dimensions = { width: dimensions.height, height: dimensions.width };
   if (!dimensions) return { preset: 'auto', width, height, scale: 1, left: 0, top: 0 };
   const scale = Math.min(width / dimensions.width, height / dimensions.height);
   return { preset: key, ...dimensions, scale,
@@ -26,7 +28,12 @@ let viewportCache = null;
 
 export function logicalViewport(win = globalThis.window) {
   const preset = win?.document?.documentElement?.dataset?.viewPreset;
-  if (VIEW_PRESETS[preset]) return VIEW_PRESETS[preset];
+  if (VIEW_PRESETS[preset])
+  {
+    const { viewWidth, viewHeight } = win.document.documentElement.dataset;
+    if (Number(viewWidth) > 0 && Number(viewHeight) > 0) return { width: Number(viewWidth), height: Number(viewHeight) };
+    return VIEW_PRESETS[preset];
+  }
   const live = win === globalThis.window && win?.document?.timeline;
   const frame = live ? win.document.timeline.currentTime : null;
   if (frame != null) {
@@ -57,6 +64,8 @@ export function applyViewViewport(preset, width, height, root = document.documen
   const view = resolveViewViewport(preset, width, height);
   root.dataset.viewPreset = view.preset;
   root.dataset.viewScale = String(view.scale);
+  root.dataset.viewWidth = String(view.width);
+  root.dataset.viewHeight = String(view.height);
   for (const axis of ['w', 'h']) {
     const property = `--view-v${axis}`;
     if (view.preset === 'auto') root.style.removeProperty(property);

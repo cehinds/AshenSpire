@@ -17,6 +17,15 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
+  // A promoted follow-up (IntentFollowUpModel.PromoteFollowUp) is the next move shown in the head slot before its
+  // own event: its icon only if the observer's read of it passed (no value, no stance beyond the icon's), else "?".
+  if (intent.promoted) {
+    const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;
+    if (!icon) return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
+    // The family and title the real (known) presentation gives that maneuver: sweeps and ranged attacks read as Attacking.
+    const family = PROMOTED_FAMILY[icon] || 'preparing';
+    return { visibility: 'partial', title: capitalize(family), stance: family, parts: [{ icon, value: null }], damageClass: null };
+  }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
@@ -56,6 +65,8 @@ export function combatIntentPresentation(intent = {}) {
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
+const PROMOTED_FAMILY = Object.freeze({ attack: 'attacking', smash: 'smashing', counter: 'countering', defend: 'defending',
+  evade: 'defending', buff: 'buffing', cast: 'casting', prepare: 'preparing' });
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });
 const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);

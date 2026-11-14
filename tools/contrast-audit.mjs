@@ -670,7 +670,7 @@ if (args.includes('--source-selftest')) {
 //
 // The defect class this gate exists to catch is one sentence: somebody changes a
 // colour token and a target the player reads drops under the WCAG floor. So the
-// plant IS that — one token in styles/base.css, dimmed. It then travels every
+// plant IS that — one colour token in styles/tokens.generated.css, dimmed. It then travels every
 // stage a real palette change travels: the file on disk, serve(), the browser,
 // the cascade, the ?shotSettings profile, the rendered glyph pixels, the capture,
 // the luminance maths, the KNOWN_BELOW ledger, and the gate's own verdict. There
@@ -688,7 +688,7 @@ if (args.includes('--source-selftest')) {
 // witness-sharing-plumbing failure I hit on 2026-08-14. The child runs the real
 // CLI, the real gate, and its exit code and stdout are the evidence.
 if (args.includes('--selftest')) {
-  const BASE = resolve(ROOT, 'styles/base.css');
+  const BASE = resolve(ROOT, 'styles/tokens.generated.css'); // the colour tokens' published home
   const ARMS = [
     {
       name: 'subfloor',
@@ -762,7 +762,7 @@ if (args.includes('--selftest')) {
   let bad = 0;
   for (const arm of ARMS) {
     if (!before.includes(arm.find)) {
-      console.log(`  ${arm.name}: PLANT DID NOT APPLY — the anchor is gone from styles/base.css.`);
+      console.log(`  ${arm.name}: PLANT DID NOT APPLY — the anchor is gone from styles/tokens.generated.css.`);
       console.log('    A known-bad that cannot be planted proves nothing; re-point it before trusting this gate.');
       bad++; continue;
     }
@@ -836,7 +836,7 @@ if (args.includes('--selftest')) {
   console.log(`  cleanup-control plant: ${lingeringCaught ? 'RED caught' : 'MISSED'} — ${lingering.label} [${lingering.profile}]`);
   console.log(`  stale-artifact profile plant: ${artifactDetail}`);
   console.log(`
-DOOR: the known-bad is an edit to styles/base.css, a real shipped stylesheet, served by the real
+DOOR: the known-bad is an edit to styles/tokens.generated.css, a real shipped stylesheet, served by the real
       serve() and rendered by the real browser. It travels the cascade, the ?shotSettings profile,
       the captured pixels, the luminance maths, the KNOWN_BELOW ledger and the gate's own verdict.
       No ratio in this block is computed by the selftest; every number above came from a pixel.

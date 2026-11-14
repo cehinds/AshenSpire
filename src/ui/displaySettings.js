@@ -7,7 +7,7 @@
 // No import-time side effects: the global listeners register from
 // installDisplaySettings() / installCardSizeResize(), which main.js calls at the
 // spots the inline registrations used to sit.
-import { applyViewViewport, resolveViewViewport } from './viewViewport.js';
+import { applyViewViewport, resolveViewViewport, VIEW_PRESETS } from './viewViewport.js';
 import { formFactorFor } from './models/FormFactorModel.js';
 import { applyHudVisibility } from './models/HudVisibilityModel.js';
 import { cardLevelsWithOverrides, cardLevelCssPropertiesFor, cardShelfCssProperties, restingWidthPx, levelRestingWidthPx } from './models/CardSizeModel.js';
@@ -261,12 +261,38 @@ export function resolveLayout(uiScale, vw, vh) {
   return layoutForCap(named != null ? named : Infinity, vw, vh);
 }
 
+// While the combat screen is mounted, View = Auto lays out on the form
+// factor's fixed canvas (docs/design/fixed-form-factor-layouts.md). Outside
+// combat Auto is native; a manual View preset wins everywhere.
+let combatCanvas = false;
+
+export function EffectiveViewPreset(viewPreset, combatOn, width, height) {
+  const key = String(viewPreset || 'auto').toLowerCase();
+  if (VIEW_PRESETS[key]) return key;
+  return combatOn ? formFactorFor(width, height, UI.uiScale.formFactor) : 'auto';
+}
+
+export function SetCombatCanvas(on) {
+  on = !!on;
+  if (on === combatCanvas) return;
+  combatCanvas = on;
+  if (!saves) return;
+  const settings = getActiveSettings() || {};
+  applyUiScale(settings);
+  applyCardSizeSettings(settings);
+}
+
 export function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  const view = applyViewViewport(settings.viewPreset, window.innerWidth, visibleHeight);
+  const effective = EffectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight);
+  const view = applyViewViewport(effective, window.innerWidth, visibleHeight);
+  // A canvas picked by combat Auto is a layout frame, not the player's screen:
+  // the short-screen / turn-your-phone gate is still decided from the real window.
+  const gateFromWindow = !VIEW_PRESETS[String(settings.viewPreset || 'auto').toLowerCase()] && view.preset !== 'auto';
   document.documentElement.style.setProperty('--visible-height', view.height + 'px');
-  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale, view.width, view.height);
+  const { zoom, narrow, compact, short: canvasShort } = resolveLayout(settings.uiScale, view.width, view.height);
+  const short = gateFromWindow ? resolveLayout(settings.uiScale, window.innerWidth, visibleHeight).short : canvasShort;
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -299,6 +325,7 @@ export function applyUiScale(settings) {
   // a gate nobody believes the second time.
   const turned = typeof window === 'undefined'
     ? { short: true }
+    : gateFromWindow ? resolveLayout(settings.uiScale, visibleHeight, window.innerWidth)
     : resolveLayout(settings.uiScale, view.height, view.width);
   // AND ONE CAPABILITY QUERY, FOR THE WORDS ONLY. "Turn your phone upright" read
   // on an 800x410 DESKTOP WINDOW is a false instruction, and a screen that tells
@@ -366,7 +393,7 @@ export function reflexAutoScale() {
   // zoom stays put, so the local width crosses narrowMax with nothing else
   // changing. Gating this on Auto left the attribute stale at exactly the
   // shapes a fixed size is most likely to be small in (#24).
-  applyUiScale((saves.loadMeta().settings) || {});
+  applyUiScale(getActiveSettings() || {});
 }
 
 // A resize fires many times a second; most of the card-size properties come out
@@ -395,11 +422,15 @@ export function applyCardSizeSettings(settings) {
   // and a tool all keep asking one question. Redeclaring `--card-w-glance`
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
-  const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
+  // The same visible height applyUiScale used, so both pick one preset.
+  const cardViewport = window.visualViewport;
+  const cardHeight = cardViewport && cardViewport.scale === 1 ? cardViewport.height : window.innerHeight;
+  const cardView = resolveViewViewport(EffectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, cardHeight), window.innerWidth, cardHeight);
+  const resting = restingWidthPx(cardView.width, levels);
   setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // Focus and inspect rest the same way: the phone keeps its `mobile` variant, a desktop gets the authored (20% larger) width.
   for (const level of ['focus', 'inspect']) {
-    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels)}px`);
+    setRootPropertyIfChanged(`--card-w-${level}`, `${levelRestingWidthPx(level, cardView.width, levels)}px`);
   }
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
@@ -610,6 +641,22 @@ export function installDisplaySettings() {
     });
     window.addEventListener('load', reflexAutoScale);
     setTimeout(reflexAutoScale, 300);
+    // A fixed canvas wider than the window leaves untransformed layout overflow,
+    // and focus / scrollIntoView will scroll the viewport even at overflow:hidden.
+    // While a view preset is active the viewport stays at 0,0.
+    window.addEventListener('scroll', () => {
+      if (document.documentElement.dataset.viewPreset === 'auto') return;
+      if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
+    }, { passive: true });
+    // The combat canvas follows the combat screen: it mounts as a direct child
+    // of #app and every other screen replaces it. Observed here so no screen
+    // file has to announce itself.
+    const app = document.getElementById('app');
+    if (app && typeof MutationObserver === 'function') {
+      const sync = () => SetCombatCanvas(!!app.querySelector(':scope > .combat'));
+      new MutationObserver(sync).observe(app, { childList: true });
+      sync();
+    }
   }
 }
 

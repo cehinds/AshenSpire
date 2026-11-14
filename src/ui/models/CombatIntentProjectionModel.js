@@ -51,7 +51,11 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
   const clears = event.type === 'enemyMoveEnded' || actor.intentInFlight
     && (event.type === 'damageDealt' || event.type === 'attackMissed' || event.type === 'attackEvaded'
       || event.type === 'combatAvoidanceResolved' && event.avoided);
-  if (deferred && !announces && clears && !event.reaction && later && announcesNextContact(later, event.sourceId)) return;
+  if (deferred && !announces && clears && !event.reaction && later && announcesNextContact(later, event.sourceId)) {
+    // The move is over and the same actor announces another one: park a promotion (see flushDeferredIntentClears).
+    if (event.type === 'enemyMoveEnded') deferred.set(event.sourceId, { type: 'intentPromote', sourceId: event.sourceId });
+    return;
+  }
   if (deferred && !announces && clears) {
     deferred.set(event.sourceId, event);
     return;
@@ -81,11 +85,24 @@ export function applyCombatIntentReceipt(entities, event, deferred = null, later
   }
 }
 
-/** Apply the clears parked by applyCombatIntentReceipt(..., deferred), then empty the map. */
-export function flushDeferredIntentClears(entities, deferred) {
+/**
+ * Apply the clears parked by applyCombatIntentReceipt(..., deferred), then empty the map. A parked promotion
+ * (`intentPromote`, the move ended and the actor announces its next one) calls promote(actorId), which moves the next
+ * planned move into the head slot; without it, or when it declines, the head stays as it did before promotion existed.
+ * Returns true when something on screen changed.
+ */
+export function flushDeferredIntentClears(entities, deferred, promote = null) {
   if (!deferred?.size) return false;
   const parked = [...deferred.values()];
   deferred.clear();
-  for (const event of parked) applyCombatIntentReceipt(entities, event);
-  return true;
+  let changed = false;
+  for (const event of parked) {
+    if (event.type === 'intentPromote') {
+      if (promote?.(event.sourceId)) changed = true;
+      continue;
+    }
+    applyCombatIntentReceipt(entities, event);
+    changed = true;
+  }
+  return changed;
 }
