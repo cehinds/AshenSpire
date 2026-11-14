@@ -155,3 +155,12 @@ test('deck rules: minimum deck size drops by 2; unlimited Basics and cantrips op
   assert.ok(!unlimitedCardIds(newRun()).includes('core.cantrip') || unlimitedCardIds(newRun()).includes('core.cantrip'), 'the base policy is unchanged');
   assert.ok(ItemPropertyIds(run, RELIC).includes('smallerDeck'));
 });
+
+test('a fight saved mid-turn keeps its item properties and its resistance', async () => {
+  const { serializeCombatSnapshot, restoreCombatSnapshot } = await import('../src/engine/combatSnapshot.js');
+  const c = fight(newRun({ [RELIC]: ['handSize1', 'retain1'], [GS]: ['edgeFire'] }));
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(c)));
+  const back = restoreCombatSnapshot({ registries, rng: createRng(5), snapshot });
+  assert.deepEqual(back.player.itemProps, c.player.itemProps);
+  assert.equal(back.player.itemProps.retain, 1);
+});
