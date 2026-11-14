@@ -126,10 +126,10 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
 // The tool-row reserve every other form factor keeps below the fan.
 export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .4, minPx: 160, maxPx: 164 },
+  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .4, minPx: 154, maxPx: 158 },
   tablet: { spread: .8, angle: 4, arc: .045, dock: .96, widthFraction: .2, minPx: 150, maxPx: 160 },
-  desktop: { spread: .94, angle: 4, arc: .045, dock: .96 },
-  widescreen: { spread: .94, angle: 4, arc: .045, dock: .96 },
+  desktop: { spread: .86, angle: 4, arc: .045, dock: .96 },
+  widescreen: { spread: .86, angle: 4, arc: .045, dock: .96 },
 });
 
 export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
