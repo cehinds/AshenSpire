@@ -69,10 +69,10 @@ export function combatIntentPresentation(intent = {}) {
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
-export const chargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
+export const ChargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
 
 function chargingPresentation(intent) {
-  const { turnsLeft, block } = intent.charging, when = chargingWhen(turnsLeft);
+  const { turnsLeft, block } = intent.charging, when = ChargingWhen(turnsLeft);
   const later = intentDamageRead(intent)?.label ?? null;
   const parts = [];
   if (block != null) parts.push({ icon: 'defend', value: String(block) });
