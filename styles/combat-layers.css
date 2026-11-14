@@ -186,8 +186,9 @@
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
 /* Phone width: the Reaction and Auto switches keep label, track and knob; the
-   enabled/disabled words drop out (state stays in aria-checked and aria-label). */
-@media (max-width: 480px) {
+   enabled/disabled words drop out (state stays in aria-checked and aria-label). Asked of the game viewport (the
+   combat canvas in combat), not the real window. */
+@container game-viewport (max-width: 480px) {
   :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { display: none; }
   :root .combat[data-layout='formation'] .combat-tools .reaction-switch-track { width: calc(34px / var(--ui-zoom,1)); }
 }
