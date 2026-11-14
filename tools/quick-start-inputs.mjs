@@ -171,10 +171,19 @@ async function main() {
     // These are real controls, never engine calls or injected run state.
     for (let step = 0; step < 24; step += 1) {
       if (await evalIn(`!!window.__combat && !!document.querySelector('.hand .card')`)) break;
+      // The opening: any key leaves it once its first scene has been up 600 ms.
+      if (await evalIn(`!!document.querySelector('.prologue-screen')`)) {
+        await wait(900);
+        await pressKey('Enter', 'Enter', 13, 'any key skips the opening');
+        await wait(300);
+        continue;
+      }
+      // The start node is preselected: wait for its tray's Enter to settle rather than selecting again.
+      if (await evalIn(`!!document.querySelector('.map-node.selected') && !!document.querySelector('.map-enter:not([disabled])')`)) await wait(400);
       const next = await evalIn(`(() => {
         const visible = n => { if (!n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true') return false; const r=n.getBoundingClientRect(); return r.width>0 && r.height>0 && n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); };
         const pick = selector => [...document.querySelectorAll(selector)].find(visible);
-        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen [data-prologue-action="continue"], .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
+        const direct = pick('#shrine-leave, #leave-shop, .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
         const node = direct || pick('.map-node.monster.reachable:not(.current)') || [...document.querySelectorAll('.map-node.reachable:not(.current):not(.visited)')].filter(visible).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left)[0];
         const dialogue = node || [...document.querySelectorAll('.dialogue-screen button, .event-screen button, .class-mastery-node')].find(visible);
         if (!dialogue) return null;
@@ -234,57 +243,17 @@ async function main() {
     return inputs.length;
   };
 
-  // The full character-creation route, from the Title to BEGIN THE CLIMB.
+  // The way in on a fresh profile: New Game opens creation for slot 1 at once
+  // (no slot picker), and the Core Class step carries Begin itself. Two clicks
+  // from the title to the opening; the seed field stays on the optional Review
+  // step, so the route plays whatever seed the page drew.
   const createAndBegin = async () => {
     await click('.title-menu .slot-new', 'New');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot picker');
-    await click('[data-title-action="modal-continue"]', 'slot picker Continue');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
-    await click('[data-title-action="review-new"]', 'Start in this slot');
+    ok(await evalIn(`!document.querySelector('[data-title-action="modal-continue"]')`), 'a fresh profile has no slot picker');
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
-    // Core's authored creation has Class and Review only.
-    // The staged flow (Class -> Attributes -> Equipment -> Feats ->
-    // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
-    // data-creation-stage; Next (#cz-next) is the one real click that leaves a
-    // stage, and each stage is waited for by that attribute.
-    const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
-    const openFace = async (key) => {
-      await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
-      if (!(await evalIn(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await click(`[data-face="${key}"]`, `open the ${key} fold`);
-    };
-    await click('#cz-classes .cz-class', 'a class');
-    await click('#cz-next', 'Next (creation)');
-    if (await evalIn(onStage('review'))) {
-      await click('#seed-input', 'seed field');
-      await pressKey('a', 'KeyA', 65, 'select seed text', 2);
-      spend('type route seed', CORE_ENTRY_SEED.length);
-      await cdp.send('Input.insertText', { text: CORE_ENTRY_SEED }, S);
-      await click('#cz-start', 'Begin Core');
-      return;
-    }
-    await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
-    await chooseStatMode('lean');
-    await click('#cz-next', 'Next (to Equipment)');
-    await until(onStage('equipment'), 'the Equipment stage');
-    await openFace('armour');
-    await click('#cz-armours .equip-chip .equipment-poker-card', 'an armour');
-    // The armour's own Choose button is spent only when the stage shows it
-    // (a card click may already have chosen the armour); the probe never
-    // clicks an element it cannot see.
-    if (await evalIn(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
-      await click('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
-    }
-    for (let step = 0; step < 8; step += 1) {
-      if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
-      if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
-        while (await evalIn(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
-          await click('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])', 'a starting ability');
-        }
-      }
-      await click('#cz-next', 'Next (towards Review)');
-    }
-    await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
-    await click('#cz-start', 'BEGIN THE CLIMB');
+    await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'class'`, 'the Class step');
+    await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.hidden && !b.disabled && b.getAttribute('aria-disabled') !== 'true' && b.getBoundingClientRect().width > 0; })()`, 'Begin on the Class step', 5000);
+    await click('#cz-start', 'Begin');
   };
 
   // The stat-mode <select>, driven with real input only. A real click on the
