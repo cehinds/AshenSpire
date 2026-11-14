@@ -15,13 +15,15 @@ const build = (modules = {}, core = 'ashen.core@2.0.0') => {
   const profile = resolveGameProfile({ formatVersion: 1, core, modules });
   return bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 };
+// Owner 2026-11-14: the shipped combat mix is cards only; the 66/4/18/2/10 mix these tests pin stays covered by this explicit legacy setting.
+const LEGACY_GROUPS = [['cards', 66, 'combatCards'], ['weaponArts', 4, 'weaponArts'], ['potions', 18, 'potions'], ['flaskRelic', 2, 'relics'], ['weapons', 10, 'weapons'], ['retired', 0, 'armor']].map(([id, weight, category]) => ({ id, weight, categories: [category] }));
 const NO_RESERVE = { 'reward-ranks': { stanceCoverage: { enabled: false, reservedSlots: 0, preferTiers: ['basic'], excludePools: ['special'] } } };
 const reg = build(NO_RESERVE);
 const fresh = (seed, registries = reg) => createRunState({ seed, classId: 'reaver', registries });
 const cardsOf = run => run.gameProfile.content.cards;
 
 test('combat reward kinds roll 70% cards, 20% potions, 10% weapons over 1000 seeded rolls', () => {
-  const profile = { 'reward-ranks': NO_RESERVE['reward-ranks'], rewards: { offerCount: 1 } };
+  const profile = { 'reward-ranks': NO_RESERVE['reward-ranks'], rewards: { offerCount: 1, rewardGroups: LEGACY_GROUPS } };
   const registries = build(profile), counts = {};
   for (let i = 0; i < 1000; i++) {
     const [option] = gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(7000 + i), { offerId: 'f' }).options;
@@ -73,6 +75,7 @@ test('a card shown on a recent reward screen is offered less often than a fresh 
 });
 
 test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards (owner 2026-10-27)', () => {
+  const starseer = (seed, registries = reg) => createRunState({ seed, classId: 'starseer', registries, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const isBasic = basicOrCantripMatcher(reg, fresh(1)), defs = new Map(cardsOf(fresh(1)).map(c => [c.id, c]));
   const rules = fresh(1).gameProfile.content.rewards, minRank = rules.eligibility.combatCards.rankOfRarity;
   const rankOf = c => Number.isSafeInteger(c.rank) ? c.rank : minRank?.[c.rarity] ?? 1;
@@ -80,7 +83,7 @@ test('depth 1-3 offers lean basic/cantrip, depth 4+ offers lean mana-cost cards 
   const share = (depths, registries = reg) => {
     let total = 0, basic = 0, mana = 0, high = 0;
     for (const depth of depths) for (let i = 0; i < 250; i++) {
-      const run = fresh(i + 1, registries); run.floor = depth;
+      const run = starseer(i + 1, registries); run.floor = depth; run.maxMana = Math.max(run.maxMana, 3);
       for (const o of gameProfileRewardOffers(registries, run, createRng(i * 7 + depth), { offerId: 'f' }).options) if (o.kind === 'combatCards') {
         total++; if (isBasic(o.id)) basic++; if ((defs.get(o.id).manaCost || 0) > 0) mana++; if (rankOf(defs.get(o.id)) >= highRankMin) high++;
       }
@@ -123,7 +126,7 @@ test('treasure rolls its own 60/10/30 table (cards 60, equipment 10, potions 30)
 });
 
 test('combat offers admit no relic but brimmingGourd, and no armor', () => {
-  const registries = build({ ...NO_RESERVE, rewards: { offerCount: 1000 } }), relics = new Set(), kinds = new Set();
+  const registries = build({ ...NO_RESERVE, rewards: { offerCount: 1000, rewardGroups: LEGACY_GROUPS } }), relics = new Set(), kinds = new Set();
   for (let i = 0; i < 20; i++) for (const o of gameProfileRewardOffers(registries, fresh(i + 1, registries), createRng(40 + i), { offerId: 'c', source: 'combat' }).options) { kinds.add(o.kind); if (o.kind === 'relics') relics.add(o.id); }
   assert.deepEqual([...relics], ['brimmingGourd']);
   assert.ok(!kinds.has('armor'));

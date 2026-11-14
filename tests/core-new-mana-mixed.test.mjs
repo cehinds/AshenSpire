@@ -28,6 +28,9 @@ const BY_CLASS = {
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
+
+// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
+const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
@@ -128,7 +131,8 @@ test('the reward model counts each card as a mana card, never as a basic or cant
 test('every class sees its new cards more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
   const report = [];
   for (const classId of CLASSES) {
-    const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless]);
+    const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless].filter(id => payable(classId, id)));
+    if (!own.size) continue;
     const share = floors => {
       let hits = 0, total = 0;
       for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, floors[seed % floors.length])) { total++; if (own.has(id)) hits++; }
@@ -147,7 +151,8 @@ test('offers never cross classes: class cards only reach their own class, colorl
     const seen = new Set();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
-      if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
+      if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
+      else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
   }

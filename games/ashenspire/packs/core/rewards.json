@@ -156,6 +156,7 @@
     }
   },
   "eligibility": {
+    "playableOnly": true,
     "weapons": {
       "groups": [
         "straightSwords",
@@ -188,6 +189,36 @@
       ]
     },
     "relics": {
+      "allow": [
+        "goldenSprout",
+        "whetstoneFragment",
+        "cinderPouch",
+        "goldleafCharm",
+        "crackedLantern",
+        "sacrificialKnife",
+        "curedHide",
+        "ivoryComb",
+        "emberwickCharm",
+        "carrionMorsel",
+        "crackedTear",
+        "fellWardenBrand",
+        "twinnedArmor",
+        "blightTouchedIdol",
+        "pearlOfSagacity",
+        "blessedDew",
+        "azureSigil",
+        "saltedRelic",
+        "hollowedHorn",
+        "gildedTear",
+        "goldboughSapling",
+        "flayersCenser",
+        "vigilantHalo",
+        "carrionTalon",
+        "emberIdol",
+        "forsakenWarflag",
+        "wrathCoil",
+        "brimmingGourd"
+      ],
       "pools": [
         "core2"
       ],
@@ -199,10 +230,13 @@
       ]
     }
   },
+  "eliteRelic": {
+    "choices": 2
+  },
   "rewardGroups": [
     {
       "id": "cards",
-      "weight": 66,
+      "weight": 96,
       "categories": [
         "combatCards"
       ]
@@ -216,21 +250,21 @@
     },
     {
       "id": "potions",
-      "weight": 18,
+      "weight": 0,
       "categories": [
         "potions"
       ]
     },
     {
       "id": "flaskRelic",
-      "weight": 2,
+      "weight": 0,
       "categories": [
         "relics"
       ]
     },
     {
       "id": "weapons",
-      "weight": 10,
+      "weight": 0,
       "categories": [
         "weapons"
       ]
