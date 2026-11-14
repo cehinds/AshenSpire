@@ -91,11 +91,11 @@ export function paintEndTurnKey(endTurn, key) {
 }
 
 /**
- * paintEndTurnWarning(button, text) — the accessible name End Turn wears while a card is still playable
+ * PaintEndTurnWarning(button, text) — the accessible name End Turn wears while a card is still playable
  * ("End turn (you can still play a card)"); an empty text puts the plain name back. The footer art repaints the
  * name on every count paint, so the text is kept in its state and not only set on the button.
  */
-export function paintEndTurnWarning(endTurn, text = '') {
+export function PaintEndTurnWarning(endTurn, text = '') {
   const row = endTurn?.closest?.('.combat-action-row');
   if (row) paintFooterArt(row, { endTurnAria: text });
   if (text) endTurn?.setAttribute?.('aria-label', text);
