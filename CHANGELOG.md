@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-13
 
+- **Combat: fixed layouts per screen size, floor at 75%, steady battlefield after a win** ([#2746](https://github.com/cehinds/AshenSpire/pull/2746), `0.7.4.68`). Combat no longer rescales as you resize the window: desktop, widescreen, tablet and phone each have one fixed layout that grows or shrinks as a whole. The ground now starts a quarter of the way down the screen in every scene, the sky and side scenery are drawn smaller and the ground sharper, the space between your side and the enemy's is three times wider, and the battlefield no longer shifts when the last enemy falls.
 - **Behind the scenes: theme colours live in one settings file** ([#2743](https://github.com/cehinds/AshenSpire/pull/2743), `0.7.4.67`). The game's main colours, including the high-contrast and colour-blind variants, are now edited in content/config/ui/tokens.json instead of the stylesheet. Nothing you see changes.
 
 ## 2026-11-12
