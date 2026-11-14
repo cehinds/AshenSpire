@@ -50,8 +50,11 @@ export function UpgradeWeaponId(run, instance) {
 /** The weapon's Smith level (how many times it has been upgraded at the Smith / Blacksmith), 0 for none. */
 export function WeaponSmithLevel(run, instance) {
   const id = UpgradeWeaponId(run, instance);
-  const level = id && run && run.itemUpgradeLevels ? run.itemUpgradeLevels[`armament/${id}`] : 0;
-  return Number.isSafeInteger(level) && level > 0 ? level : 0;
+  const ref = `armament/${id}`;
+  const level = id && run && run.itemUpgradeLevels ? run.itemUpgradeLevels[ref] : 0;
+  // The fixed Smith tier plus the options the Blacksmith's work picked (W25 step 4: each is one upgrade of the weapon).
+  const picks = id && Array.isArray(run?.itemUpgradePicks?.[ref]) ? run.itemUpgradePicks[ref].length : 0;
+  return (Number.isSafeInteger(level) && level > 0 ? level : 0) + picks;
 }
 
 /**

@@ -34,6 +34,8 @@ import { renderCard } from '../components/card.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
 import { smithingPlan } from '../../model/smithing.js';
+import { coreSmithingActive } from '../../model/smithingCore.js';
+import { OpenSmithOptionsModal } from '../components/smithOptionsModal.js';
 import { blacksmithStoneDiscount } from '../../model/blacksmithConfig.js';
 import { coreArmamentPlan, commitCoreArmament, coreWeaponArtPlan, commitCoreWeaponArt } from '../../model/blacksmithStock.js';
 import { BLACKSMITH_SERVICES, serviceCandidates, serviceIdleReason, rankUpCards, rankUpPlan, commitRankUp, upgradeArtPlan, commitUpgradeArt, blacksmithWithholds, plural, blacksmithUpgradePlan, commitBlacksmithUpgrade } from '../../model/blacksmith.js';
@@ -167,6 +169,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       }
     },
     upgrade(shelf) {
+      if (coreSmithingActive(run)) {
+        // Core 2: every owned weapon, shield, armour and relic with a slot left. The action opens its rolled options.
+        for (const candidate of serviceCandidates(registries, run, 'upgrade')) {
+          const plan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'stones', priceMult });
+          const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.slotLine', { n: candidate.nextLevel, max: candidate.slots }), '', { visual: equipmentVisual(candidate.itemId) });
+          host.dataset.itemRef = candidate.itemRef;
+          const action = addAction(host, { label: t('blacksmith.verb.upgrade'), kind: 'service', ok: !!plan.ok, reason: plan.reason, price: priceLine({ stones: plan.stones, cinders: plan.cost }) });
+          action.run = (event) => openItemOptions(plan, event.currentTarget, host);
+          shelf.append(host);
+        }
+        return;
+      }
       // An item with no name of its own is a raw id; the screen never shows one.
       for (const candidate of smithingPlan(registries, run, undefined, { stoneDiscount }).candidates.filter((row) => row.itemName)) {
         const host = tile(GLYPH.upgrade, candidate.itemName, t('blacksmith.upgrade.line', { from: candidate.currentLevel, to: candidate.nextLevel }), '', { visual: equipmentVisual(candidate.itemId) });
@@ -186,6 +200,18 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       shelf.append(host);
     },
   };
+
+  // Core 2 item upgrade: the player picks one of the rolled options; the quote is the plan the modal showed.
+  function openItemOptions(plan, opener, host) {
+    OpenSmithOptionsModal({
+      title: t('blacksmith.options.title', { name: plan.name }),
+      eyebrow: t('blacksmith.upgrade.slotLine', { n: plan.n, max: plan.smith.slots }),
+      price: t('blacksmith.options.price', { stones: plan.stones, plural: plural(plan.stones), cinders: plan.cost }),
+      options: plan.options.map((option) => ({ id: option.id, name: option.text, text: '' })),
+      opener,
+      onChoose: (optionId) => act(host, () => commitBlacksmithUpgrade(registries, run, { ...plan, optionId }, { priceMult })),
+    });
+  }
 
   function openUpgradeModal(itemRef, returnFocusElement) {
     let selection = itemRef;
