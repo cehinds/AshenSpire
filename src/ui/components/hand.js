@@ -1,3 +1,4 @@
+import { CanvasRect } from '../viewViewport.js';
 import { desktopHandLayout } from '../models/DesktopCombatFooter.js';
 import { handLayout, responsiveHandLayout, handGeometryKey, reconcileHandOrder, moveHandInstance, holdPlaySlots, HAND_PLAY_SETTLE } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
@@ -149,7 +150,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       const measured = box || readStripBox();
       const rect = measured.rect, clientWidth = measured.clientWidth, clientHeight = measured.clientHeight;
-      const zoom = rect.width / clientWidth || 1;
+      // The strip's rect is in scaled real px; its own zoom (rect over local px) carries the
+      // combat canvas's fit scale too. The plan's authored px are canvas px, so it is handed
+      // the canvas zoom (owner, 2026-11-14: one layout per form factor, only scaled).
+      const rectZoom = rect.width / clientWidth || 1;
+      const zoom = CanvasRect(rect).width / clientWidth || 1;
       const fontSize = measured.fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
@@ -200,7 +205,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       setVar(handEl, '--hand-rest-left', plan.restLeft + 'px');
       setVar(handEl, '--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
       setVar(handEl, '--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
-      const geometryKey = handGeometryKey({ width: clientWidth, height: clientHeight, zoom, fontSize, left: rect.left });
+      const geometryKey = handGeometryKey({ width: clientWidth, height: clientHeight, zoom: rectZoom, fontSize, left: rect.left });
       if (handEl.dataset.handGeometry !== geometryKey) handEl.dataset.handGeometry = geometryKey;
       setVar(handEl, '--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {

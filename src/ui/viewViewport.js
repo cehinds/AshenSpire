@@ -49,6 +49,34 @@ export function viewScale(win = globalThis.window) {
   return Number(win?.document?.documentElement?.dataset?.viewScale) || 1;
 }
 
+// THE CANVAS BOX (owner, 2026-11-14: "each should have it's own configuration
+// that's relative"). Inside a form factor every combat element is laid out in
+// the canvas's own px; the real window only sets the uniform scale and the
+// letterbox offset of <html>'s transform. getBoundingClientRect and pointer
+// coordinates are in scaled real px, so layout code converts them with
+// CanvasRect before mixing them with authored px constants. Without a canvas
+// (Auto outside combat) the box is the window and the conversion is identity.
+export function CanvasBox(win = globalThis.window) {
+  const data = win?.document?.documentElement?.dataset;
+  const { width, height } = logicalViewport(win);
+  if (!VIEW_PRESETS[data?.viewPreset]) return { preset: 'auto', width, height, scale: 1, left: 0, top: 0 };
+  return { preset: data.viewPreset, width, height, scale: Number(data.viewScale) || 1,
+    left: Number(data.viewLeft) || 0, top: Number(data.viewTop) || 0 };
+}
+
+// A real-window rect (an element's getBoundingClientRect, or any
+// {left, top, width, height}) in canvas px. Reads no layout beyond the rect.
+export function CanvasRect(source, win = globalThis.window) {
+  const rect = typeof source?.getBoundingClientRect === 'function' ? source.getBoundingClientRect() : source;
+  const data = win?.document?.documentElement?.dataset;
+  const canvas = VIEW_PRESETS[data?.viewPreset];
+  const scale = canvas ? Number(data.viewScale) || 1 : 1;
+  const offsetX = canvas ? Number(data.viewLeft) || 0 : 0, offsetY = canvas ? Number(data.viewTop) || 0 : 0;
+  const left = (rect.left - offsetX) / scale, top = (rect.top - offsetY) / scale;
+  const width = rect.width / scale, height = rect.height / scale;
+  return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top };
+}
+
 // DOMRects and pointer coordinates are physical pixels, including letterboxing.
 export function viewViewportBox(win = globalThis.window) {
   const root = win?.document?.documentElement;
@@ -66,6 +94,8 @@ export function applyViewViewport(preset, width, height, root = document.documen
   root.dataset.viewScale = String(view.scale);
   root.dataset.viewWidth = String(view.width);
   root.dataset.viewHeight = String(view.height);
+  root.dataset.viewLeft = String(view.left);
+  root.dataset.viewTop = String(view.top);
   for (const axis of ['w', 'h']) {
     const property = `--view-v${axis}`;
     if (view.preset === 'auto') root.style.removeProperty(property);
