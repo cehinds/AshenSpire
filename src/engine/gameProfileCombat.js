@@ -16,6 +16,7 @@ import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
+import { ElementReceiptStages, ElementProtectionView, ElementReceiptFinish } from './elementIdentity.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -71,7 +72,18 @@ function reflectApplies(target, source, carrier, profile) {
   return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
 // `forecast`: a preview of an attack that will certainly be avoided (Evade, out of range, hit roll off) prices 0 HP, as the play will; the landed receipt never sets it.
-export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
+export function profileDamageReceipt(ctx, source, target, base, carrier = {}, options = {}) {
+  // Element identity (W25): Necrotic ignores Poise and Fire ignores some of it, so the hit meets a smaller pool (restored below, never kept);
+  // Force and Fire then take extra Poise. Without `elements` rules the view is null and this is exactly the receipt below.
+  const view = ElementProtectionView(ctx, source, target, carrier);
+  if (!view) return ElementReceiptFinish(ctx, carrier, profileDamageReceiptCore(ctx, source, target, base, carrier, options), null, target?.persistentPoise);
+  const real = target.persistentPoise.value;
+  target.persistentPoise.value = view.value;
+  let receipt;
+  try { receipt = profileDamageReceiptCore(ctx, source, target, base, carrier, options); } finally { target.persistentPoise.value = real; }
+  return ElementReceiptFinish(ctx, carrier, receipt, view, { value: real });
+}
+function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
@@ -118,6 +130,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
   for (const row of weaknesses) if (row.effect === 'damage') raw = transition(`weakness:${row.hidden ? 'unknown' : row.to}`,weaknessLabel(row.to,row.hidden),raw,raw*(1+row.amount/100),'offense',1+row.amount/100);
+  // Element identity (W25): the deterministic element multipliers (Burn, Shock, Brittle, Chill, spread, chain, undead) are receipt stages, so a quote equals the hit.
+  const element = modern && !flatReturn ? ElementReceiptStages(ctx, source, target, carrier, raw) : null;
+  for (const stage of element?.stages || []) raw = transition(stage.id, stage.label, raw, raw * stage.multiplier, 'offense', stage.multiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
   // An ally's Guard interception lowers `raw` here; kept so the displayed raw hit can add it back (Guard is a defense, owner 2026-11-04).
   let guardIntercepted = 0;
@@ -259,7 +274,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
-  return { raw, rawHit, weaknesses, pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
+  return { raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}),

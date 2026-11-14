@@ -6,6 +6,7 @@ import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
+import { ElementTurnStart, ElementTurnEnd } from './elementIdentity.js';
 import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
@@ -505,6 +506,7 @@ function startPlayerTurn(combat) {
   clearEnemyReactionRolls(combat);
   combat.phase = 'player';
   const p = combat.player;
+  ElementTurnStart(combat, p); // element identity (W25): Burn explosion, Chill, Freeze and Shock, read before the statuses decay
   decayAtTurnStart(combat, p);
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
@@ -568,6 +570,7 @@ function endPlayerTurn(combat, discardIds = []) {
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
+  ElementTurnEnd(combat, p); // element identity (W25): Necrotic build-up
   if (combat.result) return;
 
   // …then each card still in hand fires its authored `onTurnEndInHand` effect
@@ -652,6 +655,8 @@ function enemyTurnStart(combat) {
 // One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
+  ElementTurnStart(combat, enemy); // element identity (W25)
+  if (!enemy.alive) return;
   decayAtTurnStart(combat, enemy);
   if (fixCoreEnabled(combat)) {
     // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
@@ -806,6 +811,7 @@ function enemyPhase(combat) {
       proposalTurn(combat,enemy,'end');
       fireOwnerHooks(combat, enemy, 'ownerTurnEnd');
       drainQueue(combat);
+      ElementTurnEnd(combat, enemy); // element identity (W25)
       if (combat.result) return;
       if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
