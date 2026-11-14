@@ -270,3 +270,19 @@ test('the stance tooltip and the stance help state each benefit in the same word
   const nodes = readFileSync(new URL('../content/source/nodes.csv', import.meta.url), 'utf8');
   for (const id of ['attack', 'defend', 'counter', 'sweep', 'smash', 'casting']) assert.match(nodes.split('\n').find(row => row.startsWith(`maneuver:${id},`)), /Stance benefit:/, `${id} help names its benefit`);
 });
+
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+
+test('a fight saved before the ruling keeps today\'s stance rules after a save and load; a fight saved with them keeps them', () => {
+  for (const benefits of [false, true]) {
+    const { combat } = live({ benefits });
+    const loaded = restoreCombatSnapshot({ registries: reg, rng: createRng(511), snapshot: serializeCombatSnapshot(combat) });
+    assert.equal(Boolean(Benefits.StanceBenefitRules(loaded)), benefits, `benefits ${benefits}`);
+    assert.equal(computeBlockGain(loaded, loaded.player, 10, carrierOf('defend')), benefits ? 15 : 10);
+    const target = loaded.enemies[0];
+    Object.assign(target, { hp: 500, block: 0, persistentPoise: { value: 0, max: 20 } });
+    delete target.weaknesses; // a loaded fight re-reads its enemies' weaknesses (SPEC 5.3); this test is about stance rules
+    strike(loaded, loaded.player, target, 10, carrierOf('attack'));
+    assert.equal(500 - target.hp, benefits ? 12 : 10);
+  }
+});
