@@ -14,7 +14,7 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // spell range: one real hostile action is still required and its committed miss is
 // reported without inventing a number. While numbers are short, a hostile card with a
 // positive public preview chance is preferred, since only HP damage yields a number.
-// Optional enemy-turn reactions are declined through their visible Back button.
+// Optional enemy-turn reactions are declined through their visible Skip button.
 // No engine action, settings change, injected state or synthetic click is used.
 //
 // Each input, contact and numeric readout is associated with this player's
@@ -383,7 +383,7 @@ async function main() {
         while (Date.now() < deadline) {
           if (await evalIn(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`)) break;
           const decline = '.reaction-choice [data-control-role="exit"]';
-          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Back from the optional defensive reaction');
+          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Skip the optional defensive reaction');
           else await wait(100);
         }
         await until(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`, `turn ${turn + 1} or the fight's end`, 1000);

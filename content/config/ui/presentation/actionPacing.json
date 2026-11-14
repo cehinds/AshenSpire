@@ -5,7 +5,14 @@
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
     "enemyAttackDefaultMs": 750,
-    "enemyFloaterIntervalDefaultMs": 750
+    "enemyFloaterIntervalDefaultMs": 750,
+    "enemyTurn": {
+      "stageGapMs": 100,
+      "spritePlaybackRate": 1.25,
+      "telegraphMs": 250,
+      "floaterIntervalMs": 375,
+      "turnBannerScale": 0.35
+    }
   },
   "behavior": {
     "autoCombat": false,

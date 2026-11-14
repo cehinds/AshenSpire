@@ -69,17 +69,19 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
   let settled = false;
   let dismissed = false;
   const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
-  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.back'), role: 'exit' });
+  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), role: 'exit' });
   let bodyHost = null;
   const shell = openModal({
     title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
     className: 'reaction-choice', deferFocus: true,
     initialFocus: () => bodyHost?.querySelector('[data-reaction-option]') || null,
-    closeLabel: t('common.back'), secondary: [decline], primary: play,
+    closeLabel: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), secondary: [decline], primary: play,
     body(host) {
       bodyHost = host;
       const incoming = intentDamageRead(pending.intentPreview);
       if (incoming) host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
+      // What skipping costs, when the engine's preview says (the same incoming amount, read as the price of the button).
+      if (incoming && !stacked) host.append(el('p', { class: 'reaction-skip-cost', text: t('combat.reaction.skipCost', { amount: incoming.label }) }));
       if (stacked) {
         host.append(el('p', { className: 'reaction-stack-label', text: t('combat.reaction.stack') }));
         const list = el('ol', { className: 'reaction-stack', 'data-reaction-stack': String(stack.length) });
