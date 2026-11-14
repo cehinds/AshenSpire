@@ -23,6 +23,7 @@ import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 import { floaterWordShown } from '../src/ui/models/FloaterPolicyModel.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
 import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
+import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -176,6 +177,39 @@ function checkEnemyActions(events, reactionNumbers, tally, label) {
   settle(contact, 'contact'); settle(action, 'action');
 }
 
+/**
+ * The number each attacking enemy shows on its intent as the player's turn ends (the screen's own projectCombatIntent) is what its first action
+ * then costs the player, enemies acting in order: a later attacker's number already holds the Block and Poise the earlier ones spend.
+ */
+function forecastBeforeTurn(combat) {
+  const out = new Map();
+  // An armed Counter answers the first hit it covers, kills or staggers the attacker mid-phase and moves what the next one meets; that
+  // interplay is priced per action at its own receipt (checkEnemyActions), not forecast across the turn.
+  if (combat.player.combatCounter?.charges > 0) return out;
+  for (const enemy of livingEnemies(combat)) {
+    if (enemy.intent?.kind !== 'attack' || enemy.intent.damage == null) continue;
+    const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage;
+    if (shown && shown.basis === 'hp' && shown.min === shown.max) out.set(enemy.id, { moveId: enemy.intent.moveId, shown: shown.max });
+  }
+  return out;
+}
+function checkForecast(forecast, events, tally, label) {
+  for (const [id, { moveId, shown }] of forecast) {
+    const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.sourceId === id);
+    if (start < 0 || events[start].moveId !== moveId) continue;
+    // A status or a stagger an earlier enemy puts on the player (a buildup gauge filling, a Poise break) changes the next hit's multiplier; the
+    // forecast carries Block, Poise and Counter between attackers, not the riders each move applies, so such a turn is priced at the receipt.
+    if (events.slice(0, start).some(event => event.type === 'playerStaggered' || (event.type === 'statusApplied' && event.targetId === 'player'))) continue;
+    let lost = 0;
+    for (const event of events.slice(start + 1)) {
+      if (event.type === 'enemyMoveEnded' && event.sourceId === id) break;
+      if (event.type === 'damageDealt' && event.sourceId === id && event.targetId === 'player') lost += event.hpLoss;
+    }
+    assert.equal(lost, shown, `${label}: ${id} ${moveId} was shown at ${shown} and cost the player ${lost}`);
+    tally.forecasts++;
+  }
+}
+
 function playFight(classId, seed, tally) {
   const combat = fightFor(classId, seed);
   const label = `${classId} seed ${seed}`;
@@ -199,6 +233,7 @@ function playFight(classId, seed, tally) {
     const mark = combat.eventLog.length;
     const reactionNumbers = new Map();
     let safety = 0;
+    const forecast = takeReactions ? new Map() : forecastBeforeTurn(combat);
     if (combat.phase === 'player' && !combat.pendingReaction) dispatch(combat, { type: 'endTurn' });
     while ((combat.pendingReaction || combat.pendingCardChoice || combat.pendingAbilityDiscard) && safety++ < 40 && !combat.result) {
       if (combat.pendingReaction) {
@@ -218,16 +253,18 @@ function playFight(classId, seed, tally) {
     // With a reaction taken the number to match is the option's; a multi-action turn mixes both, so only the actions with no reaction are
     // compared against their own intent receipt, and the reaction ones against the option.
     checkEnemyActions(events, reactionNumbers, tally, label);
+    checkForecast(forecast, events, tally, label);
     reactionNumbers.clear();
   }
 }
 
 test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lost, floater = HP lost, cost shown = cost paid`, () => {
-  const tally = { hits: 0, costs: 0, actions: 0, floaters: 0, reactions: 0 };
+  const tally = { hits: 0, costs: 0, actions: 0, floaters: 0, reactions: 0, forecasts: 0 };
   for (let i = 0; i < FIGHTS; i++) playFight(CLASSES[i % CLASSES.length], 100 + i, tally);
   if (process.env.TALLY) console.log(JSON.stringify(tally));
   assert.ok(tally.hits > 300, `enough damaging hits were checked: ${tally.hits}`);
   assert.ok(tally.costs > 400, `enough costs were checked: ${tally.costs}`);
+  assert.ok(tally.forecasts > 60, `enough shown intents were compared with what they cost: ${tally.forecasts}`);
   assert.ok(tally.actions > 150, `enough enemy actions were checked: ${tally.actions}`);
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
 });

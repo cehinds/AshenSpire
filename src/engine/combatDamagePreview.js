@@ -169,6 +169,8 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         defender.block = (defender.block || 0) + Matchups.CounterBlockGrant(previewCtx, defender, bonus);
         // With a per-hit reaction policy the Counter answers the first covered hit, so it adds Block to that hit only.
         if (bonus > 0 && previewCtx.reactionRules?.contactPolicy === 'perHit') counterAnswered = true;
+        // A Counter that answered is used up for whatever acts after this action in the same detached state.
+        if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
       }
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);

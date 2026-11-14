@@ -5,6 +5,8 @@ import * as Matchups from './combatMatchups.js';
 import * as Tactics from './combatCardTactics.js';
 import * as Control from './combatStatusControl.js';
 import * as Proposal from './proposalStatusRuntime.js';
+import { knowledgeIntentProjection } from './enemyKnowledge.js';
+import { decayAtTurnStart } from './statuses.js';
 
 import * as Counter from './counterRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
@@ -31,6 +33,22 @@ function detached(combat, enemy, neutral) {
   return { ctx, player, source };
 }
 
+// Each living enemy ahead of `source` whose next move is a readable attack hits the previewed player state once, as it will when the turn runs.
+function advanceThroughEarlierEnemies(ctx, source, prepared) {
+  for (const other of ctx.enemies) {
+    if (other.id === source.id) return;
+    const intent = other.intent;
+    if (!other.alive || !intent || intent.kind !== 'attack' || intent.damage == null || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
+    if (ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
+    const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[intent.moveId];
+    if (!authored) continue;
+    decayAtTurnStart(ctx, other);
+    const move = Tactics.expandedEnemyMove(other, authored, intent.moveId, ctx);
+    const carrier = Tactics.enemyMoveCarrier(other, move, intent.moveId, ctx);
+    try { Damage.previewDamageHits(ctx, other, prepared.defender, intent.damage, carrier.tags, carrier, Math.max(0, Math.floor(intent.hits ?? 1)), prepared); } catch { /* an earlier move that cannot be priced leaves the state as it was */ }
+  }
+}
+
 function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
   const { ctx, player, source } = detached(combat, enemy, neutral);
   const effect = move.effects?.find(row => row.op === 'damage');
@@ -50,7 +68,12 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // target states (Block, pools, stance, statuses) rather than multiply all-landed damage by hit probability.
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
     const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
-    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action);
+    // Owner, 2026-11-14: enemies act in order, so the number on a later attacker is what the player loses after the earlier ones have hit
+    // (their Block spent, their Poise broken, a Counter used up). A forecast with no action in flight carries each earlier, readable attack
+    // through the same state before the Counter's own Block is read; the receipt taken as an action starts already holds them.
+    // The attacker's own statuses tick at its turn start (Weak wears off), before its move: a forecast prices the hit after that tick.
+    if (!action) decayAtTurnStart(ctx, source);
+    const prepared = enemyIntentDamageState(ctx, source, carrier, base, action, action ? null : state => advanceThroughEarlierEnemies(ctx, source, state));
     // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
     // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
     let states = [{ attacker: Damage.cloneDetachedAttacker(source), target: prepared.defender, key: targetKey(prepared.defender), loss: 0, landed: 0, probability: 1 }];
@@ -125,8 +148,9 @@ export function projectEnemyIntentDamage(combat, enemy, intent, { action = null,
     scope: 'directDamageAtCurrentDefenses' } };
 }
 
-export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null) {
+export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null, before = null) {
   const state = Damage.damagePreviewState(ctx, ctx.player);
+  before?.(state);
   if (!fixCoreEnabled(ctx) || !ProfileCombat.configuredCombat(ctx)) return state;
   const group = action?.meta?.expansionGroup;
   const contact = !!group?.contactSequence && action?.effect?.op === 'damage';
