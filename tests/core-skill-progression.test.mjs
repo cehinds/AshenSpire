@@ -582,7 +582,9 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
     acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier, gameProfileRewardOffers, coreCardRanks, pendingRankUpRows,
     // Core pays the §15.3 stone door too since #2392; a normal pool pays 0 and writes its claim.
-    grantSmithingReward, smithingRewardId };
+    grantSmithingReward, smithingRewardId,
+    // The one victory screen (W2-E): the combined door asks VictorySpoils for its strip; a marker stands in for it here.
+    VictorySpoils: (_registries, _run, receipt) => ({ spoilsFor: receipt }) };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
@@ -598,16 +600,17 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     const mountGameProfileLevelUp = () => { throw Error('small award must not cross levels'); };
     const deckDoors = () => ({});
     const mountGameProfileOffers = (_app, model) => offers.push(model);
-    const transactReward = () => {}, deckEditBounds = () => ({ max: 30 });
+    const transactReward = (_run, _offerId, change) => { change(); persist(); }, deckEditBounds = () => ({ max: 30 });
     ${body('async function onCombatEnd(', '\n// ---- non-combat nodes')}
     ${body('function beginGameProfileReward(', '\nfunction showShop(')}
     return { settle: () => onCombatEnd('victory', combat, { pool: 'normal', enemies: ['wanderingSoldier'] }), resume: showGameProfileReward };
   `)(deps, run, combat, reg, saves, receipts, offers);
   const main = make(run);
   await main.settle();
-  assert.equal(receipts.length, 1);
-  assert.equal(receipts[0].receiptOnly, true);
-  assert.equal(offers.length, 0, 'the existing Victory modal precedes the offer');
+  assert.equal(receipts.length, 0, 'a receipt with an offer opens no receipt screen of its own');
+  assert.equal(offers.length, 1, 'the victory receipt and the offer are ONE door');
+  assert.equal(offers[0].title, 'VICTORY');
+  assert.ok(offers[0].spoils?.spoilsFor?.xpGains, 'the door carries the spoils strip built from the saved receipt');
   const paid = structuredClone(run.skills);
   const saved = saves.loadRun(reg);
   assert.ok(saved, saves.runStatus().reason);
@@ -617,15 +620,16 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
   assert.equal(gain.tracks['class:reaver'], paid['class:reaver'].xp);
   assert.equal(gain.tracks['item:shield'], undefined);
   await main.settle();
-  assert.equal(receipts.length, 1, 'duplicate combat callback cannot pay or reopen');
+  assert.equal(offers.length, 1, 'duplicate combat callback cannot pay or reopen');
   const resumed = make(saved); resumed.resume();
-  assert.equal(receipts.length, 2);
-  receipts[1].onDone();
-  assert.equal(offers.length, 1);
-  assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
-  assert.deepEqual(saved.skills, paid);
-  resumed.resume();
-  assert.equal(receipts.length, 2, 'acknowledged receipt stays closed');
+  assert.equal(offers.length, 2, 'a reload resumes the same combined door');
+  assert.equal(offers[1].spoils.spoilsFor.xpGains.tracks['item:blade'], paid['item:blade'].xp, 'with the same saved receipt');
+  assert.equal(receipts.length, 0);
+  // Leaving the door acknowledges the receipt in the same save and runs what follows (here: the map, nothing else owed).
+  offers[1].onContinue();
+  assert.equal(saves.loadRun(reg).gameProfilePendingReward?.victoryReceipt, undefined);
+  assert.deepEqual(saved.skills, paid, 'XP is never paid twice');
+  assert.equal(receipts.length, 0, 'no receipt screen after the choice');
 });
 
 test('a won Core fight silences level notices after the receipt; a defeat keeps them', async () => {
