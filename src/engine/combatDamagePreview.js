@@ -175,6 +175,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const counterPlan = defender?.combatCounter && fixCoreEnabled(ctx) && !local.counterBlocked && defender !== source && defender.kind !== source?.kind
       ? Matchups.previewTacticalAction(previewCtx, attacker || source, defender, carrier, Array.from({ length: Math.max(0, Math.floor(hits)) }, () => ({ amount: base }))) : null;
     let counterAnswered = false;
+    const poiseStart = defender?.persistentPoise?.value ?? 0;
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
       if (counterPlan && !counterAnswered && !Counter.counterReturnSpent(defender)) {
         const probe = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
@@ -201,6 +202,9 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       hitDamages: receipts.map(shown), totalDamage: rawTotal,
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
       attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
+      // Wave 3: the Poise the play removes from this target and whether that breaks it (the target quote's "−6 Poise" / BREAK).
+      poiseLoss: modern ? Math.max(0, poiseStart - (defender?.persistentPoise?.value ?? 0)) : 0,
+      poiseBreaks: modern && poiseStart > 0 && defender?.persistentPoise?.value === 0,
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: modern ? [rawTotal, rawTotal]
         : [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
