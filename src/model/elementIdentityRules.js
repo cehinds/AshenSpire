@@ -50,7 +50,13 @@ export function ElementStatusTooltip(ctx, id) {
   if (!rules) return null;
   const pct = value => `${Math.round(value * 100)}%`;
   if (id === 'burn') {
-    return `Each stack: +${pct(rules.burn.damageTakenPerStack)} damage taken and 1 HP lost at the start of its turn (ignores Block); each turn start it has a ${rules.burn.explodeChancePerStack}% chance per stack to explode (a chance, never previewed), hurting its allies for its stacks and clearing the Burn. One stack burns out each turn. Burn has no maximum.`;
+    return `At the start of its turn, loses HP equal to Burn stacks (ignores Block). Each stack also adds +${pct(rules.burn.damageTakenPerStack)} damage taken, and each turn start it has a ${rules.burn.explodeChancePerStack}% chance per stack to explode (a chance, never previewed), hurting its allies for its stacks and clearing the Burn.`;
   }
   return null;
+}
+
+/** True when the element rules lift the engine cap of this status (Burn): nothing limits its stacks. */
+export function ElementStatusUncapped(ctx, id) {
+  const rules = ElementRulesOf(ctx);
+  return !!rules && id === 'burn' && !Number.isFinite(rules.burn.cap);
 }

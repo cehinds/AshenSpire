@@ -31,7 +31,7 @@ function present(ctx, id, definition, holder) {
     }
   }
   // Element identity (W25): Burn's tooltip states the reworked rule when the fight plays under the element rules.
-  const element = resolved && typeof resolved === 'object' ? ElementStatusTooltip(ctx, id) : null;
+  const element = resolved && typeof resolved === 'object' && resolved.tooltip === LEGACY_TOOLTIPS[id] ? ElementStatusTooltip(ctx, id) : null; // only the shipped wording, never a custom tooltip
   if (element) resolved = { ...resolved, tooltip: element, description: element };
   return presentationWording(ctx, id, resolved, fixCoreEnabled(ctx), resolved !== definition);
 }
