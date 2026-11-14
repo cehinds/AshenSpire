@@ -1,5 +1,6 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem, upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
+import { ItemStatBonus } from './itemPicks.js';
 const ATTRIBUTES = ['strength','dexterity','constitution','wisdom','intelligence'];
 const STATS = ['hp','mp','sp','ar','dr','poise','ward','evasion','precision',...ATTRIBUTES];
 // A single resolved-value path. Points are never also granted as raw bonuses.
@@ -17,8 +18,18 @@ export function gameProfileEquipmentReceipt(registries, run) {
     const sourceId = armor ? `armor/${run.class}/${id}` : `armament/${id}`;
     const tier = run.itemUpgradeLevels?.[sourceId] || 0;
     const resolved = resolveGearItem(item, settings, {rank: (item.rank ?? 1) + upgradeTierBonus(gameModule(run,'equipment'), tier)});
-    for (const key of STATS) totals[key] += resolved.values[key] || 0;
-    sources.push({ name:item.name.replace(/_/g,' '), kind:'equipment', sourceId, slot, itemId:item.id, ...resolved.values, resolved });
+    // The Blacksmith's picks and the item's properties add stat points on top (W25 step 4).
+    const values = { ...resolved.values };
+    for (const [key, n] of Object.entries(ItemStatBonus(run, sourceId))) values[key] = (values[key] || 0) + n;
+    for (const key of STATS) totals[key] += values[key] || 0;
+    sources.push({ name:item.name.replace(/_/g,' '), kind:'equipment', sourceId, slot, itemId:item.id, ...values, resolved });
+  }
+  // A held relic's properties are stat points too (a relic has no gear row, so nothing else adds them).
+  for (const id of run.relics || []) {
+    const bonus = ItemStatBonus(run, `relic/${id}`);
+    if (!Object.keys(bonus).length) continue;
+    for (const key of STATS) totals[key] += bonus[key] || 0;
+    sources.push({ name:id, kind:'relic', sourceId:`relic/${id}`, itemId:id, ...bonus });
   }
   return { totals, sources };
 }

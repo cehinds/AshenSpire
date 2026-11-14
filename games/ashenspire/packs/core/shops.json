@@ -82,6 +82,7 @@
       "rankUp": 120
     },
     "rankUpStones": 1,
+    "upgradeRankChance": 20,
     "armamentStock": 6,
     "tierWeights": {
       "0": 20,

@@ -2034,10 +2034,18 @@ body.reduce-motion .target-hud-detail { transition: none; }
   text-align: left; overflow: hidden;
 }
 .card-option .co-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The Blacksmith's option tiles (smithOptionsModal.js) say a whole sentence, so the name wraps. */
+.card-option.smith-option .co-name { white-space: normal; overflow: visible; text-overflow: clip; }
 .card-option .co-effect { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.2em; font-size: 0.92em; }
 .card-option .co-costs { display: flex; gap: 0.3rem; overflow: hidden; margin-top: auto; }
 .card-option .co-chip { flex: 0 0 auto; padding: 0 0.4rem; border: 1px solid var(--line-soft); border-radius: 999px; font-size: 0.75em; white-space: nowrap; }
 .card-option .co-order { position: absolute; top: 0.3rem; right: 0.4rem; font-weight: 700; color: var(--gold); }
+.option-row-detail { grid-column: 1 / -1; box-sizing: border-box; margin: 0 0 4px; padding: 0.5rem 0.6rem; border: 1px solid var(--line); border-top: 0; background: var(--panel); }
+.modal.option-choice.card-upgrade-modal .option-row-list, .modal.option-choice.mount-service-modal .option-row-list, .mount-service-list, .card-upgrade-list { flex: 0 0 auto; height: auto; max-height: none; overflow: visible; }
+.mount-service-modal .mount-service-outcome { flex-wrap: wrap; gap: 0.6rem; }
+.mount-service-modal .smith-card-sprite { flex: 0 0 auto; min-width: max-content; }
+.card-upgrade-modal .smith-header-stones { margin: 0 0 0.5rem; }
+.option-row .co-order { flex: 0 0 auto; font-weight: 700; color: var(--gold); }
 .card-option .val.up { color: var(--green); font-weight: 700; }
 .card-option .val.down { color: var(--ember); font-weight: 700; }
 .card-option[aria-pressed='true'] { outline: var(--focus-ring); }
@@ -2086,6 +2094,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
   box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
 }
+.option-row.as-railitem:disabled { opacity: 0.55; cursor: not-allowed; }
 /* Reaction choice legibility pass (owner, 2026-11-02: "the text on the modal is hard to read"). Scoped to
    `.reaction-choice` so the discard and card pickers sharing optionRowList keep their rows. The layout is
    unchanged; only the text and the surface behind it move:
@@ -2094,37 +2103,37 @@ body.reduce-motion .target-hud-detail { transition: none; }
      zoom shrinks a phone's px, so the value is max(Npx, N / --ui-zoom) and never reads below N either way;
    - nothing is clipped: names, titles and the incoming line wrap instead of ending in an ellipsis;
    - rows are separated by a gap and a border, and the selected row takes the green outline. */
-.modal.reaction-choice {
+.modal:is(.reaction-choice, .option-choice) {
   --rc-body: max(15px, calc(15px / var(--ui-zoom, 1)));
   --rc-name: max(16px, calc(16px / var(--ui-zoom, 1)));
   background-image: none; background-color: var(--bg-raise);
 }
-:root[data-layout='narrow'] .modal.reaction-choice { --rc-body: max(14px, calc(14px / var(--ui-zoom, 1))); }
-.modal.reaction-choice > :is(.modal-head, .modal-foot) { background-color: var(--bg-raise); }
-.modal.reaction-choice .modal-eyebrow { font-size: var(--rc-body); line-height: 1.3; letter-spacing: 0.12em; color: var(--parchment); white-space: normal; }
-.modal.reaction-choice .modal-head-id h2 { font-size: max(20px, calc(20px / var(--ui-zoom, 1))); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.modal.reaction-choice .modal-body { padding: var(--modal-inset); }
-.modal.reaction-choice .modal-body { font-size: var(--rc-body); line-height: 1.45; color: var(--parchment); }
-.modal.reaction-choice .modal-body p { font-size: var(--rc-body); line-height: 1.45; margin-block: 0 0.6em; }
-.modal.reaction-choice .reaction-incoming-damage { font-weight: 600; overflow-wrap: anywhere; }
-.modal.reaction-choice .reaction-stack li { font-size: var(--rc-body); }
-.modal.reaction-choice .option-row-list { gap: 8px; max-height: min(62vh, 34rem); padding-bottom: 2px; }
-.modal.reaction-choice .option-row.as-railitem { min-height: max(48px, calc(48px / var(--ui-zoom, 1))); padding: 0.5rem 0.75rem; border: 1px solid var(--line); background: var(--panel); font-size: var(--rc-body); line-height: 1.35; }
-.modal.reaction-choice .option-row-name { font-size: var(--rc-name); line-height: 1.25; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.modal.reaction-choice .option-row-status { font-size: var(--rc-body); gap: 0.25rem 0.6rem; }
-.modal.reaction-choice .option-row .co-chip { font-size: var(--rc-name); line-height: 1.3; padding: 0 0.5rem; color: var(--gold); }
-.modal.reaction-choice .option-row-chip { font-size: var(--rc-body); line-height: 1.3; color: var(--parchment); white-space: normal; }
-.modal.reaction-choice .option-row .co-arrow { font-size: 0.8em; }
-.modal.reaction-choice .option-row.as-railitem .option-row-status,
-.modal.reaction-choice .option-row.as-railitem .option-row-status span:not(.val):not(.co-chip) { color: var(--parchment); }
-:root .modal.reaction-choice .option-row.as-railitem[aria-pressed='true']:not(:disabled) {
+:root[data-layout='narrow'] .modal:is(.reaction-choice, .option-choice) { --rc-body: max(14px, calc(14px / var(--ui-zoom, 1))); }
+.modal:is(.reaction-choice, .option-choice) > :is(.modal-head, .modal-foot) { background-color: var(--bg-raise); }
+.modal:is(.reaction-choice, .option-choice) .modal-eyebrow { font-size: var(--rc-body); line-height: 1.3; letter-spacing: 0.12em; color: var(--parchment); white-space: normal; }
+.modal:is(.reaction-choice, .option-choice) .modal-head-id h2 { font-size: max(20px, calc(20px / var(--ui-zoom, 1))); white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.modal:is(.reaction-choice, .option-choice) .modal-body { padding: var(--modal-inset); }
+.modal:is(.reaction-choice, .option-choice) .modal-body { font-size: var(--rc-body); line-height: 1.45; color: var(--parchment); }
+.modal:is(.reaction-choice, .option-choice) .modal-body p { font-size: var(--rc-body); line-height: 1.45; margin-block: 0 0.6em; }
+.modal:is(.reaction-choice, .option-choice) .reaction-incoming-damage { font-weight: 600; overflow-wrap: anywhere; }
+.modal:is(.reaction-choice, .option-choice) .reaction-stack li { font-size: var(--rc-body); }
+.modal:is(.reaction-choice, .option-choice) .option-row-list { gap: 8px; max-height: min(62vh, 34rem); padding-bottom: 2px; }
+.modal:is(.reaction-choice, .option-choice) .option-row.as-railitem { min-height: max(48px, calc(48px / var(--ui-zoom, 1))); padding: 0.5rem 0.75rem; border: 1px solid var(--line); background: var(--panel); font-size: var(--rc-body); line-height: 1.35; }
+.modal:is(.reaction-choice, .option-choice) .option-row-name { font-size: var(--rc-name); line-height: 1.25; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+.modal:is(.reaction-choice, .option-choice) .option-row-status { font-size: var(--rc-body); gap: 0.25rem 0.6rem; }
+.modal:is(.reaction-choice, .option-choice) .option-row .co-chip { font-size: var(--rc-name); line-height: 1.3; padding: 0 0.5rem; color: var(--gold); }
+.modal:is(.reaction-choice, .option-choice) .option-row-chip { font-size: var(--rc-body); line-height: 1.3; color: var(--parchment); white-space: normal; }
+.modal:is(.reaction-choice, .option-choice) .option-row .co-arrow { font-size: 0.8em; }
+.modal:is(.reaction-choice, .option-choice) .option-row.as-railitem .option-row-status,
+.modal:is(.reaction-choice, .option-choice) .option-row.as-railitem .option-row-status span:not(.val):not(.co-chip) { color: var(--parchment); }
+:root .modal:is(.reaction-choice, .option-choice) .option-row.as-railitem[aria-pressed='true']:not(:disabled) {
   outline: 3px solid var(--green); outline-offset: -3px; border-color: var(--green);
   background: color-mix(in srgb, var(--green) 14%, var(--panel)); color: var(--parchment);
   box-shadow: inset 0 0 0 1px var(--green);
 }
-.modal.reaction-choice .modal-foot button { font-size: var(--rc-body); white-space: normal; overflow: visible; text-overflow: clip; }
+.modal:is(.reaction-choice, .option-choice) .modal-foot button { font-size: var(--rc-body); white-space: normal; overflow: visible; text-overflow: clip; }
 @media (hover: none) {
-  :root .modal.reaction-choice .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { background: var(--panel); border-color: var(--line); }
+  :root .modal:is(.reaction-choice, .option-choice) .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { background: var(--panel); border-color: var(--line); }
 }
 /* On touch there is no pointer to hover with: an unselected row never keeps a hover look. */
 @media (hover: none) {

@@ -35,7 +35,7 @@ test('card choice titles contain the readable option name without its icon ID', 
   const shell = openCardChoiceModal({ cardName: 'Test card', plan: { kind: 'stance', options: [
     { id: 'a', icon: 'flask-health', name: 'Defensive stance', tooltip: 'Guard the next blow.' },
   ] }, onChoose() {} });
-  assert.equal(document.querySelector('.co-name').textContent, 'Defensive stance');
+  assert.equal(document.querySelector('.option-row-name').textContent, 'Defensive stance');
   shell.close();
 }));
 
