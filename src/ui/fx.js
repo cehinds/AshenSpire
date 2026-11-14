@@ -35,7 +35,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
-import { showStanceFlash } from './stanceFlash.js';
+import { showStanceFlash, playerStanceOverlay } from './stanceFlash.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
 import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
@@ -1274,15 +1274,20 @@ export function playTimeline(events, ctx, done) {
     },
     // The card leaves the hand and shows as played: its own timeline event, first in the beat (owner 2026-11-13).
     onCardPlayed: beat => {
+      if (beat.actorId === 'player') playerStanceOverlay.attach();
       const played = beat.events.find(e => e.type === 'cardPlayed');
       if (played && ctx.onStanceLead) visualSafe(() => ctx.onStanceLead(beat, played, { cardOnly: true }));
     },
     // The stance event only exists on a beat that changes the actor's stance: a brief sigil over the actor, then the icon updates.
+    // The swing clip is over: the player's selection sigil fades out.
+    onSwingEnd: beat => { if (beat.actorId === 'player') playerStanceOverlay.release(); },
     stanceChanges: beat => !!stanceChangeEvent(beat),
     onAction: beat => {
       const entered = stanceChangeEvent(beat);
       if (!entered) return;
-      if (timing.scale !== 0) visualSafe(() => showStanceFlash(ctx.anchorFor(beat.actorId), entered, { reduced: reducedMotionRequested() }));
+      // The player's sigil has been up since the card was selected; it only updates the small icon now. An enemy flashes briefly.
+      const lingering = beat.actorId === 'player' && playerStanceOverlay.active;
+      if (timing.scale !== 0 && !lingering) visualSafe(() => showStanceFlash(ctx.anchorFor(beat.actorId), entered, { reduced: reducedMotionRequested() }));
       if (ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
     // The reservation covers the slower of the player's and the enemy's animation settings.
@@ -1391,8 +1396,9 @@ export function playTimeline(events, ctx, done) {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
       ctx.onResolution?.(beat);
     },
-    onWatchdog: () => { dbg.watchdog = (dbg.watchdog || 0) + 1; },
+    onWatchdog: () => { playerStanceOverlay.clear(); dbg.watchdog = (dbg.watchdog || 0) + 1; },
     onFlush: () => {
+      playerStanceOverlay.clear();
       const current = isCurrent();
       if (current) for (const beat of beats) cue(beat, false);
       const mount = ctx.combatEl ?? globalThis.document;
@@ -1401,6 +1407,7 @@ export function playTimeline(events, ctx, done) {
       if (current) ctx.onFlush?.();
     },
     onDone: () => {
+      playerStanceOverlay.release();
       removeEventListener('pointerdown', skip, { capture: true });
       removeEventListener('pointerup', release, { capture: true });
       removeEventListener('pointercancel', release, { capture: true });

@@ -356,3 +356,17 @@ test('the stance event is skipped on a beat that repeats the stance and fires on
   assert.equal(swing(same.trace) - word(same.trace), 0, 'the swing follows the action word directly');
   assert.equal(swing(change.trace) - word(change.trace), 100);
 });
+
+test('onSwingEnd fires when the swing clip completes, not at contact', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const c = clock(), marks = {};
+  runActionTimeline([{ actorId: 'p', kind: 'attack', events: [] }], {
+    onStage: stage => { if (stage === 'contact') marks.contact = c.now; },
+    onSprite: () => ({ impactMs: 275, totalMs: 550, cancel() {} }),
+    maxSpriteMs: () => 550,
+    onSwingEnd: () => { marks.end = c.now; },
+  }, actionPacing(), timerOptions(c));
+  c.advance(10000); setCombatPacing();
+  assert.equal(marks.contact, 475, 'contact on the impact frame (swing at 200)');
+  assert.equal(marks.end, 750, 'the clip ends 550 ms after the swing started');
+});

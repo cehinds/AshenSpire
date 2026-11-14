@@ -132,6 +132,8 @@ export function runActionTimeline(beats, hooks, timingIn, {
       // Authored handles are the final timing authority. A longer real clip may extend the original deadline only by
       // the part not already reserved by maxSpriteMs.
       creditWatchdog(Math.max(0, total - reservedSpriteMs));
+      // The actor's animation ends here (not at contact): the stance sigil that stayed up since the card was selected fades out.
+      enqueue(spriteStart + total, () => safe(() => hooks.onSwingEnd?.(beat)));
       arm(schedule);
       telegraphCheck();
     };

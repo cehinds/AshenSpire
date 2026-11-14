@@ -1,7 +1,7 @@
 // The stance-change flash: a brief sigil over the actor, data-driven, skipped under Reduced motion, never blocks input.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stanceFlashPlan, stanceFlashIcon, showStanceFlash } from '../src/ui/stanceFlash.js';
+import { stanceFlashPlan, stanceFlashIcon, showStanceFlash, createStanceOverlay } from '../src/ui/stanceFlash.js';
 import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
 import { withKitDom } from './helpers/dom.mjs';
 
@@ -42,5 +42,85 @@ test('Reduced motion skips the overlay', () => {
     const sprite = dom.document.createElement('div');
     assert.equal(showStanceFlash(sprite, { maneuver: 'smash' }, { reduced: true }), null);
     assert.equal(sprite.children.length, 0);
+  });
+});
+
+// ---- the player's overlay: up while a stance-changing card is selected, lingering through the play (owner, 2026-11-13) ----
+function overlayRig(t, reduced = false) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const rig = {};
+  withKitDom(dom => {
+    rig.sprite = dom.document.createElement('div');
+    rig.overlay = createStanceOverlay({ reduced: () => reduced });
+    rig.overlay.bind(() => rig.sprite);
+  });
+  return rig;
+}
+const live = rig => rig.sprite.querySelector('.stance-flash');
+test('selecting a stance-changing card shows the sigil; a same-stance card shows none', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select(null);
+    assert.equal(live(rig), null, 'a same-stance selection passes null');
+    rig.overlay.select('smash');
+    const el = live(rig);
+    assert.ok(el);
+    assert.equal(el.dataset.stance, 'smash');
+    assert.equal(el.style.pointerEvents, 'none');
+    t.mock.timers.tick(1);
+    assert.equal(el.style.opacity, '0.6');
+  });
+});
+test('it switches sigil between stance-changing cards and fades out when the selection ends', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    const el = live(rig);
+    rig.overlay.select('counter');
+    assert.equal(live(rig), el, 'the same element');
+    assert.equal(el.dataset.stance, 'counter');
+    rig.overlay.select(null);
+    assert.equal(el.style.opacity, '0', 'fading out');
+    assert.equal(rig.overlay.active, false);
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null, 'removed after fadeOutMs');
+  });
+});
+test('it persists into the play and fades out when the swing ends, whatever the selection does meanwhile', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    rig.overlay.hold();
+    rig.overlay.select(null);            // the play clears the selection
+    rig.overlay.select('counter');       // and another card selected meanwhile does not touch it
+    const el = live(rig);
+    assert.ok(el && el.dataset.stance === 'smash');
+    t.mock.timers.tick(2000);            // cardPlayed, cost, action word, swing...
+    assert.equal(live(rig), el);
+    assert.equal(el.style.opacity, '0.6');
+    rig.overlay.release();               // the swing clip completed
+    assert.equal(el.style.opacity, '0');
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null);
+  });
+});
+test('a refused or cancelled play removes it at once', t => {
+  const rig = overlayRig(t);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    rig.overlay.clear();
+    assert.equal(live(rig), null);
+    rig.overlay.select('smash'); rig.overlay.hold(); rig.overlay.clear();
+    assert.equal(live(rig), null);
+    rig.overlay.select('smash');
+    assert.ok(live(rig), 'a new selection after the refusal works again');
+  });
+});
+test('Reduced motion and Instant draw no overlay at all', t => {
+  const rig = overlayRig(t, true);
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    assert.equal(live(rig), null);
+    assert.equal(rig.sprite.children.length, 0);
   });
 });

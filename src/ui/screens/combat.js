@@ -100,6 +100,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
+import { playerStanceOverlay } from '../stanceFlash.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
@@ -984,6 +985,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!leading) return;
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? kindForCard(def) : null;
+    // The stance sigil over the figure while a card of another stance is selected or armed (owner, 2026-11-13); it lingers
+    // through the play (held in commitPlay) and fx.js fades it when the swing ends.
+    playerStanceOverlay.bind(() => player?.querySelector('.sprite'));
+    playerStanceOverlay.select(armed?.maneuver && armed.maneuver !== (held ?? RESTING_PLAYER_ACTION).maneuver ? armed.maneuver : null);
     const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
     const maneuver = profile.maneuver || 'prepare';
     const previous = player.querySelector('.player-action-intent');
@@ -3692,6 +3697,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // `tip` (plain player words) also shows on the card when it is given.
   function refusePlay(instanceId, line, tip) {
     logIgnored(`playCard ${instanceId}`, line);
+    playerStanceOverlay.clear();
     if (!tip) return;
     const cardEl = combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`);
     if (cardEl) showTooltipFor(cardEl, '<p>' + esc(tip) + '</p>');
@@ -3770,9 +3776,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
       disp = null;
+      playerStanceOverlay.clear();
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
+    playerStanceOverlay.hold(); // the sigil stays up until the swing ends
     sfx.play('cardPlay');
     haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
     // A card the player picked while earlier plays resolved keeps its selection; only the played card's own aim clears.
