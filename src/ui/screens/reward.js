@@ -17,7 +17,7 @@
 // `saves` and `rng` are optional: stubs get a deterministic pick, never Math.random.
 
 import { uiIconText } from '../../content/uiIcons.js';
-import { attributePointGains, largestAttributeGain, attributeGainSummary } from '../../model/attributePointPreview.js';
+import { StatAllocationSection } from '../components/statAllocation.js';
 import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
 import { renderCard } from '../components/card.js';
@@ -28,7 +28,6 @@ import { isEngaged, focusFirst } from '../input.js';
 import { rewardPlan, rewardClaimStatus, rewardNotes, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations, scopeXpProgress } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
-import { levelUpPlan } from '../../model/levelup.js';
 import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { skillTracks, rankUpCandidates, raiseCardRank } from '../../model/skills.js';
@@ -164,38 +163,8 @@ export function mountRewards(app, {
   }
 
   function statAllocationSection() {
-    if (!receiptOnly || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
-    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': t('reward.level.assignStats.aria') });
-    const draw = () => {
-      const points = run.level?.unspentPoints || 0;
-      const attrs = levelUpPlan(registries, run).attributes;
-      // The largest thing one more point buys, from the live formulas (model/attributePointPreview.js).
-      const gainChip = (attrId) => {
-        const gains = attributePointGains(registries, run, attrId, { settings });
-        const top = largestAttributeGain(registries, run, attrId, { settings });
-        return top ? el('span', { class: 'reward-stat-gain', text: top.text, title: attributeGainSummary(gains) }) : null;
-      };
-      host.replaceChildren(
-        el('h3', { text: `Assign stats · ${points} point${points === 1 ? '' : 's'} available` }),
-        ...attrs.map((attr) => {
-          const id = attr.id;
-          const add = button({ label: '+', className: 'reward-stat-add', disabled: points < 1, attrs: { 'aria-label': `Increase ${attr.label}` } });
-          add.addEventListener('click', () => {
-            if (!run.level?.unspentPoints) return;
-            onAllocateStat(id);
-            persistProgress();
-            draw();
-          });
-          return el('div', { class: 'reward-stat-row' }, [
-            el('span', { class: 'reward-stat-name' }, [attr.label, gainChip(attr.id)]),
-            el('span', { text: String(run.attributes?.[id] ?? 0) }),
-            add,
-          ]);
-        }),
-      );
-    };
-    draw();
-    return host;
+    if (!receiptOnly) return null;
+    return StatAllocationSection(registries, run, { settings, onAllocateStat, onChange: persistProgress });
   }
 
   async function playXpAnimation(host) {
