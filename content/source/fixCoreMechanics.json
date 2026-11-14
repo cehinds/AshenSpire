@@ -2,7 +2,8 @@
   "version": 1,
   "enabled": true,
   "ward": {
-    "enabled": false
+    "enabled": false,
+    "poisePerStack": 5
   },
   "defaultTags": [
     "defense:wardProtection",

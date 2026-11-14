@@ -105,9 +105,12 @@ export function digest(combat) {
 // 2026-11-14 (#2754): damageDealt events gained `hpRemoved` (the HP a hit actually took, for the no-overkill floater). With that one field
 // removed from the three emit sites in src/engine/actions.js all four digests and the cleanup baseline reproduce their previous values exactly,
 // so only the event payload moved; HP, turns, RNG counters and event counts are unchanged.
+// Re-pinned 2026-11-14 for Ward as a Poise effect (W25-B): the fight's rules snapshot gains ward.poisePerStack 5, so only the state hashes move. Logs, event
+// counts, turns and RNG are identical, and removing that one field from the state text reproduces all four previous state hashes exactly
+// (the legacy fights' were bfab34c0ca8fef2d / aec32fc07e375e4d, the shipped fights' bea7224313f1fa40 / bde8c04ced638abb).
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: 'bfab34c0ca8fef2d', events: 218, turn: 6 }],
-  [[4242, 'reaver'], { log: '75301c4daabf3238', state: 'aec32fc07e375e4d', events: 215, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: '1050e65e93b6c50b', events: 218, turn: 6 }],
+  [[4242, 'reaver'], { log: '75301c4daabf3238', state: '74dc222af3960b7b', events: 215, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
@@ -116,8 +119,8 @@ for (const [setup, expected] of LEGACY_PINNED) {
   });
 }
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '68045e4bda0ffd02', state: 'bea7224313f1fa40', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: '714e5d0f2a83d7e3', state: 'bde8c04ced638abb', events: 193, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '68045e4bda0ffd02', state: '0caed245ca17d0af', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: '714e5d0f2a83d7e3', state: '2ca971ecbc8a3f1e', events: 193, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

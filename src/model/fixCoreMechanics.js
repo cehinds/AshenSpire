@@ -76,7 +76,8 @@ const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProf
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
   const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
-  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack'].includes(key))
+    || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0)))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
@@ -188,6 +189,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
   else if (id === 'staggered') row.tooltip = row.description = facts[id];
+  else if (id === 'ward' && rules.ward?.poisePerStack > 0) row.tooltip = row.description = `Each stack gives +${rules.ward.poisePerStack} maximum and current Poise. While Ward is above 0, all damage goes to Poise first, then Block, then HP. Lose ${rules.statuses.decayAmount} stack at the start of your turn, and its +${rules.ward.poisePerStack} maximum Poise with it.`;
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }
