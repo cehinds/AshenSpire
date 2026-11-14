@@ -36,7 +36,7 @@ import { createRegistries } from '../src/model/registries.js';
 import * as Profile from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
-import { dispatch, previewCard } from '../src/engine/combat.js';
+import { dispatch, previewCard, cardChoicePlan } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { stampCombatPlaysEver, foldCombatPlaysEver } from '../src/model/playsEver.js';
 import { affordableCards, refusalsFor, botControlAction, botCardTargetId } from './simbot.mjs';
@@ -208,7 +208,18 @@ function fight(ctx, run, rng, encounterId, policy) {
     const refused = refusalsFor(combat);
     const pick = pickCard(registries, combat, refused, policy);
     if (!pick) { act({ type: 'endTurn' }); continue; }
-    try { act({ type: 'playCard', cardInstanceId: pick.card.instanceId, targetId: botCardTargetId(registries, combat, pick.card, pick.target.id) }); } catch (e) { if (!isRefusal(e)) throw e; refused.add(pick.card.instanceId); }
+    // The door's own target rule decides: a card whose resolved face takes no enemy (a variant swapped in by what was paid)
+    // is retried with no target; a card the door still refuses is set aside for the turn.
+    const choice = cardChoicePlan(combat, pick.card.instanceId)?.options[0]?.id;
+    const tries = [botCardTargetId(registries, combat, pick.card, pick.target.id), undefined];
+    let played = false;
+    for (let t = 0; t < tries.length && !played; t++) {
+      if (t > 0 && tries[t] === tries[0]) break;
+      try { act({ type: 'playCard', cardInstanceId: pick.card.instanceId, targetId: tries[t], choice }); played = true; } catch (e) {
+        if (!isRefusal(e) && !/^Invalid \w+ target '/.test(String(e && e.message))) throw e;
+      }
+    }
+    if (!played) refused.add(pick.card.instanceId);
   }
   let healed = 0; let lost = 0;
   for (const ev of combat.eventLog) {
