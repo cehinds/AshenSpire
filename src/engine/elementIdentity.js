@@ -138,7 +138,7 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
   const rules = ElementRulesOf(ctx);
   if (!rules || !receipt || receipt.evaded) return;
   const element = ElementOfHit(carrier);
-  ctx.elementHit = { sourceId: source?.id || null, targetId: target.id, element, amount: receipt.amount, hpLoss: receipt.hpLoss, chain: !!carrier?.elementChain };
+  ctx.elementHit = { sourceId: source?.id || null, targetId: target.id, element, amount: receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount, hpLoss: receipt.hpLoss, chain: !!carrier?.elementChain };
   if (stacksOf(target, 'brittle') > 0) removeStatus(ctx, target, 'brittle', { reason: 'consumed' });
   if (!element) return;
   if (receipt.element?.heal > 0) applyHeal(ctx, target, receipt.element.heal);
@@ -275,17 +275,19 @@ export function ElementTurnStart(ctx, entity) {
   if (shock > 0 && rolls(ctx, shock * rules.shock.actionLossChancePerStack)) loseAction(ctx, entity, 'shock', rules.shock.playerStaminaLoss);
 }
 
-/** At the end of an owner's turn: Necrotic build-up at or above current HP kills it (a boss takes the build-up as damage instead). */
+/** At the end of an owner's turn: Necrotic build-up at or above current HP kills it (a boss takes the build-up as damage instead). Knockback ends. */
 export function ElementTurnEnd(ctx, entity) {
   const rules = ElementRulesOf(ctx);
   if (!rules || !entity?.alive) return;
   if (entity.statuses?.knockback) removeStatus(ctx, entity, 'knockback', { reason: 'consumed' });
   const buildup = stacksOf(entity, 'necroticBuildup');
-  if (!(buildup > 0) || buildup < entity.hp) return;
+  if (!(buildup > 0)) return;
+  // A boss cannot be struck dead by build-up: it takes the build-up as damage at the end of each of its turns and the build-up resets (owner wording: "bosses
+  // instead take damage equal to the build-up at the end of their turn and the build-up resets"). Anything else dies once build-up reaches its current HP.
   if (ElementHasTag(ctx, entity, rules.necrotic.bossTag)) {
     removeStatus(ctx, entity, 'necroticBuildup', { reason: 'consumed' });
     applyLoseHp(ctx, entity, buildup, 'necrotic build-up');
-  } else {
+  } else if (buildup >= entity.hp) {
     ctx.emit?.('elementNecroticDeath', { targetId: entity.id, amount: buildup });
     applyLoseHp(ctx, entity, entity.hp, 'necrotic build-up');
   }
