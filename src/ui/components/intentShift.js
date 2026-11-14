@@ -8,7 +8,7 @@ import { ANIM_SPEEDS, getAnimSpeed } from '../animationPace.js';
 export const INTENT_SHIFT_MS = 220;
 
 /** The shift's length: 0 (skip) under reduced motion or the Instant pace. */
-export function intentShiftMs() {
+export function IntentShiftMs() {
   if (reducedMotionRequested() || !ANIM_SPEEDS[getAnimSpeed()]) return 0;
   return INTENT_SHIFT_MS;
 }
@@ -19,11 +19,11 @@ const rectOf = node => {
 };
 
 /**
- * snapshotIntentShift(intentNode) → what the old node looked like, taken BEFORE it is replaced: the rect and a clone of
+ * SnapshotIntentShift(intentNode) → what the old node looked like, taken BEFORE it is replaced: the rect and a clone of
  * its head, and the rect of each follow-up glyph in its compact row. The old node is detached by the rebuild, so
  * its rects cannot be read afterwards.
  */
-export function snapshotIntentShift(node) {
+export function SnapshotIntentShift(node) {
   const head = node?.querySelector?.('.intent-compact .intent-actions');
   if (!head) return null;
   const rows = [...node.querySelectorAll('.intent-compact .intent-followup')];
@@ -40,11 +40,11 @@ const play = (node, keyframes, duration, extra = {}) => {
 };
 
 /**
- * animateIntentShift(before, newNode, { duration }) → true when it started. `before` is snapshotIntentShift of the old
+ * AnimateIntentShift(before, newNode, { duration }) → true when it started. `before` is SnapshotIntentShift of the old
  * node, `newNode` the live node now showing the promoted head. Old follow-up i becomes the head (i = 0) or the new
  * follow-up i - 1; each moves from its old rect to its new one. Anything that cannot be measured is skipped.
  */
-export function animateIntentShift(before, newNode, { duration = intentShiftMs() } = {}) {
+export function AnimateIntentShift(before, newNode, { duration = IntentShiftMs() } = {}) {
   if (!before || !newNode || !(duration > 0) || typeof newNode.animate !== 'function') return false;
   const compact = newNode.querySelector('.intent-compact');
   const head = compact?.querySelector('.intent-actions');

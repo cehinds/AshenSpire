@@ -17,7 +17,7 @@ export function combatIntentPresentation(intent = {}) {
       stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
       damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
-  // A promoted follow-up (IntentFollowUpModel.promoteFollowUp) is the next move shown in the head slot before its
+  // A promoted follow-up (IntentFollowUpModel.PromoteFollowUp) is the next move shown in the head slot before its
   // own event: its icon only if the observer's read of it passed (no value, no stance beyond the icon's), else "?".
   if (intent.promoted) {
     const icon = typeof intent.icon === 'string' && intent.icon ? intent.icon : null;

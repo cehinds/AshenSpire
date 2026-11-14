@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyCombatIntentReceipt, flushDeferredIntentClears } from '../src/ui/models/CombatIntentProjectionModel.js';
-import { createFollowMemo, CreateFollowUpReduction, followUpPlan, promoteFollowUpRow } from '../src/ui/models/IntentFollowUpModel.js';
+import { createFollowMemo, CreateFollowUpReduction, followUpPlan, PromoteFollowUpRow } from '../src/ui/models/IntentFollowUpModel.js';
 import { combatIntentPresentation } from '../src/ui/models/CombatIntentModel.js';
 
 const ID = 'e1';
@@ -27,7 +27,7 @@ function rig(followIds, reads) {
       reduce(events, disp, { [ID]: trace });
       events.forEach((event, i) => applyCombatIntentReceipt(ents, event, disp.intentClears, [...events.slice(i + 1), ...upcoming]));
     },
-    resolve() { return flushDeferredIntentClears(ents, disp.intentClears, id => promoteFollowUpRow({ disp, followMemo: memo, followTrace: { [ID]: trace } }, id)); },
+    resolve() { return flushDeferredIntentClears(ents, disp.intentClears, id => PromoteFollowUpRow({ disp, followMemo: memo, followTrace: { [ID]: trace } }, id)); },
     row: () => (ents[ID].followUps || []).map(s => (s.kind === 'unknown' ? '?' : s.icon)),
     shown: () => combatIntentPresentation(ents[ID].intentPreview),
   };
