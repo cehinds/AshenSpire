@@ -807,7 +807,7 @@ export function barrierPoiseBonus(ctx, entity) {
 /** wardPoiseBonus(ctx, entity) → the +Poise the entity's Ward stacks give (owner, 2026-11-14): `ward.poisePerStack` per stack in the
  * fight's FixCore rules, the same Poise effect Barrier is (no separate Ward pool). A fight whose rules carry no `poisePerStack`
  * (saved before this ruling) gives none. It rides on the Poise `barrierBonus` field with Barrier's, so it is clamped the same way. */
-export function wardPoiseBonus(ctx, entity) {
+function wardPoiseBonus(ctx, entity) {
   const per = ctx?.fixCoreRules?.ward?.poisePerStack;
   return Number.isInteger(per) && per > 0 ? Math.floor((entity?.statuses?.ward?.stacks || 0) * per) : 0;
 }
