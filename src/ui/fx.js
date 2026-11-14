@@ -1235,7 +1235,7 @@ export function playTimeline(events, ctx, done) {
     // The reveal of whose turn it is and the refill of the hand follow the banner without a pause of their own.
     if (beat.kind === 'reveal' || beat.kind === 'draw') return { ...enemyTiming, stepMs: 0 };
     if (beat.actorId && !beat.banner && !beat.events.some(event => OUTCOME.has(event.type)))
-      return { ...enemyTiming, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
+      return { ...enemyTiming, intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
     return enemyTiming;
   };
   // The pacing a beat runs on (its banner shows for the same hold the timeline waits).

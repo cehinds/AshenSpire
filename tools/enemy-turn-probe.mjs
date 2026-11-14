@@ -24,9 +24,9 @@ import { serve } from './serve.mjs';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 // Seeds whose fight opens on a lone enemy, on two enemies, and on an enemy that opens with a non-damaging move.
-const SEEDS = ['5', 'W2B', '23', '12', '6', '21', '8', '7', '1', '16'];
-// Budgets in seconds: { median, max } per group. Today's numbers until the pacing change lands.
-const BUDGET = { one: { median: 6.5, max: 7.5 }, two: { median: 9, max: 11 }, guard: { median: 5, max: 5.5 } };
+const SEEDS = ['5', 'W2B', '23', '12', '8', '20', '24', '6', '1'];
+// Budgets in seconds: { median, max } per group (owner's Wave 2 targets: one action 2.6 s, two actions 4.0 s median and 4.5 s max, a non-damaging action 1.2 s).
+const BUDGET = { one: { median: 2.6, max: 3.5 }, two: { median: 4.0, max: 4.5 }, guard: { median: 1.2, max: 1.6 } };
 const args = process.argv.slice(2);
 const argOf = (flag, fallback) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : fallback; };
 const MIN_TURNS = Number(argOf('--turns', 6));
