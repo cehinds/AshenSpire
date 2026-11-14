@@ -76,7 +76,11 @@ test('the rest site has one name, and it is the one SPEC.md uses', () => {
 });
 
 test('no shipped-profile help says attacks roll to hit or that intents can be hidden or guessed', () => {
-  assert.deepEqual(offenders(/hit chance|roll to hit|rolls to hit|chance to hit/i, interfaceText), []);
+  // Two accessible labels are spoken only in a fight whose snapshot still rolls to hit (saved before the 2026-11-14 change):
+  // the per-target quote prints them beside the HP loss there, and nowhere under the shipped no-roll rules.
+  const legacyRollOnly = new Set(['combat.quote.chanceAria', 'combat.quote.contestAria']);
+  const shipped = interfaceText.filter(row => !legacyRollOnly.has(row.where.replace(/\.(short|full|tip)$/, '')));
+  assert.deepEqual(offenders(/hit chance|roll to hit|rolls to hit|chance to hit/i, shipped), []);
   const tutorial = readFileSync(new URL('../src/ui/components/tutorial.js', import.meta.url), 'utf8');
   assert.doesNotMatch(tutorial, /unknown action|broad clue|exact read/);
   assert.match(tutorial, /Every enemy move is shown/);

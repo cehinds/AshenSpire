@@ -89,7 +89,7 @@ export function armouryPanelModel({
       slots: layout?.slots || 'none',
       subject,
     },
-    accessibility: { role: 'dialog', label: 'Armoury', modal: true },
+    accessibility: { role: 'dialog', label: t('armoury.title'), modal: true },
     children: [
       armouryHeaderModel({ views, activeView: view, viewLabels, title, closeLabel, railLabel }),
       ...regionModels,
