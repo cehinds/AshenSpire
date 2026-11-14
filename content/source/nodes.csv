@@ -456,7 +456,7 @@ camp:spell,camp,Spell,9FC3E8,✧,,,,,Selects physical Guard or magical Ward comb
 maneuver:attack,maneuver,Attack,D7B36B,⚔,,,,,Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy. Stance benefit: attacks deal +20% damage.
 maneuver:defend,maneuver,Defend,9FC3E8,🛡,,,,,Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard. Stance benefit: +50% Block gained and 25% less Poise damage taken.
 maneuver:counter,maneuver,Counter,C8A3D8,↩,,,,,"Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter. Stance benefit: +25% Block gained; a hit that costs you HP returns 25% of that HP to the attacker."
-maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it. Stance benefit: an attack also hits every other enemy in range for 50% of its damage.
+maneuver:sweep,maneuver,Sweep,93C9BC,🌀,,,,,Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it. Stance benefit: none extra; a Sweep already hits every enemy in range for full damage.
 maneuver:ranged,maneuver,Ranged,AAC88A,➶,,,,,"Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
 maneuver:smash,maneuver,Smash,DB9871,⚒,,,,,Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it. Stance benefit: +50% Poise damage.
 school:frost,school,Frost,A6D8EF,❄,,,,,Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.

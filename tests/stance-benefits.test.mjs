@@ -1,5 +1,5 @@
 // Owner, 2026-11-14 (Wave 2.5): each stance has its own natural benefit, on top of the unchanged matchup table, for players AND enemies.
-//   Attack +20% damage | Smash +50% Poise damage | Sweep splash 50% to every other enemy in range | Counter +25% Block, returns 25% of HP lost
+//   Attack +20% damage | Smash +50% Poise damage | Sweep: no extra benefit (owner: sweeps are AoE for full damage; the splash hook stays inert, covered with an explicit fixture) | Counter +25% Block, returns 25% of HP lost
 //   Defend +50% Block, -25% Poise damage taken | Prepared spells +25% damage | neutral: the player draws 1 extra card next turn.
 // Numbers live in fixCoreMechanics.json `stanceBenefits`; a fight created before the ruling has no block and plays today's rules.
 import test from 'node:test';
@@ -11,10 +11,12 @@ import * as Benefits from '../src/engine/stanceBenefits.js';
 const modern = rules => ({ combatExpansionVersion: 2, fixCoreRules: rules, gameProfile: { modules: { effects: { fixCoreVersion: 1 } } } });
 const fight = modern(shipped);
 const old = modern((({ stanceBenefits, ...rest }) => rest)(shipped));
+// Owner, 2026-11-14: a Sweep has no extra benefit in the shipped data; the splash hook is kept inert and is exercised through this explicit fixture.
+const withSplash = rules => ({ ...rules, stanceBenefits: { ...rules.stanceBenefits, sweep: { splashFraction: 0.5 } } });
 const card = maneuver => ({ combatProfile: { camp: maneuver === 'prepared' ? 'spell' : 'physical', maneuver, range: 'melee' } });
 
 test('shipped data holds the approved numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.stanceBenefits, { version: 1, attack: { damageMultiplier: 1.2 }, smash: { poiseDamageBonus: 0.5 }, sweep: { splashFraction: 0.5 },
+  assert.deepEqual(shipped.stanceBenefits, { version: 1, attack: { damageMultiplier: 1.2 }, smash: { poiseDamageBonus: 0.5 },
     counter: { blockMultiplier: 1.25, hpReturnFraction: 0.25 }, defend: { blockMultiplier: 1.5, poiseDamageTakenMultiplier: 0.75 },
     prepared: { damageMultiplier: 1.25 }, neutral: { extraDrawNextTurn: 1 } });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
@@ -191,10 +193,11 @@ import { rangePairKey, actorRangeKey } from '../src/model/combatEngagement.js';
 const singleBundle = { ...contentBundle, cards: contentBundle.cards.map(card => card.id !== 'cleavingBlow' ? card
   : { ...card, effects: card.effects.map(effect => effect.op === 'damage' ? { ...effect, target: 'enemy' } : effect) }) };
 const singleReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(singleBundle, profile)), profile);
-function sweepFight({ benefits = true, enemies = 3 } = {}) {
+function sweepFight({ benefits = true, enemies = 3, splash = true } = {}) {
   const run = createRunState({ registries: singleReg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: singleReg, run, rng: createRng(511), enemyIds: Array.from({ length: enemies }, () => 'wanderingSoldier') });
   if (!benefits) { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; }
+  else if (splash) combat.fixCoreRules = withSplash(combat.fixCoreRules);
   for (const enemy of combat.enemies) Object.assign(enemy, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 0, max: 20 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 0 } });
   Object.assign(combat.player, { hp: 500, maxHp: 500, statuses: {} });
   return combat;
@@ -207,7 +210,7 @@ function playCleave(combat, targetId) {
   dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId, targetId });
 }
 
-test('Sweep: a single-target Sweep also hits every other enemy in range at 50% of its damage', () => {
+test('Sweep splash hook (explicit rule fixture; not shipped): a single-target Sweep also hits every other enemy in range at 50% of its damage', () => {
   const combat = sweepFight();
   playCleave(combat, combat.enemies[0].id);
   const lost = combat.enemies.map(enemy => 500 - enemy.hp);
@@ -226,6 +229,14 @@ test('Sweep: a single-target Sweep also hits every other enemy in range at 50% o
   assert.deepEqual(old.enemies.map(enemy => 500 - enemy.hp).slice(1), [0, 0], 'a fight created before the ruling hits only the aimed enemy');
 });
 
+test('shipped data gives a Sweep no splash: every enemy it already reaches takes the full hit, and the hook is inert', () => {
+  assert.equal(shipped.stanceBenefits.sweep, undefined);
+  assert.equal(Benefits.SweepSplashFraction(fight, { kind: 'player', combatStance: { maneuver: 'sweep' } }, card('sweep')), 0);
+  const combat = sweepFight({ splash: false });
+  playCleave(combat, combat.enemies[0].id);
+  assert.deepEqual(combat.enemies.map(enemy => 500 - enemy.hp).slice(1), [0, 0], 'the shipped rules add no splash to a single-target Sweep card');
+});
+
 test('neutral: a player who ends a turn holding no stance draws one extra card next turn; holding a stance, or under the old rules, draws the usual hand', () => {
   const handAfterNextTurn = ({ benefits = true, stance = null } = {}) => {
     const { combat } = live({ benefits });
@@ -241,7 +252,7 @@ test('neutral: a player who ends a turn holding no stance draws one extra card n
   assert.equal(handAfterNextTurn({ stance: 'attack' }), base, 'a held stance draws the usual hand');
 });
 
-test('Sweep quotes: aimed at one enemy, each other enemy in range quotes its splash as an extra line, and it is the HP the play takes', () => {
+test('Sweep splash hook (explicit rule fixture): quotes: aimed at one enemy, each other enemy in range quotes its splash as an extra line, and it is the HP the play takes', () => {
   const combat = sweepFight();
   const ref = { instanceId: 'sweep-quote', cardId: 'cleavingBlow', upgraded: false };
   combat.piles.hand.push(ref);
@@ -264,7 +275,7 @@ import { StanceBenefitTip } from '../src/ui/models/StanceBenefitModel.js';
 import { readFileSync } from 'node:fs';
 
 test('the stance tooltip and the stance help state each benefit in the same words as the numbers', () => {
-  const expected = { attack: /\+20% damage/, smash: /\+50% Poise damage/, sweep: /50% of its damage/, counter: /\+25% Block.*25% of that HP/, defend: /\+50% Block.*25% less Poise/, casting: /\+25% damage/ };
+  const expected = { attack: /\+20% damage/, smash: /\+50% Poise damage/, sweep: /No extra benefit.*full damage/, counter: /\+25% Block.*25% of that HP/, defend: /\+50% Block.*25% less Poise/, casting: /\+25% damage/ };
   for (const [maneuver, pattern] of Object.entries(expected)) assert.match(StanceBenefitTip(maneuver).body, pattern, maneuver);
   assert.match(StanceBenefitTip('prepare').body, /draw 1 extra card/, 'the resting glyph names the no-stance draw');
   const nodes = readFileSync(new URL('../content/source/nodes.csv', import.meta.url), 'utf8');

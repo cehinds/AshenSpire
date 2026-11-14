@@ -30,6 +30,7 @@
 // The batch-1 CI fixes (Broken plan forecast, otherEnemy target, boost clearing, Ward refill guard) move the hash again; e6c9b9... joins the previous set.
 // the batch-2 merge of w25-modals (blacksmith/option modals, item properties) moves the runtime hash; earlier batch-1 668f10... is kept.
 // the batch-2 merge of w25-stances (stance natural benefits, stanceBenefits rules) moves the runtime hash; w25-stances' own 211930... and the earlier f2b79e... are kept.
+// Sweep has no extra benefit (owner: sweeps are AoE for full damage): the sweep row leaves stanceBenefits and the hash moves; the batch-2 stances merge hash 28288b... is kept.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -62,8 +63,10 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:668f10ab6f6139504fbe7e63a661d203bc487eebaadfea604d4deab63ff7364e',
   'sha256:f2b79eabc865dd5e317c63a86bbff25afe81675a7fc2f2c491a4d4b5f24766b5',
   'sha256:211930bddff697aa6894291370d65bfa6ebc2a9e5c673a840ce68f37c4d4b891',
+  'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
+  'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:28288b331e757629f7240e110a45698817150d9c1001c8e43fcfe4a723f311c0';
+const FIXED_EVASION_RUNTIME = 'sha256:093f5541161859e8ed91a74baa580c44f24058e377cd0b930d33c9da7aa6b372';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
