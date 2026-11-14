@@ -15,11 +15,11 @@ import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { validateContent } from '../src/model/validate.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
-import { uncappedRun } from './helpers/uncapped-range.mjs';
+import { uncappedRun, withLegacyRangedBow } from './helpers/uncapped-range.mjs';
 
 const profile = resolveGameProfile('core');
-const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const imported = importLegacyContent(contentBundle);
+const registries = withLegacyRangedBow(bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile));
+const imported = importLegacyContent({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments: contentBundle.equipment.armaments.map(piece => piece.id === 'shortbow' ? { ...piece, range: 'ranged' } : piece) } }); // the legacy Ranged bow
 const importedWeapon = id => imported.entities.find(row => row.kind === 'EQUIPMENT' && row.explicitOverrides.legacyId === id).explicitOverrides;
 const bandOf = range => ['melee', 'reach', 'ranged'].indexOf(range);
 function live(weaponId, enemyId = 'wanderingSoldier', seed = 511) {
