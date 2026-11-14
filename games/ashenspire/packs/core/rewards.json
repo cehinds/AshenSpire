@@ -156,6 +156,9 @@
     }
   },
   "eligibility": {
+    "combatCards": {
+      "playableOnly": true
+    },
     "weapons": {
       "groups": [
         "straightSwords",

@@ -41,7 +41,12 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
   const cardRule = rules?.eligibility?.combatCards;
   const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  // Owner 2026-11-14: eligibility.combatCards.playableOnly never offers a card the class cannot pay for: a mana cost above the
+  // class's mana pool base of 0 (stats.poolBasesByClass) or above the run's max mana. Claims keep accepting every card.
+  const unpayable = !claim && cardRule?.playableOnly
+    ? (card => (card.manaCost || 0) > 0 && (gameContent(run, 'stats')?.poolBasesByClass?.[run.class]?.mana === 0 || card.manaCost > (run.maxMana ?? 0)))
+    : () => false;
+  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -56,7 +61,7 @@ function pools(registries, run, { claim = false } = {}) {
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim) : [],
+    weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim).filter(id => !unpayable(registries.cards.get(id))) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
