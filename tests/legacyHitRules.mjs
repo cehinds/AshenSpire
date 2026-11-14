@@ -31,9 +31,17 @@ export function legacyRules(rules) {
  * perception.roll). A fight snapshots its rules when it is created, so build the fight inside and play it outside. Restores the keys after.
  */
 export function withLegacyDefaults(build) {
-  const held = { hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
-  delete fixCoreMechanics.accuracy.hitRoll; delete fixCoreMechanics.accuracy.evadeStacksPerCard; delete fixCoreMechanics.perception.roll;
+  const held = { stanceBenefits: fixCoreMechanics.stanceBenefits, hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
+  delete fixCoreMechanics.accuracy.hitRoll; delete fixCoreMechanics.accuracy.evadeStacksPerCard; delete fixCoreMechanics.perception.roll; delete fixCoreMechanics.stanceBenefits;
   try { return build(); } finally {
+    fixCoreMechanics.stanceBenefits = held.stanceBenefits; // the 2026-11-14 stance benefits (Wave 2.5) are also absent from a fight saved earlier
     fixCoreMechanics.accuracy.hitRoll = held.hitRoll; fixCoreMechanics.accuracy.evadeStacksPerCard = held.evadeStacksPerCard; fixCoreMechanics.perception.roll = held.roll;
   }
+}
+
+/** Runs `build` while the shipped default rules lack only `stanceBenefits`: a fight created between the 2026-11-14 exact-hits ruling and the stance benefits (Wave 2.5). */
+export function withoutStanceBenefitDefaults(build) {
+  const held = fixCoreMechanics.stanceBenefits;
+  delete fixCoreMechanics.stanceBenefits;
+  try { return build(); } finally { fixCoreMechanics.stanceBenefits = held; }
 }

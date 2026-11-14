@@ -94,7 +94,7 @@ function loadPlayerActionIntent() {
   const setData = (el, key, value) => { el.dataset[key] = String(value); };
   const setAttr = (el, key, value) => { el.attrs[key] = String(value); };
   const onLive = (el, type, fn) => { el.listeners[type] = fn; };
-  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }), setData, setAttr, onLive });
+  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }), setData, setAttr, onLive, attachTooltip() {}, StanceBenefitTip: () => ({ title: '', body: '' }), esc: text => text });
 }
 function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');

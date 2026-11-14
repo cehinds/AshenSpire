@@ -21,6 +21,7 @@ function coreCounterFixture() {
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'bundled-counter-preview' });
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; } // pins the pre-Wave-2.5 arithmetic (tests/legacyStanceRules.mjs)
   combat.piles.hand.push({ instanceId: 'bundled-core-counter', cardId: 'core.counter' });
   const enemy = combat.enemies[0];
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [],
