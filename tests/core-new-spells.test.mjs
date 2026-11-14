@@ -22,6 +22,9 @@ const BY_CLASS = {
 };
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
+
+// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
+const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
@@ -120,10 +123,13 @@ test('offers never cross classes: Magic spells only reach their own class, color
   for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
     const seen = new Set();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(magic)) for (const id of list) {
-      if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
+      // The Core 2 starter decks own one of these (Herald: Sanctified Ward); a basic the class already owns is never offered again.
+      if (owner === classId && starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
+      else if (owner === classId) assert.ok(seen.has(id), `${classId} never offered its own ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
-    for (const id of BY_CLASS.colorless) assert.ok(seen.has(id), `${classId} never offered colorless ${id}`);
+    for (const id of BY_CLASS.colorless) assert.ok(payable(classId, id) ? seen.has(id) : !seen.has(id), `${classId} colorless ${id}: offered only when payable`);
   }
 });

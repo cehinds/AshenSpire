@@ -8,6 +8,7 @@ import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 import { commitCardUpgrade, planCardUpgrade } from '../src/model/cardUpgradeService.js';
+import { upgradeChoiceCount } from '../src/model/cardUpgradeLimits.js';
 import { upgradePreviewHtml } from '../src/ui/components/card.js';
 import { projectGameCard } from '../src/model/gameProfile.js';
 import { closeConfirmationModal } from '../src/ui/components/confirmationModal.js';
@@ -369,8 +370,14 @@ test('blacksmith rows list 2 options for a Basic card and 3 for a ranked one; th
   assert.equal(strikeRow.options.length, 2, 'Strike is Basic');
   assert.equal(strikeRow.plan.options.length, 2);
   assert.deepEqual(strikeRow.options[0].step, plain.rows.find(r => r.cardId === 'core.strike').plan.step);
-  const ranked = smith.rows.find(r => r.cardId === 'core.ironbreaker' || r.cardId === 'core.reaverSpecial');
-  if (ranked) assert.equal(ranked.options.length, 3);
+  // Ironbreaker and Rallying Roar are Reaver starters now (0 MP, so few distinct rolls): the rule asks for 3 slots on a ranked card,
+  // and a card with fewer distinct candidates shows fewer rows (cardUpgradeLimits.nextUpgradeOptions).
+  for (const id of ['core.ironbreaker', 'core.rallyingRoar']) {
+    const row = smith.rows.find(r => r.cardId === id);
+    assert.ok(row, `${id} is in the Reaver deck`);
+    assert.equal(upgradeChoiceCount(registries.cards.get(id), row.instance || {}, { blacksmith: true }), 3, `${id} is ranked`);
+    assert.ok(row.options.length >= 2 && row.options.length <= 3, `${id} lists 2 or 3 options`);
+  }
   for (const row of smith.rows) for (const option of row.options) assert.ok(option.changes.length >= 1, `${row.cardId} option changes something`);
 });
 

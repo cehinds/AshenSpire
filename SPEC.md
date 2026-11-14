@@ -1331,7 +1331,7 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
 `buildGameProfileActMap`, `routes.maxBranches`. A profile without `maxBranches` keeps the single-trunk map; stored graphs are never regenerated.
 
 - Nine pre-boss depths; rests on depths 3, 6, 9.
-- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new).
+- Depth 1: ONE centred start node `n1_0` (a fight under `firstFloor`, or a rest if authored) whose edges reach the first lane(s) of every branch. With `routes.startNodeRefills` (default true) it has `refill: true`: entering restores HP to max and refills both flask pools (a graph without the field does nothing new). Core 2 ships `startNodeRefills: false` (owner brief, 2026-11-14): its start node restores nothing.
 - Branches `b = rng.int('map', 1, min(maxBranches, distinct bosses))`; Core `maxBranches` 3 (engine max 5). Bosses: first `b` of a seeded shuffle; the first boss beaten ends the act.
 - From depth 2 each branch is a subgraph in up to `L = clamp(floor(2 * branchColumns / b), 1, branchColumns)` lanes (3, 3, 2, 1, 1 for b = 1..5; board at most `2 * branchColumns` wide). Edges after depth 1 never leave a branch.
 - No forced rejoin: every lane on a rest depth has its own rest; each lane holds at least one elite on some non-rest depth at or past `minimumThreatFloor` (per lane, not per path: a remerge edge can carry a path past it; a lane with no such depth has none).
@@ -1341,10 +1341,17 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
   - Last two depths: a three-lane branch may narrow once (25%, an outer lane joins its neighbour), never below two lanes; once widened it never collapses to one path (before its first fork the trunk may be a single path, rest depths included). A one-lane branch (b 4–5) stays single. Every path ends at the branch's boss.
 - Remerge: per branch and per gap between in-branch depths, one `map` draw (18%) may add ONE edge between neighbouring lanes existing on both depths; never into every rest depth.
 - Ids: `n{depth}_{branchIndex * L + lane}`, column `branch * L + lane`. `bossId` `boss_0`; `bossIds` all `boss_k`; `shrineIds` every pre-boss rest (`shrineId` the first); nodes carry `branch` (null on depth 1).
+- Visible forks (owner brief, 2026-11-14). Each key is read only when present; a profile without it keeps the draws above, draw for draw (`tests/core-map-legacy-golden.test.mjs`).
+  - `typeWeights`: a free node (not a rest, the forced first node or a guaranteed slot) is a weighted draw over the listed types; `shopShare` is ignored. Core: fight 70, event 16, shop 9, treasure 5 (no random elites; the per-lane elite stays).
+  - `variedNeighbours`: a free node never repeats the type of the lane beside it on the same depth when another type can roll.
+  - `shopsPerBranch` 1: each branch holds one guaranteed shop on a non-rest depth 4–8, never on a guaranteed elite slot.
+  - `forkPercent` replaces `FORK_PERCENT` (Core 70). `crossLinkPercent` replaces the remerge rule (Core 100): every pair of neighbouring lanes present on both depths of a gap draws ONE diagonal edge, direction 50/50, dropped if it would cross an edge already in that gap; the rest-depth exception does not apply.
+  - Core 2 hides no node type (`hiddenTypes: []`) and draws the whole map (`mapMode: "path"`).
+  - Measured over 300 Act 1 seeds (`tests/core-map-shape.test.mjs`): 5.0 fights per walk (was 4.5), a shop in every branch (was 47% of maps), 57% of type-free steps offer two or more node types (was 23%; rest rows and the boss cannot fork by type, and edges that never cross cap this near two thirds).
 
 ### Rewards after combat and merchant prices
 
-- Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic. Flask roll: §5.5.
+- Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic (Core 2: a choice of two, §15.1 *Elite spoils*). Flask roll: §5.5.
 - Card reward on the §15.1 schedule: shipped 10% per won fight (`balance.rewards.cardRewards.chancePct`); choose 1 of 3–5 (random per combat door, `rewards.combatOfferCount` {min 3, max 5}, `cardRewards` stream; chests and level cards keep 3). Default odds common 60 / uncommon 35 / rare 5, Elite 45/40/15; a class's reward weights may override.
 - Solo boss victory: up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`rollRelicChoices`, `relicRewards` stream; one left gives a single `relicId`); pick one. Auto-collect picks randomly; with it off an unpicked choice is left behind.
 - Merchant prices (cinders): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
@@ -2764,6 +2771,8 @@ The deck editor lets the player move cards between the deck and a sideboard unde
 
 **The collection is what the run owns plus the unlimited basics.**
 
+**Core 2 from 2026-11-14** (owner brief; §17 *Rest sites, progression and combat pacing*): the shipped profile ignores `deckEditingWhere` (its `cards.editorWhere: "rest"` opens the editor only from the Rest screen's free Edit deck door) and lists no unlimited rule, so the editor shows each owned card as an ordinary tile and mints nothing. The Adept entitlements below describe a run pinned to an earlier Core 2 profile.
+
 **Core collection and Adept copies** (owner, 2026-10-23): uncollected cards stay hidden.
 - Run-scoped, monotonic `collectedCardIds` ledger of loose card definitions the run has collected.
   - Seeded from the starter deck; updated when the run acquires an ordinary loose card.
@@ -2983,16 +2992,20 @@ Core 1 pins the card, potion and offer weights neutral (`tests/core-reward-mix.t
 
 #### Core 2 reward mix (owner, 2026-10-27)
 
-Combat `rewardGroups` (`packs/core/rewards.json`); elites and bosses roll the same table.
+Combat `rewardGroups` (`packs/core/rewards.json`); elites and bosses roll the same table. From 2026-11-14 (owner brief) every won fight offers a card choice: the door's 3–5 options are all cards or weapon arts, take one. Potions, weapons and armor come from chests and shops. The 2026-10-27 weights stay in the second column for runs pinned to them.
 
-| Group | Weight |
-|---|---|
-| Cards | 66 |
-| Weapon arts | 4 (cards + arts = 70) |
-| Potions | 18 |
-| Flask relic | 2 (potions share = 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among combat relics, the Core 2 flask reward) |
-| Weapons | 10 |
-| Armor and every other relic | retired from combat rewards (the shop fills its own shelves per category) |
+| Group | Weight | Until 2026-11-14 |
+|---|---|---|
+| Cards | 96 | 66 |
+| Weapon arts | 4 | 4 (cards + arts = 70) |
+| Potions | 0 | 18 |
+| Flask relic | 0 | 2 (potions share = 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among combat relics) |
+| Weapons | 0 | 10 |
+| Armor and every other relic | retired from combat rewards (the shop fills its own shelves per category) | the same |
+
+- **Elite spoils** (`rewards.eliteRelic: { choices: 2 }`): after an elite's card door, a second door titled "Elite spoils" offers two distinct unowned relics from `eligibility.relics.allow`; take one. It is its own offer (`<combat offer id>:elite`, source `elite`), saved like any other, shown before level offers, and skipped when no allowed relic is left. A profile without the key has no elite relic.
+- **Allowed relics** (`eligibility.relics.allow`, 28 ids): new offers from every source (elite, chest, shop) draw only from this list, the relics traced to have a working effect under Core 2 (Strength, Bleed-burst, legacy-passive and missing-tag relics are left out until they are reworked). A claim still accepts any relic, so an offer or shop shelf saved earlier stays claimable. The Brimming Gourd's weight among them is 1 (was 20, when it was the only combat relic).
+- **Playable cards only** (`eligibility.playableOnly`): a new card or weapon-art offer never holds a card with a mana cost for a class whose base Mana is 0 (`stats.poolBasesByClass`, the Reaver), nor one whose mana cost exceeds the run's max Mana. Claims are not filtered.
 
 - **Treasure chests** roll `source: 'treasure'` against `treasureRewardGroups`: cards and weapon arts 60, weapons, armor and relics 10, potions 30. A chest still offers relics, armor and weapons (`tests/core-reward-mix.test.mjs`).
 - **Weapon arts.** A reward screen never offers an owned art (`eligibility.weaponArts.skipOwned`). The pool is the learnable arts of carried weapons the player does not own; `skipOwned` also applies to shops and the Blacksmith shelf; an art stocked in the visited shop or shown on the open reward door is not offered by the other (owner, 2026-11-05).
@@ -3178,8 +3191,12 @@ Describes the configured Ashen profile branch. It does not change legacy game ru
 | Rogue | DEX 2 | next unlock, in order |
 | Herald | WIS 2 | last unlock |
 
-- Each class has six starting attribute points; every other attribute is 1. Each has a fixed loadout and ten-card starter: three Strike, three Defend, one Counter, one Smash, one Sweep and one weapon art from the starting weapon (owner 2026-11-01), replacing the class special.
-- Class lists are authored per class (`starterDeck.classDecks`) and stay at ten cards with the worn weapon's art and any gear-granted card counted: the Starseer keeps one class special; the Herald, who has none, authors one fewer Ethereal.
+- Each class has six starting attribute points; every other attribute is 1. Each has a fixed loadout and an eleven-card starter holding at least one Smash, one Sweep and two cards of its own class (owner brief, 2026-11-14; before that ten cards, and the Reaver held four Strike, four Defend and one Counter). The worn weapon's art (owner 2026-11-01, replacing the class special) and any gear-granted card count toward the eleven.
+- Class lists are authored per class (`starterDeck.classDecks`), and every starter card is playable with the class's starting weapon and pools (`tests/core-starting-decks.test.mjs`):
+  - Reaver: 2 Strike, 3 Defend, Counter, Smash, Sweep, Ironbreaker, Rallying Roar, and Sundering Hew from the greatsword. Ironbreaker and Rallying Roar cost 2 SP and no MP (were 1 SP and 1 MP; a Reaver's base Mana is 0).
+  - Rogue: 2 Strike, 2 Defend, Counter, Evade, Smash, Sweep, Feint, Venomed Edge, and Twin Fang.
+  - Starseer: 2 Arcane Spark, Star Spark, Astral Bolt, 3 Ethereal, Smash, Sweep, and Mana Surge and Blight Touch from the sceptre.
+  - Herald: 2 Resource Echo, 2 Ethereal, Exhaust, Smash, Sweep, Smite, Sanctified Ward, and Mana Surge and Blight Touch.
 - Opening hand: 4 + INT.
 - Unified damage, Block then Poise, and the seven directed stance advantages in `docs/ai/json-game-modules/CORE-SPEC.md`.
 
@@ -3328,13 +3345,15 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 
 ### Rest sites, progression and combat pacing
 
-- **Rest sites:** 3 per act, one directly before the boss. A rest heals and offers Smith and Level Up (none exclusive); it closes only through Continue. Core Smith is free, tier 2 at most; higher needs a Blacksmith (§14.4), shown as "Needs a Blacksmith".
-- **Level Up** spends an already-earned level, not the rest visit; the rest grants no level.
+- **Rest sites:** 3 per act, one directly before the boss. A visit is ONE pick (owner brief, 2026-11-14; `rests.servicesPerVisit: 1` with the `rest` service listed): **Rest** (heal `recovery.hp`, shipped 0.3 = 30% of max HP rounded up, and refill MP, SP and both flask pools), **Smith** or **Upgrade Card**. Arriving heals nothing, and Smith and Upgrade Card restore nothing. The pick closes the visit; Continue leaves. Core Smith is free, tier 2 at most; higher needs a Blacksmith (§14.4), shown as "Needs a Blacksmith".
+  - `recovery.hp` is `"full"` or a fraction in (0, 1]. A profile whose `services` lacks `rest` keeps the earlier rule, so a run saved under it does too: the rest heals on arrival and offers Smith, Level Up and Upgrade Card, none exclusive.
+- **Level Up** is not a Core 2 rest service (it was until 2026-11-14): earned attribute points are spent as the next bullet says. Where an older profile lists it, it spends an already-earned level, not the rest visit; the rest grants no level.
 - **Attribute points** are spent on the Core Victory receipt and the Armory character sheet through `allocateAttributePoint` (`src/model/levelup.js`), which neither heals nor uses up a rest visit; every other `applyLevelUp` caller stays rest-only, and the Level Up rest service stays.
   - Each attribute row shows its largest per-point gain (e.g. `+10 HP`), every gain in its tooltip, from `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
 - **Victory receipt** shows only the Character bar (class-named); class-mastery and weapon/skill tracks are still paid and banked, notices acknowledged silently. Character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; older snapshot: 1).
-- Strategize is not a rest service: deck and equipment editing happen at will outside combat, disabled in it. The Armory control outline is blue while it holds a new item, else black.
-- ~15% of randomly typed map nodes are shops; reward groups cards 60 / equipment and relics 10 / potions 30. Armor budget 3 + per-rarity bonus (default 0).
+- **Deck editing happens only at a rest site** (owner brief, 2026-11-14; `cards.editorWhere: "rest"`): the Rest screen carries a free **Edit deck** door that is not a service and does not spend the visit's pick. The Armory, character creation, the reward screen and combat open no deck editor. Acquiring a card is not editing: a card won at a reward door or bought in a shop may still go straight into the deck ("Add to deck") or into the collection, as before; the Armory's Deck tab shows the deck read-only. Equipment editing still happens at will outside combat, disabled in it. A profile with `editorWhere: "noncombat"` keeps the earlier rule (the deck is edited from the Armory at will). The Armory control outline is blue while it holds a new item, else black.
+- **No unlimited copies** (owner brief, 2026-11-14; `deck-training.unlimited: []`): a card's copies are the copies the run owns, and the editor mints nothing. A profile that still lists the `basicTraining` and `graduate` rules keeps §14.1's Adept copies.
+- Map node types and shops: §6, *Visible forks*. Reward groups: §15.1. Armor budget 3 + per-rarity bonus (default 0).
 - **Combat speed** (configurable): auto-combat ×1.5, manual play ×1.25 by default. Step pacing: see Pacing controls below.
 - **Auto-combat** picks the player's reactions and plays the player's turn.
   - Reaction: counters the perceived incoming action, else the card type of the last stance, ties toward past choices.

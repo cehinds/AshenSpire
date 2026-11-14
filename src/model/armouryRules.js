@@ -4,7 +4,8 @@ import { gameModule } from './gameProfile.js';
 import { carriedIds } from './loadout.js';
 import { deckEditingOn } from './deckRules.js';
 
-export const noncombatEditing = run => !!run && gameModule(run, 'cards')?.editorWhere === 'noncombat';
+// 'rest' (the one-pick Core) shares the equipment rules, the combat lock and the Armoury glow; only the deck door differs.
+export const noncombatEditing = run => !!run && ['noncombat', 'rest'].includes(gameModule(run, 'cards')?.editorWhere);
 /** True while Core forbids deck and equipment changes: any fight that has not resolved (a pending reaction is still a fight). */
 export const editingLocked = (run, combat) => noncombatEditing(run) && !!combat && !combat.result;
 
@@ -25,6 +26,8 @@ export function newArmouryItems(run) {
 export const armouryHasNew = run => noncombatEditing(run) && newArmouryItems(run).length > 0;
 export function markArmourySeen(run) { if (run?.loadout) run.armorySeen = snapshot(run); }
 /** Core opens the deck editor from the Armoury at will, unless the cards module disables manual editing. */
-export const profileOpensDeckEditor = run => noncombatEditing(run) && gameModule(run, 'cards')?.editorEnabled !== false;
+export const profileOpensDeckEditor = run => !!run && gameModule(run, 'cards')?.editorWhere === 'noncombat' && gameModule(run, 'cards')?.editorEnabled !== false;
+/** Core 2 edits the deck only at a rest site (editorWhere 'rest'), unless the cards module disables manual editing. */
+export const RestOpensDeckEditor = run => !!run && gameModule(run, 'cards')?.editorWhere === 'rest' && gameModule(run, 'cards')?.editorEnabled !== false;
 /** The one predicate for 'the Armoury opens the deck editor': the profile allows it and the player's Deck editing setting is on. */
 export const armouryOpensDeckEditor = (run, settings) => profileOpensDeckEditor(run) && deckEditingOn(settings);

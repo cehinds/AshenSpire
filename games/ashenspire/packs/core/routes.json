@@ -3,16 +3,15 @@
   "prebossNodes": 9,
   "bosses": 3,
   "restsPerAct": 3,
-  "hiddenTypes": [
+  "hiddenTypes": [],
+  "visibleTypes": [
+    "rest",
+    "elite",
+    "boss",
     "event",
     "fight",
     "treasure",
     "shop"
-  ],
-  "visibleTypes": [
-    "rest",
-    "elite",
-    "boss"
   ],
   "restFloors": [
     3,
@@ -21,10 +20,20 @@
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
-  "mapMode": "fog",
+  "mapMode": "path",
   "firstFloor": "fight",
   "shopShare": 0.15,
   "requirePrebossRest": true,
   "maxBranches": 3,
-  "startNodeRefills": true
+  "startNodeRefills": false,
+  "typeWeights": {
+    "fight": 70,
+    "event": 16,
+    "treasure": 5,
+    "shop": 9
+  },
+  "variedNeighbours": true,
+  "shopsPerBranch": 1,
+  "forkPercent": 70,
+  "crossLinkPercent": 100
 }

@@ -169,14 +169,15 @@ test('armament purchase: refuses without cinders or room, and a stale quote spen
 test('weapon-art shelf: the Core art is sold at the weaponArt price, once, into the sideboard', () => {
   const run = smithRun(coreOut);
   // Owner 2026-11-05: the shelf is the carried greatsword's two learnable arts (its default is granted, so never sold).
-  assert.deepEqual(run.shopStock.weaponArts.map((row) => row.id).sort(), ['executioner', 'poiseBreaker']);
+  // Owner 2026-11-14 (playableOnly): poiseBreaker costs mana a Reaver cannot pay, so the shelf stocks only executioner.
+  assert.deepEqual(run.shopStock.weaponArts.map((row) => row.id).sort(), ['executioner']);
   const row = run.shopStock.weaponArts[0];
   assert.ok(row.cost >= 68 && row.cost <= 90);
   const before = run.cinders;
   const receipt = commitCoreWeaponArt(coreOut, run, coreWeaponArtPlan(coreOut, run, row.id));
   assert.equal(run.cinders, before - row.cost);
   assert.ok(run.sideboard.some((card) => card.instanceId === receipt.instance.instanceId && card.cardId === row.id));
-  assert.equal(run.shopStock.weaponArts.length, 1);
+  assert.equal(run.shopStock.weaponArts.length, 0, 'the only art on the shelf is sold once');
   assert.equal(coreWeaponArtPlan(coreOut, run, row.id).ok, false);
   const poor = smithRun(coreOut, { cinders: 1 });
   assert.match(coreWeaponArtPlan(coreOut, poor, poor.shopStock.weaponArts[0].id).reason, /cinders/i);

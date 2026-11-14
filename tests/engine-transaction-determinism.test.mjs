@@ -86,9 +86,14 @@ export function digest(combat) {
 // Re-pinned 2026-11-08 for the enemy level budget (owner, 2026-11-07, SPEC 17): enemies are level 1-5 and carry 5 + level attribute
 // points with a floor of 1 and no STR/DEX/CON offset, so their pools, Evasion and Precision differ. PERF1 198 -> 201 events; 4242
 // keeps 235 events; turns are unchanged. The two plays of one seed still agree.
+// Re-pinned 2026-11-14 for the 11-card Core starter decks and 2 SP Ironbreaker / Rallying Roar (SPEC 5.1, owner 2026-11-14): the
+// Reaver draws and plays different cards, so both reaver logs move (PERF1 201 -> 218 events, 4242 235 -> 215; turns unchanged).
+// Verified the engine did not move: with the content files of 7b6ac01016 (the starter decks, card costs and generated catalog
+// from before that change) laid over this tree, the previous digests (171b2290e0e5728c/30419cc524dfe0b2 and
+// 3b5d5f1e6bff1a0b/17b2a175fd3bcb97) reproduce exactly. The new values are this test's own digest() on the shipped content.
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '171b2290e0e5728c', state: '30419cc524dfe0b2', events: 201, turn: 6 }],
-  [[4242, 'reaver'], { log: '3b5d5f1e6bff1a0b', state: '17b2a175fd3bcb97', events: 235, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '4d2fb53e38d46c35', state: 'bbc2249ca776d1be', events: 218, turn: 6 }],
+  [[4242, 'reaver'], { log: '10f5a41a88d703ff', state: 'f7cb6297ec6132d1', events: 215, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

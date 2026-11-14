@@ -49,9 +49,12 @@ const ownedIds = (run) => new Set([...run.deck, ...run.sideboard].map(card => ca
 test('the art pool is the arts of carried weapons minus owned or granted ones', () => {
   const run = reaver(['ashStaff']);
   assert.ok(ownedIds(run).has('greatswordSunderingHew'), 'the worn greatsword grants its default art');
-  const expected = (...weapons) => weapons.flatMap(arts).filter(id => !ownedIds(run).has(id)).sort();
+  // Owner 2026-11-14 (rewards.eligibility.playableOnly): a Reaver has no mana pool, so an art that costs mana is never in its pool.
+  const payable = id => !(reg.cards.get(id).manaCost > 0);
+  const expected = (...weapons) => weapons.flatMap(arts).filter(id => !ownedIds(run).has(id) && payable(id)).sort();
   assert.deepEqual([...gameProfileRewardPools(reg, run).weaponArts].sort(), expected('greatsword', 'ashStaff'));
   assert.ok(!gameProfileRewardPools(reg, run).weaponArts.includes('greatswordSunderingHew'), 'granted art is not offered');
+  assert.ok(reg.cards.get('poiseBreaker').manaCost > 0 && !gameProfileRewardPools(reg, run).weaponArts.includes('poiseBreaker'), 'a Reaver is never offered the greatsword art that costs mana');
   run.sideboard.push({ instanceId: 'own-1', cardId: 'executioner', upgraded: false });
   assert.ok(!gameProfileRewardPools(reg, run).weaponArts.includes('executioner'), 'a sideboarded art counts as owned');
   assert.deepEqual([...gameProfileRewardPools(reg, run).weaponArts].sort(), expected('greatsword', 'ashStaff'));
@@ -68,7 +71,7 @@ test('shops and the Blacksmith never stock an owned or granted art', () => {
     for (const row of stock.options.filter(option => option.kind === 'weaponArts')) assert.ok(!owned.has(row.id), `shop stocked owned ${row.id}`);
     const shelves = coreBlacksmithShelves(reg, createRng(seed), run);
     for (const row of shelves.weaponArts) assert.ok(!owned.has(row.id), `blacksmith stocked owned ${row.id}`);
-    assert.deepEqual([...shelves.weaponArts.map(row => row.id)].sort(), ['executioner', 'hamstringRogue', 'katanaDrawCut', 'poiseBreaker'].sort());
+    assert.deepEqual([...shelves.weaponArts.map(row => row.id)].sort(), ['executioner', 'hamstringRogue', 'katanaDrawCut'].sort());
   }
 });
 
@@ -77,13 +80,14 @@ test('an art on the open door is not stocked by the shop, and a shop art is not 
   run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
   run.gameProfilePendingReward = { offerId: 'door', source: 'combat' };
   const stock = gameProfileShopStock(reg, run, createRng(3), { shopId: 'x' });
-  assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id), ['poiseBreaker']);
+  // The greatsword's other learnable art costs mana a Reaver cannot pay (playableOnly), so the open door's art was the only one.
+  assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id), []);
   const run2 = reaver();
   run2.gameProfileOpenShop = 'x';
-  run2.gameProfileRewardOffers = { 'shop:x': { id: 'shop:x', source: 'shop', options: [{ kind: 'weaponArts', id: 'poiseBreaker' }], taken: [], claimed: null } };
+  run2.gameProfileRewardOffers = { 'shop:x': { id: 'shop:x', source: 'shop', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
   for (let seed = 0; seed < 100; seed++) {
     const door = gameProfileRewardOffers(reg, structuredClone(run2), createRng(seed), { offerId: 'd' });
-    assert.ok(!door.options.some(option => option.id === 'poiseBreaker'), `seed ${seed}`);
+    assert.ok(!door.options.some(option => option.id === 'executioner'), `seed ${seed}`);
   }
 });
 
@@ -99,15 +103,18 @@ test('200 doors for a Reaver carrying a greatsword and a katana offer at least t
   assert.ok(!seen.has('core.reaverSpecial'));
   const only = new Set();
   for (let seed = 0; seed < 200; seed++) for (const row of gameProfileRewardOffers(reg, reaver(), createRng(seed), { offerId: 'fight' }).options) if (row.kind === 'weaponArts') only.add(row.id);
-  assert.deepEqual([...only].sort(), ['executioner', 'poiseBreaker']);
+  assert.deepEqual([...only].sort(), ['executioner'], 'poiseBreaker costs mana a Reaver cannot pay');
 });
 
 test('the Blacksmith shelf skips an art on the open reward door but keeps its own earlier shelf', () => {
-  const run = reaver();
+  const run = reaver(['katana']);
   run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }], taken: [], claimed: null } };
   run.gameProfilePendingReward = { offerId: 'door', source: 'combat' };
-  run.shopStock = { kind: 'blacksmith', offerings: ['weaponArts'], weaponArts: [{ id: 'poiseBreaker', cost: 70 }] };
-  assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id), ['poiseBreaker']);
+  run.shopStock = { kind: 'blacksmith', offerings: ['weaponArts'], weaponArts: [{ id: 'hamstringRogue', cost: 70 }] };
+  const shelf = coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id).sort();
+  assert.ok(!shelf.includes('executioner'), 'the art on the open door is skipped');
+  assert.ok(shelf.includes('hamstringRogue'), 'an art already on the shelf stays stocked');
+  assert.deepEqual(shelf, ['hamstringRogue', 'katanaDrawCut', 'quickCut']);
 });
 
 // ---- Deck eligibility: a worn weapon's arts can always join the deck ----
@@ -144,8 +151,9 @@ test('a skipped door (no pending reward) does not hide its arts from the next sh
   const run = reaver();
   run.gameProfileRewardOffers = { door: { id: 'door', source: 'combat', options: [{ kind: 'weaponArts', id: 'executioner' }, { kind: 'weaponArts', id: 'poiseBreaker' }], taken: [], claimed: null } };
   const stock = gameProfileShopStock(reg, run, createRng(3), { shopId: 'y' });
-  assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id).sort(), ['executioner', 'poiseBreaker']);
-  assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id).sort(), ['executioner', 'poiseBreaker']);
+  // poiseBreaker costs mana a Reaver cannot pay (playableOnly), so only executioner is ever stocked.
+  assert.deepEqual(stock.options.filter(option => option.kind === 'weaponArts').map(option => option.id).sort(), ['executioner']);
+  assert.deepEqual(coreBlacksmithShelves(reg, createRng(5), run).weaponArts.map(row => row.id).sort(), ['executioner']);
 });
 
 test('an old save holding core.reaverSpecial on a pending door or shop shelf still claims and buys it; fresh offers never include it', () => {

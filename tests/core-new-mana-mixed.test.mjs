@@ -17,15 +17,20 @@ const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const ids = list => list.map(id => `core.${id}`);
 const BY_CLASS = {
-  reaver: ids(['ironbreaker', 'rallyingRoar']),
+  // Ironbreaker and Rallying Roar are 2 SP / 0 MP starters now (Wave 1 stance starter decks), so they are no longer mana cards.
+  reaver: [],
   rogue: ids(['venomedEdge', 'smokeVeil']),
-  starseer: ids(['eclipse', 'astralBolt']),
-  herald: ids(['censure', 'smite']),
+  // Astral Bolt and Smite are in the Starseer and Herald starter decks now, so they are never offered as rewards.
+  starseer: ids(['eclipse']),
+  herald: ids(['censure']),
   colorless: ids(['hexmark', 'manaLash']),
 };
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
 const ALL = Object.values(BY_CLASS).flat();
 const def = id => profile.content.cards.find(card => card.id === id);
+
+// Owner 2026-11-14 (playableOnly): a Reaver has no mana pool, so it is never offered a card that costs mana; its own mana cards cannot be seen.
+const payable = (classId, id) => classId !== 'reaver' || !(def(id).manaCost > 0);
 const live = (classId, seed, floor) => {
   const run = createRunState({ registries, seed, classId, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   run.floor = floor;
@@ -45,8 +50,8 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
     if (card.damageSchool === 'magic') assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a magic attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
     if (cls === 'starseer' || cls === 'herald' || cls === 'colorless') assert.ok(card.tags.includes('camp:spell'), id);
   }
-  assert.equal(ALL.length, 10);
-  assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
+  assert.equal(ALL.length, 6);
+  assert.equal(new Set(ALL.map(id => def(id).name)).size, 6);
   assert.ok(ALL.filter(id => def(id).rarity === 'rare').length <= 3);
   // A magic-school attack must carry exposure; check every damage card explicitly.
   for (const id of ALL) if (def(id).effects.some(e => e.op === 'damage') && def(id).damageSchool === 'magic') assert.ok(def(id).exposureBuildupPerHit >= 5, id);
@@ -111,11 +116,6 @@ test('no card is strictly better than a peer it shares a reward pool with, in ei
     // The new card must not cover an existing same-rarity card at the same or higher cost.
     if (other.rarity === a.rarity && other.staminaCost >= a.staminaCost && other.manaCost >= a.manaCost && !ALL.includes(other.id)) assert.ok(!covers(a, other), `${id} covers ${other.id} at no more cost`);
   }
-  // Ironbreaker is the cheap-SP mana option, so the 2 SP / 1 MP Reaver starter must not beat it, nor share its cost.
-  const starter = def('core.reaverSpecial'), ironbreaker = def('core.ironbreaker');
-  assert.ok(starter, 'core.reaverSpecial exists');
-  assert.ok(!covers(starter, ironbreaker), 'core.reaverSpecial does not dominate Ironbreaker');
-  assert.ok(ironbreaker.staminaCost < starter.staminaCost && ironbreaker.manaCost <= starter.manaCost, 'Ironbreaker costs less SP than the starter');
 });
 
 test('the reward model counts each card as a mana card, never as a basic or cantrip', () => {
@@ -131,7 +131,8 @@ test('the reward model counts each card as a mana card, never as a basic or cant
 test('every class sees its new cards more often at depth 4+ than at depth 1-3 (600 seeds per class and band)', () => {
   const report = [];
   for (const classId of CLASSES) {
-    const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless]);
+    const own = new Set([...BY_CLASS[classId], ...BY_CLASS.colorless].filter(id => payable(classId, id)));
+    if (!own.size) continue;
     const share = floors => {
       let hits = 0, total = 0;
       for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, floors[seed % floors.length])) { total++; if (own.has(id)) hits++; }
@@ -149,8 +150,12 @@ test('offers never cross classes: class cards only reach their own class, colorl
   for (const classId of CLASSES) {
     const seen = new Set();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    // The Core 2 starter decks hold one of the class's own mana cards (Rogue: Venomed Edge); a basic the class already owns is never offered again.
+    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
-      if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
+      if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
+      else if (starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
+      else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
   }
