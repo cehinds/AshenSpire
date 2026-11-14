@@ -42,33 +42,75 @@ function decayAtTurnStart(ctx, enemy) {
   for (const [key, value] of Object.entries(held)) { if (value === undefined) delete enemy[key]; else enemy[key] = value; }
 }
 
-// Each living enemy ahead of `source` plays its readable attacks through the previewed player state, in order, as the turn will run them: its
-// head move, then each attack of its plan (owner, 2026-11-14: a later number holds every earlier action, not only the first). A planned move
-// that is not an attack leaves the state as it was; a delayed one ends the plan, as it does when it is played.
+// Each living enemy ahead of `source` plays its known actions through the previewed player state, in order, as the turn will run them: its
+// head move, then each move of its plan (owner, 2026-11-14: a later number holds everything earlier enemies do to the player, not only the
+// first attack's damage). A move lands its hits, then its authored effects on the previewed player: statuses (Vulnerable, Weak, Frail), Block,
+// Poise and Ward. A delayed move ends its plan, as it does when it is played. Reactions are assumed declined. The copy's rng throws, so an action
+// whose result depends on a draw (a status chance) cannot be known: the effect is rolled back and nothing after it is advanced.
+// Ops that only touch the player's piles never change the HP the next hit costs and are skipped; any other op also stops the advance.
+// moveEngagement changes where the enemy stands, which this forecast does not model (it never did).
+const NEUTRAL_EFFECT_OPS = new Set(['addCard', 'moveEngagement']);
+const PLAYER_POOL_OPS = new Set(['poiseDamage', 'wardDamage']);
+const APPLIED_EFFECT_OPS = new Set(['applyStatus', 'buildup', 'removeStatus', 'block', 'gainBlock', 'gainBarrier', 'heal', 'applyReflect', 'gainCounterStacks']);
+
+// Restores an entity object in place (the previewed state is shared by reference with its callers).
+function restoreEntity(entity, saved) {
+  for (const key of Object.keys(entity)) delete entity[key];
+  Object.assign(entity, saved);
+}
+
+function applyMoveEffects(ctx, other, move, carrier, moveId, prepared) {
+  for (const effect of move.effects || []) {
+    if (!effect || effect.op === 'damage' || NEUTRAL_EFFECT_OPS.has(effect.op)) continue;
+    if (PLAYER_POOL_OPS.has(effect.op)) {
+      if (effect.target !== 'player' || !Number.isFinite(effect.amount)) return false;
+      Damage.previewPoiseDrain(prepared.previewCtx, other, prepared, effect, carrier, effect.amount);
+      continue;
+    }
+    if (!APPLIED_EFFECT_OPS.has(effect.op)) return false;
+    const savedPlayer = structuredClone(prepared.defender), savedSelf = structuredClone(other);
+    try {
+      Actions.executeAction(prepared.previewCtx, { effect, source: other, owner: other, target: prepared.defender, card: carrier, meta: { moveId } });
+    } catch {
+      restoreEntity(prepared.defender, savedPlayer); restoreEntity(other, savedSelf);
+      return false;
+    }
+  }
+  return true;
+}
+
+// 'stop' ends the whole advance (an action that cannot be known), 'delay' ends this enemy's plan, 'ok' goes on.
 function advanceThroughEarlierEnemies(ctx, source, prepared) {
-  const price = (other, moveId, damage, hits) => {
+  const advance = (other, moveId, damage, hits) => {
     const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
-    if (!authored) return false;
+    if (!authored) return 'stop';
     const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
     const carrier = Tactics.enemyMoveCarrier(other, move, moveId, ctx);
     // The move enters its stance before its hit lands, as the live move does: a second move in the same stance carries the matching-stance bonus.
-    try { ProfileCombat.setProfileStance(ctx, other, carrier); Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared); } catch { /* an earlier move that cannot be priced leaves the state as it was */ }
-    return !move.delay;
+    try {
+      ProfileCombat.setProfileStance(ctx, other, carrier);
+      if (damage != null) Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared);
+    } catch { return 'stop'; }
+    if (!applyMoveEffects(ctx, other, move, carrier, moveId, prepared)) return 'stop';
+    return move.delay ? 'delay' : 'ok';
   };
   for (const other of ctx.enemies) {
     if (other.id === source.id) return;
     const intent = other.intent;
-    if (!other.alive || !intent || intent.kind !== 'attack' || intent.damage == null || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
+    if (!other.alive || !intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
     if (ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
     decayAtTurnStart(ctx, other);
-    if (!price(other, intent.moveId, intent.damage, intent.hits) || !other.planDue) continue;
+    const head = advance(other, intent.moveId, intent.damage, intent.hits);
+    if (head === 'stop') return;
+    if (head === 'delay' || !other.planDue) continue;
     for (const planned of other.plannedMoves || []) {
       const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[planned.moveId];
       if (!authored || authored.reaction) continue;
       const move = Tactics.expandedEnemyMove(other, authored, planned.moveId, ctx);
       if (move.delay) break;
-      if (move.damage == null) continue;
-      if (!price(other, planned.moveId, enemyMoveDamage(other, move), move.hits ?? 1)) break;
+      const step = advance(other, planned.moveId, move.damage == null ? null : enemyMoveDamage(other, move), move.hits ?? 1);
+      if (step === 'stop') return;
+      if (step === 'delay') break;
     }
   }
 }

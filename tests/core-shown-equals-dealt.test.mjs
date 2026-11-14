@@ -24,6 +24,7 @@ import { floaterWordShown } from '../src/ui/models/FloaterPolicyModel.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
 import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { DragFaceQuote, DragFaceTargetId } from '../src/ui/models/DragFaceModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -139,7 +140,10 @@ function checkFloaters(events, tally, label) {
   for (const event of events) {
     if (event.type !== 'damageDealt') continue;
     const parts = guardHitFloatParts(event, 0);
-    if (event.hpLoss > 0) assert.equal(parts.damage?.text, `-${event.hpLoss}`, `${label}: the floater is the HP lost`);
+    // The HP actually lost: a killing blow's overkill is not part of it.
+    const lost = Number.isFinite(event.hpRemoved) ? Math.min(event.hpLoss, event.hpRemoved) : event.hpLoss;
+    if (lost > 0) assert.equal(parts.damage?.text, `-${lost}`, `${label}: the floater is the HP lost`);
+    else if (event.hpLoss > 0) assert.equal(parts.damage, null, `${label}: a hit on an already-empty target floats no number`);
     else {
       assert.equal(parts.damage, null, `${label}: a hit that cost no HP floats no number`);
       if ((event.blocked || 0) > 0 || (event.poiseAbsorbed || 0) > 0) assert.equal(floaterWordShown(outcomeKindForEvent(event)), 'blocked', `${label}: a hit absorbed whole shows the Blocked word ${JSON.stringify({ ...event, abilityBefore: undefined, cardTags: undefined, rangeOrigin: undefined, damageReceipt: undefined })}`);
@@ -198,9 +202,6 @@ function checkForecast(forecast, events, tally, label) {
   for (const [id, { moveId, shown }] of forecast) {
     const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.sourceId === id);
     if (start < 0 || events[start].moveId !== moveId) continue;
-    // A status or a stagger an earlier enemy puts on the player (a buildup gauge filling, a Poise break) changes the next hit's multiplier; the
-    // forecast carries Block, Poise and Counter between attackers, not the riders each move applies, so such a turn is priced at the receipt.
-    if (events.slice(0, start).some(event => event.type === 'playerStaggered' || (event.type === 'statusApplied' && event.targetId === 'player'))) continue;
     let lost = 0;
     for (const event of events.slice(start + 1)) {
       if (event.type === 'enemyMoveEnded' && event.sourceId === id) break;
@@ -242,7 +243,9 @@ function playFight(classId, seed, tally) {
         const option = takeReactions ? offer.options.find(row => Number.isFinite(row.incomingHp)) : null;
         // The prompt states the incoming action and each option's result as the HP the player will lose.
         if (Number.isFinite(offer.incomingHp)) assert.ok(offer.incomingHp >= 0, `${label}: the prompt's incoming HP`);
+        // The prompt's top-level "Lose N HP" is what skipping it costs; an option's number is what taking it costs (checked per action below).
         if (option) { reactionNumbers.set(offer.sourceId, option.incomingHp); tally.reactions++; }
+        else if (Number.isFinite(offer.incomingHp)) { reactionNumbers.set(offer.sourceId, offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
         dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option ? option.id : null });
       } else if (combat.pendingCardChoice) {
         const pending = combat.pendingCardChoice;
@@ -265,6 +268,7 @@ test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lo
   if (process.env.TALLY) console.log(JSON.stringify(tally));
   assert.ok(tally.hits > 300, `enough damaging hits were checked: ${tally.hits}`);
   assert.ok(tally.costs > 400, `enough costs were checked: ${tally.costs}`);
+  assert.ok(tally.skipped > 0, 'at least one reaction prompt was skipped and checked against its top-level number');
   assert.ok(tally.forecasts > 60, `enough shown intents were compared with what they cost: ${tally.forecasts}`);
   assert.ok(tally.actions > 150, `enough enemy actions were checked: ${tally.actions}`);
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
@@ -405,8 +409,7 @@ test('the reaction prompt states the incoming action and each option as the HP t
 
 test('a later attacker is forecast after an earlier enemy has played all of its planned actions', () => {
   let checked = 0;
-  // (Block 20 is left out: the third earlier hit then breaks the player's Poise, and the stagger it marks is a rider the forecast does not carry.)
-  for (const block of [0, 6, 10, 13, 30]) {
+  for (const block of [0, 6, 10, 13, 20, 30]) {
     const { combat } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier'] });
     const [first, second] = combat.enemies;
     // The earlier enemy has three attacks this turn (its head and two planned follow-ups); the later one has one.
@@ -430,7 +433,7 @@ test('a later attacker is forecast after an earlier enemy has played all of its 
     assert.equal(lost, shown.max, `block ${block}: the later attacker was shown at ${shown.max} and cost ${lost}`);
     checked++;
   }
-  assert.equal(checked, 5);
+  assert.equal(checked, 6);
 });
 
 // ---- W2-J (a): a card dragged over a farther enemy shows THAT enemy's number and cost before release ----------------------------------
@@ -468,4 +471,223 @@ test('the ghost prices the aimed enemy without moving the fight', () => {
   DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: 'e2' });
   DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: null });
   assert.equal(JSON.stringify([combat.player, combat.enemies, combat.piles.hand.length, combat.eventLog.length]), before);
+});
+
+// ---- Review fix 2: a later intent holds what earlier enemies do to the player, not only their damage ------------------------------------
+
+test('an earlier enemy that applies Vulnerable, then attacks, is in the later enemy\'s number (and a planned follow-up of the same enemy too)', () => {
+  const base = reg.enemies.get('wanderingSoldier');
+  const curse = { ...base, id: 'w2rCurser', moves: { hex: { intent: 'debuff', weight: 1, effects: [{ op: 'applyStatus', target: 'player', status: 'vulnerable', stacks: 2 }] },
+    slash: base.moves.slash } };
+  const custom = bindGameProfileRegistries(createRegistries({ ...applyGameProfileToContent(contentBundle, profile), enemies: [...applyGameProfileToContent(contentBundle, profile).enemies, curse] }), profile);
+  for (const plan of [[], ['slash']]) {
+    const run = createRunState({ registries: custom, classId: 'reaver', seed: 7, profileMeta: META });
+    const combat = createRunCombat({ registries: custom, run, rng: createRng(7), enemyIds: ['w2rCurser', 'wanderingSoldier'] });
+    const [first, second] = combat.enemies;
+    for (const enemy of combat.enemies) Object.assign(enemy, { hp: 400, maxHp: 400, statuses: {}, planDue: true, skipNextTurn: false, maxStamina: 12, stamina: 12, fixCoreStaminaRemaining: 12 });
+    first.intent = { ...first.intent, kind: 'debuff', moveId: 'hex', damage: null, hits: 1 };
+    first.plannedMoves = plan.map(moveId => ({ moveId, sp: 1 }));
+    second.intent = { ...second.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 };
+    second.plannedMoves = [];
+    combat.player.block = 0; combat.player.hp = 100; combat.player.maxHp = 100; combat.player.statuses = {};
+    const shown = projectCombatIntent(combat, second.id)?.projectedDamage;
+    assert.ok(shown && shown.min === shown.max, `plan ${plan}: exact (${JSON.stringify(shown)})`);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    assert.ok(events.some(event => event.type === 'statusApplied' && event.status === 'vulnerable' && event.targetId === 'player'), 'the earlier enemy applied Vulnerable');
+    let lost = 0, open = false;
+    for (const event of events) {
+      if (event.type === 'enemyMoveStarted' && event.sourceId === second.id) open = true;
+      if (open && event.type === 'damageDealt' && event.sourceId === second.id && event.targetId === 'player') lost += event.hpLoss;
+    }
+    assert.ok(lost > 0);
+    assert.equal(lost, shown.max, `plan ${plan}: shown ${shown.max}, lost ${lost}`);
+  }
+});
+
+// ---- Review fix 3: the preview spends a prepared Evade charge the way the real hit does ------------------------------------------------
+
+test('a target holding one Evade stack AND a prepared Evade charge: one evaded hit spends both, in the preview as in the play', () => {
+  const { combat, card } = fixture({ hand: 'base.multi-hit' });
+  combat.enemies[0].statuses = { evade: { stacks: 1 } };
+  combat.enemies[0].combatEvade = { charges: 1, bonus: 0 };
+  const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
+  assert.equal(shown[0], 0, 'the first hit is evaded');
+  assert.ok(shown.slice(1).every(amount => amount > 0), `the stack and the charge went together, so every later hit lands: ${shown}`);
+  const tally = check(combat, card, 'e1', 'Evade stack + prepared charge');
+  assert.ok(tally.hits >= 2);
+  assert.equal(combat.enemies[0].combatEvade.charges, 0);
+  assert.equal(combat.enemies[0].statuses.evade?.stacks || 0, 0);
+});
+
+// ---- Review fix 6: an enemy Smash into Block (Elite Wyrm Aspirant, tailSlam) ------------------------------------------------------------
+// Reproduced at model level: the number on the intent IS the HP the move's first hit costs, at every Block and with or without a defensive
+// stance. What the player saw as "0 shown, 22 lost" is the Elite's SECOND tailSlam (it plays two this turn): the first one spends the Block,
+// the follow-up is a new action with its own number, shown when it begins. So the case asserts the shown number per action.
+
+test('an enemy Smash into Block: the intent number equals the HP lost by that action, at Block 0, 10 and 32, in and out of Defend stance', () => {
+  const mk = () => {
+    const run = createRunState({ registries: reg, classId: 'reaver', seed: 1, profileMeta: META });
+    const combat = createRunCombat({ registries: reg, run, rng: createRng(1), enemyIds: ['wyrmAspirant'] });
+    combat.player.hp = combat.player.maxHp = 500;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    combat.player.hp = combat.player.maxHp = 500;
+    return combat;
+  };
+  let checked = 0, twoActions = false;
+  for (const stance of [false, true]) for (const block of [0, 10, 32]) {
+    const combat = mk();
+    const enemy = combat.enemies[0];
+    assert.equal(enemy.intent?.moveId, 'tailSlam', 'the fixture turn plays tailSlam');
+    combat.player.block = block;
+    if (stance) combat.player.combatStance = { maneuver: 'defend', camp: 'physical', id: 'defend' };
+    const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage;
+    assert.ok(shown && shown.min === shown.max, `exact at block ${block}`);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    const starts = events.filter(event => event.type === 'enemyMoveStarted').length;
+    twoActions ||= starts > 1;
+    const first = events.find(event => event.type === 'damageDealt' && event.targetId === 'player');
+    assert.equal(first.hpLoss, shown.max, `${stance ? 'Defend' : 'no stance'}, Block ${block}: shown ${shown.max}, first action lost ${first.hpLoss}`);
+    checked++;
+  }
+  assert.equal(checked, 6);
+  assert.ok(twoActions, 'the Elite plays a second tailSlam, whose number belongs to that action');
+});
+
+// ---- Review fix 7: a player attack that took no HP always has a visible cause (gildedKnight) --------------------------------------------
+// Reproduced at model level: the Knight's gildedGuard reaction (it answers a player action worth 8 or more) hits the player and gains Block
+// BEFORE the card lands, so the card's hit is wholly Blocked. The card face states the pre-reaction number (the rule for a play an enemy
+// reaction answers); the resolution emits the damageDealt receipt whose Blocked word the floater policy shows.
+
+test('gildedKnight: every player attack that leaves its HP unchanged emits a receipt that reads Blocked or another shown word', () => {
+  let zeroHpPlays = 0;
+  for (const classId of CLASSES) {
+    const cards = reg.cards.all().filter(card => card.class === classId && card.type === 'attack' && !card.id.startsWith('progression-'));
+    for (const card of cards) {
+      const run = createRunState({ registries: reg, classId, seed: 3, profileMeta: META });
+      const combat = createRunCombat({ registries: reg, run, rng: createRng(3), enemyIds: ['gildedKnight'] });
+      const enemy = combat.enemies[0];
+      Object.assign(combat.piles.hand[0], { cardId: card.id, upgraded: false });
+      combat.player.energy = combat.player.stamina = combat.player.mana = 9;
+      const hp = enemy.hp, start = combat.eventLog.length;
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; } // an unaffordable or illegal play is refused, not resolved
+      while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      if (enemy.hp !== hp || !enemy.alive) continue;
+      const events = combat.eventLog.slice(start);
+      const mine = events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId === enemy.id);
+      // A play that dealt nothing at all is a status or Poise play with no hit; every hit that took no HP carries a shown word.
+      for (const event of mine) {
+        zeroHpPlays++;
+        assert.equal(event.hpLoss, 0);
+        assert.ok(floaterWordShown(outcomeKindForEvent(event)), `${classId} ${card.id}: the hit that took no HP has no word (${outcomeKindForEvent(event)})`);
+      }
+    }
+  }
+  assert.ok(zeroHpPlays > 0, 'the Knight absorbed at least one play');
+});
+
+// ---- Review fix 8: a killing blow floats the HP lost, not the overkill -----------------------------------------------------------------
+
+test('a killing blow floats the HP the target had left, while the face keeps the full hit', () => {
+  const { combat, card } = fixture({ hand: 'core.strike' });
+  const enemy = combat.enemies[0];
+  enemy.hp = 3; enemy.maxHp = 400;
+  const face = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
+  assert.ok(face[0] > 3, `the face keeps the full hit (${face[0]})`);
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  const hit = combat.eventLog.slice(start).find(event => event.type === 'damageDealt' && event.targetId === 'e1');
+  assert.ok(hit.hpLoss > 3, 'the hit overkills');
+  assert.equal(hit.hpRemoved, 3);
+  assert.equal(guardHitFloatParts(hit, 0).damage.text, '-3', 'the floater is the 3 HP lost');
+  assert.equal(enemy.alive, false);
+});
+
+// ---- Review fix 5: the gaps in this file ---------------------------------------------------------------------------------------------
+// Covered here: the prompt's top-level number against a skipped prompt (playFight, above: `tally.skipped`), a Counter card from hand, a
+// play an enemy reaction answers, an X-cost card, a stance-discounted card. NOT covered, with the reason: an upcast card, because the shipped
+// Core profile switches spell ranks off (resolveCombatCard throws), so no Core play can carry ranks.
+//
+// Rule for a play an enemy reaction answers (written for SPEC): the card face states the hit as if no enemy reaction answered it; the reaction
+// can only add Block or Poise to the target first, so the HP the play takes is never MORE than the face, and the reaction's own receipts
+// (combatEnemyReactionStacked, its move and its Block gain) are in the log before the card's hit.
+
+test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP taken is never more, and the reaction is in the log first', () => {
+  let answered = 0;
+  for (const classId of CLASSES) {
+    const cards = reg.cards.all().filter(card => card.class === classId && card.type === 'attack' && !card.id.startsWith('progression-'));
+    for (const card of cards) {
+      const run = createRunState({ registries: reg, classId, seed: 3, profileMeta: META });
+      const combat = createRunCombat({ registries: reg, run, rng: createRng(3), enemyIds: ['gildedKnight'] });
+      const enemy = combat.enemies[0];
+      Object.assign(combat.piles.hand[0], { cardId: card.id, upgraded: false });
+      combat.player.energy = combat.player.stamina = combat.player.mana = 9;
+      let face;
+      try { face = faceOf(combat, combat.piles.hand[0].instanceId, enemy.id); } catch { continue; }
+      const start = combat.eventLog.length, hp = enemy.hp;
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; }
+      while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      const events = combat.eventLog.slice(start);
+      const stacked = events.findIndex(event => event.type === 'combatEnemyReactionStacked');
+      if (stacked < 0) continue;
+      answered++;
+      const faceTotal = (face.perEnemy.get(enemy.id) || []).reduce((n, v) => n + v, 0);
+      const firstHit = events.findIndex(event => event.type === 'damageDealt' && event.sourceId === 'player');
+      assert.ok(firstHit < 0 || stacked < firstHit, `${card.id}: the reaction comes before the card's hit`);
+      assert.ok(hp - enemy.hp <= faceTotal || !enemy.alive, `${card.id}: the HP taken (${hp - enemy.hp}) is not more than the pre-reaction face (${faceTotal})`);
+    }
+  }
+  assert.ok(answered > 0, 'the Knight answered at least one play');
+});
+
+test('a Counter card from hand: the face cost is the cost paid, and its return hits for the number its face carried', () => {
+  const { combat, card } = fixture({ classId: 'rogue', hand: 'core.counter' });
+  const enemy = combat.enemies[0];
+  // The enemy's attack is revealed before the Counter is played, so the face states the return computed from it (SPEC 17).
+  const slash = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: enemyMoveCarrier(enemy, slash, 'slash', combat).combatProfile };
+  enemy.planDue = true; enemy.plannedMoves = [];
+  const face = faceOf(combat, card.instanceId, 'e1'); // the face is priced against the enemy the Counter will answer
+  const tally = check(combat, card, combat.player.id, 'Counter card');
+  assert.equal(tally.costs, 1);
+  const carried = face.preview.values.find(row => row.op === 'damage')?.hitDamages?.[0];
+  const hp = enemy.hp, start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  const events = combat.eventLog.slice(start);
+  assert.ok(events.some(event => event.type === 'combatCounterTriggered'), 'the Counter answered the attack');
+  assert.equal(hp - enemy.hp, carried, 'the Counter return took the HP its face carried');
+});
+
+test('an X-cost card: the face says X and the play pays everything the player holds; a stance discount on the face is the discount paid', () => {
+  for (const stamina of [2, 5]) {
+    const { combat, card } = fixture({ classId: 'starseer', hand: 'supernova' });
+    combat.player.energy = stamina; combat.player.stamina = stamina; combat.player.mana = 9;
+    const face = faceOf(combat, card.instanceId, 'e1');
+    assert.equal(face.preview.costIsX, true);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1', rangeRoute: 'advance' });
+    const events = combat.eventLog.slice(start);
+    assert.equal(sum(events, 'staminaSpent'), stamina, `X pays all ${stamina} Stamina held`);
+  }
+  // A second card of the stance the first one entered is cheaper on the face by exactly what it is cheaper to play.
+  const { combat } = fixture({ hand: 'core.strike' });
+  const [first, second] = combat.piles.hand;
+  second.cardId = 'core.strike'; second.upgraded = false;
+  const t1 = check(combat, first, 'e1', 'stance first');
+  const faceSecond = faceOf(combat, second.instanceId, 'e1');
+  const t2 = check(combat, second, 'e1', 'stance second');
+  assert.ok(t1.costs === 1 && t2.costs === 1);
+  assert.ok(faceSecond.stamina <= 1, `the second Strike in the same stance is priced at ${faceSecond.stamina}`);
+});
+
+test('an upcast card cannot be played in the shipped Core profile (spell ranks are off), so no upcast face exists to compare', () => {
+  const { combat } = fixture({ classId: 'starseer', hand: 'starSpark' });
+  assert.throws(() => previewCard(combat, combat.piles.hand[0].instanceId, 'e1', 1), /Spell ranks are disabled/);
 });

@@ -20,7 +20,7 @@ export function armOptionDecision(control, {
   detailsHtml = '',
   detailsNode = null,
   blockedDetailsNode = null,
-  confirmLabel = 'Confirm',
+  confirmLabel = t('common.confirm'),
   cancelLabel = t('common.back'),
   tone = 'normal',
   onCommit,
