@@ -79,6 +79,7 @@ import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
+import { CharacterDisplayName } from '../../model/characterName.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -1087,7 +1088,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Context labels need only identity; inspection projects the full model on demand.
   function combatantName(role, entity) {
     return role === 'player'
-      ? (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase()
+      ? CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)
       : registries.enemies.get(entity.enemyId).name;
   }
 
@@ -1097,7 +1098,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade });
       return {
         role: 'player',
-        name: (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase(),
+        name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name),
         subtitle: `${runClassIdentity(registries, run).name} · Level ${characterLevel(run)}`,
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
@@ -1594,7 +1595,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (logMemo && logMemo.log === combat.eventLog && logMemo.shown === shown && logMemo.registries === registries && logMemo.who === who) return logMemo.rows;
     globalThis.__perfCount?.('combatLogFormat');
     const rows = combatLogEntries(combat.eventLog.slice(0, shown),
-      { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+      { registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
     logMemo = { log: combat.eventLog, shown, registries, who, rows };
     return rows;
   }
@@ -1611,7 +1612,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function renderReactionNote() {
     reactionNote.attach(combatEl);
     const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
-      registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+      registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
     if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
   }
 
@@ -2113,7 +2114,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     const abilityName = (id) => activeCombatAbilities(registries, p).find(row => row.id === id)?.name;
     const playerName = combatantName('player', p);
-    const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
+    const nameLabel = `${CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
     const statusIn = statusRows(p);
     const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
