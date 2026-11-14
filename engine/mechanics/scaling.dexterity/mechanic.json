@@ -20,7 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/derivedStats.js",
-    "symbol": "restoreDerivedStatRuleSnapshot"
+    "file": "src/model/cardUpgradeSteps.js",
+    "symbol": "addMenuOptions"
   }
 }
