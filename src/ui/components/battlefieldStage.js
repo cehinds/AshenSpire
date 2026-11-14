@@ -1,7 +1,7 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
 import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { logicalViewport, CanvasBox, viewViewportBox } from '../viewViewport.js';
+import { logicalViewport, CanvasBox, viewViewportBox, matchViewMedia } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
@@ -36,8 +36,10 @@ import { setData, setStyle, setVar } from '../domWrite.js';
 // selection (a selected frame hides its meters) and would refit the settled artwork on every click.
 const miniHudGroupHeight = grid => overheadGroupHeightPx(grid, {
   wide: isWideFormFactor(document.documentElement.dataset.formFactor),
-  tall: window.matchMedia('(min-width: 1200px)').matches,
-  shortWindow: window.matchMedia('(min-width: 1200px) and (max-height: 800px)').matches });
+  // Paired with the container queries in combat-target-responsive.css: asked of the game view (the combat canvas),
+  // never the real window, so the stage's reserve and the CSS rows agree.
+  tall: matchViewMedia('(min-width: 1200px)').matches,
+  shortWindow: matchViewMedia('(min-width: 1200px) and (max-height: 800px)').matches });
 
 // These classes change controls, tint or outlines, not the figure's pose.
 // Unknown classes remain conservative: action/reaction transforms still track.
