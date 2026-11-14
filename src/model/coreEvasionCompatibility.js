@@ -49,7 +49,7 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:22534c34792bcf9db9688514836cd66c77470c68a3c3b3703ac8164a706129ef',
   'sha256:68d430e0053091cec98f2819769a92bfbd7e944af9b8237bc315cd40f472fc87', // stance natural benefits (Wave 2.5)
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:30f0a339565d19ca4ff81bb1bd7b003fcd008dc180ca50a60752a240d972b9ee';
+const FIXED_EVASION_RUNTIME = 'sha256:211930bddff697aa6894291370d65bfa6ebc2a9e5c673a840ce68f37c4d4b891';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
