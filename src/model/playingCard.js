@@ -231,9 +231,9 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'discard': text = `${effect.choose ? 'Choose and discard' : 'Discard'} ${n}${effect.random ? ' at random' : ''}`; break;
       case 'heal': text = `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${n} HP`; break;
       case 'loseHp': text = `${effect.offering ? 'Offer' : 'Pay'} ${n} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`; break;
-      case 'gainEnergy': text = `Gain ${n} SP`; break;
+      case 'gainEnergy': text = `Gain ${n} Stamina`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
-      case 'restoreStamina': text = `Restore ${n} SP`; break;
+      case 'restoreStamina': text = `Restore ${n} Stamina`; break;
       case 'applyReflect': text = `Gain ${n} Reflect`; break;
       case 'poiseDamage': case 'wardDamage': {
         const merged = poiseMerge?.get(index);

@@ -33,7 +33,7 @@ export function equipmentCardModel(registries, piece) {
     (row.source?.id || row.id) === piece.id && (row.kind === 'armor') === armor && (!row.classes || row.classes.includes(piece.classId)));
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0)});
-    const labels = {hp:'HP',mp:'MP',sp:'SP',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
+    const labels = {hp:'HP',mp:'Mana',sp:'Stamina',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
     // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule).
     const tierAR = !armor && piece.kind !== 'shield' ? upgradeTierBonus(gameModule(registries,'equipment'),piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
     facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,

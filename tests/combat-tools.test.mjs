@@ -22,7 +22,7 @@ test('log contains executed public receipts by round, never predictions or unsta
     { type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'p1', targetId: 'e1', amount: 10, blocked: 1 }];
   const rows = combatLogEntries(events, { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] });
   assert.deepEqual(rows.map(row => [row.id, row.round]), [[2, 1], [3, 1], [4, 1], [7, 2], [8, 2]]);
-  assert.match(rows[0].text, /Reaver played Guard Counter \(Upcast 2\).*2 SP, 3 MP/);
+  assert.match(rows[0].text, /Reaver played Guard Counter \(Upcast 2\).*2 Stamina, 3 Mana/);
   assert.equal(rows[2].text, "Soldier's Slash hit Reaver for 7: Block absorbed 7 (7 → 0); 0 HP dealt.");
   assert.equal(rows[4].text, "Reaver's attack hit Soldier for 10: Block absorbed 1 (1 → 0); 9 HP dealt.");
   assert.doesNotMatch(JSON.stringify(rows), /privateFuture|secretGuess|hpLost/);
@@ -40,7 +40,7 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
   const rows = combatLogEntries(events, { registries, players: [{ id: 'player', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] });
   assert.deepEqual(rows.map(row => row.text), [
     "No reaction: Counter can't answer a Sweep.",
-    'Not enough SP to Counter (need 1, have 0).',
+    'Not enough Stamina to Counter (need 1, have 0).',
     'No reaction: Reactions are off.',
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",

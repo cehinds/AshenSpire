@@ -108,7 +108,7 @@ export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
   installFooterArt(row);
   if (!row) return;
-  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'SP', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
+  const next = { ...states.get(row), endTurn: t('combat.endTurn'), drawLabel: 'DRAW', spLabel: 'Stamina', discardLabel: t('combat.discard'), exhaustLabel: t('combat.exhaust'), potions: t('potions.run.title'), ...values };
   states.set(row, next);
   const textNodes = new Map([...row.querySelectorAll('[data-footer-text]')].map(node => [node.dataset.footerText, node]));
   for (const group of Object.values(plan.groups)) for (const item of group.items) {

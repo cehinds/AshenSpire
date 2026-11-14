@@ -24,7 +24,7 @@ test('summarizeCardOption: name, line and cost chips; a missing reader gives a n
   const full = summarizeCardOption(null, {}, option, { defOf: () => counterDef,
     previewOf: (opt) => { assert.equal(opt.play.targetId, 'e1'); return { values: [{ op: 'block', value: 7 }, { op: 'damage', value: 4 }] }; } });
   assert.equal(full.name, 'Counter');
-  assert.deepEqual(full.costs, ['2 SP', '1 MP']);
+  assert.deepEqual(full.costs, ['2 Stamina', '1 Mana']);
   assert.equal(full.line[0].dir, 'up');
   const bare = summarizeCardOption(null, {}, option);
   assert.deepEqual(bare.line, []);

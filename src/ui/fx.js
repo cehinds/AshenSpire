@@ -1190,7 +1190,7 @@ export function playTimeline(events, ctx, done) {
   // Only the cost receipts a card or an enemy pays are played and applied up front; any other lead receipt (a heal or
   // Block a cardPreparing trigger produced) keeps its full visuals and applies with the rest of the beat.
   const costOf = beat => (beat.lead || []).filter(event => COST_LABEL[event.type]);
-  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'SP', manaSpent: 'MP', enemyStaminaSpent: 'SP' };
+  const COST_LABEL = { energySpent: 'EP', staminaSpent: 'Stamina', manaSpent: 'Mana', enemyStaminaSpent: 'Stamina' };
   // Cues belong to the committed beat, even when its multi-hit reactions are
   // split into groups. Skipping drains only beats whose numbers were unheard.
   const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));

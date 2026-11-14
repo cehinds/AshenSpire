@@ -88,7 +88,7 @@ test('the reported refusal names the card it came from, not the first candidate'
   assert.deepEqual(row.cardIds, ['guardCounter', 'whirlingGuard']);
   const registries = createRegistries(contentBundle);
   assert.deepEqual(combatLogEntries(events, { registries }).map(entry => entry.text).filter(text => text.startsWith('Not enough')),
-    [`Not enough SP to Sweep (need ${row.need}, have 0).`]);
+    [`Not enough Stamina to Sweep (need ${row.need}, have 0).`]);
 });
 
 test('the Reaction switch off reports switchOff only to a seat holding a candidate', () => {

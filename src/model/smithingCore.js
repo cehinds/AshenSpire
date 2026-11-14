@@ -24,7 +24,7 @@ const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 const STAT_ORDER = ['ar', 'dr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'MP', sp: 'SP', evasion: 'Evasion', precision: 'Precision',
+  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [

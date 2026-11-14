@@ -913,7 +913,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
-        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less Stamina.'
         + (stance.maneuver === 'defend' ? ' While in Defend stance, Defend, Counter and Evade cards all take Adept discounts.' : '')
         + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
         + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';

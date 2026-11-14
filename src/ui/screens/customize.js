@@ -81,14 +81,14 @@ import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
-  mana: 'MP',
-  stamina: 'SP',
+  mana: 'Mana',
+  stamina: 'Stamina',
   energy: 'AP',
 });
 const CREATION_INSPECTION_LABELS = Object.freeze({
   hp: 'Health Points (HP)',
-  mana: 'Mana Points (MP)',
-  stamina: 'Stamina Points (SP)',
+  mana: 'Mana',
+  stamina: 'Stamina',
   energy: 'Action Points (AP)',
   ar: 'Attack Rating (AR)',
   dr: 'Defense Rating (DR)',

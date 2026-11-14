@@ -6,7 +6,7 @@ export function upcastChoicePlan(definition) {
   return { kind: 'upcast', options: [
     { id: String(base), name: `Base tier ${base}`, tooltip: 'Use the printed card and its normal cost.' },
     ...upcastOptions(definition).map(option => ({ id: String(option.tier), name: `Upcast tier ${option.tier} (+${option.tier - base})`,
-      tooltip: `Costs +${option.stamina} SP and +${option.mana} Mana. Bonuses apply only to this play.` })),
+      tooltip: `Costs +${option.stamina} Stamina and +${option.mana} Mana. Bonuses apply only to this play.` })),
   ] };
 }
 export function openUpcastChoice({ definition, opener, onChoose, onClosed }) {

@@ -148,7 +148,7 @@ export function describeFormula(formula) {
       && ['min', 'max'].every(key => formula[key] === undefined || Number.isFinite(formula[key]))
       && !(formula.min !== undefined && formula.max !== undefined && formula.min > formula.max)
       && Object.keys(formula).every(key => ['f', 'per', 'min', 'max'].includes(key))) {
-    let text = `${formula.per} per SP spent`;
+    let text = `${formula.per} per Stamina spent`;
     if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
     if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
     if (!Number.isInteger(formula.per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
