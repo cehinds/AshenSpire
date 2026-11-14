@@ -587,7 +587,7 @@ function endPlayerTurn(combat, discardIds = []) {
     if (combat.result) return;
   }
 
-  S.clearTurnBoosts(combat, p);
+  S.ClearTurnBoosts(combat, p);
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 

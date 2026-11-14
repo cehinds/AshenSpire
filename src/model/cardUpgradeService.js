@@ -1,7 +1,7 @@
 // The Core card-upgrade service: plan (inert) then commit (docs/ai/tasks/CARD-UPGRADES-2026-10-28.md).
 // planCardUpgrade reads the run and writes nothing, so a preview equals the
 // commit: the roll is the stateless mulberry32(hash(run.seed, instanceId, stepIndex)).
-import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, restUpgradeRule } from './cardUpgradeLimits.js';
+import { canUpgrade, nextUpgradeStep, nextUpgradeOptions, RestUpgradeRule } from './cardUpgradeLimits.js';
 import { upgradeStepsOf, upgradeCount, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 import { resolveCard } from './registries.js';
 import { projectGameCard } from './gameProfile.js';
@@ -38,9 +38,9 @@ export function planCardUpgrade(run, registries, instanceId, { choices = 1, comb
 }
 
 /** The quote a rest-site Upgrade Card shows for an instance: 1 option up to the third upgrade, 2 (some with two effects) from the fourth. */
-export function planRestCardUpgrade(run, registries, instanceId) {
+export function PlanRestCardUpgrade(run, registries, instanceId) {
   const instance = findInstance(run, instanceId);
-  return planCardUpgrade(run, registries, instanceId, instance ? restUpgradeRule(instance) : {});
+  return planCardUpgrade(run, registries, instanceId, instance ? RestUpgradeRule(instance) : {});
 }
 
 /**

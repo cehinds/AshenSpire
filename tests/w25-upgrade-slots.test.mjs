@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
-import { upgradeSlots, upgradeWeaponId, weaponSmithLevel, canUpgrade, restUpgradeRule, nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
-import { planRestCardUpgrade, planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
+import { UpgradeSlots, UpgradeWeaponId, WeaponSmithLevel, canUpgrade, RestUpgradeRule, nextUpgradeOptions } from '../src/model/cardUpgradeLimits.js';
+import { PlanRestCardUpgrade, planCardUpgrade, commitCardUpgrade } from '../src/model/cardUpgradeService.js';
 import { upgradeStepsProblems, applyUpgradeSteps } from '../src/model/cardUpgrade.js';
 import { cardUpgradeModel } from '../src/ui/models/CardUpgradeModel.js';
 
@@ -14,17 +14,17 @@ const strike = (run) => run.deck.find((c) => c.cardId === 'core.strike');
 test('slots = rank + weapon smith level + 1; an unranked card counts as rank 1 (the owner\'s three examples)', () => {
   const run = newRun();
   const card = strike(run);
-  assert.equal(upgradeWeaponId(run, card), 'greatsword', 'a class card counts the equipped main weapon');
-  assert.equal(upgradeSlots(run, card), 2, 'unranked card, +0 weapon');
+  assert.equal(UpgradeWeaponId(run, card), 'greatsword', 'a class card counts the equipped main weapon');
+  assert.equal(UpgradeSlots(run, card), 2, 'unranked card, +0 weapon');
   run.itemUpgradeLevels = { 'armament/greatsword': 1 };
-  assert.equal(weaponSmithLevel(run, card), 1);
-  assert.equal(upgradeSlots(run, card), 3, 'unranked card, +1 weapon');
+  assert.equal(WeaponSmithLevel(run, card), 1);
+  assert.equal(UpgradeSlots(run, card), 3, 'unranked card, +1 weapon');
   run.itemUpgradeLevels = { 'armament/greatsword': 2 };
   card.rank = 3;
-  assert.equal(upgradeSlots(run, card), 6, 'rank 3, +2 weapon');
-  assert.equal(upgradeSlots(run, { ...card, sourceArmamentId: 'dagger' }), 4, 'a weapon card counts its own source weapon (a +0 dagger)');
+  assert.equal(UpgradeSlots(run, card), 6, 'rank 3, +2 weapon');
+  assert.equal(UpgradeSlots(run, { ...card, sourceArmamentId: 'dagger' }), 4, 'a weapon card counts its own source weapon (a +0 dagger)');
   run.itemUpgradeLevels = { 'armament/greatsword': 9 }; card.rank = 9;
-  assert.equal(upgradeSlots(run, card), 10, 'never past the 10-upgrade cap');
+  assert.equal(UpgradeSlots(run, card), 10, 'never past the 10-upgrade cap');
 });
 
 test('a card with every slot used is refused with the slots code, and a higher rank or weapon level opens the next', () => {
@@ -40,8 +40,8 @@ test('a card with every slot used is refused with the slots code, and a higher r
 
 test('the rest rule: one option up to the third upgrade, two from the fourth', () => {
   const upgraded = (n) => ({ instanceId: 'x', cardId: 'core.strike', upgraded: n > 0, upgradeSteps: Array.from({ length: n }, () => ({ k: 'dmg', n: 1 })) });
-  for (const n of [0, 1, 2]) assert.deepEqual(restUpgradeRule(upgraded(n)), { choices: 1, combos: false }, `upgrade ${n + 1}`);
-  for (const n of [3, 4, 5, 8]) assert.deepEqual(restUpgradeRule(upgraded(n)), { choices: 2, combos: true }, `upgrade ${n + 1}`);
+  for (const n of [0, 1, 2]) assert.deepEqual(RestUpgradeRule(upgraded(n)), { choices: 1, combos: false }, `upgrade ${n + 1}`);
+  for (const n of [3, 4, 5, 8]) assert.deepEqual(RestUpgradeRule(upgraded(n)), { choices: 2, combos: true }, `upgrade ${n + 1}`);
 });
 
 test('rest quotes: 1 option for upgrades 1-3 and 2 for the 4th; the picker model and a commit agree', () => {
@@ -50,11 +50,11 @@ test('rest quotes: 1 option for upgrades 1-3 and 2 for the 4th; the picker model
   const optionsOf = () => cardUpgradeModel(registries, run, card.instanceId).rows.find((r) => r.instanceIds.includes(card.instanceId)).options;
   for (let n = 1; n <= 3; n += 1) {
     assert.equal(optionsOf().length, 1, `upgrade ${n}`);
-    assert.equal(planRestCardUpgrade(run, registries, card.instanceId).options, undefined);
-    commitCardUpgrade(run, registries, planRestCardUpgrade(run, registries, card.instanceId));
+    assert.equal(PlanRestCardUpgrade(run, registries, card.instanceId).options, undefined);
+    commitCardUpgrade(run, registries, PlanRestCardUpgrade(run, registries, card.instanceId));
   }
   assert.equal(optionsOf().length, 2, 'the 4th upgrade');
-  const quote = planRestCardUpgrade(run, registries, card.instanceId);
+  const quote = PlanRestCardUpgrade(run, registries, card.instanceId);
   assert.equal(quote.options.length, 2);
   const second = { ...quote, step: quote.options[1].step };
   const done = commitCardUpgrade(run, registries, second);

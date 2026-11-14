@@ -271,7 +271,7 @@ function applyFx(card, step) {
  * One upgrade is named `Name+` (or the authored name); N >= 2 is `Name+N`.
  */
 /** The steps with each `combo` replaced by its inner steps (a combo is two effects in one slot). */
-export const flatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
+export const FlatSteps = (steps) => (steps || []).flatMap((step) => (step && step.k === 'combo' && Array.isArray(step.steps) ? step.steps : [step]));
 
 export function applyUpgradeSteps(base, steps) {
   if (!Array.isArray(steps) || !steps.length) return base;
@@ -284,7 +284,7 @@ export function applyUpgradeSteps(base, steps) {
   }
   // Cantrips and basics cost no Mana (SPEC, card upgrades): a rank-down step zeroes the copy's Mana, whatever the
   // order of the steps, so a saved instance resolves the same way (no migration).
-  if (flatSteps(steps).some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
+  if (FlatSteps(steps).some((step) => step && step.k === 'tag' && step.tag === RANK_DOWN_TAG)) {
     card.manaCost = 0;
     // Zeroing Mana also drops the Mana offset of the Core 2 multi-hit Stamina floor, so the engine could charge more
     // than the face prints: print the floor instead, so face, preview and combat agree.

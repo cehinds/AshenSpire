@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, flatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
@@ -292,7 +292,7 @@ const stepOf = (kind, option, choice) => {
  */
 export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits = {}, count = 1) {
   // A combo is two effects in one slot: the checks below (once per card, already tagged) look through it.
-  const applied = flatSteps(appliedSteps);
+  const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const found = options(baseDef, current, applied, limits);
   const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);

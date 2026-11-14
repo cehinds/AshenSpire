@@ -241,8 +241,8 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
   }
 }
 
-/** clearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
-export function clearTurnBoosts(ctx, entity) {
+/** ClearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
+export function ClearTurnBoosts(ctx, entity) {
   const boosts = entity.turnBoosts;
   if (!boosts) return;
   for (const [statusId, stacks] of Object.entries(boosts)) {

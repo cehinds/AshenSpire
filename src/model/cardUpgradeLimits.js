@@ -3,7 +3,7 @@
 // 2026-10-28). Pure reads of the run: nothing here mutates.
 import { cardRank } from './cardRank.js';
 import { mulberry32 } from './rng.js';
-import { upgradeCount, paidUpgradeCount, upgradeStepsOf, flatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
+import { upgradeCount, paidUpgradeCount, upgradeStepsOf, FlatSteps, applyUpgradeSteps, MAX_CARD_UPGRADES } from './cardUpgrade.js';
 
 const MAX_CANDIDATES = 20;
 import { rollUpgradeOptions, upgradeStepRng, upgradeSeed } from './cardUpgradeSteps.js';
@@ -19,7 +19,7 @@ export function upgradeBasic(def, instance = null) {
   const tags = (def && def.tags) || [];
   if (tags.includes('rank.cantrip')) return true;
   // A rank-down upgrade step (tag rank.cantrip) makes this copy count as a cantrip.
-  if (flatSteps(upgradeStepsOf(instance || {})).some((step) => step.k === 'tag' && step.tag === 'rank.cantrip')) return true;
+  if (FlatSteps(upgradeStepsOf(instance || {})).some((step) => step.k === 'tag' && step.tag === 'rank.cantrip')) return true;
   const spell = tags.includes('source:spell') || tags.includes('camp:spell');
   return !!def && def.rarity === 'common' && !spell;
 }
@@ -40,7 +40,7 @@ export function freeAllowance(instance, def) {
  * carries `sourceArmamentId` / `weaponId`), else the main weapon the run has equipped (the active right-hand slot).
  * Returns its armament id, or '' when there is none.
  */
-export function upgradeWeaponId(run, instance) {
+export function UpgradeWeaponId(run, instance) {
   const own = instance && (instance.sourceArmamentId || instance.weaponId);
   if (own) return own;
   const loadout = run && run.loadout;
@@ -48,25 +48,25 @@ export function upgradeWeaponId(run, instance) {
 }
 
 /** The weapon's Smith level (how many times it has been upgraded at the Smith / Blacksmith), 0 for none. */
-export function weaponSmithLevel(run, instance) {
-  const id = upgradeWeaponId(run, instance);
+export function WeaponSmithLevel(run, instance) {
+  const id = UpgradeWeaponId(run, instance);
   const level = id && run && run.itemUpgradeLevels ? run.itemUpgradeLevels[`armament/${id}`] : 0;
   return Number.isSafeInteger(level) && level > 0 ? level : 0;
 }
 
 /**
- * upgradeSlots(run, instance) → how many upgrades the card may carry: its rank (an unranked card counts as rank 1) plus
+ * UpgradeSlots(run, instance) → how many upgrades the card may carry: its rank (an unranked card counts as rank 1) plus
  * its weapon's Smith level plus 1, never past MAX_CARD_UPGRADES. Owner's examples: unranked + a +0 weapon = 2; unranked
  * + a +1 weapon = 3; rank 3 + a +2 weapon = 6.
  */
-export function upgradeSlots(run, instance) {
-  return Math.min(MAX_CARD_UPGRADES, cardRank(instance) + weaponSmithLevel(run, instance) + 1);
+export function UpgradeSlots(run, instance) {
+  return Math.min(MAX_CARD_UPGRADES, cardRank(instance) + WeaponSmithLevel(run, instance) + 1);
 }
 
 /** Rest-site odds (owner, 2026-11-14): upgrades 1-3 offer one option of one effect; the 4th and later offer two options, each 80% one effect, 20% two. */
 export const REST_ONE_OPTION_UPTO = 3;
 export const REST_TWO_EFFECT_CHANCE = 0.2;
-export function restUpgradeRule(instance) {
+export function RestUpgradeRule(instance) {
   return upgradeCount(instance) + 1 > REST_ONE_OPTION_UPTO ? { choices: 2, combos: true } : { choices: 1, combos: false };
 }
 
@@ -165,7 +165,7 @@ export function canUpgrade(registries, run, instance) {
   const refuse = (code, reason, cost = null) => ({ ok: false, code, reason, cost, n, free: null });
   if (!def) return refuse('missing', 'That card is not in the deck.');
   if (instance.sourceArmamentId || instance.grantedBy) return refuse('armament', `${def.name} is upgraded with its armament.`);
-  const slots = upgradeSlots(run, instance);
+  const slots = UpgradeSlots(run, instance);
   if (n > slots && n <= MAX_CARD_UPGRADES) {
     return refuse('slots', `${def.name} has ${slots} upgrade slots (rank + weapon level + 1); raise its rank or smith its weapon.`);
   }
