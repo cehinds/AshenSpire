@@ -28,7 +28,7 @@ export function TargetQuoteHits(preview, targetId) {
 export function TargetQuotePoise(preview, targetId) {
   let removed = 0, breaks = false;
   for (const row of preview?.values || []) {
-    if (row.op !== 'damage' || !ENEMY_DAMAGE_TARGETS.has(row.target)) continue;
+    if (!['damage', 'poiseDamage', 'wardDamage'].includes(row.op) || (row.target && !ENEMY_DAMAGE_TARGETS.has(row.target))) continue;
     const entry = row.perTargetPoise?.[targetId];
     if (!entry) continue;
     removed += Math.max(0, Math.floor(Number(entry.removed) || 0));

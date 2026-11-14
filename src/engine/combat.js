@@ -2363,7 +2363,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
           for (const e of hit) {
             const state = e?.kind === 'enemy' && damagePreviewStates.get(e.id);
-            if (state) previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            if (!state) continue;
+            const spent = previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            // The quote's "−N Poise" and BREAK read this row too (Wave 3).
+            if (spent > 0) (entry.perTargetPoise ||= {})[e.id] = { removed: spent, breaks: state.defender.persistentPoise.value === 0 };
           }
         }
         break;

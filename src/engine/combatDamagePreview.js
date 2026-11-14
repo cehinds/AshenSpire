@@ -159,6 +159,20 @@ export function SpendPreviewEvade(defender) {
   if (plan.stack && evade) defender.statuses = { ...defender.statuses, evade: { ...evade, stacks: evade.stacks - 1 } };
 }
 
+/** The Poise a hit's damage-type rider takes after the hit, applied to the detached defender (mirrors live matchupRiderEffects + dealPoiseDamage). */
+function previewRiderPoise(ctx, source, defender, attack, receipt) {
+  const poise = defender.persistentPoise;
+  if (!(poise?.value > 0)) return;
+  const left = Math.max(0, (receipt.amount || 0) - (receipt.poiseMitigated || 0));
+  for (const effect of Matchups.matchupRiderEffects(ctx, source, defender, attack, { amount: left, hpLoss: receipt.hpLoss || 0 })) {
+    if (effect.op !== 'poiseDamage' || !(poise.value > 0)) continue;
+    const spent = Math.min(poise.value, Math.max(0, Math.floor(effect.amount)));
+    if (!(spent > 0)) continue;
+    poise.value -= spent;
+    if (poise.value === 0) previewPoiseBreak(ctx, defender);
+  }
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -189,6 +203,9 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt); if (receipt.evaded) SpendPreviewEvade(defender); }
+      // Wave 3: a damage-type rider's Poise damage (blunt hits and the like) lands after the hit, as live does (actions.js matchupRiderEffects),
+      // so the quote's "−N Poise" and BREAK, and the next hit's x1.5, hold it. Once per target per action, from the shared rider budget.
+      if (defender && !receipt.evaded && fixCoreEnabled(ctx)) previewRiderPoise(previewCtx, attacker || source, defender, attack, receipt);
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
       if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }

@@ -129,3 +129,34 @@ test('a quote moves nothing in the fight', () => {
   quoteFor(combat, card, 'e1'); quoteFor(combat, card, 'e2');
   assert.equal(JSON.stringify([combat.player, combat.enemies, combat.piles, combat.eventLog.length, combat.rng?.state ?? null]), before);
 });
+
+// Wave 3: the quote also says the Poise the play removes and BREAK when it empties the bar; what it says is what the play does.
+test('the quote names the Poise the play removes, and BREAK when it empties that enemy\'s bar', () => {
+  for (const [poise, expectBreak] of [[20, false], [2, true]]) {
+    const { combat, card } = fixture();
+    combat.enemies.forEach(enemy => { enemy.persistentPoise = { value: poise, max: 20 }; });
+    combat.enemies[1].persistentPoise = { value: 20, max: 20 }; // e2 keeps a full bar: the same play does not break it
+    const near = quoteFor(combat, card, 'e1'), far = quoteFor(combat, card, 'e2');
+    assert.equal(near.poiseBreaks, expectBreak, `Poise ${poise}: BREAK is said exactly when the bar empties`);
+    assert.equal(far.poiseBreaks, false);
+    assert.equal(near.poise, expectBreak ? t('combat.callout.poiseBreak') : t('combat.quote.poise', { amount: near.poise.replace(/\D/g, '') }), 'the word is BREAK or the Poise removed');
+    const before = combat.enemies[0].persistentPoise.value;
+    playOn(combat, card, 'e1');
+    const after = combat.enemies[0];
+    if (expectBreak) { assert.ok(after.broken, 'the play did break it'); assert.equal(after.persistentPoise.value, 0); }
+    // The quote prices the hit's own Poise (absorbed, drained, and a damage-type rider's); Poise a gear or stance rider queues after the hit is
+    // not in it, so what the play removed is at least what the quote said, and a BREAK is never promised that does not happen.
+    else assert.ok(Number(near.poise.replace(/\D/g, '')) <= before - after.persistentPoise.value, 'the Poise quoted is no more than the Poise removed');
+  }
+});
+
+test('a Broken enemy takes the x1.5 in the quote, and the quote adds no Poise word (its bar is empty)', () => {
+  const { combat, card } = fixture();
+  const plain = quoteFor(combat, card, 'e2');
+  combat.enemies[1].broken = { since: 1, endTurn: 1 };
+  combat.enemies[1].persistentPoise = { value: 0, max: 20 };
+  const broken = quoteFor(combat, card, 'e2');
+  assert.ok(broken.hits[0] > plain.hits[0], `${broken.hits} > ${plain.hits}`);
+  assert.equal(broken.poise, null);
+  assert.equal(playOn(combat, card, 'e2').hits[0], broken.hits[0]);
+});
