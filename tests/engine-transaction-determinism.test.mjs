@@ -14,7 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 
 function fight([seed, classId]) {
   const profile = resolveGameProfile('default');
@@ -115,9 +115,20 @@ for (const [setup, expected] of LEGACY_PINNED) {
     assert.deepEqual(first, expected);
   });
 }
-const PINNED = [
+// Wave 2.5 (stance benefits): these are the shipped digests before the benefits. A fight whose rules lack `stanceBenefits` (one created earlier) still reproduces
+// them exactly, which is the proof that the new PINNED values below moved only through the benefits.
+const PRE_BENEFIT_PINNED = [
   [['PERF1', 'reaver'], { log: '68045e4bda0ffd02', state: 'bea7224313f1fa40', events: 195, turn: 6 }],
   [[4242, 'reaver'], { log: '714e5d0f2a83d7e3', state: 'bde8c04ced638abb', events: 193, turn: 6 }],
+];
+for (const [setup, expected] of PRE_BENEFIT_PINNED) {
+  test(`pre-benefit fight ${setup[0]}/${setup[1]} still reproduces the digest from before the stance benefits`, () => {
+    assert.deepEqual(digest(play(withoutStanceBenefitDefaults(() => fight(setup)), 5)), expected);
+  });
+}
+const PINNED = [
+  [['PERF1', 'reaver'], { log: 'f8ac7a9eb1cfa6d7', state: '6428012afc3f81ca', events: 192, turn: 6 }],
+  [[4242, 'reaver'], { log: '123f2bed28ce5308', state: 'c31fbb6ecd06ac82', events: 193, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
