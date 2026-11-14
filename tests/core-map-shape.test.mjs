@@ -89,3 +89,10 @@ test('every visible Core node type is one enterNode opens, events keep their res
   }
   assert.deepEqual([...seen].sort(), [...handled].sort());
 });
+
+test('the shipped Core routes draw every node and the start node no longer heals', () => {
+  assert.equal(run.gameProfile.modules.routes.mapMode, 'path');
+  assert.equal(run.gameProfile.modules.routes.startNodeRefills, false);
+  assert.deepEqual(run.gameProfile.content.routes.hiddenTypes, []);
+  for (let seed = 1; seed <= 20; seed++) assert.ok(!mapFor(seed).nodes.n1_0.refill);
+});

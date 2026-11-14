@@ -12,11 +12,13 @@ import { createRng } from '../src/engine/rng.js';
 import { mapKnowledge, resolveMapMode, nearestShrine, litNodes, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 
-function setup(routes = {}) {
+// `legacy` resolves the routes content a run pinned before the visible-fork map (hidden types, fog, refilling start, uniform draw).
+function setup(routes = {}, legacy = false) {
   // Core authors three rest depths (D10); a test that moves the rest floors states its own count.
   if (routes.restFloors && routes.restsPerAct === undefined) routes = { ...routes, restsPerAct: routes.restFloors.length };
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } });
+  const profile = legacy ? legacyCoreProfile(routes) : resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
   return { reg, run };
@@ -98,8 +100,8 @@ function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
   if (rests.includes(count)) assert.equal(map.shrineIds.length, Object.values(map.nodes).filter(node => node.floor === count && node.branch != null).length);
   for (const node of Object.values(map.nodes)) if (node.branch != null) for (const next of node.next) assert.equal(map.nodes[next].branch, node.branch, `${node.id} -> ${next} crosses branches`);
 }
-test('every seeded core map splits into distinct-boss branches, each with its own rests, elite and boss, across all three acts', () => {
-  const { reg, run } = setup();
+test('legacy routes content: every seeded core map splits into distinct-boss branches, each with its own rests, elite and boss, across all three acts', () => {
+  const { reg, run } = setup({}, true);
   const seen = new Set();
   for (let seed = 1; seed <= 40; seed++) {
     for (let tier = 1; tier <= 3; tier++) {
@@ -157,7 +159,7 @@ test('branch width, length, rest placement and exposed node types follow JSON se
   assert.equal(noRestMap.shrineId, null);
 });
 test('each branch is a tree that forks outward, joins at its boss, and remerges only rarely (owner, 2026-10-27)', () => {
-  const { reg, run } = setup();
+  const { reg, run } = setup({}, true);
   let eligibleGaps = 0, remergeEdges = 0, intoRestGaps = 0, intoRestRemerges = 0, branches = 0, singleStarts = 0, allRestGapsRemerged = 0, forkEdges = 0, narrowEdges = 0, paths = 0, multiLane = 0, forkedBranches = 0;
   for (let seed = 1; seed <= 200; seed++) {
     for (let tier = 1; tier <= 3; tier++) {
@@ -246,8 +248,8 @@ test('route source defaults bind branch width and invalid dimensions fail before
   assert.throws(() => setup({ restFloors: [3, 6] }), /restFloors.*requirePrebossRest/);
 });
 
-test('Core authors fog and pins it over a stale viewer path setting (owner, 2026-10-19)', () => {
-  const { reg, run } = setup();
+test('legacy routes content: fog is pinned over a stale viewer path setting (owner, 2026-10-19)', () => {
+  const { reg, run } = setup({}, true);
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   assert.equal(run.gameProfile.modules.routes.mapMode, 'fog');
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
@@ -322,7 +324,7 @@ test('a rest lights only its own branch\'s next rest, never a sibling branch\'s'
 });
 
 test('the start node refills HP and both flasks on entry unless startNodeRefills is false', () => {
-  const start = routes => { const { reg, run } = setup(routes); return { run, map: buildActMap(reg, createRng(11), run.seatOrder[0], 1) }; };
+  const start = (routes, legacy = true) => { const { reg, run } = setup(routes, legacy); return { run, map: buildActMap(reg, createRng(11), run.seatOrder[0], 1) }; };
   const on = start({});
   assert.equal(on.map.nodes.n1_0.refill, true, 'default is on');
   assert.ok(Object.values(on.map.nodes).filter(node => node.id !== 'n1_0').every(node => !node.refill), 'only the start refills');
@@ -342,6 +344,7 @@ test('the start node refills HP and both flasks on entry unless startNodeRefills
   assert.equal(applyNodeRefill(legacy, old), false, 'a saved graph without the flag does nothing new');
   assert.equal(legacy.hp, 12);
   const off = start({ startNodeRefills: false });
+  assert.ok(!start({}, false).map.nodes.n1_0.refill, 'the shipped Core start node no longer heals');
   assert.ok(!('refill' in off.map.nodes.n1_0) || off.map.nodes.n1_0.refill !== true);
   const spent = hurt();
   assert.equal(applyNodeRefill(spent, off.map.nodes.n1_0), false);

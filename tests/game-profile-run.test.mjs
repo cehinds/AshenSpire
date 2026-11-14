@@ -10,6 +10,7 @@ import { gameProfileClassAvailable,gameProfileCompletedRunMeta } from '../src/mo
 import { beginGameProfileRest,createGameProfileRestDraft,commitGameProfileRest,restServiceUsed } from '../src/model/gameProfileRest.js';
 import { gameProfileRestModel } from '../src/ui/models/GameProfileRestModel.js';
 import { buildActMap } from '../src/engine/actmap.js';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save.js';
@@ -53,7 +54,12 @@ test('seeded route has nine preboss depths, a rest in every lane of every branch
   assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
+  // Core 2 shows every node type (hiddenTypes empty); an old pinned profile still hides them behind '?' events.
   for(const n of Object.values(map.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
+   else assert.equal(n.type,{fight:'monster',event:'event',elite:'elite',treasure:'treasure',shop:'merchant',rest:'shrine',boss:'boss'}[n.actualType]);}
+  const old=legacyCoreProfile(),oldReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old);
+  const oldMap=buildActMap(oldReg,createRng(100+tier),run.seatOrder[tier-1],tier);
+  for(const n of Object.values(oldMap.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
    else if(!['rest','elite','boss'].includes(n.actualType))assert.equal(n.type,'event');}
  }
 });
