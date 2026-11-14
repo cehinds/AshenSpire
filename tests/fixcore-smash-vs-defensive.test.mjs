@@ -133,7 +133,8 @@ test('intent projection: a multi-hit Smash loses its stance bonus once an earlie
   assert.equal(shown.max, 15);
   const preview = previewDamageHits(combat, enemy, combat.player, 4, smashTags, enemy.intent, 3);
   assert.equal(preview.hpLoss, shown.max);
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 0, 0], 'the Smash Poise-damage rider, then a damage-type rider that empties the bar, which stops the rest (the rider is previewed as it lands live)');
+  // Live play drains 3 -> 1 -> 0 (a Core hit applies no damage-type rider; checked against applyAttackDamage below), so the preview does the same.
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 1, 0], 'the Smash Poise-damage rider, then the last Poise point, then nothing left to take');
   for (let i = 0; i < 3; i++) { primeAccuracyRolls(combat); applyAttackDamage(combat, enemy, combat.player, 4, smashTags, enemy.intent); }
   assert.equal(100 - combat.player.hp, shown.max);
 });
