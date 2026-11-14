@@ -1,6 +1,7 @@
 import { renderCard } from './card.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
+import { RenderRankUpOfferCard } from './rankUpOfferCard.js';
 import { mountRewardDoor, replaceRewardFoot } from './rewardDoor.js';
 import { clearSelection } from './cardSelection.js';
 import { openBoundCardInspection } from './cardInspection.js';
@@ -87,7 +88,9 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const equipment = ['weapons', 'armor'].includes(option.kind);
+    const service = option.kind === 'rankUps';
     const definition = card ? registries.cards.get(option.id)
+      : service ? { name: t('rankUp.name') }
       : option.kind === 'relics' ? registries.relics.get(option.id)
       : option.kind === 'potions' ? registries.flasks.get(option.id)
       : option.kind === 'weapons' ? registries.equipment.armaments.find(item => item.id === option.id)
@@ -100,7 +103,8 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       infoBadge: true,
       // Reading a reward never chooses it; the chooser owns that action.
       only: [],
-    }) : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
+    }) : service ? RenderRankUpOfferCard(registries, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
+      : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
       : renderCollectibleCard(registries, definition, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
     face.classList.add('reward-choice-face'); face.dataset.pickId = String(index);
     // First tap selects; a tap on the already-selected card face opens the inspector (owner, 2026-11-05).

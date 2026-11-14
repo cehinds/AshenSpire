@@ -5,6 +5,7 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -175,7 +176,7 @@ function weightedPotionPick(rule,run,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
-function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[]}) {
+function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
@@ -237,12 +238,15 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const history=run.rewardOfferHistory||={cards:{}};history.cards||={};
     for(const option of shown)history.cards[option.id]=(history.cards[option.id]||0)+1;
   }
+  // W25-R: a won fight may also offer to raise a card's rank (rewards.json rankUp.chancePct by fight tier). It rolls on a hash of
+  // the run's seed and the offer's id, not on a stream, so it moves no counter and a reload answers the same.
+  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION});
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
-export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat' } = {}) {
+export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
@@ -250,7 +254,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
   const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
-  return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
@@ -273,14 +277,19 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   (run.gameProfileRewardOffers ||= {})[offerId] = offer;
   return offer;
 }
-export function claimGameProfileReward(registries,run,offerId,index) {
+export function claimGameProfileReward(registries,run,offerId,index,{instanceId=null}={}) {
   const offer=run.gameProfileRewardOffers?.[offerId];
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if (!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
+  if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
-  if(['combatCards','weaponArts'].includes(option.kind)) {
+  let raised=null;
+  if(option.kind===RANK_UP_OPTION.kind) {
+    // W25-R: the service raises one chosen owned card by one rank; the pick rides the claim, so the offer stays one row.
+    if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to rank up');
+    raised=RaiseCardRank(registries,draft,instanceId);
+  } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
     draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
@@ -305,7 +314,7 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   } else throw new Error('Unknown reward category');
   const pending=draft.gameProfileRewardOffers[offerId];pending.taken.push(index);
   if(pending.taken.length>=Math.min(pending.takeCount,pending.options.length))pending.claimed=index;
-  syncZones(draft);Object.assign(run,draft);return option;
+  syncZones(draft);Object.assign(run,draft);return raised?{...option,instanceId:raised.instanceId,rank:raised.rank}:option;
 }
 // Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
 // sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
