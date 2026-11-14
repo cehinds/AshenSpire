@@ -12,8 +12,13 @@ import { smithingPlan } from '../src/model/smithing.js';
 import { gameProfileRestModel, gameProfileSmithModel } from '../src/ui/models/GameProfileRestModel.js';
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+// The pre-one-pick Core rest block (arrival heals, every service once, Level Up listed): a run pins its profile, so an old save keeps it.
+// The one-pick Core block is covered by tests/core-rest-one-pick.test.mjs.
+const LEGACY_RESTS = { servicesPerVisit: 'all', services: ['smith', 'levelUp', 'upgradeCard'],
+  recovery: { hp: 'full', sp: 'full', mp: 'full', healingFlasks: 'full', mpFlasks: 'full' }, smith: { free: true, tiersPerService: 1 } };
 function fixture() {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-ui-test' });
+  run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
   run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   const visit = beginGameProfileRest(run, '1:' + run.mapNodeId);
@@ -126,6 +131,7 @@ test('the editor follows an explicit nonempty configured basic policy without le
 
 test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
   const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
+  run.gameProfile.content.rests = structuredClone(LEGACY_RESTS);
   run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
   run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
