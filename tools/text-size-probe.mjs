@@ -29,39 +29,18 @@ const SCREENS = { combat: '?shot=combat&shotSeed=4', reward: '?shot=reward', res
 const VIEWPORTS = ['1280x800', '390x844'];
 // Budgets: `min` values must be at least the number, `max` values at most. Today's values until the targets are set.
 const BUDGET = {
-  '1280x800 combat minText': { min: 4.63 },
-  '1280x800 combat cardEffect': { min: 11.06 },
-  '1280x800 combat cardName': { min: 11.76 },
-  '1280x800 combat cardType': { min: 8.96 },
-  '1280x800 combat cardCost': { min: 13.67 },
-  '1280x800 combat playerHp': { min: 15.6 },
-  '1280x800 combat largestOtherNumber': { max: 16.27 },
-  '1280x800 combat numberSizes': { max: 11 },
-  '1280x800 combat enemyIntent': { min: 14.4 },
-  '1280x800 reward minText': { min: 5.92 },
-  '1280x800 reward cardEffect': { min: 9.77 },
-  '1280x800 reward cardName': { min: 10.39 },
-  '1280x800 reward cardType': { min: 7.97 },
-  '1280x800 reward cardCost': { min: 14.23 },
-  '1280x800 rest minText': { min: 12 },
-  '390x844 combat minText': { min: 4.8 },
-  '390x844 combat cardEffect': { min: 9.3 },
-  '390x844 combat cardName': { min: 9.89 },
-  '390x844 combat cardType': { min: 7.56 },
-  '390x844 combat cardCost': { min: 11.5 },
-  '390x844 combat playerHp': { min: 9.36 },
-  '390x844 combat minTapTarget': { min: 25.2 },
-  '390x844 combat largestOtherNumber': { max: 14.92 },
-  '390x844 combat numberSizes': { max: 9 },
-  '390x844 combat enemyIntent': { min: 17.6 },
-  '390x844 reward minText': { min: 7.11 },
-  '390x844 reward cardEffect': { min: 11.78 },
-  '390x844 reward cardName': { min: 12.53 },
-  '390x844 reward cardType': { min: 9.58 },
-  '390x844 reward cardCost': { min: 17.16 },
-  '390x844 reward minTapTarget': { min: 25.2 },
-  '390x844 rest minText': { min: 12 },
-  '390x844 rest minTapTarget': { min: 25.2 },
+  // Targets (Wave 2, sizes), effective px. No visible text under 11; hand and reward faces: effect 13, name 12, type 11, cost 16;
+  // the player's HP and the enemy intent are the two largest numbers (22 or more, everything else smaller); at most 8 number
+  // sizes on the combat screen; every control on the phone at least 44 px in both directions.
+  minText: { min: 11 },
+  cardEffect: { min: 13 },
+  cardName: { min: 12 },
+  cardType: { min: 11 },
+  cardCost: { min: 16 },
+  playerHp: { min: 22 },
+  enemyIntent: { min: 22 },
+  numberSizes: { max: 8 },
+  minTapTarget: { min: 44 },
 };
 const args = process.argv.slice(2);
 const argOf = (flag, fallback) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : fallback; };
@@ -153,7 +132,17 @@ const PAGE_SCAN = `(() => {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1 || r.right <= 0 || r.bottom <= 0 || r.left >= vw || r.top >= vh) continue;
     if (getComputedStyle(el).pointerEvents === 'none') continue;
-    taps.push({ sel: pathOf(el), w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10, text: (el.textContent || '').trim().slice(0, 24), disabled: !!el.disabled });
+    // A control may extend its hit area with an invisible ::before/::after box; the larger box is the target.
+    let w = r.width, h = r.height;
+    for (const pseudo of ['::before', '::after']) {
+      const ps = getComputedStyle(el, pseudo);
+      if (ps.content === 'none' || ps.content === 'normal' || ps.position !== 'absolute' || ps.pointerEvents === 'none' || ps.display === 'none') continue;
+      const m = ps.transform !== 'none' ? new DOMMatrixReadOnly(ps.transform) : null;
+      const pw = parseFloat(ps.width) * (m ? Math.hypot(m.a, m.b) : 1), ph = parseFloat(ps.height) * (m ? Math.hypot(m.c, m.d) : 1);
+      const k = zoomOf(el);
+      if (pw * k > w) w = pw * k; if (ph * k > h) h = ph * k;
+    }
+    taps.push({ sel: pathOf(el), w: Math.round(w * 10) / 10, h: Math.round(h * 10) / 10, text: (el.textContent || '').trim().slice(0, 24), disabled: !!el.disabled });
   }
   return { items, taps, vw, vh };
 })()`;
@@ -234,6 +223,10 @@ async function main() {
     console.log(`MEASURE ${tag} ${parts.join(' ')}`);
   }
   let red = 0;
+  for (const s of scans.filter((x) => x.screen === 'combat')) {
+    const get = (k) => checks.find((c) => c.name === `${s.vp} combat ${k}`)?.value;
+    if (!(get('largestOtherNumber') < Math.min(get('playerHp'), get('enemyIntent')))) { console.log(`FAIL ${s.vp} combat largestOtherNumber: ${fmt(get('largestOtherNumber'))} is not under both focus numbers`); red += 1; }
+  }
   const useBudget = argOf('--budgets', '') !== 'none';
   for (const c of checks) {
     const key = c.name.replace(/^\S+ \S+ /, '');
