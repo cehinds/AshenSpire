@@ -438,7 +438,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   if (openingId && reachable.has(openingId)) {
     const reading = board.readingOf(openingId);
     if (reading) readings.set(openingId, reading);
-    selection = { selectedId: openingId };
+    selection = soleStartId ? { selectedId: openingId, selectedAt: performance.now() } : { selectedId: openingId };
     renderSelection();
     openTray();
   }

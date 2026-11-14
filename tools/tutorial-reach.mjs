@@ -581,10 +581,7 @@ async function main() {
   };
   const walkNewClimb = async (seed) => {
     await clickSel('.title-menu .slot-new', 'NEW');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot picker');
-    await clickSel('[data-title-action="modal-continue"]', 'the slot picker Continue');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
-    await clickSel('[data-title-action="review-new"]', 'Start in this slot');
+    // A fresh profile has no slot to choose: New Game opens creation for slot 1 at once.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
     // The staged flow (Class -> Attributes -> Equipment -> Feats ->
     // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
@@ -599,7 +596,7 @@ async function main() {
       }
     };
     await clickSel('#cz-classes .cz-class', 'the first class');
-    await clickSel('#cz-next', 'Next after Class');
+    await clickSel('#cz-next', 'Customise after Class (Begin is on the Class step; Review holds the seed)');
     // Core uses fixed starting choices and goes straight to Review. Detailed
     // creation retains the authored Attributes -> Equipment walk below.
     await until(`(${onStage('review')}) || (${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select'))`, 'Review or Attributes after Class');
