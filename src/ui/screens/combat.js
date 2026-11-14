@@ -290,6 +290,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
+        <div class="turn-skip-hint" aria-hidden="true">${t('combat.skipHint')}</div>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
         <div class="combat-expansion-controls" aria-live="polite"></div>

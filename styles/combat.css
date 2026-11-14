@@ -1395,6 +1395,13 @@
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
 }
 .victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
+/* While the enemies act, a pointer press skips their playback (ui/fx.js); the hint says so and is gone with the turn. */
+.turn-skip-hint {
+  position: absolute; top: calc(30px / var(--ui-zoom,1)); left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
+  font: calc(12px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .06em; white-space: nowrap; color: var(--muted);
+  opacity: 0; transition: opacity 160ms ease;
+}
+[data-turn='enemy'] .turn-skip-hint { opacity: .8; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @container game-viewport (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
