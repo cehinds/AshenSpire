@@ -25,14 +25,14 @@ test('the note uses the combat log\'s own wording', () => {
     assert.equal(note.text, row.text, `${event.reason}: the same line as the log`);
   }
   assert.equal(latestReactionNote([notCovered], { registries, enemies }).text, "No reaction: Counter can't answer a Sweep.");
-  assert.equal(latestReactionNote([cost], { registries, enemies }).text, 'Not enough SP to Sweep (need 1, have 0).');
+  assert.equal(latestReactionNote([cost], { registries, enemies }).text, 'Not enough Stamina to Sweep (need 1, have 0).');
 });
 
 test('the newest note wins, and only after the last one shown', () => {
   const events = [{ ...cost, ownerId: 'player' }, { type: 'damageDealt' }, { ...notCovered, ownerId: 'player' }];
   assert.equal(latestReactionNote(events, { registries, enemies }).index, 2, 'the newest wins');
   assert.equal(latestReactionNote(events, { after: 2, registries, enemies }), null, 'an old note is not shown twice');
-  assert.equal(latestReactionNote([cost], { registries, enemies }).text, 'Not enough SP to Sweep (need 1, have 0).');
+  assert.equal(latestReactionNote([cost], { registries, enemies }).text, 'Not enough Stamina to Sweep (need 1, have 0).');
 });
 
 test('the toast: one at a time, polite, gone after its life, survives a re-render', (t) => {
@@ -88,7 +88,7 @@ test('place() avoids the hero\'s mini HUD', () => {
 test('unaffordable automatic range return explains kept defense', () => {
   const event = { type: 'combatRangeReturnUnavailable', sourceId: 'seatA', ownerId: 'seatA', targetId: 'e1', required: 2, available: 1, advanceSp: 2, reason: 'stamina', defenseKept: true };
   const note = latestReactionNote([event], { registries, enemies });
-  assert.equal(note.text, 'Counter return skipped: not enough SP to Advance (need 2, have 1). Defense kept.');
+  assert.equal(note.text, 'Counter return skipped: not enough Stamina to Advance (need 2, have 1). Defense kept.');
   const [row] = combatLogEntries([event], { registries, players: [{ id: 'seatA', name: 'Ash' }], enemies });
   assert.equal(row.text, note.text, 'toast and durable log agree');
 });
@@ -96,7 +96,7 @@ test('unaffordable automatic range return explains kept defense', () => {
 test('an unaffordable automatic hostile action uses distinct catalog wording in the local note and log', () => {
   const event = { type: 'combatRangeActionUnavailable', sourceId: 'player', ownerId: 'player', targetId: 'e1', required: 2, available: 1, advanceSp: 2, reason: 'stamina', triggerKey: 'relic:starterMedallion' };
   const note = latestReactionNote([event], { registries, enemies });
-  assert.equal(note.text, 'Automatic action skipped: not enough SP to Advance (need 2, have 1).');
+  assert.equal(note.text, 'Automatic action skipped: not enough Stamina to Advance (need 2, have 1).');
   assert.doesNotMatch(note.text, /Counter|Defense kept/);
   const [row] = combatLogEntries([event], { registries, enemies });
   assert.equal(row.text, note.text);

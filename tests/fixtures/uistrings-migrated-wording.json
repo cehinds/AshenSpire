@@ -1,0 +1,6 @@
+{
+  "reason": "Wave 2 one-word wording: the Menu control row is new, and keeping it in the permanent shadow sweep stops a src/ui literal from repainting it.",
+  "ids": [
+    "common.menu"
+  ]
+}

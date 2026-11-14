@@ -31,7 +31,7 @@ test('enemy deck uses the actual authored membership, names and runtime move pri
   assert.deepEqual(read.cards.map(card => card.cardId), authored.defaultDeck);
   assert.equal(read.current.name, 'Guard');
   assert.equal(read.last.name, 'Slash');
-  assert.match(read.last.meta, /Last played.*SP.*MP/);
+  assert.match(read.last.meta, /Last played.*Stamina.*Mana/);
   assert.equal(read.last.detail, f.moves.find(row => row.moveId === 'slash').detail);
   assert.equal(JSON.stringify(f), before, 'inspection never changes action selection or combat state');
 });
@@ -50,8 +50,8 @@ test('hidden current action remains unread while the resolved last card remains 
 test('SP remains visible at zero in enemy summary, current state and preview', () => {
   const resources = [{ label: 'HP', value: 12, max: 20 }, { label: 'SP', value: 0, max: 4 }];
   const view = projectCombatantInspector({ name: 'Soldier', resources });
-  assert.deepEqual(view.sections[0].rows.find(row => row.label === 'SP').value, '0 / 4');
-  assert.equal(view.sections.find(row => row.id === 'state').rows.find(row => row.label === 'SP').value, '0 / 4');
+  assert.deepEqual(view.sections[0].rows.find(row => row.label === 'Stamina').value, '0 / 4');
+  assert.equal(view.sections.find(row => row.id === 'state').rows.find(row => row.label === 'Stamina').value, '0 / 4');
   assert.deepEqual(previewMeters(resources).map(row => row.label), ['HP', 'SP']);
 });
 
@@ -67,7 +67,7 @@ test('last played uses the committed receipt after live modifiers change', () =>
     } },
   ];
   const read = enemyDeckInspection(f.combat, f.enemy, f.moves, f.preview);
-  assert.match(read.last.meta, /Paid 3 SP/);
+  assert.match(read.last.meta, /Paid 3 Stamina/);
   assert.match(read.last.detail, /17 × 2 damage/);
   assert.doesNotMatch(read.last.detail, /100/);
   assert.notEqual(read.last.detail, read.cards.find(row => row.last).detail,
@@ -163,5 +163,5 @@ test('Core Block and rating modifiers distinguish base payload from projected an
   const committedBase = receipt.actionPreview.actionEffects.find(row => row.op === 'damage').amount;
   assert.notEqual(committedBase, blocked.damage, 'the committed base opcode is not the resulting HP loss');
   assert.match(snapshot.detail, /Base .* damage to player before combat modifiers/);
-  assert.match(snapshot.meta, /Paid .* SP/);
+  assert.match(snapshot.meta, /Paid .* Stamina/);
 });

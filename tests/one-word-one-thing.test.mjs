@@ -53,7 +53,7 @@ test('every return control reads Back, never Back to a place', () => {
   assert.ok(back.length >= 5);
   for (const row of back) assert.equal(row.text, 'Back', row.where);
   const source = readFileSync(new URL('../src/ui/components/saveSlotSelector.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /back: 'Back to /);
+  assert.doesNotMatch(source, /back: 'Back/);
 });
 
 test('Confirm commits a selection and Continue leaves a finished screen, in sentence case', () => {
