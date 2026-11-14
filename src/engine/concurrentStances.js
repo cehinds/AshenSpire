@@ -1,6 +1,6 @@
 import { stanceMitigation } from './stanceMitigation.js';
 import { proposalCardPlan, proposalContext } from './proposalStatusRuntime.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import * as StatusHelpers from '../framework/statusSemantics.js';
 export const MANEUVERS=Object.freeze(['attack','smash','defend','sweep','counter','casting']);
 function policy(ctx,entity) {
@@ -43,7 +43,10 @@ export function defensiveCombatStance(ctx,entity,carrier={}) {
 // Core 2: a Poise break puts the owner in the Staggered stance and never adds a `staggered` status, yet content gates
 // on hasStatus(..., 'staggered'). This is the one place that answers "is it staggered" for predicates and previews.
 export function isStaggered(ctx,entity) {
- return !!entity && fixCoreEnabled(ctx) && activeCombatStances(ctx,entity).some(row=>row?.maneuver==='staggered');
+ if(!entity || !fixCoreEnabled(ctx))return false;
+ // Wave 3: under `poise.breakRule: "broken"` the word on cards is Broken, and only a Poise break earns it (entity.broken).
+ if(FixCoreBrokenRules(ctx))return !!entity.broken;
+ return activeCombatStances(ctx,entity).some(row=>row?.maneuver==='staggered');
 }
 /** Status stacks, counting the Core Staggered stance as one `staggered` stack. */
 export function statusStacksWithStance(ctx,entity,statusId) {

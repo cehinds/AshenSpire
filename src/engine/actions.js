@@ -4,7 +4,8 @@ import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
@@ -1179,6 +1180,10 @@ export function fixCoreStagger(ctx, entity, options = {}) {
   // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
   if (entity?.combatCounter?.charges === 0) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
+  // Owner, 2026-11-14: under `poise.breakRule: "broken"` a Poise break (only that cause) makes the owner Broken (brokenRule.js)
+  // instead of Staggered; weakness and Smash-advantage staggers keep the stance below.
+  const broken = options.cause === 'poiseBreak' ? FixCoreBrokenRules(ctx) : null;
+  if (broken) return { cancelledMove: BreakCombatant(ctx, entity, broken) };
   if (rules.stance) {
     entity.combatStance = fixCoreStaggeredStance(entity, rules);
     ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered' });
@@ -1190,6 +1195,7 @@ export function fixCoreStagger(ctx, entity, options = {}) {
   if (rules.vulnerableStacks > 0) statuses.applyStatus(ctx, entity, 'vulnerable', rules.vulnerableStacks, entity);
   if (entity.kind === 'player') ctx.emit('playerStaggered', { targetId: entity.id, actionLoss: rules.staminaLoss, statuses: rules.vulnerableStacks > 0 ? { vulnerable: rules.vulnerableStacks } : {},
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}), ...(options.cause ? { cause: options.cause } : {}) });
+  return { cancelledMove: null };
 }
 
 function staggerRefused(ctx, enemy) {
@@ -1200,8 +1206,8 @@ export function staggerEnemy(ctx, enemy, options = {}) {
   if (staggerRefused(ctx, enemy)) return false;
   if (fixCoreEnabled(ctx)) {
     // Owner D13: Staggered is a stance (-1 SP, +1 Vulnerable), not a skipped turn or a stacking status.
-    fixCoreStagger(ctx, enemy, options);
-    ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: null, ...(options.cause ? { cause: options.cause } : {}) });
+    const { cancelledMove } = fixCoreStagger(ctx, enemy, options);
+    ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove, ...(options.cause ? { cause: options.cause } : {}) });
     return true;
   }
   Matchups.clearCombatCounter(enemy, ctx);

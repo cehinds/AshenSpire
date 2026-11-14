@@ -133,7 +133,7 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // A miss preserves the target's defenses for the next hit. Enumerate/merge the reachable
     // target states (Block, pools, stance, statuses) rather than multiply all-landed damage by hit probability.
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
-    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
+    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.broken, row.statuses, row.reflectStacks]);
     // Owner, 2026-11-14: enemies act in order, so the number on a later attacker is what the player loses after the earlier ones have hit
     // (their Block spent, their Poise broken, a Counter used up). A forecast with no action in flight carries each earlier, readable attack
     // through the same state before the Counter's own Block is read; the receipt taken as an action starts already holds them.

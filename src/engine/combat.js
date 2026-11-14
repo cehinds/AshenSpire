@@ -69,6 +69,7 @@ import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRa
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
+import { ApplyPendingLoss, EndBrokenWhenDue } from './brokenRule.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -809,10 +810,14 @@ function enemyPhase(combat) {
       if (combat.result) return;
       if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
+      // Broken ends with the turn whose action it lost: the enemy's Poise refills to full (Wave 3).
+      if (enemy.alive) EndBrokenWhenDue(combat, enemy);
     }
   }
 
   combat.emit('enemyTurnEnd', { turn: combat.turn });
+  // The player's Broken lasts through the round after the break (its short turn and the enemy phase that answers it).
+  if (combat.player.alive) EndBrokenWhenDue(combat, combat.player);
   drainQueue(combat);
   delete combat.reactionCursor;
 }
@@ -957,6 +962,9 @@ function rollIntents(combat, isFirstTurn = false) {
     delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
     if (enemy.pendingMove) {
+      // Broken in its own turn (Wave 3): the held charge is its lost next action and is cancelled with its charge.
+      ApplyPendingLoss(combat, enemy);
+      if (!enemy.pendingMove) continue;
       // A committed delayed move stays telegraphed until it resolves.
       if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true };
       continue;
@@ -970,11 +978,14 @@ function rollIntents(combat, isFirstTurn = false) {
     const moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
+      ApplyPendingLoss(combat, enemy);
       continue;
     }
     presentIntent(combat, enemy, def, moveId);
     // The pool's planned moves play after the head in the enemy phase (enemyPhase), so the plan is due this turn.
     enemy.planDue = true;
+    // An enemy Broken in its own turn loses the head of this plan (Wave 3): its intent reads Broken, the rest of the plan stays.
+    ApplyPendingLoss(combat, enemy);
     drainQueue(combat);
   }
 }

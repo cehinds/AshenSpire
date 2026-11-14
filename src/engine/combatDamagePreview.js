@@ -1,4 +1,4 @@
-import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import * as ProfileCombat from './gameProfileCombat.js';
 import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
@@ -35,6 +35,13 @@ export function damagePreviewState(ctx, target) {
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
+  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (x1.5, no Vulnerable grant).
+  const broken = FixCoreBrokenRules(ctx);
+  if (broken) {
+    defender.broken = { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1, preview: true };
+    defender.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: broken.damageMultiplier };
+    return;
+  }
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
   if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
