@@ -13,6 +13,7 @@
     "dev": "node tools/serve.mjs --watch",
     "qa:sandbox": "node tools/qa-sandbox.mjs",
     "qa:combat-canvas": "node tools/combat-canvas-qa.mjs",
+    "probe:enemy-turn": "node tools/verdict.mjs -- node tools/enemy-turn-probe.mjs",
     "test": "node tests/run-node.mjs --no-selftests --no-discovered",
     "test:all": "node tests/run-node.mjs",
     "test:pr": "node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests --no-discovered && node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --no-slow",

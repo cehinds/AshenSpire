@@ -277,7 +277,7 @@ test('a floater\'s sound plays when it spawns, not when it queued', (t) => setup
 }));
 
 test('a rebuilt figure (new element, same data-eid) receives the floaters that were waiting', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = () => ({ box: a.box, isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = () => ({ box: a.box, isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(), second = figure();
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: (sel) => (sel.includes('data-eid="player"') ? second : null) } });
   floatNum(fx, first, '+1', 'blk'); floatNum(fx, first, '+2', 'blk');
@@ -288,7 +288,7 @@ test('a rebuilt figure (new element, same data-eid) receives the floaters that w
 }));
 
 test('a queued callout word survives a figure rebuild and spawns at the new sprite', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = (left) => ({ getBoundingClientRect: () => ({ ...a.box, left, right: left + a.box.width, bottom: a.box.top + a.box.height }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = (left) => ({ getBoundingClientRect: () => ({ ...a.box, left, right: left + a.box.width, bottom: a.box.top + a.box.height }), isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(100), second = figure(300);
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: (sel) => (sel.includes('data-eid="player"') ? second : null) } });
   floatNum(fx, first, '+1', 'blk');
@@ -301,7 +301,7 @@ test('a queued callout word survives a figure rebuild and spawns at the new spri
 }));
 
 test('after a rebuild the new sprite shares the old column: one sequence, not two', (t) => setup(t, ({ fx, a, spawns }) => {
-  const figure = () => ({ getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: () => ({ dataset: { eid: 'player' } }) });
+  const figure = () => ({ getBoundingClientRect: () => ({ ...a.box, right: 180, bottom: 320 }), isConnected: true, closest: (selector) => selector === '.enemy-row' ? null : { dataset: { eid: 'player' } } });
   const first = figure(), second = figure();
   Object.defineProperty(fx, 'ownerDocument', { value: { querySelector: () => second } });
   floatNum(fx, first, '+1', 'blk');

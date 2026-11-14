@@ -69,13 +69,13 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
   let settled = false;
   let dismissed = false;
   const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
-  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'combat.reaction.skip'), role: 'exit' });
+  const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), role: 'exit' });
   let bodyHost = null;
   const shell = openModal({
     title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
     className: 'reaction-choice', deferFocus: true,
     initialFocus: () => bodyHost?.querySelector('[data-reaction-option]') || null,
-    closeLabel: t(stacked ? 'combat.reaction.resolve' : 'combat.reaction.skip'), secondary: [decline], primary: play,
+    closeLabel: t(stacked ? 'combat.reaction.resolve' : 'common.skip'), secondary: [decline], primary: play,
     body(host) {
       bodyHost = host;
       const incoming = intentDamageRead(pending.intentPreview);
