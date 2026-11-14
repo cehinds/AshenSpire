@@ -249,10 +249,16 @@ export function ApplyCombatBeat(disp, events, {
                 }
                 break;
             case 'combatStanceChanged':
-                if (t && e.broken) t.broken = true;
+                if (t && e.broken)
+                {
+                    t.broken = true;
+                }
                 break;
             case 'brokenEnded':
-                if (t) t.broken = false;
+                if (t)
+                {
+                    t.broken = false;
+                }
                 break;
             case 'arcaneExposureChanged':
                 if (t && t.arcaneExposure)
