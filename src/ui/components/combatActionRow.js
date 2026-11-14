@@ -81,11 +81,14 @@ export const POTIONS_TIP_HTML = `<div class="tt-title">${esc(t('potions.run.titl
  * renderControls repaints it whenever the binding changes; it wears the same
  * row (combat.endTurn) the first render does, so a reword survives a rebind.
  */
-export function paintEndTurnKey(endTurn, key) {
+export function paintEndTurnKey(endTurn, key, aria = '') {
+  // `aria` overrides the accessible name while a warning stands ("End turn (you can still play a card)").
   if (endTurn?.closest?.('.combat-action-row')) {
-    paintFooterArt(endTurn.closest('.combat-action-row'), { endTurnKey: key });
+    paintFooterArt(endTurn.closest('.combat-action-row'), { endTurnKey: key, endTurnAria: aria });
+    if (aria) endTurn.setAttribute('aria-label', aria);
     return;
   }
+  if (aria) endTurn?.setAttribute('aria-label', aria); else endTurn?.removeAttribute('aria-label');
   if (!endTurn || endTurn.querySelector('.et-key')?.textContent === key) return;
   endTurn.replaceChildren(t('combat.endTurn'), keycap(key, { class: 'et-key' }));
 }

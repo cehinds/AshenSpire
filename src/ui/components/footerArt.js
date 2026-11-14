@@ -121,7 +121,7 @@ export function paintFooterArt(row, values = {}) {
     }
   }
   scheduleCaps();
-  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
+  row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnAria || (next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn));
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
   // The key sits on its own line under the words, as the full label's key does.

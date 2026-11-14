@@ -2666,19 +2666,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
-    paintEndTurnKey($('.end-turn'), etKey);
+    // End Turn never asks (owner, 2026-11-14). While a card is still playable it
+    // wears a warning and says so instead, so the answer is on the button before
+    // the tap and not in a modal after it.
+    const cardsLeft = combat.phase === 'player' && endTurnHasPlayableCard();
+    paintEndTurnKey($('.end-turn'), etKey, cardsLeft ? t('combat.endTurn.cardsLeft') : '');
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     const endTurn = $('.end-turn');
     const confirmReady = String(combat.phase === 'player' && !hasPlayable);
     if (endTurn.dataset.confirmReady !== confirmReady) endTurn.dataset.confirmReady = confirmReady;
-    // End Turn never asks (owner, 2026-11-14). While a card is still playable it
-    // wears a warning and says so instead, so the answer is on the button before
-    // the tap and not in a modal after it.
-    const cardsLeft = combat.phase === 'player' && endTurnHasPlayableCard();
     endTurn.classList.toggle('end-turn--cards-left', cardsLeft);
-    const endTurnWords = cardsLeft ? t('combat.endTurn.cardsLeft') : t('combat.endTurn');
-    if (endTurn.getAttribute('aria-label') !== endTurnWords) endTurn.setAttribute('aria-label', endTurnWords);
 
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
