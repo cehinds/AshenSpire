@@ -3,6 +3,7 @@ import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { VictorySpoils } from './ui/components/victorySpoils.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
 import { snapshotRunForDiff } from './model/runChangeReceipt.js';
@@ -99,8 +100,6 @@ import { executeRunEffects, drawCards, discardFromHand, executeAction } from './
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
-// After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
-import { VictorySpoils } from './ui/components/victorySpoils.js';
 import { SyncHudCinders } from './ui/components/hudmeta.js';
 import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
