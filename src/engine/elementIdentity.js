@@ -11,8 +11,8 @@
 // Headless: no document, window or timers.
 import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
-import { applyStatus, removeStatus, getStacks } from './statuses.js';
-import { applyHeal, applyLoseHp } from './actions.js';
+import * as Statuses from './statuses.js';
+import * as Actions from './actions.js';
 
 export { ElementRulesOf, ElementOfHit, HitsAllTargets };
 
@@ -25,7 +25,7 @@ export function ElementAttribute(ctx, entity, id) {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 const sumAttributes = (ctx, entity, ids) => ids.reduce((sum, id) => sum + ElementAttribute(ctx, entity, id), 0);
-const stacksOf = (entity, id) => getStacks(entity, id);
+const stacksOf = (entity, id) => Statuses.getStacks(entity, id);
 const defOf = (ctx, entity) => (entity?.kind === 'enemy' && entity.enemyId && ctx?.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null);
 /** Creature tag read (`undead`, `boss`): the entity's own tags, else its definition's tags and kinds. */
 export function ElementHasTag(ctx, entity, tag) {
@@ -44,7 +44,7 @@ function addCapped(ctx, target, id, stacks, source, cap) {
   if (!target?.alive || !(stacks > 0)) return 0;
   const room = Math.max(0, cap - stacksOf(target, id));
   const add = Math.min(Math.floor(stacks), room);
-  if (add > 0) applyStatus(ctx, target, id, add, source);
+  if (add > 0) Statuses.applyStatus(ctx, target, id, add, source);
   return add;
 }
 
@@ -139,22 +139,22 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
   if (!rules || !receipt || receipt.evaded) return;
   const element = ElementOfHit(carrier);
   ctx.elementHit = { sourceId: source?.id || null, targetId: target.id, element, amount: receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount, hpLoss: receipt.hpLoss, chain: !!carrier?.elementChain };
-  if (stacksOf(target, 'brittle') > 0) removeStatus(ctx, target, 'brittle', { reason: 'consumed' });
+  if (stacksOf(target, 'brittle') > 0) Statuses.removeStatus(ctx, target, 'brittle', { reason: 'consumed' });
   if (!element) return;
-  if (receipt.element?.heal > 0) applyHeal(ctx, target, receipt.element.heal);
+  if (receipt.element?.heal > 0) Actions.applyHeal(ctx, target, receipt.element.heal);
   if (element === 'necrotic' && target.alive && !ElementHasTag(ctx, target, rules.necrotic.undeadTag)) {
     const stacks = Math.max(rules.necrotic.buildupMin, ElementAttribute(ctx, source, rules.necrotic.buildupAttribute));
-    applyStatus(ctx, target, 'necroticBuildup', stacks, source);
+    Statuses.applyStatus(ctx, target, 'necroticBuildup', stacks, source);
   }
   if (element === 'divine' && source?.alive) {
     const wis = ElementAttribute(ctx, source, rules.divine.healAttribute);
-    if (wis > 0) applyHeal(ctx, source, wis);
+    if (wis > 0) Actions.applyHeal(ctx, source, wis);
     const cleanse = ElementAttribute(ctx, source, rules.divine.cleanseAttribute);
-    for (const id of ['necroticBuildup', 'shock']) if (cleanse > 0 && stacksOf(source, id) > 0) removeStatus(ctx, source, id, { amount: cleanse, reason: 'consumed' });
+    for (const id of ['necroticBuildup', 'shock']) if (cleanse > 0 && stacksOf(source, id) > 0) Statuses.removeStatus(ctx, source, id, { amount: cleanse, reason: 'consumed' });
   }
   if (element === 'frost' && target.alive) {
     const stacks = rules.frost.chillBase + Math.floor(ElementAttribute(ctx, source, 'intelligence') / rules.frost.chillIntPerExtra);
-    applyStatus(ctx, target, 'chill', stacks, source);
+    Statuses.applyStatus(ctx, target, 'chill', stacks, source);
   }
   if (element === 'force' && target.alive && !carrier?.elementChain) ElementPushPull(ctx, source, target, carrier);
 }
@@ -188,11 +188,11 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
     addCapped(ctx, target, 'shock', stacks, source, rules.shock.cap);
   } else if (hit.element === 'divine') {
     const smite = Math.floor(hit.amount * rules.divine.smiteFraction);
-    if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
+    if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
   } else if (hit.element === 'frost') {
-    if (stacksOf(target, 'chill') > 0) { applyStatus(ctx, target, 'freeze', 1, source); applyStatus(ctx, target, 'brittle', 1, source); }
+    if (stacksOf(target, 'chill') > 0) { Statuses.applyStatus(ctx, target, 'freeze', 1, source); Statuses.applyStatus(ctx, target, 'brittle', 1, source); }
   } else if (hit.element === 'force') {
-    applyStatus(ctx, target, 'knockback', 1, source);
+    Statuses.applyStatus(ctx, target, 'knockback', 1, source);
     if (ctx.rangeState?.policy?.enabled && source && target.alive) {
       const sourceKey = actorRangeKey(ctx, source), targetKey = actorRangeKey(ctx, target);
       if (sourceKey && targetKey && engagementBand(ctx.rangeState, sourceKey, targetKey) === 0) ElementPushPull(ctx, source, target, {});
@@ -259,8 +259,8 @@ export function ElementTurnStart(ctx, entity) {
   const burn = stacksOf(entity, 'burn');
   if (burn > 0 && rolls(ctx, burn * rules.burn.explodeChancePerStack)) {
     ctx.emit?.('elementBurnExploded', { targetId: entity.id, amount: burn });
-    for (const ally of sameSide(ctx, entity)) if (ally !== entity && ally.alive) applyLoseHp(ctx, ally, burn, 'burn explosion');
-    removeStatus(ctx, entity, 'burn', { reason: 'consumed' });
+    for (const ally of sameSide(ctx, entity)) if (ally !== entity && ally.alive) Actions.applyLoseHp(ctx, ally, burn, 'burn explosion');
+    Statuses.removeStatus(ctx, entity, 'burn', { reason: 'consumed' });
   }
   const chill = stacksOf(entity, 'chill'), chillLoss = Math.floor(chill / rules.frost.chillStacksPerStaminaLoss);
   if (chillLoss > 0) {
@@ -268,7 +268,7 @@ export function ElementTurnStart(ctx, entity) {
     else entity.pendingActionLoss = (entity.pendingActionLoss || 0) + chillLoss;
   }
   if (stacksOf(entity, 'freeze') > 0) {
-    removeStatus(ctx, entity, 'freeze', { reason: 'consumed' });
+    Statuses.removeStatus(ctx, entity, 'freeze', { reason: 'consumed' });
     loseAction(ctx, entity, 'freeze', rules.frost.freezePlayerStaminaLoss);
   }
   const shock = stacksOf(entity, 'shock');
@@ -279,16 +279,16 @@ export function ElementTurnStart(ctx, entity) {
 export function ElementTurnEnd(ctx, entity) {
   const rules = ElementRulesOf(ctx);
   if (!rules || !entity?.alive) return;
-  if (entity.statuses?.knockback) removeStatus(ctx, entity, 'knockback', { reason: 'consumed' });
+  if (entity.statuses?.knockback) Statuses.removeStatus(ctx, entity, 'knockback', { reason: 'consumed' });
   const buildup = stacksOf(entity, 'necroticBuildup');
   if (!(buildup > 0)) return;
   // A boss cannot be struck dead by build-up: it takes the build-up as damage at the end of each of its turns and the build-up resets (owner wording: "bosses
   // instead take damage equal to the build-up at the end of their turn and the build-up resets"). Anything else dies once build-up reaches its current HP.
   if (ElementHasTag(ctx, entity, rules.necrotic.bossTag)) {
-    removeStatus(ctx, entity, 'necroticBuildup', { reason: 'consumed' });
-    applyLoseHp(ctx, entity, buildup, 'necrotic build-up');
+    Statuses.removeStatus(ctx, entity, 'necroticBuildup', { reason: 'consumed' });
+    Actions.applyLoseHp(ctx, entity, buildup, 'necrotic build-up');
   } else if (buildup >= entity.hp) {
     ctx.emit?.('elementNecroticDeath', { targetId: entity.id, amount: buildup });
-    applyLoseHp(ctx, entity, entity.hp, 'necrotic build-up');
+    Actions.applyLoseHp(ctx, entity, entity.hp, 'necrotic build-up');
   }
 }
