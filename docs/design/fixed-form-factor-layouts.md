@@ -54,3 +54,37 @@ game out on that form factor's fixed canvas, using the existing preset machinery
   (a landscape phone must still be told to turn upright).
 - Popovers/dialogs already compensate (`styles/base.css:371`); pointer math uses `viewViewportBox`.
 - `?shot=` screenshot boots and the sandbox QA sizes (1280×800, 390×844) must keep working.
+
+## Relative to the canvas, never to the window (owner, 2026-11-14)
+
+Owner: "game keeps auto scaling, it shouldn't do that" and "it can change between
+desktop and mobile and tablet and wide screen, but each should have it's own
+configuration that's relative".
+
+- The rule.
+  - The real window picks the form factor (and so the canvas); a resize may switch it.
+  - Inside a form factor every combat element (grid and combatants, overhead HUDs,
+    sky / props / ground and the floor line, hand cards, action row, header) is laid
+    out only in that canvas's px. The window changes exactly one thing: the uniform
+    scale and letterbox offset of `<html>`'s transform.
+  - So layout is path-independent: after any chain of resizes it equals a fresh load
+    at that window, and two windows of one form factor show the same picture, scaled.
+  - The only real-window reads are the form-factor pick, the scale/offset, and the
+    short-screen gate. Map and menus keep Auto scaling.
+- How the code keeps it.
+  - `CanvasBox()` / `CanvasRect()` (`src/ui/viewViewport.js`) give the canvas size,
+    scale and offset, and convert a `getBoundingClientRect` (scaled real px) to
+    canvas px. `<html>` carries `data-view-left` / `data-view-top` beside
+    `data-view-scale`.
+  - A zoom read off a rect over local px carries the fit scale. The hand plans
+    (`hand.js`) and the band plans (`combatLayout.js`) take the canvas zoom, so
+    their authored px are canvas px; the overhead racks scale their authored heights
+    and gaps by the fit before they meet rects.
+  - The battlefield relays out when its inputs change (the canvas size and the
+    field's and hand's local boxes), not on window thresholds, and the fit scale and
+    offset vars no longer force a refit.
+- Check: `node tools/combat-canvas-qa.mjs` (`npm run qa:combat-canvas`) compares
+  canvas-px rects across same-form-factor windows, a resize chain and a drag.
+- Open: SPEC.md keeps the player rack's gap at "a fixed 10 screen-pixel" above the
+  art (and `tools/player-hud-clearance-qa.mjs` asserts it at 320x740), so that one
+  gap still follows the window's scale (up to 2.7 canvas px at 2000x1225).
