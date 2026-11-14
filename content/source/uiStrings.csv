@@ -1704,6 +1704,8 @@ combat.intent.damageContact,,Hit {index}/{count} · next {amount} {basis},,
 
 combat.receipt.hitLabel,,Hit,,
 combat.receipt.hitsLabel,,Hits,,
+combat.receipt.yourDamage,,Your damage: {amount},,
+combat.receipt.yourDamageTimes,,Your damage: {amount} × {count},,
 gameProfile.rest.service.upgradeCard,,Upgrade Card,Upgrade Card,
 gameProfile.rest.description.upgradeCardAll,,Upgrade one card. The first upgrades are free.,Upgrade one card. The first upgrades are free.,
 gameProfile.rest.noUpgradeCard,,No card can be upgraded.,No card can be upgraded.,
