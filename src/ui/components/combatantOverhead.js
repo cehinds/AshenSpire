@@ -155,7 +155,13 @@ export function intentParts(parts = [], { unknown = false } = {}) {
   for (const part of visible) {
     const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = part.icon;
     group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
-    if (part.value != null || unknown) {
+    if (part.note && !unknown) {
+      // A charging move: its later number (when it has one) over the turns left, both small and not read as incoming damage.
+      const stack = document.createElement('span'); stack.className = 'intent-damage-read intent-later';
+      if (part.value != null) { const value = document.createElement('strong'); value.className = 'intent-action-value'; value.textContent = String(part.value); stack.append(value); }
+      const note = document.createElement('small'); note.className = 'intent-later-note'; note.textContent = part.note; stack.append(note);
+      group.append(stack);
+    } else if (part.value != null || unknown) {
       const value = document.createElement('strong'); value.className = 'intent-action-value';
       value.textContent = unknown ? '?' : String(part.value);
       if (part.summary && !unknown) {
