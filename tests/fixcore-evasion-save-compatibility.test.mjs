@@ -44,6 +44,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const snapshot = serializeCombatSnapshot(combat);
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
+  // A fight saved before the 2026-11-14 ruling: it has no hitRoll / evadeStacksPerCard / perception.roll keys, so it keeps rolling and grants evadeStackBase.
+  delete snapshot.fixCoreRules.accuracy.hitRoll; delete snapshot.fixCoreRules.accuracy.evadeStacksPerCard; delete snapshot.fixCoreRules.perception.roll;
   const restored = restoreStripped({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 2);
@@ -55,9 +57,10 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
-  // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped 3, and the
+  // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped evadeStacksPerCard, and the
   // grant matches the face. Off-combat faces (no combat rules) still read the shipped rule.
-  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 3 Evade.');
+  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade.');
+  assert.equal(restored.fixCoreRules.accuracy.hitRoll, undefined, 'the saved fight keeps rolling');
   const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join('').replace(/<[^>]*>/g,'');
   const plain = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored });
   const live = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored, preview: previewCard(restored, 'resumed-evade', null) });
@@ -110,8 +113,9 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-07: the mechanics-kernel move (src/model/mechanicsKernel.js → engine/runtime/bindings.mjs) moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: the stance move (src/engine/combatRounds/stance.js → src/model/stance.js) repoints the maneuver_smash manifest, which moves the runtime hash (the old one is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-08: enemy-level budgets on the integrated dev runtime; old saves keep their own rules.
+  // Re-pinned 2026-11-14: exact hits and intents (hitRoll, evadeStacksPerCard, perception.roll) move the runtime hash (63e8... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-14: the one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp) moves the runtime hash (9808... is now in PREVIOUS_RUNTIMES, so a save from it still resumes).
-  assert.equal(profile.lock.runtimeHash, 'sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034');
+  assert.equal(profile.lock.runtimeHash, 'sha256:87f11fa361a1f7e53035c62face2a2d98f1829c5516e1235c4c2da60697cfd4c');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
