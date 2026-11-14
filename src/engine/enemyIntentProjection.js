@@ -51,9 +51,8 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
     // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's defensive-stance bonus.
     const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses, row.reflectStacks]);
     const prepared = enemyIntentDamageState(ctx, source, carrier, base, action);
-    // Owner, 2026-11-03: the shown number is the raw hit (receipt.rawHit: attacker stance/statuses, Vulnerable, type weakness), never reduced by
-    // the defender's Block, Poise, Ward, Barrier, Counter, Reflect or defensive stance, nor zeroed by Evade/AC (hitChance rides separately).
-    // `loss` is that raw total; `landed` counts the hits that connected so the displayed range ignores misses.
+    // Owner, 2026-11-14: the shown number is the HP the player loses if the move resolved now (receipt.hpLoss): after the player's Block, Poise, stance,
+    // Reflect and Evade, carried hit to hit. Supersedes the 2026-11-03 raw hit. `landed` counts the hits that connected so the displayed range ignores misses.
     let states = [{ attacker: Damage.cloneDetachedAttacker(source), target: prepared.defender, key: targetKey(prepared.defender), loss: 0, landed: 0, probability: 1 }];
     for (let hit = 0; hit < hits; hit++) {
       const next = new Map();
@@ -66,13 +65,16 @@ function damageBounds(combat, enemy, move, base, hits, neutral, action = null) {
       };
       for (const state of states) {
         if (!(state.attacker?.hp > 0)) { add(state); continue; }
-        const receipt = ProfileCombat.profileDamageReceipt(ctx, state.attacker || source, state.target, base, carrier);
+        const receipt = ProfileCombat.profileDamageReceipt(ctx, state.attacker || source, state.target, base, carrier, { forecast: true });
         const landed = structuredClone(state.target);
         Damage.applyReceiptToPreviewTarget(ctx, landed, receipt);
         const attacker = Damage.cloneDetachedAttacker(state.attacker);
         Damage.previewReflectReturn(ctx, attacker, landed, receipt, carrier);
-        add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}|${attacker?.combatStance}|${attacker?.persistentPoise?.value}|${JSON.stringify(attacker?.statuses)}`, loss: state.loss + receipt.rawHit, landed: state.landed + 1, probability: state.probability * receipt.hitChance });
-        add({ ...state, probability: state.probability * (1 - receipt.hitChance) });
+        add({ attacker, target: landed, key: targetKey(landed) + `|${attacker?.hp}|${attacker?.combatStance}|${attacker?.persistentPoise?.value}|${JSON.stringify(attacker?.statuses)}`, loss: state.loss + receipt.hpLoss, landed: state.landed + 1, probability: state.probability * receipt.hitChance });
+        // A hit Evade cancels spends one stack, so the next hit of the same move meets one stack fewer, as live does.
+        const missed = receipt.evaded ? structuredClone(state.target) : state.target;
+        if (receipt.evaded) Damage.SpendPreviewEvade(missed);
+        add({ ...state, target: missed, key: receipt.evaded ? targetKey(missed) : state.key, probability: state.probability * (1 - receipt.hitChance) });
       }
       states = [...next.values()];
     }

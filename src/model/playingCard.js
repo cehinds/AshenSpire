@@ -159,6 +159,19 @@ export function cardSummaryContext(def, preview = null, registries = null, rules
   return { value, defenseValue, title, condition, profile: combatProfileFor(def), bindings, tokens, poiseMerge };
 }
 
+/**
+ * The per-hit [min, max] HP loss across every living enemy for a card that strikes them all, or null when the card does not,
+ * has one living enemy, or every enemy loses the same on every hit (the face then states one number).
+ */
+export function AllEnemySpread(live) {
+  const rows = live?.faceTargetHitDamages;
+  if (!Array.isArray(rows) || rows.length < 2) return null;
+  const hits = Math.max(...rows.map(row => row.length));
+  if (!(hits > 0)) return null;
+  const ranges = Array.from({ length: hits }, (_, at) => { const column = rows.map(row => row[at] ?? 0); return [Math.min(...column), Math.max(...column)]; });
+  return ranges.every(range => range[0] === range[1]) && rows.every(row => row.every((amount, at) => amount === rows[0][at])) ? null : ranges;
+}
+
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
   const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
@@ -174,11 +187,14 @@ export function combatCardSummary(def, preview = null, registries = null) {
         const sequence = live?.faceHitDamages && hits > 0 ? live.faceHitDamages : live?.hitDamages;
         const sequenceTotal = sequence === live?.hitDamages ? live?.totalDamage : sequence?.reduce((sum, amount) => sum + amount, 0);
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
+        const spread = AllEnemySpread(live);
         const type = combatCardDamageLabel(def, preview, registries, index);
         const word = `${type ? `${type} ` : ''}damage`;
         // A hit part magic and part physical reads both parts, the physical first, and keeps its hit count.
-        const split = !unequal ? splitOf(def, p, n, ratings, live) : null;
-        const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic }) + (hits !== 1 ? ` ×${hits}` : '')
+        const split = !unequal && !spread ? splitOf(def, p, n, ratings, live) : null;
+        const range = r => r[0] === r[1] ? String(r[0]) : `${r[0]}-${r[1]}`;
+        const damage = spread ? (spread.every(r => range(r) === range(spread[0])) ? `${range(spread[0])} ${word}${spread.length !== 1 ? ` ×${spread.length}` : ''}` : `${spread.map(range).join(' + ')} ${word}`)
+          : split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic }) + (hits !== 1 ? ` ×${hits}` : '')
           : unequal ? `${sequence.join(' + ')} ${word} (${sequenceTotal} total across ${sequence.length} hits)`
           : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;
         text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;

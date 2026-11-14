@@ -2225,7 +2225,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
           const d = shared.defender;
           faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
-            defender: { ...d, statuses: structuredClone(d.statuses || {}), block: 0, wardBlock: 0,
+            defender: { ...d, statuses: structuredClone(d.statuses || {}),
               persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
               ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
               ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
@@ -2266,6 +2266,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
               attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
             entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
             entry.faceHitDamages = faceHits.map(Math.floor);
+            // Owner, 2026-11-14: the number on the face is the HP the reference target loses from each hit, after its defensive stance, Reflect,
+            // Block, Poise and Evade; a card that strikes every enemy states each living enemy's hits so the face can show one number or min-max.
+            entry.value = entry.faceValue;
+            entry.hitDamages = entry.faceHitDamages;
+            entry.totalDamage = entry.faceHitDamages.reduce((sum, amount) => sum + amount, 0);
+            if (eff.target === 'allEnemies') entry.faceTargetHitDamages = living.map(e => (entry.perTargetHitDamages[e.id] || []).map(Math.floor));
           }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));

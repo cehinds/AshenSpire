@@ -21,7 +21,7 @@ import { armsAsCoreCounter } from './profileStance.js';
 // Returns null for a card with an effect it cannot phrase (the same cases as
 // combatCardSummary). The caller then keeps the authored text.
 
-import { cardSummaryContext, combatCardDamageLabel, splitOf } from './playingCard.js';
+import { cardSummaryContext, combatCardDamageLabel, splitOf, AllEnemySpread } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
@@ -172,13 +172,19 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const sequence = live?.faceHitDamages && hits > 0 ? live.faceHitDamages : live?.hitDamages;
         const sequenceTotal = sequence === live?.hitDamages ? live?.totalDamage : sequence?.reduce((sum, amount) => sum + amount, 0);
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
+        const spread = AllEnemySpread(live);
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
         const type = combatCardDamageLabel(def, preview, registries, index).split(' · ')[0];
         const word = `${type ? `${esc(type)} ` : ''}damage`;
         // A hit part magic and part physical names both parts, the physical first; equal repeated hits split each hit.
-        const split = !unequal ? splitOf(def, p, n, ratings, live) : null;
+        const split = !unequal && !spread ? splitOf(def, p, n, ratings, live) : null;
         let text;
-        if (split) {
+        if (spread) {
+          // A card that hits every enemy: each hit's HP loss is one number when every living enemy loses the same, else min-max.
+          const shown = spread.map(range => range[0] === range[1] ? num(range[0], base) : `${num(range[0], base)}-${num(range[1], base)}`);
+          const same = shown.every(part => part === shown[0]);
+          text = same ? `${shown[0]} ${word}${spread.length !== 1 ? ` ×${num(spread.length, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}` : `${shown.join(' + ')} ${word}`;
+        } else if (split) {
           // Each part compares with the same split of the static base, so a boosted hit colours both parts.
           const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
           text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`
