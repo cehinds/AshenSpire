@@ -2018,8 +2018,9 @@ body.reduce-motion .target-hud-detail { transition: none; }
 }
 /* Card option tiles: the picker grid for reactions, discards and card choices. */
 .as-options.grid.card-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin: 0.5rem; }
-/* Asked of the game viewport (the combat canvas while a fight is mounted, the window elsewhere), not the window. */
-@container game-viewport (min-width: 768px) { .as-options.grid.card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
+/* The window elsewhere (armoury pickers); the game viewport only while a fight is mounted. */
+@media (min-width: 768px) { :root:not(:has(.combat)) .as-options.grid.card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
+@container game-viewport (min-width: 768px) { :root:has(.combat) .as-options.grid.card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
 .card-option {
   position: relative; display: flex; flex-direction: column; justify-content: center; gap: 0.3rem;
   box-sizing: border-box; width: 100%; height: 8.75rem; min-height: 48px; padding: 0.6rem 0.7rem;
@@ -2048,12 +2049,18 @@ body.reduce-motion .target-hud-detail { transition: none; }
 /* More than 3 options: the same tiles in a grid (columns = ceil(sqrt(n)), set by optionRowList), row-major. */
 .option-row-list[data-columns]:not([data-columns='1']) { display: grid; grid-template-columns: repeat(var(--option-columns), minmax(0, 1fr)); }
 .option-row-list[data-columns]:not([data-columns='1']) > .option-row.as-railitem { min-width: 0; }
+/* Three or more columns: art above the text so three tiles fit a phone (the window outside a fight, the canvas's width in combat). */
+@media (max-width: 480px) {
+  :root:not(:has(.combat)) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) > .option-row.as-railitem { flex-direction: column; justify-content: flex-start; text-align: center; gap: 0.3rem; padding: 0.4rem 0.3rem; }
+  :root:not(:has(.combat)) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-text { align-items: center; flex: 0 1 auto; width: 100%; }
+  :root:not(:has(.combat)) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-name { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
+  :root:not(:has(.combat)) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-status { justify-content: center; }
+}
 @container game-viewport (max-width: 480px) {
-  /* Three or more columns: art above the text so three tiles fit a phone (the canvas's width in combat). */
-  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) > .option-row.as-railitem { flex-direction: column; justify-content: flex-start; text-align: center; gap: 0.3rem; padding: 0.4rem 0.3rem; }
-  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-text { align-items: center; flex: 0 1 auto; width: 100%; }
-  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-name { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
-  .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-status { justify-content: center; }
+  :root:has(.combat) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) > .option-row.as-railitem { flex-direction: column; justify-content: flex-start; text-align: center; gap: 0.3rem; padding: 0.4rem 0.3rem; }
+  :root:has(.combat) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-text { align-items: center; flex: 0 1 auto; width: 100%; }
+  :root:has(.combat) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-name { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
+  :root:has(.combat) .option-row-list[data-columns]:not([data-columns='1']):not([data-columns='2']) .option-row-status { justify-content: center; }
 }
 .option-row-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
 .option-row-name { color: var(--parchment); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
