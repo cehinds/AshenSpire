@@ -57,12 +57,14 @@ import { attackHitPreview } from '../src/engine/stanceHit.js';
 import { fixCoreEnabled } from '../src/model/fixCoreMechanics.js';
 import { acFor } from '../src/ui/models/acBadge.js';
 
-function fixture({ fixCore = true } = {}) {
+// hitRoll: true is the explicit legacy rule set (a fight created before Wave 2 keeps it); the shipped default has no hit roll and no AC.
+function fixture({ fixCore = true, hitRoll = true } = {}) {
   const registries = createRegistries({ ...contentBundle });
   const player = { classId: 'reaver', hp: 50, maxHp: 50, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'a', cardId: 'twinbladeFlurry' }], relicIds: [] };
   const gameProfile = fixCore ? { formatVersion: 1, modules: { effects: { fixCoreVersion: 1 } } } : undefined;
   const combat = createCombat({ registries, rng: createRng(7), player, gameProfile, combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['wanderingSoldier'] });
+  if (fixCore && hitRoll) combat.fixCoreRules = { ...combat.fixCoreRules, accuracy: { ...combat.fixCoreRules.accuracy, hitRoll: true } };
   return combat;
 }
 
@@ -82,6 +84,11 @@ test('AC is the hit preview\'s Evasion for the player, follows Evade stacks, and
   const more = acFor(combat, me);
   assert.equal(more.value, attackHitPreview(combat, enemy, me, carrier).evasion);
   assert.ok(more.value > ac.value && more.evade > 0, 'Evade stacks raise AC');
+});
+
+test('with no hit roll (the shipped rule) the player has no AC to show', () => {
+  const combat = fixture({ hitRoll: false });
+  assert.equal(acFor(combat, combat.player), null);
 });
 
 test('the player row draws no AC badge or caption (owner 2026-11-07), and the model still carries AC for the inspect panel', () => withKitDom(() => {

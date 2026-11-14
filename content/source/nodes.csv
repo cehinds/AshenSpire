@@ -72,10 +72,10 @@ spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
 item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
 item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
 item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,What this piece IS: the Armoury and the smith name it Magic Focus.
-item:armor,itemType,Armor,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armor.
+item:armor,itemType,Armour,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armour.
 from:global,grantSource,Global,B8B0A0,🌐,,,,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.
 from:relic,grantSource,Relic,C9A227,◈,,,,,Carried in by the starting relic.
-from:armor,grantSource,Armor,7FA8C9,▣,,,,,Bound to the outfit the run begins wearing.
+from:armor,grantSource,Armour,7FA8C9,▣,,,,,Bound to the outfit the run begins wearing.
 from:weapon,grantSource,Weapon,C9502E,⚔,,,,,Bound to an armament in hand at creation.
 from:class,grantSource,Class,9FC3E8,✦,,,,,The class signature card.
 fx:blade,presentation,blade,9FC3E8,✧,,,,,blade visual identity; no combat modifier.
@@ -153,7 +153,7 @@ curedHide,property,Cured Hide,9A9A9A,🛡,,,,,What Cured Hide does when the figh
 ivoryComb,property,Ivory Comb,9A9A9A,🪮,,,,,What Ivory Comb does when the fight gives it its moment.
 fellWardenBrand,property,Fell Warden Brand,6E9C6E,🔱,,,,,What Fell Warden Brand does when the fight gives it its moment.
 bloodiedTalisman,property,Bloodied Talisman,6E9C6E,🩸,,,,,What Bloodied Talisman does when the fight gives it its moment.
-twinnedArmor,property,Twinned Armor,6E9C6E,👥,,,,,What Twinned Armor does when the fight gives it its moment.
+twinnedArmor,property,Twinned Armour,6E9C6E,👥,,,,,What Twinned Armour does when the fight gives it its moment.
 blightTouchedIdol,property,Blight-Touched Idol,6E9C6E,☣,,,,,What Blight-Touched Idol does when the fight gives it its moment.
 companion,property,Companion,B08D57,☥,,,,,"What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
 hollowSquire,companion,Hollow Squire,B08D57,🛡,,,,,A squire without a knight raises a shield before you.

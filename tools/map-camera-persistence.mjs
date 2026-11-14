@@ -218,7 +218,12 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await wait(400); // the watch debounces 100 ms
       const changedState = await readState();
       // The open tray: select a reachable node through the map's own pick.
+      // The single start node is preselected and its tray already open on
+      // arrival; a second tap on a selected node would close it, so tap only
+      // when no node is selected yet.
       const picked = await evaluate(`(() => {
+        const chosen = document.querySelector('.map-node.selected');
+        if (chosen && document.querySelector('.map-tray')?.dataset.shown === 'true') return chosen.dataset.node;
         const node = document.querySelector('.map-node.reachable');
         if (!node) return null;
         node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -570,12 +575,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await evaluate(`document.querySelector('.startup-gate').click()`);
       await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
       await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
-      await waitFor('the new-slot modal (flush case)', `!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`);
-      await press('[data-title-action="modal-continue"]');
-      // Continue only opens the slot's decision door ("Start in slot n?"); its
-      // primary, Start (review-new), is the press that commits the new climb.
-      await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
-      await press('[data-title-action="review-new"]');
+      // A fresh profile opens creation directly: no slot picker or decision door.
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
       // Creation is a staged flow — Class, Attributes, Equipment,
       // Feats, Spells (casters), Review (see tools/quick-start-inputs.mjs) —

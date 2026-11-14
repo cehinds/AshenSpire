@@ -29,7 +29,7 @@ export function paintStaminaOrb(orb, values) {
   };
   let html = ['orb', 'frame', 'sigil'].map(id => image(id, 450, 450, staminaOrb.layers[id].size * 9)).join('');
   html += model.gems.map(gem => image(gem.id, gem.x, gem.y, gem.size * staminaOrb.layers[gem.id].size / 100)).join('');
-  for (const [id, value, font, baseline] of [['number', model.current, 145, 430], ['label', 'SP', 68, 540]]) {
+  for (const [id, value, font, baseline] of [['number', model.current, 145, 430], ['label', '', 68, 540]]) {
     const l = staminaOrb.layers[id];
     if (l.visible) html += `<text data-orb-part="${id}" x="${450 + l.x * 9}" y="${baseline + l.y * 9}" text-anchor="middle" dominant-baseline="central" opacity="${l.opacity / 100}" style="font:${font * l.size / 100}px Georgia,serif;fill:#f1f1dc">${value}</text>`;
   }

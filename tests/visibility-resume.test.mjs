@@ -458,8 +458,6 @@ const KNOWN = {
   ],
   'src/ui/components/damageReceipt.js': [
     ["'pointermove'", 'forwards hover only from hand hit lanes to their numeric damage inspectors; renders public engine receipts without combat actions'],
-    ["'pointerdown'", 'stops the hand hold/drag/play owner when a damage inspector is touched; does not dispatch an action'],
-    ["'click'", 'forwards a native inspection click through the hand lane; opens the same tooltip without playing the card (tests/fixcore-combat-ui.browser.mjs)'],
   ],
   'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
@@ -499,7 +497,7 @@ const KNOWN = {
     ["'pagehide'", "module-level, added once: flushes the map's queued camera-commit save early (flushPendingSave). That save is the one the map already makes 80 ms after a pan or pick, now run on idle; it writes the run as it stands, only while the map is on screen, and moves no run or combat state"],
     ["'visibilitychange'", "module-level, added once: on hidden, the same early flush of the map's queued camera-commit save as pagehide; nothing on visible. It writes the run as it stands and moves no run or combat state"]],
   'src/ui/screens/profileNotice.js': ["'keydown'"],
-  'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists'], ['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired by the Art quality setting, not the page cycle: repaints the prologue character canvas from assetUrl() only"]],
+  'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists'], ['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired by the Art quality setting, not the page cycle: repaints the prologue character canvas from assetUrl() only"], ["'keydown'", 'any key leaves the opening once its first scene has been up 600 ms (way-in); removed in cleanup, and the prologue runs before any run or fight exists']],
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
   'src/ui/previews/tooltipReviewScene.js': ['.__tooltipReviewRun'],

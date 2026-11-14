@@ -94,7 +94,7 @@ test('the inspector and bestiary rows follow the same discovery gate', () => {
 
 import { readFileSync } from 'node:fs';
 import { previewCard } from '../src/engine/combat.js';
-import { withDiscoveredWeaknessesOnly } from '../src/model/weaknessDiscovery.js';
+import { PreviewWithUnknownWeaknessesMarked } from '../src/model/weaknessDiscovery.js';
 
 // The first hand card whose preview against the soldier names its weakness (the soldier is weak to blunt; the reaver's attacks hit blunt or slashing).
 function previewsAgainst(ledger) {
@@ -102,30 +102,39 @@ function previewsAgainst(ledger) {
   enemy.weaknesses = ['blunt', 'slashing', 'piercing'].map(to => ({ to, effect: 'damage', amount: 25 }));
   const before = JSON.stringify(enemy.weaknesses);
   const out = combat.piles.hand.map(card => {
-    const shown = withDiscoveredWeaknessesOnly(previewCard, combat, ledger, card.instanceId, enemy.id);
+    const shown = PreviewWithUnknownWeaknessesMarked(previewCard, combat, ledger, card.instanceId, enemy.id);
     return JSON.stringify(shown);
   });
   assert.equal(JSON.stringify(enemy.weaknesses), before, 'every row is restored after a preview');
   return out;
 }
-test('a card preview names and uses no undiscovered weakness; a discovered one appears with its bonus', () => {
+// Owner, 2026-11-14: the preview uses an undiscovered weakness (its number is true) but never names it.
+test('a card preview uses an undiscovered weakness and labels it "Unknown weakness"; a discovered one is named', () => {
   const hidden = previewsAgainst({});
-  // The weakness line is a breakdown row labelled "Weak to <type>"; a card's own text may say "Weak to ALL enemies" (Rallying Roar applies Weak).
   const WEAK_ROW = '"label":"Weak to ';
-  assert.ok(!hidden.some(text => text.includes(WEAK_ROW)), 'undiscovered: no "Weak to" line');
+  assert.ok(!hidden.some(text => text.includes(WEAK_ROW)), 'undiscovered: no "Weak to <type>" line');
+  assert.ok(hidden.some(text => text.includes('"label":"Unknown weakness"')), 'undiscovered: an "Unknown weakness" line');
+  assert.ok(!hidden.some(text => /weakness:(blunt|slashing|piercing)/.test(text)), 'and no source id names the type');
   const all = ['blunt', 'slashing', 'piercing'].map(to => `${to}:damage`);
   const shown = previewsAgainst({ wanderingSoldier: all });
-  assert.ok(shown.some(text => text.includes(WEAK_ROW)), 'discovered: the line shows');
+  assert.ok(shown.some(text => text.includes(WEAK_ROW)), 'discovered: the line names the type');
+  assert.ok(!shown.some(text => text.includes('Unknown weakness')));
   const total = text => [...text.matchAll(/"totalDamage":(\d+)/g)].map(m => Number(m[1]));
-  const base = hidden.flatMap(total), seen = shown.flatMap(total);
-  assert.ok(seen.some((value, i) => value > base[i]), 'discovered: the previewed number carries the bonus');
+  assert.deepEqual(hidden.flatMap(total), shown.flatMap(total), 'the number is the same either way: it is true');
+  const none = combatPreviewTotals(null);
+  assert.ok(hidden.flatMap(total).some((value, i) => value > none[i]), 'and it carries the bonus the play will deal');
 });
+function combatPreviewTotals() {
+  const run = newRun(), combat = fight(run), enemy = combat.enemies[0];
+  enemy.weaknesses = [];
+  return combat.piles.hand.flatMap(card => [...JSON.stringify(previewCard(combat, card.instanceId, enemy.id)).matchAll(/"totalDamage":(\d+)/g)].map(m => Number(m[1])));
+}
 
 test('real resolution still applies an undiscovered weakness, and combat.js keeps discovery wired', () => {
   const run = newRun(), combat = fight(run), enemy = combat.enemies[0];
   enemy.weaknesses = [{ to: 'blunt', effect: 'damage', amount: 25 }];
-  withDiscoveredWeaknessesOnly(() => assert.equal(enemy.weaknesses.length, 0), combat, {});
-  assert.equal(enemy.weaknesses.length, 1, 'the live fight keeps its rows');
+  PreviewWithUnknownWeaknessesMarked(() => assert.equal(enemy.weaknesses[0].hidden, true), combat, {});
+  assert.equal(enemy.weaknesses[0].hidden, undefined, 'the live fight keeps its rows');
   // The screen is DOM-and-browser bound (tests/*.browser.mjs), so guard its wiring by source: the enemy paint syncs the
   // ledger before it reads it, and every card preview goes through the discovery-gated wrapper.
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');

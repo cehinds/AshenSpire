@@ -14,7 +14,7 @@ import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-a
 // spell range: one real hostile action is still required and its committed miss is
 // reported without inventing a number. While numbers are short, a hostile card with a
 // positive public preview chance is preferred, since only HP damage yields a number.
-// Optional enemy-turn reactions are declined through their visible Back button.
+// Optional enemy-turn reactions are declined through their visible Skip button.
 // No engine action, settings change, injected state or synthetic click is used.
 //
 // Each input, contact and numeric readout is associated with this player's
@@ -214,13 +214,10 @@ async function main() {
     }
     await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'New Game');
     await click('.title-menu .slot-new', 'New Game');
-    await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the slot picker');
-    await click('[data-title-action="modal-continue"]', 'Create character');
-    await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the slot review');
-    await click('[data-title-action="review-new"]', 'Start');
+    // A fresh profile opens creation directly: no slot picker or slot review.
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'Core class creation');
     await click('#cz-classes .cz-class', 'Reaver');
-    await click('#cz-next', 'Review');
+    await click('#cz-next', 'Customise');
     await until(`document.querySelector('.cz-railed')?.dataset.creationStage === 'review'`, 'Core review');
     await click('#seed-input', 'seed field');
     for (const type of ['keyDown','keyUp']) await cdp.send('Input.dispatchKeyEvent', { type, key: 'a', code: 'KeyA', modifiers: 2, windowsVirtualKeyCode: 65 }, S);
@@ -367,11 +364,11 @@ async function main() {
         // burning every sampling attempt on that same unchanged hand.
         const turn = await evalIn(`window.__combat.turn`);
         for (let attempt = 0; attempt < 3 && await evalIn(`window.__combat?.turn === ${turn} && window.__combat?.phase === 'player'`); attempt += 1) {
-          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 600 } : null; })()`);
+          const pt = await evalIn(`(() => { const el = document.querySelector('.combat .end-turn'); const r = el?.getBoundingClientRect(); return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2, hold: Number(el.dataset.holdMs) || 0 } : null; })()`);
           if (!pt) throw new Error('no End Turn');
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-          await wait(pt.hold + 250);
+          await wait(pt.hold ? pt.hold + 250 : 60);
           await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
           const transitionEnd = Date.now() + 4000;
           while (Date.now() < transitionEnd) {
@@ -383,7 +380,7 @@ async function main() {
         while (Date.now() < deadline) {
           if (await evalIn(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`)) break;
           const decline = '.reaction-choice [data-control-role="exit"]';
-          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Back from the optional defensive reaction');
+          if (await evalIn(`!!document.querySelector('${decline}')`)) await click(decline, 'Skip the optional defensive reaction');
           else await wait(100);
         }
         await until(`window.__combat?.result != null || (window.__combat?.turn > ${turn} && (${idle}))`, `turn ${turn + 1} or the fight's end`, 1000);

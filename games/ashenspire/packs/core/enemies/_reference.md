@@ -30,7 +30,7 @@ What every reference tag in `enemies/<id>.json` means. Generated, do not edit.
 | enemy:hollowAstronomer | The Hollow Astronomer | boss |
 | enemy:huskBrute | Husk Brute | minion |
 | enemy:lanternMoth | Lantern Moth | minion |
-| enemy:livingArmor | Living Armor | minion |
+| enemy:livingArmor | Living Armour | minion |
 | enemy:marrowOrganist | The Marrow Organist | boss |
 | enemy:mirrorScribe | Mirror Scribe | minion |
 | enemy:stitchCrab | Stitch Crab | minion |

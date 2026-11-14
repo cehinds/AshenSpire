@@ -14,6 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
+import { withLegacyDefaults } from './legacyHitRules.mjs';
 
 function fight([seed, classId]) {
   const profile = resolveGameProfile('default');
@@ -91,9 +92,29 @@ export function digest(combat) {
 // Verified the engine did not move: with the content files of 7b6ac01016 (the starter decks, card costs and generated catalog
 // from before that change) laid over this tree, the previous digests (171b2290e0e5728c/30419cc524dfe0b2 and
 // 3b5d5f1e6bff1a0b/17b2a175fd3bcb97) reproduce exactly. The new values are this test's own digest() on the shipped content.
+// Re-pinned 2026-11-14 for exact hits and intents (accuracy.hitRoll false, perception.roll false): no d20 is drawn for any attack and no
+// perception check is made, so the combatAvoidance and intent streams stay at their start and the logs lose their roll receipts.
+// Verified the engine only changed through those two keys: the same fights built with the keys absent (a fight saved before the ruling,
+// LEGACY_PINNED below, built through withLegacyDefaults) reproduce the previous digests exactly. The new values are this test's own digest().
+// Re-pinned 2026-11-14 for shown = dealt (W2-F): intents, card faces and reaction prompts carry the HP lost instead of the raw hit, so the stored
+// intentPreview payloads in the log (and the pending-reaction incomingHp fields) change, and an offensive stance no longer grants Precision while
+// accuracy.hitRoll is false. Verified on the previous engine (1f0a16daee): with the roll keys absent (the LEGACY_PINNED fights) player and enemy HP, turn,
+// every RNG counter, the event types, the damage sequence and the whole log with the display keys (intentPreview, incomingHp, hitDamages, totalDamage,
+// projectedDamage, hpLossBounds) removed are identical, so only the preview figures moved. The shipped fights lose exactly the Precision stance-entry
+// receipts (PERF1 216 -> 195 events, 4242 211 -> 193): player and enemy HP, turn, RNG counters and the damage sequence are identical.
+const LEGACY_PINNED = [
+  [['PERF1', 'reaver'], { log: '223ea164af9c1eee', state: '3d703123766a5e29', events: 218, turn: 6 }],
+  [[4242, 'reaver'], { log: '35bab7a0d6ae4b9d', state: 'f2288d8a7d80513e', events: 215, turn: 6 }],
+];
+for (const [setup, expected] of LEGACY_PINNED) {
+  test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
+    const first = digest(play(withLegacyDefaults(() => fight(setup)), 5));
+    assert.deepEqual(first, expected);
+  });
+}
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '4d2fb53e38d46c35', state: 'bbc2249ca776d1be', events: 218, turn: 6 }],
-  [[4242, 'reaver'], { log: '10f5a41a88d703ff', state: 'f7cb6297ec6132d1', events: 215, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '82c0d7045cb6ae98', state: '50a554d5b4b798f5', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: 'e0b20c94c8899c37', state: '881e6f5f4813ab9c', events: 193, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

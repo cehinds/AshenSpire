@@ -2,7 +2,7 @@ import { statusPresentationDefinition } from './statusPresentation.js';
 import { cardSummaryContext } from './playingCard.js';
 import { withChargedEffects } from './cardFaceText.js';
 import { stanceEntryBonuses } from './stanceRules.js';
-import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
+import { fixCoreEnabled, evadeGrantOnlyCard, FixCoreHitRollOff } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 
 // Quantified self benefits belong to the shared tag rail. Keep separate grants
@@ -38,8 +38,9 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
         && metric.metric === 'evadeStackGain' && metric.of === 'self'
         && Object.keys(metric).every(key => ['f', 'metric', 'of'].includes(key))) {
       const accuracy = fixCoreRules(ctx, { id: 'card-face' }, def).accuracy;
-      count = accuracy.evadeStackBase;
-      formula = accuracy.evadeStackDex ? `${accuracy.evadeStackDex === 1 ? '' : accuracy.evadeStackDex + '× '}DEX` : null;
+      const certain = FixCoreHitRollOff({ accuracy });
+      count = certain ? accuracy.evadeStacksPerCard ?? 1 : accuracy.evadeStackBase;
+      formula = !certain && accuracy.evadeStackDex ? `${accuracy.evadeStackDex === 1 ? '' : accuracy.evadeStackDex + '× '}DEX` : null;
     }
     if (!simple || count === undefined) continue;
     add(effect.status, { count, formula,

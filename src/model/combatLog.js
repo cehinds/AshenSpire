@@ -22,7 +22,7 @@ import { accuracyRollReceipt, contestRollReceipt, dodgeRollReceipt, evadeRollRec
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
   statusOnly: 'a status effect', attack: 'this attack' };
-const RESOURCE_WORDS = { stamina: 'SP', mana: 'MP' };
+const RESOURCE_WORDS = { stamina: 'Stamina', mana: 'Mana' };
 // What an engine `source` string means when no card, move or trigger raised the effect.
 const SOURCE_WORDS = { poise: 'Poise overflow', defendStance: 'Defend stance', sleep: 'Sleep', barrier: 'Barrier overflow',
   rating: 'rating change', recovery: 'Recovery', flux: 'flux' };
@@ -37,7 +37,7 @@ const row = (registry, id) => (id != null && registry?.has?.(id) ? registry.get(
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
 function rangeReturnUnavailableText(event) {
   const reason = event.reason === 'stamina'
-    ? `not enough SP to Advance (need ${event.required}, have ${event.available})`
+    ? `not enough Stamina to Advance (need ${event.required}, have ${event.available})`
     : 'out of range';
   return `Counter return skipped: ${reason}. Defense kept.`;
 }
@@ -56,7 +56,7 @@ function reactionUnavailableText(event, { registries, source, owner }) {
     case 'notCovered': return `No reaction: Counter can't answer ${ATTACK_KIND_WORDS[event.attackKind] || 'this attack'}.`;
     case 'cost': return event.resource === 'hp'
       ? `Not enough HP to ${card?.name || 'use that card'} (need ${event.need}, have ${event.have}).`
-      : `Not enough ${RESOURCE_WORDS[event.resource] || 'SP'} to ${verb} (need ${event.need}, have ${event.have}).`;
+      : `Not enough ${RESOURCE_WORDS[event.resource] || 'Stamina'} to ${verb} (need ${event.need}, have ${event.have}).`;
     case 'switchOff': return 'No reaction: Reactions are off.';
     case 'attackerStaggered': return `No reaction: ${source} is staggered.`;
     case 'attackerControlled': return `No reaction: ${source} can't act.`;
@@ -165,7 +165,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'cardPlayed': {
         const card = row(registries?.cards, event.cardId)?.name || 'a card';
         playing = { actorKey: sourceKey, label: card === 'a card' ? null : card };
-        const costs = [`${event.staminaSpent ?? event.energySpent ?? 0} SP`, ...(event.manaSpent ? [`${event.manaSpent} MP`] : [])];
+        const costs = [`${event.staminaSpent ?? event.energySpent ?? 0} Stamina`, ...(event.manaSpent ? [`${event.manaSpent} Mana`] : [])];
         const on = event.targetId && targetKey !== sourceKey ? ` on ${target}` : '';
         text = `${source} played ${card}${event.upcastTier ? ` (Upcast ${event.upcastTier})` : ''}${on} · ${costs.join(', ')}.`;
         break;
@@ -380,7 +380,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       // `poise` is the nominal break bonus before Poise Guard absorbs any of it: pressure, not damage taken.
       case 'combatGuardBroken': {
         const who = event.sourceId || event.sourcePlayerId ? `${attackText()} broke ` : 'Broke ';
-        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Guard!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
+        text = `${who}${event.targetId || event.targetPlayerId ? `${target}'s` : 'the'} Block!${event.poise > 0 ? ` (+${event.poise} Poise pressure)` : ''}`;
         break;
       }
       case 'impactDealt':

@@ -192,7 +192,8 @@ test('C3 the export names the path it belongs at, and says it is a fragment', ()
 
 test('D1 the mobile variant keeps the phone size; the desktop is 20% larger', () => {
   // Owner (2026-11-02): desktop and laptop cards are 1.2x (152 to 182.4, focus 280 to 336, inspect 320 to 384); phones stay put.
-  assert.equal(AUTHORED.glance.variants.mobile, 152);
+  // Wave 2 (sizes): the phone's glance width is 170 (was 152) so a reward face's rules type reads at 13 px effective.
+  assert.equal(AUTHORED.glance.variants.mobile, 170);
   assert.equal(AUTHORED.glance.widthPx, 152 * 1.2);
   assert.equal(AUTHORED.focus.variants.mobile, 280);
   assert.equal(AUTHORED.inspect.variants.mobile, 320);

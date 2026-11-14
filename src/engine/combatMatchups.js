@@ -612,6 +612,16 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
       const hit = Hit.resolveAttackHit(ctx, source, target, carrier);
       receipt.counterAttack = hit;
       receipt.avoided = hit ? !hit.hit : false;
+      // Owner, 2026-11-14 (hitRoll off): a multi-hit attack is evaded hit by hit, each hit spending one Evade stack. The first
+      // hit was decided above; each later damaging contact asks again, and the action is avoided only when every hit was.
+      if (hit?.noRoll && hit.inRange) {
+        const damaging = contacts.map((contact, index) => contact.effect ? -1 : index).filter(index => index >= 0);
+        if (damaging.length > 1) {
+          receipt.contactHits = {};
+          damaging.forEach((index, order) => { receipt.contactHits[index] = order === 0 ? hit.hit : Hit.resolveAttackHit(ctx, source, target, carrier)?.hit !== false; });
+          receipt.avoided = damaging.every(index => !receipt.contactHits[index]);
+        }
+      }
       receipt.connected = !receipt.avoided;
     }
     if (receipt.counterEligible && !receipt.avoided) {
@@ -683,8 +693,8 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
 
 /**
  * THE ONE SMASH GUARD-BREAK TEST: a Smash that connects and leaves the target
- * with no Block. GUARD BREAK (combatGuardBroken) and the Block's blockBroken
- * both read it, so the Block break a Smash makes is shown as GUARD BREAK alone.
+ * with no Block. BLOCK BREAK (combatGuardBroken) and the Block's blockBroken
+ * both read it, so the Block break a Smash makes is shown as BLOCK BREAK alone.
  */
 export function isSmashGuardBreak(receipt, target) {
   return !!receipt && receipt.smash === true && (receipt.connected ?? true) && number(receipt.guardBefore) > 0 && number(target?.block) <= 0;

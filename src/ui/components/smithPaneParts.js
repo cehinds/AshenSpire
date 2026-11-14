@@ -17,7 +17,7 @@ export const deltaNode = (from, to, { spaced = true } = {}) => {
 };
 
 export const CHANGE_LABELS = {
-  damage: 'DAMAGE', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
+  damage: 'DAMAGE', block: 'BLOCK', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
 };
 
 /** A row's changes as StatPairs with deltas: "AR 7 → 10". `row.values` is [{ op?, label?, before, after }]. */

@@ -243,8 +243,8 @@ const projectRoomy = (def) => {
   return cardFaceProjection(def, { lines: cardFaceLines(def, null, reg), authoredHtml, registries: reg, effects: def.effects, roomy: FACE_BUDGET });
 };
 
-test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 10 px', () => {
-  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 10]);
+test('the roomy budget is data: five lines, seven words a line, a 70% floor, never under 13 px (Wave 2 sizes: was 10)', () => {
+  assert.deepEqual([FACE_BUDGET.lines, FACE_BUDGET.wordsPerLine, FACE_BUDGET.minScale, FACE_BUDGET.minPx], [5, 7, 0.7, 13]);
   assert.equal(FACE_BUDGET.clauses, 5);
 });
 

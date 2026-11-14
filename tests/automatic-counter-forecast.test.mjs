@@ -46,11 +46,11 @@ for (const spent of [false, true]) test(`bundled full-action forecast retains th
   const combat = fixture({ spent }), enemy = combat.enemies[0];
   const before = JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() });
   const forecast = captureEnemyIntent(combat, enemy);
-  // Owner, 2026-11-03: the forecast is the raw hit (20 each), whatever the Counter stance and its Block do; the real HP loss
-  // (what the Counter owner-cycle budget changes) is checked against the damageDealt events below.
+  // Owner, 2026-11-14: the forecast is the HP lost per hit, the Counter stance and its Block included (what the Counter owner-cycle
+  // budget changes); the damageDealt events below are the same numbers.
   const expected = spent ? [15, 15, 15] : [12, 15, 15];
-  assert.deepEqual(Array.from(forecast.hitDamages), [20, 20, 20]);
-  assert.equal(forecast.totalDamage, 60);
+  assert.deepEqual(Array.from(forecast.hitDamages), expected);
+  assert.equal(forecast.totalDamage, expected.reduce((a, b) => a + b, 0));
   assert.equal(forecast.hpLoss, expected.reduce((a, b) => a + b, 0), 'the forecast still knows the real HP loss');
   assert.equal(JSON.stringify({ player: combat.player, enemy, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() }), before);
   assert.deepEqual(captureEnemyIntent(combat, enemy), forecast);

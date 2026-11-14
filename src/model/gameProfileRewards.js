@@ -46,7 +46,10 @@ function pools(registries, run, { claim = false } = {}) {
   const unpayable = !claim && rules?.eligibility?.playableOnly
     ? (card => (card.manaCost || 0) > 0 && (gameContent(run, 'stats')?.poolBasesByClass?.[run.class]?.mana === 0 || card.manaCost > (run.maxMana ?? 0)))
     : () => false;
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  // Owner 2026-11-14: eligibility.excludeCardIds keeps cards that do nothing without the hit roll (Guiding Whisper) or repeat another
+  // (base.evade) out of every new offer and shop. Their definitions stay for saved decks, and a claim still accepts an earlier offer.
+  const retired = claim ? null : new Set(rules?.eligibility?.excludeCardIds || []);
+  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && !retired?.has(card.id) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();

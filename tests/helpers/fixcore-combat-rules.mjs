@@ -4,6 +4,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
+import { legacyRolls } from '../legacyHitRules.mjs';
 export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 export const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -14,7 +15,9 @@ export const registries = Object.freeze({ ...baseRegistries, enemies: {
     return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 5, hits: 3 } } } : row;
   }
 } });
-export function live() {
+// `legacy: true` hands the fight the rules of one saved before the 2026-11-14 ruling (no hitRoll / perception.roll keys), for suites that
+// assert the d20 or the perception check; the default is the shipped rules (attacks hit, reads exact).
+export function live({ legacy = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   for (const entity of [combat.player, ...combat.enemies]) {
@@ -24,6 +27,7 @@ export function live() {
   // This fixture authors three contacts, which cost 3 SP (1 SP per hit); fund that price and select
   // that move explicitly instead of inheriting the one-SP native plan.
   for (const row of combat.enemies) delete row.weaknesses; // enemy weaknesses (SPEC 5.3) are tested in enemy-weaknesses.test.mjs
+  if (legacy) legacyRolls(combat);
   const enemy = combat.enemies[0];
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' };

@@ -137,6 +137,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // than MIN_DIALOGUE_PX on the glass the words stop being readable, so a frame
   // too short for that (a phone on its side) keeps that size and scrolls.
   const MIN_DIALOGUE_PX = 12;
+  const SKIP_AFTER_MS = 600;
   let currentStage = null, fit = 1, fitKey = '';
   // On a short landscape screen the caption layout is a side panel (the
   // stylesheet's max-height:500px fallback): it fills its column, so there is
@@ -146,7 +147,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !(shortLandscape.matches && !root.closest('.pse-phone'))));
   function measureFit() {
     const scenes = order.map(index => config.scenes[index])
-      .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
+      .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name,location:destination.name})}))
       .filter(({stage}) => fixedCaption(stage));
     if (!scenes.length) return 1;
     // The probe stands in a hidden copy of the FRAME, so each scene's wireframe
@@ -309,7 +310,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // in the opening (prologueResumePosition), rather than on one it has watched.
   let position = editorPreview ? 0 : prologueResumePosition(config,Math.max(0,Math.min(config.scenes.length-1,startScene)));
   let sceneIndex = order[position], elapsed = 0;
-  let stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
+  let skipOpenAt = 0, stopped = false, paused = false, loading = false, serial = 0, last = 0, raf = 0;
   let animations = [], previous = null, reveal = null, delayMs = 0;
   const reduced = () => editorPreview || p.reduceMotion || settings.reducedMotion === true || document.body.classList.contains('reduced-motion') || prefersStill.matches;
   const ownerVeil = root.closest('.modal-veil');
@@ -323,6 +324,24 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);
     document.removeEventListener(ART_SOURCE_EVENT,repaintActor);
+    document.removeEventListener('keydown',anyKeySkips,true);
+    root.removeEventListener('click',anyClickSkips,true);
+  }
+  // ANY KEY, CLICK OR TAP LEAVES THE OPENING once its first scene has been on
+  // screen for SKIP_AFTER_MS (way-in brief W2-D): the Skip button is still
+  // there, but the player no longer has to find it. Pause keeps
+  // its own meaning; the real opening only (never the settings preview).
+  function skipReady() { return !preview && !editorPreview && !stopped && skipOpenAt > 0 && performance.now() >= skipOpenAt && !blocked(); }
+  function anyKeySkips(event) {
+    if (!skipReady() || event.repeat || ['Shift','Control','Alt','Meta','Tab','CapsLock','Escape'].includes(event.key)) return;
+    if (event.target === pause) return;
+    event.preventDefault(); event.stopPropagation();
+    finish('skipped');
+  }
+  function anyClickSkips(event) {
+    if (!skipReady() || event.target === pause) return;
+    event.preventDefault(); event.stopPropagation();
+    finish('skipped');
   }
   function finish(reason) { if (stopped) return; cleanup(); onFinish(reason); }
   // The character painting, at whatever tier assetUrl() names now (ready()
@@ -399,7 +418,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     const token = ++serial; loading = true; next.disabled = true;
     position = Math.max(0,Math.min(order.length-1,at)); sceneIndex = order[position]; elapsed = resumeAt; last = 0;
     const scene = config.scenes[sceneIndex], layout = forceLayout || (portrait.matches ? 'mobile' : 'desktop');
-    const copy = prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name});
+    const copy = prologueCopy(scene,config,{classId,name:run.customization?.name,location:destination.name});
     if (notify) onScene(sceneIndex);
     const stage_ = prologueStaging(config,scene);
     const plate = el('div',{class:'prologue-plate'});
@@ -509,6 +528,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (paused || blocked()) elapsed = Math.max(elapsed,duration);
     animations.forEach(a=>{a.pause(); a.currentTime=elapsed;});
     previous = plate; loading = false; next.disabled = false; last = 0;
+    if (!skipOpenAt) skipOpenAt = performance.now() + SKIP_AFTER_MS;
   }
   function tick(now) {
     if (stopped || !root.isConnected) { cleanup(); return; }
@@ -549,6 +569,8 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   if (!forceLayout) portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);
   document.addEventListener(ART_SOURCE_EVENT,repaintActor);
+  document.addEventListener('keydown',anyKeySkips,true);
+  root.addEventListener('click',anyClickSkips,true);
   // THE FRAME IS UP BEFORE THE ARTWORK IS. `showScene` applies the staging when
   // it appends the plate, which waits on the painting decoding (up to eight
   // seconds when the file is missing) — so the opening used to draw its first

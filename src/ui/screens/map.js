@@ -380,12 +380,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // backdrop matches it (city, bridge, forest...). Decorative; the adapter maps
   // (legacy dungeon, co-op) have no painting and record nothing.
   function travelTo(id) {
+    showEntering();
     if (!mapAdapter) {
       const settingId = board.terrainAt?.(id);
       if (settingId) run.mapTerrain = { nodeId: id, settingId };
       else delete run.mapTerrain;
     }
     leaving(onPick)(id);
+  }
+  // The press is taken at once: Enter turns to a visible "Entering…" with a
+  // spinner, painted before the long task that builds the next screen.
+  function showEntering() {
+    enterButton.dataset.busy = 'true';
+    enterButton.setAttribute('aria-busy', 'true');
+    enterButton.textContent = t('map.entering');
   }
   function selectNode(id, reading, pointerType = 'mouse') {
     lastPickPointerType = pointerType;
@@ -427,6 +435,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const reading = board.readingOf(selectedId);
     if (reading) readings.set(selectedId, reading);
     selection = { selectedId };
+    renderSelection();
+    openTray();
+  } else if (!selectedId && !mapAdapter && !current && reachable.size === 1) {
+    // A new run's one start node is preselected, so the first press is Enter
+    // (never when more than one node can be entered). Picking it again within
+    // the repeat delay does not travel.
+    const [startId] = reachable;
+    const reading = board.readingOf(startId);
+    if (reading) readings.set(startId, reading);
+    selection = { selectedId: startId, selectedAt: performance.now() };
     renderSelection();
     openTray();
   }

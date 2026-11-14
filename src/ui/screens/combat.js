@@ -4,7 +4,7 @@ import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { acFor } from '../models/acBadge.js';
 import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
-import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
 import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
@@ -79,6 +79,7 @@ import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
+import { CharacterDisplayName } from '../../model/characterName.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -100,6 +101,7 @@ import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
+import { DragFaceQuote, DragFaceTargetId } from '../models/DragFaceModel.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
@@ -145,7 +147,7 @@ import { mountRelicRail } from '../components/relicRail.js';
 import { t, tFull } from '../strings.js';
 import { weaknessTraitRows } from '../../model/enemyWeaknessRules.js';
 import { weaknessChips } from '../components/weaknessChips.js';
-import { discoveredWeaknesses, recordWeaknessDiscoveries, withDiscoveredWeaknessesOnly } from '../../model/weaknessDiscovery.js';
+import { discoveredWeaknesses, recordWeaknessDiscoveries, PreviewWithUnknownWeaknessesMarked } from '../../model/weaknessDiscovery.js';
 import { armHold, holdMs } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -162,7 +164,7 @@ import { iconTray, setIconTrayOverflow, trayIcon } from '../components/iconTray.
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
-import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
+import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, PaintEndTurnWarning, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button, html, openModal } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
@@ -228,10 +230,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     () => playerSprite(customization, classId, configuredArt ? 'default' : armourId, presentation), { enemy: false });
   const profileEnemySprite = (definition, entity) => profileArt(
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
-  // Weakness discovery (SPEC 5.3): a card preview must not use, or name, a weakness the player has not discovered. The preview runs on
-  // the fight with only the discovered rows in place (restored at once); real resolution keeps every row, which is how it is found.
+  // Weakness discovery (SPEC 5.3): a card preview uses every weakness the play will use, so its number is true, but it never names one the
+  // player has not discovered: the preview runs with those rows marked hidden (restored at once) and the breakdown reads "Unknown weakness".
   const knownWeaknesses = enemy => discoveredWeaknesses(enemy.weaknesses, run.weaknessDiscovery, enemy.enemyId);
-  const previewWithKnownWeaknesses = (target, ...args) => withDiscoveredWeaknessesOnly(enginePreviewCard, target, run.weaknessDiscovery, ...args);
+  const previewWithKnownWeaknesses = (target, ...args) => PreviewWithUnknownWeaknessesMarked(enginePreviewCard, target, run.weaknessDiscovery, ...args);
   const previewMemo = createPreviewMemo({ combat, preview: previewWithKnownWeaknesses, dispatch: engineDispatch });
   const { dispatch, previewCard: memoPreviewCard } = previewMemo;
   // An enemy's projected intent reads only the fight, so it is kept like a preview until the next change.
@@ -290,6 +292,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         ${formationGridHtml()}
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
+        <div class="turn-skip-hint" aria-hidden="true">${t('combat.skipHint')}</div>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
         <div class="combat-expansion-controls" aria-live="polite"></div>
@@ -450,6 +453,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
     },
     combatEl,
+    // True while the enemies' turn is on screen, so the rest of a turn resumed after a reaction keeps the enemy pacing.
+    isEnemyPlayback: () => enemyPlayback,
     anchorFor: (id) => combatEl.querySelector(`[data-eid="${id}"] .sprite`) || combatEl.querySelector(`[data-eid="${id}"]`),
     // A damage float sizes by the hit's share of this max HP (ui/fx.js dmgClass).
     maxHpFor: (id) => (getEntity(combat, id) || {}).maxHp || 0,
@@ -1084,7 +1089,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Context labels need only identity; inspection projects the full model on demand.
   function combatantName(role, entity) {
     return role === 'player'
-      ? (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase()
+      ? CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)
       : registries.enemies.get(entity.enemyId).name;
   }
 
@@ -1094,7 +1099,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade });
       return {
         role: 'player',
-        name: (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase(),
+        name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name),
         subtitle: `${runClassIdentity(registries, run).name} · Level ${characterLevel(run)}`,
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
@@ -1591,7 +1596,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (logMemo && logMemo.log === combat.eventLog && logMemo.shown === shown && logMemo.registries === registries && logMemo.who === who) return logMemo.rows;
     globalThis.__perfCount?.('combatLogFormat');
     const rows = combatLogEntries(combat.eventLog.slice(0, shown),
-      { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+      { registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
     logMemo = { log: combat.eventLog, shown, registries, who, rows };
     return rows;
   }
@@ -1608,7 +1613,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function renderReactionNote() {
     reactionNote.attach(combatEl);
     const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
-      registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+      registries, players: [{ id: 'player', name: CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name) }], enemies: combat.enemies });
     if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
   }
 
@@ -1850,7 +1855,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
     // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
-    const label = rangeHitLabel(preview, { targetId: enemy.id });
+    const label = rangeHitLabel(preview, { targetId: enemy.id, certainHits: FixCoreHitRollOff(combat.fixCoreRules || combat.gameProfile?.fixCoreRules) });
     if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
@@ -2110,7 +2115,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     const abilityName = (id) => activeCombatAbilities(registries, p).find(row => row.id === id)?.name;
     const playerName = combatantName('player', p);
-    const nameLabel = `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`;
+    const nameLabel = `${CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
     const statusIn = statusRows(p);
     const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
@@ -2666,12 +2671,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+    // End Turn never asks (owner, 2026-11-14). While a card is still playable it
+    // wears a warning and says so instead, so the answer is on the button before
+    // the tap and not in a modal after it.
+    const cardsLeft = combat.phase === 'player' && endTurnHasPlayableCard();
     paintEndTurnKey($('.end-turn'), etKey);
+    PaintEndTurnWarning($('.end-turn'), cardsLeft ? t('combat.endTurn.cardsLeft') : '');
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     const endTurn = $('.end-turn');
     const confirmReady = String(combat.phase === 'player' && !hasPlayable);
     if (endTurn.dataset.confirmReady !== confirmReady) endTurn.dataset.confirmReady = confirmReady;
+    endTurn.classList.toggle('end-turn--cards-left', cardsLeft);
 
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
@@ -2899,6 +2910,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       return { legal: flick || !!directPlayer, enemies: [], flick };
     };
+    // THE DRAGGED CARD NAMES THE ENEMY IT IS OVER (owner, 2026-11-14): the ghost's face is priced for that enemy, from the same quote the click
+    // path uses, and goes back to the card's own face when the drag leaves every enemy. It repaints only when the hovered enemy changes.
+    let dragFaceTarget = null;
+    const paintDragFace = targetId => {
+      if (targetId === dragFaceTarget || !dragGhost) return;
+      dragFaceTarget = targetId;
+      let quote;
+      try {
+        quote = targetId
+          ? DragFaceQuote({ preview: previewCard, combat, instanceId: inst.instanceId, targetId, ranks: upcastRanksByCard.get(inst.instanceId),
+            targetName: id => registries.enemies.get(getEntity(combat, id)?.enemyId)?.name || id, unplayable: isUnplayable(inst) })
+          : { preview: pv, affordable };
+      } catch (e) { console.warn('[combat] dragged card not previewable for', targetId); return; }
+      const old = dragGhost;
+      const face = renderCard(registries, inst, { preview: quote.preview, affordable: quote.affordable, range: true,
+        maxRange: combat.rangeState?.policy?.maxRange, faceLineLimit: 3, inspection: false });
+      face.classList.add(...[...old.classList].filter(name => name !== 'unaffordable'));
+      face.setAttribute('aria-hidden', 'true');
+      face.style.cssText = old.style.cssText;
+      if (old.dataset.dropState) face.dataset.dropState = old.dataset.dropState;
+      const key = old.querySelector(':scope > .key-hint');
+      if (key) face.appendChild(key);
+      const verdict = old.querySelector('.drop-verdict');
+      if (verdict) face.appendChild(verdict);
+      old.replaceWith(face);
+      dragGhost = face;
+    };
     const updateDropTarget = event => {
       if (!dragGhost) return;
       // Reads first (viewport, ghost box, pointer, drop plan), writes after: the
@@ -2913,6 +2951,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dragGhost.style.left = `${ghostPlacement.left}px`;
       dragGhost.style.top = `${ghostPlacement.top}px`;
       showDragAims(plan.enemies);
+      paintDragFace(DragFaceTargetId(plan));
       if (selfOnlyTarget) showSelfAim(plan.legal);
       const state = plan.legal ? 'legal' : 'illegal';
       // Same-value skips: a pointermove that changes nothing must dirty no style.
@@ -2970,7 +3009,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           dragGhost.classList.remove('selected', 'card-drawn', 'drag-source');
           dragGhost.style.cssText = `position:fixed;z-index:600;pointer-events:none;opacity:.8;transform:none;margin:0;zoom:1;width:${ghostWidth / bodyZoom}px;height:${ghostHeight / bodyZoom}px;`;
           document.body.appendChild(dragGhost);
-          ghostBox = null; dropPrimed = false;
+          ghostBox = null; dropPrimed = false; dragFaceTarget = null;
           selfOnlyTarget = readSelfOnlyTarget();
           beginDragTargeting();
         }
@@ -3846,13 +3885,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (plan.prompt) openHandDiscard(registries, plan, finish, $('.end-turn'));
     else finish();
   }
-  // Read the card-only fact for every press: a spent hand takes one tap,
-  // while an affordable card keeps the configured hold/review. Autoplay uses
-  // the same guarded commitEndTurn command directly.
+  // One activation ends the turn, with or without a card left (the endTurn row
+  // in model/secondbeat.js says `tap: true`); renderControls dresses the
+  // button with `end-turn--cards-left` instead of asking. Autoplay uses the
+  // same guarded commitEndTurn command directly.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
     ctx: () => ({ playable: endTurnHasPlayableCard() }),
-    tapWhenNone: true,
-    question: 'End your turn and let the enemies act?', confirmLabel: 'END TURN', onConfirm: commitEndTurn,
+    onConfirm: commitEndTurn,
   });
   endTurnBeat.refresh();
 
@@ -3899,7 +3938,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   attachTooltip($('.end-turn'), () => `<div class="tt-title">${esc(t('combat.endTurn'))}</div>`
     + (combat.handRules?.retain ? 'Enemies act, then draw while keeping unplayed cards.' : 'Enemies act, then draw a fresh hand.')
     + `<div class="ti-detail">Block expires at the start of your next turn. `
-    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
+    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b> or tap this.`
+    + `${$('.end-turn').classList.contains('end-turn--cards-left') ? `<br>${esc(t('combat.endTurn.cardsLeft'))}.` : ''}</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.

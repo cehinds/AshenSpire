@@ -85,7 +85,9 @@ function defaultFloaterLifeMs() {
 // It follows the floater life, so it scales with the Combat speed multiplier and shortens on Instant exactly as
 // the life does, never below 1 ms. At the default speed it is the JSON number itself.
 export function floaterStaggerMs({ enemy = false } = {}) {
-  const base = enemy ? combatPacing.enemyFloaterIntervalMs : FLOATER_STACK.floaterStaggerMs;
+  // The enemies' own interval (content/config actionPacing.json, motion.enemyTurn): the player's row still scales it.
+  const base = enemy ? combatPacing.enemyFloaterIntervalMs * ACTION_PACING.enemyTurn.floaterIntervalMs / ACTION_PACING.enemyFloaterIntervalDefaultMs
+    : FLOATER_STACK.floaterStaggerMs;
   return Math.max(1, Math.round(base * floaterLifeMs() / defaultFloaterLifeMs()));
 }
 // The shrunk wait used while more than floaterMaxQueued floaters are waiting over one combatant, so the backlog
@@ -124,15 +126,21 @@ export function actionPacing({ reduced = false, enemy = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
   const scaled = value => Math.max(0, Number(value) || 0) * scale;
-  const spriteScale = scale / ACTION_PACING.spritePlaybackRate
+  // The enemies act on their own pacing (motion.enemyTurn): a shorter stage gap and a faster sprite clip than the
+  // player's own plays, which keep the stages the click-impact probe pins. The player's pause and speed rows still
+  // scale both (a pause of 1000 ms doubles the enemy gap too), so a faster setting stays faster.
+  const turn = ACTION_PACING.enemyTurn;
+  const spriteScale = scale / (enemy ? turn.spritePlaybackRate : ACTION_PACING.spritePlaybackRate)
     * (enemy ? enemyAnimationMs() : combatPacing.animationMs) / ACTION_PACING.animationStepDurationMs;
-  const gapMs = scaled(combatPacing.gapMs);
+  const gapMs = scaled(enemy ? combatPacing.gapMs * turn.stageGapMs / ACTION_PACING.stageGapMs : combatPacing.gapMs);
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each
   // boundary. The cost and the action word open the beat; the stance follows the word by one gap (intentMs), then the animation.
   return {
     gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
-    stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
+    stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) * (enemy ? turn.turnBannerScale : 1) : 0),
+    // How long an enemy's wind-up (its telegraph beat) is held before the attack beat takes over; 0 for the player.
+    telegraphMs: enemy ? scaled(turn.telegraphMs) : 0,
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),
     scale,

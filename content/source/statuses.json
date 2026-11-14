@@ -566,7 +566,7 @@
   },
   {
     "id": "astralArmor",
-    "name": "Astral Armor",
+    "name": "Astral Armour",
     "icon": "progression",
     "stackMode": "add",
     "decay": "none",

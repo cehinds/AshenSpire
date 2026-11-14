@@ -97,8 +97,9 @@ test('save validation refuses persistent Precision outside its total stack count
   }
 });
 
+// Precision only matters while the d20 is rolled, so this fight carries the rules of one saved before the 2026-11-14 ruling.
 test('Precision affects hit chance but never per-hit damage or live damage on a landed hit', () => {
-  const ctx = live(), target = ctx.enemies[0];
+  const ctx = live({ legacy: true }), target = ctx.enemies[0];
   target.attributes = { ...target.attributes, dexterity: 10 }; // avoid the natural-1 hit ceiling before Precision
   ctx.player.attributes = { dexterity: 2, strength: 0, wisdom: 0, intelligence: 0 };
   const card = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };

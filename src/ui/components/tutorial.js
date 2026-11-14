@@ -34,7 +34,7 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 // of the two rules applied to which line.
 const STEPS = [
   { sel: '.energy-orb', title: () => t('combat.actions'), text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
-  { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'An enemy intent shows an unknown action, a broad clue, or an exact read. Inspect an enemy for learned details and prediction controls.' },
+  { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Every enemy move is shown above its head. Attacks always land unless the target has Evade, which makes the next attack miss. Inspect an enemy for its full move list.' },
   // The Play cards line follows the live `oneTapPlay` setting (combat.js passes it
   // when the callout is shown): with it on a tap plays, with it off a tap only
   // selects and the player then picks a target.
