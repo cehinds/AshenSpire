@@ -39,10 +39,13 @@ const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: t
 const base = 'http://127.0.0.1:' + server.server.address().port;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const results = [];
+let skipped = 0;
 const check = (name, ok, detail = '') => {
   results.push(ok);
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`);
 };
+// A check that would measure nothing is reported as SKIP, not PASS, and counted apart.
+const skip = (name, reason) => { skipped++; console.log(`SKIP ${name} — ${reason}`); };
 
 // Runs in the page: the key rects in canvas px, plus the canvas box and the hand.
 function canvasFacts() {
@@ -184,7 +187,7 @@ async function armedFacts(page) {
   if (strike < 0) return null;
   await page.locator('.hand .card').nth(strike).click();
   await page.waitForTimeout(1200);
-  return page.evaluate(() => {
+  const facts = await page.evaluate(() => {
     const root = document.documentElement;
     const matrix = new DOMMatrix(getComputedStyle(root).transform === 'none' ? undefined : getComputedStyle(root).transform);
     const scale = matrix.a || 1, left = matrix.e, top = matrix.f;
@@ -192,9 +195,34 @@ async function armedFacts(page) {
     const cells = document.querySelector('.target-hud-cells');
     return { cells: cells ? [...cells.querySelectorAll('path, polygon')].map(box).filter(r => r[2] > 0) : [],
       picker: [...document.querySelectorAll('.enemy-target-picker:not([hidden]) .enemy-target-button:not([hidden])')].map(box),
-      // The armed card's range chooser and the hit-chance badges.
-      range: [...document.querySelectorAll('.combat-range-action, .combat-hit-chance')].filter(node => node.getBoundingClientRect().width).map(box) };
+      // The armed card's range chooser and the hit-chance badges, apart: either may be absent.
+      range: [...document.querySelectorAll('.combat-range-action')].filter(node => node.getBoundingClientRect().width).map(box),
+      badges: [...document.querySelectorAll('.combat-hit-chance')].filter(node => node.getBoundingClientRect().width).map(box) };
   });
+  facts.press = await pressEmptyCell(page);
+  return facts;
+}
+// With a card armed: press the empty part of an enemy's drawn cell (beside its body, not on a sprite or control)
+// and report whether the card resolved, i.e. the press reached that enemy.
+async function pressEmptyCell(page) {
+  const spot = await page.evaluate(() => {
+    const passive = t => t.closest('.combatant, .target-hud-layer, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+    for (const frame of document.querySelectorAll('.combatant.enemy:not(.dead)')) {
+      const tile = document.querySelector(`.formation-grid [data-cell="${frame.dataset.formationCell}"]`);
+      if (!tile) continue;
+      const r = tile.getBoundingClientRect(), y = r.top + r.height / 2;
+      for (let dx = 0; dx <= r.width * 0.3; dx += 3) for (const sign of [1, -1]) {
+        const x = r.left + r.width / 2 + sign * dx, el = document.elementFromPoint(x, y);
+        if (el && !passive(el)) return { x, y, cell: frame.dataset.formationCell };
+      }
+    }
+    return null;
+  });
+  if (!spot) return { spot: null, resolved: false };
+  const before = await page.locator('.hand .card').count();
+  await page.mouse.click(spot.x, spot.y);
+  await page.waitForTimeout(1500);
+  return { spot, resolved: (await page.locator('.hand .card').count()) < before };
 }
 function compareBoxes(a, b) {
   if (a.length !== b.length) return { worst: Infinity, where: `${a.length} vs ${b.length} boxes` };
@@ -228,7 +256,7 @@ try {
     const deskArmed = await armedFacts(desk.page);
     await desk.context.close();
     check('armed: a Strike is in the three-enemy hand', !!resized && !!freshArmed && !!deskArmed);
-    if (freshArmed && deskArmed) for (const part of ['cells', 'range']) {
+    if (freshArmed && deskArmed) for (const part of ['cells', 'badges']) {
       const same = compareBoxes(freshArmed[part], deskArmed[part]);
       check(`armed same form factor: ${part} at fresh 2000x1225 equal fresh 1440x900 (${deskArmed[part].length} boxes)`,
         deskArmed[part].length > 0 && same.worst <= TOLERANCE, same.worst <= TOLERANCE ? `max diff ${same.worst.toFixed(2)}` : `max diff ${same.worst.toFixed(1)} at ${same.where}`);
@@ -237,12 +265,25 @@ try {
       const cells = compareBoxes(resized.cells, freshArmed.cells);
       check(`armed after a scale-only resize: target tint cells equal a fresh 2000x1225 load (${resized.cells.length} cells)`,
         resized.cells.length > 0 && cells.worst <= TOLERANCE, cells.worst <= TOLERANCE ? `max diff ${cells.worst.toFixed(2)}` : `max diff ${cells.worst.toFixed(1)} at ${cells.where}`);
-      const range = compareBoxes(resized.range, freshArmed.range);
-      check(`armed after a scale-only resize: range chooser and hit-chance badges equal a fresh load (${resized.range.length} boxes)`,
-        resized.range.length > 0 && range.worst <= TOLERANCE, range.worst <= TOLERANCE ? `max diff ${range.worst.toFixed(2)}` : `max diff ${range.worst.toFixed(1)} at ${range.where}`);
-      const picker = compareBoxes(resized.picker, freshArmed.picker);
-      check(`armed after a scale-only resize: enemy target picker equals a fresh load (${resized.picker.length} boxes${resized.picker.length ? '' : '; the target HUD replaces the picker on every form factor'})`,
-        picker.worst <= TOLERANCE, picker.worst <= TOLERANCE ? `max diff ${picker.worst.toFixed(2)}` : `max diff ${picker.worst.toFixed(1)} at ${picker.where}`);
+      const badges = compareBoxes(resized.badges, freshArmed.badges);
+      check(`armed after a scale-only resize: hit-chance badges equal a fresh load (${resized.badges.length} boxes)`,
+        resized.badges.length > 0 && badges.worst <= TOLERANCE, badges.worst <= TOLERANCE ? `max diff ${badges.worst.toFixed(2)}` : `max diff ${badges.worst.toFixed(1)} at ${badges.where}`);
+      if (!resized.range.length && !freshArmed.range.length) skip('armed after a scale-only resize: range chooser equals a fresh load', 'no .combat-range-action is shown for Strike at this size');
+      else {
+        const range = compareBoxes(resized.range, freshArmed.range);
+        check(`armed after a scale-only resize: range chooser equals a fresh load (${resized.range.length} boxes)`,
+          resized.range.length > 0 && range.worst <= TOLERANCE, range.worst <= TOLERANCE ? `max diff ${range.worst.toFixed(2)}` : `max diff ${range.worst.toFixed(1)} at ${range.where}`);
+      }
+      if (!resized.picker.length && !freshArmed.picker.length) skip('armed after a scale-only resize: enemy target picker equals a fresh load', 'the target HUD replaces the picker on every form factor, so there are no boxes to measure');
+      else {
+        const picker = compareBoxes(resized.picker, freshArmed.picker);
+        check(`armed after a scale-only resize: enemy target picker equals a fresh load (${resized.picker.length} boxes)`,
+          resized.picker.length > 0 && picker.worst <= TOLERANCE, picker.worst <= TOLERANCE ? `max diff ${picker.worst.toFixed(2)}` : `max diff ${picker.worst.toFixed(1)} at ${picker.where}`);
+      }
+      check(`armed after a scale-only resize: pressing the empty part of enemy cell ${resized.press.spot?.cell} resolves the card on it`,
+        resized.press.resolved, resized.press.spot ? '' : 'no empty spot in any enemy cell');
+      check(`armed at a fresh 2000x1225 load: the same press resolves the card (agrees with the resized page)`,
+        freshArmed.press.resolved === resized.press.resolved && freshArmed.press.resolved);
     }
   }
   // b. Path independence, then c. on every stop.
@@ -276,5 +317,5 @@ try {
   await new Promise(r => server.server.close(r));
 }
 const failed = results.filter(ok => !ok).length;
-console.log(`combat-canvas-qa: ${results.length - failed} passed, ${failed} failed`);
+console.log(`combat-canvas-qa: ${results.length - failed} passed, ${failed} failed, ${skipped} skipped`);
 process.exit(failed ? 1 : 0);
