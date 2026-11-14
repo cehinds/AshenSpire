@@ -11,6 +11,7 @@ import { decayAtTurnStart as decayStatuses } from './statuses.js';
 import * as Counter from './counterRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { effectiveD20Percent } from './d20Chance.js';
+import { enemyMoveDamage } from '../model/state.js';
 
 const sum = values => values.reduce((total, value) => total + value, 0);
 const unknown = reason => ({ basis: 'hp', min: null, max: null, label: '?', tone: 'red', stanceReduced: false, uncertain: true, reason });
@@ -41,19 +42,34 @@ function decayAtTurnStart(ctx, enemy) {
   for (const [key, value] of Object.entries(held)) { if (value === undefined) delete enemy[key]; else enemy[key] = value; }
 }
 
-// Each living enemy ahead of `source` whose next move is a readable attack hits the previewed player state once, as it will when the turn runs.
+// Each living enemy ahead of `source` plays its readable attacks through the previewed player state, in order, as the turn will run them: its
+// head move, then each attack of its plan (owner, 2026-11-14: a later number holds every earlier action, not only the first). A planned move
+// that is not an attack leaves the state as it was; a delayed one ends the plan, as it does when it is played.
 function advanceThroughEarlierEnemies(ctx, source, prepared) {
+  const price = (other, moveId, damage, hits) => {
+    const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
+    if (!authored) return false;
+    const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
+    const carrier = Tactics.enemyMoveCarrier(other, move, moveId, ctx);
+    // The move enters its stance before its hit lands, as the live move does: a second move in the same stance carries the matching-stance bonus.
+    try { ProfileCombat.setProfileStance(ctx, other, carrier); Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared); } catch { /* an earlier move that cannot be priced leaves the state as it was */ }
+    return !move.delay;
+  };
   for (const other of ctx.enemies) {
     if (other.id === source.id) return;
     const intent = other.intent;
     if (!other.alive || !intent || intent.kind !== 'attack' || intent.damage == null || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
     if (ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
-    const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[intent.moveId];
-    if (!authored) continue;
     decayAtTurnStart(ctx, other);
-    const move = Tactics.expandedEnemyMove(other, authored, intent.moveId, ctx);
-    const carrier = Tactics.enemyMoveCarrier(other, move, intent.moveId, ctx);
-    try { Damage.previewDamageHits(ctx, other, prepared.defender, intent.damage, carrier.tags, carrier, Math.max(0, Math.floor(intent.hits ?? 1)), prepared); } catch { /* an earlier move that cannot be priced leaves the state as it was */ }
+    if (!price(other, intent.moveId, intent.damage, intent.hits) || !other.planDue) continue;
+    for (const planned of other.plannedMoves || []) {
+      const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[planned.moveId];
+      if (!authored || authored.reaction) continue;
+      const move = Tactics.expandedEnemyMove(other, authored, planned.moveId, ctx);
+      if (move.delay) break;
+      if (move.damage == null) continue;
+      if (!price(other, planned.moveId, enemyMoveDamage(other, move), move.hits ?? 1)) break;
+    }
   }
 }
 
