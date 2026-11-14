@@ -5,9 +5,9 @@ import { stanceFlashPlan, stanceFlashIcon, showStanceFlash } from '../src/ui/sta
 import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-test('the flash is about 100 ms and its durations are data', () => {
-  assert.deepEqual({ ...ACTION_PACING.stanceFlash }, { fadeInMs: 30, holdMs: 40, fadeOutMs: 30, opacity: 0.6 });
-  assert.deepEqual(stanceFlashPlan(), { fadeInMs: 30, holdMs: 40, fadeOutMs: 30, opacity: 0.6, totalMs: 100 });
+test('the flash is about 250 ms and its durations are data', () => {
+  assert.deepEqual({ ...ACTION_PACING.stanceFlash }, { fadeInMs: 80, holdMs: 90, fadeOutMs: 80, opacity: 0.6 });
+  assert.deepEqual(stanceFlashPlan(), { fadeInMs: 80, holdMs: 90, fadeOutMs: 80, opacity: 0.6, totalMs: 250 });
   assert.equal(stanceFlashPlan({ fadeInMs: 10, holdMs: 0, fadeOutMs: 5, opacity: 2 }).opacity, 1, 'opacity is clamped');
 });
 test('Reduced motion, Instant and a zero-length flash draw nothing', () => {
@@ -31,9 +31,9 @@ test('the overlay is created over the sprite, ignores the pointer, fades to 60% 
     assert.ok(el.querySelector('svg'), 'the stance sigil');
     t.mock.timers.tick(5);
     assert.equal(el.style.opacity, '0.6');
-    t.mock.timers.tick(100);
+    t.mock.timers.tick(200);
     assert.equal(el.style.opacity, '0', 'faded out');
-    t.mock.timers.tick(30);
+    t.mock.timers.tick(80);
     assert.equal(sprite.contains(el), false, 'removed when it has faded');
   });
 });

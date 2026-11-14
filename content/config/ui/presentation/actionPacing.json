@@ -17,7 +17,7 @@
       { "id": "bars", "with": "reaction", "offsetMs": 0 },
       { "id": "end", "with": "previous", "offsetMs": 100 }
     ],
-    "stanceFlash": { "fadeInMs": 30, "holdMs": 40, "fadeOutMs": 30, "opacity": 0.6 },
+    "stanceFlash": { "fadeInMs": 80, "holdMs": 90, "fadeOutMs": 80, "opacity": 0.6 },
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
     "enemyAttackDefaultMs": 750,
