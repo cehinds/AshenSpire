@@ -75,7 +75,10 @@ try {
           box:box(node), valueBox:box(value), barrier:node.dataset.barrier || null };
       });
       // The visible artwork: the battlefield publishes its ground line and visible height in screen px; the sprite box is a cross-check.
-      const groundY = Number(frame.dataset.groundY), visibleHeight = Number(frame.dataset.spriteVisibleHeight);
+      // groundY and spriteVisibleHeight are field-relative canvas px; this measures in screen px, so they are scaled
+      // by the canvas fit and placed on the field's box.
+      const fit = Number(document.documentElement.dataset.viewScale) || 1, fieldTop = frame.closest('.field').getBoundingClientRect().top;
+      const groundY = fieldTop + Number(frame.dataset.groundY) * fit, visibleHeight = Number(frame.dataset.spriteVisibleHeight) * fit;
       const sprite = frame.querySelector('.sprite');
       const art = { groundY, visibleHeight, top:groundY - visibleHeight, spriteBox:sprite ? box(sprite) : null };
       // The combat canvas's fit scale (1 without one): the gap is measured in canvas px.
@@ -97,7 +100,8 @@ try {
     geometry.selected = await page.evaluate(() => {
       const frame = document.querySelector('.combatant.player'), rack = frame.querySelector('.target-hud-overhead-meters');
       return { selected:frame.classList.contains('context-selected'),
-        artTop:Number(frame.dataset.groundY) - Number(frame.dataset.spriteVisibleHeight), rackBottom:rack.getBoundingClientRect().bottom };
+        artTop:frame.closest('.field').getBoundingClientRect().top + (Number(frame.dataset.groundY) - Number(frame.dataset.spriteVisibleHeight)) * (Number(document.documentElement.dataset.viewScale) || 1),
+        rackBottom:rack.getBoundingClientRect().bottom };
     });
     report.views.push({name,width,height,profile:fixture.profile,facts,geometry,errors});
     try {

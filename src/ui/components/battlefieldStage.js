@@ -1109,7 +1109,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setData(frame, 'baseSpriteScale', fitted.scale);
       setData(frame, 'presentationScale', multiplier);
       setData(frame, 'formationX', slot.x);
-      setData(frame, 'groundY', fieldRect.top + ground);
+      // The ground anchor, field-relative in canvas px (readers add the field's own box): a scale-only resize runs no
+      // relayout, so a cached real-px value would go stale (enemyTargetPicker, the HUD clearance QA).
+      setData(frame, 'groundY', ground / CanvasBox().scale);
       setData(frame, 'groundRatio', ground / fieldRect.height);
       setStyle(stack, 'top', `${local.top}px`);
       // The half-field art floor may move two enemies to the same painted
@@ -1123,7 +1125,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setData(frame, 'overheadClamped', 'false');
       setData(frame, 'combatantScale', '1');
       setData(frame, 'spriteRatio', ratio);
-      setData(frame, 'spriteVisibleHeight', visibleHeight);
+      setData(frame, 'spriteVisibleHeight', visibleHeight / CanvasBox().scale); // canvas px, paired with groundY
       // Keep the 44 px target on the clickable frame, above neighbouring art.
       // It does not change the dimensions read by the sprite fitter.
       frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
