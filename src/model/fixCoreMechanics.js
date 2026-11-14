@@ -34,6 +34,11 @@ export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFE
 // Owner, 2026-10-26: a pierce hit lets floor(blockBypassFraction x its damage) past Block. Missing blocks keep this default.
 export const FIXCORE_PIERCE_DEFAULTS = Object.freeze({ blockBypassFraction: 0.2 });
 export const fixCorePierceRules = rules => ({ ...FIXCORE_PIERCE_DEFAULTS, ...(rules?.pierce || {}) });
+// Owner, 2026-11-14: attacks always connect and intents are always read. `accuracy.hitRoll: false` draws no d20 and makes Evade a
+// stack that cancels the next attack; `perception.roll: false` makes every intent read exact. A rules object without the key
+// (a fight saved before this ruling) keeps rolling, so only an explicit `false` switches the roll off.
+export const FixCoreHitRollOff = rules => rules?.accuracy?.hitRoll === false;
+export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === false;
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
 // Pure v1 -> current migration for persisted rules: a perception block saved
@@ -156,7 +161,9 @@ export function damageReceipt(targetId, hits) {
 // registry is explicit so UI facades cannot recursively query themselves.
 /** The off-combat phrase for Evade's configured (and card-scoped) stack grant. */
 export function evadeStackGainPhrase(ctx, carrier = null) {
-  const { evadeStackBase: base, evadeStackDex: dex } = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
+  const accuracy = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
+  if (FixCoreHitRollOff({ accuracy })) return String(accuracy.evadeStacksPerCard ?? 1);
+  const { evadeStackBase: base, evadeStackDex: dex } = accuracy;
   return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
 }
 /** A card whose whole authored rule is its configured self Evade grant. */
@@ -175,7 +182,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    evade: `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
+    evade: FixCoreHitRollOff(rules) ? 'The next attack against you misses.' : `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;

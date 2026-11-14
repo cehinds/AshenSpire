@@ -1,5 +1,5 @@
 import * as Engagement from './combatEngagement.js';
-import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, FixCoreHitRollOff } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -66,6 +66,8 @@ export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base >
 export function evadeStackGain(ctx, entity, carrier = null) {
   if (!fixCoreEnabled(ctx) || !entity) return 0;
   const cfg = fixCoreRules(ctx, entity, carrier).accuracy;
+  // Owner, 2026-11-14: without the hit roll one Evade card is one stack that cancels the next attack.
+  if (FixCoreHitRollOff({ accuracy: cfg })) return Math.floor(cfg.evadeStacksPerCard ?? 1);
   return Math.floor(cfg.evadeStackBase + cfg.evadeStackDex * (Number(attributesOf(ctx, entity)?.dexterity) || 0));
 }
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
@@ -139,9 +141,12 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options)) : effectiveEvasion(ctx, target, options);
   const need = fixCoreEnabled(ctx) ? evasion - accuracy : Math.max(2, Math.min(20, 8 + evasion - accuracy));
   const evadeAttempted = inRange && !bypass && !options.evadeDisabled && (evadeStacks > 0 || !!eligiblePreparedEvade(target));
-  const mode = hitMode(source, target, options);
+  // Owner, 2026-11-14 (hitRoll off): no die. An in-range attack hits unless an Evade stack, or a prepared Evade, will cancel it.
+  const noRoll = fixCoreEnabled(ctx) && FixCoreHitRollOff({ accuracy: cfg });
+  const mode = noRoll ? 'normal' : hitMode(source, target, options);
   let hits = 0, outcomes = mode === 'normal' ? 20 : 400;
-  if (inRange) for (let first = 1; first <= 20; first++) {
+  if (noRoll) { hits = inRange && !evadeAttempted ? 20 : 0; outcomes = 20; }
+  else if (inRange) for (let first = 1; first <= 20; first++) {
     if (mode === 'normal') { if (bypass || diceHit([first], need, mode, fixCoreEnabled(ctx))) hits++; }
     else for (let second = 1; second <= 20; second++) if (bypass || diceHit([first, second], need, mode, fixCoreEnabled(ctx))) hits++;
   }
@@ -149,7 +154,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
   return { range, requiredRange, inRange, accuracy, ...(precisionParts ? { precisionParts } : {}), evasion, need, bypass, opposed: false, ...(fixCoreEnabled(ctx) ? { fixedDefense: true } : {}), mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
-    ...(!inRange ? { missReason: 'range' } : {}) };
+    ...(noRoll ? { noRoll: true } : {}),
+    ...(!inRange ? { missReason: 'range' } : noRoll && evadeAttempted ? { missReason: 'evaded' } : {}) };
 }
 
 export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
@@ -157,6 +163,7 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   if (!preview) return null;
   // A contest is rolled by the contest helper (combatMatchups.beginTacticalAction); this path only reports it as unavoidable.
   if (preview.contest) return { ...preview, d20: null, dice: [], hit: true };
+  if (preview.noRoll) return resolveCertainHit(ctx, source, target, carrier, options, preview);
   const d20 = preview.inRange && !preview.bypass ? (typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20)) : null;
   const dice = d20 == null ? [] : [d20];
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));
@@ -171,6 +178,24 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   const result = { ...preview, d20, dice, hit, ...(preview.fixedDefense && dice.length ? { attackTotal: attackDie + preview.accuracy, evasionTotal: preview.evasion } : {}), ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}), ...(!hit ? { missReason: preview.inRange ? 'accuracy' : 'range' } : {}) };
   if (!hit && preview.inRange && !preview.bypass && preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
   const label = hit ? preview.evadeActive && !preview.bypass ? 'Hit — Evade Failed' : 'Hit' : 'Missed';
+  if (!options.suppressOutcomeEvent) ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}), ...result, label });
+  return result;
+}
+
+/** hitRoll off: no die is drawn. A stack of Evade (or a prepared Evade) cancels this attack and is spent; anything else in range connects. */
+function resolveCertainHit(ctx, source, target, carrier, options, preview) {
+  const evaded = preview.evadeAttempted;
+  const hit = preview.inRange && !evaded;
+  if (evaded) {
+    if (eligibleEvadeMode(target)) delete target.nextEvadeMode;
+    const prepared = eligiblePreparedEvade(target);
+    if (prepared) prepared.charges--;
+    if (preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
+  }
+  const result = { ...preview, d20: null, dice: [], hit, ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}),
+    ...(!hit ? { missReason: preview.inRange ? 'evaded' : 'range' } : {}) };
+  const label = hit ? 'Hit' : evaded ? 'Evaded' : 'Missed';
   if (!options.suppressOutcomeEvent) ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}), ...result, label });
   return result;

@@ -113,6 +113,13 @@
       "stanceAdvantageBonus": {
         "type": "number",
         "minimum": 0
+      },
+      "hitRoll": {
+        "type": "boolean"
+      },
+      "evadeStacksPerCard": {
+        "type": "number",
+        "minimum": 0
       }
     },
     "required": [
