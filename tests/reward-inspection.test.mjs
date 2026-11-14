@@ -84,7 +84,9 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
     assert.equal(inspect.disabled, false, 'the first touch face tap still selects a reward');
     assert.match(inspect.getAttribute('aria-label'), /^Inspect /);
     const chosen = app.querySelector('.reward-selected');
-    for (const stage of ['selection', 'review']) {
+    // A relic or flask has no review stage (Confirm takes it, W2-E: two clicks from choice to what follows); cards and equipment keep it.
+    const reviewed = !['relics', 'potions'].includes(kind);
+    for (const stage of reviewed ? ['selection', 'review'] : ['selection']) {
       if (stage === 'review') confirm.click();
       assert.notEqual(app.querySelector('.reward-row').inert, true, 'review does not block Information');
       const labels = [...app.querySelector('.modal-foot-actions').children].map(button => button.textContent);
@@ -116,8 +118,10 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
       assert.deepEqual({ run, offer }, before, 'reading cannot change XP, decks, claims, or offers');
       assert.deepEqual(calls, []);
     }
-    assert.equal(confirm.textContent, 'Continue');
-    assert.equal(app.querySelector('.reward-pick').disabled, true, 'review choices stay locked');
+    if (reviewed) {
+      assert.equal(confirm.textContent, 'Continue');
+      assert.equal(app.querySelector('.reward-pick').disabled, true, 'review choices stay locked');
+    } else assert.equal(confirm.textContent, 'Confirm', 'a relic or flask is taken by Confirm itself');
     confirm.click();
     assert.deepEqual(calls, ['take']);
     assert.equal(app.querySelector('.reward-confirm-status').textContent, 'save refused');
@@ -125,9 +129,11 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
     inspect.click(); document.querySelector('.card-inspection-modal .modal-close').click();
     assert.deepEqual(calls, ['take'], 'reading after a refusal does not retry the claim');
     assert.deepEqual({ run, offer }, before);
-    app.querySelector('#reward-continue').click();
-    assert.equal(confirm.textContent, 'Confirm');
-    assert.equal(app.querySelector('.reward-pick').disabled, false);
+    if (reviewed) {
+      app.querySelector('#reward-continue').click();
+      assert.equal(confirm.textContent, 'Confirm');
+      assert.equal(app.querySelector('.reward-pick').disabled, false);
+    }
   });
 });
 

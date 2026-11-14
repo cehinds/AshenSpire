@@ -23,7 +23,8 @@ export function RewardDoorCopy(offer, run, settings) {
 
 // Configured mixed rewards share the full-game reward door, option columns,
 // card faces and explicit selection/confirmation. Claims remain host-owned.
-export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null, onEditEquipment = null, canEditEquipment = false }) {
+// `spoils` (optional element) is the victory strip shown above the choice on a won fight's door (components/victorySpoils.js).
+export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null, onEditEquipment = null, canEditEquipment = false, spoils = null }) {
   clearSelection();
   let presentation = rewardDoorOwners.get(run);
   if (!presentation || presentation.offerId !== offer.id) {
@@ -150,7 +151,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
         onContinue();
         completed = true;
       } else {
-        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax, onEditEquipment, canEditEquipment });
+        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax, onEditEquipment, canEditEquipment, spoils });
       }
     } catch (error) {
       inspect.disabled = completed; strip.inert = completed;
@@ -176,6 +177,9 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   confirm.addEventListener('click', () => {
     if (pending || completed || selected === null || confirm.disabled) return;
     if (addToDeckMode) return commit(index => onAddToDeck(index));
+    // A relic or flask has nothing to review: Confirm takes it and the door moves on (two clicks from the choice to what follows).
+    // A card keeps its own Add buttons; a weapon or armour keeps the review foot (Equip now / Continue) for the Armoury.
+    if (!reviewing && !cardPick() && !['weapons', 'armor'].includes(offer.options[selected]?.kind)) return commit(claimOnly);
     if (!reviewing) {
       reviewing = true;
       // Keep the selected face's Information control available in review.
@@ -194,7 +198,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   // The footer drops hidden buttons when built, so the door is rebuilt (same owner: in place) whenever the review changes them.
   const buildFoot = () => modalFooter({ secondary: [next, inspect, equip, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' });
   function mountDoor() {
-    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: buildFoot() });
+    mountRewardDoor(app, { owner: presentation.owner, title, body: [spoils, note, strip, status], foot: buildFoot() });
   }
   // Swap only the footer in the open door; falls back to a full mount when no door of this owner is open.
   function mountFoot() { if (!replaceRewardFoot(app, presentation.owner, buildFoot())) mountDoor(); }

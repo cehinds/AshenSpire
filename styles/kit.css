@@ -1746,6 +1746,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
 .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
 .reward-door .rp-next { justify-self: end; }
+/* A reward door over the fight owns the screen: the hand overlay (z 900, above the veil) would show through the door's
+   fade-in and sit over its buttons, so it leaves the layout while any reward veil is open. */
+body:has(.reward-veil) .hand-overlay { visibility: hidden; }
+/* ONE VICTORY SCREEN: the spoils strip above the card choice (components/victorySpoils.js). */
+.reward-door .victory-spoils { width: 100%; max-width: 30rem; display: grid; gap: .5rem; justify-items: center; }
+.reward-door .victory-spoils .reward-progress { width: 100%; }
+.reward-door .spoils-line { margin: 0; color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; text-align: center; }
+.reward-door .spoils-points { display: grid; gap: .5rem; width: 100%; justify-items: center; }
+.reward-door .spoils-points .reward-stat-allocation { border-top: 0; padding-top: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
 /* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
