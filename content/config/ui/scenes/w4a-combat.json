@@ -20,7 +20,7 @@
       "cardStepPx": 255,
       "fanAngleDegrees": 4,
       "arcPx": 8,
-      "handHeightPx": 420,
+      "handHeightPx": 400,
       "handGapPx": 10,
       "handOverlapFraction": 0.12,
       "backgroundTopPx": 700,
