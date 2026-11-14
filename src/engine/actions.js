@@ -1833,11 +1833,19 @@ export const OPCODE_HANDLERS = Object.freeze({
       for (const t of plannedStatusTargets(ctx, action, eff)) {
         const authored = evalNum(ctx, action, eff.stacks, 1, t);
         const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
+        const held = t.statuses?.[eff.status]?.stacks || 0;
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
           tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]
         });
         // `thisTurn` (a card upgrade's temporary stat boost): the stacks leave again at the end of the owner's turn (statuses.ClearTurnBoosts).
-        if (eff.thisTurn === true) { t.turnBoosts ||= {}; t.turnBoosts[eff.status] = (t.turnBoosts[eff.status] || 0) + stacks; }
+        // `turnBoostBases` is what the owner holds apart from the boost; a permanent gain of the same status while boosted raises it.
+        if (eff.thisTurn === true) {
+          t.turnBoosts ||= {}; t.turnBoostBases ||= {};
+          if (!(eff.status in t.turnBoosts)) t.turnBoostBases[eff.status] = held;
+          t.turnBoosts[eff.status] = (t.turnBoosts[eff.status] || 0) + stacks;
+        } else if (t.turnBoosts?.[eff.status] !== undefined && t.turnBoostBases?.[eff.status] !== undefined) {
+          t.turnBoostBases[eff.status] += Math.max(0, (t.statuses?.[eff.status]?.stacks || 0) - held);
+        }
         proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];

@@ -8,6 +8,10 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
+import { executeAction } from '../src/engine/actions.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const strike = () => registries.cards.get('core.strike');
@@ -111,6 +115,47 @@ test('target with `other` hits one OTHER enemy at half damage, never the main ta
   }
   const alone = fight([inst('p', 'core.strike', [step])]);
   assert.deepEqual(Object.keys(previewCard(alone, 'p', alone.enemies[0].id).values.find((row) => row.target === 'otherEnemy').perTarget), [], 'a lone enemy is quoted no half hit');
+});
+
+// Opus review on #2756: a boost gained in the enemy phase (a Reaction) used to last through the player's whole next turn, and the
+// end-of-turn clear subtracted the whole boost even after a Strength loss, eating stacks the player owned before it.
+const boostSelf = (combat) => executeAction(combat, { effect: { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2, thisTurn: true },
+  source: combat.player, owner: combat.player, target: combat.player, meta: {} });
+test('a thisTurn boost gained in the enemy phase ends with that turn, before the player acts again', () => {
+  // The shipped Core profile: the Wandering Soldier opens with Slash at seed 511, so a Reaction card is offered against it.
+  const core = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, core)), core);
+  const c = createRunCombat({ registries: reg, run: createRunState({ registries: reg, classId: 'reaver', seed: 511 }), rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  assert.equal(c.enemies[0].intent.moveId, 'slash');
+  for (const pile of Object.values(c.piles)) pile.length = 0;
+  c.piles.hand.push(inst('p', 'core.strike', [{ k: 'fx', fx: 'boost', stat: 'strength', n: 2 }, { k: 'fx', fx: 'reaction' }]));
+  for (let i = 0; i < 8; i += 1) c.piles.draw.push({ instanceId: `f${i}`, cardId: 'core.defend', upgraded: false });
+  c.player.stamina = c.player.maxStamina = 20; c.player.hp = c.player.maxHp = 999;
+  dispatch(c, { type: 'endTurn' });
+  const option = c.pendingReaction?.options?.find((row) => row.play?.cardInstanceId === 'p');
+  assert.ok(option, 'the boosted Reaction is offered against Slash');
+  dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: option.id });
+  for (let i = 0; c.pendingReaction && i < 20; i++) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  assert.ok(c.eventLog.some((row) => row.type === 'statusApplied' && row.status === 'strength'), 'the Reaction granted the boost');
+  assert.equal(c.phase, 'player');
+  assert.ok(!c.player.statuses.strength || c.player.statuses.strength.stacks === 0, 'gone before the next player turn');
+  assert.equal(c.player.turnBoosts, undefined);
+});
+test('clearing a thisTurn boost removes at most the boost still present, never stacks owned before it', () => {
+  const c = fight([inst('p', 'core.strike')]);
+  c.player.statuses.strength = { stacks: 3 };
+  boostSelf(c);
+  assert.equal(c.player.statuses.strength.stacks, 5);
+  c.player.statuses.strength.stacks -= 2; // a Strength loss after the grant takes the boost first
+  dispatch(c, { type: 'endTurn' });
+  for (let i = 0; c.pendingReaction && i < 20; i++) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  assert.equal(c.player.statuses.strength?.stacks, 3, 'the three owned stacks stay');
+  const d = fight([inst('p', 'core.strike')]);
+  d.player.statuses.strength = { stacks: 3 };
+  boostSelf(d);
+  dispatch(d, { type: 'endTurn' });
+  for (let i = 0; d.pendingReaction && i < 20; i++) dispatch(d, { type: 'chooseReaction', offerId: d.pendingReaction.id, optionId: null });
+  assert.equal(d.player.statuses.strength?.stacks, 3, 'with no loss the whole boost leaves');
 });
 
 test('Retain keeps the card at end of turn; holdOne keeps another; Exhaust removal drops Exhaust; Innate opens in hand', () => {

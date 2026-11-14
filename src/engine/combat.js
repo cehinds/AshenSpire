@@ -504,6 +504,8 @@ function startPlayerTurn(combat) {
   returnHiddenCards(combat);
   if (!fixCoreEnabled(combat)) decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
+  // A `thisTurn` boost gained during the enemy phase (a Reaction) ends with that turn, so it is gone before the player acts.
+  S.ClearTurnBoosts(combat, combat.player);
   combat.phase = 'player';
   const p = combat.player;
   decayAtTurnStart(combat, p);
