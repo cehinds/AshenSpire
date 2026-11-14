@@ -115,7 +115,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-08: enemy-level budgets on the integrated dev runtime; old saves keep their own rules.
   // Re-pinned 2026-11-14: exact hits and intents (hitRoll, evadeStacksPerCard, perception.roll) move the runtime hash (63e8... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-14: the one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp) moves the runtime hash (9808... is now in PREVIOUS_RUNTIMES, so a save from it still resumes).
-  assert.equal(profile.lock.runtimeHash, 'sha256:68d430e0053091cec98f2819769a92bfbd7e944af9b8237bc315cd40f472fc87');
+  // Re-pinned 2026-11-14: Ward as a Poise effect (ward.poisePerStack in fixCoreMechanics.json, src/model/combatRatings.js) moves the runtime hash (68d4... is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:1551ec573f5dc9da9059c1bf6d55866e690f2a3bb2fae06eecdee43abba2c9c7');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
