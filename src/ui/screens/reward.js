@@ -255,6 +255,7 @@ export function mountRewards(app, {
         el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
         receiptOnly ? statAllocationSection() : null,
+        receiptOnly && rewards.cinders ? el('p', { class: 'spoils-line spoils-cinders', text: t('reward.spoils.cinders', { gained: rewards.cinders.gained, total: rewards.cinders.total }) }) : null,
       ]),
       foot,
     });
