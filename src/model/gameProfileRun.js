@@ -137,8 +137,10 @@ export function gameProfileRatingReceipt(registries, run) {
           weaponTier = Math.max(weaponTier,itemTier);
           if (gameModule(run,'gear')?.armorBudget && itemTier) {
             const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
-            totals.ar += ar;
-            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr:0,ward:0,poise:0,weaponTier:itemTier});
+            // A magic weapon's tier also raises its spells: the same bonus lands in PR (W25 upgrades, step 1).
+            const pr = piece.kind === 'staff' ? ar : 0;
+            totals.ar += ar; totals.pr += pr;
+            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr,ward:0,poise:0,weaponTier:itemTier});
           }
         }
       }

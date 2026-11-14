@@ -7,7 +7,7 @@
 // (src/engine/handRules.js endTurnCardFate, configured branch) never reads the
 // `retain` keyword, so a Retain upgrade would show a keyword that does nothing.
 import { mulberry32 } from './rng.js';
-import { applyUpgradeSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
+import { applyUpgradeSteps, FlatSteps, firstPlainIndex, isPlainEffect, isPlainStatus, TAG_FAMILIES, TARGETING, UPGRADE_ELEMENTS, ELEMENT_IDENTITY, RANK_DOWN_TAG, hitFloor, currentHits } from './cardUpgrade.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { STACK_CAPS, rankedEffectsCapped } from './cardRank.js';
 
@@ -16,7 +16,10 @@ export { STACK_CAPS };
 // pool. `range`..`rankDown` are all `tag` steps (cardUpgrade.js); they are separate options so a choice of
 // several never offers the same thing twice.
 const WEIGHTS = Object.freeze({ dmg: 30, blk: 25, stk: 20, addStatus: 8, cost: 10, hits: 5,
-  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3 });
+  poise: 12, range: 6, targeting: 6, maneuver: 5, school: 4, element: 6, rankDown: 3,
+  // The effect menu (W25): one entry per `fx` step id (cardUpgrade.js FX_KINDS), keyed `fx:<id>`.
+  'fx:block': 18, 'fx:draw': 14, 'fx:cycle': 8, 'fx:cull': 4, 'fx:copy': 5, 'fx:shuffle': 4, 'fx:retain': 10, 'fx:innate': 5,
+  'fx:unexhaust': 8, 'fx:holdOne': 6, 'fx:boost': 8, 'fx:target': 7, 'fx:reaction': 4 });
 const RESTRICTED_TYPES = new Set(['power', 'status', 'curse', 'consumable']);
 
 /** FNV-1a over the three roll inputs: a stable 32-bit seed. */
@@ -89,8 +92,9 @@ function options(base, current, applied, limits) {
     if (n) found.dmg = { n };
   }
   const blkIndex = firstPlainIndex(effects, 'block');
-  if (blkIndex >= 0) {
-    const baseTotal = totalOf(baseEffects, 'block') || totalOf(effects, 'block');
+  // Only a Block the card was printed with grows: one an `fx` step added has no printed total to cap against.
+  if (blkIndex >= 0 && totalOf(baseEffects, 'block') > 0) {
+    const baseTotal = totalOf(baseEffects, 'block');
     const n = biggest(Math.max(2, Math.ceil(baseTotal * 0.2)), scale, (k) => effects[blkIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.blk = { n };
   }
@@ -135,12 +139,53 @@ function options(base, current, applied, limits) {
     if (counts.length) found.hits = { per, counts };
   }
   addTagOptions(base, current, applied, found, dmgIndex, limits, counterReturn);
+  addMenuOptions(base, current, found, dmgIndex, counterReturn);
   return found;
+}
+
+const hasOp = (effects, op) => effects.some((effect) => effect.op === op);
+const FX_OF = (id) => `fx:${id}`;
+
+/**
+ * The effect menu (owner, 2026-11-14): each option adds an effect the card does not already have, so it always changes
+ * what the card does. A kind is left out when the card already has what it would add (no second Draw effect past 3, no
+ * Retain on a Retain card, no Exhaust-removal on a card without Exhaust, no hit-all-style duplicate).
+ */
+function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
+  const effects = current.effects || [];
+  const tags = tagsOf(current);
+  const keywords = current.keywords || [];
+  const maneuver = familyValue(tags, 'maneuver:');
+  const hasBlock = hasOp(effects, 'block');
+  const attack = tags.includes('classification.attack') || base.type === 'attack';
+  const sp = Number.isInteger(current.staminaCost) ? current.staminaCost : 0;
+  const spell = familyValue(tags, 'camp:') === 'spell' || tags.includes('source:spell');
+  const set = (id, option = {}) => { found[FX_OF(id)] = { fx: id, ...option }; };
+  if (!hasBlock && !counterReturn && maneuver !== 'counter') set('block', { n: sp >= 2 ? 6 : 4 });
+  const draw = effects.filter((e) => isPlainEffect(e, 'draw')).reduce((sum, e) => sum + e.amount, 0);
+  if (draw < 3) set('draw', { n: 1 });
+  if (!hasOp(effects, 'discard') && !hasOp(effects, 'draw')) set('cycle', { n: 1 });
+  if (!hasOp(effects, 'exhaust') && !keywords.includes('exhaust')) set('cull');
+  if (!hasOp(effects, 'addCard') && !keywords.includes('exhaust')) set('copy');
+  if (!hasOp(effects, 'shuffleDiscardIntoDraw')) set('shuffle');
+  if (!keywords.includes('retain') && !keywords.includes('ethereal')) set('retain');
+  if (!keywords.includes('innate')) set('innate');
+  if (keywords.includes('exhaust')) set('unexhaust');
+  if (!hasOp(effects, 'retain')) set('holdOne');
+  const boosted = (stat) => effects.some((e) => e.op === 'applyStatus' && e.thisTurn === true && e.status === stat);
+  // Temporary STR / DEX are Strength / Dexterity statuses removed at turn end. INT / WIS have no live status in combat
+  // (ratings are folded in when the fight starts), so a spell card is not offered a boost.
+  if (!spell && dmgIndex >= 0 && !boosted('strength')) set('boost', { stat: 'strength', n: 2 });
+  else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
+  if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
+    && !effects.some((e) => e.op === 'damage' && e.target === 'randomEnemy')) set('target');
+  if (attack && !spell && !tags.includes('trait:reaction')) set('reaction');
 }
 
 const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
-const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash', 'ranged'].some((x) => x === m));
+// The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
+const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
 // Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
 const basicDef = (def) => {
   const tags = def.tags || [];
@@ -159,17 +204,19 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   const tagged = (predicate) => applied.some((s) => s.k === 'tag' && predicate(s));
 
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
-  if (poiseIndex >= 0 && !counterReturn) {
+  // A Smash card's Poise damage is derived from the hit it lands (gameProfileCombat smashRule), so its printed Poise number
+  // never reaches the engine: a Poise step on it would change a shown number and nothing else (W25 upgrades, step 1).
+  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash') {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.poise = { n };
   }
   if (attacking && !counterReturn) {
     const raw = familyValue(tags, 'range:') || normalizeRange(familyValue(tags, 'reach:')) || (maneuver === 'ranged' ? 'reach' : 'melee');
-    const next = { melee: 'reach', reach: 'ranged' }[raw];
+    const next = { melee: 'reach', reach: 'melee' }[raw];
     // Owner, 2026-11-05: a fight capped at Reach never offers Reach to Ranged (limits.maxRange, from the run's range policy).
     const cap = RANGES.indexOf(limits.maxRange);
-    if (next && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
+    if (next && applied.filter((t) => t.tag?.startsWith('range:')).length < 2 && (cap < 0 || RANGES.indexOf(next) <= cap)) found.range = { tag: `range:${next}` };
   }
   if (hitsEnemy && maneuver !== 'sweep' && !counterReturn && !tagged((s) => s.retarget)) {
     const [SINGLE, AREA] = TARGETING;
@@ -185,14 +232,12 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
     const tags2 = ATTACK_MANEUVERS.filter((m) => m !== maneuver && (m !== 'smash' || sp >= 2));
     if (tags2.length) found.maneuver = { tags: tags2.map((m) => `maneuver:${m}`) };
   }
-  if (camp === 'spell' && !tagged((t) => t.tag?.startsWith('school:'))) {
-    const own = familyValue(tags, 'school:');
-    const schools = TAG_FAMILIES['school:'].filter((school) => school !== own);
-    if (schools.length) found.school = { tags: schools.map((school) => `school:${school}`) };
-  }
-  if (hitsEnemy && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
+  // No `school` swap option: a school change alone changes no play (the riders that read it belong to the elements work),
+  // and `add elemental damage` (step 2) is how a card gains an element.
+  if (hitsEnemy && !counterReturn && camp !== 'spell' && current.damageSchool === 'physical' && !tagged((s) => s.damageSchool)) found.element = { schools: UPGRADE_ELEMENTS, exposure: limits.exposure };
   // a card that pays no Stamina (the 0 SP / 0 MP zero-cost cards) would become a 0-cost cantrip, which Core forbids (SPEC, zero-cost cards)
-  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0
+  // ...and only a card that pays Mana: on a 0-Mana card the step would change a tag and nothing else.
+  if (!basicDef(base) && !tags.includes(RANK_DOWN_TAG) && current.staminaCost !== 0 && current.manaCost > 0
     // zeroing Mana drops the multi-hit Stamina offset: never offer it when the floor would then exceed the printed SP
     && hitFloor({ ...current, manaCost: 0 }, currentHits(current.effects || [])) <= (current.staminaCost || 0) && !tagged((s) => s.tag === RANK_DOWN_TAG)) found.rankDown = { tag: RANK_DOWN_TAG };
 }
@@ -210,6 +255,7 @@ export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = 
 
 const stepOf = (kind, option, choice) => {
   const pickOf = (list) => list[Math.min(list.length - 1, Math.floor(choice * list.length))];
+  if (kind.startsWith('fx:')) return { k: 'fx', ...option };
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
     case 'blk': return { k: 'blk', n: option.n };
@@ -245,7 +291,8 @@ const stepOf = (kind, option, choice) => {
  * has fewer eligible options; [] when it is fully upgraded.
  */
 export function rollUpgradeOptions(baseDef, appliedSteps, stepIndex, rng, limits = {}, count = 1) {
-  const applied = appliedSteps || [];
+  // A combo is two effects in one slot: the checks below (once per card, already tagged) look through it.
+  const applied = FlatSteps(appliedSteps);
   const current = applied.length ? applyUpgradeSteps(baseDef, applied) : baseDef;
   const found = options(baseDef, current, applied, limits);
   const kinds = Object.keys(WEIGHTS).filter((kind) => found[kind]);

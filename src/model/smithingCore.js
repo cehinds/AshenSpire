@@ -21,10 +21,10 @@ const previewCard = (...args) => need().previewCard(...args);
 const createRng = (...args) => need().createRng(...args);
 const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 
-const STAT_ORDER = ['ar', 'dr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
+const STAT_ORDER = ['ar', 'dr', 'pr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
 const STAT_LABELS = {
-  ar: 'AR', dr: 'DR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
+  ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward', hp: 'HP', mp: 'Mana', sp: 'Stamina', evasion: 'Evasion', precision: 'Precision',
   strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT',
 };
 const CARD_VALUES = [
@@ -54,7 +54,10 @@ function itemAtTier(run, item, level) {
   const values = { ...resolved.values };
   // A weapon (or staff) keeps its pool and adds weaponARPerTier AR per tier, as the rating receipt does.
   if (item.kind !== 'armor' && item.kind !== 'shield') {
-    values.ar += bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
+    const gain = bonus * (gameModule(run, 'equipment')?.upgradeBonuses?.weaponARPerTier || 0);
+    values.ar += gain;
+    // A magic weapon's tier also raises its spells (gameProfileRatingReceipt): PR rises with AR.
+    if (item.kind === 'staff') values.pr = (values.pr || 0) + gain;
   }
   const points = Object.values(resolved.points).reduce((sum, n) => sum + n, 0) + resolved.tagCost;
   return { values, points, budget: resolved.budget };

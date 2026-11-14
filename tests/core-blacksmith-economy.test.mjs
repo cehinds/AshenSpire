@@ -220,6 +220,7 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
 
 test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 40 cinders', () => {
   const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
   assert.equal(run.cinders, 60);
@@ -301,6 +302,7 @@ test('armament purchase: a rack piece the run has since acquired is refused and 
 
 test('picker: under a cinder quote the selected row, confirm and blockers read cinders, never "0 stones" or a stone shortfall', () => {
   const run = smithRun(coreOut, { stones: 0, cinders: 100 });
+  run.itemUpgradeLevels = { 'armament/greatsword': 3 }; // card slots: rank 1 + weapon level 3 + 1
   const card = strike(run);
   commitUpgradeArt(coreOut, run, upgradeArtPlan(coreOut, run, card.instanceId));
   const quote = (id) => { const p = upgradeArtPlan(coreOut, run, id); return { ok: p.ok, cost: p.stones, reason: p.reason, cinders: p.cost }; };
