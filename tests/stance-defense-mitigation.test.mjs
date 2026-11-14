@@ -69,10 +69,8 @@ for (const mode of ['core']) test(`${mode} actual grouped damage matches green H
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   const before = JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() });
   const projected = projectCombatIntent(combat, enemy.id).projectedDamage;
-  // Owner, 2026-11-03: Core quotes the raw hit (3 x 8 = 24) whatever the Counter stance and Block do; the real loss is still 14.
-  // The archived 'current' profile keeps its net projection.
-  if (mode === 'core') { assert.equal(projected.max, 24); assert.equal(projected.baseline.max, 24); assert.equal(projected.tone, 'red'); }
-  else { assert.equal(projected.max, 14); assert.equal(projected.baseline.max, 20); assert.equal(projected.tone, 'green'); }
+  // Owner, 2026-11-14: Core quotes the HP the player will lose (14 after the Counter stance and 4 Block), and the neutral-stance baseline is 20.
+  assert.equal(projected.max, 14); assert.equal(projected.baseline.max, 20); assert.equal(projected.tone, 'green');
   assert.equal(JSON.stringify({ player: combat.player, enemies: combat.enemies, counters: combat.rng.getCounters() }), before);
   const card = enemyMoveCarrier(enemy, registries.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
   combat.rng.int = () => 20; combat.rng.float = () => 0;
