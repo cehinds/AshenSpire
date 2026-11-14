@@ -811,6 +811,7 @@ Enemies act from an SP pool derived from their stats; each move has an SP price.
 **Plan and intent box**
 - At the start of the player's turn each enemy plans the actions that fit its live SP. The first planned move is the intent; committed moves play in plan order in the enemy phase, each revealed as it plays. The plan is saved with the fight.
 - The intent box shows the first move as the main intent and every committed follow-up as a symbol beside it at the same size, on the player's turn and through the enemy phase, under the per-slot concealment rule (§4.9). An unrevealed move shows `?` until it plays or is cancelled; its fate is never shown before its own event.
+- **The row advances when each action resolves.** Once a move's animation and effects have resolved and the same actor announces another move, that move leaves the follow-up row and takes the head slot at once, drawn as its own symbol only (its icon if the Perception read of that move passed, else `?`; never a value, never more than the row showed). The next move's own announcement then replaces it with the real intent and does not advance the row again. The head shifts left and grows into place (about 220 ms, presentation only: nothing waits on it, and it is skipped under reduced motion or the Instant pace). With no further move the intent clears at resolution as before.
 - The intent's damage number sits left of the stance icon; the hit-% badge is centered on the target's sprite in white text with a black outline.
 
 **Other rules**
