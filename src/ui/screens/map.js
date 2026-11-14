@@ -423,10 +423,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // opens again, rather than the redraw silently dropping the destination.
   // The reading (what the node shows, and whether it is revealed) comes back
   // from the board just drawn, so the tray names the same destination it did.
-  if (selectedId && reachable.has(selectedId)) {
-    const reading = board.readingOf(selectedId);
-    if (reading) readings.set(selectedId, reading);
-    selection = { selectedId };
+  // A new run's one start node is preselected, so the first press is Enter.
+  // Never when more than one node can be entered.
+  const soleStartId = !selectedId && !mapAdapter && !current && reachable.size === 1 ? [...reachable][0] : null;
+  const openingId = selectedId || soleStartId;
+  if (openingId && reachable.has(openingId)) {
+    const reading = board.readingOf(openingId);
+    if (reading) readings.set(openingId, reading);
+    selection = { selectedId: openingId };
     renderSelection();
     openTray();
   }
