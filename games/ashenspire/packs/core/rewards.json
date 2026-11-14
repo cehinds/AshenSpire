@@ -306,5 +306,12 @@
         "potions"
       ]
     }
-  ]
+  ],
+  "rankUp": {
+    "chancePct": {
+      "normal": 5,
+      "elite": 25,
+      "boss": 25
+    }
+  }
 }
