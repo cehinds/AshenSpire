@@ -48,7 +48,8 @@ function fixture(document) {
     upcastOptions: () => [], cardChoicePlan: () => null, resolveCard: () => ({}),
     takeSnapshot: () => CaptureCombatDisplay(combat, { registries, projectCombatIntent: () => null, previewCard, followMemo: { plan: () => null }, upcastRanksByCard: context.upcastRanksByCard, paintedHandQuotes: new Map() }),
     flyCard() {}, sfx: { play() {} }, haptic: { play() {} }, t: x => x, render() {}, renderPlayQueue() {}, queueToast: { show() {} },
-    renderTopbar() { seen.orbStamina = context.disp.ents.player.stamina; },
+    renderTopbar() {},
+    paintActionCounts() { seen.orb = context.disp.ents.player.energy; },
     setBusy(value) { context.busy = value; },
     afterDispatch: () => { seen.atTimelineStart = hand.children.map(c => c.dataset.instanceId + ':' + c.dataset.cost).join(','); seen.orbAtStart = context.disp.ents.player.stamina; },
     handStrip: { render({ cards }) {
@@ -67,8 +68,10 @@ test('a play pays its cost and re-prices the held hand before the timeline start
   assert.equal(f.combat.player.stamina, 30);
   const before = f.hand.children.filter(c => c.dataset.instanceId !== strike.instanceId).map(c => c.dataset.cost);
   assert.deepEqual(before, ['2', '2'], 'the Executioners cost 2 before the Strike');
+  const energyBefore = f.combat.player.energy;
   f.context.playCard(strike.instanceId, f.combat.enemies[0].id);
-  assert.equal(f.seen.orbAtStart, 29, 'the stamina orb already shows the 1 paid');
+  assert.equal(f.seen.orbAtStart, 29, 'the stamina read-out already shows the 1 paid');
+  assert.equal(f.seen.orb, energyBefore - 1, 'the energy orb was painted with the 1 paid, before the timeline');
   const rest = f.seen.atTimelineStart.split(',');
   assert.equal(rest.length, 2, 'the played card has left the hand');
   assert.ok(rest.every(cell => !cell.startsWith(strike.instanceId + ':')));

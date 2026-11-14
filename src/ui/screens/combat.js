@@ -1315,6 +1315,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (paid.length) { applyBeatToDisp({ events: paid, committing: true }); for (const event of paid) paidAtCommit.add(event); }
     RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard);
     renderTopbar();
+    paintActionCounts(); // the Stamina / Mana orb
   }
   function applyBeatToDisp(beat) {
     const fresh = beat.events.filter(event => !paidAtCommit.has(event) || beat.committing);
