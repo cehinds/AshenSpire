@@ -24,6 +24,7 @@ import { floaterWordShown } from '../src/ui/models/FloaterPolicyModel.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
 import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { expandedEnemyMove, enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 import { DragFaceQuote, DragFaceTargetId } from '../src/ui/models/DragFaceModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -242,7 +243,9 @@ function playFight(classId, seed, tally) {
         const option = takeReactions ? offer.options.find(row => Number.isFinite(row.incomingHp)) : null;
         // The prompt states the incoming action and each option's result as the HP the player will lose.
         if (Number.isFinite(offer.incomingHp)) assert.ok(offer.incomingHp >= 0, `${label}: the prompt's incoming HP`);
+        // The prompt's top-level "Lose N HP" is what skipping it costs; an option's number is what taking it costs (checked per action below).
         if (option) { reactionNumbers.set(offer.sourceId, option.incomingHp); tally.reactions++; }
+        else if (Number.isFinite(offer.incomingHp)) { reactionNumbers.set(offer.sourceId, offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
         dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option ? option.id : null });
       } else if (combat.pendingCardChoice) {
         const pending = combat.pendingCardChoice;
@@ -265,6 +268,7 @@ test(`${FIGHTS} seeded fights across the four classes: face = dealt, intent = lo
   if (process.env.TALLY) console.log(JSON.stringify(tally));
   assert.ok(tally.hits > 300, `enough damaging hits were checked: ${tally.hits}`);
   assert.ok(tally.costs > 400, `enough costs were checked: ${tally.costs}`);
+  assert.ok(tally.skipped > 0, 'at least one reaction prompt was skipped and checked against its top-level number');
   assert.ok(tally.forecasts > 60, `enough shown intents were compared with what they cost: ${tally.forecasts}`);
   assert.ok(tally.actions > 150, `enough enemy actions were checked: ${tally.actions}`);
   assert.ok(tally.floaters > 300, `enough floaters were checked: ${tally.floaters}`);
@@ -603,4 +607,87 @@ test('a killing blow floats the HP the target had left, while the face keeps the
   assert.equal(hit.hpRemoved, 3);
   assert.equal(guardHitFloatParts(hit, 0).damage.text, '-3', 'the floater is the 3 HP lost');
   assert.equal(enemy.alive, false);
+});
+
+// ---- Review fix 5: the gaps in this file ---------------------------------------------------------------------------------------------
+// Covered here: the prompt's top-level number against a skipped prompt (playFight, above: `tally.skipped`), a Counter card from hand, a
+// play an enemy reaction answers, an X-cost card, a stance-discounted card. NOT covered, with the reason: an upcast card, because the shipped
+// Core profile switches spell ranks off (resolveCombatCard throws), so no Core play can carry ranks.
+//
+// Rule for a play an enemy reaction answers (written for SPEC): the card face states the hit as if no enemy reaction answered it; the reaction
+// can only add Block or Poise to the target first, so the HP the play takes is never MORE than the face, and the reaction's own receipts
+// (combatEnemyReactionStacked, its move and its Block gain) are in the log before the card's hit.
+
+test('a play an enemy reaction answers: the face is the pre-reaction hit, the HP taken is never more, and the reaction is in the log first', () => {
+  let answered = 0;
+  for (const classId of CLASSES) {
+    const cards = reg.cards.all().filter(card => card.class === classId && card.type === 'attack' && !card.id.startsWith('progression-'));
+    for (const card of cards) {
+      const run = createRunState({ registries: reg, classId, seed: 3, profileMeta: META });
+      const combat = createRunCombat({ registries: reg, run, rng: createRng(3), enemyIds: ['gildedKnight'] });
+      const enemy = combat.enemies[0];
+      Object.assign(combat.piles.hand[0], { cardId: card.id, upgraded: false });
+      combat.player.energy = combat.player.stamina = combat.player.mana = 9;
+      let face;
+      try { face = faceOf(combat, combat.piles.hand[0].instanceId, enemy.id); } catch { continue; }
+      const start = combat.eventLog.length, hp = enemy.hp;
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; }
+      while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      const events = combat.eventLog.slice(start);
+      const stacked = events.findIndex(event => event.type === 'combatEnemyReactionStacked');
+      if (stacked < 0) continue;
+      answered++;
+      const faceTotal = (face.perEnemy.get(enemy.id) || []).reduce((n, v) => n + v, 0);
+      const firstHit = events.findIndex(event => event.type === 'damageDealt' && event.sourceId === 'player');
+      assert.ok(firstHit < 0 || stacked < firstHit, `${card.id}: the reaction comes before the card's hit`);
+      assert.ok(hp - enemy.hp <= faceTotal || !enemy.alive, `${card.id}: the HP taken (${hp - enemy.hp}) is not more than the pre-reaction face (${faceTotal})`);
+    }
+  }
+  assert.ok(answered > 0, 'the Knight answered at least one play');
+});
+
+test('a Counter card from hand: the face cost is the cost paid, and its return hits for the number its face carried', () => {
+  const { combat, card } = fixture({ classId: 'rogue', hand: 'core.counter' });
+  const enemy = combat.enemies[0];
+  // The enemy's attack is revealed before the Counter is played, so the face states the return computed from it (SPEC 17).
+  const slash = expandedEnemyMove(enemy, reg.enemies.get(enemy.enemyId).moves.slash, 'slash', combat);
+  enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1, combatProfile: enemyMoveCarrier(enemy, slash, 'slash', combat).combatProfile };
+  enemy.planDue = true; enemy.plannedMoves = [];
+  const face = faceOf(combat, card.instanceId, 'e1'); // the face is priced against the enemy the Counter will answer
+  const tally = check(combat, card, combat.player.id, 'Counter card');
+  assert.equal(tally.costs, 1);
+  const carried = face.preview.values.find(row => row.op === 'damage')?.hitDamages?.[0];
+  const hp = enemy.hp, start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  const events = combat.eventLog.slice(start);
+  assert.ok(events.some(event => event.type === 'combatCounterTriggered'), 'the Counter answered the attack');
+  assert.equal(hp - enemy.hp, carried, 'the Counter return took the HP its face carried');
+});
+
+test('an X-cost card: the face says X and the play pays everything the player holds; a stance discount on the face is the discount paid', () => {
+  for (const stamina of [2, 5]) {
+    const { combat, card } = fixture({ classId: 'starseer', hand: 'supernova' });
+    combat.player.energy = stamina; combat.player.stamina = stamina; combat.player.mana = 9;
+    const face = faceOf(combat, card.instanceId, 'e1');
+    assert.equal(face.preview.costIsX, true);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1', rangeRoute: 'advance' });
+    const events = combat.eventLog.slice(start);
+    assert.equal(sum(events, 'staminaSpent'), stamina, `X pays all ${stamina} Stamina held`);
+  }
+  // A second card of the stance the first one entered is cheaper on the face by exactly what it is cheaper to play.
+  const { combat } = fixture({ hand: 'core.strike' });
+  const [first, second] = combat.piles.hand;
+  second.cardId = 'core.strike'; second.upgraded = false;
+  const t1 = check(combat, first, 'e1', 'stance first');
+  const faceSecond = faceOf(combat, second.instanceId, 'e1');
+  const t2 = check(combat, second, 'e1', 'stance second');
+  assert.ok(t1.costs === 1 && t2.costs === 1);
+  assert.ok(faceSecond.stamina <= 1, `the second Strike in the same stance is priced at ${faceSecond.stamina}`);
+});
+
+test('an upcast card cannot be played in the shipped Core profile (spell ranks are off), so no upcast face exists to compare', () => {
+  const { combat } = fixture({ classId: 'starseer', hand: 'starSpark' });
+  assert.throws(() => previewCard(combat, combat.piles.hand[0].instanceId, 'e1', 1), /Spell ranks are disabled/);
 });
