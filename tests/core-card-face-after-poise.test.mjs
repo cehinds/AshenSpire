@@ -8,6 +8,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { withoutStanceBenefits } from './legacyStanceRules.mjs'; // Wave 2.5: these numbers pin the pre-benefit rules
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -16,7 +17,7 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
   const run = createRunState({ registries: reg, classId, seed: 5, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: enemies.map(() => 'wanderingSoldier') });
+  const combat = withoutStanceBenefits(createRunCombat({ registries: reg, run, rng: createRng(5), enemyIds: enemies.map(() => 'wanderingSoldier') }));
   combat.enemies.forEach((enemy, i) => {
     const { poise = 0, block = 0, statuses = {} } = enemies[i];
     Object.assign(enemy, { hp: 500, maxHp: 500, block, barrier: 0, statuses, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 } });
