@@ -36,6 +36,7 @@ import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
+import { NeutralExtraDraw, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
@@ -545,7 +546,12 @@ function startPlayerTurn(combat) {
   p.pendingActionLoss = 0;
 
   // Draw.
-  A.drawCards(combat, Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0)));
+  // Owner, 2026-11-14 (Wave 2.5): a player holding no stance draws one extra card (stanceBenefits.js). It sits above the hand cap for this turn;
+  // turnDrawCount sets the cap again at the next turn start.
+  const baseDraw = Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0));
+  const restDraw = NeutralExtraDraw(combat, p, combat.turn);
+  if (restDraw > 0) combat.handMax += restDraw;
+  A.drawCards(combat, baseDraw + restDraw);
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });

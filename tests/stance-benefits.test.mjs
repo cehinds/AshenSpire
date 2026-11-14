@@ -224,3 +224,18 @@ test('Sweep: a single-target Sweep also hits every other enemy in range at 50% o
   playCleave(old, old.enemies[0].id);
   assert.deepEqual(old.enemies.map(enemy => 500 - enemy.hp).slice(1), [0, 0], 'a fight created before the ruling hits only the aimed enemy');
 });
+
+test('neutral: a player who ends a turn holding no stance draws one extra card next turn; holding a stance, or under the old rules, draws the usual hand', () => {
+  const handAfterNextTurn = ({ benefits = true, stance = null } = {}) => {
+    const { combat } = live({ benefits });
+    combat.player.energy = 5;
+    if (stance) combat.player.combatStance = stanceOf(stance); else delete combat.player.combatStance;
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(combat.phase, 'player', 'the enemies acted and the next turn began');
+    return combat.piles.hand.length;
+  };
+  const base = handAfterNextTurn({ benefits: false });
+  assert.equal(handAfterNextTurn(), base + 1, 'no stance: one extra card');
+  assert.equal(handAfterNextTurn({ stance: 'attack' }), base, 'a held stance draws the usual hand');
+});
