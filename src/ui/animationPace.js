@@ -145,6 +145,8 @@ export function actionPacing({ reduced = false, enemy = false } = {}) {
     // how long the hand waits after the last hit is applied and shown before it unlocks.
     damageGapMs: enemy && scale > 0 ? Math.min(turn.damageGapMs, scaled(turn.damageGapMs)) : 0,
     tailMs: enemy ? Math.min(turn.tailMs, scaled(turn.tailMs)) : 0,
+    // The second and later action of one enemy phase walks its stage gaps at this fraction (the first keeps them whole).
+    laterActionGapScale: enemy ? turn.laterActionGapScale : 1,
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),
     scale,

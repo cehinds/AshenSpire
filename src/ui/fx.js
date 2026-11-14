@@ -1237,8 +1237,14 @@ export function playTimeline(events, ctx, done) {
       return { ...enemyTiming, intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
     // An attack hands over as its damage is applied and shown: the next action's telegraph starts then (overlap), and
     // after the last action of the phase the hand unlocks after tailMs. Its reaction and floaters play on under it.
-    return { ...enemyTiming, chain: true, ...(laterAction(beat) ? { tailMs: 0 } : {}) };
+    const k = enemyTiming.laterActionGapScale, later = earlierAction(beat);
+    const gap = ms => later ? ms * k : ms;
+    return { ...enemyTiming, chain: true, ...(laterAction(beat) ? { tailMs: 0 } : {}),
+      ...(later ? { intentMs: gap(enemyTiming.intentMs), wordMs: gap(enemyTiming.wordMs), afterSpriteMs: gap(enemyTiming.afterSpriteMs),
+        resultMs: gap(enemyTiming.resultMs), reactionMs: gap(enemyTiming.reactionMs), damageMs: gap(enemyTiming.damageMs) } : {}) };
   };
+  // Has an enemy action (a wind-up or an attack) already played earlier in this phase?
+  const earlierAction = beat => beats.slice(0, beats.indexOf(beat)).some(before => enemyBeats.has(before) && before.actorId && !before.banner && !before.telegraph && before.kind !== 'reveal' && before.kind !== 'draw');
   // Is another enemy action (a reveal, wind-up or attack) still to play after this beat?
   const laterAction = beat => beats.slice(beats.indexOf(beat) + 1).some(later => enemyBeats.has(later) && later.actorId && !later.banner && later.kind !== 'draw');
   // The pacing a beat runs on (its banner shows for the same hold the timeline waits).

@@ -13,7 +13,8 @@
       "floaterIntervalMs": 375,
       "turnBannerScale": 0.35,
       "damageGapMs": 250,
-      "tailMs": 150
+      "tailMs": 150,
+      "laterActionGapScale": 0.6
     }
   },
   "behavior": {
