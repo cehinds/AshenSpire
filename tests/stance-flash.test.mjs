@@ -87,8 +87,8 @@ test('it switches sigil between stance-changing cards and fades out when the sel
     assert.equal(live(rig), null, 'removed after fadeOutMs');
   });
 });
-test('it persists into the play and fades out when the swing ends, whatever the selection does meanwhile', t => {
-  const rig = overlayRig(t);
+test('linger: it persists into the play and fades out when the swing ends, whatever the selection does meanwhile', t => {
+  const rig = styledRig(t, 'linger');
   withKitDom(() => {
     rig.overlay.select('smash');
     rig.overlay.hold();
@@ -126,13 +126,13 @@ test('Reduced motion and Instant draw no overlay at all', t => {
   });
 });
 
-// ---- the exit style: enlarge (default) or linger, as data ----
-import { overlayPlan } from '../src/ui/stanceFlash.js';
-test('the overlay style is data: enlarge by default, linger on request, nothing under Reduced motion', () => {
-  assert.deepEqual({ ...ACTION_PACING.stanceOverlay }, { style: 'enlarge', opacity: 0.6, fadeInMs: 80, enlargeScale: 1.4, enlargeOpacity: 0.3, fadeOutMs: 80 });
-  assert.equal(overlayPlan().style, 'enlarge');
+// ---- the exit style: outline (default) or linger, as data ----
+import { overlayPlan, overlayStanceFor } from '../src/ui/stanceFlash.js';
+test('the overlay style is data: outline by default, linger on request, nothing under Reduced motion', () => {
+  assert.deepEqual({ ...ACTION_PACING.stanceOverlay }, { style: 'outline', opacity: 0.6, fadeInMs: 80, playExitMs: 75, outlineScale: 2.5, fadeOutMs: 80 });
+  assert.equal(overlayPlan().style, 'outline');
   assert.equal(overlayPlan({ ...ACTION_PACING.stanceOverlay, style: 'linger' }).style, 'linger');
-  assert.equal(overlayPlan({ style: 'junk' }).style, 'enlarge');
+  assert.equal(overlayPlan({ style: 'enlarge' }).style, 'outline', 'the old enlarge style is gone');
   assert.equal(overlayPlan(undefined, { reduced: true }), null);
 });
 function styledRig(t, style) {
@@ -145,40 +145,59 @@ function styledRig(t, style) {
   });
   return rig;
 }
-test('enlarge: when the swing starts the held sigil grows and dims over the clip, then fades out when it ends', t => {
-  const rig = styledRig(t, 'enlarge');
+test('outline: on play the sigil keeps its size, the glow grows to 2.5x and the overlay fades out over 75 ms, then it is removed', t => {
+  const rig = styledRig(t, 'outline');
+  withKitDom(dom => {
+    dom.document.documentElement = { dataset: { performance: 'full' } };
+    rig.overlay.select('smash');
+    const el = live(rig);
+    t.mock.timers.tick(100);
+    rig.overlay.hold('#ee7237');
+    const svg = el.querySelector('svg');
+    assert.match(svg.style.filter, /0 0 3px/, 'the play glow at its own radius');
+    assert.match(svg.style.filter, /0 0 12px/);
+    t.mock.timers.tick(1);
+    assert.match(svg.style.filter, /0 0 7\.5px/, 'the outline grows 2.5x (3 -> 7.5)');
+    assert.match(svg.style.filter, /0 0 30px/, 'and 12 -> 30');
+    assert.equal(el.style.opacity, '0', 'while the whole overlay fades');
+    assert.match(el.style.transition, /opacity 75ms/);
+    assert.equal(el.style.transform, 'scale(1)', 'the sigil itself is never scaled');
+    assert.equal(el.style.pointerEvents, 'none');
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null, 'removed about 75 ms after the play');
+    assert.equal(rig.overlay.consumePlayed(), true, 'the stance event knows the sigil was shown');
+    assert.equal(rig.overlay.consumePlayed(), false);
+  });
+});
+test('linger: the held sigil stays at its opacity and size through the swing, then fades out when it ends', t => {
+  const rig = styledRig(t, 'linger');
   withKitDom(() => {
     rig.overlay.select('smash'); rig.overlay.hold();
     const el = live(rig);
-    t.mock.timers.tick(100);
+    t.mock.timers.tick(600);
     assert.deepEqual([el.style.opacity, el.style.transform], ['0.6', 'scale(1)']);
-    rig.overlay.begin(550);
-    assert.equal(el.style.transform, 'scale(1.4)');
-    assert.equal(el.style.opacity, '0.3');
-    assert.match(el.style.transition, /transform 550ms linear/, 'transform and opacity only, over the clip duration');
-    assert.equal(el.style.pointerEvents, 'none');
-    t.mock.timers.tick(550);
     rig.overlay.release();
     assert.equal(el.style.opacity, '0');
     t.mock.timers.tick(100);
     assert.equal(live(rig), null);
   });
 });
-test('linger: the held sigil stays at its opacity and scale through the swing, then fades out when it ends', t => {
-  const rig = styledRig(t, 'linger');
-  withKitDom(() => {
-    rig.overlay.select('smash'); rig.overlay.hold();
-    const el = live(rig);
-    t.mock.timers.tick(100);
-    rig.overlay.begin(550);
-    assert.deepEqual([el.style.opacity, el.style.transform], ['0.6', 'scale(1)'], 'begin changes nothing');
-    t.mock.timers.tick(550);
-    assert.equal(el.style.opacity, '0.6');
-    rig.overlay.release();
-    assert.equal(el.style.opacity, '0');
-    t.mock.timers.tick(100);
-    assert.equal(live(rig), null);
-  });
+
+// ---- which stance the selected card is compared with ----
+test('regression: after playing Attack, selecting another Attack shows nothing and selecting Sweep shows the sweep sigil', () => {
+  // The display's held stance is stale right after a play (it catches up when the played card's beat is drawn); the engine's
+  // stance is committed the moment the play is dispatched.
+  const afterPlayingAttack = { engine: 'attack', held: 'defend' };
+  assert.equal(overlayStanceFor({ armed: 'attack', ...afterPlayingAttack }), null);
+  assert.equal(overlayStanceFor({ armed: 'sweep', ...afterPlayingAttack }), 'sweep');
+  // A card still waiting in the play queue is what the next card follows.
+  assert.equal(overlayStanceFor({ armed: 'attack', pending: 'sweep', engine: 'attack', held: 'attack' }), 'attack');
+  assert.equal(overlayStanceFor({ armed: 'sweep', pending: 'sweep', engine: 'attack', held: 'attack' }), null);
+  // Without an engine stance the held one decides; a card with no stance shows nothing.
+  assert.equal(overlayStanceFor({ armed: 'smash', held: 'smash' }), null);
+  assert.equal(overlayStanceFor({ armed: 'smash', held: 'attack' }), 'smash');
+  assert.equal(overlayStanceFor({ armed: null, engine: 'attack' }), null);
+  assert.equal(overlayStanceFor({ armed: 'defend', engine: 'block' }), null, 'block is the defend stance');
 });
 
 // ---- the played card's motif glow ----
@@ -207,8 +226,8 @@ test('a played fire card glows in its motif colour (two shadows on full performa
     const filter = el.querySelector('svg').style.filter;
     assert.equal((filter.match(/drop-shadow/g) || []).length, 2, 'tight plus wide');
     assert.match(el.querySelector('svg').style.transition, /filter 120ms/);
-    rig.overlay.begin(550);
-    assert.equal(el.dataset.glowColor, CARD_ART_ELEMENTS.fire.glow, 'the glow stays through the exit');
+    t.mock.timers.tick(1);
+    assert.equal(el.dataset.glowColor, CARD_ART_ELEMENTS.fire.glow, 'the glow colour stays through the exit');
   });
 });
 test('a card with no motif glows in the neutral gold token, and a lite device gets one shadow', t => {

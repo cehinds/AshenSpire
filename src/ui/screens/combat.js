@@ -100,7 +100,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { playerStanceOverlay } from '../stanceFlash.js';
+import { playerStanceOverlay, overlayStanceFor } from '../stanceFlash.js';
 import { cardMotifGlow } from '../cardArtComposition.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
@@ -970,6 +970,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     refreshAim();
   }
 
+  // The stance of the last card still waiting in the play queue (not yet dispatched), or null with an empty queue.
+  function pendingStanceManeuver() {
+    const last = playQueue.at(-1);
+    const inst = last && combat.piles.hand.find(card => card.instanceId === last.instanceId);
+    return inst ? kindForCard(resolveCombatCard(combat, inst))?.maneuver ?? null : null;
+  }
+
   // The figure's glyph and stance: the armed card's, else the held ones.
   function syncPlayerPreview(player, inst, def) {
     syncPlayerActionIntent(player, inst, heldKinds.get());
@@ -989,7 +996,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The stance sigil over the figure while a card of another stance is selected or armed (owner, 2026-11-13); it lingers
     // through the play (held in commitPlay) and fx.js fades it when the swing ends.
     playerStanceOverlay.bind(() => player?.querySelector('.sprite'));
-    playerStanceOverlay.select(armed?.maneuver && armed.maneuver !== (held ?? RESTING_PLAYER_ACTION).maneuver ? armed.maneuver : null);
+    // Compared with the stance the player will be in when this card resolves, not the display's held stance (see overlayStanceFor).
+    playerStanceOverlay.select(overlayStanceFor({ armed: armed?.maneuver, pending: pendingStanceManeuver(), engine: combat.player?.combatStance?.maneuver,
+      held: (held ?? RESTING_PLAYER_ACTION).maneuver }));
     const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
     const maneuver = profile.maneuver || 'prepare';
     const previous = player.querySelector('.player-action-intent');

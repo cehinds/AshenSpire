@@ -1280,14 +1280,13 @@ export function playTimeline(events, ctx, done) {
     },
     // The stance event only exists on a beat that changes the actor's stance: a brief sigil over the actor, then the icon updates.
     // The swing clip is over: the player's selection sigil fades out.
-    onSwingStart: (beat, clipMs) => { if (beat.actorId === 'player') playerStanceOverlay.begin(clipMs); },
     onSwingEnd: beat => { if (beat.actorId === 'player') playerStanceOverlay.release(); },
     stanceChanges: beat => !!stanceChangeEvent(beat),
     onAction: beat => {
       const entered = stanceChangeEvent(beat);
       if (!entered) return;
       // The player's sigil has been up since the card was selected; it only updates the small icon now. An enemy flashes briefly.
-      const lingering = beat.actorId === 'player' && playerStanceOverlay.active;
+      const lingering = beat.actorId === 'player' && (playerStanceOverlay.active || playerStanceOverlay.consumePlayed());
       if (timing.scale !== 0 && !lingering) visualSafe(() => showStanceFlash(ctx.anchorFor(beat.actorId), entered, { reduced: reducedMotionRequested() }));
       if (ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
