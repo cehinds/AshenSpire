@@ -259,3 +259,14 @@ test('Sweep quotes: aimed at one enemy, each other enemy in range quotes its spl
   assert.equal(500 - second.hp, quote.splash[0], 'quotes equal HP lost');
   assert.equal(500 - aimed.hp, aimedQuote.hits[0]);
 });
+
+import { StanceBenefitTip } from '../src/ui/models/StanceBenefitModel.js';
+import { readFileSync } from 'node:fs';
+
+test('the stance tooltip and the stance help state each benefit in the same words as the numbers', () => {
+  const expected = { attack: /\+20% damage/, smash: /\+50% Poise damage/, sweep: /50% of its damage/, counter: /\+25% Block.*25% of that HP/, defend: /\+50% Block.*25% less Poise/, casting: /\+25% damage/ };
+  for (const [maneuver, pattern] of Object.entries(expected)) assert.match(StanceBenefitTip(maneuver).body, pattern, maneuver);
+  assert.match(StanceBenefitTip('prepare').body, /draw 1 extra card/, 'the resting glyph names the no-stance draw');
+  const nodes = readFileSync(new URL('../content/source/nodes.csv', import.meta.url), 'utf8');
+  for (const id of ['attack', 'defend', 'counter', 'sweep', 'smash', 'casting']) assert.match(nodes.split('\n').find(row => row.startsWith(`maneuver:${id},`)), /Stance benefit:/, `${id} help names its benefit`);
+});

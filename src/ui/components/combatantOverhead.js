@@ -5,6 +5,7 @@ import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 import { setAttr, setData, onLive } from '../domWrite.js';
+import { StanceBenefitTip } from '../models/StanceBenefitModel.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
@@ -133,6 +134,8 @@ export function playerActionIntent(profile, onTarget) {
   node.append(row);
   onLive(node, 'click', event => { event.stopPropagation(); onTarget(); });
   setPlayerActionManeuver(node, profile);
+  // Wave 2.5: the held stance names its natural benefit (read live from the node, so a kept node shows the newest stance).
+  attachTooltip(node, () => { const tip = StanceBenefitTip(node.dataset.maneuver); return `<div class="tt-title">${esc(tip.title)}</div>${esc(tip.body)}`; }, { intent: 'above', align: 'center' });
   return node;
 }
 
