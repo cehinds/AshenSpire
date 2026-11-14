@@ -5199,6 +5199,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   filter: drop-shadow(0 0 4px #83b885);
 }
 .combat-action-row[data-footer-art] .end-turn[data-confirm-ready='true']:not(:disabled) text { fill: #c2e9bc; }
+/* A card is still playable: End Turn still ends the turn on one tap, but it says what it will throw away. */
+.combat-action-row .end-turn.end-turn--cards-left:not(:disabled) { box-shadow: 0 0 0 2px var(--gold); }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) { box-shadow: none; }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) .footer-art-face { filter: drop-shadow(0 0 4px var(--gold)); }
+.combat-action-row[data-footer-art] .end-turn.end-turn--cards-left:not(:disabled) text { fill: var(--gold); }
 :root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] .footer-art-rails,
 .combat-action-row[data-footer-compact='true'] button .footer-art-face text { display: none; }
 :root .combat[data-layout='formation'].combat .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {

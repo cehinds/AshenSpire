@@ -7484,7 +7484,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       armamentId: 'greatsword',
     };
     const continueBeat = beatFor('rewardContinue');
-    eq(continueBeat.form, 'hold', 'reward Continue is registered in the shared second-beat table as a hold');
+    eq(continueBeat.form, 'none', 'reward Continue is registered in the shared second-beat table as a tap (it asks once, in the reward screens, only while a reward is unclaimed)');
+    eq(continueBeat.tap, true, 'and says so on its row');
     eq(continueBeat.surface, 'reward', 'the census can route the registered action to the reward surface');
     plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 5, 'five reward kinds derive five rows');

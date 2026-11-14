@@ -35,6 +35,7 @@ import { skillTracks, rankUpCandidates, raiseCardRank } from '../../model/skills
 import { el, modalFooter, button } from '../kit/index.js';
 import { t, tFull, tTip } from '../strings.js';
 import { reasonWhenDisabled } from '../components/refusal.js';
+import { openConfirmationModal } from '../components/confirmationModal.js';
 import { rankUpBonusOptions } from '../../model/rankUpBonus.js';
 import { cardUpgradeChanges } from '../models/CardUpgradeModel.js';
 import { projectGameCard } from '../../model/gameProfile.js';
@@ -308,22 +309,29 @@ export function mountRewards(app, {
       onDone();
       disarmContinue?.(); disarmContinue = null;
     };
-    // The action is registered in secondbeat's enumerable table, so native
-    // keyboard/gamepad presses enter the same shared armPress door as pointer
-    // and touch; the configured dial remains the one duration authority.
+    // Continue commits on one tap (the rewardContinue row in model/secondbeat.js
+    // says `tap: true`) and asks exactly once, in the shared confirmation modal,
+    // while something claimable is still unclaimed. The row stays registered so
+    // keyboard and pad presses enter the same door as pointer and touch.
+    const leave = () => {
+      if (!receiptOnly) return finish();
+      if (receiptContinued || !xpAnimationDone) return;
+      receiptContinued = true;
+      try { finish(); }
+      catch (error) {
+        receiptContinued = false;
+        note.textContent = error.message;
+      }
+    };
     disarmContinue?.();
     disarmContinue = beatArmer(meta, registries)(cont, 'rewardContinue', {
-      question: t('reward.leave.question'),
-      confirmLabel: t('reward.leave.confirm'),
       onConfirm: () => {
-        if (!receiptOnly) return finish();
-        if (receiptContinued || !xpAnimationDone) return;
-        receiptContinued = true;
-        try { finish(); }
-        catch (error) {
-          receiptContinued = false;
-          note.textContent = error.message;
-        }
+        if (!hasUnclaimedReward()) return leave();
+        openConfirmationModal({
+          title: t('reward.leave.question'), message: t('reward.leave.message'),
+          confirmLabel: t('reward.leave.confirm'), cancelLabel: t('reward.leave.take'),
+          returnFocusElement: cont, onConfirm: leave,
+        });
       },
     });
 
@@ -379,6 +387,9 @@ export function mountRewards(app, {
       });
     }
   }
+
+  // A row the player could still take: not taken, not skipped, not blocked.
+  const hasUnclaimedReward = () => plan.rows.some((row) => !states[row.key] && !row.blockedBy);
 
   // The menu's foot note: what Continue does from here.
   function holdNote() {

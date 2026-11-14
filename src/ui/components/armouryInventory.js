@@ -9,7 +9,7 @@ import { equipmentModLines } from '../../model/equipmentCompare.js';
 import { relicText } from './card.js';
 import { renderCandidateComparison } from './equipmentReceipts.js';
 import { esc, hideTooltip, showTooltipFor, stickTooltip } from './tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP, HOLD_DRAG_SETTLE_MS } from '../../framework/optionDecision.js';
+import { armHold, HOLD_POINTER_SLOP, HOLD_DRAG_SETTLE_MS } from '../../framework/optionDecision.js';
 import { refuses } from './refusal.js';
 import { assetUrl } from '../assetmap.js';
 import { mountDisclosure } from './disclosure.js';
@@ -264,7 +264,11 @@ export function armouryInventoryBlock(ctx) {
   // Read here): compact rows, no grid, and the detail opens under the rows only once an item is chosen.
   const { selectedSlot, allRows, rows, itemCount } = armouryInventoryModel({ registries, run, meta, eq, picking, inCombat });
   if (!selectedSlot) { box.classList.add('is-books-only'); box.dataset.detailOpen = 'false'; prompt.hidden = true; }
-  const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+  // Equip and unequip commit on one tap (owner, 2026-11-14): a worn item is not
+  // lost, it goes back to the inventory. So the card never owns a hold here;
+  // the explicit action button (or the face, once a slot is picked) commits on
+  // a press, and the hold-confirm dial no longer governs this surface.
+  const holdDuration = 0;
   const inventoryItemClass = layout.cardClasses.inventoryItem;
   const faceActions = new Map();
   const pickerParts = new Map();

@@ -11,6 +11,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { beatArmer } from '../src/ui/components/holdconfirm.js';
+import { ACTIONS } from '../src/model/secondbeat.js';
+
+// LEGACY FIXTURE (Wave 2, owner 2026-11-14): the eventChoice row now says
+// `tap: true`, so the state-dependent hold path (`tapWhenNone`) is exercised
+// against the same row with its tap flag switched back off. A row is a plain
+// object even though the table is frozen, so the flag can be flipped and put back.
+function withoutTapFlag(fn) {
+  const was = ACTIONS.eventChoice.tap;
+  ACTIONS.eventChoice.tap = false;
+  try { return fn(); } finally { ACTIONS.eventChoice.tap = was; }
+}
 
 function fakeControl() {
   const handlers = new Map();
@@ -55,7 +66,7 @@ function tap(control) {
   control.handlers.get('click')(click);
 }
 
-test("a 'none' beat commits on a tap with no review and no timer; 'hold' still reviews", () => {
+test("a 'none' beat commits on a tap with no review and no timer; 'hold' still reviews", () => withoutTapFlag(() => {
   const state = { binding: false };
   const control = fakeControl();
   const committed = [];
@@ -83,9 +94,9 @@ test("a 'none' beat commits on a tap with no review and no timer; 'hold' still r
   } finally {
     disarm();
   }
-});
+}));
 
-test("without tapWhenNone a 'none' beat is unchanged: the tap still reviews and the hold stays", () => {
+test("without tapWhenNone a 'none' beat is unchanged: the tap still reviews and the hold stays", () => withoutTapFlag(() => {
   const control = fakeControl();
   const committed = [];
   const arm = beatArmer({ settings: {} }, REGISTRIES);
@@ -95,6 +106,23 @@ test("without tapWhenNone a 'none' beat is unchanged: the tap still reviews and 
     assert.equal(control.dataset.holdMs, '600', 'the universal option contract keeps its hold');
     assert.throws(() => withReviewSentinel(() => tap(control)), new RegExp(REVIEW), 'and a tap opens the review');
     assert.deepEqual(committed, []);
+  } finally {
+    disarm();
+  }
+}));
+
+test("a `tap: true` row commits on one tap with no review and no timer, with the dial on and without tapWhenNone", () => {
+  const control = fakeControl();
+  const committed = [];
+  const arm = beatArmer({ settings: {} }, REGISTRIES);
+  const disarm = arm(control, 'eventChoice', { ctx: { binding: true }, onConfirm: () => committed.push('commit'), showHint: false });
+  try {
+    assert.equal(control.dataset.beat, 'none');
+    assert.equal(control.dataset.holdMs, undefined, 'no hold timer is drawn, even for a binding choice');
+    assert.equal(control.dataset.optionHold, 'disabled');
+    assert.equal(control.dataset.optionTap, 'commit');
+    withReviewSentinel(() => tap(control));
+    assert.deepEqual(committed, ['commit'], 'one tap commits and no review opens');
   } finally {
     disarm();
   }

@@ -6,6 +6,7 @@ import { clearSelection } from './cardSelection.js';
 import { openBoundCardInspection } from './cardInspection.js';
 import { el, button, modalFooter } from '../kit/index.js';
 import { t } from '../strings.js';
+import { openConfirmationModal } from './confirmationModal.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 
 // Presentation ownership stays outside the serializable run and offer data.
@@ -127,8 +128,20 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       next.textContent = t('common.skip');
       return;
     }
-    try { onContinue(); completed = true; }
-    catch (error) { status.textContent = error.message; }
+    const leave = () => {
+      try { onContinue(); completed = true; }
+      catch (error) { status.textContent = error.message; }
+    };
+    // Leaving with a choice still open and nothing taken asks once; after a take, or when nothing is on offer, it goes straight on.
+    if (offer.claimed === null && !offer.taken.length && offer.options.length) {
+      openConfirmationModal({
+        title: t('reward.leave.question'), message: t('reward.leave.message'),
+        confirmLabel: t('reward.leave.confirm'), cancelLabel: t('reward.leave.take'),
+        returnFocusElement: next, onConfirm: leave,
+      });
+      return;
+    }
+    leave();
   });
   // After a claim: leave when the offer is spent, else show the next pick. Also the way back from the deck editor.
   function proceed() {

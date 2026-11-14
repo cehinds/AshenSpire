@@ -162,7 +162,7 @@ import { iconTray, setIconTrayOverflow, trayIcon } from '../components/iconTray.
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
-import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
+import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, PaintEndTurnWarning, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button, html, openModal } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
@@ -2666,12 +2666,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The bound key (or pad button) rides on the End Turn button itself, so the
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+    // End Turn never asks (owner, 2026-11-14). While a card is still playable it
+    // wears a warning and says so instead, so the answer is on the button before
+    // the tap and not in a modal after it.
+    const cardsLeft = combat.phase === 'player' && endTurnHasPlayableCard();
     paintEndTurnKey($('.end-turn'), etKey);
+    PaintEndTurnWarning($('.end-turn'), cardsLeft ? t('combat.endTurn.cardsLeft') : '');
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     const endTurn = $('.end-turn');
     const confirmReady = String(combat.phase === 'player' && !hasPlayable);
     if (endTurn.dataset.confirmReady !== confirmReady) endTurn.dataset.confirmReady = confirmReady;
+    endTurn.classList.toggle('end-turn--cards-left', cardsLeft);
 
     // The innerHTML above just dropped the HOLD hint on the floor. `refresh()`
     // re-reads the action's state and re-dresses the button — and it is the
@@ -3846,13 +3852,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (plan.prompt) openHandDiscard(registries, plan, finish, $('.end-turn'));
     else finish();
   }
-  // Read the card-only fact for every press: a spent hand takes one tap,
-  // while an affordable card keeps the configured hold/review. Autoplay uses
-  // the same guarded commitEndTurn command directly.
+  // One activation ends the turn, with or without a card left (the endTurn row
+  // in model/secondbeat.js says `tap: true`); renderControls dresses the
+  // button with `end-turn--cards-left` instead of asking. Autoplay uses the
+  // same guarded commitEndTurn command directly.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
     ctx: () => ({ playable: endTurnHasPlayableCard() }),
-    tapWhenNone: true,
-    question: 'End your turn and let the enemies act?', confirmLabel: 'END TURN', onConfirm: commitEndTurn,
+    onConfirm: commitEndTurn,
   });
   endTurnBeat.refresh();
 
@@ -3899,7 +3905,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   attachTooltip($('.end-turn'), () => `<div class="tt-title">${esc(t('combat.endTurn'))}</div>`
     + (combat.handRules?.retain ? 'Enemies act, then draw while keeping unplayed cards.' : 'Enemies act, then draw a fresh hand.')
     + `<div class="ti-detail">Block expires at the start of your next turn. `
-    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b>, or hold this.</div>`);
+    + `Press <b>${esc(hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn'))}</b> or tap this.`
+    + `${$('.end-turn').classList.contains('end-turn--cards-left') ? `<br>${esc(t('combat.endTurn.cardsLeft'))}.` : ''}</div>`);
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.

@@ -169,18 +169,12 @@ export function mountEvent(app, opts) {
         // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
         showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };
-      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
-      // CHARACTERISTIC of the choice, derived from its own ops
-      // (model/consequence.js); the beat is derived from that characteristic
-      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
-      // position all moved into the machinery with it — a bar that cannot be
-      // pressed still never gets armed, because this branch is the affordable
-      // one and always was.
+      // A choice commits on one tap (the eventChoice row in model/secondbeat.js
+      // says `tap: true`; owner, 2026-11-14). Whether a choice binds is still a
+      // characteristic derived from its ops (model/consequence.js) and rides in
+      // the ctx so the audit record keeps it; it no longer picks a hold.
       disarmers.push(arm(btn, 'eventChoice', {
         ctx: { binding },
-        question: t('dialogue.respond.question', { label: choice.label || choice.text || t('event.defaultOption') }),
-        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
-        confirmLabel: 'CHOOSE',
         onConfirm: commit,
       }));
     }
