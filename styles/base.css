@@ -1,6 +1,10 @@
 /* styles/base.css — palette, reset, typography (GDD §7, sprite style guide) */
 
 :root {
+  /* Hit floaters (owner, 2026-11-14): Block white, Poise yellow, HP red. */
+  --floater-block: #fff;
+  --floater-poise: #ffd34d;
+  --floater-hp: #ff4a4a;
   --accent-rgb: 201, 162, 39; /* --gold as rgb, for glow/halo alpha (swapped by accent theme) */
   /* THE TAP-TARGET FLOOR, and it has one home because it is one fact.
      Sunna's ruling under Law 4 (#37): "a floor of N device px measured after

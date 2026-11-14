@@ -157,13 +157,13 @@ test('words and numbers share one column and one clock', (t) => setup(t, ({ fx, 
 
 test('words waiting together spawn by priority; a number keeps its place', (t) => setup(t, ({ fx, a, spawns }) => {
   callout(fx, a, 'e1', 'staggered');                  // spawns now
-  callout(fx, a, 'e1', 'blocked');
+  callout(fx, a, 'e1', 'countered'); // BLOCKED no longer draws (screen-reader only, 2026-11-14), so another mid-rank word stands in
   floatNum(fx, a, '-4', 'heal');
   callout(fx, a, 'e1', 'status:burn');
   callout(fx, a, 'e1', 'resisted');
   advance(t, floaterStaggerMs() * 4);
-  // waiting: blocked(2), number, burn(6), resisted(1) -> ranked slots hold burn, blocked, resisted around the number
-  assert.deepEqual(spawns.map((s) => s.node.dataset.calloutKind ?? s.node.textContent), ['staggered', 'status:burn', '-4', 'blocked', 'resisted']);
+  // waiting: countered(3), number, burn(6), resisted(1) -> ranked slots hold burn, countered, resisted around the number
+  assert.deepEqual(spawns.map((s) => s.node.dataset.calloutKind ?? s.node.textContent), ['staggered', 'status:burn', '-4', 'countered', 'resisted']);
 }));
 
 test('a skip drops the waiting floaters and the visible words; visible numbers keep their life', (t) => setup(t, ({ fx, a, spawns }) => {

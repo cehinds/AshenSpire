@@ -28,12 +28,19 @@ export function floaterGlyphShown(word) {
 }
 
 // The number classes fx.js passes to floatNum:
-//   shown : 'dmg', 'dmg small|heavy|crit|pct20|pct35' (dmgClass; HP damage), 'dmg heavy' (Defeated)
-//   hidden: 'blk' (block gain), 'blk small' (cost, guard, RESISTED), 'blk <tier>' (guardHitFloatParts fullHit),
-//           'heal', 'burst' (resource and proc bursts), 'poise small', 'ward small', 'barrier small',
+//   shown : 'dmg', 'dmg small|heavy|crit|pct20|pct35' (dmgClass; HP damage), 'dmg heavy' (Defeated),
+//           'blk small hitpart' (the Block a hit met, white), 'poise small hitpart' (the Poise it removed, yellow)
+//   hidden: 'blk' (block gain), 'blk small' (cost, RESISTED), 'blk <tier>' (guardHitFloatParts fullHit),
+//           'heal', 'burst' (resource and proc bursts), 'poise small' (gain, guarded), 'ward small', 'barrier small',
 //           'pierce small', 'immune small'
-/** True only for HP damage numbers and Defeated: a class string whose first token is `dmg`. */
+/**
+ * True for HP damage numbers and Defeated (a class string whose first token is `dmg`) and for the Block and Poise
+ * parts of a hit (owner, 2026-11-14: "blocked damage white, poise damage yellow, health damage red"): `blk` or `poise`
+ * together with the `hitpart` token that guardHitFloatParts adds. Every other `blk` / `poise` number stays hidden.
+ */
 export function floaterNumberShown(cls) {
   if (!policyOn) return true;
-  return String(cls ?? '').trim().split(/\s+/)[0] === 'dmg';
+  const tokens = String(cls ?? '').trim().split(/\s+/);
+  if (tokens[0] === 'dmg') return true;
+  return tokens.includes('hitpart') && (tokens[0] === 'blk' || tokens[0] === 'poise');
 }

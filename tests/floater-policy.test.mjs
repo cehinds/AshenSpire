@@ -40,7 +40,33 @@ test('only HP damage numbers and Defeated show', () => {
   }
   const parts = guardHitFloatParts({ amount: 10, blocked: 4, barrierAbsorbed: 1, wardAbsorbed: 1, poiseAbsorbed: 1, pierced: 1, forceImmune: 1 });
   assert.equal(floaterNumberShown(parts.damage.cls), true);
-  for (const key of ['barrier', 'ward', 'poise', 'pierced', 'immune', 'guard', 'fullHit']) assert.equal(floaterNumberShown(parts[key].cls), false, key);
+  for (const key of ['barrier', 'ward', 'pierced', 'immune', 'fullHit']) assert.equal(floaterNumberShown(parts[key].cls), false, key);
+  // Owner, 2026-11-14: the Block and Poise a hit met show too (white and yellow); a gain or a cost with the same base class does not.
+  for (const key of ['poise', 'guard']) assert.equal(floaterNumberShown(parts[key].cls), true, key);
+  assert.equal(floaterNumberShown('poise small'), false);
+});
+
+// Owner, 2026-11-14: "blocked damage should be white, poise damage in yellow, health damage in red."
+test('a hit with Block, Poise and HP parts floats three numbers in three colours that sum to the hit', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  withKitDom(({ document }) => {
+    const layer = document.createElement('div'); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+    const anchor = document.createElement('div'); anchor.box = { left: 100, top: 300, width: 80, height: 120 };
+    document.body.append(layer, anchor);
+    const event = { amount: 9, blocked: 4, poiseAbsorbed: 3, hpRemoved: 5 };
+    const parts = guardHitFloatParts(event);
+    assert.equal(parts.full, 12);
+    const made = [parts.guard, parts.poise, parts.damage].map((part) => floatNum(layer, anchor, part.text, part.cls));
+    assert.ok(made.every(Boolean), 'all three float');
+    assert.deepEqual(made.map((el) => el.className.split(' ').filter((c) => ['blk', 'poise', 'dmg', 'hitpart'].includes(c))), [['blk', 'hitpart'], ['poise', 'hitpart'], ['dmg']]);
+    const nums = made.map((el) => Math.abs(Number(el.textContent)));
+    assert.deepEqual(nums, [4, 3, 5]);
+    assert.equal(nums.reduce((a, b) => a + b, 0), parts.full, 'the numbers sum to the hit');
+    assert.equal(parts.damage.text, `-${event.hpRemoved}`, 'the red number is the HP lost');
+    // A part that is 0 shows no floater.
+    const none = guardHitFloatParts({ amount: 5, blocked: 0, hpRemoved: 5 });
+    assert.equal(none.guard, null); assert.equal(none.poise, null);
+  });
 });
 
 test('callout() with a hidden kind returns null and spawns nothing; a shown kind spawns', (t) => {

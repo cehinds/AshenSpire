@@ -720,6 +720,7 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   layer = combatReadoutLayer(layer);
   const rec = stackFor(layer, anchor);
   const same = (item) => item.kind === kind && item.forId === String(forId);
+  if (kind === 'blocked' && !repeat) return screenReaderCallout(layer, forId, kind, def);
   if (!repeat && (rec.stack.has(same) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
@@ -733,6 +734,20 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   // Through enqueueFloater, so a word gets the same host tracking as a number (a rebuilt figure retargets it).
   // The intent word is the beat's marker (cost first, word, then the stance one gap later): it never waits behind the cost floater.
   enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true, immediate: kind.startsWith('action:') });
+  return el;
+}
+// BLOCKED is no longer drawn (owner, 2026-11-14): the white Block number says it. The word stays as screen-reader text,
+// outside the floater column so it takes no slot.
+function screenReaderCallout(layer, forId, kind, def) {
+  if (liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
+  const el = document.createElement('div');
+  el.className = 'fx-callout sr-only';
+  el.dataset.calloutFor = String(forId);
+  el.dataset.calloutKind = kind;
+  el.setAttribute('role', 'status');
+  el.textContent = def.word || t(def.string);
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), calloutLifeMs());
   return el;
 }
 const liveCallouts = (layer, forId) => [...(layer.children || [])]
@@ -782,13 +797,13 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
-    poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
+    poise: poise > 0 ? { text: String(poise), cls: 'poise small hitpart' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
     // Magic hits Poise first, 1:1 (owner, 2026-10-31).
-    magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
+    magicPoise: magicPoise > 0 ? { text: String(magicPoise), cls: 'poise small hitpart' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
-    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small hitpart' } : null,
     // Owner, 2026-11-14: the floating number is the HP the hit cost (what the card face, the intent and the HP bar agree on), never the
     // hit before Block, Poise, Ward or Barrier. `damage` stays null for a hit that cost no HP, which shows its outcome word instead;
     // `fullHit` is the unsigned pre-layer figure a guarded hit that cost no HP carries (beside BLOCKED or Pierced; the policy hides it).
@@ -1770,7 +1785,9 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
-            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls);
+            // A hit fully absorbed floats its white (Block) and yellow (Poise) numbers; the word stays screen-reader text only.
+            if (outcome === 'blocked' && parts.guard) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.guard.text, parts.guard.cls);
+            if (parts.poise && outcome === 'blocked') floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.poise.text, parts.poise.cls);
             if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls);
             return;
           }
@@ -1779,6 +1796,9 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // all at the same x. The layers the hit met come first, then the hit's HP loss.
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls);
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls);
+          // The three parts of the hit, each its own number (owner, 2026-11-14): the damage Block absorbed (white), the Poise
+          // it removed (yellow) and the HP it took (red, below, spawned first so it sits on top of the column).
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls);
           if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls);
           if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls);
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls);
