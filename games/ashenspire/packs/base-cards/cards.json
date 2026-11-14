@@ -4,7 +4,7 @@
     {
       "definition": {
         "id": "base.persistent-protection",
-        "name": "Ward Armor",
+        "name": "Ward Armour",
         "class": "colorless",
         "rarity": "uncommon",
         "cost": 1,
@@ -30,7 +30,7 @@
         "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
         "faceTemplate": ["Gain Persistent Block {base.persistent-block}.", "Gain Persistent Barrier {base.persistent-barrier}."],
         "icon": "skill",
-        "flavor": "Armor charm of the Bastion watch.\n\nThe ridge gates were held through long winters by guards too few to relieve one another. Their warding knots were tied into the lining, renewing a thin defense whenever the wearer could stand and breathe.\n\nThe cloth outlasted several suits of iron."
+        "flavor": "Armour charm of the Bastion watch.\n\nThe ridge gates were held through long winters by guards too few to relieve one another. Their warding knots were tied into the lining, renewing a thin defense whenever the wearer could stand and breathe.\n\nThe cloth outlasted several suits of iron."
       },
       "tags": [
         "classification.skill",
@@ -7356,7 +7356,7 @@
         ],
         "textTemplate": "Deal {poiseDamage} Poise damage.",
         "icon": "shield",
-        "flavor": "A staggering blow of the Bastion's quarry crews.\n\nQuarry workers drove wedges where the weight of a block already strained its bed. A short stroke could unsettle stone too large to break outright. Their fighting descendants sought the same yielding place beneath armor and planted feet.\n\nWhat cannot be broken can still be moved."
+        "flavor": "A staggering blow of the Bastion's quarry crews.\n\nQuarry workers drove wedges where the weight of a block already strained its bed. A short stroke could unsettle stone too large to break outright. Their fighting descendants sought the same yielding place beneath armour and planted feet.\n\nWhat cannot be broken can still be moved."
       },
       "tags": [
         "classification.skill",
@@ -7471,7 +7471,7 @@
         "textTemplate": "Add a temporary Smash to hand.",
         "faceTemplate": ["Add a temporary Smash."],
         "icon": "shield",
-        "flavor": "A recalled stroke of the Citadel's heavy weapon drills.\n\nA recruit carried a wooden mallet before being trusted with the armory's iron. Instructors made its simple downward path the last exercise of every watch. Even an empty hand could remember the weight when no suitable weapon remained.\n\nThe practiced burden waits for another shape."
+        "flavor": "A recalled stroke of the Citadel's heavy weapon drills.\n\nA recruit carried a wooden mallet before being trusted with the armoury's iron. Instructors made its simple downward path the last exercise of every watch. Even an empty hand could remember the weight when no suitable weapon remained.\n\nThe practiced burden waits for another shape."
       },
       "tags": [
         "classification.skill",

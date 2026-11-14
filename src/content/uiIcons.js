@@ -326,7 +326,7 @@ export function uiIconId(value) {
 // Compact readable fallback labels for callers that deliberately render text.
 // Resource labels match the game HUD; every other label fits a small icon box.
 export const UI_ICON_LABELS = Object.freeze({
-  accessibility: 'Access', actions: 'AP', armour: 'Armor', attack: 'Atk', audio: 'Audio',
+  accessibility: 'Access', actions: 'AP', armour: 'Armour', attack: 'Atk', audio: 'Audio',
   back: 'Back', bleed: 'Bleed', blight: 'Blight', block: 'Block', boss: 'Boss', burn: 'Burn',
   check: 'OK', cinders: 'Cinder', close: 'X', collapse: 'Fold', combat: 'Fight', compare: 'Vs',
   compendium: 'Guide', connected: 'Online', contrast: 'Tone', controls: 'Keys', coop: 'Co-op',

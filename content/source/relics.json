@@ -205,7 +205,7 @@
   },
   {
     "id": "twinnedArmor",
-    "name": "Twinned Armor",
+    "name": "Twinned Armour",
     "rarity": "uncommon",
     "icon": "armour",
     "textTemplate": "Every 10th card you play each combat: gain {block} Block."

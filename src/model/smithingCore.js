@@ -147,7 +147,7 @@ export function coreSmithingStats(run, itemRef, currentLevel, nextLevel) {
   const before = itemAtTier(run, item, currentLevel), after = itemAtTier(run, item, nextLevel);
   const stats = [];
   if (item.kind === 'armor' || item.kind === 'shield') {
-    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armor budget' : 'Stat points',
+    stats.push({ kind: 'budget', tag: `core:budget:${itemRef}`, label: item.kind === 'armor' ? 'Armour budget' : 'Stat points',
       before: before.budget ?? before.points, after: after.budget ?? after.points });
   }
   for (const id of STAT_ORDER) if (before.values[id] !== after.values[id]) {
