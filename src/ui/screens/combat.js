@@ -162,7 +162,7 @@ import { iconTray, setIconTrayOverflow, trayIcon } from '../components/iconTray.
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
-import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
+import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, paintEndTurnKey, paintEndTurnWarning, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button, html, openModal } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
@@ -2670,7 +2670,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // wears a warning and says so instead, so the answer is on the button before
     // the tap and not in a modal after it.
     const cardsLeft = combat.phase === 'player' && endTurnHasPlayableCard();
-    paintEndTurnKey($('.end-turn'), etKey, cardsLeft ? t('combat.endTurn.cardsLeft') : '');
+    paintEndTurnKey($('.end-turn'), etKey);
+    paintEndTurnWarning($('.end-turn'), cardsLeft ? t('combat.endTurn.cardsLeft') : '');
     const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     const endTurn = $('.end-turn');

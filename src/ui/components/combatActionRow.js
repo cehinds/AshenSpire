@@ -81,16 +81,25 @@ export const POTIONS_TIP_HTML = `<div class="tt-title">${esc(t('potions.run.titl
  * renderControls repaints it whenever the binding changes; it wears the same
  * row (combat.endTurn) the first render does, so a reword survives a rebind.
  */
-export function paintEndTurnKey(endTurn, key, aria = '') {
-  // `aria` overrides the accessible name while a warning stands ("End turn (you can still play a card)").
+export function paintEndTurnKey(endTurn, key) {
   if (endTurn?.closest?.('.combat-action-row')) {
-    paintFooterArt(endTurn.closest('.combat-action-row'), { endTurnKey: key, endTurnAria: aria });
-    if (aria) endTurn.setAttribute('aria-label', aria);
+    paintFooterArt(endTurn.closest('.combat-action-row'), { endTurnKey: key });
     return;
   }
-  if (aria) endTurn?.setAttribute('aria-label', aria); else endTurn?.removeAttribute('aria-label');
   if (!endTurn || endTurn.querySelector('.et-key')?.textContent === key) return;
   endTurn.replaceChildren(t('combat.endTurn'), keycap(key, { class: 'et-key' }));
+}
+
+/**
+ * paintEndTurnWarning(button, text) — the accessible name End Turn wears while a card is still playable
+ * ("End turn (you can still play a card)"); an empty text puts the plain name back. The footer art repaints the
+ * name on every count paint, so the text is kept in its state and not only set on the button.
+ */
+export function paintEndTurnWarning(endTurn, text = '') {
+  const row = endTurn?.closest?.('.combat-action-row');
+  if (row) paintFooterArt(row, { endTurnAria: text });
+  if (text) endTurn?.setAttribute?.('aria-label', text);
+  else if (!row?.dataset?.footerArt) endTurn?.removeAttribute?.('aria-label');
 }
 
 /**
