@@ -671,7 +671,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const relayoutConfig = uiConfig.presentation.combatFormationModel.behavior.relayout;
   const placedFrames = new WeakSet();
   let laidOut = null, forcePending = false, layoutEpoch = 0, placedFormationKey = null;
-  const viewportNow = () => viewportKey({ width: window.innerWidth, height: window.innerHeight });
+  // The layout's inputs are the combat canvas and the bands it is cut into, never the real window
+  // (owner, 2026-11-14: one configuration per form factor, only scaled). A window resize inside a
+  // form factor changes neither, so nothing relays out; a form-factor switch changes the canvas, and
+  // the bands combatLayout re-plans for it (the field's and the hand's local boxes) can land a frame
+  // later, so they are inputs too: a pass that ran before them is redone when they arrive.
+  const viewportNow = () => {
+    const canvas = logicalViewport(), hand = field.closest('.combat')?.querySelector('.hand');
+    return { ...viewportKey(canvas), inputs: [canvas.width, canvas.height, field.offsetWidth, field.offsetHeight,
+      hand?.offsetTop ?? '', hand?.offsetHeight ?? ''].join('x') };
+  };
   const refresh = (force = false) => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
@@ -689,7 +698,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       rangeRanks: field.dataset.rangeRanks, policy: field.dataset.formationPolicy,
       frames: frames.map(frame => ({ eid: frame.dataset.eid, dead: frame.classList.contains('dead') })) });
     const unplaced = frames.some(frame => !placedFrames.has(frame)) || formationKey !== placedFormationKey;
-    const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone });
+    const moved = shouldRelayout(laidOut, now, relayoutConfig, { phone }) || laidOut?.inputs !== now.inputs;
     if (!(force === true || forcePending) && !unplaced && !moved) return;
     forcePending = false;
     layoutEpoch++;
@@ -1588,7 +1597,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const settingKey = () => { const root = document.documentElement;
     return FORCING_ATTRIBUTES.map(name => typeof root?.getAttribute === 'function' ? root.getAttribute(name) : null).join('|'); };
   let lastSettingKey = settingKey();
-  let lastSeenViewport = `${window.innerWidth}x${window.innerHeight}`;
+  const canvasKey = () => { const canvas = logicalViewport(); return `${canvas.width}x${canvas.height}`; };
+  let lastSeenViewport = canvasKey();
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();
@@ -1602,7 +1612,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // UI scale and text size (--ui-zoom, root font-size, --view-*) are live display settings: changed in Settings
     // mid-combat they relay out once. The same variables also follow the viewport (a phone's address bar), so a
     // change that arrives with a new viewport size goes through the viewport gate instead.
-    const viewport = `${window.innerWidth}x${window.innerHeight}`;
+    const viewport = canvasKey();
     const settingChange = keyMoved && viewport === lastSeenViewport;
     lastSeenViewport = viewport;
     if (setting !== lastSettingKey || settingChange) { lastSettingKey = setting; scheduleForced(); }
