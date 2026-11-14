@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 206,
-  "distinct": 177,
+  "sites": 203,
+  "distinct": 176,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -27,7 +27,6 @@
     "src/ui/components/ashenBlight.js": 3,
     "src/ui/components/debugChrome.js": 3,
     "src/ui/components/menuComponents.js": 3,
-    "src/ui/models/ArmouryModels.js": 3,
     "src/ui/models/SmithSelectionModel.js": 3,
     "src/ui/screens/equipment.js": 3,
     "src/ui/screens/history.js": 3,
@@ -36,7 +35,7 @@
     "src/ui/components/mountServiceModal.js": 2,
     "src/ui/components/smithPaneParts.js": 2,
     "src/ui/components/smithUpgradeModal.js": 2,
-    "src/ui/models/QuickAccessPanelModel.js": 2,
+    "src/ui/models/ArmouryModels.js": 2,
     "src/ui/previews/tooltipReviewScene.js": 2,
     "src/ui/screens/event.js": 2,
     "src/ui/screens/title.js": 2,
