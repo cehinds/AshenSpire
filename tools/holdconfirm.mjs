@@ -227,9 +227,8 @@ const PLANTS = [
     to: "    if (origin.source !== 'pointer') return false;\n    heldThisPress = true;",
     what: 'the pre-S7 line that made the hold a mouse feature',
     expect: 'every non-pointer TAP commits again — the eight cells that were red at b83bda1',
-    mustRed: (out) => /FAIL\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
-    mustStay: (out) => /ok\s+endTurn: ON, a held key press DOES end the turn/.test(out)
-      || /ok\s+a completed hold ends the turn/.test(out),
+    mustRed: (out) => /FAIL\s+deleteSave: ON, a short key press does NOT delete the run/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a held key press DOES end the turn/.test(out),
   },
   {
     name: 'Q2 the release contract cut',
@@ -238,8 +237,8 @@ const PLANTS = [
     to: "      onEnd: () => { if (armed) stop('idle'); },",
     what: 'the answer input.js reads as "did the gesture consume the activation?"',
     expect: 'an ABORTED key/pad hold activates on release — the abort commits',
-    mustRed: (out) => /FAIL\s+\w+: ON, a short (key|pad) press does NOT/.test(out),
-    mustStay: (out) => /ok\s+a release before the fill lands does NOT end the turn/.test(out),
+    mustRed: (out) => /FAIL\s+deleteSave: ON, a short (key|pad) press does NOT/.test(out),
+    mustStay: (out) => /ok\s+a release before the fill lands deletes NOTHING/.test(out),
   },
   {
     name: 'Q3 the key door closed',
@@ -248,8 +247,8 @@ const PLANTS = [
     to: '  /* holdconfirm --selftest Q3: a key action never presses its control */',
     what: 'the pad half of a `kind: key` action reaching its armed control',
     expect: 'the pad button commits End Turn on a tap again',
-    mustRed: (out) => /FAIL\s+endTurn: ON, a short pad press does NOT end the turn/.test(out),
-    mustStay: (out) => /ok\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
+    mustRed: (out) => /FAIL\s+endTurn: ON, a short pad press DOES end the turn/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a short key press DOES end the turn/.test(out),
   },
   // Q4 WAS HERE AND IS DELETED, WHICH IS ITSELF THE FINDING. It cut
   // `if (!(Number(el.dataset.holdMs) > 0)) return null;` out of input.js's
@@ -271,7 +270,7 @@ const PLANTS = [
     what: 'the clause that leaves an open veil owning the End Turn key',
     expect: 'holding `e` with the draw pile open ENDS THE TURN under the panel',
     mustRed: (out) => /FAIL\s+with a veil standing, HOLDING the End Turn key does nothing/.test(out),
-    mustStay: (out) => /ok\s+endTurn: ON, a held key press DOES end the turn/.test(out),
+    mustStay: (out) => /ok\s+endTurn: ON, a short key press DOES end the turn/.test(out),
   },
   {
     name: 'Q6 the autorepeat leak',
@@ -281,8 +280,8 @@ const PLANTS = [
     what: 'the swallow that keeps an OS autorepeat inside the press it belongs to',
     expect: 'the second keydown (33 ms in) reaches combat and clicks End Turn — the turn '
       + 'ends a third of the way through a hold that keeps filling',
-    mustRed: (out) => /FAIL\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
-    mustStay: (out) => /ok\s+endTurn: ON, a short pad press does NOT end the turn/.test(out),
+    mustRed: (out) => /FAIL\s+deleteSave: ON, a short key press does NOT delete the run/.test(out),
+    mustStay: (out) => /ok\s+deleteSave: ON, a short pad press does NOT delete the run/.test(out),
   },
   {
     // THE ONE PLANT IN THIS CORPUS THAT IS ABOUT WHERE A THING IS, NOT WHAT IT
@@ -616,25 +615,16 @@ async function main() {
     console.log(`\n  dial '${dial}'`);
     await open(dial);
     if (mutate) {
-      // THE MUTATION: put the old door back. The bar keeps its class, its hint
-      // and its fill — only the wiring changes, so the screen looks identical
-      // and the abort silently commits.
-      //
-      // AND IT COUNTS WHAT IT REWIRED, which is not bookkeeping. Rune's finding
-      // tonight, and it is general: A KNOWN-BAD PINNED TO A VALUE DIES THE DAY
-      // THE TREE REACHES THAT VALUE — AND IT DIES GREEN. His framing mutation
-      // hardcoded `data-framing = 'fit'`, `entries: 1` made every frame fit, and
-      // a lie that had become true reported NOT CAUGHT. Mine is pinned to a
-      // different value: that this event still HAS a binding bar to falsify.
-      // Author the curse out of `rotPriestOffer` and the mutation rewires
-      // nothing, the abort correctly commits nothing, and `--mutate` passes
-      // having proved that a screen with no hold on it does not break. So it
-      // refuses instead, by name, at exit 2 — which is where `unknown` goes.
+      // THE MUTATION (Wave 2, owner 2026-11-14): the choice bars commit on ONE
+      // tap now, so the known-bad is the bar that stops committing — its
+      // listeners are cloned away and the screen looks identical. The tap
+      // check below must go red. Counted, because a mutation that rewires
+      // nothing proves nothing: an event with no binding bar exits 2.
       const rewired = await ev(`(() => {
         const bars = [...document.querySelectorAll('button.ev-choice')].filter(x => x.dataset.binding === '1');
         for (const b of bars) {
           const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
-          c.addEventListener('click', () => { document.querySelector('#choices').innerHTML = '<p>mutated commit</p>'; });
+          void c; // listeners gone: a tap now commits nothing
         }
         return bars.length;
       })()`);
@@ -649,110 +639,38 @@ async function main() {
     const before = await ev(STATE);
     if (before && before.error) { findings.push(`dial ${dial}: ${before.error}`); continue; }
 
-    if (dial === 'off') {
-      ok(`off wires no hold`, before.held === 0 && before.hints === 0, `${before.held} held bar(s), ${before.hints} hint(s)`);
-      const p = await barPoint(0);
-      // Same refusal as the mutation's, one dial position earlier: an event
-      // with no binding choice cannot say anything about what `off` does to a
-      // binding choice. An exception here would read as a broken tool; this
-      // reads as the absence it is.
-      if (!p) {
-        console.error(`\nholdconfirm: '${EVENT}' has no binding choice, so nothing on this run measures the feature. `
-          + `That is unknown, not a pass — pick an event with one (--event <id>).`);
-        cdp.close(); await dropBrowser(); stop(); process.exit(2);
-      }
-      await touch('touchStart', p); await wait(40); await touch('touchEnd', p);
-      await wait(220);
-      const after = await ev(STATE);
-      ok(`off sends a tap to review and commits NOTHING`, !after.committed && after.reviewing,
-        `committed=${after.committed} confirmation=${after.reviewing}`);
-      const tapConfirm = await pointOf('.confirmation-confirm');
-      if (await press(tapConfirm, 30)) await wait(260);
-      const afterTapConfirm = await ev(STATE);
-      ok(`the off-mode review can commit the choice`, afterTapConfirm.committed,
-        `committed=${afterTapConfirm.committed} confirmation=${afterTapConfirm.reviewing}`);
-
-      // A mobile browser may turn a stationary long press into its native
-      // context gesture and suppress the trailing click. `off` still means the
-      // review opens; it must not secretly mean "release quickly enough for
-      // WebKit/Chromium to synthesize click". Re-open the same authored state
-      // because the confirmed review above consumed its binding choice.
-      await open('off');
-      const heldPoint = await barPoint(0);
-      if (!heldPoint) {
-        console.error(`\nholdconfirm: '${EVENT}' lost its binding choice before the off-mode long-press check.`);
-        cdp.close(); await dropBrowser(); stop(); process.exit(2);
-      }
-      // Dispatch the pointer stream without a synthetic click. That is the
-      // mobile-browser edge: once the native long-press gesture wins, the
-      // trailing click is allowed to disappear. The control must own release,
-      // not depend on an event the browser may never synthesize.
-      await ev(`(() => {
-        const b=[...document.querySelectorAll('button.ev-choice')].find(x=>x.dataset.binding==='1');
-        const r=b.getBoundingClientRect();
-        b.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,pointerId:77,pointerType:'touch',isPrimary:true,button:0,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
-        return true;
-      })()`);
-      await wait(900);
-      await ev(`(() => {
-        const b=[...document.querySelectorAll('button.ev-choice')].find(x=>x.dataset.binding==='1');
-        const r=b.getBoundingClientRect();
-        b.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
-        b.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:77,pointerType:'touch',isPrimary:true,button:0,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
-        return true;
-      })()`);
-      await wait(260);
-      const afterLongPress = await ev(STATE);
-      ok(`off sends a mobile long press to review and commits NOTHING`,
-        !afterLongPress.committed && afterLongPress.reviewing,
-        `committed=${afterLongPress.committed} confirmation=${afterLongPress.reviewing}`);
-      const longConfirm = await pointOf('.confirmation-confirm');
-      if (await press(longConfirm, 30)) await wait(260);
-      const afterLongConfirm = await ev(STATE);
-      ok(`the long-press review can commit the choice`, afterLongConfirm.committed,
-        `committed=${afterLongConfirm.committed} confirmation=${afterLongConfirm.reviewing}`);
-      continue;
-    }
-
-    ok(`every option bar offers the hold shortcut and every binding bar is included`,
-      before.binding > 0 && before.held >= before.binding
-        && before.held === before.optionControls && before.hints === before.held,
-      `${before.binding} binding, ${before.optionControls} option, ${before.held} armed, ${before.hints} hint(s), ${before.holdMs} ms`);
-
-    // ---- 1. THE ABORT. Press the bar a low thumb finds, let go early.
+    // ---- 1. NO HOLD IS WIRED, AT ANY DIAL POSITION. A choice commits on a tap
+    // (the eventChoice row says `tap: true`), so the hold, its hint and its
+    // fill are gone, and the dial neither lengthens nor shortens anything here.
+    ok(`the choice bars wire no hold and draw no HOLD hint at dial '${dial}'`,
+      before.held === 0 && before.hints === 0 && (before.holdMs === null || before.holdMs === 0),
+      `${before.held} held bar(s), ${before.hints} hint(s), ${before.holdMs} ms`);
     const p = await barPoint(0);
-    if (!p) { findings.push(`dial ${dial}: no binding bar to press`); continue; }
-    await touch('touchStart', p);
-    await wait(Math.round(before.holdMs * 0.45));
-    const mid = await ev(STATE);
-    await touch('touchEnd', p);
+    // Refuses by name, as the mutation does: an event with no binding choice
+    // says nothing about the bars that used to hold.
+    if (!p) {
+      console.error(`\nholdconfirm: '${EVENT}' has no binding choice, so nothing on this run measures the feature. `
+        + `That is unknown, not a pass — pick an event with one (--event <id>).`);
+      cdp.close(); await dropBrowser(); stop(); process.exit(2);
+    }
+    // ---- 2. ONE TAP COMMITS, and opens no review.
+    await touch('touchStart', p); await wait(40); await touch('touchEnd', p);
     await wait(260);
-    const aborted = await ev(STATE);
-    ok(`a release before the fill lands commits NOTHING`, !aborted.committed && aborted.bars === before.bars,
-      `bars ${before.bars} -> ${aborted.bars}, committed=${aborted.committed}`);
-    ok(`the fill was visibly under way when the finger lifted`, mutate ? true : (mid.progress > 0.05 && mid.progress < 1),
-      `progress ${mid.progress} at 45% of ${before.holdMs} ms`);
-    ok(`the bar returned to rest after the abort`, mutate ? true : aborted.holdState === 'idle' && aborted.progress === 0,
-      `state=${aborted.holdState} progress=${aborted.progress}`);
-    // AN EARLY RELEASE IS A TAP, AND A TAP REVIEWS (the universal option
-    // contract, components/holdconfirm.js arm(): short activation → review
-    // modal, deliberate hold → commit). So the abort above leaves the review
-    // standing over the bars, and a hold pressed through that veil lands on
-    // nothing. Put it away the way a player does — Back — before the hold.
-    if (aborted.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(260); }
-
-    // ---- 2. A COMPLETED HOLD COMMITS.
-    // If the abort above already committed, there is no bar left to hold and
-    // that is the finding, not a crash — a tool that dies on the defect it
-    // found reports it as an exception instead of a result.
+    const tapped = await ev(STATE);
+    ok(`one tap on a binding bar commits and opens no review`, tapped.committed && !tapped.reviewing,
+      `committed=${tapped.committed} confirmation=${tapped.reviewing} bars ${before.bars} -> ${tapped.bars}`);
+    // ---- 3. A LONG PRESS IS ONE TAP, NOT TWO. Re-open the same state and hold
+    // the bar well past the old dial; it must commit exactly once and no review.
+    await open(dial);
+    if (mutate) await ev(`(() => { for (const b of [...document.querySelectorAll('button.ev-choice')].filter(x => x.dataset.binding === '1')) b.replaceWith(b.cloneNode(true)); return 1; })()`);
     const p2 = await barPoint(0);
-    if (!p2) { ok(`a completed hold commits`, false, 'no binding bar left — the abort above already committed it'); continue; }
     await touch('touchStart', p2);
-    await wait(before.holdMs + 320);
+    await wait(900);
     await touch('touchEnd', p2);
     await wait(260);
-    const done = await ev(STATE);
-    ok(`a completed hold commits`, done.committed, `committed=${done.committed}, bars=${done.bars}`);
+    const held = await ev(STATE);
+    ok(`a long press on a binding bar is one commit and opens no review`, held.committed && !held.reviewing && held.bars === tapped.bars,
+      `committed=${held.committed} confirmation=${held.reviewing} bars ${before.bars} -> ${held.bars}`);
   }
 
   // ---- 5. THE DERIVATION IS NOT A LIST (Law 0's falsifier for this control).
@@ -776,88 +694,19 @@ async function main() {
     })()`);
     if (res && res.skip) skip('new-entry', 'structural', res.skip);
     else {
-      ok(`a never-seen entry with a curse arrives holding`, res && res.binding === true, `reasons ${JSON.stringify(res && res.why)}`);
+      ok(`a never-seen entry with a curse is still derived binding (the audit record; it no longer holds)`, res && res.binding === true, `reasons ${JSON.stringify(res && res.why)}`);
       ok(`a never-seen entry with no cost does not`, res && res.free === false, `free=${res && res.free}`);
     }
   }
 
-  // ---- 6. THE LABEL SURVIVES THE FILL (Bjorn's finding, made a check).
-  // It asserts CONSTRUCTION, not pixels: a background-image paints under text
-  // by definition, and a generated ::before is the shape that overlaid it. A
-  // pixel comparison would be the stronger check and this repo has no home for
-  // one; stated rather than implied.
+  // ---- 6 and 6b (the fill paints under the label; the painted fill survives a
+  // hover) RETIRED (Wave 2, owner 2026-11-14). Both measured the event bars'
+  // fill, and no event bar holds any more: a choice commits on one tap. The
+  // fill is still drawn by the holds that remain (the title's delete-save, driven
+  // below) but nothing in this tool reads its paint there; that is `unknown`,
+  // said here instead of kept as a check that cannot go red.
   {
-    console.log(`\n  the fill paints under the label`);
     await open('normal');
-    const paint = await ev(`(() => {
-      const b = document.querySelector('button.ev-choice.beat-hold');
-      if (!b) return { error: 'no held bar' };
-      const cs = getComputedStyle(b);
-      const bef = getComputedStyle(b, '::before');
-      return { bg: cs.backgroundImage, beforeContent: bef.content, beforePos: bef.position };
-    })()`);
-    ok(`the fill is a background, not an overlay`,
-      !paint.error && /repeating-linear-gradient/.test(paint.bg)
-        && /rgba\(255, 255, 255, 0\.52\)/.test(paint.bg)
-        && /rgba\(0, 0, 0, 0\.58\)/.test(paint.bg)
-        && (paint.beforeContent === 'none' || paint.beforeContent === 'normal'),
-      `background-image=${paint.bg ? 'gradient' : 'none'}, ::before content=${paint.beforeContent}`);
-
-    // ---- 6b. THE FILL IS STILL THERE WITH A POINTER ON IT, AND IT IS THE
-    // PAINTED VALUE THAT IS READ (Sunna, 2026-08-08 — this branch shipped the
-    // defect and nothing here could see it).
-    //
-    // Every check above this line reads `data-hold-progress`, which is written
-    // by the same function that writes `--hold` and is therefore incapable of
-    // disagreeing with it. THE DEFECT WAS IN THE PAINT. `base.css` carries a
-    // bare `button:hover { background: #2e2517 }` — a SHORTHAND, so it resets
-    // `background-image` — at specificity (0,1,1). Renaming `.ev-hold` to
-    // `.beat-hold` dropped the fill rule to (0,1,0), under it. A hovering
-    // pointer therefore deleted the entire fill while `--hold` climbed
-    // perfectly, and YOU CANNOT HOLD A CONTROL WITHOUT BEING OVER IT.
-    //
-    // So this reads `getComputedStyle().backgroundSize` — the picture — with a
-    // MOUSE over the bar, mid-press, and holds it against `--hold`. It is the
-    // one check in this file that could ever have gone red on that defect, and
-    // it was OBSERVED RED against the branch head before the CSS fix, entering
-    // by the same door a player does: the real bundle, a real hover, a real
-    // press. dev's `button.ev-choice.ev-hold` (0,2,1) passes it too, which is
-    // why the defect was a regression and not a shipped bug.
-    //
-    // The second half is the ease. `button` also declares
-    // `transition: background 120ms` — same shorthand, so `background-size`
-    // eases: on dev the paint ran ~13 points behind and GREW on the frame after
-    // the finger lifted. That is the one frame the rule's own comment says must
-    // tell the truth instantly, so the tolerance here is tight on purpose: an
-    // eased fill cannot stay inside 2 points of a value moving at ~1.7 points
-    // per frame.
-    {
-      const b = await pointOf('button.ev-choice.beat-hold');
-      if (!b) skip('the painted fill', 'unasked', 'no held bar to hover');
-      else {
-        const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
-        await M('mouseMoved', b.x, b.y);
-        await wait(200);
-        const hov = await ev(`(() => { const cs = getComputedStyle(document.querySelector('button.ev-choice.beat-hold'));
-          return { img: /gradient/.test(cs.backgroundImage) }; })()`);
-        ok(`a pointer resting on the bar does not delete the fill`, hov.img === true,
-          `background-image with :hover applied = ${hov.img ? 'gradient' : 'NONE — base.css button:hover out-specifies the fill rule'}`);
-        await M('mousePressed', b.x, b.y, { buttons: 1 });
-        await wait(300);
-        const mid = await ev(`(() => { const e = document.querySelector('button.ev-choice.beat-hold');
-          const painted = parseFloat(getComputedStyle(e).backgroundSize);
-          const truth = parseFloat(e.style.getPropertyValue('--hold')) * 100;
-          return { painted, truth, img: /gradient/.test(getComputedStyle(e).backgroundImage) }; })()`);
-        await M('mouseReleased', b.x, b.y, { buttons: 0 });
-        await wait(250);
-        ok(`the PAINTED fill matches the hold, under the pointer that is holding it`,
-          mid.img === true && Number.isFinite(mid.painted) && Math.abs(mid.painted - mid.truth) <= 2,
-          `painted ${Number.isFinite(mid.painted) ? mid.painted.toFixed(1) : mid.painted}% vs --hold ${mid.truth.toFixed(1)}%`
-          + ` (>2 points apart means the fill is eased, or gone)`);
-        await M('mouseMoved', 5, 5);
-      }
-    }
-
     // ---- 4b. A PRESS THE POINTER WALKS AWAY FROM IS AN ABORT, NOT A TAP.
     //
     // Pointer capture keeps the trailing `click` aimed at the bar even though
@@ -868,15 +717,10 @@ async function main() {
     // the hold but left the press's tap state armed, so the click it generated
     // opened the confirmation modal under a scrolling thumb.
     {
-      const b = await pointOf('button.ev-choice.beat-hold');
-      if (!b) skip('the moved-away press', 'unasked', 'no held bar to press');
+      const b = await pointOf('button.ev-choice[data-binding="1"]');
+      if (!b) skip('the moved-away press', 'unasked', 'no binding bar to press');
       else {
         const M = (t, x, y, extra = {}) => cdp.send('Input.dispatchMouseEvent', { type: t, x, y, button: t === 'mouseMoved' ? 'none' : 'left', clickCount: 1, ...extra }, sessionId);
-        // The painted-fill block above ends in a short press, and a short press
-        // on an option control REVIEWS by design — so a modal may be open here.
-        // Close it first and assert the clean start, or this case reads the
-        // previous case's modal as its own finding.
-        if ((await ev(STATE)).reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(300); }
         const before = await ev(STATE);
         ok(`the moved-away press starts from a clean screen (no review open)`, !before.reviewing && before.bars > 0,
           `reviewing=${before.reviewing} bars=${before.bars}`);
@@ -890,7 +734,7 @@ async function main() {
         await wait(400);
         const after = await ev(STATE);
         ok(`a press the pointer walked away from opens no review and commits nothing`,
-          !after.reviewing && !after.committed && after.bars === before.bars && after.holdState !== 'holding',
+          !after.reviewing && !after.committed && after.bars === before.bars,
           `reviewing=${after.reviewing} committed=${after.committed} bars ${before.bars} -> ${after.bars} holdState=${after.holdState}`);
         if (after.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(250); }
         await M('mouseMoved', 5, 5);
@@ -1154,67 +998,66 @@ async function main() {
     console.log(`\n  END TURN — the half of his sentence that was dropped`);
     await openShot('combat');
     if (mutate) {
-      // PUT THE OLD DOOR BACK. The button keeps its class, its fill and its
-      // HOLD word — only the wiring changes, so the screen looks identical and
-      // the abort silently ends the turn. The check below must go red.
+      // THE KNOWN-BAD (Wave 2): End Turn commits on one tap, so the mutation is
+      // the button that stops committing — listeners cloned away, screen
+      // identical. The tap checks below must go red.
       const rewired = await ev(`(() => {
         const b = document.querySelector('.end-turn'); if (!b) return 0;
         const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
-        c.addEventListener('click', () => { window.__combat.turn++; });
         return 1;
       })()`);
       if (!rewired) { console.error('\nholdconfirm --mutate: no End Turn button to rewire. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
-      console.log(`    (mutation rewired End Turn to commit on a pointer click)`);
+      console.log(`    (mutation removed End Turn's listeners)`);
     }
     const st = () => ev(`(() => {
       const c = window.__combat; const b = document.querySelector('.end-turn');
       if (!c || !b) return null;
       return { turn: c.turn, phase: c.phase, energy: c.player.energy,
                beat: b.dataset.beat, holdMs: Number(b.dataset.holdMs || 0),
-               pulse: b.classList.contains('pulse'),
+               cardsLeft: b.classList.contains('end-turn--cards-left'),
+               label: b.getAttribute('aria-label') || '',
                hint: !!b.querySelector('.hold-hint') };
     })()`);
     const a = await st();
     if (!a) skip('end-turn', 'unasked', 'no ?shot=combat board with a window.__combat handle at this ref');
     else {
-      ok(`with a play still in hand, End Turn owes a HOLD`, a.beat === 'hold' && a.holdMs > 0,
-        `beat=${a.beat} ms=${a.holdMs} energy=${a.energy} pulse=${a.pulse}`);
-      ok(`and it SAYS so on the button`, a.hint === true, `HOLD hint present=${a.hint}`);
-      // OWNER, 2026-10-18: End Turn is a single tap when no card is playable;
-      // the configured beat stays when a card is still affordable. Both cells
-      // of the row are asserted, so neither edge can drift unseen.
-      ok(`the table rules End Turn a hold while a card is playable and a single tap once none is`,
-        table && !table.skip && table.endTurnForm === 'hold' && table.endTurnSpentForm === 'none',
+      ok(`End Turn owes no beat: no hold, no HOLD word`, a.beat === 'none' && a.holdMs === 0 && a.hint === false,
+        `beat=${a.beat} ms=${a.holdMs} hint=${a.hint}`);
+      ok(`the table rules End Turn a single tap at both edges of the hand`,
+        table && !table.skip && table.endTurnForm === 'none' && table.endTurnSpentForm === 'none',
         `beatFor('endTurn', playable) = ${table && table.endTurnForm}; spent = ${table && table.endTurnSpentForm}`);
+      // OWNER, 2026-11-14: the warning is on the button, not in a modal.
+      ok(`with a play still in hand the button wears the warning and says so`,
+        a.cardsLeft === true && /you can still play a card/i.test(a.label),
+        `cardsLeft=${a.cardsLeft} aria-label=${JSON.stringify(a.label)}`);
 
       const p = await pointOf('.end-turn');
       if (!p) ok(`End Turn is pressable`, false, 'the button has no box');
       else {
-        // 1. THE ABORT. This is the check that matters: an early release
-        // committing would look exactly like a working feature.
-        await press(p, Math.round(a.holdMs * 0.4));
+        // 1. ONE TAP ENDS THE TURN, with a card still playable and no review.
+        await press(p, 40); await wait(900);
         const b1 = await st();
         const b1Review = await ev(`!!document.querySelector('.confirmation-modal')`);
-        ok(`a release before the fill lands does NOT end the turn`,
-          b1.turn === a.turn && b1.phase === a.phase && b1Review,
-          `turn ${a.turn} -> ${b1.turn}, phase ${a.phase} -> ${b1.phase}, confirmation=${b1Review}`);
-        // A short press now has a positive meaning: REVIEW. Close that veil
-        // before testing the direct-hold shortcut, or the veil correctly owns
-        // the second press and this harness reports a false lockout.
-        await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
-        // 2. A COMPLETED HOLD ENDS IT.
-        await press(await pointOf('.end-turn'), a.holdMs + 350);
-        await wait(900);
-        const b2 = await st();
-        ok(`a completed hold ends the turn`, b2 && (b2.turn > a.turn || b2.phase !== 'player'),
-          `turn ${a.turn} -> ${b2 && b2.turn}, phase ${a.phase} -> ${b2 && b2.phase}`);
+        ok(`one tap ends the turn with a card still playable and opens no review`,
+          b1 && (b1.turn > a.turn || b1.phase !== a.phase) && !b1Review,
+          `turn ${a.turn} -> ${b1 && b1.turn}, phase ${a.phase} -> ${b1 && b1.phase}, confirmation=${b1Review}`);
       }
 
-      // 3. THE SPENT EDGE (owner, 2026-10-18; it was "state-independent" from
-      // 2026-08-17). With no card left to play End Turn is ONE TAP: no timer, no
-      // review. The hand is emptied on the live combat and the press is made
-      // before any repaint, so what is measured is the decision taken at the
-      // moment of the press, which is what the player gets.
+      // 2. A LONG PRESS IS ONE TAP, NOT TWO: a hold longer than the old dial
+      // must end the turn exactly once.
+      await openShot('combat');
+      const h0 = await st();
+      const hp = await pointOf('.end-turn');
+      if (!h0 || !hp) ok(`End Turn is pressable for the long press`, false, 'no button box');
+      else {
+        await press(hp, 1200); await wait(1200);
+        const h1 = await st();
+        ok(`a press held past the old dial ends the turn exactly once`,
+          h1 && h1.turn === h0.turn + 1 || (h1 && h1.phase !== 'player' && h1.turn <= h0.turn + 1),
+          `turn ${h0.turn} -> ${h1 && h1.turn}, phase ${h1 && h1.phase}`);
+      }
+
+      // 3. THE SPENT EDGE. With no card left the warning goes and the tap still ends the turn.
       await openShot('combat');
       const c0 = await ev(`(() => {
         const c = window.__combat; if (!c) return null;
@@ -1236,33 +1079,26 @@ async function main() {
         }
       }
 
-      // 4. OFF IS STILL OFF. The characteristic remains `hold`, but the dial
-      // removes its timer, visible hint and direct-commit shortcut. Review is
-      // universal and the modal's explicit answer remains the commit door.
+      // 4. THE HOLD DIAL DOES NOT REACH IT. Off or not, one pointer press ends the turn.
       await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: 'off' }) });
       const off = await st();
-      ok(`Off removes End Turn's hold timer and hint`, off && off.holdMs === 0 && off.hint === false,
+      ok(`the hold dial 'off' changes nothing: no timer, no hint`, off && off.holdMs === 0 && off.hint === false && off.beat === 'none',
         off ? `beat=${off.beat} ms=${off.holdMs} hint=${off.hint}` : 'no combat state');
       await ev(`document.querySelector('.end-turn')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const op = await pointOf('.end-turn');
-      if (!off || !op) ok(`Off leaves End Turn pressable`, false, 'no button box');
+      if (!off || !op) ok(`End Turn stays pressable with the dial off`, false, 'no button box');
       else {
-        // Dispatch on the control itself here. The normal-dial cells above
-        // already prove viewport hit testing; this cell owns the zero-duration
-        // pointer lifecycle, which must not depend on a trailing browser click.
+        // Dispatched on the control: the zero-duration pointer lifecycle must
+        // commit on release without depending on a trailing browser click.
         await ev(`(() => { const b = document.querySelector('.end-turn'); const r = b.getBoundingClientRect();
           b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }));
           b.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 91, pointerType: 'touch', isPrimary: true, button: 0, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 })); return true; })()`);
-        await wait(300);
+        await wait(900);
         const off2 = await st();
         const offReview = await ev(`!!document.querySelector('.confirmation-modal')`);
-        ok(`Off sends one pointer press to review and does not end the turn`,
-          off2 && off2.turn === off.turn && off2.phase === off.phase && offReview,
+        ok(`with the dial off, one pointer press ends the turn and opens no review`,
+          off2 && (off2.turn > off.turn || off2.phase !== off.phase) && !offReview,
           `turn ${off.turn} -> ${off2 && off2.turn}, phase ${off.phase} -> ${off2 && off2.phase}, confirmation=${offReview}`);
-        await press(await pointOf('.confirmation-confirm'), 30); await wait(900);
-        const off3 = await st();
-        ok(`the off-mode confirmation ends the turn`, off3 && (off3.turn > off.turn || off3.phase !== 'player'),
-          `turn ${off.turn} -> ${off3 && off3.turn}, phase ${off.phase} -> ${off3 && off3.phase}`);
       }
 
       // 5. THE KEY THAT CANNOT BE THE CURSOR'S. `.end-turn` matches input.js's
@@ -1351,7 +1187,9 @@ async function main() {
     const INPUT_ROWS = [
       { id: 'endTurn', of: 'end the turn', sel: null, key: 'e', btn: 2,
         open: (d) => openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) }),
-        read: () => ev(`(window.__combat || {}).turn`), moved: (a, b) => b > a },
+        // The engine moves to the enemy phase at once and the turn counter only
+        // after the enemy playback, so the read is turn and phase together.
+        read: () => ev(`(() => { const c = window.__combat || {}; return (c.turn || 0) * 2 + (c.phase === 'player' ? 0 : 1); })()`), moved: (a, b) => b > a },
       { id: 'eventChoice', of: 'take the choice', sel: 'button.ev-choice[data-binding="1"]', key: 'Enter', btn: 0,
         open: (d) => open(d, { id: EVENT }),
         read: () => ev(`document.querySelectorAll('#choices button').length`), moved: (a, b) => b < a },
@@ -1368,6 +1206,14 @@ async function main() {
         },
         read: () => ev(`(((window.__combat || {}).player || {}).flaskCharges || {}).hpCurrent`),
         moved: (a, b) => a != null && b != null && b < a },
+      // THE ONE HOLD LEFT ON THE FOUR-ACTION LIST'S PATTERN (Wave 2): the title's
+      // delete-save still owes its hold, so it carries the short-aborts /
+      // long-commits half of this matrix that End Turn, the event bar, the shrine
+      // and the flask no longer take.
+      { id: 'deleteSave', of: 'delete the run', sel: '.title-slot-delete', key: 'Enter', btn: 0, holds: true,
+        open: async (d) => { await openShot('title', { shotSettings: JSON.stringify({ holdConfirm: d }) });
+          await press(await pointOf('[data-title-action="load"]'), 30); await wait(400); },
+        read: () => ev(`document.querySelectorAll('.title-slot-pick.is-filled').length`), moved: (a, b) => b < a },
     ];
 
     for (const row of INPUT_ROWS) {
@@ -1375,12 +1221,39 @@ async function main() {
       for (const dial of ['normal', 'off']) {
         await row.open(dial);
         const ms = Number(await ev(`Number((document.querySelector(${JSON.stringify(armSel)}) || { dataset: {} }).dataset.holdMs || 0)`)) || 0;
-        if (dial === 'normal' && !(ms > 0)) {
+        if (!row.holds && !(await ev(`!!document.querySelector(${JSON.stringify(armSel)})`))) {
+          skip(`${row.id} on every input`, 'unasked', `no armed control at this ref (Core's own door draws it)`);
+          continue;
+        }
+        if (row.holds && dial === 'normal' && !(ms > 0)) {
           skip(`${row.id} on every input`, 'unasked', `no armed control with a live dial at this ref (holdMs=${ms})`);
           continue;
         }
         const drive = { key: (t) => holdKey(row.key, t), pad: (t) => holdPad(row.btn, t) };
         for (const input of ['key', 'pad']) {
+          if (!row.holds) {
+            // A TAP ROW (`tap: true`): the short press commits and the long
+            // press commits ONCE, with no review at either dial position.
+            await row.open(dial);
+            if (row.sel) await focusOn(row.sel);
+            const t0 = await row.read();
+            await drive[input](60);
+            await wait(700);
+            const t1 = await row.read();
+            const tapReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+            ok(`${row.id}: ${dial === 'off' ? 'OFF' : 'ON'}, a short ${input} press DOES ${row.of} and opens no review`,
+              row.moved(t0, t1) && !tapReview, `${t0} -> ${t1}, confirmation=${tapReview}`);
+            await row.open(dial);
+            if (row.sel) await focusOn(row.sel);
+            const l0 = await row.read();
+            await drive[input](1000);
+            await wait(700);
+            const l1 = await row.read();
+            const longReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+            ok(`${row.id}: ${dial === 'off' ? 'OFF' : 'ON'}, a held ${input} press DOES ${row.of} and opens no review`,
+              row.moved(l0, l1) && !longReview, `${l0} -> ${l1}, confirmation=${longReview}`);
+            continue;
+          }
           // SHORT — under the dial. Review is universal: both enabled and off
           // open the modal and commit nothing. The dial governs only whether a
           // completed hold may take the direct-commit shortcut.
@@ -1448,23 +1321,25 @@ async function main() {
       const rewired = await ev(`(() => {
         const b = document.querySelector('#rest-opt'); if (!b) return 0;
         const c = b.cloneNode(true); b.parentNode.replaceChild(c, b);
-        c.addEventListener('click', () => { c.remove(); });
         return 1;
       })()`);
       if (!rewired) { console.error('\nholdconfirm --mutate: no #rest-opt to rewire. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
-      console.log(`    (mutation rewired Rest to commit on a pointer click)`);
+      console.log(`    (mutation removed Rest's listeners: a tap now commits nothing)`);
     }
     const onShrine = () => ev(`!!document.querySelector('#rest-opt')`);
     const restBeat = await ev(`(() => { const e = document.querySelector('#rest-opt'); return e ? { beat: e.dataset.beat, ms: Number(e.dataset.holdMs || 0) } : null; })()`);
     if (!restBeat) skip('shrine', 'unasked', 'no ?shot=rest screen at this ref');
     else {
-      ok(`Rest owes a HOLD`, restBeat.beat === 'hold' && restBeat.ms > 0, `beat=${restBeat.beat} ms=${restBeat.ms}`);
+      ok(`Rest owes no beat: no hold, no HOLD word`, restBeat.beat === 'none' && restBeat.ms === 0, `beat=${restBeat.beat} ms=${restBeat.ms}`);
+      // ONE TAP spends the shrine (Wave 2, owner 2026-11-14) and opens no review.
+      // Run last in this block's reading order would leave the shrine, so it is
+      // measured on its own page and the Smith checks below re-open theirs.
       const rp = await pointOf('#rest-opt');
-      await press(rp, Math.round(restBeat.ms * 0.4));
+      await press(rp, 40); await wait(500);
       const restReview = await ev(`!!document.querySelector('.confirmation-modal')`);
-      ok(`a release before the fill lands does NOT spend the shrine and opens review`,
-        await onShrine() && restReview, `still on the shrine=${await onShrine()} confirmation=${restReview}`);
-      await press(await pointOf('.confirmation-cancel'), 30); await wait(250);
+      ok(`one tap on Rest spends the shrine and opens no review`, !(await onShrine()) && !restReview,
+        `still on the shrine=${await onShrine()} confirmation=${restReview}`);
+      await openShot('rest', { shotSmithingStones: 0 });
 
       // The Smith's unaffordable edge is deliberately native-clickable. It
       // must explain the block through the same review modal, publish the ARIA
@@ -1537,9 +1412,9 @@ async function main() {
         nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
         hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')
       } : null; })()`);
-      ok(`affordable Smith Upgrade publishes the live hold shortcut`,
+      ok(`affordable Smith Upgrade is a plain Confirm: no hold shortcut is published`,
         ready && !ready.nativeDisabled && ready.aria === 'false' && ready.state === 'actionable'
-          && ready.hold === 'commit' && ready.holdMs > 0 && ready.hint,
+          && ready.hold === 'disabled' && ready.holdMs === 0 && !ready.hint,
         JSON.stringify(ready));
       await press(await pointOf('.smith-confirm'), Math.round((ready && ready.holdMs || 600) * 0.35)); await wait(300);
       const affordableReview = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return {
@@ -1572,8 +1447,13 @@ async function main() {
       ok(`CANCEL takes it back and nothing was smithed`,
         !afterCancel.confirmation && afterCancel.smith,
         `confirmation=${afterCancel.confirmation} smith=${afterCancel.smith}`);
-      await press(await pointOf('.smith-confirm'), (ready && ready.holdMs || 600) + 350); await wait(700);
-      ok(`a deliberate Smith hold commits and leaves the shrine`, !(await onShrine()), `still on the shrine=${await onShrine()}`);
+      // A press held past the old dial is still a tap on a chooser: it reviews, it does not commit.
+      await press(await pointOf('.smith-confirm'), 1000); await wait(500);
+      const heldReview = await ev(`!!document.querySelector('.confirmation-modal')`);
+      ok(`a held press on Smith Upgrade only reviews and commits nothing`, heldReview && await ev(`!!document.querySelector('.smith-upgrade-modal')`),
+        `confirmation=${heldReview}`);
+      await press(await pointOf('.confirmation-confirm'), 40); await wait(700);
+      ok(`the review's plain Confirm commits and leaves the shrine`, !(await onShrine()), `still on the shrine=${await onShrine()}`);
     }
   }
 
