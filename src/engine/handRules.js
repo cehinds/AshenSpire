@@ -59,7 +59,10 @@ export function endTurnCardFate(ctx, card) {
   if (card.proposalChanges?.retain && (card.proposalChanges.retainUntilTurn ?? ctx.turn)>=ctx.turn || ctx.player.combatRetainedCards?.includes(card.instanceId)) return 'keep';
   if (configuredCombat(ctx)) {
     const def = projectGameCard(ctx, card) || resolveCard(ctx.registries, card);
-    return (def.keywords || []).includes('ethereal') ? 'exhaust' : 'discard';
+    const keywords = def.keywords || [];
+    if (keywords.includes('ethereal')) return 'exhaust';
+    // A Retain card (keyword, from the card or an upgrade) stays in hand at end of turn in Core too (W25 upgrades, step 1).
+    return keywords.includes('retain') ? 'keep' : 'discard';
   }
   if (ctx.combatExpansionVersion === 2 && ctx.player.combatRetainedCards?.includes(card.instanceId)) return 'keep';
   const def = resolveCard(ctx.registries, card);
