@@ -327,6 +327,8 @@ test('an undiscovered weakness counts in the number shown and in the hit dealt',
   const plain = faceOf(none, none.piles.hand[0].instanceId, 'e1').perEnemy.get('e1')[0];
   const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1')[0];
   assert.ok(shown > plain, `the weakness is in the number: ${shown} > ${plain}`);
+  const faceOnly = row => row.preview.values.find(v => v.op === 'damage').faceValue;
+  assert.ok(faceOnly(faceOf(combat, card.instanceId, 'e1')) > faceOnly(faceOf(none, none.piles.hand[0].instanceId, 'e1')), 'the weakness (undiscovered too) is in the face');
   check(combat, card, 'e1', 'weakness');
 });
 

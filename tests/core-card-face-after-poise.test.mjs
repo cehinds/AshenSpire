@@ -31,8 +31,8 @@ function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
 const damageRow = (combat, id, target) => previewCard(combat, id, target).values.find(v => v.op === 'damage');
 const rawRow = (combat, id) => previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage');
 
-test('Strike: the face is the same against 0 and 20 Block, with and without Poise, and Vulnerable or not', () => {
-  const faces = [{}, { block: 20 }, { poise: 10 }, { block: 20, poise: 10 }, { statuses: { vulnerable: { stacks: 1, duration: 2 } } }].map(spec => {
+test('Strike: the face is the same against 0 and 20 Block, with and without Poise', () => {
+  const faces = [{}, { block: 20 }, { poise: 10 }, { block: 20, poise: 10 }].map(spec => {
     const { combat, id } = fight({ enemies: [spec] });
     return [damageRow(combat, id).faceValue, damageRow(combat, id, combat.enemies[0].id).faceValue, damageRow(combat, id, combat.enemies[0].id).value];
   });
@@ -142,4 +142,14 @@ test('the rendered face of a multi-hit card reads N x M however the target is de
   assert.ok(faceText.includes('×3'), faceText);
   const summary = String(combatCardSummary(preview.resolvedDefinition, preview, reg));
   assert.ok(summary.includes('×3') && !summary.includes('total'), summary);
+});
+
+test('Vulnerable on the reference enemy raises the face; the quote follows it', () => {
+  const { combat, id } = fight({ enemies: [{ statuses: { vulnerable: { stacks: 1, duration: 2 } } }, {}] });
+  const [a, b] = combat.enemies;
+  const face = damageRow(combat, id, a.id).faceValue;
+  assert.ok(face > 12, `Vulnerable raises the face above 12, got ${face}`);
+  assert.equal(damageRow(combat, id).faceValue, face, 'the frontmost enemy is the reference');
+  assert.equal(damageRow(combat, id, b.id).faceValue, 12, 'aiming the other enemy gives its own Vulnerable-free face');
+  assert.equal(damageRow(combat, id, a.id).perTarget[a.id], face);
 });

@@ -2250,15 +2250,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           // Shown on the card: a whole number, rounded down (owner, 2026-10-18); the chain itself stays exact.
           entry.faceValue = Math.floor(A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true }));
-          // Owner, 2026-11-14 (amends the same day's Wave 2 rule): the face is the attacker-side figure, the same whichever enemy is aimed or
-          // hovered: the card's own amount with every term of yours (rating, Strength, Weak, your stance, upgrades, relics). Nothing that depends
-          // on the enemy (Block, Poise, defensive stance, matchup, Evade, Reflect, Vulnerable, weakness) reaches it; the target quotes carry those.
+          // Owner, 2026-11-14 (amends the same day's Wave 2 rule): the face is your modified damage: every term of yours (rating, Strength, Weak,
+          // your stance, upgrades, relics) plus the reference enemy's Vulnerable and weakness (an undiscovered one too). Nothing of its DEFENCES
+          // reaches it (Block, Poise, Ward, Barrier, defensive stance, matchup advantage, Evade, Reflect); the target quotes carry those.
           if (faceEnemy) {
             const each = Math.max(1, Math.floor(entry.hits));
+            const raw = enemy => Math.floor(A.computeAttackDamage(combat, p, enemy, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true, proposal: false }));
+            entry.faceValue = raw(faceEnemy);
             entry.faceHitDamages = Array.from({ length: each }, () => entry.faceValue);
             entry.value = entry.faceValue;
             entry.hitDamages = entry.faceHitDamages;
             entry.totalDamage = entry.faceValue * each;
+            if (eff.target === 'allEnemies') entry.faceTargetHitDamages = living.map(e => Array.from({ length: each }, () => raw(e)));
           }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
