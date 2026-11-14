@@ -198,9 +198,6 @@ function checkForecast(forecast, events, tally, label) {
   for (const [id, { moveId, shown }] of forecast) {
     const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.sourceId === id);
     if (start < 0 || events[start].moveId !== moveId) continue;
-    // A status or a stagger an earlier enemy puts on the player (a buildup gauge filling, a Poise break) changes the next hit's multiplier; the
-    // forecast carries Block, Poise and Counter between attackers, not the riders each move applies, so such a turn is priced at the receipt.
-    if (events.slice(0, start).some(event => event.type === 'playerStaggered' || (event.type === 'statusApplied' && event.targetId === 'player'))) continue;
     let lost = 0;
     for (const event of events.slice(start + 1)) {
       if (event.type === 'enemyMoveEnded' && event.sourceId === id) break;
@@ -405,8 +402,7 @@ test('the reaction prompt states the incoming action and each option as the HP t
 
 test('a later attacker is forecast after an earlier enemy has played all of its planned actions', () => {
   let checked = 0;
-  // (Block 20 is left out: the third earlier hit then breaks the player's Poise, and the stagger it marks is a rider the forecast does not carry.)
-  for (const block of [0, 6, 10, 13, 30]) {
+  for (const block of [0, 6, 10, 13, 20, 30]) {
     const { combat } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier'] });
     const [first, second] = combat.enemies;
     // The earlier enemy has three attacks this turn (its head and two planned follow-ups); the later one has one.
@@ -430,7 +426,7 @@ test('a later attacker is forecast after an earlier enemy has played all of its 
     assert.equal(lost, shown.max, `block ${block}: the later attacker was shown at ${shown.max} and cost ${lost}`);
     checked++;
   }
-  assert.equal(checked, 5);
+  assert.equal(checked, 6);
 });
 
 // ---- W2-J (a): a card dragged over a farther enemy shows THAT enemy's number and cost before release ----------------------------------
@@ -468,4 +464,38 @@ test('the ghost prices the aimed enemy without moving the fight', () => {
   DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: 'e2' });
   DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: null });
   assert.equal(JSON.stringify([combat.player, combat.enemies, combat.piles.hand.length, combat.eventLog.length]), before);
+});
+
+// ---- Review fix 2: a later intent holds what earlier enemies do to the player, not only their damage ------------------------------------
+
+test('an earlier enemy that applies Vulnerable, then attacks, is in the later enemy\'s number (and a planned follow-up of the same enemy too)', () => {
+  const base = reg.enemies.get('wanderingSoldier');
+  const curse = { ...base, id: 'w2rCurser', moves: { hex: { intent: 'debuff', weight: 1, effects: [{ op: 'applyStatus', target: 'player', status: 'vulnerable', stacks: 2 }] },
+    slash: base.moves.slash } };
+  const custom = bindGameProfileRegistries(createRegistries({ ...applyGameProfileToContent(contentBundle, profile), enemies: [...applyGameProfileToContent(contentBundle, profile).enemies, curse] }), profile);
+  for (const plan of [[], ['slash']]) {
+    const run = createRunState({ registries: custom, classId: 'reaver', seed: 7, profileMeta: META });
+    const combat = createRunCombat({ registries: custom, run, rng: createRng(7), enemyIds: ['w2rCurser', 'wanderingSoldier'] });
+    const [first, second] = combat.enemies;
+    for (const enemy of combat.enemies) Object.assign(enemy, { hp: 400, maxHp: 400, statuses: {}, planDue: true, skipNextTurn: false, maxStamina: 12, stamina: 12, fixCoreStaminaRemaining: 12 });
+    first.intent = { ...first.intent, kind: 'debuff', moveId: 'hex', damage: null, hits: 1 };
+    first.plannedMoves = plan.map(moveId => ({ moveId, sp: 1 }));
+    second.intent = { ...second.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 };
+    second.plannedMoves = [];
+    combat.player.block = 0; combat.player.hp = 100; combat.player.maxHp = 100; combat.player.statuses = {};
+    const shown = projectCombatIntent(combat, second.id)?.projectedDamage;
+    assert.ok(shown && shown.min === shown.max, `plan ${plan}: exact (${JSON.stringify(shown)})`);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    assert.ok(events.some(event => event.type === 'statusApplied' && event.status === 'vulnerable' && event.targetId === 'player'), 'the earlier enemy applied Vulnerable');
+    let lost = 0, open = false;
+    for (const event of events) {
+      if (event.type === 'enemyMoveStarted' && event.sourceId === second.id) open = true;
+      if (open && event.type === 'damageDealt' && event.sourceId === second.id && event.targetId === 'player') lost += event.hpLoss;
+    }
+    assert.ok(lost > 0);
+    assert.equal(lost, shown.max, `plan ${plan}: shown ${shown.max}, lost ${lost}`);
+  }
 });
