@@ -100,6 +100,7 @@ import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
+import { DragFaceQuote, DragFaceTargetId } from '../models/DragFaceModel.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
@@ -2908,6 +2909,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       return { legal: flick || !!directPlayer, enemies: [], flick };
     };
+    // THE DRAGGED CARD NAMES THE ENEMY IT IS OVER (owner, 2026-11-14): the ghost's face is priced for that enemy, from the same quote the click
+    // path uses, and goes back to the card's own face when the drag leaves every enemy. It repaints only when the hovered enemy changes.
+    let dragFaceTarget = null;
+    const paintDragFace = targetId => {
+      if (targetId === dragFaceTarget || !dragGhost) return;
+      dragFaceTarget = targetId;
+      let quote;
+      try {
+        quote = targetId
+          ? DragFaceQuote({ preview: previewCard, combat, instanceId: inst.instanceId, targetId, ranks: upcastRanksByCard.get(inst.instanceId),
+            targetName: id => registries.enemies.get(getEntity(combat, id)?.enemyId)?.name || id, unplayable: isUnplayable(inst) })
+          : { preview: pv, affordable };
+      } catch (e) { console.warn('[combat] dragged card not previewable for', targetId); return; }
+      const old = dragGhost;
+      const face = renderCard(registries, inst, { preview: quote.preview, affordable: quote.affordable, range: true,
+        maxRange: combat.rangeState?.policy?.maxRange, faceLineLimit: 3, inspection: false });
+      face.classList.add(...[...old.classList].filter(name => name !== 'unaffordable'));
+      face.setAttribute('aria-hidden', 'true');
+      face.style.cssText = old.style.cssText;
+      if (old.dataset.dropState) face.dataset.dropState = old.dataset.dropState;
+      const key = old.querySelector(':scope > .key-hint');
+      if (key) face.appendChild(key);
+      const verdict = old.querySelector('.drop-verdict');
+      if (verdict) face.appendChild(verdict);
+      old.replaceWith(face);
+      dragGhost = face;
+    };
     const updateDropTarget = event => {
       if (!dragGhost) return;
       // Reads first (viewport, ghost box, pointer, drop plan), writes after: the
@@ -2922,6 +2950,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       dragGhost.style.left = `${ghostPlacement.left}px`;
       dragGhost.style.top = `${ghostPlacement.top}px`;
       showDragAims(plan.enemies);
+      paintDragFace(DragFaceTargetId(plan));
       if (selfOnlyTarget) showSelfAim(plan.legal);
       const state = plan.legal ? 'legal' : 'illegal';
       // Same-value skips: a pointermove that changes nothing must dirty no style.
@@ -2979,7 +3008,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           dragGhost.classList.remove('selected', 'card-drawn', 'drag-source');
           dragGhost.style.cssText = `position:fixed;z-index:600;pointer-events:none;opacity:.8;transform:none;margin:0;zoom:1;width:${ghostWidth / bodyZoom}px;height:${ghostHeight / bodyZoom}px;`;
           document.body.appendChild(dragGhost);
-          ghostBox = null; dropPrimed = false;
+          ghostBox = null; dropPrimed = false; dragFaceTarget = null;
           selfOnlyTarget = readSelfOnlyTarget();
           beginDragTargeting();
         }
