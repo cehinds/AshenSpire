@@ -2089,6 +2089,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
   background: rgba(var(--accent-rgb), 0.14); color: var(--gold);
   box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px rgba(var(--accent-rgb), 0.3);
 }
+.option-row.as-railitem:disabled { opacity: 0.55; cursor: not-allowed; }
 /* Reaction choice legibility pass (owner, 2026-11-02: "the text on the modal is hard to read"). Scoped to
    `.reaction-choice` so the discard and card pickers sharing optionRowList keep their rows. The layout is
    unchanged; only the text and the surface behind it move:
@@ -2127,7 +2128,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 }
 .modal:is(.reaction-choice, .option-choice) .modal-foot button { font-size: var(--rc-body); white-space: normal; overflow: visible; text-overflow: clip; }
 @media (hover: none) {
-  :root .modal.reaction-choice .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { background: var(--panel); border-color: var(--line); }
+  :root .modal:is(.reaction-choice, .option-choice) .option-row.as-railitem:not([aria-pressed='true']):not(:disabled):hover { background: var(--panel); border-color: var(--line); }
 }
 /* On touch there is no pointer to hover with: an unselected row never keeps a hover look. */
 @media (hover: none) {
