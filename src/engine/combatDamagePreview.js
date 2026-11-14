@@ -5,6 +5,7 @@ import * as Actions from './actions.js';
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
 import * as Counter from './counterRule.js';
+import { EvadeSpendPlan } from './stanceHit.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
@@ -140,10 +141,15 @@ export function previewAttackerView(state, source) {
   return { attacker, previewCtx: bindDetachedAttacker(state.previewCtx, source, attacker) };
 }
 
-/** A hit avoided by Evade spends one stack, as live resolveCertainHit does, so a later hit of the same action meets one stack fewer. Detached only. */
+/** A hit avoided by Evade spends what live resolveCertainHit spends (EvadeSpendPlan): the next-attack mode, a prepared charge and one stack,
+ *  so a later hit of the same action meets one of each fewer. Detached only: the shared objects are copied, never edited. */
 export function SpendPreviewEvade(defender) {
-  const evade = defender?.statuses?.evade;
-  if (evade?.stacks > 0) defender.statuses = { ...defender.statuses, evade: { ...evade, stacks: evade.stacks - 1 } };
+  if (!defender) return;
+  const plan = EvadeSpendPlan(defender);
+  if (plan.mode) delete defender.nextEvadeMode;
+  if (plan.prepared) defender.combatEvade = { ...defender.combatEvade, charges: defender.combatEvade.charges - 1 };
+  const evade = defender.statuses?.evade;
+  if (plan.stack && evade) defender.statuses = { ...defender.statuses, evade: { ...evade, stacks: evade.stacks - 1 } };
 }
 
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */

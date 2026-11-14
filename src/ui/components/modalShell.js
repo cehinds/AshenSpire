@@ -35,6 +35,7 @@ import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // for loss. `tone: 'danger'` is available and is meant to be rare.
 
 import { esc } from './tooltip.js';
+import { t } from '../strings.js';
 import { planButtonGroup } from '../models/ButtonSizeModel.js';
 import { resolveModalRung, resolveFooterSize } from '../models/WireframeChoiceModel.js';
 import { activeWireframeChoice } from '../wireframeChoices.js';
@@ -287,7 +288,7 @@ export function modalHead({
   extras = null,
   showMenuButton = null,
   onMenu = null,
-  menuLabel = 'Menu',
+  menuLabel = t('common.menu'),
   closeLabel = 'Close',
   onClose = null,
 } = {}) {
@@ -387,7 +388,7 @@ export function modalHead({
     menu.dataset.focusable = 'true';
     menu.title = menuLabel;
     menu.setAttribute('aria-label', menuLabel);
-    menu.replaceChildren(engravedIcon('menu') || 'Menu');
+    menu.replaceChildren(engravedIcon('menu') || t('common.menu'));
     if (onMenu) menu.addEventListener('click', onMenu);
     actions.appendChild(menu);
   }

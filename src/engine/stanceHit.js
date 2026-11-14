@@ -184,14 +184,21 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   return result;
 }
 
+/** What one evaded hit takes from `target`: its pending Evade mode, one prepared-Evade charge and one Evade stack (each only if it holds one).
+ *  The live resolver and the detached preview both read this, so they spend the same things. */
+export function EvadeSpendPlan(target) {
+  return { mode: !!eligibleEvadeMode(target), prepared: !!eligiblePreparedEvade(target), stack: stacks(target, 'evade') > 0 };
+}
+
 /** hitRoll off: no die is drawn. A stack of Evade (or a prepared Evade) cancels this attack and is spent; anything else in range connects. */
 function resolveCertainHit(ctx, source, target, carrier, options, preview) {
   const evaded = preview.evadeAttempted;
   const hit = preview.inRange && !evaded;
   if (evaded) {
-    if (eligibleEvadeMode(target)) delete target.nextEvadeMode;
-    const prepared = eligiblePreparedEvade(target);
-    if (prepared) prepared.charges--;
+    // One evaded hit spends everything EvadeSpendPlan names: the next-attack mode, a prepared charge AND a stack.
+    const plan = EvadeSpendPlan(target);
+    if (plan.mode) delete target.nextEvadeMode;
+    if (plan.prepared) eligiblePreparedEvade(target).charges--;
     if (preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
   }
   const result = { ...preview, d20: null, dice: [], hit, ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}),

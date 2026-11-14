@@ -102,9 +102,12 @@ export function digest(combat) {
 // every RNG counter, the event types, the damage sequence and the whole log with the display keys (intentPreview, incomingHp, hitDamages, totalDamage,
 // projectedDamage, hpLossBounds) removed are identical, so only the preview figures moved. The shipped fights lose exactly the Precision stance-entry
 // receipts (PERF1 216 -> 195 events, 4242 211 -> 193): player and enemy HP, turn, RNG counters and the damage sequence are identical.
+// 2026-11-14 (#2754): damageDealt events gained `hpRemoved` (the HP a hit actually took, for the no-overkill floater). With that one field
+// removed from the three emit sites in src/engine/actions.js all four digests and the cleanup baseline reproduce their previous values exactly,
+// so only the event payload moved; HP, turns, RNG counters and event counts are unchanged.
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: '223ea164af9c1eee', state: '3d703123766a5e29', events: 218, turn: 6 }],
-  [[4242, 'reaver'], { log: '35bab7a0d6ae4b9d', state: 'f2288d8a7d80513e', events: 215, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: 'bfab34c0ca8fef2d', events: 218, turn: 6 }],
+  [[4242, 'reaver'], { log: '75301c4daabf3238', state: 'aec32fc07e375e4d', events: 215, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
@@ -113,8 +116,8 @@ for (const [setup, expected] of LEGACY_PINNED) {
   });
 }
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '82c0d7045cb6ae98', state: '50a554d5b4b798f5', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: 'e0b20c94c8899c37', state: '881e6f5f4813ab9c', events: 193, turn: 6 }],
+  [['PERF1', 'reaver'], { log: '68045e4bda0ffd02', state: 'bea7224313f1fa40', events: 195, turn: 6 }],
+  [[4242, 'reaver'], { log: '714e5d0f2a83d7e3', state: 'bde8c04ced638abb', events: 193, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

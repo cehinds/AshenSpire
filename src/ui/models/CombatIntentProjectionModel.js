@@ -1,10 +1,20 @@
 import { previewIntent } from '../../engine/combat.js';
 import { captureEnemyIntent } from '../../engine/enemyIntentReceipt.js';
 import { projectEnemyIntentDamage } from '../../engine/enemyIntentProjection.js';
+import { EnemyChargingState } from '../../engine/enemyCharging.js';
 
 // Apply the production observer gate before inspecting the queued payload.
 // A reaction pause belongs to one pending contact, not the full original move.
 export function projectCombatIntent(combat, enemyInstanceId) {
+  const intent = projectUncharged(combat, enemyInstanceId);
+  if (intent.hidden || intent.revealed === false || intent.kind === 'staggered') return intent;
+  // Owner, 2026-11-14: a delayed move that does not land this turn says so (Charging, turns left, the Block it gains now); its damage number
+  // is the later one and reads as such. The turn it lands it is an ordinary attack.
+  const charging = EnemyChargingState(combat, combat.enemies.find(row => row.id === enemyInstanceId));
+  return charging ? { ...intent, charging } : intent;
+}
+
+function projectUncharged(combat, enemyInstanceId) {
   const intent = previewIntent(combat, enemyInstanceId);
   if (intent.hidden || intent.revealed === false || intent.kind === 'staggered') return intent;
   const enemy = combat.enemies.find(row => row.id === enemyInstanceId);
