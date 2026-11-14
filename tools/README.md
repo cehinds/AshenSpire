@@ -13,7 +13,7 @@ prefix; its callers are the union.
 
 This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level `tools/*.mjs`, `*.cjs`, `*.py`, `*.sh`, `*.ps1` and `*.bat`, every top-level subfolder, and every `tools/attic/` tool must be a backticked name in the first column of a table row (below, or in the Attic section for attic tools), and every such name must still be tracked. Add the row in the same change that adds, moves or deletes a tool.
 
-## Tools something references (244 tool files, plus the 9 subfolders)
+## Tools something references (245 tool files, plus the 9 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -106,6 +106,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `contrast-audit.mjs` | contrast-audit — what the eye actually gets: WCAG contrast of the | wf ci; tests contrast-title-continue, engine.test.js; tools buildstamp-shot, mapreach, pairsweep +1; docs SPEC.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/main.js +2 |
 | `convert-card-art.py` | Format/size conversion only. The authored PNG master remains unchanged. | tools export-extended-card-art |
 | `core-entry-fixture.mjs` | A deterministic real-input route: seed 4, initial Shrine, then the leftmost | tests core-entry-fixture; tools click-impact-probe, quick-start-inputs |
+| `coresim.mjs` | tools/coresim.mjs — a headless Act 1 simulator for the Core 2 ruleset. | tests coresim |
 | `creationbrief.mjs` | creationbrief — D26's short form, observed on glass. | tools browser, foldsurvivors, release-shots; docs CHANGELOG.md, DEVELOPER.md; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/content/changelog.generated.js +3 |
 | `credits-check.mjs` | credits-check — does every asset directory have a CREDITS row, and | wf ci; tests run-node; docs CREDITS.md, SPEC.md, docs/ART-REPO-PLAN.md +4 |
 | `css-strip.mjs` | tools/css-strip.mjs — drop /* … */ comments from CSS the bundle inlines. | tests boot-splash, historical-ui-icons; tools buildversion, bundle |
