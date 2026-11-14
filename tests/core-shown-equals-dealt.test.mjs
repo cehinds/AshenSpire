@@ -24,6 +24,7 @@ import { floaterWordShown } from '../src/ui/models/FloaterPolicyModel.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
 import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
+import { DragFaceQuote, DragFaceTargetId } from '../src/ui/models/DragFaceModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -430,4 +431,41 @@ test('a later attacker is forecast after an earlier enemy has played all of its 
     checked++;
   }
   assert.equal(checked, 5);
+});
+
+// ---- W2-J (a): a card dragged over a farther enemy shows THAT enemy's number and cost before release ----------------------------------
+
+test('a drag over a farther enemy: the ghost face (DragFaceQuote) is the cost paid and the HP lost, and leaving restores the reference', () => {
+  for (const hand of ['core.strike', 'greatswordSunderingHew']) {
+    const { combat, card } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier', 'wanderingSoldier'], hand });
+    combat.rangeState.engagements['["enemy:e3","player:player"]'] = 1;
+    combat.enemies[2].block = 5; // the far enemy also holds Block, so its number differs from the reference's
+    const preview = (target, id, targetId, ranks) => previewCard(target, id, targetId, ranks, { rangeRoute: 'advance' });
+    const quoteFor = targetId => DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId, targetName: id => id });
+    const reference = quoteFor(DragFaceTargetId({ legal: false }));
+    const far = quoteFor(DragFaceTargetId({ legal: true, targetId: 'e3' }));
+    assert.equal(DragFaceTargetId({ legal: false, targetId: 'e3' }), null, 'a drop that is not legal prices no enemy');
+    assert.equal(far.preview.targetName, 'e3', 'the quote names the enemy it prices');
+    assert.ok(far.preview.cost > reference.preview.cost, `${hand}: Advance is in the far enemy's face cost (${far.preview.cost} against ${reference.preview.cost})`);
+    const shownHits = far.preview.values.filter(row => row.op === 'damage').flatMap(row => row.perTargetHitDamages?.e3 || []).map(Math.floor);
+    assert.ok(shownHits.length >= 1 && shownHits.every(amount => amount >= 0), `${hand}: the quote carries the hits against e3 (${shownHits})`);
+    const start = combat.eventLog.length, hp = combat.enemies[2].hp;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e3', rangeRoute: 'advance' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start), played = events.findIndex(event => event.type === 'cardPlayed');
+    assert.equal(sum(events.slice(0, played), 'energySpent'), far.preview.cost, `${hand}: the energy paid is what the ghost showed`);
+    assert.equal(sum(events.slice(0, played), 'staminaSpent'), far.preview.staminaCost || 0, `${hand}: the stamina paid is what the ghost showed`);
+    const lost = events.filter(event => event.type === 'damageDealt' && event.targetId === 'e3' && event.cardInstanceId === card.instanceId).map(event => event.hpLoss);
+    assert.deepEqual(lost, shownHits.slice(0, lost.length), `${hand}: each hit's HP loss is the number the ghost showed`);
+    assert.ok(hp - combat.enemies[2].hp === lost.reduce((a, b) => a + b, 0) && lost.length >= 1, `${hand}: the HP that left e3 is the hits shown`);
+  }
+});
+
+test('the ghost prices the aimed enemy without moving the fight', () => {
+  const { combat, card } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+  const before = JSON.stringify([combat.player, combat.enemies, combat.piles.hand.length, combat.eventLog.length]);
+  const preview = (target, id, targetId, ranks) => previewCard(target, id, targetId, ranks, { rangeRoute: 'advance' });
+  DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: 'e2' });
+  DragFaceQuote({ preview, combat, instanceId: card.instanceId, targetId: null });
+  assert.equal(JSON.stringify([combat.player, combat.enemies, combat.piles.hand.length, combat.eventLog.length]), before);
 });
