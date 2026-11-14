@@ -514,3 +514,41 @@ test('a target holding one Evade stack AND a prepared Evade charge: one evaded h
   assert.equal(combat.enemies[0].combatEvade.charges, 0);
   assert.equal(combat.enemies[0].statuses.evade?.stacks || 0, 0);
 });
+
+// ---- Review fix 6: an enemy Smash into Block (Elite Wyrm Aspirant, tailSlam) ------------------------------------------------------------
+// Reproduced at model level: the number on the intent IS the HP the move's first hit costs, at every Block and with or without a defensive
+// stance. What the player saw as "0 shown, 22 lost" is the Elite's SECOND tailSlam (it plays two this turn): the first one spends the Block,
+// the follow-up is a new action with its own number, shown when it begins. So the case asserts the shown number per action.
+
+test('an enemy Smash into Block: the intent number equals the HP lost by that action, at Block 0, 10 and 32, in and out of Defend stance', () => {
+  const mk = () => {
+    const run = createRunState({ registries: reg, classId: 'reaver', seed: 1, profileMeta: META });
+    const combat = createRunCombat({ registries: reg, run, rng: createRng(1), enemyIds: ['wyrmAspirant'] });
+    combat.player.hp = combat.player.maxHp = 500;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    combat.player.hp = combat.player.maxHp = 500;
+    return combat;
+  };
+  let checked = 0, twoActions = false;
+  for (const stance of [false, true]) for (const block of [0, 10, 32]) {
+    const combat = mk();
+    const enemy = combat.enemies[0];
+    assert.equal(enemy.intent?.moveId, 'tailSlam', 'the fixture turn plays tailSlam');
+    combat.player.block = block;
+    if (stance) combat.player.combatStance = { maneuver: 'defend', camp: 'physical', id: 'defend' };
+    const shown = projectCombatIntent(combat, enemy.id)?.projectedDamage;
+    assert.ok(shown && shown.min === shown.max, `exact at block ${block}`);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    const starts = events.filter(event => event.type === 'enemyMoveStarted').length;
+    twoActions ||= starts > 1;
+    const first = events.find(event => event.type === 'damageDealt' && event.targetId === 'player');
+    assert.equal(first.hpLoss, shown.max, `${stance ? 'Defend' : 'no stance'}, Block ${block}: shown ${shown.max}, first action lost ${first.hpLoss}`);
+    checked++;
+  }
+  assert.equal(checked, 6);
+  assert.ok(twoActions, 'the Elite plays a second tailSlam, whose number belongs to that action');
+});
