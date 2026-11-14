@@ -18,8 +18,8 @@ import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMo
 import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
-import { createFollowMemo, CreateFollowUpReduction, promoteFollowUpRow } from '../models/IntentFollowUpModel.js';
-import { snapshotIntentShift, animateIntentShift } from '../components/intentShift.js';
+import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '../models/IntentFollowUpModel.js';
+import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot } from '../models/CombatRangeRankModel.js';
@@ -2363,9 +2363,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // A promotion (a resolved move's successor moving into the head slot) is drawn as a shift: the old row is measured
       // before the rebuild replaces it, then the new nodes animate from there. Presentation only, nothing waits on it.
       const promotedNow = !!shownIntent?.promoted;
-      const shiftFrom = record && promotedNow && !record.promoted ? snapshotIntentShift(box.querySelector('.intent')) : null;
+      const shiftFrom = record && promotedNow && !record.promoted ? SnapshotIntentShift(box.querySelector('.intent')) : null;
       const rowWrote = record ? writeSlots(box, record, keys, build) : true;
-      if (shiftFrom) animateIntentShift(shiftFrom, box.querySelector('.intent'));
+      if (shiftFrom) AnimateIntentShift(shiftFrom, box.querySelector('.intent'));
       if (rowWrote) wrote = true;
       stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
@@ -3483,7 +3483,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         onResolution: () => {
           // A move that resolved with another announced for its actor promotes the next planned move into the head slot.
           if (disp && flushDeferredIntentClears(disp.ents, disp.intentClears,
-            id => promoteFollowUpRow({ disp, followMemo, followTrace: combat.followTrace }, id))) renderCombatantStage({ fit: false });
+            id => PromoteFollowUpRow({ disp, followMemo, followTrace: combat.followTrace }, id))) renderCombatantStage({ fit: false });
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts. Core 2 plays
