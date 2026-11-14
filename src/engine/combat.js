@@ -2412,7 +2412,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
   const rangeActions = F.cardActions(combat, { ...def, effects: preparedEffects }, p, action.target, action.card,
     action.meta || {}, null);
   const range = previewRangeRoutes(combat, p, rangeActions, paidCosts, { rangeRoute, hitPreview: previewCardAttackHit });
-  const rangeCosts = range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
+  // Owner, 2026-11-14: the cost on the face is the cost the play pays. Preparing a Counter pays no Advance (its range cost is the reaction's,
+  // quoted on the prompt when the return fires), so the face of a Counter in hand carries none.
+  const advanceOnPlay = action.card.combatProfile?.maneuver === 'counter' ? 0 : range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0;
+  const rangeCosts = advanceOnPlay === 0 && range ? paidCosts : range?.routes.find(row => row.id === rangeRoute)?.costs || paidCosts;
   return {
     ...(range ? { range, costs: rangeCosts } : {}),
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
@@ -2426,7 +2429,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     ...(inst.upgradeSteps?.length ? { upgradeSteps: inst.upgradeSteps } : {}),
     name: def.name,
     type: def.type,
-    cost: shownCost + (range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0),
+    cost: shownCost + advanceOnPlay,
     costIsX: isX,
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),

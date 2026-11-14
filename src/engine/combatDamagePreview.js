@@ -4,6 +4,7 @@ import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
+import * as Counter from './counterRule.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
@@ -156,7 +157,19 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     if (local.attackerSource !== source) { local.attackerSource = source; local.attacker = cloneDetachedAttacker(source); }
     const attacker = local.attacker;
     const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
+    // A target holding a Counter that beats this hit adds Block to itself before the hit is absorbed (SPEC §17), as applyProfileDamage does:
+    // the face names the HP the play will cost, so the preview grants that Block too. An intent's own state has already granted it (counterBlocked).
+    const counterPlan = defender?.combatCounter && fixCoreEnabled(ctx) && !local.counterBlocked && defender !== source && defender.kind !== source?.kind
+      ? Matchups.previewTacticalAction(previewCtx, attacker || source, defender, carrier, Array.from({ length: Math.max(0, Math.floor(hits)) }, () => ({ amount: base }))) : null;
+    let counterAnswered = false;
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
+      if (counterPlan && !counterAnswered && !Counter.counterReturnSpent(defender)) {
+        const probe = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
+        const bonus = Counter.counterBlockBonus(previewCtx, counterPlan, hit, probe.damageReceipt?.hits?.[0]?.incoming);
+        defender.block = (defender.block || 0) + Matchups.CounterBlockGrant(previewCtx, defender, bonus);
+        // With a per-hit reaction policy the Counter answers the first covered hit, so it adds Block to that hit only.
+        if (bonus > 0 && previewCtx.reactionRules?.contactPolicy === 'perHit') counterAnswered = true;
+      }
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt); if (receipt.evaded) SpendPreviewEvade(defender); }
