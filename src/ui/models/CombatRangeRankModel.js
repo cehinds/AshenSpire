@@ -41,10 +41,7 @@ export function applyRangeRankEvent(snap, event) {
 
 export function rangeRanksFromSnapshot(snap) {
   if (!snap) return null;
-  // A decided fight keeps the pose it was decided in: once a whole side is down nobody is left to be
-  // in melee with, and ranking only the living would send the winner (and the fallen) to the back strip.
-  const decided = !snap.players.some(a => a.alive) || !snap.enemies.some(a => a.alive);
-  const players = snap.players.filter(a => decided || a.alive), enemies = snap.enemies.filter(a => decided || a.alive);
+  const players = snap.players.filter(a => a.alive), enemies = snap.enemies.filter(a => a.alive);
   const melee = (p, e) => snap.engagements[rangePairKey(p, e)] === 0;
   const ranks = new Map();
   for (const p of players) ranks.set(p.key, enemies.some(e => melee(p.key, e.key)) ? 'front' : 'back');
@@ -53,3 +50,22 @@ export function rangeRanksFromSnapshot(snap) {
 }
 
 export const combatRangeRanks = combat => rangeRanksFromSnapshot(rangeRankSnapshot(combat));
+
+// True once a whole side is down: nobody is left to be in melee with.
+export const rangeRankDecided = snap => !!snap && (!snap.players.some(a => a.alive) || !snap.enemies.some(a => a.alive));
+
+// The stage's ranks, one memo per combat screen. A decided fight keeps the pose it was decided in (owner,
+// 2026-11-13: "after combat the battle field changes (it should not change at all)"): the last ranks drawn
+// while both sides stood are drawn again, because re-ranking at that point would send the winner to the back
+// strip, and ranking the fallen as well would restore engagements they held before they died.
+export function stageRangeRanks() {
+  let last = null;
+  return snap => {
+    if (!snap) return null;
+    const decided = rangeRankDecided(snap);
+    if (decided && last) return last;
+    const ranks = rangeRanksFromSnapshot(snap);
+    if (!decided) last = ranks;
+    return ranks;
+  };
+}

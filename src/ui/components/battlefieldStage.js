@@ -1529,8 +1529,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
       // Owner 2026-11-13: the floor's top stands at a fixed share of the whole
-      // combat screen (scenes/w4a-combat.json floorPercent: 80 = floor covers
-      // the bottom 80%), not at the back rank's feet, which left back-rank
+      // combat screen (scenes/w4a-combat.json floorPercent: 75 = floor covers
+      // the bottom 75%), not at the back rank's feet, which left back-rank
       // enemies standing on the tree line.
       groundY: (rect.height / zoom) * (1 - wireframeUi.scene.floorFraction),
       config: battlefieldBackdropConfig({ height: sceneHeight,
