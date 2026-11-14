@@ -24,8 +24,9 @@ test('mobile fan touches both side insets whenever the full-width step fits with
   }
 });
 
+// Wave 2 (sizes): phone faces are 150 px or wider, so only a two-card hand is short enough to be capped at one card width.
 test('a short mobile hand is capped at one card width apart and stays centred', () => {
-  for (const count of [2, 3]) {
+  for (const count of [2]) {
     const p = plan('mobile', 412, 260, count, true);
     assert.equal(p.step, p.cardWidth);
     assert.ok(Math.abs(p.start - (412 - p.span) / 2) <= 1e-9);
@@ -36,11 +37,11 @@ test('mobile no longer carries a count-based spread', () => {
   assert.equal(RESPONSIVE_HAND.mobile.spread, undefined);
 });
 
-test('tablet, desktop and widescreen eight-card fans are unchanged', () => {
+test('tablet, desktop and widescreen eight-card fans are pinned (Wave 2 sizes: wider faces, wider desktop step)', () => {
   const pins = {
-    tablet: [820, 300, 137.76000000000002, 69.70165927436737, 97.16419253971418],
-    desktop: [1280, 216, 117.33333333333333, 63.07689839482528, 360.56418895144486],
-    widescreen: [1920, 324, 184, 98.91604521006691, 521.7938417647658],
+    tablet: [820, 300, 160, 91.37831403711972, 10.175900870080966],
+    desktop: [1280, 216, 117.33333333333333, 79.77372444051431, 302.1252977915332],
+    widescreen: [1920, 324, 184, 125.09970423626109, 430.15103517308626],
   };
   for (const [ff, [w, h, cw, step, start]] of Object.entries(pins)) {
     const p = plan(ff, w, h, 8);

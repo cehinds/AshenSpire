@@ -252,6 +252,7 @@ This index is enforced by `tests/tools-readme.test.mjs`: every tracked top-level
 | `testnumbers.mjs` | testnumbers — NO TWO TESTS WEAR THE SAME NUMBER. | tests run-node; tools plantsites-baseline.json |
 | `tokens-css.mjs` | tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json as CSS custom properties. | tests run-node, serve-watch, tokens-css; tools launch, serve; docs DEVELOPER.md; other index.html, styles/tokens.generated.css |
 | `textfit.mjs` | textfit — THE GATE FOR "NOTHING BLEEDS", MEASURED ON A REAL PAGE. | tests card-presentation-levels |
+| `text-size-probe.mjs` | text-size-probe — how big is the text the player reads, and how big are the things they tap, in a real browser | (none) |
 | `tutorial-reach.mjs` | tutorial-reach — can a real player finish (or skip) the first-run | wf ci, tutorial-reach; tests run-node, tutorial-reach-stability; tools actionreach, gatelist, mobilefit +4; docs DEVELOPER.md, docs/FINISH.md; other src/main.js |
 | `ui-components.mjs` | Reusable UI component contract: stable semantic ids, one shared Map/Combat | tests run-node, ui-component-catalogs; docs DEVELOPER.md, docs/FINISH.md, docs/RELEASE-CHECKLIST.md +1 |
 | `ui-validate.mjs` | Validates the JSON UI layer (engine/ui/components, games/<game>/ui/screens) and writes engine/ui/index.json. | tests ui-json; tools build-game; docs engine/ui/README.md; other package.json |

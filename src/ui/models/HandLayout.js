@@ -121,14 +121,15 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   });
 }
 
-// Each form factor authors its own fan; all distances scale with the card.
+// Each form factor authors its own fan; all distances scale with the card. Wave 2 (sizes): every face is at least 150 viewport px
+// wide, so the rules type (31/360 of the face) reads at 13 px; the desktop fan no longer overlaps by a third.
 // The tool-row reserve every other form factor keeps below the fan.
 export const HAND_TOOL_ROW_RESERVE_PX = 66;
 export const RESPONSIVE_HAND = Object.freeze({
-  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .277, minPx: 88, maxPx: 120 },
-  tablet: { spread: .64, angle: 4, arc: .045, dock: .96, widthFraction: .168, minPx: 120, maxPx: 150 },
-  desktop: { spread: .68, angle: 4, arc: .045, dock: .96 },
-  widescreen: { spread: .68, angle: 4, arc: .045, dock: .96 },
+  mobile: { angle: 4, arc: .045, dock: .96, widthFraction: .4, minPx: 154, maxPx: 158 },
+  tablet: { spread: .8, angle: 4, arc: .045, dock: .96, widthFraction: .2, minPx: 150, maxPx: 160 },
+  desktop: { spread: .86, angle: 4, arc: .045, dock: .96 },
+  widescreen: { spread: .86, angle: 4, arc: .045, dock: .96 },
 });
 
 export function responsiveHandLayout(input, sizePlan = handLayout(input)) {
