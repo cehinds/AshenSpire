@@ -89,3 +89,20 @@ test('a move with no delay is never charging', () => {
   enemy.intent = { kind: 'attack', moveId: 'bonePrelude', damage: 6, hits: 1, block: null, delayed: false, pending: false };
   assert.equal(projectCombatIntent(combat, enemy.id).charging, undefined);
 });
+
+// Review finding (2026-11-14): a charging enemy ahead of another must not count in the later enemy's number; its move lands nothing this turn.
+test('a charging enemy earlier in the order does not spend the player\'s Block in a later enemy\'s intent', () => {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 11, profileMeta: META });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(11), enemyIds: ['marrowOrganist', 'marrowOrganist'] });
+  const [first, second] = combat.enemies;
+  const def = reg.enemies.get(first.enemyId);
+  const charging = { kind: 'attack', moveId: 'funeralChord', damage: def.moves.funeralChord.damage, hits: 1, block: null, delayed: true, pending: false };
+  for (const enemy of combat.enemies) { enemy.intent = { ...charging }; enemy.plannedMoves = []; enemy.planDue = true; }
+  combat.player.hp = 100; combat.player.maxHp = 100; combat.player.block = 12;
+  const withCharger = projectCombatIntent(combat, second.id);
+  first.alive = false;
+  const alone = projectCombatIntent(combat, second.id);
+  first.alive = true;
+  assert.deepEqual(withCharger.charging, alone.charging, 'the later enemy reads the same whether or not an earlier one is charging');
+  assert.equal(JSON.stringify(withCharger), JSON.stringify(alone));
+});

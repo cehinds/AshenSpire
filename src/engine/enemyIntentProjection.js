@@ -85,6 +85,9 @@ function advanceThroughEarlierEnemies(ctx, source, prepared) {
     const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[moveId];
     if (!authored) return 'stop';
     const move = Tactics.expandedEnemyMove(other, authored, moveId, ctx);
+    // A delayed move only starts charging this turn: it lands nothing on the player yet, so it neither spends the
+    // player's Block and Poise nor applies its effects in the forecast (its charging badge shows no damage either).
+    if (move.delay) return 'delay';
     const carrier = Tactics.enemyMoveCarrier(other, move, moveId, ctx);
     // The move enters its stance before its hit lands, as the live move does: a second move in the same stance carries the matching-stance bonus.
     try {
@@ -92,7 +95,7 @@ function advanceThroughEarlierEnemies(ctx, source, prepared) {
       if (damage != null) Damage.previewDamageHits(ctx, other, prepared.defender, damage, carrier.tags, carrier, Math.max(0, Math.floor(hits ?? 1)), prepared);
     } catch { return 'stop'; }
     if (!applyMoveEffects(ctx, other, move, carrier, moveId, prepared)) return 'stop';
-    return move.delay ? 'delay' : 'ok';
+    return 'ok';
   };
   for (const other of ctx.enemies) {
     if (other.id === source.id) return;
