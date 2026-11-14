@@ -33,7 +33,7 @@ if (ONLY && !PARTS.includes(ONLY)) { console.error(`CANVAS_QA_ONLY=${ONLY}: expe
 const runs = part => !ONLY || ONLY === part;
 const ROUTE = '/?gameProfile=core&shot=combat&shotHand=2';
 const THREE = '/?gameProfile=core&shot=combat&shotHand=5&shotSeed=4&shotEnemies=ashheartDragon,wyrmAspirant,fellWarden';
-const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop', 'healthRow', 'valueFont', 'reaction'];
+const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop', 'healthRow', 'valueFont', 'reaction', 'enemyPanel'];
 
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const base = 'http://127.0.0.1:' + server.server.address().port;
@@ -68,6 +68,8 @@ function canvasFacts() {
     playerHud: rect('.combatant.player .target-hud-overhead-meters'),
     enemyHud: rect([...document.querySelectorAll('.target-hud-overhead-meters')].find(node => !node.closest('.combatant.player')) || null),
     header: rect('.combat > .topbar'),
+    // The enemy's target HUD detail panel (laid out even while it is faded out).
+    enemyPanel: rect('.target-hud-detail[data-role="enemy"]'),
     card: rect('.hand .card'), endTurn: rect('.end-turn'),
     // The sky: the layered backdrop plate, or the painted scene's SVG frame.
     sky: rect('.layered-environment-layer[data-role="backdrop"], .alternative-backdrop svg'),
