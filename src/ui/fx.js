@@ -35,6 +35,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
+import { showStanceFlash } from './stanceFlash.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
 import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
@@ -1147,10 +1148,10 @@ const traceBeat = (step, detail) => {
 // (prepareTacticalCard / setCombatStance) and the legacy enterStance effect emits stanceEntered. All three are drawn
 // before the action word and animation (owner 2026-11-05); the stance receipts are preferred for the trace detail.
 const STANCE_LEAD_TYPES = new Set(['stanceEntered', 'combatStanceChanged']);
-function stanceLeadEvent(beat) {
+// The receipt that says THIS beat changes the actor's stance (a card that repeats the stance emits none), or undefined.
+function stanceChangeEvent(beat) {
   return beat.events.find(e => STANCE_LEAD_TYPES.has(e.type)
-    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId))
-    || beat.events.find(e => e.type === 'cardPlayed');
+    && (e.type === 'stanceEntered' || !beat.actorId || (e.sourceId || e.targetId) === beat.actorId));
 }
 
 // Is this figure in its stance? 'out' — mid-action or in a pose other than its
@@ -1271,10 +1272,18 @@ export function playTimeline(events, ctx, done) {
     onActionWord: beat => {
       if (!beat.prepared && beat.actorId && !beat.banner && beat.kind !== 'reveal') sayAction(beat);
     },
+    // The card leaves the hand and shows as played: its own timeline event, first in the beat (owner 2026-11-13).
+    onCardPlayed: beat => {
+      const played = beat.events.find(e => e.type === 'cardPlayed');
+      if (played && ctx.onStanceLead) visualSafe(() => ctx.onStanceLead(beat, played, { cardOnly: true }));
+    },
+    // The stance event only exists on a beat that changes the actor's stance: a brief sigil over the actor, then the icon updates.
+    stanceChanges: beat => !!stanceChangeEvent(beat),
     onAction: beat => {
-      // Owner 2026-11-06: the stance a card enters follows the intent word by one gap, before the action animation.
-      const entered = stanceLeadEvent(beat);
-      if (entered && ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
+      const entered = stanceChangeEvent(beat);
+      if (!entered) return;
+      if (timing.scale !== 0) visualSafe(() => showStanceFlash(ctx.anchorFor(beat.actorId), entered, { reduced: reducedMotionRequested() }));
+      if (ctx.onStanceLead) { visualSafe(() => ctx.onStanceLead(beat, entered)); traceBeat('stance-change', entered.stance || entered.maneuver); }
     },
     // The reservation covers the slower of the player's and the enemy's animation settings.
     maxSpriteMs: speed => {

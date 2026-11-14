@@ -190,7 +190,7 @@ test('legal slow four-hit Fell Warden reactions finish every group without watch
       onWatchdog: () => { watchdog++; },
       onDone: () => { done++; doneAt = clock.time; },
     }, timing, options(clock));
-    const schedule = computeBeatSchedule(timing.timeline, { impactMs: timing.spriteSpeed.lungeMs / 2, groups: groups.length });
+    const schedule = computeBeatSchedule(timing.timeline, { impactMs: timing.spriteSpeed.lungeMs / 2, groups: groups.length, skip: new Set(['cardPlayed']) });
     // The beat ends when its last event has fired and its own clip has finished; the long reaction pose is not waited for.
     // A later group's pose starts only after the pose still playing is over (it never replaces an unfinished clip); nothing else waits for it.
     let poseFree = 0, lastPoseStart = 0;

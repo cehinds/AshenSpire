@@ -54,8 +54,8 @@ function swingAt(t, stage) {
 test('a painted outfit caught in a hurt pose settles before the intent and action-word waits', (t) => {
   const { swing, settled, settledAt } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'hit', transition: null }; } });
   assert.equal(settled, 1);
-  assert.equal(settledAt, 0, 'the stance is restored before either wait begins');
-  assert.equal(swing, 200);
+  assert.equal(settledAt, 100, 'the stance is restored with the cost, before the action word and swing');
+  assert.equal(swing, 200, 'cardPlayed, cost +100, action word +100, then the swing directly (no stance change)');
 });
 
 test('a painted outfit at rest retains the same ordered waits', (t) => {
@@ -87,7 +87,7 @@ test('a stance-changing attack plays stance change, then the action animation, t
         { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 3, blocked: 0 }], {
         layer: dom.document.createElement('div'), combatEl: dom.document.createElement('div'),
         anchorFor: (id) => (id === 'player' ? anchor : e1),
-        onStanceLead: () => order.push('stance'),
+        onStanceLead: (beat, event, options) => { if (!options?.cardOnly) order.push('stance'); },
         animateActor: () => { order.push('action'); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
         onBeatApplied() {}, onFlush() {},
       }, () => completed++);
@@ -126,7 +126,7 @@ function leadOrder(t, events) {
       playTimeline(events, {
         layer: dom.document.createElement('div'), combatEl: dom.document.createElement('div'),
         anchorFor: (id) => (id === 'player' ? anchor : e1),
-        onStanceLead: (beat, event) => order.push(`stance:${event.type}`),
+        onStanceLead: (beat, event, options) => order.push(`${options?.cardOnly ? 'card' : 'stance'}:${event.type}`),
         animateActor: () => { order.push('action'); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
         onBeatApplied: () => { applied++; }, onFlush() {},
       }, () => completed++);
@@ -141,13 +141,14 @@ function leadOrder(t, events) {
 test('a Core 2 card play emits combatStanceChanged and leads with the stance before the action and the hit', (t) => {
   const { events } = core2CardEvents();
   const order = leadOrder(t, events);
-  assert.deepEqual(order.slice(0, 3), ['stance:combatStanceChanged', 'action', 'hit']);
+  assert.deepEqual(order.slice(0, 4), ['card:cardPlayed', 'stance:combatStanceChanged', 'action', 'hit']);
   assert.equal(order.filter(step => step.startsWith('stance')).length, 1, 'the stance leads exactly once');
 });
 
-test('an ordinary card play with no stance receipt still leads on cardPlayed, before the action and the hit', (t) => {
+test('a card play with no stance receipt shows the card, skips the stance event and goes straight to the action', (t) => {
   // The stance sprite follows every cardPlayed through the held-stance ledger, so that receipt must lead too.
   const { events } = core2CardEvents();
   const order = leadOrder(t, events.filter(e => e.type !== 'combatStanceChanged'));
-  assert.deepEqual(order.slice(0, 3), ['stance:cardPlayed', 'action', 'hit']);
+  assert.deepEqual(order.slice(0, 3), ['card:cardPlayed', 'action', 'hit']);
+  assert.ok(!order.some(step => step.startsWith('stance')), 'a card that repeats the stance has no stance event');
 });

@@ -1,7 +1,7 @@
 // Presentation scheduler. Engine state is already committed; hooks consume
 // receipts only. One timer drives a queue of events, and every exit finishes once.
 //
-// Each actor beat is a set of events (cost, actionWord, stance, swing, contact, result, reaction, numbers, bars, end)
+// Each actor beat is a set of events (cardPlayed, cost, actionWord, stance, swing, contact, result, reaction, numbers, bars, end)
 // that start where the combat timeline puts them (timing.timeline, ui/combatTimeline.js). Events that share a start fire
 // in list order within one task. The swing's impact time is only known once its clip is made, so the starts that depend
 // on it are armed then. The next beat starts after `end` has fired, every other event of the beat has fired, and the
@@ -9,7 +9,7 @@
 import { computeBeatSchedule, SWING_SCALE } from './combatTimeline.js';
 import { defaultTimeline, sanitizeTimeline } from '../model/combatTimelinePolicy.js';
 
-const TELEGRAPH_EVENTS = new Set(['cost', 'actionWord', 'stance', 'swing', 'contact']);
+const TELEGRAPH_EVENTS = new Set(['cardPlayed', 'cost', 'actionWord', 'stance', 'swing', 'contact']);
 const scaleSpeed = (speed, factor) => speed && Object.fromEntries(Object.entries(speed).map(([key, value]) => [key, typeof value === 'number' ? value * factor : value]));
 
 export function runActionTimeline(beats, hooks, timingIn, {
@@ -90,6 +90,10 @@ export function runActionTimeline(beats, hooks, timingIn, {
     const beatStart = now();
     const groups = safe(() => hooks.reactionGroups?.(beat)) || [beat];
     const telegraph = !!beat.telegraph;
+    // Events that do not apply to this beat take no time: no card played, or no stance change (a card that repeats the stance).
+    const skip = new Set();
+    if (!beat.events?.some(event => event.type === 'cardPlayed')) skip.add('cardPlayed');
+    if (hooks.stanceChanges && !safe(() => hooks.stanceChanges(beat))) skip.add('stance');
     const armed = new Set();
     let pending = 0, spriteStart = 0, recoveryDeadline = 0, impact = 0;
     let swingFired = false, contactFired = false, endFired = false, handedOff = false, teleDone = false;
@@ -117,7 +121,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
       actor = stage('sprite', beat, () => hooks.onSprite?.(beat, speed));
       spriteStart = now(); swingFired = true;
       impact = Math.max(0, Number(actor?.impactMs) || 0);
-      const schedule = computeBeatSchedule(timeline, { impactMs: impact, groups: groups.length });
+      const schedule = computeBeatSchedule(timeline, { impactMs: impact, groups: groups.length, skip });
       // Contact moved off the clip's own impact frame: play this beat's clip faster or slower so the frame lands on it
       // (only the acting clip, only this beat; outside the clamp the clip keeps its speed and contact still fires on time).
       if (schedule.swingScale !== 1 && actor && speed && schedule.swingScale >= SWING_SCALE.min && schedule.swingScale <= SWING_SCALE.max) {
@@ -163,6 +167,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
     const fire = ({ id, group: groupIndex }) => {
       const group = groups[Math.min(groupIndex, groups.length - 1)];
       switch (id) {
+        case 'cardPlayed': safe(() => hooks.onCardPlayed?.(beat)); break;
         case 'cost': stage('intent', beat, () => hooks.onIntent?.(beat)); break;
         case 'actionWord': safe(() => hooks.onActionWord?.(beat)); break;
         case 'stance': stage('action', beat, () => hooks.onAction?.(beat)); break;
@@ -189,7 +194,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
         enqueue(beatStart + entry.at, () => { pending--; fire(entry); handOff(); });
       }
     };
-    arm(computeBeatSchedule(timeline, { impactMs: null, groups: groups.length }));
+    arm(computeBeatSchedule(timeline, { impactMs: null, groups: groups.length, skip }));
   };
 
   // Budget derives from the computed schedule and the caller's real authored clip upper bound (a clip may be retimed

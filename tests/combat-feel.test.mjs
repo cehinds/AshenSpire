@@ -20,9 +20,9 @@ import { withKitDom } from './helpers/dom.mjs';
 import { haptic } from '../src/ui/haptics.js';
 import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
-// The default timeline starts the swing 200 ms into the beat (cost 0, action word +100, swing +100); contact is on its impact frame,
+// For an enemy beat the default timeline starts the swing 100 ms in (cost 0, action word +100, no stance change); contact is on its impact frame,
 // the reaction pose and the numbers 200 ms after contact (result +100, reaction +100).
-const LEAD = 200;
+const LEAD = 100; // an enemy beat: no card, no stance change: cost 0, action word +100, swing at once
 setCombatPacing({ combatSpeed: 1 }); // these timings are authored at x1; the shipped default is x1.25 (owner, 2026-10-26)
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');

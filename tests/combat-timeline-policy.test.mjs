@@ -6,9 +6,9 @@ import { resolveCombatAutomation } from '../src/model/autoCombatPolicy.js';
 
 const ids = list => list.map(row => row.id);
 test('the default timeline lists every event once, in the owner order', () => {
-  assert.deepEqual(TIMELINE_EVENT_IDS, ['cost', 'actionWord', 'stance', 'swing', 'contact', 'result', 'reaction', 'numbers', 'bars', 'end']);
+  assert.deepEqual(TIMELINE_EVENT_IDS, ['cardPlayed', 'cost', 'actionWord', 'stance', 'swing', 'contact', 'result', 'reaction', 'numbers', 'bars', 'end']);
   assert.deepEqual(defaultTimeline().map(row => [row.id, row.with, row.offsetMs].join(':')), [
-    'cost:previous:0', 'actionWord:previous:100', 'stance:actionWord:0', 'swing:previous:100', 'contact:previous:0',
+    'cardPlayed:previous:0', 'cost:previous:100', 'actionWord:previous:100', 'stance:actionWord:0', 'swing:previous:100', 'contact:previous:0',
     'result:previous:100', 'reaction:previous:100', 'numbers:reaction:0', 'bars:reaction:0', 'end:previous:100']);
   assert.deepEqual([TIMELINE_OFFSET.min, TIMELINE_OFFSET.max, TIMELINE_OFFSET.step], [-500, 1000, 10]);
 });
@@ -25,7 +25,7 @@ test('offsets are clamped and a non-number takes the default', () => {
 });
 test('unknown and repeated ids are dropped and missing ids come back from the defaults', () => {
   const list = sanitizeTimeline([{ id: 'bars' }, { id: 'nope' }, { id: 'bars' }, { id: 'cost' }]);
-  assert.equal(list.length, 10);
+  assert.equal(list.length, 11);
   assert.deepEqual([...ids(list)].sort(), [...TIMELINE_EVENT_IDS].sort());
   assert.deepEqual(ids(sanitizeTimeline(null)), TIMELINE_EVENT_IDS);
 });
@@ -37,9 +37,9 @@ test('a with that is not an earlier event becomes previous, so there are no cycl
 });
 test('moving an event up or down reorders it and repairs anchors that now point forward', () => {
   const up = moveTimelineEvent(defaultTimeline(), 'numbers', -1);
-  assert.deepEqual(ids(up).slice(6, 9), ['numbers', 'reaction', 'bars']);
+  assert.deepEqual(ids(up).slice(7, 10), ['numbers', 'reaction', 'bars']);
   assert.equal(up.find(row => row.id === 'numbers').with, 'previous', 'numbers was with reaction, now before it');
-  assert.deepEqual(ids(moveTimelineEvent(defaultTimeline(), 'cost', -1)), TIMELINE_EVENT_IDS, 'the first cannot move up');
+  assert.deepEqual(ids(moveTimelineEvent(defaultTimeline(), 'cardPlayed', -1)), TIMELINE_EVENT_IDS, 'the first cannot move up');
   assert.deepEqual(ids(moveTimelineEvent(defaultTimeline(), 'end', 1)), TIMELINE_EVENT_IDS, 'the last cannot move down');
 });
 test('setTimelineEvent changes one row and repairs it', () => {
@@ -50,5 +50,5 @@ test('setTimelineEvent changes one row and repairs it', () => {
 test('a saved reaction override is validated like the shared list', () => {
   const resolved = resolveTimelineSetting({ shared: [], reaction: [{ id: 'end', offsetMs: 5000 }] });
   assert.equal(resolved.reaction.find(row => row.id === 'end').offsetMs, 1000);
-  assert.equal(resolved.reaction.length, 10);
+  assert.equal(resolved.reaction.length, 11);
 });

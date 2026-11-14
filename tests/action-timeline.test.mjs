@@ -330,3 +330,29 @@ test('Reduced motion keeps the order with every event together', () => {
   assert.equal(names(trace), 'intent word action sprite contact result reaction damage hud resolution done');
   assert.ok(trace.every(row => row[2] === 0));
 });
+
+// ---- cardPlayed first, and the stance event only on a stance change (owner, 2026-11-13) ----
+const cardBeat = { actorId: 'p', kind: 'attack', events: [{ type: 'cardPlayed' }] };
+test('cardPlayed fires first, then cost +100, the action word +100, and the swing', () => {
+  const cards = [];
+  const { trace } = play([cardBeat], actionPacing(), { onCardPlayed: () => cards.push('card'), stanceChanges: () => true });
+  assert.deepEqual(cards, ['card']);
+  assert.equal(names(trace), 'intent word action sprite contact result reaction damage hud resolution done');
+  const t = Object.fromEntries(trace.map(row => [row[0], row[2]]));
+  assert.deepEqual([t.intent, t.word, t.action, t.sprite], [100, 200, 200, 300]);
+});
+test('a beat with no card played has no cardPlayed event and starts at once', () => {
+  const calls = [];
+  const { trace } = play([{ actorId: 'e', kind: 'attack', events: [] }], actionPacing(), { onCardPlayed: () => calls.push('card'), stanceChanges: () => true });
+  assert.deepEqual(calls, []);
+  assert.equal(trace.find(row => row[0] === 'intent')[2], 0);
+});
+test('the stance event is skipped on a beat that repeats the stance and fires on a change', () => {
+  const same = play([cardBeat], actionPacing(), { stanceChanges: () => false });
+  assert.equal(same.trace.some(row => row[0] === 'action'), false, 'no stance stage');
+  const change = play([cardBeat], actionPacing(), { stanceChanges: () => true });
+  assert.equal(change.trace.some(row => row[0] === 'action'), true);
+  const swing = trace => trace.find(row => row[0] === 'sprite')[2], word = trace => trace.find(row => row[0] === 'word')[2];
+  assert.equal(swing(same.trace) - word(same.trace), 0, 'the swing follows the action word directly');
+  assert.equal(swing(change.trace) - word(change.trace), 100);
+});

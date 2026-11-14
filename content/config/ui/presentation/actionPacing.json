@@ -5,7 +5,8 @@
     "reactionGapScale": 0.5,
     "fixedStageMs": { "telegraphHoldMs": 0, "telegraphResetMs": 100 },
     "timeline": [
-      { "id": "cost", "with": "previous", "offsetMs": 0 },
+      { "id": "cardPlayed", "with": "previous", "offsetMs": 0 },
+      { "id": "cost", "with": "previous", "offsetMs": 100 },
       { "id": "actionWord", "with": "previous", "offsetMs": 100 },
       { "id": "stance", "with": "actionWord", "offsetMs": 0 },
       { "id": "swing", "with": "previous", "offsetMs": 100 },
@@ -16,6 +17,7 @@
       { "id": "bars", "with": "reaction", "offsetMs": 0 },
       { "id": "end", "with": "previous", "offsetMs": 100 }
     ],
+    "stanceFlash": { "fadeInMs": 30, "holdMs": 40, "fadeOutMs": 30, "opacity": 0.6 },
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
     "enemyAttackDefaultMs": 750,

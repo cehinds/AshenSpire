@@ -161,7 +161,8 @@ test('an enemy attack plays in the same order, and a hit-stop lengthens the swin
       { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 }]);
     finish();
     assert.deepEqual(order(trace), ['contact', 'reaction:player', 'float:-6', 'bars', 'settle']);
-    assert.equal(timeOf(trace, 'settle'), Math.max(END, LEAD + TOTAL + 60), 'the attacker settles at the end, or after its hit-stop if that is later');
+    // An enemy beat has no card and no stance change: its swing starts at the action word, 100 ms in, not 200.
+    assert.equal(timeOf(trace, 'settle'), Math.max(END - GAP, GAP + TOTAL + 60), 'the attacker settles at the end, or after its hit-stop if that is later');
   });
 });
 
@@ -368,7 +369,7 @@ test('the card-play order: cost, intent word, stance, animation, hit word, react
       { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
     ], {
       onLeadApplied: () => mark('cost-applied'),
-      onStanceLead: () => mark('stance'),
+      onStanceLead: (beat, event, options) => { if (!options?.cardOnly) mark('stance'); },
     });
     finish();
     const all = [...words.map(w => ({ what: `word:${w.kind}`, at: w.at })), ...trace.map(e => ({ ...e }))]
@@ -379,9 +380,9 @@ test('the card-play order: cost, intent word, stance, animation, hit word, react
       ['float:−2 EP', 'cost-applied', 'word:action:Strike', 'stance', 'swing', 'word:hit', 'reaction:e1', 'float:-4']);
     assert.ok(first('float:−2 EP') < first('word:action:Strike'));
     const at = what => all.find(e => e.what === what).at;
-    assert.equal(at('cost-applied'), 0, 'the cost is the first thing that happens');
-    assert.equal(at('stance'), GAP, 'the stance follows the beat start by one gap (intentMs)');
-    assert.equal(at('word:action:Strike'), GAP, 'the action word follows the cost by 100 ms, with the stance');
+    assert.equal(at('cost-applied'), GAP, 'the card is shown played first; the cost follows it by 100 ms');
+    assert.equal(at('stance'), 2 * GAP, 'the stance changes with the action word');
+    assert.equal(at('word:action:Strike'), 2 * GAP, 'the action word follows the cost by 100 ms');
   });
 });
 
@@ -397,7 +398,7 @@ test('the enemy-turn order: reveal, SP payment, move word, animation, hit word, 
       { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 },
     ], { onLeadApplied: () => mark('cost-applied') });
     finish();
-    const all = [...trace, ...words.map(w => ({ what: `word:${w.kind}`, at: w.at }))].sort((a, b) => a.at - b.at).map(e => e.what);
+    const all = [...words.map(w => ({ what: `word:${w.kind}`, at: w.at })), ...trace].sort((a, b) => a.at - b.at).map(e => e.what);
     const wanted = ['float:−2 SP', 'cost-applied', 'word:action:Attack', 'swing', 'word:hit', 'reaction:player', 'float:-6'];
     const seen = all.filter(n => wanted.includes(n));
     assert.deepEqual(seen, wanted);
@@ -422,7 +423,7 @@ test('a card with two distinct costs (SP and MP) shows both cost floaters before
       { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1', name: 'Strike' },
       { type: 'stanceEntered', stance: 'smash', playerId: 'player' },
       { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 0 },
-    ], { onStanceLead: () => trace.push({ what: 'stance', at: Date.now() }) });
+    ], { onStanceLead: (beat, event, options) => { if (!options?.cardOnly) trace.push({ what: 'stance', at: Date.now() }); } });
     finish();
     const word = words.find(w => w.kind === 'action:Strike');
     const sp = trace.find(e => e.what === 'float:\u22121 SP'), mp = trace.find(e => e.what === 'float:\u22122 MP'), stance = trace.find(e => e.what === 'stance');

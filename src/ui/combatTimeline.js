@@ -7,14 +7,23 @@ export const SWING_SCALE = Object.freeze({ min: 0.25, max: 4 });
 
 /**
  * computeBeatSchedule(timeline, { impactMs = null, groups = 1 }) returns
- *   starts      { eventId: ms | null } for the first group,
+ *   starts      { eventId: ms | null } for the first group (events in `skip` are absent),
  *   entries     [{ id, group, at }] resolved events in firing order (time, group, list order),
  *   swingScale  the factor that makes the swing's impact frame land on contact (1 when it already does or cannot).
  * With several reaction groups the result, reaction, numbers and bars repeat per group in the same relative layout; a
  * group starts one segment length plus the result's own spacing after the previous one, and events listed after the
  * segment move out by the groups' total.
  */
-export function computeBeatSchedule(timeline, { impactMs = null, groups = 1 } = {}) {
+export function computeBeatSchedule(fullTimeline, { impactMs = null, groups = 1, skip = null } = {}) {
+  // An event that does not apply to the beat (no card played, no stance change) takes no time: it is left out of the chain.
+  // The wait that followed a left-out event goes with it: the next event starts where the left-out one would have.
+  const timeline = [];
+  let zeroNext = false;
+  for (const row of fullTimeline) {
+    if (skip?.has(row.id)) { zeroNext = true; continue; }
+    timeline.push((zeroNext && row.with === 'previous') || skip?.has(row.with) ? { ...row, with: 'previous', offsetMs: 0 } : row);
+    zeroNext = false;
+  }
   const starts = {};
   let previous = null; // { start, duration }
   for (const row of timeline) {

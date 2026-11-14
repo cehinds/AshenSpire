@@ -3479,9 +3479,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // Owner 2026-11-05: the stance a card enters is drawn before the card's action animation starts. Core 2 plays
         // report it as combatStanceChanged, the legacy enterStance effect as stanceEntered. appliedVisualEvents makes
         // onBeatApplied's applyVisualEvents skip what this already led, and setStance repeats the same pose, so no flicker.
-        onStanceLead: beat => {
+        // The card event shows the played card ({ cardOnly }); the stance event (only on a stance change) updates the held stance
+        // without an entry animation (setStance repaints the rest pose), after fx.js has flashed the new stance's sigil.
+        onStanceLead: (beat, entered, { cardOnly = false } = {}) => {
           if (beat.actorId !== 'player') return;
           applyVisualEvents(beat.events.filter(event => event.type === 'cardPlayed'));
+          if (cardOnly) return;
           stageFor($('.combatant.player .sprite'))?.setStance?.(playerStance(null));
         },
         // A committed engagement step changes the strips on its own beat, inside the group's timeline (see fx.js onEngagement).
