@@ -34,6 +34,7 @@ export const SmithUpgradeSlots = (run, itemRef) => Math.min(ITEM_SMITH.maxSlots,
 /** The sentence an option reads as ("+1 DEX", "Retain 1 card at turn end"). */
 export function PickText(pick) {
   if (!pick) return '';
+  if (pick.k === 'spent') return '(reworked)';
   if (pick.k === 'prop') return ITEM_PROPERTIES.find((row) => row.id === pick.prop)?.text || pick.prop;
   if (pick.k === 'effect') return pick.effect === 'poiseDamagePct' ? `+${pick.n}% Poise damage` : `${pick.effect} ${pick.n}`;
   return `+${pick.n} ${STAT_LABELS[pick.stat] || pick.stat}`;

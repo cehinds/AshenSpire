@@ -4,6 +4,7 @@ import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
+import { ItemFamily } from './itemPicks.js';
 
 export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
@@ -138,7 +139,7 @@ export function gameProfileRatingReceipt(registries, run) {
           if (gameModule(run,'gear')?.armorBudget && itemTier) {
             const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
             // A magic weapon's tier also raises its spells: the same bonus lands in PR (W25 upgrades, step 1).
-            const pr = piece.kind === 'staff' ? ar : 0;
+            const pr = ItemFamily(run,`armament/${id}`) === 'magic' ? ar : 0; // a category change can make a staff martial, a sword magic
             totals.ar += ar; totals.pr += pr;
             sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr,ward:0,poise:0,weaponTier:itemTier});
           }

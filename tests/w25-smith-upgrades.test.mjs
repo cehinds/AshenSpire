@@ -12,7 +12,7 @@ import { createRng } from '../src/engine/rng.js';
 import { buildBlacksmithStock } from '../src/engine/shopKinds.js';
 import { blacksmithUpgradePlan, commitBlacksmithUpgrade, smithUpgradeItems, serviceCandidates } from '../src/model/blacksmith.js';
 import { SmithUpgradeCost, SmithUpgradeSlots, RollSmithOptions, SmithOptionPool } from '../src/model/smithUpgrade.js';
-import { ItemFamily, ItemCategory, ItemUpgradeCount } from '../src/model/itemPicks.js';
+import { ItemFamily, ItemCategory, ItemUpgradeCount, ItemPropertyIds } from '../src/model/itemPicks.js';
 import { gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import { UpgradeSlots } from '../src/model/cardUpgradeLimits.js';
@@ -110,4 +110,31 @@ test('picks count as the weapon\'s smith level for card slots, and an old save (
   run.itemUpgradePicks = { [GS]: [{ id: 'ar', k: 'stat', stat: 'ar', n: 1 }] };
   assert.equal(UpgradeSlots(run, strike), 3);
   assert.equal(ItemCategory(run, GS), 'greatsword');
+});
+
+test('item rank-up: +1 upgrade slot for the rank-up price; slots never pass the ceiling', async () => {
+  const { itemRankUpPlan, commitItemRankUp } = await import('../src/model/blacksmith.js');
+  const run = smithRun();
+  assert.equal(SmithUpgradeSlots(run, GS), 6);
+  const quote = itemRankUpPlan(registries, run, GS);
+  assert.deepEqual([quote.ok, quote.stones, quote.cost], [true, 1, 120], quote.reason);
+  const [stonesBefore, cindersBefore] = [run.smithingStones, run.cinders];
+  commitItemRankUp(registries, run, quote);
+  assert.equal(SmithUpgradeSlots(run, GS), 7);
+  assert.deepEqual([run.smithingStones, run.cinders], [stonesBefore - 1, cindersBefore - 120]);
+  assert.throws(() => commitItemRankUp(registries, run, quote), /changed|Inspect/);
+  run.itemRanks[GS] = 99;
+  assert.equal(SmithUpgradeSlots(run, GS), 12);
+  assert.equal(itemRankUpPlan(registries, run, GS).ok, false);
+});
+
+test('an upgrade can roll a property, and the property it picks is held by the item and counted as an upgrade', () => {
+  const run = smithRun();
+  let found = null;
+  for (let n = 1; n <= 60 && !found; n += 1) found = RollSmithOptions(run, GS, n).find((o) => o.k === 'prop');
+  assert.ok(found, 'a property appears among the options');
+  run.itemUpgradePicks = { [GS]: [{ id: found.id, k: 'prop', prop: found.prop }] };
+  assert.deepEqual(ItemPropertyIds(run, GS), [found.prop]);
+  assert.ok(!SmithOptionPool(run, GS).some((row) => row.pick.id === found.id), 'a held property is not offered again');
+  assert.equal(ItemUpgradeCount(run, GS), 1);
 });
