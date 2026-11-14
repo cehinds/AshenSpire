@@ -17,20 +17,33 @@ export function stanceFlashPlan(config = ACTION_PACING.stanceFlash, { reduced = 
 }
 
 /**
- * overlayPlan(config, { reduced }) -> the player's selection overlay: { style, opacity, fadeInMs, fadeOutMs, playExitMs, outlineScale },
- * or null (Instant, Reduced motion). style 'outline' (default): when the card is played the sigil keeps its size while its
- * glow grows to outlineScale times its radius and the overlay fades to 0 over playExitMs, then it is removed. style 'linger':
- * the sigil stays as it is until the swing clip ends, then fades out over fadeOutMs.
+ * overlayPlan(config, { reduced }) -> the player's selection overlay:
+ *   { style, opacity, fadeInMs, fadeOutMs, playExitMs, shrinkScale, shrinkMs, expandScale }, or null (Instant, Reduced motion).
+ * style 'burst' (default): when the card is played the whole overlay (sigil and motif outline) shrinks to shrinkScale over
+ * shrinkMs at full opacity, then expands to expandScale while fading to 0 for the rest of playExitMs, and is removed.
+ * style 'linger': the sigil stays as it is until the swing clip ends, then fades out over fadeOutMs.
  */
 export function overlayPlan(config = ACTION_PACING.stanceOverlay, { reduced = false } = {}) {
   if (reduced || !config) return null;
   const num = value => Math.max(0, Number(value) || 0);
   const unit = (value, fallback) => Math.min(1, Math.max(0, Number.isFinite(Number(value)) ? Number(value) : fallback));
+  const playExitMs = num(config.playExitMs) || 150;
   return {
-    style: config.style === 'linger' ? 'linger' : 'outline',
+    style: config.style === 'linger' ? 'linger' : 'burst',
     opacity: unit(config.opacity, 0.6), fadeInMs: num(config.fadeInMs), fadeOutMs: num(config.fadeOutMs),
-    playExitMs: num(config.playExitMs) || 75, outlineScale: Math.max(1, Number(config.outlineScale) || 2.5),
+    playExitMs, shrinkScale: Math.max(0.05, Number(config.shrinkScale) || 0.5), shrinkMs: Math.min(playExitMs, num(config.shrinkMs) || 50),
+    expandScale: Math.max(1, Number(config.expandScale) || 3),
   };
+}
+
+/** playExitKeyframes(plan, opacity) -> WAAPI keyframes for the play exit: shrink at full opacity, then expand while fading out. */
+export function playExitKeyframes(plan, opacity = plan.opacity) {
+  const turn = plan.shrinkMs / plan.playExitMs;
+  return [
+    { transform: 'scale(1)', opacity, offset: 0 },
+    { transform: `scale(${plan.shrinkScale})`, opacity, offset: turn },
+    { transform: `scale(${plan.expandScale})`, opacity: 0, offset: 1 },
+  ];
 }
 
 /**
@@ -122,8 +135,8 @@ const GLOW_RAMP_MS = 120;
  *   bind(getAnchor)  where the overlay lives (the player's sprite element, looked up on each use)
  *   select(stance)   the selection's stance when it differs from the held one, else null: shows, switches or fades out the sigil
  *   hold(glow)       the card was played: the sigil stays up (selection changes no longer touch it) and glows in `glow`
- *                    style 'outline' (default) then grows the glow to outlineScale x and fades the overlay over playExitMs (75 ms)
- *                    from this moment and removes it; 'linger' keeps it until release()
+ *                    style 'burst' (default) then shrinks the overlay and expands it while it fades (playExitMs, 150 ms) from
+ *                    this moment and removes it; 'linger' keeps it until release()
  *   release()        the actor's action animation ended: fade out
  *   clear()          a refused or cancelled play: removed at once
  * Instant and Reduced motion draw nothing. The overlay never blocks input.
@@ -178,15 +191,19 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
       el.dataset.glow = '1';
       played = true;
       const plan = overlayPlan(config(), { reduced: reduced() });
-      if (plan?.style === 'outline') {
-        // The play exit: only the outline grows (the sigil keeps its size) while the whole overlay fades out, then it is removed.
-        const node = el, exit = plan.playExitMs;
-        const grown = scale => full ? `drop-shadow(0 0 ${3 * scale}px var(--stance-glow)) drop-shadow(0 0 ${12 * scale}px var(--stance-glow))` : `drop-shadow(0 0 ${12 * scale}px var(--stance-glow))`;
-        setTimeout(() => {
-          svg.style.transition = `filter ${exit}ms linear`; svg.style.filter = grown(plan.outlineScale);
-          node.style.transition = `opacity ${exit}ms linear`; node.style.opacity = '0';
-        }, 0);
-        setTimeout(() => { node.remove(); if (el === node) { el = null; icon = null; held = false; } }, exit + 20);
+      if (plan?.style === 'burst') {
+        // The play exit (transform and opacity only, around the figure centre): shrink, then expand while fading; then removed.
+        const node = el, total = plan.playExitMs, turn = plan.shrinkMs;
+        if (typeof node.animate === 'function') {
+          node.animate(playExitKeyframes(plan, plan.opacity), { duration: total, easing: 'linear', fill: 'forwards' });
+        } else {
+          setTimeout(() => { node.style.transition = `transform ${turn}ms linear`; node.style.transform = `scale(${plan.shrinkScale})`; }, 0);
+          setTimeout(() => {
+            node.style.transition = `transform ${total - turn}ms linear, opacity ${total - turn}ms linear`;
+            node.style.transform = `scale(${plan.expandScale})`; node.style.opacity = '0';
+          }, turn);
+        }
+        setTimeout(() => { node.remove(); if (el === node) { el = null; icon = null; held = false; } }, total + 20);
       }
     },
     // Put the overlay back on the figure if a redraw replaced it.

@@ -127,12 +127,12 @@ test('Reduced motion and Instant draw no overlay at all', t => {
 });
 
 // ---- the exit style: outline (default) or linger, as data ----
-import { overlayPlan, overlayStanceFor } from '../src/ui/stanceFlash.js';
-test('the overlay style is data: outline by default, linger on request, nothing under Reduced motion', () => {
-  assert.deepEqual({ ...ACTION_PACING.stanceOverlay }, { style: 'outline', opacity: 0.6, fadeInMs: 80, playExitMs: 75, outlineScale: 2.5, fadeOutMs: 80 });
-  assert.equal(overlayPlan().style, 'outline');
+import { overlayPlan, overlayStanceFor, playExitKeyframes } from '../src/ui/stanceFlash.js';
+test('the overlay style is data: burst by default, linger on request, nothing under Reduced motion', () => {
+  assert.deepEqual({ ...ACTION_PACING.stanceOverlay }, { style: 'burst', opacity: 0.6, fadeInMs: 80, playExitMs: 150, shrinkScale: 0.5, shrinkMs: 50, expandScale: 3, fadeOutMs: 80 });
+  assert.equal(overlayPlan().style, 'burst');
   assert.equal(overlayPlan({ ...ACTION_PACING.stanceOverlay, style: 'linger' }).style, 'linger');
-  assert.equal(overlayPlan({ style: 'enlarge' }).style, 'outline', 'the old enlarge style is gone');
+  assert.equal(overlayPlan({ style: 'enlarge' }).style, 'burst', 'an unknown style is the default');
   assert.equal(overlayPlan(undefined, { reduced: true }), null);
 });
 function styledRig(t, style) {
@@ -145,28 +145,57 @@ function styledRig(t, style) {
   });
   return rig;
 }
-test('outline: on play the sigil keeps its size, the glow grows to 2.5x and the overlay fades out over 75 ms, then it is removed', t => {
-  const rig = styledRig(t, 'outline');
+test('the play exit keyframes come from the config: shrink to 0.5 over 50 ms at full opacity, then expand to 3x while fading, 150 ms in all', () => {
+  const plan = overlayPlan();
+  assert.equal(plan.playExitMs, 150);
+  assert.deepEqual(playExitKeyframes(plan), [
+    { transform: 'scale(1)', opacity: 0.6, offset: 0 },
+    { transform: 'scale(0.5)', opacity: 0.6, offset: 50 / 150 },
+    { transform: 'scale(3)', opacity: 0, offset: 1 },
+  ]);
+  const custom = overlayPlan({ ...ACTION_PACING.stanceOverlay, playExitMs: 200, shrinkScale: 0.25, shrinkMs: 40, expandScale: 2 });
+  assert.deepEqual(playExitKeyframes(custom).map(frame => [frame.transform, frame.offset]), [['scale(1)', 0], ['scale(0.25)', 0.2], ['scale(2)', 1]]);
+});
+test('burst: on play the whole overlay shrinks, then expands while fading, over 150 ms, then it is removed (WAAPI)', t => {
+  const rig = styledRig(t, 'burst');
   withKitDom(dom => {
     dom.document.documentElement = { dataset: { performance: 'full' } };
     rig.overlay.select('smash');
     const el = live(rig);
-    t.mock.timers.tick(100);
+    const calls = [];
+    el.animate = (frames, options) => { calls.push([frames, options]); return {}; };
     rig.overlay.hold('#ee7237');
-    const svg = el.querySelector('svg');
-    assert.match(svg.style.filter, /0 0 3px/, 'the play glow at its own radius');
-    assert.match(svg.style.filter, /0 0 12px/);
-    t.mock.timers.tick(1);
-    assert.match(svg.style.filter, /0 0 7\.5px/, 'the outline grows 2.5x (3 -> 7.5)');
-    assert.match(svg.style.filter, /0 0 30px/, 'and 12 -> 30');
-    assert.equal(el.style.opacity, '0', 'while the whole overlay fades');
-    assert.match(el.style.transition, /opacity 75ms/);
-    assert.equal(el.style.transform, 'scale(1)', 'the sigil itself is never scaled');
-    assert.equal(el.style.pointerEvents, 'none');
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0][0], playExitKeyframes(overlayPlan({ ...ACTION_PACING.stanceOverlay, style: 'burst' })));
+    assert.equal(calls[0][1].duration, 150);
+    assert.equal(el.dataset.glowColor, '#ee7237', 'the motif glow is on throughout');
+    assert.match(el.querySelector('svg').style.filter, /drop-shadow/);
     t.mock.timers.tick(100);
-    assert.equal(live(rig), null, 'removed about 75 ms after the play');
+    assert.equal(live(rig), el, 'still there mid exit');
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null, 'removed after the 150 ms exit');
     assert.equal(rig.overlay.consumePlayed(), true, 'the stance event knows the sigil was shown');
     assert.equal(rig.overlay.consumePlayed(), false);
+  });
+});
+test('burst without WAAPI: two chained transitions, transform and opacity only', t => {
+  const rig = styledRig(t, 'burst');
+  withKitDom(() => {
+    rig.overlay.select('smash');
+    const el = live(rig);
+    t.mock.timers.tick(100);
+    rig.overlay.hold('#ee7237');
+    t.mock.timers.tick(1);
+    assert.equal(el.style.transform, 'scale(0.5)', 'phase 1: shrink');
+    assert.match(el.style.transition, /^transform 50ms/);
+    assert.equal(el.style.opacity, '0.6', 'at full opacity');
+    t.mock.timers.tick(50);
+    assert.equal(el.style.transform, 'scale(3)', 'phase 2: expand');
+    assert.equal(el.style.opacity, '0', 'while fading out');
+    assert.match(el.style.transition, /transform 100ms linear, opacity 100ms linear/);
+    assert.equal(el.style.pointerEvents, 'none');
+    t.mock.timers.tick(120);
+    assert.equal(live(rig), null);
   });
 });
 test('linger: the held sigil stays at its opacity and size through the swing, then fades out when it ends', t => {

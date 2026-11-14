@@ -18,7 +18,7 @@
       { "id": "end", "with": "previous", "offsetMs": 100 }
     ],
     "stanceLeadMs": 10,
-    "stanceOverlay": { "style": "outline", "opacity": 0.6, "fadeInMs": 80, "playExitMs": 75, "outlineScale": 2.5, "fadeOutMs": 80 },
+    "stanceOverlay": { "style": "burst", "opacity": 0.6, "fadeInMs": 80, "playExitMs": 150, "shrinkScale": 0.5, "shrinkMs": 50, "expandScale": 3, "fadeOutMs": 80 },
     "stanceFlash": { "fadeInMs": 80, "holdMs": 90, "fadeOutMs": 80, "opacity": 0.6 },
     "animationStepDurationMs": 390,
     "animationStepDefaultMs": 550,
