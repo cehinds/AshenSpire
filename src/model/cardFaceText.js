@@ -62,6 +62,8 @@ function esc(value) {
 }
 
 /** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
+const ATTRIBUTE_ABBREVIATION = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
+
 export function withChargedEffects(def, preview = null) {
   return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
 }
@@ -240,6 +242,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         if (effect.chance !== undefined && partialChance(effect.chance)) chances.push({ name: title(effect.status), chance: effectiveD20Percent(effect.chance) });
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
+      case 'changeAttribute': return frag('gain', `${n >= 0 ? '+' : ''}${num(n, base)} ${ATTRIBUTE_ABBREVIATION[effect.attribute] || esc(title(effect.attribute))} ${effect.thisTurn === true ? 'this turn' : 'for the fight'}`);
       case 'applyStatus': {
         // Unmodelled per-application tags (for example Persistent) may carry
         // authored rules. Preserve that prose rather than silently dropping it.

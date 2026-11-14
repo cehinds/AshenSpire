@@ -70,10 +70,13 @@ export const RANK_DOWN_TAG = 'rank.cantrip';
 export const MAX_CARD_UPGRADES = 10;
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
 // cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
-// retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR or DEX
-// this turn), target (+1 target at half damage), reaction (the Reaction trait).
+// retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
+// for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait).
 export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction'));
-export const BOOST_STATS = Object.freeze(words('strength dexterity'));
+export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
+// A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
+// fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
+export const BOOST_DURATIONS = Object.freeze(words('turn fight'));
 
 
 const AUTHORED_ONLY = Object.freeze([Object.freeze({ k: 'authored' })]);
@@ -252,7 +255,11 @@ function applyFx(card, step) {
     case 'retain': case 'innate': out.keywords = [...new Set([...(card.keywords || []), KEYWORD_OF[step.fx]])]; break;
     case 'unexhaust': out.keywords = (card.keywords || []).filter((word) => word !== 'exhaust'); dropTag('lifecycle.exhaust'); break;
     case 'holdOne': effects.push({ op: 'retain', amount: 1 }); break;
-    case 'boost': effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true }); break;
+    case 'boost':
+      // A step with no `until` is a legacy STR / DEX "this turn" boost: the status it always was. Every other boost changes the live attribute (engine/liveStats.js).
+      if (step.until === undefined && ['strength', 'dexterity'].includes(step.stat)) effects.push({ op: 'applyStatus', target: 'self', status: step.stat, stacks: step.n, thisTurn: true });
+      else effects.push({ op: 'changeAttribute', target: 'self', attribute: step.stat, amount: step.n, ...(step.until === 'fight' ? {} : { thisTurn: true }) });
+      break;
     case 'target': {
       const index = effects.findIndex((e) => isPlainEffect(e, 'damage') && e.target === 'enemy');
       if (index >= 0) effects.push({ op: 'damage', target: 'randomEnemy', amount: Math.max(1, Math.ceil(effects[index].amount / 2)) });
@@ -326,6 +333,8 @@ export function upgradeStepsProblems(instance, path) {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
+      if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
+      if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');
     }
     if (step.k === 'combo') {
       const inner = step.steps;

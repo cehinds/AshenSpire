@@ -172,11 +172,14 @@ function addMenuOptions(base, current, found, dmgIndex, counterReturn) {
   if (!keywords.includes('innate')) set('innate');
   if (keywords.includes('exhaust')) set('unexhaust');
   if (!hasOp(effects, 'retain')) set('holdOne');
-  const boosted = (stat) => effects.some((e) => e.op === 'applyStatus' && e.thisTurn === true && e.status === stat);
-  // Temporary STR / DEX are Strength / Dexterity statuses removed at turn end. INT / WIS have no live status in combat
-  // (ratings are folded in when the fight starts), so a spell card is not offered a boost.
+  const boosted = (stat) => effects.some((e) => (e.op === 'applyStatus' && e.thisTurn === true && e.status === stat) || (e.op === 'changeAttribute' && e.attribute === stat));
+  // A boost is a live attribute change (engine/liveStats.js): STR for an attack, DEX for a block, INT for a spell's damage, WIS for a
+  // spell's defence. stepOf picks the duration: this turn (+2) or the rest of the fight (+1, stacks per play).
+  const hasWard = hasOp(effects, 'gainWard') || hasOp(effects, 'gainBarrier');
   if (!spell && dmgIndex >= 0 && !boosted('strength')) set('boost', { stat: 'strength', n: 2 });
   else if (!spell && hasBlock && !boosted('dexterity')) set('boost', { stat: 'dexterity', n: 2 });
+  else if (spell && dmgIndex >= 0 && !boosted('intelligence')) set('boost', { stat: 'intelligence', n: 2 });
+  else if (spell && (hasBlock || hasWard) && !boosted('wisdom')) set('boost', { stat: 'wisdom', n: 2 });
   if (!counterReturn && dmgIndex >= 0 && effects[dmgIndex].target === 'enemy' && attack
     && !effects.some((e) => e.op === 'damage' && e.target === 'randomEnemy')) set('target');
   if (attack && !spell && !tags.includes('trait:reaction')) set('reaction');
@@ -255,6 +258,8 @@ export function rollUpgradeStep(baseDef, appliedSteps, stepIndex, rng, limits = 
 
 const stepOf = (kind, option, choice) => {
   const pickOf = (list) => list[Math.min(list.length - 1, Math.floor(choice * list.length))];
+  // The boost's duration is its own choice: usually this turn (+n), sometimes the rest of the fight (+1, stacking per play).
+  if (kind === 'fx:boost') return choice >= 0.65 ? { k: 'fx', fx: 'boost', stat: option.stat, n: 1, until: 'fight' } : { k: 'fx', fx: 'boost', stat: option.stat, n: option.n, until: 'turn' };
   if (kind.startsWith('fx:')) return { k: 'fx', ...option };
   switch (kind) {
     case 'dmg': return { k: 'dmg', n: option.n };
