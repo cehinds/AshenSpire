@@ -496,7 +496,8 @@
     "tags": [
       "camp:physical",
       "maneuver:attack",
-      "classification.attack"
+      "classification.attack",
+      "trait:reaction"
     ],
     "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
     "upgrade": {
