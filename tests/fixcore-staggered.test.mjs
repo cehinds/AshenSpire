@@ -26,6 +26,8 @@ const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', mane
 function live(poise = 20) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  // These tests cover the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); tests/poise-broken.test.mjs covers the shipped Broken rule.
+  combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
   delete target.combatStance; delete target.combatCounter;
@@ -34,7 +36,7 @@ function live(poise = 20) {
 const hit = (combat, target, amount, source = combat.player) => { primeAccuracyRolls(combat); applyAttackDamage(combat, source, target, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
 test('shipped Core data: Poise drains what it prevented; Staggered stance -1 SP +1 Vulnerable extend-only', () => {
-  assert.deepEqual(shipped.poise, { drain: 'prevented' });
+  assert.deepEqual(shipped.poise, { drain: 'prevented', breakRule: 'broken', brokenDamageMultiplier: 1.5 }, 'the Staggered stance below is the legacy rule a saved fight keeps');
   assert.deepEqual(shipped.staggered, { stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
   assert.equal(shipped.statuses.staggerRiders.weak, 0);
   assert.deepEqual(fixCorePoiseRules({}), { drain: 'prevented' }, 'old saves fall back to the ruling');
