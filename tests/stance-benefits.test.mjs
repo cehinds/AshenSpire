@@ -79,3 +79,91 @@ test('neutral: a player at rest draws one extra card from its second turn; enemi
   assert.equal(Benefits.NeutralExtraDraw(fight, { kind: 'player', combatStance: { maneuver: 'attack' } }, 3), 0);
   assert.equal(Benefits.NeutralExtraDraw(fight, { kind: 'enemy' }, 3), 0);
 });
+
+// ---- Live resolution: the same receipt drives the hit, the preview and the card face ----
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { applyAttackDamage, computeBlockGain, gainBlock } from '../src/engine/actions.js';
+import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
+
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const OPEN = { skipRatingBonus: true };
+const carrierOf = (maneuver, camp = 'physical') => ({ ...OPEN, combatProfile: { camp, maneuver, range: 'melee' } });
+const stanceOf = maneuver => ({ maneuver, camp: 'physical', range: 'melee' });
+/** `benefits: false` plays the same fight under the rules a fight created before the ruling holds (no stanceBenefits block). */
+function live({ benefits = true, enemies = ['wanderingSoldier'], poise = 0, block = 0, stance = null } = {}) {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: enemies });
+  if (!benefits) { const { stanceBenefits, ...rest } = combat.fixCoreRules; combat.fixCoreRules = rest; }
+  for (const target of combat.enemies) {
+    Object.assign(target, { hp: 500, maxHp: 500, block, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: Math.max(20, poise) }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
+    delete target.combatCounter;
+    if (stance) target.combatStance = stanceOf(stance); else delete target.combatStance;
+  }
+  Object.assign(combat.player, { hp: 500, maxHp: 500, block: 0, statuses: {}, persistentPoise: { value: poise, max: 20 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
+  return { combat, target: combat.enemies[0] };
+}
+const strike = (combat, from, to, amount, carrier) => { primeAccuracyRolls(combat); applyAttackDamage(combat, from, to, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
+
+test('Attack +20% and Prepared +25%: shown (preview) equals dealt, for a player and for an enemy; the old rules deal the printed number', () => {
+  for (const [maneuver, camp, expected] of [['attack', 'physical', 12], ['prepared', 'spell', 12], ['smash', 'physical', 10], ['sweep', 'physical', 10]]) {
+    const carrier = carrierOf(maneuver === 'prepared' ? 'casting' : maneuver, camp);
+    const { combat, target } = live();
+    const shown = previewDamageHits(combat, combat.player, target, 10, [], carrier, 1).hitDamages[0];
+    const dealt = strike(combat, combat.player, target, 10, carrier);
+    // 10 x 1.25 = 12.5 floors to 12; every row here lands on 12 or the printed 10.
+    assert.equal(500 - target.hp, expected, `${maneuver} deals ${expected}`);
+    assert.equal(shown, 500 - target.hp, `${maneuver}: the quote is the HP lost`);
+    assert.ok(dealt);
+  }
+  { // an enemy in Attack stance hits the player for +20%
+    const { combat, target } = live();
+    const hit = strike(combat, target, combat.player, 10, carrierOf('attack'));
+    assert.equal(500 - combat.player.hp, 12); assert.ok(hit);
+  }
+  { // the old rules (a fight created before the ruling): the printed number
+    const { combat, target } = live({ benefits: false });
+    strike(combat, combat.player, target, 10, carrierOf('attack'));
+    assert.equal(500 - target.hp, 10);
+  }
+});
+
+test('Block gained: Defend x1.5, Counter x1.25, others unchanged; the old rules keep the printed Block', () => {
+  const { combat } = live();
+  const block = maneuver => computeBlockGain(combat, combat.player, 10, carrierOf(maneuver));
+  assert.equal(block('defend'), 15);
+  assert.equal(block('counter'), 12);
+  assert.equal(block('attack'), 10);
+  const old = live({ benefits: false }).combat;
+  assert.equal(computeBlockGain(old, old.player, 10, carrierOf('defend')), 10);
+  const before = combat.player.block;
+  gainBlock(combat, combat.player, 10, { ...carrierOf('defend'), cardId: 'x' });
+  assert.equal(combat.player.block - before, computeBlockGain(combat, combat.player, 10, { ...carrierOf('defend'), cardId: 'x' }), 'the Block gained is the Block quoted');
+});
+
+test('Poise: a Smash costs the pool 50% more, a Defend target 25% less; HP lost is unchanged; the preview carries the same Poise', () => {
+  const lost = (benefits, attacker, defender, base = 40) => {
+    const { combat, target } = live({ benefits, poise: 20, stance: defender });
+    const preview = previewDamageHits(combat, combat.player, target, base, [], carrierOf(attacker), 1);
+    strike(combat, combat.player, target, base, carrierOf(attacker));
+    return { pool: 20 - target.persistentPoise.value, hp: 500 - target.hp, previewHp: preview.hitDamages[0] };
+  };
+  const smashOld = lost(false, 'smash', 'attack'), smashNew = lost(true, 'smash', 'attack');
+  assert.ok(smashOld.pool > 0);
+  assert.equal(smashNew.pool, smashOld.pool + Math.floor(0.5 * smashOld.pool), 'Smash: +50% Poise damage');
+  assert.equal(smashNew.hp, smashOld.hp, 'the extra is Poise damage, not HP');
+  const defOld = lost(false, 'sweep', 'defend'), defNew = lost(true, 'sweep', 'defend');
+  assert.equal(defNew.pool, defOld.pool - Math.floor(0.25 * defOld.pool), 'Defend: -25% Poise damage taken');
+  assert.equal(defNew.previewHp, defNew.hp, 'quotes equal HP lost');
+  // The existing Smash vs Defend rule keeps working: its Poise drain is 50% of the total, now with the Smash bonus and the Defend sparing on top.
+  const both = lost(true, 'smash', 'defend', 16), bothOld = lost(false, 'smash', 'defend', 16);
+  assert.ok(bothOld.pool > 0);
+  const taken = bothOld.pool, extra = Math.floor(0.5 * taken);
+  assert.equal(both.pool, taken + extra - Math.floor(0.25 * (taken + extra)));
+});

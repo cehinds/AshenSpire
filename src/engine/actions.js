@@ -12,6 +12,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { BlockGainMultiplier } from './stanceBenefits.js';
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
@@ -410,7 +411,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0));
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
     }
   }
   const hpBefore = target.hp;
@@ -953,7 +954,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');

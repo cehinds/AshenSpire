@@ -83,7 +83,7 @@ export function SweepSplashFraction(ctx, source, carrier) {
  * (the same contact the hit itself uses, priced without the play's committed range plan). `candidates` is the primary's side, supplied by the caller.
  */
 export function SweepSplashTargets(ctx, source, primary, carrier, candidates) {
-  if (!primary || !source || !(SweepSplashFraction(ctx, source, carrier) > 0)) return [];
+  if (!primary || !source || primary.kind === source.kind || !(SweepSplashFraction(ctx, source, carrier) > 0)) return [];
   const probe = { ...carrier };
   delete probe.rangePlan; delete probe.rangeContactId;
   return candidates.filter(other => other && other !== primary && other !== source && other.alive && other.kind === primary.kind
