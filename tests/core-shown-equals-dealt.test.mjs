@@ -499,3 +499,18 @@ test('an earlier enemy that applies Vulnerable, then attacks, is in the later en
     assert.equal(lost, shown.max, `plan ${plan}: shown ${shown.max}, lost ${lost}`);
   }
 });
+
+// ---- Review fix 3: the preview spends a prepared Evade charge the way the real hit does ------------------------------------------------
+
+test('a target holding one Evade stack AND a prepared Evade charge: one evaded hit spends both, in the preview as in the play', () => {
+  const { combat, card } = fixture({ hand: 'base.multi-hit' });
+  combat.enemies[0].statuses = { evade: { stacks: 1 } };
+  combat.enemies[0].combatEvade = { charges: 1, bonus: 0 };
+  const shown = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
+  assert.equal(shown[0], 0, 'the first hit is evaded');
+  assert.ok(shown.slice(1).every(amount => amount > 0), `the stack and the charge went together, so every later hit lands: ${shown}`);
+  const tally = check(combat, card, 'e1', 'Evade stack + prepared charge');
+  assert.ok(tally.hits >= 2);
+  assert.equal(combat.enemies[0].combatEvade.charges, 0);
+  assert.equal(combat.enemies[0].statuses.evade?.stacks || 0, 0);
+});
