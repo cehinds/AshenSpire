@@ -68,13 +68,13 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
   for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
 });
 
-test('Starseer replaces Resource Gain and both sceptre classes start with ten cards', () => {
+test('Starseer replaces Resource Gain and both sceptre classes start with eleven cards', () => {
   const run = start('starseer');
   assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
-  assert.equal(run.deck.length, 10, 'the starting weapon art replaces the class special');
-  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 8);
+  assert.equal(run.deck.length, 11, 'the starting weapon art replaces the class special');
+  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
   const herald = start('herald');
-  assert.equal(herald.deck.length, 10, 'Herald trades one Ethereal for granted Mana Surge');
+  assert.equal(herald.deck.length, 11, 'Herald authors nine cards plus granted Mana Surge and Blight Touch');
   assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 2);
 });
 

@@ -17,10 +17,12 @@ const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const ids = list => list.map(id => `core.${id}`);
 const BY_CLASS = {
-  reaver: ids(['ironbreaker', 'rallyingRoar']),
+  // Ironbreaker and Rallying Roar are 2 SP / 0 MP starters now (Wave 1 stance starter decks), so they are no longer mana cards.
+  reaver: [],
   rogue: ids(['venomedEdge', 'smokeVeil']),
-  starseer: ids(['eclipse', 'astralBolt']),
-  herald: ids(['censure', 'smite']),
+  // Astral Bolt and Smite are in the Starseer and Herald starter decks now, so they are never offered as rewards.
+  starseer: ids(['eclipse']),
+  herald: ids(['censure']),
   colorless: ids(['hexmark', 'manaLash']),
 };
 const CLASSES = ['reaver', 'rogue', 'starseer', 'herald'];
@@ -45,8 +47,8 @@ test('every card is authored in its class, costs SP and MP, is not a cantrip, an
     if (card.damageSchool === 'magic') assert.ok(card.exposureBuildupPerHit >= balanceExposure.buildupPerManaSpell, `${id}: a magic attack builds at least ${balanceExposure.buildupPerManaSpell} Arcane Exposure per hit`);
     if (cls === 'starseer' || cls === 'herald' || cls === 'colorless') assert.ok(card.tags.includes('camp:spell'), id);
   }
-  assert.equal(ALL.length, 10);
-  assert.equal(new Set(ALL.map(id => def(id).name)).size, 10);
+  assert.equal(ALL.length, 6);
+  assert.equal(new Set(ALL.map(id => def(id).name)).size, 6);
   assert.ok(ALL.filter(id => def(id).rarity === 'rare').length <= 3);
   // A magic-school attack must carry exposure; check every damage card explicitly.
   for (const id of ALL) if (def(id).effects.some(e => e.op === 'damage') && def(id).damageSchool === 'magic') assert.ok(def(id).exposureBuildupPerHit >= 5, id);
@@ -111,11 +113,6 @@ test('no card is strictly better than a peer it shares a reward pool with, in ei
     // The new card must not cover an existing same-rarity card at the same or higher cost.
     if (other.rarity === a.rarity && other.staminaCost >= a.staminaCost && other.manaCost >= a.manaCost && !ALL.includes(other.id)) assert.ok(!covers(a, other), `${id} covers ${other.id} at no more cost`);
   }
-  // Ironbreaker is the cheap-SP mana option, so the 2 SP / 1 MP Reaver starter must not beat it, nor share its cost.
-  const starter = def('core.reaverSpecial'), ironbreaker = def('core.ironbreaker');
-  assert.ok(starter, 'core.reaverSpecial exists');
-  assert.ok(!covers(starter, ironbreaker), 'core.reaverSpecial does not dominate Ironbreaker');
-  assert.ok(ironbreaker.staminaCost < starter.staminaCost && ironbreaker.manaCost <= starter.manaCost, 'Ironbreaker costs less SP than the starter');
 });
 
 test('the reward model counts each card as a mana card, never as a basic or cantrip', () => {
