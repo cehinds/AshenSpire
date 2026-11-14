@@ -12,6 +12,9 @@
       "telegraphMs": 250,
       "floaterIntervalMs": 375,
       "turnBannerScale": 0.35
+    },
+    "counter": {
+      "floaterToAnimMs": 75
     }
   },
   "behavior": {
