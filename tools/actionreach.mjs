@@ -363,8 +363,11 @@ async function main() {
       await cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile: w < 700 }, S);
       await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: w < 700, maxTouchPoints: 5 }, S);
       await cdp.send('Page.navigate', { url: base }, S);
-      await until(`!!([...document.querySelectorAll('button')].find(x=>/BEGIN A CLIMB/i.test(x.textContent)))`, 'the title screen');
-      await evalIn(`[...document.querySelectorAll('button')].find(x=>/BEGIN A CLIMB/i.test(x.textContent)).click(); 'ok'`);
+      await until(`!!document.querySelector('.startup-gate, .title-menu .slot-new')`, 'the startup gate or the title screen');
+      if (await evalIn(`!!document.querySelector('.startup-gate')`)) await evalIn(`document.querySelector('.startup-gate').click(); 'ok'`);
+      await until(`!!document.querySelector('.title-menu .slot-new:not([disabled])')`, 'the title screen');
+      // A fresh profile opens creation directly from New Game.
+      await evalIn(`document.querySelector('.title-menu .slot-new').click(); 'ok'`);
       await until(sc.ready, `the ${sc.name} screen`);
       console.log(`\n  ${sc.name} @ ${shape}`);
       for (const [k, v] of Object.entries(TEXT)) {
