@@ -1089,8 +1089,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           [left - skew * height / 2, top + height]].map(point => point.map(value => value / fit))));
         // Owner (2026-11-06): the mini HUD is as wide as its cell (the front edge, a parallelogram's width) and its contents
         // scale with it. Both are written here, once per layout pass, and read by the HUD's own placement and styles.
-        setData(frame, 'cellWidth', width);
-        setVar(frame, '--mini-hud-scale', String(miniHudScale({ cellWidth: width }).scale));
+        // The cell width in canvas px (combatTargetHud scales it back by the fit): the mini HUD scale is an authored
+        // canvas-px ratio, and the cached width must not hold a stale scale's real px.
+        setData(frame, 'cellWidth', width / fit);
+        setVar(frame, '--mini-hud-scale', String(miniHudScale({ cellWidth: width / fit }).scale));
       }
       if (Number.isFinite(slot.miniHudWidth)) {
         const miniHud = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
