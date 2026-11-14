@@ -50,7 +50,7 @@ function connectCdp(wsUrl) {
     ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
     send(method, params = {}, sessionId) {
       const id = nextId++;
-      return new Promise((res, rej) => { const timer = setTimeout(() => { pending.delete(id); rej(new Error(`no answer to ${method}`)); }, 45000); pending.set(id, { res: (v) => { clearTimeout(timer); res(v); }, rej: (e) => { clearTimeout(timer); rej(e); } }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
+      return new Promise((res, rej) => { const timer = setTimeout(() => { pending.delete(id); rej(new Error(`no answer to ${method}`)); }, 90000); pending.set(id, { res: (v) => { clearTimeout(timer); res(v); }, rej: (e) => { clearTimeout(timer); rej(e); } }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
     },
     close: () => ws.close(),
   };
@@ -89,8 +89,13 @@ async function main() {
           };
           const until = async (expr, label, ms = 30000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await ev(expr)) return; await wait(40); } throw new Error(`timeout: ${label}`); };
           await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSeed=${encodeURIComponent(seed)}` }, S);
-          await until(`!!window.__combat && !!document.querySelector('.end-turn')`, 'the fight');
+          await until(`!!window.__combat && !!document.querySelector('.end-turn')`, 'the fight', 90000);
           await wait(1500);
+          // The time a reaction prompt stays in the page (from added to removed), read from the page's own clock.
+          await ev(`window.__prompt = { open: null, ms: 0 }; new MutationObserver(() => {
+            const here = !!document.querySelector('.reaction-choice'), p = window.__prompt;
+            if (here && p.open == null) p.open = performance.now(); else if (!here && p.open != null) { p.ms += performance.now() - p.open; p.open = null; }
+          }).observe(document.body, { childList: true, subtree: true }); true`);
           await ev(`addEventListener('pointerup', e => { if (e.target.closest?.('.end-turn')) window.__upAt = performance.now(); }, true)`);
           const ready = `window.__combat.phase === 'player' && document.querySelector('.combat')?.dataset.turn === 'player' && !document.querySelector('.end-turn')?.disabled && !document.querySelector('.hand')?.inert && !document.querySelector('.reaction-choice')`;
           let stop = false, fullStreak = 0;
@@ -98,30 +103,28 @@ async function main() {
             if (stop || await ev(`window.__combat.result != null`)) break;
             await until(`${ready} || window.__combat.result != null`, 'a playable hand', 60000);
             if (await ev(`window.__combat.result != null`)) break;
-            await ev(`window.__prevTurn = window.__combat.turn; window.__ev0 = window.__combat.eventLog.length; window.__upAt = null; true`);
+            await ev(`window.__prevTurn = window.__combat.turn; window.__ev0 = window.__combat.eventLog.length; window.__upAt = null; window.__prompt.ms = 0; true`);
             const pt = await ev(`(() => { const r = document.querySelector('.end-turn').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
             await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
             await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
             await wait(900);
             await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
-            let promptMs = 0, over = false;
+            let over = false;
             for (let guard = 0; guard < 4000; guard += 1) {
               const s = await ev(`({ over: !document.querySelector('.combat') || window.__combat.result != null, react: !!document.querySelector('.reaction-choice'),
                 ready: ${ready} && window.__combat.turn > window.__prevTurn, now: performance.now() })`).catch(() => ({ over: true }));
               if (s.over) { over = true; break; }
               if (s.react) {
-                const t0 = Date.now();
                 await wait(150);
                 const pr = await ev(`(() => { const b = document.querySelector('.reaction-choice [data-control-role="exit"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
                 if (pr) for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x: pr.x, y: pr.y, button: 'left', clickCount: 1 }, S);
                 await wait(250);
-                promptMs += Date.now() - t0;
                 continue;
               }
               if (s.ready) {
-                const r = await ev(`({ up: window.__upAt, now: performance.now(), moves: window.__combat.eventLog.slice(window.__ev0).filter(e => e.type === 'enemyMoveStarted').map(e => e.kind),
+                const r = await ev(`({ up: window.__upAt, now: performance.now(), prompt: window.__prompt.ms, moves: window.__combat.eventLog.slice(window.__ev0).filter(e => e.type === 'enemyMoveStarted').map(e => e.kind),
                   hurts: window.__combat.eventLog.slice(window.__ev0).some(e => ['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'hpLost'].includes(e.type)) })`);
-                const seconds = (r.now - r.up - promptMs) / 1000;
+                const seconds = (r.now - r.up - r.prompt) / 1000;
                 const key = r.moves.length === 2 ? 'two' : r.moves.length === 1 && r.hurts ? 'one' : r.moves.length === 1 ? 'guard' : null;
                 if (key && groups[key].length < MIN_TURNS + 2) groups[key].push(seconds);
                 fullStreak = key && groups[key].length >= MIN_TURNS ? fullStreak + 1 : 0;
