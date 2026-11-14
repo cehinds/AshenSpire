@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreStatusDefinition, FixCoreHitRollOff } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreStatusDefinition } from './fixCoreMechanics.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { keyFor as fixCoreRulesKey, fixCoreRules } from './fixCoreRulesCache.js';
 
@@ -15,17 +15,12 @@ function present(ctx, id, definition, holder) {
   // accuracy.precisionTooltip text (mechanics.json; the statuses.json row feeds a locked manifest and stays as is) and a tooltip built from the editable accuracy constants for Evade.
   if (resolved !== definition && fixCoreEnabled(ctx) && definition && typeof definition === 'object') {
     if (id === 'precision') {
-      // Owner, 2026-11-14: with no hit roll Precision changes nothing; say so instead of promising Accuracy.
-      const text = FixCoreHitRollOff(fixCoreRules(ctx, holder))
-        ? `Precision does nothing under the current rules: every attack lands unless the target has Evade. Loses ${mechanics.accuracy.precisionDecayPerTurn} stacks at the start of the owner's turn.`
-        : mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
+      const text = mechanics.accuracy.precisionTooltip.replace(/\{(precisionStackValue|precisionDecayPerTurn)\}/g,
         (_, key) => String(mechanics.accuracy[key]));
       resolved = { ...resolved, tooltip: text, description: text };
     }
     else if (id === 'evade') {
-      // Owner, 2026-11-14: with no hit roll a stack of Evade cancels the next attack, whatever the Evasion numbers say.
-      const fixed = FixCoreHitRollOff(fixCoreRules(ctx, holder)) ? 'The next attack against you misses.' : `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll.`;
-      const text = `${fixed} Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
+      const text = `Each stack adds ${mechanics.accuracy.evadePerStack} Evasion. Only attacks roll. Applications add stacks. Lose ${fixCoreRules(ctx, holder).statuses.decayAmount} stack at the start of the owner's turn each round.`;
       resolved = { ...resolved, tooltip: text, description: text };
     }
   }

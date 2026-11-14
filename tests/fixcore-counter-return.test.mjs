@@ -639,9 +639,7 @@ function armedThen(...cardIds) {
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
   const events = combat.eventLog.slice(start);
-  // An Evade card's stack cancels that Attack (owner, 2026-11-14: no hit roll), so only the other lines see it land.
-  if (cardIds.includes('core.evade')) assert.ok(events.some(e => e.type === 'attackMissed' && e.missReason === 'evaded'), 'the enemy Attack was evaded');
-  else assert.ok(events.some(e => e.type === 'damageDealt' && e.targetId === 'player'), 'the enemy Attack landed ');
+  assert.ok(events.some(e => e.type === 'damageDealt' && e.targetId === 'player'), 'the enemy Attack landed ');
   return events.filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
 }
 

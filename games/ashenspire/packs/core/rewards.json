@@ -157,10 +157,6 @@
   },
   "eligibility": {
     "playableOnly": true,
-    "excludeCardIds": [
-      "core.guidingWhisper",
-      "base.evade"
-    ],
     "weapons": {
       "groups": [
         "straightSwords",

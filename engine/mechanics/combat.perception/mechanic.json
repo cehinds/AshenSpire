@@ -36,9 +36,6 @@
           "type": "number"
         },
         "default": []
-      },
-      "roll": {
-        "type": "boolean"
       }
     },
     "required": [

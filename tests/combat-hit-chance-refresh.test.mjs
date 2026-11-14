@@ -11,7 +11,6 @@ import { createRng } from '../src/engine/rng.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardAffectsEnemies, hitBadgeTargetIds } from '../src/model/hitBadge.js';
 import { rangeHitLabel } from '../src/ui/models/CombatRangeActionModel.js';
-import { FixCoreHitRollOff } from '../src/model/fixCoreMechanics.js';
 import { upcastOptions } from '../src/model/upcasting.js';
 import { upcastChoicePlan } from '../src/ui/components/upcastChoice.js';
 import { withKitDom } from './helpers/dom.mjs';
@@ -48,7 +47,7 @@ function fixture(document) {
     heldTurnHand: null, playQueue: [], inputBusy: () => false, disp: null, busy: false, enemyPlayback: false, upcastPreviewRefresh: false,
     handRenderKey: null, handPreviewCache: { stateKey: null, cards: new Map() }, upcastRanksByCard: new Map(), rangeRoutesByCard: new Map(),
     resolveCombatCard, previewCard, previewCardHit, cardTargetPlan, cardAffectsEnemies, hitBadgeTargetIds,
-    rangeHitLabel, FixCoreHitRollOff, upcastOptions, upcastChoicePlan, esc: value => String(value),
+    rangeHitLabel, upcastOptions, upcastChoicePlan, esc: value => String(value),
     findInst: id => combat.piles.hand.find(card => card.instanceId === id),
     getEntity: (_combat, id) => [combat.player, ...combat.enemies].find(entity => entity.id === id),
     $: selector => combatEl.querySelector(selector), readSettings: () => ({}),
