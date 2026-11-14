@@ -241,6 +241,19 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
   }
 }
 
+/** clearTurnBoosts(ctx, entity) — remove the stacks a `thisTurn` applyStatus granted, at the end of the owner's turn. */
+export function clearTurnBoosts(ctx, entity) {
+  const boosts = entity.turnBoosts;
+  if (!boosts) return;
+  for (const [statusId, stacks] of Object.entries(boosts)) {
+    const inst = entity.statuses?.[statusId];
+    if (!inst) continue;
+    inst.stacks -= stacks;
+    if (getStacks(entity, statusId) <= 0) removeStatus(ctx, entity, statusId, { reason: 'expired' });
+  }
+  delete entity.turnBoosts;
+}
+
 /**
  * decayAtTurnEnd(ctx, entity) — apply per-owner-turn-end decay:
  *   'perTurnEnd'   → −1 stack (expire at 0)

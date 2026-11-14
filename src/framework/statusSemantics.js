@@ -22,6 +22,7 @@ export function removeStatus(...args) { return Adopted.removeStatus(...args); }
 export function statusDefinition(...args) { return Adopted.statusDefinition(...args); }
 export function decayAtTurnStart(...args) { return Adopted.decayAtTurnStart(...args); }
 export function decayAtTurnEnd(...args) { return Adopted.decayAtTurnEnd(...args); }
+export function clearTurnBoosts(...args) { return Adopted.clearTurnBoosts(...args); }
 export function getMult(...args) { return Adopted.getMult(...args); }
 export function getAdd(...args) { return Adopted.getAdd(...args); }
 export function getFlag(...args) { return Adopted.getFlag(...args); }

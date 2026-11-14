@@ -1825,6 +1825,8 @@ export const OPCODE_HANDLERS = Object.freeze({
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
           tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]
         });
+        // `thisTurn` (a card upgrade's temporary stat boost): the stacks leave again at the end of the owner's turn (statuses.clearTurnBoosts).
+        if (eff.thisTurn === true) { t.turnBoosts ||= {}; t.turnBoosts[eff.status] = (t.turnBoosts[eff.status] || 0) + stacks; }
         proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
