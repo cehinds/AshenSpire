@@ -36,3 +36,19 @@
   text-align: center;
   overflow-wrap: normal;
 }
+
+/* The per-target quote (owner, 2026-11-14): the badge's job while a card is selected is what the play will do to THIS enemy. It reads
+   smaller than the HP and intent numbers (the two largest on the screen) and sits where the hit chance sat, on the body, below the intent. */
+:root .combat .combatant > .combat-hit-chance.target-quote {
+  display: inline-flex; align-items: baseline; gap: calc(8px / var(--ui-zoom, 1));
+  font-size: calc(18px / var(--ui-zoom, 1)); line-height: 1;
+}
+:root .combat .combatant > .combat-hit-chance.target-quote[data-quote-kind='cause'] { font-size: calc(15px / var(--ui-zoom, 1)); }
+:root .combat .combatant > .combat-hit-chance.target-quote[data-quote-kind='refusal'] {
+  max-width: calc(150px / var(--ui-zoom, 1)); white-space: normal; text-align: center; font-size: calc(14px / var(--ui-zoom, 1)); line-height: 1.1;
+}
+.target-quote-cost { font-size: .8em; }
+.target-quote-cost::before { content: ''; display: inline-block; width: .55em; height: .55em; margin-right: .2em; border-radius: 50%; background: currentColor; }
+.target-quote-cost[data-resource='stamina'] { color: var(--green); }
+.target-quote-cost[data-resource='mana'] { color: var(--frost); }
+.target-quote-chance { font-size: .8em; }

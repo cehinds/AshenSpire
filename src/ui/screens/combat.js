@@ -2,6 +2,7 @@ import { engravedIcon } from '../components/engravedIcon.js';
 import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
+import { TargetQuote } from '../models/TargetQuoteModel.js';
 import { acFor } from '../models/acBadge.js';
 import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
@@ -1856,6 +1857,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } catch { return null; }
     // An insight contest has no hit chance and no range: the badge prices the DC the d20 + attributes + rank must reach.
     const label = rangeHitLabel(preview, { targetId: enemy.id, certainHits: FixCoreHitRollOff(combat.fixCoreRules || combat.gameProfile?.fixCoreRules) });
+    // Owner, 2026-11-14: in a Core 2 fight the badge is the per-target quote (the HP this enemy loses, its cause word or refusal, and the
+    // Stamina or Mana it costs when that differs from the face); a fight that still rolls to hit keeps its hit chance beside it.
+    const quote = targetQuoteFor(enemy, preview);
+    if (quote) return targetQuoteBadge(quote, label, preview);
     if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
@@ -1863,6 +1868,44 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
     node.textContent = label;
     node.setAttribute('aria-label', (preview?.contest ? 'Contest difficulty ' : 'Chance to hit ') + node.textContent);
+    return node;
+  }
+
+  // The enemy the card face is priced against while a card is selected: the last aimed one, else the first it can hit.
+  function quoteReferenceId() {
+    const legal = cardTargets(selected).legalIds;
+    return (lastTargetId && legal.includes(lastTargetId) ? lastTargetId : legal.find(id => getEntity(combat, id)?.kind === 'enemy')) ?? null;
+  }
+
+  function targetQuoteFor(enemy, hitPreview) {
+    if (!fixCoreEnabled(combat) || hitPreview?.contest) return null;
+    try {
+      const referenceId = quoteReferenceId();
+      return TargetQuote({ preview: previewCard, combat, instanceId: selected, targetId: enemy.id, ranks: upcastRanksByCard.get(selected),
+        reference: referenceId ? previewCard(combat, selected, referenceId, upcastRanksByCard.get(selected)) : null, hitPreview });
+    } catch { return null; }
+  }
+
+  function targetQuoteBadge(quote, chanceLabel, hitPreview) {
+    const node = document.createElement('span');
+    node.className = 'combat-hit-chance target-quote';
+    node.dataset.quoteKind = quote.kind;
+    node.dataset.rollMode = hitPreview.advantage ? 'advantage' : hitPreview.disadvantage ? 'disadvantage' : 'neutral';
+    const part = (className, text, attrs = {}) => {
+      const span = document.createElement('span');
+      span.className = className; span.textContent = text;
+      Object.assign(span.dataset, attrs);
+      node.append(span);
+    };
+    part('target-quote-text', quote.text);
+    if (quote.stamina != null) part('target-quote-cost', String(quote.stamina), { resource: 'stamina' });
+    if (quote.mana != null) part('target-quote-cost', String(quote.mana), { resource: 'mana' });
+    if (chanceLabel) part('target-quote-chance', chanceLabel);
+    const spoken = [quote.label];
+    if (quote.stamina != null) spoken.push(t('combat.quote.staminaAria', { amount: quote.stamina }));
+    if (quote.mana != null) spoken.push(t('combat.quote.manaAria', { amount: quote.mana }));
+    if (chanceLabel) spoken.push('Chance to hit ' + chanceLabel);
+    node.setAttribute('aria-label', spoken.join('. '));
     return node;
   }
 
@@ -1884,7 +1927,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else {
         if (!existing) frame.append(badge);
         else if (existing.className !== badge.className || existing.textContent !== badge.textContent
-          || existing.dataset.rollMode !== badge.dataset.rollMode || existing.dataset.rangeDetail !== badge.dataset.rangeDetail) {
+          || existing.dataset.rollMode !== badge.dataset.rollMode || existing.dataset.rangeDetail !== badge.dataset.rangeDetail
+          || existing.dataset.quoteKind !== badge.dataset.quoteKind) {
           existing.replaceWith(badge);
         }
       }
