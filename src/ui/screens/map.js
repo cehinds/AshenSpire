@@ -380,12 +380,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // backdrop matches it (city, bridge, forest...). Decorative; the adapter maps
   // (legacy dungeon, co-op) have no painting and record nothing.
   function travelTo(id) {
+    showEntering();
     if (!mapAdapter) {
       const settingId = board.terrainAt?.(id);
       if (settingId) run.mapTerrain = { nodeId: id, settingId };
       else delete run.mapTerrain;
     }
     leaving(onPick)(id);
+  }
+  // The press is taken at once: Enter turns to a visible "Entering…" with a
+  // spinner, painted before the long task that builds the next screen.
+  function showEntering() {
+    enterButton.dataset.busy = 'true';
+    enterButton.setAttribute('aria-busy', 'true');
+    enterButton.textContent = t('map.entering');
   }
   function selectNode(id, reading, pointerType = 'mouse') {
     lastPickPointerType = pointerType;

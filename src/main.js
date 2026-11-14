@@ -1873,7 +1873,7 @@ function enterNode(nodeId) {
     if (res.kind === 'event') {
       run.seenEvents.push(res.eventId);
       persist();
-      return showEvent(res.eventId);
+      return afterEntryPaint(() => showEvent(res.eventId));
     }
     kind = res.kind; // fight | shrine | treasure
   }
@@ -1890,13 +1890,13 @@ function enterNode(nodeId) {
       persist();
       // An Unknown node's rest outcome is the field camp (proposal §7.4): a
       // small rest and no services. A shrine node is the Shrine.
-      return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
+      return afterEntryPaint(() => showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine'));
     case 'merchant': {
       if (!gameModule(run, 'shops')) { persist(); return showMap(); }
-      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return showShop();
+      run.gameProfileOpenShop = `${run.actNumber}:${nodeId}`; persist(); return afterEntryPaint(() => showShop());
     }
     case 'treasure': {
-      return beginGameProfileReward({ source: 'treasure', after: 'map' });
+      return afterEntryPaint(() => beginGameProfileReward({ source: 'treasure', after: 'map' }));
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -1929,9 +1929,8 @@ function combatMods(pool, encounter = null) {
 // (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
 // states stay synchronous.
 let fightEntryPending = false;
-function startFight(pool, nodeId) {
-  if (fightEntryPending) return;
-  if (shotState || typeof requestAnimationFrame !== 'function') return startFightNow(pool, nodeId);
+function afterEntryPaint(action) {
+  if (shotState || typeof requestAnimationFrame !== 'function') return action();
   const owner = run;
   fightEntryPending = true;
   app.setAttribute('aria-busy', 'true');
@@ -1939,8 +1938,13 @@ function startFight(pool, nodeId) {
     fightEntryPending = false;
     app.removeAttribute('aria-busy');
     if (run !== owner) return;
-    startFightNow(pool, nodeId);
+    action();
   }, 0));
+  return undefined;
+}
+function startFight(pool, nodeId) {
+  if (fightEntryPending) return;
+  return afterEntryPaint(() => startFightNow(pool, nodeId));
 }
 
 function startFightNow(pool, nodeId) {
