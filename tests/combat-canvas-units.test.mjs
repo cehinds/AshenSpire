@@ -46,3 +46,43 @@ test('separateRow keeps its authored edge margin in the caller units', () => {
   separateRow(scaled, 300 * 2.5, undefined, 2.5);
   unit.forEach((r, i) => near(scaled[i].x, r.x * 2.5, `row ${i}`));
 });
+
+test('the band plan takes the canvas zoom: one canvas plans the same bands at every fit scale', async () => {
+  const { planCombatLayout } = await import('./helpers/combat-layout-plan.mjs');
+  const base = { formFactor: 'desktop', width: 1200, height: 750, zoom: 1.2 };
+  const plain = planCombatLayout({ ...base, canvasScale: 1 });
+  for (const canvasScale of [0.62, 1.36, 2.39]) {
+    const scaled = planCombatLayout({ ...base, canvasScale });
+    for (const key of ['hud', 'hand', 'footer', 'battlefield']) near(scaled[key], plain[key], `${key} at fit ${canvasScale}`);
+    assert.equal(scaled.arrangement, plain.arrangement);
+  }
+});
+
+test('the hand plan takes the canvas zoom: one canvas lays the same fan at every fit scale', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { runInNewContext } = await import('node:vm');
+  const { handLayout, responsiveHandLayout, handGeometryKey, holdPlaySlots, HAND_PLAY_SETTLE } = await import('../src/ui/models/HandLayout.js');
+  const { desktopHandLayout } = await import('../src/ui/models/DesktopCombatFooter.js');
+  const { CanvasRect } = await import('../src/ui/viewViewport.js');
+  const source = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
+  const start = source.indexOf('  let publishedGeometry ='), end = source.indexOf('\n  // Re-derive when the measured facts move:', start);
+  const style = () => { const values = new Map(); return { setProperty: (k, v) => values.set(k, v), getPropertyValue: k => values.get(k) || '' }; };
+  const fan = fit => {
+    const root = { dataset: { formFactor: 'desktop', viewPreset: 'desktop', viewScale: String(fit), viewLeft: '0', viewTop: '0' } };
+    const win = { document: { documentElement: root } };
+    const combat = { dataset: { compactCombat: 'false', desktopFooter: 'true' } };
+    // Local box 1200 x 300 under body zoom 1.2, drawn at the canvas fit: the rect carries both.
+    const handEl = { style: style(), dataset: {}, isConnected: true, clientWidth: 1200, clientHeight: 300, closest: () => combat,
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 1200 * 1.2 * fit, height: 300 * 1.2 * fit }), dispatchEvent() {} };
+    const card = id => ({ dataset: { instanceId: id }, parentNode: handEl, style: style(), lane: null,
+      querySelector(selector) { return selector === '.card-upcast-controls' ? null : this.lane; }, appendChild(node) { this.lane = node; } });
+    const cards = [card('a'), card('b'), card('c')];
+    const scope = { handEl, handEls: cards, fitFan: true, handLayout, responsiveHandLayout, handGeometryKey, desktopHandLayout, holdPlaySlots, HAND_PLAY_SETTLE,
+      CanvasRect: rect => CanvasRect(rect, win), setTimeout, clearTimeout, layoutMetrics: () => ({ fontSize: '10px' }), upcastMeasurements: new WeakMap(),
+      measureHandUpcastHeight: () => 0, document: { documentElement: root, createElement: () => ({ setAttribute() {} }) }, Event: class { constructor(type) { this.type = type; } } };
+    runInNewContext(source.slice(start, end) + '\napplyHandLayout', scope)();
+    return cards.map(c => ['--hand-card-width', '--hand-card-x', '--hand-card-y'].map(k => parseFloat(c.style.getPropertyValue(k))));
+  };
+  const plain = fan(1);
+  for (const fit of [0.62, 1.36, 2.39]) fan(fit).forEach((row, i) => row.forEach((value, j) => near(value, plain[i][j], `card ${i} value ${j} at fit ${fit}`)));
+});
