@@ -7,22 +7,11 @@ import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/mod
 import { createRunState } from '../src/model/state.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
-import { compileGameProfiles } from '../tools/game-config.mjs';
-import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 
-// A run saved before the visible-fork map keeps the routes content it was pinned with. This fixture is that old content
-// (routes.json as shipped through 2026-11-13): maps built from it must roll draw for draw as they always did.
-export const LEGACY_ROUTES = {
-  acts: 3, prebossNodes: 9, bosses: 3, restsPerAct: 3,
-  hiddenTypes: ['event', 'fight', 'treasure', 'shop'], visibleTypes: ['rest', 'elite', 'boss'],
-  restFloors: [3, 6, 9], branchColumns: 3, minimumThreatFloor: 3, mapMode: 'fog', firstFloor: 'fight',
-  shopShare: 0.15, requirePrebossRest: true, maxBranches: 3, startNodeRefills: true,
-};
-// The bundle binds every routes key; null means absent, so the old content re-resolves with the new keys switched off.
-const { catalog, authors } = compileGameProfiles();
-const changed = structuredClone(catalog);
-changed.packs['ashen.core-content@2.0.0'].content.routes = { ...structuredClone(LEGACY_ROUTES), typeWeights: null, variedNeighbours: null, shopsPerBranch: null, forkPercent: null, crossLinkPercent: null };
-const profile = resolveGameAuthor(authors.core, changed);
+// A run saved before the visible-fork map keeps the routes content it was pinned with (tests/coreLegacyRoutes.mjs): maps built
+// from it must roll draw for draw as they always did.
+const profile = legacyCoreProfile();
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
 
