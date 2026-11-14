@@ -773,7 +773,7 @@ The intent shown is what the enemy does.
   - Exception: a shown move that became impossible (target gone, out of range with no way to close, unaffordable). The intent then changes visibly, as soon as it becomes impossible and during the player's turn; an enemy never swaps or refuses a shown move silently at act time.
   - If the shown move needs an unaffordable Advance and the enemy has an affordable range-closing move, that move replaces it at that moment.
 - **SP lost before acting** (Poise break or weakness, §4.6a). The queued plan is recomputed against the SP it will have.
-  - Moves it can no longer afford leave the plan, the earliest affordable ones stay in order, and the intent updates at once; if none is affordable it shows `?` (no move) for the turn.
+  - Moves it can no longer afford leave the plan, the earliest affordable ones stay in order, and the intent updates at once; if none is affordable it shows **Staggered** with no number for the turn (2026-11-14; it read `?` before).
   - Trimming picks nothing new, draws no `enemyAI` roll, and removes dropped moves from `movesHistory` (so `maxConsecutive` reads what will play).
 - **Reaction SP carries over.** The SP an enemy pays for a reaction during the player's turn is added to its `pendingStaminaLoss` as paid, so its next turn-start refill (max minus pending loss) is smaller by that amount. It is owed once (the stamina spent now only gates further reactions this turn). The plan is then trimmed as above.
   - The reaction's Advance surcharge (§4.6a) is owed the same way. A reaction or Advance in the enemy phase draws on that turn's own pool and carries nothing.
@@ -997,7 +997,7 @@ Version-2 combat expansion: [docs/combat-expansion-contract.md](docs/combat-expa
 Reaction prompts, the combat log and enemy-action presentation. Detailed contract (persistence, privacy, accessibility, responsive geometry): [docs/combat-reaction-contract.md](docs/combat-reaction-contract.md).
 
 **Reaction modal and log**
-- The reaction modal uses **Back, Play**; Back skips the offered reaction and resumes the incoming action. A combat-scoped, owned Reaction switch controls optional prompts.
+- The reaction modal uses **Skip, Play** (2026-11-14; the exit read Back before); Skip declines the offered reaction and resumes the incoming action. Its numbers are HP the player will lose (§17, *Plannable and quick turns*). A combat-scoped, owned Reaction switch controls optional prompts.
 - The right-side combat log unfolds in place, groups completed public actions by round, and supports Small, Medium and Large heights bounded below the menu controls.
 - Accuracy, contest, critical-hit, Intent-read perception, status buildup and status recovery rolls are logged as total vs DC ("Strike: 18 vs 9 · hit"). Dodge and Evade rows keep their sentences and gain an itemised receipt; range-distance rows keep their sentence alone. In Full detail mode each receipt is itemised (die, every bonus, the DC parts, the verdict) from the row's `rollReceipt`.
 
@@ -3308,6 +3308,8 @@ A card authored `contest: 'mental'` or `'physical'` (`schemas.js`, `validate.js`
 
 ### Accuracy, Evasion and Precision
 
+**Shipped Core 2 draws no hit roll** (`accuracy.hitRoll: false`, owner brief 2026-11-14; *Plannable and quick turns* below). The rest of this section governs a fight whose rules snapshot lacks that key or sets it true (a fight or run saved before the change).
+
 The attacker rolls d20 + Precision; the defender does not roll. Hit when the total is at least the defender's Evasion; natural 20 always hits, natural 1 always misses; advantage/disadvantage apply to the attacker's die.
 
 | Value | Formula |
@@ -3330,6 +3332,8 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 
 ### Perception and hit-chance display
 
+Shipped Core 2 rolls no Perception for intents and shows no hit chance (`perception.roll: false`, `accuracy.hitRoll: false`; *Plannable and quick turns*). The first two bullets govern a snapshot without those keys.
+
 - Perception: seeded `d20 + WIS` by the observer vs DC = 5 + target INT + target WIS + configured bonuses (default none).
 - Hit chance shows on each valid target while a card that can damage it or apply an effect to it is selected, regardless of Perception.
 - One tap or click selects a card; play needs a second tap or a target pick. One-tap play is an opt-in Settings switch, off by default.
@@ -3350,7 +3354,7 @@ The attacker rolls d20 + Precision; the defender does not roll. Hit when the tot
 - **Level Up** is not a Core 2 rest service (it was until 2026-11-14): earned attribute points are spent as the next bullet says. Where an older profile lists it, it spends an already-earned level, not the rest visit; the rest grants no level.
 - **Attribute points** are spent on the Core Victory receipt and the Armory character sheet through `allocateAttributePoint` (`src/model/levelup.js`), which neither heals nor uses up a rest visit; every other `applyLevelUp` caller stays rest-only, and the Level Up rest service stays.
   - Each attribute row shows its largest per-point gain (e.g. `+10 HP`), every gain in its tooltip, from `src/model/attributePointPreview.js`; the Rest card model carries the same `mainGain`.
-- **Victory receipt** shows only the Character bar (class-named); class-mastery and weapon/skill tracks are still paid and banked, notices acknowledged silently. Character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; older snapshot: 1).
+- **Victory receipt** (one screen with the card choice since 2026-11-14: *Plannable and quick turns*) shows only the Character bar (class-named); class-mastery and weapon/skill tracks are still paid and banked, notices acknowledged silently. Character XP is paid at `modules.progression.settings.characterXpMultiplier` (1.5; older snapshot: 1).
 - **Deck editing happens only at a rest site** (owner brief, 2026-11-14; `cards.editorWhere: "rest"`): the Rest screen carries a free **Edit deck** door that is not a service and does not spend the visit's pick. The Armory, character creation, the reward screen and combat open no deck editor. Acquiring a card is not editing: a card won at a reward door or bought in a shop may still go straight into the deck ("Add to deck") or into the collection, as before; the Armory's Deck tab shows the deck read-only. Equipment editing still happens at will outside combat, disabled in it. A profile with `editorWhere: "noncombat"` keeps the earlier rule (the deck is edited from the Armory at will). The Armory control outline is blue while it holds a new item, else black.
 - **No unlimited copies** (owner brief, 2026-11-14; `deck-training.unlimited: []`): a card's copies are the copies the run owns, and the editor mints nothing. A profile that still lists the `basicTraining` and `graduate` rules keeps §14.1's Adept copies.
 - Map node types and shops: §6, *Visible forks*. Reward groups: §15.1. Armor budget 3 + per-rarity bonus (default 0).
@@ -3427,24 +3431,50 @@ Core 2 only. Enemy levels 1–5; an enemy's stat budget follows the player's rul
 
 ### Core clarity, progression and editing amendment
 
-- **Core card face.** The damage number on a combat card face is what one hit does against a reference enemy, not the raw number.
+- **Core card face.** The damage number on a combat card face is the HP one hit will take from a reference enemy (*Plannable and quick turns*, rule 1; it was the hit before Block until 2026-11-14).
   - Reference: the aimed living enemy, else the frontmost living enemy; with none, or outside combat (deck view, rewards, shop, codex, smithing receipts), the raw number.
-  - It is the targeted preview's first hit from that enemy's state as the effect meets it (after the card's own earlier Poise damage). Includes Poise, Vulnerable, Weak, stance advantage, the target's defensive stance, Smash vs a defensive stance, and Ward when enabled; excludes Block and Barrier (and the bonus Smash gains from the target's Block).
-  - Only damage aimed at an enemy takes it; self and ally damage keep the raw number. A multi-hit card whose hits differ shows the same before-Block sequence.
-- **Multi-hit.** `5 × 3` is three contacts of 5 (15 before defenses and modifiers); a total never becomes each contact's base damage. Each contact resolves defenses, statuses and accuracy independently and offers its own eligible paid Counter (amends once-per-owner-cycle: a newly paid manual Counter may answer each contact; automatic Counter returns keep the owner-cycle limit). Unequal contacts show their sequence, not a uniform multiplier. Receipts match the revealed projection; uncertain results stay in its displayed bounds.
+  - Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
+- **Multi-hit.** `5 × 3` is three contacts of 5 (15 before defenses and modifiers); a total never becomes each contact's base damage. Each contact resolves defenses, statuses and accuracy independently and offers its own eligible paid Counter (amends once-per-owner-cycle: a newly paid manual Counter may answer each contact; automatic Counter returns keep the owner-cycle limit). Unequal contacts show their sequence, not a uniform multiplier. Receipts match the revealed projection.
 - **Boss action previews.** Revealed boss moves expose their payload as well as damage (Block, healing, statuses, card additions, charging) with readable descriptions. Formula-backed values are projected on detached state, consuming no RNG and selecting no move or executing a script. HP-triggered phase changes stay distinct from a selected move. Perception and concealment still govern unrevealed choices. Once played, the current or last action is inspectable.
 - **Enemy inspection.** Show solo enemies' current/max SP, authored deck or move-set composition (kept distinct) and public current/last action with costs and effects; never fabricate draw order or reveal an unrevealed choice.
 - **Card readability.** Target three concise effect lines.
-  - Hand-face rules shrink to the readable floor and show at one or two lines; three or more at the floor show the Inspect cue.
+  - Hand-face rules shrink to the readable floor (13 px effective since 2026-11-14) and show at one or two lines; three or more at the floor show the Inspect cue.
   - Text wraps in a fixed-size panel and shrinks its font, never stretching the panel or taking artwork space; keep a font floor and an in-panel inspection cue.
   - A standard Counter face says Gain X Block and Counter X; tag and inspection explain the mechanics and automatic Poise rider.
   - Inspection and full Rules keep every effect, amount, condition, duration.
   - Visible tags may carry repeated mechanic definitions, with prose retained when the explaining tag is unavailable.
 - **Opening and progression.** Core enables the existing intro flow and settings. New Core runs grow only the active class and weapons used (no armor, accessory or character-level progression), on the slow curves, with separate nonnegative class/weapon XP multipliers (default 1; older snapshot: 1). Crossing presentation stays on.
 - **Bounded existing-Core progression policy, version 1.** Core 2 (including older snapshots) stops future character-level XP and new character-level reward doors. Snapshot hashes, earned levels, attributes, XP ledger and earned pending rewards or unspent attribute points are preserved; pending claims are grandfathered until spent. It does not migrate a legacy or future non-Core profile, rewrite its combat rules, replay the intro mid-run, or grant rewards.
-- **Pacing controls.** Persisted, independent controls for the pause between combat steps (default 500 ms) and action/reaction animation step duration. A mobile-fast preset visibly sets both; manual edits remain possible. Speed multipliers and reduced motion compose. Report intentional pauses separately from input latency, main-thread stalls and processing time.
+- **Pacing controls.** Enemy turns use their own shorter timings (*Plannable and quick turns*, rule 5). Persisted, independent controls for the pause between combat steps (default 500 ms) and action/reaction animation step duration. A mobile-fast preset visibly sets both; manual edits remain possible. Speed multipliers and reduced motion compose. Report intentional pauses separately from input latency, main-thread stalls and processing time.
 - **Editing and archive boundaries.** Preserve the public launch doors and architecture layers. Editable source uses readable named icon identifiers and asset references (centralized legacy aliases may keep old data). Authored content/configuration stays authoritative, with Visual Studio editing recipes and validation commands. Archive code only after checking runtime, dynamic, tooling and test references; keep provenance and restoration instructions.
 - Mobile goal: at least 2× faster interactions, stretch 4× throughput; report baseline, device/emulation, action correctness and remaining stalls (a timing preset alone does not meet it).
+
+### Plannable and quick turns amendment
+
+Owner brief, 2026-11-14 ("make a turn plannable and quick"). Rules 1, 3 (display), 4 to 9 are presentation and apply to every Core 2 run, saved or new. Rule 2 and the intent read of rule 3 are keyed on new rule keys, so a fight or run saved before them keeps rolling.
+
+1. **One number per hit: the HP that will change.** The card face, the enemy intent, the floater, the reaction prompt and the inspector all read the same evaluator (`profileDamageReceipt`) at the same stage, `hpLoss`. This replaces the 2026-11-02 and 2026-11-03 rulings (face before Block; intent as the raw hit).
+   - **Card face:** the HP the reference enemy will lose from one hit now, after its defensive stance, Reflect, Block, Poise and Evade. Equal hits read `N × M`, unequal hits their sequence; a card that hits every enemy shows one number when all would lose the same, else `min–max`. Aiming at another enemy updates the face before the play is committed, by click, focus or drag.
+   - **Intent:** the HP the player will lose if the move resolved now, given the player's Block, Poise, stance and Evade; it changes as those change during the turn. A later attacker is priced after the earlier enemies' shown actions. Multi-hit keeps `× N` with per-hit HP.
+   - **Floater:** the HP lost. A hit that takes no HP shows "Blocked". No Poise or Block floater.
+   - **Reaction prompt:** the incoming action reads "Lose N HP" and each option the HP lost after it, with the option's real cost (a Counter's range cost included).
+   - **Inspector:** keeps its breakdown and ends on the face's number. A weakness not yet discovered is priced and its row reads "Unknown weakness".
+   - **Cost:** the Stamina and Mana on a face are what the play charges for the reference target, Advance included; what is deducted at commit equals what the face showed at commit. A Counter in hand shows no Advance (its range is paid when it answers).
+   - A plan cancelled by a Poise break reads "Staggered" with no number. Clicking or tapping the damage number selects the card; the inspector opens from the info badge, hover or long-press.
+   - *Falsify:* `tests/core-shown-equals-dealt.test.mjs` (152 seeded fights, four classes) fails when a hit's HP loss differs from the face or intent number, a floater differs from the HP lost, or the Stamina or Mana spent differs from the face cost.
+2. **Attacks hit** (`accuracy.hitRoll: false` in `content/source/fixCoreMechanics.json`). No d20 is drawn for a hit, so no attack by either side misses by chance and no hit chance is shown.
+   - **Evade is the only miss, and it is visible.** A target with an Evade stack (or a prepared Evade) cancels the next attack against it and spends one stack; a multi-hit attack is evaded hit by hit. The Evade card grants `accuracy.evadeStacksPerCard` (1) stack. The stack shows on the target and the aimed face reads the result.
+   - **Precision does nothing without a roll:** no Precision is granted on entering an offensive stance, no face prints an "Entry: Precision" line, and the four Core cards that granted it lose that effect. `core.guidingWhisper` and `base.evade` leave the reward pool (`rewards.eligibility.excludeCardIds`).
+   - A snapshot without the key keeps *Accuracy, Evasion and Precision* as written.
+3. **Every enemy move is shown, exactly** (`perception.roll: false`). At the start of each player turn every living enemy shows its move, its exact value by rule 1, its planned follow-ups and a readied Counter. Nothing is concealed and no Perception is rolled for the read; §4.9's hidden-intent clues apply only to a snapshot without the key. *Falsify:* `tests/core-intents-exact.test.mjs`, `tests/core-attacks-hit.test.mjs`.
+4. **Only destructive actions ask.** A tap commits; the hold or review dialog stays only for delete save, fresh profile, profile restore, removing a card at a shop, shrine level up, smith upgrade, extract and install, leaving a reward door with nothing taken ("Leave without taking a reward?"), and the Load and Quit Without Saving doors of §7. End Turn never asks: while a playable card remains the button changes colour (`end-turn--cards-left`). *Falsify:* `tests/confirm-only-destructive.test.mjs` pins the set.
+5. **Enemy turns are short.** Enemy playback uses `motion.enemyTurn` in `content/config/ui/presentation/actionPacing.json` (stage gap 100 ms, sprite rate 1.25, telegraph 250 ms, floater interval 375 ms, turn banner ×0.35); the player's own steps keep *Pacing controls*.
+   - Budgets from End Turn to a playable hand, median / max (`npm run probe:enemy-turn`): one enemy action 2.6 / 3.5 s, two 4.0 / 4.5 s, a non-damaging action 1.2 / 1.6 s. Measured before: 6.2, 8.2 and 4.6 s medians.
+   - A press during enemy playback finishes it, and the screen says "Tap to skip". The reaction window is kept: it opens only when the player holds a card that can answer, has no timer, and its exit reads "Skip".
+6. **Four clicks from the title to the first hand** on a fresh profile (budget in `tools/core-entry-fixture.mjs`, 8 inputs): New Game opens creation for the first slot (the slot picker returns once any slot holds a save); the Class step carries Begin, with Customise as the secondary door to Review; any key, click or tap skips the opening after 600 ms; a new run's single start node is preselected so the first press is Enter; Enter shows "Entering…" in the frame it is pressed.
+7. **One victory screen; victory to map in two clicks.** A won fight shows one door: the title, a spoils strip (Cinders gained and the new total, a smithing stone if one dropped, the Character bar, and "N points to spend" when attribute points are banked) and the card choice. Taking (select, then Add to deck or Add to library) or leaving (Skip, then confirm) goes straight on; no Continue. An armament keeps Equip now / Continue. Elite spoils, level notices and rank-ups stay separate doors, shown only with content. The spoils are recorded on the receipt when the fight ends, so a reload shows the same numbers and pays nothing twice. Nothing from the fight draws above a reward door's controls. *Falsify:* `tests/victory-one-screen.test.mjs`.
+8. **Sizes** (effective px, 1280×800 and 390×844; `npm run probe:text-size`). No visible text under 11. Hand and reward faces: effect text 13 or more, name 12, type label 11, cost 16; tag counts and the range chip show only on a hovered, focused, selected or inspected card. The player's HP in the field HUD and the enemy intent number are the two largest numbers on the combat screen (22 or more; no other number as large), with at most 8 number sizes. Every combat control on a phone is at least 44 px in both directions (`--tap-floor`); a smaller glyph extends its hit area.
+9. **Rest and header fixes.** Upgrade Card lists copies of a card at the same upgrade state as one row with a count, and lists a weapon-granted card disabled with "Upgrades with its weapon (Smith)". The run header's Cinders and HP update on the screen where an event, a dialogue or a won fight changes them.
 
 ### Reward inspection and earned-effect feedback
 
