@@ -1,5 +1,6 @@
 import { CharacterDisplayName } from '../../model/characterName.js';
 import { engravedIcon } from './engravedIcon.js';
+import { t } from '../strings.js';
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
 // The in-run overlay is intentionally narrow: Settings and Controls only.
@@ -294,7 +295,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       quickButton.className = 'subtle';
       quickButton.id = 'ov-quicknav';
       quickButton.title = 'Go to…';
-      quickButton.replaceChildren(engravedIcon('menu') || 'Menu');
+      quickButton.replaceChildren(engravedIcon('menu') || t('common.menu'));
       actions?.prepend(quickButton);
     } else if (quickNavMode() !== 'mirror') {
       quickButton?.remove();

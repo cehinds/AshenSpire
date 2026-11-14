@@ -3982,7 +3982,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
     if ($('#combat-armoury')) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row?.label || helpText('armouryTitle'))}</div>${esc(onArmoury ? helpText('armouryTest') : row?.tip || helpText('armoury'))}`);
     if (menuBtn) attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
+      `<div class="tt-title">${esc(t('common.menu'))}</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }

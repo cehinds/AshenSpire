@@ -281,7 +281,7 @@ export function wireRunHud(app, {
   if (armouryBtn && onArmoury && armouryRow) attachTooltip(armouryBtn, () => `<div class="tt-title">${esc(armouryRow.label)}</div>${esc(armouryRow.tip)}`);
   if (menuBtn) {
     attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      `<div class="tt-title">${esc(t('common.menu'))}</div>${esc(quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
