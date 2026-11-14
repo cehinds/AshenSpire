@@ -1081,9 +1081,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       setData(frame, 'targetHudLane', slot.lane === 0 ? 'left' : slot.lane === plan.rows - 1 ? 'right' : 'middle');
       if (slot.box) {
         const { left, top, width, height, skew = 0 } = slot.box;
+        // Field-relative CANVAS px (the plan's field-relative real px over the canvas fit): a scale-only resize runs
+        // no relayout, so nothing cached here may hold scaled real px. combatTargetHud draws it in a canvas-px viewBox.
+        const fit = CanvasBox().scale;
         setData(frame, 'targetHudCellPolygon', JSON.stringify([[left + skew * height / 2, top],
           [left + width + skew * height / 2, top], [left + width - skew * height / 2, top + height],
-          [left - skew * height / 2, top + height]]));
+          [left - skew * height / 2, top + height]].map(point => point.map(value => value / fit))));
         // Owner (2026-11-06): the mini HUD is as wide as its cell (the front edge, a parallelogram's width) and its contents
         // scale with it. Both are written here, once per layout pass, and read by the HUD's own placement and styles.
         setData(frame, 'cellWidth', width);

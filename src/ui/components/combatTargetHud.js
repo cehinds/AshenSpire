@@ -4,6 +4,7 @@ import { targetHudConfig, targetHudEnabled, miniHudScale, enemyHudPlacement, cre
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { combatantInfo } from './combatantOverhead.js';
 import { anchorLocalBox } from '../fx.js';
+import { CanvasBox } from '../viewViewport.js';
 import { reducedMotionRequested } from '../motion.js';
 import { refreshIconTray } from './iconTray.js';
 import { setVar, setStyle, setData, setAttr, markBuilt, morph } from '../domWrite.js';
@@ -373,7 +374,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const path = tile?.querySelector('[data-perspective-outline]');
       if (tile && path) tiles.set(id, { path, box: tile.getBoundingClientRect() });
     }
-    const viewBox = `0 0 ${fieldBox.width} ${fieldBox.height}`;
+    // The stage writes the cell polygons in field-relative canvas px, so the viewBox is the field in canvas px
+    // (the same at every scale of one canvas); the tile fallback below places in the same units.
+    const fit = CanvasBox().scale;
+    const viewBox = `0 0 ${fieldBox.width / fit} ${fieldBox.height / fit}`;
     if (cells.getAttribute('viewBox') !== viewBox) cells.setAttribute('viewBox', viewBox);
     const drawn = [];
     for (const id of tintIds()) {
@@ -401,8 +405,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
         cells.append(shape); continue;
       }
       const svg = document.createElementNS(cells.namespaceURI, 'svg');
-      svg.setAttribute('x', item.box.left - fieldBox.left); svg.setAttribute('y', item.box.top - fieldBox.top);
-      svg.setAttribute('width', item.box.width); svg.setAttribute('height', item.box.height); svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('x', (item.box.left - fieldBox.left) / fit); svg.setAttribute('y', (item.box.top - fieldBox.top) / fit);
+      svg.setAttribute('width', item.box.width / fit); svg.setAttribute('height', item.box.height / fit); svg.setAttribute('viewBox', '0 0 100 100');
       const shape = item.path.cloneNode();
       shape.setAttribute('fill', item.fill);
       shape.setAttribute('fill-opacity', item.opacity);
