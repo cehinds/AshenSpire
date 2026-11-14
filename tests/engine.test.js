@@ -2509,7 +2509,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       `a relabelled item type is refused by name — said ${JSON.stringify(said.slice(0, 160))}`);
     const piece = (createRegistries(renamed).equipment.armour || [])
       .find((p) => (p.itemTypes || []).some((t) => t.tag === 'item:armor'));
-    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armor',
+    eq(piece.itemTypes.find((t) => t.tag === 'item:armor').label, 'Armour',
       'and the stamp is what it was refused for disagreeing with');
     // Two derivations of one label, held to each other directly rather than
     // through the rows that happen to be shipped.
