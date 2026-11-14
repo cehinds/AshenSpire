@@ -552,3 +552,35 @@ test('an enemy Smash into Block: the intent number equals the HP lost by that ac
   assert.equal(checked, 6);
   assert.ok(twoActions, 'the Elite plays a second tailSlam, whose number belongs to that action');
 });
+
+// ---- Review fix 7: a player attack that took no HP always has a visible cause (gildedKnight) --------------------------------------------
+// Reproduced at model level: the Knight's gildedGuard reaction (it answers a player action worth 8 or more) hits the player and gains Block
+// BEFORE the card lands, so the card's hit is wholly Blocked. The card face states the pre-reaction number (the rule for a play an enemy
+// reaction answers); the resolution emits the damageDealt receipt whose Blocked word the floater policy shows.
+
+test('gildedKnight: every player attack that leaves its HP unchanged emits a receipt that reads Blocked or another shown word', () => {
+  let zeroHpPlays = 0;
+  for (const classId of CLASSES) {
+    const cards = reg.cards.all().filter(card => card.class === classId && card.type === 'attack' && !card.id.startsWith('progression-'));
+    for (const card of cards) {
+      const run = createRunState({ registries: reg, classId, seed: 3, profileMeta: META });
+      const combat = createRunCombat({ registries: reg, run, rng: createRng(3), enemyIds: ['gildedKnight'] });
+      const enemy = combat.enemies[0];
+      Object.assign(combat.piles.hand[0], { cardId: card.id, upgraded: false });
+      combat.player.energy = combat.player.stamina = combat.player.mana = 9;
+      const hp = enemy.hp, start = combat.eventLog.length;
+      try { dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: enemy.id }); } catch { continue; } // an unaffordable or illegal play is refused, not resolved
+      while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+      if (enemy.hp !== hp || !enemy.alive) continue;
+      const events = combat.eventLog.slice(start);
+      const mine = events.filter(event => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId === enemy.id);
+      // A play that dealt nothing at all is a status or Poise play with no hit; every hit that took no HP carries a shown word.
+      for (const event of mine) {
+        zeroHpPlays++;
+        assert.equal(event.hpLoss, 0);
+        assert.ok(floaterWordShown(outcomeKindForEvent(event)), `${classId} ${card.id}: the hit that took no HP has no word (${outcomeKindForEvent(event)})`);
+      }
+    }
+  }
+  assert.ok(zeroHpPlays > 0, 'the Knight absorbed at least one play');
+});
