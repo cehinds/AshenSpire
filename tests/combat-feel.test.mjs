@@ -284,7 +284,8 @@ test('a click during hit-stop clears the held attacker and flushes once without 
 test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([6], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    const contactAt = actionPacing().intentMs + actionPacing().wordMs + 100; tick(contactAt);
+    // The Counter starts at once (owner, 2026-11-14): no intent or word wait before its animation, only the 1 ms timer turn.
+    const contactAt = 100 + 1; tick(contactAt);
     assert.deepEqual(holds, [['actor', 60, 10000 + contactAt]], 'a counter holds contact before its separate target reaction');
     for (let i = 0; i < 100; i++) tick(20);
   });
@@ -293,7 +294,7 @@ test('an ordered counter holds its attacker on a qualifying HP hit', (t) => {
 test('a counter beat does not hold on an HP hit under 6', (t) => {
   drive(t, ({ start, tick, holds }) => {
     start([5], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' });
-    tick(actionPacing().intentMs + actionPacing().wordMs + 100);
+    tick(100 + 1);
     assert.equal(holds.length, 0, 'a counter hit of 5 HP does not hold');
     for (let i = 0; i < 100; i++) tick(20);
   });
