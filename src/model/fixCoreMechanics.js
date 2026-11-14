@@ -73,9 +73,23 @@ export function normalizeFixCoreRules(rules) {
   return out;
 }
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
+// Owner, 2026-11-14 (Wave 2.5): each stance has a natural benefit, in data. A missing block (a fight saved before this ruling) means no benefits.
+// Fields per stance: attack/prepared damageMultiplier; smash poiseDamageBonus; sweep splashFraction; counter blockMultiplier + hpReturnFraction;
+// defend blockMultiplier + poiseDamageTakenMultiplier; neutral extraDrawNextTurn. Logic: src/engine/stanceBenefits.js.
+const STANCE_BENEFIT_FIELDS = Object.freeze({ attack: ['damageMultiplier'], prepared: ['damageMultiplier'], smash: ['poiseDamageBonus'], sweep: ['splashFraction'],
+  counter: ['blockMultiplier', 'hpReturnFraction'], defend: ['blockMultiplier', 'poiseDamageTakenMultiplier'], neutral: ['extraDrawNextTurn'] });
+function validateStanceBenefits(rows) {
+  if (rows === undefined) return;
+  if (typeof rows !== 'object' || rows === null || rows.version !== 1) throw new Error('FixCore stanceBenefits requires version 1');
+  for (const [stance, row] of Object.entries(rows)) {
+    if (stance === 'version') continue;
+    const fields = STANCE_BENEFIT_FIELDS[stance];
+    if (!fields || typeof row !== 'object' || row === null || Object.entries(row).some(([key, value]) => !fields.includes(key) || !Number.isFinite(value) || value < 0)) throw new Error(`FixCore stanceBenefits.${stance} requires non-negative numbers for ${(fields || []).join(', ')}`);
+  }
+}
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','stanceBenefits',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
@@ -85,6 +99,7 @@ export function validateFixCoreRules(rules) {
   fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
   if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
   fractions('pierce', rules.pierce, Object.keys(FIXCORE_PIERCE_DEFAULTS));
+  validateStanceBenefits(rules.stanceBenefits);
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');

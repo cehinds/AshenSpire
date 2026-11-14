@@ -40,6 +40,32 @@
     "discount": 1,
     "minimumCost": 1
   },
+  "stanceBenefits": {
+    "version": 1,
+    "attack": {
+      "damageMultiplier": 1.2
+    },
+    "smash": {
+      "poiseDamageBonus": 0.5
+    },
+    "sweep": {
+      "splashFraction": 0.5
+    },
+    "counter": {
+      "blockMultiplier": 1.25,
+      "hpReturnFraction": 0.25
+    },
+    "defend": {
+      "blockMultiplier": 1.5,
+      "poiseDamageTakenMultiplier": 0.75
+    },
+    "prepared": {
+      "damageMultiplier": 1.25
+    },
+    "neutral": {
+      "extraDrawNextTurn": 1
+    }
+  },
   "accuracy": {
     "evasionVersion": 2,
     "baseAC": 1,
