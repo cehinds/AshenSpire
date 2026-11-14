@@ -761,7 +761,9 @@ function dropWaitingFloaters(layer) {
 export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
-  const residual = amount - blocked;
+  // The HP the hit took: a killing blow is not charged for its overkill (owner rule: the floater is the HP lost).
+  const taken = amount - blocked;
+  const residual = Number.isFinite(event?.hpRemoved) ? Math.min(taken, event.hpRemoved) : taken;
   // The whole hit as it reached the layers (the combat log's "for N"); the floater itself shows the HP lost, `residual`.
   const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached

@@ -139,7 +139,10 @@ function checkFloaters(events, tally, label) {
   for (const event of events) {
     if (event.type !== 'damageDealt') continue;
     const parts = guardHitFloatParts(event, 0);
-    if (event.hpLoss > 0) assert.equal(parts.damage?.text, `-${event.hpLoss}`, `${label}: the floater is the HP lost`);
+    // The HP actually lost: a killing blow's overkill is not part of it.
+    const lost = Number.isFinite(event.hpRemoved) ? Math.min(event.hpLoss, event.hpRemoved) : event.hpLoss;
+    if (lost > 0) assert.equal(parts.damage?.text, `-${lost}`, `${label}: the floater is the HP lost`);
+    else if (event.hpLoss > 0) assert.equal(parts.damage, null, `${label}: a hit on an already-empty target floats no number`);
     else {
       assert.equal(parts.damage, null, `${label}: a hit that cost no HP floats no number`);
       if ((event.blocked || 0) > 0 || (event.poiseAbsorbed || 0) > 0) assert.equal(floaterWordShown(outcomeKindForEvent(event)), 'blocked', `${label}: a hit absorbed whole shows the Blocked word ${JSON.stringify({ ...event, abilityBefore: undefined, cardTags: undefined, rangeOrigin: undefined, damageReceipt: undefined })}`);
@@ -583,4 +586,21 @@ test('gildedKnight: every player attack that leaves its HP unchanged emits a rec
     }
   }
   assert.ok(zeroHpPlays > 0, 'the Knight absorbed at least one play');
+});
+
+// ---- Review fix 8: a killing blow floats the HP lost, not the overkill -----------------------------------------------------------------
+
+test('a killing blow floats the HP the target had left, while the face keeps the full hit', () => {
+  const { combat, card } = fixture({ hand: 'core.strike' });
+  const enemy = combat.enemies[0];
+  enemy.hp = 3; enemy.maxHp = 400;
+  const face = faceOf(combat, card.instanceId, 'e1').perEnemy.get('e1');
+  assert.ok(face[0] > 3, `the face keeps the full hit (${face[0]})`);
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
+  const hit = combat.eventLog.slice(start).find(event => event.type === 'damageDealt' && event.targetId === 'e1');
+  assert.ok(hit.hpLoss > 3, 'the hit overkills');
+  assert.equal(hit.hpRemoved, 3);
+  assert.equal(guardHitFloatParts(hit, 0).damage.text, '-3', 'the floater is the 3 HP lost');
+  assert.equal(enemy.alive, false);
 });

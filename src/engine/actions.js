@@ -284,6 +284,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   target.block -= blocked;
   reconcileWardBlock(target);
   const hpLoss = dmg - blocked;
+  const hpBefore = target.hp;
   if (hpLoss > 0) target.hp -= hpLoss;
   creditKnowledgeImpact(ctx, target, dmg, tactical.smash && dmg > critical);
   ctx.emit('damageDealt', {
@@ -292,6 +293,7 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
     targetId: target.id,
     amount: dmg,
     blocked,
+    hpRemoved: Math.max(0, Math.min(hpLoss, hpBefore)), // the HP the hit actually took: a killing blow is not charged for its overkill
     // The card that landed it, for the readers that pay by the piece that lent
     // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
     ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
@@ -411,11 +413,12 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
       target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0));
     }
   }
+  const hpBefore = target.hp;
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
       ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
-    amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
+    amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss, hpRemoved: Math.max(0, Math.min(receipt.hpLoss, hpBefore)),
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.wardRouted ? { wardRouted: true } : {}), ...(receipt.pierceBypassed ? { pierced: receipt.pierceBypassed, piercePoise: receipt.piercePoise } : {}), ...(receipt.magicPoise ? { magicPoise: receipt.magicPoise } : {}), ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, ...(receipt.weaknesses?.length ? { weaknesses: receipt.weaknesses } : {}), blockRemaining: target.block,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
@@ -833,13 +836,14 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
       if (poise.value === 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
     }
   }
+  const hpBefore = target.hp;
   if (hpLoss) target.hp -= hpLoss;
   // From here `amount` is what the hit did after Poise, as it is after Ward; the log adds each layer back.
   amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked: blocked + magicBlocked, wardResisted: resisted });
   // `amount` already excludes the magic Block soaked, so the event adds it back: amount - blocked is the HP actually lost.
-  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: amount + magicBlocked, blocked: blocked + magicBlocked, wardResisted: ward,
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: amount + magicBlocked, blocked: blocked + magicBlocked, wardResisted: ward, hpRemoved: Math.max(0, Math.min(hpLoss, hpBefore)),
     ...(fixCoreEnabled(ctx) ? { damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
       incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
       blocked: blocked + magicBlocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
