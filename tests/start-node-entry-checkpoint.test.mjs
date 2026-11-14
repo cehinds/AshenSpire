@@ -55,7 +55,7 @@ function fixture({ full = false, refillEnabled = true } = {}) {
   vm.runInContext([
     declaration(grace, 'refillFlaskCharges'),
     declaration(refill, 'applyNodeRefill'),
-    declaration(main, 'enterNode'), declaration(main, 'startFight'),
+    declaration(main, 'enterNode'), declaration(main, 'afterEntryPaint'), declaration(main, 'startFight'),
     declaration(main, 'startFightNow'),
     entry.slice(0, checkpointEnd) + '  recordEntered();\n}',
   ].join('\n'), context);
