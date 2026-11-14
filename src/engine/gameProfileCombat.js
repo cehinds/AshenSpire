@@ -70,7 +70,8 @@ function reflectApplies(target, source, carrier, profile) {
   if (carrier?.reflectedHit || carrier?.counterReturnAttack || carrier?.proposalReactive) return false;
   return !(profile?.traits?.includes('unreflectable') || profile?.combatTraits?.unreflectable === true || (Array.isArray(profile?.combatTraits) && profile.combatTraits.includes('unreflectable')) || (carrier?.tags || []).includes(mechanics.reflect.unreflectableTag));
 }
-export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true } = {}) {
+// `forecast`: a preview of an attack that will certainly be avoided (Evade, out of range, hit roll off) prices 0 HP, as the play will; the landed receipt never sets it.
+export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { roll = null, proposal = true, forecast = false } = {}) {
   const effects = configuredModule(ctx, 'effects');
   const stances = configuredModule(ctx, 'stances');
   const defenses = configuredModule(ctx, 'defenses');
@@ -116,7 +117,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
-  for (const row of weaknesses) if (row.effect === 'damage') raw = transition(`weakness:${row.to}`,weaknessLabel(row.to),raw,raw*(1+row.amount/100),'offense',1+row.amount/100);
+  for (const row of weaknesses) if (row.effect === 'damage') raw = transition(`weakness:${row.hidden ? 'unknown' : row.to}`,weaknessLabel(row.to,row.hidden),raw,raw*(1+row.amount/100),'offense',1+row.amount/100);
   if (!modern) raw=Math.max(0,Math.floor(raw));
   // An ally's Guard interception lowers `raw` here; kept so the displayed raw hit can add it back (Guard is a defense, owner 2026-11-04).
   let guardIntercepted = 0;
@@ -143,8 +144,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // Owner 2026-11-01: Evade is a tag and a status, not a stance, so no stance rolls the configured hit chance any more.
   let hitChance = 1;
   hitChance=targeting.unavoidable ? 1 : Math.max(0.05,Math.min(1,hitChance+targeting.accuracyDelta/100));
-  if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier)?.hitChance ?? 100) / 100;
-  const evaded = roll !== null && roll >= hitChance;
+  if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier, forecast ? { assumeInRange: true } : {})?.hitChance ?? 100) / 100;
+  const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
   let smashBlockBonus = 0;
   if (smashRule && !evaded && target) {
@@ -262,8 +263,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}),
-    hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
+    hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
+    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,

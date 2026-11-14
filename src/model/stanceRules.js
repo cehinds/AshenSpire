@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreReactionRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreReactionRules, FixCoreHitRollOff } from './fixCoreMechanics.js';
 import { fixCoreRules } from './fixCoreRulesCache.js';
 import { stanceRules } from '../content/stanceRules.js';
 import { cardPreparationCategory } from './cardClassification.js';
@@ -143,7 +143,9 @@ export function stanceEntryBonuses(carrier, ctx = null) {
   const evadeTagged = carrier.stanceTrigger?.stance === 'evade' || profile.stanceTrigger?.stance === 'evade' || profile.maneuver === 'evade';
   // Core 2 reads the entry grant from its own rules (the Evade card's evadeStackBase: 3, or a resumed fight's snapshot value);
   // the global stanceRules.evadeStacks stays 1 for the non-Core expanded path.
-  return { precision: offensive ? cfg.offensivePrecision : 0, evade: auxiliaryEvade || evadeTagged ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
+  // Owner, 2026-11-14: with the hit roll off Precision does nothing, so entering an offensive stance grants none (a fight with the roll on keeps it).
+  const precisionGranted = offensive && !(fixCoreEnabled(ctx) && FixCoreHitRollOff(fixCoreRules(ctx)));
+  return { precision: precisionGranted ? cfg.offensivePrecision : 0, evade: auxiliaryEvade || evadeTagged ? (fixCoreEnabled(ctx) ? fixCoreRules(ctx).accuracy.evadeStackBase : cfg.evadeStacks) : 0,
     block, barrier: amount - block };
 }
 

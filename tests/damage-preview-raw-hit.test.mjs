@@ -8,9 +8,8 @@ import { createCombat, previewIntent } from '../src/engine/combat.js';
 import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { combatIntentPresentation } from '../src/ui/models/CombatIntentModel.js';
 
-// Owner, 2026-11-03: a damage preview shows the actual hit. Only stances, statuses (Strength, Weak, Vulnerable) and
-// damage-type weakness/resistance may change it; the defender's Block, Poise, Ward, Barrier, Counter, Reflect,
-// defensive stance, Evade/AC never do. Display only: real HP loss is unchanged.
+// Owner, 2026-11-14 (supersedes 2026-11-03): an enemy intent shows the HP the player will lose if the move resolved now, after the
+// player's Block, Poise, Ward, Reflect, stance and Evade; it moves as that state moves. The receipt still carries `rawHit` (the pre-defence hit).
 function fixture() {
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -28,31 +27,43 @@ const shown = ({ combat, enemy }) => {
   return { intent, label: intent.projectedDamage.label, part: combatIntentPresentation(intent).parts[0] };
 };
 
-test('intent shows the raw hit whatever the player defends with', () => {
+test('intent shows the HP the player will lose, and follows the player\'s defences', () => {
   const f = fixture();
   const base = shown(f);
   assert.equal(base.intent.projectedDamage.max, base.intent.projectedDamage.min);
-  const raw = base.intent.projectedDamage.max;
-  assert.ok(raw > 0);
+  const open = base.intent.projectedDamage.max;
+  assert.ok(open > 0);
   const { combat } = f;
+  assert.equal(previewIntent(combat, f.enemy.id).hitDamages[0], open, 'previewIntent quotes the same figure');
+  assert.equal(previewIntent(combat, f.enemy.id).hpLoss, open, 'and it is the HP lost');
+  combat.player.block = 5;
+  assert.equal(shown(f).label, String(open - 5), 'Block 5 takes 5 off');
+  assert.equal(previewIntent(combat, f.enemy.id).hitDamages[0], open - 5);
   combat.player.block = 400;
-  assert.equal(shown(f).label, String(raw), 'Block');
+  assert.equal(shown(f).label, '0', 'Block soaks the whole hit');
   combat.player.block = 0;
   combat.player.persistentPoise = { value: 400, max: 400 };
-  assert.equal(shown(f).label, String(raw), 'Poise');
-  combat.player.persistentWard = { value: 400, max: 400 };
-  combat.player.statuses = { ...combat.player.statuses, ward: { stacks: 5 } };
-  assert.equal(shown(f).label, String(raw), 'Ward');
-  delete combat.player.persistentWard; delete combat.player.persistentPoise; delete combat.player.statuses.ward;
+  assert.ok(Number(shown(f).label) < open, 'Poise absorbs part of it');
+  delete combat.player.persistentPoise;
   combat.player.reflectStacks = 3;
-  assert.equal(shown(f).label, String(raw), 'Reflect');
+  assert.ok(Number(shown(f).label) < open, 'Reflect cuts it');
   delete combat.player.reflectStacks;
   combat.player.combatStance = { camp: 'physical', maneuver: 'defend', range: 'melee' };
-  assert.equal(shown(f).label, String(raw), 'Defend stance');
-  combat.player.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee' };
-  combat.player.block = 20;
-  assert.equal(shown(f).label, String(raw), 'Counter stance with Block');
-  assert.equal(previewIntent(combat, f.enemy.id).hitDamages[0], raw, 'previewIntent quotes the same raw hit');
+  assert.ok(Number(shown(f).label) <= open, 'a Defend stance never raises it');
+  combat.player.combatStance = { camp: 'physical', maneuver: 'neutral', range: 'melee' };
+  combat.player.statuses = { ...combat.player.statuses, evade: { stacks: 1 } };
+  assert.equal(shown(f).label, '0', 'one Evade stack cancels the single hit');
+});
+
+test('Evade is spent one stack per hit across a multi-hit intent', () => {
+  const f = fixture();
+  f.enemy.intent = { ...f.enemy.intent, hits: 3 };
+  const open = shown(f).intent.projectedDamage.max;
+  f.combat.player.statuses = { ...f.combat.player.statuses, evade: { stacks: 1 } };
+  const one = shown(f).intent.projectedDamage.max;
+  assert.equal(one, open * 2 / 3, 'one hit of three is evaded');
+  f.combat.player.statuses = { ...f.combat.player.statuses, evade: { stacks: 3 } };
+  assert.equal(shown(f).intent.projectedDamage.max, 0, 'three stacks cancel all three hits');
 });
 
 test('intent still changes with the attacker\'s statuses and the defender\'s Vulnerable', () => {
@@ -65,13 +76,12 @@ test('intent still changes with the attacker\'s statuses and the defender\'s Vul
   assert.ok(Number(shown(f).label) < raw, 'Weak on the attacker lowers the shown hit');
 });
 
-test('the raw hit is display only: real HP loss still honours Block', () => {
+test('the shown figure is the real HP loss', () => {
   const f = fixture();
-  const raw = Number(shown(f).label);
   f.combat.player.block = 400;
   const read = previewIntent(f.combat, f.enemy.id);
-  assert.equal(read.hitDamages[0], raw);
-  assert.equal(read.hpLoss, 0, 'resolution is unchanged');
+  assert.equal(read.hitDamages[0], 0);
+  assert.equal(read.hpLoss, 0);
 });
 
 test('rawHit on the receipt carries damage-type weakness but not Block or Poise', async () => {

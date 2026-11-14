@@ -91,3 +91,10 @@ test('glyph words (Cast, Guard, Stun) are hidden; allowlisted words still show',
   setFloaterPolicyEnabled(false);
   try { assert.equal(floaterGlyphShown('Cast'), true); } finally { setFloaterPolicyEnabled(true); }
 });
+
+// Owner, 2026-11-14: a hit's floating number is the HP it cost, never the hit before Block, Poise, Ward or Barrier.
+test('the damage floater is the HP lost: Block and Poise never add to it, and a hit that cost no HP floats no number', () => {
+  assert.equal(guardHitFloatParts({ amount: 12, blocked: 3, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'amount is the HP lost plus the Block spent; Poise is already out of it');
+  assert.equal(guardHitFloatParts({ amount: 9, blocked: 0, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'Poise absorbed 3 of a 12 hit: -9, not -12');
+  assert.equal(guardHitFloatParts({ amount: 5, blocked: 5, poiseAbsorbed: 4 }, 100).damage, null, 'fully absorbed: no number');
+});

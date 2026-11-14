@@ -458,8 +458,6 @@ const KNOWN = {
   ],
   'src/ui/components/damageReceipt.js': [
     ["'pointermove'", 'forwards hover only from hand hit lanes to their numeric damage inspectors; renders public engine receipts without combat actions'],
-    ["'pointerdown'", 'stops the hand hold/drag/play owner when a damage inspector is touched; does not dispatch an action'],
-    ["'click'", 'forwards a native inspection click through the hand lane; opens the same tooltip without playing the card (tests/fixcore-combat-ui.browser.mjs)'],
   ],
   'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],

@@ -1,6 +1,5 @@
-// Owner ruling 2026-11-03 (supersedes 2026-10-28): a Core combat card's damage number is the actual hit, changed only by stances,
-// statuses (Vulnerable/Weak/Strength) and damage-type weakness/resistance. The enemy's Poise, Block, Ward and Barrier are never
-// subtracted from the number shown; the real HP loss still is (the 'hit does' assertions below).
+// Owner ruling 2026-11-14 (supersedes 2026-11-02 and 2026-11-03): a Core combat card's damage number is the HP the reference target will
+// lose from one hit, after its defensive stance, Reflect, Block, Poise and Evade. Outside combat (rawFace) the card keeps its raw number.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -30,23 +29,23 @@ function fight({ classId = 'reaver', cardId = 'strike', enemies = [{}] } = {}) {
 }
 const damageRow = (combat, id, target) => previewCard(combat, id, target).values.find(v => v.op === 'damage');
 
-test('Strike against a Poise enemy: the face is the raw 12 and the hit still does 9', () => {
+test('Strike against a Poise enemy: the face is the 9 HP the hit does', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }] });
   const enemy = combat.enemies[0];
   primeAccuracyRolls(combat);
-  assert.equal(damageRow(combat, id).faceValue, 12, 'untargeted face');
-  assert.equal(damageRow(combat, id, enemy.id).faceValue, 12, 'targeted face');
+  assert.equal(damageRow(combat, id).faceValue, 9, 'untargeted face');
+  assert.equal(damageRow(combat, id, enemy.id).faceValue, 9, 'targeted face');
   dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
   assert.equal(500 - enemy.hp, 9);
 });
 
 // Magic hits Poise first, 1:1 (owner, 2026-10-31): the face is the raw number less the Poise it meets, not x0.75.
-test('Arcane Spark: face stays the raw 11 against a Poise enemy', () => {
+test('Arcane Spark: the face is the raw 11 less the Poise it meets, 1:1', () => {
   const { combat, id } = fight({ classId: 'starseer', cardId: 'starSpark', enemies: [{ poise: 4 }] });
   combat.player.ratings = { ...combat.player.ratings, pr: (combat.player.ratings?.pr || 0) + 1 }; // lifts the raw face from 10 to 11
   const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage').faceValue;
   assert.equal(raw, 11);
-  assert.equal(damageRow(combat, id).faceValue, 11);
+  assert.equal(damageRow(combat, id).faceValue, 7, '4 Poise absorbed 1:1');
 });
 
 test('no Poise and no defence: the face is the raw number', () => {
@@ -54,11 +53,11 @@ test('no Poise and no defence: the face is the raw number', () => {
   assert.equal(damageRow(combat, id).faceValue, 12);
 });
 
-test('Block and Poise are never subtracted from the face or the targeted quote', () => {
+test('Block and Poise are subtracted from the face and the targeted quote alike', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10, block: 5 }] });
   const row = damageRow(combat, id, combat.enemies[0].id);
-  assert.equal(row.faceValue, 12, 'face ignores Block and Poise');
-  assert.equal(row.value, 12, 'the targeted quote ignores Block and Poise');
+  assert.equal(row.faceValue, 5, 'Block 5 leaves 7 of the 12, Poise then cuts it to 5');
+  assert.equal(row.value, row.faceValue, 'the targeted quote is the face');
 });
 
 test('Vulnerable is part of the face', () => {
@@ -71,10 +70,10 @@ test('Vulnerable is part of the face', () => {
 test('two enemies with different defences: selecting each shows that enemy\'s figure; no selection uses the frontmost', () => {
   const { combat, id } = fight({ enemies: [{ poise: 10 }, {}] });
   const [a, b] = combat.enemies;
-  assert.equal(damageRow(combat, id).faceValue, 12, 'frontmost has Poise, which the quote ignores');
-  assert.equal(damageRow(combat, id, a.id).faceValue, 12);
+  assert.equal(damageRow(combat, id).faceValue, 9, 'the frontmost enemy has Poise');
+  assert.equal(damageRow(combat, id, a.id).faceValue, 9);
   assert.equal(damageRow(combat, id, b.id).faceValue, 12);
-  assert.equal(damageRow(combat, id, a.id).value, 12, 'face equals the targeted preview');
+  assert.equal(damageRow(combat, id, a.id).value, 9, 'face equals the targeted preview');
   assert.equal(damageRow(combat, id, b.id).value, 12);
 });
 
@@ -94,7 +93,7 @@ test('self-target damage keeps the raw face: the player loses the full amount', 
   assert.equal(self.faceValue, raw.faceValue, 'raw, not cut by the enemy\'s Poise');
 });
 
-test('a Poise-draining card: every damage face equals the targeted row (no Block), later hits see the drained state', () => {
+test('a Poise-draining card: every damage face equals the targeted row, later hits see the drained state', () => {
   const { combat, id } = fight({ classId: 'starseer', cardId: 'astralCleave', enemies: [{ poise: 10 }] });
   applyStatus(combat, combat.player, 'starstoneCharge', 1);
   const aimed = previewCard(combat, id, combat.enemies[0].id).values.filter(v => v.op === 'damage');
@@ -102,27 +101,28 @@ test('a Poise-draining card: every damage face equals the targeted row (no Block
   for (const row of aimed) assert.equal(row.faceValue, row.hitDamages[0], 'face equals the targeted first hit');
   combat.enemies[0].block = 4;
   const blocked = previewCard(combat, id, combat.enemies[0].id).values.filter(v => v.op === 'damage');
-  blocked.forEach((row, i) => assert.equal(row.faceValue, aimed[i].faceValue, 'Block does not move the face'));
+  blocked.forEach((row, i) => assert.equal(row.faceValue, row.hitDamages[0], 'the face still equals the targeted first hit'));
+  assert.ok(blocked.some((row, i) => row.faceValue < aimed[i].faceValue), 'Block lowers the face');
 });
 
-test('an X-hit card with no energy still faces the raw number, Poise ignored', () => {
+test('an X-hit card with no energy still faces the number against the frontmost enemy', () => {
   const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 10 }] });
   combat.player.energy = 0; combat.player.stamina = 0;
   const row = previewCard(combat, id).values.find(v => v.op === 'damage');
   const raw = previewCard(combat, id, undefined, undefined, { rawFace: true }).values.find(v => v.op === 'damage').faceValue;
   assert.equal(row.hits, 0, 'zero hits');
-  assert.equal(row.faceValue, raw, 'a spell\'s Poise is not subtracted');
+  assert.equal(row.faceValue, raw - 10, 'a spell meets Poise 1:1');
 });
 
 test('an aimed enemy that died falls back to the frontmost living enemy', () => {
   const { combat, id } = fight({ enemies: [{}, { poise: 10 }] });
   const [a, b] = combat.enemies;
   a.alive = false; a.hp = 0;
-  assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, 12);
-  assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, 12);
+  assert.equal(previewCard(combat, id, a.id).values.find(v => v.op === 'damage').faceValue, 9, 'a dead aim falls back to b, who has Poise');
+  assert.equal(previewCard(combat, id, b.id).values.find(v => v.op === 'damage').faceValue, 9);
 });
 
-test('the rendered face sequence and total are the before-Block ones (cardFaceLines and combatCardSummary)', async () => {
+test('the rendered face sequence and total are the hits after Block and Poise (cardFaceLines and combatCardSummary)', async () => {
   const { cardFaceLines } = await import('../src/model/cardFaceText.js');
   const { combatCardSummary } = await import('../src/model/playingCard.js');
   const { combat, id } = fight({ classId: 'starseer', cardId: 'supernova', enemies: [{ poise: 10, block: 5 }] });
@@ -131,7 +131,7 @@ test('the rendered face sequence and total are the before-Block ones (cardFaceLi
   const row = preview.values.find(v => v.op === 'damage');
   assert.equal(row.hits, 3);
   assert.ok(row.faceHitDamages.some(n => n !== row.faceHitDamages[0]), 'the hits differ');
-  assert.notDeepEqual(Array.from(row.hitDamages), Array.from(row.faceHitDamages), 'Block changes the targeted hits');
+  assert.deepEqual(Array.from(row.hitDamages), Array.from(row.faceHitDamages), 'the targeted hits are the face hits');
   const want = row.faceHitDamages.join(' + ');
   const total = row.faceHitDamages.reduce((a, b) => a + b, 0);
   const strip = h => h.replace(/<[^>]+>/g, '');

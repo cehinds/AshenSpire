@@ -762,8 +762,7 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
-  // The whole hit as it reached the layers. `event.amount` is what is left AFTER Barrier, Ward and Poise,
-  // so the floater reads the same sum the combat log does (owner, 2026-11-02: show the actual hit).
+  // The whole hit as it reached the layers (the combat log's "for N"); the floater itself shows the HP lost, `residual`.
   const full = hitAsLayered(event);
   // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
@@ -788,11 +787,11 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    // The number floats the FULL hit before Block / Poise / Ward / Barrier; the Block badge drops by the guard
-    // on its own. `damage` stays null for a hit that cost no HP so the flinch, shake and outcome words key off
-    // HP loss as before; `fullHit` is the number a guarded hit that cost no HP floats (beside BLOCKED or Pierced).
+    // Owner, 2026-11-14: the floating number is the HP the hit cost (what the card face, the intent and the HP bar agree on), never the
+    // hit before Block, Poise, Ward or Barrier. `damage` stays null for a hit that cost no HP, which shows its outcome word instead;
+    // `fullHit` is the unsigned pre-layer figure a guarded hit that cost no HP carries (beside BLOCKED or Pierced; the policy hides it).
     full,
-    damage: residual > 0 ? { text: `-${full}`, cls: dmgClass(full, targetMaxHp) } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
     // Unsigned and not `dmg`: no HP was lost, so it must not read as HP loss (guard colour, damage size tier).
     fullHit: full > 0 ? { text: String(full), cls: `blk ${dmgClass(full, targetMaxHp).replace(/^dmg\s*/, '')}`.trim() } : null,
   };
@@ -1585,12 +1584,13 @@ export function outcomeKindForEvent(e = {}) {
   if (e.immune && !(Number(e.amount) > 0)) return 'immune';
   const parts = guardHitFloatParts(e);
   if (parts.residual > 0) return null; // HP damage: the per-layer floats show it
-  if (parts.pierced) return null; // a pierced hit keeps its floats (Pierced N beside Block and Poise), not a lone BLOCKED word
   if (parts.blocked > 0) return 'blocked';
   // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
   // keeps its BREAK callout and its number, as it did before.
   if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
   if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
+  // A hit that Poise alone absorbed whole cost no HP: it reads as the same fully-absorbed word, not as silence.
+  if (parts.amount === 0 && (parts.poise || parts.magicPoise)) return 'blocked';
   return null;
 }
 
@@ -1786,7 +1786,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.damage) {
             // The tier is the hit's share of the target's max HP when the screen can say it.
             const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
-            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.full, maxHp));
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp));
           }
         },
       };

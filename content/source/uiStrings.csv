@@ -91,6 +91,7 @@ combat.reaction.help,,,Choose a card to play before this action resolves. Skip l
 combat.reaction.play,,Play,,
 combat.reaction.skipCost,,Skip: take {amount},,
 combat.reaction.upcast,,Upcast {tier},,
+combat.reaction.loseHp,,Lose {amount} HP,,
 combat.reaction.sp,,{amount} SP,,
 combat.reaction.autoCounter,,Counter (no card),,
 combat.reaction.mp,,{amount} MP,,
@@ -1366,6 +1367,7 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "knowledge.save.retry","","Retry saving enemy knowledge","",""
 "knowledge.save.retained","","Enemy learning is retained and waiting to be saved.","",""
 "combat.intent.partial","","{stance} ?","",""
+"combat.intent.staggered","","Staggered","",""
 "combat.intent.retreating","","Retreating","",""
 "combat.intent.advancing","","Advancing","",""
 # ---- the lookup's own developer messages (src/ui/strings.js). Read without calling resolve(), so an unknown id cannot recurse.

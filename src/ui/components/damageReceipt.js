@@ -117,15 +117,8 @@ function routeHandDamageInspection() {
     hovered = next;
     hovered?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: event.pointerType || 'mouse', clientX: event.clientX, clientY: event.clientY }));
   }, true);
-  document.addEventListener('pointerdown', event => {
-    if (damageNumberUnderLane(event)) event.stopImmediatePropagation();
-  }, true);
-  document.addEventListener('click', event => {
-    const number = damageNumberUnderLane(event);
-    if (!number) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    number.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  }, true);
+  // Owner, 2026-11-14: a press or click on a damage number is a press on the card (it selects it); the inspector opens from hover,
+  // keyboard focus, the touch long-press and the card's info badge, never from the click, so nothing here swallows pointerdown or click.
 }
 
 /** Mouse, focus and touch share the exact same engine calculation. */
@@ -144,12 +137,10 @@ export function bindDamageReceipt(card, preview) {
     node.setAttribute('aria-label', `${node.textContent}. Inspect damage calculation`);
     attachTooltip(node, html);
     const inspect = event => {
-      event.stopPropagation();
-      if (event.type === 'keydown') { if (!['Enter', ' '].includes(event.key)) return; event.preventDefault(); }
+      if (!['Enter', ' '].includes(event.key)) return;
+      event.stopPropagation(); event.preventDefault();
       showTooltipFor(node, html(), { intent: 'above', align: 'center' });
     };
-    node.addEventListener('pointerdown', event => event.stopPropagation());
-    node.addEventListener('click', inspect);
     node.addEventListener('keydown', inspect);
   }
 }

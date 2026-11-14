@@ -120,7 +120,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   // Target bypasses Evasion only; its spell still needs sufficient reach.
   const rangeContact = Engagement.rangeHitContact(ctx, source, target, carrier);
-  const inRange = rangeContact ? rangeContact.inRange : override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
+  // `assumeInRange` (a forecast): the Advance the play pays closes the distance, so a preview prices the hit as if it will connect; only Evade can cancel it.
+  const inRange = options.assumeInRange ? true : rangeContact ? rangeContact.inRange : override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
   const maneuver = effectiveManeuver({ combatProfile: profile, mirrors: carrier?.mirrors });
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);

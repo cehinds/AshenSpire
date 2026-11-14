@@ -4,6 +4,7 @@ import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
 // roots. Read cyclic engine exports when invoked, never during initialization.
 import * as Matchups from './combatMatchups.js';
+import * as Counter from './counterRule.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
@@ -139,6 +140,12 @@ export function previewAttackerView(state, source) {
   return { attacker, previewCtx: bindDetachedAttacker(state.previewCtx, source, attacker) };
 }
 
+/** A hit avoided by Evade spends one stack, as live resolveCertainHit does, so a later hit of the same action meets one stack fewer. Detached only. */
+export function SpendPreviewEvade(defender) {
+  const evade = defender?.statuses?.evade;
+  if (evade?.stacks > 0) defender.statuses = { ...defender.statuses, evade: { ...evade, stacks: evade.stacks - 1 } };
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -150,17 +157,31 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     if (local.attackerSource !== source) { local.attackerSource = source; local.attacker = cloneDetachedAttacker(source); }
     const attacker = local.attacker;
     const previewCtx = bindDetachedAttacker(local.previewCtx, source, attacker);
+    // A target holding a Counter that beats this hit adds Block to itself before the hit is absorbed (SPEC §17), as applyProfileDamage does:
+    // the face names the HP the play will cost, so the preview grants that Block too. An intent's own state has already granted it (counterBlocked).
+    const counterPlan = defender?.combatCounter && fixCoreEnabled(ctx) && !local.counterBlocked && defender !== source && defender.kind !== source?.kind
+      ? Matchups.previewTacticalAction(previewCtx, attacker || source, defender, carrier, Array.from({ length: Math.max(0, Math.floor(hits)) }, () => ({ amount: base }))) : null;
+    let counterAnswered = false;
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier);
+      if (counterPlan && !counterAnswered && !Counter.counterReturnSpent(defender)) {
+        const probe = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
+        const bonus = Counter.counterBlockBonus(previewCtx, counterPlan, hit, probe.damageReceipt?.hits?.[0]?.incoming);
+        defender.block = (defender.block || 0) + Matchups.CounterBlockGrant(previewCtx, defender, bonus);
+        // With a per-hit reaction policy the Counter answers the first covered hit, so it adds Block to that hit only.
+        if (bonus > 0 && previewCtx.reactionRules?.contactPolicy === 'perHit') counterAnswered = true;
+        // A Counter that answered is used up for whatever acts after this action in the same detached state.
+        if (bonus > 0) defender.combatCounter = { ...defender.combatCounter, charges: 0 };
+      }
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
-      if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
+      if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt); if (receipt.evaded) SpendPreviewEvade(defender); }
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
       if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
-    // Owner, 2026-11-03: the quoted hit is the raw hit (receipt.rawHit), changed only by stances, statuses and damage-type weakness/resistance,
-    // never by the defender's defenses (Block, Poise, Ward, Barrier, Counter, Reflect, Evade/AC). hpLoss stays the real, resolved figure.
+    // Owner, 2026-11-14: the quoted hit is the HP the target will lose from it (receipt.hpLoss): after its defensive stance, Reflect, Block,
+    // Poise and Evade, carried hit to hit through the detached defender. Supersedes the 2026-11-02 and 2026-11-03 rulings.
     const modern = fixCoreEnabled(ctx);
-    const shown = receipt => modern ? receipt.rawHit : receipt.amount;
+    const shown = receipt => modern ? receipt.hpLoss : receipt.amount;
     const rawTotal = receipts.reduce((sum, receipt) => sum + shown(receipt), 0);
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
       damage: (receipts[0] && shown(receipts[0])) || 0, hits: receipts.length,

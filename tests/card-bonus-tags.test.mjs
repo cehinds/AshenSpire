@@ -10,13 +10,18 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { cardSideTags, cardTagRailHtml } from '../src/ui/components/cardTagSymbols.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/dom.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
+import { legacyRules } from './legacyHitRules.mjs';
+import { stanceEntryBonuses } from '../src/model/stanceRules.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const legacy = createRegistries(contentBundle);
 const definition = id => playingCardDefinition(core, { cardId: id });
 const text = lines => lines?.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
-const faceWith = (def, tags, preview = null, reg = core) => cardFaceLines(def, preview, reg, null, {
+// A fight created before the 2026-11-14 ruling snapshots rules without `accuracy.hitRoll`: it still grants and prints the stance-entry Precision.
+const oldFight = { fixCoreRules: legacyRules(fixCoreMechanics) };
+const faceWith = (def, tags, preview = null, reg = core, rules = null) => cardFaceLines(def, preview, reg, rules, {
   representedEffects: tags.flatMap(tag => tag.representedEffects || []),
   representedEntry: tags.flatMap(tag => tag.representedEntry || []),
   representedRules: tags.flatMap(tag => tag.representedRules || []), entryLabel: 'On stance change',
@@ -24,18 +29,18 @@ const faceWith = (def, tags, preview = null, reg = core) => cardFaceLines(def, p
 
 test('automatic Precision has an honest static formula, exact live count and complete rule tooltip', () => {
   const def = definition('core.strike');
-  const [staticTag] = cardBonusTags(def, null, core);
+  const [staticTag] = cardBonusTags(def, null, core, oldFight);
   assert.equal(staticTag.count, 1);
   assert.equal(staticTag.countFormula, undefined); // Rule: the entry grant is exactly 1 stack, no stat-mix formula (owner, 2026-10-31)
   assert.match(staticTag.blurb, /On changing stance, gain 1 Precision/);
   assert.match(staticTag.blurb, /Repeating the same stance grants none/);
   assert.match(staticTag.blurb, /Loses 3 stacks at the start of your turn/); // Rule: Precision decays per turn; badge text is the statuses.json tooltip
-  const [live] = cardBonusTags(def, { entryPrecision: 8 }, core);
+  const [live] = cardBonusTags(def, { entryPrecision: 8 }, core, oldFight);
   assert.equal(live.count, 8);
   assert.equal(live.countFormula, undefined);
   assert.match(cardTagRailHtml([staticTag]), /aria-label="Precision 1"/);
   assert.match(cardTagRailHtml([live]), /Precision 8/);
-  assert.doesNotMatch(text(faceWith(def, [live], { entryPrecision: 8 })), /Precision|Entry/);
+  assert.doesNotMatch(text(faceWith(def, [live], { entryPrecision: 8 }, core, oldFight)), /Precision|Entry/);
 });
 
 test('Core Evade retains its short body and one unquantified keyword tag', () => {
@@ -64,12 +69,12 @@ test('conditional, timed and targeted applications keep their body semantics', (
 
 test('distinct automatic and authored Precision applications are not added into a false count', () => {
   const def = { ...definition('core.strike'), effects: [{ op: 'applyStatus', target: 'self', status: 'precision', stacks: 2 }] };
-  const [tag] = cardBonusTags(def, { entryPrecision: 8 }, core);
+  const [tag] = cardBonusTags(def, { entryPrecision: 8 }, core, oldFight);
   assert.equal(tag.count, undefined);
   assert.deepEqual(tag.representedEffects, []);
   assert.match(tag.blurb, /Gain 2 Precision/);
   assert.match(tag.blurb, /On changing stance, gain 8 Precision/);
-  assert.match(text(faceWith(def, [tag], { entryPrecision: 8 })), /\+2 Precision/); // Rule: a self Precision grant prints "+N Precision" (owner, 2026-10-31)
+  assert.match(text(faceWith(def, [tag], { entryPrecision: 8 }, core, oldFight)), /\+2 Precision/); // Rule: a self Precision grant prints "+N Precision" (owner, 2026-10-31)
 });
 
 test('a conditional Core Evade application does not promise a second automatic grant', () => {
@@ -93,11 +98,11 @@ test('uncertain effects and active Power prose still use the full authored fallb
 
 test('automatic benefit tags displace secondary identities when the rail is full', () => {
   const def = definition('core.strike');
-  const tags = cardSideTags({ tags: ['physical', 'fire', 'cold', 'arcane', 'holy'].map(id => ({ id: id === 'physical' ? 'camp:physical' : 'damage:' + id, label: id })) }, def, core);
+  const tags = cardSideTags({ tags: ['physical', 'fire', 'cold', 'arcane', 'holy'].map(id => ({ id: id === 'physical' ? 'camp:physical' : 'damage:' + id, label: id })) }, def, core, null, oldFight);
   assert.equal(tags.length, 5);
   assert.equal(tags[0].id, 'camp:physical');
   assert.ok(tags.some(tag => tag.id === 'status:precision'));
-  assert.doesNotMatch(text(faceWith(def, tags)), /On stance change|Precision|Entry/);
+  assert.doesNotMatch(text(faceWith(def, tags, null, core, oldFight)), /On stance change|Precision|Entry/);
 });
 
 
@@ -125,7 +130,8 @@ test('hand, reward and complete printed faces show the short Evade grant with a 
         const card = renderCard(core, { cardId: id }, opts), html = markup.get(card);
         const body = html.replace(/(?:aria-label|aria-description|data-tip)="[^"]*"/g, '');
         assert.doesNotMatch(body, /Entry:|stat mix|Gain Evade/);
-        assert.match(html, id === 'core.strike' ? /aria-label="Precision 1"/ : /aria-label="Evade"/);
+        if (id === 'core.strike') assert.doesNotMatch(html, /aria-label="Precision/, 'the hit roll is off: no stance-entry Precision chip');
+        else assert.match(html, /aria-label="Evade"/);
         if (id === 'core.evade') assert.match(body.replace(/<[^>]*>/g, ''), /Gain 1 Evade\./);
       }
     }
@@ -210,4 +216,12 @@ test('delegating a status definition preserves target, duration, chance and cond
   assert.match(copy, /an ally/);
   assert.match(copy, /50% chance/);
   assert.doesNotMatch(copy, /Block is not removed/);
+});
+
+// Owner, 2026-11-14: with the hit roll off Precision does nothing, so no card face or chip promises an entry grant of it.
+test('with the hit roll off, a card prints no Entry Precision line and no Precision chip', () => {
+  const def = definition('core.strike');
+  assert.deepEqual(cardBonusTags(def, null, core).filter(tag => tag.id === 'status:precision'), []);
+  assert.doesNotMatch(text(faceWith(def, cardBonusTags(def, null, core))), /Precision/);
+  assert.equal(stanceEntryBonuses(def, { registries: core, ...oldFight, combatExpansionVersion: 2 }).precision, 1, 'a fight whose rules lack hitRoll keeps its grant');
 });

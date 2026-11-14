@@ -123,7 +123,8 @@ test('the pierced part is not double-counted by Poise: what Block leaves of the 
 test('the Pierced float and the log line show the pierced amount and what Poise took', () => {
   const { hits } = enemyPierce({ damage: 14, hits: 1, block: 40, poise: 8 });
   assert.equal(guardHitFloatParts(hits[0]).pierced.text, 'Pierced 3');
-  assert.equal(outcomeKindForEvent(hits[0]), null, 'a fully absorbed pierced hit keeps its floats instead of a lone BLOCKED word');
+  // Owner, 2026-11-14: a hit that cost no HP shows the fully-absorbed word, a pierced one included (the Pierced float stays in the part list and the log).
+  assert.equal(outcomeKindForEvent(hits[0]), 'blocked', 'a fully absorbed pierced hit shows the BLOCKED word');
   const line = JSON.stringify(combatLogEntries([hits[0]], { registries: baseRegistries }));
   assert.match(line, /Pierced 3 \(Poise took 3\)/);
 });

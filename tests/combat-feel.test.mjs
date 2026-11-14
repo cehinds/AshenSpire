@@ -359,14 +359,14 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   assert.equal(dmgClass(4, 10), 'dmg pct35', 'a chip that is 40 percent of a small target is a big hit');
   assert.equal(dmgClass(10, 0), 'dmg', 'no max HP known: the absolute rule');
   assert.equal(guardHitFloatParts({ amount: 30, blocked: 0 }, 60).damage.cls, 'dmg pct35');
-  // Owner, 2026-11-02: an 8 hit into 5 Block floats 8 (the full hit), not the 3 that got through.
-  assert.equal(guardHitFloatParts({ amount: 8, blocked: 5 }, 60).damage.text, '-8');
+  // Owner, 2026-11-14: an 8 hit into 5 Block floats -3, the HP it cost (the number the card face, intent and HP bar agree on).
+  assert.equal(guardHitFloatParts({ amount: 8, blocked: 5 }, 60).damage.text, '-3');
   // A hit Block stopped whole floats its full number unsigned, in the guard colour, never as HP loss.
   const fullBlock = guardHitFloatParts({ amount: 8, blocked: 8 }, 60);
   assert.equal(fullBlock.damage, null);
   assert.equal(fullBlock.fullHit.text, '8');
   assert.doesNotMatch(fullBlock.fullHit.cls, /\bdmg\b/);
-  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct35', 'the tier keys off the full hit the number shows (owner, 2026-11-02)');
+  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct20', 'the tier keys off the HP lost, 12 of 60 (owner, 2026-11-14)');
   const css = src('styles/combat.css');
   // One text size for every floater (owner, 2026-11-05): the big-hit tiers differ by weight and colour only.
   assert.match(css, /\.float-num\.heavy, \.float-num\.pct20 \{ font-weight: 900; \}/);
