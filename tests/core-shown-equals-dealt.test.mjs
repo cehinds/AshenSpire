@@ -156,6 +156,9 @@ function checkFloaters(events, tally, label) {
  * (b) walks an enemy turn's events: each action's opening receipt (enemyMoveStarted / combatHitStarted) names the HP the player will lose;
  * the player's HP lost in that action equals it, or the number the taken reaction's option showed.
  */
+/** A prompt and the contact it answers share one key: a Broken player prices each hit of one action differently, so one number per source is not enough. */
+const reactionKey = (sourceId, preview) => `${sourceId}/${preview?.contactIndex ?? ''}`;
+
 function checkEnemyActions(events, reactionNumbers, tally, label) {
   let action = null;
   let contact = null;
@@ -169,9 +172,10 @@ function checkEnemyActions(events, reactionNumbers, tally, label) {
     if (event.type === 'combatReactionOffered') continue;
     if ((event.type === 'enemyMoveStarted' || event.type === 'combatHitStarted') && event.intentPreview) {
       const shown = IncomingHpLoss(event.intentPreview);
-      const row = shown === null ? null : { moveId: event.moveId, shown, lost: 0, reaction: reactionNumbers.get(event.sourceId) };
+      const key = reactionKey(event.sourceId, event.intentPreview);
+      const row = shown === null ? null : { moveId: event.moveId, shown, lost: 0, reaction: reactionNumbers.get(key) };
       if (event.intentPreview.damageScope === 'contact') { settle(contact, 'contact'); contact = row; } else { settle(action, 'action'); action = row; }
-      if (row && reactionNumbers.has(event.sourceId)) reactionNumbers.delete(event.sourceId);
+      if (row && reactionNumbers.has(key)) reactionNumbers.delete(key);
     }
     if (event.type === 'damageDealt' && event.targetId === 'player' && event.sourceId !== 'player') {
       if (action) action.lost += event.hpLoss;
@@ -244,8 +248,8 @@ function playFight(classId, seed, tally) {
         // The prompt states the incoming action and each option's result as the HP the player will lose.
         if (Number.isFinite(offer.incomingHp)) assert.ok(offer.incomingHp >= 0, `${label}: the prompt's incoming HP`);
         // The prompt's top-level "Lose N HP" is what skipping it costs; an option's number is what taking it costs (checked per action below).
-        if (option) { reactionNumbers.set(offer.sourceId, option.incomingHp); tally.reactions++; }
-        else if (Number.isFinite(offer.incomingHp)) { reactionNumbers.set(offer.sourceId, offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
+        if (option) { reactionNumbers.set(reactionKey(offer.sourceId, offer.intentPreview), option.incomingHp); tally.reactions++; }
+        else if (Number.isFinite(offer.incomingHp)) { reactionNumbers.set(reactionKey(offer.sourceId, offer.intentPreview), offer.incomingHp); tally.skipped = (tally.skipped || 0) + 1; }
         dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option ? option.id : null });
       } else if (combat.pendingCardChoice) {
         const pending = combat.pendingCardChoice;
@@ -365,6 +369,40 @@ test('a target with an Evade stack is priced at 0 and spends one stack per hit',
   assert.equal(shown[0], 0, 'the first hit meets the Evade stack');
   assert.ok(shown.slice(1).some(amount => amount > 0), `the stack is spent, so later hits land: ${shown}`);
   check(combat, card, 'e1', 'Evade');
+});
+
+test('a Broken target: the face already holds the x1.5 and the hit lands for it', () => {
+  for (const hand of ['core.strike', 'supernova']) {
+    const classId = hand === 'supernova' ? 'starseer' : 'reaver';
+    const plain = fixture({ classId, hand }), broken = fixture({ classId, hand });
+    for (const row of [plain, broken]) { row.combat.player.energy = 3; row.combat.player.stamina = 3; row.combat.player.mana = 9; }
+    broken.combat.enemies[0].broken = { since: 1, endTurn: 1 };
+    broken.combat.enemies[0].combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+    const before = faceOf(plain.combat, plain.card.instanceId, 'e1').perEnemy.get('e1')[0];
+    const shown = faceOf(broken.combat, broken.card.instanceId, 'e1').perEnemy.get('e1')[0];
+    assert.ok(shown > before, `${hand}: Broken is in the number (${shown} > ${before})`);
+    assert.ok(check(broken.combat, broken.card, 'e1', `Broken target ${hand}`).hits >= 1);
+  }
+});
+
+test('a Broken player: the intent number holds the x1.5 and the enemy then costs the player exactly that', () => {
+  const run = () => {
+    const { combat } = fixture();
+    const enemy = combat.enemies[0];
+    Object.assign(enemy, { intent: { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }, planDue: true });
+    Object.assign(combat.player, { block: 0, hp: 100, persistentPoise: { value: 0, max: 8 }, statuses: {} });
+    return combat;
+  };
+  const shownFor = combat => projectCombatIntent(combat, 'e1')?.projectedDamage?.max;
+  const bare = run(), brokenFight = run();
+  brokenFight.player.broken = { since: 1, endTurn: 2 };
+  brokenFight.player.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: 1.5 };
+  const [plainShown, brokenShown] = [shownFor(bare), shownFor(brokenFight)];
+  assert.ok(brokenShown > plainShown, `the intent prices the Broken player: ${brokenShown} > ${plainShown}`);
+  const hp = brokenFight.player.hp;
+  dispatch(brokenFight, { type: 'endTurn' });
+  while (brokenFight.pendingReaction) dispatch(brokenFight, { type: 'chooseReaction', offerId: brokenFight.pendingReaction.id, optionId: null });
+  assert.equal(hp - brokenFight.player.hp, brokenShown, 'what the Broken player loses is the number the intent showed');
 });
 
 test('a farther target that needs Advance: the face cost is the cost paid', () => {

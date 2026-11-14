@@ -49,7 +49,7 @@ function enemyHit(regs, { hits, block, poise }) {
   const enemy = combat.enemies[0];
   Object.assign(combat.player, { hp: 100, maxHp: 100, block, barrier: 0, statuses: {}, ratings: { ...plain, poise: 10 }, ratingSources: [{ name: 'Fixture', kind: 'attribute', ...plain, poise: 10 }],
     persistentPoise: { value: poise, max: Math.max(poise, 10) } });
-  delete combat.player.combatStance;
+  delete combat.player.combatStance; delete combat.player.broken;
   Object.assign(enemy, { maxStamina: hits, stamina: hits, statuses: {}, ratings: { ...plain }, ratingSources: [], basePrecisionBonus: 1000 });
   enemy.intent = { ...enemy.intent, moveId: 'slash' }; enemy.plannedMoves = [];
   combat.piles.hand = [];
@@ -157,6 +157,7 @@ test('property: over a grid of damage, Block and Poise, pierce never lowers HP l
       const mk = damageType => ({ combatProfile: { camp: 'physical', maneuver, damageType, range: 'melee' }, skipRatingBonus: true });
       const target = ctx => {
         Object.assign(ctx.player, { block, hp: 100, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 30 } });
+        delete ctx.player.broken; // the fixture is reused across the grid: a previous cell may have broken it
         if (stance) ctx.player.combatStance = { ...stance }; else delete ctx.player.combatStance;
         return ctx;
       };
@@ -186,7 +187,7 @@ test('property: over multi-hit actions (2-4 hits, mixed damage, Ward on and off)
     ctx.fixCoreRules = { ...structuredClone(ctx.fixCoreRules || ctx.gameProfile.fixCoreRules), ward: { enabled: ward } };
     Object.assign(ctx.player, { hp: 200, maxHp: 200, block, barrier, statuses: {}, persistentPoise: { value: poise, max: 30 },
       persistentWard: { value: ward ? 4 : 0, max: 10 } });
-    delete ctx.player.combatStance; delete ctx.player.combatCounter;
+    delete ctx.player.combatStance; delete ctx.player.combatCounter; delete ctx.player.broken;
     return ctx;
   };
   for (const hits of [2, 3, 4]) for (const dmg of [3, 5, 10]) for (const share of [0, 0.4])
