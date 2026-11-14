@@ -72,6 +72,8 @@ import { inventoryRowUsable } from '../models/ArmouryInventoryModel.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t, tFull, tTip } from '../strings.js';
+import { restOpensDeckEditor } from '../../model/armouryRules.js';
+import { openPileModal } from '../components/piles.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import {
@@ -1711,7 +1713,13 @@ export function mountEquipment(host, {
         if (id === 'deck') {
           // Remember the Deck tab as the last menu, so the Armoury button reopens the editor (main.js showArmoury).
           if (onEditDeck) { onChange?.(run.loadout, { equipView: 'deck' }); leave(); if (!wrap.isConnected) onEditDeck(); else draw(); }
-          else { notice = inCombat ? 'Deck editing is unavailable during combat.' : 'Deck editing is unavailable with the current settings.'; draw(); }
+          else {
+            const restOnly = !inCombat && restOpensDeckEditor(run);
+            notice = inCombat ? 'Deck editing is unavailable during combat.' : restOnly ? t('armoury.deck.restOnly') : 'Deck editing is unavailable with the current settings.';
+            draw();
+            // Read-only look at the deck (the combat pile viewer); nothing in it can change the deck.
+            if (restOnly) openPileModal(registries, t('armoury.hub.deck'), run.deck || []);
+          }
           return;
         }
         picking = null;
@@ -1723,7 +1731,7 @@ export function mountEquipment(host, {
     });
     const deckTab = rendered.panel.querySelector('[data-modal-tab="deck"]');
     deckTab?.setAttribute('aria-disabled', String(!onEditDeck));
-    if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : 'Deck editing is disabled by the current settings');
+    if (deckTab) progressionTip(deckTab, onEditDeck ? 'Edit your deck' : inCombat ? 'Unavailable during combat' : restOpensDeckEditor(run) ? t('armoury.deck.restOnly') : 'Deck editing is disabled by the current settings');
     setFooterPrimary = rendered.setPrimary;
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
