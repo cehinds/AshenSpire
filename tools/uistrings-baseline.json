@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 207,
-  "distinct": 178,
+  "sites": 206,
+  "distinct": 177,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -53,7 +53,6 @@
     "src/ui/kit/index.js": 1,
     "src/ui/models/BattlefieldStageModel.js": 1,
     "src/ui/models/HudQuickSettingsModel.js": 1,
-    "src/ui/models/SaveSlotSelectionModel.js": 1,
     "src/ui/models/StartupGateModels.js": 1,
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
