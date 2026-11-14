@@ -266,13 +266,13 @@ export function resolveLayout(uiScale, vw, vh) {
 // combat Auto is native; a manual View preset wins everywhere.
 let combatCanvas = false;
 
-export function effectiveViewPreset(viewPreset, combatOn, width, height) {
+export function EffectiveViewPreset(viewPreset, combatOn, width, height) {
   const key = String(viewPreset || 'auto').toLowerCase();
   if (VIEW_PRESETS[key]) return key;
   return combatOn ? formFactorFor(width, height, UI.uiScale.formFactor) : 'auto';
 }
 
-export function setCombatCanvas(on) {
+export function SetCombatCanvas(on) {
   on = !!on;
   if (on === combatCanvas) return;
   combatCanvas = on;
@@ -285,7 +285,7 @@ export function setCombatCanvas(on) {
 export function applyUiScale(settings) {
   const viewport = window.visualViewport;
   const visibleHeight = viewport && viewport.scale === 1 ? viewport.height : window.innerHeight;
-  const effective = effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight);
+  const effective = EffectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, visibleHeight);
   const view = applyViewViewport(effective, window.innerWidth, visibleHeight);
   // A canvas picked by combat Auto is a layout frame, not the player's screen:
   // the short-screen / turn-your-phone gate is still decided from the real window.
@@ -425,7 +425,7 @@ export function applyCardSizeSettings(settings) {
   // The same visible height applyUiScale used, so both pick one preset.
   const cardViewport = window.visualViewport;
   const cardHeight = cardViewport && cardViewport.scale === 1 ? cardViewport.height : window.innerHeight;
-  const cardView = resolveViewViewport(effectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, cardHeight), window.innerWidth, cardHeight);
+  const cardView = resolveViewViewport(EffectiveViewPreset(settings.viewPreset, combatCanvas, window.innerWidth, cardHeight), window.innerWidth, cardHeight);
   const resting = restingWidthPx(cardView.width, levels);
   setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // Focus and inspect rest the same way: the phone keeps its `mobile` variant, a desktop gets the authored (20% larger) width.
@@ -653,7 +653,7 @@ export function installDisplaySettings() {
     // file has to announce itself.
     const app = document.getElementById('app');
     if (app && typeof MutationObserver === 'function') {
-      const sync = () => setCombatCanvas(!!app.querySelector(':scope > .combat'));
+      const sync = () => SetCombatCanvas(!!app.querySelector(':scope > .combat'));
       new MutationObserver(sync).observe(app, { childList: true });
       sync();
     }

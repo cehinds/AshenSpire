@@ -21,7 +21,7 @@ import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel
 import { createFollowMemo, CreateFollowUpReduction } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
-import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot, rangeRankSnapshot, stageRangeRanks } from '../models/CombatRangeRankModel.js';
+import { combatRangeRanks, applyRangeRankEvent, rangeRanksFromSnapshot, rangeRankSnapshot, StageRangeRanks } from '../models/CombatRangeRankModel.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
@@ -1022,8 +1022,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
-  // The stage's range ranks; holds the pose a fight was decided in (CombatRangeRankModel.stageRangeRanks).
-  const stageRanks = stageRangeRanks();
+  // The stage's range ranks; holds the pose a fight was decided in (CombatRangeRankModel.StageRangeRanks).
+  const stageRanks = StageRangeRanks();
   // Weakness discovery (SPEC 5.3): a weakness shows once its event has played; the ledger lives on the run so a save keeps it.
   let weaknessScanned = 0;
   const syncWeaknessDiscovery = () => {
