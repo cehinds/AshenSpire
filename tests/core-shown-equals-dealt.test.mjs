@@ -399,3 +399,35 @@ test('the reaction prompt states the incoming action and each option as the HP t
   }
   assert.fail('no reaction prompt appeared in 80 seeds');
 });
+
+// ---- W2-J (b): a later attacker's intent holds EVERY action of the enemies ahead of it, not only their first ----------------------
+
+test('a later attacker is forecast after an earlier enemy has played all of its planned actions', () => {
+  let checked = 0;
+  // (Block 20 is left out: the third earlier hit then breaks the player's Poise, and the stagger it marks is a rider the forecast does not carry.)
+  for (const block of [0, 6, 10, 13, 30]) {
+    const { combat } = fixture({ enemies: ['wanderingSoldier', 'wanderingSoldier'] });
+    const [first, second] = combat.enemies;
+    // The earlier enemy has three attacks this turn (its head and two planned follow-ups); the later one has one.
+    for (const enemy of [first, second]) { enemy.intent = { ...enemy.intent, kind: 'attack', moveId: 'slash', damage: 8, hits: 1 }; enemy.planDue = true; enemy.skipNextTurn = false; }
+    first.plannedMoves = [{ moveId: 'slash', sp: 1 }, { moveId: 'slash', sp: 1 }];
+    first.maxStamina = first.stamina = first.fixCoreStaminaRemaining = 12;
+    combat.player.block = block; combat.player.hp = 100; combat.player.maxHp = 100;
+    const shown = projectCombatIntent(combat, second.id)?.projectedDamage;
+    assert.ok(shown && shown.min === shown.max, `block ${block}: the later number is exact (${JSON.stringify(shown)})`);
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    const events = combat.eventLog.slice(start);
+    const firstHits = events.filter(event => event.type === 'damageDealt' && event.sourceId === first.id).length;
+    let lost = 0, open = false;
+    for (const event of events) {
+      if (event.type === 'enemyMoveStarted' && event.sourceId === second.id) open = true;
+      if (open && event.type === 'damageDealt' && event.sourceId === second.id && event.targetId === 'player') lost += event.hpLoss;
+    }
+    assert.ok(firstHits >= 2, `block ${block}: the earlier enemy acted more than once (${firstHits})`);
+    assert.equal(lost, shown.max, `block ${block}: the later attacker was shown at ${shown.max} and cost ${lost}`);
+    checked++;
+  }
+  assert.equal(checked, 5);
+});
