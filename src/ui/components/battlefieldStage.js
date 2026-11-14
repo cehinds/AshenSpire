@@ -1,7 +1,7 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
 import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { logicalViewport, CanvasBox } from '../viewViewport.js';
+import { logicalViewport, CanvasBox, viewViewportBox } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
@@ -302,7 +302,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       const badge = frame.querySelector(':scope > .combat-hit-chance');
       const center = (body.left + body.right) / 2;
-      const x = badge.dataset.rangeDetail === 'true' ? hitBadgeCenter({ bodyCenter: center, badgeWidth: badge.getBoundingClientRect().width, left: 8, right: globalThis.innerWidth - 8 }) : center;
+      // Kept 8 canvas px inside the canvas (its box, not the real window: a letterboxed canvas ends short of it).
+      const frameBox = viewViewportBox(), inset = 8 * CanvasBox().scale;
+      const x = badge.dataset.rangeDetail === 'true' ? hitBadgeCenter({ bodyCenter: center, badgeWidth: badge.getBoundingClientRect().width, left: frameBox.left + inset, right: frameBox.right - inset }) : center;
       return { frame, x: `${(x - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
     });
     return () => {
