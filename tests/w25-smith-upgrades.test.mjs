@@ -138,3 +138,27 @@ test('an upgrade can roll a property, and the property it picks is held by the i
   assert.ok(!SmithOptionPool(run, GS).some((row) => row.pick.id === found.id), 'a held property is not offered again');
   assert.equal(ItemUpgradeCount(run, GS), 1);
 });
+
+test('the blacksmith card upgrade offers 2 or 3 options at random, the same every time it is asked', async () => {
+  const { upgradeChoiceCount } = await import('../src/model/cardUpgradeLimits.js');
+  const run = smithRun();
+  const seen = new Set();
+  for (let i = 1; i <= 60; i += 1) {
+    const instance = { instanceId: `x${i}`, cardId: 'core.strike' };
+    const n = upgradeChoiceCount(registries.cards.get('core.strike'), instance, { blacksmith: true, run });
+    seen.add(n);
+    assert.equal(upgradeChoiceCount(registries.cards.get('core.strike'), instance, { blacksmith: true, run }), n);
+  }
+  assert.deepEqual([...seen].sort(), [2, 3]);
+  assert.equal(upgradeChoiceCount(registries.cards.get('core.strike'), { instanceId: 'x' }, { run }), 1, 'a rest-site upgrade keeps its own rule');
+});
+
+test('Blacksmith card work raises the rank on a seeded 20% chance, never on an equipment card', async () => {
+  const { upgradeGrantsRank } = await import('../src/model/blacksmith.js');
+  const run = smithRun();
+  let ranked = 0;
+  for (let i = 0; i < 2000; i += 1) if (upgradeGrantsRank(run, { instanceId: `c${i}`, cardId: 'core.strike' })) ranked += 1;
+  assert.ok(ranked > 300 && ranked < 500, `about 20% of 2000: ${ranked}`);
+  assert.equal(upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }), upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike' }));
+  assert.equal(upgradeGrantsRank(run, { instanceId: 'c1', cardId: 'core.strike', sourceArmamentId: 'greatsword' }), false);
+});

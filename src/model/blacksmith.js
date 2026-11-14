@@ -22,6 +22,8 @@ import { shopSentence, shopStockKind, shopStockOfferings } from './shopKinds.js'
 import { smithingPlan, commitItemUpgrade, withSmithService, ownedSmithingItems } from './smithing.js';
 import { coreSmithingActive } from './smithingCore.js';
 import { PlanSmithUpgrade, ApplySmithUpgrade } from './smithUpgrade.js';
+import { mulberry32 } from './rng.js';
+import { upgradeSeed } from './cardUpgradeSteps.js';
 import { PlanCategoryChange, ApplyCategoryChange, CategoryChoices } from './smithCategory.js';
 import { SmithUpgradeSlots } from './smithUpgrade.js';
 import { ItemRank, ItemUpgradeCount } from './itemPicks.js';
@@ -243,6 +245,19 @@ export function upgradeArtPlan(registries, run, instanceId, { priceMult = 1 } = 
 }
 
 
+/**
+ * Whether Blacksmith work on this card also raises its rank (W25 step 3): `blacksmith.upgradeRankChance` percent,
+ * rolled on the run's seed, the card and its upgrade number, so it is the same however often it is asked.
+ */
+export function upgradeGrantsRank(run, instance) {
+  return upgradeGrantsRankAt(run, instance, Array.isArray(instance?.upgradeSteps) ? instance.upgradeSteps.length : 0);
+}
+function upgradeGrantsRankAt(run, instance, steps) {
+  const chance = blacksmithRules(run)?.upgradeRankChance;
+  if (!(chance > 0) || !instance || equipmentOwned(instance)) return false;
+  return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#rankChance`, steps))() * 100 < chance;
+}
+
 export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {}) {
   const plan = upgradeArtPlan(registries, run, quote.instanceId, { priceMult });
   if (!plan.ok) throw new Error(plan.reason);
@@ -257,7 +272,11 @@ export function commitUpgradeArt(registries, run, quote, { priceMult = 1 } = {})
   catch (error) { run.smithingStones -= lent; throw error; }
   run.cinders -= plan.cost;
   bump(run, plan);
-  return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n };
+  // The work may also raise the card's rank (rolled before the step was added: the count it had when quoted).
+  const card = owned(run).find((row) => row.instanceId === receipt.instanceId);
+  const ranked = !!card && instanceRank(card) < RANK_CEILING && upgradeGrantsRankAt(run, card, receipt.n - 1);
+  if (ranked) card.rank = instanceRank(card) + 1;
+  return { instanceId: receipt.instanceId, spentStones: receipt.spentStones - lent, step: receipt.step, n: receipt.n, ...(ranked ? { rankedUp: card.rank } : {}) };
 }
 
 // ---------------------------------------------------------------------------
