@@ -25,6 +25,7 @@
 // The 2026-11-14 wording pass (Wave 2: one word for one thing: model wording literals, the status Precision tooltip, the AC badge gate) moves the runtime hash again; wording only, no rule.
 // The 2026-11-14 Ward as a Poise effect (ward.poisePerStack in fixCoreMechanics.json) moves the runtime hash again; a fight saved without the key keeps no Ward Poise.
 // The 2026-11-14 Poise break rule (Wave 3: `poise.breakRule: "broken"` in fixCoreMechanics.json and the Broken engine path) moves the runtime hash again; a save from 68d430... keeps its own snapshotted rules, which lack the key and so keep the Staggered stance.
+// Batch 1 fix pass (preview skips an unmet conditional row; Reaction upgrade on any stance): the batch-1 hash 6c4dab... is kept for saves made on the merged tree.
 // Batch 1 (Ward Poise + Poise break together) has its own hash 6c4dab...; each branch's hash (1551ec..., e4f237...) is kept for worker saves.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
@@ -53,8 +54,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:68d430e0053091cec98f2819769a92bfbd7e944af9b8237bc315cd40f472fc87',
   'sha256:1551ec573f5dc9da9059c1bf6d55866e690f2a3bb2fae06eecdee43abba2c9c7',
   'sha256:e4f2378397bc3baef53d6c38b2609fe181c47096a64e38ebd2e84c61c8f3bf76',
+  'sha256:6c4dab6e49b3a99427f623babb5529761cb178596bf3b919f2db7bdaf8910156',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:6c4dab6e49b3a99427f623babb5529761cb178596bf3b919f2db7bdaf8910156';
+const FIXED_EVASION_RUNTIME = 'sha256:e6c9b9af71d93d0662ca2e9c06266a59a059ec112c3f2e7fd75eb8fb4a27c0d4';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
