@@ -20,7 +20,7 @@ import { el, button, modalFooter } from '../kit/index.js';
 
 // Presentation only. The persisted run transaction owns the one-service rule,
 // final validation and every pool/flask refill; closing a review changes none.
-export function mountGameProfileRest(app, { registries, run, meta, hud, visit, onStrategize, onCommit, onLeave, remount }) {
+export function mountGameProfileRest(app, { registries, run, meta, hud, visit, onStrategize, deckEditor = null, onCommit, onLeave, remount }) {
   const model = gameProfileRestModel(registries, run, visit);
   const icons = { rest: 'rest', strategize: 'deck', smith: 'smith', levelUp: 'progression', upgradeCard: 'deck' };
   const optionIds = { rest: 'rest-opt', strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt', upgradeCard: 'upgrade-card-opt' };
@@ -44,6 +44,22 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
     ]);
     return markUiComponent(card, UI.shrineOptionCard, service.id === 'levelUp' ? 'level-up' : service.id);
   })));
+
+  // Core 2: editing the deck is a free door, not a service. It is open before and after the pick, never touches `visit`, and is not
+  // counted in the availability status above.
+  if (deckEditor) {
+    const deck = el('div', { class: 'class-pick', id: 'deck-opt', role: 'button', tabindex: '0', 'aria-disabled': 'false' }, [
+      el('div', { class: 'glyph', html: engravedIconHtml('deck') }),
+      el('div', { class: 'cp-body' }, [el('h3', { text: t('gameProfile.rest.service.deck') }), el('p', { text: t('gameProfile.rest.description.deck') })]),
+    ]);
+    choices.firstChild.append(markUiComponent(deck, UI.shrineOptionCard, 'deck'));
+    const open = () => invoke(() => deckEditor.onOpen());
+    deck.addEventListener('click', open);
+    deck.addEventListener('keydown', event => {
+      if (event.defaultPrevented || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); open();
+    });
+  }
 
   // The recovery ledger is projected from the final transaction, including
   // newly derived maxima after a selected attribute/equipment upgrade.
