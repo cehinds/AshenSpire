@@ -141,6 +141,10 @@ export function actionPacing({ reduced = false, enemy = false } = {}) {
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) * (enemy ? turn.turnBannerScale : 1) : 0),
     // How long an enemy's wind-up (its telegraph beat) is held before the attack beat takes over; 0 for the player.
     telegraphMs: enemy ? scaled(turn.telegraphMs) : 0,
+    // Enemy hits: the least time between two damage numbers (so each is readable; a faster setting may shorten it) and
+    // how long the hand waits after the last hit is applied and shown before it unlocks.
+    damageGapMs: enemy && scale > 0 ? Math.min(turn.damageGapMs, scaled(turn.damageGapMs)) : 0,
+    tailMs: enemy ? Math.min(turn.tailMs, scaled(turn.tailMs)) : 0,
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: spriteSpeedFor(pace || ANIM_SPEEDS.normal, spriteScale, frameHoldMs({ reduced, enemy })),
     scale,

@@ -229,3 +229,22 @@ test('a telegraph beat is held for at most the pacing\'s telegraph length', () =
   assert.equal(span(held), 40, 'the wind-up ends at its telegraph length');
   assert.ok(span(whole) > 40, 'with no telegraph length the whole clip plays');
 });
+
+test('chained attacks hand over at the damage stage, keep their numbers 250 ms apart, and unlock after the tail', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const c = clock(), trace = [], base = { ...actionPacing(), stepMs: 0 };
+  const beats = [{ actorId: 'e1', kind: 'attack' }, { actorId: 'e2', kind: 'attack' }];
+  const chained = { ...base, resultMs: 10, reactionMs: 10, damageMs: 10, resetMs: 10, afterSpriteMs: 10, wordMs: 0, intentMs: 0, chain: true, damageGapMs: 250 };
+  runActionTimeline(beats, {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
+    onSprite: () => ({ impactMs: 0, totalMs: 0, cancel() {} }), maxSpriteMs: () => 0,
+    onReaction: () => 400, // a long hurt reaction must not hold the next action
+    timingFor: beat => beat === beats[0] ? { ...chained, tailMs: 0 } : { ...chained, tailMs: 150 },
+    onDone: () => trace.push(['done', '', c.now]),
+  }, base, timerOptions(c));
+  c.advance(20000);
+  const at = (stage, actor) => trace.find(row => row[0] === stage && row[1] === actor)[2];
+  assert.equal(at('intent', 'e2') - at('damage', 'e1') <= 5, true, 'the second action starts as the first damage is shown');
+  assert.equal(at('damage', 'e2') - at('damage', 'e1') >= 250, true, 'two damage numbers at least 250 ms apart');
+  assert.equal(trace.at(-1)[2] - at('damage', 'e2') <= 160, true, 'the hand unlocks within the tail of the last damage');
+});

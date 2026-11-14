@@ -11,7 +11,9 @@
       "spritePlaybackRate": 1.25,
       "telegraphMs": 250,
       "floaterIntervalMs": 375,
-      "turnBannerScale": 0.35
+      "turnBannerScale": 0.35,
+      "damageGapMs": 250,
+      "tailMs": 150
     }
   },
   "behavior": {

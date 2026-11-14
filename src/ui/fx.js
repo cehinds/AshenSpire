@@ -1235,8 +1235,12 @@ export function playTimeline(events, ctx, done) {
     if (beat.kind === 'reveal' || beat.kind === 'draw') return { ...enemyTiming, stepMs: 0 };
     if (beat.actorId && !beat.banner && !beat.events.some(event => OUTCOME.has(event.type)))
       return { ...enemyTiming, intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
-    return enemyTiming;
+    // An attack hands over as its damage is applied and shown: the next action's telegraph starts then (overlap), and
+    // after the last action of the phase the hand unlocks after tailMs. Its reaction and floaters play on under it.
+    return { ...enemyTiming, chain: true, ...(laterAction(beat) ? { tailMs: 0 } : {}) };
   };
+  // Is another enemy action (a reveal, wind-up or attack) still to play after this beat?
+  const laterAction = beat => beats.slice(beats.indexOf(beat) + 1).some(later => enemyBeats.has(later) && later.actorId && !later.banner && later.kind !== 'draw');
   // The pacing a beat runs on (its banner shows for the same hold the timeline waits).
   const pacingOf = beat => enemyBeats.has(beat) ? enemyTiming : timing;
   const dealsOutcome = beat => beat.events.some(event => OUTCOME.has(event.type));

@@ -8,6 +8,7 @@ export function runActionTimeline(beats, hooks, timingIn, {
   const createdAt = now();
   // Waits a caller leaves out are zero, so a partial timing object still runs.
   const timing = { intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0, stepMs: 0, bannerMs: 0, ...timingIn };
+  let lastDamageAt = -Infinity;
   let timer = null, watchdog = null, watchdogDeadline = 0, finished = false, actor = null, index = 0;
   const safe = fn => { try { return fn?.(); } catch (error) { hooks.onError?.(error); } };
   const stage = (name, beat, fn) => { safe(() => hooks.onStage?.(name, beat)); return safe(fn); };
@@ -101,19 +102,33 @@ export function runActionTimeline(beats, hooks, timingIn, {
                   const reactionLife = Number(stage('reaction', group, () => hooks.onReaction?.(group))) || 0;
                   // Nominal reaction and damage waits were reserved per group.
                   creditWatchdog(Math.max(0, reactionLife - T.reactionMs - T.damageMs));
+                  // Two hits' numbers stay readable apart: a beat that sets damageGapMs holds its damage stage until the
+                  // previous number has been up that long (the enemies' turn, content actionPacing.json motion.enemyTurn).
+                  const readableWait = T.damageGapMs > 0 ? Math.max(0, lastDamageAt + T.damageGapMs - (now() + T.reactionMs)) : 0;
                   schedule(() => {
+                    lastDamageAt = now();
                     stage('damage', group, () => hooks.onNumbers?.(group));
                     // Yield a task so numbers paint before replacement of the HUD.
                     schedule(() => {
                       stage('hud', group, () => hooks.onApply?.(group));
                       const rest = Math.max(T.damageMs, reactionLife - T.reactionMs);
                       if (groupIndex < groups.length) { schedule(react, rest); return; }
+                      // A chained beat (an enemy's attack) hands over as its damage is applied and shown: the next action
+                      // starts at once, or the hand unlocks after tailMs when it was the last. The target's reaction and the
+                      // floaters finish on their own under the next stage.
+                      if (T.chain) {
+                        schedule(() => {
+                          stage('resolution', beat, () => hooks.onResolution?.(beat));
+                          schedule(next, 0);
+                        }, Math.max(0, Number(T.tailMs) || 0));
+                        return;
+                      }
                       schedule(() => {
                         stage('resolution', beat, () => hooks.onResolution?.(beat));
                         schedule(next, Math.max(T.resetMs, T.stepMs));
                       }, rest);
                     });
-                  }, T.reactionMs);
+                  }, T.reactionMs + readableWait);
                 }, T.resultMs);
               };
               react();
