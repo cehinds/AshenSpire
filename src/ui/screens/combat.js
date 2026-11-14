@@ -450,6 +450,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
     },
     combatEl,
+    // True while the enemies' turn is on screen, so the rest of a turn resumed after a reaction keeps the enemy pacing.
+    isEnemyPlayback: () => enemyPlayback,
     anchorFor: (id) => combatEl.querySelector(`[data-eid="${id}"] .sprite`) || combatEl.querySelector(`[data-eid="${id}"]`),
     // A damage float sizes by the hit's share of this max HP (ui/fx.js dmgClass).
     maxHpFor: (id) => (getEntity(combat, id) || {}).maxHp || 0,

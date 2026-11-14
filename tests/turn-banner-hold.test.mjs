@@ -49,11 +49,11 @@ for (const [name, speed] of Object.entries(ANIM_SPEEDS)) {
 const fx = readFileSync(new URL('../src/ui/fx.js', import.meta.url), 'utf8');
 assert.match(fx, /export function banner\(layer, text, cls = '', lifeMs = null\)/, 'banner takes its display time as lifeMs');
 assert.match(fx, /setTimeout\(\(\) => el\.remove\(\), lifeMs > 0 \? lifeMs : 320\)/, 'banner is removed after lifeMs');
-assert.match(fx, /banner\(ctx\.layer, beat\.banner, 'turn', timing\.bannerMs\)/, 'the turn banner passes the timeline hold (timing.bannerMs)');
+assert.match(fx, /banner\(ctx\.layer, beat\.banner, 'turn', pacingOf\(beat\)\.bannerMs\)/, 'the turn banner passes the timeline hold of its own pacing (the enemies\' turn runs on motion.enemyTurn)');
 const tl = readFileSync(new URL('../src/ui/actionTimeline.js', import.meta.url), 'utf8');
-assert.match(tl, /schedule\(next, beat\.banner \? timing\.bannerMs : timing\.stepMs\)/, 'the timeline waits that same hold after a turn banner');
+assert.match(tl, /schedule\(next, beat\.banner \? T\.bannerMs : T\.stepMs\)/, 'the timeline waits that same hold after a turn banner (T is the beat\'s own pacing)');
 const pace = readFileSync(new URL('../src/ui/animationPace.js', import.meta.url), 'utf8');
-assert.match(pace, /bannerMs: scaled\(pace \? turnBannerHoldMs\(pace\) : 0\)/, 'timing.bannerMs is the scaled turnBannerHoldMs');
+assert.match(pace, /bannerMs: scaled\(pace \? turnBannerHoldMs\(pace\) \* \(enemy \? turn\.turnBannerScale : 1\) : 0\)/, 'timing.bannerMs is the scaled turnBannerHoldMs (shortened by motion.enemyTurn for the enemies)');
 
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
 assert.match(css, /\.fx-banner \{[^}]*animation: banner-pop var\(--fx-banner-ms, 300ms\)/s, 'the banner fade follows --fx-banner-ms');

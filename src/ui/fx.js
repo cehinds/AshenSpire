@@ -1218,6 +1218,27 @@ export function playTimeline(events, ctx, done) {
       || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
     callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
   };
+  // The enemies' turn runs on its own pacing (content/config actionPacing.json, motion.enemyTurn): every beat from the
+  // ENEMY TURN banner on, except a card the player plays in answer (a reaction), keeps the player's pacing.
+  const enemyFrom = beats.findIndex(beat => beat.banner && beat.events[0]?.type === 'enemyTurnStart');
+  // A turn resumed after the player answered a reaction prompt has no banner: the screen says whether it is the enemies'.
+  const enemyStart = ctx.isEnemyPlayback?.() === true ? 0 : enemyFrom;
+  const enemyBeats = new Set(enemyStart < 0 ? [] : beats.slice(enemyStart).filter(beat => beat.actorId !== 'player'));
+  const enemyEvents = new Set([...enemyBeats].flatMap(beat => beat.events));
+  const inEnemyTurn = beat => beat.events.some(event => enemyEvents.has(event));
+  // A beat that hits or misses owes the player the contact and the number, so it keeps every stage gap. A wind-up is
+  // held for its telegraph length alone, and an action that deals nothing (a Guard, a Warcry) walks no result, reaction
+  // or damage stage, since it has none to say.
+  const OUTCOME = new Set(['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'combatAvoidanceResolved', 'hpLost']);
+  const enemyTimingFor = beat => {
+    if (beat.telegraph) return { ...enemyTiming, intentMs: 0, wordMs: 0, resetMs: 0 };
+    if (beat.actorId && !beat.banner && beat.kind !== 'reveal' && !beat.events.some(event => OUTCOME.has(event.type)))
+      return { ...enemyTiming, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
+    return enemyTiming;
+  };
+  // The pacing a beat runs on (its banner shows for the same hold the timeline waits).
+  const pacingOf = beat => enemyBeats.has(beat) ? enemyTiming : timing;
+  const dealsOutcome = beat => beat.events.some(event => OUTCOME.has(event.type));
   let handle, skippedPointer = false;
   const isCurrent = () => ctx.isCurrent?.() ?? true;
   const skip = event => {
@@ -1249,6 +1270,7 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
   handle = runActionTimeline(beats, {
     onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
+    timingFor: beat => enemyBeats.has(beat) ? enemyTimingFor(beat) : null,
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
@@ -1349,10 +1371,13 @@ export function playTimeline(events, ctx, done) {
     },
     onReaction: beat => {
       runParts(beat, 'reaction');
-      return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
+      const speed = inEnemyTurn(beat) ? enemyTiming.spriteSpeed : timing.spriteSpeed;
+      // An enemy action with no outcome (a Guard) shows its flash but holds the timeline for none of it.
+      if (inEnemyTurn(beat) && beat.actorId && beat.kind !== 'reveal' && !dealsOutcome(beat)) return 0;
+      return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, speed)) || 0));
     },
     onNumbers: beat => {
-      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
+      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', pacingOf(beat).bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); runParts(beat, 'numbers'); }
       else {
         // Owner 2026-11-06: the damage numbers come first, then the callouts (BLOCKED, BREAK, DODGED), then the rest (status and buff gains).
