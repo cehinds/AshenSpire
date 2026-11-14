@@ -13,6 +13,7 @@ import { scaleOwnElementActions } from './elementRules.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
+import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
@@ -349,6 +350,7 @@ export function createCombat({
     combat.player.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: poiseMax, ...(player.ratings || {}) };
     combat.player.attributes = { ...(player.attributes || {}) };
     combat.player.ratingSources = structuredClone(player.ratingSources || combat.player.ratingSources || []);
+    if (player.itemProps && Object.keys(player.itemProps).length) combat.player.itemProps = structuredClone(player.itemProps);
     if (fixCoreEnabled(combat)) {
       combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
       combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
@@ -532,6 +534,7 @@ function startPlayerTurn(combat) {
     if (protection.barrier) A.gainBarrier(combat, p, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     Blight.beginAshenBlightCycle(combat, p, String(p.combatOwnerCycle));
   }
+  QueueItemTurnStart(combat, p); // W25 step 6: Block and a Poise guard from the player's item properties
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -598,6 +601,9 @@ function endPlayerTurn(combat, discardIds = []) {
   // …then refresh ordinary cards, keeping Retain; Ethereal cards exhaust. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
+  // W25 step 6: a Retain property keeps its dearest cards (never Ethereal ones) through the discard.
+  const kept = ItemRetainIds(combat, p, (card) => { const def = resolveCombatCard(combat, card); return (def.keywords || []).includes('ethereal') ? null : (Number(def.staminaCost ?? def.cost) || 0) + (Number(def.manaCost) || 0); });
+  if (kept.length) p.combatRetainedCards = [...(p.combatRetainedCards || []), ...kept];
   applyDiscardChoice(combat, discardIds);
   if (Reactions.usesReactions(combat)) {
     combat.reactionHandCleanup = { preserveLockedHand };
@@ -1871,6 +1877,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     manaSpent: manaCost,
     staminaSpent: staminaCost,
   });
+  QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
   drainQueue(combat);
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;

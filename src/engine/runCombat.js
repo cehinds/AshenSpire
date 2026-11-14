@@ -1,6 +1,7 @@
 import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { gameModule } from '../model/gameProfile.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
+import { ItemPropertySummary } from '../model/itemProperties.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
@@ -158,6 +159,7 @@ export function createRunCombat({
     player: { ...runCombatPlayer(run),
       ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
         attributes: gameProfileEffectiveAttributes(registries, run),
+        itemProps: ItemPropertySummary(run), // W25 step 6: what the gear and relics set for this fight
         baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,

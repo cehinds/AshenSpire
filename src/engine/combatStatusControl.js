@@ -1,4 +1,5 @@
 import { rollD20Check } from './d20Chance.js';
+import { ItemIncomingPercent } from './itemPropertyHooks.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
@@ -481,8 +482,10 @@ export function consumeControlActionLoss(ctx, entity) {
 }
 
 export function statusIncomingModifier(ctx, entity, profile = {}) {
-  if (!enabled(ctx)) return { percent: 0, evadeBonus: 0 };
-  const cfg = rules(ctx); let percent = 0, evadeBonus = 0;
+  // An item property's resistance or immunity to a damage type (W25 step 6) applies whatever the status rules are.
+  const itemPercent = ItemIncomingPercent(entity, profile.damageType);
+  if (!enabled(ctx)) return { percent: itemPercent, evadeBonus: 0 };
+  const cfg = rules(ctx); let percent = itemPercent, evadeBonus = 0;
   if (!entity.statusControl?.resolveActive) percent += stacks(entity, cfg.sleep.status) * cfg.sleep.damagePercentPerStack;
   if (stacks(entity, cfg.prone.status)) {
     if (profile.range === 'melee') percent += cfg.prone.meleePercent;

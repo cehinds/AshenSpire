@@ -1,4 +1,5 @@
 import { applyStatus } from './statuses.js';
+import { ItemHandBonus, QueueItemStanceEntry, ItemIncomingPercent, ItemPoiseExtra } from './itemPropertyHooks.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
@@ -38,6 +39,7 @@ export function setProfileStance(ctx, entity, carrier) {
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
   if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx, entity, carrier).stance.effectivenessMultiplier - 1 : 0;
   const previous=entity.combatStance;
+  const entering = entity?.itemProps && !sameStance(entity,carrier);
   const grants = fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
@@ -50,6 +52,8 @@ export function setProfileStance(ctx, entity, carrier) {
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
   ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
+  if (entering && entity.combatStance.maneuver !== 'neutral') QueueItemStanceEntry(ctx, entity); // W25 step 6
+
   return true;
 }
 function rating(entity, name) {
@@ -129,6 +133,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     guardIntercepted = Math.max(0, Number(statusPlan.redirect?.amount) || 0);
     raw=transition('status-rules','Other status modifiers',raw,statusPlan.amount);
   }
+  // An item property's resistance or immunity to this damage type (W25 step 6) scales the hit like a status modifier does.
+  const itemPercent = target?.itemProps ? ItemIncomingPercent(target, canonicalDamageType(profile.damageType)) : 0;
+  if (itemPercent) raw = transition('item-resist', itemPercent <= -100 ? 'Immunity (item)' : 'Resistance (item)', raw, Math.max(0, raw * (100 + itemPercent) / 100), 'offense', Math.max(0, (100 + itemPercent) / 100));
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
@@ -262,6 +269,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
+  // +% Poise damage (a magic weapon's Blacksmith pick, W25 step 4): the hit takes that much more of the target's Poise pool.
+  if (source?.itemProps?.poiseDamagePct) poiseDrain += ItemPoiseExtra(source, poiseMitigated + poiseDrain, Math.max(0, (target?.persistentPoise?.value || 0) - poiseMitigated - poiseDrain));
   return { raw, rawHit, weaknesses, pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
@@ -294,7 +303,7 @@ export function profileHandSize(ctx) {
   const cards = configuredModule(ctx, 'cards');
   if (!cards) return 0;
   return Math.max(0, Math.floor((cards.handBase ?? 4)
-    + (ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0)));
+    + (ctx.attributes?.[cards.handAttribute || 'intelligence'] || 0)) + ItemHandBonus(ctx)); // + a hand-size item property (W25 step 6)
 }
 export function profileFallbackDamage(ctx) {
   return gameContent(ctx, 'fallback')?.attackDamage ?? ctx.gameProfile?.foundation?.attackDamage ?? 5;
