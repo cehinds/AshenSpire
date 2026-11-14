@@ -34,7 +34,8 @@ test('Reaver and Rogue copy limits: each new Basic is unlimited, every other new
     const run = live(classId, ['core.strike', ...ALL]);
     assert.equal(deckCopyLimit(registries, 'core.strike', {}, run), Infinity);
     for (const id of BASICS) assert.equal(deckCopyLimit(registries, id, {}, run), Infinity, `${classId}/${id}`);
-    for (const id of [...HIGHER, CANTRIP]) assert.equal(deckCopyLimit(registries, id, {}, run), 1, `${classId}/${id}`);
+    // Limited to the copies owned: one added here, plus any the starter deck already holds (the Rogue starts with Feint).
+    for (const id of [...HIGHER, CANTRIP]) assert.equal(deckCopyLimit(registries, id, {}, run), run.deck.filter(card => card.cardId === id).length, `${classId}/${id}`);
   }
 });
 
