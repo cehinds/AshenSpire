@@ -20,7 +20,7 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition as combatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
-import { alternativeFormation } from '../models/AlternativeFormationModel.js';
+import { alternativeFormation, ScaleFormationPlan } from '../models/AlternativeFormationModel.js';
 import { fitViewportSprites } from '../models/CombatViewportSizeModel.js';
 import { stableViewportHeight, portraitPhoneViewport } from '../viewportBasis.js';
 import { perspectiveCellContains, overheadGroupHeightPx } from '../models/AlternativeFormationModel.js';
@@ -730,7 +730,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.style.setProperty('--combat-mini-hud-scale', String(hudWide ? hudGrid.desktopMiniHudScale : hudGrid.miniHudScale));
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
-    const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
+    // Authored px are canvas px; this pass measures in scaled real px, so they take the canvas fit.
+    const fit = CanvasBox().scale;
+    const overheadGap = (combat.dataset.compactCombat === 'true' ? 4 : 14) * fit;
     // Owner (2026-10-12): a readout sits directly above or below its fighter,
     // never beside it. On the perspective grid a front-rank enemy's readout
     // goes below its feet; above its head stands the back rank's.
@@ -770,7 +772,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       presentation.playerSpawnRow = playerCell[0];
       presentation.playerSpawnColumn = playerCell[1];
     }
-    const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
+    // The formation models' px (strip thresholds, body caps, insets) are canvas px: plan on the field's canvas box,
+    // then scale the plan into the scaled real px every rect below is in (ScaleFormationPlan).
+    const planFit = CanvasBox().scale;
+    const plan = combatFormation({ width: fieldRect.width / planFit, height: fieldRect.height / planFit,
       presentation,
       footerClearance: logicalViewport().height <= 480 && logicalViewport().width >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
@@ -780,13 +785,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // above it (handLiftMaxFraction). Nothing from an earlier pass is used (owner, 2026-11-06: static layout).
     const planHand = combat.querySelector('.hand'), planHandRect = planHand?.getBoundingClientRect();
     const planHandTop = planHandRect && planHand.clientWidth > 0 ? planHandRect.top - fieldRect.top : null;
-    alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop : null, formFactor: document.documentElement.dataset.formFactor });
+    alternativeFormation(plan, fieldRect.width / planFit, fieldRect.height / planFit, document.documentElement.dataset.layout === 'narrow', { ...presentation, handTop: Number.isFinite(planHandTop) ? planHandTop / planFit : null, formFactor: document.documentElement.dataset.formFactor });
+    ScaleFormationPlan(plan, planFit);
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     // Three or more lanes on a phone cap HUD width while retaining physical type/tap floors.
     combat.style.setProperty('--combat-enemy-hud-scale', String(Math.min(
       hudWide ? hudGrid.desktopEnemyMiniHudScale : hudGrid.enemyMiniHudScale,
-      Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
-        ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
+      // The plan is in scaled real px; the 24 / 12 / 104 px are canvas px, so they take the canvas fit.
+      Math.max(1, Math.min((fieldRect.width - 24 * CanvasBox().scale) / plan.rows,
+        ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12 * CanvasBox().scale)) / (104 * CanvasBox().scale)))));
     // Geometry uses local offset dimensions, which already exclude CSS zoom.
     // Keep the fitted zoom while reading; resetting it would invalidate every
     // sprite descendant before the unchanged final zoom is written below.
@@ -833,7 +840,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       // its configured headroom throughout that rebuild: an absent DOM node
       // must not briefly refit the settled artwork and backdrop between beats.
       const racked = hudWide && targetHud && !frame.classList.contains('player')
-        ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) : 0;
+        ? Math.max(0, miniHudGroupHeight(hudGrid) + hudGrid.miniHudSpriteGapPx + 6 - hudGrid.desktopMiniHudBandOverlapPx) * fit : 0;
       return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
         art,
         // The overhead stack's own height (Inspect, when shown, over the
@@ -843,10 +850,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Desktop and widescreen enemies carry the taller racked group (intent + health row) above the head: the body is
         // fitted under it, so the group never overlaps the head. It may rise desktopMiniHudBandOverlapPx into the HUD
         // band's empty middle, as the old group did (owner 2026-10-28).
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap, racked) };
+        leading: Math.max(Math.min(66 * fit, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap, racked) };
     });
     // A readout below the feet needs no headroom above the head.
-    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
+    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6 * fit;
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
@@ -869,14 +876,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combat.dataset.waistOverlap = String(solo && logicalViewport().height > 480);
     const fitFormation = () => {
       const viewportSizes = fitViewportSprites({ width: fieldRect.width, actors,
-        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow),
+        viewportHeight: stableViewportHeight(), portraitPhone: portraitPhoneViewport(narrow), unit: fit,
         // Judge the fit on the positions composition will use: a solo
         // player's feet stay above the hand.
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         solo: solo && logicalViewport().height > 480 });
       combat.dataset.spriteLastResort = viewportSizes.lastResort ? viewportSizes.lastResort.toFixed(3) : '';
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
-        perspectiveGrid: true,
+        perspectiveGrid: true, unit: fit,
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && logicalViewport().height > 480,
@@ -888,7 +895,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const growthFor = (actor, fitted) => {
         const requestedGrowth = 1; // Reading selection never changes approved artwork geometry.
         return Math.min(requestedGrowth, Math.max(1,
-          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
+          ((fitted.ground ?? actor.slot.ground) - actor.leading - 6 * fit) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
