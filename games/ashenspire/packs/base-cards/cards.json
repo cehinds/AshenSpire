@@ -1258,7 +1258,7 @@
     {
       "definition": {
         "id": "base.evade",
-        "name": "Evade",
+        "name": "Sidestep",
         "class": "colorless",
         "rarity": "common",
         "cost": 1,
