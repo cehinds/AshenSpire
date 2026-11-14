@@ -1,6 +1,5 @@
-// W25 (owner, 2026-11-14) Necrotic: x0.7 damage; ignores Poise entirely (Block then HP; Poise neither absorbs nor drops); each hit adds Necrotic build-up
-// equal to the attacker INT (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (a boss takes the build-up
-// as damage instead and the build-up resets); against an `undead` target necrotic heals it by the damage instead.
+// W25 (owner, 2026-11-14) Necrotic: x0.7 damage; ignores Poise entirely (Block then HP; Poise neither absorbs nor drops); each necrotic hit that lands while the target's Poise is broken adds Necrotic build-up
+// equal to the attacker INT (at least 1); build-up at or above the target's current HP kills it at the end of its own turn (bosses too); against an `undead` target necrotic heals it by the damage instead.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
@@ -32,12 +31,16 @@ test('live: a necrotic hit never touches Poise, and the quote is what is lost', 
   assert.ok(played.lost.e1 > 0);
 });
 
-test('each hit adds build-up equal to the attacker INT, at least 1', () => {
+test('a hit on a target whose Poise is broken adds build-up equal to the attacker INT, at least 1; with Poise left it adds none', () => {
   for (const [intelligence, stacks] of [[4, 4], [0, 1]]) {
-    const { combat, enemy } = fight({ enemies: 1, attributes: { intelligence } });
+    const { combat, enemy } = fight({ enemies: 1, poise: 0, attributes: { intelligence } });
     play(combat, 'core.graveToll', enemy.id);
     assert.equal(getStacks(enemy, 'necroticBuildup'), stacks, `INT ${intelligence}`);
   }
+  const held = fight({ enemies: 1, poise: 50 });
+  const played = play(held.combat, 'core.graveToll', held.enemy.id);
+  assert.equal(getStacks(held.enemy, 'necroticBuildup'), 0, 'Poise left: no build-up');
+  assert.equal(played.lost.e1, played.row.faceValue, 'the damage still ignores Poise');
   const old = fight({ enemies: 1, legacy: true });
   play(old.combat, 'core.graveToll', old.enemy.id);
   assert.equal(getStacks(old.enemy, 'necroticBuildup'), 0, 'an old fight builds nothing');
@@ -54,16 +57,15 @@ test('build-up at or above current HP kills at the end of its own turn; below it
   assert.equal(enemy.hp, 0);
 });
 
-test('a boss takes the build-up as damage at its turn end and the build-up resets', () => {
+test('a boss dies too when its build-up reaches its HP at its turn end', () => {
   const { combat, enemy } = fight({ enemies: 1 });
-  enemy.tags = ['boss']; enemy.hp = 10; enemy.statuses.necroticBuildup = { stacks: 12 };
+  enemy.tags = ['boss']; enemy.hp = 10; enemy.statuses.necroticBuildup = { stacks: 10 };
   ElementTurnEnd(combat, enemy);
-  assert.equal(enemy.alive, false, 'the damage is the build-up, so a boss with less HP than that still falls');
+  assert.equal(enemy.alive, false);
   const other = fight({ enemies: 1 });
   other.enemy.tags = ['boss']; other.enemy.statuses.necroticBuildup = { stacks: 12 };
   ElementTurnEnd(other.combat, other.enemy);
-  assert.equal(other.enemy.hp, 488);
-  assert.equal(getStacks(other.enemy, 'necroticBuildup'), 0);
+  assert.equal(other.enemy.hp, 500, 'below its HP: nothing');
 });
 
 test('against an undead target necrotic heals it by the damage, adds no build-up, and the quote says no damage', () => {

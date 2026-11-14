@@ -1405,7 +1405,7 @@
     "tint": "#7a4fa3",
     "stackMode": "add",
     "decay": "none",
-    "tooltip": "When the build-up reaches the holder's current HP, it dies at the end of its own turn (a boss instead takes the build-up as damage and the build-up resets). Lasts the whole fight."
+    "tooltip": "When the build-up reaches the holder's current HP, it dies at the end of its own turn, bosses included. Only added by a necrotic hit while its Poise is broken. Lasts the whole fight."
   },
   {
     "id": "knockback",

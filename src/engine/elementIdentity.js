@@ -142,7 +142,8 @@ export function ApplyElementReceipt(ctx, source, target, receipt, carrier) {
   if (stacksOf(target, 'brittle') > 0) Statuses.removeStatus(ctx, target, 'brittle', { reason: 'consumed' });
   if (!element) return;
   if (receipt.element?.heal > 0) Actions.applyHeal(ctx, target, receipt.element.heal);
-  if (element === 'necrotic' && target.alive && !ElementHasTag(ctx, target, rules.necrotic.undeadTag)) {
+  // Build-up needs the target's Poise broken (at 0), like the other elemental statuses; the damage itself ignores Poise.
+  if (element === 'necrotic' && target.alive && !(target.persistentPoise?.value > 0) && !ElementHasTag(ctx, target, rules.necrotic.undeadTag)) {
     const stacks = Math.max(rules.necrotic.buildupMin, ElementAttribute(ctx, source, rules.necrotic.buildupAttribute));
     Statuses.applyStatus(ctx, target, 'necroticBuildup', stacks, source);
   }
@@ -275,19 +276,15 @@ export function ElementTurnStart(ctx, entity) {
   if (shock > 0 && rolls(ctx, shock * rules.shock.actionLossChancePerStack)) loseAction(ctx, entity, 'shock', rules.shock.playerStaminaLoss);
 }
 
-/** At the end of an owner's turn: Necrotic build-up at or above current HP kills it (a boss takes the build-up as damage instead). Knockback ends. */
+/** At the end of an owner's turn: Necrotic build-up at or above current HP kills it Knockback ends. */
 export function ElementTurnEnd(ctx, entity) {
   const rules = ElementRulesOf(ctx);
   if (!rules || !entity?.alive) return;
   if (entity.statuses?.knockback) Statuses.removeStatus(ctx, entity, 'knockback', { reason: 'consumed' });
   const buildup = stacksOf(entity, 'necroticBuildup');
   if (!(buildup > 0)) return;
-  // A boss cannot be struck dead by build-up: it takes the build-up as damage at the end of each of its turns and the build-up resets (owner wording: "bosses
-  // instead take damage equal to the build-up at the end of their turn and the build-up resets"). Anything else dies once build-up reaches its current HP.
-  if (ElementHasTag(ctx, entity, rules.necrotic.bossTag)) {
-    Statuses.removeStatus(ctx, entity, 'necroticBuildup', { reason: 'consumed' });
-    Actions.applyLoseHp(ctx, entity, buildup, 'necrotic build-up');
-  } else if (buildup >= entity.hp) {
+  // Build-up at or above current HP kills any target, bosses included (owner, 2026-11-14: "Bosses die too").
+  if (buildup >= entity.hp) {
     ctx.emit?.('elementNecroticDeath', { targetId: entity.id, amount: buildup });
     Actions.applyLoseHp(ctx, entity, entity.hp, 'necrotic build-up');
   }

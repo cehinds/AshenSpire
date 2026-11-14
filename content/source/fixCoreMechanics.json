@@ -146,8 +146,7 @@
       "damageMultiplier": 0.7,
       "buildupAttribute": "intelligence",
       "buildupMin": 1,
-      "undeadTag": "undead",
-      "bossTag": "boss"
+      "undeadTag": "undead"
     },
     "frost": {
       "chillBase": 1,

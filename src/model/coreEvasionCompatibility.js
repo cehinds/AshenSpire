@@ -49,8 +49,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843',
   'sha256:22534c34792bcf9db9688514836cd66c77470c68a3c3b3703ac8164a706129ef',
   'sha256:68d430e0053091cec98f2819769a92bfbd7e944af9b8237bc315cd40f472fc87',
+  'sha256:33931a536301d048ab52e76fb6a2df49e92b7ff5aac774da88167cab19b30701',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:33931a536301d048ab52e76fb6a2df49e92b7ff5aac774da88167cab19b30701';
+const FIXED_EVASION_RUNTIME = 'sha256:cc8babb17366b93494ea58ce367ed435052f603b593beeee598698a6251ab1cf';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
