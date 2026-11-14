@@ -1917,13 +1917,7 @@ export function mountCustomize(app, {
     if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
-    start.hidden = plan.primary !== 'begin' && !plan.quickBegin;
-    // Class step of the two-stage flow: Begin is the primary, Next is "Customise".
-    next.textContent = plan.quickBegin ? t('creation.customise') : t('creation.next');
-    next.classList.toggle('primary', !plan.quickBegin);
-    // The green fill hangs on cz-next-stage; Customise is the neutral secondary beside the primary Begin.
-    next.classList.toggle('cz-next-stage', !plan.quickBegin);
-    next.dataset.controlRole = plan.quickBegin ? 'utility' : 'primary';
+    start.hidden = plan.primary !== 'begin';
     railed.dataset.creationStage = id;
     railed.dataset.creationStepIndex = String(categories.indexOf(id) + 1);
     railed.dataset.creationStepCount = String(categories.length);

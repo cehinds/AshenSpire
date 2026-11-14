@@ -1,7 +1,6 @@
 // The Class step claims Adept training (unlimited copies) only where the profile grants it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { registries } from './helpers/fixcore-combat-rules.mjs';
 import { createRunState } from '../src/model/state.js';
 import { UnlimitedAdeptTraining } from '../src/model/deckCopyLimit.js';
@@ -16,8 +15,3 @@ for (const classId of ['reaver', 'rogue', 'starseer', 'herald']) {
     assert.match(legacy?.label || '', /Adept/, 'the legacy profile keeps the sentence');
   });
 }
-
-test('Customise is not drawn in the Begin green', () => {
-  const src = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
-  assert.match(src, /next\.classList\.toggle\('cz-next-stage', !plan\.quickBegin\)/);
-});
