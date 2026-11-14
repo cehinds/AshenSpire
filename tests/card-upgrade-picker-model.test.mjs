@@ -62,7 +62,7 @@ test('rows: a short purse disables and moves paid cards after free cards while p
   assert.equal(model.canConfirm, false);
   assert.match(model.blockedReasons[0], /Smithing Stone/);
   assert.equal(model.selected.blockedReason, model.blockedReasons[0]);
-  assert.equal(model.rows.at(-1).instanceId, card.instanceId);
+  assert.equal(model.rows.filter(row => !row.weaponBound).at(-1).instanceId, card.instanceId);
   assert.deepEqual(model.rows.filter(row => !row.disabled).map(row => row.instanceId),
     run.deck.filter((instance, i, deck) => instance.instanceId !== card.instanceId
       && planCardUpgrade(run, registries, instance.instanceId).ok
@@ -71,7 +71,7 @@ test('rows: a short purse disables and moves paid cards after free cards while p
       .map(instance => instance.instanceId));
   run.smithingStones = 1;
   const replenished = cardUpgradeModel(registries, run, card.instanceId);
-  assert.equal(replenished.rows[0].instanceId, card.instanceId, 'affordable cards return to deck order');
+  assert.equal(replenished.rows.filter(row => !row.weaponBound)[0].instanceId, card.instanceId, 'affordable cards return to deck order');
   assert.equal(replenished.canConfirm, true);
 });
 
@@ -79,7 +79,7 @@ test('a spent service disables every remaining upgrade and keeps its reason in t
   const run = newRun();
   const model = cardUpgradeModel(registries, run, strike(run).instanceId, { blockedReason: 'This service has already been used.' });
   assert.ok(model.rows.length > 0);
-  assert.ok(model.rows.every(row => row.disabled && row.blockedReason === 'This service has already been used.'));
+  assert.ok(model.rows.filter(row => !row.weaponBound).every(row => row.disabled && row.blockedReason === 'This service has already been used.'));
   assert.equal(model.canConfirm, false);
   assert.deepEqual(model.blockedReasons, ['This service has already been used.']);
   assert.ok(model.faces?.after);
@@ -178,7 +178,7 @@ test('picker updates disable unaffordable upgrades, reorder rows, and use the cu
 
     run.smithingStones = 0;
     door.update(cardUpgradeModel(registries, run, paid.instanceId));
-    assert.equal(rows().at(-1).dataset.instanceId, paid.instanceId);
+    assert.equal(rows().filter(row => row.dataset.upgradeState !== 'blocked' || row.dataset.instanceId === paid.instanceId).at(-1).dataset.instanceId, paid.instanceId);
     assert.equal(paidRow().getAttribute('aria-disabled'), 'true');
     assert.equal(paidRow().dataset.upgradeState, 'blocked');
     assert.match(paidRow().querySelector('.card-upgrade-reason').textContent, /Smithing Stone/);
@@ -318,16 +318,41 @@ test('identical copies collapse into one row that selects the first instance', (
   assert.equal(legacyRows.find(r => r.instanceId === strikes[1].instanceId)?.copies, strikes.length - 1, 'the fresh copies stay free and selectable');
 });
 
-test('copies whose next upgrade rolls differently stay separate rows, each with its own preview', () => {
+test('copies whose next upgrade rolls differently share one row that shows the first copy and says so', () => {
   const run = newRun();
   const strikes = run.deck.filter(c => c.cardId === 'core.strike');
   for (const s of strikes) { s.upgraded = true; s.upgradeSteps = [{ k: 'authored' }]; }
   run.smithingStones = 4;
   const rows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike');
   const steps = new Set(strikes.map(s => JSON.stringify(planCardUpgrade(run, registries, s.instanceId).step)));
-  assert.equal(rows.length, steps.size, 'one row per distinct next step');
-  assert.equal(rows.reduce((n, r) => n + r.copies, 0), strikes.length, 'every copy is counted once');
-  for (const row of rows) assert.ok(row.instanceIds.every(id => JSON.stringify(planCardUpgrade(run, registries, id).step) === JSON.stringify(row.plan.step)), 'a row only groups copies with its own next step');
+  assert.equal(rows.length, 1, 'identical copies are one row however their next step rolls');
+  assert.equal(rows[0].copies, strikes.length);
+  assert.equal(rows[0].instanceId, strikes[0].instanceId, 'the first copy in deck order is the one upgraded');
+  assert.equal(JSON.stringify(rows[0].plan.step), JSON.stringify(planCardUpgrade(run, registries, strikes[0].instanceId).step));
+  assert.equal(rows[0].nextDiffers, steps.size > 1, 'the row says so when the copies would roll differently');
+});
+
+test('the smith list: two Strikes, an upgraded Strike and the weapon art are three rows, the art disabled with its reason', () => {
+  const run = newRun(); run.smithingStones = 3;
+  run.deck.push({ ...strike(run), instanceId: 'extra-strike' });
+  const strikes = run.deck.filter(c => c.cardId === 'core.strike');
+  assert.equal(strikes.length, 3);
+  strikes[2].upgraded = true; strikes[2].upgradeSteps = [{ k: 'authored' }];
+  const art = run.deck.find(c => c.cardId === 'greatswordSunderingHew');
+  assert.ok(art && (art.grantedBy || art.sourceArmamentId), 'the starting weapon grants its art');
+  const rows = cardUpgradeModel(registries, run).rows.filter(r => r.cardId === 'core.strike' || r.cardId === art.cardId);
+  assert.equal(rows.length, 3);
+  const plain = rows.find(r => r.cardId === 'core.strike' && r.upgrades === 0);
+  const upgraded = rows.find(r => r.cardId === 'core.strike' && r.upgrades === 1);
+  const weapon = rows.find(r => r.cardId === art.cardId);
+  assert.equal(plain.copies, 2);
+  assert.equal(upgraded.copies, 1);
+  assert.equal(weapon.disabled, true);
+  assert.equal(weapon.ok, false);
+  assert.equal(weapon.blockedReason, 'Upgrades with its weapon (Smith)');
+  const model = cardUpgradeModel(registries, run, art.instanceId);
+  assert.equal(model.canConfirm, false, 'the weapon art cannot be confirmed');
+  assert.equal(model.rows.at(-1).instanceId, weapon.instanceId, 'listed after the available rows');
 });
 
 test('rows carry levels, tags, art and the changed face numbers', () => {
@@ -365,7 +390,7 @@ test('blacksmith rows list 2 options for a Basic card and 3 for a ranked one; th
   const run = newRun(); run.smithingStones = 3;
   const smith = cardUpgradeModel(registries, run, null, { blacksmith: true });
   const plain = cardUpgradeModel(registries, run);
-  assert.ok(plain.rows.every(r => r.options.length === 1 && r.plan.options === undefined));
+  assert.ok(plain.rows.filter(r => !r.weaponBound).every(r => r.options.length === 1 && r.plan.options === undefined));
   const strikeRow = smith.rows.find(r => r.cardId === 'core.strike');
   assert.equal(strikeRow.options.length, 2, 'Strike is Basic');
   assert.equal(strikeRow.plan.options.length, 2);
