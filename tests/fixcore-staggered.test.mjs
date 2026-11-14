@@ -8,6 +8,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from './withoutWeaknesses.mjs'; // fixtures drop enemy weaknesses (SPEC 5.3)
+import { withoutStanceBenefits } from './legacyStanceRules.mjs'; // Wave 2.5: these numbers pin the pre-benefit rules
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
 import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction, fixCoreStagger } from '../src/engine/actions.js';
@@ -25,7 +26,7 @@ const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 function live(poise = 20) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = withoutStanceBenefits(createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] }));
   // These tests cover the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); tests/poise-broken.test.mjs covers the shipped Broken rule.
   combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];

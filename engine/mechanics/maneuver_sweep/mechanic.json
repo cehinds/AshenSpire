@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Sweep",
-  "description": "Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it.",
+  "description": "Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it. Stance benefit: an attack also hits every other enemy in range for 50% of its damage.",
   "attaches": [
     "card"
   ],

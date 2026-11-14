@@ -17,6 +17,7 @@ import { gameContent } from '../model/gameProfile.js';
 import { configuredModule } from '../model/profileModule.js';
 import { mechanics } from '../framework/data/mechanics.js';
 import { reflectStackCount, reflectCut, reflectReducePct } from './guardStacks.js';
+import { AttackDamageMultiplier, PoiseLossAdjust } from './stanceBenefits.js';
 
 // A pierce hit: the card tag `pierce` or `damage:piercing`, or a piercing damage type (content/source/tagging.csv, combatRules.js).
 // It lets floor(blockBypassFraction x that hit's damage) past Block (fixCoreMechanics.json pierce; owner, 2026-10-26: "pierce should be
@@ -121,6 +122,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // Owner, 2026-11-14: a Broken target (Poise break under `poise.breakRule: "broken"`) takes the Broken multiplier from every hit.
   const brokenRule = modern && !flatReturn && target?.broken ? FixCoreBrokenRules(ctx) : null;
   if (brokenRule) raw = transition('broken','Broken',raw,raw*brokenRule.damageMultiplier,'offense',brokenRule.damageMultiplier);
+  // Owner, 2026-11-14 (Wave 2.5): the attacker's own stance benefit (Attack +20%, Prepared +25%), then a Sweep splash hit's share of that damage.
+  const benefitMultiplier = flatReturn ? 1 : AttackDamageMultiplier(ctx,source,carrier);
+  raw = transition('stance-benefit','Stance benefit',raw,raw*benefitMultiplier,'offense',benefitMultiplier);
+  const splashMultiplier = flatReturn ? 1 : carrier.stanceSplash > 0 && carrier.stanceSplash < 1 ? carrier.stanceSplash : 1;
+  raw = transition('sweep-splash','Sweep splash',raw,raw*splashMultiplier,'offense',splashMultiplier);
   if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   // Owner, 2026-10-31 (SPEC 5.3): each enemy weakness the hit matches multiplies its damage, after Vulnerable.
   const weaknesses = modern && !flatReturn && target?.kind === 'enemy' ? matchingHitWeaknesses(target, hitWeaknessTriggers(ctx, source, carrier, profile, share)) : [];
@@ -271,12 +277,19 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   }
   // +% Poise damage (a magic weapon's Blacksmith pick, W25 step 4): the hit takes that much more of the target's Poise pool.
   if (source?.itemProps?.poiseDamagePct) poiseDrain += ItemPoiseExtra(source, poiseMitigated + poiseDrain, Math.max(0, (target?.persistentPoise?.value || 0) - poiseMitigated - poiseDrain));
+  // Owner, 2026-11-14: a Smash adds Poise damage (the pool loses it, HP is untouched); a Defend target spares a share of what its pool would lose.
+  // `poiseSpared` comes off the pool alongside poiseMitigated + poiseDrain wherever a receipt is applied (actions.js, combatDamagePreview.js).
+  let poiseSpared = 0;
+  if (modern && !evaded && !flatReturn) {
+    const poise = PoiseLossAdjust(ctx,source,carrier,defending,{taken:poiseMitigated+poiseDrain,pool:target?.persistentPoise?.value || 0});
+    poiseDrain += poise.extra; poiseSpared = poise.spared;
+  }
   return { raw, rawHit, weaknesses, pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
-    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
+    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,

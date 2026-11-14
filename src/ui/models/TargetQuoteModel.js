@@ -39,10 +39,22 @@ export function TargetQuotePoise(preview, targetId) {
 }
 
 /** The sequence in the card face's form: `N`, `N × M` when the hits are equal, else each hit in order. */
-export function TargetQuoteHitsText(hits) {
+const hitsBody = hits => {
   const list = hits.map(String);
-  const body = list.length > 1 && hits.every(amount => amount === hits[0]) ? t('combat.quote.times', { amount: hits[0], count: hits.length }) : list.join(', ');
-  return t('combat.quote.hp', { hits: body });
+  return list.length > 1 && hits.every(amount => amount === hits[0]) ? t('combat.quote.times', { amount: hits[0], count: hits.length }) : list.join(', ');
+};
+export function TargetQuoteHitsText(hits) {
+  return t('combat.quote.hp', { hits: hitsBody(hits) });
+}
+
+/**
+ * TargetQuoteSplashHits(reference, targetId) → the HP a Sweep's splash takes from that enemy when the reference enemy is the one aimed at, in order (Wave 2.5:
+ * a Sweep also strikes every other enemy in range at half damage); empty when the card has none. The splash rows ride on the reference preview.
+ */
+export function TargetQuoteSplashHits(reference, targetId) {
+  const hits = [];
+  for (const row of reference?.values || []) if (row.op === 'damage') for (const amount of row.splashHitDamages?.[targetId] || []) hits.push(Math.floor(Number(amount) || 0));
+  return hits;
 }
 
 /** True when an Evade stack on the enemy cancels the play (the hit label the hit-chance badge always read, now the only miss). */
@@ -78,15 +90,18 @@ export function TargetQuote({ preview, combat, instanceId, targetId, reference =
     stamina: reference && stamina !== (reference.staminaCost || 0) ? stamina : null,
     mana: reference && mana !== (reference.manaCost || 0) ? mana : null,
   };
+  // Another enemy is the aimed one: this enemy also takes the Sweep's splash, as an extra line under its own quote.
+  const splashHits = reference && reference !== quote ? TargetQuoteSplashHits(reference, targetId) : [];
+  const splash = splashHits.length ? { splash: splashHits, splashText: t('combat.quote.splash', { hits: hitsBody(splashHits) }), splashLabel: t('combat.quote.splashAria', { hits: splashHits.join(', ') }) } : {};
   const refusal = refusalFor(combat, quote);
   if (refusal) return { kind: 'refusal', hits, text: refusal, label: refusal, ...cost };
   if (hits.every(amount => amount === 0)) {
     const word = hitPreview && TargetQuoteEvaded(hitPreview) ? t('combat.callout.evaded') : t('combat.callout.blocked');
-    return { kind: 'cause', hits, text: word, label: word, ...cost };
+    return { kind: 'cause', hits, text: word, label: word, ...cost, ...splash };
   }
   const text = TargetQuoteHitsText(hits);
   const { removed, breaks } = TargetQuotePoise(quote, targetId);
   const poise = breaks ? t('combat.callout.poiseBreak') : removed > 0 ? t('combat.quote.poise', { amount: removed }) : null;
   const poiseLabel = breaks ? t('combat.quote.breakAria') : removed > 0 ? t('combat.quote.poiseAria', { amount: removed }) : null;
-  return { kind: 'hp', hits, text, label: [t('combat.quote.hpAria', { hits: hits.join(', ') }), poiseLabel].filter(Boolean).join('. '), poise, poiseBreaks: breaks, ...cost };
+  return { kind: 'hp', hits, text, label: [t('combat.quote.hpAria', { hits: hits.join(', ') }), poiseLabel].filter(Boolean).join('. '), poise, poiseBreaks: breaks, ...cost, ...splash };
 }

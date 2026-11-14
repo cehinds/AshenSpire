@@ -5,6 +5,7 @@ import { createRunState } from '../../src/model/state.js';
 import { createRng } from '../../src/engine/rng.js';
 import { createRunCombat } from '../../src/engine/runCombat.js';
 import { legacyRolls } from '../legacyHitRules.mjs';
+import { withoutStanceBenefits } from '../legacyStanceRules.mjs';
 export const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 export const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -27,6 +28,7 @@ export function live({ legacy = false } = {}) {
   // This fixture authors three contacts, which cost 3 SP (1 SP per hit); fund that price and select
   // that move explicitly instead of inheriting the one-SP native plan.
   for (const row of combat.enemies) delete row.weaknesses; // enemy weaknesses (SPEC 5.3) are tested in enemy-weaknesses.test.mjs
+  withoutStanceBenefits(combat); // these suites pin other rules' arithmetic; the Wave 2.5 stance benefits are tests/stance-benefits.test.mjs
   if (legacy) legacyRolls(combat);
   const enemy = combat.enemies[0];
   Object.assign(enemy, { maxStamina: 3, stamina: 3 });

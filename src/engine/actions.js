@@ -13,6 +13,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
@@ -411,7 +412,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0));
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
     }
   }
   const hpBefore = target.hp;
@@ -435,7 +436,26 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   applyWeaknessEffects(ctx, source, target, receipt);
   afterHpChange(ctx, target, { sourceId: source?.id });
   if (receipt.reflect) reflectBack(ctx, source, target, carrier, receipt.reflect);
+  if (receipt.hpLoss > 0 && fixCoreEnabled(ctx)) stanceCounterBack(ctx, source, target, carrier, receipt);
   return receipt.amount;
+}
+
+// Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returns 25% of the HP a hit cost it (nothing when Block took it all) to the attacker.
+// It travels as the same flagged return hit Reflect sends, so it needs no hit roll and can neither reflect, counter nor return again.
+function stanceCounterBack(ctx, source, target, carrier, receipt) {
+  const amount = CounterReturnAmount(ctx, receipt.defenseStance, receipt.hpLoss, carrier);
+  if (!(amount > 0) || !source?.alive || source === target || source.kind === target.kind) return;
+  ctx.emit('stanceCounterReturn', { sourceId: target.id, targetId: source.id, amount, original: receipt.hpLoss, ...seatOf(ctx, target) });
+  const profile = { ...carrier?.combatProfile, maneuver: 'counter', counterReturnAttack: true };
+  applyProfileDamage(ctx, target, source, amount, { combatReaction: true, reflectedHit: true, counterReturnAttack: true, skipRatingBonus: true, proposalReactive: true,
+    damageSchool: carrier?.damageSchool, combatProfile: profile, tags: carrier?.tags, combatRiderTargets: [],
+    ...(Number.isFinite(carrier?.magicShare) ? { magicShare: carrier.magicShare } : {}), ...(carrier?.physicalDamageType ? { physicalDamageType: carrier.physicalDamageType } : {}) });
+}
+
+// The side a Sweep's splash can reach: the primary target's own side (every living enemy, or every living player seat).
+function splashSide(ctx, primary) {
+  if (primary?.kind === 'enemy') return livingEnemies(ctx);
+  return ctx.players ? [...ctx.players.values()].map(row => row.entity) : [ctx.player].filter(Boolean);
 }
 
 // Reflect (owner 2026-10-31, SPEC §17): the landed hit sends floor(original incoming x min(cap, stacks x returnPerStack)) back as the
@@ -954,7 +974,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card) * BlockGainMultiplier(ctx, entity, card))) : 0; // Wave 2.5: Defend +50%, Counter +25% (stanceBenefits.js)
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -1717,6 +1737,9 @@ export const OPCODE_HANDLERS = Object.freeze({
           dealElementalHit(ctx, action.source, t, base, carrier, (from, to, amount) => applyAttackDamage(ctx, from, to, amount, attackTags, carrier),
             (to, amount) => applyLoseHp(ctx, to, amount, 'lightning backlash', { targetStatusesBefore: structuredClone(to.statuses || {}), sourceId: to.id })); // lightning, Bedrock, Damp (SPEC 4.7)
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
+          // Owner, 2026-11-14 (Wave 2.5): a Sweep also strikes every other enemy in range at half this hit's damage (a card that already strikes everyone needs none).
+          if (configuredCombat(ctx) && targets.length === 1 && eff.target !== 'allEnemies') for (const other of SweepSplashTargets(ctx, action.source, t, carrier, splashSide(ctx, t)))
+            applyAttackDamage(ctx, action.source, other, base, attackTags, SplashCarrier(ctx, action.source, carrier));
           // An enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k).
