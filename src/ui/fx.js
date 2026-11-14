@@ -721,7 +721,6 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   layer = combatReadoutLayer(layer);
   const rec = stackFor(layer, anchor);
   const same = (item) => item.kind === kind && item.forId === String(forId);
-  if (kind === 'blocked' && !repeat) return screenReaderCallout(layer, forId, kind, def);
   if (!repeat && (rec.stack.has(same) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
@@ -735,20 +734,6 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   // Through enqueueFloater, so a word gets the same host tracking as a number (a rebuilt figure retargets it).
   // The intent word is the beat's marker (cost first, word, then the stance one gap later): it never waits behind the cost floater.
   enqueueFloater({ layer, anchor, el, kind, forId: String(forId), rank: stackPriority(kind), lifeMs: ms, word: true, immediate: kind.startsWith('action:') });
-  return el;
-}
-// BLOCKED is no longer drawn (owner, 2026-11-14): the white Block number says it. The word stays as screen-reader text,
-// outside the floater column so it takes no slot.
-function screenReaderCallout(layer, forId, kind, def) {
-  if (liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
-  const el = document.createElement('div');
-  el.className = 'fx-callout sr-only';
-  el.dataset.calloutFor = String(forId);
-  el.dataset.calloutKind = kind;
-  el.setAttribute('role', 'status');
-  el.textContent = def.word || t(def.string);
-  layer.appendChild(el);
-  setTimeout(() => el.remove(), calloutLifeMs());
   return el;
 }
 const liveCallouts = (layer, forId) => [...(layer.children || [])]

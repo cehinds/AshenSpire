@@ -2,8 +2,8 @@
 // A presentation policy only: the event -> word mapping (calloutForEvent / outcomeKindForEvent) is unchanged, and
 // sounds and haptics play as before. ui/fx.js gates its two spawn primitives (callout, floatNum) through this.
 
-// The words that still show. `evadeFailed` is the "Hit - Evade Failed" variant of Hit (docs/STANCE-COMBAT-RULES.md).
-export const FLOATER_WORDS_SHOWN = Object.freeze(['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
+// The words that still show. A plain landed hit says no "Hit" (owner, 2026-11-14: "just show damage or status effect or miss, or blocked"): its numbers say it. `evadeFailed` is the "Hit - Evade Failed" variant of Hit (docs/STANCE-COMBAT-RULES.md).
+export const FLOATER_WORDS_SHOWN = Object.freeze(['evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
 
 // Dodged is a miss, so it draws as the Missed word. Evaded keeps its own word (owner, 2026-11-14): an Evade stack cancelled the hit.
 const MISS_KINDS = Object.freeze(['dodged']);

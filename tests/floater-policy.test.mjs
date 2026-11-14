@@ -7,8 +7,8 @@ import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-test('the allowlist is Hit, Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
-  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
+test('the allowlist is Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
+  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
   assert.ok(Object.isFrozen(FLOATER_WORDS_SHOWN));
   for (const kind of FLOATER_WORDS_SHOWN) assert.equal(floaterWordShown(kind), kind);
 });
@@ -123,4 +123,25 @@ test('the damage floater is the HP lost: Block and Poise never add to it, and a 
   assert.equal(guardHitFloatParts({ amount: 12, blocked: 3, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'amount is the HP lost plus the Block spent; Poise is already out of it');
   assert.equal(guardHitFloatParts({ amount: 9, blocked: 0, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'Poise absorbed 3 of a 12 hit: -9, not -12');
   assert.equal(guardHitFloatParts({ amount: 5, blocked: 5, poiseAbsorbed: 4 }, 100).damage, null, 'fully absorbed: no number');
+});
+
+// Owner, 2026-11-14: "you can get rid of hit, and just show damage or status effect or miss, or blocked".
+test('a landed hit says no Hit word; Missed, Countered and Blocked still show', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  withKitDom(({ document }) => {
+    const layer = document.createElement('div'); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+    const anchor = document.createElement('div'); anchor.box = { left: 100, top: 300, width: 80, height: 120 };
+    document.body.append(layer, anchor);
+    assert.equal(floaterWordShown('hit'), null);
+    assert.equal(callout(layer, anchor, 'e1', 'hit'), null);
+    assert.equal(layer.children.length, 0, 'no Hit word');
+    assert.equal(callout(layer, anchor, 'e1', 'missed')?.dataset.calloutKind, 'missed');
+    clearCallouts(layer);
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'countered')?.dataset.calloutKind, 'countered', 'Countered still shows');
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'blocked')?.dataset.calloutKind, 'blocked');
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'blocked').textContent, 'BLOCKED');
+  });
 });
