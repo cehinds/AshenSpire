@@ -1,7 +1,7 @@
 import { wireLayeredEnvironment } from './layeredEnvironment.js';
 import { mobileFloorShadowTop, holdFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
-import { logicalViewport } from '../viewViewport.js';
+import { logicalViewport, CanvasBox } from '../viewViewport.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
@@ -364,16 +364,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const body = currentSpriteBodyBounds(sprite, scheduleArt);
         const intent = rack.querySelector(':scope > :is(.intent,.player-action-intent)');
         const intentBox = intent?.getBoundingClientRect(), frameBox = frame.getBoundingClientRect();
-        const intentHeight = intentBox?.height || 37;
+        // The boxes are scaled real px; the authored heights and gaps are canvas px, so they
+        // are scaled by the canvas fit (owner, 2026-11-14: only the scale follows the window).
+        const fit = CanvasBox().scale;
+        const intentHeight = intentBox?.height || 37 * fit;
         // The rack's own box is the skip key's, read here with the rest of the reads.
         const read = intent ? { frameBox, intentBox, rackBox: rack.getBoundingClientRect() } : null;
         // Owner (2026-11-06): the rack stands wholly above the head. Its own height is read, since it can run past the
         // configured group height (the HP row's padding), and the rack's bottom, not its estimate, keeps the gap.
         const rackHeight = (read ? read.rackBox : rack.getBoundingClientRect()).height || 0; // one read per rack: the intent's skip key shares it
         racked.push({ frame, body, intent, read, placement: targetBodyHudPlacement({ body, frame: frameBox,
-          groupHeight: Math.max(miniHudGroupHeight(config), rackHeight), intentHeight,
-          // SPEC: the player's rack keeps a fixed 10 screen-pixel gap above the art; enemies keep the configured gap.
-          gap: frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx : config.miniHudSpriteGapPx, zoom }) });
+          groupHeight: Math.max(miniHudGroupHeight(config) * fit, rackHeight), intentHeight,
+          // SPEC: the player's rack keeps a fixed 10 SCREEN-pixel gap above the art, so that one gap is
+          // not scaled with the canvas (it is the one HUD distance that follows the window's scale; an
+          // open question against the 2026-11-14 canvas ruling). Enemies keep the configured canvas gap.
+          gap: frame.classList?.contains('player') ? config.playerMiniHudSpriteGapPx ?? config.miniHudSpriteGapPx * fit : config.miniHudSpriteGapPx * fit, zoom }) });
         centerTargetOverheads.watchRack?.(rack);
       // A detailed HUD rack is absent briefly while its frame is rendered.
       // Keep its settled leading host until the rack is rebuilt; placing a
@@ -1584,7 +1589,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // (dialogue bands, shop rails, tower light timings); only the page zoom and
   // the view box move this layout, so a style mutation refits only when one of
   // those changed. Reading them off the inline style is no layout read.
-  const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height', '--view-fit', '--view-left', '--view-top'];
+  // The canvas's fit scale and letterbox offset (--view-fit, --view-left, --view-top) are not
+  // layout inputs: the battlefield is laid out in canvas px, so a scale-only change moves nothing.
+  const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height'];
   // Text size is the root's inline font-size; the HUD is sized in rem.
   const rootLayoutKey = () => {
     const rootStyle = document.documentElement.style;
