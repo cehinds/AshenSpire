@@ -1,6 +1,6 @@
 import { persistRewardChange as transactReward } from './model/rewardTransaction.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, gameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
@@ -2308,7 +2308,7 @@ async function onCombatEnd(result, combat, enc) {
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -2462,12 +2462,12 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}) };
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
   persistOrWarn(); return showGameProfileReward();
 }
 
@@ -2510,7 +2510,7 @@ function showGameProfileReward() {
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persistContinuing);
-  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
     // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
@@ -2525,13 +2525,17 @@ function showGameProfileReward() {
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;
-        if (pending.levelOffers > 0) {
+        // Elite spoils (rewards.json eliteRelic): a relic choice after the combat door, before any level offers; an empty pool skips it.
+        const eliteId = pending.eliteRelic ? `${pending.offerId}:elite` : '';
+        if (eliteId && gameProfileEliteRelicOffer(registries, run, rng, { offerId: eliteId })) {
+          run.gameProfilePendingReward = { ...pending, offerId: eliteId, source: 'elite', eliteRelic: false };
+        } else if (pending.levelOffers > 0) {
           const offerId = `${pending.offerId}:level:${pending.levelOffers}`;
           gameProfileRewardOffers(registries, run, rng, { offerId, source: 'level' });
           run.gameProfilePendingReward = { ...pending, offerId, source: 'level', levelOffers: pending.levelOffers - 1 };
         }
       });
-      if (pending.levelOffers > 0) return showGameProfileReward();
+      if (run.gameProfilePendingReward) return showGameProfileReward();
       if (pending.after === 'advanceAct') return advanceAct();
       showMap();
     } });

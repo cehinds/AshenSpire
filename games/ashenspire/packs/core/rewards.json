@@ -202,6 +202,11 @@
       ]
     }
   },
+  "eliteRelic": {
+    "choices": 2,
+    "rarities": ["common", "uncommon", "rare"],
+    "exclude": []
+  },
   "rewardGroups": [
     {
       "id": "cards",

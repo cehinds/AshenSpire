@@ -250,6 +250,27 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
+/** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics of the listed rarities, built once per offerId
+ * on the reward stream. Returns null (nothing stored) when the key is absent or no relic qualifies. Its own source ('elite'), so the combat
+ * offer's relic strip (eligibility.relics.combatIds) never applies. */
+export function gameProfileEliteRelicOffer(registries, run, rng, { offerId } = {}) {
+  if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
+  if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
+  const rules = gameContent(run, 'rewards'), rule = rules?.eliteRelic;
+  if (!rule) return null;
+  const rarities = new Set(rule.rarities || []), exclude = new Set(rule.exclude || []);
+  let ids = pools(registries, run).relics.filter(id => rarities.has(registries.relics.get(id)?.rarity) && !exclude.has(id));
+  const options = [];
+  for (let n = Number.isInteger(rule.choices) ? rule.choices : 1; n > 0 && ids.length; n--) {
+    const id = weightedRelicPick(rules.eligibility?.relics?.weights, rng, 'cardRewards', ids);
+    ids = ids.filter(value => value !== id);
+    options.push({ kind: 'relics', id });
+  }
+  if (!options.length) return null;
+  const offer = { id: offerId, source: 'elite', options, takeCount: 1, taken: [], claimed: null };
+  (run.gameProfileRewardOffers ||= {})[offerId] = offer;
+  return offer;
+}
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
