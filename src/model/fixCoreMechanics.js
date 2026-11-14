@@ -27,6 +27,17 @@ export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(
 export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
+// Owner, 2026-11-14 (Wave 3, "a Poise break is the payoff"): `poise.breakRule: "broken"` turns a Poise break into Broken: the owner
+// loses its next action (an enemy's next planned move, the player 1 Stamina next turn), takes `brokenDamageMultiplier` x damage until
+// the end of that turn, then its Poise refills to full. A rules object without the key (a fight saved before this ruling) keeps the
+// Staggered stance above exactly.
+export const FIXCORE_BROKEN_DAMAGE_MULTIPLIER = 1.5;
+/** The Broken rule of a fight's Core rules, or null when the fight keeps the Staggered stance. */
+export function FixCoreBrokenRules(ctx) {
+  if (!fixCoreEnabled(ctx)) return null;
+  const poise = rawRules(ctx).poise;
+  return poise?.breakRule === 'broken' ? { damageMultiplier: poise.brokenDamageMultiplier ?? FIXCORE_BROKEN_DAMAGE_MULTIPLIER } : null;
+}
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
 // and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
 export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
@@ -80,7 +91,8 @@ export function validateFixCoreRules(rules) {
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0)))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
-  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
+    || (poise.breakRule !== undefined && poise.breakRule !== 'broken') || (poise.brokenDamageMultiplier !== undefined && !(Number.isFinite(poise.brokenDamageMultiplier) && poise.brokenDamageMultiplier >= 1)))) throw new Error('FixCore poise requires {drain:"prevented", breakRule?:"broken", brokenDamageMultiplier?:number >= 1}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
   fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
@@ -202,7 +214,9 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
   // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
-  const spends = 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
+  const broken = FixCoreBrokenRules(ctx);
+  const spends = broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
+    : 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
     return `While active, Poise takes ${poise.reduced}% off each hit (you take the rest, rounded down) and loses what it absorbed. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;

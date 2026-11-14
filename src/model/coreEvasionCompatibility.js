@@ -24,6 +24,8 @@
 // The 2026-11-14 exact hits and intents (accuracy.hitRoll, accuracy.evadeStacksPerCard and perception.roll in fixCoreMechanics.json and the combat.accuracy / combat.perception manifests) move the runtime hash again; a save from 63e8d1... keeps its own snapshotted rules, which lack the keys and so keep rolling.
 // The 2026-11-14 wording pass (Wave 2: one word for one thing: model wording literals, the status Precision tooltip, the AC badge gate) moves the runtime hash again; wording only, no rule.
 // The 2026-11-14 Ward as a Poise effect (ward.poisePerStack in fixCoreMechanics.json) moves the runtime hash again; a fight saved without the key keeps no Ward Poise.
+// The 2026-11-14 Poise break rule (Wave 3: `poise.breakRule: "broken"` in fixCoreMechanics.json and the Broken engine path) moves the runtime hash again; a save from 68d430... keeps its own snapshotted rules, which lack the key and so keep the Staggered stance.
+// Batch 1 (Ward Poise + Poise break together) has its own hash 6c4dab...; each branch's hash (1551ec..., e4f237...) is kept for worker saves.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -49,8 +51,10 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843',
   'sha256:22534c34792bcf9db9688514836cd66c77470c68a3c3b3703ac8164a706129ef',
   'sha256:68d430e0053091cec98f2819769a92bfbd7e944af9b8237bc315cd40f472fc87',
+  'sha256:1551ec573f5dc9da9059c1bf6d55866e690f2a3bb2fae06eecdee43abba2c9c7',
+  'sha256:e4f2378397bc3baef53d6c38b2609fe181c47096a64e38ebd2e84c61c8f3bf76',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:1551ec573f5dc9da9059c1bf6d55866e690f2a3bb2fae06eecdee43abba2c9c7';
+const FIXED_EVASION_RUNTIME = 'sha256:6c4dab6e49b3a99427f623babb5529761cb178596bf3b919f2db7bdaf8910156';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

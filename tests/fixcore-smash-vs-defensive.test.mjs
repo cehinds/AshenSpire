@@ -24,6 +24,8 @@ const attack = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneu
 function live({ stance = 'defend', block = 10, poise = 20, vulnerable = 0 } = {}) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  // These tests cover the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); tests/poise-broken.test.mjs covers the shipped Broken rule.
+  combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block, barrier: 0, statuses: vulnerable ? { vulnerable: { stacks: vulnerable } } : {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
   delete target.combatCounter;
@@ -131,7 +133,7 @@ test('intent projection: a multi-hit Smash loses its stance bonus once an earlie
   assert.equal(shown.max, 15);
   const preview = previewDamageHits(combat, enemy, combat.player, 4, smashTags, enemy.intent, 3);
   assert.equal(preview.hpLoss, shown.max);
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 1, 0], 'the broken stance stops the Smash Poise-damage rider');
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.poiseDamage ?? 0), [2, 0, 0], 'the Smash Poise-damage rider, then a damage-type rider that empties the bar, which stops the rest (the rider is previewed as it lands live)');
   for (let i = 0; i < 3; i++) { primeAccuracyRolls(combat); applyAttackDamage(combat, enemy, combat.player, 4, smashTags, enemy.intent); }
   assert.equal(100 - combat.player.hp, shown.max);
 });

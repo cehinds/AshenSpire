@@ -47,7 +47,7 @@ export function incomingAgainst(source, id) {
 // ctx.enemyReactionRolls. A candidate state (ctx._reactionPlaying) reads the memo only:
 // an unmemoised roll there is "does not react" and never draws.
 export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, windowIndex, incoming }) {
-  if (!enemyReactionsActive(ctx) || !enemy?.alive || enemy.skipNextTurn) return null;
+  if (!enemyReactionsActive(ctx) || !enemy?.alive || enemy.skipNextTurn || enemy.broken) return null; // a Broken enemy has lost its action: it does not react (Wave 3)
   if (enemy.combatReactionTurn === ctx.turn) return null;
   if (controlRestrictions(ctx, enemy).locked) return null;
   for (const [moveId, move] of reactionMovesOf(ctx, enemy, reactionWindow)) {

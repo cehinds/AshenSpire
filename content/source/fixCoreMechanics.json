@@ -10,7 +10,9 @@
     "defense:poiseProtection"
   ],
   "poise": {
-    "drain": "prevented"
+    "drain": "prevented",
+    "breakRule": "broken",
+    "brokenDamageMultiplier": 1.5
   },
   "staggered": {
     "stance": true,

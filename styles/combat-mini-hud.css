@@ -66,16 +66,31 @@
   font-size: max(calc(9px / var(--ui-zoom, 1)), calc(var(--mh-bar-h) * 1.3)) !important; line-height: 1; white-space: nowrap; padding-inline: 0; /* The plate already supplies the gap; extra padding overflows the fixed value slot on narrow screens. */
 }
 
-/* Poise: a plain bar, the HP bar's width and height, no number. It is an empty trough at 0/0. */
+/* Poise: the HP bar's width and height, and a number to its right in the same slot, weight and (for enemies) size as the HP number.
+   Wave 3 (owner): Poise is as prominent as HP. The player's Poise number sits beside its HP number at the same weight but a smaller size
+   than HP, so HP and the intent stay the two largest numbers (Wave 2 rule 8). It is an empty trough at 0/0. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-poise-bar.combat-health-poise-bar {
-  grid-column: 2; grid-row: 2; display: block !important; width: var(--mh-bar-w) !important; min-width: 0 !important; max-width: var(--mh-bar-w);
-  height: var(--mh-bar-h); margin: 0 !important; zoom: 1; flex: none !important; order: 0 !important;
+  grid-column: 2; grid-row: 2; display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; max-width: none;
+  height: var(--mh-bar-h); margin: 0 !important; zoom: 1; flex: none !important; order: 0 !important; gap: 0;
 }
-:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar > .m-plate { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar > .m-well { flex: 0 0 var(--mh-bar-w); width: var(--mh-bar-w) !important; order: 1; min-width: 0; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar > .m-plate.m-plate {
+  position: static !important; inset: auto !important; order: 2; flex: 1 1 auto; width: auto !important; height: auto !important; min-width: 0;
+  display: block; padding: 0 0 0 var(--mh-gap); background: transparent; justify-content: flex-start; pointer-events: none;
+}
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar > .m-plate > .m-label { display: none; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar .m-value.m-value {
+  font-size: max(calc(9px / var(--ui-zoom, 1)), calc(var(--mh-bar-h) * 1.3)) !important; line-height: 1; white-space: nowrap; padding-inline: 0; font-weight: 600; color: var(--gold);
+}
+/* The player's Poise number sits beside its HP number at the same weight but smaller (HP and the intent stay the two largest numbers). */
+:root .combat[data-layout] article.combatant.player .combat-health-row .as-meter.combat-health-poise-bar .m-value.m-value { font-size: calc(12.5px / var(--ui-zoom, 1)) !important; } /* the enemy's HP and Poise number size, so the HUD adds no new number size */
+:root .combat[data-layout] article.combatant.player .combat-health-row .as-meter.combat-health-poise-bar > .m-plate.m-plate { padding-left: calc(var(--mh-gap) + var(--hp-chars, 5) * .58 * var(--focus-number-size, 22px)); }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters :is(.combat-health-meter, .combat-health-poise-bar) > .m-well { display: block; height: var(--mh-bar-h); }
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters :is(.combat-health-meter, .combat-health-poise-bar) .m-track.m-track {
   display: block !important; width: 100% !important; min-width: 0 !important; height: var(--mh-bar-h) !important; border-radius: calc(var(--mh-bar-h) * .5);
 }
+/* Broken: the bar reads empty and says so, in the Broken colour, until Broken ends and it refills. */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-broken='true'] .m-value.m-value { color: var(--danger, var(--gold)); }
 
 /* The badge row: every badge kind and the status tray, one size, one row. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
@@ -124,3 +139,6 @@
   left: var(--combat-mini-hud-left, 0px) !important;
 }
 :root .combat[data-target-hud='true'] .combatant.player > .target-hud-overhead-meters .combat-health-row > .combat-health-meter.combat-health-meter { align-items: flex-start; }
+
+/* A Broken fighter is marked on its sprite for as long as it lasts (Wave 3): a danger-coloured ring under the figure, no new animation system. */
+:root .combat .combatant.broken > .sprite { filter: drop-shadow(0 0 calc(5px / var(--ui-zoom, 1)) var(--danger)); }

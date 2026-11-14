@@ -69,6 +69,7 @@ import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRa
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
+import { ApplyPendingLoss, EndBrokenWhenDue } from './brokenRule.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -809,10 +810,14 @@ function enemyPhase(combat) {
       if (combat.result) return;
       if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
+      // Broken ends with the turn whose action it lost: the enemy's Poise refills to full (Wave 3).
+      if (enemy.alive) EndBrokenWhenDue(combat, enemy);
     }
   }
 
   combat.emit('enemyTurnEnd', { turn: combat.turn });
+  // The player's Broken lasts through the round after the break (its short turn and the enemy phase that answers it).
+  if (combat.player.alive) EndBrokenWhenDue(combat, combat.player);
   drainQueue(combat);
   delete combat.reactionCursor;
 }
@@ -957,6 +962,9 @@ function rollIntents(combat, isFirstTurn = false) {
     delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
     if (enemy.pendingMove) {
+      // Broken in its own turn (Wave 3): the held charge is its lost next action and is cancelled with its charge.
+      ApplyPendingLoss(combat, enemy);
+      if (!enemy.pendingMove) continue;
       // A committed delayed move stays telegraphed until it resolves.
       if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true };
       continue;
@@ -970,11 +978,14 @@ function rollIntents(combat, isFirstTurn = false) {
     const moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
+      ApplyPendingLoss(combat, enemy);
       continue;
     }
     presentIntent(combat, enemy, def, moveId);
     // The pool's planned moves play after the head in the enemy phase (enemyPhase), so the plan is due this turn.
     enemy.planDue = true;
+    // An enemy Broken in its own turn loses the head of this plan (Wave 3): its intent reads Broken, the rest of the plan stays.
+    ApplyPendingLoss(combat, enemy);
     drainQueue(combat);
   }
 }
@@ -2216,6 +2227,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
+        entry.perTargetPoise = {};
         // Core face (owner, 2026-10-28): the reference enemy's state as this effect meets it, before this effect's own hits drain it.
         // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
         const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
@@ -2239,6 +2251,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
+          if (result.poiseLoss !== undefined) entry.perTargetPoise[e.id] = { removed: result.poiseLoss, breaks: !!result.poiseBreaks };
           if (primary?.id === e.id && result.counterReturn) entry.counterReturn = result.counterReturn;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
@@ -2350,7 +2363,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
           for (const e of hit) {
             const state = e?.kind === 'enemy' && damagePreviewStates.get(e.id);
-            if (state) previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            if (!state) continue;
+            const spent = previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            // The quote's "−N Poise" and BREAK read this row too (Wave 3).
+            if (spent > 0) (entry.perTargetPoise ||= {})[e.id] = { removed: spent, breaks: state.defender.persistentPoise.value === 0 };
           }
         }
         break;

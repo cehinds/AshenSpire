@@ -238,7 +238,7 @@ quickHands,property,Quick Hands,9FC3E8,🤏,,,,,"Prepared before the first card.
 secondWind,property,Second Wind,9FC3E8,💨,,,,,"What you burn, you draw."
 honedEdge,property,Honed Edge,9FC3E8,🔪,,,,,"Every prepared cut opens a vein."
 poisonedPouch,property,Poisoned Pouch,9FC3E8,☠,,,,,"The whetstone is not the only thing in the pouch."
-assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a stagger as an opening."
+assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a Break as an opening."
 shadow,property,Shadow,9FC3E8,🌑,,,,,"The subclass nothing quite reaches."
 partingBlow,property,Parting Blow,9FC3E8,⚔,,,,,"Every step out of a stance is a cut."
 ironRebuke,property,Iron Rebuke,9FC3E8,⛓,,,,,"Brace answers every wound it cannot stop."
@@ -247,7 +247,7 @@ mendingGrip,property,Mending Grip,9FC3E8,🩹,,,,,"The grip closes the wound it 
 spentStars,property,Spent Stars,9FC3E8,💫,,,,,"What burns out, burns once more."
 fallingStar,property,Falling Star,9FC3E8,☄,,,,,"The mana comes down somewhere."
 lodestarPull,property,Lodestar Pull,9FC3E8,🧲,,,,,"The shard drags the foe off its footing."
-shardHunger,property,Shard Hunger,9FC3E8,💠,,,,,"The shard drinks from a staggering foe."
+shardHunger,property,Shard Hunger,9FC3E8,💠,,,,,"The shard drinks from a Broken foe."
 burningGrace,property,Burning Grace,9FC3E8,🔥,,,,,"The warmth spills over, and scalds."
 dazzlingLight,property,Dazzling Light,9FC3E8,✨,,,,,"The litany is hard to look at."
 anointedBlade,property,Anointed Blade,9FC3E8,🗡,,,,,"The seal breaks over the edge."
@@ -343,7 +343,7 @@ ability:last-stand,technique,Last Stand,D7B36B,✦,,,,,Tests whether current HP 
 ability:war-tempo,technique,War Tempo,D7B36B,✦,,,,,Tests whether at least two Heavy cards have already been played by the acting player during this turn.
 ability:wide-cleave,technique,Wide Cleave,D7B36B,✦,,,,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.
 ability:ember-crown,technique,Ember Crown,D7B36B,✦,,,,,Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.
-ability:dreadweight,technique,Dreadweight,D7B36B,✦,,,,,Tests whether the selected enemy is currently Staggered before a direct hit.
+ability:dreadweight,technique,Dreadweight,D7B36B,✦,,,,,Tests whether the selected enemy is currently Broken before a direct hit.
 ability:oathscar,technique,Oathscar,D7B36B,✦,,,,,Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.
 ability:wound-harvest,technique,Wound Harvest,D7B36B,✦,,,,,Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.
 ability:cinder-orbit,technique,Cinder Orbit,D7B36B,✦,,,,,Tests whether the immediately preceding card played this turn by the same player was a spell.
@@ -394,7 +394,7 @@ feat:last-rampart,property,Last Rampart,D7B36B,✦,,0,,,"At half HP or lower, yo
 feat:war-cadence,property,War Cadence,D7B36B,✦,,0,,,"After your second Heavy card in a turn, gain 4 Block, once per turn."
 feat:broad-sentence,property,Broad Sentence,D7B36B,✦,,0,,,Your first attack that hits all living enemies each turn deals +2 damage to each target.
 feat:ember-sovereign,property,Ember Sovereign,D7B36B,✦,,0,,,"Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
-feat:dread-of-the-hammer,property,Dread of the Hammer,D7B36B,✦,,0,,,Your first Heavy attack against a Staggered target each turn deals +4 damage.
+feat:dread-of-the-hammer,property,Dread of the Hammer,D7B36B,✦,,0,,,Your first Heavy attack against a Broken target each turn deals +4 damage.
 feat:scarred-oath,property,Scarred Oath,D7B36B,✦,,0,,,"Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
 feat:harvest-the-wound,property,Harvest the Wound,D7B36B,✦,,0,,,"Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat."
 feat:orbit-keeper,property,Orbit Keeper,D7B36B,✦,,0,,,Your first Starstone spell following another spell each turn deals +3 direct damage.
