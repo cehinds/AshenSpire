@@ -2308,9 +2308,13 @@ async function onCombatEnd(result, combat, enc) {
   // losing either the Stone or the other spoils.
 
   // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
+  // The cinders won are paid here and written into the receipt with the new total, so the spoils line (and a reload of it)
+  // shows the number that was paid and never a live recomputation.
+  const cindersGained = Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
+  run.cinders += cindersGained;
   const victoryReceipt = { title: victoryTitle(enc), xpBefore, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}),
+    cinders: { gained: cindersGained, total: run.cinders },
     xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
-  run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
