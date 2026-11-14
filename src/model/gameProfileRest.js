@@ -21,6 +21,27 @@ export const restServicesAll = run => gameContent(run, 'rests')?.servicesPerVisi
 // Saves from before `used` existed carry only `service`; that one service counts as used.
 export const restServiceUsed = (visit, service) => !!(visit.used ? visit.used[service] : visit.service === service);
 export const restServiceSpent = (run, visit, service) => restServicesAll(run) ? restServiceUsed(visit, service) : !!visit.service;
+/** Rest-choice mode: the profile lists the `rest` service, so a visit is one pick and only that pick restores. */
+export const restChoiceMode = run => !!gameContent(run, 'rests')?.services?.includes('rest');
+/** The HP the `rest` service would restore right now (pure; the Rest card prints it). */
+export function restHpGain(run) {
+  const hp = gameContent(run, 'rests')?.recovery?.hp;
+  const target = hp === 'full' || hp === undefined ? run.maxHp : Math.min(run.maxHp, run.hp + Math.ceil(run.maxHp * hp));
+  return Math.max(0, target - run.hp);
+}
+/** The authored fraction of max HP the `rest` service restores, or 1 for "full". */
+export const restHpFraction = run => { const hp = gameContent(run, 'rests')?.recovery?.hp; return typeof hp === 'number' ? hp : 1; };
+function restRecover(run) {
+  const recovery = gameContent(run, 'rests').recovery;
+  run.hp = run.hp + restHpGain(run);
+  if (recovery.mp === 'full') run.mana = run.maxMana;
+  if (recovery.sp === 'full') run.stamina = run.maxStamina;
+  const flasks = run.flaskCharges;
+  if (flasks) {
+    if (recovery.healingFlasks === 'full') flasks.hpCurrent = flasks.hp;
+    if (recovery.mpFlasks === 'full') flasks.manaCurrent = flasks.mana;
+  }
+}
 function healFull(run) {
   run.hp = run.maxHp;
   run.mana = run.maxMana;
@@ -40,7 +61,7 @@ export function beginGameProfileRest(run, visitId = restContext(run)) {
   run.gameProfileRestVisitId = visitId;
   const visit = run.gameProfileRestVisits[visitId];
   // Core: arriving at the site heals once, so Continue without a service still rests. Reloads and remounts do not heal again.
-  if (restServicesAll(run) && !visit.healed) {
+  if (restServicesAll(run) && !restChoiceMode(run) && !visit.healed) {
     const before = { hp: run.hp, mana: run.mana, stamina: run.stamina, flaskHp: run.flaskCharges?.hpCurrent ?? 0, flaskMana: run.flaskCharges?.manaCurrent ?? 0 };
     healFull(run);
     visit.healed = { hp: run.hp - before.hp, mana: run.mana - before.mana, stamina: run.stamina - before.stamina,
@@ -81,7 +102,8 @@ function applyService(registries, draft, service, payload) {
     const quote = payload.quote && payload.quote.instanceId === payload.instanceId ? payload.quote : planCardUpgrade(draft, registries, payload.instanceId);
     upgraded = commitCardUpgrade(draft, registries, quote);
   }
-  healFull(draft);
+  if (service === 'rest') restRecover(draft);
+  else if (!restChoiceMode(draft)) healFull(draft);
   if (restServicesAll(draft)) visit.used = { ...(visit.used || (visit.service ? { [visit.service]: true } : {})), [service]: true };
   visit.service = service;
   syncZones(draft);
