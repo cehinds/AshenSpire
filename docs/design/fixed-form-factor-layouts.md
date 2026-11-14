@@ -85,6 +85,6 @@ configuration that's relative".
     offset vars no longer force a refit.
 - Check: `node tools/combat-canvas-qa.mjs` (`npm run qa:combat-canvas`) compares
   canvas-px rects across same-form-factor windows, a resize chain and a drag.
-- Open: SPEC.md keeps the player rack's gap at "a fixed 10 screen-pixel" above the
-  art (and `tools/player-hud-clearance-qa.mjs` asserts it at 320x740), so that one
-  gap still follows the window's scale (up to 2.7 canvas px at 2000x1225).
+- The player rack's 10 px gap above the art (SPEC.md) is canvas px too: it scales with
+  the canvas and equals 10 screen px at scale 1. `tools/player-hud-clearance-qa.mjs`
+  measures it in canvas px, unselected and selected.
