@@ -15,7 +15,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { applyAttackDamage, drainFixCorePoise } from '../src/engine/actions.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
-import { validateFixCoreRules, FixCoreBrokenRules } from '../src/model/fixCoreMechanics.js';
+import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
@@ -176,4 +176,18 @@ test('a fight saved without the key keeps Staggered exactly (-1 SP, +1 Vulnerabl
   assert.equal(enemy.persistentPoise.value, 0, 'no refill');
   assert.ok(!combat.eventLog.some(row => row.type === 'brokenEnded'));
   void hp;
+});
+
+test('the words say Broken: the Poise tooltip, the stance row, the intent word and the BREAK callout; the saved-fight rule still says Staggered', async () => {
+  const { combatStanceRow } = await import('../src/model/combatTacticsDisplay.js');
+  const { t } = await import('../src/ui/strings.js');
+  const combat = fight(); const enemy = combat.enemies[0];
+  assert.match(fixCoreProtectionDescription(combat, enemy, 'poise'), /Broken: it loses its next action and takes ×1\.5/);
+  assert.match(fixCoreProtectionDescription(fight(['wanderingSoldier'], { legacy: true }), enemy, 'poise'), /Staggered/);
+  drainFixCorePoise(combat, combat.player, enemy, 99);
+  const row = combatStanceRow(enemy);
+  assert.equal(row.name, 'Broken');
+  assert.match(row.detail, /Loses its next action\. Takes ×1\.5/);
+  assert.equal(t('combat.intent.staggered'), 'Broken');
+  assert.equal(t('combat.callout.poiseBreak'), 'BREAK');
 });

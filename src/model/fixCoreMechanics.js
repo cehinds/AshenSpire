@@ -212,7 +212,9 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
   // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
-  const spends = 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
+  const broken = FixCoreBrokenRules(ctx);
+  const spends = broken ? `The damage it absorbs is taken off the pool, and when the pool is empty the owner is Broken: it loses its next action and takes ×${broken.damageMultiplier} damage until then, and its Poise refills to full.`
+    : 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
     return `While active, Poise takes ${poise.reduced}% off each hit (you take the rest, rounded down) and loses what it absorbed. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
