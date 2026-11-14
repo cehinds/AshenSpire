@@ -1,10 +1,12 @@
 import { t } from '../strings.js';
 // One interaction contract for state-changing options:
 //   short click/press -> review the exact consequence and optional cost
-//   deliberate hold  -> commit the same validated action without the modal
+//   (owner, 2026-11-14: the chooser's Confirm is a plain click. A hold used to
+//   commit the same action without the modal; it no longer does, so the hold
+//   dial neither lengthens nor shortens anything here.)
 // Navigation and disclosure controls do not use this component.
 
-import { armHold, holdMs } from './holdconfirm.js';
+import { armHold } from './holdconfirm.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { ACTIONS, beatFor } from '../../model/secondbeat.js';
 
@@ -32,7 +34,7 @@ export function armOptionDecision(control, {
   if (!(control instanceof HTMLElement)) throw new Error('option decision needs a control element');
   if (typeof onCommit !== 'function') throw new Error('option decision needs one commit callback');
   const allowed = () => Boolean(canCommit());
-  const duration = allowed() ? holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm) : 0;
+  const duration = 0;
   control.dataset.optionDecision = id || 'state-change';
   control.dataset.optionTap = 'modal';
   control.dataset.optionHold = duration > 0 ? 'commit' : (allowed() ? 'disabled' : 'blocked');
