@@ -21,7 +21,7 @@ import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
@@ -166,6 +166,8 @@ export function mountEvent(app, opts) {
         const before = snapshotRunForDiff(run);
         commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
+        // The header shows the cinders and HP the choice just paid or took, on this same screen.
+        if (hud) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: 'map-header room-header', hud, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
         // The what-changed receipt over the result; a pure flavour choice (empty diff) opens nothing.
         showRunReceipt({ run, registries, before, title: def.name, lead: choice.resultText || '' });
       };

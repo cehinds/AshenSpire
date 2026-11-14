@@ -313,7 +313,8 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, foldCombatPlaysEver, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, settleConfiguredSkillProgression, skillLevelNotices,
-    combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier };
+    combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, silenceVictoryLevelNotices, configuredCharacterXpMultiplier,
+    SyncHudCinders: () => {} };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -584,7 +585,9 @@ test('actual Core victory settlement persists the scaled XP receipt before offer
     // Core pays the §15.3 stone door too since #2392; a normal pool pays 0 and writes its claim.
     grantSmithingReward, smithingRewardId,
     // The one victory screen (W2-E): the combined door asks VictorySpoils for its strip; a marker stands in for it here.
-    VictorySpoils: (_registries, _run, receipt) => ({ spoilsFor: receipt }) };
+    VictorySpoils: (_registries, _run, receipt) => ({ spoilsFor: receipt }),
+    // The header purse sync draws nothing without a document.
+    SyncHudCinders: () => {} };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;

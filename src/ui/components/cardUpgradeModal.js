@@ -55,7 +55,7 @@ export function mountCardUpgradeModal(host, initialModel, {
 
   // The model omits completed cards and orders available upgrades first.
   function cardRow(row) {
-    const upgrade = t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel });
+    const upgrade = row.weaponBound ? '' : t('cardUpgrade.row.status', { from: row.levelFrom, to: row.levelTo, cost: row.costLabel });
     const { item: wrapper, main: item } = deskRow({
       className: `smith-candidate-card smith-weapon-card card-upgrade-row rarity-${row.rarity}${row.disabled ? ' locked' : ''}`,
       attrs: { role: 'option', tabindex: '0', 'aria-selected': 'false', 'aria-disabled': String(row.disabled) },
@@ -64,7 +64,7 @@ export function mountCardUpgradeModal(host, initialModel, {
       name: row.name,
       badges: [row.inDeck ? el('span', { class: 'as-tag card-upgrade-indeck', text: t('cardUpgrade.row.inDeck') }) : null],
       meta: el('span', { class: 'deck-editor-meta smith-row-text' }, [
-        statusText(upgrade, { class: 'smith-row-status card-upgrade-cost' }),
+        upgrade ? statusText(upgrade, { class: 'smith-row-status card-upgrade-cost' }) : null,
         row.blockedReason ? statusText(row.blockedReason, { class: 'smith-row-status card-upgrade-reason' }) : null,
       ]),
       side: [pill({ label: t('cardUpgrade.row.copies', { n: row.copies }), attrs: { class: 'smith-weapon-count', 'aria-label': t(row.inDeck ? 'cardUpgrade.row.copiesLabel' : 'cardUpgrade.row.copiesLabelSide', { n: row.copies }) } })],
@@ -157,11 +157,11 @@ export function mountCardUpgradeModal(host, initialModel, {
   }
 
   /** The decision door's details (the shared body, upgradeConfirm.js): cost, both faces, then the change rows under them. */
-  const detailNodes = (raw) => { const model = viewOf(raw); return upgradeConfirmNodes({
+  const detailNodes = (raw) => { const model = viewOf(raw); const nodes = upgradeConfirmNodes({
     cost: el('div', { class: `confirmation-cost as-statrow flat ${(model.selected.shortStones ?? model.selected.plan.code === 'stones') || !model.selected.ok ? 'unaffordable' : 'affordable'}` }, priceNode(model)),
     faces: model.faces ? facesNode(model) : null,
     rows: model.selected.changes.map((change) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: change.label }), values: changeSummary({ values: [change] }) })),
-  }); };
+  }); return model.selected.nextDiffers ? [el('p', { class: 'card-upgrade-note', text: t('cardUpgrade.row.nextDiffers') }), ...nodes] : nodes; };
   const confirmationNode = (raw) => el('div', { class: 'card-upgrade-modal-details' }, detailNodes(raw));
   // With a choice among options, the modal holds the choice itself: a live node the options redraw in place.
   let modalDetails = null;

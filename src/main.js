@@ -100,6 +100,7 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountRewards } from './ui/screens/reward.js';
 // After reward.js on purpose: imported earlier, its model imports change the bundle's load order and expose cyclic named imports.
 import { VictorySpoils } from './ui/components/victorySpoils.js';
+import { SyncHudCinders } from './ui/components/hudmeta.js';
 import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft, deckEditBounds, deckEditingOn } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
@@ -2487,6 +2488,8 @@ function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers 
 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
+  // Cinders are paid at combat resolution, before this door opens: the header behind it shows the purse the strip's total shows.
+  SyncHudCinders(app, run.cinders);
   // ONE SCREEN FOR A WON FIGHT (owner requirement: victory to map in two clicks). A combat reward that carries both a victory
   // receipt and its offer opens the offer door with the spoils strip above the choice: no receipt screen, no Continue first.
   // Receipt-only cases (the final boss, a profile with no rewards module, a receipt with no offer) keep the receipt screen.

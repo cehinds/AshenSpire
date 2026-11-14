@@ -39,7 +39,7 @@ import {
 import { w4Parent, w4cLayout } from '../sceneConfig.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
-import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { runHudHtml, wireRunHud, RefreshRunHud } from '../components/runHud.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
@@ -217,6 +217,8 @@ export function mountDialogue(app, options) {
       const receipt = options.commitChoice ? options.commitChoice(step.command) : commitEventChoice({ run, registries, rng }, step.command);
       state = dialogueStep(view(), state, { type: 'resolved', choiceId: receipt.choice.id, resultText: receipt.choice.resultText }).state;
       render();
+      // The header shows the cinders and HP the choice just paid or took, on this same screen.
+      if (hudShown) RefreshRunHud(app, { registries, run, meta, place: 'event', headerClass: '', hud, remount: () => mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true }) });
       // The what-changed receipt, over the resolved line the dialogue now shows (an empty diff opens nothing).
       showRunReceipt({ run, registries, before, title: def.name || '', lead: receipt.choice.resultText || '' });
       return;

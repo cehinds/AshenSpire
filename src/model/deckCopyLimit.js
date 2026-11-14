@@ -14,6 +14,13 @@ export function activeAdeptTraining(run) {
   return null;
 }
 
+/** The class's Adept training only where the profile grants unlimited copies (deck-training `unlimited` rules); else null. */
+export function UnlimitedAdeptTraining(run) {
+  const adept = activeAdeptTraining(run);
+  const unlimited = run?.gameProfile?.modules?.['deck-training']?.unlimited;
+  return adept && Array.isArray(unlimited) && unlimited.length ? adept : null;
+}
+
 function eligibleAdeptDefinition(run, cardId) {
   const card = gameContent(run, 'cards')?.find(card => card.id === cardId), adept = activeAdeptTraining(run);
   return !!card && !!adept && basicCardKind(run, card) === adept.kind;

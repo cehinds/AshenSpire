@@ -76,7 +76,7 @@ import { gameContent } from '../../model/gameProfile.js';
 import { mountDeckEditor } from './deckEditor.js';
 import { armouryOpensDeckEditor } from '../../model/armouryRules.js';
 import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
-import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
+import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
@@ -711,7 +711,7 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
-          adept: activeAdeptTraining({ gameProfile, class: cls.id }),
+          adept: UnlimitedAdeptTraining({ gameProfile, class: cls.id }),
           visual: classGlyph(cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);
@@ -1921,6 +1921,8 @@ export function mountCustomize(app, {
     // Class step of the two-stage flow: Begin is the primary, Next is "Customise".
     next.textContent = plan.quickBegin ? t('creation.customise') : t('creation.next');
     next.classList.toggle('primary', !plan.quickBegin);
+    // The green fill hangs on cz-next-stage; Customise is the neutral secondary beside the primary Begin.
+    next.classList.toggle('cz-next-stage', !plan.quickBegin);
     next.dataset.controlRole = plan.quickBegin ? 'utility' : 'primary';
     railed.dataset.creationStage = id;
     railed.dataset.creationStepIndex = String(categories.indexOf(id) + 1);

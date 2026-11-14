@@ -12,8 +12,8 @@ import { playingCardArtwork } from '../cardArtwork.js';
 import { t } from '../strings.js';
 
 const freeze = (value) => Object.freeze(value);
-// Completed cards leave the picker, as do cards upgraded with their armament.
-const HIDDEN_CODES = freeze(['armament', 'missing', 'maxed', 'cap']);
+// Completed cards leave the picker. A card that upgrades with its weapon stays listed, disabled, with its reason.
+const HIDDEN_CODES = freeze(['missing', 'maxed', 'cap']);
 
 const row_upgrades = (instance) => (upgradeCount(instance) === 1 ? 'cardUpgrade.row.chipOne' : 'cardUpgrade.row.chip');
 const costLabel = (plan) => (plan.cost === 0 ? t('cardUpgrade.free') : t('cardUpgrade.stone', { n: plan.cost }));
@@ -94,23 +94,30 @@ export function cardUpgradeModel(registries, run, selectedInstanceId = null, { b
     // Identical copies (same card, same upgrade steps and rank) are one row that selects the first instance.
     // upgradeStepsOf normalises an old-style `upgraded: true` (no step list) to the authored step, so such a copy
     // never shares a row with fresh copies of the same card.
-    // The next step is rolled per instance id, so copies whose next upgrade differs stay separate rows: each
-    // distinct outcome stays previewable and purchasable.
-    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), plan.options ? plan.options.map((o) => o.step) : plan.step, inDeck]);
-    if (groups.has(key)) { groups.get(key).instanceIds.push(instance.instanceId); groups.get(key).copies += 1; continue; }
+    // The next step is rolled per instance id and does not split a row: the row shows the step of its first copy
+    // (the one an upgrade is applied to) and flags `nextDiffers` when another copy would roll something else.
+    const nextKey = JSON.stringify(plan.options ? plan.options.map((o) => o.step) : plan.step);
+    const key = JSON.stringify([instance.cardId, upgradeStepsOf(instance), cardRank(instance), inDeck]);
+    if (groups.has(key)) {
+      const group = groups.get(key);
+      group.instanceIds.push(instance.instanceId); group.copies += 1;
+      if (nextKey !== group.nextKey) group.nextDiffers = true;
+      continue;
+    }
     const priced = quote ? quote(instance.instanceId) : null;
-    const ok = priced ? !!priced.ok : plan.ok;
+    const weaponBound = plan.code === 'armament';
+    const ok = !weaponBound && (priced ? !!priced.ok : plan.ok);
     const base = registries.cards.get(instance.cardId);
     const rarity = base.rarity || 'common';
     const row = {
       instanceId: instance.instanceId, instanceIds: [instance.instanceId], copies: 1, inDeck, cardId: instance.cardId,
       name: plan.before?.name || base.name, rarity,
       upgrades: upgradeCount(instance), rank: cardRank(instance), plan, code: plan.code,
-      spent: false, ok, cinders: priced?.cinders > 0 ? priced.cinders : 0,
+      spent: false, ok, weaponBound, nextKey, nextDiffers: false, cinders: priced?.cinders > 0 ? priced.cinders : 0,
       // Is the Smithing Stone purse the blocker? (a quote's own verdict, else the service plan's stone code)
       shortStones: priced ? priced.cost > stones : plan.code === 'stones', disabled: !ok || !!blockedReason, cost: priced ? priced.cost : plan.cost,
       costLabel: priced?.cinders > 0 ? t('cardUpgrade.cinders', { n: priced.cinders }) : costLabel(priced ? { cost: priced.cost } : plan),
-      blockedReason: (priced ? priced.reason : plan.reason) || blockedReason,
+      blockedReason: weaponBound ? t('cardUpgrade.row.weaponBound') : (priced ? priced.reason : plan.reason) || blockedReason,
       chipLabel: t(row_upgrades(instance), { rank: cardRank(instance), n: upgradeCount(instance) }),
       statusLabel: t('cardUpgrade.row.next', { n: plan.n }),
       levelFrom: upgradeCount(instance), levelTo: upgradeCount(instance) + 1,
