@@ -3308,7 +3308,7 @@ A card authored `contest: 'mental'` or `'physical'` (`schemas.js`, `validate.js`
 
 ### Accuracy, Evasion and Precision
 
-**Shipped Core 2 draws no hit roll** (`accuracy.hitRoll: false`, owner brief 2026-11-14; *Plannable and quick turns* below). The rest of this section governs a fight whose rules snapshot lacks that key or sets it true (a fight or run saved before the change).
+**Shipped Core 2 draws no hit roll** (`accuracy.hitRoll: false`, owner brief 2026-11-14; *Plannable and quick turns* below). The rest of this section governs a fight whose rules snapshot lacks that key or sets it true (a fight saved before the change).
 
 The attacker rolls d20 + Precision; the defender does not roll. Hit when the total is at least the defender's Evasion; natural 20 always hits, natural 1 always misses; advantage/disadvantage apply to the attacker's die.
 
@@ -3451,7 +3451,7 @@ Core 2 only. Enemy levels 1–5; an enemy's stat budget follows the player's rul
 
 ### Plannable and quick turns amendment
 
-Owner brief, 2026-11-14 ("make a turn plannable and quick"). Rules 1, 3 (display), 4 to 9 are presentation and apply to every Core 2 run, saved or new. Rule 2 and the intent read of rule 3 are keyed on new rule keys, so a fight or run saved before them keeps rolling.
+Owner brief, 2026-11-14 ("make a turn plannable and quick"). Rules 1, 3 (display), 4 to 9 are presentation and apply to every Core 2 run, saved or new. Rule 2 and the intent read of rule 3 are keyed on new rule keys that a fight copies when it is created (`combat.fixCoreRules`): a fight saved before them keeps rolling and may hide intents when it is loaded, and the next fight of that run takes the new rules (checked in the browser with a save from the build before).
 
 1. **One number per hit: the HP that will change.** The card face, the enemy intent, the floater, the reaction prompt and the inspector all read the same evaluator (`profileDamageReceipt`) at the same stage, `hpLoss`. This replaces the 2026-11-02 and 2026-11-03 rulings (face before Block; intent as the raw hit).
    - **Card face:** the HP the reference enemy will lose from one hit now, after its defensive stance, Reflect, Block, Poise and Evade. Equal hits read `N × M`, unequal hits their sequence; a card that hits every enemy shows one number when all would lose the same, else `min–max`. Aiming at another enemy updates the face before the play is committed, by click, focus or drag.
