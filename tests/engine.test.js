@@ -7252,7 +7252,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Auto combat & pacing,Animation & effects,Combat log,Range,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Auto combat & pacing').map((r) => r.key).join(','),
-      'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
+      'autoCombat,combatSpeed,combatPreference,autoCombatSpeed,combatStepPause,combatStageTelegraphHoldMs,combatStageTelegraphResetMs,combatTimeline,animationStepDuration,enemyAttackMs,enemyFloaterIntervalMs,combatPacingPreset,animSpeed',
       'auto combat and every pacing dial are under one name, first');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
       'askToUpcastAfterTarget,useSprites,effects,motionAttack,motionHit,motionIdle,motionDefeat,screenShake,showPlayedCard,manaRing',
