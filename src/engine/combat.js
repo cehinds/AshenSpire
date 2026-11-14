@@ -35,7 +35,7 @@ import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProject
 import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
+import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
@@ -71,7 +71,7 @@ import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
 import { ApplyPendingLoss, EndBrokenWhenDue } from './brokenRule.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
-import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
+import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers, evalPredicate } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { gameModule } from '../model/gameProfile.js';
@@ -2233,6 +2233,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
         // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
         const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
           ? (target?.kind === 'enemy' && target.alive ? target : allLiving[0]) : null;
+        // A row whose `if` does not hold now (the Starstone pair: one branch or the other) is priced at its potential value but does not run,
+        // so what it would have done to the target (Poise, Block, a break) must not reach the rows after it: its detached state is put back.
+        const skipped = eff.if && !evalPredicate(combat, eff.if, { owner: p, source: p, target: primary, card: action.card, meta: action.meta });
+        const restore = skipped ? living.map(e => [e.id, PreviewStateSnapshot(damagePreviewStates.get(e.id))]) : [];
         for (const e of living) {
           const result = isCounterReply
             ? previewCounter(e, i)
@@ -2248,6 +2252,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
+        for (const [id, snapshot] of restore) PreviewStateRestore(damagePreviewStates.get(id), snapshot);
         if (entry.value == null && isCounterReply) {
           const result = previewCounter(primary, i);
           Object.assign(entry, { value: result.damage, hitDamages: result.hitDamages, totalDamage: result.totalDamage });

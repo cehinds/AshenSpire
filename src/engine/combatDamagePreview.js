@@ -31,6 +31,26 @@ export function damagePreviewState(ctx, target) {
 }
 
 /**
+ * PreviewStateSnapshot(state) / PreviewStateRestore(state, snapshot): copy the detached defender (and the riders spent) and put it back in place,
+ * so a card row that is priced but does not run leaves the later rows' timeline as it was. The defender object keeps its identity (the preview
+ * context compares against it).
+ */
+export function PreviewStateSnapshot(state) {
+  const d = state?.defender;
+  if (!d) return null;
+  return { defender: { ...d, statuses: structuredClone(d.statuses || {}),
+    persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+    ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+    ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) }, riders: [...state.combatRiderTargets] };
+}
+export function PreviewStateRestore(state, snapshot) {
+  if (!state?.defender || !snapshot) return;
+  for (const key of Object.keys(state.defender)) delete state.defender[key];
+  Object.assign(state.defender, snapshot.defender);
+  state.combatRiderTargets.splice(0, state.combatRiderTargets.length, ...snapshot.riders);
+}
+
+/**
  * A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable. Detached:
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
