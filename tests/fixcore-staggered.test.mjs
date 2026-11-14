@@ -138,9 +138,9 @@ test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerab
 test('preview of a multihit card sees the break: later hits take Vulnerable', () => {
   const { combat, target } = live(1);
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  // Owner, 2026-11-03: hitDamages is the raw hit (Poise is not subtracted); the receipt's hpLoss carries the resolved figures.
-  assert.deepEqual(preview.hitDamages, [20, 25], 'hit 2 meets Vulnerable x1.25 after the break');
-  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 25], 'hit 1: Poise absorbed its last 1');
+  // Owner, 2026-11-14: hitDamages is the HP lost per hit, so the break's last Poise and the Vulnerable that follows are both in it.
+  assert.deepEqual(preview.hitDamages, [19, 25], 'hit 2 meets Vulnerable x1.25 after the break; hit 1: Poise absorbed its last 1');
+  assert.deepEqual(preview.damageReceipt.hits.map(hit => hit.hpLoss), [19, 25]);
 });
 
 test('one break is one stagger: a smash-advantage hit that also breaks Poise staggers once', () => {

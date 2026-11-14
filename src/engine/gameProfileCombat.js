@@ -144,7 +144,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // Owner 2026-11-01: Evade is a tag and a status, not a stance, so no stance rolls the configured hit chance any more.
   let hitChance = 1;
   hitChance=targeting.unavoidable ? 1 : Math.max(0.05,Math.min(1,hitChance+targeting.accuracyDelta/100));
-  if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier)?.hitChance ?? 100) / 100;
+  if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier, forecast ? { assumeInRange: true } : {})?.hitChance ?? 100) / 100;
   const evaded = roll !== null ? roll >= hitChance : forecast && fixCoreEnabled(ctx) && hitChance === 0;
   if (evaded) amount = 0;
   let smashBlockBonus = 0;
