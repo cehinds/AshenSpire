@@ -41,7 +41,10 @@ export function applyRangeRankEvent(snap, event) {
 
 export function rangeRanksFromSnapshot(snap) {
   if (!snap) return null;
-  const players = snap.players.filter(a => a.alive), enemies = snap.enemies.filter(a => a.alive);
+  // A decided fight keeps the pose it was decided in: once a whole side is down nobody is left to be
+  // in melee with, and ranking only the living would send the winner (and the fallen) to the back strip.
+  const decided = !snap.players.some(a => a.alive) || !snap.enemies.some(a => a.alive);
+  const players = snap.players.filter(a => decided || a.alive), enemies = snap.enemies.filter(a => decided || a.alive);
   const melee = (p, e) => snap.engagements[rangePairKey(p, e)] === 0;
   const ranks = new Map();
   for (const p of players) ranks.set(p.key, enemies.some(e => melee(p.key, e.key)) ? 'front' : 'back');

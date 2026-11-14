@@ -196,3 +196,13 @@ test('playback: Hit and Run from Reach steps in on its Advance beat and back out
   assert.deepEqual(seen, ['front', 'back']);
   assert.deepEqual([...rangeRanksFromSnapshot(snap)].sort(), [...combatRangeRanks(combat)].sort());
 });
+
+test('a decided fight keeps its pose: the last foe dying does not send the winner to the back', () => {
+  const alive = combatRangeRanks(fight({ e1: 0 }));
+  const over = combatRangeRanks(fight({ e1: 0 }, { dead: ['e1'] }));
+  assert.equal(over.get('player:player'), 'front');
+  assert.deepEqual([...over], [...alive]);
+  // With another foe still standing, a death still re-ranks the party.
+  const one = combatRangeRanks(fight({ e1: 0, e2: 1 }, { dead: ['e1'] }));
+  assert.equal(one.get('player:player'), 'back');
+});
