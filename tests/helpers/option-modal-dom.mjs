@@ -63,6 +63,14 @@ export class FakeNode {
     }
   }
 
+  insertBefore(node, next) {
+    node.parentNode = this;
+    node.setConnected(this.isConnected);
+    const at = this.children.indexOf(next);
+    if (at < 0) this.children.push(node); else this.children.splice(at, 0, node);
+    return node;
+  }
+
   replaceChildren(...nodes) {
     this.children.forEach((child) => { child.parentNode = null; });
     this.children = [];
