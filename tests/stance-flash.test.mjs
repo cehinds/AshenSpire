@@ -1,5 +1,6 @@
 // The stance-change flash: a brief sigil over the actor, data-driven, skipped under Reduced motion, never blocks input.
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { stanceFlashPlan, stanceFlashIcon, showStanceFlash, createStanceOverlay } from '../src/ui/stanceFlash.js';
 import { ACTION_PACING } from '../src/model/autoCombatPolicy.js';
@@ -178,4 +179,51 @@ test('linger: the held sigil stays at its opacity and scale through the swing, t
     t.mock.timers.tick(100);
     assert.equal(live(rig), null);
   });
+});
+
+// ---- the played card's motif glow ----
+import { cardMotifGlow, CARD_ART_ELEMENTS } from '../src/ui/cardArtComposition.js';
+test('a card resolves its motif glow from the element table, and none without an element', () => {
+  assert.equal(cardMotifGlow({ id: 'f', cardTags: ['camp:spell', 'element:fire'] }), CARD_ART_ELEMENTS.fire.glow);
+  assert.equal(cardMotifGlow({ id: 'a', cardTags: ['camp:physical'], attack: { damageType: 'frost' } }), CARD_ART_ELEMENTS.frost.glow);
+  assert.equal(cardMotifGlow({ id: 's', cardTags: ['camp:spell'] }), CARD_ART_ELEMENTS.force.glow, 'a spell without an element is force, as the card art');
+  assert.equal(cardMotifGlow({ id: 'p', cardTags: ['camp:physical', 'maneuver:smash'] }), null);
+  assert.equal(cardMotifGlow(null), null);
+});
+test('a played fire card glows in its motif colour (two shadows on full performance); selection alone does not', t => {
+  const rig = overlayRig(t);
+  withKitDom(dom => {
+    dom.document.documentElement = { dataset: { performance: 'full' } };
+    rig.overlay.select('smash');
+    const el = live(rig);
+    assert.equal(el.dataset.glowColor, undefined, 'no glow while it is only selected');
+    assert.equal(el.dataset.tone, 'idle');
+    assert.equal(el.style.color, 'var(--stance-sigil-idle)', 'the grey token while selected');
+    assert.equal(el.querySelector('svg').style.filter || '', '');
+    rig.overlay.hold(cardMotifGlow({ id: 'f', cardTags: ['camp:spell', 'element:fire'] }));
+    assert.equal(el.dataset.glowColor, CARD_ART_ELEMENTS.fire.glow);
+    assert.equal(el.dataset.tone, 'played');
+    assert.equal(el.style.color, 'var(--stance-glow)', 'the motif colour once played');
+    const filter = el.querySelector('svg').style.filter;
+    assert.equal((filter.match(/drop-shadow/g) || []).length, 2, 'tight plus wide');
+    assert.match(el.querySelector('svg').style.transition, /filter 120ms/);
+    rig.overlay.begin(550);
+    assert.equal(el.dataset.glowColor, CARD_ART_ELEMENTS.fire.glow, 'the glow stays through the exit');
+  });
+});
+test('a card with no motif glows in the neutral gold token, and a lite device gets one shadow', t => {
+  const rig = overlayRig(t);
+  withKitDom(dom => {
+    dom.document.documentElement = { dataset: { performance: 'lite' } };
+    rig.overlay.select('smash');
+    rig.overlay.hold(null);
+    const el = live(rig);
+    assert.equal(el.dataset.glowColor, 'var(--gold)');
+    assert.equal((el.querySelector('svg').style.filter.match(/drop-shadow/g) || []).length, 1);
+  });
+});
+
+test('the idle sigil colour is a CSS custom property backed by a neutral token', () => {
+  const css = readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
+  assert.match(css, /\.stance-flash \{ --stance-sigil-idle: var\(--muted\); \}/);
 });

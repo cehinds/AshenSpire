@@ -2016,3 +2016,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-tl-move { display: inline-flex; gap: 2px; }
 .set-tl-out { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .set-tl-row { grid-template-columns: auto 1fr; } .set-tl-row > select, .set-tl-row > input[type="range"], .set-tl-out { grid-column: 1 / -1; } }
+
+/* The selected-card stance sigil is a neutral grey until the card is played (then the motif colour and glow). */
+.stance-flash { --stance-sigil-idle: var(--muted); }

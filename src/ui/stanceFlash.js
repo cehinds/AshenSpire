@@ -43,9 +43,10 @@ function buildOverlay(icon, transitionMs) {
   el.className = 'stance-flash';
   el.setAttribute('aria-hidden', 'true');
   el.dataset.stance = icon;
+  el.dataset.tone = 'idle';
   Object.assign(el.style, {
     position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    pointerEvents: 'none', opacity: '0', zIndex: '6', transformOrigin: '50% 50%', transform: 'scale(1)', transition: `opacity ${transitionMs}ms linear`,
+    pointerEvents: 'none', opacity: '0', zIndex: '6', color: 'var(--stance-sigil-idle)', transformOrigin: '50% 50%', transform: 'scale(1)', transition: `opacity ${transitionMs}ms linear`,
   });
   el.appendChild(sigil(icon));
   return el;
@@ -72,11 +73,15 @@ export function showStanceFlash(anchor, event, { reduced = false, config = ACTIO
   return el;
 }
 
+// A neutral warm gold from the theme tokens, for a card with no element or motif; the glow ramps in over 120 ms at play.
+const GLOW_FALLBACK = 'var(--gold)';
+const GLOW_RAMP_MS = 120;
+
 /**
  * createStanceOverlay({ reduced, config }): the player's stance sigil while a stance-changing card is selected (owner, 2026-11-13).
  *   bind(getAnchor)  where the overlay lives (the player's sprite element, looked up on each use)
  *   select(stance)   the selection's stance when it differs from the held one, else null: shows, switches or fades out the sigil
- *   hold()           the card was played: the sigil stays up (selection changes no longer touch it)
+ *   hold(glow)       the card was played: the sigil stays up (selection changes no longer touch it) and glows in `glow`
  *   begin(clipMs)    the swing starts: 'enlarge' grows and dims the sigil over the clip, 'linger' leaves it as it is
  *   release()        the actor's action animation ended: fade out
  *   clear()          a refused or cancelled play: removed at once
@@ -110,7 +115,23 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
       const node = el;
       setTimeout(() => { if (el === node) node.style.opacity = String(plan.opacity); }, 0);
     },
-    hold() { if (el) held = true; },
+    // The card was played: keep the sigil and glow it in the card's motif colour (`--stance-glow`; a neutral gold when it has none).
+    hold(glow = null) {
+      if (!el) return;
+      held = true;
+      const colour = glow || GLOW_FALLBACK;
+      el.style.setProperty('--stance-glow', colour);
+      el.dataset.glowColor = colour;
+      el.style.color = 'var(--stance-glow)'; // idle grey while selected (--stance-sigil-idle), the motif colour once played
+      el.dataset.tone = 'played';
+      const svg = el.querySelector('svg');
+      if (!svg) return;
+      const full = globalThis.document?.documentElement?.dataset?.performance === 'full';
+      const tight = 'drop-shadow(0 0 3px var(--stance-glow))', wide = 'drop-shadow(0 0 12px var(--stance-glow))';
+      svg.style.transition = `filter ${GLOW_RAMP_MS}ms linear`;
+      svg.style.filter = full ? `${tight} ${wide}` : wide;
+      el.dataset.glow = '1';
+    },
     begin(clipMs) {
       const plan = overlayPlan(config(), { reduced: reduced() });
       if (!el || !plan || plan.style !== 'enlarge' || !(clipMs > 0)) return;

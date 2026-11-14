@@ -59,6 +59,18 @@ const damageElement = (def, tags) => {
   return types.length === 1 ? cardArtElement(types[0]) : null;
 };
 
+/**
+ * cardMotifGlow(def, { ref, registries }) -> the glow colour of the card's element/motif (the table above), resolved as
+ * simpleCardArt resolves the element (element tag, school, single damage type, else force for a spell), or null when it has none.
+ */
+export function cardMotifGlow(def, { ref, registries = null } = {}) {
+  if (!def || typeof def !== 'object') return null;
+  const tags = tagIds(def.cardTags ?? def.tags ?? (registries ? tagService(registries).idsOf('card', def) : objectTagIds('card', def.id || ref?.cardId || '')));
+  const element = cardArtElement(uniqueIdentity(tags, 'element:')) || cardArtElement(uniqueIdentity(tags, 'school:')) || damageElement(def, tags)
+    || (uniqueIdentity(tags, 'camp:') === 'spell' ? 'force' : null);
+  return element ? CARD_ART_ELEMENTS[element].glow : null;
+}
+
 /** Compatibility adapter only: old definitions may declare visual facts in DSL.
  * Explicit cardTags are authoritative, even when empty; the pure factory never
  * reads effects, card IDs or registry card definitions.

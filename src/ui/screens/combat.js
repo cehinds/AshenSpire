@@ -101,6 +101,7 @@ import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { playerStanceOverlay } from '../stanceFlash.js';
+import { cardMotifGlow } from '../cardArtComposition.js';
 import { createStanceLedger, holdsChosenStance, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
@@ -3768,6 +3769,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The accepted play: snapshot, dispatch, take the card out of the hand, then the animations.
   function commitPlay(instanceId, targetId, choice, rank) {
     hideTooltip();
+    let playedGlow = null;
+    try { const playing = combat.piles.hand.find(card => card.instanceId === instanceId); playedGlow = playing ? cardMotifGlow(resolveCombatCard(combat, playing)) : null; } catch { /* no glow colour: the neutral gold */ }
     disp = takeSnapshot();
     let out;
     try {
@@ -3780,7 +3783,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
-    playerStanceOverlay.hold(); // the sigil stays up until the swing ends
+    playerStanceOverlay.hold(playedGlow); // the sigil stays up, glowing in the card's motif colour, until the swing ends
     sfx.play('cardPlay');
     haptic.play('cardPlay'); // the card-play buzz is THIS site's, not the shared sound id's
     // A card the player picked while earlier plays resolved keeps its selection; only the played card's own aim clears.
