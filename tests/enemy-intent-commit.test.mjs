@@ -27,7 +27,9 @@ function fight(id, seed = 511, { legacy = false } = {}) {
 }
 const settle = combat => { for (let i = 0; combat.pendingReaction && i < 50; i++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null }); };
 const play = (combat, card) => { dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, ...(card.cardId === 'core.defend' ? {} : { targetId: combat.enemies[0].id }) }); settle(combat); };
-const shown = enemy => enemy.intent?.moveId ? [enemy.intent.moveId, ...(enemy.plannedMoves || []).map(row => row.moveId)] : [];
+// A Broken enemy (SPEC 17, batch 1) has lost its head: its intent reads Broken with no move, and its remaining planned follow-ups show and play.
+const shown = enemy => enemy.intent?.moveId ? [enemy.intent.moveId, ...(enemy.plannedMoves || []).map(row => row.moveId)]
+  : enemy.broken ? (enemy.plannedMoves || []).map(row => row.moveId) : [];
 // Moves the enemy committed to this turn: started moves, plus a charge it began preparing.
 function endTurn(combat) {
   const start = combat.eventLog.length;
