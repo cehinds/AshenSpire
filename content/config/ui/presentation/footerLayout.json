@@ -226,7 +226,7 @@
           "locked": false,
           "opacity": 1,
           "text": "{value}",
-          "fontSize": 30,
+          "fontSize": 27,
           "color": "#e7dcc0",
           "fontFamily": "serif",
           "fontWeight": 400,
