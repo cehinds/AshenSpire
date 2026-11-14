@@ -148,6 +148,7 @@ common.place.rewards,,Rewards,The reward screen.,
 common.continue,,Continue,Move on from this screen.,Continue
 common.skip,,Skip,Leave this behind and move on.,Skip
 common.confirm,,Confirm,Commit the choice you have made.,Confirm
+common.menu,,Menu,Open the menu.,Menu
 common.take,,Take,Collect this into your kit.,Take
 # ---- the spoils door ------------------------------------------------------
 reward.eyebrow.spoils,,Spoils,What the fight left behind.,Spoils
@@ -932,7 +933,7 @@ settings.row.mapHeaderDensity,,Map header,Comfortable shows your name and full s
 settings.row.mapHeaderRelics,,Relics in map header,Show your relic icons in the map header bar.,
 settings.row.mapHeaderSeed,,Seed in map header,Show the run seed in the map header bar.,
 settings.row.uprightGate,,Short-screen warning,"On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.",
-settings.row.quickNav,,Quick menu,"MIRROR adds a destination list, SWITCHER folds the tabs, OFF skips both.",
+settings.row.quickNav,,Menu navigation,"MIRROR adds a destination list, SWITCHER folds the tabs, OFF skips both.",
 settings.row.armamentsPresentation,,Combat Armaments,RADIAL puts flasks and potions in the combat cluster; FIXED in the HUD.,
 settings.row.armamentsPhonePlacement,,Phone Armaments location,Where the radial sits on narrow screens.,
 settings.row.showPlayedCard,,Show played card animation,Show the played card flying to its target.,
