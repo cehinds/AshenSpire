@@ -1032,7 +1032,8 @@ async function main() {
     await until(`!!document.querySelector('.map-node.reachable:not(.current)')`, 'the resumed map');
     const fightSelector = await reachableFightSelector();
     if (!fightSelector) throw new Error('the resumed map has no reachable fight in the saved route');
-    await clickSel(fightSelector, 'the reachable fight node');
+    // A new run's single start node is preselected (its tray is already open); pressing it again would travel at once.
+    if (!(await evalIn(`document.querySelector(${JSON.stringify(fightSelector)})?.classList.contains('selected') === true`))) await clickSel(fightSelector, 'the reachable fight node');
     // The resumed map settles its camera and footer after it mounts; ENTER was
     // measured below the fold (top 1139 in 1080) on one run in ~6 when pressed
     // at once. Wait for it to stand on screen rather than scroll to it.
