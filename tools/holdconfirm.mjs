@@ -1221,7 +1221,7 @@ async function main() {
       for (const dial of ['normal', 'off']) {
         await row.open(dial);
         const ms = Number(await ev(`Number((document.querySelector(${JSON.stringify(armSel)}) || { dataset: {} }).dataset.holdMs || 0)`)) || 0;
-        if (!row.holds && !(await ev(`!!document.querySelector(${JSON.stringify(armSel)})`))) {
+        if (!row.holds && !(await ev(`!!document.querySelector(${JSON.stringify(`[data-beat-action="${row.id}"]`)})`))) {
           skip(`${row.id} on every input`, 'unasked', `no armed control at this ref (Core's own door draws it)`);
           continue;
         }
