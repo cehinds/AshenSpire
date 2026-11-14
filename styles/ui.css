@@ -2007,3 +2007,12 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .upgrade-desk .deck-editor-main.smith-candidate-card { grid-template-columns: 4.4rem minmax(0, 1fr) auto; }
   .upgrade-desk .deck-editor-main.smith-candidate-card > .deck-editor-art { max-height: 4.4rem; }
 }
+
+/* Settings > Combat: the action / reaction timeline editors. */
+.set-timeline { display: grid; gap: 8px; width: 100%; }
+.set-tl-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.set-tl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.set-tl-row { display: grid; grid-template-columns: auto minmax(7rem, 1fr) minmax(9rem, 1.2fr) minmax(8rem, 1.5fr) 4.5rem; align-items: center; gap: 8px; }
+.set-tl-move { display: inline-flex; gap: 2px; }
+.set-tl-out { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .set-tl-row { grid-template-columns: auto 1fr; } .set-tl-row > select, .set-tl-row > input[type="range"], .set-tl-out { grid-column: 1 / -1; } }
