@@ -13,7 +13,7 @@
 //   c. everything visible sits inside the canvas, the hand has its cards, no page errors.
 // Prints one line per check and exits non-zero when any fails.
 // Usage: PLAYWRIGHT_MODULE=/path/to/playwright/index.js node tools/combat-canvas-qa.mjs
-// Optional: CANVAS_QA_OUT=<dir> saves a screenshot per stop.
+// Optional: CANVAS_QA_OUT=<dir> saves a screenshot per stop; CANVAS_QA_ONLY=pairs|chain|drag runs one part.
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { serve } from './serve.mjs';
@@ -23,6 +23,7 @@ const chromium = playwright.chromium || playwright.default.chromium;
 const out = process.env.CANVAS_QA_OUT ? resolve(process.env.CANVAS_QA_OUT) : null;
 if (out) mkdirSync(out, { recursive: true });
 const TOLERANCE = 1.5;
+const ONLY = process.env.CANVAS_QA_ONLY || '';
 const ROUTE = '/?gameProfile=core&shot=combat&shotHand=2';
 const KEYS = ['player', 'enemy', 'card', 'endTurn', 'sky', 'groundTop'];
 
@@ -135,7 +136,7 @@ for (let i = 11; i >= 0; i--) DRAG.push([Math.round(1440 + (420 - 1440) * i / 12
 
 try {
   // a. Same form factor, same picture.
-  for (const [name, a, b] of PAIRS) {
+  for (const [name, a, b] of ONLY && ONLY !== 'pairs' ? [] : PAIRS) {
     const first = await freshFacts(...a), second = await freshFacts(...b);
     visibleChecks(`fresh ${a.join('x')}`, first.facts, first.errors);
     visibleChecks(`fresh ${b.join('x')}`, second.facts, second.errors);
@@ -143,10 +144,10 @@ try {
     const { worst, where } = compare(first.facts, second.facts);
     check(`same form factor ${name}: fresh ${a.join('x')} and ${b.join('x')} agree in canvas px (${presets})`,
       worst <= TOLERANCE && first.facts.canvas.preset === second.facts.canvas.preset,
-      worst <= TOLERANCE ? `max diff ${worst.toFixed(2)}` : `max diff ${worst.toFixed(1)} at ${where}`);
+      worst <= TOLERANCE ? `max diff ${worst.toFixed(2)}` : `max diff ${worst.toFixed(1)} at ${where}; ${a.join('x')} ${fmt(first.facts)}; ${b.join('x')} ${fmt(second.facts)}`);
   }
   // b. Path independence, then c. on every stop.
-  for (const [label, stops, every] of [['chain', CHAIN, true], ['drag', DRAG, false]]) {
+  for (const [label, stops, every] of [['chain', CHAIN, true], ['drag', DRAG, false]].filter(([label]) => !ONLY || ONLY === label)) {
     const { context, page, errors } = await openFight(1440, 900);
     const start = await settled(page);
     const startFresh = await freshFacts(1440, 900);
