@@ -59,6 +59,16 @@ export function cindersCounterHtml(model) {
   ])));
 }
 
+/** SyncHudCinders(root, cinders) — write the current purse into every cinders counter already drawn inside `root`. */
+export function SyncHudCinders(root, cinders) {
+  for (const counter of root?.querySelectorAll?.('[data-ui-component="cinders-counter"]') || []) {
+    const value = counter.querySelector('.cv');
+    if (value) value.textContent = String(cinders);
+    const label = counter.getAttribute('aria-label');
+    if (label) counter.setAttribute('aria-label', label.replace(/^[\d,.]+/, String(cinders)));
+  }
+}
+
 // A field's value, then its detail when it has one (the act's seat name).
 function metadataFieldHtml(model) {
   const { label, value, detail = null } = model.properties;
