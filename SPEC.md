@@ -1351,7 +1351,7 @@ Act-map generation (`engine/mapgen.js`; constants from `content/mapconfig.js`), 
 
 ### Rewards after combat and merchant prices
 
-- Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic. Flask roll: §5.5.
+- Cinders: Monster 45–75, Elite 105–150, Boss 225–270. Elites also drop a relic (Core 2: a choice of two, §15.1 *Elite spoils*). Flask roll: §5.5.
 - Card reward on the §15.1 schedule: shipped 10% per won fight (`balance.rewards.cardRewards.chancePct`); choose 1 of 3–5 (random per combat door, `rewards.combatOfferCount` {min 3, max 5}, `cardRewards` stream; chests and level cards keep 3). Default odds common 60 / uncommon 35 / rare 5, Elite 45/40/15; a class's reward weights may override.
 - Solo boss victory: up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`rollRelicChoices`, `relicRewards` stream; one left gives a single `relicId`); pick one. Auto-collect picks randomly; with it off an unpicked choice is left behind.
 - Merchant prices (cinders): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
@@ -2992,16 +2992,20 @@ Core 1 pins the card, potion and offer weights neutral (`tests/core-reward-mix.t
 
 #### Core 2 reward mix (owner, 2026-10-27)
 
-Combat `rewardGroups` (`packs/core/rewards.json`); elites and bosses roll the same table.
+Combat `rewardGroups` (`packs/core/rewards.json`); elites and bosses roll the same table. From 2026-11-14 (owner brief) every won fight offers a card choice: the door's 3–5 options are all cards or weapon arts, take one. Potions, weapons and armor come from chests and shops. The 2026-10-27 weights stay in the second column for runs pinned to them.
 
-| Group | Weight |
-|---|---|
-| Cards | 66 |
-| Weapon arts | 4 (cards + arts = 70) |
-| Potions | 18 |
-| Flask relic | 2 (potions share = 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among combat relics, the Core 2 flask reward) |
-| Weapons | 10 |
-| Armor and every other relic | retired from combat rewards (the shop fills its own shelves per category) |
+| Group | Weight | Until 2026-11-14 |
+|---|---|---|
+| Cards | 96 | 66 |
+| Weapon arts | 4 | 4 (cards + arts = 70) |
+| Potions | 0 | 18 |
+| Flask relic | 0 | 2 (potions share = 20; `eligibility.relics.combatIds` admits only `brimmingGourd` among combat relics) |
+| Weapons | 0 | 10 |
+| Armor and every other relic | retired from combat rewards (the shop fills its own shelves per category) | the same |
+
+- **Elite spoils** (`rewards.eliteRelic: { choices: 2 }`): after an elite's card door, a second door titled "Elite spoils" offers two distinct unowned relics from `eligibility.relics.allow`; take one. It is its own offer (`<combat offer id>:elite`, source `elite`), saved like any other, shown before level offers, and skipped when no allowed relic is left. A profile without the key has no elite relic.
+- **Allowed relics** (`eligibility.relics.allow`, 28 ids): new offers from every source (elite, chest, shop) draw only from this list, the relics traced to have a working effect under Core 2 (Strength, Bleed-burst, legacy-passive and missing-tag relics are left out until they are reworked). A claim still accepts any relic, so an offer or shop shelf saved earlier stays claimable. The Brimming Gourd's weight among them is 1 (was 20, when it was the only combat relic).
+- **Playable cards only** (`eligibility.playableOnly`): a new card or weapon-art offer never holds a card with a mana cost for a class whose base Mana is 0 (`stats.poolBasesByClass`, the Reaver), nor one whose mana cost exceeds the run's max Mana. Claims are not filtered.
 
 - **Treasure chests** roll `source: 'treasure'` against `treasureRewardGroups`: cards and weapon arts 60, weapons, armor and relics 10, potions 30. A chest still offers relics, armor and weapons (`tests/core-reward-mix.test.mjs`).
 - **Weapon arts.** A reward screen never offers an owned art (`eligibility.weaponArts.skipOwned`). The pool is the learnable arts of carried weapons the player does not own; `skipOwned` also applies to shops and the Blacksmith shelf; an art stocked in the visited shop or shown on the open reward door is not offered by the other (owner, 2026-11-05).
