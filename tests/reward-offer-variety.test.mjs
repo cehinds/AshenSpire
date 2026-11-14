@@ -113,6 +113,8 @@ const stanceOfId = (registries, id) => { try { return stanceOf(registries.cards.
 const SEEDS_200 = Array.from({ length: 200 }, (_, i) => i + 1);
 const stanceRun = registries => {
   const run = createRunState({ seed: 1, classId: 'reaver', registries });
+  // The 2026-11-14 starter deck opens with Sweep; drop every sweep-stance card so this run is missing both stances again.
+  run.deck = run.deck.filter(card => stanceOfId(registries, card.cardId) !== 'sweep');
   const ids = registries.cards.all().map(card => card.id);
   // Every sweep-stance card has been offered three times; no casting-stance card ever has.
   run.rewardOfferHistory = { cards: {} };

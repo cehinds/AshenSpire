@@ -98,7 +98,7 @@ test('the Core deck editor mints collected trained basics and rejects uncollecte
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter']);
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited).map(tile => tile.cardId), ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep']); // the 2026-11-14 starter deck also collects Smash and Sweep
   assert.ok(editor.collection.filter(tile => tile.unlimited).every(tile => run.collectedCardIds.includes(tile.cardId)));
   assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
