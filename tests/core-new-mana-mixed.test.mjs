@@ -150,8 +150,11 @@ test('offers never cross classes: class cards only reach their own class, colorl
   for (const classId of CLASSES) {
     const seen = new Set();
     for (let seed = 1; seed <= 600; seed++) for (const id of offered(classId, seed, 1 + (seed % 6))) seen.add(id);
+    // The Core 2 starter decks hold one of the class's own mana cards (Rogue: Venomed Edge); a basic the class already owns is never offered again.
+    const starter = new Set(live(classId, 1, 1).deck.map(card => card.cardId));
     for (const [owner, list] of Object.entries(BY_CLASS)) for (const id of list) {
       if (!payable(classId, id)) assert.ok(!seen.has(id), `${classId} was offered ${id} it cannot pay for`);
+      else if (starter.has(id)) assert.ok(!seen.has(id), `${classId} was offered ${id} from its own starter deck`);
       else if (owner === classId || owner === 'colorless') assert.ok(seen.has(id), `${classId} never offered ${id}`);
       else assert.ok(!seen.has(id), `${classId} was offered ${owner}'s ${id}`);
     }
