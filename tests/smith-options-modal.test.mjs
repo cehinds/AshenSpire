@@ -62,9 +62,9 @@ test('smith keep: rows toggle up to the limit, the quote gates the primary, conf
     rows[0].click();
     assert.equal(confirm.disabled, true, 'nothing kept: the primary is disabled');
     rows[1].click(); rows[2].click(); rows[0].click();
-    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['true', 'true', 'false'], 'the limit holds');
+    assert.deepEqual(rows.map((row) => row.getAttribute('aria-pressed')), ['false', 'true', 'true'], 'the limit holds: the third pick over 2 is ignored');
     assert.equal(confirm.disabled, false);
     confirm.click();
-    assert.deepEqual(confirmed, [['p2', 'p1']]);
+    assert.deepEqual(confirmed, [['p2', 'p3']]);
   } finally { restore(); }
 });
