@@ -75,7 +75,7 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','elements',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
@@ -88,6 +88,7 @@ export function validateFixCoreRules(rules) {
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+  if (rules.elements !== undefined && (typeof rules.elements !== 'object' || rules.elements === null || rules.elements.version !== 1)) throw new Error('FixCore elements requires {version:1}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
   compileBindings({mechanics,moduleParameters:fixCoreModuleParameters(rules),attachments:[{
