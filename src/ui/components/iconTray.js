@@ -231,13 +231,21 @@ export function fitIconTray(row, width, { iconPx = iconSizes.get(row) || 0, extr
   }
 }
 
+// An enemy's statuses are drawn a little larger than the badges beside them: they are what the player reads the enemy by.
+const ENEMY_STATUS_ICON_SCALE = 1.3;
+
 /** Fit a status tray that shares the combat HUD's badge row with the defense badges: one capacity, the row's own width. The tray
  *  always keeps room for a whole icon or +N tile; when the visible badges leave less, the last badges are squeezed out
  *  (data-squeezed) and counted in the +N. The icon size is the row's height, the badges' own diameter. */
 export function fitBadgeRowTray(tray) {
   const row = tray?.closest?.('.combat-health-badges');
   if (!row) return;
-  const iconPx = row.getBoundingClientRect().height;
+  const wraps = !row.closest('.combatant.player');
+  // The row's own height is the badge diameter, but an enemy's row grows with its wrapped statuses: read the height it is never below.
+  const iconPx = wraps ? parseFloat(getComputedStyle(row).minHeight) * ENEMY_STATUS_ICON_SCALE || 0 : row.getBoundingClientRect().height;
+  // An enemy's statuses are never folded into a +N tile (owner, 2026-11-14: "half the time I don't see them"): its tray wraps onto
+  // further lines under the badges (styles/combat-mini-hud.css), so every icon is planned as shown.
+  if (wraps) { if (iconPx > 0 && (tray.children.length || iconSizes.has(tray))) fitIconTray(tray, Number.MAX_SAFE_INTEGER, { iconPx, extraHidden: 0 }); return; }
   const badges = [...row.children].filter(node => node.classList.contains('combat-health-badge'));
   for (const badge of badges) if (badge.dataset.squeezed) delete badge.dataset.squeezed;
   let squeezed = 0;

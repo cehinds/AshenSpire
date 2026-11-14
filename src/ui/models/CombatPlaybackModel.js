@@ -138,6 +138,59 @@ export function CaptureCombatDisplay(combat, {
     };
 }
 
+const PLAY_COST_EVENTS = new Set(['energySpent', 'staminaSpent', 'manaSpent']);
+
+/** The cost receipts a play paid: the player's spend events emitted before its first cardPlayed. */
+export function PlayCostEvents(events)
+{
+    const paid = [];
+    for (const event of events)
+    {
+        if (event.type === 'cardPlayed')
+        {
+            break;
+        }
+        if (PLAY_COST_EVENTS.has(event.type))
+        {
+            paid.push(event);
+        }
+    }
+    return paid;
+}
+
+/** Re-quotes the cards still held from the post-play fight; a card that cannot be quoted keeps its earlier quote. */
+export function RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard)
+{
+    const next = new Map(disp.handPreviews);
+    for (const inst of disp.hand)
+    {
+        if (
+            disp.leftHand?.has(inst.instanceId)
+            || !combat.piles.hand.some(card => card.instanceId === inst.instanceId)
+        )
+        {
+            continue;
+        }
+        try
+        {
+            next.set(
+                inst.instanceId,
+                previewCard(
+                    combat,
+                    inst.instanceId,
+                    undefined,
+                    upcastRanksByCard.get(inst.instanceId),
+                ),
+            );
+        }
+        catch
+        {
+            // A card the engine cannot quote keeps the face it had.
+        }
+    }
+    disp.handPreviews = next;
+}
+
 /** Applies a paced beat and reports whether the screen should release the held hand. */
 export function ApplyCombatBeat(disp, events, {
     combat,
