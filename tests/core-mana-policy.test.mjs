@@ -9,6 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { getStacks } from '../src/engine/statuses.js';
+import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 const registries = core2Registries();
 function fresh(classId = 'reaver', reg = registries) {
   return createRunState({ seed: 73, classId, registries: reg, runId: 'mana-policy-test',
@@ -27,7 +28,8 @@ function fight(cardId, classId = 'reaver', reg = registries) {
 }
 
 test('core Reaver starts with one MP and an earned WIS point still adds exactly one maximum MP', () => {
-  const run = fresh(); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
+  // Level Up is no longer a shipped rest service; a run pinned to the pre-one-pick rests keeps it.
+  const run = pinLegacyRests(fresh()); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = Object.values(run.mapGraph.nodes).find(n => n.type === 'shrine' && n.floor === 3).id; // first rest on floor 3 (a branch may open narrow)
   beginGameProfileRest(run, '1:' + run.mapNodeId); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });

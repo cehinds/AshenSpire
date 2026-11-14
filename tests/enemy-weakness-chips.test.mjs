@@ -110,10 +110,12 @@ function previewsAgainst(ledger) {
 }
 test('a card preview names and uses no undiscovered weakness; a discovered one appears with its bonus', () => {
   const hidden = previewsAgainst({});
-  assert.ok(!hidden.some(text => text.includes('Weak to')), 'undiscovered: no "Weak to" line');
+  // The weakness line is a breakdown row labelled "Weak to <type>"; a card's own text may say "Weak to ALL enemies" (Rallying Roar applies Weak).
+  const WEAK_ROW = '"label":"Weak to ';
+  assert.ok(!hidden.some(text => text.includes(WEAK_ROW)), 'undiscovered: no "Weak to" line');
   const all = ['blunt', 'slashing', 'piercing'].map(to => `${to}:damage`);
   const shown = previewsAgainst({ wanderingSoldier: all });
-  assert.ok(shown.some(text => text.includes('Weak to')), 'discovered: the line shows');
+  assert.ok(shown.some(text => text.includes(WEAK_ROW)), 'discovered: the line shows');
   const total = text => [...text.matchAll(/"totalDamage":(\d+)/g)].map(m => Number(m[1]));
   const base = hidden.flatMap(total), seen = shown.flatMap(total);
   assert.ok(seen.some((value, i) => value > base[i]), 'discovered: the previewed number carries the bonus');

@@ -243,6 +243,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
+      allRoutes: configuredRoutes && mode === 'path',
       current: current || null,
       path: mapAdapter?.path || run.path || [],
       viewState: mapAdapter ? mapAdapter.viewState : run.mapView,

@@ -30,6 +30,7 @@ import { validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/dom.mjs';
 import { withModalDom } from './helpers/dom.mjs';
+import { pinLegacyRests } from './helpers/legacy-core-rests.mjs';
 
 const profile = resolveGameProfile('core');
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -414,6 +415,7 @@ test('Core character levels follow the bundle; earned points stay claimable on o
   const old = structuredClone(run);
   old.gameProfile.modules.progression.characterLevels = false; // snapshot from the skill-only era
   old.level = { level: 3, xp: 200, unspentPoints: 2 };
+  pinLegacyRests(old); // Level Up is no longer a shipped rest service; a run pinned before the one-pick rest keeps it
   assert.equal(configuredCharacterLevels(old), false);
   old.mapNodeId = 'rest-test';
   old.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
@@ -439,6 +441,9 @@ test('a Core fight pays character XP, levels, and the rest offers and commits Le
   assert.ok(run.level.unspentPoints > 0, 'the level queues attribute points');
   run.mapNodeId = 'rest-test';
   run.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
+  // The shipped one-pick rest has no Level Up service; a run pinned before it (legacy rests) still offers and commits it.
+  assert.equal(gameProfileRestModel(reg, run, beginGameProfileRest(structuredClone(run))).services.some(r => r.id === 'levelUp'), false, 'shipped rests offer no Level Up');
+  pinLegacyRests(run);
   const visit = beginGameProfileRest(run);
   const row = gameProfileRestModel(reg, run, visit).services.find(r => r.id === 'levelUp');
   assert.ok(row && row.available, 'Level Up is offered at the rest');

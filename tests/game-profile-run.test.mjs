@@ -10,21 +10,26 @@ import { gameProfileClassAvailable,gameProfileCompletedRunMeta } from '../src/mo
 import { beginGameProfileRest,createGameProfileRestDraft,commitGameProfileRest,restServiceUsed } from '../src/model/gameProfileRest.js';
 import { gameProfileRestModel } from '../src/ui/models/GameProfileRestModel.js';
 import { buildActMap } from '../src/engine/actmap.js';
+import { legacyCoreProfile } from './coreLegacyRoutes.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { stampDeck } from '../src/model/loadout.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save.js';
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
+// The pre-one-pick Core rest block (arrival heals, every service once, Level Up listed). A run pins its profile, so an old save keeps it.
+const LEGACY_RESTS={servicesPerVisit:'all',services:['smith','levelUp','upgradeCard'],recovery:{hp:'full',sp:'full',mp:'full',healingFlasks:'full',mpFlasks:'full'},smith:{free:true,tiersPerService:1}};
+const freshLegacy=()=>{const run=fresh();run.gameProfile.content.rests=structuredClone(LEGACY_RESTS);return run;};
 // A branch may open narrow, so a rest depth's lane ids vary by seed: take the first rest on the floor.
 const restId=(run,floor)=>Object.values(run.mapGraph.nodes).find(n=>n.type==='shrine'&&n.floor===floor).id;
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
 
-test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
+test('fixed classes, eleven starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
- assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,10);
+ assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,11);
  assert.equal(run.loadout.sets.rightHand[0],'greatsword');assert.equal(run.loadout.sets.leftHand[0],null);
- stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,4);
+ stampDeck(reg,run);assert.equal(run.deck.length,11);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,2);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
  const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);
@@ -53,13 +58,18 @@ test('seeded route has nine preboss depths, a rest in every lane of every branch
   assert.notEqual(map.nodes[map.bossId].encounterId,prior);prior=map.nodes[map.bossId].encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
+  // Core 2 shows every node type (hiddenTypes empty); an old pinned profile still hides them behind '?' events.
   for(const n of Object.values(map.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
+   else assert.equal(n.type,{fight:'monster',event:'event',elite:'elite',treasure:'treasure',shop:'merchant',rest:'shrine',boss:'boss'}[n.actualType]);}
+  const old=legacyCoreProfile(),oldReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,old)),old);
+  const oldMap=buildActMap(oldReg,createRng(100+tier),run.seatOrder[tier-1],tier);
+  for(const n of Object.values(oldMap.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
    else if(!['rest','elite','boss'].includes(n.actualType))assert.equal(n.type,'event');}
  }
 });
 
 test('rest requires real current rest, commits once and fully recovers after earned CON level',()=>{
- const run=fresh();assert.throws(()=>beginGameProfileRest(run,'forged'),/current rest/);
+ const run=freshLegacy();assert.throws(()=>beginGameProfileRest(run,'forged'),/current rest/);
  visit(run);run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  run.level.unspentPoints=1;const before=run.maxHp;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
@@ -69,14 +79,14 @@ test('rest requires real current rest, commits once and fully recovers after ear
 });
 
 test('failed/rest forgery is atomic; Strategize is no longer a rest service (D10)',()=>{
- const run=fresh();visit(run);run.hp=1;const before=JSON.stringify(run);
+ const run=freshLegacy();visit(run);run.hp=1;const before=JSON.stringify(run);
  assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/no attribute point waiting/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'strategize'),/Unknown rest service/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'forged'}));assert.equal(JSON.stringify(run),before);
 });
 
 test('Core rest heals on arrival, and Smith and Level Up are both usable in one visit (D10)',()=>{
- const run=fresh();run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
+ const run=freshLegacy();run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  const v=visit(run);
  assert.equal(run.hp,run.maxHp,'arrival heals');assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.ok(v.healed.hp>0);
  run.hp=1;visit(run);assert.equal(run.hp,1,'a remount of the same visit does not heal again');
@@ -136,11 +146,11 @@ test('profile completion ledger persists independently from bounded history and 
 
 
 test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
- const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
+ const run=freshLegacy();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1);
- const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
+ const smith=freshLegacy();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
  assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});
  assert.equal(smith.itemUpgradeLevels[candidate.itemRef],candidate.nextLevel);assert.equal(smith.hp,smith.maxHp);
@@ -150,7 +160,7 @@ test('two CON increases add one authored SP, and Smith commits an equipment tier
 test('actual core loadRun validates pinned birth gear instead of legacy baseline and preserves deck',()=>{
  const run=fresh();visit(run);const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);
  const restored=save.loadRun(reg);assert.ok(restored,JSON.stringify(save.runStatus()));
- assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,10);assert.equal(restored.gameProfile.hash,profile.hash);
+ assert.equal(restored.loadout.sets.rightHand[0],'greatsword');assert.equal(restored.deck.length,11);assert.equal(restored.gameProfile.hash,profile.hash);
 });
 
 
@@ -193,14 +203,16 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  const {smithingPlan}=await import('../src/model/smithing.js');
  const run=fresh();visit(run,reg);
  // Leave enough health to measure the full upgraded hit rather than overkill.
- const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;return combat;};
+ const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;
+ // The 11-card starter may not draw these in five cards; the test needs one of each, so put any missing one in hand.
+ for(const cardId of ['core.counter','core.strike'])if(!combat.piles.hand.some(card=>card.cardId===cardId))combat.piles.hand.push({cardId,instanceId:`fx-${cardId}`,upgraded:false});return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
  const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.counter'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
  const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.value]));
  commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'});
  const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
- const damaging=after.piles.hand.find(card=>(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'at least one real drawn attack gains damage after the weapon upgrade');
- const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').value,hp=after.enemies[0].hp;dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
+ const damaging=after.piles.hand.find(card=>card.cardId==='core.strike'&&(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'a real Strike gains damage after the weapon upgrade');
+ const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').damageReceipt.totalDamage,hp=after.enemies[0].hp;primeAccuracyRolls(after);dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
  // Core 2 smiths weapons only (no armour candidate), so the armour DR/Block step of the old Core 1 test is gone.
  run.loadout.sets.rightHand[0]='straightSword';const swapped=gameProfileRatingReceipt(reg,run).totals;delete run.itemUpgradeLevels['armament/greatsword'];assert.equal(swapped.ar,gameProfileRatingReceipt(reg,run).totals.ar,'the greatsword tier bonus does not follow a swapped-in weapon');
  const off=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});const noUpgrades=gameProfileRatingReceipt(r,noStats).totals.ar;noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,noUpgrades,'with stats off a Smith tier adds no rating');
@@ -222,8 +234,8 @@ test('all four unlocked core classes instantiate exact kits and decks, construct
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
  const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
- // Sceptre classes author nine cards plus granted Mana Surge: every class starts with ten.
- const sizes={reaver:10,starseer:10,rogue:10,herald:10};
+ // Every class starts with eleven (authored list plus weapon-granted cards).
+ const sizes={reaver:11,starseer:11,rogue:11,herald:11};
  for(const [classId,expected] of Object.entries(hands)){
   const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,sizes[classId],classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);

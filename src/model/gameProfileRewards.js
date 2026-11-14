@@ -41,7 +41,12 @@ function pools(registries, run, { claim = false } = {}) {
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
   const cardRule = rules?.eligibility?.combatCards;
   const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
-  const cards = definitions.filter(card => rangeCardAvailable(run, card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  // Owner 2026-11-14: eligibility.playableOnly never offers a card the class cannot pay for: a mana cost above the
+  // class's mana pool base of 0 (stats.poolBasesByClass) or above the run's max mana. Claims keep accepting every card.
+  const unpayable = !claim && rules?.eligibility?.playableOnly
+    ? (card => (card.manaCost || 0) > 0 && (gameContent(run, 'stats')?.poolBasesByClass?.[run.class]?.mana === 0 || card.manaCost > (run.maxMana ?? 0)))
+    : () => false;
+  const cards = definitions.filter(card => rangeCardAvailable(run, card) && !unpayable(card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -52,11 +57,11 @@ function pools(registries, run, { claim = false } = {}) {
   const carried = new Set([...run.loadout.storage,...Object.values(run.loadout.sets).flat()]);
   return {
     weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
-    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
+    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(claim||!Array.isArray(rules.eligibility?.relics?.allow)||rules.eligibility.relics.allow.includes(row.id))&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim) : [],
+    weaponArts: hasCards && equipment ? weaponArtPool(registries, run, rules, authoredArts, carried, claim).filter(id => !unpayable(registries.cards.get(id))) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.classId===row.classId&&owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
@@ -244,6 +249,26 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
   return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
+}
+/** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
+ * on the reward stream. Returns null (nothing stored) when the key is absent or no relic qualifies. Its own source ('elite'), so the combat
+ * offer's relic strip (eligibility.relics.combatIds) never applies. */
+export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {}) {
+  if (!offerId || typeof offerId !== 'string') throw new Error('A stable reward offerId is required');
+  if (run.gameProfileRewardOffers?.[offerId]) return run.gameProfileRewardOffers[offerId];
+  const rules = gameContent(run, 'rewards'), rule = rules?.eliteRelic;
+  if (!rule) return null;
+  let ids = pools(registries, run).relics;
+  const options = [];
+  for (let n = Number.isInteger(rule.choices) ? rule.choices : 1; n > 0 && ids.length; n--) {
+    const id = weightedRelicPick(rules.eligibility?.relics?.weights, rng, 'cardRewards', ids);
+    ids = ids.filter(value => value !== id);
+    options.push({ kind: 'relics', id });
+  }
+  if (!options.length) return null;
+  const offer = { id: offerId, source: 'elite', options, takeCount: 1, taken: [], claimed: null };
+  (run.gameProfileRewardOffers ||= {})[offerId] = offer;
+  return offer;
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];

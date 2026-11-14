@@ -46,17 +46,17 @@ for (const profileId of ['core']) {
     }
   });
 }
-test('each core character starts with its owner-ruled ten-card deck (2026-10-19)', () => {
+test('each core character starts with its owner-ruled eleven-card deck (2026-11-14: Smash, Sweep, two class cards)', () => {
   const { registries, profile } = world('core');
   const expected = {
-    reaver: { 'core.defend': 4, 'core.counter': 1, 'base.draw': 0 },
-    rogue: { 'core.defend': 2, 'core.counter': 2, 'base.draw': 1 },
-    starseer: { 'core.defend': 0, 'core.counter': 0, 'base.draw': 0 },
-    herald: { 'core.defend': 0, 'core.counter': 0, 'base.draw': 0 },
+    reaver: { 'core.smash': 1, 'core.sweep': 1, 'core.defend': 3, 'core.counter': 1, 'base.draw': 0 },
+    rogue: { 'core.smash': 1, 'core.sweep': 1, 'core.defend': 2, 'core.counter': 1, 'base.draw': 0 },
+    starseer: { 'core.smash': 1, 'core.sweep': 1, 'core.defend': 0, 'core.counter': 0, 'base.draw': 0 },
+    herald: { 'core.smash': 1, 'core.sweep': 1, 'core.defend': 0, 'core.counter': 0, 'base.draw': 0 },
   };
   for (const classId of Object.keys(expected)) {
     const run = createRunState({ seed: 1, classId, registries, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['one', 'two', 'three'] } } } });
-    assert.equal(run.deck.length, 10);
+    assert.equal(run.deck.length, 11);
     for (const [cardId, copies] of Object.entries(expected[classId])) assert.equal(run.deck.filter(card => card.cardId === cardId).length, copies, `${classId} ${cardId}`);
   }
 });
