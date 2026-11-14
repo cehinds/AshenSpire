@@ -265,7 +265,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // the instrument (tools/handlayout.mjs) can hold it at zero, not "small".
     const W = handEl.clientWidth - 1 - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
     const gap = parseFloat(cs.columnGap) || 0;
-    const C = els[0].getBoundingClientRect().width / zoom;
+    // Under the combat canvas the rect also carries the canvas fit; CanvasRect takes it out first.
+    const C = CanvasRect(els[0]).width / zoom;
     const need = n * C + (n - 1) * gap;
     const o = n > 1 ? Math.max(0, (need - W) / (n - 1)) : 0;
     els.forEach((el, i) => { el.style.marginLeft = i && o ? `${-o}px` : ''; });
