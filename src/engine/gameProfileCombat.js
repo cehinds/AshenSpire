@@ -277,7 +277,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     ...(reflect ? { reflect } : {}),
     ...(wardRouted ? { wardRouted: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
-    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, poiseSpared,
+    hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
     ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
