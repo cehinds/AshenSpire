@@ -13,7 +13,11 @@
 //   c. everything visible sits inside the canvas, the hand has its cards, no page errors.
 // Prints one line per check and exits non-zero when any fails.
 // Usage: PLAYWRIGHT_MODULE=/path/to/playwright/index.js node tools/combat-canvas-qa.mjs
-// Optional: CANVAS_QA_OUT=<dir> saves a screenshot per stop; CANVAS_QA_ONLY=pairs|chain|drag runs one part.
+// Optional: CANVAS_QA_OUT=<dir> saves a screenshot per stop;
+// CANVAS_QA_ONLY=pairs|thresholds|armed|chain|drag runs one part (any other value exits 2).
+// Parts: pairs (two windows per form factor), thresholds (same-form-factor windows on either side of
+// real-window CSS media thresholds, three-enemy fight), armed (an attack armed after a scale-only
+// resize: the target tint cells and the enemy target picker), chain and drag (path independence).
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { serve } from './serve.mjs';
@@ -24,8 +28,12 @@ const out = process.env.CANVAS_QA_OUT ? resolve(process.env.CANVAS_QA_OUT) : nul
 if (out) mkdirSync(out, { recursive: true });
 const TOLERANCE = 1.5;
 const ONLY = process.env.CANVAS_QA_ONLY || '';
+const PARTS = ['pairs', 'thresholds', 'armed', 'chain', 'drag'];
+if (ONLY && !PARTS.includes(ONLY)) { console.error(`CANVAS_QA_ONLY=${ONLY}: expected one of ${PARTS.join(', ')}`); process.exit(2); }
+const runs = part => !ONLY || ONLY === part;
 const ROUTE = '/?gameProfile=core&shot=combat&shotHand=2';
-const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop'];
+const THREE = '/?gameProfile=core&shot=combat&shotHand=5&shotSeed=4&shotEnemies=ashheartDragon,wyrmAspirant,fellWarden';
+const KEYS = ['player', 'enemy', 'playerHud', 'enemyHud', 'card', 'endTurn', 'header', 'sky', 'groundTop', 'healthRow', 'valueFont', 'reaction'];
 
 const server = await serve({ root: process.cwd(), port: 0, open: false, quiet: true });
 const base = 'http://127.0.0.1:' + server.server.address().port;
@@ -49,6 +57,10 @@ function canvasFacts() {
     if (!(r.width > 0 && r.height > 0)) return null;
     return [(r.left - left) / scale, (r.top - top) / scale, r.width / scale, r.height / scale];
   };
+  // A length in canvas px: a local (pre-zoom) CSS length times the node's own rendered zoom, without the canvas scale.
+  const canvasZoom = node => { const r = node.getBoundingClientRect(); return node.offsetHeight ? r.height / node.offsetHeight / scale : 0; };
+  const row = document.querySelector('.combat-health-row'), value = document.querySelector('.combat-health-row .m-value');
+  const reaction = document.querySelector('.reaction-switch-value');
   const ground = rect('.layered-environment-layer[data-role="ground"]:not([data-mirror]), .alternative-backdrop image[data-layer$="-ground"]');
   return { win: [innerWidth, innerHeight], canvas,
     player: rect('.combatant.player .sprite'), enemy: rect('.combatant.enemy .sprite'),
@@ -60,6 +72,10 @@ function canvasFacts() {
     // The sky: the layered backdrop plate, or the painted scene's SVG frame.
     sky: rect('.layered-environment-layer[data-role="backdrop"], .alternative-backdrop svg'),
     groundTop: ground ? [ground[1]] : null,
+    healthRow: row && row.offsetHeight ? [row.getBoundingClientRect().height / scale] : null,
+    valueFont: value && value.offsetHeight ? [parseFloat(getComputedStyle(value).fontSize) * canvasZoom(value)] : null,
+    // Shown (1) or not (0): a real-window media query hiding it would differ between same-canvas windows.
+    reaction: reaction ? [reaction.getClientRects().length && getComputedStyle(reaction).visibility !== 'hidden' ? 1 : 0] : null,
     handCards: document.querySelectorAll('.hand .card').length };
 }
 
@@ -77,12 +93,12 @@ async function settled(page) {
   return facts;
 }
 
-async function openFight(width, height) {
+async function openFight(width, height, route = ROUTE) {
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(String(error.message || error).slice(0, 200)));
-  await page.goto(base + ROUTE, { timeout: 90000 });
+  await page.goto(base + route, { timeout: 90000 });
   await page.waitForSelector('.end-turn', { timeout: 90000 });
   await page.waitForFunction(() => window.__combat?.phase === 'player', null, { timeout: 90000 });
   await page.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(i => i.decode().catch(() => {}))); });
@@ -90,12 +106,12 @@ async function openFight(width, height) {
 }
 
 const fresh = new Map();
-async function freshFacts(width, height) {
-  const key = `${width}x${height}`;
+async function freshFacts(width, height, route = ROUTE) {
+  const size = `${width}x${height}`, key = `${route}|${size}`;
   if (fresh.has(key)) return fresh.get(key);
-  const { context, page, errors } = await openFight(width, height);
+  const { context, page, errors } = await openFight(width, height, route);
   const facts = await settled(page);
-  if (out) await page.screenshot({ path: resolve(out, `fresh-${key}.png`) });
+  if (out) await page.screenshot({ path: resolve(out, `fresh-${route === THREE ? 'three-' : ''}${size}.png`) });
   await context.close();
   const value = { facts, errors };
   fresh.set(key, value);
@@ -107,7 +123,8 @@ function compare(a, b) {
   let worst = 0, where = '';
   for (const key of KEYS) {
     const x = a[key], y = b[key];
-    if (!x || !y) { if (x !== y) return { worst: Infinity, where: `${key} missing on one side` }; continue; }
+    // A key missing on either side is a failure: an absent element must not pass vacuously.
+    if (!x || !y) return { worst: Infinity, where: `${key} missing on ${!x && !y ? 'both sides' : 'one side'}` };
     x.forEach((n, i) => { const d = Math.abs(n - y[i]); if (d > worst) { worst = d; where = `${key}[${i}] ${n.toFixed(1)} vs ${y[i].toFixed(1)}`; } });
   }
   return { worst, where };
@@ -138,20 +155,81 @@ const DRAG = [];
 for (let i = 1; i <= 12; i++) DRAG.push([Math.round(1440 + (420 - 1440) * i / 12), Math.round(900 + (860 - 900) * i / 12)]);
 for (let i = 11; i >= 0; i--) DRAG.push([Math.round(1440 + (420 - 1440) * i / 12), Math.round(900 + (860 - 900) * i / 12)]);
 
+// Same-form-factor windows on either side of real-window CSS media thresholds (1200 / 800 / 600 px
+// widths and heights): with the canvas they must still show the same picture.
+const THRESHOLD_PAIRS = [
+  ['desktop 1280x720', [1440, 900], [1280, 720]],
+  ['desktop 1150x800', [1440, 900], [1150, 800]],
+  ['tablet landscape 844x390', [1100, 820], [844, 390]],
+  ['mobile 600x900', [390, 844], [600, 900]],
+];
+
+async function comparePair(name, a, b, route) {
+  const first = await freshFacts(...a, route), second = await freshFacts(...b, route);
+  visibleChecks(`fresh ${route === THREE ? 'three-enemy ' : ''}${a.join('x')}`, first.facts, first.errors);
+  visibleChecks(`fresh ${route === THREE ? 'three-enemy ' : ''}${b.join('x')}`, second.facts, second.errors);
+  const presets = `${first.facts.canvas.preset}/${second.facts.canvas.preset}`;
+  const { worst, where } = compare(first.facts, second.facts);
+  check(`same form factor ${name}: fresh ${a.join('x')} and ${b.join('x')} agree in canvas px (${presets})`,
+    worst <= TOLERANCE && first.facts.canvas.preset === second.facts.canvas.preset,
+    worst <= TOLERANCE ? `max diff ${worst.toFixed(2)}` : `max diff ${worst.toFixed(1)} at ${where}; ${a.join('x')} ${fmt(first.facts)}; ${b.join('x')} ${fmt(second.facts)}`);
+}
+
+// Runs in the page: arms the first Strike, then reads the target tint cells (each drawn shape's box) and
+// the enemy target picker's visible boxes, in canvas px.
+async function armedFacts(page) {
+  const strike = await page.evaluate(() => [...document.querySelectorAll('.hand .card')].findIndex(card => card.dataset.cardId === 'core.strike'));
+  if (strike < 0) return null;
+  await page.locator('.hand .card').nth(strike).click();
+  await page.waitForTimeout(1200);
+  return page.evaluate(() => {
+    const root = document.documentElement;
+    const matrix = new DOMMatrix(getComputedStyle(root).transform === 'none' ? undefined : getComputedStyle(root).transform);
+    const scale = matrix.a || 1, left = matrix.e, top = matrix.f;
+    const box = node => { const r = node.getBoundingClientRect(); return [(r.left - left) / scale, (r.top - top) / scale, r.width / scale, r.height / scale]; };
+    const cells = document.querySelector('.target-hud-cells');
+    return { cells: cells ? [...cells.querySelectorAll('path, polygon')].map(box).filter(r => r[2] > 0) : [],
+      picker: [...document.querySelectorAll('.enemy-target-picker:not([hidden]) .enemy-target-button:not([hidden])')].map(box) };
+  });
+}
+function compareBoxes(a, b) {
+  if (a.length !== b.length) return { worst: Infinity, where: `${a.length} vs ${b.length} boxes` };
+  let worst = 0, where = '';
+  a.forEach((r, i) => r.forEach((n, j) => { const d = Math.abs(n - b[i][j]); if (d > worst) { worst = d; where = `box ${i}[${j}] ${n.toFixed(1)} vs ${b[i][j].toFixed(1)}`; } }));
+  return { worst, where };
+}
+
 try {
   // a. Same form factor, same picture.
-  for (const [name, a, b] of ONLY && ONLY !== 'pairs' ? [] : PAIRS) {
-    const first = await freshFacts(...a), second = await freshFacts(...b);
-    visibleChecks(`fresh ${a.join('x')}`, first.facts, first.errors);
-    visibleChecks(`fresh ${b.join('x')}`, second.facts, second.errors);
-    const presets = `${first.facts.canvas.preset}/${second.facts.canvas.preset}`;
-    const { worst, where } = compare(first.facts, second.facts);
-    check(`same form factor ${name}: fresh ${a.join('x')} and ${b.join('x')} agree in canvas px (${presets})`,
-      worst <= TOLERANCE && first.facts.canvas.preset === second.facts.canvas.preset,
-      worst <= TOLERANCE ? `max diff ${worst.toFixed(2)}` : `max diff ${worst.toFixed(1)} at ${where}; ${a.join('x')} ${fmt(first.facts)}; ${b.join('x')} ${fmt(second.facts)}`);
+  if (runs('pairs')) for (const [name, a, b] of PAIRS) await comparePair(name, a, b, ROUTE);
+  if (runs('thresholds')) for (const [name, a, b] of THRESHOLD_PAIRS) await comparePair(name, a, b, THREE);
+  // A scale-only resize runs no relayout: what the stage cached must still be right in canvas px.
+  if (runs('armed')) {
+    const live = await openFight(1440, 900, THREE);
+    await settled(live.page);
+    await live.page.setViewportSize({ width: 2000, height: 1225 });
+    await settled(live.page);
+    const resized = await armedFacts(live.page);
+    if (out) await live.page.screenshot({ path: resolve(out, 'armed-after-1440-to-2000x1225.png') });
+    check('armed after 1440x900 -> 2000x1225: no page errors', live.errors.length === 0, live.errors.join(' | '));
+    await live.context.close();
+    const reference = await openFight(2000, 1225, THREE);
+    await settled(reference.page);
+    const freshArmed = await armedFacts(reference.page);
+    if (out) await reference.page.screenshot({ path: resolve(out, 'armed-fresh-2000x1225.png') });
+    await reference.context.close();
+    check('armed: a Strike is in the three-enemy hand', !!resized && !!freshArmed);
+    if (resized && freshArmed) {
+      const cells = compareBoxes(resized.cells, freshArmed.cells);
+      check(`armed after a scale-only resize: target tint cells equal a fresh 2000x1225 load (${resized.cells.length} cells)`,
+        resized.cells.length > 0 && cells.worst <= TOLERANCE, cells.worst <= TOLERANCE ? `max diff ${cells.worst.toFixed(2)}` : `max diff ${cells.worst.toFixed(1)} at ${cells.where}`);
+      const picker = compareBoxes(resized.picker, freshArmed.picker);
+      check(`armed after a scale-only resize: enemy target picker equals a fresh load (${resized.picker.length} boxes${resized.picker.length ? '' : '; the target HUD replaces the picker on every form factor'})`,
+        picker.worst <= TOLERANCE, picker.worst <= TOLERANCE ? `max diff ${picker.worst.toFixed(2)}` : `max diff ${picker.worst.toFixed(1)} at ${picker.where}`);
+    }
   }
   // b. Path independence, then c. on every stop.
-  for (const [label, stops, every] of [['chain', CHAIN, true], ['drag', DRAG, false]].filter(([label]) => !ONLY || ONLY === label)) {
+  for (const [label, stops, every] of [['chain', CHAIN, true], ['drag', DRAG, false]].filter(([label]) => runs(label))) {
     const { context, page, errors } = await openFight(1440, 900);
     const start = await settled(page);
     const startFresh = await freshFacts(1440, 900);
