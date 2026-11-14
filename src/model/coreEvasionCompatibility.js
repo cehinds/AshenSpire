@@ -22,6 +22,7 @@
 // The 2026-11-08 enemy-level budget ships on dev's fae7af... runtime. Historical profiles retain their authored tier budgets, floors, offsets and content; only new profiles use the level-based budget.
 // The 2026-11-14 one-pick rest (rest module accepts the `rest` service and a fractional recovery.hp; the Strategize-or-rest fallback in gameConfig.js) moves the runtime hash again. A save from 9808... keeps its own snapshotted rests block (arrival heal, every service once).
 // The 2026-11-14 exact hits and intents (accuracy.hitRoll, accuracy.evadeStacksPerCard and perception.roll in fixCoreMechanics.json and the combat.accuracy / combat.perception manifests) move the runtime hash again; a save from 63e8d1... keeps its own snapshotted rules, which lack the keys and so keep rolling.
+// The 2026-11-14 wording pass (Wave 2: one word for one thing: model wording literals, the status Precision tooltip, the AC badge gate) moves the runtime hash again; wording only, no rule.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -44,8 +45,9 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:fae7af5e34880ba22e670dbf0af013f01a3f2167ad6cb6e0d4a8e45413068ae3',
   'sha256:9808461cfbc52808af58a51f46ab39f06911875fbc921bd416c9237a1b90b5b6',
   'sha256:63e8d1b1176bab9240c9d15ecca73574dcf14b1fa45870129fd7674a6209e034',
+  'sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:9c112f52442c1df4e59c63c648d7e3324a39c1f7c7981b57112929ac99bc3843';
+const FIXED_EVASION_RUNTIME = 'sha256:22534c34792bcf9db9688514836cd66c77470c68a3c3b3703ac8164a706129ef';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
