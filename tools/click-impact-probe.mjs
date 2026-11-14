@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { pointerTargetExpression } from './pointer-target.mjs';
-import { judgeRounds } from './click-impact-rounds.mjs';
+import { judgeRounds, MIN_PLAYS } from './click-impact-rounds.mjs';
 import { orderedImpactSample } from './click-impact-stages.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -339,7 +339,20 @@ async function main() {
         };
         // Only HP damage draws a number now: while numbers are short, prefer a card that can deal it.
         const canDamage = c => { const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId); return !!inst && damaging(resolveCombatCard(combat, inst)) && combat.enemies.some(enemy => enemy.alive && previewCardHit(combat, inst.instanceId, enemy.id)?.hitChance > 0); };
-        const pick = (${numbers.length < PLAYS} && hand.find(c => eligible(c) && canDamage(c))) || hand.find(eligible);
+        const { resolvedCardPlayCosts } = await import('/src/engine/combat.js');
+        const { chooseImpactPlay } = await import('/tools/click-impact-rounds.mjs');
+        const living = combat.enemies.filter(enemy => enemy.alive);
+        const candidates = hand.map(c => {
+          const inst = combat.piles.hand.find(card => card.instanceId === c.dataset.instanceId);
+          const def = inst && resolveCombatCard(combat, inst);
+          const ok = eligible(c);
+          const hits = ok && def ? immediateCardEffects(def).filter(e => e.op === 'damage' && ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies'].includes(e.target)) : [];
+          const damage = hits.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+          // Conservative: one living enemy whose HP the card's listed damage reaches.
+          const lethal = ok && living.length === 1 && hits.length > 0 && damage >= living[0].hp;
+          return { id: c, eligible: ok, canDamage: ok && canDamage(c), cost: ok && def ? (Number(resolvedCardPlayCosts(combat, def).stamina) || 0) : 0, damage, lethal };
+        });
+        const pick = chooseImpactPlay(candidates, { numbersShort: ${numbers.length < PLAYS}, samplesShort: ${samples.length < PLAYS} })?.id;
         if (!pick) return false;
         pick.dataset.ciCard = 'true';
         return { cardId: pick.dataset.cardId, instanceId: pick.dataset.instanceId,
@@ -419,6 +432,8 @@ async function main() {
         console.log(`    play ${samples.length}: contact ${sample.contact} ms (authored ${sample.expectedContact}, overhead ${sample.contactOverhead}), ${sample.number == null ? 'no numeric readout (no HP damage)' : `number ${sample.number} ms (authored ${sample.expectedNumber}, overhead ${sample.numberOverhead})`} (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
       } else if (args.includes('--debug')) console.log('    unmeasured', JSON.stringify(await evalIn(`({ floats: window.__impact.floats.filter(t => t > ${mark}), contacts: window.__impact.contacts.filter(t => t > ${mark}), clips: window.__impact.clips.filter(c => c.at > ${mark}), stages: window.__fx.trace.filter(([at]) => at > ${mark}) })`)));
     }
+    const ended = await evalIn(`window.__combat?.result ?? null`);
+    if (ended != null && (samples.length < MIN_PLAYS || numbers.length < MIN_PLAYS)) console.error(`click-impact-probe: the fight ended (${JSON.stringify(ended)}) after ${await played()} plays`);
     await cdp.send('Target.closeTarget', { targetId }).catch(() => null);
     if (!hostileProofs) throw new Error('no real hostile action completed its contact and stage proof');
     return { samples, numbers };
