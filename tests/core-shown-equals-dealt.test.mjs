@@ -22,6 +22,7 @@ import { firstAffordableCard, botCardTargetId, refusalsFor } from '../tools/simb
 import { guardHitFloatParts, outcomeKindForEvent } from '../src/ui/fx.js';
 import { floaterWordShown } from '../src/ui/models/FloaterPolicyModel.js';
 import { withoutWeaknesses } from './withoutWeaknesses.mjs';
+import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -332,17 +333,32 @@ test('a farther target that needs Advance: the face cost is the cost paid', () =
   check(combat, card, 'e3', 'Advance');
 });
 
-test('the reaction prompt states the incoming action and each option as the HP the player will lose', () => {
-  const combat = fightFor('reaver', 11, ['wanderingSoldier']);
-  // Find a seed where the enemy attacks and the hand holds a Counter; the fight is deterministic, so the search is too.
+test('the reaction prompt states the incoming action and each option as the HP the player will lose, with its real cost', () => {
+  // The fight is deterministic, so searching seeds for the first prompt is too.
   for (let seed = 1; seed < 80; seed++) {
-    const c = fightFor('reaver', seed, ['wanderingSoldier']);
-    dispatch(c, { type: 'endTurn' });
-    if (!c.pendingReaction) continue;
-    assert.ok(Number.isFinite(c.pendingReaction.incomingHp), 'the prompt carries the incoming HP');
-    for (const option of c.pendingReaction.options) assert.ok(Number.isFinite(option.incomingHp), `option ${option.id} carries its result`);
+    const c = fightFor('rogue', seed, ['wanderingSoldier']);
+    for (let turn = 0; turn < 3 && !c.pendingReaction && !c.result; turn++) {
+      const card = c.piles.hand[0]; card.cardId = 'core.counter'; card.upgraded = false;
+      dispatch(c, { type: 'endTurn' });
+    }
+    const offer = c.pendingReaction;
+    if (!offer) continue;
+    assert.ok(Number.isFinite(offer.incomingHp), 'the prompt carries the incoming HP');
+    const declinedLoss = offer.incomingHp;
+    for (const option of offer.options) {
+      assert.ok(Number.isFinite(option.incomingHp), `option ${option.id} carries its result`);
+      assert.ok(option.incomingHp <= declinedLoss, 'a reaction never raises the HP lost');
+      // The label names the SP the option pays, and that is what choosing it pays.
+      assert.ok(summarizeCardOption(reg, c, option).costs.includes(`${option.staminaCost} SP`), `the label shows ${option.staminaCost} SP`);
+    }
+    const option = offer.options[0];
+    const hp = c.player.hp, start = c.eventLog.length;
+    dispatch(c, { type: 'chooseReaction', offerId: offer.id, optionId: option.id });
+    const events = c.eventLog.slice(start), played = events.findIndex(event => event.type === 'cardPlayed');
+    assert.equal(sum(events.slice(0, played), 'staminaSpent'), option.staminaCost, 'choosing the option pays the cost its label showed');
+    while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+    assert.equal(hp - c.player.hp, option.incomingHp, 'and the HP lost is the number the prompt showed for it');
     return;
   }
-  void combat;
   assert.fail('no reaction prompt appeared in 80 seeds');
 });
