@@ -44,6 +44,9 @@ export function combatIntentPresentation(intent = {}) {
   // A staggered enemy's action was cancelled: it reads Staggered, with no number and no "?" (owner, 2026-11-14).
   if (intent.kind === 'staggered') return { visibility: 'partial', title: t('combat.intent.staggered'), stance: 'preparing',
     parts: [{ icon: 'prepare', value: null }], damageClass: null };
+  // A delayed move that does not land this turn: "Charging", the turns left, whatever it gains now as this turn's effect, and its number as the
+  // later one, small and not tinted as incoming damage (owner, 2026-11-14). The turn it lands it is read as the attack it is.
+  if (intent.charging) return chargingPresentation(intent);
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const projectedDamage = intent.projectedDamage || null;
@@ -64,6 +67,19 @@ export function combatIntentPresentation(intent = {}) {
   const movement = family === 'buffing' ? (intent.actionEffects || []).find(effect => effect?.op === 'moveEngagement') : null;
   const title = movement ? t(movement.bands > 0 ? 'combat.intent.retreating' : 'combat.intent.advancing') : capitalize(family);
   return { visibility: 'known', title, stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
+}
+
+export const chargingWhen = turns => turns === 1 ? t('combat.intent.inOneTurn') : t('combat.intent.inManyTurns', { turns });
+
+function chargingPresentation(intent) {
+  const { turnsLeft, block } = intent.charging, when = chargingWhen(turnsLeft);
+  const later = intentDamageRead(intent)?.label ?? null;
+  const parts = [];
+  if (block != null) parts.push({ icon: 'defend', value: String(block) });
+  parts.push(later != null
+    ? { icon: 'attack', value: later, valueKind: 'later', note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingAria', { amount: later, when }) }
+    : { icon: 'prepare', value: null, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingNote', { when }) });
+  return { visibility: 'known', title: t('combat.intent.charging'), stance: 'preparing', parts, damageClass: null, charging: intent.charging };
 }
 
 const PROMOTED_FAMILY = Object.freeze({ attack: 'attacking', smash: 'smashing', counter: 'countering', defend: 'defending',

@@ -232,3 +232,9 @@
 :root .combat[data-layout] .combatant.player .combat-health-row { --combatant-value-text: var(--focus-number-size); }
 :root .combat[data-layout] article.combatant.player .combat-health-row .as-meter .m-value { font-size: var(--focus-number-size) !important; line-height: 1; }
 :root .combat .intent .intent-action-value, :root .combat .intent .intent-followup { --intent-value-size: var(--focus-number-size); }
+
+/* A charging move (owner, 2026-11-14): its number lands later, so it is small, muted and not the red of incoming damage, with the turns left under it. */
+:root .combat .intent .intent-action[data-value-kind='later'] .intent-action-value { font-size: calc(15px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); opacity: .85; }
+:root .combat[data-target-hud='true'] .intent .intent-action[data-value-kind='later'] .intent-action-value { color: var(--parchment); }
+:root .combat .intent .intent-later-note { display: block; font: 600 calc(12px / var(--ui-zoom, 1))/1.1 system-ui, sans-serif; white-space: nowrap; color: var(--parchment); opacity: .9; }
+:root .combat .intent .intent-later { align-items: center; }
