@@ -1280,6 +1280,7 @@ export function playTimeline(events, ctx, done) {
     },
     // The stance event only exists on a beat that changes the actor's stance: a brief sigil over the actor, then the icon updates.
     // The swing clip is over: the player's selection sigil fades out.
+    onSwingStart: (beat, clipMs) => { if (beat.actorId === 'player') playerStanceOverlay.begin(clipMs); },
     onSwingEnd: beat => { if (beat.actorId === 'player') playerStanceOverlay.release(); },
     stanceChanges: beat => !!stanceChangeEvent(beat),
     onAction: beat => {

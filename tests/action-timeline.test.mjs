@@ -370,3 +370,14 @@ test('onSwingEnd fires when the swing clip completes, not at contact', () => {
   assert.equal(marks.contact, 475, 'contact on the impact frame (swing at 200)');
   assert.equal(marks.end, 750, 'the clip ends 550 ms after the swing started');
 });
+
+test('onSwingStart reports the clip length as the swing begins', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatSpeed: 1 });
+  const c = clock(), seen = [];
+  runActionTimeline([{ actorId: 'p', kind: 'attack', events: [] }], {
+    onSprite: () => ({ impactMs: 275, totalMs: 550, cancel() {} }), maxSpriteMs: () => 550,
+    onSwingStart: (beat, ms) => seen.push([beat.actorId, ms, c.now]),
+  }, actionPacing(), timerOptions(c));
+  c.advance(10000); setCombatPacing();
+  assert.deepEqual(seen, [['p', 550, 200]]);
+});

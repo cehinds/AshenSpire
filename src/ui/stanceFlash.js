@@ -16,6 +16,22 @@ export function stanceFlashPlan(config = ACTION_PACING.stanceFlash, { reduced = 
   return totalMs > 0 ? { fadeInMs, holdMs, fadeOutMs, opacity, totalMs } : null;
 }
 
+/**
+ * overlayPlan(config, { reduced }) -> the player's selection overlay: { style, opacity, fadeInMs, fadeOutMs, enlargeScale, enlargeOpacity },
+ * or null (Instant, Reduced motion). style 'enlarge' (default) animates the held sigil from scale 1 / opacity to enlargeScale /
+ * enlargeOpacity over the swing clip; 'linger' holds it unchanged until the clip ends. Either way it then fades out.
+ */
+export function overlayPlan(config = ACTION_PACING.stanceOverlay, { reduced = false } = {}) {
+  if (reduced || !config) return null;
+  const num = value => Math.max(0, Number(value) || 0);
+  const unit = (value, fallback) => Math.min(1, Math.max(0, Number.isFinite(Number(value)) ? Number(value) : fallback));
+  return {
+    style: config.style === 'linger' ? 'linger' : 'enlarge',
+    opacity: unit(config.opacity, 0.6), fadeInMs: num(config.fadeInMs), fadeOutMs: num(config.fadeOutMs),
+    enlargeScale: Math.max(1, Number(config.enlargeScale) || 1.4), enlargeOpacity: unit(config.enlargeOpacity, 0.3),
+  };
+}
+
 /** The sigil id a stance change shows: the maneuver it enters (attack, defend, counter, smash, sweep, evade...). */
 export const stanceFlashIcon = event => {
   const id = event?.maneuver || event?.stance;
@@ -29,7 +45,7 @@ function buildOverlay(icon, transitionMs) {
   el.dataset.stance = icon;
   Object.assign(el.style, {
     position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    pointerEvents: 'none', opacity: '0', zIndex: '6', transition: `opacity ${transitionMs}ms linear`,
+    pointerEvents: 'none', opacity: '0', zIndex: '6', transformOrigin: '50% 50%', transform: 'scale(1)', transition: `opacity ${transitionMs}ms linear`,
   });
   el.appendChild(sigil(icon));
   return el;
@@ -61,14 +77,15 @@ export function showStanceFlash(anchor, event, { reduced = false, config = ACTIO
  *   bind(getAnchor)  where the overlay lives (the player's sprite element, looked up on each use)
  *   select(stance)   the selection's stance when it differs from the held one, else null: shows, switches or fades out the sigil
  *   hold()           the card was played: the sigil stays up (selection changes no longer touch it)
+ *   begin(clipMs)    the swing starts: 'enlarge' grows and dims the sigil over the clip, 'linger' leaves it as it is
  *   release()        the actor's action animation ended: fade out
  *   clear()          a refused or cancelled play: removed at once
  * Instant and Reduced motion draw nothing. The overlay never blocks input.
  */
-export function createStanceOverlay({ reduced = () => false, config = () => ACTION_PACING.stanceFlash } = {}) {
+export function createStanceOverlay({ reduced = () => false, config = () => ACTION_PACING.stanceOverlay } = {}) {
   let getAnchor = () => null, el = null, icon = null, held = false;
   const drop = fade => {
-    const node = el, plan = stanceFlashPlan(config(), { reduced: reduced() });
+    const node = el, plan = overlayPlan(config(), { reduced: reduced() });
     el = null; icon = null; held = false;
     if (!node) return;
     if (fade && plan) {
@@ -82,7 +99,7 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
     get held() { return held; },
     select(stance) {
       if (held) return;
-      const plan = stanceFlashPlan(config(), { reduced: reduced() });
+      const plan = overlayPlan(config(), { reduced: reduced() });
       const id = stance && Object.hasOwn(INTENT_ICON_SHAPES, stance) ? stance : null;
       const anchor = getAnchor();
       if (!id || !plan || !anchor?.appendChild) { drop(!!plan); return; }
@@ -94,6 +111,13 @@ export function createStanceOverlay({ reduced = () => false, config = () => ACTI
       setTimeout(() => { if (el === node) node.style.opacity = String(plan.opacity); }, 0);
     },
     hold() { if (el) held = true; },
+    begin(clipMs) {
+      const plan = overlayPlan(config(), { reduced: reduced() });
+      if (!el || !plan || plan.style !== 'enlarge' || !(clipMs > 0)) return;
+      el.style.transition = `opacity ${clipMs}ms linear, transform ${clipMs}ms linear`;
+      el.style.transform = `scale(${plan.enlargeScale})`;
+      el.style.opacity = String(plan.enlargeOpacity);
+    },
     // Put the overlay back on the figure if a redraw replaced it.
     attach() { const anchor = getAnchor(); if (el && anchor?.appendChild && el.parentNode !== anchor) anchor.appendChild(el); },
     release() { drop(true); },

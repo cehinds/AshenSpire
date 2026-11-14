@@ -124,3 +124,58 @@ test('Reduced motion and Instant draw no overlay at all', t => {
     assert.equal(rig.sprite.children.length, 0);
   });
 });
+
+// ---- the exit style: enlarge (default) or linger, as data ----
+import { overlayPlan } from '../src/ui/stanceFlash.js';
+test('the overlay style is data: enlarge by default, linger on request, nothing under Reduced motion', () => {
+  assert.deepEqual({ ...ACTION_PACING.stanceOverlay }, { style: 'enlarge', opacity: 0.6, fadeInMs: 80, enlargeScale: 1.4, enlargeOpacity: 0.3, fadeOutMs: 80 });
+  assert.equal(overlayPlan().style, 'enlarge');
+  assert.equal(overlayPlan({ ...ACTION_PACING.stanceOverlay, style: 'linger' }).style, 'linger');
+  assert.equal(overlayPlan({ style: 'junk' }).style, 'enlarge');
+  assert.equal(overlayPlan(undefined, { reduced: true }), null);
+});
+function styledRig(t, style) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const rig = {};
+  withKitDom(dom => {
+    rig.sprite = dom.document.createElement('div');
+    rig.overlay = createStanceOverlay({ config: () => ({ ...ACTION_PACING.stanceOverlay, style }) });
+    rig.overlay.bind(() => rig.sprite);
+  });
+  return rig;
+}
+test('enlarge: when the swing starts the held sigil grows and dims over the clip, then fades out when it ends', t => {
+  const rig = styledRig(t, 'enlarge');
+  withKitDom(() => {
+    rig.overlay.select('smash'); rig.overlay.hold();
+    const el = live(rig);
+    t.mock.timers.tick(100);
+    assert.deepEqual([el.style.opacity, el.style.transform], ['0.6', 'scale(1)']);
+    rig.overlay.begin(550);
+    assert.equal(el.style.transform, 'scale(1.4)');
+    assert.equal(el.style.opacity, '0.3');
+    assert.match(el.style.transition, /transform 550ms linear/, 'transform and opacity only, over the clip duration');
+    assert.equal(el.style.pointerEvents, 'none');
+    t.mock.timers.tick(550);
+    rig.overlay.release();
+    assert.equal(el.style.opacity, '0');
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null);
+  });
+});
+test('linger: the held sigil stays at its opacity and scale through the swing, then fades out when it ends', t => {
+  const rig = styledRig(t, 'linger');
+  withKitDom(() => {
+    rig.overlay.select('smash'); rig.overlay.hold();
+    const el = live(rig);
+    t.mock.timers.tick(100);
+    rig.overlay.begin(550);
+    assert.deepEqual([el.style.opacity, el.style.transform], ['0.6', 'scale(1)'], 'begin changes nothing');
+    t.mock.timers.tick(550);
+    assert.equal(el.style.opacity, '0.6');
+    rig.overlay.release();
+    assert.equal(el.style.opacity, '0');
+    t.mock.timers.tick(100);
+    assert.equal(live(rig), null);
+  });
+});
