@@ -6,13 +6,18 @@
 // are read from the engine's event log (enemyMoveStarted). Seeds are tried in order until each group has enough turns.
 //
 //   MEASURE enemyTurn actions=1 median=<s> max=<s> n=<turns>      a lone enemy's damaging action
-//   MEASURE enemyTurn actions=2 median=<s> max=<s> n=<turns>      two enemies' actions in one turn
+//   MEASURE enemyTurn twoAttacks median=<s> max=<s> n=<turns>     two actions that both hurt (two enemies, or one twice)
+//   MEASURE enemyTurn twoMixed median=<s> max=<s> n=<turns>       two actions, one of which deals no damage
+//   MEASURE enemyTurn three median=<s> max=<s> n=<turns>          three or more actions (reported, no budget)
 //   MEASURE enemyTurn guard median=<s> max=<s> n=<turns>          one action that deals no damage (Guard, Warcry, ...)
 //
 // It exits 1 when a group is over its budget (BUDGET below) or has fewer than MIN_TURNS samples, 2 when the harness
 // could not run. No setting is changed and no animation is forced: the timings are the game's own at the default speed.
 //
-//   node tools/enemy-turn-probe.mjs [--viewport 1280x800|390x844] [--budgets none] [--turns 6]
+// With --stages the slow kind's timeline stage marks (window.__fx.trace) are printed per turn: when each stage began, in
+// seconds after the End Turn release (the final line is the hand being playable).
+//
+//   node tools/enemy-turn-probe.mjs [--viewport 1280x800|390x844] [--budgets none] [--turns 6] [--stages]
 //   node tools/verdict.mjs -- node tools/enemy-turn-probe.mjs
 
 import { existsSync } from 'node:fs';
@@ -26,10 +31,12 @@ const BROWSERS = [process.env.CHROME, '/opt/pw-browsers/chromium-1194/chrome-lin
 // Seeds whose fight opens on a lone enemy, on two enemies, and on an enemy that opens with a non-damaging move.
 const SEEDS = ['5', 'W2B', '23', '12', '8', '20', '24', '6', '1'];
 // Budgets in seconds: { median, max } per group (owner's Wave 2 targets: one action 2.6 s, two actions 4.0 s median and 4.5 s max, a non-damaging action 1.2 s).
-const BUDGET = { one: { median: 2.6, max: 3.5 }, two: { median: 4.0, max: 4.5 }, guard: { median: 1.2, max: 1.6 } };
+const BUDGET = { one: { median: 2.6, max: 3.5 }, twoAttacks: { median: 4.0, max: 4.5 }, twoMixed: { median: 4.0, max: 4.5 }, guard: { median: 1.2, max: 1.6 } };
 const args = process.argv.slice(2);
 const argOf = (flag, fallback) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : fallback; };
-const MIN_TURNS = Number(argOf('--turns', 6));
+const MIN_TURNS = Number(argOf('--turns', 8));
+const STAGES = args.includes('--stages');
+const OPTIONAL = new Set(['three']);
 const [W, H] = argOf('--viewport', '1280x800').split('x').map(Number);
 const mobile = W < 600;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -68,13 +75,14 @@ async function main() {
   });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
-  const groups = { one: [], two: [], guard: [] };
+  const groups = { one: [], twoAttacks: [], twoMixed: [], guard: [], three: [] };
+  const required = () => Object.entries(groups).filter(([k]) => !OPTIONAL.has(k)).map(([, g]) => g);
   try {
     {
       const queue = argOf('--seeds', '') ? argOf('--seeds').split(',') : [...SEEDS], retried = new Set();
       for (let at = 0; at < queue.length; at += 1) {
         const seed = queue[at];
-        if (Object.values(groups).every((g) => g.length >= MIN_TURNS)) break;
+        if (required().every((g) => g.length >= MIN_TURNS)) break;
         let targetId = null;
         try {
           ({ targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' }));
@@ -99,11 +107,11 @@ async function main() {
           await ev(`addEventListener('pointerup', e => { if (e.target.closest?.('.end-turn')) window.__upAt = performance.now(); }, true)`);
           const ready = `window.__combat.phase === 'player' && document.querySelector('.combat')?.dataset.turn === 'player' && !document.querySelector('.end-turn')?.disabled && !document.querySelector('.hand')?.inert && !document.querySelector('.reaction-choice')`;
           let stop = false, fullStreak = 0;
-          for (let turn = 0; turn < 12 && !Object.values(groups).every((g) => g.length >= MIN_TURNS); turn += 1) {
+          for (let turn = 0; turn < 12 && !required().every((g) => g.length >= MIN_TURNS); turn += 1) {
             if (stop || await ev(`window.__combat.result != null`)) break;
             await until(`${ready} || window.__combat.result != null`, 'a playable hand', 60000);
             if (await ev(`window.__combat.result != null`)) break;
-            await ev(`window.__prevTurn = window.__combat.turn; window.__ev0 = window.__combat.eventLog.length; window.__upAt = null; window.__prompt.ms = 0; true`);
+            await ev(`window.__prevTurn = window.__combat.turn; window.__ev0 = window.__combat.eventLog.length; window.__upAt = null; window.__prompt.ms = 0; window.__fx.trace = []; true`);
             const pt = await ev(`(() => { const r = document.querySelector('.end-turn').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
             await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: pt.x, y: pt.y }, S);
             await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, S);
@@ -123,11 +131,14 @@ async function main() {
               }
               if (s.ready) {
                 const r = await ev(`({ up: window.__upAt, now: performance.now(), prompt: window.__prompt.ms, moves: window.__combat.eventLog.slice(window.__ev0).filter(e => e.type === 'enemyMoveStarted').map(e => e.kind),
-                  hurts: window.__combat.eventLog.slice(window.__ev0).some(e => ['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'hpLost'].includes(e.type)) })`);
+                  hurts: window.__combat.eventLog.slice(window.__ev0).some(e => ['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded', 'hpLost'].includes(e.type)),
+                  hurtMoves: window.__combat.eventLog.slice(window.__ev0).filter(e => e.type === 'enemyMoveStarted').map(e => e.kind === 'attack' || window.__combat.eventLog.slice(window.__ev0).some(x => x.sourceId === e.sourceId && ['damageDealt', 'attackHit', 'attackMissed', 'attackEvaded'].includes(x.type))),
+                  trace: (window.__fx.trace || []).map(([t, step, who]) => [Math.round(t - window.__upAt - window.__prompt.ms), step, who]) })`);
                 const seconds = (r.now - r.up - r.prompt) / 1000;
-                const key = r.moves.length === 2 ? 'two' : r.moves.length === 1 && r.hurts ? 'one' : r.moves.length === 1 ? 'guard' : null;
+                const key = r.moves.length >= 3 ? 'three' : r.moves.length === 2 ? (r.hurtMoves.every(Boolean) ? 'twoAttacks' : 'twoMixed') : r.moves.length === 1 && r.hurts ? 'one' : r.moves.length === 1 ? 'guard' : null;
                 if (key && groups[key].length < MIN_TURNS + 2) groups[key].push(seconds);
-                fullStreak = key && groups[key].length >= MIN_TURNS ? fullStreak + 1 : 0;
+                if (STAGES && key && key !== 'one' && key !== 'guard') console.error(`    stages ${key} ${seconds.toFixed(2)} s: ${r.trace.filter(([ms]) => ms > -200).map(([ms, step, who]) => `${(ms / 1000).toFixed(2)} ${step}${who ? '/' + who : ''}`).join(' | ')}`);
+                fullStreak = key && !OPTIONAL.has(key) && groups[key].length >= MIN_TURNS ? fullStreak + 1 : 0;
                 if (fullStreak >= 2) stop = true;
                 console.error(`  seed ${seed} turn ${turn + 1}: ${r.moves.length} action(s) ${key || 'none'} ${seconds.toFixed(2)} s`);
                 break;
@@ -147,15 +158,16 @@ async function main() {
   } finally { cdp.close(); await dropBrowser(); hosted.server.close(); }
 
   const fmt = (n) => n.toFixed(2);
-  const rows = [['one', 'actions=1'], ['two', 'actions=2'], ['guard', 'guard']];
+  const rows = [['one', 'actions=1'], ['twoAttacks', 'twoAttacks'], ['twoMixed', 'twoMixed'], ['guard', 'guard'], ['three', 'three']];
   const skipBudget = argOf('--budgets', '') === 'none';
   let red = 0;
   for (const [key, label] of rows) {
     const xs = groups[key];
-    if (xs.length < MIN_TURNS) { console.log(`FAIL enemyTurn ${label}: ${xs.length} of ${MIN_TURNS} turns measured`); red += 1; continue; }
+    if (OPTIONAL.has(key) && xs.length === 0) { console.log(`MEASURE enemyTurn ${label} n=0 (no turn with three actions in these seeds)`); continue; }
+    if (xs.length < (OPTIONAL.has(key) ? 1 : MIN_TURNS)) { console.log(`FAIL enemyTurn ${label}: ${xs.length} of ${MIN_TURNS} turns measured`); red += 1; continue; }
     const med = median(xs), max = Math.max(...xs);
     console.log(`MEASURE enemyTurn ${label} median=${fmt(med)} max=${fmt(max)} n=${xs.length}`);
-    if (!skipBudget && (med > BUDGET[key].median || max > BUDGET[key].max)) { console.log(`FAIL enemyTurn ${label}: over budget median<=${BUDGET[key].median} max<=${BUDGET[key].max}`); red += 1; }
+    if (!skipBudget && !OPTIONAL.has(key) && (med > BUDGET[key].median || max > BUDGET[key].max)) { console.log(`FAIL enemyTurn ${label}: over budget median<=${BUDGET[key].median} max<=${BUDGET[key].max}`); red += 1; }
   }
   console.log(red ? `enemy-turn-probe: ${red} group(s) RED` : `enemy-turn-probe: OK — ${rows.length} checks passed.`);
   process.exit(red ? 1 : 0);
