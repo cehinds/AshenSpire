@@ -9,6 +9,7 @@ import { knowledgeIntentProjection } from './enemyKnowledge.js';
 import { decayAtTurnStart as decayStatuses } from './statuses.js';
 
 import * as Counter from './counterRule.js';
+import { IsBroken } from './brokenRule.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { effectiveD20Percent } from './d20Chance.js';
 import { enemyMoveDamage } from '../model/state.js';
@@ -108,12 +109,17 @@ function advanceThroughEarlierEnemies(ctx, source, prepared, ownMoves = []) {
       return;
     }
     const intent = other.intent;
-    if (!other.alive || !intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved || other.pendingMove || other.skipNextTurn) continue;
-    if (ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
+    // A Broken enemy (poise.breakRule "broken") lost only its head: its intent reads Broken, but the plan behind it still plays this turn
+    // (brokenRule.js cancelNextAction keeps plannedMoves and planDue). The legacy Staggered enemy skips its whole turn (skipNextTurn).
+    const broken = IsBroken(other) && intent?.kind === 'staggered' && other.planDue && !other.skipNextTurn && !other.pendingMove;
+    if (!other.alive || (!broken && (!intent?.moveId || ['staggered', 'unknown'].includes(intent.kind) || intent.resolved)) || other.pendingMove || other.skipNextTurn) continue;
+    if (!broken && ctx.enemyKnowledge && knowledgeIntentProjection(ctx, other)?.exact === false) continue;
     decayAtTurnStart(ctx, other);
-    const head = advance(other, intent.moveId, intent.damage, intent.hits);
-    if (head === 'stop') return 'stop';
-    if (head === 'delay' || !other.planDue) continue;
+    if (!broken) {
+      const head = advance(other, intent.moveId, intent.damage, intent.hits);
+      if (head === 'stop') return 'stop';
+      if (head === 'delay' || !other.planDue) continue;
+    }
     for (const planned of other.plannedMoves || []) {
       const authored = ctx.registries.enemies.get(other.enemyId)?.moves?.[planned.moveId];
       if (!authored || authored.reaction) continue;
@@ -254,8 +260,10 @@ export function enemyIntentDamageState(ctx, enemy, carrier, base, action = null,
 export function ProjectPlannedMoveDamage(combat, enemy, index) {
   const planned = enemy.plannedMoves || [], head = enemy.intent;
   const defs = combat.registries.enemies.get(enemy.enemyId)?.moves;
-  if (!head?.moveId || !defs || !planned[index] || head.kind === 'staggered') return null;
-  const moves = [{ moveId: head.moveId, damage: head.damage, hits: head.hits }];
+  const broken = IsBroken(enemy) && head?.kind === 'staggered' && enemy.planDue;
+  if (!defs || !planned[index] || (!broken && (!head?.moveId || head.kind === 'staggered'))) return null;
+  // A Broken enemy lost its head, not its plan: the follow-ups are priced as the first moves it plays.
+  const moves = broken ? [] : [{ moveId: head.moveId, damage: head.damage, hits: head.hits }];
   for (let i = 0; i < index; i++) {
     const authored = defs[planned[i].moveId];
     if (!authored || authored.reaction) return null;
