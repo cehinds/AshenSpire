@@ -185,7 +185,8 @@ test('Counter: a hit that costs HP returns 25% of that HP to the attacker; a ful
 });
 
 // ---- Sweep: played through the engine, with cleavingBlow (a Sweep card) retargeted to ONE enemy so the splash is what reaches the others ----
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
+import { TargetQuote, TargetQuoteSplashHits } from '../src/ui/models/TargetQuoteModel.js';
 import { rangePairKey, actorRangeKey } from '../src/model/combatEngagement.js';
 const singleBundle = { ...contentBundle, cards: contentBundle.cards.map(card => card.id !== 'cleavingBlow' ? card
   : { ...card, effects: card.effects.map(effect => effect.op === 'damage' ? { ...effect, target: 'enemy' } : effect) }) };
@@ -238,4 +239,23 @@ test('neutral: a player who ends a turn holding no stance draws one extra card n
   const base = handAfterNextTurn({ benefits: false });
   assert.equal(handAfterNextTurn(), base + 1, 'no stance: one extra card');
   assert.equal(handAfterNextTurn({ stance: 'attack' }), base, 'a held stance draws the usual hand');
+});
+
+test('Sweep quotes: aimed at one enemy, each other enemy in range quotes its splash as an extra line, and it is the HP the play takes', () => {
+  const combat = sweepFight();
+  const ref = { instanceId: 'sweep-quote', cardId: 'cleavingBlow', upgraded: false };
+  combat.piles.hand.push(ref);
+  combat.player.energy = combat.player.stamina = 20; combat.player.mana = combat.player.maxMana;
+  const [aimed, second, third] = combat.enemies;
+  const reference = previewCard(combat, ref.instanceId, aimed.id);
+  const preview = (_c, id, targetId) => previewCard(combat, id, targetId);
+  const quote = TargetQuote({ preview, combat, instanceId: ref.instanceId, targetId: second.id, reference });
+  const aimedQuote = TargetQuote({ preview, combat, instanceId: ref.instanceId, targetId: aimed.id, reference });
+  assert.ok(aimedQuote.hits[0] > 0 && !aimedQuote.splash, 'the aimed enemy has its own quote and no splash line');
+  assert.deepEqual(quote.splash, [Math.floor(aimedQuote.hits[0] / 2)], 'the other enemy quotes half of the aimed hit as its splash');
+  assert.deepEqual(TargetQuoteSplashHits(reference, third.id), quote.splash);
+  assert.match(quote.splashText, /Sweep/);
+  playCleave(combat, aimed.id);
+  assert.equal(500 - second.hp, quote.splash[0], 'quotes equal HP lost');
+  assert.equal(500 - aimed.hp, aimedQuote.hits[0]);
 });

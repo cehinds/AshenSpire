@@ -2250,6 +2250,16 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
+        // Owner, 2026-11-14 (Wave 2.5): a Sweep also strikes every other enemy in range at half damage; the quote names what each of them would take.
+        if (configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && eff.target !== 'allEnemies' && primary?.kind === 'enemy') {
+          const splashed = SweepSplashTargets(combat, p, primary, carrier, living);
+          if (splashed.length) {
+            const splashCarrier = SplashCarrier(combat, p, carrier);
+            entry.splashHitDamages = Object.fromEntries(splashed.map(e => [e.id, previewDamageHits(combat, p, e,
+              evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, splashCarrier, entry.hits, damagePreviewState(combat, e)).hitDamages.map(Math.floor)]));
+          }
+        }
         if (entry.value == null && isCounterReply) {
           const result = previewCounter(primary, i);
           Object.assign(entry, { value: result.damage, hitDamages: result.hitDamages, totalDamage: result.totalDamage });
