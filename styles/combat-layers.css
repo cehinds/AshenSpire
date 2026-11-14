@@ -520,3 +520,37 @@
 :root[data-performance='lite'] .combat [data-target-outline='yellow'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--gold)) !important; }
 :root[data-performance='lite'] .combat [data-target-outline='red'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--ember)) !important; }
 
+
+/* ── Wave 2 (sizes): no combat text under 11 px effective ──────────────────────────────────────────────────────────
+   --text-floor is 13 layout px, which the body zoom and the combat canvas's fit scale draw at 11.5 px or more on every
+   form factor; the header and ribbon live under .hud-top { zoom: .8 }, so they take the same floor over that factor. */
+:root .combat { --text-floor: calc(13px / var(--ui-zoom, 1)); --text-floor-hud: calc(16.5px / var(--ui-zoom, 1)); }
+:root .combat[data-layout='formation'] .combat-tools > button,
+:root .combat[data-layout='formation'] .combat-tools > label,
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch > span:not(.reaction-switch-track) { font-size: var(--text-floor) !important; }
+/* The enabled/disabled word is the switch's state twice over (colour and knob carry it; aria-checked says it): it leaves the face. */
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { display: none; }
+:root .combat[data-layout='formation'] .combat-tools .reaction-switch-track { width: calc(34px / var(--ui-zoom, 1)); }
+:root .combat[data-layout='formation'] .turn-ribbon { font-size: var(--text-floor-hud) !important; }
+:root .combat .shared-hud .hud-cinders .ck, :root .combat .shared-hud .hud-cinders .cv { font-size: var(--text-floor-hud) !important; }
+:root .combat .shared-hud .resplate .m-value { font-size: var(--text-floor-hud) !important; }
+/* The footer's art keeps its words in the picture only as numbers a glance needs; the labels and key hints are real text. On the
+   desktop footer the SVG words (DRAW, Discard, Exhaust, Potions, SP, the End Turn key) were drawn at 5 to 6 px: the SVG copy goes,
+   and the readable label the compact footer already writes sits in the blank strip under the art. */
+.combat-action-row[data-footer-art]:not([data-footer-compact='true']) svg.footer-art-face text:is([data-footer-text='draw-count'], [data-footer-text='draw-label'], [data-footer-text='discard-count'], [data-footer-text='exhaust-count'], [data-footer-text='potion-label'], [data-footer-text='end-key'], [data-footer-text='sp-label']),
+.combat-action-row[data-footer-art][data-footer-compact='true'] .footer-sp-text text[data-footer-text='sp-label'],
+.combat-action-row[data-footer-art] .end-turn svg.footer-art-face text[data-footer-text='end-key'] { display: none; }
+.combat-action-row[data-footer-art]:not([data-footer-compact='true']) :is(.pile, .combat-potions) > .footer-compact-label {
+  display: block; position: absolute; left: -30%; right: -30%; bottom: 0; z-index: 1; pointer-events: none;
+  font: 600 var(--text-floor)/1.15 Georgia, serif; text-align: center; white-space: nowrap; color: var(--parchment); text-shadow: 0 1px 2px rgb(0 0 0 / .9);
+}
+.combat-action-row[data-footer-art]:not([data-footer-compact='true']) :is(.pile, .combat-potions) > .footer-compact-label .footer-compact-line { display: block; }
+/* The enemy's HP reads at a size of its own, smaller than the two focus numbers and never under the floor. */
+:root .combat[data-layout] article.combatant.enemy .combat-health-row .as-meter .m-value { font-size: calc(14px / var(--ui-zoom, 1)) !important; }
+:root .combat .combat-tools label .combat-grid-toggle-text, :root .combat .combat-tools .combat-grid-toggle > span { font-size: var(--text-floor) !important; }
+/* Phone tap targets (Wave 2, sizes): every control is at least --tap-floor (44 px) in both directions. The relic and flask
+   pips keep their drawn size and take the floor as an invisible hit area; the tool row and the intent buttons take it outright. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-tools > :is(button, label) { min-height: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); display: inline-flex; align-items: center; justify-content: center; }
+:root[data-layout='narrow'] :is(.relics, .combat-flasks, .flasks) .as-pip { position: relative; }
+:root[data-layout='narrow'] :is(.relics, .combat-flasks, .flasks) .as-pip::after { content: ''; position: absolute; left: 50%; top: 50%; width: var(--tap-floor); height: var(--tap-floor); transform: translate(-50%, -50%); }
+:root[data-layout='narrow'] .combat .target-hud-overhead-meters button.overhead-control::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
