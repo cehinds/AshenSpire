@@ -1917,7 +1917,11 @@ export function mountCustomize(app, {
     if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
-    start.hidden = plan.primary !== 'begin';
+    start.hidden = plan.primary !== 'begin' && !plan.quickBegin;
+    // Class step of the two-stage flow: Begin is the primary, Next is "Customise".
+    next.textContent = plan.quickBegin ? t('creation.customise') : t('creation.next');
+    next.classList.toggle('primary', !plan.quickBegin);
+    next.dataset.controlRole = plan.quickBegin ? 'utility' : 'primary';
     railed.dataset.creationStage = id;
     railed.dataset.creationStepIndex = String(categories.indexOf(id) + 1);
     railed.dataset.creationStepCount = String(categories.length);

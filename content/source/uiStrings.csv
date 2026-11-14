@@ -316,6 +316,7 @@ art.retry,,Retry,Load the art again.,Retry
 # ---- the act map (W4b) ---------------------------------------------------
 map.enter,,Enter,Travel to the selected node.,Enter
 map.enterNamed,,Enter {name},Travel to the selected node.,
+map.entering,,Entering…,Opening the selected node.,
 map.back,,Back,Clear the selection and close the tray.,Back
 potions.run.title,,Potions,,
 potions.run.drink,,Drink,Drink this flask now.,
@@ -718,6 +719,7 @@ creation.category.equipment,,Equipment,,
 creation.category.review,,Review,,
 creation.next,,Next,Go on to the next step.,
 creation.next.tip,,On to {category}.,,
+creation.customise,,Customise,Look over the choices and the seed before you begin.,
 creation.leave.tip,,Back to the title screen. Nothing here is saved.,,
 creation.previous.tip,,Back to {category}. Your choices stay.,,
 creation.review.destination,,Destination,,
