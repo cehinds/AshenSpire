@@ -1,3 +1,5 @@
+import { t, has } from './strings.js';
+
 // Presentation classification, like fx.js STATUS_WORDS for hostile statuses.
 // Names, tints and mechanics remain the recipient's registry definition. Keep
 // bookkeeping markers (stanceShifted) and harmful/meter statuses out of gains.
@@ -29,9 +31,16 @@ export function buffGainFor(event = {}) {
   return Math.max(0, event.total - event.previousTotal);
 }
 
+/** One word for a gained status ("Strengthened"), with a count only from 2 ("Strengthened ×2"); a status with no word reads its name. */
+function statusGainWord(statusId, name, amount) {
+  const key = `combat.status.applied.${statusId}`;
+  const word = has(key) ? t(key) : name;
+  return amount >= 2 ? `${word} ×${amount}` : word;
+}
+
 export function buffPopupFor(event, definition) {
   const amount = buffGainFor(event);
   if (!amount || !definition?.name || definition.meter || definition.proc) return null;
   return { kind: `buff:${event.status}`, targetId: event.targetId,
-    word: `+${amount} ${definition.name}`, tone: 'gold', colour: definition.tint };
+    word: statusGainWord(event.status, definition.name, amount), tone: 'gold', colour: definition.tint };
 }

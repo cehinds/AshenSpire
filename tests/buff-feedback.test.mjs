@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BUFF_STATUS_IDS, WordedStatusIds, buffGainFor, buffPopupFor } from '../src/ui/buffFeedback.js';
 import { playTimeline, setAnimSpeed, clearCallouts, statusPopupFor, STATUS_WORDS } from '../src/ui/fx.js';
+import { t, has } from '../src/model/strings.js';
 import { statuses } from '../src/content/statuses.js';
 import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { floaterStaggerMs, floaterStaggerMinMs } from '../src/ui/animationPace.js';
@@ -17,11 +18,11 @@ const grant = (status = 'precision', overrides = {}) => ({ type: 'statusApplied'
 test('positive feedback catalog resolves authored definitions and covers powers, protection and direct buffs', () => {
   for (const id of BUFF_STATUS_IDS) {
     assert.ok(definitions.has(id), `${id} is authored`);
-    assert.equal(buffPopupFor(grant(id), definitions.get(id)).word, `+3 ${definitions.get(id).name}`);
+    assert.equal(buffPopupFor(grant(id), definitions.get(id)).word, `${t(`combat.status.applied.${id}`)} ×3`, `${id} has a one-word callout`);
     assert.equal(statusPopupFor(grant(id)), null, `${id} has one positive channel`);
   }
   const ally = buffPopupFor(grant('strength', { sourceId: 'ally', targetId: 'recipient' }), { name: 'Might', tint: 'var(--gold)' });
-  assert.deepEqual(ally, { kind: 'buff:strength', targetId: 'recipient', word: '+3 Might', tone: 'gold', colour: 'var(--gold)' });
+  assert.deepEqual(ally, { kind: 'buff:strength', targetId: 'recipient', word: 'Strengthened ×3', tone: 'gold', colour: 'var(--gold)' });
 });
 
 test('only actual positive gains earn floats; meters, bookkeeping and hostile effects do not', () => {
@@ -32,10 +33,13 @@ test('only actual positive gains earn floats; meters, bookkeeping and hostile ef
   }
   // A status with no authored definition has no name to show, so it earns no word whatever the receipt says.
   assert.equal(buffPopupFor(grant('unknown'), undefined), null);
+  // A status with no word of its own reads its name, one word, with a count only from 2.
+  assert.equal(buffPopupFor(grant('noWordStatus', { stacks: 1, previousTotal: 0, total: 1 }), { name: 'Mystic' }).word, 'Mystic');
+  assert.equal(buffPopupFor(grant('noWordStatus', { stacks: 2, previousTotal: 0, total: 2 }), { name: 'Mystic' }).word, 'Mystic ×2');
   for (const definition of [undefined, { name: '' }, { name: 'Precision', meter: {} }, { name: 'Precision', proc: {} }])
     assert.equal(buffPopupFor(grant(), definition), null);
-  assert.equal(buffPopupFor(grant('precision', { stacks: 99, previousTotal: 4, total: 5 }), definitions.get('precision')).word, '+1 Precision');
-  assert.equal(buffPopupFor(grant('prepared', { stacks: 99, previousTotal: 0, total: 1 }), definitions.get('prepared')).word, '+1 Prepared');
+  assert.equal(buffPopupFor(grant('precision', { stacks: 99, previousTotal: 4, total: 5 }), definitions.get('precision')).word, 'Focused');
+  assert.equal(buffPopupFor(grant('prepared', { stacks: 99, previousTotal: 0, total: 1 }), definitions.get('prepared')).word, 'Prepared');
 });
 
 function playback(t, fn) {
@@ -95,7 +99,7 @@ for (const mode of ['normal', 'instant', 'reduced-motion']) test(`${mode}: buff 
     assert.equal(result.finish() - gainStart, baselineDuration, 'the same action keeps its existing duration');
     const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind === 'buff:precision');
     assert.equal(buffs.length, 1);
-    assert.equal(buffs[0].node.textContent, '+3 Precision');
+    assert.equal(buffs[0].node.textContent, 'Focused ×3');
     assert.equal(buffs[0].node.dataset.calloutFor, 'player');
     assert.ok(buffs[0].at >= result.stages.find(stage => stage.name === 'damage').at, 'gain lands in numbers after reaction (behind any word already in the column)');
     assert.deepEqual(result.stages.filter(stage => ['action', 'sprite', 'result', 'reaction', 'damage'].includes(stage.name)).map(stage => stage.name),
@@ -125,7 +129,7 @@ test('normal sequential playback batches multiple positive status receipts into 
     // One column over the player: the gains spawn in order, one stagger apart, from the shared numbers stage on.
     assert.ok(buffs[0].at >= damageStages[0].at, 'the first gain waits for the shared numbers stage');
     assert.deepEqual(buffs.slice(1).map((row, i) => row.at - buffs[i].at), [1, 2, 3].map(() => floaterStaggerMs()), 'each later gain follows one stagger behind');
-    assert.deepEqual(buffs.map(row => row.node.textContent), ['+2 Precision', '+3 Strength', '+4 Regen', '+5 Evade']);
+    assert.deepEqual(buffs.map(row => row.node.textContent), ['Focused ×2', 'Strengthened ×3', 'Regenerating ×4', 'Evasive ×5']);
   });
 });
 
@@ -171,17 +175,18 @@ test('missing status context safely omits gains while hostile words, heal and Bl
     assert.equal(missing.shown.length, 0);
     const result = run([grant(), grant('sleep'), { type: 'healed', targetId: 'player', amount: 2 }, { type: 'blockGained', targetId: 'player', amount: 4 }]);
     result.finish();
-    assert.deepEqual(result.shown.map(({ node }) => node.textContent), ['ASLEEP', '+3 Precision', '+2', '+4']);
+    assert.deepEqual(result.shown.map(({ node }) => node.textContent), ['ASLEEP', 'Focused ×3', '+2', '+4']);
   });
 });
 
 
-// Owner, 2026-11-14: "enemy buffs and status effects need to be shown." Every status a fighter gains that has no word of its own earns "+N Name".
-test('a status with no hostile word of its own is announced as +N Name, on an enemy as on the player', () => {
+// Owner, 2026-11-14: "enemy buffs and status effects need to be shown." Every status a fighter gains that has no word of its own earns one word ("Strengthened"), or its name when it has none, with "×N" from 2.
+test('a status with no hostile word of its own is announced as one word, with a count from 2, on an enemy as on the player', () => {
   assert.deepEqual([...WordedStatusIds].sort(), Object.keys(STATUS_WORDS).sort(), 'the worded list is fx.js STATUS_WORDS');
   for (const id of ['silenced', 'confused', 'entombed', 'necroticBlight', 'strength']) {
     const popup = buffPopupFor(grant(id, { targetId: 'e1', sourceId: 'player' }), definitions.get(id));
-    assert.equal(popup.word, `+3 ${definitions.get(id).name}`, id);
+    const key = `combat.status.applied.${id}`;
+    assert.equal(popup.word, `${has(key) ? t(key) : definitions.get(id).name} ×3`, id);
     assert.equal(popup.targetId, 'e1');
   }
   for (const id of WordedStatusIds) assert.equal(buffGainFor(grant(id)), 0, `${id} keeps its word, not a second callout`);
