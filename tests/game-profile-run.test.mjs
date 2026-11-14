@@ -12,6 +12,7 @@ import { gameProfileRestModel } from '../src/ui/models/GameProfileRestModel.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { stampDeck } from '../src/model/loadout.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save.js';
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
@@ -193,14 +194,16 @@ test('Smith tier bonuses share UI combat preview and real damage/block, and disa
  const {smithingPlan}=await import('../src/model/smithing.js');
  const run=fresh();visit(run,reg);
  // Leave enough health to measure the full upgraded hit rather than overkill.
- const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;return combat;};
+ const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;
+ // The 11-card starter may not draw these in five cards; the test needs one of each, so put any missing one in hand.
+ for(const cardId of ['core.counter','core.strike'])if(!combat.piles.hand.some(card=>card.cardId===cardId))combat.piles.hand.push({cardId,instanceId:`fx-${cardId}`,upgraded:false});return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
  const beforeDefend=before.piles.hand.find(card=>card.cardId==='core.counter'),oldBlock=previewCard(before,beforeDefend.instanceId).values.find(e=>e.op==='block').value;
  const oldDamage=new Map(before.piles.hand.map(card=>[card.cardId,previewCard(before,card.instanceId,before.enemies[0].id).values.find(e=>e.op==='damage')?.value]));
  commitGameProfileRest(reg,run,'smith',{itemRef:'armament/greatsword'});
  const after=fight();assert.equal(after.player.ratings.ar,beforeRatings.ar+1);assert.deepEqual(after.player.ratings,gameProfileRatingReceipt(reg,run).totals);assert.deepEqual(after.player.ratings,ratingReceipt(reg,run,{}).totals);
- const damaging=after.piles.hand.find(card=>(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'at least one real drawn attack gains damage after the weapon upgrade');
- const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').value,hp=after.enemies[0].hp;dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
+ const damaging=after.piles.hand.find(card=>card.cardId==='core.strike'&&(previewCard(after,card.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage')?.value||0)>(oldDamage.get(card.cardId)||Infinity));assert.ok(damaging,'a real Strike gains damage after the weapon upgrade');
+ const preview=previewCard(after,damaging.instanceId,after.enemies[0].id).values.find(e=>e.op==='damage').damageReceipt.totalDamage,hp=after.enemies[0].hp;primeAccuracyRolls(after);dispatch(after,{type:'playCard',cardInstanceId:damaging.instanceId,targetId:after.enemies[0].id});assert.equal(hp-after.enemies[0].hp,preview);
  // Core 2 smiths weapons only (no armour candidate), so the armour DR/Block step of the old Core 1 test is gone.
  run.loadout.sets.rightHand[0]='straightSword';const swapped=gameProfileRatingReceipt(reg,run).totals;delete run.itemUpgradeLevels['armament/greatsword'];assert.equal(swapped.ar,gameProfileRatingReceipt(reg,run).totals.ar,'the greatsword tier bonus does not follow a swapped-in weapon');
  const off=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{stats:false}}),r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,off)),off),noStats=createRunState({seed:1,classId:'reaver',registries:r});const noUpgrades=gameProfileRatingReceipt(r,noStats).totals.ar;noStats.itemUpgradeLevels={'armament/greatsword':3};assert.equal(gameProfileRatingReceipt(r,noStats).totals.ar,noUpgrades,'with stats off a Smith tier adds no rating');
