@@ -16,6 +16,9 @@ import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
+// The pre-one-pick Core rest block (arrival heals, every service once, Level Up listed). A run pins its profile, so an old save keeps it.
+const LEGACY_RESTS={servicesPerVisit:'all',services:['smith','levelUp','upgradeCard'],recovery:{hp:'full',sp:'full',mp:'full',healingFlasks:'full',mpFlasks:'full'},smith:{free:true,tiersPerService:1}};
+const freshLegacy=()=>{const run=fresh();run.gameProfile.content.rests=structuredClone(LEGACY_RESTS);return run;};
 // A branch may open narrow, so a rest depth's lane ids vary by seed: take the first rest on the floor.
 const restId=(run,floor)=>Object.values(run.mapGraph.nodes).find(n=>n.type==='shrine'&&n.floor===floor).id;
 const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId=restId(run,3); return beginGameProfileRest(run,'1:'+run.mapNodeId); };
@@ -59,7 +62,7 @@ test('seeded route has nine preboss depths, a rest in every lane of every branch
 });
 
 test('rest requires real current rest, commits once and fully recovers after earned CON level',()=>{
- const run=fresh();assert.throws(()=>beginGameProfileRest(run,'forged'),/current rest/);
+ const run=freshLegacy();assert.throws(()=>beginGameProfileRest(run,'forged'),/current rest/);
  visit(run);run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  run.level.unspentPoints=1;const before=run.maxHp;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
@@ -69,14 +72,14 @@ test('rest requires real current rest, commits once and fully recovers after ear
 });
 
 test('failed/rest forgery is atomic; Strategize is no longer a rest service (D10)',()=>{
- const run=fresh();visit(run);run.hp=1;const before=JSON.stringify(run);
+ const run=freshLegacy();visit(run);run.hp=1;const before=JSON.stringify(run);
  assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/no attribute point waiting/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'strategize'),/Unknown rest service/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'forged'}));assert.equal(JSON.stringify(run),before);
 });
 
 test('Core rest heals on arrival, and Smith and Level Up are both usable in one visit (D10)',()=>{
- const run=fresh();run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
+ const run=freshLegacy();run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
  const v=visit(run);
  assert.equal(run.hp,run.maxHp,'arrival heals');assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.ok(v.healed.hp>0);
  run.hp=1;visit(run);assert.equal(run.hp,1,'a remount of the same visit does not heal again');
@@ -136,11 +139,11 @@ test('profile completion ledger persists independently from bounded history and 
 
 
 test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
- const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
+ const run=freshLegacy();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  run.mapNodeId=restId(run,6);beginGameProfileRest(run,'1:'+run.mapNodeId);commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1);
- const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
+ const smith=freshLegacy();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
  assert.ok(candidate);commitGameProfileRest(reg,smith,'smith',{itemRef:candidate.itemRef});
  assert.equal(smith.itemUpgradeLevels[candidate.itemRef],candidate.nextLevel);assert.equal(smith.hp,smith.maxHp);
