@@ -69,8 +69,8 @@ test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Fo
   }
 });
 
-test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/2 in Prepared, 2/1 with a Focus, 1/1 with both; a cantrip is 1/1, 0/1, 1/0, 0/0', () => {
-  for (const [id, base, prepared, focus, both] of [['core.cometLance', [2, 2], [1, 2], [2, 1], [1, 1]], ['core.cantrip', [1, 1], [0, 1], [1, 0], [0, 0]], ['core.manaSurge', [2, 1], [1, 1], [2, 0], [1, 0]]]) {
+test('literal prices: a 1 SP / 1 MP spell is 2/2 plain, 1/2 in Prepared, 2/1 with a Focus, 1/1 with both; a cantrip (Mana Surge is one) is 1/1, 0/1, 1/0, 0/0', () => {
+  for (const [id, base, prepared, focus, both] of [['core.cometLance', [2, 2], [1, 2], [2, 1], [1, 1]], ['core.cantrip', [1, 1], [0, 1], [1, 0], [0, 0]], ['core.manaSurge', [1, 1], [0, 1], [1, 0], [0, 0]]]) {
     for (const [hand, stance, want] of [['greatsword', null, base], ['greatsword', PREPARED, prepared], ['boneSceptre', null, focus], ['boneSceptre', PREPARED, both]]) {
       const { costs } = costsIn({ hand, stance, id });
       assert.deepEqual([costs.stamina, costs.mana], want, `${id} ${hand} ${stance ? 'Prepared' : 'no stance'}`);
