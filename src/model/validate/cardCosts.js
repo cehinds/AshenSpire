@@ -42,8 +42,10 @@ export function cardCostProblems(b, err, ctx) {
     // costs Mana costs at least balance.mana.minActionCost action and
     // minStaminaCost stamina — base and upgrade alike, each field inheriting
     // the base's when the upgrade leaves it unsaid. Refused BY NAME.
+    // A card tagged cost.manaOnly (owner, 2026-11-15) is the one exception: it spends Mana alone, 0 Stamina (engine/spellCosts.js).
     const manaFloor = b.balance && b.balance.mana;
-    if (card && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
+    const manaOnly = !!card && [...(card.tags || []), ...(card.cardTags || [])].includes('cost.manaOnly');
+    if (card && !manaOnly && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
       const faces = [['', card], ['.upgrade', card.upgrade ? { cost: card.cost, manaCost: card.manaCost, staminaCost: card.staminaCost, ...card.upgrade } : null]];
       for (const [suffix, face] of faces) {
         if (!face || !(Number.isInteger(face.manaCost) && face.manaCost > 0)) continue;

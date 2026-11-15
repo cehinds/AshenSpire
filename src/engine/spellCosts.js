@@ -5,6 +5,7 @@
 // One cost rule, applied to a card's final price (so the face, the affordability checks, the bot and the payment all read the same number):
 //   every spell                    +manaSurcharge Mana           (cantrips 0 -> 1, a 1 Mana spell -> 2)
 //   every spell but a cantrip      +staminaSurcharge Stamina     (a cantrip stays at its own Stamina; an X-cost spell already spends all it has)
+//   a spell with the `manaOnlyTag`  pays 0 Stamina               (owner, 2026-11-15: "spells that cost 0 sp but 2 to 3 mp"; its printed Stamina is 0 and it takes no surcharge; Prepared has nothing to cut)
 //   the player is in Prepared      -preparedStaminaDiscount Stamina on every spell (cantrips included), never below 0
 //   a Focus item is equipped       -focusManaDiscount Mana on every spell, never below 0; one Focus item gives it, a second adds nothing
 // "Spell" is the card Mana policy's reading (model/cardManaPolicy.js cardManaCategory: a spell-camp card that is not a Power, status, curse or
@@ -30,6 +31,11 @@ export function IsSpellForCost(ctx, def) {
   return !!def && cardManaCategory(ctx.registries, def) === 'spell';
 }
 
+/** IsManaOnly(rules, def) -> whether the card carries the rule's mana-only tag (no Stamina surcharge); false when the fight's rules name no such tag. */
+export function IsManaOnly(rules, def) {
+  return !!rules.manaOnlyTag && tagIds(def).includes(rules.manaOnlyTag);
+}
+
 /** IsCantrip(rules, def) -> whether the card carries the rule's cantrip tag. */
 export function IsCantrip(rules, def) {
   return tagIds(def).includes(rules.cantripTag);
@@ -44,7 +50,7 @@ export function SpellCostAdjust(ctx, def, price) {
   if (!rules || !IsSpellForCost(ctx, def)) return price;
   const focus = FocusHeld(ctx.registries, ctx.loadout, ctx.player?.classId);
   const mana = Math.max(0, price.mana + rules.manaSurcharge - (focus ? rules.focusManaDiscount : 0));
-  const surcharge = def.cost === 'X' || IsCantrip(rules, def) ? 0 : rules.staminaSurcharge;
+  const surcharge = def.cost === 'X' || IsCantrip(rules, def) || IsManaOnly(rules, def) ? 0 : rules.staminaSurcharge;
   const prepared = inPreparedStance(ctx.player) ? rules.preparedStaminaDiscount : 0;
   const stamina = def.cost === 'X' ? price.stamina : Math.max(0, price.stamina + surcharge - prepared);
   return { stamina, mana };
