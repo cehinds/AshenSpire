@@ -458,7 +458,11 @@ const TOGGLE_SETTING = (opener) => `(async () => {
 
 // ---------------------------------------------------------------------------
 async function persistenceProbe(cdp, base, check) {
-  const page = await openPage(cdp, base, `shot=map&${settingsQuery(false)}`);
+  // Stand mid-climb (?shotAt=floor:1): at the entrance the map preselects its one
+  // start node, and the redraw without the selection preselects that same node
+  // again, so a dropped destination would be invisible. Mid-climb nothing is
+  // preselected and the click below really chooses the destination.
+  const page = await openPage(cdp, base, `shot=map&shotAt=floor:1&${settingsQuery(false)}`);
   const { ev } = page;
   try {
     await ev(PLAN);
