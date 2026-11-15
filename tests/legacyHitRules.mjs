@@ -31,9 +31,10 @@ export function legacyRules(rules) {
  * perception.roll). A fight snapshots its rules when it is created, so build the fight inside and play it outside. Restores the keys after.
  */
 export function withLegacyDefaults(build) {
-  const held = { stanceBenefits: fixCoreMechanics.stanceBenefits, hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
-  delete fixCoreMechanics.accuracy.hitRoll; delete fixCoreMechanics.accuracy.evadeStacksPerCard; delete fixCoreMechanics.perception.roll; delete fixCoreMechanics.stanceBenefits;
+  const held = { stanceBenefits: fixCoreMechanics.stanceBenefits, elements: fixCoreMechanics.elements, ratings: fixCoreMechanics.ratings, hitRoll: fixCoreMechanics.accuracy.hitRoll, evadeStacksPerCard: fixCoreMechanics.accuracy.evadeStacksPerCard, roll: fixCoreMechanics.perception.roll };
+  delete fixCoreMechanics.accuracy.hitRoll; delete fixCoreMechanics.accuracy.evadeStacksPerCard; delete fixCoreMechanics.perception.roll; delete fixCoreMechanics.stanceBenefits; delete fixCoreMechanics.elements; delete fixCoreMechanics.ratings;
   try { return build(); } finally {
+    fixCoreMechanics.elements = held.elements; fixCoreMechanics.ratings = held.ratings; // the element identities and PR from max(INT, WIS) (batch 2) are absent from an earlier fight too
     fixCoreMechanics.stanceBenefits = held.stanceBenefits; // the 2026-11-14 stance benefits (Wave 2.5) are also absent from a fight saved earlier
     fixCoreMechanics.accuracy.hitRoll = held.hitRoll; fixCoreMechanics.accuracy.evadeStacksPerCard = held.evadeStacksPerCard; fixCoreMechanics.perception.roll = held.roll;
   }
@@ -44,4 +45,14 @@ export function withoutStanceBenefitDefaults(build) {
   const held = fixCoreMechanics.stanceBenefits;
   delete fixCoreMechanics.stanceBenefits;
   try { return build(); } finally { fixCoreMechanics.stanceBenefits = held; }
+}
+
+/**
+ * Runs `build` while the shipped default rules lack every Wave 2.5 key (`stanceBenefits`, `elements`, `ratings`): a fight created before batch 2. Only these
+ * keys are removed, so a shipped-rules fight played this way must reproduce the digests taken before batch 2.
+ */
+export function withoutBatch2Rules(build) {
+  const held = { stanceBenefits: fixCoreMechanics.stanceBenefits, elements: fixCoreMechanics.elements, ratings: fixCoreMechanics.ratings };
+  delete fixCoreMechanics.stanceBenefits; delete fixCoreMechanics.elements; delete fixCoreMechanics.ratings;
+  try { return build(); } finally { Object.assign(fixCoreMechanics, held); }
 }
