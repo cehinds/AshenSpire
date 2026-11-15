@@ -77,3 +77,26 @@ test('abortWithin aborts with the parent signal or after the timeout', async () 
   const done = new AbortController(); done.abort();
   assert.equal(abortWithin(done.signal, 60_000).aborted, true);
 });
+
+test('the prologue traveller paints without canvas ctx.filter (absent in Safari)', async () => {
+  const { paintPrologueCharacter } = await import('../src/ui/prologueCharacter.js');
+  const log = [];
+  const context = (name) => ({
+    // No `filter` property at all, as in Safari.
+    save() {}, restore() {}, translate() {}, transform() {}, scale() {}, fillRect(...a) { log.push([name, 'fillRect', ...a]); },
+    createRadialGradient: () => ({ addColorStop() {} }),
+    drawImage(source, ...a) { log.push([name, 'drawImage', source.scratch ? 'scratch' : 'image', ...a]); },
+    set globalCompositeOperation(v) { log.push([name, 'composite', v]); },
+  });
+  const scratches = [];
+  const doc = { createElement: () => { const c = { scratch: true, getContext: () => context(`scratch${scratches.length}`) }; scratches.push(c); return c; } };
+  const canvas = { ownerDocument: doc, getContext: () => context('main') };
+  const image = { naturalWidth: 400, naturalHeight: 800 };
+  paintPrologueCharacter(canvas, image);
+  assert.equal(scratches.length, 2, 'one silhouette for the shadow, one dimmed figure');
+  assert.equal(scratches[0].width, 100, 'the shadow is drawn quarter size so scaling it up blurs it');
+  assert.equal(scratches[1].width, 400);
+  const mainDraws = log.filter(([who, op]) => who === 'main' && op === 'drawImage');
+  assert.ok(mainDraws.length === 2 && mainDraws.every(([, , kind]) => kind === 'scratch'), 'the raw image is never drawn straight onto the layer');
+  assert.ok(log.some(([who, op, mode]) => who.startsWith('scratch') && op === 'composite' && mode === 'source-atop'));
+});
