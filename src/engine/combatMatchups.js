@@ -2,7 +2,7 @@ import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 import { counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { decayCounterStacks, spendCounterStacks } from './guardStacks.js';
+import { decayCounterStacks, SpendCounterStacks } from './guardStacks.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -802,7 +802,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     cardHits = core.hits || null;
     // Card-stack rule (owner 2026-11-15): every answered hit spends consumePerHit stacks; the charge ends with the last stack.
     if (cardHits) {
-      spendCounterStacks(ctx, target, core.consumed);
+      SpendCounterStacks(ctx, target, core.consumed);
       if (!(target.counterStacks > 0) && target.combatCounter?.serial === counter.serial) {
         target.combatCounter.charges = 0;
         ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source), sourceId: target.id, targetId: source?.id, serial: counter.serial });

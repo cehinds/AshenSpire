@@ -105,10 +105,11 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
             enemy.intent.damage,
             carrier,
         ).damageReceipt?.hits?.[0]?.incoming ?? 0;
-        const row = !answered ? { hp: 0, poise: 0, block: 0 }
+        const row = !answered
+            ? { hp: 0, poise: 0, block: 0 }
             : cardStacks
-                ? counterReturn(ctx, seen, advantaged, { stacks: held, base: baseHp })
-                : counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
+            ? counterReturn(ctx, seen, advantaged, { stacks: held, base: baseHp })
+            : counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
         if (answered && cardStacks)
         {
             perHit.push({ incoming: seen, stacksBefore: held, hp: row.hp, poise: row.poise });
@@ -136,5 +137,13 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
         total.poise += row.poise;
         total.block += granted;
     }
-    return { incoming, advantaged, hits, stacks, base: baseHp, ...total, ...(cardStacks ? { perHit } : {}) };
+    return {
+        incoming,
+        advantaged,
+        hits,
+        stacks,
+        base: baseHp,
+        ...total,
+        ...(cardStacks ? { perHit } : {}),
+    };
 }

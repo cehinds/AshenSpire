@@ -86,7 +86,7 @@ export function CounterStackGrant(ctx, card) {
 }
 
 /** Removes Counter stacks (a covered hit spends consumePerHit); returns the number removed. Emits counterStacksChanged. */
-export function spendCounterStacks(ctx, entity, amount = 1) {
+export function SpendCounterStacks(ctx, entity, amount = 1) {
   const before = counterStackCount(entity);
   const next = Math.max(0, before - whole(amount));
   if (next === before) return 0;
