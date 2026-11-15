@@ -55,6 +55,9 @@ function addCapped(ctx, target, id, stacks, source, cap) {
 /** Fire spreads to every living enemy when the card is single-target and more than one enemy stands. */
 function fireSpreads(ctx, rules, source, carrier) {
   if (ElementOfHit(carrier) !== 'fire' || carrier?.elementChain || HitsAllTargets(carrier)) return false;
+  // The damage op decides the spread once, before any hit lands, so a spread hit that kills the aimed enemy still
+  // costs every other enemy the spread multiplier (shown = dealt).
+  if (typeof carrier?.elementSpread === 'boolean') return carrier.elementSpread;
   return !rules.fire.spreadNeedsOtherEnemies || livingOpponents(ctx, source).length > 1;
 }
 

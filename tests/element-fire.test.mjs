@@ -1,6 +1,6 @@
 // W25 (owner, 2026-11-14) Fire: a single-target fire card hits every enemy at x0.6; it ignores 1 Poise per point of WIS + INT; breaking
 // Poise inflicts Burn (stacks = INT, at least 1). Burn: +5% damage taken per stack, 1 HP per stack at turn start, 5% per stack to explode
-// for its stacks on the owner's allies (clearing it), at most 10. A fight without `elements` rules plays as before.
+// for its stacks on the owner's allies (clearing it), no stack cap (owner). A fight without `elements` rules plays as before.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
@@ -108,4 +108,16 @@ test('Burn has no cap under the element rules (its explosion chance clamps at 10
   now.enemy.statuses = {};
   ElementTurnStart(now.combat, now.enemy);
   assert.equal(now.combat.rng.getCounters().elements, undefined, 'no Burn, Shock or other rule needing a roll: the elements stream is untouched');
+});
+
+test('a spread hit that kills the aimed enemy still costs the other enemy the spread multiplier (shown = dealt)', () => {
+  const healthy = fight({ enemies: 2 });
+  const both = play(healthy.combat, 'core.cinderDart', healthy.enemies[0].id);
+  const dying = fight({ enemies: 2 });
+  dying.enemies[0].hp = 1;
+  const r = play(dying.combat, 'core.cinderDart', dying.enemies[0].id);
+  const [first, second] = dying.enemies.map((e) => e.id);
+  assert.equal(r.lost[first], 1, 'the aimed enemy had 1 HP');
+  assert.equal(r.lost[second], both.lost[healthy.enemies[1].id], 'the other enemy loses the spread amount, not the full hit');
+  assert.equal(r.lost[second], r.row.faceValue, 'what it loses is what the card face shows');
 });
