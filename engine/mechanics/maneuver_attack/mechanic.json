@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "maneuver",
   "label": "Attack",
-  "description": "Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy.",
+  "description": "Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy. Stance benefit: attacks deal +20% damage.",
   "attaches": [
     "card"
   ],

@@ -14,7 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutBatch2Rules } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
@@ -139,9 +139,21 @@ for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
     assert.deepEqual(digest(play(withLegacyDefaults(() => fight(setup)), 5)), expected);
   });
 }
-const PINNED = [
+// Batch 2 (stance benefits, element identities, PR from max(INT, WIS)): these are the shipped digests before it. A fight whose rules lack those three keys
+// (one created earlier) still reproduces them exactly, which is the proof that the new PINNED values below moved only through those rules.
+const PRE_BATCH2_PINNED = [
   [['PERF1', 'reaver'], { log: 'c8189971a46a6f90', state: '7f8f814257486e75', events: 193, turn: 6 }],
   [[4242, 'reaver'], { log: 'a52d738bc31c957b', state: 'aa8f6ae8b9909f33', events: 188, turn: 6 }],
+];
+for (const [setup, expected] of PRE_BATCH2_PINNED) {
+  test(`pre-batch-2 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Wave 2.5 rules`, () => {
+    assert.deepEqual(digest(play(withoutBatch2Rules(() => fight(setup)), 5)), expected);
+  });
+}
+// Recaptured 2026-11-14 for batch 2 (stance benefits, element identities, PR from max(INT, WIS)): PRE_BATCH2_PINNED above reproduces the previous digests with those three keys removed.
+const PINNED = [
+  [['PERF1', 'reaver'], { log: '50af6954c8e19ec4', state: 'f8b057861924c9a5', events: 190, turn: 6 }],
+  [[4242, 'reaver'], { log: '3b77f6acdf90134f', state: '9bd3ce06dca00077', events: 194, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

@@ -2,6 +2,7 @@ import { t, tFull } from './strings.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
 import { resolveStatusPresentationDefinition, coreStatusLifecycle, statusPresentationContext } from '../model/statusPresentation.js';
 import { mechanics } from '../framework/data/mechanics.js';
+import { ElementStatusUncapped } from '../model/elementIdentityRules.js';
 
 /** Explain the registered rules without inferring a buff's lifetime from its name. */
 export function statusLifecycleText(def, context = {}) {
@@ -16,7 +17,8 @@ export function statusLifecycleText(def, context = {}) {
   const rules = context.combatStatusRules || context.combatExpansionRules?.statuses || defaultStatusRules;
   const activeRule = Object.values(rules.statuses).find(rule => rule.activeStatus === def.id);
   if (activeRule && combatExpansionVersion === 2 && !core?.overrides) {
-    return [tFull('status.lifecycle.expandedStacking', { cap: activeRule.cap }),
+    // Element rules (W25): Burn has no cap, so there is no cap to state.
+    return [ElementStatusUncapped(context, def.id) ? tFull('status.lifecycle.add', { value: t('status.lifecycle.stackTotal') }) : tFull('status.lifecycle.expandedStacking', { cap: activeRule.cap }),
       core ? coreDecayText(def, core, t('status.lifecycle.stackTotal')) : decayText(def, t('status.lifecycle.stackTotal')),
       typeof def.decay === 'object' && Number.isFinite(def.decay?.duration)
         ? tFull('status.lifecycle.expandedTimer') : ''].filter(Boolean).join(' ');

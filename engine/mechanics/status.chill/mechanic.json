@@ -1,0 +1,26 @@
+{
+  "id": "status.chill",
+  "tag": "status.chill",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Chill",
+  "description": "Each stack: -5% damage dealt. Every 3 stacks, its next turn starts with 1 less Stamina. One stack wears off each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.chill"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "ElementReceiptStages"
+  }
+}

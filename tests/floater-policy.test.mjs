@@ -7,8 +7,8 @@ import { floatNum, callout, clearCallouts, CALLOUT_KINDS } from '../src/ui/fx.js
 import { dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/dom.mjs';
 
-test('the allowlist is Hit, Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
-  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['hit', 'evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
+test('the allowlist is Hit - Evade Failed, Missed, Evaded, Blocked and Countered', () => {
+  assert.deepEqual([...FLOATER_WORDS_SHOWN], ['evadeFailed', 'missed', 'evaded', 'blocked', 'countered']);
   assert.ok(Object.isFrozen(FLOATER_WORDS_SHOWN));
   for (const kind of FLOATER_WORDS_SHOWN) assert.equal(floaterWordShown(kind), kind);
 });
@@ -40,7 +40,33 @@ test('only HP damage numbers and Defeated show', () => {
   }
   const parts = guardHitFloatParts({ amount: 10, blocked: 4, barrierAbsorbed: 1, wardAbsorbed: 1, poiseAbsorbed: 1, pierced: 1, forceImmune: 1 });
   assert.equal(floaterNumberShown(parts.damage.cls), true);
-  for (const key of ['barrier', 'ward', 'poise', 'pierced', 'immune', 'guard', 'fullHit']) assert.equal(floaterNumberShown(parts[key].cls), false, key);
+  for (const key of ['barrier', 'ward', 'pierced', 'immune', 'fullHit']) assert.equal(floaterNumberShown(parts[key].cls), false, key);
+  // Owner, 2026-11-14: the Block and Poise a hit met show too (white and yellow); a gain or a cost with the same base class does not.
+  for (const key of ['poise', 'guard']) assert.equal(floaterNumberShown(parts[key].cls), true, key);
+  assert.equal(floaterNumberShown('poise small'), false);
+});
+
+// Owner, 2026-11-14: "blocked damage should be white, poise damage in yellow, health damage in red."
+test('a hit with Block, Poise and HP parts floats three numbers in three colours that sum to the hit', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  withKitDom(({ document }) => {
+    const layer = document.createElement('div'); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+    const anchor = document.createElement('div'); anchor.box = { left: 100, top: 300, width: 80, height: 120 };
+    document.body.append(layer, anchor);
+    const event = { amount: 9, blocked: 4, poiseAbsorbed: 3, hpRemoved: 5 };
+    const parts = guardHitFloatParts(event);
+    assert.equal(parts.full, 12);
+    const made = [parts.guard, parts.poise, parts.damage].map((part) => floatNum(layer, anchor, part.text, part.cls));
+    assert.ok(made.every(Boolean), 'all three float');
+    assert.deepEqual(made.map((el) => el.className.split(' ').filter((c) => ['blk', 'poise', 'dmg', 'hitpart'].includes(c))), [['blk', 'hitpart'], ['poise', 'hitpart'], ['dmg']]);
+    const nums = made.map((el) => Math.abs(Number(el.textContent)));
+    assert.deepEqual(nums, [4, 3, 5]);
+    assert.equal(nums.reduce((a, b) => a + b, 0), parts.full, 'the numbers sum to the hit');
+    assert.equal(parts.damage.text, `-${event.hpRemoved}`, 'the red number is the HP lost');
+    // A part that is 0 shows no floater.
+    const none = guardHitFloatParts({ amount: 5, blocked: 0, hpRemoved: 5 });
+    assert.equal(none.guard, null); assert.equal(none.poise, null);
+  });
 });
 
 test('callout() with a hidden kind returns null and spawns nothing; a shown kind spawns', (t) => {
@@ -97,4 +123,25 @@ test('the damage floater is the HP lost: Block and Poise never add to it, and a 
   assert.equal(guardHitFloatParts({ amount: 12, blocked: 3, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'amount is the HP lost plus the Block spent; Poise is already out of it');
   assert.equal(guardHitFloatParts({ amount: 9, blocked: 0, poiseAbsorbed: 3 }, 100).damage.text, '-9', 'Poise absorbed 3 of a 12 hit: -9, not -12');
   assert.equal(guardHitFloatParts({ amount: 5, blocked: 5, poiseAbsorbed: 4 }, 100).damage, null, 'fully absorbed: no number');
+});
+
+// Owner, 2026-11-14: "you can get rid of hit, and just show damage or status effect or miss, or blocked".
+test('a landed hit says no Hit word; Missed, Countered and Blocked still show', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  withKitDom(({ document }) => {
+    const layer = document.createElement('div'); layer.box = { left: 0, top: 0, width: 600, height: 700 };
+    const anchor = document.createElement('div'); anchor.box = { left: 100, top: 300, width: 80, height: 120 };
+    document.body.append(layer, anchor);
+    assert.equal(floaterWordShown('hit'), null);
+    assert.equal(callout(layer, anchor, 'e1', 'hit'), null);
+    assert.equal(layer.children.length, 0, 'no Hit word');
+    assert.equal(callout(layer, anchor, 'e1', 'missed')?.dataset.calloutKind, 'missed');
+    clearCallouts(layer);
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'countered')?.dataset.calloutKind, 'countered', 'Countered still shows');
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'blocked')?.dataset.calloutKind, 'blocked');
+    clearCallouts(layer);
+    assert.equal(callout(layer, anchor, 'e1', 'blocked').textContent, 'BLOCKED');
+  });
 });

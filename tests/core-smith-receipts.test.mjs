@@ -18,6 +18,7 @@ import { withKitDom } from './helpers/dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { withoutStanceBenefits } from './legacyStanceRules.mjs';
 import { previewCard, dispatch } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
@@ -232,14 +233,15 @@ test('an armor tier always raises DR, and Defend block preview equals the played
     combat.piles.hand = [card, ...combat.piles.hand.filter((row) => row !== card)];
     const had = combat.player.block; dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
     assert.equal(combat.player.block - had, shown, 'preview equals live'); return shown; };
-  const was = defendBlock(fight(run));
+  // This test pins the DR -> Block arithmetic, so it plays the pre-benefit rules (Defend's +50% is tests/stance-benefits.test.mjs).
+  const was = defendBlock(withoutStanceBenefits(fight(run)));
   const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
   assert.deepEqual(candidate.changes.filter((row) => row.label === 'DR').map((row) => row.after - row.before), [2]);
   commitGameProfileRest(reg, run, 'smith', { itemRef: 'armor/reaver/vigil' });
   const after = gameProfileRatingReceipt(reg, run).totals.dr;
   assert.equal(after, dr + 2);
   const weight = run.gameProfile.modules.defenses?.defenseRatingWeight ?? 1;
-  const now = defendBlock(fight(run));
+  const now = defendBlock(withoutStanceBenefits(fight(run)));
   assert.ok(now > was);
   assert.equal(now - was, Math.floor((after - dr) * weight));
 });
@@ -302,6 +304,7 @@ test('Smith card receipts read a Honed card at its lifetime plays (Whetstone Nic
     return row;
   };
   const fresh0 = nick(0), honed = nick(8);
-  assert.equal(honed.before - fresh0.before, 8, 'before: base 2 + 8 plays, not the fresh base');
-  assert.equal(honed.after - fresh0.after, 8, 'after: the same 8');
+  // Nick is an Attack card: its face carries Attack's +20% (stance benefit, Wave 2.5), so base 2 shows as 2 and base 2 + 8 plays as 12 (floor 1.2 x 10).
+  assert.equal(honed.before - fresh0.before, 10, 'before: base 2 + 8 plays, not the fresh base');
+  assert.equal(honed.after - fresh0.after, 10, 'after: the same 8 plays');
 });

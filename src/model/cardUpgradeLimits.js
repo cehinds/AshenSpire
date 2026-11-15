@@ -50,8 +50,11 @@ export function UpgradeWeaponId(run, instance) {
 /** The weapon's Smith level (how many times it has been upgraded at the Smith / Blacksmith), 0 for none. */
 export function WeaponSmithLevel(run, instance) {
   const id = UpgradeWeaponId(run, instance);
-  const level = id && run && run.itemUpgradeLevels ? run.itemUpgradeLevels[`armament/${id}`] : 0;
-  return Number.isSafeInteger(level) && level > 0 ? level : 0;
+  const ref = `armament/${id}`;
+  const level = id && run && run.itemUpgradeLevels ? run.itemUpgradeLevels[ref] : 0;
+  // The fixed Smith tier plus the options the Blacksmith's work picked (W25 step 4: each is one upgrade of the weapon).
+  const picks = id && Array.isArray(run?.itemUpgradePicks?.[ref]) ? run.itemUpgradePicks[ref].length : 0;
+  return (Number.isSafeInteger(level) && level > 0 ? level : 0) + picks;
 }
 
 /**
@@ -71,12 +74,14 @@ export function RestUpgradeRule(instance) {
 }
 
 /**
- * upgradeChoiceCount(def, instance, { blacksmith }) → how many options a player picks from (owner, 2026-10-31):
- * a blacksmith offers 2 on a Basic card and 3 on a ranked (not Basic) card; a rest-site upgrade, an event
- * reward and co-op keep the single roll (1).
+ * upgradeChoiceCount(def, instance, { blacksmith, run }) → how many options a player picks from: a blacksmith
+ * offers 2 or 3 at random (owner, 2026-11-14), seeded by the run, the card and its upgrade number so the quote is
+ * stable; a rest-site upgrade, an event reward and co-op keep the single roll (1). Asked without a run (no seed to
+ * roll from) the older rule stands: 2 on a Basic card and 3 on a ranked (not Basic) one.
  */
-export function upgradeChoiceCount(def, instance, { blacksmith = false } = {}) {
+export function upgradeChoiceCount(def, instance, { blacksmith = false, run = null } = {}) {
   if (!blacksmith) return 1;
+  if (run && instance?.instanceId) return mulberry32(upgradeSeed(run.seed, `${instance.instanceId}#choices`, upgradeStepsOf(instance).length))() < 0.5 ? 2 : 3;
   return upgradeBasic(def, instance) ? 2 : 3;
 }
 

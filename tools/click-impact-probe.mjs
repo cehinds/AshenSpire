@@ -452,7 +452,7 @@ async function main() {
       targetablePlayer: !!document.querySelector('.player.targetable'),
       cardsPlayed: window.__combat?.player?.counters?.cardsPlayedThisCombat,
       phase: window.__combat?.phase, player: { energy: window.__combat?.player?.energy, stamina: window.__combat?.player?.stamina, mana: window.__combat?.player?.mana, statuses: window.__combat?.player?.statuses },
-      modal: document.querySelector(".card-choice, .confirmation-modal")?.innerText,
+      modal: document.querySelector(".card-choice, .option-choice, .confirmation-modal")?.innerText,
       body: document.body.innerText.slice(-2500),
     })`).catch(() => null)));
     process.exitCode = 1;

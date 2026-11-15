@@ -36,6 +36,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing, floaterLifeMs, calloutLifeMs, floaterStaggerMs, floaterStaggerMinMs } from './animationPace.js';
+import { CounterExchangeRoles } from './models/CounterExchangeModel.js';
 import { floaterWordShown, floaterNumberShown, floaterGlyphShown } from './models/FloaterPolicyModel.js';
 import { createFloaterStack, FLOATER_STACK } from './floaterStack.js';
 import { measure, measureThenMutate } from './frameMeasure.js';
@@ -782,13 +783,14 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
-    poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
+    // One yellow number for all the Poise the hit removed (Poise absorbed plus a spell's magic Poise).
+    poise: poise + magicPoise > 0 ? { text: String(poise + magicPoise), cls: 'poise small hitpart' } : null,
     // The part of a piercing hit that went past Block (owner, 2026-10-26); Poise met it first.
     // Magic hits Poise first, 1:1 (owner, 2026-10-31).
     magicPoise: magicPoise > 0 ? { text: t('combat.receipt.magicPoise', { n: magicPoise }), cls: 'poise small' } : null,
     pierced: pierced > 0 ? { text: t('combat.receipt.pierced', { n: pierced }), cls: 'pierce small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
-    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small hitpart' } : null,
     // Owner, 2026-11-14: the floating number is the HP the hit cost (what the card face, the intent and the HP bar agree on), never the
     // hit before Block, Poise, Ward or Barrier. `damage` stays null for a hit that cost no HP, which shows its outcome word instead;
     // `fullHit` is the unsigned pre-layer figure a guarded hit that cost no HP carries (beside BLOCKED or Pierced; the policy hides it).
@@ -1240,6 +1242,17 @@ export function playTimeline(events, ctx, done) {
       return { ...enemyTiming, intentMs: 0, wordMs: 0, afterSpriteMs: 0, resultMs: 0, reactionMs: 0, damageMs: 0, resetMs: 0 };
     return enemyTiming;
   };
+  // A Counter exchange (owner, 2026-11-14): the Counter card's cost, word, stance and animation start together, then the hit or
+  // miss, then the reaction with its damage floaters, and every wait between a floater and the next animation is the one short
+  // Counter gap (motion.counter.floaterToAnimMs). The animations themselves keep their length; only the waits shrink.
+  const counterRoles = CounterExchangeRoles(beats);
+  const counterHitEvents = new Set([...counterRoles].filter(([, role]) => role === 'hit').flatMap(([beat]) => beat.events));
+  const counterTimingFor = (role, base) => {
+    const gap = timing.counterGapMs;
+    const gaps = { afterSpriteMs: gap, resultMs: gap, reactionMs: gap, damageMs: gap, resetMs: gap, stepMs: gap };
+    // Only the Counter card and its return start on one beat: the hit that the Counter answers keeps its own lead-in.
+    return role === 'hit' ? { ...base, ...gaps } : { ...base, intentMs: 0, wordMs: 0, ...gaps };
+  };
   // The pacing a beat runs on (its banner shows for the same hold the timeline waits).
   const pacingOf = beat => enemyBeats.has(beat) ? enemyTiming : timing;
   const dealsOutcome = beat => beat.events.some(event => OUTCOME.has(event.type));
@@ -1274,7 +1287,11 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
   handle = runActionTimeline(beats, {
     onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
-    timingFor: beat => enemyBeats.has(beat) ? enemyTimingFor(beat) : null,
+    timingFor: beat => {
+      const base = enemyBeats.has(beat) ? enemyTimingFor(beat) : null;
+      const role = counterRoles.get(beat);
+      return role ? counterTimingFor(role, base || timing) : base;
+    },
     onIntent: beat => {
       const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
       if (stage && stanceState(stage) !== 'in') stage.settle?.();
@@ -1379,6 +1396,9 @@ export function playTimeline(events, ctx, done) {
       const speed = inEnemyTurn(beat) ? enemyTiming.spriteSpeed : timing.spriteSpeed;
       // An enemy action with no outcome (a Guard) shows its flash but holds the timeline for none of it.
       if (inEnemyTurn(beat) && beat.actorId && beat.kind !== 'reveal' && !dealsOutcome(beat)) return 0;
+      // The hit a Counter answers does not hold the exchange for its recoil: the counter animation takes over the figure a gap
+      // after the damage floaters, as the owner asked (2026-11-14); the recoil still plays until it does.
+      if (beat.events.some(event => counterHitEvents.has(event))) return 0;
       return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, speed)) || 0));
     },
     onNumbers: beat => {
@@ -1771,8 +1791,9 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
           // A spell that spent Poise keeps its "Poise N" float beside the callout (owner, 2026-10-31).
           if (outcome) {
-            if (outcome === 'blocked' && parts.fullHit) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.fullHit.text, parts.fullHit.cls);
-            if (parts.magicPoise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.magicPoise.text, parts.magicPoise.cls);
+            // A hit fully absorbed floats its white (Block) and yellow (Poise) numbers; the word stays screen-reader text only.
+            if (outcome === 'blocked' && parts.guard) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+            if (parts.poise) floatNum(ctx.layer, ctx.anchorFor(e.targetId), parts.poise.text, parts.poise.cls, undefined, { immediate: true });
             return;
           }
           const anchor = ctx.anchorFor(e.targetId);
@@ -1780,8 +1801,11 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // all at the same x. The layers the hit met come first, then the hit's HP loss.
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls);
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls);
-          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls);
-          if (parts.magicPoise) floatNum(ctx.layer, anchor, parts.magicPoise.text, parts.magicPoise.cls);
+          // The three parts of the hit, each its own number (owner, 2026-11-14): the damage Block absorbed (white), the Poise
+          // it removed (yellow) and the HP it took (red, below, spawned last: nearest the HP bar).
+          // They spawn together (immediate), the red one last so it sits nearest the HP bar: the hit is read at a glance, not over 2 s.
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, undefined, { immediate: true });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, undefined, { immediate: true });
           if (parts.pierced) floatNum(ctx.layer, anchor, parts.pierced.text, parts.pierced.cls);
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls);
           // A pierced hit that cost no HP has no outcome word, so its full number floats here.

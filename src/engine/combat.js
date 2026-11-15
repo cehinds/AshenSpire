@@ -6,6 +6,7 @@ import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
+import { ElementTurnStart, ElementTurnEnd } from './elementIdentity.js';
 import { coreStatusPresentation } from '../model/statusPresentation.js';
 import { startingWeaknesses } from './weaknesses.js';
 import { seedElementStatuses } from './elementLightning.js';
@@ -13,6 +14,7 @@ import { scaleOwnElementActions } from './elementRules.js';
 import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
+import { QueueItemTurnStart, QueueItemSkillPlayed, ItemRetainIds } from './itemPropertyHooks.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
 import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
@@ -36,6 +38,7 @@ import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
+import { NeutralExtraDraw, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
@@ -65,6 +68,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { FALLBACK_HAND_MAX } from '../model/statRows.js';
 import { cardRatingBonus, clearMeterGuards } from './combatRatings.js';
+import { ClearTurnAttributeBoosts, RestoreLiveStats } from './liveStats.js';
 import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
@@ -349,6 +353,7 @@ export function createCombat({
     combat.player.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: poiseMax, ...(player.ratings || {}) };
     combat.player.attributes = { ...(player.attributes || {}) };
     combat.player.ratingSources = structuredClone(player.ratingSources || combat.player.ratingSources || []);
+    if (player.itemProps && Object.keys(player.itemProps).length) combat.player.itemProps = structuredClone(player.itemProps);
     if (fixCoreEnabled(combat)) {
       combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
       combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
@@ -487,6 +492,7 @@ function endCheck(combat) {
 }
 
 function finishCombat(combat, result) {
+  RestoreLiveStats(combat); // every attribute and derived value returns to its fight-start value (HP trimmed)
   combat.result = result;
   combat.phase = 'ended';
   Reactions.finishReactions(combat);
@@ -508,6 +514,7 @@ function startPlayerTurn(combat) {
   S.ClearTurnBoosts(combat, combat.player);
   combat.phase = 'player';
   const p = combat.player;
+  ElementTurnStart(combat, p); // element identity (W25): Burn explosion, Chill, Freeze and Shock, read before the statuses decay
   decayAtTurnStart(combat, p);
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
@@ -534,6 +541,7 @@ function startPlayerTurn(combat) {
     if (protection.barrier) A.gainBarrier(combat, p, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     Blight.beginAshenBlightCycle(combat, p, String(p.combatOwnerCycle));
   }
+  QueueItemTurnStart(combat, p); // W25 step 6: Block and a Poise guard from the player's item properties
 
   // Set energy to base (relics that add energy hook playerTurnStart) — less
   // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
@@ -548,7 +556,12 @@ function startPlayerTurn(combat) {
   p.pendingActionLoss = 0;
 
   // Draw.
-  A.drawCards(combat, Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0)));
+  // Owner, 2026-11-14 (Wave 2.5): a player holding no stance draws one extra card (stanceBenefits.js). It sits above the hand cap for this turn;
+  // turnDrawCount sets the cap again at the next turn start.
+  const baseDraw = Math.max(1, turnDrawCount(combat) - (combat.combatExpansionVersion === 2 && combat.turn === 1 ? (Blight.ashenBlightBonuses(p).openingHandPenalty || 0) : 0));
+  const restDraw = NeutralExtraDraw(combat, p, combat.turn);
+  if (restDraw > 0) combat.handMax += restDraw;
+  A.drawCards(combat, baseDraw + restDraw);
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
@@ -571,6 +584,7 @@ function endPlayerTurn(combat, discardIds = []) {
   proposalTurn(combat,p,'end');
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
+  ElementTurnEnd(combat, p); // element identity (W25): Necrotic build-up
   if (combat.result) return;
 
   // …then each card still in hand fires its authored `onTurnEndInHand` effect
@@ -591,6 +605,7 @@ function endPlayerTurn(combat, discardIds = []) {
   }
 
   S.ClearTurnBoosts(combat, p);
+  ClearTurnAttributeBoosts(combat, p);
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -600,6 +615,9 @@ function endPlayerTurn(combat, discardIds = []) {
   // …then refresh ordinary cards, keeping Retain; Ethereal cards exhaust. The
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
+  // W25 step 6: a Retain property keeps its dearest cards (never Ethereal ones) through the discard.
+  const kept = ItemRetainIds(combat, p, (card) => { const def = resolveCombatCard(combat, card); return (def.keywords || []).includes('ethereal') ? null : (Number(def.staminaCost ?? def.cost) || 0) + (Number(def.manaCost) || 0); });
+  if (kept.length) p.combatRetainedCards = [...(p.combatRetainedCards || []), ...kept];
   applyDiscardChoice(combat, discardIds);
   if (Reactions.usesReactions(combat)) {
     combat.reactionHandCleanup = { preserveLockedHand };
@@ -656,6 +674,8 @@ function enemyTurnStart(combat) {
 // One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
+  ElementTurnStart(combat, enemy); // element identity (W25)
+  if (!enemy.alive) return;
   decayAtTurnStart(combat, enemy);
   if (fixCoreEnabled(combat)) {
     // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
@@ -810,6 +830,7 @@ function enemyPhase(combat) {
       proposalTurn(combat,enemy,'end');
       fireOwnerHooks(combat, enemy, 'ownerTurnEnd');
       drainQueue(combat);
+      ElementTurnEnd(combat, enemy); // element identity (W25)
       if (combat.result) return;
       if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
@@ -1784,6 +1805,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     if (payment.terminal) {
       p.energy -= check.energy; p.mana -= check.mana;
       combat.piles.hand.splice(idx, 1); combat.piles.exhaust.push(inst);
+      RestoreLiveStats(combat);
       p.hp = 0; p.alive = false; combat.phase = 'ended'; combat.result = 'defeat';
       Reactions.finishReactions(combat);
       combat.emit('ashenBlightLost', { targetId: p.id, reason: 'threshold' }); return;
@@ -1873,6 +1895,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     manaSpent: manaCost,
     staminaSpent: staminaCost,
   });
+  QueueItemSkillPlayed(combat, p, def); // W25 step 6: the first skill each turn draws
   drainQueue(combat);
   // An enemy reaction window on this card's own root: it resolves when the root resumes.
   if (Reactions.deferRootPlay(combat)) return;
@@ -2255,6 +2278,16 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
+        }
+        // Owner, 2026-11-14 (Wave 2.5): a Sweep also strikes every other enemy in range at half damage; the quote names what each of them would take.
+        if (configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && eff.target !== 'allEnemies' && primary?.kind === 'enemy') {
+          const splashed = SweepSplashTargets(combat, p, primary, carrier, living);
+          if (splashed.length) {
+            const splashCarrier = SplashCarrier(combat, p, carrier);
+            entry.splashHitDamages = Object.fromEntries(splashed.map(e => [e.id, previewDamageHits(combat, p, e,
+              evalPreview(combat, action, eff.amount, e) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
+              attackTags, splashCarrier, entry.hits, damagePreviewState(combat, e)).hitDamages.map(Math.floor)]));
+          }
         }
         for (const [id, snapshot] of restore) PreviewStateRestore(damagePreviewStates.get(id), snapshot);
         if (entry.value == null && isCounterReply) {

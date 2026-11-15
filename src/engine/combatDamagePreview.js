@@ -9,6 +9,7 @@ import { EvadeSpendPlan } from './stanceHit.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 import { reflectReturned } from './guardStacks.js';
 import * as Blight from './ashenBlight.js';
+import { ElementPreviewBreak } from './elementIdentity.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
@@ -97,7 +98,7 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
  * Carries one resolved hit's effect on the previewed target to its next hit: Block, Barrier, Ward, Poise (absorbed plus a Smash's
  * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
  */
-export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
+export function applyReceiptToPreviewTarget(ctx, defender, receipt, attacker = null) {
   defender.block = receipt.blockRemaining;
   // A reflected hit spends one Reflect stack, as live does (SPEC §17).
   if (receipt.reflect) { const left = Math.max(0, (defender.reflectStacks || 0) - 1); if (left) defender.reflectStacks = left; else delete defender.reflectStacks; }
@@ -105,8 +106,8 @@ export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
   if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
   if (defender.persistentPoise) {
     const poiseBefore = defender.persistentPoise.value;
-    defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0));
-    if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
+    defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0) + (receipt.poiseSpared || 0));
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0) { previewPoiseBreak(ctx, defender); if (!receipt.evaded) ElementPreviewBreak(ctx, attacker, defender, receipt.element?.id); }
   }
 }
 
@@ -208,7 +209,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       }
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
-      if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt); if (receipt.evaded) SpendPreviewEvade(defender); }
+      if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt, attacker || source); if (receipt.evaded) SpendPreviewEvade(defender); }
       // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
       // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).

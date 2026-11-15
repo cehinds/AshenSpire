@@ -1912,10 +1912,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     part('target-quote-text', quote.text);
     if (quote.poise) part('target-quote-poise', quote.poise, { break: String(!!quote.poiseBreaks) });
+    if (quote.splashText) part('target-quote-splash', quote.splashText);
     if (quote.stamina != null) part('target-quote-cost', String(quote.stamina), { resource: 'stamina' });
     if (quote.mana != null) part('target-quote-cost', String(quote.mana), { resource: 'mana' });
     if (chanceLabel) part('target-quote-chance', chanceLabel);
     const spoken = [quote.label];
+    if (quote.splashLabel) spoken.push(quote.splashLabel);
     if (quote.stamina != null) spoken.push(t('combat.quote.staminaAria', { amount: quote.stamina }));
     if (quote.mana != null) spoken.push(t('combat.quote.manaAria', { amount: quote.mana }));
     if (chanceLabel) spoken.push(t('combat.quote.chanceAria', { chance: chanceLabel }));
