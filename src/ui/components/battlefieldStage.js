@@ -340,9 +340,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // (it fires before paint); the first call reads it once.
   let fieldSizeKey = null;
   const rackObserver = new ResizeObserver(entries => {
-    if (entries.some(({ target }) => target === field)) fieldSizeKey = `${field.clientWidth}|${field.clientHeight}`;
+    // A field resize with no new layout epoch (footer or hand reshaped) re-places the overheads, as a rack resize does.
+    let fieldResized = false;
+    if (entries.some(({ target }) => target === field)) {
+      const size = `${field.clientWidth}|${field.clientHeight}`;
+      fieldResized = fieldSizeKey !== null && size !== fieldSizeKey;
+      fieldSizeKey = size;
+    }
     const fresh = entries.filter(({ target }) => watchedRacks.has(target));
-    if (!fresh.length) return;
+    if (!fresh.length && !fieldResized) return;
     cancelAnimationFrame(rackRequest);
     rackRequest = requestAnimationFrame(() => {
       rackRequest = 0;
