@@ -260,7 +260,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     for (const wrap of root.querySelectorAll(':scope > .dialogue-plate-layer')) {
       if (wrap.querySelector('.alternative-backdrop')) fitAlternativeBackdrop(wrap, {
         width, height: sceneHeight, fieldTop: sceneTop, ground: floorLine - sceneTop,
-        narrow: dialogueCompactHost(logicalViewport().width, parent),
+        narrow: dialogueCompactHost(logicalViewport().width, parent), coverWindow: fine,
       });
     }
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
