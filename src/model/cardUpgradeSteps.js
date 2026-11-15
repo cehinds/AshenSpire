@@ -202,6 +202,8 @@ const tagsOf = (card) => card.cardTags ?? card.tags ?? [];
 const familyValue = (tags, prefix) => tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length) || '';
 // The owner removed ranged cards (2026-11-14): a stance change never offers `ranged` (old saves with it still resolve).
 const ATTACK_MANEUVERS = TAG_FAMILIES['maneuver:'].filter((m) => ['attack', 'smash'].some((x) => x === m));
+/** Chill stacks a card applies from which the hit also Freezes its target (and Freeze clears the Poise it hit). */
+const FREEZING_CHILL = 3;
 // Mirrors upgradeBasic (cardUpgradeLimits.js, which imports this module): a cantrip, or a common non-spell.
 const basicDef = (def) => {
   const tags = def.tags || [];
@@ -222,7 +224,10 @@ function addTagOptions(base, current, applied, found, dmgIndex, limits = {}, cou
   const poiseIndex = firstPlainIndex(effects, 'poiseDamage');
   // A Smash card's Poise damage is derived from the hit it lands (gameProfileCombat smashRule), so its printed Poise number
   // never reaches the engine: a Poise step on it would change a shown number and nothing else (W25 upgrades, step 1).
-  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash') {
+  // A frost card whose own Chill (3 or more) Freezes the target wipes the Poise pool it just hit, so a Poise step on it changes a shown number and
+  // nothing else either (Glacial Spike, W25 batch 4).
+  const freezesTarget = tags.includes('school:frost') && effects.some((e) => e.op === 'applyStatus' && e.status === 'chill' && e.target !== 'self' && (e.stacks || 0) >= FREEZING_CHILL);
+  if (poiseIndex >= 0 && !counterReturn && maneuver !== 'smash' && !freezesTarget) {
     const baseTotal = (base.effects || []).find((e) => isPlainEffect(e, 'poiseDamage'))?.amount || effects[poiseIndex].amount;
     const n = biggest(Math.max(1, Math.ceil(baseTotal * 0.2)), limits.scale, (k) => effects[poiseIndex].amount + k - baseTotal <= baseTotal);
     if (n) found.poise = { n };
