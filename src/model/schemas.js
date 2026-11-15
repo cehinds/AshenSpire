@@ -568,7 +568,7 @@ export const EFFECT_SPECS = Object.freeze({
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },
-  gainCounterStacks: { allowed: [], required: [], refs: {} },
+  gainCounterStacks: { allowed: ['amount'], required: [], refs: {} },
   applyReflect: { allowed: [], required: ['amount'], refs: {} },
   wardDamage: { allowed: [], required: ['amount'], refs: {} },
   completeCombatAction: { allowed: [], required: [], refs: {} },

@@ -71,8 +71,9 @@ export const MAX_CARD_UPGRADES = 10;
 // The effect menu. Each id adds one effect the card did not have: block (n), draw (n), cycle (discard n then draw n),
 // cull (exhaust a card, draw 2), copy (add a copy of this card to the discard pile), shuffle (discard into draw),
 // retain / innate (keywords), unexhaust (drop Exhaust), holdOne (Retain one other card this turn), boost (+n STR, DEX, INT or WIS
-// for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait).
-export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction'));
+// for this turn or the rest of the fight), target (+1 target at half damage), reaction (the Reaction trait), counter (+1 Counter stack a play; a Counter
+// card only, offered while its whole grant stays within the 1..3 a card may give: Wave 2 batch 5).
+export const FX_KINDS = Object.freeze(words('block draw cycle cull copy shuffle retain innate unexhaust holdOne boost target reaction counter'));
 export const BOOST_STATS = Object.freeze(words('strength dexterity intelligence wisdom'));
 // A boost lasts `until: 'turn'` (the end of the owner's turn) or `until: 'fight'` (the rest of the fight; stacks per play, reverts at the
 // fight's end). A step with no `until` is the original STR / DEX "this turn" boost, still played as the Strength / Dexterity status it was.
@@ -285,6 +286,7 @@ function applyFx(card, step) {
       break;
     }
     case 'reaction': addTag(reactionTag); break;
+    case 'counter': effects.push({ op: 'gainCounterStacks', target: 'self', amount: step.n }); break;
     default: throw new Error(`Unknown card upgrade effect '${step.fx}'`);
   }
   return out;
@@ -351,6 +353,7 @@ export function upgradeStepsProblems(instance, path) {
     if (step.k === 'fx') {
       if (!FX_KINDS.includes(step.fx)) bad('fx');
       if (['block', 'draw', 'cycle', 'boost'].includes(step.fx) && !isCount(step.n, 20)) bad('n');
+      if (step.fx === 'counter' && !isCount(step.n, 3)) bad('n');
       if (step.fx === 'boost' && !BOOST_STATS.includes(step.stat)) bad('stat');
       if (step.fx === 'boost' && step.until !== undefined && !BOOST_DURATIONS.includes(step.until)) bad('until');
       if (step.fx === 'boost' && step.until === undefined && !['strength', 'dexterity'].includes(step.stat)) bad('until');

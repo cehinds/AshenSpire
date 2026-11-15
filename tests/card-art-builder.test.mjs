@@ -115,7 +115,7 @@ test('every builder type and category renders the same native Core recipe with c
       const model = playingCardModel(registries, { cardId: BUILDER_PREVIEW_ID }, { definition: preview.definition, rules: run });
       assert.deepEqual(model.costs, { variable: false, action: 0, mana: 0, stamina: 0 });
       if (type === 'evade') {
-        if (category === 'physical') assert.equal(model.stanceType, 'evade');
+        if (category === 'physical') assert.equal(model.type.subtype, 'Defense');
         assert.equal(preview.definition.evade, false);
         assert.deepEqual(preview.definition.effects, []);
         assert.doesNotMatch(markup, /Prepare one Evade/);

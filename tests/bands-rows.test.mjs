@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
-import { bandsFight, pairOf } from './helpers/bands-fight.mjs';
-import { quoteRangeActions } from '../src/engine/combatEngagement.js';
+import { bandsFight, pairOf, registries } from './helpers/bands-fight.mjs';
+import { quoteRangeActions, authorizeCounterRange } from '../src/engine/combatEngagement.js';
 import { SyncBandRows, SetEnemyRow } from '../src/engine/bandRows.js';
 
 test('enemies stand in rows: a reach starter is back, the rest front; encounter placement wins', () => {
@@ -127,4 +127,21 @@ test('rows are drawn as ranks: the back row stands in the back column, the front
   SetEnemyRow(combat, combat.enemies[0], 'front', 'test');
   assert.equal(combat.enemies[0].formationCell[1], '3');
   assert.equal(new Set(combat.enemies.map(e => e.formationCell)).size, 3);
+});
+
+test('a card-stack Counter (counter.stackSource "card", batch 5) aimed at a back-row attacker pays +1 for the return; a front-row attacker pays nothing', () => {
+  const price = row => {
+    const combat = bandsFight({ enemyIds: ['wanderingSoldier'], hand: ['core.counter'] });
+    assert.equal(combat.fixCoreRules.counter.stackSource, 'card', 'the shipped Core rules count stacks per card');
+    const attacker = combat.enemies[0];
+    SetEnemyRow(combat, attacker, row, 'test');
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0' });
+    assert.equal(combat.player.counterStacks, 1, 'the card granted its own stack');
+    const def = registries.cards.get('core.counter');
+    const carrier = { ...def, instanceId: 'qa0', counterReturnAttack: true, tags: [...def.tags, 'range:melee'],
+      combatProfile: { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single', traits: [] } };
+    return authorizeCounterRange(combat, combat.player, attacker, carrier, { rangePlan: null }).rangeReturnAuthorization.plan.advanceSp;
+  };
+  assert.equal(price('back'), 1);
+  assert.equal(price('front'), 0);
 });

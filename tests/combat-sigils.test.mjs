@@ -107,7 +107,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 9);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 9);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {

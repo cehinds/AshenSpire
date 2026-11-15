@@ -1,8 +1,8 @@
 import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
-import { counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
+import { CounterStackRule, counterRuleActive, counterReturnForReceipt, counterReturnSpent, paidCounterContact } from './counterRule.js';
 import { mechanics } from '../framework/data/mechanics.js';
-import { decayCounterStacks } from './guardStacks.js';
+import { decayCounterStacks, SpendCounterStacks } from './guardStacks.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
@@ -600,7 +600,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     receipt.connected = contest.passed;
     ctx.emit?.(contest.passed ? 'contestPassed' : 'contestFailed', { sourceId: source?.id, targetId: target?.id, cardId: carrier?.cardId,
       ...seats(ctx, source, target), contest, contestKind: contest.kind, roll: contest.roll, total: contest.total, dc: contest.dc, passed: contest.passed });
-    if (receipt.counterEligible && !receipt.avoided) {
+    if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
       target.combatCounter.charges = 0;
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
@@ -624,7 +624,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
       }
       receipt.connected = !receipt.avoided;
     }
-    if (receipt.counterEligible && !receipt.avoided) {
+    if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
       target.combatCounter.charges = 0;
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
@@ -640,7 +640,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     : Avoidance.resolveAvoidance(ctx, source, target, receipt.profile, receipt.avoidanceAmount ?? receipt.amount,
       { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0, hitCheck: Boolean(counterAttack) });
   receipt.avoided = receipt.avoidance.avoided;
-  if (receipt.counterEligible && !receipt.avoided) {
+  if (receipt.counterEligible && !receipt.avoided && !CounterStackRule(ctx, target)) {
     target.combatCounter.charges = 0;
     ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier), ...seats(ctx, target, source),
       sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
@@ -761,12 +761,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
-    || (counterReturnSpent(target) && !paidCounterContact(ctx, carrier, counter))) return queue;
+    || (!CounterStackRule(ctx, target) && counterReturnSpent(target) && !paidCounterContact(ctx, carrier, counter))) return queue;
   const deferredRangeReturn = ctx.rangeState?.policy.enabled === true;
   if (!deferredRangeReturn) {
     returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
     if (!returnCarrier) return queue;
-    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+    if (!CounterStackRule(ctx, target)) target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   }
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
@@ -792,12 +792,22 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   // Core 2 (SPEC §17, owner 2026-10-31): the return is the card's authored damage plus the owner's Counter stacks x 10% of
   // the incoming hit (stacks persist across turns; a card-less auto-Counter has base 0), not a fraction of that hit alone.
-  let counterBreakdown = null;
+  let counterBreakdown = null, cardHits = null;
   if (counterRuleActive(ctx)) {
-    const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp) });
+    const core = counterReturnForReceipt(ctx, receipt, { stacks: target.counterStacks || 0, base: number(counter.payload.hp), owner: target });
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
     payload.hp = core.hp; payload.poise = core.poise;
-    counterBreakdown = { counterBase: number(counter.payload.hp), counterStacks: target.counterStacks || 0, counterIncoming: core.incoming, counterStackShare: core.stackShare };
+    counterBreakdown = { counterBase: number(counter.payload.hp) * (core.hits ? core.hits.length : 1), counterStacks: target.counterStacks || 0, counterIncoming: core.incoming, counterStackShare: core.stackShare,
+      ...(core.hits ? { counterHits: core.hits.map(row => ({ incoming: row.incoming, stacksBefore: row.stacksBefore, amount: row.hp, poiseDamage: row.poise })) } : {}) };
+    cardHits = core.hits || null;
+    // Card-stack rule (owner 2026-11-15): every answered hit spends consumePerHit stacks; the charge ends with the last stack.
+    if (cardHits) {
+      SpendCounterStacks(ctx, target, core.consumed);
+      if (!(target.counterStacks > 0) && target.combatCounter?.serial === counter.serial) {
+        target.combatCounter.charges = 0;
+        ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source), sourceId: target.id, targetId: source?.id, serial: counter.serial });
+      }
+    }
     if (isSpellCounter(counter.carrier)) payload.ward = 0;
   }
   const magical = isSpell(counter.carrier.combatProfile);
@@ -828,8 +838,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     if (!(payload.hp > 0 || payload.poise > 0 || payload.ward > 0)) { ctx.emit?.('combatCounterTriggered', event); return queue; }
     returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
     if (!returnCarrier) return queue;
-    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+    if (!CounterStackRule(ctx, target)) target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   }
+  // One damage and one Poise action per root: the range reservation (bindReservedRootSites) admits a single return action. Under the card-stack rule the
+  // lump is the sum of the per-hit returns, which the event lists hit by hit (counterHits).
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
