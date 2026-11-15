@@ -68,7 +68,8 @@ test('a cantrip upgrade can add +1 stack of its status, Retain or a draw', () =>
     for (let seed = 1; seed <= 12; seed += 1) {
       for (const step of rollUpgradeOptions(base, [], 0, upgradeStepRng(seed, 'probe', 0), {}, 30)) kinds.add(step.k === 'fx' ? `fx:${step.fx}` : step.k);
     }
-    assert.ok(kinds.has('stk'), `${id} offers +1 stack`);
+    // Venom Spray already prints Venom 3, the most a card can usefully apply (cardUpgradeSteps ENGINE_STACK_CAPS), so it offers no +1 stack.
+    if (id !== 'core.venomSpray') assert.ok(kinds.has('stk'), `${id} offers +1 stack`);
     assert.ok(kinds.has('fx:retain'), `${id} offers Retain`);
     assert.ok(kinds.has('fx:draw'), `${id} offers draw 1`);
   }

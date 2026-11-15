@@ -53,6 +53,10 @@ const wholePct = (n) => (Number.isFinite(n) && n > 0 ? Math.min(100, n) : 0);
 
 /** The percent chance a won fight (pool 'normal' | 'elite' | 'boss') adds a rank-up to its reward (rewards.json `rankUp.chancePct`; missing = 0). */
 export const CombatRankUpChance = (run, pool) => (CardRanksOn(run) ? wholePct(gameContent(run, 'rewards')?.rankUp?.chancePct?.[pool]) : 0);
+/** The percent chance a won fight's rank-up comes as an extra pick beside the card pick, not instead of it (rewards.json `rankUp.bonusPickPct`; missing = 0, the rank-up uses the pick). */
+export const CombatRankUpBonusChance = (run) => (CardRanksOn(run) ? wholePct(gameContent(run, 'rewards')?.rankUp?.bonusPickPct) : 0);
+/** Whether this won fight's rank-up is a bonus pick (key: the offer's id; a hash roll like the rank-up's own, so no stream moves). */
+export const CombatRankUpIsBonus = (run, offerId) => RollRankUp(run, `bonus:${offerId}`, CombatRankUpBonusChance(run));
 /** The percent chance a shop's stock carries a rank-up (shops.json `rankUp.stockChancePct`; missing = 0). */
 export const ShopRankUpChance = (run) => (CardRanksOn(run) ? wholePct(gameContent(run, 'shops')?.rankUp?.stockChancePct) : 0);
 /** The cinders a shop asks for a rank-up: the Blacksmith's own price (shops.json `blacksmith.prices.rankUp`). */
