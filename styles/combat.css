@@ -437,6 +437,9 @@
 .float-num.immune { color: #cfd3d8; }
 .float-num.blk { color: #d8dde3; }
 .float-num.heal { color: var(--green); }
+/* The three parts of one hit (ui/fx.js guardHitFloatParts): Block absorbed white, Poise removed yellow, HP taken red (.dmg, above). */
+.float-num.hitpart.blk { color: var(--floater-block); }
+.float-num.hitpart.poise { color: var(--floater-poise); }
 .float-num.burst { color: var(--ember); font-weight: 900; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */
 .reduced-motion .float-num { animation: num-life-still var(--float-ms, 1650ms) linear forwards; }

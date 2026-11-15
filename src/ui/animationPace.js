@@ -139,6 +139,9 @@ export function actionPacing({ reduced = false, enemy = false } = {}) {
   return {
     gapMs, intentMs: gapMs, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) * (enemy ? turn.turnBannerScale : 1) : 0),
+    // The wait between a floater and the next animation inside a Counter exchange (motion.counter.floaterToAnimMs, ms at the default
+    // Combat speed): the player's speed rows and Reduced motion scale it like every other wait.
+    counterGapMs: Math.round(scaled(ACTION_PACING.counter.floaterToAnimMs * AUTOMATION_DEFAULTS.combatSpeed)),
     // How long an enemy's wind-up (its telegraph beat) is held before the attack beat takes over; 0 for the player.
     telegraphMs: enemy ? scaled(turn.telegraphMs) : 0,
     // Animation services consume the same lunge/cap duration object as before.

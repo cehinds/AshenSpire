@@ -212,9 +212,12 @@ test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {
   assert.equal(target.persistentPoise.value, 20);
 });
 
-test('floating text names why damage dropped: Poise absorbed N', async () => {
+test('floating text names why damage dropped: the Poise absorbed is its own yellow number', async () => {
   const { guardHitFloatParts } = await import('../src/ui/fx.js');
-  assert.equal(guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100).poise.text, 'Poise absorbed 2');
+  // Owner, 2026-11-14: Block white, Poise yellow, HP red, each a plain number; the colour says which layer took it.
+  const { poise } = guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100);
+  assert.equal(poise.text, '2');
+  assert.match(poise.cls, /\bpoise\b.*\bhitpart\b/);
 });
 
 test('the break haptic fires on a Core enemy Poise break', async () => {
