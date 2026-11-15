@@ -10,6 +10,7 @@
 import { FixCoreBands } from '../model/fixCoreMechanics.js';
 import { actorRangeKey, bandCap, rangePairKey } from '../model/combatEngagement.js';
 import { equippedIn } from '../model/loadout.js';
+import { FORMATION_ROWS, formationDimensions, perspectiveEnemyCellOrder } from '../model/formationLayout.js';
 import { attackDescriptor } from '../model/attackTags.js';
 
 export const BandRows = Object.freeze(['front', 'back']);
@@ -34,6 +35,19 @@ export function DefaultEnemyRow(def, placed = null) {
   return def?.startingRange === 'reach' || def?.startingRange === 'ranged' ? 'back' : 'front';
 }
 
+// Presentation address: the perspective grid draws the enemy back rank in column 4 and the front rank in column 3, so a row is a column.
+const rowColumn = row => row === 'back' ? '4' : '3';
+function placeInRow(ctx, enemy) {
+  if (!ctx.formationPolicy || !enemy.formationCell) return;
+  const cells = ctx.enemies.map(other => other.formationCell).filter(Boolean);
+  const lanes = Math.max(1, ...cells.map(cell => FORMATION_ROWS.indexOf(cell[0]) + 1));
+  const dimensions = formationDimensions({ perspectiveGrid: true, formationPolicy: ctx.formationPolicy }, ctx.enemies.length, lanes);
+  const taken = new Set(ctx.enemies.filter(other => other !== enemy).map(other => other.formationCell));
+  const free = perspectiveEnemyCellOrder(dimensions).filter(cell => cell[1] === rowColumn(enemy.row) && !taken.has(cell));
+  const next = free.find(cell => cell[0] === enemy.formationCell[0]) || free[0];
+  if (next) enemy.formationCell = next;
+}
+
 /** SyncBandRows(ctx): write rows and Advance onto the pair bands. Idempotent. */
 export function SyncBandRows(ctx) {
   if (!BandsActive(ctx)) return;
@@ -51,6 +65,8 @@ export function InitBandRows(ctx, placements = []) {
     enemy.row = DefaultEnemyRow(ctx.registries.enemies.get(enemy.enemyId), placements?.[i]);
     for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, enemy.row === 'back' ? 1 : 0);
   });
+  // Seat each enemy in its row's column (a cell another enemy holds is skipped; an enemy with no free cell there keeps its own).
+  for (const enemy of ctx.enemies) placeInRow(ctx, enemy);
   SyncBandRows(ctx);
 }
 
@@ -58,6 +74,7 @@ export function InitBandRows(ctx, placements = []) {
 export function SetEnemyRow(ctx, enemy, row, reason = 'move') {
   if (!BandsActive(ctx) || !BandRows.includes(row) || enemy.row === row) return false;
   enemy.row = row;
+  placeInRow(ctx, enemy);
   for (const player of playerEntities(ctx)) setPair(ctx, player, enemy, row === 'back' ? 1 : 0);
   SyncBandRows(ctx);
   ctx.emit?.('combatRowChanged', { targetId: enemy.id, row, reason });

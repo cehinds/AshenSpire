@@ -5,7 +5,7 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { bandsFight, pairOf } from './helpers/bands-fight.mjs';
 import { quoteRangeActions } from '../src/engine/combatEngagement.js';
-import { SyncBandRows } from '../src/engine/bandRows.js';
+import { SyncBandRows, SetEnemyRow } from '../src/engine/bandRows.js';
 
 test('enemies stand in rows: a reach starter is back, the rest front; encounter placement wins', () => {
   const combat = bandsFight();
@@ -114,4 +114,13 @@ test('a melee Counter return across to a back-row attacker costs +1 (a reach ret
   assert.equal(quote(combat, 'reach'), 0, 'a reach return pays normal');
   combat.player.advanced = 2; SyncBandRows(combat);
   assert.equal(quote(combat, 'melee'), 0, 'Advanced: the attacker is in reach');
+});
+
+test('rows are drawn as ranks: the back row stands in the back column, the front row in the front column, and a step forward moves the cell', () => {
+  const combat = bandsFight({ enemyIds: ['graveWisp', 'courtSurgeon', 'wanderingSoldier'] });
+  for (const enemy of combat.enemies) assert.equal(enemy.formationCell[1], enemy.row === 'back' ? '4' : '3', `${enemy.id} ${enemy.row} ${enemy.formationCell}`);
+  assert.equal(new Set(combat.enemies.map(e => e.formationCell)).size, 3, 'no two enemies share a cell');
+  SetEnemyRow(combat, combat.enemies[0], 'front', 'test');
+  assert.equal(combat.enemies[0].formationCell[1], '3');
+  assert.equal(new Set(combat.enemies.map(e => e.formationCell)).size, 3);
 });
