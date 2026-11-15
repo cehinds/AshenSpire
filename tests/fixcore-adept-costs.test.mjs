@@ -21,7 +21,10 @@ function native(classId) {
     profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   // A caster's staff is a Focus armament (-1 MP, tests/focus-mana-discount.test.mjs); these tests price the printed Mana.
   run.loadout.sets.rightHand[0] = 'greatsword'; run.loadout.sets.leftHand[0] = null;
-  return createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const combat = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
+  return combat;
 }
 
 test('Adept costs use the equipped class tag, authoritative Spell camp and only its resource lane', () => {

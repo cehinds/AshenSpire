@@ -181,6 +181,8 @@ export const EVENTS = Object.freeze([
   'enemyStaggered',
   // Wave 3: the end of Broken (poise.breakRule "broken"): { targetId, targetKind }; the owner's Poise has refilled to full.
   'brokenEnded',
+  // W25-F: the caster's elemental flux changed { targetId, element } (element null: cleared).
+  'elementFluxChanged',
   // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
   'weaknessTriggered',
   'manaLost',

@@ -158,6 +158,9 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
+// Keep this import last: an earlier one reorders the production bundle's cyclic module init.
+import { SetFaceCostRunSource, SetFaceCostPricer } from './model/faceCosts.js';
+import { SpellCostAdjust } from './engine/spellCosts.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -444,6 +447,8 @@ let settingsChoiceChecked = !!shotState;
 // rebuilds with: a saved newGameProfile must not cost a second validation there.
 rebuildRegistries(activeSettings, selectedGameProfile);
 const audio = initAudio(activeSettings);
+SetFaceCostRunSource(() => run); // faces read the shell's current run live, so no adoption or refusal path has to tell the model
+SetFaceCostPricer(SpellCostAdjust); // the model layer may not import the engine, so the shell hands it the spell cost rule
 // Route existing sound cues through the procedural audio engine.
 sfx.sink = (id) => audio.sfx(id);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that

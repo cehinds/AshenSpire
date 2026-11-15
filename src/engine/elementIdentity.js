@@ -209,9 +209,9 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
  * the same action are priced against them as live play meets them (Shock raises later lightning damage, Burn all later damage). Mirrors OnPoiseBreak
  * for the statuses only; Smite's HP, Knockback and the push are not carried. No events, no rng.
  */
-export function ElementPreviewBreak(ctx, attacker, defender, element) {
+export function ElementPreviewBreak(ctx, attacker, defender, element, incoming = 0) {
   const rules = ElementRulesOf(ctx);
-  if (!rules || !defender || !element) return;
+  if (!rules || !defender || !element) return 0;
   const add = (id, stacks, cap = Infinity) => {
     const have = defender.statuses?.[id]?.stacks || 0, give = Math.min(Math.floor(stacks), Math.max(0, cap - have));
     if (give > 0) defender.statuses = { ...defender.statuses, [id]: { ...defender.statuses?.[id], stacks: have + give } };
@@ -219,6 +219,8 @@ export function ElementPreviewBreak(ctx, attacker, defender, element) {
   if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, ElementAttribute(ctx, attacker, rules.fire.burnAttribute)), Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
   else if (element === 'lightning') add('shock', Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0), rules.shock.cap);
   else if (element === 'frost' && (defender.statuses?.chill?.stacks || 0) > 0) { add('freeze', 1); add('brittle', 1); }
+  else if (element === 'divine') return Math.floor((incoming || 0) * rules.divine.smiteFraction);
+  return 0;
 }
 
 // ---------------------------------------------------------------------------

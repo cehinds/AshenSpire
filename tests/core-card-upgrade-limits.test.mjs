@@ -19,8 +19,8 @@ const inst = (cardId, count) => ({ instanceId: `i-${cardId}`, cardId, ...(count 
 const blade = { id: 't.blade', name: 'Bladework', type: 'attack', rank: 1, tags: ['blade'] };
 
 test('upgradeBasic: common non-spells and cantrips only', () => {
-  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.cantrip', 'core.mendingTouch']) assert.equal(upgradeBasic(def(id)), true, id);
-  for (const id of ['core.stunningBlow', 'core.ironbreaker', 'core.cometLance', 'core.starfall', 'core.reaverSpecial', 'core.starseerSpecial', 'core.manaSurge']) assert.equal(upgradeBasic(def(id)), false, id);
+  for (const id of ['core.strike', 'core.hammerBlow', 'core.cinderDart', 'core.cantrip', 'core.mendingTouch', 'core.manaSurge']) assert.equal(upgradeBasic(def(id)), true, id);
+  for (const id of ['core.stunningBlow', 'core.ironbreaker', 'core.cometLance', 'core.starfall', 'core.reaverSpecial', 'core.starseerSpecial']) assert.equal(upgradeBasic(def(id)), false, id);
   // The Adept rule is untouched: it still calls a martial uncommon Basic.
   assert.equal(basicCardKind(newRun(), def('core.stunningBlow')), 'Basic');
 });

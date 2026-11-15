@@ -19,7 +19,7 @@ const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tabl
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
     // Block occupies the tall left slot; Evade and +2 sit below the HP/Poise bars. The overflow lists Ward and Precision.
-    expected:[['shield','12'],['evade','2'],['overflow','+2']], hidden:['Arcane Ward 5','Precision 3'], ac:false },
+    expected:[['shield','12'],['evade','2'],['overflow','+2']], hidden:['Ward 5','Precision 3'], ac:false },
   // The legacy (`current`) Ward case was dropped with the retired profile (owner, 2026-11-04: Core 2 only).
 ];
 try {

@@ -14,7 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults, withoutBatch2Rules } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
@@ -154,10 +154,24 @@ for (const [setup, expected] of PRE_BATCH2_PINNED) {
     assert.deepEqual(digest(play(withoutBatch2Rules(() => fight(setup)), 5)), expected);
   });
 }
-// Recaptured 2026-11-14 for batch 2 (stance benefits, element identities, PR from max(INT, WIS)): PRE_BATCH2_PINNED above reproduces the previous digests with those three keys removed.
-const PINNED = [
+// W25-F (spell costs and elemental flux): these are the shipped digests before it. A fight whose rules lack `spellCosts` and `elementFlux` still reproduces them exactly,
+// which is the proof that the new PINNED values below moved only through those rules.
+const PRE_W25F_PINNED = [
   [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: 'ec18b722c511f64a', events: 194, turn: 6 }],
   [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'be10dc76fcfdcf39', events: 195, turn: 6 }],
+];
+for (const [setup, expected] of PRE_W25F_PINNED) {
+  test(`pre-W25-F fight ${setup[0]}/${setup[1]} still reproduces the digest from before spell costs and flux`, () => {
+    assert.deepEqual(digest(play(withoutSpellCostRules(() => fight(setup)), 5)), expected);
+  });
+}
+// Recaptured 2026-11-15 for W25-F: PRE_W25F_PINNED above reproduces the previous digests with the two keys removed (and the legacy and pre-batch-2 fights above, built through helpers that remove them too, are unchanged). Logs, event counts, turns and RNG are identical, so only the state hashes move (the fight's rules snapshot gains the two blocks).
+// Recaptured 2026-11-15 for batch 4 (Ward routing `ward.routing`, `spellCosts.manaOnlyTag`): log, event counts, turns and RNG are identical (PERF1 194, 4242 195 events), only the
+// state hashes move, through the two rule keys in the fight's snapshot. Verified: the pre-W25-F fights above are built with ward.routing, spellCosts and elementFlux removed and reproduce
+// the pre-batch-4 digests exactly, as do the legacy, roll-legacy and pre-batch-2 fights (their helpers in tests/legacyHitRules.mjs now remove ward.routing too).
+const PINNED = [
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '52a937c3967fbd9e', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '287bdd8235e37954', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

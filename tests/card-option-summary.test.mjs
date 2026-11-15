@@ -38,10 +38,10 @@ test('a gain row places its number first and keeps a plain label', () => {
   assert.equal(row.before, '+');
   assert.equal(row.after, ' HP');
 });
-test('a non-spell Barrier gain is labelled Barrier, not Def', () => {
+test('a non-spell Barrier gain is labelled Poise, not Def', () => {
   const barrierDef = { id: 'testBarrier', name: 'Brace', type: 'skill', tags: ['camp:physical'], effects: [{ op: 'gainBarrier', target: 'self', amount: 4 }] };
   const rows = cardEffectLine(barrierDef, { values: [{ op: 'gainBarrier', value: 6 }] }, null);
-  assert.deepEqual(rows.map(row => [row.label, row.value, row.dir, row.before, row.after]), [['Barrier', 6, 'up', '+', ' Barrier']]);
+  assert.deepEqual(rows.map(row => [row.label, row.value, row.dir, row.before, row.after]), [['Poise', 30, 'up', '+', ' Poise']]);
 });
 test('a multi-hit card keeps its hit count after the number', () => {
   const flurry = { id: 'testFlurry', name: 'Flurry', type: 'attack', effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }] };

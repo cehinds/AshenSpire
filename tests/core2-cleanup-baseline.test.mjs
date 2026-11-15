@@ -52,6 +52,8 @@ function openFight(api, enemyId, encounterId, profileId) {
   const encounter = registries.encounters.get(encounterId);
   assert.deepEqual(plain(encounter.enemies), [enemyId]);
   const combat = api.createRunCombat({ registries, run, rng: api.createRng(seed), encounter, enemyIds: encounter.enemies });
+  // W25-F legacy fixture: this test pins the pre-W25-F pricing and numbers, so the spell cost and flux rules (fixCoreMechanics.json) are removed, as in a fight saved before them.
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   assert.equal(combat.core2ActionRulesVersion, profileId === 'historical' ? 1 : 2);
   return { api, profile, registries, run, combat, encounter };
 }

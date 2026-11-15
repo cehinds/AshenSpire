@@ -26,6 +26,8 @@ const reg = regs.wanderingSoldier;
 function live(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: regs[enemyId], classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: regs[enemyId], run, rng: createRng(511), enemyIds: [enemyId] });
+  // W25-F legacy fixture: these tests price the printed Counter costs; the spell cost rule (+1 MP) has its own tests (spell-costs-flux.test.mjs).
+  delete combat.fixCoreRules?.spellCosts; delete combat.fixCoreRules?.elementFlux;
   const enemy = combat.enemies[0];
   // The Counter's return is an attack with its own opposed roll, so the player needs the same flat Precision (below).
   combat.player.basePrecisionBonus = 1000;
@@ -696,7 +698,8 @@ test('Core: a spell Counter face with no revealed attack describes a return with
   const view = previewCard(combat, 'cq1');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
   assert.match(text, /Return damage and Poise/);
-  assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
+  // "Gain N Poise" is the Barrier line (owner, 2026-11-15); only a fixed Poise fraction of the return would be wrong here.
+  assert.doesNotMatch(text, /(?<!Gain )\b\d+ Poise(?! and)|\d Ward damage/, text);
 });
 
 // A Core profile may override the stances module (engine/modules/stances/guide.md): omit prepared or counter.

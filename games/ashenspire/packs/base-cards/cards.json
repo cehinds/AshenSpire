@@ -27,8 +27,8 @@
             "stacks": 4
           }
         ],
-        "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Barrier {base.persistent-barrier}.",
-        "faceTemplate": ["Gain Persistent Block {base.persistent-block}.", "Gain Persistent Barrier {base.persistent-barrier}."],
+        "textTemplate": "Gain Persistent Block {base.persistent-block} and Persistent Poise {base.persistent-barrier}.",
+        "faceTemplate": ["Gain Persistent Block {base.persistent-block}.", "Gain Persistent Poise {base.persistent-barrier}."],
         "icon": "skill",
         "flavor": "Armour charm of the Bastion watch.\n\nThe ridge gates were held through long winters by guards too few to relieve one another. Their warding knots were tied into the lining, renewing a thin defense whenever the wearer could stand and breathe.\n\nThe cloth outlasted several suits of iron."
       },

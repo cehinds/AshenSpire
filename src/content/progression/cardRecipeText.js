@@ -17,7 +17,7 @@ export function recipeText(effects, { counterMode = null } = {}) {
       case 'applyStatus': text = `Apply ${t} ${e.status} to${e.target === 'self' ? ' yourself' : target}`; break;
       case 'poiseDamage': text = counterMode ? `Prepare ${t} base reply Poise damage` : `Deal ${t} Break damage to${target}`; break;
       case 'restoreMana': text = `Restore ${t} Mana`; break;
-      case 'gainEnergy': text = `Restore ${t} Actions (Stamina)`; break;
+      case 'gainEnergy': text = `Gain ${t} Stamina`; break;
       case 'heal': text = `Heal ${t} HP`; break;
       case 'loseHp': text = `Offer ${t} HP; the payment must leave at least one HP`; break;
       case 'removeStatus': text = `Remove ${t || 'all'} ${e.status} stack(s) from yourself`; break;
@@ -78,7 +78,7 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'applyStatus': options = e.target === 'self' ? [`Gain ${t} ${statusName(e.status)}`] : [`Apply ${t} ${statusName(e.status)}${all ? ' to all' : ''}`, `Apply ${t} ${statusName(e.status)}`]; break;
       case 'poiseDamage': options = counterMode ? [`Prepare ${t} reply Poise damage`] : [`Deal ${t} Poise damage`]; break;
       case 'restoreMana': options = [`Restore ${t} Mana`]; break;
-      case 'gainEnergy': options = [`Restore ${t} Stamina`]; break;
+      case 'gainEnergy': options = [`Gain ${t} Stamina`]; break;
       case 'heal': options = [`Heal ${t} HP`]; break;
       case 'loseHp': options = [`Offer ${t} HP`]; break;
       case 'removeStatus': options = [`Remove ${statusName(e.status)}`]; break;

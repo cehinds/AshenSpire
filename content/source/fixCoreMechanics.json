@@ -3,7 +3,8 @@
   "enabled": true,
   "ward": {
     "enabled": false,
-    "poisePerStack": 5
+    "poisePerStack": 5,
+    "routing": "blockFirst"
   },
   "ratings": {
     "prAttributes": ["intelligence", "wisdom"]
@@ -68,6 +69,19 @@
     "neutral": {
       "extraDrawNextTurn": 1
     }
+  },
+  "spellCosts": {
+    "version": 1,
+    "manaSurcharge": 1,
+    "staminaSurcharge": 1,
+    "cantripTag": "rank.cantrip",
+    "manaOnlyTag": "cost.manaOnly",
+    "preparedStaminaDiscount": 1,
+    "focusManaDiscount": 1
+  },
+  "elementFlux": {
+    "version": 1,
+    "multiplier": 1.25
   },
   "accuracy": {
     "evasionVersion": 2,

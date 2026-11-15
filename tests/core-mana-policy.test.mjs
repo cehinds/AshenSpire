@@ -60,14 +60,15 @@ test('Sundering Art preview, affordability and actual combat payment use the sam
   assert.ok(combat.eventLog.some(event => event.type === 'cardPlayed' && event.cardInstanceId === card.instanceId));
 });
 
-test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks', () => {
+// Owner, 2026-11-15 (W25-F): every spell costs 1 more Mana, so Star Spark's printed 1 MP is paid as 2 (no Focus armament here; the Focus discount has its own test).
+test('Star Spark pays two MP (one printed, one spell surcharge) and actually applies two decaying Vulnerable stacks', () => {
   const { combat, card } = fight('core.starseerSpecial', 'starseer');
   // Magic spends Poise 1:1 (owner, 2026-10-31), so the spell would empty the soldier's Poise 5 and the break's Staggered adds a third Vulnerable.
   // A deep pool keeps this test about the card's own two stacks.
   combat.enemies[0].persistentPoise = { value: 100, max: 100 };
   const before = combat.player.mana;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
-  assert.equal(combat.player.mana, before - 1);
+  assert.equal(combat.player.mana, before - 2);
   assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 2);
   assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');

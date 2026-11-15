@@ -34,6 +34,7 @@
 // the batch-2 merge of w25-elements (element identity: fixCoreMechanics.json elements, the shock/chill/freeze/brittle/necroticBuildup/knockback statuses, the receipt stages) moves the runtime hash; a save made before keeps its snapshotted rules, which lack elements, and plays as before. w25-elements' own 33931a... and cc8bab... and the earlier 093f55... are kept.
 // the batch-2 merge of w25-stats (PR from max(INT, WIS): ratings.prAttributes; live attribute changes in a fight) moves the runtime hash; a fight saved without the key keeps INT-only PR. w25-stats' own 4d6cf7... and the earlier f47819... are kept.
 // Batch 3 (Broken wording on cards, relics and the Prepared status; the rank-up bonus pick) moves the runtime hash; the batch-2 hash a4c872... is kept.
+// W25-W (2026-11-15): Ward's Block-first routing (`ward.routing` in fixCoreMechanics.json) and the Barrier -> "Gain N Poise" wording move the runtime hash; batch 3's 753eed... is kept.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -77,9 +78,15 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:ad67bcf673204516f765000883738c8110f0701ceccbc94dbd4167489728ee1a',
   'sha256:a2854aeb6df487f9efe4bb1358b16df21d4a8d614e0090f63c23c6507d0f2613',
   'sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763',
+  'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1',
+  'sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179',
+  'sha256:1cb94094c521bfc9e0ad13066046d32142b6bb163db7d024e5c031aa2c019ba0',
+  'sha256:8af5d70cc4e5608e15f4536e058782426af5c8de0b6c6c76713a5f730d6ceda2',
+  'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434',
 ]);
-// Moved by the rankUpCard row added to engine/runtime/ops.json (batch 3).
-const FIXED_EVASION_RUNTIME = 'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1';
+// Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
+// pinned once at the batch-4 merge.
+const FIXED_EVASION_RUNTIME = 'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
