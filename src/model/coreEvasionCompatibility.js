@@ -76,8 +76,10 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:a4c872ecda5683fecafdd96805411896a32b11bceef517168221600647f189ce',
   'sha256:ad67bcf673204516f765000883738c8110f0701ceccbc94dbd4167489728ee1a',
   'sha256:a2854aeb6df487f9efe4bb1358b16df21d4a8d614e0090f63c23c6507d0f2613',
+  'sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763';
+// Moved by the rankUpCard row added to engine/runtime/ops.json (batch 3).
+const FIXED_EVASION_RUNTIME = 'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

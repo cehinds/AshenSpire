@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:718d74587375b5ec1db38178cb807eee337778623580fd0be458dec773b8d9fe",
+      "hash": "sha256:90166d73fc16e547e46124666baa0061789115b2cd4b445c3690d48139bf3cf4",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -580,7 +580,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:1f74f95c80df7e00d4a322bd962c9092dfc10bb64ee115545e66b3737847b226"
+          "hash": "sha256:97a2c184360b4f137102f7e4db8742416ddbf18e52fcb98f0d196fcc4e3d582f"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763"
+      "runtimeHash": "sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1"
     },
     "core": {
-      "hash": "sha256:718d74587375b5ec1db38178cb807eee337778623580fd0be458dec773b8d9fe",
+      "hash": "sha256:90166d73fc16e547e46124666baa0061789115b2cd4b445c3690d48139bf3cf4",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1304,7 +1304,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:1f74f95c80df7e00d4a322bd962c9092dfc10bb64ee115545e66b3737847b226"
+          "hash": "sha256:97a2c184360b4f137102f7e4db8742416ddbf18e52fcb98f0d196fcc4e3d582f"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763"
+      "runtimeHash": "sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1"
     }
   }
 }
