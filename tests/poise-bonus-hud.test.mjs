@@ -67,3 +67,12 @@ test('the engine reports the bonus maximum so the HUD can follow it', async () =
   assert.equal(event.barrierBonus, 5);
   assert.deepEqual({ ...PoiseBonusView({ value: event.value, max: event.max, barrierBonus: event.barrierBonus }) }, { base, shown: base, bonus: 5, max: base + 5, value: base + 5 });
 });
+
+// Owner, 2026-11-15 (batch 4): at 390x844 a right-lane enemy's "10/10 +5" ran past the screen edge. While a bonus shows, the plate takes the number's own width
+// and the bar gives up that room (it was a fixed value slot), so the row never outgrows the HUD.
+test('the mini HUD lets a bonus-Poise bar give up width to its longer number', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../styles/combat-mini-hud.css', import.meta.url), 'utf8');
+  assert.match(css, /combat-health-poise-bar\[data-bonus\] > \.m-well \{ flex: 0 1 var\(--mh-bar-w\); \}/);
+  assert.match(css, /combat-health-poise-bar\[data-bonus\] > \.m-plate\.m-plate \{ flex: 0 0 auto; \}/);
+});

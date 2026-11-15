@@ -95,6 +95,10 @@
   position: absolute; inset-block: 0; left: var(--bonus-from, 100%); width: var(--bonus-width, 0); background: var(--barrier-blue); border-radius: inherit; pointer-events: none;
 }
 :root .combat .combatant .combat-health-poise-bar .m-value .m-bonus { color: var(--barrier-blue); }
+/* A bonus makes the number longer ("10/10 +5"), and the mini HUD reserves a fixed value slot: a lane at the screen edge would push the "+5" past the viewport.
+   While a bonus shows, the plate takes the number's own width and the bar gives up that room, so the row never grows past the HUD (owner, 2026-11-15, 390x844). */
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-well { flex: 0 1 var(--mh-bar-w); }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-poise-bar[data-bonus] > .m-plate.m-plate { flex: 0 0 auto; }
 
 /* The badge row: every badge kind and the status tray, one size, one row. */
 :root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters .combat-health-row > .combat-health-badges {
