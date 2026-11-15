@@ -98,7 +98,7 @@ export function visibleBadges(badges, slots = BADGE_SLOTS) {
 export function stanceBadgeFor(entity, ctx) {
   const stance = activeCombatStance(entity);
   if (!stance || stance.staggered || ctx?.combatExpansionVersion !== 2) return null;
-  const label = ACTION_SIGILS[stance.maneuver]?.label || String(stance.maneuver).replace(/^\w/, c => c.toUpperCase());
+  const label = ACTION_SIGILS[stance.maneuver === 'evade' ? 'defense' : stance.maneuver]?.label || String(stance.maneuver).replace(/^\w/, c => c.toUpperCase());
   const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, { combatStance: stance }, id)])
     .filter(([, amount]) => amount > 0).map(([id, amount]) => `+${amount} ${id === 'ward' ? 'Ward' : id.toUpperCase()}`);
   return { maneuver: stance.maneuver, label, help: `Stance: ${label}${bonuses.length ? ` · ${bonuses.join(', ')}` : ''}` };

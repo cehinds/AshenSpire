@@ -7,7 +7,7 @@ import { combatCardType, combatCardSummary } from '../src/model/playingCard.js';
 const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
 test('large face labels keep martial maneuvers and public Spell preparation categories', () => {
-  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Evade'],['barrageCounter','Spell'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
+  for (const [id, label] of [['strike','Attack'],['defend','Defense'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Defense'],['barrageCounter','Spell'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
   assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Melee|attacks and spells/);
