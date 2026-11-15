@@ -79,6 +79,7 @@ import { beginDeckEdit, cancelDeckEdit } from '../../model/deckRules.js';
 import { UnlimitedAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 import { isPopoverOpen } from '../popoverPolyfill.js';
+import { colorMix } from '../colorMixCompat.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
   hp: 'HP',
@@ -657,7 +658,7 @@ export function mountCustomize(app, {
     refreshAbilitySelection();
     // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
-    portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
+    portrait.style.boxShadow = colorMix(`0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`);
     const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
       ? (state.spriteStyle === 'classic'
         ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'classic')
