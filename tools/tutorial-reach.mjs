@@ -862,6 +862,12 @@ async function main() {
   if (want('resize') && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
+    // Combat's Auto view lays out on a fixed form-factor canvas (viewViewport.js,
+    // owner 2026-11-14), so a resize no longer moves --ui-zoom there: it moves the
+    // canvas's uniform fit (--view-fit), which is what every callout's coordinate
+    // space now follows. The case reads that instead.
+    const FIT = `parseFloat(document.documentElement.style.getPropertyValue('--view-fit'))`;
+    const fit0 = await evalIn(FIT);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
     // main.js re-flexes zoom 150 ms after the resize, the tutorial re-places at
     // 220 ms and follows the board until it holds still, the spot slides 200 ms.
@@ -869,12 +875,14 @@ async function main() {
     // loaded runner can deliver seconds after CDP sends it — so wait for the
     // re-flex to happen at all, then for rest, and read only then.
     let reflexed = false;
-    try { reflexed = await until(`parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) !== 1.7`, 'the zoom re-flex'); } catch { /* reported by the zoom check below */ }
+    try { reflexed = await until(`${FIT} !== ${fit0}`, 'the canvas re-fit'); } catch { /* reported by the zoom check below */ }
     const rest = reflexed ? await evalIn(SETTLED) : { settled: false, ms: 0 };
     const p = await evalIn(PROBE);
     const spotOn = await evalIn(SPOT_ON_TARGET);
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
-    ok(p.zoom === 1.07, `resize: --ui-zoom re-flexed 1.7 → 1.07 (else this case tests nothing)`);
+    const fit1 = await evalIn(FIT);
+    console.log(`    view-fit ${fit0} → ${fit1}`);
+    ok(reflexed && fit1 !== fit0, `resize: the combat canvas re-fit ${fit0} → ${fit1} (else this case tests nothing)`);
     ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
@@ -1148,6 +1156,11 @@ async function main() {
       );
 
       await pressKey('Escape', 'Escape', 27);
+      // The profile write is not synchronous any more: every profile mutation enters
+      // the origin-wide storage owner (browserSave.js, Web Locks) before its fresh
+      // read-merge-write, so the veil leaves the DOM a task or two before the meta
+      // lands. Wait for the write itself, bounded; a write that never lands still fails.
+      try { await until(`(() => { try { return JSON.parse(localStorage.getItem('sote_meta_v1') || '{}').settings?.seenTutorial === true; } catch { return false; } })()`, 'the durable seenTutorial write', 5000); } catch { /* reported by the check below */ }
       const finished = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
         meta: localStorage.getItem('sote_meta_v1'),
