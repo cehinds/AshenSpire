@@ -153,12 +153,12 @@ test('Barrier keeps damaged Poise below the maximum when a stack decays', () => 
   assert.equal(e.persistentPoise.value, 3);
 });
 
-test('Mote Shield gains Block, Barrier and Ward, and says so', () => {
+test('Mote Shield gains Block, Poise (Barrier stacks) and Ward, and says so', () => {
   const def = reg.cards.get('core.moteShield');
   const ops = def.effects.map(e => `${e.op}:${e.status || ''}:${e.amount ?? e.stacks ?? ''}`);
   assert.ok(ops.includes('applyStatus:barrier:1'), ops.join());
   assert.ok(ops.some(o => o.startsWith('applyStatus:ward:')), ops.join());
-  assert.match(def.textTemplate, /Barrier/); assert.match(def.textTemplate, /Ward/);
+  assert.match(def.textTemplate, /\{barrier\} Poise/); assert.doesNotMatch(def.textTemplate, /Barrier/); assert.match(def.textTemplate, /Ward/);
   const up = def.upgrade.effects.map(e => `${e.op}:${e.status || ''}:${e.amount ?? e.stacks ?? ''}`);
   assert.ok(up.includes('applyStatus:barrier:2')); assert.ok(up.includes('applyStatus:ward:2'), up.join());
 });
