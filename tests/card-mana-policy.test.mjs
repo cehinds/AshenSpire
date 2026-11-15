@@ -11,6 +11,7 @@ const registries = createRegistries(contentBundle);
 test('every authored weapon-package art and actual non-power spell has at least the printed Mana minimum', () => {
   const ids = [...new Set(registries.equipment.armaments.flatMap(piece => piece.weaponCardPackage?.weaponArtDefaults || []))];
   assert.ok(ids.length > 20);
+  assert.deepEqual(cardManaPolicy.manaFreeCards, ['quickstep'], 'only Quickstep is exempt from the weapon-art Mana minimum');
   for (const id of ids) {
     const card = resolveCard(registries, { cardId: id });
     // W25-EvadeCards (intended by the design): Quickstep is on the shortbow's art list but pays 1 Stamina and no Mana (policy.manaFreeCards).
