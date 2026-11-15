@@ -591,6 +591,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "weak",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -598,7 +604,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {weak} Weak.",
     "upgrade": {
       "effects": [
         {
@@ -610,6 +616,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "weak",
+          "stacks": 1
         }
       ]
     },
@@ -684,6 +696,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "bleed",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -691,7 +709,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Close one band. Deal {damage} damage.",
+    "textTemplate": "Close one band. Deal {damage} damage. Apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -703,6 +721,12 @@
           "op": "damage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "bleed",
+          "stacks": 2
         }
       ]
     },
@@ -990,6 +1014,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 6
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -997,7 +1027,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
@@ -1009,6 +1039,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 1
         }
       ]
     },
@@ -1309,6 +1345,12 @@
         "op": "poiseDamage",
         "target": "allEnemies",
         "amount": 3
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "bleed",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -1317,7 +1359,7 @@
       "classification.attack",
       "targeting:area"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage to ALL enemies.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage to ALL enemies. Apply {bleed} Bleed to ALL enemies.",
     "upgrade": {
       "effects": [
         {
@@ -1329,6 +1371,12 @@
           "op": "poiseDamage",
           "target": "allEnemies",
           "amount": 4
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "bleed",
+          "stacks": 1
         }
       ]
     },
@@ -1414,6 +1462,10 @@
         "op": "moveEngagement",
         "target": "enemy",
         "bands": 1
+      },
+      {
+        "op": "draw",
+        "amount": 1
       }
     ],
     "tags": [
@@ -1421,7 +1473,7 @@
       "maneuver:attack",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Retreat one band.",
+    "textTemplate": "Deal {damage} damage. Retreat one band. Draw {draw} card.",
     "upgrade": {
       "effects": [
         {
@@ -1433,6 +1485,10 @@
           "op": "moveEngagement",
           "target": "enemy",
           "bands": 1
+        },
+        {
+          "op": "draw",
+          "amount": 1
         }
       ]
     },
@@ -1649,6 +1705,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "frost",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -1657,7 +1719,7 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {frost} Frost.",
     "upgrade": {
       "effects": [
         {
@@ -1669,6 +1731,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "frost",
+          "stacks": 2
         }
       ]
     },
@@ -1744,6 +1812,12 @@
         "op": "damage",
         "target": "enemy",
         "amount": 60
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 3
       }
     ],
     "tags": [
@@ -1752,13 +1826,19 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage.",
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
     "upgrade": {
       "effects": [
         {
           "op": "damage",
           "target": "enemy",
           "amount": 76
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
         }
       ]
     },
@@ -2093,6 +2173,12 @@
         "op": "poiseDamage",
         "target": "enemy",
         "amount": 8
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
       }
     ],
     "tags": [
@@ -2100,7 +2186,7 @@
       "maneuver:smash",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.",
     "upgrade": {
       "effects": [
         {
@@ -2112,6 +2198,12 @@
           "op": "poiseDamage",
           "target": "enemy",
           "amount": 8
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 2
         }
       ]
     },
@@ -2439,6 +2531,12 @@
         "op": "block",
         "target": "self",
         "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 1
       }
     ],
     "tags": [
@@ -2447,7 +2545,7 @@
       "maneuver:casting",
       "classification.attack"
     ],
-    "textTemplate": "Deal {damage} damage. Gain {block} Block.",
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
     "upgrade": {
       "effects": [
         {
@@ -2459,6 +2557,12 @@
           "op": "block",
           "target": "self",
           "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 1
         }
       ]
     },

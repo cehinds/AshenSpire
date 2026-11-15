@@ -74,3 +74,38 @@ test('a cantrip upgrade can add +1 stack of its status, Retain or a draw', () =>
     assert.ok(kinds.has('fx:draw'), `${id} offers draw 1`);
   }
 });
+
+const attacks = cards.filter(card => card.type === 'attack' && card.id.startsWith('core.'));
+const enemyStatuses = effects => (effects || []).filter(e => e.op === 'applyStatus' && e.target !== 'self').map(e => e.status);
+// A school-less attack draws from its camp: physical hits Bleed / Vulnerable / Weak, spells their own pressure statuses.
+const CAMP_STATUS = { physical: ['bleed', 'vulnerable', 'weak', 'frail', 'venom'], spell: ['burn', 'frost', 'chill', 'shocked', 'shock', 'vulnerable', 'weak', 'frail', 'magicVulnerable', 'necroticBlight', 'venom'] };
+
+test('at least 30% of shipped attacks apply a status, and so do at least 30% of the non-cantrip ones', () => {
+  const applies = card => (card.effects || []).some(e => e.op === 'applyStatus');
+  assert.ok(attacks.filter(applies).length / attacks.length >= 0.3, 'all attacks');
+  const plain = attacks.filter(card => !tagsOf(card).includes('rank.cantrip'));
+  assert.ok(plain.filter(applies).length / plain.length >= 0.3, 'non-cantrip attacks');
+});
+
+test('each attack status matches its school or camp, at both grades', () => {
+  for (const card of attacks) {
+    const school = schoolOf(card);
+    const camp = tagsOf(card).includes('camp:spell') ? 'spell' : 'physical';
+    for (const [grade, effects] of [['base', card.effects], ['upgrade', card.upgrade?.effects]]) {
+      const applied = enemyStatuses(effects);
+      if (school && SCHOOL_STATUS[school] && applied.length) assert.ok(applied.some(status => SCHOOL_STATUS[school].includes(status)), `${card.id} ${grade}: ${applied} vs ${school}`);
+      else for (const status of applied) assert.ok(CAMP_STATUS[camp].includes(status), `${card.id} ${grade}: ${status} is not a ${camp} status`);
+    }
+  }
+});
+
+test('the riders added this wave keep both grades in step', () => {
+  const RIDERS = { pommelStrike: 'weak', drivingThrust: 'bleed', hammerBlow: 'vulnerable', cometLance: 'frost', smite: 'regen', meteor: 'burn', ironbreaker: 'vulnerable', whirlwind: 'bleed' };
+  for (const [id, status] of Object.entries(RIDERS)) {
+    const card = cards.find(row => row.id === `core.${id}`);
+    for (const effects of [card.effects, card.upgrade.effects]) assert.ok(effects.some(e => e.op === 'applyStatus' && e.status === status && e.stacks >= 1), `${id} ${status}`);
+    assert.ok(card.textTemplate.includes(`{${status}}`), `${id} face names ${status}`);
+  }
+  const hit = cards.find(row => row.id === 'core.hitAndRun');
+  for (const effects of [hit.effects, hit.upgrade.effects]) assert.ok(effects.some(e => e.op === 'draw' && e.amount === 1));
+});
