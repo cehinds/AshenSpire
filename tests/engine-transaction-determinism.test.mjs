@@ -14,7 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutCounterStackDefaults } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
@@ -169,9 +169,21 @@ for (const [setup, expected] of PRE_W25F_PINNED) {
 // Recaptured 2026-11-15 for batch 4 (Ward routing `ward.routing`, `spellCosts.manaOnlyTag`): log, event counts, turns and RNG are identical (PERF1 194, 4242 195 events), only the
 // state hashes move, through the two rule keys in the fight's snapshot. Verified: the pre-W25-F fights above are built with ward.routing, spellCosts and elementFlux removed and reproduce
 // the pre-batch-4 digests exactly, as do the legacy, roll-legacy and pre-batch-2 fights (their helpers in tests/legacyHitRules.mjs now remove ward.routing too).
-const PINNED = [
+const PRE_BATCH5_PINNED = [
   [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '52a937c3967fbd9e', events: 194, turn: 6 }],
   [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '287bdd8235e37954', events: 195, turn: 6 }],
+];
+// Recaptured 2026-11-15 for Wave 2 batch 5 (Counter stacks `counter.stackSource` and friends, no Counter-stance return): a fight whose rules lack the Counter-stack
+// keys (and keep the stance's hpReturnFraction), built through withoutCounterStackDefaults, reproduces PRE_BATCH5_PINNED above exactly, which proves the new PINNED
+// values below moved only through those rules: log, event counts and turns are identical (the Counter is never armed in these fights), only the state hashes move through the new keys in the fight's snapshot.
+for (const [setup, expected] of PRE_BATCH5_PINNED) {
+  test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => fight(setup)), 5)), expected);
+  });
+}
+const PINNED = [
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '1a19c5dd77cfff0c', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '53aa4ee0b0fa5393', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

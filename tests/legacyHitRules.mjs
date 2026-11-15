@@ -8,7 +8,10 @@ const COUNTER_STACK_KEYS = ['stackSource', 'returnPerStack', 'consumePerHit', 'd
 function stripCounterStacks() {
   const held = Object.fromEntries(COUNTER_STACK_KEYS.map(key => [key, fixCoreMechanics.counter[key]]));
   for (const key of COUNTER_STACK_KEYS) delete fixCoreMechanics.counter[key];
-  return () => Object.assign(fixCoreMechanics.counter, held);
+  // ...and the Counter stance still returns 25% of the HP a hit cost it (stanceBenefits.counter.hpReturnFraction), which the same ruling dropped.
+  const stance = fixCoreMechanics.stanceBenefits?.counter;
+  if (stance) stance.hpReturnFraction = 0.25;
+  return () => { Object.assign(fixCoreMechanics.counter, held); if (stance) delete stance.hpReturnFraction; };
 }
 function guarded(build) { const restore = stripCounterStacks(); try { return build(); } finally { restore(); } }
 /** The rules of a fight saved before the 2026-11-14 ruling: the perception key is absent, so intents roll. */
