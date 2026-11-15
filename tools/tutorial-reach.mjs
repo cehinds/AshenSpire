@@ -523,13 +523,32 @@ async function main() {
     await clickSel('.combat-potions', 'the Potions control');
     const useSel = '.combat-potion-menu .potion-use[aria-label="Use Blight Coating"]';
     await until(`!!document.querySelector(${JSON.stringify(useSel)})`, 'Blight Coating Use action');
-    const pt = await evalIn(`(() => {
+    // A form-factor canvas (Auto view in combat) keeps the document at scroll 0,0
+    // (viewViewport.js), so a scrollIntoView that moved the page is undone a
+    // frame later and a point read straight after it lands beside the button.
+    // Scroll only if the button is not already visible, then read its centre once
+    // it has held still for several frames, and hand it back only if the point
+    // really hits the button (the hit test keeps the tool honest).
+    const pt = await evalIn(`new Promise((resolve) => {
       const b = document.querySelector(${JSON.stringify(useSel)});
-      if (!b || b.disabled) return null;
-      b.scrollIntoView({ block: 'center' });
-      const r = b.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat || 'tap' };
-    })()`);
+      if (!b || b.disabled) return resolve(null);
+      const vis = () => { const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; };
+      if (!vis()) b.scrollIntoView({ block: 'nearest' });
+      let last = '', still = 0, frames = 0;
+      const tick = () => {
+        const r = b.getBoundingClientRect();
+        const key = [r.left, r.top, r.width, r.height].map(Math.round).join();
+        still = key === last ? still + 1 : 0;
+        last = key;
+        if (still >= 5 || ++frames > 300) {
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const hit = document.elementFromPoint(x, y);
+          return resolve(hit && (hit === b || b.contains(hit)) ? { x, y, beat: b.dataset.beat || 'tap' } : null);
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    })`);
     if (!pt) return { armed: false, selectedCard: false, beat: null };
     if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
     else await clickAt(pt.x, pt.y);
