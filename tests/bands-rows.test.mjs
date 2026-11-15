@@ -40,30 +40,34 @@ test('the Advance lasts through the enemy phase and the next turn, then the back
   assert.equal(combat.player.advanced, 0);
 });
 
+// Seed 2: the surgeon's roll is the scalpel, planned as its step forward ("advance") because it stands in the back row.
+const surgeonMoves = combat => combat.eventLog.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === 'e1').map(e => e.moveId);
 const surgeonScalpel = ({ advanced = false } = {}) => {
-  const combat = bandsFight({ enemyIds: ['courtSurgeon', 'wanderingSoldier'], seed: 5 });
+  const combat = bandsFight({ enemyIds: ['courtSurgeon', 'wanderingSoldier'], seed: 2, hand: advanced ? ['core.advance'] : [] });
   const surgeon = combat.enemies[0];
   assert.equal(surgeon.row, 'back');
-  surgeon.intent = { ...surgeon.intent, moveId: 'scalpel', kind: 'attack' };
+  assert.equal(surgeon.intent.moveId, 'advance');
+  assert.equal(surgeon.intent.approachFor, 'scalpel');
   surgeon.plannedMoves = []; // no follow-up this turn: the intent is the whole turn
-  if (advanced) combat.player.advanced = 2, combat.rangeState = { ...combat.rangeState, engagements: { ...combat.rangeState.engagements, [pairOf('e1')]: 0 } };
+  if (advanced) {
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'qa0', targetId: 'e1' }); // playing the Advance re-plans the intent: the attack stands
+    assert.equal(surgeon.intent.moveId, 'scalpel');
+  }
   return { combat, surgeon };
 };
 
 test('Engage: a melee move from the back row is spent stepping forward; the attack lands the turn after', () => {
   const { combat, surgeon } = surgeonScalpel();
-  const hp = combat.player.hp;
   dispatch(combat, { type: 'endTurn' });
   assert.equal(surgeon.row, 'front');
-  assert.equal(combat.player.hp, hp, 'no damage on the approach turn');
+  assert.deepEqual(surgeonMoves(combat), ['advance'], 'it approached and did not attack on the approach turn');
 });
 
 test('Engage: an Advanced player is in reach, so the back row attacks directly', () => {
   const { combat, surgeon } = surgeonScalpel({ advanced: true });
-  const hp = combat.player.hp;
   dispatch(combat, { type: 'endTurn' });
   assert.equal(surgeon.row, 'back', 'it did not move');
-  assert.ok(combat.player.hp < hp, 'it hit');
+  assert.deepEqual(surgeonMoves(combat), ['scalpel'], 'it hit directly');
 });
 
 test('with no front-row enemy left the back row steps forward at the enemy phase', () => {
