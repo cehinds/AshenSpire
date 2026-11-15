@@ -1639,7 +1639,7 @@
       "tags": [
         "bow"
       ],
-      "range": "ranged",
+      "range": "reach",
       "points": {
         "dexterity": 1
       }

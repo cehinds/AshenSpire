@@ -238,3 +238,9 @@
 :root .combat[data-target-hud='true'] .intent .intent-action[data-value-kind='later'] .intent-action-value { color: var(--parchment); }
 :root .combat .intent .intent-later-note { display: block; font: 600 calc(12px / var(--ui-zoom, 1))/1.1 system-ui, sans-serif; white-space: nowrap; color: var(--parchment); opacity: .9; }
 :root .combat .intent .intent-later { align-items: center; }
+
+/* A follow-up of the head's own stance shows its HP number beside the icon (owner, 2026-11-14): the secondary number size, so the head's
+   number stays the largest, and never under 11 px; a row of several wraps instead of widening the intent past a phone's width. */
+:root .combat .intent .intent-followups { flex-wrap:wrap; justify-content:center; }
+:root .combat .intent .intent-followup[data-has-value='true'] { gap:calc(2px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-followup .intent-followup-value { font-size:calc(15px / var(--ui-zoom,1)); font-weight:700; line-height:1; color:inherit; }

@@ -35,7 +35,8 @@ function previewAndPlay(poise) {
   const rows = damageRows(f.combat, f.id, f.enemy);
   // Owner, 2026-11-14: hitDamages is the HP lost per hit, the same as the receipt's hpLoss, which is what live must deal.
   const shown = rows.map(v => v.damageReceipt.hits.map(hit => hit.hpLoss));
-  const shownRaw = rows.map(v => v.hitDamages);
+  // Owner, 2026-11-14 (face rule): `hitDamages` is now the card FACE (attacker side); the per-target quote is `perTargetHitDamages`.
+  const shownRaw = rows.map(v => v.perTargetHitDamages[f.enemy.id]);
   const poiseBefore = f.enemy.persistentPoise.value;
   assert.equal(f.enemy.persistentPoise.value, poiseBefore, 'preview leaves the real Poise alone');
   assert.equal(f.enemy.combatStance, undefined, 'preview leaves the real stance alone');

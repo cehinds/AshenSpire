@@ -110,3 +110,18 @@ export function intentDamageRead(intent) {
     ? t('combat.intent.damageContact', { index: (intent.contactIndex || 0) + 1, count: intent.contactCount || 1, amount: bounds, basis })
     : t('combat.intent.damageTotal', { amount: bounds, basis }) };
 }
+
+// Owner, 2026-11-14: planned follow-ups of the SAME stance as the head show their own number beside the icon (the HP the player loses from
+// each, given the actions before it). `priceAt(i)` quotes follow-up i ({ label } or null). The run ends at the first follow-up that is a
+// different stance, unread, or unpriced; a Charging head keeps its presentation. Returns copies of the symbols, never the originals.
+export function SameStanceNumbers(headPart, symbols = [], priceAt) {
+  // A damaging spell is drawn with the cast icon at the head, but its stance row reads as an attack (iconForStance).
+  const icon = headPart?.icon === 'cast' && headPart.value != null ? 'attack' : headPart?.icon;
+  let run = ['attack', 'smash'].includes(icon) && headPart.valueKind !== 'later' && headPart.value != null;
+  return symbols.map((symbol, i) => {
+    if (!run || symbol.kind !== 'action' || symbol.icon !== icon) { run = false; return { ...symbol }; }
+    const price = priceAt(i);
+    if (price?.label == null) { run = false; return { ...symbol }; }
+    return { ...symbol, value: String(price.label) };
+  });
+}

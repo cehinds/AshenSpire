@@ -38,7 +38,7 @@ const fail = () => { throw UNPHRASEABLE; };
 const LINE_ORDER = ['cost', 'damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
-const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
+const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
 // Statuses whose name is not their effect: the face adds the status's own tooltip line.
 const MECHANIC_STATUSES = ['concealed', 'bulwarkEcho', 'stoneskin', 'entombed'];
@@ -149,7 +149,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     return (service ? service.resolve(list) : resolveTags(list)).map(tag => tag.label).join('');
   };
   const typed = (amountHtml, label) => (label ? `${amountHtml} ${esc(label)}` : amountHtml);
-  const areaOf = target => target === 'allEnemies' ? ' to all enemies' : target === 'randomEnemy' ? ' to a random enemy' : '';
+  const areaOf = target => target === 'allEnemies' ? ' to all enemies' : target === 'randomEnemy' ? ' to a random enemy' : target === 'otherEnemy' ? ' to another enemy' : '';
   const durationOf = effect => {
     if (effect.duration === undefined) return '';
     if (typeof effect.duration !== 'number') fail();
@@ -255,6 +255,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const out = [];
         // Precision is a flat bonus (owner, 2026-10-31): a self grant prints "+N Precision", matching the Entry line.
         if (effect.target === 'self' && effect.status === 'precision') out.push({ cat: 'bonus', text: `+${num(stacks, stacksBase)} Precision${duration}` });
+        else if (effect.target === 'self' && effect.thisTurn === true) out.push({ cat: 'gain', text: `${name} this turn` });
         else if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
         else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
@@ -286,7 +287,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
         : `Enter ${esc(registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance)}`);
       // A generated card's own cost and keywords are only in the authored text.
-      case 'addCard': return fail();
+      // An upgrade's own copy (card upgrade menu, W25) reads plainly; any other generated card keeps its authored text.
+      case 'addCard': if (effect.card === def.id && effect.pile === 'discard') return frag('bonus', 'Add a copy to your discard pile'); return fail();
+      case 'exhaust': return frag('bonus', `Exhaust ${num(n, base)}${effect.random ? ' at random' : ''}`);
+      case 'shuffleDiscardIntoDraw': return frag('bonus', 'Shuffle your discard pile into your draw pile');
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
           .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'

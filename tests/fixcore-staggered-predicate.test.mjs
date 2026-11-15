@@ -18,9 +18,12 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
-function live(poise = 2) {
+// `legacy` (the default) is the Staggered rule a fight saved before Wave 3 keeps (no `poise.breakRule`); `legacy: false` is the shipped
+// Broken rule (`poise.breakRule: "broken"`), covered by the twin tests below and by tests/poise-broken.test.mjs.
+function live(poise = 2, { legacy = true } = {}) {
   const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier']});
+  if (legacy) combat.fixCoreRules = { ...(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { drain: 'prevented' } };
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: poise, max: 20 }, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
   delete target.combatStance; delete target.combatCounter;
@@ -52,6 +55,26 @@ test('Core: an expired stance no longer counts; other stances do not count', () 
   assert.equal(ev(combat, target), false);
   assert.equal(isStaggered(combat, target), false);
   assert.equal(isStaggered(combat, null), false);
+});
+
+test('Broken (shipped rule): a real Poise break makes hasStatus staggered true through `broken`, with no stance and no status', () => {
+  const { combat, target } = live(2, { legacy: false });
+  assert.equal(combat.fixCoreRules.poise.breakRule, 'broken');
+  assert.equal(ev(combat, target), false, 'not broken yet');
+  breakPoise(combat, target);
+  assert.ok(target.broken, 'the break made the target Broken');
+  assert.equal(target.statuses.staggered, undefined);
+  assert.equal(isStaggered(combat, target), true);
+  assert.equal(ev(combat, target), true);
+  assert.equal(ev(combat, target, { ...staggeredPred, atLeast: 2 }), false, 'Broken counts as one stack');
+  assert.equal(ev(combat, target, { p: 'hasStatus', of: 'target', status: 'weak' }), false);
+});
+
+test('Broken (shipped rule): a Staggered stance alone does not count; only Broken does', () => {
+  const { combat, target } = live(2, { legacy: false });
+  target.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee' };
+  assert.equal(isStaggered(combat, target), false);
+  assert.equal(ev(combat, target), false);
 });
 
 test('Current: a staggered status still satisfies the predicate; the stance alone does not apply outside Core 2', () => {

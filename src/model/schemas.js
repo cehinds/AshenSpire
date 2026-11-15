@@ -121,6 +121,7 @@ export const TARGETS = Object.freeze([
   // Every living enemy EXCEPT the one the firing event names (and the action's
   // own target): a break's ripple reaches the others, never the broken one.
   'otherEnemies',
+  'otherEnemy',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
@@ -175,6 +176,8 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // Wave 3: the end of Broken (poise.breakRule "broken"): { targetId, targetKind }; the owner's Poise has refilled to full.
+  'brokenEnded',
   // Enemy weaknesses (SPEC 5.3): a hit met a weakness { targetId, to, effect, amount }; a weakness took enemy Mana.
   'weaknessTriggered',
   'manaLost',
@@ -569,7 +572,7 @@ export const EFFECT_SPECS = Object.freeze({
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
-  applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
+  applyStatus: { allowed: ['status', 'stacks', 'tags', 'thisTurn'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },

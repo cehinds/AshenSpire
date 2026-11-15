@@ -7,7 +7,7 @@ import { acFor } from '../models/acBadge.js';
 import { PoiseBarRemaining, PoiseNearBreak, PoiseLeft } from '../models/CombatHealthModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription, FixCoreHitRollOff } from '../../model/fixCoreMechanics.js';
 import { poiseHelpText } from '../poiseHelp.js';
-import { ApplyCombatBeat, CaptureCombatDisplay } from '../models/CombatPlaybackModel.js';
+import { ApplyCombatBeat, CaptureCombatDisplay, PlayCostEvents, RequoteHeldHand } from '../models/CombatPlaybackModel.js';
 import { PendingCombatTargetPlan, ResolveTargetHudAction } from '../models/CombatTargetingModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
@@ -19,6 +19,8 @@ import { IsCurrentCombatMount, ObserveCombatMount } from '../components/combatMo
 import { CreateCombatPlayback } from '../components/combatPlayback.js';
 import { projectCombatIntent as projectIntentUncached } from '../models/CombatIntentProjectionModel.js';
 import { flushDeferredIntentClears } from '../models/CombatIntentProjectionModel.js';
+import { ProjectPlannedFollowUpDamage } from '../models/CombatIntentProjectionModel.js';
+import { combatIntentPresentation, SameStanceNumbers } from '../models/CombatIntentModel.js';
 import { createFollowMemo, CreateFollowUpReduction, PromoteFollowUpRow } from '../models/IntentFollowUpModel.js';
 import { SnapshotIntentShift, AnimateIntentShift } from '../components/intentShift.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
@@ -1305,8 +1307,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return null;
   }
+  // Cost receipts a committed play already put on the HUD (payPlayAtCommit); the timeline must not charge them twice.
+  const paidAtCommit = new WeakSet();
+  function payPlayAtCommit(events) {
+    if (!disp) return;
+    const paid = PlayCostEvents(events).filter(event => !paidAtCommit.has(event));
+    if (paid.length) { applyBeatToDisp({ events: paid, committing: true }); for (const event of paid) paidAtCommit.add(event); }
+    RequoteHeldHand(disp, combat, previewCard, upcastRanksByCard);
+    renderTopbar();
+    paintActionCounts(); // the Stamina / Mana orb
+  }
   function applyBeatToDisp(beat) {
-    if (ApplyCombatBeat(disp, beat.events, {
+    const fresh = beat.events.filter(event => !paidAtCommit.has(event) || beat.committing);
+    if (ApplyCombatBeat(disp, fresh, {
       combat, registries, projectCombatIntent, findInst, playbackEvents, reduceFollowRows,
     })) heldTurnHand = null;
   }
@@ -1898,6 +1911,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       node.append(span);
     };
     part('target-quote-text', quote.text);
+    if (quote.poise) part('target-quote-poise', quote.poise, { break: String(!!quote.poiseBreaks) });
     if (quote.stamina != null) part('target-quote-cost', String(quote.stamina), { resource: 'stamina' });
     if (quote.mana != null) part('target-quote-cost', String(quote.mana), { resource: 'mana' });
     if (chanceLabel) part('target-quote-chance', chanceLabel);
@@ -1978,6 +1992,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
       precisionHelp: fixCoreEnabled(combat) ? registries.statuses.get('precision', entity)?.tooltip : undefined,
       poiseHelp: poiseHelpText(combat, v),
+      broken: !!v.broken, // Wave 3: re-render the Poise bar and the fighter when Broken starts or ends
       wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward'),
     };
     const arcane = procPlan && !stackHidden.has('arcaneExposure') ? arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents) : null;
@@ -2010,6 +2025,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const row = combatHealthRow(el, hud, { tooltips, blockHelp: helpText('block'), evadeHelp, precisionHelp, poiseHelp, wardHelp, persistent: true,
           poise: poiseEl });
         bars.insertBefore(row, next);
+        if (poiseEl) {
+          poiseEl.dataset.broken = String(!!v.broken);
+          // The player's HP number is larger than its bar row: the Poise number starts after it, not under it.
+          if (entity.kind === 'player') poiseEl.style.setProperty('--hp-chars', String((el.querySelector('.m-value')?.textContent || '').length));
+          // Broken: the empty bar says so in words until Broken ends and it refills (the bar's own number would read 0).
+          const poiseValue = poiseEl.querySelector('.m-value');
+          if (v.broken && poiseValue) { poiseValue.textContent = t('combat.broken.label'); poiseValue.setAttribute('aria-label', t('combat.broken.label')); }
+        }
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
     }
@@ -2162,7 +2185,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const nameLabel = `${CharacterDisplayName(run.customization?.name, runClassIdentity(registries, run).name)} · Lv ${characterLevel(run)}`;
     const meterIn = meterInputs(p);
     const statusIn = statusRows(p);
-    const classNames = () => [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
+    const classNames = () => [selfArm ? 'armed' : '', dv(combat.player).broken ? 'broken' : '', selectedCombatantId === 'player' ? 'context-selected' : ''];
     const keys = {
       classes: JSON.stringify(classNames()),
       leading: JSON.stringify([playerName, settings]),
@@ -2283,7 +2306,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!multiActionOn(combat)) return null;
     const intent = previewMemo.memo(`intent:${enemy.id}`, () => previewIntent(combat, enemy.id));
     const actions = previewMemo.memo(`plan:${enemy.id}`, () => enemyPlanActions(combat, enemy));
-    return followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+    const symbols = followUpSymbols(actions, perceptionLevel(combat), readStage(intent));
+    if (!symbols.some(symbol => symbol.kind === 'action')) return symbols;
+    // Owner, 2026-11-14: follow-ups of the head's own stance show their own number too (the HP each costs after the ones before it).
+    const head = combatIntentPresentation(projectCombatIntent(combat, enemy.id)).parts[0];
+    return SameStanceNumbers(head, symbols, index => previewMemo.memo(`followDamage:${enemy.id}:${index}`, () => ProjectPlannedFollowUpDamage(combat, enemy.id, index)));
   }
   function intentEl(enemy) {
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
@@ -2337,7 +2364,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const idx = living.indexOf(enemy);
       const meterIn = meterInputs(enemy);
       const statusIn = statusRows(enemy);
-      const classNames = () => [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
+      const classNames = () => [dv(enemy).alive ? '' : 'dead', dv(enemy).broken ? 'broken' : '', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''];
       const keys = {
         classes: JSON.stringify(classNames()),
         leading: JSON.stringify([enemy.alive, def.name, showIntent, shownIntent, followUps, enemy.alive && idx >= 0 && idx < 9 ? idx : null, !!targeting, settings]),
@@ -3881,6 +3908,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The played card leaves the hand NOW, before the first animation beat, and the rest close the gap: the
     // player sees the play was accepted instead of a card that hangs there while the timeline runs.
     disp.leftHand = new Set([instanceId]);
+    // The cost is paid and every card still held is re-priced from the post-play fight, in this same frame.
+    try { payPlayAtCommit(out.events); } catch (e) { console.warn('[combat] commit-time payment failed:', e && e.message); }
     try { renderHand({ refreshHitChances: false }); } catch (e) { console.warn('[combat] hand repaint on play failed:', e && e.message); }
     setBusy(true);
     afterDispatch(out.events);

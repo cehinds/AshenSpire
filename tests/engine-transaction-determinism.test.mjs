@@ -15,6 +15,7 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
 import { withLegacyDefaults } from './legacyHitRules.mjs';
+import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
   const profile = resolveGameProfile('default');
@@ -105,19 +106,42 @@ export function digest(combat) {
 // 2026-11-14 (#2754): damageDealt events gained `hpRemoved` (the HP a hit actually took, for the no-overkill floater). With that one field
 // removed from the three emit sites in src/engine/actions.js all four digests and the cleanup baseline reproduce their previous values exactly,
 // so only the event payload moved; HP, turns, RNG counters and event counts are unchanged.
+// Re-pinned 2026-11-14 for Ward as a Poise effect (W25-B): the fight's rules snapshot gains ward.poisePerStack 5, so only the state hashes move. Logs, event
+// counts, turns and RNG are identical, and removing that one field from the state text reproduces all four previous state hashes exactly
+// (the legacy fights' were bfab34c0ca8fef2d / aec32fc07e375e4d, the shipped fights' bea7224313f1fa40 / bde8c04ced638abb).
+// Re-pinned 2026-11-14 for the Broken rule (poise.breakRule "broken", batch 1): a Poise break cancels the enemy's next action instead of taking its SP, so
+// the shipped fights and the roll-legacy fights below lose the two Slash/Warcry pairs the SP loss refused (legacy-roll fights 218 -> 216 and 215 -> 214 events; shipped
+// fights 195 -> 193 and 193 -> 188; turns unchanged). Verified: the fights built with `poise.breakRule` and `brokenDamageMultiplier` absent (a fight saved before the rule, STAGGERED_LEGACY
+// below, which keeps the Staggered stance) reproduce the previous legacy digests exactly, and the shipped fights built that way reproduce the previous shipped logs 68045e4bda0ffd02 / 714e5d0f2a83d7e3 (218/215 events, logs aa763c4b47aaef38 / 75301c4daabf3238,
+// states 1050e65e93b6c50b / 74dc222af3960b7b), so only the rule moved. The roll-legacy fights under the shipped Broken rule have their own pin.
+/** Runs `build` with the shipped rules reading as a fight saved before the Broken rule (no `poise.breakRule`): it keeps the Staggered stance. */
+function withStaggeredRule(build) {
+  const held = { breakRule: fixCoreMechanics.poise.breakRule, mult: fixCoreMechanics.poise.brokenDamageMultiplier };
+  delete fixCoreMechanics.poise.breakRule; delete fixCoreMechanics.poise.brokenDamageMultiplier;
+  try { return build(); } finally { fixCoreMechanics.poise.breakRule = held.breakRule; fixCoreMechanics.poise.brokenDamageMultiplier = held.mult; }
+}
 const LEGACY_PINNED = [
-  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: 'bfab34c0ca8fef2d', events: 218, turn: 6 }],
-  [[4242, 'reaver'], { log: '75301c4daabf3238', state: 'aec32fc07e375e4d', events: 215, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'aa763c4b47aaef38', state: '1050e65e93b6c50b', events: 218, turn: 6 }],
+  [[4242, 'reaver'], { log: '75301c4daabf3238', state: '74dc222af3960b7b', events: 215, turn: 6 }],
 ];
 for (const [setup, expected] of LEGACY_PINNED) {
   test(`legacy-rules fight ${setup[0]}/${setup[1]} still reproduces the pre-ruling digest`, () => {
-    const first = digest(play(withLegacyDefaults(() => fight(setup)), 5));
+    const first = digest(play(withLegacyDefaults(() => withStaggeredRule(() => fight(setup))), 5));
     assert.deepEqual(first, expected);
   });
 }
+const LEGACY_ROLL_BROKEN_PINNED = [
+  [['PERF1', 'reaver'], { log: '5168315291534335', state: '8dab5013cd98b2e7', events: 216, turn: 6 }],
+  [[4242, 'reaver'], { log: '13ddf561f5c08a05', state: '3694a509fa76fb62', events: 214, turn: 6 }],
+];
+for (const [setup, expected] of LEGACY_ROLL_BROKEN_PINNED) {
+  test(`roll-legacy fight ${setup[0]}/${setup[1]} under the Broken rule reproduces its digest`, () => {
+    assert.deepEqual(digest(play(withLegacyDefaults(() => fight(setup)), 5)), expected);
+  });
+}
 const PINNED = [
-  [['PERF1', 'reaver'], { log: '68045e4bda0ffd02', state: 'bea7224313f1fa40', events: 195, turn: 6 }],
-  [[4242, 'reaver'], { log: '714e5d0f2a83d7e3', state: 'bde8c04ced638abb', events: 193, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'c8189971a46a6f90', state: '7f8f814257486e75', events: 193, turn: 6 }],
+  [[4242, 'reaver'], { log: 'a52d738bc31c957b', state: 'aa8f6ae8b9909f33', events: 188, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;

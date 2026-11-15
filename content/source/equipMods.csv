@@ -34,7 +34,7 @@
 field,scope,apply,op,effTarget,status,label,clause,blurb
 damage,card,amount,damage,enemy,,Damage,Deal {damage} damage.,"How hard the card hits."
 block,card,amount,block,self,,Block,Gain {block} Block.,"How much the card guards."
-poise,card,amount,poiseDamage,enemy,,Poise,Deal {poiseDamage} Poise damage.,"Build-up toward a Stagger."
+poise,card,amount,poiseDamage,enemy,,Poise,Deal {poiseDamage} Poise damage.,"Build-up toward a Break."
 hits,card,hits,damage,enemy,,Hits,Strikes {hits} times.,"How many times the damage lands."
 cost,card,cost,,,,Cost,,"Energy to play. Never drops below 0."
 potency,card,scale,,,,Potency,,"Every number on the card, together."

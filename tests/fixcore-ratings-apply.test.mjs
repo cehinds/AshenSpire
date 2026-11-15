@@ -52,7 +52,10 @@ function damage(w, cardId) {
   assert.equal(out.liveIncoming, out.incoming, `${cardId}: live incoming matches the preview`);
   assert.equal(out.liveLoss, out.preview, `${cardId}: live HP loss matches the preview`);
   // Owner, 2026-11-14: the quote is the HP the first hit costs; the full incoming hit is the receipt's `incoming`.
-  assert.equal(value.hitDamages[0], live.hits[0].hpLoss, `${cardId}: the quote is the HP the first hit costs`);
+  // Owner, 2026-11-14 (face rule): `hitDamages` is the card FACE (your side + the reference enemy's Vulnerable/weakness, no defences);
+  // the per-target quote (`perTargetHitDamages`) is the HP lost.
+  assert.equal(value.perTargetHitDamages[target.id][0], live.hits[0].hpLoss, `${cardId}: the quote is the HP the first hit costs`);
+  assert.equal(value.hitDamages[0], value.faceValue, `${cardId}: the face is the attacker-side number`);
   return out;
 }
 // One Block card (Defend, or Counter's Block): preview value against the Block actually gained live.
@@ -176,13 +179,19 @@ for (const src of sources.pr) {
     });
   });
 }
-for (const [label, mutate] of [['STR (stat)', stat('strength')], ['weapon Smith tier', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; }]]) {
-  test(`AR (${label}) does not change the Arcane Spark cantrip`, () => {
-    const base = world('starseer'), up = world('starseer', mutate);
-    assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
-    assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
-  });
-}
+test('AR (STR (stat)) does not change the Arcane Spark cantrip', () => {
+  const base = world('starseer'), up = world('starseer', stat('strength'));
+  assert.ok(ratings(up).ar > ratings(base).ar && ratings(up).pr === ratings(base).pr, 'AR up, PR unchanged');
+  assert.equal(damage(up, 'core.cantrip').incoming, damage(base, 'core.cantrip').incoming);
+});
+// Upgrades branch, 2026-11-14: a staff Smith tier raises its PR together with its AR (smithingCore: "PR rises with AR"). The spell
+// follows the PR gain only: the AR gain alone (STR, above) leaves it unchanged.
+test('a staff Smith tier raises PR with AR and moves the Arcane Spark cantrip by the PR weight', () => {
+  const base = world('starseer'), up = world('starseer', run => { run.itemUpgradeLevels['armament/boneSceptre'] = 2; });
+  assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar - ratings(base).ar === ratings(up).pr - ratings(base).pr, 'PR rises with AR');
+  const delta = ratings(up).pr - ratings(base).pr;
+  assert.equal(damage(up, 'core.cantrip').incoming - damage(base, 'core.cantrip').incoming, Math.floor(delta * weights(up.combat).pr));
+});
 test('PR (INT) does not change a physical attack card', () => {
   const base = world('reaver'), up = world('reaver', stat('intelligence'));
   assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar === ratings(base).ar);

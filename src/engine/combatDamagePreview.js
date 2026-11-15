@@ -1,4 +1,4 @@
-import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import * as ProfileCombat from './gameProfileCombat.js';
 import * as Actions from './actions.js';
 // Receipt capture enters this shared module from multiple bundled engine
@@ -31,10 +31,37 @@ export function damagePreviewState(ctx, target) {
 }
 
 /**
+ * PreviewStateSnapshot(state) / PreviewStateRestore(state, snapshot): copy the detached defender (and the riders spent) and put it back in place,
+ * so a card row that is priced but does not run leaves the later rows' timeline as it was. The defender object keeps its identity (the preview
+ * context compares against it).
+ */
+export function PreviewStateSnapshot(state) {
+  const d = state?.defender;
+  if (!d) return null;
+  return { defender: { ...d, statuses: structuredClone(d.statuses || {}),
+    persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
+    ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
+    ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) }, riders: [...state.combatRiderTargets] };
+}
+export function PreviewStateRestore(state, snapshot) {
+  if (!state?.defender || !snapshot) return;
+  for (const key of Object.keys(state.defender)) delete state.defender[key];
+  Object.assign(state.defender, snapshot.defender);
+  state.combatRiderTargets.splice(0, state.combatRiderTargets.length, ...snapshot.riders);
+}
+
+/**
  * A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable. Detached:
  * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
  */
 function previewPoiseBreak(ctx, defender) {
+  // Broken (owner, 2026-11-14): the previewed owner is Broken for its later hits (x1.5, no Vulnerable grant).
+  const broken = FixCoreBrokenRules(ctx);
+  if (broken) {
+    defender.broken = { since: ctx.turn || 0, endTurn: (ctx.turn || 0) + 1, preview: true };
+    defender.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, broken: true, damageMultiplier: broken.damageMultiplier };
+    return;
+  }
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
   if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
@@ -168,6 +195,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const counterPlan = defender?.combatCounter && fixCoreEnabled(ctx) && !local.counterBlocked && defender !== source && defender.kind !== source?.kind
       ? Matchups.previewTacticalAction(previewCtx, attacker || source, defender, carrier, Array.from({ length: Math.max(0, Math.floor(hits)) }, () => ({ amount: base }))) : null;
     let counterAnswered = false;
+    const poiseStart = defender?.persistentPoise?.value ?? 0;
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
       if (counterPlan && !counterAnswered && !Counter.counterReturnSpent(defender)) {
         const probe = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
@@ -181,6 +209,8 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       const receipt = ProfileCombat.profileDamageReceipt(previewCtx, attacker || source, defender, base, carrier, { forecast: true });
       receipts.push(receipt);
       if (defender) { applyReceiptToPreviewTarget(ctx, defender, receipt); if (receipt.evaded) SpendPreviewEvade(defender); }
+      // No damage-type rider here: a configured (Core) hit resolves in actions.js applyProfileDamage, which applies no matchup rider, so the
+      // only Poise a hit takes is its receipt's (absorbed and drained). Pricing a blunt rider took Poise live never took (fellWarden caneStrike).
       // A Reflect return that kills the attacker cancels its remaining hits (live: the dead source stops the action).
       if (defender && previewReflectReturn(previewCtx, attacker, defender, receipt, carrier)) break;
     }
@@ -194,6 +224,9 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       hitDamages: receipts.map(shown), totalDamage: rawTotal,
       hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
       attackerDead: !!attacker && attacker !== source && !(attacker.hp > 0),
+      // Wave 3: the Poise the play removes from this target and whether that breaks it (the target quote's "−6 Poise" / BREAK).
+      poiseLoss: modern ? Math.max(0, poiseStart - (defender?.persistentPoise?.value ?? 0)) : 0,
+      poiseBreaks: modern && poiseStart > 0 && defender?.persistentPoise?.value === 0,
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: modern ? [rawTotal, rawTotal]
         : [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };

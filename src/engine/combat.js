@@ -35,7 +35,7 @@ import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProject
 import { CounterPreviewAgainst } from './combatCounterPreview.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
+import { damagePreviewState, previewDamageHits, previewPoiseDrain, PreviewStateSnapshot, PreviewStateRestore } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
@@ -69,8 +69,9 @@ import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRa
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
+import { ApplyPendingLoss, EndBrokenWhenDue } from './brokenRule.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
-import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
+import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers, evalPredicate } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { gameModule } from '../model/gameProfile.js';
@@ -503,6 +504,8 @@ function startPlayerTurn(combat) {
   returnHiddenCards(combat);
   if (!fixCoreEnabled(combat)) decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
+  // A `thisTurn` boost gained during the enemy phase (a Reaction) ends with that turn, so it is gone before the player acts.
+  S.ClearTurnBoosts(combat, combat.player);
   combat.phase = 'player';
   const p = combat.player;
   decayAtTurnStart(combat, p);
@@ -587,6 +590,7 @@ function endPlayerTurn(combat, discardIds = []) {
     if (combat.result) return;
   }
 
+  S.ClearTurnBoosts(combat, p);
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -809,10 +813,14 @@ function enemyPhase(combat) {
       if (combat.result) return;
       if (enemy.alive) S.decayAtTurnEnd(combat, enemy);
       if (combat.combatExpansionVersion === 2) Control.endControlTurn(combat, enemy);
+      // Broken ends with the turn whose action it lost: the enemy's Poise refills to full (Wave 3).
+      if (enemy.alive) EndBrokenWhenDue(combat, enemy);
     }
   }
 
   combat.emit('enemyTurnEnd', { turn: combat.turn });
+  // The player's Broken lasts through the round after the break (its short turn and the enemy phase that answers it).
+  if (combat.player.alive) EndBrokenWhenDue(combat, combat.player);
   drainQueue(combat);
   delete combat.reactionCursor;
 }
@@ -957,6 +965,9 @@ function rollIntents(combat, isFirstTurn = false) {
     delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
     if (enemy.pendingMove) {
+      // Broken in its own turn (Wave 3): the held charge is its lost next action and is cancelled with its charge.
+      ApplyPendingLoss(combat, enemy);
+      if (!enemy.pendingMove) continue;
       // A committed delayed move stays telegraphed until it resolves.
       if (enemy.intent) enemy.intent = { ...enemy.intent, pending: true };
       continue;
@@ -970,11 +981,14 @@ function rollIntents(combat, isFirstTurn = false) {
     const moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
+      ApplyPendingLoss(combat, enemy);
       continue;
     }
     presentIntent(combat, enemy, def, moveId);
     // The pool's planned moves play after the head in the enemy phase (enemyPhase), so the plan is due this turn.
     enemy.planDue = true;
+    // An enemy Broken in its own turn loses the head of this plan (Wave 3): its intent reads Broken, the rest of the plan stays.
+    ApplyPendingLoss(combat, enemy);
     drainQueue(combat);
   }
 }
@@ -2216,21 +2230,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           : evalPreview(combat, action, eff.hits != null ? eff.hits : 1, primary);
         entry.perTarget = {};
         entry.perTargetHitDamages = {};
+        entry.perTargetPoise = {};
         // Core face (owner, 2026-10-28): the reference enemy's state as this effect meets it, before this effect's own hits drain it.
         // Only damage aimed at an enemy takes it; self and ally damage keep the raw number.
         const faceEnemy = !rawFace && configuredCombat(combat) && fixCoreEnabled(combat) && !isCounterReply && (!primary || primary.kind === 'enemy')
           ? (target?.kind === 'enemy' && target.alive ? target : allLiving[0]) : null;
-        let faceState = null;
-        if (faceEnemy) {
-          const shared = damagePreviewStates.get(faceEnemy.id) || damagePreviewState(combat, faceEnemy);
-          const d = shared.defender;
-          faceState = { ...shared, combatRiderTargets: [...shared.combatRiderTargets],
-            defender: { ...d, statuses: structuredClone(d.statuses || {}),
-              persistentWard: d.persistentWard && { ...d.persistentWard }, persistentPoise: d.persistentPoise && { ...d.persistentPoise },
-              ...(d.combatCounter ? { combatCounter: structuredClone(d.combatCounter) } : {}),
-              ...(d.combatStance ? { combatStance: structuredClone(d.combatStance) } : {}) } };
-        }
-        for (const e of living) {
+        // A row whose `if` does not hold now (the Starstone pair: one branch or the other) is priced at its potential value but does not run,
+        // so what it would have done to the target (Poise, Block, a break) must not reach the rows after it: its detached state is put back.
+        const skipped = eff.if && !evalPredicate(combat, eff.if, { owner: p, source: p, target: primary, card: action.card, meta: action.meta });
+        const restore = skipped ? living.map(e => [e.id, PreviewStateSnapshot(damagePreviewStates.get(e.id))]) : [];
+        // The upgrade's second target (`otherEnemy`) reaches one enemy other than the aimed one, so only it is quoted.
+        const reached = eff.target === 'otherEnemy' ? (primary ? [primary] : []) : living;
+        for (const e of reached) {
           const result = isCounterReply
             ? previewCounter(e, i)
             : !configuredCombat(combat) && combat.combatExpansionVersion === 2 ? expandedPreview(e, i)
@@ -2239,11 +2250,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
+          if (result.poiseLoss !== undefined) entry.perTargetPoise[e.id] = { removed: result.poiseLoss, breaks: !!result.poiseBreaks };
           if (primary?.id === e.id && result.counterReturn) entry.counterReturn = result.counterReturn;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
+        for (const [id, snapshot] of restore) PreviewStateRestore(damagePreviewStates.get(id), snapshot);
         if (entry.value == null && isCounterReply) {
           const result = previewCounter(primary, i);
           Object.assign(entry, { value: result.damage, hitDamages: result.hitDamages, totalDamage: result.totalDamage });
@@ -2260,18 +2273,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           // Shown on the card: a whole number, rounded down (owner, 2026-10-18); the chain itself stays exact.
           entry.faceValue = Math.floor(A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true }));
-          // The reference is the aimed living enemy, else the frontmost living one; no enemy leaves the raw number.
-          if (faceState) {
-            const faceHits = previewDamageHits(combat, p, faceState.defender, evalPreview(combat, action, eff.amount, faceEnemy) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0),
-              attackTags, carrier, Math.max(1, Math.floor(entry.hits)), faceState).hitDamages;
-            entry.faceValue = Math.floor(faceHits[0] ?? entry.faceValue);
-            entry.faceHitDamages = faceHits.map(Math.floor);
-            // Owner, 2026-11-14: the number on the face is the HP the reference target loses from each hit, after its defensive stance, Reflect,
-            // Block, Poise and Evade; a card that strikes every enemy states each living enemy's hits so the face can show one number or min-max.
+          // Owner, 2026-11-14 (amends the same day's Wave 2 rule): the face is your modified damage: every term of yours (rating, Strength, Weak,
+          // your stance, upgrades, relics) plus the reference enemy's Vulnerable and weakness (an undiscovered one too). Nothing of its DEFENCES
+          // reaches it (Block, Poise, Ward, Barrier, defensive stance, matchup advantage, Evade, Reflect); the target quotes carry those.
+          if (faceEnemy) {
+            const each = Math.max(1, Math.floor(entry.hits));
+            const raw = enemy => Math.floor(A.computeAttackDamage(combat, p, enemy, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true, proposal: false }));
+            entry.faceValue = raw(faceEnemy);
+            entry.faceHitDamages = Array.from({ length: each }, () => entry.faceValue);
             entry.value = entry.faceValue;
             entry.hitDamages = entry.faceHitDamages;
-            entry.totalDamage = entry.faceHitDamages.reduce((sum, amount) => sum + amount, 0);
-            if (eff.target === 'allEnemies') entry.faceTargetHitDamages = living.map(e => (entry.perTargetHitDamages[e.id] || []).map(Math.floor));
+            entry.totalDamage = entry.faceValue * each;
+            if (eff.target === 'allEnemies') entry.faceTargetHitDamages = living.map(e => Array.from({ length: each }, () => raw(e)));
           }
           // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
@@ -2350,7 +2363,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
           const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
           for (const e of hit) {
             const state = e?.kind === 'enemy' && damagePreviewStates.get(e.id);
-            if (state) previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            if (!state) continue;
+            const spent = previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+            // The quote's "−N Poise" and BREAK read this row too (Wave 3).
+            if (spent > 0) (entry.perTargetPoise ||= {})[e.id] = { removed: spent, breaks: state.defender.persistentPoise.value === 0 };
           }
         }
         break;

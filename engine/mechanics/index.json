@@ -1787,6 +1787,13 @@
       "modules": []
     },
     {
+      "id": "targeting.otherEnemy",
+      "tag": "targeting.otherEnemy",
+      "family": "targeting",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
       "id": "targeting.randomEnemy",
       "tag": "targeting.randomEnemy",
       "family": "targeting",
