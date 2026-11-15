@@ -394,8 +394,8 @@
     "name": "Retreat",
     "class": "colorless",
     "rarity": "special",
-    "cost": 0,
-    "staminaCost": 0,
+    "cost": 1,
+    "staminaCost": 1,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -413,6 +413,7 @@
     ],
     "tags": [
       "camp:physical",
+      "maneuver:defend",
       "classification.skill"
     ],
     "textTemplate": "Step back."
