@@ -21,7 +21,7 @@
   "branchColumns": 3,
   "minimumThreatFloor": 3,
   "mapMode": "fog",
-  "fogRevealRests": true,
+  "fogRevealRests": false,
   "firstFloor": "fight",
   "shopShare": 0.15,
   "requirePrebossRest": true,
