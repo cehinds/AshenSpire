@@ -60,6 +60,13 @@ Normative: [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) — cate
 - **A per-grant amount is not a cap.** What a card or move adds (its printed stacks) stays as authored. Not hold caps, and unchanged: Reflect's `reduceCap` (the most it cuts or returns, 90%), the 999 safety ceiling that only keeps a corrupt count out of a save, crit and resistance percent caps, and card rank/upgrade limits on printed stacks (`STACK_CAPS`, the cantrip stack limit of 5 and the Venom limit of 3 in the upgrade menu; these limit what an UPGRADE prints on a card, not what a combatant holds).
 - Stack-scaled numbers keep shown = dealt at any count (Burn +5% damage taken per stack, Shock +5% lightning damage taken per stack, Chill, Vulnerable and the rest).
 
+Owner decision of 2026-11-15 on Counter ("counter is very broken, some times dealing 100+ damage, and adds way too many stacks of counter"; "let counter act like evade, but damage is 10% of incoming per stack of counter + counter damage from card"; "have counter add 1-3 stacks, and has regular decay"; "set the base unupgraded counter card to 1 stack"; "there shouldn't be a max to the number of stacks"). Keyed on `counter.stackSource: "card"` in `content/source/fixCoreMechanics.json`; a fight saved without it keeps the Block-as-stacks rule. Cause found: a Counter play added the player's whole Block as stacks, so each later play re-counted the Block of the earlier ones (128 stacks after four plays), and every stack returned 10% of every hit.
+
+- **Counter stacks act like Evade stacks.** A Counter card grants its own 1-3 stacks (core.counter 1, upgraded 2; table `stacksByCard`); stacks held are uncapped; a covered landed hit spends 1; 1 fades at the owner's turn start. See *Counter*.
+- **Return per hit** = the card's base damage (with AR and attack bonuses) + floor(incoming × 0.1 × stacks held before that hit). A multi-hit attack answers once per hit while stacks last (3 stacks, 3 hits: 3, 2, 1 held). The advantage share and the once-per-cycle limit are gone for this rule. The per-hit returns land as one return action whose event lists each hit (`counterHits`); the card face, the reaction prompt and the per-root forecast quote that same total.
+- **Counter stance returns nothing of its own.** The stance keeps +25% Block gained; the separate "a hit taken returns 25%" (`stanceBenefits.counter.hpReturnFraction`) is removed from the shipped data.
+- **Upgrade step "+1 Counter"** (`fx:counter`): offered only on a card that already grants Counter stacks, while its whole grant stays within 3.
+
 #### Notes and history
 
 - The scope table is project status, not rules; its evidence is archived.
@@ -3568,15 +3575,6 @@ Owner decisions of 2026-11-15 (Ward and Barrier, "less confusing"). Presentation
 - **Divine Smite is in the quote.** A divine hit that breaks Poise also deals half the hit straight to HP; the card face and target quote carry that HP, so the quoted number is the HP the play takes (shown = dealt).
 - **A frost card whose own Chill (3 or more) soaks the target's whole Poise pool is offered no Poise upgrade step**: its Poise damage never gets Poise to spend, so the step would change a shown number and nothing else.
 - **Map fog.** The Core act map is fog again ("hide rests as well, just the path you traveled"). Only the entrance, the bosses, the traveled path and the nodes one step from the current node are lit (`routes.fogTrailOnly`); rest sites are not revealed early; route lines and node types beyond them stay hidden. Map nodes are spaced wider (rows +45%, columns +28%). Wave 1's map shape (more forks, more fights, a shop in reach, preselected start node, `hiddenTypes: []`) is unchanged. `routes.fogRevealRests` (true lights every rest from the start) exists but Core authors it false. Core authors `mapMode: "fog"`; a stale viewer `path` setting does not override it; a run saved before this change keeps its pinned `mapMode`.
-
-### Wave 2 adjustments (batch 5)
-
-Owner decision of 2026-11-15 on Counter ("counter is very broken, some times dealing 100+ damage, and adds way too many stacks of counter"; "let counter act like evade, but damage is 10% of incoming per stack of counter + counter damage from card"; "have counter add 1-3 stacks, and has regular decay"; "set the base unupgraded counter card to 1 stack"; "there shouldn't be a max to the number of stacks"). Keyed on `counter.stackSource: "card"` in `content/source/fixCoreMechanics.json`; a fight saved without it keeps the Block-as-stacks rule. Cause found: a Counter play added the player's whole Block as stacks, so each later play re-counted the Block of the earlier ones (128 stacks after four plays), and every stack returned 10% of every hit.
-
-- **Counter stacks act like Evade stacks.** A Counter card grants its own 1-3 stacks (core.counter 1, upgraded 2; table `stacksByCard`); stacks held are uncapped; a covered landed hit spends 1; 1 fades at the owner's turn start. See *Counter*.
-- **Return per hit** = the card's base damage (with AR and attack bonuses) + floor(incoming × 0.1 × stacks held before that hit). A multi-hit attack answers once per hit while stacks last (3 stacks, 3 hits: 3, 2, 1 held). The advantage share and the once-per-cycle limit are gone for this rule. The per-hit returns land as one return action whose event lists each hit (`counterHits`); the card face, the reaction prompt and the per-root forecast quote that same total.
-- **Counter stance returns nothing of its own.** The stance keeps +25% Block gained; the separate "a hit taken returns 25%" (`stanceBenefits.counter.hpReturnFraction`) is removed from the shipped data.
-- **Upgrade step "+1 Counter"** (`fx:counter`): offered only on a card that already grants Counter stacks, while its whole grant stays within 3.
 
 #### Notes and history
 
