@@ -2,6 +2,7 @@ import { combatProfileFor } from './combatCardProfile.js';
 import { entities as frameworkEntities } from '../framework/data/entities.js';
 import { cardPropertyInstances } from '../framework/importer.js';
 import { isPureDodge } from '../framework/importer.js';
+import { IsPureEvadeCard } from './alternativeCardAnimation.js';
 import { preparedEvadeCharges } from './combatTacticsDisplay.js';
 
 export const REAVER_GREATSWORD_PILOT = 'reaver-greatsword-pilot';
@@ -21,7 +22,7 @@ function preparesEvade(card) {
   if (profile.camp !== 'physical') return false;
   // Expanded pure Dodge is typed Counter; its canonical authored marker still
   // chooses this preparation painting. Mixed counters keep their Counter pose.
-  return isPureDodge(card) || (profile.maneuver === 'defend'
+  return isPureDodge(card) || IsPureEvadeCard(card) || (profile.maneuver === 'defend'
     && (card.effects?.some(effect => effect.op === 'dodgeRoll') || !!profile.evade));
 }
 

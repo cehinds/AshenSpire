@@ -79,11 +79,16 @@ for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version
   }
 });
 
-test('expanded Dodge and dagger Counter prepare defense; a Spell Counter prepares casting', () => {
+test('expanded Guard Counter and dagger Counter prepare defense; a Spell Counter prepares casting', () => {
   const { run } = mounted(2);
   const context = { registries, player: run, combatExpansionVersion: 2, breakMeterVersion: 2 };
+  // W25-EvadeCards (intended by the design): Dodge Roll is a Defend card that grants Evade, not a Counter card, so the equipment-driven
+  // Counter route is covered by Guard Counter; Dodge Roll prepares the Evade painting through its class action plan.
+  const guardCounter = resolveCombatCard(context, { cardId: 'guardCounter' });
+  assert.deepEqual([route(guardCounter, run, 2).group, route(guardCounter, run, 2).technique], ['defend', 'guard']);
   const dodge = resolveCombatCard(context, { cardId: 'dodgeRoll' });
-  assert.deepEqual([route(dodge, run, 2).group, route(dodge, run, 2).technique], ['defend', 'guard']);
+  const dodgePlan = resolveCombatAnimation(dodge, [], { classId: 'reaver', combatExpansionVersion: 2 });
+  assert.deepEqual([dodgePlan.group, dodgePlan.technique], ['defend', 'evade']);
   const dagger = resolveCombatCard(context, { cardId: 'rondelParry' });
   const parry = resolveCombatAnimation(dagger, [{ id: 'parryDagger' }], { combatExpansionVersion: 2 });
   assert.deepEqual([parry.group, parry.technique, parry.rest], ['defend', 'guard', 'guard']);
