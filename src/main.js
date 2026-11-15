@@ -159,7 +159,10 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
 // Keep this import last: an earlier one reorders the production bundle's cyclic module init.
-import { SetFaceCostRun } from './model/faceCosts.js';
+import { SetFaceCostRunSource, SetFaceCostPricer } from './model/faceCosts.js';
+import { SpellCostAdjust } from './engine/spellCosts.js';
+SetFaceCostRunSource(() => run); // faces read the shell's current run live, so no adoption or refusal path has to tell the model
+SetFaceCostPricer(SpellCostAdjust); // the model layer may not import the engine, so the shell hands it the spell cost rule
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -730,7 +733,7 @@ function beginPreparedRun({ classId, seedString, customization, custom, starting
     classId, customization, custom, startingKitId, startingHands, startingArmourId,
     startingRelicId, startingAbilityIds, attributeMode, attributes, deckEdit, quickStart,
   });
-  run = prepared.run; SetFaceCostRun(run);
+  run = prepared.run;
   rng = prepared.rng;
 
   if (run.custom.deckMode === 'draft') return showDraft();
@@ -861,7 +864,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   resetArmouryTraySession();
   activeSlot = slot;
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = loaded; SetFaceCostRun(run);
+  run = loaded;
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
@@ -1000,7 +1003,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
       closeOverlay();
       audio.stopMusic();
       xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-      run = null; SetFaceCostRun(null);
+      run = null;
       showCollapsedTitle();
     },
   });
@@ -1158,7 +1161,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   audio.music('title');
   resetArmouryTraySession();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = null; SetFaceCostRun(null);
+  run = null;
   if (startupGatePending && !skipStartup) {
     showStartupGate();
     return;
@@ -1535,7 +1538,7 @@ function quitGame() {
   closeOverlay();
   audio.stopMusic();
   xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
-  run = null; SetFaceCostRun(null);
+  run = null;
   mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
 

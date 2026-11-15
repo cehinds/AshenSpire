@@ -4,7 +4,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { reg, profile } from './elementFixture.mjs';
 import { createRunState } from '../src/model/state.js';
-import { FaceCostProfile, SetFaceCostRun } from '../src/model/faceCosts.js';
+import { FaceCostProfile, SetFaceCostRun, SetFaceCostCombat, SetFaceCostPricer } from '../src/model/faceCosts.js';
+import { SpellCostAdjust } from '../src/engine/spellCosts.js';
+import { fight } from './elementFixture.mjs';
+SetFaceCostPricer(SpellCostAdjust);
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { cardManaCategory } from '../src/model/cardManaPolicy.js';
 
@@ -49,4 +52,19 @@ test('a run made before the ruling keeps printed costs; the registered run is th
   assert.equal(FaceCostProfile(reg, def).mana, printed(def).mana + 1);
   SetFaceCostRun(null);
   assert.deepEqual(FaceCostProfile(reg, def), printed(def));
+});
+
+test('in a fight the pile faces are priced by the fight: Prepared takes 1 Stamina off a spell, as the hand pays it', () => {
+  const def = spells.find(d => !cantrip(d) && d.cost !== 'X' && printed(d).stamina > 0);
+  const { combat } = fight();
+  combat.loadout.sets.rightHand[0] = 'greatsword';
+  try {
+    SetFaceCostCombat(combat);
+    const plain = FaceCostProfile(reg, def);
+    assert.equal(plain.stamina, printed(def).stamina + 1);
+    combat.player.combatStance = { maneuver: 'casting', camp: 'spell' };
+    assert.equal(FaceCostProfile(reg, def).stamina, printed(def).stamina, 'Prepared: the surcharge and the discount cancel');
+    combat.result = 'victory';
+    assert.equal(FaceCostProfile(reg, def, null).stamina, printed(def).stamina, 'a finished fight no longer prices faces');
+  } finally { SetFaceCostCombat(null); }
 });

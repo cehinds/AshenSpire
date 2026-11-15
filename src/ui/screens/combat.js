@@ -1,3 +1,4 @@
+import { SetFaceCostCombat, ReleaseFaceCostCombat } from '../../model/faceCosts.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
@@ -221,6 +222,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
   // cell normalisation below.
   registries = combatStatusPresentationRegistries(registries, combat);
+  SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   const configuredArt = run.gameProfile?.foundation?.mode === 'configured';
   const profileArt = (render, options) => {
     if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
@@ -4204,6 +4206,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
 
   function releaseCombatMount() {
+    ReleaseFaceCostCombat(combat);
     if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
     autoCombatTimer = null;
     document.removeEventListener('pointerdown', pauseAutoCombat, true);
