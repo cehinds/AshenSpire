@@ -7,7 +7,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 
 test('shipped data holds the approved spell cost and flux numbers and the validator guards them', () => {
-  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 1, cantripTag: 'rank.cantrip', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
+  assert.deepEqual(shipped.spellCosts, { version: 1, manaSurcharge: 1, staminaSurcharge: 1, cantripTag: 'rank.cantrip', manaOnlyTag: 'cost.manaOnly', preparedStaminaDiscount: 1, focusManaDiscount: 1 });
   assert.deepEqual(shipped.elementFlux, { version: 1, multiplier: 1.25 });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   const { spellCosts, elementFlux, ...saved } = shipped;
@@ -16,6 +16,9 @@ test('shipped data holds the approved spell cost and flux numbers and the valida
   assert.throws(() => costs({ manaSurcharge: -1 }), /spellCosts/);
   assert.throws(() => costs({ staminaSurcharge: 0.5 }), /spellCosts/);
   assert.throws(() => costs({ extra: 1 }), /spellCosts/);
+  assert.throws(() => costs({ manaOnlyTag: '' }), /spellCosts/);
+  const { manaOnlyTag, ...older } = shipped.spellCosts;
+  assert.doesNotThrow(() => validateFixCoreRules({ ...shipped, spellCosts: older }), 'a block saved before the mana-only tag stays valid');
   assert.throws(() => costs({ version: 2 }), /spellCosts/);
   const flux = patch => validateFixCoreRules({ ...shipped, elementFlux: { ...shipped.elementFlux, ...patch } });
   assert.throws(() => flux({ multiplier: 0.5 }), /elementFlux/);
@@ -48,8 +51,8 @@ function costsIn({ hand, stance, id, legacy = false }) {
 // The rule written out on top of the price the fight charged before the ruling (its stance cuts, such as a Graduate's same-stance Mana cut, are unchanged):
 // Mana +1; Stamina +1 unless a cantrip (or X-cost); Prepared -1 Stamina; a Focus item -1 Mana; floors at 0. `before` is the same card priced with the rule off.
 function expected(card, before, { prepared, focus }) {
-  const cantrip = card.tags.includes('rank.cantrip'), x = card.cost === 'X';
-  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip ? 0 : 1) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
+  const cantrip = card.tags.includes('rank.cantrip'), x = card.cost === 'X', manaOnly = card.tags.includes('cost.manaOnly');
+  return { stamina: x ? null : Math.max(0, before.stamina + (cantrip || manaOnly ? 0 : 1) - (prepared ? 1 : 0)), mana: Math.max(0, before.mana + 1 - (focus ? 1 : 0)) };
 }
 
 test('cost table over every shipped Core 2 spell and cantrip: base, Prepared, Focus, both (shown = paid)', () => {

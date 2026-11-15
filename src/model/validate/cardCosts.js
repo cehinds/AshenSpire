@@ -7,6 +7,8 @@ import { validateAttack } from '../combatRules.js';
 export function cardCostProblems(b, err, ctx) {
   // Secondary costs are semantic bounds, not merely integer shapes. A negative
   // cost would mint the resource when a card is played.
+  // Core cards carry their tags in the tagging relation, not on the row.
+  const manaOnlyIds = new Set((Array.isArray(b.tagging) ? b.tagging : []).filter(row => row?.family === 'card' && row.tagId === 'cost.manaOnly').map(row => row.objectId));
   for (const card of Array.isArray(b.cards) ? b.cards : []) {
     if (card?.gradeProfiles) {
       if (!['spell','maneuver'].includes(card.abilityKind)) err(`cards.${card.id}.abilityKind`,'graded card requires authored spell/maneuver identity');
@@ -44,7 +46,7 @@ export function cardCostProblems(b, err, ctx) {
     // the base's when the upgrade leaves it unsaid. Refused BY NAME.
     // A card tagged cost.manaOnly (owner, 2026-11-15) is the one exception: it spends Mana alone, 0 Stamina (engine/spellCosts.js).
     const manaFloor = b.balance && b.balance.mana;
-    const manaOnly = !!card && [...(card.tags || []), ...(card.cardTags || [])].includes('cost.manaOnly');
+    const manaOnly = !!card && ([...(card.tags || []), ...(card.cardTags || [])].includes('cost.manaOnly') || manaOnlyIds.has(card.id));
     if (card && !manaOnly && manaFloor && Number.isInteger(manaFloor.minActionCost) && Number.isInteger(manaFloor.minStaminaCost)) {
       const faces = [['', card], ['.upgrade', card.upgrade ? { cost: card.cost, manaCost: card.manaCost, staminaCost: card.staminaCost, ...card.upgrade } : null]];
       for (const [suffix, face] of faces) {

@@ -4097,5 +4097,498 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.pyreLash",
+    "name": "Pyre Lash",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 28
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:fire",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {burn} Burn.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 36
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "A whip of pyre-smoke, drawn from the Spire's lowest hearth.\nIt costs no breath, only the Mana the flame was promised.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.conflagration",
+    "name": "Conflagration",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 22
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "burn",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:fire",
+      "targeting:area",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies. Apply {burn} Burn to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 30
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "burn",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "The whole landing catches at once.\nThe Ashen Choir sang it down in four verses, and the fourth was never finished.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.forkedBolt",
+    "name": "Forked Bolt",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 26
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "shock",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:lightning",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} Lightning damage. Apply {shock} Shock.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 34
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "shock",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "The bolt finds the iron in a man before he knows he carries it.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.stormcall",
+    "name": "Stormcall",
+    "class": "starseer",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 20
+      },
+      {
+        "op": "applyStatus",
+        "target": "allEnemies",
+        "status": "shock",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:lightning",
+      "targeting:area",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} Lightning damage to ALL enemies. Apply {shock} Shock to ALL enemies.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 28
+        },
+        {
+          "op": "applyStatus",
+          "target": "allEnemies",
+          "status": "shock",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Called from the broken lenses of the old Observatory.\nThe sky answered, and did not ask what it was answering.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.glacialSpike",
+    "name": "Glacial Spike",
+    "class": "starseer",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 26
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 4
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "chill",
+        "stacks": 3
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:frost",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. Apply {chill} Chill.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 34
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 6
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "chill",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "One needle of the deep winter, thrown by a hand that stayed warm.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.radiantVerdict",
+    "name": "Radiant Verdict",
+    "class": "herald",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 30
+      },
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 10
+      },
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "regen",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:divine",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Gain {block} Block. Gain {regen} Regen.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 46
+        },
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 14
+        },
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "regen",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Spoken once, and the room agrees with it.\nThe Chapel's censor struck the word from the record. The word did not strike back.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.witherDraught",
+    "name": "Wither Draught",
+    "class": "herald",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 24
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "necroticBlight",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:decay",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {necroticBlight} Necrotic Blight.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 32
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "necroticBlight",
+          "stacks": 3
+        }
+      ]
+    },
+    "flavor": "Drunk from the cup the Chapel keeps for those it cannot bury.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.batteringGale",
+    "name": "Battering Gale",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 22
+      },
+      {
+        "op": "poiseDamage",
+        "target": "enemy",
+        "amount": 12
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "school:force",
+      "cost.manaOnly"
+    ],
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 30
+        },
+        {
+          "op": "poiseDamage",
+          "target": "enemy",
+          "amount": 16
+        }
+      ]
+    },
+    "flavor": "A wind with a shoulder in it.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 6
+  },
+  {
+    "id": "core.openArchive",
+    "name": "Open the Archive",
+    "class": "colorless",
+    "rarity": "rare",
+    "cost": 0,
+    "staminaCost": 0,
+    "manaCost": 2,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "op": "draw",
+        "amount": 5
+      },
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.skill",
+      "cost.manaOnly",
+      "lifecycle.exhaust"
+    ],
+    "textTemplate": "Draw {draw} cards. Gain {restoreMana} Mana. Exhaust.",
+    "upgrade": {
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 7
+        },
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 3
+        }
+      ]
+    },
+    "flavor": "Every catalogue the Astronomer sealed, open at once.\nThe reader pays in Mana and keeps what the pages give back."
   }
 ]
