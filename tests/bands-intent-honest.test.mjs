@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { dispatch } from '../src/engine/combat.js';
 import { bandsFight, pairOf, registries } from './helpers/bands-fight.mjs';
-import { enemyTurnSp, enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
+import { enemyTurnSp, enemyMoveQuote, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { GrantRetreatCard } from '../src/engine/bandRows.js';
 
 const moves = combat => combat.eventLog.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === 'e1').map(e => e.moveId);
@@ -132,4 +132,12 @@ test('a plan never hides an attack the pool cannot pay: every stored approachFor
     }
   }
   assert.ok(hidden > 0, 'some enemy hides an attack behind the step forward');
+});
+
+test('the planner itself queues a back-row melee opener as the step forward (no later re-plan needed)', () => {
+  const combat = bandsFight({ enemyIds: ['fellWarden', 'wanderingSoldier'], seed: 1, encounter: { id: 'x', rows: ['back', 'front'] } });
+  const [enemy] = combat.enemies, def = registries.enemies.get('fellWarden');
+  const queue = extendEnemyQueue({ ...enemy, movesHistory: [] }, def, [], { isFirstTurn: true, pick: () => null, combat });
+  assert.equal(queue[0].moveId, 'advance');
+  assert.equal(queue[0].approachFor, 'caneStrike');
 });
