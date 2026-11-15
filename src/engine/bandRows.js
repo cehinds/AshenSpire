@@ -129,6 +129,13 @@ export function BandsEnemyPhaseStart(ctx) {
   if (living.length && !living.some(enemy => enemy.row === 'front')) for (const enemy of living) SetEnemyRow(ctx, enemy, 'front', 'frontEmpty');
 }
 
+/** BandsFormationBlock(ctx, enemy): the Block an enemy gains at its turn start for standing in a row with another living enemy (0 when alone or without rows). */
+export function BandsFormationBlock(ctx, enemy) {
+  const rules = BandsActive(ctx);
+  if (!rules || !enemy?.alive || !(rules.formationBlock > 0)) return 0;
+  return ctx.enemies.some(other => other !== enemy && other.alive && other.row === enemy.row) ? rules.formationBlock : 0;
+}
+
 /** BandsMoveEngagement(ctx, source, target, bands): a moveEngagement effect under rows. Returns true when rows handled it (the pair band is not moved by the caller). */
 export function BandsMoveEngagement(ctx, source, target, bands) {
   if (!BandsActive(ctx)) return false;

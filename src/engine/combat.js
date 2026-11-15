@@ -1,6 +1,6 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
-import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyPhaseStart, BandsPlayerTurnEnd } from './bandRows.js';
+import { InitBandRows, GrantRetreatCard, BandsActive, BandsEnemyPhaseStart, BandsPlayerTurnEnd, BandsFormationBlock } from './bandRows.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { actorRangeKey, engagementBand, rangeBand, bandCap } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
@@ -676,6 +676,8 @@ function enemyTurnStart(combat) {
       if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
       if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     }
+    const formation = BandsFormationBlock(combat, e); // rows (W25-BANDS rule 8): two or more in a row hold the line
+    if (formation > 0) { e.block = (e.block || 0) + formation; combat.emit('blockGained', { targetId: e.id, amount: formation, total: e.block, source: 'formation' }); } // flat: no Defense rating
   }
   drainQueue(combat);
 }
