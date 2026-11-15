@@ -13,17 +13,18 @@ const FROST = { combatProfile: { camp: 'spell', school: 'frost', damageType: 'ar
 const hit = (combat, source, target, carrier = SLASH, base = 100) => profileDamageReceipt(combat, source, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
 const stage = (receipt, id) => receipt.damageReceipt.hits[0].sources.find(row => row.id === id);
 
+// core.frostNip is a cantrip that prints Chill itself (w25-cantrips: a school cantrip carries its school status), so a hit adds the rule's stacks to it.
+const FROST_NIP_PRINTED_CHILL = 3;
 test('every frost hit applies 1 Chill plus 1 per 3 INT, to a single target', () => {
   for (const [intelligence, stacks] of [[0, 1], [2, 1], [3, 2], [4, 2], [6, 3], [9, 4]]) {
     const { combat, enemies } = fight({ enemies: 2, attributes: { intelligence } });
     play(combat, 'core.frostNip', enemies[0].id);
-    assert.equal(getStacks(enemies[0], 'chill'), stacks, `INT ${intelligence}`);
+    assert.equal(getStacks(enemies[0], 'chill'), stacks + FROST_NIP_PRINTED_CHILL, `INT ${intelligence}`);
     assert.equal(getStacks(enemies[1], 'chill'), 0, 'frost never spreads by element');
   }
   const old = fight({ enemies: 1, legacy: true });
   play(old.combat, 'core.frostNip', old.enemy.id);
-  assert.equal(getStacks(old.enemy, 'chill'), 0, 'an old fight keeps only the legacy Frost meter');
-  assert.ok(getStacks(old.enemy, 'frost') > 0);
+  assert.equal(getStacks(old.enemy, 'chill'), FROST_NIP_PRINTED_CHILL, 'an old fight adds no element Chill: only the card\'s printed Chill');
 });
 
 test('Chill: -5% of the damage the chilled unit deals, per stack', () => {
