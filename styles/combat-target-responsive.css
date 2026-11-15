@@ -270,4 +270,4 @@
 
 /* W25-BANDS, phone: the player's HUD hangs above the figure in the enemy rows' band, so the back rank stands higher here (its plates ride with it)
    and its lower body ends above the player's bars; the front rank, the grid and the player stay where they were. */
-:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-40px / var(--ui-zoom,1)); }
+:root[data-layout='narrow'] .combat .combatant.enemy[data-band-row='back'] { translate:0 calc(-46px / var(--ui-zoom,1)); }
