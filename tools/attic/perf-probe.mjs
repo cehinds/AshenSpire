@@ -11,6 +11,7 @@
 //   node tools/attic/perf-probe.mjs --scenario combat,map   only these (combat, map, hand, transitions)
 //   node tools/attic/perf-probe.mjs --seed PERF1         the fixed seed (default PERF1)
 //   node tools/attic/perf-probe.mjs --throttle 4         CPU slowdown (default 4; 1 = none)
+//   node tools/attic/perf-probe.mjs --viewport 375x667@2 phone viewport and DPR (default 390x844@3; 375x667@2 = iPhone SE)
 //   node tools/attic/perf-probe.mjs --out DIR            raw per-run JSON goes here (default $TMPDIR/ashen-perf)
 //   node tools/attic/perf-probe.mjs --keep-trace         also keep each Chromium trace in DIR (large)
 //   node tools/attic/perf-probe.mjs --no-profile         skip the CPU-profile pass
@@ -50,6 +51,12 @@ const CERTIFY = argv.includes('--certify');
 const RUNS = Math.max(1, Number(arg('--runs', CERTIFY ? 5 : 3)) || (CERTIFY ? 5 : 3));
 const SEED = arg('--seed', 'PERF1');
 const THROTTLE = Number(arg('--throttle', 4)) || 4;
+// --viewport WxH@DPR (default 390x844@3); iPhone SE 2nd/3rd gen is 375x667@2.
+const VIEWPORT = (() => {
+  const m = /^(\d+)x(\d+)(?:@(\d+(?:\.\d+)?))?$/.exec(arg('--viewport', '390x844@3'));
+  if (!m) throw new Error('--viewport wants WxH@DPR, e.g. 375x667@2');
+  return { width: Number(m[1]), height: Number(m[2]), dpr: Number(m[3] || 1) };
+})();
 const OUT = resolve(arg('--out', join(process.env.TMPDIR || tmpdir(), 'ashen-perf')));
 const KEEP_TRACE = argv.includes('--keep-trace');
 const PROFILE = !argv.includes('--no-profile') && !CERTIFY;
@@ -130,8 +137,9 @@ const INIT = `(() => {
       let over = 0, decoded = 0, shown = 0;
       for (const i of imgs) {
         const r = i.getBoundingClientRect(); decoded += i.naturalWidth * i.naturalHeight;
-        shown += Math.max(1, r.width * r.height) * 9; // deviceScaleFactor 3 squared
-        if (i.naturalWidth > r.width * 3 * 1.5 && r.width > 0) over++;
+        const dpr = window.devicePixelRatio || 1;
+        shown += Math.max(1, r.width * r.height) * dpr * dpr;
+        if (i.naturalWidth > r.width * dpr * 1.5 && r.width > 0) over++;
       }
       return { nodes: all.length, canvases: document.getElementsByTagName('canvas').length, imgs: imgs.length,
         filter: has((c) => c.filter !== 'none'), backdrop: has((c) => c.backdropFilter && c.backdropFilter !== 'none'),
@@ -505,7 +513,7 @@ const SCENARIOS = {
 async function onePass(browser, base, name, opts) {
   const { trace, profile } = opts;
   const sc = SCENARIOS[name];
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const ctx = await browser.newContext({ viewport: { width: VIEWPORT.width, height: VIEWPORT.height }, deviceScaleFactor: VIEWPORT.dpr, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
