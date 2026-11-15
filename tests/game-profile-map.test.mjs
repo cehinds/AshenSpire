@@ -275,7 +275,7 @@ test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026
   assert.throws(() => build({ firstFloor: 'elite' }), /firstFloor/, 'an elite cannot open before minimumThreatFloor');
 });
 test('a configured fog route reveals only landmarks, then the split and next rest; the trail persists on load', () => {
-  const { reg, run } = setup({ mapMode: 'fog', fogRevealRests: false, requirePrebossRest: false, restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
+  const { reg, run } = setup({ mapMode: 'fog', fogRevealRests: false, fogTrailOnly: false, requirePrebossRest: false, restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');

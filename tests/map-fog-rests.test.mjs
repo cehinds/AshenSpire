@@ -43,7 +43,6 @@ test('visited nodes stay drawn and the light follows the player', () => {
     const k = know(run);
     for (const seen of run.path) assert.ok(k.drawn.has(seen), `${seen} traveled stays revealed`);
     for (const to of g.nodes[id].next) assert.ok(k.drawn.has(to), `the split ahead of ${id} is lit`);
-    for (const old of before) assert.ok(k.drawn.has(old), 'the light never closes');
     before = k.drawn;
   }
   const farAway = Object.values(g.nodes).find(n => n.type !== 'shrine' && !walk.includes(n.id) && !walk.some(w => g.nodes[w].next.includes(n.id)) && !g.bossIds.includes(n.id));
@@ -59,4 +58,18 @@ test('with fogRevealRests off or absent the fog is the plain fog (legacy fixture
   assert.ok(rests(run).some(r => !plain.has(r.id)), 'plain fog hides rests that are not on the trail');
   const on = litNodes({ graph, run: { ...run, gameProfile: { modules: { routes: { fogRevealRests: true } } }, path: [] } });
   for (const r of rests(run)) assert.ok(on.has(r.id));
+});
+
+test('fogTrailOnly: the trail plus one step from the CURRENT node only; a branch off a past node and the next rest stay fogged', () => {
+  for (const seed of [1, 4, 9]) {
+    const run = newRun(seed), g = run.mapGraph;
+    assert.equal(gameModule(run, 'routes').fogTrailOnly, true);
+    const walk = [g.startIds[0]];
+    while (walk.length < 4) { const next = g.nodes[walk[walk.length - 1]].next; if (!next.length) break; walk.push(next[0]); }
+    run.path = walk; run.mapNodeId = walk[walk.length - 1];
+    const k = know(run), here = g.nodes[run.mapNodeId];
+    const allowed = new Set([...walk, ...here.next, ...g.startIds, ...g.bossIds]);
+    assert.deepEqual([...k.drawn].sort(), [...allowed].sort(), `${seed}: nothing beyond the trail, one step ahead, entrance and bosses`);
+    for (const id of walk.slice(0, -1)) for (const to of g.nodes[id].next) if (!allowed.has(to)) assert.ok(!k.drawn.has(to), `${to}: a branch off a past node is hidden`);
+  }
 });

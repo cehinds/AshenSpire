@@ -387,11 +387,16 @@ export function litNodes({ graph, run }) {
     for (const node of Object.values(graph.nodes)) if (node.type === 'shrine') add(node.id);
   }
   const path = (run && run.path) || [];
-  for (const id of path) { shine(id); shrineAhead(id); }
+  // routes.fogTrailOnly (owner, 2026-11-15: "just the path you traveled"): a travelled node lights only itself; only the node
+  // you stand on opens its split, and no shrine lights the next one. A rule key; absent keeps the older fog above.
+  const trailOnly = gameModule(run, 'routes')?.fogTrailOnly === true;
+  const here = (run && run.mapNodeId) || path[path.length - 1];
+  for (const id of path) { if (trailOnly) { add(id); } else { shine(id); shrineAhead(id); } }
+  if (trailOnly && here) shine(here);
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
   // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
   // hand-edited save could too. Standing somewhere always lights it AND its split.
-  if (run && run.mapNodeId) { shine(run.mapNodeId); shrineAhead(run.mapNodeId); }
+  if (run && run.mapNodeId) { shine(run.mapNodeId); if (!trailOnly) shrineAhead(run.mapNodeId); }
   return lit;
 }
 

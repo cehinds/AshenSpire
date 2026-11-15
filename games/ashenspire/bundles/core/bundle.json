@@ -199,6 +199,7 @@
         "requirePrebossRest": "requirePrebossRest",
         "maxBranches": "maxBranches",
         "fogRevealRests": "fogRevealRests",
+        "fogTrailOnly": "fogTrailOnly",
         "startNodeRefills": "startNodeRefills",
         "typeWeights": "typeWeights",
         "variedNeighbours": "variedNeighbours",

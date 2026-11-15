@@ -78,6 +78,19 @@
       "maximum": 5,
       "description": "Present: after a shared opening depth the act splits into 1..min(maxBranches, distinct bosses) branches, each with its own lanes, rests, elites and boss. Absent keeps a single trunk with one boss."
     },
+    "fogTrailOnly": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "enum": [
+            null
+          ]
+        }
+      ],
+      "description": "With mapMode fog: only the travelled path, the nodes one step ahead of the node you stand on, the entrance and the bosses are lit. Branches off earlier nodes and the next rest stay fogged. Absent, false or null keeps the older fog."
+    },
     "fogRevealRests": {
       "anyOf": [
         {

@@ -22,6 +22,7 @@
   "minimumThreatFloor": 3,
   "mapMode": "fog",
   "fogRevealRests": false,
+  "fogTrailOnly": true,
   "firstFloor": "fight",
   "shopShare": 0.15,
   "requirePrebossRest": true,
