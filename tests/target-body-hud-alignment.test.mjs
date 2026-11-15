@@ -26,7 +26,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const combat = { querySelector: () => null };
     const field = { querySelectorAll: () => [frame], closest: () => combat };
     const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-      uiZoom: () => zoom, CanvasBox, field, schedule() {}, scheduleArt() {}, targetBodyHudPlacement, separateRackedIntents() {},
+      uiZoom: () => zoom, CanvasBox, field, fieldSizeKey: null, schedule() {}, scheduleArt() {}, targetBodyHudPlacement, separateRackedIntents() {},
       // Desktop draws the taller group (owner 2026-10-28): the stage's helper returns its own height there.
       miniHudGroupHeight: grid => formFactor === 'desktop' ? 96 : grid.miniHudGroupHeightPx,
       uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
@@ -101,7 +101,7 @@ test('every target body is measured before inherited HUD coordinates are written
   // A partially mounted combatant has no sprite yet and must stay untouched.
   frames.push({ querySelector: () => null });
   const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
-    uiZoom: () => 1.25, CanvasBox, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
+    uiZoom: () => 1.25, CanvasBox, fieldSizeKey: null, field: { getBoundingClientRect: () => ({ left: 0, right: 390 }), querySelectorAll: () => frames, closest: () => ({ dataset: {}, querySelector: () => null }) },
     schedule() {}, scheduleArt() {}, invalidateSpriteRects() {}, readHitBadges: () => null, targetBodyHudPlacement, separateRackedIntents() {}, miniHudGroupHeight: grid => grid.miniHudGroupHeightPx,
     uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
     currentSpriteBodyBounds: sprite => ({ headY: 400, feetY: 560, top: 380, left: sprite.id * 50, right: sprite.id * 50 + 40 }),

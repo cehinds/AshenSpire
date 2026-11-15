@@ -523,13 +523,32 @@ async function main() {
     await clickSel('.combat-potions', 'the Potions control');
     const useSel = '.combat-potion-menu .potion-use[aria-label="Use Blight Coating"]';
     await until(`!!document.querySelector(${JSON.stringify(useSel)})`, 'Blight Coating Use action');
-    const pt = await evalIn(`(() => {
+    // A form-factor canvas (Auto view in combat) keeps the document at scroll 0,0
+    // (viewViewport.js), so a scrollIntoView that moved the page is undone a
+    // frame later and a point read straight after it lands beside the button.
+    // Scroll only if the button is not already visible, then read its centre once
+    // it has held still for several frames, and hand it back only if the point
+    // really hits the button (the hit test keeps the tool honest).
+    const pt = await evalIn(`new Promise((resolve) => {
       const b = document.querySelector(${JSON.stringify(useSel)});
-      if (!b || b.disabled) return null;
-      b.scrollIntoView({ block: 'center' });
-      const r = b.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat || 'tap' };
-    })()`);
+      if (!b || b.disabled) return resolve(null);
+      const vis = () => { const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; };
+      if (!vis()) b.scrollIntoView({ block: 'nearest' });
+      let last = '', still = 0, frames = 0;
+      const tick = () => {
+        const r = b.getBoundingClientRect();
+        const key = [r.left, r.top, r.width, r.height].map(Math.round).join();
+        still = key === last ? still + 1 : 0;
+        last = key;
+        if (still >= 5 || ++frames > 300) {
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const hit = document.elementFromPoint(x, y);
+          return resolve(hit && (hit === b || b.contains(hit)) ? { x, y, beat: b.dataset.beat || 'tap' } : null);
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    })`);
     if (!pt) return { armed: false, selectedCard: false, beat: null };
     if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
     else await clickAt(pt.x, pt.y);
@@ -843,6 +862,12 @@ async function main() {
   if (want('resize') && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
+    // Combat's Auto view lays out on a fixed form-factor canvas (viewViewport.js,
+    // owner 2026-11-14), so a resize no longer moves --ui-zoom there: it moves the
+    // canvas's uniform fit (--view-fit), which is what every callout's coordinate
+    // space now follows. The case reads that instead.
+    const FIT = `parseFloat(document.documentElement.style.getPropertyValue('--view-fit'))`;
+    const fit0 = await evalIn(FIT);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
     // main.js re-flexes zoom 150 ms after the resize, the tutorial re-places at
     // 220 ms and follows the board until it holds still, the spot slides 200 ms.
@@ -850,12 +875,14 @@ async function main() {
     // loaded runner can deliver seconds after CDP sends it — so wait for the
     // re-flex to happen at all, then for rest, and read only then.
     let reflexed = false;
-    try { reflexed = await until(`parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) !== 1.7`, 'the zoom re-flex'); } catch { /* reported by the zoom check below */ }
+    try { reflexed = await until(`${FIT} !== ${fit0}`, 'the canvas re-fit'); } catch { /* reported by the zoom check below */ }
     const rest = reflexed ? await evalIn(SETTLED) : { settled: false, ms: 0 };
     const p = await evalIn(PROBE);
     const spotOn = await evalIn(SPOT_ON_TARGET);
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
-    ok(p.zoom === 1.07, `resize: --ui-zoom re-flexed 1.7 → 1.07 (else this case tests nothing)`);
+    const fit1 = await evalIn(FIT);
+    console.log(`    view-fit ${fit0} → ${fit1}`);
+    ok(Number.isFinite(fit0) && Number.isFinite(fit1) && reflexed && fit1 !== fit0, `resize: the combat canvas re-fit ${fit0} → ${fit1} (else this case tests nothing)`);
     ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
@@ -1129,6 +1156,11 @@ async function main() {
       );
 
       await pressKey('Escape', 'Escape', 27);
+      // The profile write is not synchronous any more: every profile mutation enters
+      // the origin-wide storage owner (browserSave.js, Web Locks) before its fresh
+      // read-merge-write, so the veil leaves the DOM a task or two before the meta
+      // lands. Wait for the write itself, bounded; a write that never lands still fails.
+      try { await until(`(() => { try { return JSON.parse(localStorage.getItem('sote_meta_v1') || '{}').settings?.seenTutorial === true; } catch { return false; } })()`, 'the durable seenTutorial write', 5000); } catch { /* reported by the check below */ }
       const finished = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
         meta: localStorage.getItem('sote_meta_v1'),

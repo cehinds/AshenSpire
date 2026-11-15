@@ -395,6 +395,7 @@ These 155 tools were moved to `tools/attic/`, not deleted: no tracked file outsi
 | `quest-choice-contract.mjs` | Issue #257: previous event choices can unlock or exclude later quest steps. | docs SPEC.md, docs/framework-migration-checklist.md; other src/model/validate.js |
 | `quicknav-reach.mjs` | quicknav-reach — the shipped quick menu, checked in a browser. | tools plantsites-baseline.json |
 | `readiness-poses-ship.mjs` | Normalize authored sprite sheets to the existing 640px canvas / y=600 floor. | docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/readinessPoseArt.js |
+| `redraw-audit.mjs` | redraw-audit — no-op DOM writes, identical rebuilds and paint scope per card play. | docs docs/MOBILE-PERFORMANCE.md |
 | `rear-player-qa.mjs` | (no header comment) | docs docs/ai/session-continuations/2026-10-08/rear-sprites-and-layering.md |
 | `reaver-attack-animation.mjs` | Standing validation for the owner-approved painted Reaver attack. The | docs docs/ART-REPO-PLAN.md |
 | `reaver-attack-playtest.mjs` | Real-browser smoke for the painted Reaver sequence: play an actual Strike, |

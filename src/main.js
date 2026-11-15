@@ -68,6 +68,7 @@ import { peakClassLevel } from './model/classSwap.js';
 import { allocateAttributePoint, awardLevelXp, combatXpReceipt } from './model/levelup.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
+import { freezeProfile } from './engine/gameProfileCombat.js';
 import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
@@ -2027,6 +2028,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     playerStatuses: cm.playerStatuses,
   });
   stampCombatPlaysEver(run, combat); // pile copies carry the deck copy's lifetime plays (Honed cards)
+  // The live fight's rules are never edited once it starts: freezing them lets the rules cache key them by identity and a preview share them by reference.
+  if (combat.fixCoreRules) freezeProfile(combat.fixCoreRules);
   if (combat.combatExpansionVersion === 2) {
     const durable = candidate => {
       const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,

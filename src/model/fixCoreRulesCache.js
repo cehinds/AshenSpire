@@ -6,7 +6,8 @@
 // bindings and queried five families, about 80 microseconds on a desktop and a
 // fifth of the engine's time on a throttled phone. The answer is a pure
 // function of the raw rules and the attachment rows, so the repeat call is
-// keyed on exactly those two inputs as JSON, never on object identity: a
+// keyed on exactly those two inputs as JSON (the rules' text is memoised by
+// identity only for a deeply frozen rules object, see rawText): a
 // status gained, a mount swapped or a rules edit changes the key and misses.
 // A failing call is never stored; a key that cannot round-trip through JSON
 // (NaN, Infinity, or an undefined array slot, which all print as null there) is
@@ -49,11 +50,38 @@ function lossless(_key, value) {
   return value;
 }
 
+// The raw rules are by far the largest part of the key (about 4 KB of JSON) and
+// are the same object for a whole fight, so their text is memoised per object,
+// but only when the object can never change: a deeply frozen tree. A frozen
+// object stays frozen for ever, so a positive verdict is permanent, and a
+// frozen tree can only be replaced, never edited, so a new rules object is a new
+// WeakMap key. An unfrozen (or partly frozen) tree may be edited in place, so it
+// is stringified on every call exactly as before and never trusted by identity.
+const frozenRawText = new WeakMap(); // deeply frozen rules object -> its key text (null: not JSON round-trippable)
+
+function deepFrozen(value) {
+  if (!value || typeof value !== 'object') return true;
+  if (!Object.isFrozen(value)) return false;
+  for (const inner of Object.values(value)) if (!deepFrozen(inner)) return false;
+  return true;
+}
+
+function rawText(raw) {
+  if (raw === undefined) return '0';
+  if (raw === null || typeof raw !== 'object') return JSON.stringify(raw, lossless) ?? null;
+  if (frozenRawText.has(raw)) return frozenRawText.get(raw);
+  let text;
+  try { text = JSON.stringify(raw, lossless); } catch { text = null; }
+  if (deepFrozen(raw)) frozenRawText.set(raw, text);
+  return text;
+}
+
 export function keyFor(ctx, entity, carrier) {
   try {
-    const raw = ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules;
-    const key = JSON.stringify([raw === undefined ? 0 : raw, fixCoreAttachments(ctx, entity, carrier)], lossless);
-    return key === undefined ? null : key;
+    const raw = rawText(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules);
+    if (raw === null || raw === undefined) return null;
+    const attachments = JSON.stringify(fixCoreAttachments(ctx, entity, carrier), lossless);
+    return attachments === undefined ? null : `${raw}|${attachments}`;
   } catch { return null; }
 }
 
