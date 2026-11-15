@@ -91,9 +91,9 @@ test('legacy Martial overlay covers its shipped physical identities and never mu
   }
 });
 
-test('a bow equipment projection keeps Ranged delivery and spell basics retain authored Spell camp', () => {
+test('a bow equipment projection keeps a Reach attack and spell basics retain authored Spell camp', () => {
   const bow = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'strike', profileId: 'bowPierceAttack' }));
-  assert.equal(combatProfileFor(bow).maneuver, 'ranged'); assert.equal(bow.range, 'reach');
+  assert.equal(combatProfileFor(bow).maneuver, 'attack'); assert.equal(bow.range, 'reach'); assert.ok(bow.tags.includes('delivery:projectile'));
   const spell = resolveCard(registries, { cardId: 'strike', profileId: 'staffMagicAttack' });
   assert.equal(applyCombatExpansionMartial(spell), spell);
 });

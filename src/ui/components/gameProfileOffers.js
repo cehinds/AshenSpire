@@ -1,12 +1,14 @@
 import { renderCard } from './card.js';
 import { renderEquipmentCard } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
+import { RenderRankUpOfferCard } from './rankUpOfferCard.js';
 import { mountRewardDoor, replaceRewardFoot } from './rewardDoor.js';
 import { clearSelection } from './cardSelection.js';
 import { openBoundCardInspection } from './cardInspection.js';
 import { el, button, modalFooter } from '../kit/index.js';
 import { t } from '../strings.js';
 import { openConfirmationModal } from './confirmationModal.js';
+import { OfferPicksLeft } from '../../model/gameProfileRewards.js';
 import { armouryOpensDeckEditor, noncombatEditing } from '../../model/armouryRules.js';
 
 // Presentation ownership stays outside the serializable run and offer data.
@@ -36,7 +38,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   strip.style.setProperty('--choice-count', String(offer.options.length));
   // The copy follows the cards module's whole editor policy (not the rest services): the Armoury when it opens the deck editor,
   // no editing promise when non-combat editing is on but the editor is disabled, otherwise Strategize.
-  const note = el('p', { class: 'reward-note', text: t(copy.note, { count: offer.takeCount }) });
+  const note = el('p', { class: 'reward-note', text: t(offer.options.some((option) => option.bonus) ? 'reward.configured.noteBonus' : copy.note, { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   const inspect = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true });
@@ -50,6 +52,9 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const keep = button({ label: t('reward.configured.addToLibrary'), id: 'reward-keep', className: 'reward-keep' });
   editDeck.hidden = true; keep.hidden = true;
   const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
+  // A bonus rank-up is an extra pick: the card picks end when takeCount of them are taken, the bonus when it is taken.
+  const spent = (index) => offer.taken.includes(index) || offer.claimed !== null
+    || (!offer.options[index]?.bonus && OfferPicksLeft({ ...offer, options: offer.options.filter((row) => !row.bonus), taken: offer.taken.filter((at) => !offer.options[at]?.bonus) }) < 1);
   let selected = null;
   let pending = false;
   let reviewing = false;
@@ -57,7 +62,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   let addToDeckMode = false;
   const choices = [];
   function select(index) {
-    if (pending || reviewing || completed || offer.claimed !== null || offer.taken.includes(index)) return;
+    if (pending || reviewing || completed || spent(index)) return;
     selected = index;
     for (const [at, { face, control }] of choices.entries()) {
       const chosen = at === selected;
@@ -87,12 +92,14 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const equipment = ['weapons', 'armor'].includes(option.kind);
+    const service = option.kind === 'rankUps';
     const definition = card ? registries.cards.get(option.id)
+      : service ? { name: t('rankUp.name') }
       : option.kind === 'relics' ? registries.relics.get(option.id)
       : option.kind === 'potions' ? registries.flasks.get(option.id)
       : option.kind === 'weapons' ? registries.equipment.armaments.find(item => item.id === option.id)
       : registries.equipment.armour.find(item => item.id === option.id && item.classId === run.class);
-    const unavailable = offer.taken.includes(index) || offer.claimed !== null;
+    const unavailable = spent(index);
     const column = el('div', { class: `reward-choice-option${unavailable ? ' is-owned' : ''}`, dataset: { pickId: String(index) } });
     const face = card ? renderCard(registries, { cardId: option.id, instanceId: `offer:${index}`, upgraded: false, ...(option.rank > 1 ? { rank: option.rank } : {}) }, {
       rules: run, surface: 'reward', level: 'glance', actionOwnsTouch: true,
@@ -100,7 +107,8 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       infoBadge: true,
       // Reading a reward never chooses it; the chooser owns that action.
       only: [],
-    }) : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
+    }) : service ? RenderRankUpOfferCard(registries, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
+      : equipment ? renderEquipmentCard(registries, definition, { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance', surface: 'reward' }).card
       : renderCollectibleCard(registries, definition, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
     face.classList.add('reward-choice-face'); face.dataset.pickId = String(index);
     // First tap selects; a tap on the already-selected card face opens the inspector (owner, 2026-11-05).
@@ -108,14 +116,14 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       if (card && selected === index && !pending && !reviewing && !completed) openBoundCardInspection(face, face);
       else select(index);
     });
-    const control = button({ label: definition.name, disabled: unavailable, className: 'class-pick reward-node reward-pick reward-choice-button', attrs: { type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { pickId: String(index) } } });
+    const control = button({ label: option.bonus ? t('rankUp.bonusLabel', { name: definition.name }) : definition.name, disabled: unavailable, className: 'class-pick reward-node reward-pick reward-choice-button', attrs: { type: 'button', role: 'radio', 'aria-checked': 'false', dataset: { pickId: String(index) } } });
     control.addEventListener('click', () => select(index));
     column.append(face, control); strip.append(column); choices.push({ face, control });
   }
   const cardPick = () => selected !== null && ['combatCards', 'weaponArts'].includes(offer.options[selected]?.kind);
   const resetReview = () => {
     reviewing = false; addToDeckMode = false;
-    for (const [index, { control }] of choices.entries()) control.disabled = offer.taken.includes(index) || offer.claimed !== null;
+    for (const [index, { control }] of choices.entries()) control.disabled = spent(index);
     equip.hidden = true; status.textContent = '';
     confirm.disabled = selected === null;
     mountDoor();
@@ -147,7 +155,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   // After a claim: leave when the offer is spent, else show the next pick. Also the way back from the deck editor.
   function proceed() {
     try {
-      if (offer.claimed !== null || offer.taken.length >= Math.min(offer.takeCount, offer.options.length)) {
+      if (offer.claimed !== null || OfferPicksLeft(offer) < 1) {
         onContinue();
         completed = true;
       } else {

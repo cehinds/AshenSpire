@@ -19,6 +19,7 @@ import { buildBlacksmithStock } from './../engine/shopKinds.js';
 import { mountGameOver } from './../ui/screens/gameover.js';
 import { mountCompendium } from './../ui/screens/compendium.js';
 import { gameModule } from './../model/gameProfile.js';
+import { HeldItemRefs } from './../model/itemProperties.js';
 import { isConfiguredRun } from './../model/gameProfileRun.js';
 import { screenshotRoutePath } from './../ui/models/ScreenshotFixtureModel.js';
 import { configureArmamentKitPreview } from './armamentKitPreview.js';
@@ -186,6 +187,18 @@ export function createShotStates(ctx) {
         if ((run.loadout.storage || []).length >= cap) break;
         addToStorage(run.loadout, piece.id, cap);
       }
+    }
+    // `?shotItems=props` — STAND WITH WORKED ITEMS. A fresh run holds plain gear, so the Armoury's property chips and detail section
+    // (W25-R) had nothing to draw. Every item worn or held gets a rank, a Blacksmith pick and a few properties, written to the same run
+    // fields the Blacksmith writes (itemUpgradePicks, itemProps, itemRanks), in memory only like every shot lever.
+    if (shotParams.get('shotItems') === 'props') {
+      const pool = ['bleedingEdge', 'attackStance', 'resistFire', 'startBlock2', 'handSize1', 'maxPoise5', 'statusWard'];
+      run.itemUpgradePicks ||= {}; run.itemProps ||= {}; run.itemRanks ||= {};
+      HeldItemRefs(run).forEach((ref, at) => {
+        run.itemUpgradePicks[ref] = [{ id: 'prop:edgeFire', k: 'prop', prop: 'edgeFire' }, { id: 'ar', k: 'stat', stat: 'ar', n: 1 }];
+        run.itemProps[ref] = [0, 1, 2].map((n) => pool[(at * 2 + n) % pool.length]);
+        run.itemRanks[ref] = 1 + (at % 2);
+      });
     }
     const shotAt = name === 'map' ? shotParams.get('shotAt') : null;
     if (shotAt) {
@@ -370,7 +383,8 @@ export function createShotStates(ctx) {
       // Core's configured reward door: the production offer/save/renderer callbacks, no posed alternate UI and no
       // preselected option. (The legacy poses `?shotReward=full|empty|draft|...` went with the legacy door.)
       if (!isConfiguredRun(run)) throw new Error('Reward shot requires a configured game profile.');
-      beginGameProfileReward({ source: 'combat', after: 'map' });
+      // `?shotPool=elite|boss` — the fight tier the offer is rolled for (W25-R: a rank-up is likelier on an elite or boss reward).
+      beginGameProfileReward({ source: 'combat', after: 'map', pool: ['normal', 'elite', 'boss'].includes(shotParams.get('shotPool')) ? shotParams.get('shotPool') : 'normal' });
     } else if (name === 'combat' || name === 'fx') {
       // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
       // four POOL doors (which sit above the shot branches, right after newRun,
