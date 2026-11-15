@@ -174,3 +174,31 @@ export function GrantRetreatCard(ctx) {
   ctx.emit?.('combatRetreatGranted', { cardId: rules.retreatCardId });
   return true;
 }
+
+/** BandsEnemyBackAtPhase(ctx, enemy): true when the enemy will still stand in the back row when the coming enemy phase begins (an empty front row steps it forward first). */
+export function BandsEnemyBackAtPhase(ctx, enemy) {
+  if (!BandsActive(ctx) || enemy?.row !== 'back') return false;
+  return ctx.enemies.some(other => other.alive && other.row === 'front');
+}
+
+/**
+ * BandsEnemyPhaseRangeState(ctx): a detached copy of the range state as it will stand when the coming enemy phase begins, for planning and
+ * re-quoting an enemy's intents (owner, 2026-11-15). The end of this player turn spends one turn end of the Advance, so an Advance with a single
+ * turn end left is over by then; a back-row enemy that stays back is at reach, and one that steps forward is closed. Pure: the fight is not changed.
+ */
+export function BandsEnemyPhaseRangeState(ctx) {
+  const copy = ctx.rangeState && structuredClone(ctx.rangeState);
+  if (!copy || !BandsActive(ctx)) return copy;
+  const view = { ...ctx, rangeState: copy };
+  const living = ctx.enemies.filter(enemy => enemy.alive);
+  const frontHeld = living.some(enemy => enemy.row === 'front');
+  for (const player of playerEntities(ctx)) for (const enemy of living) {
+    const key = rangePairKey(actorRangeKey(ctx, player), actorRangeKey(ctx, enemy));
+    if (!Object.hasOwn(copy.engagements, key)) continue;
+    const advanced = player.advanced > 1;
+    const staysBack = enemy.row === 'back' && frontHeld;
+    if (advanced) copy.engagements[key] = 0;
+    else if (enemy.row === 'back') copy.engagements[key] = staysBack ? Math.min(Math.max(1, copy.engagements[key]), bandCap(view.rangeState.policy)) : 0;
+  }
+  return copy;
+}
