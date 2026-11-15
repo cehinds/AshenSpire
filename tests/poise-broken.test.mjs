@@ -18,13 +18,16 @@ import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules, FixCoreBrokenRules, fixCoreProtectionDescription } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { withoutStanceBenefitDefaults } from './legacyHitRules.mjs';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const carrier = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
 const META = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
 
-function fight(enemyIds = ['wanderingSoldier'], { legacy = false, seed = 511 } = {}) {
+// `noStance` builds the fight as one created before the Wave 2.5 stance benefits, so a test can read the bare Broken x1.5.
+function fight(enemyIds = ['wanderingSoldier'], { legacy = false, seed = 511, noStance = false } = {}) {
+  if (noStance) return withoutStanceBenefitDefaults(() => fight(enemyIds, { legacy, seed }));
   const run = createRunState({ registries: reg, classId: 'reaver', seed, profileMeta: META });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(seed), enemyIds });
   if (legacy) { combat.fixCoreRules = { ...combat.fixCoreRules, poise: { drain: 'prevented' } }; }
@@ -95,7 +98,7 @@ test('a charging move is cancelled and its charge lost', () => {
 });
 
 test('every hit on a Broken enemy takes x1.5, replacing Vulnerable, and only while Broken', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
+  const combat = fight(['wanderingSoldier'], { noStance: true }); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
   const before = hit(combat, enemy, 10);
   assert.equal(enemy.broken && true, true, 'the 1-Poise bar broke on that hit');
   assert.equal(enemy.statuses.vulnerable, undefined, 'no Vulnerable grant');
@@ -109,8 +112,14 @@ test('every hit on a Broken enemy takes x1.5, replacing Vulnerable, and only whi
   assert.equal(hit(combat, enemy, 10), 10, 'not Broken any more: x1');
 });
 
+test('with the shipped Attack stance benefit a hit on a Broken enemy is 10 x 1.5 x 1.2', () => {
+  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1); enemy.ratings = { ...(enemy.ratings || {}), dr: 0 };
+  hit(combat, enemy, 10);
+  assert.equal(hit(combat, enemy, 10), 18);
+});
+
 test('Broken multiplies with Vulnerable from other sources (x1.5 x1.25), the break grants none itself', () => {
-  const combat = fight(); const enemy = combat.enemies[0]; sandbag(enemy, 1);
+  const combat = fight(['wanderingSoldier'], { noStance: true }); const enemy = combat.enemies[0]; sandbag(enemy, 1);
   hit(combat, enemy, 10);
   enemy.statuses.vulnerable = { stacks: 2 };
   assert.equal(hit(combat, enemy, 10), Math.floor(10 * 1.5 * 1.25), 'Vulnerable still multiplies; the break itself grants none');
