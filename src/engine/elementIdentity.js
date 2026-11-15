@@ -10,6 +10,7 @@
 // Random rolls use the `elements` rng stream only, and only when a rule needs a roll, so no other stream shifts.
 // Headless: no document, window or timers.
 import { ElementRulesOf, ElementOfHit, HitsAllTargets } from '../model/elementIdentityRules.js';
+import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
 import { actorRangeKey, engagementBand, movedEngagementState } from '../model/combatEngagement.js';
 import * as Statuses from './statuses.js';
 import * as Actions from './actions.js';
@@ -35,11 +36,15 @@ export function ElementHasTag(ctx, entity, tag) {
 const livingOpponents = (ctx, source) => (source?.kind === 'enemy' ? [ctx.player] : ctx.enemies || []).filter(entity => entity?.alive);
 const sameSide = (ctx, entity) => (entity?.kind === 'enemy' ? ctx.enemies || [] : [...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : []), ctx.player].filter((e, i, all) => e && all.indexOf(e) === i));
 
-/** A status cap this ruleset lifts (Burn has none for fights with element rules, owner 2026-11-14; the engine cap is 3); the engine cap otherwise. */
+/** A status cap this ruleset lifts: every cap under `statusCaps: "none"` (owner 2026-11-15), Burn's under element rules (owner 2026-11-14; the engine cap is 3); the engine cap otherwise. */
 export function ElementStatusCap(ctx, id, engineCap) {
+  if (StatusCapsLifted(ctx)) return Infinity;
   const rules = ElementRulesOf(ctx);
   return rules && id === 'burn' && !Number.isFinite(rules.burn.cap) ? Infinity : engineCap;
 }
+/** Shock's hold cap: none under `statusCaps: "none"`, the element rules' own cap otherwise. */
+const burnCap = (ctx, rules) => (!StatusCapsLifted(ctx) && Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
+const shockCap = (ctx, rules) => (StatusCapsLifted(ctx) ? Infinity : rules.shock.cap);
 function addCapped(ctx, target, id, stacks, source, cap) {
   if (!target?.alive || !(stacks > 0)) return 0;
   const room = Math.max(0, cap - stacksOf(target, id));
@@ -186,10 +191,10 @@ export function OnPoiseBreak(ctx, attacker, target, hit = ctx?.elementHit) {
   const source = attacker;
   if (hit.element === 'fire') {
     const stacks = Math.max(rules.fire.burnMin, ElementAttribute(ctx, source, rules.fire.burnAttribute));
-    addCapped(ctx, target, 'burn', stacks, source, Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
+    addCapped(ctx, target, 'burn', stacks, source, burnCap(ctx, rules));
   } else if (hit.element === 'lightning') {
     const stacks = Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, source, id)), 0);
-    addCapped(ctx, target, 'shock', stacks, source, rules.shock.cap);
+    addCapped(ctx, target, 'shock', stacks, source, shockCap(ctx, rules));
   } else if (hit.element === 'divine') {
     const smite = Math.floor(hit.amount * rules.divine.smiteFraction);
     if (smite > 0) { ctx.emit?.('elementSmite', { sourceId: source?.id || null, targetId: target.id, amount: smite }); Actions.applyLoseHp(ctx, target, smite, 'smite', { sourceId: source?.id }); }
@@ -216,8 +221,8 @@ export function ElementPreviewBreak(ctx, attacker, defender, element, incoming =
     const have = defender.statuses?.[id]?.stacks || 0, give = Math.min(Math.floor(stacks), Math.max(0, cap - have));
     if (give > 0) defender.statuses = { ...defender.statuses, [id]: { ...defender.statuses?.[id], stacks: have + give } };
   };
-  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, ElementAttribute(ctx, attacker, rules.fire.burnAttribute)), Number.isFinite(rules.burn.cap) ? rules.burn.cap : Infinity);
-  else if (element === 'lightning') add('shock', Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0), rules.shock.cap);
+  if (element === 'fire') add('burn', Math.max(rules.fire.burnMin, ElementAttribute(ctx, attacker, rules.fire.burnAttribute)), burnCap(ctx, rules));
+  else if (element === 'lightning') add('shock', Math.max(...rules.lightning.shockAttributes.map(id => ElementAttribute(ctx, attacker, id)), 0), shockCap(ctx, rules));
   else if (element === 'frost' && (defender.statuses?.chill?.stacks || 0) > 0) { add('freeze', 1); add('brittle', 1); }
   else if (element === 'divine') return Math.floor((incoming || 0) * rules.divine.smiteFraction);
   return 0;

@@ -135,10 +135,11 @@ function validateElementFlux(row) {
 }
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','statusCaps','range','ward','poise','staggered','smashVsDefensive','pierce','counter','reaction','defaultTags','protectionParameters','ratings','stanceBenefits','elements','spellCosts','elementFlux',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => !['enabled', 'poisePerStack', 'routing'].includes(key))
     || (rules.ward.poisePerStack !== undefined && !(Number.isInteger(rules.ward.poisePerStack) && rules.ward.poisePerStack >= 0))
     || (rules.ward.routing !== undefined && rules.ward.routing !== 'blockFirst'))) throw new Error('FixCore ward requires {enabled:boolean, poisePerStack?:whole number, routing?:"blockFirst"}');
+  if (rules.statusCaps !== undefined && rules.statusCaps !== 'none') throw new Error('FixCore statusCaps requires "none" (or no key: the old caps)');
   if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => !['drain','breakRule','brokenDamageMultiplier'].includes(key))
@@ -203,6 +204,13 @@ export function fixCoreRules(ctx,entity=null,carrier=null) {
   return result;
 }
 export function fixCoreEnabled(ctx) { return ctx?.combatExpansionVersion === 2 && (ctx?.fixCoreRules?.version === 1 || ctx?.gameProfile?.modules?.effects?.fixCoreVersion === 1) && rawRules(ctx).enabled; }
+
+/**
+ * Owner, 2026-11-15: "nothing should have a max stack count". True when this fight's rules lift every cap on how many stacks a combatant
+ * can HOLD (the expanded-status caps of 3, Shock's 10, Reflect's 10). A fight saved without `statusCaps: "none"` keeps its caps; a per-grant
+ * amount (what a card adds) is never a cap. Safety ceilings that only keep garbage out of a save are not caps and stay.
+ */
+export const StatusCapsLifted = ctx => fixCoreEnabled(ctx) && ctx?.fixCoreRules?.statusCaps === 'none';
 /** True when FixCore is active and the data toggle has switched Ward off. */
 export function fixCoreWardDisabled(ctx) { return fixCoreEnabled(ctx) && !fixCoreWardEnabled(rawRules(ctx)); }
 export function protectionBindings(ctx, entity, carrier=null) {

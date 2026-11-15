@@ -1,6 +1,6 @@
 // Reflect stacks (owner 2026-10-31, SPEC §17): `reflectStacks` on the combat entity cuts each incoming hit by
 // min(0.9, stacks x 0.3) before Block (rounded down) and sends floor(original x min(0.9, stacks x 0.3)) back at the attacker
-// as a flagged hit that cannot reflect or counter again; each reflected hit costs one stack; stacks cap at 10 and clear with the fight.
+// as a flagged hit that cannot reflect or counter again; each reflected hit costs one stack; stacks have no cap (owner 2026-11-15; a fight saved before keeps the old cap of 10) and clear with the fight.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -17,6 +17,7 @@ import { gainReflectStacks, reflectReduceFraction, reflectReturnFraction } from 
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { mechanics } from '../src/framework/data/mechanics.js';
+import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -93,14 +94,20 @@ test('flagged and unreflectable hits are neither cut nor returned', () => {
   }
 });
 
-test('Mirror Guard grants 1 Reflect; stacks cap at mechanics.reflect.stackCap', () => {
+test('Mirror Guard grants 1 Reflect; stacks have no cap under statusCaps none, and cap at mechanics.reflect.stackCap in a fight saved without it', () => {
   const { combat } = live();
   combat.piles.hand.push({ instanceId: 'mg1', cardId: 'core.mirrorGuard', upgraded: false });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'mg1' });
   assert.equal(combat.player.reflectStacks, 1);
-  assert.equal(gainReflectStacks(combat, combat.player, 99), mechanics.reflect.stackCap - 1);
-  assert.equal(combat.player.reflectStacks, mechanics.reflect.stackCap);
-  assert.equal(gainReflectStacks(combat, combat.player, 1), 0);
+  assert.equal(StatusCapsLifted(combat), true);
+  assert.equal(gainReflectStacks(combat, combat.player, 99), 99);
+  assert.equal(combat.player.reflectStacks, 100);
+  const { combat: old } = live();
+  delete old.fixCoreRules.statusCaps;
+  old.player.reflectStacks = 1;
+  assert.equal(gainReflectStacks(old, old.player, 99), mechanics.reflect.stackCap - 1);
+  assert.equal(old.player.reflectStacks, mechanics.reflect.stackCap);
+  assert.equal(gainReflectStacks(old, old.player, 1), 0);
 });
 
 test('snapshots round-trip reflectStacks, load without it, and refuse a count over the cap', () => {
@@ -116,7 +123,9 @@ test('snapshots round-trip reflectStacks, load without it, and refuse a count ov
   assert.deepEqual(combatSnapshotProblems(old), [], 'absent means 0');
   old.player.reflectStacks = 25;
   assert.deepEqual(combatSnapshotProblems(old), []);
-  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, mechanics.reflect.stackCap);
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, 25, 'no cap: the count loads as saved');
+  delete old.fixCoreRules.statusCaps;
+  assert.equal(restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot: old }).player.reflectStacks, mechanics.reflect.stackCap, 'a fight saved without the no-cap rule loads clamped to the old cap');
 });
 
 test('multi-hit previews spend one Reflect stack per landed hit, as live does', async () => {

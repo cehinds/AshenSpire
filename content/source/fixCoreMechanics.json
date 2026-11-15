@@ -1,6 +1,7 @@
 {
   "version": 1,
   "enabled": true,
+  "statusCaps": "none",
   "ward": {
     "enabled": false,
     "poisePerStack": 5,
