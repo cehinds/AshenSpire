@@ -4115,7 +4115,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 28
+        "amount": 21
       },
       {
         "op": "applyStatus",
@@ -4138,7 +4138,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 36
+          "amount": 29
         },
         {
           "op": "applyStatus",
@@ -4168,7 +4168,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 22
+        "amount": 15
       },
       {
         "op": "applyStatus",
@@ -4192,7 +4192,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 30
+          "amount": 27
         },
         {
           "op": "applyStatus",
@@ -4222,7 +4222,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 26
+        "amount": 24
       },
       {
         "op": "applyStatus",
@@ -4245,7 +4245,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 34
+          "amount": 29
         },
         {
           "op": "applyStatus",
@@ -4275,7 +4275,7 @@
       {
         "op": "damage",
         "target": "allEnemies",
-        "amount": 20
+        "amount": 18
       },
       {
         "op": "applyStatus",
@@ -4299,7 +4299,7 @@
         {
           "op": "damage",
           "target": "allEnemies",
-          "amount": 28
+          "amount": 27
         },
         {
           "op": "applyStatus",
@@ -4329,7 +4329,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 26
+        "amount": 17
       },
       {
         "op": "poiseDamage",
@@ -4357,7 +4357,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 34
+          "amount": 22
         },
         {
           "op": "poiseDamage",
@@ -4478,7 +4478,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 32
+          "amount": 29
         },
         {
           "op": "applyStatus",
@@ -4508,7 +4508,7 @@
       {
         "op": "damage",
         "target": "enemy",
-        "amount": 22
+        "amount": 15
       },
       {
         "op": "poiseDamage",
@@ -4531,7 +4531,7 @@
         {
           "op": "damage",
           "target": "enemy",
-          "amount": 30
+          "amount": 20
         },
         {
           "op": "poiseDamage",

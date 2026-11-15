@@ -83,10 +83,13 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:1cb94094c521bfc9e0ad13066046d32142b6bb163db7d024e5c031aa2c019ba0',
   'sha256:8af5d70cc4e5608e15f4536e058782426af5c8de0b6c6c76713a5f730d6ceda2',
   'sha256:63e86f49078b08d5e66222e2fa7abb1fedda43f04fef27dcde5cfe1cec5d8434',
+  'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30',
+  'sha256:5db789257edff6ccecfbb277e81ab30e3aae881512d7420aa48b78e93989e32a',
+  'sha256:fd966dab88e5d25f38037c91ae136d5bf8f7e6c97dd3800e05d449750d21c572',
 ]);
 // Moved by the rankUpCard row (batch 3), then the spellCosts/elementFlux rules (W25-F), Ward routing (W25-W), the cost.manaOnly tag and its spells (W25-MS);
-// pinned once at the batch-4 merge.
-const FIXED_EVASION_RUNTIME = 'sha256:3e2a30822c5d5c72de68ce659efacfc124cc4418b04e611c21b48de177445e30';
+// then the statusCaps rule key (no max stack counts, W25-NC); then the Counter stack rule (counter.stackSource and friends, Wave 2 batch 5). Pinned once at the batch-5 merge.
+const FIXED_EVASION_RUNTIME = 'sha256:6c2ff725ad1e7091e9bbe845b117677ea795c77bba0cc2927b6ab133f3570ebf';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

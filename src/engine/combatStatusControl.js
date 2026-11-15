@@ -255,7 +255,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   if (!row) return false;
   if (!target?.alive || !(amount > 0)) return true;
   target.statuses ||= {};
-  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, ElementStatusCap(ctx, id, row.cap) - before)); // element identity (W25): Burn's cap is 10 under the element rules
+  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, ElementStatusCap(ctx, id, row.cap) - before)); // no cap under `statusCaps: "none"` (owner 2026-11-15); Burn has none under the element rules (W25)
   if (!add) return true;
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = before + add;
@@ -301,7 +301,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
   let iterations = 0;
   while (gauge.value >= (stacks(target, row.activeStatus) ? row.activeThreshold : row.initialThreshold)) {
     if (++iterations > 10000) throw new Error(`Unbounded status buildup '${id}'`);
-    if (stacks(target, row.activeStatus) >= row.cap) break;
+    if (stacks(target, row.activeStatus) >= ElementStatusCap(ctx, row.activeStatus, row.cap)) break;
     const threshold = stacks(target, row.activeStatus) ? row.activeThreshold : row.initialThreshold;
     gauge.value -= threshold;
     let admitted = true;
