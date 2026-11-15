@@ -128,6 +128,7 @@ import { dlog } from '../debuglog.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
+import { setData } from '../domWrite.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
 export const HOLD_POINTER_SLOP = 12;
@@ -269,11 +270,11 @@ export function armHold(btn, {
   function dress() {
     const now = msOf();
     if (now > 0) {
-      btn.classList.add('beat-hold');
-      if (feedbackHosts) btn.dataset.holdFeedback = 'delegated';
-      if (id) btn.dataset.holdAction = id;
+      if (!btn.classList.contains('beat-hold')) btn.classList.add('beat-hold');
+      if (feedbackHosts) setData(btn, 'holdFeedback', 'delegated');
+      if (id) setData(btn, 'holdAction', id);
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
-      btn.dataset.holdMs = String(now);
+      setData(btn, 'holdMs', now);
       if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
       // A screen may carry the instruction in the control's tooltip and its
       // accessible description instead of a word on the face (W4c responses,
@@ -294,7 +295,7 @@ export function armHold(btn, {
         else host.appendChild(hint);
       }
     } else {
-      btn.classList.remove('beat-hold');
+      if (btn.classList.contains('beat-hold')) btn.classList.remove('beat-hold');
       delete btn.dataset.holdFeedback;
       delete btn.dataset.hold;
       delete btn.dataset.holdAction;
