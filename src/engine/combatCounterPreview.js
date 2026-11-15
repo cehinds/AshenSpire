@@ -18,6 +18,7 @@ import {
     counterReturn,
 } from './counterRule.js';
 import { counterStackCount } from './guardStacks.js';
+import { FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 
 /** Forecasts a Counter from a revealed attack, using its committed move on detached combatants. */
 export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected = null, baseHp = 0)
@@ -43,8 +44,9 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     {
         return { uncovered: true };
     }
+    // The card-stack rule has no owner-cycle limit: every landed covered hit answers while stacks remain.
     if (
-        counterReturnSpent(ctx.player)
+        !FixCoreCounterStacks(ctx) && counterReturnSpent(ctx.player)
         && !(ctx.reactionRules?.contactPolicy === 'perHit' && ctx.phase === 'enemy' && card)
     )
     {
@@ -84,11 +86,16 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
     const total = { hp: 0, poise: 0, block: 0 };
     let incoming = 0;
     // A new Counter adds its resulting Block as stacks before contact.
+    const cardStacks = FixCoreCounterStacks(ctx);
     const stacks = card
-        ? counterStacksAfterCard(ctx.player, base.block)
+        ? counterStacksAfterCard(ctx.player, base.block, ctx, card)
         : counterStackCount(ctx.player);
+    let held = stacks;
+    const perHit = [];
     for (let hit = 0; hit < hits; hit++)
     {
+        // Card-stack rule: each answered hit spends consumePerHit; with none held a later hit gets no return (it still lands).
+        const answered = !cardStacks || held > 0;
         // Later contacts see earlier Reflect, Poise and stance changes on the detached state.
         const view = previewAttackerView(state, enemy);
         const seen = profileDamageReceipt(
@@ -98,7 +105,16 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
             enemy.intent.damage,
             carrier,
         ).damageReceipt?.hits?.[0]?.incoming ?? 0;
-        const row = counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
+        const row = !answered
+            ? { hp: 0, poise: 0, block: 0 }
+            : cardStacks
+            ? counterReturn(ctx, seen, advantaged, { stacks: held, base: baseHp })
+            : counterReturn(ctx, seen, advantaged, { stacks, base: hit === 0 ? baseHp : 0 });
+        if (answered && cardStacks)
+        {
+            perHit.push({ incoming: seen, stacksBefore: held, hp: row.hp, poise: row.poise });
+            held = Math.max(0, held - cardStacks.consumePerHit);
+        }
         const granted = CounterBlockGrant(state.previewCtx, state.defender, row.block);
         state.defender.block = (state.defender.block || 0) + granted;
         const landed = previewDamageHits(
@@ -121,5 +137,13 @@ export function CounterPreviewAgainst(ctx, enemy, intent, card = null, projected
         total.poise += row.poise;
         total.block += granted;
     }
-    return { incoming, advantaged, hits, stacks, base: baseHp, ...total };
+    return {
+        incoming,
+        advantaged,
+        hits,
+        stacks,
+        base: baseHp,
+        ...total,
+        ...(cardStacks ? { perHit } : {}),
+    };
 }

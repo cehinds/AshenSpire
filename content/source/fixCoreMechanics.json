@@ -30,7 +30,22 @@
     "poiseFraction": 0.2,
     "advantageIncomingFraction": 0.25,
     "advantagePoiseFraction": 0.5,
-    "advantageBlockFraction": 0.25
+    "advantageBlockFraction": 0.25,
+    "stackSource": "card",
+    "returnPerStack": 0.1,
+    "consumePerHit": 1,
+    "decayPerTurn": 1,
+    "advantageShare": 0,
+    "stacksPerCard": 1,
+    "stacksUpgradeBonus": 1,
+    "stacksMax": 3,
+    "stacksByCard": {
+      "core.counter": 1, "guardCounter": 1, "riposte": 2, "rondelParry": 1, "wardingStar": 1, "nockAndWait": 1,
+      "lowGuardRiposte": 2, "spikedReprisal": 2, "progression-crimson-reprisal": 2, "progression-rime-mirror": 2,
+      "umbralWard": 3, "bindingParry": 3,
+      "frostCounter": 1, "fireCounter": 1, "lightningCounter": 1, "forceCounter": 1, "alterationCounter": 1,
+      "illusionCounter": 1, "divineCounter": 1, "decayCounter": 1, "barrageCounter": 1
+    }
   },
   "reaction": {
     "handCostDiscount": 1
@@ -57,8 +72,7 @@
       "poiseDamageBonus": 0.5
     },
     "counter": {
-      "blockMultiplier": 1.25,
-      "hpReturnFraction": 0.25
+      "blockMultiplier": 1.25
     },
     "defend": {
       "blockMultiplier": 1.5,

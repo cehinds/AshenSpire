@@ -301,8 +301,9 @@ test('per-root Counter forecast prices later contacts from the Poise-broken atta
   assert.equal(broken.forecast.hp, broken.liveHp, 'Reflect breaks the attacker\'s Poise: forecast == live return damage');
   const control = run(0);
   assert.equal(control.forecast.hp, control.liveHp, 'control: nothing to break, forecast == live');
-  // The Counter stance benefit (Wave 2.5, `stanceBenefits`) raises the return; a fight saved before batch 2 keeps the old number.
-  assert.equal(control.forecast.hp, 147, 'control forecast with the shipped stance benefits');
+  // Batch 5 (owner 2026-11-15): 11 stacks held (10 + the card's 1), each answered hit returns 4 + floor(incoming x 0.1 x stacks held) and spends one;
+  // a fight saved before it keeps the old number below.
+  assert.equal(control.forecast.hp, 72, 'control forecast with the card-stack Counter rule: 21 + 27 + 24');
   const legacy = withoutBatch2Rules(() => run(0));
   assert.equal(legacy.forecast.hp, legacy.liveHp, 'pre-batch-2 rules: forecast == live');
   assert.equal(legacy.forecast.hp, 111, 'pre-batch-2 control forecast unchanged');

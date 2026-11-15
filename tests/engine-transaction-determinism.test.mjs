@@ -14,7 +14,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { candidateState } from '../src/engine/combatRules.js';
-import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule } from './legacyHitRules.mjs';
+import { withLegacyDefaults, withoutBatch2Rules, withoutSpellCostRules, withoutStatusCapsRule, withoutCounterStackDefaults } from './legacyHitRules.mjs';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 function fight([seed, classId]) {
@@ -170,20 +170,32 @@ for (const [setup, expected] of PRE_W25F_PINNED) {
 // state hashes move, through the two rule keys in the fight's snapshot. Verified: the pre-W25-F fights above are built with ward.routing, spellCosts and elementFlux removed and reproduce
 // the pre-batch-4 digests exactly, as do the legacy, roll-legacy and pre-batch-2 fights (their helpers in tests/legacyHitRules.mjs now remove ward.routing too).
 // Recaptured 2026-11-15 for the no-max-stack rule (`statusCaps: "none"`, W25-NC): log, event counts, turns and RNG are identical, only the state hashes move, through the new key in the fight's
-// rules snapshot. Verified: PRE_NO_CAPS_PINNED below (the previous shipped values) is reproduced exactly by the shipped rules with `statusCaps` removed, as are the legacy, roll-legacy,
-// pre-batch-2 and pre-W25-F fights (their helpers in tests/legacyHitRules.mjs remove it too).
+// rules snapshot. Verified: PRE_NO_CAPS_PINNED below (the previous shipped values) is reproduced exactly by the shipped rules with `statusCaps` and the Counter-stack keys removed, as are the legacy, roll-legacy,
+// pre-batch-2 and pre-W25-F fights (their helpers in tests/legacyHitRules.mjs remove them too).
 const PRE_NO_CAPS_PINNED = [
   [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '52a937c3967fbd9e', events: 194, turn: 6 }],
   [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '287bdd8235e37954', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PRE_NO_CAPS_PINNED) {
   test(`pre-no-caps fight ${setup[0]}/${setup[1]} still reproduces the digest from before statusCaps`, () => {
-    assert.deepEqual(digest(play(withoutStatusCapsRule(() => fight(setup)), 5)), expected);
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => withoutStatusCapsRule(() => fight(setup))), 5)), expected);
+  });
+}
+// Recaptured 2026-11-15 for Wave 2 batch 5 (Counter stacks `counter.stackSource` and friends, no Counter-stance return): a fight whose rules lack the Counter-stack
+// keys (and keep the stance's hpReturnFraction), built through withoutCounterStackDefaults, reproduces PRE_BATCH5_PINNED (the values shipped after the no-caps rule) exactly, which proves the new PINNED
+// values below moved only through those rules: log, event counts and turns are identical (the Counter is never armed in these fights), only the state hashes move through the new keys in the fight's snapshot.
+const PRE_BATCH5_PINNED = [
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '9a0e9981b6b3bd87', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'f63b09461a81f60e', events: 195, turn: 6 }],
+];
+for (const [setup, expected] of PRE_BATCH5_PINNED) {
+  test(`pre-batch-5 fight ${setup[0]}/${setup[1]} still reproduces the digest from before the Counter stack rule`, () => {
+    assert.deepEqual(digest(play(withoutCounterStackDefaults(() => fight(setup)), 5)), expected);
   });
 }
 const PINNED = [
-  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '9a0e9981b6b3bd87', events: 194, turn: 6 }],
-  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: 'f63b09461a81f60e', events: 195, turn: 6 }],
+  [['PERF1', 'reaver'], { log: 'ed87a83d9902650e', state: '33eb4180cba351fa', events: 194, turn: 6 }],
+  [[4242, 'reaver'], { log: '67ff2d8913a51515', state: '8a7b6f7b35a08604', events: 195, turn: 6 }],
 ];
 for (const [setup, expected] of PINNED) {
   const seed = `${setup[0]}/${setup[1]}`;
