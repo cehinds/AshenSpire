@@ -916,7 +916,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const armed = !!dragInstanceId || !!selected || !!selfArm || selectedFlask != null;
     const plan = pendingTargetPlan(dragInstanceId || selected || selfArm);
     const layer = targetLayer({ armed: armed && plan.mode === 'enemy', enemies: combat.enemies });
-    combatEl.dataset.targetLayer = layer.active ? 'armed' : 'idle';
+    setData(combatEl, 'targetLayer', layer.active ? 'armed' : 'idle');
     updateTargetHud(armed ? plan.legalIds : []);
     combatEl.querySelectorAll('.combatant').forEach(frame => {
       const id = frame.classList.contains('player') ? combat.player.id : frame.dataset.eid;
@@ -972,7 +972,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     // `.hand[data-has-selection]` stands in for `.hand:has(.selected)` in combat.css.
     const handEl = $('.hand');
-    handEl?.setAttribute('data-has-selection', String(!!handEl.querySelector('.selected')));
+    if (handEl) setAttrIfChanged(handEl, 'data-has-selection', !!handEl.querySelector('.selected'));
     // The preview's target outline follows the aimed card, which this sync is the one place that changes.
     decorateRoundsScreen();
     const player = $('.combatant.player');
