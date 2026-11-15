@@ -204,7 +204,8 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if ((unpaidPlan || prepaidPlanPending) && !prepaidReturn && extra > 0 && !ctx._rangeContext && core2MultiHitRulesEnabled(ctx)) {
     const before = ctx.rangeState;
     // Rows (W25-BANDS): the Advance is the player's state (every enemy in reach, for a limited number of turn ends); an enemy that pays one steps to the front row.
-    if (BandsActive(ctx)) { if (source.kind === 'enemy') SetEnemyRow(ctx, source, 'front', 'advance'); else SetAdvanced(ctx, source, true); }
+    if (BandsActive(ctx) && source.kind === 'enemy' && source.row === 'back') SetEnemyRow(ctx, source, 'front', 'advance');
+    else if (BandsActive(ctx) && source.kind !== 'enemy') SetAdvanced(ctx, source, true);
     else ctx.rangeState = advancedEngagementState(before, plan);
     emitCommittedAdvance(ctx, source, before, ctx.rangeState);
   }

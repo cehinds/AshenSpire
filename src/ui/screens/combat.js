@@ -1004,14 +1004,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // glyphs shows, so nothing is removed, re-created or refitted for it.
     // W25-F: a caster's second stance icon: the elemental flux (or the plain magic mark), from the display state so it moves with the paced beats.
     const fluxView = PlayerFluxView(ElementFluxRules(combat), dv(combat.player), inPreparedStance(dv(combat.player)));
-    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); SetPlayerAdvanced(previous, combat.player.advanced > 0); return; }
+    if (previous) { setPlayerActionManeuver(previous, profile); SetPlayerFlux(previous, fluxView); SetPlayerAdvanced(previous, combat.player?.advanced > 0); return; }
     const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
     if (action) {
       SetPlayerFlux(action, fluxView);
-      SetPlayerAdvanced(action, combat.player.advanced > 0);
+      SetPlayerAdvanced(action, combat.player?.advanced > 0);
       // Selection can change after the HUD's gate has already run. Keep a
       // replacement inside its existing rack without relying on another fit.
       const rack = player.querySelector('.target-hud-overhead-meters');

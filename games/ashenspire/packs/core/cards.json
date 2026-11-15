@@ -414,7 +414,7 @@
       "camp:physical",
       "classification.skill"
     ],
-    "textTemplate": "Step back out of the Advance."
+    "textTemplate": "Step back."
   },
   {
     "id": "core.closingDodge",
