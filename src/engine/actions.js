@@ -4,7 +4,7 @@ import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance, FixCoreBrokenRules, FixCoreCounterStacks } from '../model/fixCoreMechanics.js';
 import { BreakCombatant } from './brokenRule.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -16,7 +16,7 @@ import { configuredCombat, configuredModule, profileDamageReceipt } from './game
 import { BlockGainMultiplier, CounterReturnAmount, SweepSplashTargets, SplashCarrier } from './stanceBenefits.js';
 import { FluxMultiplier, FluxScale } from './elementFlux.js';
 import { ApplyElementReceipt, OnPoiseBreak, ElementTargets, ElementChain } from './elementIdentity.js';
-import { gainCounterStacks, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
+import { gainCounterStacks, CounterStackGrant, gainReflectStacks, spendReflectStacks, reflectReturned } from './guardStacks.js';
 import { weaknessTickMultiplier, weaknessesActive } from './weaknesses.js';
 import { WEAKNESS_MANA, WEAKNESS_STAMINA } from '../model/enemyWeaknessRules.js';
 import { counterBlockBonus, counterReturnSpent, paidCounterContact } from './counterRule.js';
@@ -447,7 +447,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   return receipt.amount;
 }
 
-// Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returns 25% of the HP a hit cost it (nothing when Block took it all) to the attacker.
+// Owner, 2026-11-14 (Wave 2.5): a unit in Counter stance returned 25% of the HP a hit cost it; the shipped data dropped that return on 2026-11-15 (batch 5), so only a fight saved with `hpReturnFraction` still runs it.
 // It travels as the same flagged return hit Reflect sends, so it needs no hit roll and can neither reflect, counter nor return again.
 function stanceCounterBack(ctx, source, target, carrier, receipt) {
   const amount = CounterReturnAmount(ctx, receipt.defenseStance, receipt.hpLoss, carrier);
@@ -1205,7 +1205,8 @@ function afterHpChange(ctx, target, death = {}) {
 export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
-  if (entity?.combatCounter?.charges === 0) entity.combatCounterStaggered = entity.combatCounter.serial;
+  // (Card-stack rule: the charge stays armed while stacks remain, so an armed Counter is remembered too.)
+  if (entity?.combatCounter?.charges === 0 || (entity?.combatCounter && FixCoreCounterStacks(ctx))) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
   // Owner, 2026-11-14: under `poise.breakRule: "broken"` a Poise break (only that cause) makes the owner Broken (brokenRule.js)
   // instead of Staggered; weakness and Smash-advantage staggers keep the stance below.
@@ -1636,7 +1637,9 @@ function runGuardStackOpcode(ctx, action, eff) {
   if (eff.op === 'gainCounterStacks') {
     if (!fixCoreEnabled(ctx)) return true; // Core 2 only (SPEC §17)
     // A Counter card adds the Block it stands behind, after its own Block grant.
-    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount === undefined ? t.block : evalNum(ctx, action, eff.amount, 0, t));
+    // Owner 2026-11-15: under the card-stack rule the grant is the card's own 1..3 (CounterStackGrant), never the Block held.
+    const grant = eff.amount === undefined ? CounterStackGrant(ctx, action.card) : 0;
+    for (const t of resolveTargets(ctx, action, eff.target)) gainCounterStacks(ctx, t, eff.amount !== undefined ? evalNum(ctx, action, eff.amount, 0, t) : grant || t.block);
     return true;
   }
   if (eff.op === 'applyReflect') {
