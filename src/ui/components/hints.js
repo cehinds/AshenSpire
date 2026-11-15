@@ -74,6 +74,7 @@ import {
   keyLabel, padLabel, hasGamepad, actionShort, actionLabel, actionHint,
   beginActionPress, endActionPress,
 } from '../input.js';
+import { setAttr } from '../domWrite.js';
 
 // Which action chips each context shows, in reading order — ids only. The
 // labels come from the ACTIONS registry (actionShort), so this can't drift from
@@ -198,8 +199,8 @@ export function refreshHintBars() {
   // writing `data-action-hint`, which is Law 0 clause 1 on a tooltip.
   document.querySelectorAll('[data-action-hint]').forEach((el) => {
     const hint = actionHint(el.dataset.actionHint);
-    el.setAttribute('title', hint);
-    if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', hint);
+    setAttr(el, 'title', hint);
+    if (el.hasAttribute('aria-label')) setAttr(el, 'aria-label', hint);
   });
   // Prose that names a control (the tutorial's "or press E") re-derives the same
   // way: the element says which action it is quoting and gets the live symbol.

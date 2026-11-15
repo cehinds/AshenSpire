@@ -269,11 +269,11 @@ export function armHold(btn, {
   function dress() {
     const now = msOf();
     if (now > 0) {
-      btn.classList.add('beat-hold');
-      if (feedbackHosts) btn.dataset.holdFeedback = 'delegated';
-      if (id) btn.dataset.holdAction = id;
+      if (!btn.classList.contains('beat-hold')) btn.classList.add('beat-hold');
+      if (feedbackHosts && btn.dataset.holdFeedback !== 'delegated') btn.dataset.holdFeedback = 'delegated';
+      if (id && btn.dataset.holdAction !== String(id)) btn.dataset.holdAction = id;
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
-      btn.dataset.holdMs = String(now);
+      if (btn.dataset.holdMs !== String(now)) btn.dataset.holdMs = String(now);
       if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
       // A screen may carry the instruction in the control's tooltip and its
       // accessible description instead of a word on the face (W4c responses,
@@ -294,7 +294,7 @@ export function armHold(btn, {
         else host.appendChild(hint);
       }
     } else {
-      btn.classList.remove('beat-hold');
+      if (btn.classList.contains('beat-hold')) btn.classList.remove('beat-hold');
       delete btn.dataset.holdFeedback;
       delete btn.dataset.hold;
       delete btn.dataset.holdAction;

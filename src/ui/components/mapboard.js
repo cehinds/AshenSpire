@@ -1300,10 +1300,23 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // where the finger put it (map.js), but a later re-fit (#1142) must still
   // keep that node in the band the tray leaves visible, so the look is
   // recorded exactly as centerOnNode records it, and the camera stays put.
-  function holdLook(id, { inset = 0 } = {}) {
+  //
+  // `keepRestored` is the tray that opens AT MOUNT over a camera that was just
+  // restored (the preselected start node, after Armaments closes or on Continue).
+  // The restore was clamped to a box without the tray's room at the foot, so the
+  // box grows by it and the saved pan is written again, and the write is
+  // recorded as the restore's own so the viewport watch finishes it at the
+  // saved shape rather than re-fitting over the player's pan.
+  function holdLook(id, { inset = 0, keepRestored = false } = {}) {
     if (!byId[id]) return;
     insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
     look = { id, inset };
+    if (keepRestored && restored && !restorePending) {
+      sizeSvg();
+      scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+      scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+      restoreWrite = { left: scroll.scrollLeft, top: scroll.scrollTop };
+    }
   }
   // Closing a tray that never moved the camera forgets its look without
   // re-framing, so the view the player is looking at does not jump.
