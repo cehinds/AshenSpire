@@ -216,3 +216,19 @@ test('Barrier on an emptied Poise pool clears the empty marker, so the fight sti
   assert.equal('missing' in e.persistentPoise, false, 'a refilled pool is no longer empty');
   assert.doesNotThrow(() => serializeCombatSnapshot(combat));
 });
+
+test('Ward (block first): the quote equals the hit that lands (shown = dealt)', () => {
+  const carrier = { ...physical, skipRatingBonus: true };
+  const quote = hit(physical, { poise: 4, block: 3 }).receipt;
+  const combat = liveCore(), target = combat.enemies[0];
+  Object.assign(target, { block: 3, persistentWard: null, persistentPoise: { value: 4, max: 20 }, gameProfilePoise: 0, statuses: { ward: { stacks: 1 } } });
+  delete target.combatStance; delete target.weaknesses;
+  target.hp = target.maxHp = 100;
+  const start = combat.eventLog.length;
+  A.applyAttackDamage(combat, combat.player, target, 10, [], carrier);
+  const dealt = combat.eventLog.slice(start).find(e => e.type === 'damageDealt' && e.targetId === target.id);
+  assert.equal(dealt.wardBlockFirst, true);
+  assert.equal(dealt.blocked, quote.blocked, 'Block');
+  assert.equal(dealt.poiseAbsorbed, quote.poiseMitigated, 'Poise');
+  assert.equal(100 - target.hp, quote.hpLoss, 'HP');
+});
