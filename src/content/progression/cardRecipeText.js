@@ -17,6 +17,8 @@ export function recipeText(effects, { counterMode = null } = {}) {
       case 'applyStatus': text = `Apply ${t} ${e.status} to${e.target === 'self' ? ' yourself' : target}`; break;
       case 'poiseDamage': text = counterMode ? `Prepare ${t} base reply Poise damage` : `Deal ${t} Break damage to${target}`; break;
       case 'restoreMana': text = `Restore ${t} Mana`; break;
+      case 'changeAttribute': text = `Gain +${e.amount} ${e.attribute}${e.thisTurn ? ' this turn' : ' for the fight'}`; break;
+      case 'moveEngagement': text = e.target === 'self' ? (e.bands < 0 ? 'Advance' : 'Retreat') : e.bands < 0 ? 'Close one band' : 'Retreat one band'; break;
       case 'gainEnergy': text = `Gain ${t} Stamina`; break;
       case 'heal': text = `Heal ${t} HP`; break;
       case 'loseHp': text = `Offer ${t} HP; the payment must leave at least one HP`; break;
@@ -78,6 +80,8 @@ export function recipeFace(effects, { counterMode = null } = {}) {
       case 'applyStatus': options = e.target === 'self' ? [`Gain ${t} ${statusName(e.status)}`] : [`Apply ${t} ${statusName(e.status)}${all ? ' to all' : ''}`, `Apply ${t} ${statusName(e.status)}`]; break;
       case 'poiseDamage': options = counterMode ? [`Prepare ${t} reply Poise damage`] : [`Deal ${t} Poise damage`]; break;
       case 'restoreMana': options = [`Restore ${t} Mana`]; break;
+      case 'changeAttribute': options = [`+${e.amount} ${e.attribute.slice(0, 3).toUpperCase()}${e.thisTurn ? ' this turn' : ''}`]; break;
+      case 'moveEngagement': options = [e.target === 'self' ? (e.bands < 0 ? 'Advance' : 'Retreat') : e.bands < 0 ? 'Close one band' : 'Retreat one band']; break;
       case 'gainEnergy': options = [`Gain ${t} Stamina`]; break;
       case 'heal': options = [`Heal ${t} HP`]; break;
       case 'loseHp': options = [`Offer ${t} HP`]; break;

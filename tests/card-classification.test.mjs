@@ -46,7 +46,7 @@ test('Sweep Reaction uses actual rank two, while Defense uses rank one', () => {
 
 test('shared card model exposes canonical identity and separate ability labels with legacy CSS hooks', () => {
   const registries = createRegistries(contentBundle);
-  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Evade']]) {
+  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Defense']]) {
     const def = applyCardTraits(applyCombatExpansionCard(registries.cards.get(id)));
     const model = playingCardModel(registries, { cardId: id }, { definition: def });
     assert.equal(model.type.id, category);

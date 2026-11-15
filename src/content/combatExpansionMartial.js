@@ -110,25 +110,6 @@ function martialProjection(def) {
     }
   }
   if (EVADES.has(def.id)) card.evade = { charges: 1, bonus: 0 };
-  if (['quickstep', 'dodgeRoll'].includes(def.id)) {
-    const originalBlock = def.id === 'quickstep' ? 4 : 3;
-    let primaryBlock = false;
-    const support = card.effects.filter(effect => !['damage', 'poiseDamage', 'wardDamage', 'gainWard', 'gainPoise'].includes(effect.op))
-      .map(effect => {
-        if (effect.op !== 'block' || effect.if || effect.oncePerTurn || primaryBlock) return effect;
-        primaryBlock = true;
-        return { ...effect, amount: addedAmount(effect.amount, 5 - originalBlock) };
-      });
-    if (!primaryBlock) support.unshift({ op: 'block', target: 'self', amount: 5 });
-    // Quickstep's new base draw supplements, rather than erases, earned draws.
-    if (def.id === 'quickstep') support.push({ op: 'draw', amount: 1 });
-    card.effects = [...support, { op: 'damage', target: 'enemy', amount: 3 }];
-    card.counterPayload = { hp: 3, poise: 0, ward: 0 };
-    // Equipment ratingId can point at DR for the guard face; the reply uses AR.
-    delete card.ratingId; delete card.ratingValue; delete card.ratingCap;
-    card.textTemplate = `Gain {block} Block. Prepare one Evade and Melee Counter: return {damage} damage when the full incoming action is absorbed.${def.id === 'quickstep' ? ' Draw {draw} card.' : ''}`;
-    delete card.upgrade; delete card.singleBreak;
-  }
   if (UPCAST[def.id]) card.upcast = { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, ...UPCAST[def.id] };
   return card;
 }

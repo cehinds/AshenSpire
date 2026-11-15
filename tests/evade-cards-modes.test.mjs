@@ -20,7 +20,7 @@ test('a card with modes offers one option per mode and refuses a play without a 
   assert.equal(plan.kind, 'mode');
   assert.deepEqual(plan.options.map(o => o.id), ['advance', 'retreat']);
   assert.equal(assertCardChoice(plan, 'retreat'), 'retreat');
-  assert.throws(() => assertCardChoice(plan, null), /Choose one/);
+  assert.equal(assertCardChoice(plan, null), 'advance', 'no pick plays the first mode');
   assert.throws(() => assertCardChoice(plan, 'swim'), /Choose one/);
   assert.equal(cardChoice(registries, { id: 'plain', effects: [] }, 'reaver'), null);
 });

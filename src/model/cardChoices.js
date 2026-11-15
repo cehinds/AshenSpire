@@ -56,6 +56,8 @@ export function assertCardChoice(plan, choice) {
     if (choice != null) throw new Error('This card offers no choice');
     return null;
   }
+  // A card's named modes default to the first when a headless caller (a bot, a test) names none; the screen always asks.
+  if (plan.kind === 'mode' && choice == null) return plan.options[0].id;
   if (!plan.options.some((o) => o.id === choice)) {
     throw new Error(`${plan.kind === 'mode' ? 'Choose one' : 'Choose a stance'}: ${plan.options.map((o) => o.id).join(', ')}`);
   }
