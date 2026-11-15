@@ -86,3 +86,16 @@ test('a fight made without the bands key plays as before: no rows, no Advanced s
     assert.equal(combat.rangeState.engagements[pairOf('e2')], 0, 'persistent until something grows it');
   } finally { fixCoreMechanics.bands = saved; }
 });
+
+test('Approaching: a back-row enemy plans the step forward before any move that needs an Advance', () => {
+  let approaches = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const combat = bandsFight({ enemyIds: ['courtSurgeon', 'wanderingSoldier'], seed });
+    const surgeon = combat.enemies[0];
+    const plan = [surgeon.intent, ...(surgeon.plannedMoves || [])].map(mv => mv?.moveId).filter(Boolean);
+    const scalpel = plan.indexOf('scalpel');
+    if (scalpel >= 0) assert.ok(plan.indexOf('advance') >= 0 && plan.indexOf('advance') < scalpel, `seed ${seed}: ${plan.join(',')}`);
+    if (plan.includes('advance')) approaches++;
+  }
+  assert.ok(approaches > 0, 'the step forward is planned at least once');
+});
