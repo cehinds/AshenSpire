@@ -17,7 +17,7 @@ const card = maneuver => ({ combatProfile: { camp: maneuver === 'prepared' ? 'sp
 
 test('shipped data holds the approved numbers and the validator guards them', () => {
   assert.deepEqual(shipped.stanceBenefits, { version: 1, attack: { damageMultiplier: 1.2 }, smash: { poiseDamageBonus: 0.5 },
-    counter: { blockMultiplier: 1.25, hpReturnFraction: 0.25 }, defend: { blockMultiplier: 1.5, poiseDamageTakenMultiplier: 0.75 },
+    counter: { blockMultiplier: 1.25 }, defend: { blockMultiplier: 1.5, poiseDamageTakenMultiplier: 0.75 },
     prepared: { damageMultiplier: 1.25 }, neutral: { extraDrawNextTurn: 1 } });
   assert.doesNotThrow(() => validateFixCoreRules(shipped));
   assert.doesNotThrow(() => validateFixCoreRules((({ stanceBenefits, ...rest }) => rest)(shipped)), 'a block saved before the ruling stays valid');
@@ -66,12 +66,14 @@ test('Poise: Smash adds 50% of what the hit took (capped by the pool); a Defend 
   assert.deepEqual(Benefits.PoiseLossAdjust(fight, enemy, smash, 'defend', { taken: 0, pool: 20 }), { extra: 0, spared: 0 });
 });
 
-test('Counter returns 25% of the HP lost; nothing when the hit was fully blocked', () => {
-  assert.equal(Benefits.CounterReturnAmount(fight, 'counter', 12, {}), 3);
-  assert.equal(Benefits.CounterReturnAmount(fight, 'counter', 3, {}), 0);
-  assert.equal(Benefits.CounterReturnAmount(fight, 'counter', 0, {}), 0, 'fully blocked');
-  assert.equal(Benefits.CounterReturnAmount(fight, 'defend', 12, {}), 0);
-  assert.equal(Benefits.CounterReturnAmount(fight, 'counter', 12, { counterReturnAttack: true }), 0, 'a return never returns');
+test('Counter stance returns nothing of its own (batch 5, owner 2026-11-15); a fight saved with hpReturnFraction keeps the 25% return', () => {
+  assert.equal(Benefits.CounterReturnAmount(fight, 'counter', 12, {}), 0, 'the shipped data has no hpReturnFraction');
+  const saved = modern({ ...shipped, stanceBenefits: { ...shipped.stanceBenefits, counter: { blockMultiplier: 1.25, hpReturnFraction: 0.25 } } });
+  assert.equal(Benefits.CounterReturnAmount(saved, 'counter', 12, {}), 3);
+  assert.equal(Benefits.CounterReturnAmount(saved, 'counter', 3, {}), 0);
+  assert.equal(Benefits.CounterReturnAmount(saved, 'counter', 0, {}), 0, 'fully blocked');
+  assert.equal(Benefits.CounterReturnAmount(saved, 'defend', 12, {}), 0);
+  assert.equal(Benefits.CounterReturnAmount(saved, 'counter', 12, { counterReturnAttack: true }), 0, 'a return never returns');
 });
 
 test('neutral: a player at rest draws one extra card from its second turn; enemies and other stances draw none', () => {
@@ -170,20 +172,22 @@ test('Poise: a Smash costs the pool 50% more, a Defend target 25% less; HP lost 
   assert.equal(both.pool, taken + extra - Math.floor(0.25 * (taken + extra)));
 });
 
-test('Counter: a hit that costs HP returns 25% of that HP to the attacker; a fully blocked hit returns nothing; the old rules return nothing', () => {
-  const trial = ({ benefits = true, block = 0, attacker = 'player' } = {}) => {
-    const { combat, target } = live({ benefits, stance: 'counter', block });
+test('Counter stance: a hit that costs HP returns nothing (batch 5); a fight saved with hpReturnFraction still returns 25% of the HP lost', () => {
+  const trial = ({ legacyReturn = false, block = 0, attacker = 'player' } = {}) => {
+    const { combat, target } = live({ stance: 'counter', block });
+    if (legacyReturn) combat.fixCoreRules = { ...combat.fixCoreRules, stanceBenefits: { ...combat.fixCoreRules.stanceBenefits, counter: { blockMultiplier: 1.25, hpReturnFraction: 0.25 } } };
     const [from, to] = attacker === 'player' ? [combat.player, target] : [target, combat.player];
     if (attacker === 'enemy') { to.combatStance = stanceOf('counter'); to.block = block; }
     strike(combat, from, to, 40, carrierOf('sweep'));
-    return { lost: (to === target ? 500 - to.hp : 500 - to.hp), back: 500 - from.hp };
+    return { lost: 500 - to.hp, back: 500 - from.hp };
   };
-  const hit = trial();
-  assert.ok(hit.lost > 0);
-  assert.equal(hit.back, Math.floor(0.25 * hit.lost), 'player attacks a Counter enemy: 25% of the HP it lost comes back');
-  assert.equal(trial({ attacker: 'enemy' }).back, Math.floor(0.25 * trial({ attacker: 'enemy' }).lost), 'a Counter player returns it to the enemy too');
-  assert.equal(trial({ block: 1000 }).back, 0, 'a fully blocked hit returns nothing');
-  assert.equal(trial({ benefits: false }).back, 0, 'a fight created before the ruling');
+  const shipped = trial();
+  assert.ok(shipped.lost > 0);
+  assert.equal(shipped.back, 0, 'the shipped Counter stance returns nothing of its own (the stack return is the Counter card\'s)');
+  assert.equal(trial({ attacker: 'enemy' }).back, 0);
+  const saved = trial({ legacyReturn: true });
+  assert.equal(saved.back, Math.floor(0.25 * saved.lost), 'a fight saved with the 25% return keeps it');
+  assert.equal(trial({ legacyReturn: true, block: 1000 }).back, 0, 'a fully blocked hit returns nothing');
 });
 
 // ---- Sweep: played through the engine, with cleavingBlow (a Sweep card) retargeted to ONE enemy so the splash is what reaches the others ----
@@ -275,7 +279,7 @@ import { StanceBenefitTip } from '../src/ui/models/StanceBenefitModel.js';
 import { readFileSync } from 'node:fs';
 
 test('the stance tooltip and the stance help state each benefit in the same words as the numbers', () => {
-  const expected = { attack: /\+20% damage/, smash: /\+50% Poise damage/, sweep: /No extra benefit.*full damage/, counter: /\+25% Block.*25% of that HP/, defend: /\+50% Block.*25% less Poise/, casting: /\+25% damage/ };
+  const expected = { attack: /\+20% damage/, smash: /\+50% Poise damage/, sweep: /No extra benefit.*full damage/, counter: /\+25% Block gained\.?$/, defend: /\+50% Block.*25% less Poise/, casting: /\+25% damage/ };
   for (const [maneuver, pattern] of Object.entries(expected)) assert.match(StanceBenefitTip(maneuver).body, pattern, maneuver);
   assert.match(StanceBenefitTip('prepare').body, /draw 1 extra card/, 'the resting glyph names the no-stance draw');
   const nodes = readFileSync(new URL('../content/source/nodes.csv', import.meta.url), 'utf8');

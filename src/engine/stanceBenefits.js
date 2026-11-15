@@ -7,7 +7,7 @@
 //   prepared   spells deal +25% damage (chosen over the Mana discount)   AttackDamageMultiplier
 //   smash      +50% Poise damage                                 PoiseLossAdjust         (profileDamageReceipt, before the receipt returns)
 //   defend     +50% Block gained, -25% Poise damage taken        BlockGainMultiplier (computeBlockGain), PoiseLossAdjust
-//   counter    +25% Block gained; a hit that costs HP returns 25% of that HP   BlockGainMultiplier, CounterReturnAmount (applyProfileDamage)
+//   counter    +25% Block gained (BlockGainMultiplier); a saved fight with `hpReturnFraction` also returns that share of the HP lost (CounterReturnAmount); none ships since 2026-11-15
 //   sweep      an attack also hits every other enemy in range at 50%   SweepSplashTargets / SplashCarrier (the damage effect, actions.js)
 //   neutral    the player draws 1 extra card at its next turn start   NeutralExtraDraw (startPlayerTurn)
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';

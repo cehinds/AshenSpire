@@ -147,12 +147,12 @@ test('Core-only status wording adapts custom timers without changing versioned d
   assert.match(original.tooltip, /after 3 turns\. Re-applying adds stacks and refreshes/);
 });
 
-test('Core duration clocks tick once at owner turn start and retain non-overridden expansion caps', () => {
+test('Core duration clocks tick once at owner turn start and, with statusCaps none, expansion statuses hold every stack applied', () => {
   const { combat } = fixture({ amount: 2 });
   applyStatus(combat, combat.player, 'crimsonBlight', 5);
-  assert.equal(combat.player.statuses.crimsonBlight.stacks, 3);
+  assert.equal(combat.player.statuses.crimsonBlight.stacks, 5, 'no max stack count (owner 2026-11-15): shown = held');
   const text = statusTooltipText(core.statuses.get('crimsonBlight'), combat);
-  assert.match(text, /stack total up to 3/);
+  assert.doesNotMatch(text, /stack total up to/, 'the tooltip states no cap');
   assert.match(text, /3 ticks at the start/);
   assert.doesNotMatch(text, /owner turn ends/);
   combat.turn++; decayAtTurnStart(combat, combat.player);
