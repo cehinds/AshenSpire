@@ -21,6 +21,10 @@ test('detectFlags asks CSS.supports and flags what is missing', () => {
   };
   assert.deepEqual(Object.values(detectFlags(modern)).filter(Boolean), []);
   assert.deepEqual(detectFlags(ios15), { colorMix: true, cqUnits: true, containers: true, overflowClip: true, userSelect: true, backdropFilter: true, popover: true });
+  // Prefix gaps alone (every modern Safari) start nothing; with a real gap they ride along.
+  const prefixOnly = (prop) => !/^(user-select|backdrop-filter)$/.test(prop);
+  assert.deepEqual(Object.values(detectFlags(prefixOnly)).filter(Boolean), []);
+  assert.equal(detectFlags((prop) => prop !== 'width').userSelect, true);
   assert.equal(detectFlags(() => { throw new Error('no'); }).colorMix, false, 'a throwing probe means "do not touch"');
 });
 

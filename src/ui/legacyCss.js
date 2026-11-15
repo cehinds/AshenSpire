@@ -31,15 +31,18 @@ export const FLAGS = ['colorMix', 'cqUnits', 'containers', 'overflowClip', 'user
 /** Which repairs this browser needs, from CSS.supports (a function (prop, value) or (condition)). */
 export function detectFlags(supports) {
   const ok = (...args) => { try { return !!supports(...args); } catch { return true; } };
-  return {
+  const gaps = {
     colorMix: !ok('color', 'color-mix(in srgb, red 50%, blue)'),
     cqUnits: !ok('width', '1cqw'),
     containers: !ok('container-type', 'inline-size'),
     overflowClip: !ok('overflow', 'clip'),
-    userSelect: !ok('user-select', 'none'),
-    backdropFilter: !ok('backdrop-filter', 'blur(1px)'),
     popover: !ok('selector(:popover-open)'),
   };
+  // The -webkit- prefixes are NOT probed: unprefixed user-select and backdrop-filter are missing from Safari well past
+  // 17, so probing them would run the full rewrite (and switch text selection off) on current iPhones. They ride along
+  // only when a real Safari 15/16 gap already starts the rewrite.
+  const rewriting = Object.values(gaps).some(Boolean);
+  return { ...gaps, userSelect: rewriting, backdropFilter: rewriting };
 }
 
 export const anyFlag = (flags) => FLAGS.some((name) => flags[name]);
