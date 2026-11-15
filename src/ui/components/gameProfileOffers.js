@@ -38,7 +38,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   strip.style.setProperty('--choice-count', String(offer.options.length));
   // The copy follows the cards module's whole editor policy (not the rest services): the Armoury when it opens the deck editor,
   // no editing promise when non-combat editing is on but the editor is disabled, otherwise Strategize.
-  const note = el('p', { class: 'reward-note', text: t(copy.note, { count: offer.takeCount }) });
+  const note = el('p', { class: 'reward-note', text: t(offer.options.some((option) => option.bonus) ? 'reward.configured.noteBonus' : copy.note, { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   const inspect = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true });
