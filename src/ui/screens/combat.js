@@ -222,7 +222,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
   // cell normalisation below.
   registries = combatStatusPresentationRegistries(registries, combat);
-  SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   const configuredArt = run.gameProfile?.foundation?.mode === 'configured';
   const profileArt = (render, options) => {
     if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
@@ -256,6 +255,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // meeting the same logical id on a later surface handed that surface a card
   // already one beat in: its first touch acted instead of selecting.
   clearSelection();
+  SetFaceCostCombat(combat); // pile faces (no preview) are priced by this fight's stance and loadout, as the hand is
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
