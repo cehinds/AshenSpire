@@ -34,6 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-15
 
+- **Older iPhones can play** ([#2785](https://github.com/cehinds/AshenSpire/pull/2785), `0.7.4.106`). The game now loads and lays out on iPhones that stop at iOS 15, such as the first iPhone SE, where it used to show nothing. Newer phones and computers are unchanged.
+- **Lighter Lite on phones** ([#2784](https://github.com/cehinds/AshenSpire/pull/2784), `0.7.4.104`). On a phone in Lite mode the game no longer draws blurred glows, shadows and colour blends, which are slow on small phones; selections and targets are shown with plain outlines instead, and unfound compendium pieces stay hidden. Desktop looks the same as before.
+- **Less measuring in combat** ([#2781](https://github.com/cehinds/AshenSpire/pull/2781), `0.7.4.102`). The markers above enemies, the combat log row and the footer labels no longer force the screen to be re-measured on every update, so phones do less work each turn. Nothing looks different.
 - **The map keeps where you were looking** ([#2779](https://github.com/cehinds/AshenSpire/pull/2779), `0.7.4.98`). Coming back to the map after the Armoury or Continue no longer jumps the view to your starting node; it stays where you left it.
 - **Lighter rule checks in combat** ([#2780](https://github.com/cehinds/AshenSpire/pull/2780), `0.7.4.98`). The game no longer re-reads the whole rulebook each time it checks a rule during a fight, so card previews and actions cost phones less work. Nothing plays differently.
 - **Fewer needless updates in combat** ([#2777](https://github.com/cehinds/AshenSpire/pull/2777), `0.7.4.96`). Playing a card no longer re-writes hundreds of unchanged details on the combat screen, so phones do less work on every play. Nothing looks different.
