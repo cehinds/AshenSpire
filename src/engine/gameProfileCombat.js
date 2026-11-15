@@ -4,7 +4,7 @@ import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -200,7 +200,25 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // Ward (owner, 2026-11-01, SPEC 4.1a): while the target holds Ward stacks ALL damage, physical and magical, goes to Poise first (100%),
   // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.
   const wardRouted = modern && (target?.statuses?.ward?.stacks || 0) > 0;
-  if (wardRouted) {
+  // Owner, 2026-11-15 (W25-W): under `ward.routing: "blockFirst"` the hit meets Block FIRST; Poise then absorbs the whole remainder 1:1 (no leak) until it is empty, then HP.
+  const wardBlockFirst = wardRouted && fixCoreWardBlockFirst(ctx);
+  if (wardBlockFirst) {
+    const total = physical + magical;
+    const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
+    const blockSoak = Math.min(Math.max(0, target?.block || 0), total);
+    blockSpent = blockSoak;
+    const bypassAmount = isPierceHit(profile, carrier) && !carrier?.combatReaction ? Math.floor(fixCorePierceRules(fixCoreRules(ctx, target)).blockBypassFraction * total) : 0;
+    pierceBypassed = Math.min(bypassAmount, blockSoak);
+    blocked = blockSoak - pierceBypassed;
+    const afterBlock = total - blocked;
+    // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
+    const toPoise = smashRule ? 0 : Math.min(afterBlock, poisePool);
+    poiseDrain = smashRule && !evaded ? Math.min(poisePool, Math.floor(smashRule.poiseFraction * incoming)) : 0;
+    poiseMitigated = toPoise;
+    transition('block', 'Block', total, afterBlock, 'mitigation');
+    transition('ward-poise', 'Poise (Ward: absorbs the whole rest)', afterBlock, afterBlock - toPoise, 'mitigation');
+    amount = afterBlock - toPoise;
+  } else if (wardRouted) {
     const total = physical + magical;
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);
     // A Smash against a defensive stance has no absorption (its Poise loss is Poise damage, below).
@@ -302,7 +320,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   return { raw, rawHit, weaknesses, ...(element ? { element: { id: element.element, heal: element.heal } } : {}), pierceBypassed, piercePoise, magicPoise, wardMitigated, barrierMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(pierceBypassed ? {pierced:pierceBypassed,piercePoise} : {}),...(magicPoise ? {magicPoise} : {}),...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     ...(reflect ? { reflect } : {}),
-    ...(wardRouted ? { wardRouted: true } : {}),
+    ...(wardRouted ? { wardRouted: true } : {}), ...(wardBlockFirst ? { wardBlockFirst: true } : {}),
     hitChance, uncertain: (fixCoreEnabled(ctx) && hitChance < 1) && roll === null && !evaded,
     hpLossBounds: (fixCoreEnabled(ctx) && hitChance < 1 && !evaded) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain, ...(poiseSpared ? { poiseSpared } : {}),
     blockRemaining: Math.max(0, (target?.block || 0) - (blockSpent ?? blocked)), evaded, advantage,
