@@ -86,9 +86,10 @@ test('Current: a staggered status still satisfies the predicate; the stance alon
   assert.equal(evalPredicate({ player: bare, enemies: [], registries: reg }, { p: 'hasStatus', of: 'self', status: 'staggered' }, { owner: bare }), false, 'not Core: stance ignored');
 });
 
-test('Executioner: base branch before the break, Staggered branch after a real Core Poise break', () => {
+test('Executioner: base branch before the break, Broken branch after a real Core Poise break (shipped rule); legacy Staggered still works', () => {
+  for (const legacy of [false, true]) {
   const dmg = (stagger) => {
-    const { combat, target } = live();
+    const { combat, target } = live(2, { legacy });
     if (stagger) breakPoise(combat, target);
     combat.player.energy = 99; combat.piles.hand.push({ instanceId: 'exec', cardId: 'executioner' });
     primeAccuracyRolls(combat);
@@ -99,7 +100,11 @@ test('Executioner: base branch before the break, Staggered branch after a real C
   const base = dmg(false), broken = dmg(true);
   assert.equal(base.length, 1); assert.equal(broken.length, 1);
   // Authored 10 vs 25 (x2.5) before scaling; the broken target also takes Vulnerable x1.25, so the 25 branch is well past 2.5x.
-  assert.ok(broken[0] > base[0] * 2.5, `Staggered branch fires (${base} -> ${broken})`);
+  assert.ok(broken[0] > base[0] * 2.5, `Broken branch fires (legacy ${legacy}: ${base} -> ${broken})`);
+  }
+  const card = reg.cards.get('executioner');
+  assert.match(card.textTemplate, /If the target is Broken/);
+  assert.deepEqual(card.faceTemplate, ['Deal {damage} damage.', 'Broken: deal {damage.2} instead.']);
 });
 
 test('Dread of the Hammer: its staggered target gate (before-play snapshot) holds after a Core Poise break', () => {

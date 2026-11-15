@@ -131,6 +131,7 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
     sizing: {
       bands: { hud: 10, scene: 40, context: 35, footer: 15 },
       bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
+      bandsDesktop: { hud: 9, scene: 59, context: 24, footer: 8 },
       floorPercent: 75,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
       context: {

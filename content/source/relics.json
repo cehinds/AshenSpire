@@ -184,7 +184,7 @@
     "name": "Fell Warden Brand",
     "rarity": "uncommon",
     "icon": "relic",
-    "textTemplate": "Whenever an enemy Staggers, draw {draw} cards."
+    "textTemplate": "Whenever an enemy is Broken, draw {draw} cards."
   },
   {
     "id": "bloodiedTalisman",
@@ -325,7 +325,7 @@
     "name": "Vigilant Halo",
     "rarity": "rare",
     "icon": "skill",
-    "textTemplate": "Whenever an enemy Staggers, heal {heal} HP.",
+    "textTemplate": "Whenever an enemy is Broken, heal {heal} HP.",
     "flavor": "It hovers a hand above your head, waiting for you to earn it."
   },
   {
@@ -424,7 +424,7 @@
     "name": "Hollowed Horn",
     "rarity": "uncommon",
     "icon": "audio",
-    "textTemplate": "Whenever an enemy Staggers, apply {vulnerable} Vulnerable to ALL enemies.",
+    "textTemplate": "Whenever an enemy is Broken, apply {vulnerable} Vulnerable to ALL enemies.",
     "flavor": "It sounds only once. Everything still standing flinches."
   },
   {
@@ -448,7 +448,7 @@
     "name": "Howling Standard",
     "rarity": "rare",
     "icon": "combat",
-    "textTemplate": "Whenever an enemy Staggers, gain {strength} Strength.",
+    "textTemplate": "Whenever an enemy is Broken, gain {strength} Strength.",
     "flavor": "It has not fallen in a hundred routs. It does not intend to start with yours."
   },
   {

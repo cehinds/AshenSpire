@@ -16,6 +16,8 @@ import { mountEquipCompareModal } from '../components/equipCompareModal.js';
 import { armouryPageOf } from '../../model/armouryPages.js';
 import { openSlotChoiceModal, openEquipConfirmModal } from '../components/armouryEquipModals.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { ItemPropertyChips, ItemPropertyDetail, ItemPropertyCounts } from '../components/itemProperties.js';
+import { ArmouryItemRef, ItemPropertyLines } from '../../model/itemPropertyLines.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // src/ui/screens/equipment.js — the Armoury.
 //
@@ -1075,6 +1077,11 @@ export function mountEquipment(host, {
    * Inspect opens the item's card in the kit's inspection modal, as the Smith
    * rail does. The face is an inspect card with no inspection door of its own.
    */
+  /** The property lines of an owned item: a relic by its id, armour by its class and id, anything else as an armament. */
+  function propertyLinesOf(item, category) {
+    const kind = category === 'Relic' ? 'relic' : item?.classId ? 'armor' : category === 'Potion' ? null : 'armament';
+    return kind ? ItemPropertyLines(run, ArmouryItemRef(run, kind, item)) : null;
+  }
   function openItemInspection(item, category, { owned: count = null, opener = null, extra = null } = {}) {
     if (!item) return null;
     const rendered = isCollectibleCategory(category)
@@ -1083,6 +1090,9 @@ export function mountEquipment(host, {
     const details = equipmentDetails(rendered.explanations);
     // Smithing tier, the last smithing receipt and the Weapon Art / Unique Skill costs.
     if (extra) details.append(extra);
+    // W25-R: what the Blacksmith's work has put on the item: its properties, rank and upgrade count.
+    const properties = ItemPropertyDetail(propertyLinesOf(item, category));
+    if (properties) details.append(properties);
     return openCardInspection({ title: item.name, card: rendered.card, details, opener });
   }
   /** Selects a row (outline) and opens its card; the real buttons above it never reach here. */
@@ -1149,7 +1159,9 @@ export function mountEquipment(host, {
       el('strong', { class: 'armament-position-name', text: position.summary.name }),
       pill({ label: position.active ? 'Equipped' : t('armoury.slot.reserve'), attrs: { class: 'armament-equipped-badge' } }),
     ]);
-    card.append(rowSelectButton(slot, position, position.summary.name), thumbnail, el('div', { class: 'armament-compact-body' }, [head, positionActions(slot, position)]));
+    // W25-R: the item's properties as a short chip list under its name.
+    const chips = ItemPropertyChips(propertyLinesOf(position.summary.item, position.summary.category));
+    card.append(rowSelectButton(slot, position, position.summary.name), thumbnail, el('div', { class: 'armament-compact-body' }, [head, chips, positionActions(slot, position)].filter(Boolean)));
     attachPositionDropTarget(card, slot, position);
     return card;
   }
@@ -1360,6 +1372,12 @@ export function mountEquipment(host, {
     return layout.combatPower.cards.map(role);
   }
 
+  /** W25-R: a relic's properties, one "Name: effect" line each, then its rank and upgrade count. */
+  function relicPropertyLines(id) {
+    const lines = ItemPropertyLines(run, ArmouryItemRef(run, 'relic', { id }));
+    const counts = ItemPropertyCounts(lines);
+    return [...lines.properties.map((row) => `${row.name}: ${row.text}`), ...(counts ? [counts] : [])];
+  }
   function relicEntries() {
     return (run.relics || []).map((id) => {
       const relic = registries.relics.get(id);
@@ -1368,7 +1386,7 @@ export function mountEquipment(host, {
         kind: 'relic',
         disclosure: 'face',
         face: { label: relic.name, value: 'Equipped' },
-        reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.'] },
+        reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.', ...relicPropertyLines(id)] },
       };
     });
   }

@@ -8,7 +8,7 @@
 // A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
 // to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { commitEventChoice, choiceAffordable, ChoiceUnmetRequirement } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
 import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
@@ -152,12 +152,13 @@ export function mountEvent(app, opts) {
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
-    const affordable = choiceAffordable(choice, run);
+    const unmet = ChoiceUnmetRequirement(choice, run, registries);
+    const affordable = unmet === null;
     responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
     if (!affordable) {
       btn.disabled = true;
-      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: unmet === 'rankableCard' ? t('event.noRankableCard') : 'Cannot afford' }));
     } else {
       // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
       // the quest completion check — one writer for all three, shared with the

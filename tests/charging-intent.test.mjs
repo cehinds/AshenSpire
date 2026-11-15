@@ -106,3 +106,24 @@ test('a charging enemy earlier in the order does not spend the player\'s Block i
   assert.deepEqual(withCharger.charging, alone.charging, 'the later enemy reads the same whether or not an earlier one is charging');
   assert.equal(JSON.stringify(withCharger), JSON.stringify(alone));
 });
+
+// Owner 2026-11-15, "icon + turn pip": the charging move renders its icon, the landing number (dimmed, never 0) and an hourglass badge with the turns
+// left; the sentence is the aria-label (and the tooltip's lead line), not HUD text.
+test('a charging part renders the icon, the later number and a turns pip, with no sentence on the HUD', async () => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { intentParts } = await import('../src/ui/components/combatantOverhead.js');
+  const { combat, enemy } = organist();
+  const shown = combatIntentPresentation(projectCombatIntent(combat, enemy.id));
+  const attack = shown.parts.find(part => part.valueKind === 'later');
+  assert.equal(attack.turns, 1, 'the part carries the turns left');
+  withKitDom(() => {
+    const row = intentParts(shown.parts);
+    const group = row.querySelector('.intent-action[data-charging="true"]');
+    assert.ok(group, 'the charging group is marked');
+    assert.equal(group.querySelector('.intent-action-value')?.textContent, String(attack.value));
+    assert.notEqual(group.querySelector('.intent-action-value')?.textContent, '0');
+    assert.equal(group.querySelector('.intent-later-turns')?.textContent, '1');
+    assert.equal(row.querySelector('.intent-later-note'), null, 'no "Charging" sentence on the HUD');
+    assert.equal(group.getAttribute('aria-label'), attack.summary, 'the sentence is the label');
+  });
+});

@@ -369,6 +369,21 @@
         "resultText": "The hum quiets the moment it leaves the anvil, as if it was only ever waiting for a hand."
       },
       {
+        "label": "Press a coin into his hand (pay 40 cinders, rank up a random card)",
+        "requires": {
+          "cinders": 40,
+          "rankableCard": true
+        },
+        "effects": [
+          {
+            "op": "rankUpCard",
+            "random": true,
+            "cost": 40
+          }
+        ],
+        "resultText": "His eyes stay shut, but the hammer rises and falls once on its own. One of your cards comes back from the anvil a rank higher, still warm."
+      },
+      {
         "label": "Wake him (pay 30 cinders, heal 12% max HP)",
         "requires": {
           "cinders": 30

@@ -5,6 +5,7 @@ import { coreCardRanks, cardTrackLevel, rollDraftRank } from './skills.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
 import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
+import { RANK_UP_OPTION, CombatRewardRanksUp, CombatRankUpIsBonus, ShopStocksRankUp, ShopRankUpPrice, RankUpCandidates, RaiseCardRank } from './rankUpService.js';
 import { reserveStanceCards, basicOrCantripMatcher } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard, moveToSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
@@ -175,7 +176,7 @@ function weightedPotionPick(rule,run,rng,stream,ids) {
   for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
   return ids.at(-1);
 }
-function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[]}) {
+function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null,excludedIds=[],pool='normal'}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
@@ -237,12 +238,25 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     const history=run.rewardOfferHistory||={cards:{}};history.cards||={};
     for(const option of shown)history.cards[option.id]=(history.cards[option.id]||0)+1;
   }
+  // W25-R: a won fight may also offer to raise a card's rank (rewards.json rankUp.chancePct by fight tier). It rolls on a hash of
+  // the run's seed and the offer's id, not on a stream, so it moves no counter and a reload answers the same.
+  if(source==='combat'&&CombatRewardRanksUp(registries,run,offerId,pool))options.push({...RANK_UP_OPTION,...(CombatRankUpIsBonus(run,offerId)?{bonus:true}:{})});
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
   run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
-export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat' } = {}) {
+/**
+ * OfferPicksLeft(offer) -> how many picks the player may still make. A bonus option (a rank-up that came beside the card pick,
+ * rewards.json rankUp.bonusPickPct) is one extra pick on top of takeCount; every other option shares takeCount. An offer
+ * without a bonus option counts exactly as before.
+ */
+export function OfferPicksLeft(offer) {
+  const bonus = offer.options.filter(option => option.bonus), plain = offer.options.length - bonus.length;
+  const plainTaken = offer.taken.filter(at => !offer.options[at]?.bonus).length, bonusTaken = offer.taken.length - plainTaken;
+  return Math.max(0, Math.min(offer.takeCount, plain) - plainTaken) + (bonus.length - bonusTaken);
+}
+export function gameProfileRewardOffers(registries, run, rng, { offerId, source = 'combat', pool = 'normal' } = {}) {
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
@@ -250,7 +264,7 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   // reward stream when the offer is first made. Chests, level cards and shops keep offerCount; a settings offerCount that differs from combatOfferCount.appliesAtOfferCount (the shipped 3) wins over the range.
   const range=rules.combatOfferCount,cached=!!run.gameProfileRewardOffers?.[offerId];
   const combatCount=source==='combat'&&!cached&&(module.offerCount??rules.offerCount)===(range?.appliesAtOfferCount??rules.offerCount)&&range&&Number.isInteger(range.min)&&Number.isInteger(range.max)&&range.max>=range.min?rng.int('cardRewards',range.min,range.max):null;
-  return makeOffer(registries,run,rng,{offerId,source,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+  return makeOffer(registries,run,rng,{offerId,source,pool,count:combatCount??module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
     groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):source==='treasure'?(rules.treasureRewardGroups??module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 /** Elite spoils (rewards.json `eliteRelic`): a relic choice of up to `choices` unowned relics from the allowed relic pool (eligibility.relics.allow), built once per offerId
@@ -273,14 +287,20 @@ export function GameProfileEliteRelicOffer(registries, run, rng, { offerId } = {
   (run.gameProfileRewardOffers ||= {})[offerId] = offer;
   return offer;
 }
-export function claimGameProfileReward(registries,run,offerId,index) {
+export function claimGameProfileReward(registries,run,offerId,index,{instanceId=null}={}) {
   const offer=run.gameProfileRewardOffers?.[offerId];
   if(!offer||offer.claimed!==null||offer.taken.includes(index)||offer.takeCount<1)throw new Error('Reward offer is missing or already claimed');
   const option=offer.options[index];
   if(!Number.isInteger(index)||!option)throw new Error('Invalid reward option');
-  if (!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
+  if(!option.bonus&&OfferPicksLeft({...offer,options:offer.options.filter(row=>!row.bonus),taken:offer.taken.filter(at=>!offer.options[at]?.bonus)})<1)throw new Error('Reward offer is missing or already claimed');
+  if (option.kind!==RANK_UP_OPTION.kind&&!(pools(registries,run,{claim:true})[option.kind] || []).includes(option.id)) throw new Error('Reward option is unavailable under configured eligibility');
   const draft=structuredClone(run);
-  if(['combatCards','weaponArts'].includes(option.kind)) {
+  let raised=null;
+  if(option.kind===RANK_UP_OPTION.kind) {
+    // W25-R: the service raises one chosen owned card by one rank; the pick rides the claim, so the offer stays one row.
+    if(typeof instanceId!=='string'||!instanceId)throw new Error('Choose a card to rank up');
+    raised=RaiseCardRank(registries,draft,instanceId);
+  } else if(['combatCards','weaponArts'].includes(option.kind)) {
     registries.cards.get(option.id);
     const instanceId=`reward:${offerId}:${index}${offer.source==='shop'?`:${offer.tradeRevision||0}`:''}`;
     draft.sideboard.push({instanceId,cardId:option.id,upgraded:false,...(option.rank>1?{rank:option.rank}:{})});
@@ -304,8 +324,8 @@ export function claimGameProfileReward(registries,run,offerId,index) {
     draft.loadout.boughtArmour.push({classId:run.class,id:option.id});
   } else throw new Error('Unknown reward category');
   const pending=draft.gameProfileRewardOffers[offerId];pending.taken.push(index);
-  if(pending.taken.length>=Math.min(pending.takeCount,pending.options.length))pending.claimed=index;
-  syncZones(draft);Object.assign(run,draft);return option;
+  if(OfferPicksLeft(pending)<1)pending.claimed=index;
+  syncZones(draft);Object.assign(run,draft);return raised?{...option,instanceId:raised.instanceId,rank:raised.rank}:option;
 }
 // Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
 // sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
@@ -367,6 +387,9 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
+  // W25-R: some shops also stock a rank-up service (shops.json rankUp.stockChancePct), at the Blacksmith's own price. It rolls on a hash of the
+  // run seed and the shop id, joins a fresh stock once, and rides the saved stock after that.
+  if(fresh&&!stock.options.some(option=>option.kind===RANK_UP_OPTION.kind)&&ShopStocksRankUp(registries,run,shopId)){stock.options.push({...RANK_UP_OPTION,price:ShopRankUpPrice(run)});stock.takeCount+=1;}
   // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
   const table=module.priceTable??rules.priceTable;
   if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
@@ -395,6 +418,7 @@ export function gameProfileShopPurchasePlan(registries,run,shopId,index) {
   else if(!Number.isSafeInteger(price)||price<0)reason='Invalid configured shop price';
   else if(stock.options[index].kind==='weapons'&&(run.loadout?.storage||[]).length>=(registries.balance.equipment.storageSlots??8))reason='Inventory is full. Sell or make room first.';
   else if(!Number.isSafeInteger(run.cinders)||run.cinders<price)reason='Insufficient cinders';
+  else if(stock.options[index].kind===RANK_UP_OPTION.kind){if(!RankUpCandidates(registries,run).length)reason='No card of yours can rise in rank.';}
   else try {claimGameProfileReward(registries,structuredClone(run),offerId,index);}catch(error){reason=error.message;}
   return {ok:!reason,reason,shopId,index,price,revision:stock?.tradeRevision||0,signature:JSON.stringify(stock?.options[index])};
 }
@@ -405,7 +429,9 @@ export function purchaseGameProfileShopOffer(registries,run,shopId,index,rng=nul
   const offerId=`shop:${shopId}`,price=plan.price;
   const instanceId=`reward:${offerId}:${index}:${run.gameProfileRewardOffers?.[offerId]?.tradeRevision||0}`;
   const draft=structuredClone(run);draft.cinders-=price;
-  const receipt=claimGameProfileReward(registries,draft,offerId,index);
+  const receipt=claimGameProfileReward(registries,draft,offerId,index,{instanceId:quote?.instanceId??null});
+  // A rank-up service is a one-off shelf: no replacement is stocked in its place, and what was paid is no resale ceiling.
+  if(receipt.kind===RANK_UP_OPTION.kind){draft.gameProfileRewardOffers[offerId].tradeRevision=plan.revision+1;Object.assign(run,draft);return {...receipt,price,replacement:null};}
   // Old saves can offer a much lower flat price. Retain that paid-price
   // ceiling across reloads and later merchants so resale cannot profit.
   draft.gameProfileShopPurchasePrices ||= {};

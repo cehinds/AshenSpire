@@ -93,6 +93,8 @@ export const RUN_OPCODES = Object.freeze([
   'addCardToDeck',
   'removeCardFromDeck',
   'upgradeCard',
+  // W25-R: raise one owned card's rank (Core 2); `cost` cinders are paid only when a card rises.
+  'rankUpCard',
   'addRelic',
   'addFlask',
   'addFlaskCapacity',
@@ -610,6 +612,7 @@ export const EFFECT_SPECS = Object.freeze({
   addCardToDeck: { allowed: ['card'], required: ['card'], refs: { card: 'cards' } },
   removeCardFromDeck: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
   upgradeCard: { allowed: ['card', 'random'], required: [], refs: { card: 'cards' } },
+  rankUpCard: { allowed: ['random', 'cost'], required: [], refs: {} },
   addRelic: { allowed: ['id', 'random'], required: [], refs: { id: 'relics' } },
   addFlask: { allowed: ['id', 'random'], required: [], refs: { id: 'flasks' } },
   addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
@@ -1172,7 +1175,7 @@ export const SCHEMAS = Object.freeze({
         // `requires: { hp: 50 }` type-checked, was silently ignored, and the
         // choice was always affordable. The vocabulary is closed to what the
         // evaluator can actually read; widening it is an engine change.
-        requires: opt(obj({ cinders: opt(int) })),
+        requires: opt(obj({ cinders: opt(int), rankableCard: opt(bool) })),
         effects,
         resultText: str,
       })

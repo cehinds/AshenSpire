@@ -453,7 +453,10 @@ test('a compact host takes the compact band plan, and both plans sum to 100', ()
   assert.ok(near(roomy.hud, frame.height * 0.10), 'a roomy host keeps the 10% band');
   assert.ok(near(compact.hud, frame.height * 0.12), 'a compact host gets 12%');
   assert.ok(compact.hud > roomy.hud && compact.context < roomy.context, 'the room comes from the context band');
-  for (const shares of [W4C_LAYOUT.sizing.bands, W4C_LAYOUT.sizing.bandsCompact]) {
+  const desktop = dialogueBands({ width: 1800, height: 880, zoom: 1.1, rem: 16 }, W4C_LAYOUT, W4_PARENT, false, true);
+  assert.ok(near(desktop.scene, 880 * 0.59) && near(desktop.footer, 880 * 0.08), 'a fine-pointer desktop host gives the scene the room and the footer one short row');
+  assert.ok(near(dialogueBands(frame, W4C_LAYOUT, W4_PARENT, true, true).hud, frame.height * 0.12), 'a compact host ignores the desktop split');
+  for (const shares of [W4C_LAYOUT.sizing.bands, W4C_LAYOUT.sizing.bandsCompact, W4C_LAYOUT.sizing.bandsDesktop]) {
     assert.equal(shares.hud + shares.scene + shares.context + shares.footer, 100);
   }
   assert.throws(

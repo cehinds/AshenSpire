@@ -225,12 +225,10 @@
 /* Owner (2026-11-06): the mini HUD is as wide as its cell and its contents scale with it (--mini-hud-scale, set once per layout pass). */
 :root .combat .combatant { --intent-content-scale: calc(.8 * var(--mini-hud-scale, 1)); }
 
-/* Wave 2 (sizes): the two numbers a player plans a turn around, their own HP and the incoming damage, are the largest numbers on
-   the combat screen (24 px effective each); every other number stays under 20. Specificity beats the per-form-factor rows above. */
+/* Wave 2 (sizes): the incoming damage is the largest number on the combat screen (24 px effective); every other number stays under 20.
+   The player's own HP and Poise numbers match the enemy's small mini HUD numbers (owner, 2026-11-15). */
 :root .combat { --focus-number-size: calc(27px / var(--ui-zoom, 1)); }
 :root[data-layout='narrow'] .combat { --focus-number-size: calc(24px / var(--ui-zoom, 1)); }
-:root .combat[data-layout] .combatant.player .combat-health-row { --combatant-value-text: var(--focus-number-size); }
-:root .combat[data-layout] article.combatant.player .combat-health-row .as-meter .m-value { font-size: var(--focus-number-size) !important; line-height: 1; }
 :root .combat .intent .intent-action-value, :root .combat .intent .intent-followup { --intent-value-size: var(--focus-number-size); }
 
 /* A charging move (owner, 2026-11-14): its number lands later, so it is small, muted and not the red of incoming damage, with the turns left under it. */
@@ -238,6 +236,11 @@
 :root .combat[data-target-hud='true'] .intent .intent-action[data-value-kind='later'] .intent-action-value { color: var(--parchment); }
 :root .combat .intent .intent-later-note { display: block; font: 600 calc(12px / var(--ui-zoom, 1))/1.1 system-ui, sans-serif; white-space: nowrap; color: var(--parchment); opacity: .9; }
 :root .combat .intent .intent-later { align-items: center; }
+/* The charging move's turn pip (owner, 2026-11-15): a small hourglass badge with the turns left, right of the icon (the intent row clips anything hung below it). */
+:root .combat .intent .intent-action[data-charging='true'] { position: relative; }
+:root .combat .intent .intent-later-pip { position: static; margin-inline-start: calc(2px / var(--ui-zoom, 1)); display: inline-flex; align-items: center; gap: 0; padding: 0 calc(2px / var(--ui-zoom, 1)); border-radius: 999px; background: var(--bg-raise, var(--bg)); border: 1px solid var(--parchment); color: var(--parchment); pointer-events: none; }
+:root .combat .intent .intent-later-pip > svg { width: calc(9px / var(--ui-zoom, 1)); height: calc(9px / var(--ui-zoom, 1)); }
+:root .combat .intent .intent-later-turns { font: 700 calc(11px / var(--ui-zoom, 1))/1 system-ui, sans-serif; color: var(--parchment); }
 
 /* A follow-up of the head's own stance shows its HP number beside the icon (owner, 2026-11-14): the secondary number size, so the head's
    number stays the largest, and never under 11 px; a row of several wraps instead of widening the intent past a phone's width. */

@@ -33,6 +33,7 @@
 // Sweep has no extra benefit (owner: sweeps are AoE for full damage): the sweep row leaves stanceBenefits and the hash moves; the batch-2 stances merge hash 28288b... is kept.
 // the batch-2 merge of w25-elements (element identity: fixCoreMechanics.json elements, the shock/chill/freeze/brittle/necroticBuildup/knockback statuses, the receipt stages) moves the runtime hash; a save made before keeps its snapshotted rules, which lack elements, and plays as before. w25-elements' own 33931a... and cc8bab... and the earlier 093f55... are kept.
 // the batch-2 merge of w25-stats (PR from max(INT, WIS): ratings.prAttributes; live attribute changes in a fight) moves the runtime hash; a fight saved without the key keeps INT-only PR. w25-stats' own 4d6cf7... and the earlier f47819... are kept.
+// Batch 3 (Broken wording on cards, relics and the Prepared status; the rank-up bonus pick) moves the runtime hash; the batch-2 hash a4c872... is kept.
 const PREVIOUS_RUNTIMES = new Set([
   'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9',
   'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2',
@@ -73,8 +74,12 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:f478198585239b6625dabf7f8541ce4a9e7e7cb4e6d93fdd4bbae847b0274c73',
   'sha256:4d6cf722bb83154aa34bd78b6aeb320fa05b98d557e25bc1155e9fd9297c9d63',
   'sha256:a4c872ecda5683fecafdd96805411896a32b11bceef517168221600647f189ce',
+  'sha256:ad67bcf673204516f765000883738c8110f0701ceccbc94dbd4167489728ee1a',
+  'sha256:a2854aeb6df487f9efe4bb1358b16df21d4a8d614e0090f63c23c6507d0f2613',
+  'sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763',
 ]);
-const FIXED_EVASION_RUNTIME = 'sha256:ad67bcf673204516f765000883738c8110f0701ceccbc94dbd4167489728ee1a';
+// Moved by the rankUpCard row added to engine/runtime/ops.json (batch 3).
+const FIXED_EVASION_RUNTIME = 'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)

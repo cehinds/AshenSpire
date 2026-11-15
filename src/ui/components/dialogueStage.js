@@ -204,13 +204,37 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     const width = root.clientWidth, height = root.clientHeight;
     if (!(width > 0) || !(height > 0)) return;
     const compactHud = dialogueHudCompact({ width: logicalViewport().width, height: logicalViewport().height }, layout, parent);
-    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud);
+    const fine = typeof matchMedia === 'function' && matchMedia('(pointer: fine) and (hover: hover)').matches;
+    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud, fine);
     root.style.setProperty('--w4-vw', `${width / 100}px`);
     root.style.setProperty('--w4-vh', `${height / 100}px`);
     root.style.setProperty('--w4-band-hud', `${bands.hud}px`);
     root.style.setProperty('--w4-band-scene', `${bands.scene}px`);
     root.style.setProperty('--w4-band-context', `${bands.context}px`);
     root.style.setProperty('--w4-band-footer', `${bands.footer}px`);
+    // A MOUSE WINDOW SIZES THE CONTEXT PANEL TO ITS TEXT (owner, 2026-11-15): the desktop split is only a
+    // ceiling. The panel is measured at that ceiling and the height it does not need goes to the scene band,
+    // so one line of speech is not a large empty box. A phone or compact host keeps the configured split.
+    if (fine && bands.supported && !compactHud && !dialogueCompactHost(logicalViewport().width, parent)) {
+      const ctx = root.querySelector(':scope > .dialogue-context');
+      const region = ctx?.querySelector(':scope > .dialogue-region');
+      if (ctx && region && !ctx.hidden) {
+        fitResponses(rem);
+        const box = region.querySelector(':scope > .dialogue-responses');
+        box?.style.removeProperty('--dialogue-response-row-h');
+        region.dataset.responseStretch = 'false';
+        const stretched = region.offsetHeight;
+        region.style.alignSelf = 'flex-start';
+        const natural = region.offsetHeight;
+        region.style.alignSelf = '';
+        const needed = Math.min(bands.context, Math.ceil(natural + (bands.context - stretched)));
+        const freed = bands.context - needed;
+        if (freed > 1) {
+          root.style.setProperty('--w4-band-scene', `${bands.scene + freed}px`);
+          root.style.setProperty('--w4-band-context', `${needed}px`);
+        }
+      }
+    }
     root.dataset.w4Geometry = bands.supported ? 'supported' : 'unsupported';
     root.dataset.dialogueCompact = String(dialogueCompactHost(logicalViewport().width, parent));
     // A short host draws the HUD's one-row compact form. The band itself never
@@ -236,7 +260,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     for (const wrap of root.querySelectorAll(':scope > .dialogue-plate-layer')) {
       if (wrap.querySelector('.alternative-backdrop')) fitAlternativeBackdrop(wrap, {
         width, height: sceneHeight, fieldTop: sceneTop, ground: floorLine - sceneTop,
-        narrow: dialogueCompactHost(logicalViewport().width, parent),
+        narrow: dialogueCompactHost(logicalViewport().width, parent), coverWindow: fine,
       });
     }
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
@@ -246,7 +270,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     // the whole figure instead; a wide-but-short window still can, and keeps
     // the close-up it had (844x390, where the whole-figure rule made both
     // speakers small and distant).
-    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(logicalViewport().width, parent), height);
+    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(logicalViewport().width, parent) || fine, height);
     fitResponses(rem);
   }
 

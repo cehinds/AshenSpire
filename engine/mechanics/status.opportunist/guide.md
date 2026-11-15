@@ -1,5 +1,5 @@
 # Opportunist (`status.opportunist`)
-When an enemy staggers, become Prepared and draw 1 card per stack.
+When an enemy is Broken, become Prepared and draw 1 card per stack.
 - Carried by: statuses on any entity.
 - Lives in: `src/content/statuses.js`.
 - Defined in: `content/source/statuses.json`.
