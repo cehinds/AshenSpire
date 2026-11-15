@@ -3,6 +3,7 @@ import { CharacterDisplayName } from './model/characterName.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, GameProfileEliteRelicOffer, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer, addPurchasedCardToDeck, shopCardDeckRefusal } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { OpenRankUpCardModal } from './ui/components/rankUpCardModal.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
 import { showRunReceipt } from './ui/components/whatChangedModal.js';
 import { snapshotRunForDiff } from './model/runChangeReceipt.js';
@@ -2322,7 +2323,7 @@ async function onCombatEnd(result, combat, enc) {
   const boss = enc.pool === 'boss';
   if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
   if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
-  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
+  return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt, pool: enc.pool, eliteRelic: enc.pool === 'elite' && !!gameContent(run, 'rewards')?.eliteRelic });
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
@@ -2478,11 +2479,11 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null, eliteRelic = false, pool = 'normal' } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
   if (noticeOnly && !progression.length && !victoryReceipt) { persistOrWarn(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
-  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
+  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source, pool });
   run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}), ...(eliteRelic ? { eliteRelic } : {}) };
   persistOrWarn(); return showGameProfileReward();
 }
@@ -2560,6 +2561,15 @@ function leaveRewardDoor(pending) {
   showMap();
 }
 
+// W25-R: the card pick of a "Rank up a card" service (a reward option or a shop shelf): option rows of the cards that can rise.
+// Resolves with the chosen instance id; Cancel rejects with an empty message, so the door that asked stays as it was.
+function chooseRankUpCard({ price = '' } = {}) {
+  return new Promise((resolve, reject) => {
+    let picked = null;
+    OpenRankUpCardModal({ registries, run, price, onChoose: id => { picked = id; }, onClosed: () => queueMicrotask(() => (picked ? resolve(picked) : reject(new Error('')))) });
+  });
+}
+
 // The offers door. `combined` heads it with the victory title and the spoils strip (cinders, stone, XP, points to spend).
 // The receipt is acknowledged in the same save that leaves the door, so a reload on it shows the same strip and nothing is paid twice
 // (XP, cinders and stones are paid at combat resolution, before any door opens; the receipt is only their record).
@@ -2574,7 +2584,10 @@ function mountGameProfileOfferDoor(pending, { combined }) {
   }) : null;
   mountGameProfileOffers(app, { registries, run, settings, offer, spoils,
     title: receipt ? (receipt.title || t('reward.title.victory')) : pending.source === 'level' ? 'Level reward' : pending.source === 'elite' ? 'Elite spoils' : 'Victory rewards',
-    onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
+    // W25-R: a "Rank up a card" option asks which card first (option rows); the claim carries the pick, Cancel leaves the offer open.
+    onTake: index => (offer.options[index]?.kind === 'rankUps'
+      ? chooseRankUpCard().then(instanceId => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index, { instanceId })))
+      : persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index))),
     // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
     // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
     onAddToDeck: index => persistRewardChange(() => claimGameProfileRewardToDeck(registries, run, pending.offerId, index, saves.loadMeta().settings || {})),
@@ -2633,6 +2646,12 @@ function showShop() {
   audio.music('shop');
   return mountConfiguredShop(app, { registries, run, offer, meta: saves.loadMeta(), hud: roomHud(showShop),
     onTake: (index, quote) => {
+      // W25-R: a shelf that sells a rank-up asks which card first; Cancel leaves the stock and the purse as they were.
+      if (offer.options[index]?.kind === 'rankUps') {
+        return chooseRankUpCard({ price: t('rankUp.pick.price', { cinders: quote.price }) }).then(instanceId => {
+          try { purchaseGameProfileShopOffer(registries, run, shopId, index, rng, { ...quote, instanceId }); persist(); } finally { showShop(); }
+        }, () => {});
+      }
       const receipt = purchaseGameProfileShopOffer(registries, run, shopId, index, rng, quote); persist(); showShop();
       offerShopCardDestination(receipt);
     },

@@ -57,6 +57,7 @@
   ],
   "sleepingSmith": [
     "takeBlade",
+    "reforgeCard",
     "wakeSmith",
     "leave"
   ],

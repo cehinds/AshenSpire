@@ -12,7 +12,7 @@ const registries = createRegistries(contentBundle);
 const identities = {
   unarmedAttack: ['physical', 'attack', null], shieldAttack: ['physical', 'attack', null],
   bladeAttack: ['physical', 'attack', null], twinbladeAttack: ['physical', 'attack', null],
-  daggerPierceAttack: ['physical', 'attack', null], bowPierceAttack: ['physical', 'ranged', null],
+  daggerPierceAttack: ['physical', 'attack', null], bowPierceAttack: ['physical', 'attack', null],
   staffMagicAttack: ['spell', null, 'force'], sceptreArcaneAttack: ['spell', null, 'decay'],
   unarmedGuard: ['physical', 'defend', null], weaponGuard: ['physical', 'defend', null],
   shieldGuard: ['physical', 'defend', null], staffGuard: ['spell', 'defend', 'alteration'],

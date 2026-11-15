@@ -128,7 +128,7 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, floorTop, zoom = 1 }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false, floorShadowTop, floorTop, zoom = 1, coverWindow = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   if (backdrop) {
     delete backdrop.dataset.mobileFloorPaintTop;
@@ -155,9 +155,11 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
     ? Math.min(ground, standGround + (device.groundAnchor - standingTop) * device.height * scale) : ground;
   const cameraGround = coverFloor
     ? Math.max(framed, height - (1 - device.groundAnchor) * device.height * scale) : framed;
-  const top = document.documentElement.dataset.wireframeSceneFloor === 'off'
+  let top = document.documentElement.dataset.wireframeSceneFloor === 'off'
     ? fieldTop + (height - device.height * scale) / 2
     : coverFloor ? previewTop + device.groundAnchor * device.height * (coverScale - scale) : fieldTop + cameraGround - device.groundAnchor * device.height * scale;
+  // `coverWindow` (desktop dialogue): the art reaches the window's bottom edge, so the figures never stand on a bare strip.
+  if (coverWindow) top = Math.max(top, fieldTop + height - device.height * scale);
   svg.setAttribute('viewBox', `0 0 ${device.width} ${device.height}`);
   svg.style.cssText = `width:${device.width * scale}px;height:${device.height * scale}px;left:${(width - device.width * scale) / 2}px;top:${top}px`;
   backdrop.dataset.device = key;

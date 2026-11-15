@@ -17,6 +17,7 @@ import { button, statusText, el, railItem } from '../kit/index.js';
 import { t } from '../strings.js';
 import { renderEquipmentCard } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
+import { RenderRankUpOfferCard } from '../components/rankUpOfferCard.js';
 import { shopOfferPrice } from '../../model/shopOfferPrice.js';
 import { gameProfileShopPurchasePlan } from '../../model/gameProfileRewards.js';
 import { gameProfileShopSalePlans } from '../../model/gameProfileShopSales.js';
@@ -63,7 +64,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const status = statusText('', { role: 'alert' });
   const leave = button({ label: t('shop.leave'), role: 'exit', id: 'leave-shop' }); leave.addEventListener('click', onLeave);
   foot.append(status, modalFooter({ secondary: [leave], className: 'shop-foot' }));
-  const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell' };
+  const labels = { combatCards: 'shop.bar.combatCards', weaponArts: 'shop.bar.weaponArts', weapons: 'shop.bar.armaments', armor: 'shop.bar.armour', relics: 'shop.bar.relics', potions: 'shop.bar.flasks', sell: 'shop.bar.sell', rankUps: 'shop.bar.rankUps' };
   const sellEnabled = onSell && settingOn(meta?.settings, 'shopSell');
   const categories = [...new Set(offer.options.map(option => option.kind)), ...(sellEnabled ? ['sell'] : [])];
   let active = categories.includes(previousCategory) ? previousCategory : categories[0];
@@ -85,14 +86,15 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onSel
   const arm = beatArmer(meta, registries);
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
-    const def = card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
+    const service = option.kind === 'rankUps';
+    const def = service ? { name: t('rankUp.name') } : card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
     const quote = gameProfileShopPurchasePlan(registries, run, shopId, index);
     const price = shopOfferPrice(offer, index);   // each offer has its own price; stock saved before that has one for all
     const available = quote.ok;
     const tile = el('div', { class: 'class-pick shop-offer' });
-    const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
+    const visual = service ? RenderRankUpOfferCard(registries, { interactive: false, level: 'glance', surface: 'shop' }).card : card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, shopCardOptions) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: price }), enabled: available };
-    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }), visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
+    const buy = arrangeMerchantOffer({ tile, name: def?.name || option.id, desc: service ? t('rankUp.blurb') : configuredOfferText(registries, run, option.kind, def, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }), visual, price: t('shop.price', { cost: price }), avail: { available, reason: quote.reason || null, because: 'cinders' }, action });
     if (available) arm(buy, 'shopBuy', { onConfirm: () => { try { onTake(index, quote); } catch (error) { status.textContent = error.message; } } });
     shelves.get(option.kind).append(tile);
   }

@@ -82,6 +82,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
 import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCardProfile.js';
+import { RankUpCandidates, RaiseCardRank } from '../model/rankUpService.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -2217,6 +2218,18 @@ export const RUN_OPCODE_HANDLERS = Object.freeze({
         idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
       }
       if (idx >= 0) removeDeckCard(run, run.deck[idx].instanceId);
+      return;
+    },
+    // W25-R: an event that raises a card's rank (the shared rank-up service), on the card a seeded pick chooses. `cost` cinders are paid
+    // only when a card rises, so a run that cannot rank cards (Legacy, or every card capped) keeps its purse.
+    rankUpCard: (ctx, action, eff) => {
+      const run = ctx.run;
+      const candidates = RankUpCandidates(ctx.registries, run);
+      const cost = Number.isSafeInteger(eff.cost) && eff.cost > 0 ? eff.cost : 0;
+      if (!candidates.length || run.cinders < cost) return;
+      const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
+      RaiseCardRank(ctx.registries, run, chosen.instanceId);
+      run.cinders -= cost;
       return;
     },
     upgradeCard: (ctx, action, eff) => {

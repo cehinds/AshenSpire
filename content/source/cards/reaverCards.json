@@ -1069,7 +1069,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {
@@ -1156,8 +1156,8 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage. If the target is Staggered: deal {damage.2} instead.",
-    "faceTemplate": ["Deal {damage} damage.", "Staggered: deal {damage.2} instead."],
+    "textTemplate": "Deal {damage} damage. If the target is Broken: deal {damage.2} instead.",
+    "faceTemplate": ["Deal {damage} damage.", "Broken: deal {damage.2} instead."],
     "upgrade": {
       "effects": [
         {
@@ -1791,7 +1791,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: deal {poiseDamage.2} more Poise damage.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: deal {poiseDamage.2} more Poise damage.",
     "upgrade": {
       "effects": [
         {
@@ -1888,7 +1888,7 @@
         }
       }
     ],
-    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Staggered: apply {bleed} Bleed.",
+    "textTemplate": "Deal {damage} damage and {poiseDamage} Poise damage. If the target is Broken: apply {bleed} Bleed.",
     "upgrade": {
       "effects": [
         {

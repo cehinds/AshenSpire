@@ -77,8 +77,8 @@ function chargingPresentation(intent) {
   const parts = [];
   if (block != null) parts.push({ icon: 'defend', value: String(block) });
   parts.push(later != null
-    ? { icon: 'attack', value: later, valueKind: 'later', note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingAria', { amount: later, when }) }
-    : { icon: 'prepare', value: null, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingNote', { when }) });
+    ? { icon: 'attack', value: later, valueKind: 'later', turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingAria', { amount: later, when }) }
+    : { icon: 'prepare', value: null, turns: turnsLeft, note: t('combat.intent.chargingNote', { when }), summary: t('combat.intent.chargingNote', { when }) });
   return { visibility: 'known', title: t('combat.intent.charging'), stance: 'preparing', parts, damageClass: null, charging: intent.charging };
 }
 

@@ -25,6 +25,7 @@ function canvasElement(frameWidthPx) {
       this.observer = new ResizeObserver(entries => {
         const width = Number(this.dataset.frameWidth) || 350;
         this.style.setProperty('--card-scale', entries[0].contentRect.width / width);
+        FitBonusLines(this);
       });
       this.observer.observe(this);
     }
@@ -33,6 +34,42 @@ function canvasElement(frameWidthPx) {
   const el = document.createElement('as-equipment-card');
   el.dataset.frameWidth = String(frameWidthPx);
   return el;
+}
+
+/**
+ * FitBonusLines(card) -> the number of effect lines the face now shows, or 0 when it cannot measure.
+ *
+ * The authored `bonusMaxLines` (2) is a floor, not a ceiling (owner, 2026-11-15: a relic's effect was cut at
+ * two lines with three empty lines under it). The effects region is as tall as the row solver made it; this
+ * raises the line clamp one line at a time while the region still holds its content, so the text ends in an
+ * ellipsis only where it truly stops fitting. A face that is not laid out yet (no height) is left as it is.
+ */
+export function FitBonusLines(card) {
+  const effects = card?.querySelector?.('.epc-effects');
+  if (!effects || effects.dataset.entries === 'many') return 0;
+  const bonus = effects.querySelector('.epc-bonus:not([hidden])');
+  const floor = Number(card.dataset.bonusFloor) || 2;
+  if (!bonus || !(effects.clientHeight > 0)) return 0;
+  const MAX = 12;
+  // Grow the line budget while the region holds it; if the text is still cut, shrink the type a step (never
+  // below 0.9 of its authored size) and grow again, so a long effect shows whole when it can.
+  const grow = () => {
+    let lines = floor;
+    card.style.setProperty('--epc-bonus-lines', String(lines));
+    while (lines < MAX && bonus.scrollHeight > bonus.clientHeight + 1) {
+      card.style.setProperty('--epc-bonus-lines', String(lines + 1));
+      if (effects.scrollHeight > effects.clientHeight + 1) { card.style.setProperty('--epc-bonus-lines', String(lines)); break; }
+      lines++;
+    }
+    return lines;
+  };
+  let lines = 0;
+  for (const fit of [1, 0.95, 0.9]) {
+    card.style.setProperty('--epc-bonus-fit', String(fit));
+    lines = grow();
+    if (bonus.scrollHeight <= bonus.clientHeight + 1) break;
+  }
+  return lines;
 }
 
 /** Face geometry and type scale reach the stylesheet as custom properties. */
@@ -49,6 +86,7 @@ function applyCardTokens(card, tokens) {
   if (tokens.heights.flavor === undefined) card.style.removeProperty('--epc-flavor-row');
   else set('--epc-flavor-row', `${tokens.heights.flavor}px`);
   set('--epc-bonus-lines', String(tokens.bonusMaxLines));
+  card.dataset.bonusFloor = String(tokens.bonusMaxLines);
   set('--card-info-inset', `${tokens.info.insetPx}px`);
   set('--card-info-fade', `${tokens.info.fadeMs}ms`);
   for (const [key, value] of Object.entries(tokens.type)) set(`--epc-text-${key}`, value);
@@ -209,6 +247,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     });
   };
   paint(drawn);
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => FitBonusLines(card));
   // Keep explanation gestures out of the containing equipment hold action.
   if (interactive) for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) card.addEventListener(type, event => event.stopPropagation());
   if (inspection) {
