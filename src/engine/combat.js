@@ -83,6 +83,7 @@ import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { focusManaDiscount, applyFocusManaDiscount } from '../model/focusMana.js';
 import { SpellCostRules, SpellCostAdjust } from './spellCosts.js';
+import { FluxAfterPlay, ClearFlux, FluxScale, FluxMultiplier } from './elementFlux.js';
 import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
@@ -494,6 +495,7 @@ function endCheck(combat) {
 
 function finishCombat(combat, result) {
   RestoreLiveStats(combat); // every attribute and derived value returns to its fight-start value (HP trimmed)
+  ClearFlux(combat.player); // elemental flux ends with the fight
   combat.result = result;
   combat.phase = 'ended';
   Reactions.finishReactions(combat);
@@ -607,6 +609,7 @@ function endPlayerTurn(combat, discardIds = []) {
 
   S.ClearTurnBoosts(combat, p);
   ClearTurnAttributeBoosts(combat, p);
+  ClearFlux(p); // elemental flux ends with the player's turn (W25-F)
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
 
@@ -1951,6 +1954,7 @@ function finishAbilityPlay(combat) {
   if (!play) return;
   const inst = play.instance;
   const def = resolveCombatCard(combat, inst);
+  FluxAfterPlay(combat, combat.player, play.ref, def); // the cast's element becomes the flux once its own effects have resolved (W25-F)
 
   // Expanded Powers carry Exhaust; legacy Powers without it leave play.
   // The destination is the framework's call; this engine moves the card.
@@ -2372,13 +2376,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
       }
       case 'applyStatus': {
         entry.status = eff.status;
-        entry.value = evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0);
+        entry.value = FluxScale(combat, p, action.card, evalPreview(combat, action, eff.stacks != null ? eff.stacks : 1, primary) + (action.meta.abilityChargeBuildup || 0));
         break;
       }
       case 'heal':
         {
           const amount = evalPreview(combat, action, eff.amount, primary);
-          entry.value = Math.floor((amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0)) * stanceEffectiveness(combat, p, action.card));
+          entry.value = Math.floor((amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0)) * stanceEffectiveness(combat, p, action.card) * FluxMultiplier(combat, p, action.card));
         }
         break;
       case 'buildup':

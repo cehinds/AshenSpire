@@ -109,3 +109,110 @@ test('a fight saved without the spellCosts block keeps today\'s costs and the Pr
     if (card.cost !== 'X') assert.equal(prepared.stamina, card.staminaCost, `${card.id}: Prepared took no Stamina off before`);
   }
 });
+
+// ---- Elemental flux (src/engine/elementFlux.js) ----
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+import { FluxScale, FluxMultiplier, FluxElement } from '../src/engine/elementFlux.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
+
+const FIRE = { cardId: 'core.cinderDart', instanceId: 'i1', combatProfile: { camp: 'spell', school: 'fire', damageType: 'arcane', magicShare: 1 }, tags: ['school:fire'], magicShare: 1 };
+const FROST = { ...FIRE, combatProfile: { ...FIRE.combatProfile, school: 'frost' }, tags: ['school:frost'] };
+const quote = (combat, carrier, base) => profileDamageReceipt(combat, combat.player, combat.enemies[0], base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
+const flux = receipt => receipt.damageReceipt.hits[0].sources.find(row => row.id === 'element-flux');
+
+test('a card of the flux element is lifted x1.25 and floored: 10 -> 12, 7 -> 8, 3 -> 3; another element, no flux, a return hit and an old fight are not', () => {
+  const { combat } = fight();
+  combat.player.elementFlux = 'fire';
+  for (const [base, want] of [[10, 12], [7, 8], [3, 3], [20, 25]]) {
+    const stage = flux(quote(combat, FIRE, base));
+    assert.equal(stage.multiplier, 1.25, `the quote lists the flux stage for ${base}`);
+    assert.equal(stage.effective, want, `floor(${base} x 1.25)`);
+  }
+  assert.equal(flux(quote(combat, FROST, 10)), undefined, 'a Frost card is not lifted by Fire flux');
+  assert.equal(flux(quote(combat, { ...FIRE, counterReturnAttack: true }, 10)), undefined, 'a Counter return hit is never lifted');
+  assert.equal(flux(quote(combat, { ...FIRE, cardId: undefined, instanceId: undefined }, 10)), undefined, 'only a played card is lifted (no status tick or enemy move)');
+  delete combat.player.elementFlux;
+  assert.equal(flux(quote(combat, FIRE, 10)), undefined, 'no flux, no lift');
+  const old = fight({ legacy: true });
+  delete old.combat.fixCoreRules.elementFlux; old.combat.player.elementFlux = 'fire';
+  assert.equal(flux(quote(old.combat, FIRE, 10)), undefined, 'a fight created before the ruling has no flux even if the key is set');
+  assert.equal(FluxMultiplier(old.combat, old.combat.player, FIRE), 1);
+  assert.equal(FluxElement(old.combat, old.combat.player), null);
+});
+
+test('FluxScale floors every number it lifts (Block, healing, status stacks)', () => {
+  const { combat } = fight();
+  combat.player.elementFlux = 'fire';
+  assert.deepEqual([3, 4, 5, 8, 10].map(n => FluxScale(combat, combat.player, FIRE, n)), [3, 5, 6, 10, 12]);
+  assert.deepEqual([3, 4].map(n => FluxScale(combat, combat.player, FROST, n)), [3, 4]);
+  combat.phase = 'enemy';
+  assert.equal(FluxScale(combat, combat.player, FIRE, 4), 4, 'the enemy phase neither reads nor changes the flux');
+});
+
+const SELF = new Set(['core.steadyHands', 'core.mendingTouch']);
+function sequence(ids, { legacy = false, attributes = { strength: 2 } } = {}) {
+  const { combat, enemy } = fight({ attributes });
+  if (legacy) delete combat.fixCoreRules.elementFlux;
+  combat.player.energy = 30; combat.player.mana = 30;
+  const rows = [];
+  ids.forEach((id, index) => {
+    const card = combat.piles.hand[0];
+    card.cardId = id;
+    const target = SELF.has(id) ? undefined : enemy.id;
+    primeAccuracyRolls(combat);
+    const before = { hp: enemy.hp, block: combat.player.block, playerHp: combat.player.hp };
+    const view = previewCard(combat, card.instanceId, target);
+    const face = view.values.find(value => value.op === 'damage')?.faceValue ?? null;
+    const blockFace = view.values.find(value => value.op === 'block')?.value ?? null;
+    const healFace = view.values.find(value => value.op === 'heal')?.value ?? null;
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: target });
+    rows.push({ id, face, blockFace, healFace, lost: before.hp - enemy.hp, block: combat.player.block - before.block, flux: combat.player.elementFlux ?? null });
+  });
+  return { combat, rows };
+}
+const DART = 'core.cinderDart', NIP = 'core.frostNip', ARC = 'core.cantrip', STRIKE = 'core.strike';
+
+test('flux chain: Fire, Fire, Fire lifts the second and third (the first sets it); face = damage dealt', () => {
+  const live = sequence([DART, DART, DART]).rows, control = sequence([DART, DART, DART], { legacy: true }).rows;
+  assert.deepEqual(live.map(row => row.flux), ['fire', 'fire', 'fire'], 'the flux stays while the element repeats');
+  assert.deepEqual(control.map(row => row.flux), [null, null, null], 'an old fight sets none');
+  assert.equal(live[0].face, control[0].face, 'the first cast is never lifted by the flux it creates');
+  for (const index of [1, 2]) {
+    assert.ok(live[index].face > control[index].face, `cast ${index + 1} is lifted`);
+    assert.ok(Math.abs(live[index].face - control[index].face * 1.25) < 1.25 + 1e-9, `cast ${index + 1} is about x1.25: ${live[index].face} vs ${control[index].face}`);
+  }
+  for (const row of live) assert.equal(row.lost, row.face, `${row.id}: shown = dealt`);
+});
+
+test('flux chain: Fire then Frost replaces the flux, a non-element spell clears it, a non-spell leaves it', () => {
+  const live = sequence([DART, NIP, DART, STRIKE, ARC, DART]).rows, control = sequence([DART, NIP, DART, STRIKE, ARC, DART], { legacy: true }).rows;
+  assert.deepEqual(live.map(row => row.flux), ['fire', 'frost', 'fire', 'fire', null, 'fire']);
+  assert.equal(live[1].face, control[1].face, 'Frost after Fire is not lifted (the flux was Fire)');
+  assert.equal(live[2].face, control[2].face, 'Fire after Frost is not lifted (Frost replaced the flux)');
+  assert.equal(live[5].face, control[5].face, 'Fire after a non-element spell is not lifted (it cleared the flux)');
+});
+
+test('flux lifts Block and healing too, floored; the face shows the lifted number', () => {
+  const ward = sequence([DART, 'core.cinderWard']), wardControl = sequence([DART, 'core.cinderWard'], { legacy: true });
+  assert.ok(ward.rows[1].block > wardControl.rows[1].block, 'Cinder Ward after Fire gains more Block');
+  assert.equal(ward.rows[1].blockFace, ward.rows[1].block, 'Block face = Block gained');
+  const heal = sequence(['core.steadyHands', 'core.mendingTouch']), healControl = sequence(['core.steadyHands', 'core.mendingTouch'], { legacy: true });
+  assert.deepEqual(heal.rows.map(row => row.flux), ['divine', 'divine']);
+  assert.ok(heal.rows[1].healFace > healControl.rows[1].healFace, 'Mending Touch after Steady Hands heals more');
+  assert.equal(heal.rows[0].healFace, healControl.rows[0].healFace, 'the first cast is not lifted');
+});
+
+test('flux ends at the end of the turn and with the fight', () => {
+  const { combat } = sequence([DART, DART]);
+  assert.equal(combat.player.elementFlux, 'fire');
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(combat.player.elementFlux, undefined, 'the player turn ended');
+  const { combat: other } = sequence([DART]);
+  assert.equal(other.player.elementFlux, 'fire');
+  other.enemies.forEach(enemy => { enemy.hp = 1; });
+  other.piles.hand[0].cardId = DART;
+  primeAccuracyRolls(other);
+  dispatch(other, { type: 'playCard', cardInstanceId: other.piles.hand[0].instanceId, targetId: other.enemies[0].id });
+  assert.equal(other.result, 'victory');
+  assert.equal(other.player.elementFlux, undefined, 'the fight is over: no flux');
+});
