@@ -820,6 +820,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   combatEl.addEventListener('pointerover', previewAimedTarget);
   combatEl.addEventListener('focusin', previewAimedTarget);
 
+  // A target armed without a hover (a touch has none: the picker, the cursor or a tap's focus ring) quotes the card at that enemy, so a
+  // back-row enemy's +1 Stamina shows on the card's cost before the play, like the hovered quote on desktop. Shown = paid.
+  function syncArmedTarget() {
+    if (!selected || inputBusy() || enemyPlayback || combatEl.classList.contains('drag-targeting')) return;
+    const id = combatEl.querySelector('.combatant.enemy.hover-target, .combatant.enemy.gp-focus')?.dataset.eid;
+    if (!id || id === lastTargetId || !cardTargets(selected).legalIds.includes(id)) return;
+    lastTargetId = id;
+    renderHand();
+  }
+
   function refreshAim() {
     if (combatEl.classList.contains('drag-targeting')) return;
     const want = currentAims();
@@ -4295,7 +4305,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       aimScheduled = true;
       setTimeout(() => {
         aimScheduled = false;
-        if (combatEl.isConnected) refreshAim();
+        if (combatEl.isConnected) { syncArmedTarget(); refreshAim(); }
       }, 0);
     });
     aimObs.observe(field, { attributes: true, attributeFilter: ['class'], subtree: true });
