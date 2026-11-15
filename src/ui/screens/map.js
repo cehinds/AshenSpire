@@ -244,6 +244,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     viewer: {
       meta, reachable, mode, reveal,
       allRoutes: configuredRoutes && mode === 'path',
+      gameProfile: run.gameProfile, // the fog rules (routes.fogRevealRests) are read from the run's pinned profile
       current: current || null,
       path: mapAdapter?.path || run.path || [],
       viewState: mapAdapter ? mapAdapter.viewState : run.mapView,
