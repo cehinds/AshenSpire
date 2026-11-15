@@ -69,6 +69,18 @@
       "extraDrawNextTurn": 1
     }
   },
+  "spellCosts": {
+    "version": 1,
+    "manaSurcharge": 1,
+    "staminaSurcharge": 1,
+    "cantripTag": "rank.cantrip",
+    "preparedStaminaDiscount": 1,
+    "focusManaDiscount": 1
+  },
+  "elementFlux": {
+    "version": 1,
+    "multiplier": 1.25
+  },
   "accuracy": {
     "evasionVersion": 2,
     "baseAC": 1,
