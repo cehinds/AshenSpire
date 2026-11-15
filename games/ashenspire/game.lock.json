@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:d31c69c23dad71a1d53cd13479e4db86800bf3488be9ae9fff9fd6d8ddd26921",
+      "hash": "sha256:bee9836e009ad77d7be81e72d57b3adc7b03d58b9a60b71449e661531c52345f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:33e04ef5f169b5a6d74250482833747de44b822a9dbc1af55114477ea7c96194"
+          "hash": "sha256:a41b092651ce9334acc8c16bd3587c578aa92cb24ddda1a22558e9e9fca4aa10"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -634,7 +634,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c7ea9ea189dcc1366249177cb2959666fc2bfc86620a7c7c2b238b2df1130976"
+          "hash": "sha256:e1ae5b874945dd37708311fdb14fa99aa130f26b6c5ca9ccf9d9f00fd42dbfdc"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -682,7 +682,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3bc42574b31e443416e79f5c2183f825b83768c0237227a7ec6be7790438b82d"
+          "hash": "sha256:3a7d4d4596cdba72fa737d97640d88acce5995653920f243b49416c1f5c44ed3"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179"
+      "runtimeHash": "sha256:238d4b2d40ee3f55c27b328c28c3db609dc28a23d9482b872dd76cda90e1ed55"
     },
     "core": {
-      "hash": "sha256:d31c69c23dad71a1d53cd13479e4db86800bf3488be9ae9fff9fd6d8ddd26921",
+      "hash": "sha256:bee9836e009ad77d7be81e72d57b3adc7b03d58b9a60b71449e661531c52345f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + engine/runtime/bindings.mjs + src/model/{formulas,fixCoreMechanics}.js",
-          "hash": "sha256:33e04ef5f169b5a6d74250482833747de44b822a9dbc1af55114477ea7c96194"
+          "hash": "sha256:a41b092651ce9334acc8c16bd3587c578aa92cb24ddda1a22558e9e9fca4aa10"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -1358,7 +1358,7 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:c7ea9ea189dcc1366249177cb2959666fc2bfc86620a7c7c2b238b2df1130976"
+          "hash": "sha256:e1ae5b874945dd37708311fdb14fa99aa130f26b6c5ca9ccf9d9f00fd42dbfdc"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
@@ -1406,7 +1406,7 @@
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:3bc42574b31e443416e79f5c2183f825b83768c0237227a7ec6be7790438b82d"
+          "hash": "sha256:3a7d4d4596cdba72fa737d97640d88acce5995653920f243b49416c1f5c44ed3"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -1447,7 +1447,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179"
+      "runtimeHash": "sha256:238d4b2d40ee3f55c27b328c28c3db609dc28a23d9482b872dd76cda90e1ed55"
     }
   }
 }

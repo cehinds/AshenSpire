@@ -128,7 +128,8 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   // Re-pinned 2026-11-15 (batch 3): the Broken wording on cards, relics and the Prepared status moves the runtime hash; batch-2's a4c872... and ad67bc... are kept (a2854a... was batch 3's own pin before merging dev).
   // Re-pinned 2026-11-15 (batch 3): the rankUpCard row in engine/runtime/ops.json moves the runtime hash (753eed... is now in PREVIOUS_RUNTIMES).
   // Re-pinned 2026-11-15 (W25-F): spell costs and elemental flux rules (fixCoreMechanics.json spellCosts/elementFlux, src/model/fixCoreMechanics.js) move the runtime hash (0ea717... is now in PREVIOUS_RUNTIMES).
-  assert.equal(profile.lock.runtimeHash, 'sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179');
+  // Re-pinned 2026-11-15 (W25-MS): the cost.manaOnly tag and the nine mana-only Core spells move the runtime hash (9f3348... is now in PREVIOUS_RUNTIMES).
+  assert.equal(profile.lock.runtimeHash, 'sha256:238d4b2d40ee3f55c27b328c28c3db609dc28a23d9482b872dd76cda90e1ed55');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);

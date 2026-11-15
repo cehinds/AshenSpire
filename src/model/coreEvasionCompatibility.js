@@ -78,9 +78,12 @@ const PREVIOUS_RUNTIMES = new Set([
   'sha256:a2854aeb6df487f9efe4bb1358b16df21d4a8d614e0090f63c23c6507d0f2613',
   'sha256:753eed5a7b51b22ba88dee172eebaaf122204189d2eb7576dc8b5cadda3ac763',
   'sha256:0ea717b957fdd4add2b4a16745f8dff8475a3ae08ee11377b47bfc41464a98f1',
+  'sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179',
+  'sha256:8af5d70cc4e5608e15f4536e058782426af5c8de0b6c6c76713a5f730d6ceda2',
 ]);
 // Moved by the rankUpCard row added to engine/runtime/ops.json (batch 3); then by the spellCosts and elementFlux rules (W25-F), batch 3's 0ea717... is kept.
-const FIXED_EVASION_RUNTIME = 'sha256:9f334813aab14c772228bf6612058393550f453e4c1549d7d2b0dd496ff2b179';
+// Moved again by the cost.manaOnly tag and the nine mana-only Core spells (W25-MS); the W25-F 9f3348... runtime is kept.
+const FIXED_EVASION_RUNTIME = 'sha256:238d4b2d40ee3f55c27b328c28c3db609dc28a23d9482b872dd76cda90e1ed55';
 export function coreEvasionCompatibleRuntime(profile, currentRuntime) {
   return currentRuntime === FIXED_EVASION_RUNTIME
     && PREVIOUS_RUNTIMES.has(profile?.lock?.runtimeHash)
