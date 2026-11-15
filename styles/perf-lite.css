@@ -37,7 +37,7 @@
 }
 /* The card art's colour treatment was a `color` blend over the art; a flat
    low-alpha tint is the nearest paint without a blend. */
-:root[data-performance='lite'] [data-art-background-color] { opacity: .3; }
+:root[data-performance='lite'] [data-art-background-color] { opacity: .16; }
 
 /* 2. Target relationship colours (green friend / yellow neutral / red foe).
    The 1px coloured drop-shadow silhouette becomes a 1px solid outline in the
