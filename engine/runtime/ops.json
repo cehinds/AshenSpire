@@ -970,6 +970,32 @@
         "file": "src/engine/actions.js",
         "symbol": "runOpcode case refillFlasks"
       }
+    },
+    "changeAttribute": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        },
+        "attribute": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "value",
+          "required": true
+        },
+        "thisTurn": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "description": "Adds or subtracts an attribute for the rest of the fight, or until the end of the owner turn with thisTurn; derived stats follow at once.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case changeAttribute"
+      }
     }
   },
   "effectEnvelope": {
