@@ -198,7 +198,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   bringStancesForward(saved);
   // Stack counts above the live cap (a cap changed since the save) load clamped, never refused.
   const enemies = Array.isArray(saved?.enemies) ? saved.enemies : [];
-  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity);
+  for (const entity of [saved?.player, ...enemies]) clampStackCounts(entity, saved?.fixCoreRules?.statusCaps === 'none');
   if (saved?.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);

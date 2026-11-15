@@ -2,6 +2,7 @@
 // `reflectStacks`), not statuses: absent means 0, the cap and fractions are data (content/framework/mechanics.json
 // `counter` / `reflect`), and they clear only when the fight ends (a fresh entity carries none). Pure helpers.
 import { mechanics } from '../framework/data/mechanics.js';
+import { StatusCapsLifted } from '../model/fixCoreMechanics.js';
 import { COUNTER_STACK_SAFETY_CEILING } from '../model/combatTacticsRules.js';
 
 /** Safety ceiling for a stack count in memory and in a save; not a game rule. */
@@ -28,7 +29,8 @@ export function gainCounterStacks(ctx, entity, amount) {
 export function gainReflectStacks(ctx, entity, amount) {
   if (!entity) return 0;
   const before = reflectStackCount(entity);
-  const next = Math.min(mechanics.reflect.stackCap, before + whole(amount));
+  // No rule cap under `statusCaps: "none"` (owner 2026-11-15); a fight saved without it keeps mechanics.reflect.stackCap.
+  const next = Math.min(StatusCapsLifted(ctx) ? STACK_CEILING : mechanics.reflect.stackCap, before + whole(amount));
   if (next === before) return 0;
   entity.reflectStacks = next;
   ctx?.emit?.('reflectStacksChanged', { targetId: entity.id, stacks: next, amount: next - before,

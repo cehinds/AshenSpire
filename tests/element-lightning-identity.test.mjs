@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import { fight, play } from './elementFixture.mjs';
 import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { applyStatus, getStacks, decayAtTurnStart } from '../src/engine/statuses.js';
-import { ElementTurnStart, ElementSecondaryPlan } from '../src/engine/elementIdentity.js';
+import { ElementTurnStart, ElementSecondaryPlan, ElementPreviewBreak } from '../src/engine/elementIdentity.js';
+import { StatusCapsLifted } from '../src/model/fixCoreMechanics.js';
 
 const SPARK = { combatProfile: { camp: 'spell', school: 'lightning', damageType: 'arcane', magicShare: 1 }, tags: ['school:lightning'], magicShare: 1 };
 const hit = (combat, target, carrier = SPARK, base = 10) => profileDamageReceipt(combat, combat.player, target, base, { ...carrier, skipRatingBonus: true }, { roll: 0 });
@@ -37,8 +38,8 @@ test('live: Spark hits its target and chains half to another enemy; the quote of
   assert.equal(play(old.combat, 'core.spark', old.enemies[0].id).lost.e2, 0, 'an old snapshot never chains');
 });
 
-test('breaking Poise with lightning adds Shock equal to the larger of INT and WIS, capped at 10', () => {
-  for (const [attributes, stacks] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 1, wisdom: 6 }, 6], [{ intelligence: 15, wisdom: 1 }, 10]]) {
+test('breaking Poise with lightning adds Shock equal to the larger of INT and WIS; no cap on the stacks held (a fight saved before the no-cap rule stops at 10)', () => {
+  for (const [attributes, stacks] of [[{ intelligence: 4, wisdom: 2 }, 4], [{ intelligence: 1, wisdom: 6 }, 6], [{ intelligence: 15, wisdom: 1 }, 15]]) {
     const { combat, enemies } = fight({ enemies: 1, poise: 3, attributes });
     play(combat, 'core.spark', enemies[0].id);
     assert.equal(enemies[0].persistentPoise.value, 0);
@@ -47,6 +48,23 @@ test('breaking Poise with lightning adds Shock equal to the larger of INT and WI
   const old = fight({ enemies: 1, poise: 3, legacy: true });
   play(old.combat, 'core.spark', old.enemy.id);
   assert.equal(getStacks(old.enemy, 'shock'), 0);
+  // Legacy twin: element rules but no `statusCaps` key (a fight saved before 2026-11-15) keeps Shock's cap of 10, at the break and in a forecast.
+  const capped = fight({ enemies: 1, poise: 3, attributes: { intelligence: 15, wisdom: 1 }, oldCaps: true });
+  play(capped.combat, 'core.spark', capped.enemy.id);
+  assert.equal(getStacks(capped.enemy, 'shock'), 10);
+});
+
+test('Shock held beyond the old cap: further breaks keep adding, and shown = dealt at 30 stacks (+150% lightning damage taken)', () => {
+  const { combat, enemies } = fight({ enemies: 1 });
+  const target = enemies[0];
+  const plain = hit(combat, target, SPARK, 100).hpLoss;
+  target.statuses.shock = { stacks: 30 };
+  assert.equal(StatusCapsLifted(combat), true);
+  assert.equal(stage(hit(combat, target, SPARK, 100), 'element-shock').multiplier, 2.5);
+  assert.equal(hit(combat, target, SPARK, 100).hpLoss, Math.floor(plain * 2.5));
+  const previewed = ElementPreviewBreak(combat, combat.player, target, 'lightning');
+  assert.equal(previewed, 0);
+  assert.ok(getStacks(target, 'shock') > 30, 'a previewed break stacks past the old cap too');
 });
 
 test('Shock: +5% lightning damage taken per stack, nothing for other elements', () => {
