@@ -4,7 +4,7 @@ import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack, canonicalDamageType, finesseRatingView, carrierHasTag } from '../model/combatRatings.js';
 import { core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCorePierceRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, FixCoreWardBlockFirst, FixCoreBrokenRules } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -201,7 +201,7 @@ function profileDamageReceiptCore(ctx, source, target, base, carrier = {}, { rol
   // the overflow spills to Block, and what is left reaches HP. A pierce hit still lets its fraction of what Block soaked through.
   const wardRouted = modern && (target?.statuses?.ward?.stacks || 0) > 0;
   // Owner, 2026-11-15 (W25-W): under `ward.routing: "blockFirst"` the hit meets Block FIRST; Poise then absorbs the whole remainder 1:1 (no leak) until it is empty, then HP.
-  const wardBlockFirst = wardRouted && fixCoreWardBlockFirst(ctx);
+  const wardBlockFirst = wardRouted && FixCoreWardBlockFirst(ctx);
   if (wardBlockFirst) {
     const total = physical + magical;
     const poisePool = Math.max(0, target?.persistentPoise?.value || 0);

@@ -53,7 +53,7 @@ export const FixCorePerceptionRollOff = rules => rules?.perception?.roll === fal
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 // Owner, 2026-11-15 (W25-W): every hit meets Block first; a target holding Ward stacks then has its Poise absorb the whole remainder 1:1 before HP.
 // `ward.routing: "blockFirst"` turns it on; a fight saved without the key keeps the Poise-first Ward routing (the whole hit to Poise, the rest to Block).
-export const fixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
+export const FixCoreWardBlockFirst = ctx => fixCoreEnabled(ctx) && rawRules(ctx).ward?.routing === 'blockFirst';
 // Owner, 2026-11-14 (W25): PR (spell damage) is priced from max(INT, WIS). `ratings.prAttributes` lists the attributes PR reads the highest
 // of; rules without the key (a run or fight made before this ruling) keep PR on Intelligence alone.
 export const FIXCORE_PR_ATTRIBUTE_IDS = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);

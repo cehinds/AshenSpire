@@ -53,5 +53,5 @@ export function syncPoiseMaximum(ctx, entity) {
     if (bonus > 0) poise.barrierBonus = bonus; else delete poise.barrierBonus;
   }
   if (entity.broken) poise.value = 0;
-  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: delta ? 'barrier' : 'rating', ...seatOf(ctx, entity) });
+  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, barrierBonus: poise.barrierBonus || 0, source: delta ? 'barrier' : 'rating', ...seatOf(ctx, entity) });
 }

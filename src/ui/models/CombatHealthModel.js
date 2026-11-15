@@ -25,6 +25,19 @@ export const PoiseLeft = (v, entity) => {
 };
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
+/**
+ * Bonus Poise (Owner, 2026-11-15): Poise above the base maximum (Barrier stacks, "Gain N Poise") shown apart from it. `pool` is a Core Poise pool
+ * ({ value, max, barrierBonus }); `max` includes the bonus maximum. Returns { base, shown, bonus, max, value } while the current Poise
+ * is above the base maximum, else null (the bar and number read as usual).
+ */
+export function PoiseBonusView(pool) {
+  const bonusMax = count(pool?.barrierBonus);
+  if (!(bonusMax > 0)) return null;
+  const max = count(pool.max), value = count(pool.value), base = Math.max(0, max - bonusMax);
+  const bonus = Math.max(0, value - base);
+  return bonus > 0 ? Object.freeze({ base, shown: Math.min(value, base), bonus, max, value }) : null;
+}
+
 export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, wardStacks = 0, maxHp = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0, evasion = null, precision = null, counterStacks = 0, reflectStacks = 0 } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);
