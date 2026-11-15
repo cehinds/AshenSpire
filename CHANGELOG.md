@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-11-15
 
+- **Front and back rows** ([#2769](https://github.com/cehinds/AshenSpire/pull/2769), `0.7.4.87`). Enemies stand in a front and a back row. A melee card aimed at the back row costs 1 more Stamina and steps you forward; reach cards and spells hit any row. A back-row melee enemy shows "Approaching" and steps forward before it can strike, unless you have stepped in. Bows, halberds and some sceptres give a Retreat card each turn (1 Stamina) to step back out. Force pushes and pulls enemies between rows, the new card Upset the Ranks swaps them, two or more enemies in a row hold 2 Block each, and Fire and Lightning stay within the row you aim at. Archers no longer step back when you advance.
 - **Evade cards are Defense cards** ([#2767](https://github.com/cehinds/AshenSpire/pull/2767), `0.7.4.86`). Cards that prepare an Evade (Quickstep, Dodge Roll, Backstep and others) now show Defense as their type, with the Defense icon; Evade itself still works as before.
 
 ## 2026-11-14
