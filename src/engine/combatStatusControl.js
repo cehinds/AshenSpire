@@ -1,8 +1,10 @@
 import { rollD20Check } from './d20Chance.js';
+import { ItemIncomingPercent } from './itemPropertyHooks.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { fixCoreRules } from '../model/fixCoreRulesCache.js';
 import * as Actions from './actions.js';
 import * as Statuses from './statuses.js';
+import { ElementStatusCap } from './elementIdentity.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { persistentPoiseMaximum } from '../model/combatRatings.js';
@@ -253,7 +255,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   if (!row) return false;
   if (!target?.alive || !(amount > 0)) return true;
   target.statuses ||= {};
-  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, row.cap - before));
+  const before = stacks(target, id), add = Math.min(whole(amount), Math.max(0, ElementStatusCap(ctx, id, row.cap) - before)); // element identity (W25): Burn's cap is 10 under the element rules
   if (!add) return true;
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = before + add;
@@ -481,8 +483,10 @@ export function consumeControlActionLoss(ctx, entity) {
 }
 
 export function statusIncomingModifier(ctx, entity, profile = {}) {
-  if (!enabled(ctx)) return { percent: 0, evadeBonus: 0 };
-  const cfg = rules(ctx); let percent = 0, evadeBonus = 0;
+  // An item property's resistance or immunity to a damage type (W25 step 6) applies whatever the status rules are.
+  const itemPercent = ItemIncomingPercent(entity, profile.damageType);
+  if (!enabled(ctx)) return { percent: itemPercent, evadeBonus: 0 };
+  const cfg = rules(ctx); let percent = itemPercent, evadeBonus = 0;
   if (!entity.statusControl?.resolveActive) percent += stacks(entity, cfg.sleep.status) * cfg.sleep.damagePercentPerStack;
   if (stacks(entity, cfg.prone.status)) {
     if (profile.range === 'melee') percent += cfg.prone.meleePercent;

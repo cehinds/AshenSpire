@@ -1,0 +1,26 @@
+{
+  "id": "status.necroticBuildup",
+  "tag": "status.necroticBuildup",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Necrotic build-up",
+  "description": "When the build-up reaches the holder's current HP, it dies at the end of its own turn, bosses included. Only added by a necrotic hit while its Poise is broken. Lasts the whole fight.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.necroticBuildup"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/elementIdentity.js",
+    "symbol": "ApplyElementReceipt"
+  }
+}

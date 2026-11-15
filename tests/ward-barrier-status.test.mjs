@@ -30,7 +30,9 @@ function hit(carrier, { block = 0, poise = 0, ward = 1, amount = 10 } = {}) {
   return { receipt, combat, target, poiseAfter: poise - receipt.poiseMitigated, blockAfter: receipt.blockRemaining };
 }
 const physical = { combatProfile: { camp: 'physical', damageType: 'slashing' } };
-const spell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
+// Arcane carries no element rule, so these cases pin the plain Ward lane. Fire's own Poise rule (it ignores Poise points) has its case below.
+const spell = { combatProfile: { camp: 'spell', damageType: 'arcane', magicShare: 1 } };
+const fireSpell = { combatProfile: { camp: 'spell', damageType: 'fire', magicShare: 1 } };
 
 for (const [name, carrier] of [['physical', physical], ['magic', spell]]) {
   test(`Ward: a ${name} hit meets Poise first, 100%, before Block`, () => {
@@ -54,6 +56,13 @@ for (const [name, carrier] of [['physical', physical], ['magic', spell]]) {
     assert.notEqual(hit(carrier, { poise: 20, block: 5, ward: 0 }).receipt.wardRouted, true);
   });
 }
+
+test('Ward: a fire spell still takes the Ward lane, and the Poise Fire ignores leaves the pool on top of what absorbed the hit', () => {
+  const r = hit(fireSpell, { poise: 4, block: 3 });
+  assert.equal(r.receipt.wardRouted, true);
+  assert.ok(r.receipt.element.poiseIgnored > 0, 'Fire ignores some Poise');
+  assert.equal(r.poiseAfter, r.receipt.element.poiseIgnored, 'the ignored points are the only Poise left in this helper\'s sum');
+});
 
 test('Ward: with no Poise the whole hit meets Block then HP', () => {
   const r = hit(physical, { poise: 0, block: 4 });

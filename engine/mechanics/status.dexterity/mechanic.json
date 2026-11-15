@@ -20,7 +20,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/model/cardUpgradeSteps.js",
-    "symbol": "addMenuOptions"
+    "file": "src/engine/elementIdentity.js"
   }
 }

@@ -405,7 +405,10 @@ async function play(page, device, row, before) {
   else {
     await tap(page, page.locator('.combatant.player .player-action-intent'), device);
   }
-  if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
+  if (before.choice) {
+    await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
+    await tap(page, page.locator('.card-choice .modal-foot button', { hasText: 'Choose' }), device);
+  }
   await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === window.__auditInstanceId), null, { timeout: 10000 });
   if (row.curated) {
     await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.presentation?.action, null, { timeout: 5000 });
@@ -480,7 +483,10 @@ async function endTurnAndPlayNext(page, device, row) {
   await tap(page, page.locator(`.hand .card[data-instance-id="${next.instanceId}"]`), device);
   if (next.needsTarget) await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
   else await tap(page, page.locator('.combatant.player .player-action-intent'), device);
-  if (next.choice) await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
+  if (next.choice) {
+    await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
+    await tap(page, page.locator('.card-choice .modal-foot button', { hasText: 'Choose' }), device);
+  }
   await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), next.instanceId, { timeout: 10000 });
   choices.push(...await finishPending(page, device));
   return { discardIds, choices, recovered, next };

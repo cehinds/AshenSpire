@@ -9,7 +9,8 @@
 // keyed on exactly those two inputs as JSON, never on object identity: a
 // status gained, a mount swapped or a rules edit changes the key and misses.
 // A failing call is never stored; a key that cannot round-trip through JSON
-// (a null, which also stands for NaN/Infinity there) is not cached at all.
+// (NaN, Infinity, or an undefined array slot, which all print as null there) is
+// not cached at all. A real null is kept: `elements.burn.cap: null` means "no cap".
 //
 // This lives beside fixCoreMechanics.js rather than inside it because that
 // file is part of the mechanics runtime hash (tools/game-config.mjs), and a
@@ -41,11 +42,18 @@ function detach(result) {
   return out;
 }
 
+// Throws for a value JSON would turn into null by accident, so the caller skips the cache.
+function lossless(_key, value) {
+  if (typeof value === 'number' && !Number.isFinite(value)) throw new TypeError('not round-trippable');
+  if (value === undefined && Array.isArray(this)) throw new TypeError('not round-trippable');
+  return value;
+}
+
 export function keyFor(ctx, entity, carrier) {
   try {
     const raw = ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules;
-    const key = JSON.stringify([raw === undefined ? 0 : raw, fixCoreAttachments(ctx, entity, carrier)]);
-    return key === undefined || key.includes('null') ? null : key;
+    const key = JSON.stringify([raw === undefined ? 0 : raw, fixCoreAttachments(ctx, entity, carrier)], lossless);
+    return key === undefined ? null : key;
   } catch { return null; }
 }
 

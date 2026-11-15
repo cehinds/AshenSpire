@@ -3,7 +3,9 @@ export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
+import { PrAttributeView } from './fixCoreMechanics.js';
 import { upgradeTierBonus } from '../../engine/kernel/gameConfig.js';
+import { ItemFamily } from './itemPicks.js';
 
 export const isConfiguredRun = (subject) => (subject?.gameProfile || subject)?.foundation?.mode === 'configured';
 export const gameProfileAttributes = (subject, classId) => gameContent(subject, 'classAttributes')?.[classId];
@@ -111,7 +113,7 @@ export function gameProfileRatingReceipt(registries, run) {
   const stats = gameModule(run,'stats')?.mode === 'configured';
   if (stats) for (const id of ids) {
     const table = run.derivedStatRuleSnapshot?.rules || registries.derivedStatRules;
-    const receipt = deriveStat(table,id,{attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
+    const receipt = deriveStat(table,id,{attributes: id === 'pr' ? PrAttributeView(run,attributes) : attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
     attributeReceipts[id] = receipt; totals[id] = receipt.value;
   }
   const sources = [{name:'Attributes',kind:'attribute',...totals}];
@@ -138,7 +140,7 @@ export function gameProfileRatingReceipt(registries, run) {
           if (gameModule(run,'gear')?.armorBudget && itemTier) {
             const ar = upgradeTierBonus(gameModule(run,'equipment'),itemTier) * policy.weaponARPerTier;
             // A magic weapon's tier also raises its spells: the same bonus lands in PR (W25 upgrades, step 1).
-            const pr = piece.kind === 'staff' ? ar : 0;
+            const pr = ItemFamily(run,`armament/${id}`) === 'magic' ? ar : 0; // a category change can make a staff martial, a sword magic
             totals.ar += ar; totals.pr += pr;
             sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr,ward:0,poise:0,weaponTier:itemTier});
           }

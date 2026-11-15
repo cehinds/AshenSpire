@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 203,
-  "distinct": 176,
+  "sites": 201,
+  "distinct": 174,
   "files": {
     "src/ui/screens/customize.js": 39,
     "src/ui/components/offlinePlay.js": 20,
@@ -32,7 +32,6 @@
     "src/ui/screens/history.js": 3,
     "src/ui/components/armouryStatsPanel.js": 2,
     "src/ui/components/holdconfirm.js": 2,
-    "src/ui/components/mountServiceModal.js": 2,
     "src/ui/components/smithPaneParts.js": 2,
     "src/ui/components/smithUpgradeModal.js": 2,
     "src/ui/models/ArmouryModels.js": 2,

@@ -37,13 +37,20 @@ test('every fx kind applies, validates, and an unknown one is refused', () => {
     { k: 'fx', fx: 'block', n: 4 }, { k: 'fx', fx: 'draw', n: 1 }, { k: 'fx', fx: 'cycle', n: 1 }, { k: 'fx', fx: 'cull' }, { k: 'fx', fx: 'copy' },
     { k: 'fx', fx: 'shuffle' }, { k: 'fx', fx: 'retain' }, { k: 'fx', fx: 'innate' }, { k: 'fx', fx: 'holdOne' }, { k: 'fx', fx: 'boost', stat: 'strength', n: 2 },
     { k: 'fx', fx: 'target' }, { k: 'fx', fx: 'reaction' }];
+  // Batch 2: INT / WIS boosts exist, for this turn or the rest of the fight. They are the same kind ('boost'), so the kind count is unchanged.
+  const attributeBoosts = [{ k: 'fx', fx: 'boost', stat: 'intelligence', n: 2, until: 'turn' }, { k: 'fx', fx: 'boost', stat: 'wisdom', n: 1, until: 'fight' }];
   assert.equal(FX_KINDS.length, steps.length + 1, 'unexhaust is the thirteenth kind');
   for (const step of steps) {
     assert.deepEqual(upgradeStepsProblems(withSteps([step]), 'x'), [], JSON.stringify(step));
     assert.notDeepEqual(JSON.stringify(applyUpgradeSteps(strike(), [step])), JSON.stringify(applyUpgradeSteps(strike(), [{ k: 'dmg', n: 0 }])), step.fx);
   }
   assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'nope' }]), 'x')[0], /fx/);
-  assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'boost', stat: 'wisdom', n: 2 }]), 'x')[0], /stat/);
+  for (const step of attributeBoosts) {
+    assert.deepEqual(upgradeStepsProblems(withSteps([step]), 'x'), [], JSON.stringify(step));
+    assert.notDeepEqual(JSON.stringify(applyUpgradeSteps(strike(), [step])), JSON.stringify(applyUpgradeSteps(strike(), [{ k: 'dmg', n: 0 }])), step.stat);
+  }
+  assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'boost', stat: 'constitution', n: 2, until: 'turn' }]), 'x')[0], /stat/);
+  assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'boost', stat: 'wisdom', n: 2 }]), 'x')[0], /until/, 'only STR / DEX keep the legacy no-duration boost');
   assert.match(upgradeStepsProblems(withSteps([{ k: 'fx', fx: 'block', n: 0 }]), 'x')[0], /\.n/);
 });
 
@@ -57,7 +64,10 @@ test('a card is only offered what it lacks', () => {
   assert.ok(fxOf('core.mendingTouch').includes('unexhaust'));
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'retain' }]).includes('retain'), 'no second Retain');
   assert.ok(!fxOf('core.strike', [{ k: 'fx', fx: 'block', n: 4 }]).includes('block'));
-  assert.ok(!fxOf('core.spark').includes('boost'), 'a spell has no live INT / WIS to boost');
+  const boostStats = (cardId) => nextUpgradeOptions(run, { instanceId: 'x', cardId, upgraded: false }, registries.cards.get(cardId), registries, 40, { noAuthored: true })
+    .filter((s) => s.k === 'fx' && s.fx === 'boost').map((s) => s.stat);
+  assert.ok(boostStats('core.spark').includes('intelligence'), 'a damaging spell is offered an INT boost');
+  assert.ok(!boostStats('core.spark').some((stat) => ['strength', 'dexterity'].includes(stat)), 'a spell is offered INT / WIS boosts, never STR / DEX');
 });
 
 test('Block, draw, copy, shuffle and cull do what the card says', () => {

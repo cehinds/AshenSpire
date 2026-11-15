@@ -45,10 +45,12 @@ function rowArt(row) {
 
 /**
  * optionRowList(rows, { idAttr, onSelect, selectedId }) -> the list element.
- * `rows`: { id, name, line?, html?, text?, costs?, artAsset?, artGlyph?, chip?, count? (a "×N" chip for identical options shown once), disabled?, className? }
- * (a summarizeCardOption result plus the art and chip the caller adds).
+ * `rows`: { id, name, line?, html?, text?, costs?, artAsset?, artGlyph?, chip?, count? (a "×N" chip for identical options shown once), disabled?, className?, detail? }
+ * (a summarizeCardOption result plus the art and chip the caller adds). `detail` is a node drawn directly UNDER its
+ * row (the before -> after card faces of an upgrade): the row gets aria-expanded and the node a full-width cell.
+ * `columns` forces the column count (1 keeps a long list a single column, so a detail sits under its own row).
  */
-export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr = 'data-option' } = {}) {
+export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr = 'data-option', columns: forcedColumns = null } = {}) {
   const items = rows.map(row => {
     const costs = (row.costs || []).length
       ? el('span', { class: 'co-costs' }, row.costs.map(cost => el('span', { class: 'co-chip', text: String(cost) })))
@@ -65,12 +67,14 @@ export function optionRowList(rows, { onSelect = null, selectedId = null, idAttr
       row.count ? el('span', { class: 'option-row-chip option-row-count', text: row.count }) : null,
       row.chip ? el('span', { class: 'option-row-chip', text: row.chip }) : null,
     ]);
+    if (row.detail) item.setAttribute('aria-expanded', 'true');
     if (row.disabled) { item.disabled = true; item.setAttribute('aria-disabled', 'true'); }
     item.addEventListener('click', () => { if (!item.disabled) onSelect?.(row.id, item); });
     return item;
   });
-  const columns = optionColumns(rows.length);
-  const list = el('div', { class: 'option-row-list', role: 'group', 'data-columns': String(columns) }, items);
+  const columns = forcedColumns || optionColumns(rows.length);
+  const cells = items.flatMap((item, index) => (rows[index].detail ? [item, el('div', { class: 'option-row-detail', role: 'region', [`${idAttr}-detail`]: rows[index].id }, rows[index].detail)] : [item]));
+  const list = el('div', { class: 'option-row-list', role: 'group', 'data-columns': String(columns) }, cells);
   list.style?.setProperty?.('--option-columns', String(columns));
   list.addEventListener('keydown', event => {
     const dir = ARROWS[event.key];

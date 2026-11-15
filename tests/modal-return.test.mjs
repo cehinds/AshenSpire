@@ -69,6 +69,7 @@ test('Blacksmith card list: confirm lands back on a refreshed list, Back exits f
     assert.equal(host.querySelector('.smith-back').textContent.trim(), 'Back');
     // The row's own review confirms: the list closes, commits, and reopens.
     host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
+    host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
     dom.document.querySelector('.confirmation-modal .confirmation-confirm').click();
     assert.equal(confirmed, strike.instanceId);
     flushModalReturns(); drain();
@@ -126,6 +127,7 @@ test('a refused confirm (false or a throw) does not reopen the list over the ref
           onConfirm() { if (result === 'throw') throw new Error('refused'); return result; } }); };
         open();
         host.querySelector(`.card-upgrade-row[data-instance-id="${strike.instanceId}"]`).click();
+        host.querySelector('.card-upgrade-confirm').dispatchEvent(new dom.Event('click', { detail: 0 })); // a keyboard activation: the armed button reviews
         try { dom.document.querySelector('.confirmation-modal .confirmation-confirm').click(); } catch { /* the throw surfaces here */ }
         flushModalReturns();
         while (timers.length) timers.shift()();

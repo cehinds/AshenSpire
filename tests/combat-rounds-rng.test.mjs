@@ -6,11 +6,13 @@ import assert from 'node:assert/strict';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 
 test('combatRounds is the last stream, and no earlier stream moved', () => {
-  assert.equal(STREAM_NAMES.at(-2), 'combatRounds');
-  assert.equal(STREAM_NAMES.at(-1), 'combatContest');
-  // dev's enemyReaction stream (enemy reactions) landed before it; both are appended after enemyIntentClue.
-  assert.equal(STREAM_NAMES.indexOf('enemyReaction'), STREAM_NAMES.length - 3);
-  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 4);
+  // The `elements` stream (W25 element rules) was appended after combatContest; nothing moved.
+  assert.equal(STREAM_NAMES.at(-1), 'elements');
+  assert.equal(STREAM_NAMES.at(-2), 'combatContest');
+  assert.equal(STREAM_NAMES.at(-3), 'combatRounds');
+  // dev's enemyReaction stream (enemy reactions) landed before it; all are appended after enemyIntentClue.
+  assert.equal(STREAM_NAMES.indexOf('enemyReaction'), STREAM_NAMES.length - 4);
+  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 5);
 });
 
 test('existing streams roll the same values on a fixed seed (golden from before the stream existed)', () => {
@@ -27,7 +29,7 @@ test('off mode: an untouched run has no combatRounds key in its counters', () =>
   assert.equal('combatRounds' in counters, false);
   rng.float('shuffle');
   assert.equal('combatRounds' in rng.getCounters(), false, 'drawing another stream adds no key');
-  assert.equal(Object.keys(counters).length, STREAM_NAMES.length - 2);
+  assert.equal(Object.keys(counters).length, STREAM_NAMES.length - 3); // combatRounds, combatContest and elements are omitted while zero
 });
 
 test('once drawn, the stream is saved with its count and restores exactly', () => {

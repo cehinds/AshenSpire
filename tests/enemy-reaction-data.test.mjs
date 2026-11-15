@@ -108,10 +108,12 @@ test('the first reaction carriers validate, carry trait:reaction, and are never 
 
 test('the enemyReaction stream is appended after enemyIntentClue (the Combat Rounds Preview and contest streams follow it)', () => {
   // #2428 appended combatContest last; the streams above it keep their index.
-  assert.equal(STREAM_NAMES.at(-3), 'enemyReaction');
-  assert.equal(STREAM_NAMES.at(-2), 'combatRounds');
-  assert.equal(STREAM_NAMES.at(-1), 'combatContest');
-  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 4);
+  // W25 appended `elements` after combatContest; the streams above keep their index.
+  assert.equal(STREAM_NAMES.at(-4), 'enemyReaction');
+  assert.equal(STREAM_NAMES.at(-3), 'combatRounds');
+  assert.equal(STREAM_NAMES.at(-2), 'combatContest');
+  assert.equal(STREAM_NAMES.at(-1), 'elements');
+  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 5);
 });
 
 test('the shipped rules carry enemyReactions and a rules object without it still validates', () => {

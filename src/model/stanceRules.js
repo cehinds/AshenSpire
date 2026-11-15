@@ -124,7 +124,7 @@ export function stanceRatingBonus(ctx, entity, id) {
   const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter'].includes(stance.maneuver);
   const offensiveId = stance.maneuver === 'casting' || stance.mirrored || (stance.maneuver === 'counter' && stance.camp === 'spell') ? 'pr' : 'ar';
-  return (offensive && id === offensiveId ? cfg.offensiveRating : 0)
+  return (entity?.itemProps?.stanceRating?.[stance.maneuver]?.[id] || 0) + (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
 export function stanceEntryBonuses(carrier, ctx = null) {

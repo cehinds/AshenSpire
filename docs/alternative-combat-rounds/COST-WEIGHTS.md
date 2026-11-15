@@ -383,6 +383,12 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `confused` | 2 | card | The owner's floor for a status. |
 | `slowed` | 2 | card | The owner's floor for a status. |
 | `entombed` | 2 | card | The owner's floor for a status. |
+| `chill` | 2 | card | The owner's floor for a status. |
+| `freeze` | 2 | card | The owner's floor for a status. |
+| `brittle` | 2 | card | The owner's floor for a status. |
+| `shock` | 2 | card | The owner's floor for a status. |
+| `knockback` | 2 | card | The owner's floor for a status. |
+| `necroticBuildup` | 2 | card | The owner's floor for a status. |
 
 ## Outliers
 

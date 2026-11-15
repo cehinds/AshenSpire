@@ -184,12 +184,12 @@ test('weapon-art shelf: the Core art is sold at the weaponArt price, once, into 
 });
 
 test('blacksmith upgrade: insufficient cinders refuses and keeps both purses; stale quote refuses', () => {
-  const run = smithRun(coreOut, { stones: 5, cinders: 59 });
+  const run = smithRun(coreOut, { stones: 5, cinders: 24 }); // W25: the first item upgrade costs 25 cinders
   const plan = blacksmithUpgradePlan(coreOut, run, 'armament/greatsword');
   assert.equal(plan.ok, false);
   assert.match(plan.reason, /cinders/i);
   assert.throws(() => commitBlacksmithUpgrade(coreOut, run, plan));
-  assert.deepEqual([run.smithingStones, run.cinders, run.itemUpgradeLevels?.['armament/greatsword']], [5, 59, undefined]);
+  assert.deepEqual([run.smithingStones, run.cinders, run.itemUpgradeLevels?.['armament/greatsword']], [5, 24, undefined]);
   run.cinders = 500;
   const quote = blacksmithUpgradePlan(coreOut, run, 'armament/greatsword');
   commitBlacksmithUpgrade(coreOut, run, quote);
@@ -208,14 +208,15 @@ test('tier reach: the rest-site Smith stops at tier 2 and says it needs a Blacks
   run.itemUpgradeLevels = { 'armament/greatsword': 1 };
   assert.equal(commitGameProfileRest(coreReg, run, 'smith', { itemRef: 'armament/greatsword' }) !== undefined, true);
   assert.equal(run.itemUpgradeLevels['armament/greatsword'], 2);
-  // The Blacksmith takes tier 2 to 3, at 2 stones (the ladder's 3 less the discount) and 150 cinders.
+  // W25: the Blacksmith's work is a pick of rolled options, priced by the item's upgrade number (2 fixed tiers held,
+  // so this is upgrade 3: 1 stone and 85 cinders), and it leaves the fixed tier ladder alone.
   const smith = smithRun(coreOut, { stones: 4, cinders: 400 });
   smith.itemUpgradeLevels = { 'armament/greatsword': 2 };
   const plan = blacksmithUpgradePlan(coreOut, smith, 'armament/greatsword');
-  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 2, 150]);
+  assert.deepEqual([plan.ok, plan.stones, plan.cost], [true, 1, 85]);
   commitBlacksmithUpgrade(coreOut, smith, plan);
-  assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 3);
-  assert.equal(smithingPlan(coreReg, smith).candidates.find((c) => c.itemRef === 'armament/greatsword'), undefined, 'no tier 4');
+  assert.equal(smith.itemUpgradeLevels['armament/greatsword'], 2);
+  assert.equal(smith.itemUpgradePicks['armament/greatsword'].length, 1);
 });
 
 test('picker: a card past its free upgrade is enabled with 0 stones at the Blacksmith, and confirm commits for 40 cinders', () => {
